@@ -22,6 +22,9 @@
 (define-module (guix store database)
   #:use-module (sqlite3)
   #:use-module (guix config)
+  #:use-module (guix serialization)
+  #:use-module (guix store)
+  #:use-module (guix derivations)
   #:use-module (guix store deduplication)
   #:use-module (guix base16)
   #:use-module (guix progress)
@@ -44,7 +47,9 @@
             valid-path-id
 
             register-valid-path
+            register-derivation-outputs
             register-items
+            registered-derivation-outputs
             %epoch
             reset-timestamps
             vacuum-database))
@@ -206,6 +211,26 @@ SELECT id FROM ValidPaths WHERE path = :path"
            "Integer ~A out of range: ~S" (list key number)
            (list number))))
 
+(define (register-derivation-outputs db drv)
+  "Register all output paths of DRV as being produced by it (note that
+this doesn't mean 'already produced by it', but rather just 'associated with
+it')."
+  (let ((stmt (sqlite-prepare
+               db
+               "
+INSERT OR REPLACE INTO DerivationOutputs (drv, id, path)
+SELECT id, :outid, :outpath FROM ValidPaths WHERE path = :drvpath;"
+               #:cache? #t)))
+    (for-each (match-lambda
+                ((outid . ($ <derivation-output> path))
+                 (sqlite-bind-arguments stmt
+                                        #:drvpath (derivation-file-name
+                                                   drv)
+                                        #:outid outid
+                                        #:outpath path)
+                 (sqlite-step-and-reset stmt)))
+              (derivation-outputs drv))))
+
 (define (add-references db referrer references)
   "REFERRER is the id of the referring store item, REFERENCES is a list
 ids of items referred to."
@@ -284,6 +309,11 @@ VALUES (:path, :hash, :time, :deriver, :size)"
             (sqlite-step-and-reset stmt)
             (last-insert-row-id db)))))
 
+  (when (derivation-path? path)
+    (register-derivation-outputs db
+                                 (read-derivation-from-file
+                                  path)))
+
   ;; Call 'path-id' on each of REFERENCES.  This ensures we get a
   ;; "non-NULL constraint" failure if one of REFERENCES is unregistered.
   (add-references db id
@@ -330,6 +360,25 @@ is true."
 (define %epoch
   ;; When it all began.
   (make-time time-utc 0 1))
+
+(define (registered-derivation-outputs db drv)
+  "Get the list of (id, output-path) pairs registered for DRV."
+  (let ((stmt (sqlite-prepare
+               db
+               "
+SELECT id, path
+FROM DerivationOutputs
+WHERE drv in (SELECT id from ValidPaths where path = :drv)"
+               #:cache? #t)))
+    (sqlite-bind-arguments stmt #:drv drv)
+    (let ((result (sqlite-fold (lambda (current prev)
+                                 (match current
+                                   (#(id path)
+                                    (cons (cons id path)
+                                          prev))))
+                               '() stmt)))
+      (sqlite-reset stmt)
+      result)))
 
 (define* (register-items db items
                          #:key prefix
