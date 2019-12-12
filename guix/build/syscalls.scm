@@ -177,6 +177,7 @@
             configure-network-interface
             add-network-route/gateway
             delete-network-route
+            initialize-loopback
 
             interface?
             interface-name
@@ -227,7 +228,12 @@
             utmpx-address
             login-type
             utmpx-entries
-            (read-utmpx-from-port . read-utmpx)))
+            (read-utmpx-from-port . read-utmpx)
+            personality
+            ADDR_NO_RANDOMIZE
+            setdomainname
+            UNAME26
+            PER_LINUX32))
 
 ;;; Commentary:
 ;;;
@@ -2136,6 +2142,16 @@ is true, it must be a socket address to use as the network mask."
       (lambda ()
         (close-port sock)))))
 
+(define (initialize-loopback)
+  (let ((sock (socket PF_INET SOCK_DGRAM IPPROTO_IP)))
+    (dynamic-wind
+      (const #t)
+      (lambda ()
+        (set-network-interface-flags sock "lo"
+                                     (logior IFF_UP IFF_LOOPBACK IFF_RUNNING)))
+      (lambda ()
+        (close sock)))))
+
 
 ;;;
 ;;; Network routes.
@@ -2706,5 +2722,32 @@ entry."
      eof)
     ((? bytevector? bv)
      (read-utmpx bv))))
+
+;; TODO: verify these constants are correct on platforms other than x86-64
+(define ADDR_NO_RANDOMIZE #x0040000)
+(define UNAME26           #x0020000)
+(define PER_LINUX32          #x0008)
+
+(define personality
+  (let ((proc (syscall->procedure int "personality" `(,unsigned-long))))
+    (lambda (persona)
+      (let-values (((ret err) (proc persona)))
+        (if (= -1 ret)
+            (throw 'system-error "personality" "~A"
+                   (list (strerror err))
+                   (list err))
+            ret)))))
+
+(define setdomainname
+  (let ((proc (syscall->procedure int "setdomainname" (list '* int))))
+    (lambda (domain-name)
+      (let-values (((ret err) (proc (string->pointer/utf-8 domain-name)
+                                    (bytevector-length (string->utf8
+                                                        domain-name)))))
+        (if (= -1 ret)
+            (throw 'system-error "setdomainname" "~A"
+                   (list (strerror err))
+                   (list err))
+            ret)))))
 
 ;;; syscalls.scm ends here
