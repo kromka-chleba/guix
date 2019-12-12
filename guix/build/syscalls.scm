@@ -57,6 +57,8 @@
             MS_REC
             MS_SHARED
             MS_LAZYTIME
+            MS_PRIVATE
+            MS_REC
             MNT_FORCE
             MNT_DETACH
             MNT_EXPIRE
@@ -566,6 +568,7 @@ the last argument of `mknod'."
 (define MS_REC            16384)
 (define MS_SHARED       1048576)
 (define MS_RELATIME     2097152)
+(define MS_PRIVATE       262144)
 (define MS_STRICTATIME 16777216)
 (define MS_LAZYTIME    33554432)
 
