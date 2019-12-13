@@ -199,6 +199,7 @@
 
             %store-prefix
             (make-store-path . store-path)
+            compressed-hash
             output-path
             fixed-output-path
             store-path?

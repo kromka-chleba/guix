@@ -38,6 +38,8 @@
   #:use-module (srfi srfi-26)
   #:use-module (rnrs io ports)
   #:use-module (ice-9 match)
+  #:use-module (ice-9 vlist)
+  #:use-module (system foreign)
   #:export (sql-schema
             %default-database-file
             store-database-file
@@ -52,7 +54,10 @@
             registered-derivation-outputs
             %epoch
             reset-timestamps
-            vacuum-database))
+            vacuum-database
+            outputs-exist?
+            file-closure
+            all-transitive-inputs))
 
 ;;; Code for working with the store database directly.
 
@@ -441,3 +446,84 @@ typically by adding them as temp-roots."
   (let ((db (sqlite-open (store-database-file))))
     (sqlite-exec db "VACUUM;")
     (sqlite-close db)))
+
+(define (outputs-exist? db drv-path outputs)
+  "Determine whether all output labels in OUTPUTS exist as built outputs of
+DRV-PATH."
+  (let ((statement
+         (sqlite-prepare
+          db
+          "
+SELECT id
+FROM ValidPaths
+WHERE path IN (
+  SELECT path
+  FROM DerivationOutputs
+  WHERE DerivationOutputs.id = :id
+    AND drv IN (
+      SELECT id FROM ValidPaths WHERE path = :drvpath
+    )
+)"
+          #:cache? #t)))
+    (sqlite-bind-arguments statement #:drvpath drv-path)
+
+    (every (lambda (out-id)
+             (sqlite-bind-arguments statement #:id out-id)
+             (sqlite-step-and-reset statement))
+           outputs)))
+
+(define* (file-closure db path #:key (list-so-far vlist-null))
+  "Return a vlist containing the store paths referenced by PATH, the store
+paths referenced by those paths, and so on."
+  (let ((get-references
+         (sqlite-prepare
+          db
+          "
+SELECT path
+FROM ValidPaths
+WHERE id IN (
+  SELECT reference FROM Refs WHERE referrer IN (
+    SELECT id FROM ValidPaths WHERE path = :path
+  )
+)"
+          #:cache? #t)))
+    ;; to make it possible to go depth-first we need to get all the
+    ;; references of an item first or we'll have re-entrancy issues with
+    ;; the get-references statement.
+    (define (references-of path)
+      ;; There are no problems with resetting an already-reset
+      ;; statement.
+      (sqlite-bind-arguments get-references #:path path)
+      (let ((result
+             (sqlite-fold (lambda (row prev)
+                            (cons (vector-ref row 0) prev))
+                          '()
+                          get-references)))
+        (sqlite-reset get-references)
+        result))
+
+    (let %file-closure ((path path)
+                        (references-vlist list-so-far))
+      (if (vhash-assoc path references-vlist)
+          references-vlist
+          (fold %file-closure
+                (vhash-cons path #t references-vlist)
+                (references-of path))))))
+
+(define (all-input-output-paths drv)
+  "Return a list containing the output paths this derivation's inputs need to
+provide."
+  (apply append (map derivation-input-output-paths
+                     (derivation-inputs drv))))
+
+(define (all-transitive-inputs db drv)
+  "Produce a list of all inputs and all of their references."
+  (let ((input-paths (all-input-output-paths drv)))
+    (vhash-fold (lambda (key val prev)
+                  (cons key prev))
+                '()
+                (fold (lambda (input list-so-far)
+                        (file-closure db input #:list-so-far list-so-far))
+                      vlist-null
+                      `(,@(derivation-sources drv)
+                        ,@input-paths)))))
