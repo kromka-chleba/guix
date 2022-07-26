@@ -33,8 +33,10 @@
   #:use-module (guix build-system julia)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages julia-jll)
+  #:use-module (gnu packages node)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages python-web)
   #:use-module (gnu packages version-control))
 
 (define-public julia-abstractffts
@@ -2730,6 +2732,75 @@ differentiation (AD).")
     (description
      "Most of these templates are adapted from existing, popular templates
 with minor modifications to accommodate Franklin's content.")
+    (license license:expat)))
+
+(define-public julia-franklin
+  (package
+    (name "julia-franklin")
+    (version "0.10.96")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/JuliaDocs/Franklin.jl")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1psrsdbgqdymqbn3yfqf9bh5fyjrl4gm6154sycyzhg52dnc92rf"))))
+    (build-system julia-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'link-depot 'fix-paths
+            (lambda _
+              ;; TODO: highlight.js, KaTeX
+              (substitute* "src/Franklin.jl"
+                (("import NodeJS") ""))
+              (substitute* "src/build.jl"
+                (("NodeJS\\.nodejs_cmd\\(\\)")
+                 (string-append
+                  "\""
+                  #$(file-append (this-package-input "node") "/bin/node")
+                  "\""))
+                (("\"python3\"")
+                 (string-append
+                  "\""
+                  #$(file-append (this-package-input "python") "/bin/python3")
+                  "\"")))))
+          (add-after 'link-depot 'skip-network-tests
+            (lambda _
+              (substitute* "test/eval/repl.jl"
+                ;; Tests requiring fetching Julia packages
+                (("@testset \"pkg\" begin\n" all)
+                 (string-append all "    return\n")))
+              (substitute* "test/runtests.jl"
+                ;; Used in ping test
+                (("F\\.IP_CHECK") "()")))))))
+    (native-inputs
+     (list julia-dataframes
+           julia-datastructures
+           julia-suppressor))
+    (inputs
+     (list node
+           python
+           python-css-html-js-minify))
+    (propagated-inputs
+     (list julia-docstringextensions
+           julia-exprtools
+           julia-franklintemplates
+           julia-http
+           julia-literate
+           julia-liveserver
+           julia-orderedcollections))
+    (native-search-paths
+     (list (package-native-search-paths python-css-html-js-minify)))
+    (home-page "https://franklinjl.org")
+    (synopsis "Simple, customizable and fast static site generator")
+    (description
+     "Franklin is a simple, customisable static site generator
+oriented towards technical blogging and light, fast-loading pages.
+It supports maths with KaTeX, code evaluation and optional pre-rendering.")
     (license license:expat)))
 
 (define-public julia-functionwrappers
