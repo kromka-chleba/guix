@@ -181,7 +181,9 @@ build daemon, from within the generated build program."
                                                   #:channel-metadata
                                                   '#$channel-metadata
                                                   #:pull-version
-                                                  #$pull-version)
+                                                  #$pull-version
+                                                  #:graft?
+                                                  #$(%graft?))
                                  #:system system))
                              derivation-file-name))))))
                   #:module-path (list source))))

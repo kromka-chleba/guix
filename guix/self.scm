@@ -23,6 +23,7 @@
   #:use-module (guix config)
   #:use-module (guix modules)
   #:use-module (guix gexp)
+  #:use-module (guix grafts)
   #:use-module (guix store)
   #:use-module (guix monads)
   #:use-module (guix discovery)
@@ -33,6 +34,7 @@
   #:use-module ((guix build utils) #:select (find-files))
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9)
+  #:use-module (srfi srfi-9 gnu)
   #:use-module (srfi srfi-35)
   #:use-module (ice-9 match)
   #:export (make-config.scm
@@ -250,6 +252,50 @@ record with the new file name."
      ;; In this case, anything that refers to the result also depends on ITEM,
      ;; which isn't great.
      (file-append item "/" file))))
+
+(define graft-derivation*
+  (store-lift graft-derivation))
+
+(define package-grafts*
+  (store-lift package-grafts))
+
+;; Apply grafts explicitly
+(define-immutable-record-type <explicit-grafting>
+  (%explicit-grafting obj packages)
+  explicit-grafting?
+  (obj      explicit-grafting-obj)       ;obj
+  (packages explicit-grafting-packages)) ;list of <package>s
+
+(define (write-explicit-grafting rec port)
+  (match rec
+    (($ <explicit-grafting> obj packages)
+     (format port "#<explicit-grafting ~s ~s>" obj packages))))
+
+(define (explicit-grafting obj packages)
+  (%explicit-grafting obj packages))
+
+(define-gexp-compiler (explicit-grafting-compiler (explicit-grafting <explicit-grafting>)
+                                                  system target)
+  (match explicit-grafting
+    (($ <explicit-grafting> obj packages)
+     (mlet* %store-monad ((drv (without-grafting
+                                (lower-object obj system #:target target)))
+                          (grafts
+                           (mapm %store-monad
+                                 (lambda (pkg)
+                                   (package-grafts* pkg system #:target target))
+                                 packages)))
+       (match (delete-duplicates
+               (concatenate grafts))
+         (()
+          (return drv))
+         (grafts
+          (mlet %store-monad ((guile (package->derivation
+                                      (guile-for-grafts)
+                                      system #:graft? #f)))
+            (graft-derivation* drv grafts
+                               #:system system
+                               #:guile guile))))))))
 
 (define* (locale-data source domain
                       #:optional (directory domain))
@@ -815,7 +861,8 @@ itself."
                         (gzip (specification->package "gzip"))
                         (bzip2 (specification->package "bzip2"))
                         (xz (specification->package "xz"))
-                        (guix (specification->package "guix")))
+                        (guix (specification->package "guix"))
+                        (graft? #t))
   "Return a file-like object that contains a compiled Guix."
   (define guile-avahi
     (specification->package "guile-avahi"))
@@ -1095,25 +1142,34 @@ itself."
                                                guile-lzma
                                                dependencies)
                                         #:guile guile-for-build
-                                        #:guile-version guile-version)))
-           (whole-package name modules dependencies
-                          #:command command
-                          #:guile guile-for-build
+                                        #:guile-version guile-version))
+                (obj
+                 (whole-package name modules dependencies
+                                #:command command
+                                #:guile guile-for-build
 
-                          ;; Include 'guix-daemon'.  XXX: Here we inject an
-                          ;; older snapshot of guix-daemon, but that's a good
-                          ;; enough approximation for now.
-                          #:daemon daemon
+                                ;; Include 'guix-daemon'.  XXX: Here we inject an
+                                ;; older snapshot of guix-daemon, but that's a good
+                                ;; enough approximation for now.
+                                #:daemon daemon
 
-                          #:info (info-manual source)
-                          #:miscellany (miscellaneous-files source daemon)
-                          #:guile-version guile-version)))
+                                #:info (info-manual source)
+                                #:miscellany (miscellaneous-files source daemon)
+                                #:guile-version guile-version)))
+           (if graft?
+               (explicit-grafting obj
+                                  (map (compose force cdr) %packages))
+               obj)))
         ((= 0 pull-version)
          ;; Legacy 'guix pull': return the .scm and .go files as one
          ;; directory.
-         (built-modules (lambda (node)
-                          (list (node-source node)
-                                (node-compiled node)))))
+         (let ((obj (built-modules (lambda (node)
+                                     (list (node-source node)
+                                           (node-compiled node))))))
+           (if graft?
+               (explicit-grafting obj
+                                  (map (compose force cdr) %packages))
+               obj)))
         (else
          ;; Unsupported 'guix pull' version.
          #f)))
@@ -1359,7 +1415,8 @@ containing MODULE-FILES and possibly other files as well."
 (define* (guix-derivation source version
                           #:optional (guile-version (effective-version))
                           #:key (pull-version 0)
-                          channel-metadata)
+                          channel-metadata
+                          (graft? #t))
   "Return, as a monadic value, the derivation to build the Guix from SOURCE
 for GUILE-VERSION.  Use VERSION as the version string.  Use CHANNEL-METADATA
 as the channel metadata sexp to include in (guix config).
@@ -1396,7 +1453,11 @@ this PULL-VERSION value is not supported."
                                #:pull-version pull-version
                                #:guile-version (if (>= pull-version 1)
                                                    "3.0" guile-version)
-                               #:guile-for-build guile)))
+                               #:guile-for-build guile
+                               #:graft? graft?)))
       (if guix
-          (lower-object guix)
+          (if graft?
+              (lower-object guix)
+              (without-grafting
+               (lower-object guix)))
           (return #f)))))
