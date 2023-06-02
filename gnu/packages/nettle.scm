@@ -84,6 +84,7 @@ themselves.")
   ;; cannot use it yet.  So keep it separate.
   (package (inherit nettle-2)
     (version "3.9.1")
+    (replacement nettle-3-current)
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/nettle/nettle-"
@@ -97,3 +98,18 @@ themselves.")
         ;; Build "fat" binaries where the right implementation is chosen
         ;; at run time based on CPU features (starting from 3.1.)
         `(cons "--enable-fat" ,flags))))))
+
+
+(define-public nettle-3-current
+    ; upate to current version of Nettle 3; this uses GNU Guix's crafting mechanism
+    ; to avoid massive rebuild
+  (package (inherit nettle)
+    (version "3.10")
+    (replacement nettle-3-current)
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnu/nettle/nettle-"
+                                  version ".tar.gz"))
+              (sha256
+               (base32
+                "0z749qcqf1wap6zfkrvi6w9wg013y0c439ff9b5q9r3ln6niiidl"))))))
