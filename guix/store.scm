@@ -202,6 +202,8 @@
             compressed-hash
             output-path
             fixed-output-path
+            text-output-path
+            text-output-path-from-hash
             store-path?
             direct-store-path?
             derivation-path?
@@ -2013,6 +2015,20 @@ HASH-ALGO, of the derivation NAME.  RECURSIVE? has the same meaning as for
         (make-store-path (string-append "output:" output)
                          (sha256 (string->utf8 tag))
                          name))))
+
+(define (text-output-path name text references)
+  (text-output-path-from-hash
+   name
+   (sha256 (string->utf8 text))
+   references))
+
+(define* (text-output-path-from-hash name text-hash references)
+  (make-store-path
+   (string-append "text" (string-join (sort references string<?)
+                                      ":"
+                                      'prefix))
+   text-hash
+   name))
 
 (define (store-path? path)
   "Return #t if PATH is a store path."
