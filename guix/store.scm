@@ -211,6 +211,7 @@
             store-path-package-name
             store-path-hash-part
             direct-store-path
+            validate-store-name
             derivation-log-file
             log-file))
 
@@ -2036,6 +2037,16 @@ HASH-ALGO, of the derivation NAME.  RECURSIVE? has the same meaning as for
   ;; be fast as it's called often in `derivation', for instance.
   ;; `isStorePath' in Nix does something similar.
   (string-prefix? (%store-prefix) path))
+
+(define (validate-store-name name)
+  (string-for-each
+   (lambda (c)
+     (unless (or (char-alphabetic? c)
+                 (char-numeric? c)
+                 (member c '(#\+ #\- #\. #\_ #\? #\=)))
+       (error (simple-format #f "invalid character ~A" c))))
+   name)
+  #t)
 
 (define (direct-store-path? path)
   "Return #t if PATH is a store path, and not a sub-directory of a store path.
