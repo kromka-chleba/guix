@@ -4,6 +4,7 @@
 ;;; Copyright © 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Arjan Adriaanse <arjan@adriaan.se>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -190,12 +191,8 @@
                                     #:parallel-build? #$parallel-build?
                                     #:inputs #$(input-tuples->gexp inputs))))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile
-                      #:substitutable? substitutable?)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define* (linux-module-build-cross
           name
@@ -250,12 +247,8 @@
                               #:phases #$phases
                               #:tests? #$tests?))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile
-                      #:substitutable? substitutable?)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define linux-module-build-system
   (build-system
