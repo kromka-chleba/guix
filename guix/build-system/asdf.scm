@@ -3,6 +3,7 @@
 ;;; Copyright © 2019, 2020, 2021, 2022 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2022 Pierre Neidhardt <mail@ambrevar.xyz>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 jgart <jgart@dismail.de>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -103,7 +104,7 @@
                             (guile #f)
                             (imported-modules %asdf-build-system-modules)
                             (modules %asdf-build-modules))
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -115,13 +116,7 @@
                              #:search-paths '#$(sexp->gexp
                                                 (map search-path-specification->sexp
                                                      search-paths))
-                             #:inputs #$(input-tuples->gexp inputs)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+                             #:inputs #$(input-tuples->gexp inputs))))))
 
 (define* (package-with-build-system from-build-system to-build-system
                                     from-prefix to-prefix
@@ -307,7 +302,7 @@ set up using CL source package conventions."
           systems
           asd-test-systems))
 
-    (define builder
+    (mbegin %store-monad
       (with-imported-modules imported-modules
         #~(begin
             (use-modules #$@(sexp->gexp modules))
@@ -327,13 +322,7 @@ set up using CL source package conventions."
                           #:search-paths '#$(sexp->gexp
                                              (map search-path-specification->sexp
                                                   search-paths))
-                          #:inputs #$(input-tuples->gexp inputs))))))
-
-    (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                    system #:graft? #f)))
-      (gexp->derivation name builder
-                        #:system system
-                        #:guile-for-build guile))))
+                          #:inputs #$(input-tuples->gexp inputs))))))))
 
 (define asdf-build-system/sbcl
   (build-system
