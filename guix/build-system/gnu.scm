@@ -389,7 +389,7 @@ returned derivations, or whether they should always build it locally.
 
 ALLOWED-REFERENCES can be either #f, or a list of packages that the outputs
 are allowed to refer to."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -427,20 +427,7 @@ are allowed to refer to."
                            #:make-dynamic-linker-cache? #$make-dynamic-linker-cache?
                            #:license-file-regexp #$license-file-regexp
                            #:strip-flags #$strip-flags
-                           #:strip-directories #$strip-directories)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    ;; Note: Always pass #:graft? #f.  Without it, ALLOWED-REFERENCES &
-    ;; co. would be interpreted as referring to grafted packages.
-    (gexp->derivation name builder
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+                           #:strip-directories #$strip-directories))))))
 
 
 ;;;
@@ -520,7 +507,7 @@ is one of `host' or `target'."
   "Cross-build NAME for TARGET, where TARGET is a GNU triplet.  INPUTS are
 cross-built inputs, and NATIVE-INPUTS are inputs that run on the build
 platform."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -572,18 +559,7 @@ platform."
                      #:make-dynamic-linker-cache? #$make-dynamic-linker-cache?
                      #:license-file-regexp #$license-file-regexp
                      #:strip-flags #$strip-flags
-                     #:strip-directories #$strip-directories))))
-
-    (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target target
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+                     #:strip-directories #$strip-directories)))))
 
 (define gnu-build-system
   (build-system
