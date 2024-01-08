@@ -2,6 +2,7 @@
 ;;; Copyright © 2017 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2021-2022 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2021 Thiago Jung Bauermann <bauermann@kolabnow.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -121,7 +122,7 @@
                                    (guix build union)
                                    (guix build utils))))
   "Build SOURCE with INPUTS."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -145,16 +146,7 @@
                                #:inputs %build-inputs
                                #:search-paths '#$(sexp->gexp
                                                   (map search-path-specification->sexp
-                                                       search-paths)))))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:guile-for-build guile)))
+                                                       search-paths))))))))
 
 (define texlive-build-system
   (build-system
