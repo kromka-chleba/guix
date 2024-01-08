@@ -6,6 +6,7 @@
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -143,7 +144,7 @@
                    disallowed-references)
   "Build SOURCE using CMAKE, and with INPUTS. This assumes that SOURCE
 provides a 'CMakeLists.txt' file as its build system."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -178,16 +179,7 @@ provides a 'CMakeLists.txt' file as its build system."
                  #:patch-shebangs? #$patch-shebangs?
                  #:strip-binaries? #$strip-binaries?
                  #:strip-flags #$strip-flags
-                 #:strip-directories #$strip-directories)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:graft? #f       ;consistent with 'gnu-build'
-                      #:system system
-                      #:guile-for-build guile
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references)))
+                 #:strip-directories #$strip-directories))))))
 
 
 ;;;
@@ -229,7 +221,7 @@ provides a 'CMakeLists.txt' file as its build system."
   "Cross-build NAME using CMAKE for TARGET, where TARGET is a GNU triplet and
 with INPUTS.  This assumes that SOURCE provides a 'CMakeLists.txt' file as its
 build system."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -275,16 +267,7 @@ build system."
                     #:make-dynamic-linker-cache? #f ;cross-compiling
                     #:strip-binaries? #$strip-binaries?
                     #:strip-flags #$strip-flags
-                    #:strip-directories #$strip-directories))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:graft? #f                 ;consistent with 'gnu-build'
-                      #:system system
-                      #:guile-for-build guile
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references)))
+                    #:strip-directories #$strip-directories)))))
 
 (define qt-build-system
   (build-system
