@@ -4,6 +4,7 @@
 ;;; Copyright © 2021-2022, 2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -209,7 +210,7 @@ TRIPLET."
                       disallowed-references)
   "Build SOURCE using MESON, and with INPUTS, assuming that SOURCE
 has a 'meson.build' file."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -248,18 +249,7 @@ has a 'meson.build' file."
                              #:strip-binaries? #$strip-binaries?
                              #:strip-flags #$strip-flags
                              #:strip-directories #$strip-directories
-                             #:elf-directories #$(sexp->gexp elf-directories))))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+                             #:elf-directories #$(sexp->gexp elf-directories)))))))
 
 (define* (meson-cross-build name
                             #:key
@@ -303,8 +293,8 @@ SOURCE has a 'meson.build' file."
     (if (null? target-inputs)
         (input-tuples->gexp host-inputs)
         #~(append #$(input-tuples->gexp host-inputs)
-              #+(input-tuples->gexp target-inputs))))
-  (define builder
+                  #+(input-tuples->gexp target-inputs))))
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -364,18 +354,7 @@ SOURCE has a 'meson.build' file."
                        #:strip-binaries? #$strip-binaries?
                        #:strip-flags #$strip-flags
                        #:strip-directories #$strip-directories
-                       #:elf-directories #$(sexp->gexp elf-directories)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target target
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+                       #:elf-directories #$(sexp->gexp elf-directories))))))
 
 (define meson-build-system
   (build-system
