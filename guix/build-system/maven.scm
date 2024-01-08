@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2020 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2021, 2022 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -124,7 +125,7 @@
                                  (guix build utils))))
   "Build SOURCE using PATCHELF, and with INPUTS. This assumes that SOURCE
 provides its own binaries."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -144,13 +145,7 @@ provides its own binaries."
                        #:patch-shebangs? #$patch-shebangs?
                        #:strip-binaries? #$strip-binaries?
                        #:strip-flags #$strip-flags
-                       #:strip-directories #$strip-directories))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+                       #:strip-directories #$strip-directories)))))
 
 (define maven-build-system
   (build-system
