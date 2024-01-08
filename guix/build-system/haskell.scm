@@ -4,6 +4,7 @@
 ;;; Copyright © 2020 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -143,7 +144,7 @@ version REVISION."
                                    (guix build utils))))
   "Build SOURCE using HASKELL, and with INPUTS.  This assumes that SOURCE
 provides a 'Setup.hs' file as its build system."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -174,13 +175,7 @@ provides a 'Setup.hs' file as its build system."
                                #:search-paths '#$(sexp->gexp
                                                   (map search-path-specification->sexp
                                                        search-paths))
-                               #:inputs #$(input-tuples->gexp inputs))))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+                               #:inputs #$(input-tuples->gexp inputs)))))))
 
 (define haskell-build-system
   (build-system
