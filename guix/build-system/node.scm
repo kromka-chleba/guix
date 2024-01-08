@@ -4,6 +4,8 @@
 ;;; Copyright © 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2021 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2021 Philip McGrath <philip@philipmcgrath.com>
+;;; Copyright © 2024 Daniel Khodabakhsh <d.khodabakhsh@gmail.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -108,11 +110,8 @@
                                               search-paths))
                       #:inputs #$(input-tuples->gexp inputs)))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define node-build-system
   (build-system
