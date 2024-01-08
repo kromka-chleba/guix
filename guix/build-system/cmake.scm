@@ -4,6 +4,7 @@
 ;;; Copyright © 2017 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2020 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -147,7 +148,7 @@
                       disallowed-references)
   "Build SOURCE using CMAKE, and with INPUTS. This assumes that SOURCE
 provides a 'CMakeLists.txt' file as its build system."
-  (define build
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -180,18 +181,7 @@ provides a 'CMakeLists.txt' file as its build system."
                              #:patch-shebangs? #$patch-shebangs?
                              #:strip-binaries? #$strip-binaries?
                              #:strip-flags #$strip-flags
-                             #:strip-directories #$strip-directories)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name build
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+                             #:strip-directories #$strip-directories))))))
 
 
 ;;;
@@ -233,7 +223,7 @@ provides a 'CMakeLists.txt' file as its build system."
   "Cross-build NAME using CMAKE for TARGET, where TARGET is a GNU triplet and
 with INPUTS.  This assumes that SOURCE provides a 'CMakeLists.txt' file as its
 build system."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -288,18 +278,7 @@ build system."
                        #:make-dynamic-linker-cache? #f ;cross-compiling
                        #:strip-binaries? #$strip-binaries?
                        #:strip-flags #$strip-flags
-                       #:strip-directories #$strip-directories))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target target
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+                       #:strip-directories #$strip-directories)))))
 
 (define cmake-build-system
   (build-system
