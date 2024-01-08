@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2022 Pierre Langlois <pierre.langlois@gmx.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -114,7 +115,7 @@
                             (imported-modules %tree-sitter-build-system-modules)
                             (modules '((guix build utils)
                                        (guix build tree-sitter-build-system))))
-  (define builder
+  (mbegin %store-monad
     (with-extensions (list guile-json)
       (with-imported-modules imported-modules
         #~(begin
@@ -130,13 +131,7 @@
                                '#$(sexp->gexp
                                    (map search-path-specification->sexp
                                         search-paths))
-                               #:inputs #$(input-tuples->gexp inputs))))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+                               #:inputs #$(input-tuples->gexp inputs)))))))
 
 (define* (tree-sitter-cross-build name
                                   #:key
@@ -157,7 +152,7 @@
                                   (modules
                                    '((guix build utils)
                                      (guix build tree-sitter-build-system))))
-  (define builder
+  (mbegin %store-monad
     (with-extensions (list guile-json)
       (with-imported-modules imported-modules
         #~(begin
@@ -192,14 +187,7 @@
                                '#$(sexp->gexp
                                    (map
                                     search-path-specification->sexp
-                                    native-search-paths)))))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target target
-                      #:guile-for-build guile)))
+                                    native-search-paths))))))))
 
 (define tree-sitter-build-system
   (build-system
