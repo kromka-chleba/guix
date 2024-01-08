@@ -3,6 +3,7 @@
 ;;; Copyright © 2020 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2021, 2022 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2023 Jonathan Brielmaier <jonathan.brielmaier@web.de>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -91,7 +92,7 @@
                      (modules '((guix build copy-build-system)
                                 (guix build utils))))
   "Build SOURCE using INSTALL-PLAN, and with INPUTS."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@modules)
@@ -116,16 +117,7 @@
                             #:patch-shebangs? #$patch-shebangs?
                             #:strip-binaries? #$strip-binaries?
                             #:strip-flags #$strip-flags
-                            #:strip-directories #$strip-directories)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target #f
-                      #:substitutable? substitutable?
-                      #:graft? #f
-                      #:guile-for-build guile)))
+                            #:strip-directories #$strip-directories))))))
 
 (define copy-build-system
   (build-system
