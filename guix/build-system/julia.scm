@@ -4,6 +4,7 @@
 ;;; Copyright © 2021 Jean-Baptiste Volatier <jbv@pm.me>
 ;;; Copyright © 2021, 2022 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2022 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -90,7 +91,7 @@
                       (modules '((guix build julia-build-system)
                                  (guix build utils))))
   "Build SOURCE using Julia, and with INPUTS."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -107,13 +108,7 @@
                        #:inputs #$(input-tuples->gexp inputs)
                        #:julia-package-name #$julia-package-name
                        #:julia-package-uuid #$julia-package-uuid
-                       #:julia-package-dependencies #$julia-package-dependencies))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+                       #:julia-package-dependencies #$julia-package-dependencies)))))
 
 (define julia-build-system
   (build-system
