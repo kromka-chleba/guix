@@ -8,6 +8,7 @@
 ;;; Copyright © 2021, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2024 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -160,8 +161,7 @@ unavailable."
                       (modules '((guix build cargo-build-system)
                                  (guix build utils))))
   "Build SOURCE using CARGO, and with INPUTS."
-
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -190,13 +190,7 @@ unavailable."
                        #:inputs #$(input-tuples->gexp inputs)
                        #:search-paths '#$(sexp->gexp
                                           (map search-path-specification->sexp
-                                               search-paths))))))
-
-  (gexp->derivation name builder
-                    #:system system
-                    #:target #f
-                    #:graft? #f
-                    #:guile-for-build guile))
+                                               search-paths)))))))
 
 (define* (cargo-cross-build name
                             #:key
@@ -226,8 +220,7 @@ unavailable."
                             (modules '((guix build cargo-build-system)
                                        (guix build utils))))
   "Cross-build SOURCE using CARGO, and with INPUTS."
-
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -262,14 +255,8 @@ unavailable."
                                           (map search-path-specification->sexp
                                                search-paths))
                        #:native-search-paths '#$(sexp->gexp
-                                          (map search-path-specification->sexp
-                                               native-search-paths))))))
-
-  (gexp->derivation name builder
-                    #:system system
-                    #:target target
-                    #:graft? #f
-                    #:guile-for-build guile))
+                                                 (map search-path-specification->sexp
+                                                      native-search-paths)))))))
 
 ;; TODO: Remove after Dec. 31, 2026.
 (define (package-cargo-inputs p)
