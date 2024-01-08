@@ -3,6 +3,7 @@
 ;;; Copyright © 2013 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2013 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2021 Lars-Dominik Braun <lars@6xq.net>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -184,7 +185,7 @@ pre-defined variants."
                        disallowed-references)
   "Build SOURCE using PYTHON, and with INPUTS.  This assumes that SOURCE
 provides a 'setup.py' file as its build system."
-  (define build
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -204,17 +205,7 @@ provides a 'setup.py' file as its build system."
                               #:search-paths '#$(sexp->gexp
                                                  (map search-path-specification->sexp
                                                       search-paths))
-                              #:inputs %build-inputs)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name build
-                      #:system system
-                      #:graft? #f                 ;consistent with 'gnu-build'
-                      #:target #f
-                      #:guile-for-build guile
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references)))
+                              #:inputs %build-inputs))))))
 
 (define python-build-system
   (build-system
