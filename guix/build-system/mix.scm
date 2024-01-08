@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2023 Pierre-Henry Fröhring <contact@phfrohring.com>
 ;;; Copyright © 2025 Giacomo Leidi <goodoldpaul@autistici.org>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -98,7 +99,7 @@ See: https://github.com/hexpm/specifications/blob/main/endpoints.md"
         `("prod" ,@(if tests? '("test") '()))
         '("shared")))
 
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
 
@@ -122,18 +123,7 @@ See: https://github.com/hexpm/specifications/blob/main/endpoints.md"
                                               (map
                                                search-path-specification->sexp
                                                search-paths))
-                           #:inputs
-                           %build-inputs)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system
-                                                  #:graft? #f)))
-    (gexp->derivation name
-                      builder
-                      #:system system
-                      #:graft? #f       ;consistent with 'gnu-build'
-                      #:target #f
-                      #:guile-for-build guile)))
+                           #:inputs %build-inputs))))))
 
 (define* (lower name
                 #:key
