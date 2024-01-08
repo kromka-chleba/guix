@@ -2,6 +2,7 @@
 ;;; Copyright © 2016, 2017, 2018 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2017 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2021-2022 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -19,6 +20,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 (define-module (guix build-system ocaml)
   #:use-module (guix store)
+  #:use-module (guix monads)
   #:use-module (guix utils)
   #:use-module (guix gexp)
   #:use-module (guix search-paths)
@@ -261,7 +263,7 @@ pre-defined variants."
                                  (guix build utils))))
   "Build SOURCE using OCAML, and with INPUTS. This assumes that SOURCE
 provides a 'setup.ml' file as its build system."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@modules)
@@ -285,13 +287,7 @@ provides a 'setup.ml' file as its build system."
                        #:patch-shebangs? #$patch-shebangs?
                        #:strip-binaries? #$strip-binaries?
                        #:strip-flags #$strip-flags
-                       #:strip-directories #$strip-directories))))
-
-  (gexp->derivation name builder
-                    #:system system
-                    #:target #f
-                    #:graft? #f
-                    #:guile-for-build guile))
+                       #:strip-directories #$strip-directories)))))
 
 (define ocaml-build-system
   (build-system
