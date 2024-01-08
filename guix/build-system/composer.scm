@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2019 Julien Lepiller <julien@lepiller.eu>
+;;; Copyright © 2023-2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -18,6 +19,7 @@
 
 (define-module (guix build-system composer)
   #:use-module (guix store)
+  #:use-module (guix monads)
   #:use-module (guix utils)
   #:use-module (guix derivations)
   #:use-module (guix search-paths)
@@ -110,7 +112,7 @@
                          (strip-binaries? #t)
                          (strip-flags #~'("--strip-debug"))
                          (strip-directories #~'("lib" "lib64" "libexec"
-                                               "bin" "sbin"))
+                                                "bin" "sbin"))
                          (phases '(@ (guix build composer-build-system)
                                      %standard-phases))
                          (system (%current-system))
@@ -121,7 +123,7 @@
                                     (guix build utils))))
   "Build SOURCE using PHP, and with INPUTS. This assumes that SOURCE provides
 a 'composer.json' file as its build system."
-  (define builder
+  (mbegin %store-monad
     (with-extensions (list guile-json)
       (with-imported-modules imported-modules
         #~(begin
@@ -146,13 +148,7 @@ a 'composer.json' file as its build system."
                    #:patch-shebangs? #$patch-shebangs?
                    #:strip-binaries? #$strip-binaries?
                    #:strip-flags #$strip-flags
-                   #:strip-directories #$strip-directories))))))
-
-  (gexp->derivation name builder
-                    #:system system
-                    #:target #f
-                    #:graft? #f
-                    #:guile-for-build guile))
+                   #:strip-directories #$strip-directories)))))))
 
 (define composer-build-system
   (build-system
