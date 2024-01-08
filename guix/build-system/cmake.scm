@@ -3,6 +3,7 @@
 ;;; Copyright © 2013 Cyril Roelandt <tipecaml@gmail.com>
 ;;; Copyright © 2017 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2020 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -129,7 +130,7 @@
                       disallowed-references)
   "Build SOURCE using CMAKE, and with INPUTS. This assumes that SOURCE
 provides a 'CMakeLists.txt' file as its build system."
-  (define build
+  (define builder
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -161,16 +162,8 @@ provides a 'CMakeLists.txt' file as its build system."
                              #:strip-flags #$strip-flags
                              #:strip-directories #$strip-directories)))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name build
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 
 ;;;
@@ -263,16 +256,8 @@ build system."
                        #:strip-flags #$strip-flags
                        #:strip-directories #$strip-directories))))
 
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target target
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:allowed-references allowed-references
-                      #:disallowed-references disallowed-references
-                      #:guile-for-build guile)))
+  (mbegin %store-monad
+    (return builder)))
 
 (define cmake-build-system
   (build-system
