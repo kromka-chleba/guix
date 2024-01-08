@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2023 Josselin Poiret <dev@jpoiret.xyz>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -88,7 +89,7 @@
                      (extra-files '("^\\./.*\\.agda-lib$"))
                      (imported-modules %agda-build-system-modules)
                      (modules %default-modules))
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -105,13 +106,7 @@
                       #:tests? #$tests?
                       #:inputs #$(input-tuples->gexp inputs)
                       #:plan '#$plan
-                      #:extra-files '#$extra-files))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+                      #:extra-files '#$extra-files)))))
 
 (define agda-build-system
   (build-system
