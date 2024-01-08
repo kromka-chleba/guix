@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2023 Ekaitz Zarraga <ekaitz@elenq.tech>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -63,7 +64,7 @@
                     (modules '((guix build zig-build-system)
                                (guix build utils))))
   "Build SOURCE using Zig, and with INPUTS."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -89,13 +90,7 @@
                      #:search-paths '#$(sexp->gexp
                                         (map search-path-specification->sexp
                                              search-paths))
-                     #:inputs #$(input-tuples->gexp inputs)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+                     #:inputs #$(input-tuples->gexp inputs))))))
 
 (define* (zig-cross-build name
                           #:key
@@ -123,7 +118,7 @@
                           (modules '((guix build zig-build-system)
                                      (guix build utils))))
   "Build SOURCE using Zig, and with INPUTS."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -133,7 +128,7 @@
 
           (define %build-target-inputs
             (append #$(input-tuples->gexp host-inputs)
-              #+(input-tuples->gexp target-inputs)))
+                    #+(input-tuples->gexp target-inputs)))
 
           (define %build-inputs
             (append %build-host-inputs %build-target-inputs))
@@ -155,8 +150,8 @@
                      #:search-paths '#$(map search-path-specification->sexp
                                             search-paths)
                      #:native-search-paths '#$(map
-                                                search-path-specification->sexp
-                                                native-search-paths)
+                                               search-path-specification->sexp
+                                               native-search-paths)
                      #:install-source? #$install-source?
                      #:skip-build? #$skip-build?
                      #:zig-build-flags #$zig-build-flags
@@ -168,17 +163,7 @@
                      #:tests? #$(and tests? (not skip-build?))
                      #:search-paths '#$(sexp->gexp
                                         (map search-path-specification->sexp
-                                             search-paths))))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-        (gexp->derivation name builder
-                          #:system system
-                          #:target target
-                          #:graft? #f
-                          #:substitutable? substitutable?
-                          #:guile-for-build guile)))
-
+                                             search-paths)))))))
 
 (define* (lower name
                 #:key source inputs native-inputs outputs system target
