@@ -4,6 +4,7 @@
 ;;; Copyright © 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -166,7 +167,7 @@
                              (modules '((guix build linux-module-build-system)
                                         (guix build utils))))
   "Build SOURCE using LINUX, and with INPUTS."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -185,14 +186,7 @@
                                     #:outputs #$(outputs->gexp outputs)
                                     #:make-flags #$make-flags
                                     #:parallel-build? #$parallel-build?
-                                    #:inputs #$(input-tuples->gexp inputs))))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile
-                      #:substitutable? substitutable?)))
+                                    #:inputs #$(input-tuples->gexp inputs)))))))
 
 (define* (linux-module-build-cross
           name
@@ -214,7 +208,7 @@
            %linux-module-build-system-modules)
           (modules '((guix build linux-module-build-system)
                      (guix build utils))))
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -245,14 +239,7 @@
                                   search-path-specification->sexp
                                   native-search-paths)
                               #:phases #$phases
-                              #:tests? #$tests?))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile
-                      #:substitutable? substitutable?)))
+                              #:tests? #$tests?)))))
 
 (define linux-module-build-system
   (build-system
