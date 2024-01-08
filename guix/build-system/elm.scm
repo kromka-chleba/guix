@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2022 Philip McGrath <philip@philipmcgrath.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -171,7 +172,7 @@ given VERSION with sha256 checksum HASH."
                     (imported-modules %elm-build-system-modules)
                     (modules %elm-default-modules))
   "Build SOURCE using ELM."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -184,12 +185,7 @@ given VERSION with sha256 checksum HASH."
                      #:search-paths '#$(sexp->gexp
                                         (map search-path-specification->sexp
                                              search-paths))
-                     #:inputs #$(input-tuples->gexp inputs)))))
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+                     #:inputs #$(input-tuples->gexp inputs))))))
 
 (define elm-build-system
   (build-system
