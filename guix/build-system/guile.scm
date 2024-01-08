@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2018-2019, 2021-2022 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -101,7 +102,7 @@
                                  (guix build utils)))
                       (substitutable? #t))
   "Build SOURCE using Guile taken from the native inputs, and with INPUTS."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@modules)
@@ -119,16 +120,7 @@
                        #:outputs #$(outputs->gexp outputs)
                        #:inputs #$(input-tuples->gexp inputs)
                        #:search-paths '#$(map search-path-specification->sexp
-                                              search-paths)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:guile-for-build guile)))
+                                              search-paths))))))
 
 (define* (guile-cross-build name
                             #:key
@@ -155,7 +147,7 @@
                             (modules '((guix build guile-build-system)
                                        (guix build utils)))
                             (substitutable? #t))
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@modules)
@@ -188,16 +180,7 @@
                                                  search-path-specification->sexp
                                                  native-search-paths)
                        #:make-dynamic-linker-cache? #f ;cross-compiling
-                       #:phases #$phases))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:target target
-                      #:graft? #f
-                      #:substitutable? substitutable?
-                      #:guile-for-build guile)))
+                       #:phases #$phases)))))
 
 (define guile-build-system
   (build-system
