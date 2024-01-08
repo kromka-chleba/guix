@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2016 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -94,56 +95,45 @@ and VERSION."
          (arguments (strip-keyword-arguments private-keywords arguments)))))
 
 (define* (rebar-build name inputs
-                       #:key
-                       guile source
-                       (rebar-flags ''("skip_deps=true" "-vv"))
-                       (tests? #t)
-                       (test-target "eunit")
-                       ;; TODO: install-name  ; default: based on guix package name
-                       (install-profile "default")
-                       (phases '(@ (guix build rebar-build-system)
-                                   %standard-phases))
-                       (outputs '("out"))
-                       (search-paths '())
-                       (native-search-paths '())
-                       (system (%current-system))
-                       (imported-modules %rebar-build-system-modules)
-                       (modules '((guix build rebar-build-system)
-                                  (guix build utils))))
+                      #:key
+                      guile source
+                      (rebar-flags ''("skip_deps=true" "-vv"))
+                      (tests? #t)
+                      (test-target "eunit")
+                      ;; TODO: install-name  ; default: based on guix package name
+                      (install-profile "default")
+                      (phases '(@ (guix build rebar-build-system)
+                                  %standard-phases))
+                      (outputs '("out"))
+                      (search-paths '())
+                      (native-search-paths '())
+                      (system (%current-system))
+                      (imported-modules %rebar-build-system-modules)
+                      (modules '((guix build rebar-build-system)
+                                 (guix build utils))))
   "Build SOURCE with INPUTS."
-
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
 
           #$(with-build-variables inputs outputs
               #~(rebar-build #:source #+source
-                      #:system #$system
-                      #:name #$name
-                      #:rebar-flags #$rebar-flags
-                      #:tests? #$tests?
-                      #:test-target #$test-target
-                      ;; TODO: #:install-name #$install-name
-                      #:install-profile #$install-profile
-                      #:phases #$(if (pair? phases)
-                                     (sexp->gexp phases)
-                                     phases)
-                      #:outputs %outputs
-                      #:search-paths '#$(sexp->gexp
-                                         (map search-path-specification->sexp
-                                              search-paths))
-                      #:inputs %build-inputs)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    ;; Note: Always pass #:graft? #f.  Without it, ALLOWED-REFERENCES &
-    ;; co. would be interpreted as referring to grafted packages.
-    (gexp->derivation name builder
-                      #:system system
-                      #:target #f
-                      #:graft? #f
-                      #:guile-for-build guile)))
+                             #:system #$system
+                             #:name #$name
+                             #:rebar-flags #$rebar-flags
+                             #:tests? #$tests?
+                             #:test-target #$test-target
+                             ;; TODO: #:install-name #$install-name
+                             #:install-profile #$install-profile
+                             #:phases #$(if (pair? phases)
+                                            (sexp->gexp phases)
+                                            phases)
+                             #:outputs %outputs
+                             #:search-paths '#$(sexp->gexp
+                                                (map search-path-specification->sexp
+                                                     search-paths))
+                             #:inputs %build-inputs))))))
 
 (define rebar-build-system
   (build-system
