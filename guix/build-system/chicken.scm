@@ -2,6 +2,7 @@
 ;;; Copyright © 2020 raingloom <raingloom@riseup.net>
 ;;; Copyright © 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -93,7 +94,7 @@ EXTENSION is the file name extension, such as '.tar.gz'."
                         (modules '((guix build chicken-build-system)
                                    (guix build union)
                                    (guix build utils))))
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -109,13 +110,7 @@ EXTENSION is the file name extension, such as '.tar.gz'."
                          #:unpack-path #$unpack-path
                          #:build-flags #$build-flags
                          #:tests? #$tests?
-                         #:inputs #$(input-tuples->gexp inputs)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+                         #:inputs #$(input-tuples->gexp inputs))))))
 
 (define chicken-build-system
   (build-system
