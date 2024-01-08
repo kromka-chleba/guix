@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2018 Alex Vong <alexvong1995@gmail.com>
 ;;; Copyright © 2020, 2021 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -133,7 +134,7 @@
                         (imported-modules %clojure-build-system-modules)
                         (modules %default-modules))
   "Build SOURCE with INPUTS."
-  (define builder
+  (mbegin %store-monad
     (with-imported-modules imported-modules
       #~(begin
           (use-modules #$@(sexp->gexp modules))
@@ -146,7 +147,7 @@
                          #:test-dirs #$test-dirs
                          #:compile-dir #$compile-dir
                          #:java-compile-dir #$java-compile-dir
-                         
+
                          #:jar-names #$jar-names
                          #:main-class #$main-class
                          #:omit-source? #$omit-source?
@@ -167,13 +168,7 @@
                                             (map search-path-spec->sexp
                                                  search-paths))
                          #:system #$system
-                         #:inputs #$(input-tuples->gexp inputs)))))
-
-  (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
-                                                  system #:graft? #f)))
-    (gexp->derivation name builder
-                      #:system system
-                      #:guile-for-build guile)))
+                         #:inputs #$(input-tuples->gexp inputs))))))
 
 (define clojure-build-system
   (build-system
