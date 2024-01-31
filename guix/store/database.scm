@@ -55,9 +55,13 @@
             %epoch
             reset-timestamps
             vacuum-database
+            valid-path
+            all-valid-paths
+            valid-path-from-hash-part
             outputs-exist?
             file-closure
-            all-transitive-inputs))
+            all-transitive-inputs
+            valid-path-references))
 
 ;;; Code for working with the store database directly.
 
@@ -447,6 +451,63 @@ typically by adding them as temp-roots."
     (sqlite-exec db "VACUUM;")
     (sqlite-close db)))
 
+(define (valid-path db store-filename)
+  (let ((statement
+         (sqlite-prepare
+          db
+          "
+SELECT id, hash, registrationTime, deriver, narSize
+FROM ValidPaths
+WHERE path = :path"
+          #:cache? #t)))
+
+    (sqlite-bind-arguments
+     statement
+     #:path store-filename)
+
+    (let ((result (sqlite-step statement)))
+      (sqlite-reset statement)
+
+      result)))
+
+(define (all-valid-paths db)
+  (let ((statement
+         (sqlite-prepare
+          db
+          "
+SELECT path FROM ValidPaths"
+          #:cache? #t)))
+
+    (let ((result
+           (sqlite-map
+            (match-lambda
+              (#(path) path))
+            statement)))
+      (sqlite-reset statement)
+
+      result)))
+
+(define (valid-path-from-hash-part db hash)
+  (let ((statement
+         (sqlite-prepare
+          db
+          "
+SELECT path FROM ValidPaths WHERE path >= :path LIMIT 1"
+          #:cache? #t))
+        (path-prefix
+         (string-append (%store-prefix) "/" hash)))
+
+    (sqlite-bind-arguments
+     statement
+     #:path path-prefix)
+
+    (let ((result
+           (sqlite-step statement)))
+
+      (if (and result (string-prefix? path-prefix result))
+          result
+          #f))))
+
 (define (outputs-exist? db drv-path outputs)
   "Determine whether all output labels in OUTPUTS exist as built outputs of
 DRV-PATH."
@@ -527,3 +588,28 @@ provide."
                       vlist-null
                       `(,@(derivation-sources drv)
                         ,@input-paths)))))
+
+(define (valid-path-references db valid-path-id)
+  (let ((statement
+         (sqlite-prepare
+          db
+          "
+SELECT ValidPaths.path
+FROM Refs
+INNER JOIN ValidPaths ON Refs.reference = ValidPaths.id
+WHERE referrer = :id"
+          #:cache? #t)))
+
+    (sqlite-bind-arguments
+     statement
+     #:id valid-path-id)
+
+    (let ((result (sqlite-fold
+                   (lambda (row result)
+                     (cons (vector-ref row 0)
+                           result))
+                   '()
+                   statement)))
+      (sqlite-reset statement)
+
+      result)))
