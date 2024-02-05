@@ -20,7 +20,8 @@
   #:use-module (guix ui)
   #:use-module (guix scripts)
   #:use-module (guix derivations)
-  #:use-module ((guix store) #:select (derivation-path? store-path?))
+  #:use-module ((guix store) #:select (%store-prefix
+                                       derivation-path? store-path?))
   #:use-module ((guix build utils) #:select (store-file-name?
                                              strip-store-file-name))
   #:autoload   (guix build download) (%download-methods url-fetch)
@@ -257,6 +258,9 @@ Note: OUTPUT may differ from the 'out' value of DRV, notably for 'bmCheck' or
   ;; ... and out of an abundance of caution, remove the ability to use '#.'
   ;; constructs entirely
   (read-hash-procedures '())
+
+  (and=> (getenv "GUIX_STORE_DIRECTORY")
+         %store-prefix)
 
   ;; This program must be invoked by guix-daemon under an unprivileged UID to
   ;; prevent things downloading from 'file:///etc/shadow'.  (That means we
