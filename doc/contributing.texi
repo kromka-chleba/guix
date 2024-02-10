@@ -774,8 +774,11 @@ guix install vim-guix-vim
 
 In NeoVim you can even make a similar setup to Geiser using
 @url{https://conjure.fun/, Conjure} that lets you connect to a running Guile
-process and inject your code there live (sadly it's not packaged in Guix yet).
+process and inject your code there live:
 
+@example
+guix install vim-conjure
+@end example
 
 @node Source Tree Structure
 @section Source Tree Structure

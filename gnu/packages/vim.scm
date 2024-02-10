@@ -16,6 +16,7 @@
 ;;; Copyright © 2023 Charles Jackson <charles.b.jackson@protonmail.com>
 ;;; Copyright © 2023 Foundation Devices, Inc. <hello@foundationdevices.com>
 ;;; Copyright © 2023, 2024 Nguyễn Gia Phong <mcsinyx@disroot.org>
+;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -317,6 +318,30 @@ configuration files.
 This package provides a version of Vim with many optional features enabled.
 It includes a graphical interface, @command{gvim}, and support for plugins
 written in the Python 3, Perl, Ruby, Tcl, and Lua programming languages.")))
+
+(define-public vim-conjure
+  (package
+    (name "vim-conjure")
+    (version "4.56.0")
+    (source
+     (origin
+       (file-name (git-file-name name version))
+       (method git-fetch)
+       (sha256
+        (base32 "1b99c2rw3iy6rq6x8gzy4nca7w6k6q251s53kxcminivl2f9kazd"))
+       (uri (git-reference
+              (url "https://github.com/Olical/conjure/")
+              (commit (string-append "v" version))))))
+    (build-system vim-build-system)
+    (synopsis "Interactive evaluation for Neovim")
+    (description
+     "Conjure is an interactive environment for evaluating code within
+your running program.  The core features of Conjure are language agnostic,
+with each language client providing their own extra tools.  You can find a
+@uref{https://github.com/Olical/conjure/wiki/Client-features, comparison
+table for all clients and supported features} in the wiki.")
+    (home-page "https://conjure.oli.me.uk/")
+    (license license:unlicense)))
 
 (define-public vim-neocomplete
   (package
