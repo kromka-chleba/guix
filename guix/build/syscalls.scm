@@ -38,6 +38,7 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-26)
+  #:use-module (srfi srfi-71)
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 regex)
   #:use-module (ice-9 match)
@@ -124,6 +125,7 @@
             mkdtemp!
             fdatasync
             pivot-root
+            unshare
             scandir*
             getxattr
             setxattr
@@ -1362,6 +1364,16 @@ system to PUT-OLD."
           (throw 'system-error "pivot_root" "~S ~S: ~A"
                  (list new-root put-old (strerror err))
                  (list err)))))))
+
+(define unshare
+  (false-if-exception
+   (let ((proc (syscall->procedure int "unshare" (list int))))
+     (lambda (flags)
+       (let ((ret err (proc flags)))
+         (unless (zero? ret)
+           (throw 'system-error "unshare" "~d ~d: ~A"
+                  (list flags (strerror err))
+                  (list err))))))))
 
 
 ;;;
