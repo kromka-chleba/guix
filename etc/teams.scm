@@ -8,7 +8,7 @@ exec $pre_inst_env_maybe guix repl -- "$0" "$@"
 !#
 
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2022, 2023 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2022-2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2022 Mathieu Othacehe <othacehe@gnu.org>
 ;;; Copyright © 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Simon Tournier <zimon.toutoune@gmail.com>
@@ -176,6 +176,13 @@ and the r-build-system."
                       "guix/scripts/import/cran.scm"
                       "tests/cran.scm")))
 
+(define-team sugar
+  (team 'sugar
+        #:name "Sugar team"
+        #:description
+        "Everything related to the Sugar Desktop and learning environment."
+        #:scope (list "gnu/packages/sugar.scm")))
+
 (define-team telephony
   (team 'telephony
         #:name "Telephony team"
@@ -300,11 +307,7 @@ asdf-build-system."
   (team 'go
         #:name "Go team"
         #:scope (list "gnu/packages/configuration-management.scm"
-                      "gnu/packages/golang-check.scm"
-                      "gnu/packages/golang-crypto.scm"
-                      "gnu/packages/golang-web.scm"
-                      "gnu/packages/golang-xyz.scm"
-                      "gnu/packages/golang.scm"
+                      "gnu/packages/golang(-.+|)\\.scm$"
                       "gnu/packages/syncthing.scm"
                       "gnu/packages/terraform.scm"
                       "guix/build-system/go.scm"
@@ -631,7 +634,7 @@ GLib/GIO, GTK, GStreamer and Webkit."
 
 (define-member (person "Ricardo Wurmus"
                        "rekado@elephly.net")
-  r core mentors tex)
+  core mentors r sugar tex)
 
 (define-member (person "Christopher Baines"
                        "guix@cbaines.net")

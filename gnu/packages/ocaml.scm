@@ -30,6 +30,7 @@
 ;;; Copyright © 2023 Csepp <raingloom@riseup.net>
 ;;; Copyright © 2023 Foundation Devices, Inc. <hello@foundationdevices.com>
 ;;; Copyright © 2023 Arnaud DABY-SEESARAM <ds-ac@nanein.fr>
+;;; Copyright © 2024 Sören Tempel <soeren@soeren-tempel.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1468,6 +1469,39 @@ libglade (and it an generate OCaml code from .glade files),
 libpanel, librsvg and quartz.")
     (license license:lgpl2.1)))
 
+(define-public binsec
+  (package
+    (name "binsec")
+    (version "0.8.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/binsec/binsec")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0j6lwj20jaq0702v2fqvsrax1400zqbvz5q2cmjqhvrjzcfcl0kr"))))
+    (build-system dune-build-system)
+    (native-inputs (list gmp ocaml-qcheck ocaml-ounit2))
+    (propagated-inputs (list dune-site
+                             ocaml-base
+                             ocaml-menhir
+                             ocaml-graph
+                             ocaml-zarith
+                             ocaml-grain-dypgen
+                             ocaml-toml))
+    (synopsis "Binary-level analysis platform")
+    (description
+     "BINSEC is a binary analysis platform which implements analysis
+techniques such as symbolic execution.  The goal of BINSEC is to improve
+software security at the binary level through binary analysis.  BINSEC
+is a research tool which relies on prior work in binary code analysis
+at the intersection of formal methods, program analysis security and
+software engineering.")
+    (home-page "https://binsec.github.io/")
+    (license license:lgpl2.1)))
+
 (define-public unison
   (package
     (name "unison")
@@ -2325,6 +2359,84 @@ defined in this library.")
      `(#:dune ,ocaml5.0-dune-bootstrap
        #:ocaml ,ocaml-5.0
        #:findlib ,ocaml5.0-findlib))))
+
+(define-public ocaml-iso8601
+  (package
+    (name "ocaml-iso8601")
+    (version "0.2.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ocaml-community/ISO8601.ml")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nzadswspizi7s6sf67icn2xgc3w150x8vdg5nk1mjrm2s98n6d3"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-stdlib-shims ocaml-core-unix ocaml-ounit))
+    (synopsis "Parser and printer for date-times in ISO8601")
+    (description "This package allows parsing of dates that follow the ISO 8601
+and RFC 3339 formats in OCaml.")
+    (home-page "https://github.com/ocaml-community/ISO8601.ml")
+    (license license:expat)))
+
+(define-public ocaml-toml
+  (package
+    (name "ocaml-toml")
+    (version "7.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ocaml-toml/To.ml")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0z2873mj3i6h9cg8zlkipcjab8jympa4c4avhk4l04755qzphkds"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-base ocaml-mdx ocaml-menhir ocaml-iso8601))
+    (synopsis "TOML library for OCaml")
+    (description
+     "This package provides an OCaml library for interacting with files
+in the @acronym{TOML, Tom's Obvious Minimal Language} format.  Specifically,
+it provides a parser, a serializer, and a pretty printer.")
+    (home-page "https://github.com/ocaml-toml/To.ml")
+    (license license:expat)))
+
+(define-public ocaml-grain-dypgen
+  (package
+    (name "ocaml-grain-dypgen")
+    (version "0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/grain-lang/dypgen")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jyxkvi75nchk5kmhqixmjy70z55gmlqa83pxn0hsv2qxvyqxavw"))))
+    (build-system ocaml-build-system)
+    (arguments
+     (list
+      ;; Upstream does not have a test suite.
+      #:tests? #f
+      #:make-flags #~(let ((out #$output))
+                       (list (string-append "OCAMLLIBDIR=" out
+                                            "/lib/ocaml/site-lib")
+                             (string-append "BINDIR=" out "/bin")
+                             (string-append "MANDIR=" out "/share/man")))
+      #:phases #~(modify-phases %standard-phases
+                   (delete 'configure))))
+    (properties `((upstream-name . "grain_dypgen")))
+    (home-page "https://github.com/grain-lang/dypgen")
+    (synopsis "Self-extensible parsers and lexers for OCaml")
+    (description
+     "This package provides a @acronym{GLR, generalized LR} parser generator
+for OCaml.  It is able to generate self-extensible parsers (also called
+adaptive parsers) as well as extensible lexers for the parsers it produces.")
+    (license license:cecill-b)))
 
 (define-public ocaml-topkg
   (package

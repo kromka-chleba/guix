@@ -18,6 +18,7 @@
 ;;; Copyright © 2023 Felix Lechner <felix.lechner@lease-up.com>
 ;;; Copyright © 2023 Hilton Chain <hako@ultrarare.space>
 ;;; Copyright © 2023 Katherine Cox-Buday <cox.katherine.e@gmail.com>
+;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -41,7 +42,9 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (gnu packages)
-  #:use-module (gnu packages golang))
+  #:use-module (gnu packages golang)
+  #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-xyz))
 
 ;;; Commentary:
 ;;;
@@ -57,39 +60,35 @@
 ;;; Libraries:
 ;;;
 
-(define-public go-github-com-alecthomas-assert
-  (let ((commit "405dbfeb8e38effee6e723317226e93fff912d06")
-        (revision "1"))
-    (package
-      (name "go-github-com-alecthomas-assert")
-      (version (git-version "0.0.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/alecthomas/assert")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "1l567pi17k593nrd1qlbmiq8z9jy3qs60px2a16fdpzjsizwqx8l"))))
-      (build-system go-build-system)
-      (arguments
-       `(#:import-path "github.com/alecthomas/assert"))
-      (native-inputs
-       (list go-github-com-alecthomas-colour
-             go-github-com-mattn-go-isatty
-             go-github-com-alecthomas-repr
-             go-github-com-sergi-go-diff))
-      (home-page "https://github.com/alecthomas/assert/")
-      (synopsis "Go assertion library")
-      (description "Assertion library that:
+(define-public go-github-com-alecthomas-assert-v2
+  (package
+    (name "go-github-com-alecthomas-assert-v2")
+    (version "2.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alecthomas/assert")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ai26ncfcwzg47rqaigs5v1fzfz6i8p11ki75ni5429xkjs77riz"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:go go-1.18
+           #:import-path "github.com/alecthomas/assert/v2"))
+    (propagated-inputs
+     (list go-github-com-alecthomas-repr
+           go-github-com-hexops-gotextdiff))
+    (home-page "https://github.com/alecthomas/assert/")
+    (synopsis "Go assertion library")
+    (description "Assertion library that:
 @itemize
 @item makes spotting differences in equality much easier
 @item uses repr and diffmatchpatch to display structural differences in colour
 @item aborts tests on first assertion failure
-@end itemize\n")
-      (license license:expat))))
+@end itemize")
+    (license license:expat)))
 
 (define-public go-github-com-cheekybits-is
   (let ((commit "68e9c0620927fb5427fda3708222d0edee89eae9")
@@ -123,6 +122,44 @@
 @end itemize\n")
       (license license:expat))))
 
+(define-public go-github-com-davecgh-go-spew
+  (package
+    (name "go-github-com-davecgh-go-spew")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/davecgh/go-spew")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hka6hmyvp701adzag2g26cxdj47g21x6jz4sc6jjz1mn59d474y"))))
+    (build-system go-build-system)
+    (arguments
+     '(#:unpack-path "github.com/davecgh/go-spew"
+       #:import-path "github.com/davecgh/go-spew/spew"))
+    (home-page "https://github.com/davecgh/go-spew")
+    (synopsis "Deep pretty printer for Go data structures to aid in debugging")
+    (description "Package @command{spew} implements a deep pretty printer
+for Go data structures to aid in debugging.
+
+A quick overview of the additional features spew provides over the built-in
+printing facilities for Go data types are as follows:
+
+@itemize
+@item Pointers are dereferenced and followed.
+@item Circular data structures are detected and handled properly.
+@item Custom Stringer/error interfaces are optionally invoked, including on
+unexported types.
+@item Custom types which only implement the Stringer/error interfaces via a
+pointer receiver are optionally invoked when passing non-pointer variables.
+@item Byte arrays and slices are dumped like the hexdump -C command which
+includes offsets, byte values in hex, and ASCII output (only when using Dump
+style).
+@end itemize")
+    (license license:isc)))
+
 (define-public go-github-com-frankban-quicktest
   (package
     (name "go-github-com-frankban-quicktest")
@@ -147,6 +184,30 @@
     (description
      "Package quicktest provides a collection of Go helpers for writing
 tests.")
+    (license license:expat)))
+
+(define-public go-github-com-go-test-deep
+  (package
+    (name "go-github-com-go-test-deep")
+    (version "1.0.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-test/deep")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mmw2w3by7y24jjpjwmf2gfl08c65jihn3si9m0sswmagmdsk8q0"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:import-path "github.com/go-test/deep"))
+    (home-page "https://github.com/go-test/deep")
+    (synopsis "Human-friendly deep variable equality in Go")
+    (description
+     "The deep package provides the deep.Equal function which is like
+reflect.DeepEqual but returns a list of differences.  This is helpful
+when comparing complex types like structures and maps.")
     (license license:expat)))
 
 (define-public go-github-com-golangplus-testing
@@ -226,6 +287,28 @@ also update a file with new \"golden\" output that is deemed correct.")
       (description "Gofuzz is a library for populationg Go objects with random
 values for the purpose of fuzz testing.")
       (license license:asl2.0))))
+
+(define-public go-github-com-hexops-gotextdiff
+  (package
+    (name "go-github-com-hexops-gotextdiff")
+    (version "1.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hexops/gotextdiff")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vgq6w0cfhr76qlczgm5khsj1wnjkva0vhkh3qspaa1nkfw3jny1"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:import-path "github.com/hexops/gotextdiff"))
+    (home-page "https://github.com/hexops/gotextdiff")
+    (synopsis "Unified text diffing in Go")
+    (description
+     "This package provides a library to generate unified diffs.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-jacobsa-oglematchers
   (let ((commit "141901ea67cd4769c6800aa7bfdfc558fa22bda5")
@@ -550,7 +633,9 @@ under test) much simpler.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "033vv29g2wf6fd757ajfmha30bqin3b07377037zkl051mk6mghs"))))
+           "033vv29g2wf6fd757ajfmha30bqin3b07377037zkl051mk6mghs"))
+         (modules '((guix build utils)))
+         (snippet '(delete-file-recursively "examples"))))
       (build-system go-build-system)
       (arguments
        '(#:import-path "github.com/DATA-DOG/go-sqlmock"))
@@ -643,6 +728,23 @@ reformat the source code, it only prints out style mistakes.")
      "This package provides basic assertions along with building blocks for
 custom assertions to be used alongside native Go testing.")
     (license license:expat)))
+
+(define-public go-github-com-go-playground-assert-v2
+  (package
+    (inherit go-gopkg-in-go-playground-assert-v1)
+    (name "go-github-com-go-playground-assert-v2")
+    (version "2.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-playground/assert")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "13mb07dxhcy9ydqbracnrpfj682g6sazjpm56yrlbn2jc1yfy44c"))))
+    (arguments
+     (list #:import-path "github.com/go-playground/assert/v2"))))
 
 (define-public go-honnef-co-go-tools
   (package

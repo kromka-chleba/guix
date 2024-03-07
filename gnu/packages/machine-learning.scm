@@ -24,6 +24,9 @@
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2023 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2024 David Pflug <david@pflug.io>
+;;; Copyright © 2024 Timothee Mathieu <timothee.mathieu@inria.fr>
+;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -521,8 +524,8 @@ Performance is achieved by using the LLVM JIT compiler.")
   (deprecated-package "guile-aiscm-next" guile-aiscm))
 
 (define-public llama-cpp
-  (let ((commit "f31b5397143009d682db90fd2a6cde83f1ef00eb")
-        (revision "0"))
+  (let ((commit "03bf161eb6dea6400ee49c6dc6b69bdcfa9fd3fc")
+        (revision "1"))
     (package
       (name "llama-cpp")
       (version (git-version "0.0.0" revision commit))
@@ -531,10 +534,10 @@ Performance is achieved by using the LLVM JIT compiler.")
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/ggerganov/llama.cpp")
-               (commit (string-append "master-" (string-take commit 7)))))
+               (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0ys6n53n032zq1ll9f3vgxk8sw0qq7x3fi7awsyy13adzp3hn08p"))))
+          (base32 "1ag1jash84hasz10h0piw72a8ginm8kzvhihbzzljz96gq2kjm88"))))
       (build-system cmake-build-system)
       (arguments
        (list
@@ -561,8 +564,10 @@ Performance is achieved by using the LLVM JIT compiler.")
                                       (get-string-all input))))))
                       (chmod (string-append bin script) #o555)))
                   (mkdir-p bin)
-                  (make-script "convert-pth-to-ggml")
+                  (make-script "convert-hf-to-gguf")
+                  (make-script "convert-llama-ggml-to-gguf")
                   (make-script "convert-lora-to-ggml")
+                  (make-script "convert-persimmon-to-gguf")
                   (make-script "convert"))))
             (add-after 'install-python-scripts 'wrap-python-scripts
               (assoc-ref python:%standard-phases 'wrap))
@@ -1779,6 +1784,29 @@ scikit-learn.  It includes algorithms that are useful but do not satisfy the
 scikit-learn inclusion criteria, for instance due to their novelty or lower
 citation number.")
       (license license:bsd-3))))
+
+(define-public python-mord
+  (package
+    (name "python-mord")
+    (version "0.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "mord" version))
+       (sha256
+        (base32 "1cvv9b9w69v0inq0zgcw0vmkiq3zn9q9r6clkynpzjik9rrh405n"))))
+    (build-system pyproject-build-system)
+    ;; v0.7 does not provide any test cases
+    ;; v0.6 relies on deprecated scikit-learn functionality
+    (arguments `(#:tests? #f))
+    (inputs (list python-numpy python-scipy python-scikit-learn))
+    (home-page "https://pypi.org/project/mord/")
+    (synopsis "Ordinal regression models for scikit-learn")
+    (description
+     "This package provides a collection of ordinal regression models for
+machine learning in Python.  They are intended to be used with scikit-learn
+and are compatible with its API.")
+    (license license:bsd-3)))
 
 (define-public python-thinc
   (package
@@ -5365,3 +5393,54 @@ Brian 2 simulator.")
      "OneAPI Deep Neural Network Library (oneDNN) is a cross-platform
 performance library of basic building blocks for deep learning applications.")
     (license license:asl2.0)))
+
+(define-public python-gguf
+  (package
+    (name "python-gguf")
+    (version "0.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "gguf" version))
+       (sha256
+        (base32 "0rbyc2h3kpqnrvbyjvv8a69l577jv55a31l12jnw21m1lamjxqmj"))))
+    (build-system pyproject-build-system)
+    (arguments
+      (list #:tests? #false))
+    (inputs (list poetry python-pytest))
+    (propagated-inputs (list python-numpy))
+    (home-page "https://ggml.ai")
+    (synopsis "Read and write ML models in GGUF for GGML")
+    (description "A Python library for reading and writing GGUF & GGML format ML models.")
+    (license license:expat)))
+
+(define-public python-gymnasium
+  (package
+    (name "python-gymnasium")
+    (version "0.29.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "gymnasium" version))
+       (sha256
+        (base32 "1cab4wsnlsxn2z90qmymv8ppmsq8yq2amiqwid3r0xfbxx92flqs"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-cloudpickle python-farama-notifications
+                             python-importlib-metadata python-numpy
+                             python-typing-extensions))
+    (native-inputs (list python-pytest python-scipy))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'create-tests-module
+            (lambda _
+              (with-output-to-file "tests/__init__.py"
+                (lambda _ (display ""))))))))
+    (home-page "https://gymnasium.farama.org/")
+    (synopsis
+     "Standard API for reinforcement learning and a set of reference environments")
+    (description
+     "This package provides a standard API for reinforcement learning and a
+diverse set of reference environments (formerly Gym).")
+    (license license:expat)))

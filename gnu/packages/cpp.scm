@@ -8,7 +8,7 @@
 ;;; Copyright © 2019 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
 ;;; Copyright © 2020, 2021 Nicolò Balzarotti <nicolo@nixo.xyz>
 ;;; Copyright © 2020 Roel Janssen <roel@gnu.org>
-;;; Copyright © 2020, 2021, 2023 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2020, 2021, 2023, 2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2020, 2021, 2022 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020, 2022 Marius Bakke <marius@gnu.org>
@@ -29,7 +29,7 @@
 ;;; Copyright © 2022 muradm <mail@muradm.net>
 ;;; Copyright © 2022 Attila Lendvai <attila@lendvai.name>
 ;;; Copyright © 2022 Arun Isaac <arunisaac@systemreboot.net>
-;;; Copyright © 2022, 2023 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2022, 2023, 2024 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2022, 2023 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Antero Mejr <antero@mailbox.org>
@@ -279,16 +279,18 @@ use by the C++ Core Guidelines maintained by the Standard C++ Foundation.")
     (name "c2ffi")
     ;; As per the c2ffi README: the first three elements are encoding the
     ;; required Clang/LLVM version, and the last one is the c2ffi revision.
-    (version "12.0.0.0")
+    (version "16.0.0.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/rpav/c2ffi")
-             (commit (string-append "v" version))))
+             ;; Upstream is not tagging releases consistently.
+             ;; (commit (string-append "v" version))
+             (commit "097cbe61ca02dc79ea60859aa056975131a9d985")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qq8dfismd20d9kfxpfvwz07v9mfvd0y7p5r3c92mk2pm4xnmzfy"))
+        (base32 "1mqhw4838chl495gaj9z0731ahkmqb4f3wlc1qalk82fdsaniyd5"))
        (modules '((guix build utils)))
        (snippet
         '(substitute* "CMakeLists.txt"
@@ -309,9 +311,9 @@ LLVMOption LLVMBitReader LLVMProfileData")))))
              (when tests?
                (invoke "./bin/c2ffi" "--help")))))))
     (native-inputs
-     (list clang-12)) ; CMakeLists.txt invokes `clang -print-resource-dir`
+     (list clang-16)) ; CMakeLists.txt invokes `clang -print-resource-dir`
     (inputs
-     (list clang-12)) ; Compiled with gcc, but links against libclang-cpp.so
+     (list clang-16)) ; Compiled with gcc, but links against libclang-cpp.so
     (home-page "https://github.com/rpav/c2ffi")
     (synopsis "Clang-based FFI wrapper generator")
     (description
@@ -513,7 +515,17 @@ operating on batches.")
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags (list "-DHWY_SYSTEM_GTEST=on"
-                               "-DBUILD_SHARED_LIBS=ON")))
+                               "-DBUILD_SHARED_LIBS=ON")
+       ,@(if (string-prefix? "i686-linux" (or (%current-system)
+                                              (%current-target-system)))
+             '(#:phases
+               (modify-phases %standard-phases
+                 (add-after 'unpack 'really-skip-precision-tests
+                   (lambda _
+                     (substitute* "hwy/contrib/math/math_test.cc"
+                       (("Skipping math_test due to GCC issue with excess precision.*" m)
+                        (string-append m "return;\n")))))))
+             '())))
     (native-inputs
      (list googletest))
     (home-page "https://github.com/google/highway")
@@ -1055,10 +1067,9 @@ and make @code{cpplint} usable in wider contexts.")
           (base32 "09xnf8hmld1fk8j33zwlz1qcxnjdx1ncbg62csic9va4m1wc2v1d"))))
    (build-system cmake-build-system)
    (arguments
-      ;; No tests.
-    `(#:tests? #f
-      ;; Build the shared library instead of a static one.
-      #:configure-flags `("-DBUILD_SHARED_LIBS=1")))
+    (list #:tests? #f     ; No tests.
+          #:configure-flags #~(list "-DBUILD_SHARED_LIBS=ON"
+                                    "-DREPROC++=ON")))
    (native-inputs
     (list pkg-config))
    (synopsis "Process IO library")
@@ -2442,7 +2453,7 @@ CRC32C algorithm, which is specified in RFC 3720, section 12.1.")
 (define-public fast-float
   (package
     (name "fast-float")
-    (version "3.5.1")
+    (version "6.0.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2451,7 +2462,7 @@ CRC32C algorithm, which is specified in RFC 3720, section 12.1.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0z3rxxd0pwvw70dbnv63rm67biw829vdqf50y16isxm6g3sbrz8g"))))
+                "1xf4gbllha760cr0ri53zsja46dypj45lj070ijb5f78xavfd8f8"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2467,9 +2478,7 @@ CRC32C algorithm, which is specified in RFC 3720, section 12.1.")
                 (("if\\(NOT supplemental_test_files_POPULATED.*")
                  (string-append
                   "set(supplemental_test_files_BINARY_DIR "
-                  (search-input-directory (or native-inputs inputs)
-                                          "data")
-                  ")\nif(0)\n"))))))))
+                  #$fast-float-test-files ")\nif(0)\n"))))))))
     (native-inputs (list doctest fast-float-test-files))
     (home-page "https://github.com/fastfloat/fast_float")
     (synopsis "Floating point number parser for C++")
@@ -2694,6 +2703,37 @@ also includes a C library that checks casting, multiplication, division,
 addition and subtraction for all combinations of signed and unsigned 32-bit and
 64-bit integers.")
     (license license:expat)))
+
+(define-public wide-integer
+  (let ((commit "22b8428746248e682d5276f8e8b7fb52af73ea47")
+        (revision "1314"))              ; commit count
+   (package
+    (name "wide-integer")
+    (version (git-version "0" revision commit))
+    (source (origin
+             (method git-fetch)
+             (uri (git-reference
+                   (url "https://github.com/ckormanyos/wide-integer")
+                   (commit commit)))
+             (file-name (git-file-name name version))
+             (sha256
+              (base32 "0bhjnbdcphv5kddddh8kpwjpjix23m12vmfsz0r6wjc5d27md33z"))
+             (modules '((guix build utils)))
+             (snippet #~(substitute* "CMakeLists.txt"
+                          (("WideIntegerTargets") "wide-integer-targets")
+                          (("WideIntegerConfig") "wide-integer-config")
+                          (("WideInteger") "wide-integer")))))
+    (build-system cmake-build-system)
+    (native-inputs (list boost))
+    (home-page "https://github.com/ckormanyos/wide-integer")
+    (synopsis "C++ template for arbitrary-precision integers")
+    (description "This package implements a generic template for extended
+width signed and unsigned integral types.  Up to 63 limbs of any built-in
+integer type are supported, and can be used to build powers of two like
+int128_t, uint256_t, but also somewhat esoteric types such as int24_t,
+uint80_t, or uint1536_t.  The provided types can be used in much the same
+way as basic integer types.")
+    (license license:boost1.0))))
 
 (define-public wdl
   ;; No tag is available.

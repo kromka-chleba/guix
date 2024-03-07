@@ -36,6 +36,9 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages golang)
+  #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
@@ -48,7 +51,6 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages rsync)
-  #:use-module (gnu packages syncthing)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages version-control)
@@ -284,7 +286,7 @@ systems.")
            go-github-com-bmizerany-perks-quantile
            go-github-com-burntsushi-toml
            go-github-com-davecgh-go-spew
-           go-github-com-golang-snappy ; Move to (gnu packages golang)
+           go-github-com-golang-snappy
            go-github-com-julienschmidt-httprouter
            go-github-com-mreiferson-go-options
            go-github-com-mreiferson-go-svc

@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015-2023 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015-2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015 Vicente Vera Parra <vicentemvp@gmail.com>
 ;;; Copyright © 2016 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016, 2017, 2019, 2020, 2021 Efraim Flashner <efraim@flashner.co.il>
@@ -18,6 +18,7 @@
 ;;; Copyright © 2021 Frank Pursel <frank.pursel@gmail.com>
 ;;; Copyright © 2022 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2023 gemmaro <gemmaro.dev@gmail.com>
+;;; Copyright © 2023 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2023 Troy Figiel <troy@troyfigiel.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -114,7 +115,7 @@
 (define-public pspp
   (package
     (name "pspp")
-    (version "1.4.1")
+    (version "2.0.0")
     (source
      (origin
       (method url-fetch)
@@ -122,11 +123,16 @@
                           version ".tar.gz"))
       (sha256
        (base32
-        "0lqrash677b09zxdlxp89z6k02y4i23mbqg83956dwl69wc53dan"))))
+        "1pyqlab9kw65wxc8pilcwb64l18w37xxdg3r6n287c7mda4cpxm8"))))
     (build-system gnu-build-system)
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-test-suite
+		 (lambda _
+		   (substitute* "tests/output/tex.at"
+		     (("AT_CHECK\\(\\[LC_ALL=C.UTF-8 pspp")
+		      "AT_CHECK([LC_ALL=en_US.UTF-8 pspp"))))
                (add-before 'check 'prepare-tests
                  ;; Prevent irrelevant errors that cause test output mismatches:
                  ;; ‘Fontconfig error: No writable cache directories’
@@ -148,7 +154,7 @@
            `(,glib "bin") ;for glib-genmarshal
            perl
            pkg-config
-           python-2 ;for tests
+           python-3 ;for tests
            texinfo))
     (home-page "https://www.gnu.org/software/pspp/")
     (synopsis "Statistical analysis")
@@ -508,14 +514,14 @@ available, greatly increasing its breadth and scope.")
 (define-public r-boot
   (package
     (name "r-boot")
-    (version "1.3-28.1")
+    (version "1.3-30")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "boot" version))
        (sha256
         (base32
-         "0lzz08fpn80qzm197s4806hr6skanr3r3rlx6bx7zk4cripygkfl"))))
+         "15zysf5manfsap7x0zvjzgdvs9whv137iasjydp1php6sqmxc2am"))))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/boot")
     (synopsis "Bootstrap functions for R")
@@ -801,14 +807,14 @@ analysis.")
 (define-public r-survival
   (package
     (name "r-survival")
-    (version "3.5-7")
+    (version "3.5-8")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "survival" version))
        (sha256
         (base32
-         "0bi76kr5xkcs98r795lz9nvsj6zzxq0w6zn1938z0ffx5b9js3nm"))))
+         "1d0qvw4200mjldna9n0acis0fk8xj28wwzqb8c3d4537l92zivbi"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-matrix))
@@ -997,19 +1003,20 @@ OpenSSL should be used.")
 (define-public r-estimability
   (package
     (name "r-estimability")
-    (version "1.4.1")
+    (version "1.5")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "estimability" version))
               (sha256
                (base32
-                "090i1xwdp4fwj8jr8nk13w49516lfkk5mq1w7l0lff9g8lgaynn6"))))
+                "0s6w8vnq0jc136d2mpf6pgg45rbxccrlsgdy89pgksnbaxhmyb5k"))))
     (build-system r-build-system)
+    (native-inputs (list r-knitr))
     (home-page "https://cran.r-project.org/web/packages/estimability")
     (synopsis "Tools for assessing estimability of linear predictions")
-    (description "Provides tools for determining estimability of linear
-functions of regression coefficients, and @code{epredict} methods that handle
-non-estimable cases correctly.")
+    (description "This package provides tools for determining estimability of
+linear functions of regression coefficients, and @code{epredict} methods that
+handle non-estimable cases correctly.")
     (license license:gpl2+)))
 
 (define-public r-labeling
@@ -1257,13 +1264,13 @@ using just two functions: melt and dcast (or acast).")
 (define-public r-ggplot2
   (package
     (name "r-ggplot2")
-    (version "3.4.4")
+    (version "3.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "ggplot2" version))
        (sha256
-        (base32 "0iiywrzv8j0npasvzgkxwhw0zqisf4xmpx06jl0lsq1ybl3fqxid"))))
+        (base32 "1qlh231dwsa7j0pzlw6xdm68d7r0v64916p66bg9lh1dw3a1ryh7"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-cli
@@ -1295,13 +1302,13 @@ aesthetic attributes.")
 (define-public r-ggdendro
   (package
     (name "r-ggdendro")
-    (version "0.1.23")
+    (version "0.2.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "ggdendro" version))
               (sha256
                (base32
-                "1f4fz9llmbpb8gh90aid7dvriadx16xdhsl7832yw4pyqj4fjcrs"))))
+                "0sdayyzvhkbli0ha68mc0f7cgp36njv9ign37d63l21hvd6w6h0r"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-ggplot2 r-mass))
@@ -1321,14 +1328,14 @@ agnes cluster diagrams.")
 (define-public r-gdtools
   (package
     (name "r-gdtools")
-    (version "0.3.5")
+    (version "0.3.6")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "gdtools" version))
        (sha256
         (base32
-         "155qa55wr9vf2j2j4qjqqlkdaqlvvlvsm2wmysnhli47bfh6vd4c"))))
+         "1d1sidm2qi1nrp1hhf010xji66aj8sn833fv4a39gli2c560p4i6"))))
     (build-system r-build-system)
     (native-inputs
      (list pkg-config))
@@ -1413,13 +1420,13 @@ evaluation (NSE) in R.")
 (define-public r-dbi
   (package
     (name "r-dbi")
-    (version "1.2.1")
+    (version "1.2.2")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "DBI" version))
               (sha256
                (base32
-                "0w7dpp1zg8w0mback1mk0a0vp51hf4njmrxz1i3j1xq5b1jfyiz4"))))
+                "10d7sl9nk1gkkbinmvplyp2hg9zgxgs03llamrvbf4a5cnrs0mcd"))))
     (build-system r-build-system)
     (native-inputs
      (list r-knitr))
@@ -1518,6 +1525,36 @@ it supports LaTeX and HTML output.  Source code of other languages is
 supported via Andre Simon's highlight package.")
     (license license:gpl3+)))
 
+(define-public r-httpgd
+  (let ((commit "3f5f55822c4dce930155b91cedcfd4d483e3294e")
+        (revision "1"))
+    (package
+      (name "r-httpgd")
+      (version (git-version "2.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/nx10/httpgd")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "14i7mhbv1vcz2886w9lii9zhgr4zhhc844349syb989nhhzg552n"))))
+      (properties `((upstream-name . "httpgd")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-asioheaders r-cpp11 r-unigd))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/nx10/httpgd")
+      (synopsis "'HTTP' Server Graphics Device")
+      (description
+       "This package provides a graphics device for R that is accessible via
+network protocols.  This package was created to make it easier to embed live R
+graphics in integrated development environments and other applications.  The
+included HTML/@code{JavaScript} client (plot viewer) aims to provide a better
+overall user experience when dealing with R graphics.  The device
+asynchronously serves graphics via HTTP and @code{WebSockets}'.")
+      (license license:gpl2+))))
+
 (define-public r-mime
   (package
     (name "r-mime")
@@ -1606,18 +1643,19 @@ generation in R using Literate Programming techniques.")
 (define-public r-knitrbootstrap
   (package
     (name "r-knitrbootstrap")
-    (version "1.0.2")
+    (version "1.0.3")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "knitrBootstrap" version))
        (sha256
         (base32
-         "1aj60j7f0gcs120fdrnfbnb7vk7lfn1phil0mghg6a5zldz4cqs3"))))
+         "157mn2gm7djfiw1b55vdr2ylrmgxlpfg95bmm82ghv5g6vr26smd"))))
     (properties `((upstream-name . "knitrBootstrap")))
     (build-system r-build-system)
     (propagated-inputs
-     (list r-knitr r-rmarkdown r-markdown))
+     (list r-knitr r-markdown r-rmarkdown))
+    (native-inputs (list r-knitr))
     (home-page "https://github.com/jimhester/knitrBootstrap")
     (synopsis "Knitr bootstrap framework")
     (description
@@ -3141,13 +3179,13 @@ well as additional utilities such as panel and axis annotation functions.")
 (define-public r-rcpparmadillo
   (package
     (name "r-rcpparmadillo")
-    (version "0.12.6.6.1")
+    (version "0.12.8.0.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "RcppArmadillo" version))
               (sha256
                (base32
-                "1h7z1l2zf4qv8azi9c4wj0klshhcqihpabvjhln7ra61i8lvssls"))))
+                "0pkn4334dh4k6hqfx4xln2nfvajyxdbfnfddajb8875il0f7kp0x"))))
     (properties `((upstream-name . "RcppArmadillo")))
     (build-system r-build-system)
     (propagated-inputs
@@ -3547,14 +3585,14 @@ statements.")
 (define-public r-segmented
   (package
     (name "r-segmented")
-    (version "2.0-2")
+    (version "2.0-3")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "segmented" version))
        (sha256
         (base32
-         "0ym5z2zngkqvs1cd7c3k16k9ipsli6xc6qp0nmr77va34d8v0n4q"))))
+         "1f89v6zbxwl6yhx3qi7wrr3rndnxfwaf49mygw357f7cf3i8ma77"))))
     (build-system r-build-system)
     (propagated-inputs (list r-mass r-nlme))
     (home-page "https://cran.r-project.org/web/packages/segmented")
@@ -3792,13 +3830,13 @@ using the multicore functionality of the parallel package.")
              "datatables-extensions/Buttons"))))
     (package
       (name "r-dt")
-      (version "0.31")
+      (version "0.32")
       (source (origin
                 (method url-fetch)
                 (uri (cran-uri "DT" version))
                 (sha256
                  (base32
-                  "11wwd76x1bk9aswi8w4bmvbf51j8hlmb5gsyqzfjdi6ihjkl4vwm"))
+                  "0nvj2bc441b9h13085fa7q281f86lgx4k0d8lr64xgdpbmbvkl21"))
                 (modules '((guix build utils)
                            (ice-9 match)))
                 (snippet
@@ -4362,13 +4400,13 @@ persistent (on the file system).")
 (define-public r-r-rsp
   (package
     (name "r-r-rsp")
-    (version "0.45.0")
+    (version "0.46.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "R.rsp" version))
               (sha256
                (base32
-                "192x8cvna1j0sx37xh3ha8bjjyx39pn5wnxzn5gs3z5j93a4d055"))))
+                "1frkgjc2mzvjnay8g5nky1bvxv60wvsypmmdj6mbsfjnzq7ni7qs"))))
     (properties `((upstream-name . "R.rsp")))
     (build-system r-build-system)
     (arguments
@@ -4956,14 +4994,14 @@ conversion of R objects to LaTeX code, and recoding variables.")
 (define-public r-runit
   (package
     (name "r-runit")
-    (version "0.4.32")
+    (version "0.4.33")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "RUnit" version))
        (sha256
         (base32
-         "1wc1gwb7yw7phf8b0gkig6c23klya3ax11c6i4s0f049k42r78r3"))))
+         "0pybwvd57vf71vvlxdrynw5n6s5gnbqnwvq0qpd395ggqypwb95j"))))
     (properties `((upstream-name . "RUnit")))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/RUnit")
@@ -5100,14 +5138,14 @@ including:
 (define-public r-gplots
   (package
     (name "r-gplots")
-    (version "3.1.3")
+    (version "3.1.3.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "gplots" version))
        (sha256
         (base32
-         "05k7a8x62qs5g6mps62vb3mwjdnfjzvjb20yws3x0r2j42g3p1cz"))))
+         "1whs45axg1vp2p3jjya4aq68bl6vp11g059saj2av0vmyaadxq8s"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-catools r-gtools r-kernsmooth))
@@ -5281,13 +5319,13 @@ data at that region, and avoids over-plotting.")
 (define-public r-ggthemes
   (package
     (name "r-ggthemes")
-    (version "5.0.0")
+    (version "5.1.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "ggthemes" version))
               (sha256
                (base32
-                "1iddxlcxbj5pq0llbhjh5gvxq8j4kzby0cahy0sgzzca074i7aan"))))
+                "03mxigi34nd05wjigm8lpcbyhp4c8jxz7zm04qs27clbzsn1jj07"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-ggplot2
@@ -5581,14 +5619,14 @@ models, generalized linear models and model-based clustering.")
 (define-public r-mclust
   (package
     (name "r-mclust")
-    (version "6.0.1")
+    (version "6.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "mclust" version))
        (sha256
         (base32
-         "0zsk89r2l73zi1dy0195k84n4dqdp97yisll5kg16amxs5pxx4hf"))))
+         "0mchdxkc3y0v6dw8fzjnlqd6f3zrafm3xf1c53s6ps529b66kx2x"))))
     (build-system r-build-system)
     (native-inputs
      (list gfortran r-knitr))
@@ -5746,14 +5784,14 @@ generally.")
 (define-public r-robust
   (package
     (name "r-robust")
-    (version "0.7-3")
+    (version "0.7-4")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "robust" version))
        (sha256
         (base32
-         "0pj7qinp11rjsibixl7axvxp9alaqr4pjr1l52vq8cl8h6j159w9"))))
+         "0qh816ha18v0n021cccjan1kplmyj0xyb7jmkmrnb6gxf8kma3b3"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-fit-models r-lattice r-mass r-robustbase r-rrcov))
@@ -6248,14 +6286,14 @@ multivariate case.")
 (define-public r-tclust
   (package
     (name "r-tclust")
-    (version "1.5-5")
+    (version "1.5-6")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "tclust" version))
        (sha256
         (base32
-         "15jl1srsn0m0r5qafbkqsvnh44j30nh3yhipw030mdfa4qkbz3gw"))))
+         "1p7y58mklcwq76msh1q8pm2v6v19ja6fy07xg1j07d2zw2wa0phy"))))
     (build-system r-build-system)
     ;; These are all suggested packages, not build dependencies.
     (propagated-inputs
@@ -6775,8 +6813,8 @@ Java package that provides routines for various statistical distributions.")
     (license license:gpl2+)))
 
 (define-public emacs-ess
-  (let ((commit "3691ecc642eab5d016887e42699648e0eeeef566")
-        (version "18.10.2")
+  (let ((commit "ab2faeca1ba6c456333312c58f58ef9e5ef4aa8b")
+        (version "24.01.1")
         (revision "1"))
     (package
       (name "emacs-ess")
@@ -6788,7 +6826,7 @@ Java package that provides routines for various statistical distributions.")
                (url "https://github.com/emacs-ess/ESS")
                (commit commit)))
          (sha256
-          (base32 "19p8djsbgvahpsx1w8i6h3qvpbdr4isjwm3wi82yk2648ri0qsq1"))
+          (base32 "0jfdfqpa3x1zm65cllkzhqir057xd3hxi4z2ddii1i26zy56iikf"))
          (file-name (git-file-name name version))
          (modules '((guix build utils)))
          (snippet
@@ -6806,9 +6844,6 @@ Java package that provides routines for various statistical distributions.")
               ;; Stop install-info from trying to update the info directory.
               (substitute* "doc/Makefile"
                 ((".*/dir.*") ""))
-              ;; Fix r-help-mode test.
-              (substitute* "test/ess-test-r.el"
-                (("\\(equal ess-help-object \"plot.default\")") "t"))
               ;; Avoid generating ess-autoloads.el twice.
               (substitute* "Makefile"
                 (("all: lisp doc etc autoloads")
@@ -6838,9 +6873,6 @@ Java package that provides routines for various statistical distributions.")
           #~(modify-phases %standard-phases
               (delete 'configure)
               (add-before 'check 'skip-failing-tests
-                ;; The command-without-trailing-newline-test and other
-                ;; tests fail for unknown reasons (see:
-                ;; https://github.com/emacs-ess/ESS/issues/1272).
                 (lambda _
                   (let-syntax
                       ((disable-tests
@@ -6852,22 +6884,7 @@ Java package that provides routines for various statistical distributions.")
                              (((string-append "^\\(ert-deftest " test-name ".*")
                                all)
                               (string-append all "(skip-unless nil)\n"))
-                             ...))))
-                       (disable-etests  ;different test syntax
-                        (syntax-rules ()
-                          ((_ file ())
-                           (syntax-error "test names list must not be empty"))
-                          ((_ file (test-name ...))
-                           (emacs-batch-edit-file file
-                             '(progn
-                               (mapc (lambda (test)
-                                       (goto-char (point-min))
-                                       (search-forward
-                                        (format "etest-deftest %s " test))
-                                       (beginning-of-line)
-                                       (kill-sexp))
-                                     (list test-name ...))
-                               (basic-save-buffer)))))))
+                             ...)))))
                     (disable-tests (list "test/ess-test-inf.el"
                                          "test/ess-test-r.el")
                                    ("ess--derive-connection-path"
@@ -6877,15 +6894,10 @@ Java package that provides routines for various statistical distributions.")
                                     "ess-r-load-ESSR-github-fetch-no"
                                     "ess-r-load-ESSR-github-fetch-yes"
                                     "ess-set-working-directory-test"
-                                    "ess-test-r-startup-directory"))
-                    (disable-etests "test/ess-test-r-eval.el"
-                                    ("ess-r-eval-ns-env-roxy-tracebug-test"
-                                     "ess-r-eval-sink-freeze-test"))
-                    (disable-etests
-                     "test/ess-test-inf.el"
-                     ("command-without-trailing-newline-test")))))
+                                    "ess-test-r-startup-directory")))))
               (replace 'check
-                (lambda _ (invoke "make" "test")))))))
+                (lambda* (#:key tests? #:allow-other-keys)
+                  (when tests? (invoke "make" "test"))))))))
       (native-inputs (list perl r-roxygen2 texinfo))
       (inputs (list emacs-minimal r-minimal))
       (propagated-inputs (list emacs-julia-mode))
@@ -7459,13 +7471,13 @@ Calculates confidence intervals for the difference in proportion.")
 (define-public r-desctools
   (package
     (name "r-desctools")
-    (version "0.99.53")
+    (version "0.99.54")
     (source
       (origin
         (method url-fetch)
         (uri (cran-uri "DescTools" version))
         (sha256
-          (base32 "0b7an97ns7zjc5qqqhrbb0wzzvcx7wcd0980fxlnpbzj5z2idl0p"))))
+          (base32 "16qbm1l1281yj1cg6fp8xgd8xdshpz9a09f0b9cyimsjbm01c2j7"))))
     (properties `((upstream-name . "DescTools")))
     (build-system r-build-system)
     (propagated-inputs
@@ -7773,4 +7785,41 @@ weighting schemes.")
      "@code{Enumerable::Statistics} provides some methods to calculate
 statistical summary in arrays and enumerables.")
     (home-page "https://github.com/mrkn/enumerable-statistics")
+    (license license:expat)))
+
+(define-public python-pgmpy
+  (package
+    (name "python-pgmpy")
+    (version "0.1.24")
+    (source
+     (origin
+       (method git-fetch)  ;pypi package does not include test data
+       (uri (git-reference
+             (url "https://github.com/pgmpy/pgmpy")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0fvzh6v0yhgdryczamvzhfy2ymywkh0ssx4rl47xnfvi43hnij90"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-daft
+                             python-joblib
+                             python-networkx
+                             python-numpy
+                             python-opt-einsum
+                             python-pandas
+                             python-pyparsing
+                             python-pytorch
+                             python-scikit-learn
+                             python-scipy
+                             python-statsmodels
+                             python-tqdm))
+    (native-inputs (list python-mock
+                         python-pytest))
+    (home-page "https://github.com/pgmpy/pgmpy")
+    (synopsis "Probabilistic Graphical Models library")
+    (description "This package provides a library for Probabilistic
+Graphical Models.  It can be used for learning (Structure and Parameter),
+inference (Probabilistic and Causal), and simulations in Bayesian
+Networks.")
     (license license:expat)))

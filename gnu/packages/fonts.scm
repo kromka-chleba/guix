@@ -59,6 +59,7 @@
 ;;; Copyright © 2023 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2023 chris <chris@bumblehead.com>
 ;;; Copyright © 2023, 2024 Luis Felipe López Acevedo <sirgazil@zoho.com>
+;;; Copyright © 2024 Christina O'Donnell <cdo@mutix.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -216,7 +217,7 @@ in print.  With attention to detail for high resolution rendering.")
 (define-public font-intel-one-mono
   (package
     (name "font-intel-one-mono")
-    (version "1.2.1")
+    (version "1.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -225,8 +226,26 @@ in print.  With attention to detail for high resolution rendering.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1md57997nzkz75ambsahawzy1x71qvkp6f87zcqibksm66yvcjdc"))))
+                "0w9isn8az1k3a3q4m2llwnryy79i5v30dx1hfaf90x0zkj98ky5h"))))
+    (outputs '("out" "ttf" "woff"))
     (build-system font-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'split-outputs
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (let ((out-fonts (string-append (assoc-ref outputs "out")
+                                                   "/share/fonts"))
+                         (ttf-fonts (string-append (assoc-ref outputs "ttf")
+                                                   "/share/fonts"))
+                         (woff-fonts (string-append (assoc-ref outputs "woff")
+                                                    "/share/fonts")))
+                     (mkdir-p ttf-fonts)
+                     (mkdir-p woff-fonts)
+                     (rename-file (string-append out-fonts "/truetype")
+                                  (string-append ttf-fonts "/truetype"))
+                     (rename-file (string-append out-fonts "/web")
+                                  (string-append woff-fonts "/web"))))))))
     (home-page "https://github.com/intel/intel-one-mono")
     (synopsis "Expressive monospaced font family")
     (description
@@ -586,6 +605,30 @@ The unified Libertinus family consists of:
 @item Libertinus Math, an original matching OpenType math font.
 @end enumerate\n")
     (license license:silofl1.1)))
+
+(define-public font-libre-franklin
+  (let ((commit "bfc61d6e403771c2e90aa6e0bd54975633974fb2")
+        (revision "0"))
+    (package
+      (name "font-libre-franklin")
+      (version (git-version "1.015" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/impallari/Libre-Franklin")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "07rm9fkhm8ckxpaj0zixl4vgzmj6bj4xzbaqm5hngdjds1bjv1ls"))))
+      (build-system font-build-system)
+      (home-page "https://fonts.google.com/specimen/Libre+Franklin")
+      (synopsis "Font family based on Franklin Gothic")
+      (description
+       "The Libre Franklin font family is an open source interpretation and
+expansion of Franklin Gothic, a classic font.  It covers 105 Latin Languages.")
+      (license license:silofl1.1))))
 
 (define-public font-terminus
   (package
@@ -970,7 +1013,7 @@ for use at smaller text sizes")))
 (define-public font-gnu-unifont
   (package
     (name "font-gnu-unifont")
-    (version "15.1.01")
+    (version "15.1.05")
     (source
      (origin
        (method url-fetch)
@@ -980,7 +1023,7 @@ for use at smaller text sizes")))
              (string-append "mirror://gnu/unifont/unifont-"
                             version "/unifont-" version ".tar.gz")))
        (sha256
-        (base32 "1dydcqa2nvmnij5jzj10carrzssd3ar24i8zd18pk4zpl84l4pz1"))
+        (base32 "1yi33kxlgw7ds99za5bclh537sw8ggl94nrhhq7hwxaq8dgzaxfj"))
        (snippet
         '(begin
            (use-modules (guix build utils))
@@ -2637,6 +2680,61 @@ This package provides only TrueType files (TTF).
 It comes in seven weights and Roman, Italic and Oblique styles.")
    (home-page "https://rubjo.github.io/victor-mono/")
    (license license:expat)))
+
+(define-public font-dongle
+  (let ((commit "f7127c4d2450e1cad20254ec692591347e2fc260")
+        (revision "1"))
+    (package
+      (name "font-dongle")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/yangheeryu/Dongle")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1gwrjv468bqfa3nxh01vprk7rp24cnhk3zlkrv5mzqcbcdf96nqp"))))
+      (build-system font-build-system)
+      (arguments
+       `(#:phases
+         (modify-phases %standard-phases
+           (add-before 'install 'build
+             (lambda _
+               (begin
+                 (chdir "sources")
+                 (invoke "unzip" "Dongle.zip")
+                 (chdir "..")
+                 (invoke "python3" "build.py")))))))
+      (native-inputs
+       (list python
+             python-glyphslib
+             python-fonttools
+             python-ufolib2
+             python-ufo2ft
+             zip))
+      (synopsis
+       "Rounded sans-serif typeface, supporting Hangeul and Latin glyphs")
+      (description
+       "Dongle(동글) is a rounded sans-serif typeface for display.  It is a
+modular Hangeul with the de-square frame, creating a playful and rhythmic
+movement.  The name, Dongle comes from a Korean onomatopoeia, meaning 'rounded
+or curved shape (with adorable impression)’.
+
+Dongle was originally designed as a 'Jamo (consonant and vowel in Hangeul)
+typing module' for the author's student project.  Later it revised into
+‘syllabic module’ to be released to the public.  As the character size varies
+according to the syllable structure, Dongle typeface is much smaller compared
+to other square frame Korean typefaces.  Therefore, it is better to adjust the
+font size visually to your liking, rather than relying on the point size of
+the editing program.
+
+It is designed especially for Hangeul typography, but it also includes Latin
+alphabet as a part of KS X 1001.  This typeface has a light, regular, and bold
+weight.")
+      (home-page "https://github.com/yangheeryu/Dongle")
+      (license license:silofl1.1))))
 
 (define-public font-meera-inimai
   (package
