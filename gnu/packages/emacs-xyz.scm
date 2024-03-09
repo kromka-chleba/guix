@@ -23495,7 +23495,7 @@ according to a parsing expression grammar.")
 (define-public emacs-eldev
   (package
     (name "emacs-eldev")
-    (version "1.8.2")
+    (version "1.9")
     (source
      (origin
        (method git-fetch)
@@ -23504,7 +23504,7 @@ according to a parsing expression grammar.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "108px7lnf39ngvb8rcqb9qh2amcbs1h22dbwd1q7js2np2nd132y"))))
+        (base32 "0mhp3m4d5na844nnv107j706552h0q6xs93jkp4rmqiig73kq17w"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -33691,22 +33691,7 @@ simple but powerful Org contents.")
      (list
       #:include #~(cons "^src/" %default-include)
       #:tests? #t
-      ;; <https://github.com/emacs-eldev/eldev/issues/99#issuecomment-1912637609>
-      #:test-command #~(list "eldev" "-X" "-dtTC" "test")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'configure-eldev
-            (lambda _
-              (setenv "HOME"
-                      (string-append (getcwd) "/.eldev"))
-              (with-output-to-file "Eldev-local"
-                (lambda _
-                  (format #t "~s"
-                          '(dolist (d (split-string (getenv
-                                                     "EMACSLOADPATH")
-                                                    ":" t))
-                                   (ignore-errors
-                                    (eldev-use-local-dependency d)))))))))))
+      #:test-command #~(list "eldev" "--use-emacsloadpath" "-dtTC" "test")))
     (native-inputs (list emacs-buttercup emacs-eldev))
     (propagated-inputs (list emacs-org))
     (home-page "https://github.com/ox-tufte/ox-tufte")
