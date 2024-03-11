@@ -17249,16 +17249,18 @@ consistent API regardless of how the configuration was created.")
 (define-public python-configargparse
   (package
     (name "python-configargparse")
-    (version "1.5.3")
+    (version "1.7")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "ConfigArgParse" version))
               (sha256
                (base32
-                "17vky4ihicbf7nggg30xs7h3g5rxzwgch8vilnnrvdaacszkq2qv"))))
+                "1l866g1dcf2ljf8fl7ggpxk1rggry0lya4d5b264gradi1qp81p7"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-mock python-pytest))
+    (propagated-inputs
+     (list python-pyyaml))
     (synopsis "Replacement for argparse")
     (description "A drop-in replacement for argparse that allows options to also
 be set via config files and/or environment variables.")
@@ -23984,8 +23986,18 @@ manipulation, or @code{stdout}.")
          (base32
           "1vi2fj31vygfcqrkimdmk52q2ldw08g9fn4v4zlgdfgcjlhqyhxn"))))
     (build-system python-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-rdflib-6-compatibility
+            (lambda _
+              ;; See https://github.com/trungdong/prov/issues/151
+              (substitute* "src/prov/tests/test_rdf.py"
+                (("\\.serialize\\(format=\"nt\"\\)")
+                 ".serialize(format=\"nt\", encoding=\"utf-8\")")))))))
     (propagated-inputs
-     (list python-dateutil python-lxml python-networkx python-rdflib-5))
+     (list python-dateutil python-lxml python-networkx python-rdflib))
     (native-inputs
      (list graphviz python-pydot))
     (home-page "https://github.com/trungdong/prov")
