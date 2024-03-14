@@ -3515,7 +3515,8 @@ September 2004}")
 data structures and routines for the scalable (parallel) solution of
 scientific applications modeled by partial differential equations.")
     (license (license:non-copyleft
-              "https://www.mcs.anl.gov/petsc/documentation/copyright.html"))))
+              "https://www.mcs.anl.gov/petsc/documentation/copyright.html"))
+    (properties '((tunable? . #t)))))
 
 (define-public petsc-complex
   (package
@@ -7135,16 +7136,21 @@ set.")
            (lambda _
              (invoke "make" "-C" "docs")))
          (replace 'check
-           (lambda _
-             (setenv "LD_LIBRARY_PATH" (string-append (getcwd) "/hypre/lib"))
-             (setenv "PATH" (string-append "." ":" (getenv "PATH")))
-             (invoke "make" "check" "CHECKRUN=")
-             (for-each (lambda (filename)
-                         (let ((size (stat:size (stat filename))))
-                           (when (positive? size)
-                             (error (format #f "~a size ~d; error indication~%"
-                                            filename size)))))
-                       (find-files "test" ".*\\.err$"))))
+           (lambda* (#:key tests? #:allow-other-keys)
+             (when tests?
+               (setenv "LD_LIBRARY_PATH"
+                       (string-append (getcwd) "/hypre/lib"))
+               (setenv "PATH"
+                       (string-append "." ":"
+                                      (getenv "PATH")))
+               (invoke "make" "check" "CHECKRUN=")
+               (for-each (lambda (filename)
+                           (let ((size (stat:size (stat filename))))
+                             (when (positive? size)
+                               (error (format #f
+                                       "~a size ~d; error indication~%"
+                                       filename size)))))
+                         (find-files "test" ".*\\.err$")))))
          (add-after 'install 'install-docs
            (lambda* (#:key outputs #:allow-other-keys)
              ;; Custom install because docs/Makefile doesn't honor ${docdir}.

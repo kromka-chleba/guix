@@ -28,9 +28,10 @@
 (channel-news
  (version 0)
 
- (entry (commit "8f4ffb3fae133bb21d7991e97c2f19a7108b1143")
+ (entry (commit "ff1251de0bc327ec478fc66a562430fbf35aef42")
         (title
          (en "Daemon vulnerability allowing store corruption has been fixed")
+         (de "Schwachstelle im Daemon behoben, durch die der Store verfälscht werden konnte")
          (fr "Une faille du démon permettant de corrompre le dépôt a été corrigée"))
         (body
          (en "A vulnerability in the build daemon, @command{guix-daemon}, was
@@ -47,8 +48,34 @@ sudo guix system reconfigure /run/current-system/configuration.scm
 sudo herd restart guix-daemon
 @end example
 
+If you are using Guix on another distro, run @command{info \"(guix) Upgrading
+Guix\"} or visit
+@uref{https://guix.gnu.org/manual/devel/en/html_node/Upgrading-Guix.html} to
+learn how to upgrade Guix.
+
 See @uref{https://issues.guix.gnu.org/69728} for more information on this
 issue.")
+         (de "Eine Sicherheitslücke im Erstellungs-Daemon,
+@command{guix-daemon}, wurde gefunden und geschlossen.  Sie hatte es
+unprivilegierten Nutzern ermöglicht, das Ergebnis einer @dfn{Ableitung mit
+fester Ausgabe}, wie Quellcode-Tarballs und Git-Checkouts, zu manipulieren.
+So war eine lokale Rechteausweitung möglich.
+
+Der Fehler ist behoben und wir raten Nutzern von Guix System, ihr System zu
+aktualisieren mit einem Befehl wie:
+
+@example
+sudo guix system reconfigure /run/current-system/configuration.scm
+sudo herd restart guix-daemon
+@end example
+
+Wenn Sie Guix auf einer anderen Distribution verwenden, erfahren Sie mit dem
+Befehl @command{info \"(guix.de) Aktualisieren von Guix\"} oder auf
+@uref{https://guix.gnu.org/manual/devel/de/html_node/Aktualisieren-von-Guix.html},
+wie Sie Guix aktualisieren.
+
+Siehe @uref{https://issues.guix.gnu.org/69728} für mehr Informationen zu dem
+Fehler.")
          (fr "Une faille de sécurité du démon de compilation,
 @command{guix-daemon}, a été identifiée et corrigée.  La faille permettait à
 un·e utilisateur·rice sans privilège de corrompre le résultat d'une
@@ -62,6 +89,10 @@ Ce problème est corrigé et les utilisateur·rices de Guix System sont invité�
 sudo guix system reconfigure /run/current-system/configuration.scm
 sudo herd restart guix-daemon
 @end example
+
+Pour voir comment mettre à jour Guix sur une autre distribution, lancer
+@command{info \"(guix.fr) Mettre à niveau Guix\"} ou visiter
+@uref{https://guix.gnu.org/manual/devel/fr/html_node/Mettre-a-niveau-Guix.html}.
 
 Voir @uref{https://issues.guix.gnu.org/69728} pour plus d'informations sur
 cette anomalie.")))
