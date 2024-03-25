@@ -4,6 +4,7 @@
 ;;; Copyright © 2018 Pierre-Antoine Rouby <pierre-antoine.rouby@inria.fr>
 ;;; Copyright © 2019 Brian Leung <bkleung89@gmail.com>
 ;;; Copyright © 2019 Leo Famulari <leo@famulari.name>
+;;; Copyright © 2019 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2019, 2020, 2021 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2020 Joseph LaFreniere <joseph@lafreniere.xyz>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
@@ -901,6 +902,40 @@ expressing configuration which is easy for both humans and machines to read.")
     (home-page "https://github.com/hashicorp/hcl")
     (license license:mpl2.0)))
 
+(define-public go-github-com-hashicorp-go-hclog
+  (package
+    (name "go-github-com-hashicorp-go-hclog")
+    (version "1.6.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hashicorp/go-hclog")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lvr4ga95a0xb62vgq1hy558x3r65hn2d0h7bf0a88lsfsrcik0n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/hashicorp/go-hclog"))
+    (propagated-inputs
+     (list go-github-com-fatih-color
+           go-github-com-mattn-go-isatty
+           go-golang-org-x-tools))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/hashicorp/go-hclog")
+    (synopsis "Key/value logging interface for Go")
+    (description
+     "This package provides a simple key/value logging interface for Golang
+for use in development and production environments.  Unlike the standard
+library @code{log} package, this package provides logging levels that provide
+decreased output based upon the desired amount of output.  It also comes with
+a command-line program @code{hclogvet} that can be used to check that the logging level
+methods on @code{hclog.Logger} are used correctly.")
+    (license license:expat)))
+
 (define-public go-github-com-hashicorp-go-multierror
   (package
     (name "go-github-com-hashicorp-go-multierror")
@@ -1187,6 +1222,33 @@ called concurrently with themselves and each other.")
 customized globally.")
     (license license:expat)))
 
+(define-public go-github-com-lib-pq
+  (package
+    (name "go-github-com-lib-pq")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lib/pq")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "08j1smm6rassdssdks4yh9aspa1dv1g5nvwimmknspvhx8a7waqz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lib/pq"
+      ;; The tests seem to fail without access to the network or a running
+      ;; Postgres instance.
+      #:tests? #f))
+    (home-page "https://github.com/lib/pq")
+    (synopsis "Golang Postgres driver for Go's database/sql")
+    (description
+     "This package provides a pure Go Postgres driver for Go's
+database/sql package.")
+    (license license:expat)))
+
 (define-public go-github-com-matryer-try
   (package
     (name "go-github-com-matryer-try")
@@ -1331,6 +1393,30 @@ command line flags, config files, and default struct values.")
        "Go Windows Service wrapper compatible with GNU/Linux.  Windows tests
 @url{https://github.com/judwhite/go-svc/raw/master/svc/svc_windows_test.go,here}.")
       (license license:expat))))
+
+(define-public go-github-com-multiformats-go-varint
+  (package
+    (name "go-github-com-multiformats-go-varint")
+    (version "0.0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/multiformats/go-varint")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0l4s0z3rc3d350zp6qximl1jjhic6l8w74wkmx244jgfzsxd93af"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/multiformats/go-varint"))
+    (home-page "https://github.com/multiformats/go-varint")
+    (synopsis "Varint helpers that enforce minimal encoding")
+    (description
+     "This package provides a functionality for encoding and decoding unsigned
+varints.")
+    (license license:expat)))
 
 (define-public go-github-com-nats-io-nats-go
   (package
@@ -1859,7 +1945,7 @@ weighted moving averages}.")
     ;; There is not much information provided by the project, see
     ;; <https://github.com/whyrusleeping/go-sysinfo/issues>.
     (description
-     "This packages provides a basic system stats like @code{DiskUsage} and
+     "This package provides a basic system stats like @code{DiskUsage} and
 @code{MemoryInfo}.")
     (license license:expat)))
 
@@ -1933,6 +2019,22 @@ Go.")
 ;;;
 ;;; Executables:
 ;;;
+
+(define-public go-hclogvet
+  (package
+    (inherit go-github-com-hashicorp-go-hclog)
+    (name "go-hclogvet")
+    (arguments
+     (list
+      #:import-path "github.com/hashicorp/go-hclog/hclogvet"
+      #:unpack-path "github.com/hashicorp/go-hclog"
+      #:install-source? #f))
+    (propagated-inputs
+     (list go-golang-org-x-tools))
+    (description
+     "@code{hclogvet} is a @code{go vet} tool for checking that the
+Trace/Debug/Info/Warn/Error methods on @code{hclog.Logger} are used
+correctly.")))
 
 (define-public go-numcpus
   (package

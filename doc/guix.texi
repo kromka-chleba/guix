@@ -4727,7 +4727,9 @@ the user's @file{~/.config/guix/channels.scm} file, unless @option{-q}
 is passed;
 @item
 the system-wide @file{/etc/guix/channels.scm} file, unless @option{-q}
-is passed;
+is passed (on Guix System, this file can be declared in the operating
+system configuration, @pxref{guix-configuration-channels,
+@code{channels} field of @code{guix-configuration}});
 @item
 the built-in default channels specified in the @code{%default-channels}
 variable.
@@ -5497,16 +5499,16 @@ $ wget -O - \
 @cindex configuration file for channels
 @cindex @command{guix pull}, configuration file
 @cindex configuration of @command{guix pull}
-Guix and its package collection are updated by running @command{guix pull}
-(@pxref{Invoking guix pull}).  By default @command{guix pull} downloads and
-deploys Guix itself from the official GNU@tie{}Guix repository.  This can be
-customized by defining @dfn{channels} in the
-@file{~/.config/guix/channels.scm} file.  A channel specifies a URL and branch
-of a Git repository to be deployed, and @command{guix pull} can be instructed
-to pull from one or more channels.  In other words, channels can be used
-to @emph{customize} and to @emph{extend} Guix, as we will see below.
-Guix is able to take into account security concerns and deal with authenticated
-updates.
+Guix and its package collection are updated by running @command{guix
+pull}.  By default @command{guix pull} downloads and deploys Guix itself
+from the official GNU@tie{}Guix repository.  This can be customized by
+providing a file specifying the set of @dfn{channels} to pull from
+(@pxref{Invoking guix pull}).  A channel
+specifies the URL and branch of a Git repository to be deployed, and
+@command{guix pull} can be instructed to pull from one or more channels.
+In other words, channels can be used to @emph{customize} and to
+@emph{extend} Guix, as we will see below.  Guix is able to take into
+account security concerns and deal with authenticated updates.
 
 @menu
 * Specifying Additional Channels::  Extending the package collection.
@@ -7680,7 +7682,8 @@ assembly is to C programs.  The term ``derivation'' comes from the fact
 that build results @emph{derive} from them.
 
 This chapter describes all these APIs in turn, starting from high-level
-package definitions.
+package definitions.  @xref{Source Tree Structure}, for a more general
+overview of the source code.
 
 @menu
 * Package Modules::             Packages from the programmer's viewpoint.
@@ -19805,6 +19808,20 @@ few seconds when enough entropy is available and is only done once; you
 might want to turn it off for instance in a virtual machine that does
 not need it and where the extra boot time is a problem.
 
+@anchor{guix-configuration-channels}
+@item @code{channels} (default: @code{%default-channels})
+List of channels to be specified in @file{/etc/guix/channels.scm}, which
+is what @command{guix pull} uses by default (@pxref{Invoking guix
+pull}).
+
+@quotation Note
+When reconfiguring a system, the existing @file{/etc/guix/channels.scm}
+file is backed up as @file{/etc/guix/channels.scm.bak} if it was
+determined to be a manually modified file.  This is to facilitate
+migration from earlier versions, which allowed for in-place
+modifications to @file{/etc/guix/channels.scm}.
+@end quotation
+
 @item @code{max-silent-time} (default: @code{3600})
 @itemx @code{timeout} (default: @code{(* 3600 24)})
 The number of seconds of silence and the number of seconds of activity,
@@ -22719,9 +22736,9 @@ Logging level.
 This service type adds a list of known Facebook hosts to the
 @file{/etc/hosts} file.
 (@pxref{Host Names,,, libc, The GNU C Library Reference Manual})
-Each line contains a entry that maps a known server name of the Facebook
-on-line service---e.g., @code{www.facebook.com}---to the local
-host---@code{127.0.0.1} or its IPv6 equivalent, @code{::1}.
+Each line contains an entry that maps a known server name of the Facebook
+on-line service---e.g., @code{www.facebook.com}---to unroutable IPv4 and
+IPv6 addresses.
 
 This mechanism can prevent programs running locally, such as Web
 browsers, from accessing Facebook.

@@ -24977,7 +24977,7 @@ tabs, history, or bookmarks from Emacs.")
     (home-page "https://github.com/purcell/ibuffer-projectile")
     (synopsis "Group Ibuffer's list by Projectile root")
     (description
-     "This packages adds functionality to Emacs Ibuffer for grouping buffers
+     "This package adds functionality to Emacs Ibuffer for grouping buffers
 by their Projectile root directory.")
     (license license:gpl3+)))
 
@@ -33695,7 +33695,7 @@ simple but powerful Org contents.")
 (define-public emacs-ox-tufte
   (package
     (name "emacs-ox-tufte")
-    (version "4.1.1")
+    (version "4.2.0")
     (source
      (origin
        (method git-fetch)
@@ -33704,7 +33704,7 @@ simple but powerful Org contents.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0nmi6p19sg2vl64znm356bchphbybq03jyjsnqhddb39c4pilxah"))))
+        (base32 "0rdainmx0xg6rfql7rai75x0v2r2s1snjy6b61jd53caif7aigbk"))))
     (build-system emacs-build-system)
     (arguments
      (list

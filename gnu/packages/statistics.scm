@@ -115,7 +115,7 @@
 (define-public pspp
   (package
     (name "pspp")
-    (version "2.0.0")
+    (version "2.0.1")
     (source
      (origin
       (method url-fetch)
@@ -123,7 +123,7 @@
                           version ".tar.gz"))
       (sha256
        (base32
-        "1pyqlab9kw65wxc8pilcwb64l18w37xxdg3r6n287c7mda4cpxm8"))))
+        "002c08rxym056mn7a73jwjmcazqd4gh5j1cyml603y4ckvqb1nwf"))))
     (build-system gnu-build-system)
     (arguments
      (list #:phases
@@ -2176,7 +2176,7 @@ machine learning, computer vision, and high-dimensional statistics.")
 (define-public python-arviz
   (package
     (name "python-arviz")
-    (version "0.17.0")
+    (version "0.17.1")
     (source (origin
               (method git-fetch)        ; PyPI misses some test files
               (uri (git-reference
@@ -2185,7 +2185,7 @@ machine learning, computer vision, and high-dimensional statistics.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0rmv7nniciq2jjnmk3qslc777wm8mjp7vsbk5dqx87a94dp7198f"))))
+                "1rpm2a9swzhnqn84dfsbc8kvz6qnn8w2icr3p08gwax9h9pg4ksp"))))
     (build-system pyproject-build-system)
     (arguments
      ;; FIXME: matplotlib tests fail because of the "--save" test flag.
@@ -2224,7 +2224,7 @@ comparison and diagnostics.")
 (define-public python-pymc
   (package
     (name "python-pymc")
-    (version "5.10.3")
+    (version "5.11.0")
     (source (origin
               (method git-fetch)        ; no tests in PyPI
               (uri (git-reference
@@ -2233,7 +2233,7 @@ comparison and diagnostics.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ydngbki4xb0i4j0nayzqqrvwlxp30fp56kiwm95n2i7iwgmki02"))))
+                "0x94qzq3z02fxlliz1xfdpb2pbn7nhp4skzcxz6qdavbj9xqcxys"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f ; tests are too computationally intensive
@@ -2347,13 +2347,13 @@ building design matrices.")
 (define-public python-mapie
   (package
     (name "python-mapie")
-    (version "0.8.2")
+    (version "0.8.3")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "MAPIE" version))
               (sha256
                (base32
-                "185nnsl6ag2xzkfxpmc86d9dd8wf2v87b2psan10sma399fbqd0x"))))
+                "13kgyqk1hp603n9zym835kp1pqs83k0j7ymayw4fk0zx4z1nmvdx"))))
     (build-system pyproject-build-system)
     (native-inputs (list python-pandas python-pytest))
     (propagated-inputs (list python-numpy python-scikit-learn))
