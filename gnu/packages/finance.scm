@@ -686,7 +686,7 @@ blockchain.")
   ;; the system's dynamically linked library.
   (package
     (name "monero")
-    (version "0.18.3.2")
+    (version "0.18.3.3")
     (source
      (origin
        (method git-fetch)
@@ -704,7 +704,7 @@ blockchain.")
             delete-file-recursively
             '("external/miniupnp" "external/rapidjson"))))
        (sha256
-        (base32 "0ri3ss5vgsjk5pzmaaw8yi7sg4lasx58d8kz3m6z5vg7p69gdzxv"))))
+        (base32 "1d3dnkz18v0mlspafnzm301lmdiz6pwjzdbsdq23mn7cyynzgnc9"))))
     (build-system cmake-build-system)
     (native-inputs
      (list doxygen
@@ -791,7 +791,7 @@ the Monero command line client and daemon.")
 (define-public monero-gui
   (package
     (name "monero-gui")
-    (version "0.18.3.2")
+    (version "0.18.3.3")
     (source
      (origin
        (method git-fetch)
@@ -807,7 +807,7 @@ the Monero command line client and daemon.")
            ;; See the 'extract-monero-sources' phase.
            (delete-file-recursively "monero")))
        (sha256
-        (base32 "0jic43b7jzc1i7x2mqqpbbb2992687nm12kk642yr10dm4maklzb"))))
+        (base32 "1yy98y37l5nfxj921h6rbhni6fk0fic9bs4gqbnq2n4397h7jamj"))))
     (build-system qt-build-system)
     (native-inputs
      `(,@(package-native-inputs monero)

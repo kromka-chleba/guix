@@ -3747,16 +3747,16 @@ code completion and project management support.")
 (define-public emacs-auto-compile
   (package
     (name "emacs-auto-compile")
-    (version "1.8.2")
+    (version "2.0.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/emacscollective/auto-compile")
-                    (commit version)))
+                    (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1wq8kl6659yyx8gb6m95mrrqh9bjpx4y7c6injvsqil3jkaff9xv"))))
+                "1h0rq69flrjj65wa1x7x0ispm041qr2xrzs5qxciabhav2hs3hqh"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-compat emacs-packed))
     (home-page "https://github.com/emacscollective/auto-compile")
@@ -10962,14 +10962,14 @@ well as text folding, if any.")
 (define-public emacs-jit-spell
   (package
     (name "emacs-jit-spell")
-    (version "0.3")
+    (version "0.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://elpa.gnu.org/packages/jit-spell-"
                                   version ".tar"))
               (sha256
                (base32
-                "0q8wd9phd0zcjhc92j633vz82fr0ji8zc9vir7kcn1msrf6jspwz"))))
+                "1p83spcq52l7k63p56y3w5r3kl49wbrs4abynwn25ikhkd4wl8x3"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/astoff/jit-spell")
@@ -12073,7 +12073,7 @@ interface.")
 (define-public emacs-orderless
   (package
     (name "emacs-orderless")
-    (version "1.0")
+    (version "1.1")
     (source
      (origin
        (method git-fetch)
@@ -12081,7 +12081,7 @@ interface.")
              (url "https://github.com/oantolin/orderless")
              (commit version)))
        (sha256
-        (base32 "1jmwyici90v82gqjq44n0scrwhmg05pi9yplkn4bpss80c83dxp4"))
+        (base32 "1gc3ysa1yhi6pz8bafbdpj0avdhms0rfd1r3k5mrhnm8mgh6zq8q"))
        (file-name (git-file-name name version))))
     (build-system emacs-build-system)
     (arguments
@@ -25256,7 +25256,7 @@ powerful Org contents.")
 (define-public emacs-org-re-reveal
   (package
     (name "emacs-org-re-reveal")
-    (version "3.25.1")
+    (version "3.26.0")
     (source
      (origin
        (method git-fetch)
@@ -25265,7 +25265,7 @@ powerful Org contents.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ayiaqci969d8q3nc0aq0a9djl84lckj2sc5nndbb1bvvhz49xq1"))))
+        (base32 "11if1c1a0i6i2wagjwqmvp2hfkv3slpq7r6dfbpkhlmils2hxr9p"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-htmlize emacs-org))
@@ -25550,7 +25550,7 @@ functions.")
 (define-public emacs-benchmark-init
   (package
     (name "emacs-benchmark-init")
-    (version "1.1")
+    (version "1.2")
     (source
      (origin
        (method git-fetch)
@@ -25559,7 +25559,7 @@ functions.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "19375vamhld4xm2qrdmhlp2nczfvalmz9x6ahl23zwkilr8n1nbw"))))
+        (base32 "1slw10mp9lkfy04qgv7ly76rww2rs3yijq6sjx4jwswd4b46bmsg"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/dholm/benchmark-init-el")
     (synopsis "Benchmark Emacs @code{require} and @code{load} calls")
@@ -26695,7 +26695,7 @@ appropriate directory if no @code{eshell} session is active.")
 (define-public emacs-eshell-syntax-highlighting
   (package
     (name "emacs-eshell-syntax-highlighting")
-    (version "0.5")
+    (version "0.6")
     (source
      (origin
        (method git-fetch)
@@ -26704,7 +26704,7 @@ appropriate directory if no @code{eshell} session is active.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1la604vdj56s934j16yz8rlvzhd69433rrbgfyw9c7njxqldwcs7"))))
+        (base32 "0maza5vh22psfxg5qavdayqr40aw8jc95bjiz5dwm0xga55clbfg"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/akreisher/eshell-syntax-highlighting")
     (synopsis "Add syntax highlighting to Eshell")
@@ -27447,7 +27447,7 @@ image, rotate it, save modified images, and more.")
 (define-public emacs-package-lint
   (package
     (name "emacs-package-lint")
-    (version "0.21")
+    (version "0.22")
     (source
      (origin
        (method git-fetch)
@@ -27457,7 +27457,7 @@ image, rotate it, save modified images, and more.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1y0h8rrmvi3j5maig6i69kxxr1igb96075vpzbycaqln3xn11g36"))))
+         "1myhdhb3kwq03f3p7qgb9bk8srs1wlag4ch4kl26yb9213mzx8gv"))))
     (arguments
      (list #:include #~(cons "^data/" %default-include)))
     (build-system emacs-build-system)
@@ -28458,7 +28458,7 @@ buffers – other modes on the TODO list).
 (define-public emacs-magit-todos
   (package
     (name "emacs-magit-todos")
-    (version "1.7.1")
+    (version "1.7.2")
     (source
      (origin
        (method git-fetch)
@@ -28468,7 +28468,7 @@ buffers – other modes on the TODO list).
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1y5l36ig0q5dqgijw916zgaz68kphg7k6kxs560vrfwkfn0cy59d"))))
+         "1ygn1498ji785bkbi7ziazk1bkzinq5srpjh2yhw70v3cr5sfk8g"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-async
@@ -31223,7 +31223,7 @@ as Emacs Lisp.")
 (define-public emacs-transient
   (package
     (name "emacs-transient")
-    (version "0.5.3")
+    (version "0.6.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -31232,7 +31232,7 @@ as Emacs Lisp.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0fr0pan4dffckfywnx7a0dkb2l71fnc47cqqqb1lckqwr1gr9z6l"))))
+                "1mdcph2g0nbava3npa7bz463jqrz8rp9zmjgx8rqk7bdz2gd2yai"))))
     (build-system emacs-build-system)
     (arguments
      `(#:tests? #f                      ;no test suite
@@ -32408,7 +32408,7 @@ through Dash docsets.")
 (define-public emacs-devdocs
   (package
     (name "emacs-devdocs")
-    (version "0.5")
+    (version "0.6")
     (source
      (origin
        (method url-fetch)
@@ -32416,7 +32416,7 @@ through Dash docsets.")
              "https://elpa.gnu.org/packages/"
              "devdocs-" version ".tar"))
        (sha256
-        (base32 "0qyp8lhf76yv2ym7cryvygvf2m9jah5nsl1g79gqjrsin6vlhqka"))))
+        (base32 "17av2l61mr4y8la4cqiq1dnaznni4xirr5k3wdix1jzl3q1apypy"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/astoff/devdocs.el")
     (synopsis "Emacs viewer for DevDocs")
@@ -33437,7 +33437,7 @@ it forcibly
 (define-public emacs-elpher
   (package
     (name "emacs-elpher")
-    (version "3.5.1")
+    (version "3.6.0")
     (source
      (origin
        (method git-fetch)
@@ -33446,7 +33446,7 @@ it forcibly
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qiqjkbqjv6gw4lyf697jsb081sy2r46i3q6gdssfrhsjjmb8jag"))))
+        (base32 "00z41vw63vm71i5szmvrxspvnzkpzflpip56jnmkjc94qfla2l8s"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -35838,14 +35838,14 @@ example code.")
 (define-public emacs-buffer-env
   (package
     (name "emacs-buffer-env")
-    (version "0.5")
+    (version "0.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://elpa.gnu.org/packages/buffer-env-"
                                   version ".tar"))
               (sha256
                (base32
-                "17q0flxp0rp52ksyh5ijcamvvm003icbyzv28r6vknrw3qsphb3p"))))
+                "08li070s2s64lifgzns0z6xjk1qyaik56d6sbdp3gsyghc1sx7rn"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/astoff/buffer-env")
@@ -38083,7 +38083,7 @@ complementary packages.")
 (define-public emacs-wisp-mode
   (package
     (name "emacs-wisp-mode")
-    (version "1.0.11")
+    (version "1.0.12")
     (source
      (origin
        (method hg-fetch)
@@ -38092,7 +38092,7 @@ complementary packages.")
              (changeset (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1w2wx5001aiwky25kvk190d1bgz6g856nm5hhaggsyb1h9f5ws17"))))
+        (base32 "0m5ssl4ngk2jl1zk0fnsss0asyvwanjaa5rrcksldqnh2ikcr4bm"))))
     (build-system emacs-build-system)
     (home-page "https://www.draketo.de/software/wisp")
     (synopsis "Syntax highlighting and indentation support for Wisp files")

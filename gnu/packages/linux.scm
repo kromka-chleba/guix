@@ -5,7 +5,7 @@
 ;;; Copyright © 2014, 2015, 2016, 2017, 2018, 2019, 2020 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015 Federico Beffa <beffa@fbengineering.ch>
 ;;; Copyright © 2015 Taylan Ulrich Bayırlı/Kammer <taylanbayirli@gmail.com>
-;;; Copyright © 2015-2018, 2020, 2022, 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015-2018, 2020, 2022-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Christine Lemmer-Webber <cwebber@dustycloud.org>
 ;;; Copyright © 2016–2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2016, 2017 Alex Kost <alezost@gmail.com>
@@ -2149,14 +2149,14 @@ deviation, and minimum and maximum values.  It can show a nice histogram too.")
 (define-public psmisc
   (package
     (name "psmisc")
-    (version "23.5")
+    (version "23.7")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "mirror://sourceforge/psmisc/psmisc/psmisc-"
                           version ".tar.xz"))
       (sha256
-       (base32 "12z5786dnf37n8wvv73wdcqp3nvsqzhwdk3ajna0mag4yz1fqdyw"))))
+       (base32 "09y30ywh1d4s4f0wgvki115kgpliq48rarmfmmjl0iq22jf5viaq"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -2490,14 +2490,14 @@ slabtop, tload, top, vmstat, w, watch and sysctl.")
 (define-public usbutils
   (package
     (name "usbutils")
-    (version "015")
+    (version "017")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "mirror://kernel.org/linux/utils/usb/usbutils/"
                           "usbutils-" version ".tar.xz"))
       (sha256
-       (base32 "0vnsdzx997v8ksi5dbsi2vc8b3mcm5b6jnmcdhszdyag3yxm3d63"))))
+       (base32 "0nz008kshcajc9asxr4j5dh4wgq72z52lws4ga6y60wirzymz8m6"))))
     (build-system gnu-build-system)
     (outputs (list "out" "python"))
     (arguments
@@ -2564,7 +2564,7 @@ module.")
 (define-public e2fsprogs
   (package
     (name "e2fsprogs")
-    (version "1.46.4")
+    (version "1.47.0")
     (source (origin
              (method url-fetch)
              (uri (string-append
@@ -2573,7 +2573,7 @@ module.")
                    "e2fsprogs-" version ".tar.xz"))
              (sha256
               (base32
-               "04wp77fg842dhribgn0xvbd77idh0n7a839ga4bwy78v7i9l445i"))))
+               "1nymjw801lmlr5y6bg1zv9jsip5dkyxqislbdzpir4mx5czzajhl"))))
     (build-system gnu-build-system)
     (inputs (list `(,util-linux "lib")))
     (native-inputs (list pkg-config
