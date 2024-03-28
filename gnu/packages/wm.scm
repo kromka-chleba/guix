@@ -830,13 +830,6 @@ desktop environment.")
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
-               (add-after 'unpack 'remove-gmo-files
-                 ;; gmo files are generated from .po files
-                 ;; so remove them before build to make sure
-                 ;; they are re-generated if needed
-                 (lambda _
-                   (for-each delete-file
-                             (find-files "po" "\\.gmo$"))))
                (add-after 'unpack 'skip-failing-test
                  ;; strtest.cc tests failing due to $HOME and /etc setup
                  ;; difference under guix

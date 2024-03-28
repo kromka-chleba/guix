@@ -663,13 +663,13 @@ estimation) corresponding to the book: Wand, M.P. and Jones, M.C. (1995)
 (define-public r-lattice
   (package
     (name "r-lattice")
-    (version "0.22-5")
+    (version "0.22-6")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "lattice" version))
               (sha256
                (base32
-                "1wd5dlxi0hd4l08g999y3xnxnaq06gwvflcqr9ym0cx131gbw7xs"))))
+                "1xq09lfjlca6c7mn412hjjav0q66p7wmjrwx5f3ygv3jwh8p4dsb"))))
     (build-system r-build-system)
     (home-page "https://lattice.r-forge.r-project.org/")
     (synopsis "High-level data visualization system")
@@ -1908,14 +1908,14 @@ database.")
 (define-public r-dbplyr
   (package
     (name "r-dbplyr")
-    (version "2.4.0")
+    (version "2.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "dbplyr" version))
        (sha256
         (base32
-         "1rzi8112fi0bx2fj0j5ak9bfgqgjk5k5dv66qrb890gsf5bz6m4i"))))
+         "1zxw4ignzm2fzixsf6n80f44b9q7434vamy2xj4v31wlx3dmnixv"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-blob
@@ -2981,13 +2981,13 @@ pure C implementation of the Git core methods.")
 (define-public r-rstudioapi
   (package
     (name "r-rstudioapi")
-    (version "0.15.0")
+    (version "0.16.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "rstudioapi" version))
               (sha256
                (base32
-                "1kvc870gx02cpb800zjvdrhfhyfpzgkydgw2g7kxdlrpr8fwhnwk"))))
+                "1rjgxn7p15a69vfkhwrxywag6w9k4ccnklpvhr1sb1wy35ksizvl"))))
     (build-system r-build-system)
     (native-inputs
      (list r-knitr))

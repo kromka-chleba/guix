@@ -5,10 +5,11 @@
 ;;; Copyright © 2019 Brian Leung <bkleung89@gmail.com>
 ;;; Copyright © 2019 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2019 Vagrant Cascadian <vagrant@debian.org>
-;;; Copyright © 2019, 2020, 2021 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2019-2022 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2020 Joseph LaFreniere <joseph@lafreniere.xyz>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2020, 2021 raingloom <raingloom@riseup.net>
+;;; Copyright © 2021 Collin J. Doering <collin@rekahsoft.ca>
 ;;; Copyright © 2021 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
 ;;; Copyright © 2021 Sarah Morgensen <iskarian@mgsn.dev>
@@ -142,6 +143,57 @@ syntax highlighted HTML, ANSI-coloured text, etc.")
      (list go-github-com-alecthomas-assert-v2
            go-github-com-alecthomas-repr))))
 
+(define-public go-github-com-alecthomas-kingpin
+  (package
+    (name "go-github-com-alecthomas-kingpin")
+    (version "2.2.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alecthomas/kingpin")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mndnv3hdngr3bxp7yxfd47cas4prv98sqw534mx7vp38gd88n5r"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/alecthomas/kingpin"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-alecthomas-template
+           go-github-com-alecthomas-units))
+    (home-page "https://github.com/alecthomas/kingpin")
+    (synopsis "Go library provides utilities for building command line interfaces")
+    (description
+     "Go library provides utilities for building command line interfaces.")
+    (license license:expat)))
+
+(define-public go-github-com-alecthomas-kingpin-v2
+  (package
+    (inherit go-github-com-alecthomas-kingpin)
+    (name "go-github-com-alecthomas-kingpin-v2")
+    (version "2.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alecthomas/kingpin")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12xl62xzwq2h71hp1i0133403zhyqwsh95sr870fx18wmpqh8shf"))))
+    (arguments
+     (list
+      #:import-path "github.com/alecthomas/kingpin/v2"))
+    (propagated-inputs
+     (list go-github-com-alecthomas-units
+           go-github-com-xhit-go-str2duration-v2))
+    (native-inputs
+     (list go-github-com-stretchr-testify))))
+
 (define-public go-github-com-alecthomas-participle-v2
   (package
     (name "go-github-com-alecthomas-participle-v2")
@@ -170,25 +222,82 @@ structs.  The approach is similar to how other marshallers work in Golang,
 \"unmarshalling\" an instance of a grammar into a struct.")
     (license license:expat)))
 
+(define-public go-github-com-alecthomas-template
+  ;; No release, see <https://github.com/alecthomas/template/issues/7>.
+  (let ((commit "a0175ee3bccc567396460bf5acd36800cb10c49c")
+        (revision "0"))
+    (package
+      (name "go-github-com-alecthomas-template")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/alecthomas/template")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0qjgvvh26vk1cyfq9fadyhfgdj36f1iapbmr5xp6zqipldz8ffxj"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/alecthomas/template"))
+      (home-page "https://github.com/alecthomas/template")
+      (synopsis "Fork of Go's text/template adding newline elision")
+      (description
+       "This is a fork of Go 1.4's text/template package with one addition: a
+backslash immediately after a closing delimiter will delete all subsequent
+newlines until a non-newline.")
+      (license license:bsd-3))))
+
+(define-public go-github-com-alecthomas-units
+  ;; No release, see <https://github.com/alecthomas/units/issues/9>.
+  (let ((commit "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a")
+        (revision "0"))
+    (package
+      (name "go-github-com-alecthomas-units")
+      (version "0.0.0")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/alecthomas/units")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1j65b91qb9sbrml9cpabfrcf07wmgzzghrl7809hjjhrmbzri5bl"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/alecthomas/units"))
+      (native-inputs
+       (list go-github-com-stretchr-testify))
+      (home-page "https://github.com/alecthomas/units")
+      (synopsis "Helpful unit multipliers and functions for Go")
+      (description
+       "This library provides unit multipliers and functions for Go.")
+      (license license:expat))))
+
 (define-public go-github-com-anmitsu-go-shlex
   (package
     (name "go-github-com-anmitsu-go-shlex")
     (version "0.0.0-20200514113438-38f4b401e2be")
     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/anmitsu/go-shlex")
-               (commit (go-version->git-ref version))))
-        (file-name (git-file-name name version))
-        (sha256
-          (base32 "17iz68yzbnr7y4s493asbagbv79qq8hvl2pkxvm6bvdkgphj8w1g"))))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/anmitsu/go-shlex")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17iz68yzbnr7y4s493asbagbv79qq8hvl2pkxvm6bvdkgphj8w1g"))))
     (build-system go-build-system)
     (arguments '(#:import-path "github.com/anmitsu/go-shlex"))
     (home-page "https://github.com/anmitsu/go-shlex")
     (synopsis "Simple shell-like lexical analyzer for Go")
-    (description "This package provides a simple lexical analyzer to parse
-shell-like commands.")
+    (description
+     "This package provides a simple lexical analyzer to parse shell-like
+commands.")
     (license license:expat)))
 
 (define-public go-github-com-armon-go-radix
@@ -615,17 +724,19 @@ of unit files.")))
 
 (define-public go-github-com-cyberdelia-go-metrics-graphite
   (package
+    ;; No release, see
+    ;; <https://github.com/cyberdelia/go-metrics-graphite/issues/17>.
     (name "go-github-com-cyberdelia-go-metrics-graphite")
     (version "0.0.0-20161219230853-39f87cc3b432")
     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/cyberdelia/go-metrics-graphite")
-               (commit (go-version->git-ref version))))
-        (file-name (git-file-name name version))
-        (sha256
-          (base32 "1nnpwryw8i110laffyavvhx38gcd1jnpdir69y6fxxzpx06d094w"))))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cyberdelia/go-metrics-graphite")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1nnpwryw8i110laffyavvhx38gcd1jnpdir69y6fxxzpx06d094w"))))
     (build-system go-build-system)
     (propagated-inputs
      (list go-github-com-rcrowley-go-metrics))
@@ -634,7 +745,8 @@ of unit files.")))
        #:import-path "github.com/cyberdelia/go-metrics-graphite"))
     (home-page "https://github.com/cyberdelia/go-metrics-graphite")
     (synopsis "Graphite client for go-metrics")
-    (description "This package provides a reporter for the
+    (description
+     "This package provides a reporter for the
 @url{https://github.com/rcrowley/go-metrics,go-metrics} library which posts
 metrics to Graphite.")
     (license license:bsd-2)))
@@ -1249,6 +1361,33 @@ customized globally.")
 database/sql package.")
     (license license:expat)))
 
+(define-public go-github-com-kballard-go-shellquote
+  ;; No release, see <https://github.com/kballard/go-shellquote/issues/13>.
+  (let ((commit "95032a82bc518f77982ea72343cc1ade730072f0")
+        (revision "1"))
+    (package
+      (name "go-github-com-kballard-go-shellquote")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/kballard/go-shellquote")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1rspvmnsikdq95jmx3dykxd4k1rmgl98ryjrysvl0cf18hl1vq80"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/kballard/go-shellquote"))
+      (synopsis "Shell-style string joins and splits")
+      (description
+       "Shellquote provides utilities for joining/splitting strings using sh's
+word-splitting rules.")
+      (home-page "https://github.com/kballard/go-shellquote")
+      (license license:expat))))
+
 (define-public go-github-com-matryer-try
   (package
     (name "go-github-com-matryer-try")
@@ -1318,14 +1457,14 @@ the @code{cpan} module @code{Parse::CommandLine}.")
     (name "go-github-com-miekg-dns")
     (version "1.1.48")
     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/miekg/dns")
-               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-          (base32 "14m4wnbgmc1prj4ds1fsz1nwb1awaq365lhbp8clzsidxmhjf3hl"))))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/miekg/dns")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14m4wnbgmc1prj4ds1fsz1nwb1awaq365lhbp8clzsidxmhjf3hl"))))
     (build-system go-build-system)
     (arguments '(#:import-path "github.com/miekg/dns"))
     (propagated-inputs
@@ -1336,7 +1475,7 @@ the @code{cpan} module @code{Parse::CommandLine}.")
     (home-page "https://github.com/miekg/dns")
     (synopsis "Domain Name Service library in Go")
     (description
-      "This package provides a fully featured interface to the @acronym{DNS,
+     "This package provides a fully featured interface to the @acronym{DNS,
 Domain Name System}.  Both server and client side programming is supported.
 The package allows complete control over what is sent out to the @acronym{DNS,
 Domain Name Service}.  The API follows the less-is-more principle, by
@@ -1474,25 +1613,27 @@ very fast, and tries to be entropy pool friendly.")
     (name "go-github-com-nbrownus-go-metrics-prometheus")
     (version "0.0.0-20210712211119-974a6260965f")
     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/nbrownus/go-metrics-prometheus")
-               (commit (go-version->git-ref version))))
-        (file-name (git-file-name name version))
-        (sha256
-          (base32 "1kl9l08aas544627zmhkgp843qx94sxs4inxm20nw1hx7gp79dz0"))))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nbrownus/go-metrics-prometheus")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kl9l08aas544627zmhkgp843qx94sxs4inxm20nw1hx7gp79dz0"))))
     (build-system go-build-system)
     (arguments '(#:import-path "github.com/nbrownus/go-metrics-prometheus"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
     (propagated-inputs
-     (list go-github-com-stretchr-testify
-           go-github-com-rcrowley-go-metrics
-           go-github-com-prometheus-client-golang))
+     (list go-github-com-prometheus-client-golang
+           go-github-com-rcrowley-go-metrics))
     (home-page "https://github.com/nbrownus/go-metrics-prometheus")
     (synopsis "Prometheus support for go-metrics")
-    (description "This package provides a reporter for the @code{go-metrics}
-library which posts the metrics to the Prometheus client registry and just
-updates the registry.")
+    (description
+     "This package provides a reporter for the @code{go-metrics} library which
+posts the metrics to the Prometheus client registry and just updates the
+registry.")
     (license license:asl2.0)))
 
 (define-public go-github-com-nsqio-go-diskqueue
@@ -1949,6 +2090,31 @@ weighted moving averages}.")
 @code{MemoryInfo}.")
     (license license:expat)))
 
+(define-public go-github-com-xhit-go-str2duration-v2
+  (package
+    (name "go-github-com-xhit-go-str2duration-v2")
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xhit/go-str2duration")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1c9zi9mfy5ww413y1jpfh1rdis43lvd5v6gvajqzh4q1km9lyxjj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/xhit/go-str2duration/v2"))
+    (home-page "https://github.com/xhit/go-str2duration")
+    (synopsis "Convert string to duration in golang")
+    (description
+     "This package provides a means to obtain @code{time.Duration} from a
+string.  The string can be a string retorned for @code{time.Duration} or a
+similar string with weeks or days too.")
+    (license license:bsd-3)))
+
 (define-public go-go-uber-org-automaxprocs
   (package
     (name "go-go-uber-org-automaxprocs")
@@ -2006,6 +2172,13 @@ CPU quota.")
      "This package provides a library for fast, structured, leveled logging in
 Go.")
     (license license:expat)))
+
+(define-public go-gopkg-in-alecthomas-kingpin-v2
+  (package
+    (inherit go-github-com-alecthomas-kingpin)
+    (arguments
+     (list
+      #:import-path "gopkg.in/alecthomas/kingpin.v2"))))
 
 (define-public go-gopkg-in-op-go-logging-v1
   (package
