@@ -3173,32 +3173,6 @@ termination.")
                       "t.Fatalf(`Killf(\"BO%%s")))))))
     (home-page "https://gopkg.in/tomb.v1")))
 
-(define-public go-gopkg-in-natefinch-lumberjack.v2
-  (package
-    (name "go-gopkg-in-natefinch-lumberjack.v2")
-    (version "2.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/natefinch/lumberjack")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1l3vlv72b7rfkpy1164kwd3qzrqmmjnb67akzxqp2mlvc66k6p3d"))))
-    (build-system go-build-system)
-    (arguments
-     '(#:import-path "gopkg.in/natefinch/lumberjack.v2"))
-    (propagated-inputs
-     `(("github.com/burntsush/toml" ,go-github-com-burntsushi-toml)
-       ("gopkg.in/yaml.v2" ,go-gopkg-in-yaml-v2)))
-    (home-page "https://github.com/natefinch/lumberjack")
-    (synopsis "Rolling logger for Go")
-    (description
-     "Lumberjack is a Go package for writing logs to rolling files.")
-    (license license:expat)))
-
 (define-public go-github.com-jtolds-gls
   (package
     (name "go-github.com-jtolds-gls")
@@ -6070,31 +6044,6 @@ and aid debugging.")
     (description "This package provides a cron library for Go.  It implements
 a cron spec parser and job runner.")
     (license license:expat)))
-
-(define-public go-github-com-danwakefield-fnmatch
-  (let ((commit "cbb64ac3d964b81592e64f957ad53df015803288")
-        (revision "0"))
-    (package
-     (name "go-github-com-danwakefield-fnmatch")
-     (version (git-version "0.0.0" revision commit))
-     (source
-      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/danwakefield/fnmatch")
-             (commit commit)))
-       (sha256
-        (base32
-         "0cbf511ppsa6hf59mdl7nbyn2b2n71y0bpkzbmfkdqjhanqh1lqz"))
-       (file-name (git-file-name name version))))
-     (build-system go-build-system)
-     (arguments
-      '(#:import-path "github.com/danwakefield/fnmatch"))
-     (home-page "https://github.com/danwakefield/fnmatch")
-     (synopsis "Updated clone of kballards golang fnmatch gist")
-     (description "This package provides an updated clone of kballards golang
-fnmatch gist (https://gist.github.com/kballard/272720).")
-     (license license:bsd-2))))
 
 (define-public go-github-com-ddevault-go-libvterm
   (let ((commit "b7d861da381071e5d3701e428528d1bfe276e78f")

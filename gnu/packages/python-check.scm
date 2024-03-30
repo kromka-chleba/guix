@@ -546,20 +546,25 @@ astropy related packages.")
 (define-public python-pytest-arraydiff
   (package
     (name "python-pytest-arraydiff")
-    (version "0.5.0")
+    (version "0.6.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest-arraydiff" version))
        (sha256
-        (base32 "1livzfbi7ag17hskd5845dh1kdir24f7jrbw8y2s1pyhzyz4jhbi"))))
-    (build-system python-build-system)
+        (base32 "1pk7v96rkypx4ld59f6p8fh5bq371ka8g7bh4h7n4df91x2v2dr9"))))
+    (build-system pyproject-build-system)
     (arguments
-     ;; Tests require python-astropy, which itself requires this package.
-     ;; Disable tests to avoid the circular dependency problem.
-     '(#:tests? #f))
+     (list
+      #:test-flags
+      #~(list "-k" (string-append
+                    ;; Disable tests requiring python-astropy, to break cycle.
+                    "not test_succeeds_func_fits_hdu"
+                    " and not test_fails"
+                    " and not test_generate"
+                    " and not test_default_format"))))
     (native-inputs
-     (list python-pytest python-setuptools-scm)) ; for sanity-check
+     (list python-pytest python-setuptools-scm))
     (propagated-inputs
      (list python-numpy))
     (home-page "https://github.com/astropy/pytest-arraydiff")
@@ -605,26 +610,29 @@ running the tests.")
 (define-public python-pytest-doctestplus
   (package
     (name "python-pytest-doctestplus")
-    (version "1.0.0")
+    (version "1.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest-doctestplus" version))
        (sha256
-        (base32 "17ylfnrcvvp6sd13bfj40jl40paqmjsbywysszb3xqgdr86l8l7n"))))
+        (base32 "0cmrkgpib869kpy8h8hfkg20w16lakkmbkw8cxdywpmf5wx7dbf5"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags
            #~(list "-k" (string-append
+                         ;; Tests requiring network access.
                          "not test_remote_data_url"
                          " and not test_remote_data_float_cmp"
                          " and not test_remote_data_ignore_whitespace"
                          " and not test_remote_data_ellipsis"
                          " and not test_remote_data_requires"
-                         " and not test_remote_data_ignore_warnings"))))
+                         " and not test_remote_data_ignore_warnings"
+                         ;; Requiring git available.
+                         " and not test_generate_diff_basic"))))
     (native-inputs
      (list python-numpy python-pytest python-setuptools-scm))
-    (home-page "https://github.com/astropy/pytest-doctestplus")
+    (home-page "https://github.com/scientific-python/pytest-doctestplus")
     (synopsis "Pytest plugin with advanced doctest features")
     (description
      "This package contains a plugin for the Pytest framework that provides
@@ -661,13 +669,13 @@ for interactively selecting and running Pytest tests.")
 (define-public python-pytest-filter-subpackage
   (package
     (name "python-pytest-filter-subpackage")
-    (version "0.1.2")
+    (version "0.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest-filter-subpackage" version))
        (sha256
-        (base32 "10hpl3f7g2bm29lakmp8492b7lr0dp90khfni12m4gl02xks7bhz"))))
+        (base32 "0mmgg2n8qk6s2kprycjl70lxcpm43dkapplmkf32i0ai6qdqyiiz"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-pytest

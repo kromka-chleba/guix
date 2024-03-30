@@ -8,6 +8,7 @@
 ;;; Copyright © 2019-2022 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2020 Joseph LaFreniere <joseph@lafreniere.xyz>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2020, 2021 Martin Becze <mjbecze@riseup.net>
 ;;; Copyright © 2020, 2021 raingloom <raingloom@riseup.net>
 ;;; Copyright © 2021 Collin J. Doering <collin@rekahsoft.ca>
 ;;; Copyright © 2021 Guillaume Le Vaillant <glv@posteo.net>
@@ -490,6 +491,38 @@ information and periodically output metrics")
 quantiles over an unbounded data stream within low memory and CPU bounds.")
     (license license:bsd-2)))
 
+(define-public go-github-com-briandowns-spinner
+  (package
+    (name "go-github-com-briandowns-spinner")
+    (version "1.23.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/briandowns/spinner")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "036r59m068k8grr0q77a6b1rqw4dyxm00fsxj7b9w1fjviq8djs6"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/briandowns/spinner"))
+    (propagated-inputs
+     (list go-github-com-fatih-color
+           go-github-com-mattn-go-isatty
+           go-golang-org-x-term))
+    (home-page "https://github.com/briandowns/spinner")
+    (synopsis "Terminal spinner/progress indicators")
+    (description
+     "Package spinner is a simple package to add a spinner / progress
+indicator to any terminal application.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-burntsushi-toml
   (package
     (name "go-github-com-burntsushi-toml")
@@ -750,6 +783,33 @@ of unit files.")))
 @url{https://github.com/rcrowley/go-metrics,go-metrics} library which posts
 metrics to Graphite.")
     (license license:bsd-2)))
+
+(define-public go-github-com-danwakefield-fnmatch
+  (let ((commit "cbb64ac3d964b81592e64f957ad53df015803288")
+        (revision "0"))
+    (package
+      (name "go-github-com-danwakefield-fnmatch")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/danwakefield/fnmatch")
+               (commit commit)))
+         (sha256
+          (base32 "0cbf511ppsa6hf59mdl7nbyn2b2n71y0bpkzbmfkdqjhanqh1lqz"))
+         (file-name (git-file-name name version))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/danwakefield/fnmatch"))
+      (home-page "https://github.com/danwakefield/fnmatch")
+      (synopsis "Updated clone of kballards golang fnmatch gist")
+      (description
+       "This package provides string-matching based on BSD fnmatch.3.  It is an
+updated clone of kballards golang fnmatch
+gist (https://gist.github.com/kballard/272720).")
+      (license license:bsd-2))))
 
 (define-public go-github-com-dave-jennifer
   (package
@@ -1361,6 +1421,71 @@ customized globally.")
 database/sql package.")
     (license license:expat)))
 
+(define-public go-github-com-logrusorgru-aurora
+  (package
+    (name "go-github-com-logrusorgru-aurora")
+    (version "2.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/logrusorgru/aurora")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "1ck2j2ff2avph07vgq0r1y7hmbqgvk339rvph45dcwgci23lb3pf"))
+       (file-name (git-file-name name version))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/logrusorgru/aurora"))
+    (home-page "https://github.com/logrusorgru/aurora")
+    (synopsis "Ultimate ANSI colors for Golang")
+    (description
+     "This package provides ANSI colors for Golang.  The package supports
+Printf/Sprintf etc.")
+    (license license:unlicense)))
+
+(define-public go-github-com-logrusorgru-aurora-v3
+  (package
+    (inherit go-github-com-logrusorgru-aurora)
+    (name "go-github-com-logrusorgru-aurora-v3")
+    (version "3.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/logrusorgru/aurora")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "0z7cgj8gl69271d0ag4f4yjbsvbrnfibc96cs01spqf5krv2rzjc"))
+       (file-name (git-file-name name version))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/logrusorgru/aurora/v3"))))
+
+(define-public go-github-com-logrusorgru-aurora-v4
+  (package
+    (inherit go-github-com-logrusorgru-aurora)
+    (name "go-github-com-logrusorgru-aurora-v4")
+    (version "4.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/logrusorgru/aurora")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "0a4w4p0sl5hwa9fridk7s023sjcis8qf1k8fm3g5qar58vxzlh9w"))
+       (file-name (git-file-name name version))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.19
+      #:import-path "github.com/logrusorgru/aurora/v3"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))))
+
 (define-public go-github-com-kballard-go-shellquote
   ;; No release, see <https://github.com/kballard/go-shellquote/issues/13>.
   (let ((commit "95032a82bc518f77982ea72343cc1ade730072f0")
@@ -1386,6 +1511,41 @@ database/sql package.")
        "Shellquote provides utilities for joining/splitting strings using sh's
 word-splitting rules.")
       (home-page "https://github.com/kballard/go-shellquote")
+      (license license:expat))))
+
+(define-public go-github-com-marcinbor85-gohex
+  ;; No release, see <https://github.com/marcinbor85/gohex/issues/5>.
+  (let ((commit "baab2527a9a2a4abb3dc06baabedfa5e0268b8d8")
+        (revision "0"))
+    (package
+      (name "go-github-com-marcinbor85-gohex")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/marcinbor85/gohex")
+               (commit commit)))
+         (sha256
+          (base32 "06v4cc6ld6vvxd4xm9k6l49lhcd9ncq7xfx35mj5b9r96ih49fiz"))
+         (file-name (git-file-name name version))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/marcinbor85/gohex"))
+      (home-page "https://pkg.go.dev/github.com/marcinbor85/gohex")
+      (synopsis "Parse Intel HEX files")
+      (description
+       "This package provides a Golang library for parsing Intel HEX files,
+implementing features like:
+
+@itemize
+@item robust intelhex parsing (full test coverage)
+@item support i32hex format
+@item two-way converting hex<->bin
+@item trivial but powerful api (only the most commonly used functions)
+@item interface-based IO functions
+@end itemize")
       (license license:expat))))
 
 (define-public go-github-com-matryer-try
@@ -2179,6 +2339,51 @@ Go.")
     (arguments
      (list
       #:import-path "gopkg.in/alecthomas/kingpin.v2"))))
+
+(define-public go-gopkg-in-cheggaaa-pb-v1
+  (package
+    (inherit go-github-com-cheggaaa-pb-v3)
+    (name "go-gopkg-in-cheggaaa-pb-v1")
+    (version "1.0.28")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gopkg.in/cheggaaa/pb.v1.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "13a66cqbpdif804qj12z9ad8r24va9q41gfk71qbc4zg1wsxs3rh"))))
+    (arguments
+     (list
+      #:import-path "gopkg.in/cheggaaa/pb.v1"))))
+
+(define-public go-gopkg-in-natefinch-lumberjack.v2
+  (package
+    (name "go-gopkg-in-natefinch-lumberjack.v2")
+    (version "2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/natefinch/lumberjack")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1l3vlv72b7rfkpy1164kwd3qzrqmmjnb67akzxqp2mlvc66k6p3d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gopkg.in/natefinch/lumberjack.v2"))
+    (propagated-inputs
+     (list go-github-com-burntsushi-toml
+           go-gopkg-in-yaml-v2))
+    (home-page "https://github.com/natefinch/lumberjack")
+    (synopsis "Rolling logger for Go")
+    (description
+     "Lumberjack is a Go package for writing logs to rolling files.")
+    (license license:expat)))
 
 (define-public go-gopkg-in-op-go-logging-v1
   (package

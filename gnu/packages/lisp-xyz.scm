@@ -2552,6 +2552,40 @@ It is similar to the @code{CL:LOOP} macro, with these distinguishing marks:
 (define-public ecl-iterate
   (sbcl-package->ecl-package sbcl-iterate))
 
+(define-public sbcl-charje.loop
+  (package
+    (name "sbcl-charje.loop")
+    (version "0.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~charje/loop")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "cl-charje.loop" version))
+       (sha256
+        (base32
+         "1x1hw5xmrx9xmfzga8y0yi6s27r7zc80rwl2z7l4d2h24ykscvd4"))))
+    (build-system asdf-build-system/sbcl)
+    (inputs
+     (list sbcl-alexandria
+           sbcl-binding-arrows
+           sbcl-parse-declarations))
+    (home-page "https://git.sr.ht/~charje/loop")
+    (synopsis "Loop abstraction for Common Lisp that is consistent for
+different kinds of data")
+    (description "Loop is a joy to use and has a consistent interface unlike
+other looping abstractions and ANSI list operations.  You can define your own
+iterators and aggregators that integrate tightly into other operations.  All
+operations are non-consing when possible.")
+    (license license:agpl3+)))
+
+(define-public cl-charje.loop
+  (sbcl-package->cl-source-package sbcl-charje.loop))
+
+(define-public ecl-charje.loop
+  (sbcl-package->ecl-package sbcl-charje.loop))
+
 (define-public sbcl-cl-uglify-js
   ;; There have been many bug fixes since the 2010 release.
   (let ((commit "429c5e1d844e2f96b44db8fccc92d6e8e28afdd5")
@@ -22778,8 +22812,8 @@ resolving the tension between granularity and concurrency.")
 
 (define-public sbcl-binding-arrows
   ;; Fork of sbcl-arrows that does not have a new tag.
-  (let ((commit "d19364ec8850880ed6e42078ccaa2ed9114dc83a")
-        (revision "1"))
+  (let ((commit "46bcba8bb1ff27cd5caab3bda36f000d0489a4f2")
+        (revision "2"))
     (package
      (name "sbcl-binding-arrows")
      (version (git-version "1.0.0" revision commit))
@@ -22789,9 +22823,9 @@ resolving the tension between granularity and concurrency.")
        (uri (git-reference
              (url "https://github.com/phoe/binding-arrows")
              (commit commit)))
-       (file-name (git-file-name name version))
+       (file-name (git-file-name "cl-binding-arrows" version))
        (sha256
-        (base32 "0hqikgzic7kjq2n1d924yldfm30qz67cmsk6gghi9cbmxkwdlwp8"))))
+        (base32 "0kzybw5qlb49czh9v2lnxniz9jzqx306a6lnarfv59x48a7cch22"))))
      (build-system asdf-build-system/sbcl)
      (native-inputs
       (list sbcl-hu.dwim.stefil))

@@ -225,15 +225,15 @@ BUFR and WMO GTS abbreviated header formats.")
 (define-public cdo
   (package
     (name "cdo")
-    (version "2.1.0")
+    (version "2.4.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://code.mpimet.mpg.de/attachments/download/27481/cdo-"
+             "https://code.mpimet.mpg.de/attachments/download/29313/cdo-"
              version ".tar.gz"))
        (sha256
-        (base32 "1k18llghpf3jnjn0xcnhmbg7arb1fiy854qqn9m5c1abjin38wdq"))))
+        (base32 "0b2d1d8r1lxs422dxajnmvjyhjwfichlkglv3yqm7wq7rjw0yyd4"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -258,7 +258,7 @@ BUFR and WMO GTS abbreviated header formats.")
     (inputs
      (list curl eccodes fftw hdf5 libxml2 netcdf proj udunits))
     (native-inputs
-     (list pkg-config))
+     (list pkg-config python-wrapper))
     (home-page "https://code.mpimet.mpg.de/projects/cdo")
     (synopsis "Climate data operators")
     (description "@acronym{CDO, Climate Data Operators} is a collection of command-line
@@ -470,7 +470,7 @@ topology functions.")
 (define-public gnome-maps
   (package
     (name "gnome-maps")
-    (version "43.0")                    ;for libsoup 3 support
+    (version "44.5")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -478,7 +478,7 @@ topology functions.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1r1l6ajs6zz316m8zac5r0l3qgdv616xh376bfn2fflcnz7wys08"))))
+                "026488yb6azwb2sm0yy0iaipk914l3agvb7d8azks4kyjqlslyb8"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -520,11 +520,10 @@ topology functions.")
            glib-networking
            gnome-online-accounts
            gsettings-desktop-schemas
-           gtk+
+           gtk
            libadwaita
            libgee
            libgweather4
-           libhandy
            librsvg
            libsecret
            libshumate
@@ -3188,23 +3187,19 @@ latitude and longitude.")
 (define-public gplates
   (package
     (name "gplates")
-    ;; Note: use a pre-release to cope with newer Boost, ref
-    ;; https://discourse.gplates.org/t/compilation-error-with-boost-1-77/452/3
-    (version "2.3.01-beta.3")
+    (version "2.4")
     (source (origin
-              (method url-fetch)
-              (uri "https://cloudstor.aarnet.edu.au/plus/s\
-/ojsYNOyUYE3evNp/download?path=%2F&files=gplates_2.3.1-beta.3_src.zip")
-              (file-name (string-append name "-" version ".zip"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/GPlates/GPlates")
+                    (commit (string-append "GPlates-" version))))
               (sha256
                (base32
-                "06i87dfab0cq9gdi5mh6sf9wigawpp0d05zbyslv910443i26gwv"))))
+                "1awb4igchgpmrvj6blxd1w81c617bs66w6cfrwvf30n6rjlyn6q5"))
+              (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags (list "-DBoost_NO_BOOST_CMAKE=ON")
-       #:tests? #f))                    ;no test target
-    (native-inputs
-     (list unzip))                      ;for the beta
+     (list #:tests? #f))                    ;no test target
     (inputs
      (list boost
            cgal

@@ -599,8 +599,7 @@ API key.")
                          (search-input-file inputs "bin/guile"))))))
           (add-after 'make-autoloads 'patch-autoloads
             (lambda _
-              (substitute* (string-append (elpa-directory #$output)
-                                          "/geiser-guile-autoloads.el")
+              (substitute* "geiser-guile-autoloads.el"
                 ;; Activating implementations fails when Geiser is not yet
                 ;; loaded, so let's defer that until it is.
                 (("\\(geiser-activate-implementation .*\\)" all)
@@ -669,8 +668,7 @@ using geiser.")
                    (search-input-file inputs "bin/gosh")))))
             (add-after 'make-autoloads 'patch-autoloads
               (lambda _
-                (substitute* (string-append (elpa-directory #$output)
-                                            "/geiser-gauche-autoloads.el")
+                (substitute* "geiser-gauche-autoloads.el"
                   ;; Activating implementations fails when Geiser is not yet
                   ;; loaded, so let's defer that until it is.
                   (("\\(geiser-activate-implementation .*\\)" all)
@@ -715,8 +713,7 @@ a generic Scheme interaction mode for the GNU Emacs editor.")
                          (search-input-file inputs "bin/racket"))))))
           (add-after 'make-autoloads 'patch-autoloads
             (lambda _
-              (substitute* (string-append (elpa-directory #$output)
-                                          "/geiser-racket-autoloads.el")
+              (substitute* "geiser-racket-autoloads.el"
                 ;; Activating implementations fails when Geiser is not yet
                 ;; loaded, so let's defer that until it is.
                 (("\\(geiser-activate-implementation .*\\)" all)
@@ -754,9 +751,7 @@ a generic Scheme interaction mode for the GNU Emacs editor.")
        (modify-phases %standard-phases
          (add-after 'make-autoloads 'patch-autoloads
            (lambda* (#:key outputs #:allow-other-keys)
-             (substitute* (string-append
-                           (elpa-directory (assoc-ref outputs "out"))
-                           "/geiser-chez-autoloads.el")
+             (substitute* "geiser-chez-autoloads.el"
                ;; Activating implementations fails when Geiser is not yet
                ;; loaded, so let's defer that until it is.
                ;; See <https://gitlab.com/emacs-geiser/chez/-/issues/7>.
@@ -1593,13 +1588,11 @@ on stdout instead of using a socket as the Emacsclient does.")
                                            emacs:%default-include)))))
             (add-after 'unpack 'emacs-add-install-to-native-load-path
               (assoc-ref emacs:%standard-phases 'add-install-to-native-load-path))
-            (add-after 'install 'make-autoloads
+            (add-after 'unpack 'make-autoloads
               (assoc-ref emacs:%standard-phases 'make-autoloads))
-            (add-after 'make-autoloads 'enable-autoloads-compilation
-              (assoc-ref emacs:%standard-phases 'enable-autoloads-compilation))
-            (add-after 'enable-autoloads-compilation 'patch-el-files
+            (add-after 'unpack 'patch-el-files
               (assoc-ref emacs:%standard-phases 'patch-el-files))
-            (add-after 'patch-el-files 'emacs-build
+            (add-after 'install 'emacs-build
               (assoc-ref emacs:%standard-phases 'build))
             (add-after 'emacs-build 'validate-compiled-autoloads
               (assoc-ref emacs:%standard-phases 'validate-compiled-autoloads)))))
@@ -1678,7 +1671,11 @@ libgit2 bindings for Emacs, intended to boost the performance of Magit.")
             (replace 'install
               (lambda args
                 (with-directory-excursion "lisp"
-                  (apply (assoc-ref %standard-phases 'install) args)))))))
+                  (apply (assoc-ref %standard-phases 'install) args))))
+            (replace 'build
+              (lambda args
+                (with-directory-excursion "lisp"
+                  (apply (assoc-ref %standard-phases 'build) args)))))))
       (native-inputs
        (list texinfo))
       (inputs
@@ -3933,6 +3930,8 @@ defined in RFC 2425 and RFC 2426 to/from The Insidious Big Brother Database
               (emacs-substitute-sexps "eweouz.el"
                 ("eweouz-helper-dirs"
                  `(list ,(string-append #$output "/libexec/eweouz"))))))
+          (add-after 'enter-lisp-dir 'emacs-make-autoloads
+            (assoc-ref emacs:%standard-phases 'make-autoloads))
           (add-after 'emacs-patch-variables 'emacs-expand-load-path
             (assoc-ref emacs:%standard-phases 'expand-load-path))
           (add-after 'emacs-expand-load-path 'emacs-add-install-to-native-load-path
@@ -3940,9 +3939,7 @@ defined in RFC 2425 and RFC 2426 to/from The Insidious Big Brother Database
           (add-after 'emacs-add-install-to-native-load-path 'emacs-install
             (assoc-ref emacs:%standard-phases 'install))
           (add-after 'emacs-install 'emacs-build
-            (assoc-ref emacs:%standard-phases 'build))
-          (add-after 'emacs-install 'emacs-make-autoloads
-            (assoc-ref emacs:%standard-phases 'make-autoloads)))))
+            (assoc-ref emacs:%standard-phases 'build)))))
     (native-inputs
      (list autoconf
            automake
@@ -5611,6 +5608,8 @@ during idle time, while Emacs is doing nothing else.")
              ;; upgrading" that pdf-tools tries to perform.
              (emacs-substitute-variables "pdf-tools.el"
                ("pdf-tools-handle-upgrades" '()))))
+         (add-after 'enter-lisp-dir 'emacs-make-autoloads
+           (assoc-ref emacs:%standard-phases 'make-autoloads))
          (add-after 'emacs-patch-variables 'emacs-expand-load-path
            (assoc-ref emacs:%standard-phases 'expand-load-path))
          (add-after 'emacs-expand-load-path 'emacs-add-install-to-native-load-path
@@ -5618,9 +5617,7 @@ during idle time, while Emacs is doing nothing else.")
          (add-after 'emacs-add-install-to-native-load-path 'emacs-install
            (assoc-ref emacs:%standard-phases 'install))
          (add-after 'emacs-install 'emacs-build
-           (assoc-ref emacs:%standard-phases 'build))
-         (add-after 'emacs-install 'emacs-make-autoloads
-           (assoc-ref emacs:%standard-phases 'make-autoloads)))))
+           (assoc-ref emacs:%standard-phases 'build)))))
     (native-inputs
      (list autoconf automake emacs-minimal pkg-config))
     (inputs
@@ -12313,6 +12310,30 @@ call.")
 library with Eglot instead of Yasnippet.")
       (license license:gpl3+))))
 
+(define-public emacs-eglot-jl
+  (package
+    (name "emacs-eglot-jl")
+    (version "2.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/non-Jedi/eglot-jl")
+         (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "144q4fj3am165vf1vx2ljlsmpn8vvvs1b95qi3rxlwqskkx0lig3"))))
+    (build-system emacs-build-system)
+    (arguments (list #:include #~(cons "\\.(jl|toml)$" %default-include)))
+    (propagated-inputs (list emacs-eglot))
+    (home-page "https://github.com/non-Jedi/eglot-jl")
+    (synopsis "Julia support for Eglot")
+    (description
+     "This package adds support for Eglot to the Julia language.")
+    (license license:cc0)))
+
 (define-public emacs-consult-xdg-recent-files
   (let ((commit "593023ffb99a368152ebd4e739488fa560bdfdea")
         (revision "0"))
@@ -16912,7 +16933,7 @@ passive voice.")
 (define-public emacs-org
   (package
     (name "emacs-org")
-    (version "9.6.21")
+    (version "9.6.24")
     (source
      (origin
        (method git-fetch)
@@ -16921,7 +16942,7 @@ passive voice.")
              (commit (string-append "release_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1hf76wa7qvp9lvkr3rgzk7q3slq7mf17w6w6axaj6cn73ryn2ldw"))))
+        (base32 "1ry7zqv25zbh2lvmirm8vyxc55zggf7s7508nkf4yfs4yayr7rnw"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -16963,6 +16984,10 @@ passive voice.")
               (substitute* "testing/lisp/test-org.el"
                 (("test-org/org-(encode-time|time-string-to-time) .*" all)
                  (string-append all "  (skip-unless nil)\n")))))
+          (replace 'build
+            (lambda args
+              (with-directory-excursion "lisp"
+                (apply (assoc-ref %standard-phases 'build) args))))
           (replace 'install
             (lambda _
               (let ((elpa (elpa-directory #$output))
