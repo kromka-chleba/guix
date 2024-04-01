@@ -2117,7 +2117,7 @@ compository, supporting the following featuers:
 (define-public waybar
   (package
     (name "waybar")
-    (version "0.9.20")
+    (version "0.10.0")
     (source
      (origin
        (method git-fetch)
@@ -2126,7 +2126,7 @@ compository, supporting the following featuers:
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "07h5l7h7wmzqgg7fbp98khrxg2sq2s4ncp4fiiz1yg62r752idy4"))))
+        (base32 "00a8npilvcvicn9mff00i5rdzdll0zrmq0y8wgr314gnljn52md7"))))
     (build-system meson-build-system)
     (arguments
      (list #:configure-flags #~(list "--wrap-mode=nodownload")))
@@ -2197,7 +2197,7 @@ core/thread.")
 (define-public wlr-randr
   (package
     (name "wlr-randr")
-    (version "0.4.0")
+    (version "0.4.1")
     (source
      (origin
        (method git-fetch)
@@ -2206,7 +2206,7 @@ core/thread.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1f3dc2i6c1rn2adfcnqmh10570ps335188zllg66sv1d0l8mggry"))))
+        (base32 "1kl5awwclmlfcxfz0jp8gzpg2vffsl9chfilysfsv1mq11a96ifs"))))
     (build-system meson-build-system)
     (inputs (list wayland))
     (native-inputs (list pkg-config))
