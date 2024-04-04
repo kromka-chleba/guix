@@ -1197,6 +1197,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/ffmpeg-jami-libopusdec-enable-FEC.patch	\
   %D%/packages/patches/ffmpeg-jami-libopusenc-enable-FEC.patch	\
   %D%/packages/patches/ffmpeg-jami-libopusenc-reload-packet-loss-at-encode.patch \
+  %D%/packages/patches/ffmpeg-jami-pipewiregrab-source-filter.patch	\
   %D%/packages/patches/ffmpeg-jami-remove-mjpeg-log.patch	\
   %D%/packages/patches/ffmpeg-jami-screen-sharing-x11-fix.patch	\
   %D%/packages/patches/fifengine-boost-compat.patch		\
@@ -1437,6 +1438,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/gtk4-respect-GUIX_GTK4_PATH.patch    	\
   %D%/packages/patches/gtkglext-disable-disable-deprecated.patch \
   %D%/packages/patches/gtksourceview-2-add-default-directory.patch \
+  %D%/packages/patches/gwenview-kimageannotator.patch		\
   %D%/packages/patches/gzdoom-search-in-installed-share.patch	\
   %D%/packages/patches/gzdoom-find-system-libgme.patch	\
   %D%/packages/patches/hdf4-reproducibility.patch 		\
@@ -1493,8 +1495,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/itk-snap-alt-glibc-compat.patch		\
   %D%/packages/patches/jami-disable-integration-tests.patch	\
   %D%/packages/patches/jami-libjami-headers-search.patch	\
-  %D%/packages/patches/jami-qml-tests-discovery.patch		\
+  %D%/packages/patches/jami-qwindowkit.patch			\
   %D%/packages/patches/jami-skip-tests-requiring-internet.patch	\
+  %D%/packages/patches/jami-tests-qtwebengine-ifdef-to-if.patch	\
   %D%/packages/patches/jami-unbundle-dependencies.patch		\
   %D%/packages/patches/jamvm-1.5.1-aarch64-support.patch	\
   %D%/packages/patches/jamvm-1.5.1-armv7-support.patch	\
@@ -1575,6 +1578,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/liba52-use-mtune-not-mcpu.patch		\
   %D%/packages/patches/libaio-32bit-test.patch                  \
   %D%/packages/patches/libaio-riscv-test5.patch			\
+  %D%/packages/patches/libarchive-remove-potential-backdoor.patch	\
   %D%/packages/patches/libbase-fix-includes.patch		\
   %D%/packages/patches/libbase-use-own-logging.patch		\
   %D%/packages/patches/libbonobo-activation-test-race.patch	\
@@ -1964,10 +1968,12 @@ dist_patch_DATA =						\
   %D%/packages/patches/qemu-fix-agent-paths.patch 		\
   %D%/packages/patches/qrcodegen-cpp-make-install.patch		\
   %D%/packages/patches/qtbase-absolute-runpath.patch		\
+  %D%/packages/patches/qtbase-find-tools-in-PATH.patch		\
+  %D%/packages/patches/qtbase-qmake-fix-includedir.patch 	\
+  %D%/packages/patches/qtbase-qmlimportscanner-qml-import-path.patch 	\
   %D%/packages/patches/qtbase-moc-ignore-gcc-macro.patch	\
   %D%/packages/patches/qtbase-qmake-use-libname.patch		\
   %D%/packages/patches/qtbase-5-use-TZDIR.patch			\
-  %D%/packages/patches/qtbase-use-TZDIR.patch			\
   %D%/packages/patches/qtscript-disable-tests.patch		\
   %D%/packages/patches/quagga-reproducible-build.patch          \
   %D%/packages/patches/quickswitch-fix-dmenu-check.patch	\
