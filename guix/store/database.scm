@@ -154,9 +154,17 @@ times.  This may reduce contention for the database somewhat."
   (sqlite-exec db (if restartable? "begin;" "begin immediate;"))
   (catch #t
     (lambda ()
-      (let-values ((result (proc)))
-        (sqlite-exec db "commit;")
-        (apply values result)))
+      (with-throw-handler #t
+        (lambda ()
+          (call-with-values proc
+            (lambda vals
+              (sqlite-exec db "commit;")
+              (apply values vals))))
+        (lambda (key args)
+          (simple-format
+           (current-error-port)
+           "transaction aborted: ~A: ~A\n" key args)
+          (backtrace))))
     (lambda args
       ;; The roll back may or may not have occurred automatically when the
       ;; error was generated. If it has occurred, this does nothing but signal
