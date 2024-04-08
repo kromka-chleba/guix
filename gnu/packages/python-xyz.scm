@@ -151,6 +151,7 @@
 ;;; Copyright © 2024 Ian Eure <ian@retrospec.tv>
 ;;; Copyright © 2024 Adriel Dumas--Jondeau <leirda@disroot.org>
 ;;; Copyright © 2024 Navid Afkhami <navid.afkhami@mdc-berlin.de>
+;;; Copyright © 2024 TakeV <takev@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -20757,6 +20758,35 @@ implementation has been adapted, improved, and fixed from Molten.")
 running in.")
     (license license:isc)))
 
+(define-public python-shshsh
+  (package
+    (name "python-shshsh")
+    (version "1.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/zqqqqz2000/shshsh")
+         (commit
+          "fd21c8696aebaae04507760c16cb45979291fef5")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1wzqyj1a6jj6cyv5ymzy834qm2lyq80yy1kfz0q0zayq9gm1cj7f"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-poetry-core
+           python-pytest
+           python-tox))
+    (home-page "https://github.com/zqqqqz2000/shshsh")
+    (synopsis "Write Shell commands simply and safely within Python")
+    (description "This package provides a way to write Shell commands from
+within Python.  Python functions can be chained together to process input
+Bash control characters are escapted so that parameters can be passed
+without worrying about command injection.")
+    (license license:expat)))
+
 (define-public python-memcached
   (package
     (name "python-memcached")
@@ -34997,6 +35027,28 @@ It’s specially useful when you need to standardize the data from many
 sources.  For example, it allows you to have all your casting and
 parsing rules in a single place.")
     (license license:bsd-3)))
+
+(define-public python-iterable-io
+  (package
+    (name "python-iterable-io")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "iterable-io" version))
+       (sha256
+        (base32 "0g4cn522n4dv6ly8pwf97dc62rr4f7my38v0bh6vmac7jmrip7pv"))))
+    (build-system pyproject-build-system)
+    (home-page "https://github.com/pR0Ps/iterable-io")
+    (synopsis "Adapt generators and other iterables to a file-like interface")
+    (description
+     "@code{iterable-io} is a small Python library that provides an adapter so
+that it's possible to read from
+@url{https://docs.python.org/3/glossary.html#term-iterable,iterable} objects
+in the same way as
+@url{https://docs.python.org/3/glossary.html#term-file-object,file-like}
+objects.")
+    (license license:lgpl3)))
 
 (define-public python-iteround
   (package

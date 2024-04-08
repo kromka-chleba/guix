@@ -28,6 +28,7 @@
 ;;; Copyright © 2023 Timotej Lazar <timotej.lazar@araneo.si>
 ;;; Copyright © 2023 Morgan Smith <Morgan.J.Smith@outlook.com>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -70,6 +71,7 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages graphics)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
@@ -1294,29 +1296,35 @@ on your file system and offers to remove it.  @command{rmlint} can find:
 (define-public lf
   (package
     (name "lf")
-    ;; When updating, remove go-github-com-gdamore-tcell-v2-2.3 from golang.scm.
-    (version "27")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/gokcehan/lf")
-                    (commit (string-append "r" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1piym8za0iw2s8yryh39y072f90mzisv89ffvn1jzb71f71mbfqa"))))
+    (version "31")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gokcehan/lf")
+             (commit (string-append "r" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03icsf4c3j7295s1d8s6srz5gf09a3lghgw3zfcd86p03zhkzsaf"))))
     (build-system go-build-system)
-    (native-inputs
-     (list go-github-com-mattn-go-runewidth go-golang-org-x-term
-           go-gopkg-in-djherbis-times-v1 go-github-com-gdamore-tcell-v2-2.3))
     (arguments
-     `(#:import-path "github.com/gokcehan/lf"))
+     (list
+      #:go go-1.18
+      #:install-source? #f
+      #:import-path "github.com/gokcehan/lf"))
+    (native-inputs
+     (list go-github-com-djherbis-times
+           go-github-com-gdamore-tcell-v2
+           go-github-com-mattn-go-runewidth
+           go-golang-org-x-term
+           go-gopkg-in-djherbis-times-v1))
     (home-page "https://github.com/gokcehan/lf")
     (synopsis "Console file browser similar to Ranger")
-    (description "lf (as in \"list files\") is a terminal file manager
-written in Go.  It is heavily inspired by ranger with some missing and
-extra features.  Some of the missing features are deliberately omitted
-since they are better handled by external tools.")
+    (description
+     "@code{lf} (as in \"list files\") is a terminal file manager written in
+Go.  It is heavily inspired by @code{ranger} with some missing and extra
+features.  Some of the missing features are deliberately omitted since they
+are better handled by external tools.")
     (license license:expat)))
 
 (define-public xfe
