@@ -46,6 +46,9 @@
             call-with-database
             with-database
 
+            call-with-transaction
+            call-with-retrying-transaction
+
             valid-path-id
 
             register-valid-path
