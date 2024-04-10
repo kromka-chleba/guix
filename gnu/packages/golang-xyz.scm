@@ -29,6 +29,7 @@
 ;;; Copyright © 2023 Sergey Trofimov <sarg@sarg.org.ru>
 ;;; Copyright © 2023 Thomas Ieong <th.ieong@free.fr>
 ;;; Copyright © 2023 Timo Wilken <guix@twilken.net>
+;;; Copyright © 2023 Wilko Meyer <w@wmeyer.eu>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;;
@@ -1089,6 +1090,31 @@ scanner API made public.")
 for @code{Set}, @code{Get}, @code{Delete} and @code{Len}.")
     (license license:expat)))
 
+(define-public go-github-com-facette-natsort
+  (package
+    (name "go-github-com-facette-natsort")
+    (version "0.0.0-20181210072756-2cd4dd1e2dcb")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/facette/natsort")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kfas7nq7cfrbaqvpmifg2p8v8z0d2kdqjb7p9y6r0rpdzl2zy6p"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/facette/natsort"))
+    (home-page "https://github.com/facette/natsort")
+    (synopsis "Natural strings sorting in Go")
+    (description
+     "This package provides an implementation of
+@url{https://web.archive.org/web/20210803201519/http://davekoelle.com/alphanum.html,the
+Alphanum Algorithm} developed by Dave Koelle in Go.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-gabriel-vasile-mimetype
   (package
     (name "go-github-com-gabriel-vasile-mimetype")
@@ -1527,6 +1553,33 @@ and stop units of work, which may receive @code{Close} signals from many clients
 struct to another.")
     (license license:expat)))
 
+(define-public go-github-com-johnkerl-lumin
+  (package
+    (name "go-github-com-johnkerl-lumin")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/johnkerl/lumin")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1liv27pxi79q4yr1bd0wgsx31ixw53ipsgs2kp0asxj2d6z4hpiz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/johnkerl/lumin"))
+    (home-page "https://github.com/johnkerl/lumin")
+    (synopsis "Command-line tool to highlight matches in files")
+    (description
+     "@command{lumin} is a simple command-line program which highlights matches
+to a specified pattern (string or regex) in the specified files.  This is like
+@code{grep} with @code{--color}, except that @code{lumin} shows all lines, not
+just matching lines.  This package proviedes a CLI tool and @code{colors}
+library.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-josharian-intern
   (package
     (name "go-github-com-josharian-intern")
@@ -1656,6 +1709,70 @@ customized globally.")
 word-splitting rules.")
       (home-page "https://github.com/kballard/go-shellquote")
       (license license:expat))))
+
+(define-public go-github-com-lestrrat-go-envload
+  (package
+    (name "go-github-com-lestrrat-go-envload")
+    (version "0.0.0-20180220234015-a3eb8ddeffcc")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lestrrat-go/envload")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hlhvygfg67w8pqmjl91124zggnz6m750vjmmjlf8ys63nv3na05"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lestrrat-go/envload"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/lestrrat-go/envload")
+    (synopsis "Restore and load environment variables")
+    (description
+     "This package implements a Perl5 like @code{temporary} variable, for
+applications requiring reloading of configuration from environment variables
+or during the tests temporarily change the value of an environment variable in
+Golang.")
+    (license license:expat)))
+
+(define-public go-github-com-lestrrat-go-strftime
+  (package
+    (name "go-github-com-lestrrat-go-strftime")
+    (version "1.0.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lestrrat-go/strftime")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1iqzxmj3ijldjf99acy44qrrzvfxzn0vza3m0c9bw46bg8v1wsyc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/lestrrat-go/strftime"
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'remove-benchmarks
+                     (lambda* (#:key import-path #:allow-other-keys)
+                       (delete-file-recursively
+                        (string-append "src/" import-path "/bench")))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pkg-errors
+           go-github-com-lestrrat-go-envload))
+    (home-page "https://github.com/lestrrat-go/strftime")
+    (synopsis "Strftime for Golang")
+    (description
+     "This package provides a Golang library implementing the conversion of
+date and time information from a given calendar time to a character string
+according to a format string.  It is optimized for scenarios where the same
+pattern is called repeatedly.")
+    (license license:expat)))
 
 (define-public go-github-com-lib-pq
   (package

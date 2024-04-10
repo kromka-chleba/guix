@@ -502,17 +502,17 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 
 ;; The current "mainline" kernel.
 
-(define-public linux-libre-6.8-version "6.8.2")
+(define-public linux-libre-6.8-version "6.8.4")
 (define-public linux-libre-6.8-gnu-revision "gnu")
 (define deblob-scripts-6.8
   (linux-libre-deblob-scripts
    linux-libre-6.8-version
    linux-libre-6.8-gnu-revision
    (base32 "1kqwcm8baq3zx1z8jrgnvm9yps3y9jbf4pv1pbqqprpdscgl9089")
-   (base32 "1bh8mwwarzp5l9bwa6235qqqmm0i14wix6lfs6wi7nszia5k9j0a")))
+   (base32 "0j9pj370zismhzw18iyx3lwcby3l3160xgpmh5xa8i8cr38r2z5h")))
 (define-public linux-libre-6.8-pristine-source
   (let ((version linux-libre-6.8-version)
-        (hash (base32 "013xs37cnan72baqvmn2qrcbs5bbcv1gaafrcx3a166gbgc25hws")))
+        (hash (base32 "0qwywy89an1w0yvs5957kqyv74mwgxady521w2lmyq00zjaw9pnm")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.8)))
@@ -522,7 +522,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.7-version "6.7.11")
+(define-public linux-libre-6.7-version "6.7.12")
 (define-public linux-libre-6.7-gnu-revision "gnu")
 (define deblob-scripts-6.7
   (linux-libre-deblob-scripts
@@ -532,7 +532,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "16zh4cj1q7khl943ij4fzc815plbcdllns93chv6725gsm338hsl")))
 (define-public linux-libre-6.7-pristine-source
   (let ((version linux-libre-6.7-version)
-        (hash (base32 "0jhb175nlcncrp0y8md7p83yydlx6qqql6llav8djbv3f74rfr1c")))
+        (hash (base32 "113rf3jqfpf3wcv637zbq5ww2hpaaf23y6dsmkds01l8jkipjabc")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.7)))
@@ -541,7 +541,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.23")
+(define-public linux-libre-6.6-version "6.6.25")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -551,22 +551,22 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "17hq5pirvxaq1yscb204950xlakrd4r4mknjqayh1rzj4rzngzyq")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1fd824ia3ngy65c5qaaln7m66ca4p80bwlnvvk76pw4yrccx23r0")))
+        (hash (base32 "0i0zvqlj02rm6wpbidji0rn9559vrpfc1b8gbfjk70lhhyz11llr")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.83")
+(define-public linux-libre-6.1-version "6.1.84")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
    linux-libre-6.1-version
    linux-libre-6.1-gnu-revision
    (base32 "1sf80f2i4vf888xjcn84ymn4w5ynn30ib9033zwmv7f09yvfhapy")
-   (base32 "1ixyx604zwrvn1njxadhmd9j1w3jd13xx5za789l3kj5rgygdwsm")))
+   (base32 "1kp8zl97x1hsmvmdwaq8s8gndfmf8chvlhsw216f86ishi2prws3")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "145iw3wii7znhrqdmgnwhswk235g6gw8axjjji2cw4rn148rddl8")))
+        (hash (base32 "0ykhl4i6yhryzgjkdbdz4pd3b1ghv84h6mpn7bdx0ra7w7mx55xg")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
@@ -1141,12 +1141,6 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
 
-(define-public linux-libre-version         linux-libre-6.7-version)
-(define-public linux-libre-gnu-revision    linux-libre-6.7-gnu-revision)
-(define-public linux-libre-pristine-source linux-libre-6.7-pristine-source)
-(define-public linux-libre-source          linux-libre-6.7-source)
-(define-public linux-libre                 linux-libre-6.7)
-
 (define-public linux-libre-6.8
   (make-linux-libre* linux-libre-6.8-version
                      linux-libre-6.8-gnu-revision
@@ -1154,6 +1148,12 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      '("x86_64-linux" "i686-linux" "armhf-linux"
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
+
+(define-public linux-libre-version         linux-libre-6.8-version)
+(define-public linux-libre-gnu-revision    linux-libre-6.8-gnu-revision)
+(define-public linux-libre-pristine-source linux-libre-6.8-pristine-source)
+(define-public linux-libre-source          linux-libre-6.8-source)
+(define-public linux-libre                 linux-libre-6.8)
 
 (define-public linux-libre-6.6
   (make-linux-libre* linux-libre-6.6-version
@@ -1207,11 +1207,11 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 ;; Linux-Libre.
 ;; Reference: <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-lts-version         linux-libre-6.1-version)
-(define-public linux-libre-lts-gnu-revision    linux-libre-6.1-gnu-revision)
-(define-public linux-libre-lts-pristine-source linux-libre-6.1-pristine-source)
-(define-public linux-libre-lts-source          linux-libre-6.1-source)
-(define-public linux-libre-lts                 linux-libre-6.1)
+(define-public linux-libre-lts-version         linux-libre-6.6-version)
+(define-public linux-libre-lts-gnu-revision    linux-libre-6.6-gnu-revision)
+(define-public linux-libre-lts-pristine-source linux-libre-6.6-pristine-source)
+(define-public linux-libre-lts-source          linux-libre-6.6-source)
+(define-public linux-libre-lts                 linux-libre-6.6)
 
 
 ;;;
@@ -1387,9 +1387,9 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 (define-public linux-libre-with-bpf
   (let ((base-linux-libre
          (make-linux-libre*
-          linux-libre-6.6-version
-          linux-libre-6.6-gnu-revision
-          linux-libre-6.6-source
+          linux-libre-6.8-version
+          linux-libre-6.8-gnu-revision
+          linux-libre-6.8-source
           '("x86_64-linux" "i686-linux" "armhf-linux"
             "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
           #:extra-version "bpf"
