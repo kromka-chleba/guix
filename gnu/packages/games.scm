@@ -9837,6 +9837,34 @@ certainly not least as a fun, realistic, and challenging desktop flight
 simulator.")
     (license license:gpl2+)))
 
+(define-public jstest-gtk
+  ;; There is no recent tagged release; use the latest commit.
+  (let ((commit "60fe6ebdbc6719945be3f04988667dea569085be")
+        (revision "0"))
+    (package
+      (name "jstest-gtk")
+      (version (git-version "0.1.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/Grumbel/jstest-gtk")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1x5m6xvd1r9dhgzh6hp4vrszczbbxr04v7lyh4wjxxzrj3ahbmcq"))))
+      (build-system cmake-build-system)
+      (arguments (list #:configure-flags #~(list "-DBUILD_TESTS=ON")))
+      (native-inputs (list pkg-config))
+      (inputs (list gtkmm-3 libsigc++-2))
+      (home-page "https://github.com/Grumbel/jstest-gtk/")
+      (synopsis "Simple joystick tester GUI")
+      (description "@command{jstest-gtk} is a simple joystick tester based on
+GTK.  It provides a list of attached joysticks, a way to display which buttons
+and axis are pressed, a way to remap axis and buttons and a way to calibrate
+joysticks.")
+      (license license:gpl3+))))
+
 (define-public jumpnbump
   (package
     (name "jumpnbump")
@@ -11720,6 +11748,48 @@ on the pitch of the voice and the rhythm of singing.")
        "This package provides a set of udev rules for game controllers and
 virtual reality devices.")
       (license license:expat))))
+
+(define-public zsnes
+  (package
+    (name "zsnes")
+    (version "2.0.12")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/xyproto/zsnes")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0g9l1ij3p1adkp97wkp0dz44i2xpmsvfpkxvlfkpr7190dibsgsz"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:system "i686-linux"        ;requires 32 bit libraries to build
+           #:tests? #f                  ;no test suite
+           #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target))
+                   (string-append "CXX=" #$(cxx-for-target))
+                   (string-append "PREFIX=" #$output))
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'configure)))) ;no configure script
+    (native-inputs (list nasm pkg-config))
+    (inputs (list glib libpng mesa ncurses sdl zlib))
+    (home-page "https://www.zsnes.com")
+    (synopsis "Super Nintendo Entertainment System emulator")
+    (description "ZSNES is a @acronym{Super Nintendo Entertainment System,
+SNES} emulator that can play most games at full speed with sound and special
+graphic filters.  Some of its features include:
+@itemize
+@item Support for smooth and dynamic image scaling
+@item Support for rewinding and fast-forwarding in-game
+@item JMA compression format
+@item Change the appearance of the GUI
+@item Take screenshots of currently running games
+@item Saving the game at any point by recording the console’s state
+@item Record movies of gameplay which can be played back.
+@end itemize")
+    (license license:gpl2+)
+    (supported-systems (list "x86_64-linux"))))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances

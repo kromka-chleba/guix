@@ -8,6 +8,7 @@
 ;;; Copyright © 2019-2021 Martin Becze <mjbecze@riseup.net>
 ;;; Copyright © 2019-2022 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2020 Alex Griffin <a@ajgrf.com>
+;;; Copyright © 2020 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2020 Joseph LaFreniere <joseph@lafreniere.xyz>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2020, 2021 raingloom <raingloom@riseup.net>
@@ -32,6 +33,7 @@
 ;;; Copyright © 2023 Wilko Meyer <w@wmeyer.eu>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
+;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1115,6 +1117,33 @@ for @code{Set}, @code{Get}, @code{Delete} and @code{Len}.")
 Alphanum Algorithm} developed by Dave Koelle in Go.")
     (license license:bsd-3)))
 
+(define-public go-github-com-fatih-color
+  (package
+    (name "go-github-com-fatih-color")
+    (version "1.16.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/fatih/color")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15689x103gy9q7g7623rlvhwrw27p079ardapmrrag0sdwrx5bq2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/fatih/color"))
+    (propagated-inputs
+     (list go-github-com-mattn-go-colorable
+           go-github-com-mattn-go-isatty))
+    (home-page "https://pkg.go.dev/github.com/fatih/color")
+    (synopsis "Print colored text in Go")
+    (description
+     "This package provides an ANSI color package to output colorized or SGR
+defined output to the standard output.")
+    (license license:expat)))
+
 (define-public go-github-com-gabriel-vasile-mimetype
   (package
     (name "go-github-com-gabriel-vasile-mimetype")
@@ -1202,6 +1231,30 @@ interfaces to back that API.  Packages in the Go ecosystem can depend on it,
 while callers can implement logging with whatever backend is appropriate.")
     (license license:asl2.0)))
 
+(define-public go-github-com-gobwas-glob
+  (package
+    (name "go-github-com-gobwas-glob")
+    (version "0.2.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gobwas/glob")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0jxk1x806zn5x86342s72dq2qy64ksb3zrvrlgir2avjhwb18n6z"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gobwas/glob"))
+    (home-page "https://github.com/gobwas/glob")
+    (synopsis "Go globbing library")
+    (description
+     "This package provides a Go implementation of globs.")
+    (license license:expat)))
+
 (define-public go-github-com-hashicorp-errwrap
   (package
     (name "go-github-com-hashicorp-errwrap")
@@ -1274,7 +1327,7 @@ methods on @code{hclog.Logger} are used correctly.")
        (sha256
         (base32 "0l4s41skdpifndn9s8y6s9vzgghdzg4z8z0lld9qjr28888wzp00"))))
     (build-system go-build-system)
-    (inputs (list go-github-com-hashicorp-errwrap))
+    (propagated-inputs (list go-github-com-hashicorp-errwrap))
     (arguments
      (list
       #:import-path "github.com/hashicorp/go-multierror"))
@@ -1363,6 +1416,51 @@ constraints, and verifying versions against a set of constraints.  It can sort
 a collection of versions properly, handles prerelease/beta versions, can
 increment versions.")
     (license license:mpl2.0)))
+
+(define-public go-github-com-hashicorp-golang-lru
+  (package
+    (name "go-github-com-hashicorp-golang-lru")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hashicorp/golang-lru")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "13q3mdlr4hb2cxa5k4ccpz1gg4swrmkxm7h3brq3xsawidpbjbyb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/hashicorp/golang-lru"))
+    (home-page "https://github.com/hashicorp/golang-lru")
+    (synopsis "Golang LRU cache")
+    (description
+     "@code{lru} is a package which implements a fixed-size thread safe
+@acronym{Least recently used,LRU} cache.  It is based on the cache in
+Groupcache.")
+    (license license:mpl2.0)))
+
+(define-public go-github-com-hashicorp-golang-lru-v2
+  (package
+    (inherit go-github-com-hashicorp-golang-lru)
+    (name "go-github-com-hashicorp-golang-lru-v2")
+    (version "2.0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hashicorp/golang-lru")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lb2ylv2bz6lsqhn6c2hsafjjcx0hsdbah6arhb778g3xbkpgvf3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.18
+      #:import-path "github.com/hashicorp/golang-lru/v2"))))
 
 (define-public go-github-com-hashicorp-hcl
   (package
@@ -2507,6 +2605,30 @@ syslog, file and memory.  Multiple backends can be utilized with different log
 levels per backend and logger.")
     (license license:bsd-3)))
 
+(define-public go-github-com-openprinting-goipp
+  (package
+    (name "go-github-com-openprinting-goipp")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/OpenPrinting/goipp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p05dk37l393byvjanvi3ipqcax320vf3qynlzazm7czzzlw448h"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/OpenPrinting/goipp"))
+    (home-page "https://github.com/OpenPrinting/goipp")
+    (synopsis "IPP core protocol implementation")
+    (description
+      "The goipp package implements the IPP core protocol, as defined by
+@@url{https://rfc-editor.org/rfc/rfc8010.html,RFC 8010}.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-orisano-pixelmatch
   (package
     (name "go-github-com-orisano-pixelmatch")
@@ -2531,6 +2653,33 @@ levels per backend and logger.")
 comparison library, to Go.  Both a library and a command-line tool are
 included in this package.")
     (license license:expat)))
+
+(define-public go-github-com-pbnjay-memory
+  (let ((commit "7b4eea64cf580186c0eceb10dc94ba3a098af46c")
+        (revision "2"))
+    (package
+      (name "go-github-com-pbnjay-memory")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/pbnjay/memory")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "107w8pd1aasdrk35hh9pbdh9z11s9s79nglz6rqfnf6bhgb8b3s0"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/pbnjay/memory"))
+      (home-page "https://github.com/gedex/inflector")
+      (synopsis "Go library to report total system memory")
+      (description
+       "@code{memory} provides a single method reporting total physical system
+memory accessible to the kernel.  It does not account for memory used by other
+processes.")
+      (license license:bsd-3))))
 
 (define-public go-github-com-pierrec-cmdflag
   (package
@@ -3036,6 +3185,32 @@ string.  The string can be a string retorned for @code{time.Duration} or a
 similar string with weeks or days too.")
     (license license:bsd-3)))
 
+(define-public go-go-uber-org-atomic
+  (package
+    (name "go-go-uber-org-atomic")
+    (version "1.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/uber-go/atomic")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0grswsk7nkf7zmmychf6aj6032shyag1kgs6zf7qwxyn55dym1v8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "go.uber.org/atomic"))
+    (native-inputs
+     (list go-github-com-stretchr-testify go-github-com-davecgh-go-spew))
+    (home-page "https://pkg.go.dev/go.uber.org/atomic")
+    (synopsis "Wrapper types for sync/atomic")
+    (description
+     "This package provides simple wrappers for primitive types to enforce
+atomic access.")
+    (license license:expat)))
+
 (define-public go-go-uber-org-automaxprocs
   (package
     (name "go-go-uber-org-automaxprocs")
@@ -3061,6 +3236,92 @@ similar string with weeks or days too.")
 CPU quota.")
     (license license:expat)))
 
+(define-public go-go-uber-org-dig
+  (package
+    (name "go-go-uber-org-dig")
+    (version "1.17.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/uber-go/dig")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "020dak2r0yykk6fkfwad2wbz73pjbbdkdamn0ir7xf2irxsmjakm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.20
+      #:import-path "go.uber.org/dig"))
+    (native-inputs
+     (list go-github-com-stretchr-testify-next))
+    (home-page "https://pkg.go.dev/go.uber.org/dig")
+    (synopsis "Reflection based dependency injection toolkit for Golang")
+    (description
+     "Package @code{dig} provides a functionality to implement resolving
+object dependencies graph during the process startup.")
+    (license license:expat)))
+
+(define-public go-go-uber-org-fx
+  (package
+    (name "go-go-uber-org-fx")
+    (version "1.21.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://pkg.go.dev/go.uber.org/fx")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16pbqmkij02zw6xa4660k905y0r0rc50vyqhg41i2411r68jrdnn"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.20
+      #:import-path "go.uber.org/fx"))
+    (native-inputs
+     (list go-github-com-stretchr-testify-next))
+    (propagated-inputs
+     (list go-go-uber-org-dig
+           go-go-uber-org-goleak
+           go-go-uber-org-multierr
+           go-go-uber-org-zap
+           go-golang-org-x-sys))
+    (home-page "https://go.uber.org/fx")
+    (synopsis "Dependency injection based application framework for Golang")
+    (description
+     "Package @code{fx} is a framework that makes it easy to build
+applications out of reusable, composable modules.")
+    (license license:expat)))
+
+(define-public go-go-uber-org-multierr
+  (package
+    (name "go-go-uber-org-multierr")
+    (version "1.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/uber-go/multierr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "162941s8f6a9x2w04qm4qa3zz0zylwag9149hywrj9ibp2nzcsqz"))))
+    (build-system go-build-system)
+    (arguments
+     '(#:import-path "go.uber.org/multierr"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-go-uber-org-atomic))
+    (home-page "https://pkg.go.dev/go.uber.org/multierr")
+    (synopsis "Error combination for Go")
+    (description
+     "@code{multierr} allows combining one or more Go errors together.")
+    (license license:expat)))
+
 (define-public go-go-uber-org-zap
   (package
     (name "go-go-uber-org-zap")
@@ -3076,18 +3337,31 @@ CPU quota.")
         (base32 "0lzbbs87fvixzbyv4wpl3s70vm2m0jz2jgdvrviiksc2al451qgs"))))
     (build-system go-build-system)
     (arguments
-     '(#:import-path "go.uber.org/zap"
-       #:tests? #f)) ; TODO: Fix tests
+     (list
+      #:go go-1.19
+      #:import-path "go.uber.org/zap"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Remove test files requiring to download all dependencies for the
+          ;; current Go module and reports their module paths and locations on
+          ;; disk.
+          (add-after 'unpack 'remove-test-files
+            (lambda* (#:key import-path #:allow-other-keys)
+              (delete-file
+               (string-append "src/" import-path
+                              "/stacktrace_ext_test.go")))))))
     (native-inputs
-     (list go-github-com-stretchr-testify
+     (list go-github-com-stretchr-testify-next
+           go-go-uber-org-goleak
            go-golang-org-x-lint
            go-honnef-co-go-tools))
     (propagated-inputs
-     (list go-github-com-pkg-errors
+     (list go-github-com-benbjohnson-clock
+           go-github-com-pkg-errors
            go-go-uber-org-atomic
            go-go-uber-org-multierr
            go-gopkg-in-yaml-v2))
-    (home-page "https://go.uber.org/zap")
+    (home-page "https://pkg.go.dev/go.uber.org/zap")
     (synopsis "Logging library for Go")
     (description
      "This package provides a library for fast, structured, leveled logging in
