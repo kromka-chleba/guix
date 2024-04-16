@@ -221,6 +221,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/cybersecurity.scm		\
   %D%/packages/cyrus-sasl.scm			\
   %D%/packages/darwin.scm			\
+  %D%/packages/data-language.scm		\
   %D%/packages/databases.scm			\
   %D%/packages/datamash.scm			\
   %D%/packages/datastructures.scm		\
@@ -1298,6 +1299,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/gcc-12-cross-environment-variables.patch \
   %D%/packages/patches/gcc-10-tree-sra-union-handling.patch	\
   %D%/packages/patches/gcc-11-libstdc++-powerpc.patch           \
+  %D%/packages/patches/gcc-13-cross-system-header-dir.patch     \
   %D%/packages/patches/gcolor3-update-libportal-usage.patch	\
   %D%/packages/patches/gd-fix-tests-on-i686.patch		\
   %D%/packages/patches/gd-brect-bounds.patch			\

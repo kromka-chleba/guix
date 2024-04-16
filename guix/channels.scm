@@ -20,10 +20,19 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix channels)
-  #:use-module (git)                              ;TODO: autoload
+  #:autoload   (git commit) (commit-lookup
+                             commit-id)
+  #:autoload   (git oid) (oid->string
+                          string->oid)
+  #:autoload   (git object) (object-id)
+  #:autoload   (git errors) (GIT_ENOTFOUND)
+  #:autoload   (git structs) (git-error-code)
   #:autoload   (guix git) (update-cached-checkout
                            url+commit->name
                            commit-difference
+                           repository-info
+                           commit-short-id
+                           tag->commit
                            with-repository)
   #:autoload   (guix git-authenticate) (authenticate-repository)
   #:autoload   (guix openpgp) (openpgp-public-key-fingerprint
@@ -43,10 +52,10 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-2)
   #:use-module (srfi srfi-9)
-  #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-34)
   #:use-module (srfi srfi-35)
+  #:use-module (srfi srfi-71)
   #:autoload   (guix describe) (current-channels) ;XXX: circular dep
   #:autoload   (guix self) (whole-package make-config.scm)
   #:autoload   (guix inferior) (gexp->derivation-in-inferior) ;FIXME: circular dep
@@ -207,18 +216,13 @@ introduction, add it."
 channel that uses that repository and the commit HEAD currently points to; use
 INTRODUCTION as the channel's introduction.  Return #f if no Git repository
 could be found at DIRECTORY or one of its ancestors."
-  (catch 'git-error
-    (lambda ()
-      (with-repository (repository-discover directory) repository
-        (let* ((head   (repository-head repository))
-               (commit (oid->string (reference-target head))))
-          (channel
-           (inherit %default-guix-channel)
-           (url (repository-working-directory repository))
-           (commit commit)
-           (branch (reference-shorthand head))
-           (introduction introduction)))))
-    (const #f)))
+  (let ((directory commit branch (repository-info directory)))
+    (channel
+     (inherit %default-guix-channel)
+     (url directory)
+     (commit commit)
+     (branch branch)
+     (introduction introduction))))
 
 (define-record-type <channel-instance>
   (channel-instance channel commit checkout)
@@ -343,9 +347,6 @@ result is unspecified."
          (apply-patch patch checkout))
        (loop rest)))))
 
-(define commit-short-id
-  (compose (cut string-take <> 7) oid->string commit-id))
-
 (define* (authenticate-channel channel checkout commit
                                #:key (keyring-reference-prefix "origin/"))
   "Authenticate the given COMMIT of CHANNEL, available at CHECKOUT, a
@@ -411,12 +412,11 @@ their relation.  When AUTHENTICATE? is false, CHANNEL is not authenticated."
     (and (string=? (basename file) ".git")
          (eq? 'directory (stat:type stat))))
 
-  (let-values (((channel)
-                (ensure-default-introduction channel))
-               ((checkout commit relation)
-                (update-cached-checkout (channel-url channel)
-                                        #:ref (channel-reference channel)
-                                        #:starting-commit starting-commit)))
+  (let ((channel (ensure-default-introduction channel))
+        (checkout commit relation
+                  (update-cached-checkout (channel-url channel)
+                                          #:ref (channel-reference channel)
+                                          #:starting-commit starting-commit)))
     (when relation
       (validate-pull channel starting-commit commit relation))
 
@@ -1155,14 +1155,8 @@ the field its 'tag' refers to.  A 'git-error' exception is raised if the tag
 cannot be found."
   (if (channel-news-entry-commit entry)
       entry
-      (let* ((tag       (channel-news-entry-tag entry))
-             (reference (reference-lookup repository
-                                          (string-append "refs/tags/" tag)))
-             (target    (reference-target reference))
-             (oid       (let ((obj (object-lookup repository target)))
-                          (if (= OBJ-TAG (object-type obj)) ;annotated tag?
-                              (tag-target-id (tag-lookup repository target))
-                              target))))
+      (let* ((tag (channel-news-entry-tag entry))
+             (oid (object-id (tag->commit repository tag))))
         (channel-news-entry (oid->string oid) tag
                             (channel-news-entry-title entry)
                             (channel-news-entry-body entry)))))
