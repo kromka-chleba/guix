@@ -724,9 +724,12 @@ EXTRA_DIST +=						\
   build-aux/config.rpath				\
   build-aux/convert-xref.scm				\
   build-aux/generate-authors.scm			\
+  build-aux/git-version-gen				\
+  build-aux/mdate-from-git.scm				\
   build-aux/test-driver.scm				\
   build-aux/update-NEWS.scm				\
   build-aux/update-guix-package.scm			\
+  build-aux/xgettext.scm				\
   doc/build.scm						\
   etc/disarchive-manifest.scm				\
   etc/guix-install.sh					\
@@ -954,6 +957,20 @@ guix-binary.%.tar.xz:
 	  guix` ;					\
 	cp "$$tarball" "$@.tmp" ; mv "$@.tmp" "$@"
 
+# The `dist' target has other dependencies when building from Git
+# to assert and achieve reproducibility.
+if in_git_p
+
+# The dependency on dist-doc-pot-update is to clean possibly stale doc and po
+# files and only then generate the .pot files, which are not checked in.
+dist: dist-doc-pot-update
+dist-doc-pot-update: auto-clean
+	$(MAKE) guile$(EXEEXT)
+	$(MAKE) -C po/guix all
+	$(MAKE) -C po/packages all
+	$(MAKE) doc-pot-update
+
+dist-hook: gen-ChangeLog gen-AUTHORS
 
 # Assert that Autotools cache is up to date with Git, by checking
 # PACKAGE_VERSION against HEAD.  Indented to get past Automake.
@@ -968,20 +985,20 @@ guix-binary.%.tar.xz:
  $(error Cannot create reproducible tarball)
  else
  $(warning Tarball will be irreproducible; distdir will not get removed!)
- endif
- endif
- endif
+ endif # !GUIX_ALLOW_IRREPRODUCIBLE_TARBALL
+ endif # PACKAGE_VERSION != git_version
+ endif # MAKECMDGOALS dist
 
-# The dependency on dist-doc-pot-update is to clean possibly stale doc and po
-# files and only then generate the .pot files, which are not checked in.
-dist: dist-doc-pot-update
-dist-doc-pot-update: auto-clean
-	$(MAKE) guile$(EXEEXT)
-	$(MAKE) -C po/guix all
-	$(MAKE) -C po/packages all
-	$(MAKE) doc-pot-update
+else # !in_git_p
 
-dist-hook: gen-ChangeLog gen-AUTHORS gen-tarball-version
+dist: doc-pot-update
+
+ ifeq ($(MAKECMDGOALS),dist)
+$(warning Not using Git, tarball will likely be irreproducible!)
+ endif # MAKECMDGOALS dist
+endif # !in_git_p
+
+dist-hook: gen-tarball-version
 dist-hook: assert-no-store-file-names
 
 distcheck-hook: assert-binaries-available assert-final-inputs-self-contained
@@ -993,27 +1010,25 @@ $(top_srcdir)/.version: config.status
 
 gen-tarball-version:
 	echo $(VERSION) > "$(distdir)/.tarball-version"
-	git show HEAD --format=%ct --no-patch > $(distdir)/.tarball-timestamp
+	echo $(SOURCE_DATE_EPOCH) > $(distdir)/.tarball-timestamp
 
 gen-ChangeLog:
-	$(AM_V_GEN)if test -e .git; then		\
-	  export LC_ALL=en_US.UTF-8;			\
-	  export TZ=UTC0;				\
-	  $(top_srcdir)/build-aux/gitlog-to-changelog	\
-	    > $(distdir)/ChangeLog.tmp;			\
-	  rm -f $(distdir)/ChangeLog;			\
-	  mv $(distdir)/ChangeLog.tmp $(distdir)/ChangeLog;	\
-	fi
+	$(AM_V_GEN)set -e;					\
+	  export LC_ALL=en_US.UTF-8;				\
+	  export TZ=UTC0;					\
+	  $(top_srcdir)/build-aux/gitlog-to-changelog		\
+	    > $(distdir)/ChangeLog.tmp;				\
+	  rm -f $(distdir)/ChangeLog;				\
+	  mv $(distdir)/ChangeLog.tmp $(distdir)/ChangeLog;
 
 gen-AUTHORS:
-	$(AM_V_GEN)if test -e .git; then			\
+	$(AM_V_GEN)set -e;					\
 	  rm -f "$(distdir)/AUTHORS";				\
 	  export LC_ALL=en_US.UTF-8;				\
 	  export TZ=UTC0;					\
 	  $(top_builddir)/pre-inst-env "$(GUILE)"		\
 	    "$(top_srcdir)/build-aux/generate-authors.scm"	\
-	    "$(top_srcdir)" "$(distdir)/AUTHORS";		\
-	fi
+	    "$(top_srcdir)" "$(distdir)/AUTHORS";
 
 # Like 'dist', but regenerate 'configure' so we get an up-to-date
 # 'PACKAGE_VERSION' string.  (In Gnulib, 'GNUmakefile' has a special trick to
@@ -1241,7 +1256,12 @@ COMMIT_MSG_MAGIC = VGhpcyBpcyB0aGUgY29tbWl0LW1zZyBob29rIG9mIEd1aXg=
 	cp etc/git/commit-msg $@; \
 	fi
 
+# The etc/git/ config files are not distributed and have no use when building
+# from a tarball.  Do not add dependencies on these to *_DATA when building
+# from a tarball, as that breaks the build.
+if in_git_p
 nodist_noinst_DATA = .git/hooks/pre-push .git/config .git/hooks/commit-msg
+endif
 
 # Downloading up-to-date PO files.
 
