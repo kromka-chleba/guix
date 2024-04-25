@@ -717,6 +717,117 @@ and intuitive.  It aims to be the fundamental high-level building block for
 doing practical, real world data analysis in Python.")
     (license license:bsd-3)))
 
+(define-public python-pandas-2
+  (package
+    (name "python-pandas")
+    (version "2.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pandas-dev/pandas")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1v9j38bvw739csdfl98ga6fqjdm61q3p5a2l7h364kg925nbc9r1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--pyargs" "pandas"
+              ;; "--exitfirst"
+              ;; FIXME "-n" (number->string (parallel-job-count))
+              "-m" "not slow and not network and not db"
+              "-k" (string-append
+                    "not test_git_version"
+                    " and not test_show_versions_console"
+                    ;; Not testing ~ expansion.
+                    " and not test_expand_user"
+                    " and not test_get_handle_with_path"
+                    ;; These test access the internet (see:
+                    ;; https://github.com/pandas-dev/pandas/issues/45085).:
+                    ;; pandas/tests/io/xml/test_xml.py::test_wrong_url[lxml]
+                    ;; pandas/tests/io/xml/test_xml.py::test_wrong_url[etree]
+                    " and not test_wrong_url"
+                    ;; TODO: Missing input
+                    " and not TestS3"
+                    " and not s3"
+                    ;; This test fails when run with pytest-xdist
+                    ;; (see: https://github.com/pandas-dev/pandas/issues/39096).
+                    " and not test_memory_usage"
+                    " and not test_parsing_tzlocal_deprecated"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'version-set-by-guix
+            (lambda _
+              (with-output-to-file "_version_meson.py"
+                (lambda _
+                  (display
+                   (string-append "__version__ = \""
+                                  #$(package-version this-package)
+                                  "\""))))))
+          (add-before 'check 'prepare-x
+            (lambda _
+              (system "Xvfb &")
+              (setenv "DISPLAY" ":0")
+              (setenv "HOME" ".")
+              ;; Skip tests that require lots of resources.
+              (setenv "PANDAS_CI" "1")))
+          (add-after 'unpack 'patch-which
+            (lambda _
+              (substitute* "pandas/io/clipboard/__init__.py"
+                (("^WHICH_CMD = .*")
+                 (string-append "WHICH_CMD = \""
+                                #$(this-package-input "which")
+                                "/bin/which\"\n")))))
+          ;; The compiled libraries are only in the output at this point,
+          ;; but they are needed to run tests.
+          ;; FIXME: This should be handled by the pyargs pytest argument,
+          ;; but is not for some reason.
+          (add-before 'check 'pre-check
+            (lambda _
+              (copy-recursively
+               (string-append #$output
+                              "/lib/python3.10/site-packages/pandas/_libs")
+               "pandas/_libs"))))))
+    (propagated-inputs
+     (list python-dateutil
+           python-jinja2
+           python-matplotlib
+           python-numpy
+           python-openpyxl
+           python-pytz
+           python-tzdata
+           python-xlrd
+           python-xlsxwriter))
+    (inputs
+     (list which xclip xsel))
+    (native-inputs
+     (list meson-python/newer
+           python-beautifulsoup4
+           python-cython-0.29.35
+           python-html5lib
+           python-lxml
+           python-matplotlib
+           python-openpyxl
+           python-pytest-asyncio
+           python-pytest-next
+           python-pytest-localserver
+           python-pytest-mock
+           python-pytest-xdist
+           python-versioneer
+           ;; Needed to test clipboard support.
+           xorg-server-for-tests))
+    (home-page "https://pandas.pydata.org")
+    (synopsis "Data structures for data analysis, time series, and statistics")
+    (description
+     "Pandas is a Python package providing fast, flexible, and expressive data
+structures designed to make working with structured (tabular,
+multidimensional, potentially heterogeneous) and time series data both easy
+and intuitive.  It aims to be the fundamental high-level building block for
+doing practical, real world data analysis in Python.")
+    (license license:bsd-3)))
+
 (define-public python-pandas-stubs
   (package
     (name "python-pandas-stubs")
@@ -1221,6 +1332,53 @@ on top of raw NumPy-like arrays, which allows for a more intuitive, more
 concise, and less error-prone developer experience.  The package includes a
 large and growing library of domain-agnostic functions for advanced analytics
 and visualization with these data structures.")
+    (license license:asl2.0)))
+
+(define-public python-xarray-dataclasses
+  (package
+    (name "python-xarray-dataclasses")
+    (version "1.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/astropenguin/xarray-dataclasses/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "043lc1hadr5y0y16g682viiafy0hfsa7q18lqmndpyvnmcgm893z"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-numpy python-typing-extensions
+                             python-xarray))
+    (native-inputs (list python-pytest python-poetry-core))
+    (home-page "https://github.com/astropenguin/xarray-dataclasses/")
+    (synopsis "xarray data creation made easy by dataclass")
+    (description "@code{xarray-dataclasses} is a Python package that makes it
+easy to create @code{xarray}'s @code{DataArray} and @code{Datase} objects that
+are \"typed\" (i.e. fixed dimensions, data type, coordinates, attributes, and
+name) using the Python's @code{dataclass}.")
+    (license license:expat)))
+
+;; Note that this package will be folded into xarray eventually.  See
+;; https://github.com/pydata/xarray/issues/8572 for details.
+(define-public python-xarray-datatree
+  (package
+    (name "python-xarray-datatree")
+    (version "0.0.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "xarray-datatree" version))
+       (sha256
+        (base32 "1x1s25s6dp1f2hck9qw8vl8hgkyy23rcwag2a9vd3w0dbgrrl5i6"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-packaging python-xarray))
+    (native-inputs (list python-pytest python-zarr))
+    (home-page "https://github.com/xarray-contrib/datatree")
+    (synopsis "Hierarchical tree-like data structures for xarray")
+    (description "Datatree is a prototype implementation of a tree-like
+hierarchical data structure for @code{xarray}.  Datatree is in the process of
+being merged upstream into @code{xarray}.")
     (license license:asl2.0)))
 
 (define-public python-xarray-einstats

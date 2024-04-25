@@ -2473,7 +2473,7 @@ files (TTF).")
 (define-public font-mononoki
   (package
     (name "font-mononoki")
-    (version "1.3")
+    (version "1.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2481,7 +2481,7 @@ files (TTF).")
                     (commit version)))
               (sha256
                (base32
-                "07gh84iw84g8fha3gx4yjyl1rsksqhy2kk38f01m048sgjp6ww5j"))
+                "1mqinvb3hyimga8qjgpwgfv30yddzyicd79shhjbsns91v5z4x33"))
               (file-name (git-file-name name version))))
     (build-system font-build-system)
     (arguments
@@ -2519,7 +2519,7 @@ font that is a composite of IBM Plex Mono and IBM Plex Sans JP.")
 (define-public font-public-sans
   (package
     (name "font-public-sans")
-    (version "1.008")
+    (version "2.001")
     (source
      (origin
        (method git-fetch)
@@ -2528,7 +2528,7 @@ font that is a composite of IBM Plex Mono and IBM Plex Sans JP.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qhyxbjv1rnydfpqzd18fbiyz75p4sabphy8yj07hyq0hidp5xsf"))))
+        (base32 "0p3rl4w8m381jxb7in6z9iwjbk1chd7s0gk6jz96c8ci1bddbxk0"))))
     (build-system font-build-system)
     (home-page "https://public-sans.digital.gov/")
     (synopsis "Neutral typeface for interfaces, text, and headings")
@@ -3558,7 +3558,7 @@ prevalent typefaces in Traditional Chinese regions.")))
 (define-public font-spleen
   (package
     (name "font-spleen")
-    (version "1.9.3")
+    (version "2.1.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -3566,7 +3566,7 @@ prevalent typefaces in Traditional Chinese regions.")))
                     version "/spleen-" version ".tar.gz"))
               (sha256
                (base32
-                "09bbwza14pl70cxbr09f9m8522s5p1p04kx9gh8svpd50bdixbdp"))))
+                "0brp1kyp6i5q9zk3hpj5ngxh4js0aw2m6d4yrzxmif3f39pwaiwb"))))
     (build-system font-build-system)
     (outputs '("out" ;OTB
                "bdf" "otf" "pcf" "psf"))

@@ -71,7 +71,10 @@
       #~(list "--disable-static"
               "--enable-64bit"
               (string-append "LDFLAGS=-Wl,-rpath="
-                             (assoc-ref %outputs "out") "/lib"))
+                             (assoc-ref %outputs "out") "/lib")
+              #$@(if (%current-target-system)
+                     #~("HOST_CC=gcc")
+                     #~()))
       ;; Use fixed timestamps for reproducibility.
       #:make-flags #~'("SH_DATE='1970-01-01 00:00:01'"
                        ;; This is epoch 1 in microseconds.
@@ -154,6 +157,9 @@ in the Mozilla clients.")
                                             (#$(target-linux?) "linux")
                                             (else ""))))
                        #~())
+                #$@(if (%current-target-system)
+                       #~("CROSS_COMPILE=1")
+                       #~())
                 (string-append "NSPR_INCLUDE_DIR="
                                (search-input-directory %build-inputs
                                                        "include/nspr"))
@@ -176,7 +182,8 @@ in the Mozilla clients.")
               (setenv "CC" #$(cc-for-target))
               ;; TODO: Set this unconditionally
               #$@(if (%current-target-system)
-                     #~((setenv "CCC" #$(cxx-for-target)))
+                     #~((setenv "CCC" #$(cxx-for-target))
+                        (setenv "NATIVE_CC" "gcc"))
                      #~())
               ;; No VSX on powerpc-linux.
               #$@(if (target-ppc32?)

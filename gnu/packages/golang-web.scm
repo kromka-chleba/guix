@@ -1,7 +1,8 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2017, 2019, 2021 Leo Famulari <leo@famulari.name>
+;;; Copyright © 2017, 2019, 2020, 2021 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2018 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2018 Pierre-Antoine Rouby <pierre-antoine.rouby@inria.fr>
+;;; Copyright © 2019 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2020 Jack Hill <jackhill@jackhill.us>
 ;;; Copyright © 2020 Joseph LaFreniere <joseph@lafreniere.xyz>
 ;;; Copyright © 2020 Martin Becze <mjbecze@riseup.net>
@@ -56,6 +57,7 @@
   #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages ipfs)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages web))
 
@@ -1094,6 +1096,30 @@ used like a user interface for humans, to read and edit before passing the
 JSON data to the machine.")
     (license license:expat)))
 
+(define-public go-github-com-jackpal-go-nat-pmp
+  (package
+    (name "go-github-com-jackpal-go-nat-pmp")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jackpal/go-nat-pmp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p2yrzfbkazc9nisr2iqjwzhb6q16zj6finyxxn2ikk7iiighl1g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/jackpal/go-nat-pmp"))
+    (home-page "https://github.com/jackpal/go-nat-pmp")
+    (synopsis "Port mapping and discovery of external IP address")
+    (description
+     "This package provides a Go client for the NAT-PMP internet protocol for
+port mapping and discovering the external IP address of a firewall.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-jcmturner-dnsutils-v2
   (package
     (name "go-github-com-jcmturner-dnsutils-v2")
@@ -1308,33 +1334,28 @@ router.")
     (license license:bsd-3)))
 
 (define-public go-github-com-multiformats-go-multiaddr
-  ;; This commit is from <2018-10-01> and associated with GX package manager,
-  ;; since that time the project has changed versing stile and GX is dropped.
-  ;; Current versioned tag is v0.12.2 <2024-01-26>.
-  (let ((commit "fe1c46f8be5af4aff4db286e08839295bd922efb")
-        (revision "0"))
-    (package
-      (name "go-github-com-multiformats-go-multiaddr")
-      (version (git-version "1.3.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/multiformats/go-multiaddr")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0p5f8h098a4yjjmzsgqs7vhx1iqifb8izwg3559cr4h7clkpzznh"))))
-      (build-system go-build-system)
-      (arguments
-       (list
-        #:import-path "github.com/multiformats/go-multiaddr"))
-      (propagated-inputs
-       (list go-github-com-multiformats-go-multihash))
-      (home-page "https://github.com/multiformats/go-multiaddr")
-      (synopsis "Composable and future-proof network addresses")
-      (description
-       "Multiaddr is a standard way to represent addresses that does the
+  (package
+    (name "go-github-com-multiformats-go-multiaddr")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/multiformats/go-multiaddr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cdzlzh7cb1pj9mhq45va3r6gs6pcdfa9j7vdrqlv3zd6k3bxg39"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/multiformats/go-multiaddr"))
+    (propagated-inputs
+     (list go-github-com-multiformats-go-multihash))
+    (home-page "https://github.com/multiformats/go-multiaddr")
+    (synopsis "Composable and future-proof network addresses")
+    (description
+     "Multiaddr is a standard way to represent addresses that does the
 following:
 
 @itemize
@@ -1343,8 +1364,62 @@ following:
 @item Have a binary packed format.
 @item Have a nice string representation.
 @item Encapsulate well.
-@end itemize\n")
-      (license license:expat))))
+@end itemize")
+    (license license:expat)))
+
+;; It's for the Kubo update; remove it when it is no longer needed.
+(define-public go-github-com-multiformats-go-multiaddr-0.12
+  (package
+    (inherit go-github-com-multiformats-go-multiaddr)
+    (name "go-github-com-multiformats-go-multiaddr")
+    (version "0.12.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/multiformats/go-multiaddr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rn02yn7494r7ayn585bbsddprbn8wdccxs4n2k5dmll4dyd39mp"))))
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/multiformats/go-multiaddr"))
+    (native-inputs (list go-github-com-stretchr-testify))
+    (propagated-inputs (list go-github-com-ipfs-go-cid
+                             go-github-com-multiformats-go-multibase
+                             go-github-com-multiformats-go-varint
+                             go-github-com-multiformats-go-multihash-0.2.3
+                             go-golang-org-x-exp-2023))))
+
+(define-public go-github-com-multiformats-go-multiaddr-dns
+  (package
+    (name "go-github-com-multiformats-go-multiaddr-dns")
+    (version "0.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/multiformats/go-multiaddr-dns")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17qpcgxlmji6wdnjabl5ihc4zn69w2g0karad46zj70y5zg4y24r"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/multiformats/go-multiaddr-dns"
+      #:unpack-path "github.com/multiformats/go-multiaddr-dns"))
+    (propagated-inputs
+     (list go-github-com-miekg-dns
+           go-github-com-multiformats-go-multiaddr-0.12))
+    (home-page "https://multiformats.io/multiaddr/")
+    (synopsis "Library and CLI tool for DNS multiaddr resolution")
+    (description
+     "Go library for /dns4, /dns6, /dnsaddr multiaddr resolution.")
+    (license license:expat)))
 
 (define-public go-github-com-multiformats-go-multiaddr-net
   ;; This commit is from <2018-10-01> and associated with GX package manager,
@@ -1937,6 +2012,20 @@ Encryption, JSON Web Signature, and JSON Web Token standards.")
 ;;;
 ;;; Executables:
 ;;;
+
+(define-public go-madns
+  (package
+    (inherit go-github-com-multiformats-go-multiaddr-dns)
+    (name "go-madns")
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-multiformats-go-multiaddr-dns)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _ "github.com/multiformats/go-multiaddr-dns")
+        "github.com/multiformats/go-multiaddr-dns/madns")))
+    (description
+     "This package provides a CLI binary executible built from
+go-github-com-multiformats-go-multiaddr-dns.")))
 
 (define-public go-minify
   (package

@@ -3549,13 +3549,13 @@ paired or unpaired study designs.")
 (define-public r-alevinqc
   (package
     (name "r-alevinqc")
-    (version "1.18.0")
+    (version "1.18.1")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "alevinQC" version))
               (sha256
                (base32
-                "0lhbh9xgkbrad9fqvxl4c6y0f2kgibn6sinp8znysk5m9z0ngpwp"))))
+                "0jzvldbqsqz5j0fp41jdq3vfwp1q1ggckparzx21jlli211c9shr"))))
     (properties `((upstream-name . "alevinQC")))
     (build-system r-build-system)
     (propagated-inputs
@@ -8221,13 +8221,13 @@ Enrichment Analysis} (GSEA).")
 (define-public r-gsva
   (package
     (name "r-gsva")
-    (version "1.50.2")
+    (version "1.50.5")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "GSVA" version))
               (sha256
                (base32
-                "1xgp311wh7ykvnk7nh5xik1kp2b2r08vx595znmzn28fc8rz62b1"))))
+                "0n1g376jfpmnlsjdbv23hb3jny03i84jmvhrcpz2rb5bbpfbm0al"))))
     (properties `((upstream-name . "GSVA")))
     (build-system r-build-system)
     (propagated-inputs (list r-biobase
@@ -13203,14 +13203,14 @@ respectively.")
 (define-public r-bayseq
   (package
     (name "r-bayseq")
-    (version "2.36.0")
+    (version "2.36.2")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "baySeq" version))
        (sha256
         (base32
-         "1b5vvzl0kkm6kb03vr6m6sdlr3azpc24933a7ayxkiffmf2wbi0g"))))
+         "0c24glflznbihx81kgvlx5i3wb95c7jg4wllwawry4kb6rkjbwp0"))))
     (properties `((upstream-name . "baySeq")))
     (build-system r-build-system)
     (propagated-inputs
@@ -15455,14 +15455,14 @@ are standardized and usable by the accompanying mutossGUI package.")
 (define-public r-metap
   (package
     (name "r-metap")
-    (version "1.9")
+    (version "1.10")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "metap" version))
        (sha256
         (base32
-         "1w4mv7vb94d4pkllvabz9az8sbrbfhigxw4is3j0jzi1pnlyc8kg"))))
+         "18l86026g5g0pdihw41h7yck1ad5k43bb7as5qih2k5xkr680mzx"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-lattice

@@ -75,7 +75,7 @@
 (define-public diffoscope
   (package
     (name "diffoscope")
-    (version "263")
+    (version "265")
     (source
      (origin
        (method git-fetch)
@@ -84,7 +84,7 @@
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bq45gyn214hf9brnn5xlj9xvcg6p0yr8cc2p153f93pgzsyqlg4"))))
+        (base32 "0fdaxihmzz1jf9ay8pwr1z60b2rnihawp4js4nw9l7wv0gij9vpg"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -233,9 +233,9 @@
         ;; openjdk and dependent packages are only
         ;; available on x86_64 currently.
         ((or "x86_64-linux")
-         (list enjarify)
          ;; No unversioned openjdk available.
-         (list `(,openjdk12 "jdk")))
+         (list `(,openjdk12 "jdk")
+               enjarify))
         (_ '()))))
     (home-page "https://diffoscope.org/")
     (synopsis "Compare files, archives, and directories in depth")
@@ -253,7 +253,7 @@ install.")
 (define-public reprotest
   (package
     (name "reprotest")
-    (version "0.7.26")
+    (version "0.7.27")
     (source
      (origin
        (method git-fetch)
@@ -262,7 +262,7 @@ install.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1992wlkil07fmj64lw3i7l16dgkkzphz0f932hbkkj9rlcamdwxd"))))
+        (base32 "0z5i53dy4ax4gbidcqmwqq0686n1g397c79bsscfs94s2y35fsns"))))
     (inputs
      (list python-debian python-distro python-libarchive-c python-rstr))
     (native-inputs

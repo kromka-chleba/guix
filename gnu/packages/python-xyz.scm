@@ -1126,35 +1126,28 @@ into dataclasses.")
 (define-public python-contourpy
   (package
     (name "python-contourpy")
-    (version "1.1.0")
+    (version "1.1.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "contourpy" version))
        (sha256
-        (base32 "088bhyh6m6q0h637wiq2paqhwn76hqvvbhqwacfx4a1qhv1lcc75"))))
+        (base32 "1az80zv067rcybm5x93j7rfiakbwiv1h8l58gnki4wjbwb13gfln"))))
     (build-system pyproject-build-system)
     (arguments
-     (list
-      #:test-flags
-      ;; All these tests require matplotlib, but matplotlib requires contourpy
-      ;; now.
-      '(list "-k" "not test_mypy"
-             "--ignore=tests/test_config.py"
-             "--ignore=tests/test_filled.py"
-             "--ignore=tests/test_lines.py"
-             "--ignore=tests/test_renderer.py")))
-    (propagated-inputs (list python-mypy
-                             python-numpy
-                             python-pillow
-                             python-pytest
-                             python-pytest-cov
-                             python-pytest-xdist
-                             python-selenium
-                             python-sphinx
-                             python-sphinx-copybutton
-                             python-wurlitzer))
-    (native-inputs (list meson-python pybind11-2.10 pkg-config))
+     ;; Image tests require matplotlib and create a circular dependency.
+     (list #:test-flags
+           #~(list "-m" "not image")))
+    (propagated-inputs
+     (list python-numpy))
+    (native-inputs
+     (list cmake
+           meson-python/newer
+           pkg-config
+           pybind11
+           python-pytest
+           python-pytest-cov
+           python-wurlitzer))
     (home-page "https://contourpy.readthedocs.io/")
     (synopsis
      "Python library for calculating contours of 2D quadrilateral grids")
@@ -1835,6 +1828,24 @@ class.")
     (description "This package provides a general purpose Python utility
 library.")
     (license license:expat)))
+
+(define-public python-slicerator
+  (package
+    (name "python-slicerator")
+    (version "1.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "slicerator" version))
+       (sha256
+        (base32 "0ik0bmh18zgffd9kx53254jp3yyih6zcmd8kfb080xnqbizhl0a4"))))
+    (build-system pyproject-build-system)
+    (home-page "https://github.com/soft-matter/slicerator")
+    (synopsis "Lazy-loading, fancy-sliceable iterable")
+    (description
+     "This package provides a lazy-loading, fancy-sliceable iterable.  Think
+of it like a generator that is \"reusable\" and has a length.")
+    (license license:bsd-3)))
 
 (define-public python-slixmpp
   (package
@@ -4000,7 +4011,7 @@ server.")
 (define-public python-openpyxl
   (package
     (name "python-openpyxl")
-    (version "3.0.9")
+    (version "3.0.10")
     (source
      (origin
        ;; We use the upstream repository, as the tests are not included in the
@@ -4011,13 +4022,8 @@ server.")
              (changeset version)))
        (file-name (string-append name "-" version "-checkout"))
        (sha256
-        (base32 "1p8xvc2gjw6zyzbd7qdvc3x178sm00ymrbyh9539l4fpzgxh0j9c"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      (invoke "pytest"))))))
+        (base32 "0f8ym32vdn8wyziiy5bz8iiwvgj7dlccy86wkfcn5syqgivgqnv9"))))
+    (build-system pyproject-build-system)
     (native-inputs (list python-lxml python-pillow python-pytest))
     (propagated-inputs (list python-et-xmlfile python-jdcal))
     (home-page "https://openpyxl.readthedocs.io")
@@ -6077,26 +6083,17 @@ possible.")
 for Python.")
     (license license:bsd-3)))
 
-
 (define-public python-jinja2
   (package
     (name "python-jinja2")
-    (version "3.1.1")
+    (version "3.1.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "Jinja2" version))
        (sha256
-        (base32
-         "1saawzys14l1p4kafs7hkihmnvqjq8fwxjmkjiqx3jq1nm5ys2v4"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (if tests?
-                          (invoke "pytest" "-vv")
-                          (format #t "test suite not run~%")))))))
+        (base32 "0lp86yadzf8dph67f6g3yxmvnhrzzi863z58jmsrx2j059q1ld9i"))))
+    (build-system pyproject-build-system)
     (native-inputs (list python-pytest))
     (propagated-inputs (list python-markupsafe))
     (home-page "https://jinja.palletsprojects.com/")
@@ -6105,7 +6102,6 @@ for Python.")
      "Jinja2 is a small but fast and easy to use stand-alone template engine
 written in pure Python.")
     (license license:bsd-3)))
-
 
 (define-public python-jinja2-time
   (package
@@ -7607,6 +7603,9 @@ errors when data is invalid.")
     (arguments
      (list
        #:test-flags #~(list "--ignore=tests/test_docs.py"   ; no pytest_examples
+                            ;; These tests include hashes that keep changing depending on
+                            ;; package versions.
+                            "--ignore=tests/benchmarks/test_north_star.py"
                             ;; need python-email-validator >= 2.0.0
                             "-k not test_fastapi_startup_perf")
        #:phases
@@ -8625,6 +8624,34 @@ debugger, which features tab completion, syntax highlighting, better
 tracebacks and better introspection than Python's standard @command{pdb}
 debugger, with which it shares the same interface.")
     (license license:bsd-3)))
+
+(define-public python-ipfsspec
+  (package
+    (name "python-ipfsspec")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ipfsspec" version))
+       (sha256
+        (base32 "1y4ad9schc76j2lynm7vpwi4q4jzi9vv843zfpisbp8zqgm0rr7l"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      '(list "-m not local_gw"
+             ;; Require local gateway
+             "--ignore=test/test_gateway.py"
+             ;; Require internet
+             "--ignore=test/test_async.py"
+             "--ignore=test/test_ipfs.py")))
+    (propagated-inputs (list python-aiohttp python-fsspec python-requests))
+    (native-inputs (list python-pytest python-pytest-asyncio))
+    (home-page "https://github.com/fsspec/ipfsspec")
+    (synopsis "Read-only implementation of fsspec for IPFS")
+    (description "This package provides a read-only implementation of
+@code{fsspec} for IPFS.")
+    (license license:expat)))
 
 (define-public python-pdbpp
   ;; The latest release lacks support for Python 3.10; use the latest commit
@@ -13976,7 +14003,7 @@ plugin for flake8 to check PEP-8 naming conventions.")
 (define-public python-pyproject-metadata
   (package
     (name "python-pyproject-metadata")
-    (version "0.6.1")
+    (version "0.7.1")
     (source
      (origin
        (method git-fetch)
@@ -13986,7 +14013,7 @@ plugin for flake8 to check PEP-8 naming conventions.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "00zahgw9zjfqwf0218bj5k732aibnn68cq1p8f0wmbirb7fy5k31"))))
+         "0yvs59ymz5gdix34a95wxlxvk9bnvjgrzsnmnc3ws7whpfv3yasm"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-packaging))
     (native-inputs (list python-pypa-build python-pytest python-tomli))
@@ -17552,8 +17579,11 @@ config files.")
                (add-after 'unpack 'loosen-requirements
                  (lambda _
                    (substitute* "requirements/base.txt"
-                     (("antlr4-python3-runtime==")
-                      "antlr4-python3-runtime>=")))))))
+                     (("antlr4-python3-runtime==.*")
+                      "antlr4-python3-runtime >=4.9\n"))
+                   ;; Ignore deprecation warnings.
+                   (substitute* "pyproject.toml"
+                     (("-Werror") "")))))))
     (propagated-inputs (list java-antlr4-runtime-python
                              python-pydevd
                              python-pyyaml))
@@ -27288,19 +27318,23 @@ codecs for use in data storage and communication applications.")
 (define-public python-zarr
   (package
     (name "python-zarr")
-    (version "2.17.1")
+    (version "2.17.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "zarr" version))
        (sha256
         (base32
-         "0qb2wj60i7v1c95k6m0pskx20ss6dxrj3ym0d7z4c98jfah3ljsn"))))
+         "1kjj0pk0s6306ljrig77m39zqdy32ch4nyja5lalab9l9v5sdfic"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      #~(list "-n" "auto")
+      #~(list "-n" "auto"
+              ;; This tests are flaky.  The pass several times on my laptop
+              ;; but occasionally fail.  They fail pretty reliably on the
+              ;; build farm.
+              "-k not test_lazy_loader and not open_array")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'disable-service-tests

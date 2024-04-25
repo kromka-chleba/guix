@@ -1075,6 +1075,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/cool-retro-term-wctype.patch		\
   %D%/packages/patches/coreutils-gnulib-tests.patch		\
   %D%/packages/patches/cppcheck-disable-char-signedness-test.patch	\
+  %D%/packages/patches/cppdap-add-CPPDAP_USE_EXTERNAL_GTEST_PACKAGE.patch\
   %D%/packages/patches/cpuinfo-system-libraries.patch		\
   %D%/packages/patches/cpulimit-with-glib-2.32.patch		\
   %D%/packages/patches/crawl-upgrade-saves.patch		\
@@ -1511,6 +1512,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/java-apache-ivy-port-to-latest-bouncycastle.patch	\
   %D%/packages/patches/java-commons-collections-fix-java8.patch \
   %D%/packages/patches/java-commons-lang-fix-dependency.patch \
+  %D%/packages/patches/java-guava-remove-annotation-deps.patch \
   %D%/packages/patches/java-jeromq-fix-tests.patch		\
   %D%/packages/patches/java-openjfx-build-jdk_version.patch     \
   %D%/packages/patches/java-powermock-fix-java-files.patch		\

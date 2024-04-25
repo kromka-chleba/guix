@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2023 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015-2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016, 2017 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2017, 2019, 2021 Carlo Zancanaro <carlo@zancanaro.id.au>
@@ -4135,7 +4135,7 @@ from source tags and class annotations.")))
            java-commons-cli
            java-qdox
            java-jdom2
-           java-asm))
+           java-asm-8))
     (native-inputs
      (list java-junit java-guava java-geronimo-xbean-reflect))
     (synopsis "Inversion-of-control container for Maven")
@@ -5106,10 +5106,85 @@ including java-asm.")
            #:tests? #f))
     (inputs (list java-asm-8 java-asm-analysis-8 java-asm-tree-8))))
 
+(define-public java-asm-9
+  (package
+    (inherit java-asm)
+    (version "9.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://gitlab.ow2.org/asm/asm")
+                     (commit (string-append
+                               "ASM_" (string-join (string-split version #\.)
+                                                   "_")))))
+              (file-name (git-file-name "java-asm" version))
+              (sha256
+               (base32
+                "0c00m638skr5md1p6y1c2xn11kj5w6sjapyvwp9mh70rw095bwzk"))))
+    (arguments
+     `(#:jar-name "asm9.jar"
+       #:source-dir "asm/src/main/java"
+       #:test-dir "asm/src/test"
+       ;; tests depend on junit5
+       #:tests? #f))
+    (propagated-inputs '())
+    (native-inputs '())))
+
+(define-public java-asm-tree-9
+  (package
+    (inherit java-asm-9)
+    (name "java-asm-tree")
+    (arguments
+     `(#:jar-name "asm-tree.jar"
+       #:source-dir "asm-tree/src/main/java"
+       #:test-dir "asm-tree/src/test"
+       ;; tests depend on junit5
+       #:tests? #f))
+    (inputs
+     (list java-asm-9))))
+
+(define-public java-asm-analysis-9
+  (package
+    (inherit java-asm-9)
+    (name "java-asm-analysis")
+    (arguments
+     `(#:jar-name "asm-analysis.jar"
+       #:source-dir "asm-analysis/src/main/java"
+       #:test-dir "asm-analysis/src/test"
+       ;; tests depend on junit5
+       #:tests? #f))
+    (inputs
+     (list java-asm-9 java-asm-tree-9))))
+
+(define-public java-asm-util-9
+  (package
+    (inherit java-asm-9)
+    (name "java-asm-util")
+    (arguments
+     `(#:jar-name "asm-util8.jar"
+       #:source-dir "asm-util/src/main/java"
+       #:test-dir "asm-util/src/test"
+       ;; tests depend on junit5
+       #:tests? #f))
+    (inputs
+     (list java-asm-9 java-asm-analysis-9 java-asm-tree-9))))
+
+(define-public java-asm-commons-9
+  (package
+    (inherit java-asm-9)
+    (name "java-asm-commons")
+    (arguments
+     (list #:jar-name "asm-commons8.jar"
+           #:source-dir "asm-commons/src/main/java"
+           #:test-dir "asm-commons/src/test"
+           ;; tests depend on junit5
+           #:tests? #f))
+    (inputs (list java-asm-9 java-asm-analysis-9 java-asm-tree-9))))
+
 (define-public java-cglib
   (package
     (name "java-cglib")
-    (version "3.2.4")
+    (version "3.3.0")
     (source
      (origin
        (method git-fetch)
@@ -5121,7 +5196,7 @@ including java-asm.")
                                   version)))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "186451jms2zfp47yd8kxd77az2cqal1my2br7klgyp8fpl4qfg8v"))))
+        (base32 "1lnscamc6bnhh7jgij5garxagp3zn2jp4cbq0rsn4xr3l0cnd014"))))
     (build-system ant-build-system)
     (arguments
      `(;; FIXME: tests fail because junit runs
@@ -5133,8 +5208,8 @@ including java-asm.")
        (modify-phases %standard-phases
          (add-after 'unpack 'chdir
            (lambda _ (chdir "cglib") #t)))))
-    (inputs
-     (list java-asm java-junit))
+    (native-inputs (list java-junit))
+    (propagated-inputs (list java-asm-8))
     (home-page "https://github.com/cglib/cglib/")
     (synopsis "Java byte code generation library")
     (description "The byte code generation library CGLIB is a high level API
@@ -5144,7 +5219,7 @@ to generate and transform Java byte code.")
 (define-public java-objenesis
   (package
     (name "java-objenesis")
-    (version "2.5.1")
+    (version "3.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5153,11 +5228,12 @@ to generate and transform Java byte code.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "054yi200wj00x6dp1sxfrwgndwywadsbn8d8ij1j0v45j9g2vdya"))))
+                "1brlcn536p4s1v1f3vzxhr38lvyhc33wjrbj2x06kdrd8agy90cr"))))
     (build-system ant-build-system)
     (arguments
-     `(#:jar-name "objenesis.jar"
-       #:source-dir "main/src/"
+     `(#:tests? #f; require junit-5
+       #:jar-name "objenesis.jar"
+       #:source-dir "main/src/main/java"
        #:test-dir "main/src/test/"))
     (native-inputs
      (list java-junit java-hamcrest-core))
@@ -5221,7 +5297,7 @@ constructor on object instantiation.")
                (delete-file "tests2/EasyMockPropertiesTest.java"))
              #t)))))
     (inputs
-     (list java-asm java-cglib java-objenesis))
+     (list java-cglib java-objenesis))
     (native-inputs
      (list java-junit java-hamcrest-core))
     (home-page "https://easymock.org/")
@@ -5280,7 +5356,7 @@ mock objects in unit testing.")
      (list #:jar-name "easymock-class-extensions.jar"
            #:source-dir "easymock-classextension/src/main/java"
            #:test-dir "easymock-classextension/src/test"))
-    (inputs (list java-asm
+    (inputs (list java-asm-8
                   java-easymock-3.2
                   java-cglib
                   java-objenesis))
@@ -5344,7 +5420,7 @@ The jMock library
                (base32
                 "12b7l22g3nrjvf2dzcw3z03fpd2chrgp0d8xkvn8w55rwb57pax6"))))
     (inputs
-     (list java-hamcrest-all java-asm java-bsh java-junit))
+     (list java-hamcrest-all java-bsh java-junit))
     (native-inputs
      `(("cglib" ,java-cglib)))
     (arguments
@@ -5362,7 +5438,6 @@ The jMock library
        #:test-dir "jmock-junit4/src/test"))
     (inputs
      `(("java-hamcrest-all" ,java-hamcrest-all)
-       ("java-asm" ,java-asm)
        ("java-bsh" ,java-bsh)
        ("java-jmock" ,java-jmock)
        ("java-jumit" ,java-junit)))))
@@ -5389,7 +5464,6 @@ The jMock library
            java-objenesis
            java-cglib
            java-jmock
-           java-asm
            java-bsh
            java-junit))
     (native-inputs
@@ -6203,11 +6277,54 @@ namespaces.")
 It provides packages in the @code{javax.annotations} namespace.")
     (license license:asl2.0)))
 
+(define-public java-error-prone-annotations
+  (package
+    (name "java-error-prone-annotations")
+    (version "2.18.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/google/error-prone")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name "java-error-prone" version))
+              (sha256
+               (base32
+                "19sqsz0b308rhadr3ff10azdbqjq37nvrn9c06224dwpxap0931f"))))
+    (build-system ant-build-system)
+    (arguments
+     `(#:tests? #f; no tests
+       #:jar-name (string-append ,name "-" ,version ".jar")
+       #:source-dir "annotations/src/main/java"
+       #:test-dir "annotations/src/altest"
+       #:phases
+       (modify-phases %standard-phases
+         (replace 'install (install-from-pom "annotations/pom.xml")))))
+    (propagated-inputs (list java-error-prone-parent-pom java-jsr305))
+    (home-page "https://errorprone.info")
+    (synopsis "Java static analyzer at compile-time")
+    (description "Error Prone is a static analysis tool for Java that catches
+common programming mistakes at compile-time.  This package contains annotations
+used by programmers to guide the static analysis.")
+    (license license:asl2.0)))
+
+(define java-error-prone-parent-pom
+  (package
+    (inherit java-error-prone-annotations)
+    (name "java-error-prone-parent-pom")
+    (arguments
+     `(#:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure)
+         (delete 'build)
+         (replace 'install
+           (install-pom-file "pom.xml")))))
+    (propagated-inputs '())))
+
 (define-public java-guava
   (package
     (name "java-guava")
-    ;; This is the last release of Guava that can be built with Java 7.
-    (version "20.0")
+    (version "31.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6216,7 +6333,9 @@ It provides packages in the @code{javax.annotations} namespace.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "00h5cawdjic1vind3yivzh1f58flvm1yfmhsyqwyvmbvj1vakysp"))))
+                "0sv1w5cnids9ad3l7qhrh3dh1wdqwc946iinsxryafr25wg5z1lp"))
+              (patches
+               (search-patches "java-guava-remove-annotation-deps.patch"))))
     (build-system ant-build-system)
     (arguments
      `(#:tests? #f                      ; no tests included
@@ -6230,27 +6349,26 @@ It provides packages in the @code{javax.annotations} namespace.")
                ;; Remove annotations to avoid extra dependencies:
                ;; * "j2objc" annotations are used when converting Java to
                ;;   Objective C;
-               ;; * "errorprone" annotations catch common Java mistakes at
-               ;;   compile time;
                ;; * "IgnoreJRERequirement" is used for Android.
+               ;; * "Nullable" is used to catch NPE at build time.
                (substitute* (find-files "." "\\.java$")
                  (("import com.google.j2objc.*") "")
-                 (("import com.google.errorprone.annotation.*") "")
-                 (("import org.codehaus.mojo.animal_sniffer.*") "")
-                 (("@CanIgnoreReturnValue") "")
-                 (("@LazyInit") "")
+                 (("import org.checkerframework.checker.*") "")
+                 (("@ReflectionSupport.*") "")
                  (("@WeakOuter") "")
                  (("@RetainedWith") "")
                  (("@Weak") "")
-                 (("@ForOverride") "")
                  (("@J2ObjCIncompatible") "")
-                 (("@IgnoreJRERequirement") "")))
-             #t))
+                 (("@IgnoreJRERequirement") "")
+                 (("@Nullable") "")))))
+         ;; This is required by guava, but this is just an empty stub
+         (add-before 'install 'install-listenablefuture-stub
+           (install-pom-file "futures/listenablefuture9999/pom.xml"))
          (replace 'install (install-from-pom "guava/pom.xml")))))
     (inputs
-     (list java-jsr305))
+     (list java-error-prone-annotations java-jsr305))
     (propagated-inputs
-     (list java-guava-parent-pom))
+     (list java-guava-futures-failureaccess java-guava-parent-pom))
     (home-page "https://github.com/google/guava")
     (synopsis "Google core libraries for Java")
     (description "Guava is a set of core libraries that includes new
@@ -6259,6 +6377,21 @@ graph library, functional types, an in-memory cache, and APIs/utilities for
 concurrency, I/O, hashing, primitives, reflection, string processing, and much
 more!")
     (license license:asl2.0)))
+
+(define-public java-guava-futures-failureaccess
+  (package
+    (inherit java-guava)
+    (name "java-guava-futures-failureaccess")
+    (arguments
+     `(#:tests? #f; no tests
+       #:jar-name "guava-futures-failureaccess.jar"
+       #:source-dir "futures/failureaccess/src"
+       #:phases
+       (modify-phases %standard-phases
+         (replace 'install
+           (install-from-pom "futures/failureaccess/pom.xml")))))
+    (propagated-inputs
+     `(("java-sonatype-oss-parent-pom" ,java-sonatype-oss-parent-pom-7)))))
 
 (define java-guava-parent-pom
   (package
@@ -6522,6 +6655,7 @@ standards and recommendations.")
      `(#:jar-name "httpcomponents-httpclient-cache.jar"
        #:source-dir "src/main/java"
        #:test-dir "src/test"
+       #:tests? #f; tests are broken with current cglib.
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'delete-unused-impls
@@ -6539,7 +6673,6 @@ standards and recommendations.")
                     (prepend java-httpcomponents-httpclient
                              java-httpcomponents-httpmime
                              java-hamcrest-core)))
-    (native-inputs (list java-easymock-3.2 java-easymock-class-extension))
     (description "This package provides an API for caching accessed HTTP
 resources.")))
 
@@ -6548,6 +6681,7 @@ resources.")))
     (name "java-httpcomponents-httpclient-osgi")
     (arguments
      `(#:jar-name "httpcomponents-httpclient-osgi.jar"
+       #:tests? #f; tests are broken with current cglib.
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'chdir
@@ -9817,8 +9951,7 @@ the system under test at the same time.")
        ("junit" ,java-junit)
        ("hamcrest" ,java-hamcrest-core)
        ("cglib" ,java-cglib)
-       ("objenesis" ,java-objenesis)
-       ("asm" ,java-asm)))))
+       ("objenesis" ,java-objenesis)))))
 
 (define-public java-ops4j-pax-exam-core-junit
   (package
@@ -10464,7 +10597,6 @@ the dependency is said to be unsatisfied, and the application is broken.")
            (install-from-pom "core/pom.xml")))))
     (propagated-inputs
      (list java-aopalliance
-           java-asm
            java-cglib
            java-guava
            java-javax-inject
@@ -10644,7 +10776,7 @@ annotations.")
 (define-public java-bsh
   (package
     (name "java-bsh")
-    (version "2.0b6")
+    (version "2.1.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -10653,7 +10785,7 @@ annotations.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0kz3f0xjack6c9syssi4qjw1rbd3q5963sk5pmr143hiibxa9csw"))
+                "1a6y46yz2ba4mnlfv4bpd5pmzhgxrzk3s10xp05jz377nbp2izwg"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -10669,6 +10801,10 @@ annotations.")
        #:make-flags (list "-DDATE" "(no date for reproducibility)")
        #:phases
        (modify-phases %standard-phases
+         (add-before 'check 'fix-test
+           (lambda _
+             (substitute* "tests/junitTests/src/bsh/Issue_55_Test.java"
+               ((" BshScriptEngineFactory") " bsh.engine.BshScriptEngineFactory"))))
          (replace 'install
            (install-from-pom "pom.xml")))))
     (inputs
@@ -10766,8 +10902,7 @@ those in Perl and JavaScript.")
            java-hamcrest-core
            java-mockito-1
            java-cglib
-           java-objenesis
-           java-asm))
+           java-objenesis))
     (home-page "https://github.com/alexruiz/fest-assert-2.x")
     (synopsis "FEST fluent assertions")
     (description "FEST-Assert provides a fluent interface for assertions.")
@@ -10840,7 +10975,6 @@ those in Perl and JavaScript.")
        ("java-assertj" ,java-assertj)
        ("java-mockito" ,java-mockito-1)
        ("cglib" ,java-cglib)
-       ("asm" ,java-asm)
        ("aopalliance" ,java-aopalliance)))
     (home-page "https://testng.org")
     (synopsis "Testing framework")
@@ -11122,8 +11256,7 @@ programming language.")
        ("java-hamcrest-all" ,java-hamcrest-all)))
     (native-inputs
      `(("cglib" ,java-cglib)
-       ("objenesis" ,java-objenesis)
-       ("asm" ,java-asm)))
+       ("objenesis" ,java-objenesis)))
     (home-page "https://www.lmax.com/disruptor")
     (synopsis "High performance inter-thread communication")
     (description "LMAX Disruptor is a software pattern and software component
@@ -11262,34 +11395,72 @@ everything as database, including class objects, text format data, data
 streams, etc.")
     (license license:asl2.0)))
 
+(define-public java-byte-buddy-dep
+  (package
+    (name "java-byte-buddy-dep")
+    (version "1.14.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/raphw/byte-buddy")
+                     (commit (string-append "byte-buddy-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "03jmsnkjb9d3z9brqs8fc512hhs5b5iab3a5wbax9zi03dskgvh2"))))
+    (build-system ant-build-system)
+    (arguments
+     `(#:jar-name "byte-buddy-dep.jar"
+       #:source-dir "byte-buddy-dep/src/main/java"
+       #:test-dir "byte-buddy-dep/src/test"
+       #:tests? #f; would build java files that are incompatible with current jdk
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'remove-annotations
+           (lambda _
+             (with-directory-excursion "byte-buddy-dep/src/main/java/net/bytebuddy"
+               (substitute* (find-files "." ".*.java")
+                 (("@EqualsAndHashCode.*") "")
+                 (("import lombok.EqualsAndHashCode;") "")
+                 (("@SuppressFBWarnings.*") "")
+                 (("import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;") ""))
+               (substitute* '("description/type/TypeDescription.java"
+                              "dynamic/loading/ClassInjector.java")
+                 (("^  *value = .*") "")
+                 (("^  *justification = .*") ""))))))))
+    (inputs
+      (list java-asm-9 java-asm-commons-9 java-jsr305 java-native-access))
+    (home-page "http://bytebuddy.net/")
+    (synopsis "Runtime code generation for the Java virtual machine")
+    (description "Byte Buddy is a code generation and manipulation library for
+creating and modifying Java classes during the runtime of a Java application
+and without the help of a compiler.")
+    (license license:asl2.0)))
+
 (define-public java-powermock-reflect
   (package
     (name "java-powermock-reflect")
-    (version "1.7.3")
+    (version "2.0.9")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/powermock/powermock/"
-                                  "archive/powermock-" version ".tar.gz"))
-              (file-name (string-append name "-" version ".tar.gz"))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/powermock/powermock")
+                     (commit (string-append "powermock-" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "0sbgi5vqq7k72wzcdjb20s370vyd4hsbnx71pzb8ishml3gy7fwy"))
+                "03y8szi9iwxnv431z2mn2ivc1ak30vcvfvkyrwmfq7wq93bj2c5v"))
               (patches
                 (search-patches "java-powermock-fix-java-files.patch"))))
     (build-system ant-build-system)
     (arguments
      `(#:jar-name "java-powermock-reflect.jar"
-       #:jdk ,icedtea-8
        #:source-dir "powermock-reflect/src/main/java"
        #:test-dir "powermock-reflect/src/test"))
     (inputs
-     (list java-objenesis))
+     (list java-asm-9 java-objenesis))
     (native-inputs
-     `(("junit" ,java-junit)
-       ("cglib" ,java-cglib)
-       ("asm" ,java-asm)
-       ("hamcrest" ,java-hamcrest-core)
-       ("assertj" ,java-assertj)))
+     (list java-assertj java-cglib java-hamcrest-core java-junit))
     (home-page "https://github.com/powermock/powermock")
     (synopsis "Mock library extension framework")
     (description "PowerMock is a framework that extends other mock libraries
@@ -11318,12 +11489,12 @@ done to the IDE or continuous integration servers which simplifies adoption.")
                                "build/classes")
              #t)))))
     (inputs
-     `(("reflect" ,java-powermock-reflect)
-       ("javassist" ,java-jboss-javassist)))
+     (list java-asm-9
+           java-byte-buddy-dep
+           java-jboss-javassist
+           java-powermock-reflect))
     (native-inputs
-     `(("junit" ,java-junit)
-       ("assertj" ,java-assertj)
-       ("mockito" ,java-mockito-1)))))
+     (list java-assertj java-mockito-1 java-junit))))
 
 (define-public java-powermock-api-support
   (package
@@ -11336,8 +11507,7 @@ done to the IDE or continuous integration servers which simplifies adoption.")
        #:source-dir "powermock-api/powermock-api-support/src/main/java"
        #:tests? #f)); no tests
     (inputs
-     `(("core" ,java-powermock-core)
-       ("reflect" ,java-powermock-reflect)))))
+     (list java-powermock-core java-powermock-reflect))))
 
 (define-public java-powermock-modules-junit4-common
   (package
@@ -11350,11 +11520,11 @@ done to the IDE or continuous integration servers which simplifies adoption.")
        #:source-dir "powermock-modules/powermock-module-junit4-common/src/main/java"
        #:test-dir "powermock-modules/powermock-module-junit4-common/src/test"))
     (inputs
-     `(("core" ,java-powermock-core)
-       ("easymock" ,java-easymock)
-       ("reflect" ,java-powermock-reflect)
-       ("hamcrest" ,java-hamcrest-core)
-       ("cglib" ,java-cglib)))))
+     (list java-cglib
+           java-easymock
+           java-hamcrest-core
+           java-powermock-core
+           java-powermock-reflect))))
 
 (define-public java-powermock-modules-junit4
   (package
@@ -11363,7 +11533,7 @@ done to the IDE or continuous integration servers which simplifies adoption.")
     (build-system ant-build-system)
     (arguments
      `(#:jar-name "java-powermock-modules-junit4.jar"
-       #:jdk ,icedtea-8
+       #:tests? #f; require easymock 4, which introduces a loop with testng
        #:source-dir "powermock-modules/powermock-module-junit4/src/main/java"
        #:test-dir "powermock-modules/powermock-module-junit4/src/test"
        #:phases
@@ -11376,16 +11546,15 @@ done to the IDE or continuous integration servers which simplifies adoption.")
                (("4.12") "4.12-SNAPSHOT"))
              #t)))))
     (inputs
-     `(("core" ,java-powermock-core)
-       ("reflect" ,java-powermock-reflect)
-       ("common" ,java-powermock-modules-junit4-common)
-       ("cglib" ,java-cglib)))
+     (list java-cglib
+           java-powermock-core
+           java-powermock-reflect
+           java-powermock-modules-junit4-common))
     (native-inputs
-     `(("easymock" ,java-easymock)
-       ("hamcrest" ,java-hamcrest-core)
-       ("objenesis" ,java-objenesis)
-       ("asm" ,java-asm)
-       ("junit" ,java-junit)))))
+     (list java-easymock
+           java-hamcrest-core
+           java-junit
+           java-objenesis))))
 
 (define-public java-powermock-api-easymock
   (package
@@ -11408,11 +11577,11 @@ done to the IDE or continuous integration servers which simplifies adoption.")
                  (("\\(\\(MockClassLoader\\) classLoader\\).*;") ";")))
              #t)))))
     (inputs
-     `(("core" ,java-powermock-core)
-       ("easymock" ,java-easymock)
-       ("reflect" ,java-powermock-reflect)
-       ("support" ,java-powermock-api-support)
-       ("cglib" ,java-cglib)))))
+     (list java-cglib
+           java-easymock
+           java-powermock-api-support
+           java-powermock-core
+           java-powermock-reflect))))
 
 (define-public java-jboss-jms-api-spec
   (package
@@ -11602,8 +11771,7 @@ disk storage or off-heap memory.")
     (inputs
      (list java-slf4j-api java-lz4))
     (native-inputs
-     (list java-asm
-           java-bouncycastle
+     (list java-bouncycastle
            java-cglib
            java-easymock
            java-hamcrest-all
@@ -12475,7 +12643,6 @@ features that bring it on par with the Z shell line editor.")
            java-easymock
            java-jboss-javassist
            java-objenesis
-           java-asm
            java-hamcrest-core
            java-cglib
            java-junit
@@ -12606,7 +12773,6 @@ This package includes the line reader.")
        ("java-mockito-1" ,java-mockito-1)
        ("java-hamcrest-all" ,java-hamcrest-all)
        ("java-objenesis" ,java-objenesis)
-       ("java-asm" ,java-asm)
        ("java-cglib" ,java-cglib)
        ("resources"
         ,(origin
@@ -13294,7 +13460,6 @@ OSGi Service Registry is a goal of this project.")
            java-guice
            java-guava
            java-aopalliance
-           java-asm
            java-cglib))
     (native-inputs
      (list java-junit))
@@ -13418,7 +13583,6 @@ static code analysis or code manipulation.")))
            java-hamcrest-core
            java-mockito-1
            java-cglib
-           java-asm
            java-objenesis
            java-joda-time))
     (home-page "https://logback.qos.ch")

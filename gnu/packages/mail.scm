@@ -17,7 +17,7 @@
 ;;; Copyright © 2016, 2017 Troy Sankey <sankeytms@gmail.com>
 ;;; Copyright © 2016, 2017, 2018 Nikita <nikita@n0.is>
 ;;; Copyright © 2016 Clément Lassieur <clement@lassieur.org>
-;;; Copyright © 2016–2023 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2016–2024 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2016 John Darrington <jmd@gnu.org>
 ;;; Copyright © 2016, 2018 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2017 Thomas Danckaert <post@thomasdanckaert.be>
@@ -51,6 +51,7 @@
 ;;; Copyright © 2022 muradm <mail@muradm.net>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2022 ( <paren@disroot.org>
+;;; Copyright © 2022 Mathieu Laparie <mlaparie@disr.it>
 ;;; Copyright © 2023 Timo Wilken <guix@twilken.net>
 ;;; Copyright © 2023 Arjan Adriaanse <arjan@adriaan.se>
 ;;; Copyright © 2023 Wilko Meyer <w@wmeyer.eu>
@@ -454,6 +455,48 @@ software.  GNU Mailutils provides the following commands:
        "Mairix is a program for indexing and searching email messages stored in
 Maildir, MH, MMDF or mbox folders.")
       (license license:gpl2))))
+
+(define-public nmail
+  (package
+    (name "nmail")
+    (version "4.54")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/d99kris/nmail/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bk2kq0pk1r4w5xv94yh37vrwxs8lczjg11gfraxh9cxyjigwsrp"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests?
+                         (invoke "ctest" "--output-on-failure")))))))
+    (inputs
+     (list curl
+           cyrus-sasl
+           expat
+           file
+           libetpan
+           ncurses
+           openssl
+           sqlite
+           (list util-linux "lib")
+           xapian
+           zlib))
+    (native-inputs (list pkg-config))
+    (home-page "https://github.com/d99kris/nmail")
+    (synopsis "Terminal-based email client")
+    (description
+     "@command{nmail} is an easily configurable terminal-based email client
+with a @code{ncurses} user interface similar to @code{alpine} and
+@code{pine}.")
+    (license license:expat)))
 
 (define-public go-gitlab.com-shackra-goimapnotify
   (package
@@ -4114,7 +4157,7 @@ It is a replacement for the @command{urlview} program.")
 (define-public mumi
   (package
     (name "mumi")
-    (version "0.0.8")
+    (version "0.0.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4123,7 +4166,7 @@ It is a replacement for the @command{urlview} program.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1z556pxsz0zx95gd5b4hwkmwcvf3jyz7njkb3zwbhrwnpgygnbyl"))))
+                "13b7cich8fz2nzx2gf39kdrj9vwhhqjxfhqr5mi78xhd6v0sypdw"))))
     (build-system gnu-build-system)
     (arguments
      (list

@@ -64,6 +64,7 @@
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 normally_js <normally_js@posteo.net>
+;;; Copyright © 2024 Markku Korkeala <markku.korkeala@iki.fi>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -7176,6 +7177,32 @@ Agent is a web crawler.  It uses the list of registered robots from
 @url{http://www.robotstxt.org}.")
     (license license:gpl3+)))
 
+(define-public python-robotframework-requests
+  (package
+    (name "python-robotframework-requests")
+    (version "0.9.7")
+    (source
+     (origin
+       (method git-fetch)               ; no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/MarketSquare/robotframework-requests")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "077j8p5k41v53slyv8h32fcmqfi7m6z3r4gmyqqaawm5szfmy61m"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-requests python-robotframework))
+    (native-inputs
+     (list python-pytest))
+    (home-page "https://github.com/MarketSquare/robotframework-requests")
+    (synopsis "Robot Framework keyword library wrapper around requests")
+    (description
+     "@code{RequestsLibrary} is a @url{https://robotframework.org/, Robot
+Framework} library aimed to provide HTTP API testing functionalities by
+wrapping the @code{requests} Python library.")
+    (license license:expat)))
+
 (define-public python-pysolr
   (package
     (name "python-pysolr")
@@ -7400,16 +7427,29 @@ challenges.")
 (define-public python-imap-tools
   (package
     (name "python-imap-tools")
-    (version "0.29.0")
+    (version "1.6.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "imap_tools" version))
-        (sha256
-          (base32
-            "0x122jwpc74wwyw2rsv2fvh6p12y31019ndfr9717jzjkj2d3lhb"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))          ; tests require internet access
+     (origin
+       (method git-fetch)               ; no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/ikvk/imap_tools")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0w4x5l5w7rz1mrmbbjbfqbf3f5p89wi2fw245yvg8k98zgy012sg"))))
+    (arguments
+     (list
+      #:test-flags
+      ;; Tests require a network connection
+      #~(list "-k" (string-append "not test_action"
+                                  " and not test_attributes"
+                                  " and not test_connection"
+                                  " and not test_folders"
+                                  " and not test_idle"
+                                  " and not test_live"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest))
     (home-page "https://github.com/ikvk/imap_tools")
     (synopsis "Work with email and mailbox by IMAP")
     (description

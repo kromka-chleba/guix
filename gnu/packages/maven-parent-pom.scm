@@ -92,6 +92,14 @@
   (make-apache-parent-pom
     "25" "1vwx2fpgk7cn2pnlnx26df26vndiwwn5l7ngakj0vwal5pmp6115"))
 
+(define-public apache-parent-pom-27
+  (make-apache-parent-pom
+    "27" "07087qdcwadsg3va5rc9xb7k89im3fm2g297lpmfh1aggn7cpc00"))
+
+(define-public apache-parent-pom-29
+  (make-apache-parent-pom
+    "29" "0fj078bgzs0r24x66ph5bbwkkc5s9d1qh57hmlpisg4mdi0l48s9"))
+
 (define* (make-apache-commons-parent-pom version hash parent
                                          #:key (tag-prefix "commons-parent-"))
   (hidden-package
@@ -442,6 +450,26 @@ other projects as their parent pom.")
       (description "Apache Maven is a software project management and comprehension
 tool.  This package contains the Maven parent POM.")
       (license license:asl2.0))))
+
+(define-public maven-parent-pom-39
+  (make-maven-parent-pom
+    "39" "1123nmm63nrsfy9i35zn12glswc2sy9bsj4fir2z9yh93kraky1y"
+    apache-parent-pom-29
+    #:replacements
+    (delay
+      `(("org.codehaus.plexus"
+         ("plexus-component-annotations" .
+          ,(package-version java-plexus-component-annotations)))))))
+
+(define-public maven-parent-pom-37
+  (make-maven-parent-pom
+    "37" "0c8yham28si4zadpv9v2i61gl3in518jls4nsawfhx42b6x3371j"
+    apache-parent-pom-27
+    #:replacements
+    (delay
+      `(("org.codehaus.plexus"
+         ("plexus-component-annotations" .
+          ,(package-version java-plexus-component-annotations)))))))
 
 (define-public maven-parent-pom-35
   (make-maven-parent-pom

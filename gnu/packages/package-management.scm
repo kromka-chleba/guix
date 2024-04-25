@@ -99,6 +99,7 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages perl-check)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages polkit)
   #:use-module (gnu packages popt)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -1544,8 +1545,8 @@ environments.")
                   "0k9zkdyyzir3fvlbcfcqy17k28b51i20rpbjwlx2i1mwd2pw9cxc")))))))
 
 (define-public guix-build-coordinator
-  (let ((commit "14e18eed98d1836662d8787d08f7a37cf8c2f69d")
-        (revision "100"))
+  (let ((commit "0df0c1a6b85f1f84affdd21b3b6b14fb62f7820e")
+        (revision "101"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1556,7 +1557,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1vv1l6y80ymqi7qz70bfq4is4y1xh21jm4d4gapn63931ac4fiij"))
+                  "01p4ng1h061awfr8j520civgxl75239v67if3r7fqhr8k4f3b6ry"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1793,8 +1794,8 @@ in an isolated environment, in separate namespaces.")
     (license license:gpl3+)))
 
 (define-public nar-herder
-  (let ((commit "ffda727a3b6bd45851662159709a1927a1ee0c1d")
-        (revision "27"))
+  (let ((commit "6be6f63c9f03b7bc928f7927a38da91f95f57ea2")
+        (revision "28"))
     (package
       (name "nar-herder")
       (version (git-version "0" revision commit))
@@ -1805,7 +1806,7 @@ in an isolated environment, in separate namespaces.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1qg8s68prdv3qgwx63k4zfvsida64jq6fcl06zffbkbl672rnrzl"))
+                  "1kg7h3y5wx9saxqhyj36135i5n0h8yppq05s2cin22b9c8mdkxi0"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -2022,14 +2023,14 @@ the boot loader configuration.")
 (define-public flatpak
   (package
     (name "flatpak")
-    (version "1.14.4")
+    (version "1.14.6")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/flatpak/flatpak/releases/download/"
                            version "/flatpak-" version ".tar.xz"))
        (sha256
-        (base32 "16b7f7n2mms6zgm0lj3fn86ny11xjn8cd3mrk1slwhvwnv8dnd4a"))
+        (base32 "0ij93vl9skcfdfgkmgd80q0q4c6q39dss4rds7phxizqqsr3d3sk"))
        (patches
         (search-patches "flatpak-fix-path.patch"
                         "flatpak-unset-gdk-pixbuf-for-sandbox.patch"))))
@@ -2042,6 +2043,7 @@ the boot loader configuration.")
      (list
       #:configure-flags
       #~(list
+         "--with-curl"
          "--enable-documentation=no" ;; FIXME
          "--enable-system-helper=no"
          "--localstatedir=/var"
@@ -2105,19 +2107,22 @@ cp -r /tmp/locale/*/en_US.*")))
            bubblewrap
            curl
            dconf
-           fuse-2
+           fuse
            gdk-pixbuf
            gpgme
            json-glib
            libarchive
+           libcap
            libostree
            libseccomp
            libsoup-minimal-2
            libxau
            libxml2
            p11-kit
+           polkit
            util-linux
-           xdg-dbus-proxy))
+           xdg-dbus-proxy
+           zstd))
     (propagated-inputs (list glib-networking gnupg gsettings-desktop-schemas))
     (home-page "https://flatpak.org")
     (synopsis "System for building, distributing, and running sandboxed desktop

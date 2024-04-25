@@ -40,7 +40,7 @@
 (define-public maven-resolver-api
   (package
     (name "maven-resolver-api")
-    (version "1.6.3")
+    (version "1.9.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -49,7 +49,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0hbbbxj14qyq8pccyab96pjqq90jnjmid1pml9kx55c5smfpjn37"))))
+                "0s18vivvapmrk407syrc8ib2qpmp01i3k46h6gqp7961n1p9wzlq"))))
     (build-system ant-build-system)
     (arguments
      `(#:jar-name "maven-resolver-api.jar"
@@ -90,7 +90,7 @@
              #t))
          (replace 'install
            (install-pom-file "pom.xml")))))
-    (propagated-inputs '())))
+    (propagated-inputs (list maven-parent-pom-37))))
 
 (define-public maven-resolver-spi
   (package
@@ -140,7 +140,7 @@ ease testing of the repository system.")))
     (propagated-inputs
      (list maven-resolver-api))
     (native-inputs
-     (list java-junit java-hamcrest-core maven-resolver-test-util))
+     (list java-junit java-hamcrest-all maven-resolver-test-util))
     (synopsis "Utility classes for the maven repository system")
     (description "This package contains a collection of utility classes to
 ease usage of the repository system.")))
@@ -174,6 +174,35 @@ ease usage of the repository system.")))
     (description "This package contains a repository connector implementation
 for repositories using URI-based layouts.")))
 
+(define-public maven-resolver-named-locks
+  (package
+    (inherit maven-resolver-api)
+    (name "maven-resolver-named-locks")
+    (arguments
+     `(#:jar-name "maven-resolver-named-locks.jar"
+       #:source-dir "maven-resolver-named-locks/src/main/java"
+       #:test-dir "maven-resolver-named-locks/src/test"
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'build 'generate-sisu
+           (lambda _
+             (mkdir-p "build/classes/META-INF/sisu")
+             (with-output-to-file "build/classes/META-INF/sisu/javax.inject.Named"
+               (lambda _
+                 (display "org.eclipse.aether.named.providers.FileLockNamedLockFactory
+org.eclipse.aether.named.providers.LocalReadWriteLockNamedLockFactory
+org.eclipse.aether.named.providers.LocalSemaphoreNamedLockFactory
+org.eclipse.aether.named.providers.NoopNamedLockFactory\n")))))
+         (replace 'install
+           (install-from-pom "maven-resolver-named-locks/pom.xml")))))
+    (propagated-inputs
+      (list java-slf4j-api))
+    (native-inputs
+      (list java-javax-inject java-junit java-hamcrest-all))
+    (synopsis "Maven artifact resolver named locks")
+    (description "This package contains a synchronization utility implementation
+using named locks.")))
+
 (define-public maven-resolver-impl
   (package
     (inherit maven-resolver-api)
@@ -182,6 +211,7 @@ for repositories using URI-based layouts.")))
      `(#:jar-name "maven-resolver-impl.jar"
        #:source-dir "maven-resolver-impl/src/main/java"
        #:test-dir "maven-resolver-impl/src/test"
+       #:tests? #f; require more recent hamcrest
        #:phases
        (modify-phases %standard-phases
          (add-before 'build 'generate-sisu
@@ -189,37 +219,60 @@ for repositories using URI-based layouts.")))
              (mkdir-p "build/classes/META-INF/sisu")
              (with-output-to-file "build/classes/META-INF/sisu/javax.inject.Named"
                (lambda _
-                 (display
-                   (string-append
-                     ;; Build this list by looking for files containing "@Named"
-                     "org.eclipse.aether.internal.impl.DefaultArtifactResolver\n"
-                     "org.eclipse.aether.internal.impl.collect.DefaultDependencyCollector\n"
-                     "org.eclipse.aether.internal.impl.DefaultChecksumPolicyProvider\n"
-                     "org.eclipse.aether.internal.impl.DefaultDeployer\n"
-                     "org.eclipse.aether.internal.impl.DefaultFileProcessor\n"
-                     "org.eclipse.aether.internal.impl.DefaultInstaller\n"
-                     "org.eclipse.aether.internal.impl.DefaultLocalRepositoryProvider\n"
-                     "org.eclipse.aether.internal.impl.DefaultMetadataResolver\n"
-                     "org.eclipse.aether.internal.impl.DefaultOfflineController\n"
-                     "org.eclipse.aether.internal.impl.DefaultRemoteRepositoryManager\n"
-                     "org.eclipse.aether.internal.impl.DefaultRepositoryConnectorProvider\n"
-                     "org.eclipse.aether.internal.impl.DefaultRepositoryEventDispatcher\n"
-                     "org.eclipse.aether.internal.impl.DefaultRepositoryLayoutProvider\n"
-                     "org.eclipse.aether.internal.impl.DefaultRepositorySystem\n"
-                     "org.eclipse.aether.internal.impl.DefaultSyncContextFactory\n"
-                     "org.eclipse.aether.internal.impl.DefaultTransporterProvider\n"
-                     "org.eclipse.aether.internal.impl.DefaultUpdateCheckManager\n"
-                     "org.eclipse.aether.internal.impl.DefaultUpdatePolicyAnalyzer\n"
-                     "org.eclipse.aether.internal.impl.EnhancedLocalRepositoryManagerFactory\n"
-                     "org.eclipse.aether.internal.impl.LoggerFactoryProvider\n"
-                     "org.eclipse.aether.internal.impl.Maven2RepositoryLayoutFactory\n"
-                     "org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory\n"
-                     "org.eclipse.aether.internal.impl.slf4j.Slf4jLoggerFactory"))))
-             #t))
+                 ;; Build this list by looking for files containing "@Named"
+                 (display "org.eclipse.aether.internal.impl.DefaultArtifactResolver
+org.eclipse.aether.internal.impl.DefaultChecksumPolicyProvider
+org.eclipse.aether.internal.impl.DefaultDeployer
+org.eclipse.aether.internal.impl.DefaultFileProcessor
+org.eclipse.aether.internal.impl.DefaultInstaller
+org.eclipse.aether.internal.impl.DefaultLocalPathComposer
+org.eclipse.aether.internal.impl.DefaultLocalPathPrefixComposerFactory
+org.eclipse.aether.internal.impl.DefaultLocalRepositoryProvider
+org.eclipse.aether.internal.impl.DefaultMetadataResolver
+org.eclipse.aether.internal.impl.DefaultOfflineController
+org.eclipse.aether.internal.impl.DefaultRemoteRepositoryManager
+org.eclipse.aether.internal.impl.DefaultRepositoryConnectorProvider
+org.eclipse.aether.internal.impl.DefaultRepositoryEventDispatcher
+org.eclipse.aether.internal.impl.DefaultRepositoryLayoutProvider
+org.eclipse.aether.internal.impl.DefaultRepositorySystem
+org.eclipse.aether.internal.impl.DefaultRepositorySystemLifecycle
+org.eclipse.aether.internal.impl.DefaultTrackingFileManager
+org.eclipse.aether.internal.impl.DefaultTransporterProvider
+org.eclipse.aether.internal.impl.DefaultUpdateCheckManager
+org.eclipse.aether.internal.impl.DefaultUpdatePolicyAnalyzer
+org.eclipse.aether.internal.impl.EnhancedLocalRepositoryManagerFactory
+org.eclipse.aether.internal.impl.LoggerFactoryProvider
+org.eclipse.aether.internal.impl.Maven2RepositoryLayoutFactory
+org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory
+org.eclipse.aether.internal.impl.checksum.DefaultChecksumAlgorithmFactorySelector
+org.eclipse.aether.internal.impl.checksum.Md5ChecksumAlgorithmFactory
+org.eclipse.aether.internal.impl.checksum.Sha1ChecksumAlgorithmFactory
+org.eclipse.aether.internal.impl.checksum.Sha256ChecksumAlgorithmFactory
+org.eclipse.aether.internal.impl.checksum.Sha512ChecksumAlgorithmFactory
+org.eclipse.aether.internal.impl.checksum.SparseDirectoryTrustedChecksumsSource
+org.eclipse.aether.internal.impl.checksum.SummaryFileTrustedChecksumsSource
+org.eclipse.aether.internal.impl.checksum.TrustedToProvidedChecksumsSourceAdapter
+org.eclipse.aether.internal.impl.collect.DefaultDependencyCollector
+org.eclipse.aether.internal.impl.collect.bf.BfDependencyCollector
+org.eclipse.aether.internal.impl.collect.df.DfDependencyCollector
+org.eclipse.aether.internal.impl.filter.DefaultRemoteRepositoryFilterManager
+org.eclipse.aether.internal.impl.filter.GroupIdRemoteRepositoryFilterSource
+org.eclipse.aether.internal.impl.filter.PrefixesRemoteRepositoryFilterSource
+org.eclipse.aether.internal.impl.resolution.TrustedChecksumsArtifactResolverPostProcessor
+org.eclipse.aether.internal.impl.slf4j.Slf4jLoggerFactory
+org.eclipse.aether.internal.impl.synccontext.DefaultSyncContextFactory
+org.eclipse.aether.internal.impl.synccontext.legacy.DefaultSyncContextFactory
+org.eclipse.aether.internal.impl.synccontext.named.NamedLockFactoryAdapterFactoryImpl
+org.eclipse.aether.internal.impl.synccontext.named.providers.DiscriminatingNameMapperProvider
+org.eclipse.aether.internal.impl.synccontext.named.providers.FileGAVNameMapperProvider
+org.eclipse.aether.internal.impl.synccontext.named.providers.FileHashingGAVNameMapperProvider
+org.eclipse.aether.internal.impl.synccontext.named.providers.GAVNameMapperProvider
+org.eclipse.aether.internal.impl.synccontext.named.providers.StaticNameMapperProvider\n")))))
          (replace 'install
            (install-from-pom "maven-resolver-impl/pom.xml")))))
     (propagated-inputs
      (list maven-resolver-api
+           maven-resolver-named-locks
            maven-resolver-spi
            maven-resolver-util
            java-commons-lang3
@@ -229,7 +282,7 @@ for repositories using URI-based layouts.")))
            java-slf4j-api
            maven-resolver-parent-pom))
     (native-inputs
-     (list java-junit maven-resolver-test-util))))
+     (list java-hamcrest-all java-junit java-mockito-1 maven-resolver-test-util))))
 
 (define-public maven-resolver-transport-wagon
   (package
@@ -247,49 +300,9 @@ for repositories using URI-based layouts.")))
              (mkdir-p "build/classes/META-INF/sisu")
              (with-output-to-file "build/classes/META-INF/sisu/javax.inject.Named"
                (lambda _
-                 (display "org.eclipse.aether.transport.wagon.WagonTransporterFactory\n")))
-             #t))
-         (add-before 'build 'generate-components.xml
-           (lambda _
-             (mkdir-p "build/classes/META-INF/plexus")
-             (with-output-to-file "build/classes/META-INF/plexus/components.xml"
-               (lambda _
-                 (display
-                   (string-append
-                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
-<component-set>
-  <components>
-    <component>
-      <role>org.eclipse.aether.transport.wagon.WagonConfigurator</role>
-      <role-hint>plexus</role-hint>
-      <implementation>org.eclipse.aether.internal.transport.wagon.PlexusWagonConfigurator</implementation>
-      <description />
-      <isolated-realm>false</isolated-realm>
-      <requirements>
-        <requirement>
-          <role>org.codehaus.plexus.PlexusContainer</role>
-          <role-hint />
-          <field-name>container</field-name>
-        </requirement>
-      </requirements>
-    </component>
-    <component>
-      <role>org.eclipse.aether.transport.wagon.WagonProvider</role>
-      <role-hint>plexus</role-hint>
-      <implementation>org.eclipse.aether.internal.transport.wagon.PlexusWagonProvider</implementation>
-      <description />
-      <isolated-realm>false</isolated-realm>
-      <requirements>
-        <requirement>
-          <role>org.codehaus.plexus.PlexusContainer</role>
-          <role-hint />
-          <field-name>container</field-name>
-        </requirement>
-      </requirements>
-    </component>
-  </components>
-</component-set>\n"))))
-             #t)))))
+                 (display "org.eclipse.aether.internal.transport.wagon.PlexusWagonConfigurator
+org.eclipse.aether.internal.transport.wagon.PlexusWagonProvider
+org.eclipse.aether.transport.wagon.WagonTransporterFactory"))))))))
     (inputs
      `(("maven-resolver-api" ,maven-resolver-api)
        ("maven-resolver-spi" ,maven-resolver-spi)
@@ -344,8 +357,7 @@ Maven Wagon, for use in Maven.")))
            maven-resolver-util
            maven-wagon-provider-api))
     (native-inputs
-     (list java-asm
-           java-aopalliance
+     (list java-aopalliance
            java-cglib
            java-guava
            java-guice
@@ -375,7 +387,9 @@ files, for use in Maven.")))
              (mkdir-p "build/classes/META-INF/sisu")
              (with-output-to-file "build/classes/META-INF/sisu/javax.inject.Named"
                (lambda _
-                 (display "org.eclipse.aether.transport.http.HttpTransporterFactory\n"))))))))
+                 (display "org.eclipse.aether.transport.http.HttpTransporterFactory
+org.eclipse.aether.transport.http.Nexus2ChecksumExtractor
+org.eclipse.aether.transport.http.XChecksumChecksumExtractor\n"))))))))
     (inputs
      (list java-eclipse-sisu-inject
            java-eclipse-sisu-plexus
@@ -393,7 +407,6 @@ files, for use in Maven.")))
            java-httpcomponents-httpcore))
     (native-inputs
      (list java-aopalliance
-           java-asm
            java-cglib
            java-eclipse-aether-api
            java-eclipse-jetty-http
@@ -1119,13 +1132,13 @@ gets and puts artifacts through HTTP(S) using Apache HttpClient-4.x.")))
 (define maven-pom
   (package
     (name "maven-pom")
-    (version "3.8.6")
+    (version "3.9.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://apache/maven/"
                                   "maven-3/" version "/source/"
                                   "apache-maven-" version "-src.tar.gz"))
-              (sha256 (base32 "0jszmcaxp597a62ajrc478jxix1qmw4pknhiygsbjdy3kccc7gvj"))
+              (sha256 (base32 "0s8ds2bqkdi2yrcwbd3mkszh6l4hf56j9jz47hkpd7i3zh1hmr4n"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -1199,7 +1212,7 @@ gets and puts artifacts through HTTP(S) using Apache HttpClient-4.x.")))
          (replace 'install
            (install-pom-file "pom.xml")))))
     (propagated-inputs
-     (list maven-parent-pom-35))
+     (list maven-parent-pom-39))
     (home-page "https://maven.apache.org/")
     (synopsis "Build system")
     (description "Apache Maven is a software project management and comprehension
@@ -1262,7 +1275,6 @@ and compares versions:")))
            java-plexus-component-annotations
            java-guice
            java-cglib
-           java-asm
            java-eclipse-sisu-inject
            java-javax-inject
            java-plexus-classworlds
@@ -1473,7 +1485,6 @@ inheritance, interpolation, @dots{}")))
        ("java-plexus-component-annotations" ,java-plexus-component-annotations)
        ("java-guice" ,java-guice)
        ("java-cglib" ,java-cglib)
-       ("java-asm" ,java-asm)
        ("java-eclipse-sisu-inject" ,java-eclipse-sisu-inject)
        ("java-javax-inject" ,java-javax-inject)
        ("java-plexus-utils" ,java-plexus-utils)
@@ -1819,6 +1830,7 @@ artifactId=maven-core" ,(package-version maven-core-bootstrap))))
        #:source-dir "maven-embedder/src/main/java"
        #:test-dir "maven-embedder/src/test"
        #:test-exclude (list "**/MavenCliTest.java")
+       #:tests? #f; require junit 4.13
        #:jdk ,icedtea-8
        #:phases
        (modify-phases %standard-phases
@@ -1840,9 +1852,9 @@ artifactId=maven-core" ,(package-version maven-core-bootstrap))))
                        file mode "maven-embedder/src/main/java" version
                        "false" "true"))
              (let ((file "maven-embedder/src/main/mdo/core-extensions.mdo"))
-               (modello-single-mode file "1.0.0" "java")
-               (modello-single-mode file "1.0.0" "xpp3-reader")
-               (modello-single-mode file "1.0.0" "xpp3-writer"))
+               (modello-single-mode file "1.1.0" "java")
+               (modello-single-mode file "1.1.0" "xpp3-reader")
+               (modello-single-mode file "1.1.0" "xpp3-writer"))
              #t))
          (add-before 'check 'fix-test-paths
            (lambda _
@@ -2103,7 +2115,6 @@ logging support.")))
        ("java-guice" ,java-guice)
        ("java-guava" ,java-guava)
        ("java-cglib" ,java-cglib)
-       ("java-asm" ,java-asm)
        ("java-modello-plugins-java" ,java-modello-plugins-java)
        ("java-modello-plugins-xml" ,java-modello-plugins-xml)
        ("java-modello-plugins-xpp3" ,java-modello-plugins-xpp3)
@@ -2120,6 +2131,8 @@ logging support.")))
        ("java-jsr250" ,java-jsr250)
        ("java-cdi-api" ,java-cdi-api)
        ("java-junit" ,java-junit)
+       ("java-mockito-1" ,java-mockito-1)
+       ("java-objenesis" ,java-objenesis)
        ("maven-resolver-impl" ,maven-resolver-impl)
        ("maven-resolver-connector-basic" ,maven-resolver-connector-basic)
        ("maven-resolver-transport-wagon" ,maven-resolver-transport-wagon)
@@ -2164,7 +2177,8 @@ layer for plugins that need to keep Maven2 compatibility.")))
                      "maven-settings" "maven-settings-builder" "maven-plugin-api"
                      "maven-repository-metadata" "maven-shared-utils" "maven-resolver-api"
                      "maven-resolver-spi" "maven-resolver-util" "maven-resolver-impl"
-                     "maven-resolver-connector-basic" "maven-resolver-provider"
+                     "maven-resolver-connector-basic" "maven-resolver-named-locks"
+                     "maven-resolver-provider"
                      "maven-resolver-transport-wagon" "maven-slf4j-provider"
                      "maven-wagon-provider-api"
                      "maven-wagon-file" "maven-wagon-http" "java-commons-logging-minimal"
@@ -2175,7 +2189,8 @@ layer for plugins that need to keep Maven2 compatibility.")))
                      "java-javax-inject" "java-plexus-component-annotations"
                      "java-plexus-utils" "java-plexus-interpolation"
                      "java-plexus-sec-dispatcher" "java-plexus-cipher" "java-guava"
-                     "java-jansi" "java-jsr250" "java-cdi-api" "java-commons-cli"
+                     "java-guava-futures-failureaccess" "java-jansi"
+                     "java-jsr250" "java-cdi-api" "java-commons-cli"
                      "java-commons-io" "java-commons-lang3" "java-slf4j-api"))))
              (substitute* "apache-maven/src/bin/mvn"
                (("cygwin=false;")
@@ -2218,6 +2233,7 @@ layer for plugins that need to keep Maven2 compatibility.")))
            maven-resolver-api
            maven-resolver-spi
            maven-resolver-util
+           maven-resolver-named-locks
            maven-resolver-impl
            maven-resolver-connector-basic
            maven-resolver-provider
@@ -2244,6 +2260,7 @@ layer for plugins that need to keep Maven2 compatibility.")))
            java-plexus-sec-dispatcher
            java-plexus-cipher
            java-guava
+           java-guava-futures-failureaccess
            java-jansi
            java-jsr250
            java-cdi-api

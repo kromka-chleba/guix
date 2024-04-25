@@ -50,6 +50,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (gnu packages)
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages base)
@@ -90,6 +91,7 @@
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages protobuf)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-xyz)
@@ -1700,6 +1702,83 @@ purposes.")
     (synopsis "Image Visualization Tools")
     (description "Python library for object detection, semantic and instance
 segmentation.")
+    (license license:expat)))
+
+(define-public python-pims
+  (package
+    (name "python-pims")
+    (version "0.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "PIMS" version))
+       (sha256
+        (base32 "0fsg353mbbj1ad06nwrp8p9xcrzy6rca6b52nvlbraaf3m309dz2"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; We don't have all the (sometimes very large) data files, so we skip
+      ;; these tests.
+      '(list "--ignore=pims/tests/test_imseq.py"
+             "--ignore=pims/tests/test_norpix.py"
+             "-k"
+             (string-append " not TestImageReaderTIFF"
+                            " and not TestOpenFiles"
+                            " and not TestSpeStack"
+                            " and not TestTiffStack_pil"
+                            " and not TestTiffStack_tifffile"
+                            " and not TestVideo_ImageIO"))))
+    (propagated-inputs
+     (list python-imageio python-numpy python-slicerator))
+    (native-inputs (list python-pytest))
+    (home-page "https://github.com/soft-matter/pims")
+    (synopsis "Python Image Sequence")
+    (description "Scientific video can be packaged in various ways: familiar
+video formats like @file{.AVI} and @file{.MOV}, folders full of numbered
+images, or \"stacks\" of TIFF images.  Each of these requires a separate
+Python module.  And, once loaded, they have different methods for accessing
+individual images, looping through the images in bulk, accessing a specific
+range, or dealing with multidimensional files.  PIMS can do all of these using
+a consistent interface, handling the differences between different inputs
+invisibly.")
+    (license license:bsd-3)))
+
+(define-public python-spatial-image
+  (package
+    (name "python-spatial-image")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "spatial_image" version))
+       (sha256
+        (base32 "0blyjwgv6bqpg7r3f4dcs7x27ysfm8n9y0zk5j7dxj74lma3wdsm"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-numpy python-pytest python-pytest-mypy
+                             python-xarray python-xarray-dataclasses))
+    (native-inputs (list python-flit-core python-pytest))
+    (home-page "https://github.com/spatial-image/spatial-image")
+    (synopsis "Multi-dimensional spatial image data structure")
+    (description "This package implements a multi-dimensional spatial image
+data structure for scientific Python.
+
+To facilitate:
+
+@itemize
+@item Multi-scale processing and analysis
+@item Registration
+@item Resampling
+@item Subregion parallel processing
+@item Coupling with meshes, point sets, and annotations
+@end itemize
+
+with scientific images, which are typically multi-dimensional with anisotropic
+sampling, this package provides a spatial-image data structure.  In addition
+to an N-dimensional array of pixel values, spatial metadata defines the
+location of the pixel sampling grid in space time.  It also labels the array
+dimensions.  This metadata is easily utilized and carried through image
+processing pipelines.")
     (license license:expat)))
 
 (define-public labelme

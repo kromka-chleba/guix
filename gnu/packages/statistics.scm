@@ -1768,13 +1768,13 @@ R packages that praise their users.")
 (define-public r-testthat
   (package
     (name "r-testthat")
-    (version "3.2.1")
+    (version "3.2.1.1")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "testthat" version))
               (sha256
                (base32
-                "1ba80zk9jzs91xl82bykhrvvgamfvp1h189rfq099h813dhhx60x"))))
+                "1xz94i0r62lslyqya8gz6i2r100wi26y5c2822v2i7lkflwwx1fp"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-brio
@@ -2894,14 +2894,14 @@ collation, and NAMESPACE files.")
 (define-public r-openssl
   (package
     (name "r-openssl")
-    (version "2.1.1")
+    (version "2.1.2")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "openssl" version))
        (sha256
         (base32
-         "1p2bnr4z4vx3yqq5isqb3z4d9vg2isiz8i0h3vxdb5ramzwjd9zs"))))
+         "0mm0rlf3m6wkvz5p8prxwjr37rn30lmhddsdi4ffnsmrysfl3rbp"))))
     (properties
      `((upstream-name . "openssl")
        (updater-extra-inputs . ("openssl"))))
@@ -3184,13 +3184,13 @@ well as additional utilities such as panel and axis annotation functions.")
 (define-public r-rcpparmadillo
   (package
     (name "r-rcpparmadillo")
-    (version "0.12.8.2.0")
+    (version "0.12.8.2.1")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "RcppArmadillo" version))
               (sha256
                (base32
-                "0w1c0mpqqf6m2gk4221kjxx299bs4qpxn867fgnkpg69kj3mh8gd"))))
+                "11w92xjjwfhb3sv3g0m6hdhm27nnx73ahb404zm79a29ihwrj55w"))))
     (properties `((upstream-name . "RcppArmadillo")))
     (build-system r-build-system)
     (propagated-inputs
@@ -3589,14 +3589,14 @@ statements.")
 (define-public r-segmented
   (package
     (name "r-segmented")
-    (version "2.0-3")
+    (version "2.0-4")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "segmented" version))
        (sha256
         (base32
-         "1f89v6zbxwl6yhx3qi7wrr3rndnxfwaf49mygw357f7cf3i8ma77"))))
+         "0a7qfs83kgn7g98kiwlk8zm2q9pzgkvmms9l15sgc5y952yig926"))))
     (build-system r-build-system)
     (propagated-inputs (list r-mass r-nlme))
     (home-page "https://cran.r-project.org/web/packages/segmented")
@@ -4456,13 +4456,13 @@ t-probabilities, quantiles, random deviates and densities.")
 (define-public r-matrixstats
   (package
     (name "r-matrixstats")
-    (version "1.2.0")
+    (version "1.3.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "matrixStats" version))
               (sha256
                (base32
-                "0ws5lmzqm42vrn5791l21zr05l78x0xi6b89jw0gi0vjb4pc20z4"))))
+                "0ni4jgw3jfbwakzrcz6jcjr1zsnaq924jz2a9d8kq92vv43ycgj1"))))
     (properties `((upstream-name . "matrixStats")))
     (build-system r-build-system)
     (arguments
@@ -5559,14 +5559,14 @@ forest of trees using random inputs, for classification and regression.")
 (define-public r-diptest
   (package
     (name "r-diptest")
-    (version "0.77-0")
+    (version "0.77-1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "diptest" version))
        (sha256
         (base32
-         "0cnaz1akl86vg5p0g4yl4r66407dxssfki130rrwxpbbbqakbj63"))))
+         "04r8c6xy5vympxaxmgnjib4pqh97f9k6b43i66qhzkl3yh0awki2"))))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/diptest")
     (synopsis "Hartigan's dip test statistic for unimodality")
@@ -6060,14 +6060,14 @@ algorithms.")
 (define-public r-lme4
   (package
     (name "r-lme4")
-    (version "1.1-35.2")
+    (version "1.1-35.3")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "lme4" version))
        (sha256
         (base32
-         "0nvvkvpasna9hy0y3fxd4fy2b2gxzgdga9kmxvli59dlkdy28ipc"))))
+         "0ij37wly0d28x143xdkjry5jsj4chlbli2fl9zbp8fkcgh95r1xl"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-boot
@@ -6290,18 +6290,18 @@ multivariate case.")
 (define-public r-tclust
   (package
     (name "r-tclust")
-    (version "1.5-6")
+    (version "2.0-3")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "tclust" version))
        (sha256
         (base32
-         "1p7y58mklcwq76msh1q8pm2v6v19ja6fy07xg1j07d2zw2wa0phy"))))
+         "0l0m77a4r7izzw8akx7cz1qcxpvbjgg364yjapazji290741rfs6"))))
     (build-system r-build-system)
     ;; These are all suggested packages, not build dependencies.
     (propagated-inputs
-     (list r-cluster r-mclust r-mvtnorm r-sn))
+     (list r-doparallel r-foreach r-mass r-rcpp r-rcpparmadillo))
     (home-page "https://cran.r-project.org/web/packages/tclust")
     (synopsis "Robust trimmed clustering")
     (description

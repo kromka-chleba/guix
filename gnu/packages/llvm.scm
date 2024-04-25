@@ -55,6 +55,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system emacs)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system trivial)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
@@ -550,7 +551,7 @@ output), and Binutils.")
     ("15.0.7" . "12sggw15sxq1krh1mfk3c1f07h895jlxbcifpwk3pznh4m1rjfy2")
     ("16.0.6" . "0jxmapg7shwkl88m4mqgfjv4ziqdmnppxhjz6vz51ycp2x4nmjky")
     ("17.0.6" . "1a7rq3rgw5vxm8y39fyzr4kv7w97lli4a0c1qrkchwk8p0n07hgh")
-    ("18.1.2" . "06nfbn8yj8c65q4vamwdiqpxh0dggs6w781swd3285k4af0qwf62")))
+    ("18.1.4" . "1kddjysa6qj1qlb88a4m7lqni6922drgb37kj2hnspj9hrph891g")))
 
 (define %llvm-patches
   '(("14.0.6" . ("clang-14.0-libc-search-path.patch"))
@@ -558,7 +559,7 @@ output), and Binutils.")
     ("16.0.6" . ("clang-16.0-libc-search-path.patch"))
     ("17.0.6" . ("clang-17.0-libc-search-path.patch"
                  "clang-17.0-link-dsymutil-latomic.patch"))
-    ("18.1.2" . ("clang-18.0-libc-search-path.patch"
+    ("18.1.4" . ("clang-18.0-libc-search-path.patch"
                  "clang-17.0-link-dsymutil-latomic.patch"))))
 
 (define (llvm-monorepo version)
@@ -1454,7 +1455,7 @@ Library.")
 (define-public llvm-18
   (package
     (inherit llvm-15)
-    (version "18.1.2")
+    (version "18.1.4")
     (source (llvm-monorepo version))))
 
 (define-public clang-runtime-18
@@ -1470,7 +1471,7 @@ Library.")
                     (package-version llvm-18)))
      (sha256
       (base32
-       "1whpd7szjy6i95gzy9jzf154dgk2jdbsp753sv2dx4lg9a9chkcc")))))
+       "1rrf9x7n3hvzqqijfx8v8kxa2i39jdf7c164my8k6vzr7aa0dj1c")))))
 
 (define-public libomp-18
   (package
@@ -1642,6 +1643,13 @@ components which highly leverage existing libraries in the larger LLVM Project."
     (version (package-version llvm-17))
     (source (llvm-monorepo version))
     (inputs (list llvm-17))))
+
+(define-public lld-18
+  (package
+    (inherit lld-15)
+    (version (package-version llvm-18))
+    (source (llvm-monorepo version))
+    (inputs (list llvm-18))))
 
 (define-public lld lld-14)
 
@@ -2193,6 +2201,23 @@ LLVM."))))
 (define-public ocaml-llvm-9 (make-ocaml-llvm llvm-9))
 (define-public ocaml-llvm-10 (make-ocaml-llvm llvm-10))
 (define-public ocaml-llvm-11 (make-ocaml-llvm llvm-11))
+
+(define-public wllvm
+  (package
+    (name "wllvm")
+    (version "1.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "wllvm" version))
+       (sha256
+        (base32 "0cf31hixzq5bzkxv91rvadlhrpxzy934134scv4frj85bxbpl19y"))))
+    (build-system pyproject-build-system)
+    (home-page "https://github.com/SRI-CSL/whole-program-llvm")
+    (synopsis "Whole Program LLVM")
+    (description "This package provides a toolkit for building whole-program
+LLVM bitcode files.")
+    (license license:expat)))
 
 (define-public llvm-julia
   (package

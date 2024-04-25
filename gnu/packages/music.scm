@@ -603,19 +603,27 @@ you create custom user interfaces for your MIDI hardware.")
 (define-public qmmp
   (package
     (name "qmmp")
-    (version "2.1.6")
+    (version "2.1.7")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "https://qmmp.ylsoftware.com/files/"
+       (uri (string-append "https://qmmp.ylsoftware.com/files/qmmp/"
                            (version-major+minor version) "/"
                            "qmmp-" version ".tar.bz2"))
        (sha256
-        (base32 "1jpflf17198ascaqmxla6ajb69bnj8zzngk32vdyyw5443kshylj"))))
+        (base32 "0wqy4dh5cci67d822zn2535l0vsvd9c9sqsbscz4j530c6y6g9z6"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
-           #:tests? #f)) ; there are no tests
+           #:tests? #f ; there are no tests
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'set-paths
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "src/plugins/Ui/skinned/skinreader.cpp"
+                     (("\"(tar|unzip)\"" _ name)
+                      (let ((file (string-append "/bin/" name)))
+                        (string-append "\"" (search-input-file inputs file) "\"")))))))))
     (inputs
      ;; Missing optional inputs:
      ;; libsidplay2 ; input plugin
@@ -645,11 +653,15 @@ you create custom user interfaces for your MIDI hardware.")
            qttools
            soxr
            taglib
+           tar ; for loading skins
+           unzip ; for loading skins
            wavpack
            wildmidi))
     (native-inputs
      (list pkg-config))
     (home-page "https://qmmp.ylsoftware.com")
+    (properties
+     `((release-monitoring-url . "https://qmmp.ylsoftware.com/downloads.php")))
     (synopsis "Qt-based music player")
     (description "Music player with support for most common audio formats, and
 plugins for various additional features such as visualization, effects and

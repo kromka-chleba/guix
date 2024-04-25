@@ -25,6 +25,7 @@
 ;;; Copyright © 2021 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2022, 2023 Navid Afkhami <navid.afkhami@mdc-berlin.de>
 ;;; Copyright © 2022 Antero Mejr <antero@mailbox.org>
+;;; Copyright © 2024 Alexis Simon <alexis.simon@runbox.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1140,6 +1141,62 @@ from single-cell RNA-seq data.")
       ;; GPLv3.
       (license license:gpl3))))
 
+(define-public r-saige
+  (let ((commit "c6717ba9c5a967bcf612e97566d845397b1b7167")
+        (revision "1"))
+    (package
+      (name "r-saige")
+      (version (git-version "1.3.4" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/saigegit/SAIGE")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0c3211whqazycs9ivwdz23imj45j4na2xzcfq5l989ykkgmqnjzs"))))
+      (properties `((upstream-name . "SAIGE")))
+      (build-system r-build-system)
+      (arguments
+       (list
+        #:phases
+        '(modify-phases %standard-phases
+           (add-after 'unpack 'do-not-download-packages
+             (lambda _
+               ;; Pretend to be a Conda build to avoid having to install
+               ;; things with pip and cget.
+               (setenv "CONDA_BUILD" "1")))
+           (add-after 'unpack 'link-with-openblas
+             (lambda* (#:key inputs #:allow-other-keys)
+               (substitute* "src/Makevars"
+                 (("-llapack")
+                  (search-input-file inputs
+                                     "/lib/libopenblas.so"))))))))
+      (inputs (list openblas savvy superlu zlib zstd))
+      (propagated-inputs (list r-bh
+                               r-data-table
+                               r-dplyr
+                               r-matrix
+                               r-metaskat
+                               r-optparse
+                               r-qlcmatrix
+                               r-rcpp
+                               r-rcpparmadillo
+                               r-rcppeigen
+                               r-rcppparallel
+                               r-rhpcblasctl
+                               r-rsqlite
+                               r-skat
+                               r-spatest))
+      (home-page "https://github.com/saigegit/SAIGE")
+      (synopsis "Genome-wide association tests in large-scale data sets")
+      (description "SAIGE is a package for efficiently controlling for
+case-control imbalance and sample relatedness in single-variant assoc
+tests (SAIGE) and controlling for sample relatedness in region-based assoc
+tests in large cohorts and biobanks (SAIGE-GENE+).")
+      (license license:gpl2+))))
+
 (define-public r-singlet
   (let ((commit "765a6c45081807a1522f0e8983e2417822a36f36")
         (revision "1"))
@@ -1914,6 +1971,58 @@ from high-throughput single-cell RNA sequencing (scRNA-seq) data.")
     (description
      "CMSeq is a set of commands to provide an interface to .bam files for coverage
 and sequence consensus.")
+    (license license:expat)))
+
+(define-public python-cyvcf2
+  (package
+    (name "python-cyvcf2")
+    (version "0.30.28")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/brentp/cyvcf2")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16yhfax509zyip8kkq2b0lflx5bdq5why7d785ayrqyzzq2rxqkk"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; Delete bundled library
+        '(delete-file-recursively "htslib"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'build-extensions
+            (lambda _
+              ;; Cython extensions have to be built before running the tests.
+              (invoke "python" "setup.py" "build_ext" "--inplace")))
+          (add-after 'unpack 'fix-setup
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "setup.py"
+                (("^htslib_include_dirs =.*")
+                 (string-append "htslib_include_dirs = [\""
+                                #$(this-package-input "htslib") "/include\"]\n"))
+                (("lib_name = \"libhts.so\"")
+                 (string-append "lib_name = \""
+                                (search-input-file inputs "lib/libhts.so.3")
+                                "\"\n")))))
+          (add-before 'build 'use-system-htslib-package
+            (lambda _
+              (setenv "CYTHONIZE" "1")
+              (setenv "CYVCF2_HTSLIB_MODE" "EXTERNAL"))))))
+    (inputs (list curl htslib libdeflate openssl zlib))
+    (native-inputs (list python-cython python-pytest))
+    (propagated-inputs
+     (list python-click
+           python-coloredlogs
+           python-numpy))
+    (home-page "https://github.com/brentp/cyvcf2/")
+    (synopsis "Fast vcf file parsing with Cython and htslib")
+    (description "Cyvcf2 is a Cython wrapper around htslib built for fast
+parsing of Variant Call Format (VCF) files.")
     (license license:expat)))
 
 (define-public python-decoupler-py
@@ -4643,7 +4752,7 @@ interval trees with associated meta-data.  It is primarily used by the
                 (("version='plotCoverage")
                  "version='%(prog)s")))))))
     (native-inputs
-     (list python-mock python-nose))
+     (list python-mock python-pytest))
     (propagated-inputs
      (list python-matplotlib
            python-numpy
@@ -7303,6 +7412,10 @@ geographic distributions.")
        (modify-phases %standard-phases
          ;; FIXME: this phase fails with "duplicate entry: htsjdk/samtools/AbstractBAMFileIndex$1.class"
          (delete 'generate-jar-indices)
+         (add-after 'unpack 'fix-guava
+           (lambda _
+             (substitute* "src/java/picard/cmdline/CommandLineParser.java"
+               (("CharMatcher.ASCII") "CharMatcher.ascii()"))))
          (add-after 'unpack 'use-our-htsjdk
            (lambda* (#:key inputs #:allow-other-keys)
              (substitute* "build.xml"
@@ -7362,6 +7475,10 @@ VCF.")
          (delete 'generate-jar-indices)
          (add-after 'unpack 'remove-useless-build.xml
            (lambda _ (delete-file "build.xml") #t))
+         (add-after 'unpack 'fix-guava
+           (lambda _
+             (substitute* "src/main/java/picard/cmdline/CommandLineParser.java"
+               (("CharMatcher.ASCII") "CharMatcher.ascii()"))))
          ;; This is necessary to ensure that htsjdk is found when using
          ;; picard.jar as an executable.
          (add-before 'build 'edit-classpath-in-manifest
@@ -9324,6 +9441,43 @@ viewer.")
                                               (string-match "\\.h$" name)))))))
                (delete 'patch-tests)
                (delete 'configure))))))))
+
+(define-public savvy
+  (package
+    (name "savvy")
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/statgen/savvy")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "03jh89gl67adnpkwx8yrdn62pd9sg69k21gxh15my2vvpfl1pxlx"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      '(list "-DBUILD_TESTS=ON"
+             "-DBUILD_EVAL=ON")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'use-shared-libraries
+           (lambda _
+             ;; Do not prefer static libraries.
+             (substitute* "CMakeLists.txt"
+               (("set\\(CMAKE_FIND_LIBRARY_SUFFIXES \".a;.*") "")))))))
+    (native-inputs (list pkg-config))
+    (inputs (list htslib))
+    (propagated-inputs (list streambuf-shrinkwrap))
+    (home-page "https://github.com/statgen/savvy/")
+    (synopsis "Interface to various variant calling formats")
+    (description
+     "Savvy is the official C++ interface for the SAV file format and offers
+seamless support for BCF and VCF files.")
+    (license license:mpl2.0)))
 
 (define-public morpheus
   (package
