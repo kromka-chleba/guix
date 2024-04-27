@@ -55,6 +55,7 @@
 ;;; Copyright © 2023, 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 Yovan Naumovski <yovan@gorski.stream>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024 Parnikkapore <poomklao@yahoo.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -6209,47 +6210,56 @@ and reverb.")
 (define-public lsp-plugins
   (package
     (name "lsp-plugins")
-    (version "1.2.3")
+    (version "1.2.15")
     (source
       (origin
         (method url-fetch)
-        (uri (string-append "https://github.com/sadko4u/lsp-plugins"
+        (uri (string-append "https://github.com/lsp-plugins/lsp-plugins"
                             "/releases/download/" version
                             "/lsp-plugins-src-" version ".tar.gz"))
         (sha256
-         (base32 "0asgwrkyncxz5h7kjkbwm78z8l2jndxvsrgd634m5x9n37gjsgvs"))))
+         (base32 "1bpkbmy8djz304rlsf9zp7bkyc874gnpfihkigqg4fj667x2xfcj"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags
-       (list
-         (string-append "CC=" ,(cc-for-target))
-         "BUILD_MODULES=\"lv2 ladspa jack\"" "VST_UI=0"
-         (string-append "PREFIX=" (assoc-ref %outputs "out"))
-         (string-append "ETC_PATH=" (assoc-ref %outputs "out") "/etc"))
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (invoke "make" "config" "TEST=1"
-                       (string-append "PREFIX=" out)
-                       (string-append "ETCDIR=" out "/etc")))))
-         (replace 'check
-           (lambda _
-             (invoke ".build/host/lsp-plugin-fw/lsp-plugins-test" "utest"))))))
+     (list
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda _
+              (invoke "make" "config"
+                      "STRICT=1"
+                      "TEST=1"
+                      "FEATURES=clap doc jack ladspa lv2 vst2 xdg"
+                      (string-append "PREFIX=" #$output)
+                      (string-append "ETCDIR=" #$output "/etc"))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke ".build/host/lsp-plugin-fw/lsp-plugins-test" "utest"))))
+          (add-after 'install 'move-large-subdirs
+            (lambda _
+              (define (move-to-output output path)
+                (let ((source (string-append #$output path))
+                      (target (string-append output path)))
+                  (mkdir-p (dirname target))
+                  (rename-file source target)))
+              (move-to-output #$output:doc "/share/doc") ; 29MB
+              (move-to-output #$output:lv2 "/lib/lv2") ; 32MB
+              (move-to-output #$output:bin "/bin") ; Avoid cluttering xdg menu
+              (move-to-output #$output:bin "/share")
+              (move-to-output #$output:bin "/etc"))))))
     (inputs
      (list cairo
            freetype
-           hicolor-icon-theme
-           jack-1
-           ladspa
+           jack-2
            libsndfile
            libx11
            libxrandr
-           lv2
            mesa))
-    (native-inputs
-     (list pkg-config php))
+    (native-inputs (list pkg-config php))
+    (outputs '("out" "doc" "lv2" "debug"))
     (synopsis "Audio plugin collection")
     (description "LSP (Linux Studio Plugins) is a collection of audio
 plugins available as LADSPA/LV2 plugins and as standalone JACK

@@ -28825,7 +28825,7 @@ repository is provided via Python API and as a compressed JSON file.")
   (package
     ;; This is a command-line tool, so no "python-" prefix.
     (name "jube")
-    (version "2.2.2")
+    (version "2.6.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -28833,9 +28833,10 @@ repository is provided via Python API and as a compressed JSON file.")
                     version))
               (sha256
                (base32
-                "0xq4k1q63s1p6swgyp61vahlrd1fqmgbm0gm5kpj8ikwy0yc0nqk"))
+                "0r5d2gdqa0f4c468q3k25ycw1k2g76gg8fyiln4ni98fvfsbx3il"))
               (file-name (string-append "jube-" version ".tar.gz"))))
     (build-system python-build-system)
+    (native-inputs (list python-pyyaml)) ; pyyaml is needed for tests
     (home-page "https://apps.fz-juelich.de/jsc/jube/jube2/docu/index.html")
     (synopsis "Benchmarking environment")
     (description
@@ -35805,7 +35806,7 @@ window managers.")
 (define-public i3-autotiling
   (package
     (name "i3-autotiling")
-    (version "1.8")
+    (version "1.9.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -35814,7 +35815,7 @@ window managers.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1nsm0gd45ys4ghlzrvjrf0lvcyhvpx58lz8gg325a762wn5a4a72"))))
+                "010sw3b2nx5cl578drd3xj58wlza76zkzh1jhsp44chg1vvhacrx"))))
     (build-system python-build-system)
     (arguments (list #:tests? #f))      ;no tests
     (native-inputs (list python-wheel))
