@@ -1390,7 +1390,7 @@ following:
     (propagated-inputs (list go-github-com-ipfs-go-cid
                              go-github-com-multiformats-go-multibase
                              go-github-com-multiformats-go-varint
-                             go-github-com-multiformats-go-multihash-0.2.3
+                             go-github-com-multiformats-go-multihash
                              go-golang-org-x-exp-2023))))
 
 (define-public go-github-com-multiformats-go-multiaddr-dns
@@ -1419,6 +1419,34 @@ following:
     (synopsis "Library and CLI tool for DNS multiaddr resolution")
     (description
      "Go library for /dns4, /dns6, /dnsaddr multiaddr resolution.")
+    (license license:expat)))
+
+(define-public go-github-com-multiformats-go-multiaddr-fmt
+  (package
+    (name "go-github-com-multiformats-go-multiaddr-fmt")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/multiformats/go-multiaddr-fmt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "119qqrnhzcb9im428alssv2dz9rrj74hy0asd10bnfv2d5fd09nm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/multiformats/go-multiaddr-fmt"))
+    (propagated-inputs
+     (list go-github-com-multiformats-go-multiaddr-0.12))
+    (home-page "https://github.com/multiformats/go-multiaddr-fmt")
+    (synopsis "Declarative validator for multiaddrs")
+    (description
+     "This package provides a validation checker for multiaddrs.  Some basic
+validators for common address types are provided, but creating your own
+combinations is easy.")
     (license license:expat)))
 
 (define-public go-github-com-multiformats-go-multiaddr-net
@@ -1456,6 +1484,34 @@ in stdlib's @command{net} package.  This means wrappers of standard net
 symbols like @command{net.Dial} and @command{net.Listen}, as well as
 conversion to and from @command{net.Addr}.")
       (license license:expat))))
+
+(define-public go-github-com-multiformats-go-multistream
+  (package
+    (name "go-github-com-multiformats-go-multistream")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/multiformats/go-multistream")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mlcz16ii090vq6brm02dmmkj8akkafa55kyvkrrwpq6zvj1hy23"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.20
+      #:import-path "github.com/multiformats/go-multistream"))
+    (propagated-inputs
+     (list go-github-com-multiformats-go-varint))
+    (home-page "https://github.com/multiformats/go-multistream")
+    (synopsis "Implementation of the multistream protocol in Golang")
+    (description
+     "Package multistream implements a simple stream router for the
+multistream-select protocol.  The protocol is defined at
+@url{https://github.com/multiformats/multistream-select}")
+    (license license:expat)))
 
 (define-public go-github-com-nwidger-jsoncolor
   (package
@@ -1621,7 +1677,7 @@ the Go standard library}.")
 (define-public go-github-com-quic-go-quic-go
   (package
     (name "go-github-com-quic-go-quic-go")
-    (version "0.39.3")
+    (version "0.42.0")
     (source
      (origin
        (method git-fetch)
@@ -1630,13 +1686,13 @@ the Go standard library}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0acabl3cz48nxpggc5s7fwxpmr5amyi09jygn5m5xxkkbhqs2cxq"))))
+        (base32 "0bdr48nbcjajmhx1h11qfl1i7myxqpyqqk5n21007xyqw13qhb8c"))))
     (build-system go-build-system)
     (arguments
      (list
       ;; XXX More packages required...
       #:tests? #f
-      #:go go-1.20
+      #:go go-1.21
       #:import-path "github.com/quic-go/quic-go"))
     (propagated-inputs
      (list go-github-com-cheekybits-genny

@@ -2212,6 +2212,34 @@ the @code{cpan} module @code{Parse::CommandLine}.")
 other directories.  It is optimized for filewalking.")
     (license license:expat)))
 
+(define-public go-github-com-mgutz-ansi
+  (let ((commit "9520e82c474b0a04dd04f8a40959027271bab992")
+        (revision "0"))
+    (package
+      (name "go-github-com-mgutz-ansi")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url
+                "https://github.com/mgutz/ansi")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "00bz22314j26736w1f0q4jy9d9dfaml17vn890n5zqy3cmvmww1j"))))
+      (build-system go-build-system)
+      (arguments
+       (list #:import-path "github.com/mgutz/ansi"))
+      (propagated-inputs
+       (list go-github-com-mattn-go-isatty go-github-com-mattn-go-colorable))
+      (home-page "https://github.com/mgutz/ansi")
+      (synopsis "Small, fast library to create ANSI colored strings and codes")
+      (description
+       "This package provides @code{ansi}, a Go module that can generate ANSI
+colored strings.")
+      (license license:expat))))
+
 (define-public go-github-com-miekg-dns
   (package
     (name "go-github-com-miekg-dns")
@@ -2425,6 +2453,41 @@ command line flags, config files, and default struct values.")
      "Implementation of @url{https://github.com/multiformats/multibase,
 multibase} (self identifying base encodings) in Go.")
     (license license:expat)))
+
+(define-public go-github-com-multiformats-go-multicodec
+  (package
+    (name "go-github-com-multiformats-go-multicodec")
+    (version "0.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/multiformats/go-multicodec")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vyc85aa9k644l9m3safiz7kk8mm84jclridsp0qnxfj2kcqgipd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.19
+      #:import-path "github.com/multiformats/go-multicodec"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'copy-multibase-specs
+            (lambda* (#:key import-path #:allow-other-keys)
+              (copy-recursively
+               (string-append #$(this-package-native-input
+                                 "specification-multicodec")
+                              "/share/multicodec/")
+               (string-append "src/" import-path "/spec/multicodec/")))))))
+    (native-inputs
+     (list specification-multicodec))
+    (home-page "https://github.com/multiformats/go-multicodec")
+    (synopsis "Golang constants for the multicodec table")
+    (description
+     "Package multicodec exposes the multicodec table as Go constants.")
+    (license (list license:asl2.0 license:expat))))
 
 (define-public go-github-com-multiformats-go-varint
   (package

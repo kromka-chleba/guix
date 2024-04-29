@@ -115,17 +115,17 @@ interactive languages.")
     (uri (git-reference
           (url "https://github.com/HaxeFoundation/haxelib")
           ;; This should match the haxelib submodule in haxe.
-          (commit "4b27f91d8a4ff279d9903091680fee2c93a0d574")
+          (commit "f17fffa97554b1bdba37750e3418051f017a5bc2")
           ;; This repo includes some Haxe libs as well.
           (recursive? #t)))
     (sha256
      (base32
-      "0mwrm6gxgclwziiprfiswmjbz6z3dnvdwl8gq3gaym18pvx4p3ny"))))
+      "13ql042mxkybhw7di8c8cfq47p8snvadg9yglyif6b5k9ij85r6z"))))
 
 (define-public haxe
   (package
     (name "haxe")
-    (version "4.2.5")
+    (version "4.3.4")
     (source
      (origin
        (method git-fetch)
@@ -134,7 +134,7 @@ interactive languages.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0pl8vpyb7gl2yqjg85yc4zxq9c3ipvw4yrrpliaxs25ynrj3l51n"))))
+        (base32 "1svbxf5g6j7vvqhyjlv1ha9yjh42c94jxvn7xhqbb0smyk64vibm"))))
     (build-system dune-build-system)
     (arguments
      (list #:phases
@@ -173,13 +173,14 @@ interactive languages.")
     (inputs (list libuv
                   mbedtls-lts
                   neko
+                  ocaml-camlp-streams
                   ocaml-extlib
                   ocaml-luv
                   ocaml-ptmap
                   ocaml-sedlex
                   ocaml-sha
                   ocaml-xml-light
-                  pcre
+                  pcre2
                   zlib))
     (native-inputs (list ocaml-findlib camlp5))
     (home-page "https://haxe.org/")
@@ -195,7 +196,7 @@ includes the compiler and library manager.")
 (define-public hashlink
   (package
     (name "hashlink")
-    (version "1.12")
+    (version "1.14")
     (source
      (origin
        (method git-fetch)
@@ -204,7 +205,7 @@ includes the compiler and library manager.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0i5f1mxpgjcdirx60kxrw0r0y15qh3j16a6fj8mzkq3k7j2hc982"))
+        (base32 "163kj2fww8a1hp93aklla181sp84hrsl8dy5rwrv79057bmkjz5d"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -232,7 +233,7 @@ includes the compiler and library manager.")
                  (lambda _
                    (substitute* "Makefile"
                      (("\\$\\{PCRE\\}") "")
-                     (("-lpthread") "-lpthread -lpcre16")
+                     (("-lpthread") "-lpthread -lpcre2-16")
                      (("include/minimp3")
                       (string-append #$(this-package-input "minimp3") "/include"))
                      (("include/mikktspace ")
@@ -259,7 +260,7 @@ includes the compiler and library manager.")
                   mikktspace
                   minimp3
                   openal
-                  pcre
+                  pcre2
                   sdl2
                   sqlite
                   zlib))

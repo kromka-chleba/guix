@@ -3233,6 +3233,51 @@ reformat the current buffer using a command-line program, together with an
 optional minor mode which can apply this command automatically on save.")
     (license license:gpl3+)))
 
+(define-public emacs-language-id
+  (package
+    (name "emacs-language-id")
+    (version "0.20")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/lassik/emacs-language-id.git")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "153810jq4rbgpzvbhz2i1dyrj8bmdf4zxsrhfg0b70iq4bh78bz6"))))
+    (build-system emacs-build-system)
+    (synopsis "Identify programming language used in Emacs buffers")
+    (description "This package provides a way for Emacs to identify the
+programming language used in an Emacs buffer.")
+    (home-page "https://github.com/lassik/emacs-language-id")
+    (license license:isc)))
+
+(define-public emacs-format-all-the-code
+  (package
+    (name "emacs-format-all-the-code")
+    (version "0.6.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/lassik/emacs-format-all-the-code.git")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1p8bh96yksbpajx2pqxjc4vf7nfncwc3mvh1fcj8afw53g72is8m"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list emacs-inheritenv emacs-language-id))
+    (synopsis "Auto-format any source code")
+    (description "This package lets you auto-format source code in many
+languages using the same command for all languages, instead of learning
+a different Emacs package and formatting command for each language.
+Over 70 languages are supported, including Emacs Lisp, Kotlin, Go and
+Rust.")
+    (home-page "https://github.com/lassik/emacs-format-all-the-code")
+    (license license:expat)))
+
 (define-public emacs-relative-buffers
   (let ((release "0.0.1")
         (revision "0")
@@ -4835,7 +4880,7 @@ be regarded as @code{emacs-company-quickhelp} for @code{emacs-corfu}.")
 (define-public emacs-cape
   (package
     (name "emacs-cape")
-    (version "1.4")
+    (version "1.5")
     (source
      (origin
        (method git-fetch)
@@ -4844,7 +4889,7 @@ be regarded as @code{emacs-company-quickhelp} for @code{emacs-corfu}.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ml3w9xvcxbcbsi01rdsclsxra5h7jrm9lsrkbj1hin2wl5gr9np"))))
+        (base32 "1ah0nwib2k46467j0fhq9kckx7cqnjgwpdb7zk9jw8rbrjlndcpw"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -20902,7 +20947,7 @@ multiplexer.")
 (define-public emacs-plz
   (package
     (name "emacs-plz")
-    (version "0.7.2")
+    (version "0.8")
     (source
      (origin
        (method git-fetch)
@@ -20911,7 +20956,7 @@ multiplexer.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0bbc8jr6xivzc7r701lnxmhcs7v56av780avyycaz1hpcmggl726"))))
+        (base32 "0vyx6vd90ifj4aza8k9h7ccb4ijs5n5k8hcn8ccm6jrw5h148c4v"))))
     (build-system emacs-build-system)
     (inputs (list curl))
     (arguments
@@ -30855,6 +30900,8 @@ and implementation of treeview controls using treemacs as a tree renderer.")
        (sha256
         (base32 "1zczmcv8562lachkvcwy6njn7zkgny08iznpmrx821wr8mh52wnn"))))
     (build-system emacs-build-system)
+    (arguments
+     (list #:include #~(cons* "\\.png$" %default-include)))
     (propagated-inputs
      (list emacs-bui emacs-lsp-mode emacs-posframe emacs-lsp-treemacs))
     (home-page "https://emacs-lsp.github.io/dap-mode")

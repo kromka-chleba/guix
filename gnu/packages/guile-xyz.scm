@@ -2026,8 +2026,8 @@ for MySQL.")
     (license license:gpl2+)))
 
 (define-public guile-lmdb
-  (let ((commit "ea9aa1d4b13e03f9fd23ec73d8884f4fae79666b")
-        (revision "1"))
+  (let ((commit "56a986f5db5b70b6bec3ba3e6c161267dd8fda29")
+        (revision "2"))
     (package
       (name "guile-lmdb")
       (version (git-version "0.0.1" revision commit))
@@ -2039,7 +2039,7 @@ for MySQL.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1li92ldyjvbqkhqnkndgw0jk1avkzq9jkbmk8dqiby4na72sxi8k"))))
+                  "1pzqgdm0dlz3v7nac1akpxrmxgbi2ycyxs7fnn3kba65424vigm7"))))
       (build-system guile-build-system)
       (arguments
        (list
@@ -2064,6 +2064,8 @@ Several conveniences are added on top:
 @code{call-with-wrapped-cursor} helpers and respective @code{with-} macros.
 @item @code{for-cursor} procedure for cursor iteration.
 @item @code{val} and @code{stat} types.
+@item @code{set-compare!} and @code{set-dupsort!} to configure entry
+sorting.
 @item Error signaling instead of integer return values.
 @end itemize")
       (license license:gpl3+))))
@@ -4521,8 +4523,8 @@ function: raw, typed, and functional.")
       (license license:lgpl3+))))
 
 (define-public guile-gsl
-  (let ((commit "e6d1477b0d0456f500c32610a5cae6ebb1b8acfe")
-        (revision "0"))
+  (let ((commit "22ac81c45f33f897d7cc88744d427a6959682c24")
+        (revision "1"))
     (package
       (name "guile-gsl")
       (version (git-version "0.0.1" revision commit))
@@ -4534,7 +4536,7 @@ function: raw, typed, and functional.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1b4brimmg3phahia9dm0wkcp1f29wnbvmi0q8di5sz7pf7qjzsy0"))))
+          (base32 "0gwxyd5flq107ibqdqvx7dl5z23an171jwckn7dvlqc60b7n2x64"))))
       (build-system guile-build-system)
       (arguments
        (list
@@ -4556,7 +4558,7 @@ function: raw, typed, and functional.")
       (synopsis "Bindings for GNU Scientific library in Guile")
       (description
        "This package provides a Guile Scheme wrapper for @code{libgsl.so}.
-Implements vector, matrix,and BLAS operations.")
+Implements vector, matrix, and BLAS operations.")
       (license license:gpl3+))))
 
 (define-public guile-ffi-fftw
