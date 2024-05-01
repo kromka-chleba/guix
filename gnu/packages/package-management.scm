@@ -1545,8 +1545,8 @@ environments.")
                   "0k9zkdyyzir3fvlbcfcqy17k28b51i20rpbjwlx2i1mwd2pw9cxc")))))))
 
 (define-public guix-build-coordinator
-  (let ((commit "0df0c1a6b85f1f84affdd21b3b6b14fb62f7820e")
-        (revision "101"))
+  (let ((commit "53dddfa62c281ac428325a9d642093979dce77d2")
+        (revision "102"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1557,7 +1557,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "01p4ng1h061awfr8j520civgxl75239v67if3r7fqhr8k4f3b6ry"))
+                  "11i2qwnz7lhjvkg95vdv1520baa2lzqhb9slvm6xxql8lxmsjvj0"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1671,6 +1671,16 @@ outputs of those builds.")
   (package
     (inherit guix-build-coordinator)
     (name "guix-build-coordinator-agent-only")
+    (arguments
+     (substitute-keyword-arguments (package-arguments guix-build-coordinator)
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (add-after 'install 'strip-non-agent-files
+              (lambda _
+                (delete-file-recursively
+                 (string-append #$output "/share/guix-build-coordinator"))
+                (delete-file
+                 (string-append #$output "/bin/guix-build-coordinator"))))))))
     (native-inputs
      (list pkg-config
            autoconf
@@ -1686,17 +1696,16 @@ outputs of those builds.")
            guile-next))
     (inputs
      (list guile-next
-           bash-minimal
-           (libc-utf8-locales-for-target)))
-    (propagated-inputs
-     (list guile-prometheus
+           guix
+           guile-prometheus
            guile-gcrypt
            guile-json-4
            guile-lib
            guile-lzlib
            guile-zlib
-           guix
-           guile-gnutls))
+           guile-gnutls
+           bash-minimal
+           (libc-utf8-locales-for-target)))
     (description
      "The Guix Build Coordinator helps with performing lots of builds across
 potentially many machines, and with doing something with the results and
@@ -1794,8 +1803,8 @@ in an isolated environment, in separate namespaces.")
     (license license:gpl3+)))
 
 (define-public nar-herder
-  (let ((commit "fb764aa513efd206e175a1c52d737e1e934c3ca1")
-        (revision "29"))
+  (let ((commit "71115bd073d58c48eb4a1d456ac4c89b262799ef")
+        (revision "30"))
     (package
       (name "nar-herder")
       (version (git-version "0" revision commit))
@@ -1806,7 +1815,7 @@ in an isolated environment, in separate namespaces.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "16b40ky638y6qsp5qjh1pm4kyzc3ilrcyk3dg18fhsy759mrkkxn"))
+                  "139d2ajnm1s0y7iirbvxdr14g6ywkj7zrfskwbmvlkz5ldn7v9zb"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments

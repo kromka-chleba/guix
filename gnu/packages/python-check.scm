@@ -9,7 +9,7 @@
 ;;; Copyright © 2020 Edouard Klein <edk@beaver-labs.com>
 ;;; Copyright © 2020, 2021 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
-;;; Copyright © 2021-2023 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2021-2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2021 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2021, 2022 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2021 Bonface Munyoki Kilyungi <me@bonfacemunyoki.com>
@@ -60,6 +60,38 @@
   #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (guix utils))
+
+(define-public python-assay
+  ;; No release yet.
+  (let ((commit "74617d70e77afa09f58b3169cf496679ac5d5621")
+        (revision "0"))
+    (package
+      (name "python-assay")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/brandon-rhodes/assay")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1klxmamj88mn0q348r08zksccgsbch8sp0m4b04s3myrqnslp2nd"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:test-flags #~(list "-m" "assay.tests")
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? test-flags #:allow-other-keys)
+                (when tests?
+                  (apply invoke "python" test-flags)))))))
+      (home-page "https://github.com/brandon-rhodes/assay")
+      (synopsis "Python testing framework")
+      (description
+       "This package provides opiniotated Python test framework prototype.")
+      (license license:expat))))
 
 (define-public python-assertpy
   (package
@@ -420,13 +452,17 @@ interactions, which will update them to correspond to the new API.")
 (define-public python-pytest-socket
   (package
     (name "python-pytest-socket")
-    (version "0.5.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pytest-socket" version))
-              (sha256
-               (base32
-                "1dkr86nxkxc0ka3rdnpmk335m8gl1zh1sy8i7w4w1jsidbf82jvw"))))
+    (version "0.7.0")
+    (source
+     (origin
+       ;; There are no tests in the PyPI tarball.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/miketheman/pytest-socket")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1m6s07gvljq82hiajzy1v123kpkciziiqdjqfnas169rmzg0bmnp"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -440,7 +476,18 @@ interactions, which will update them to correspond to the new API.")
                     " and not test_httpx_fails"
                     " and not test_disabled_urllib_fails"
                     " and not test_urllib_succeeds_by_default"
-                    " and not test_enabled_urllib_succeeds"))))
+                    " and not test_enabled_urllib_succeeds"
+                    " and not test_single_cli_arg_connect_disabled_hostname_resolved"))
+     #:phases
+       #~(modify-phases %standard-phases
+           ;; See <https://github.com/miketheman/pytest-socket/issues/308>
+         (add-after 'unpack 'fix-tests
+           (lambda _
+             (substitute* (list "tests/test_async.py"
+                                "tests/test_socket.py"
+                                "tests/test_precedence.py")
+               (("from tests.common import assert_socket_blocked")
+                "from common import assert_socket_blocked")))))))
     (native-inputs (list python-httpx
                          python-poetry-core
                          python-pypa-build

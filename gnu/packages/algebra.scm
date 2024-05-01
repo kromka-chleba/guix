@@ -228,7 +228,7 @@ the real span of the lattice.")
 (define-public pari-gp
   (package
     (name "pari-gp")
-    (version "2.15.4")
+    (version "2.15.5")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -236,7 +236,7 @@ the real span of the lattice.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "03swii601kxnphl6v7wv0rh2xn4rz6xbljzvfw5v9py6w3z5nm63"))))
+                "10grsn8wr8k02akj8f8wm1rhzrk0qls4phr46gv59nfr2msxmz8f"))))
     (build-system gnu-build-system)
     (native-inputs (list (texlive-updmap.cfg)))
     (inputs (list gmp libx11 perl readline))
@@ -447,20 +447,24 @@ or text interfaces) or as a C++ library.")
 (define-public flint
   (package
    (name "flint")
-   (version "3.0.1")
+   (version "3.1.2")
    (source
     (origin
       (method url-fetch)
       (uri (string-append "https://flintlib.org/flint-" version ".tar.gz"))
       (sha256
-       (base32 "1d4lawfvmjd4n7rp4z9xkwwjjbrjhkmxnxw1xf0ki1isa001lcbv"))))
+       (base32 "0017bjncpx4kdx67qcnm3nahz3gyyi2w3ggkrx586r3llcqs9czx"))))
    (build-system gnu-build-system)
    (inputs
     (list ntl))
    (propagated-inputs
-    (list gmp mpfr)) ; header files from both are included by flint/arith.h
+    (list gmp mpfr)) ; header files included by flint.h or mpfr_mat.h
    (arguments
-    `(#:parallel-tests? #f))            ; seems to be necessary on arm
+      ;; Parallel tests failed in the past on ARM, this may need to be
+      ;; tested again.
+    `(#:parallel-tests? #f
+      ;; Prevent build machine specifics from ending up in the binary.
+      #:configure-flags '("--disable-assembly")))
    (synopsis "Fast library for number theory")
    (description
     "FLINT is a C library for number theory.  It supports arithmetic
@@ -473,7 +477,7 @@ Operations that can be performed include conversions, arithmetic,
 GCDs, factoring, solving linear systems, and evaluating special
 functions.  In addition, FLINT provides various low-level routines for
 fast arithmetic.")
-   (license license:lgpl2.1+)
+   (license license:lgpl3+)
    (home-page "https://flintlib.org/")
    (properties
     '((release-monitoring-url . "http://flintlib.org/downloads.html")))))
@@ -525,8 +529,7 @@ these types and other mathematical functions.")
             (modules '((guix build utils)))
             (snippet
              '(begin
-                (delete-file-recursively "src/libtool-origin")
-                #t))))
+                (delete-file-recursively "src/libtool-origin")))))
    (build-system gnu-build-system)
    (native-inputs
     (list libtool perl)) ; for configuration
@@ -554,7 +557,8 @@ these types and other mathematical functions.")
     "NTL is a C++ library providing data structures and algorithms
 for manipulating signed, arbitrary length integers, and for vectors,
 matrices, and polynomials over the integers and over finite fields.")
-   (license license:gpl2+)
+   (license license:lgpl2.1+) ; Linking with gf2x makes the distributed
+                              ; binary de facto gpl3+.
    (home-page "https://shoup.net/ntl/")))
 
 (define-public singular
@@ -1011,7 +1015,8 @@ extends it by a set of algebraic capabilities.")
                   (guix build utils)
                   (guix build cmake-build-system))
 
-       #:phases (modify-phases %standard-phases
+       #:phases
+       (modify-phases %standard-phases
                   (add-after 'unpack 'disable-some-tests
                     ;; Not all platforms are well supported by the test suite.
                     (lambda _

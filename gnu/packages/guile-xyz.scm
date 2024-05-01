@@ -77,6 +77,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crypto)
+  #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages disk)
   #:use-module (gnu packages emacs)
@@ -145,14 +146,14 @@
 (define-public artanis
   (package
     (name "artanis")
-    (version "0.5.1")
+    (version "0.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/artanis/artanis-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "1zfg49s7wp37px7k22qcr06rxfwyn3gv1c3jmma346xw0m8jr63w"))
+                "1y4mf8vv2fwjg4z8c4d7an5rxi96sh7krk0djnafm2l66i97cj3m"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -191,7 +192,7 @@
     ;; projects.
     ;; TODO: Add guile-dbi and guile-dbd optional dependencies.
     (propagated-inputs
-     (list guile-json-3 guile-readline guile-redis))
+     (list guile-json-3 guile-curl guile-readline guile-redis))
     (native-inputs
      (list bash-minimal                           ;for the `source' builtin
            pkg-config
@@ -1120,7 +1121,7 @@ for calling methods on remote servers by exchanging JSON objects.")
 (define-public guile-ares-rs
   (package
     (name "guile-ares-rs")
-    (version "0.9.3")
+    (version "0.9.4")
     (source
      (origin
        (method git-fetch)
@@ -1130,7 +1131,7 @@ for calling methods on remote servers by exchanging JSON objects.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "021lg06c5lrp2j1qv8hl4jh4yq07k158h824kjv6b87bxqk7vq54"))))
+         "0ksj39ka8n7cbsqf56z67hyk2jcjz6zlkgnbdrqa9kp95p47xp41"))))
     (build-system guile-build-system)
     (arguments
      (list
@@ -3491,7 +3492,7 @@ from @code{tree-il}.")
 (define-public guile-hoot
   (package
     (name "guile-hoot")
-    (version "0.4.0")
+    (version "0.4.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://spritely.institute/files/releases"
@@ -3499,7 +3500,7 @@ from @code{tree-il}.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0mlj9b9dzhd8k8jg9fgwxyxdy8rsynfq81vm00rjgbh2ivpgr3x2"))))
+                "08bp2dl688ap18h9d840g0dpk71rb3v9r0fmwdjrkwwwsryrjr0n"))))
     (build-system gnu-build-system)
     (arguments
      '(#:make-flags '("GUILE_AUTO_COMPILE=0"

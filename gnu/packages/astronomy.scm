@@ -69,6 +69,7 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages photo)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages plotutils)
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -451,7 +452,7 @@ with namespaces, exception handling, and member template functions.")
 (define-public cfitsio
   (package
     (name "cfitsio")
-    (version "4.3.1")
+    (version "4.4.0")
     (source
      (origin
        (method url-fetch)
@@ -459,7 +460,7 @@ with namespaces, exception handling, and member template functions.")
              "https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/"
              "cfitsio-" version ".tar.gz"))
        (sha256
-        (base32 "1gk2a07ypmc8rcngakcarprznq7hi3xr9szfv3hy2yv80ppci9s7"))))
+        (base32 "1abb4ky6pjyi9f9ly8qjmkb5h25d5xxqlrxrgjg86q77bbwhr44m"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -522,8 +523,7 @@ in FITS files.")
            python-shapely))
     (native-inputs
      (list python-pytest-astropy
-           python-pytest-mpl
-           python-semantic-version))
+           python-pytest-mpl))
     (home-page "http://aplpy.github.io")
     (synopsis "Astronomical Plotting Library in Python")
     (description
@@ -675,64 +675,84 @@ CFITSIO library.  Among other things, it can
   (package
     (name "python-gatspy")
     (version "0.3")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "gatspy" version))
-              (sha256
-               (base32
-                "1gw2z6x8nikvnw2gkdl70gr81cwczd1pd7v8ry2kjn6k4kssrfav"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "gatspy" version))
+       (sha256
+        (base32 "1gw2z6x8nikvnw2gkdl70gr81cwczd1pd7v8ry2kjn6k4kssrfav"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:phases
-      '(modify-phases %standard-phases
-         ;; Tests need this
-         (add-before 'check 'set-HOME
-           (lambda _ (setenv "HOME" "/tmp"))))
       #:test-flags
-      '(list "-k"
-             (string-append
-              ;; These tests require internet access
-              "not test_download_data.py"
-              ;; XXX: we don't have supersmoother
-              " and not test_supersmoother.py"))))
-    (propagated-inputs (list python-astroml python-numpy python-scipy))
+      ;; These tests require internet access
+      #~(list "-k" "not test_download_data.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Tests need this
+          (add-before 'check 'set-HOME
+            (lambda _ (setenv "HOME" "/tmp"))))))
+    (propagated-inputs
+     (list python-astroml
+           python-numpy
+           python-scipy
+           python-supersmoother))
     (native-inputs (list python-pytest python-nose python-setuptools-scm))
     (home-page "https://github.com/astroml/gatspy")
     (synopsis "General tools for astronomical time series in Python")
-    (description "This package provides general tools for astronomical time
-series in Python.")
+    (description
+     "This package provides general tools for astronomical time series in
+Python.")
     (license license:bsd-2)))
 
 (define-public python-ginga
   (package
     (name "python-ginga")
-    (version "5.0.0")
+    (version "5.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ginga" version))
        (sha256
-        (base32 "1kydi6qqsscgsa55fa2za35vr5j8xjn09lfbnb5ajr8yxdgm4n3y"))))
+        (base32 "1zw93487a0ilkb5w5qjgrdnavxlmdmjp6c2wyc1wp8qahby9c0xa"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+         (add-after 'unpack 'relax-requirements
+           (lambda _
+             (substitute* "setup.cfg"
+               ;; packaging>=23.1
+               ((">=23.1") ">=21.3"))))
+         (add-before 'check 'set-home
+           (lambda _
+             ;; Relax matplotlib warning: ... because the default path
+             ;; (/homeless-shelter/.config/matplotlib) is not a writable
+             ;; directory ...
+             (setenv "HOME" "/tmp"))))))
     (propagated-inputs
-     (list ;;python-exifread  ; optional, not packed yet in Guix
+     (list opencv
            python-astropy
            python-astroquery
            python-dateutil
+           python-exif-read
+           python-fitsio
            python-magic
            python-matplotlib
-           python-fitsio
            python-numpy
+           python-packaging
            python-photutils
            python-pillow
+           python-pyyaml
            python-qtpy
-           python-scipy))
+           python-scipy
+           python-tomli))
     (native-inputs
      (list python-attrs
            python-docutils
            python-pytest-astropy
-           python-semantic-version
+           python-pytest-astropy-header
            python-tornado))
     (home-page "https://ejeschke.github.io/ginga/")
     (synopsis "Scientific image viewer and toolkit for FITS files")
@@ -1111,6 +1131,51 @@ programs for the manipulation and analysis of astronomical data.")
 from Stark Labs.")
     (license license:bsd-3)))
 
+(define-public psfex
+  (package
+    (name "psfex")
+    (version "3.24.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/astromatic/psfex")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ykgzyxnxjxqk6b8jng006wjilg4fqaxclpfn8plg6brk1qf39sn"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "CPPFLAGS=-fcommon"
+              "--enable-openblas"
+              "--enable-plplot"
+              (string-append "--with-fftw-libdir="
+                             #$(this-package-input "fftw") "/lib")
+              (string-append "--with-fftw-incdir="
+                             #$(this-package-input "fftw") "/include")
+              (string-append "--with-openblas-libdir="
+                             #$(this-package-input "openblas") "/lib")
+              (string-append "--with-openblas-incdir="
+                             #$(this-package-input "openblas") "/include")
+              (string-append "--with-plplot-libdir="
+                             #$(this-package-input "plplot") "/lib")
+              (string-append "--with-plplot-incdir="
+                             #$(this-package-input "plplot") "/include"))))
+    (native-inputs
+     (list autoconf automake libtool pkg-config))
+    (inputs
+     (list openblas fftw fftwf plplot))
+    (home-page "https://www.astromatic.net/software/psfex/")
+    (synopsis "Astronomical PSF modelling and quality assessment")
+    (description
+     "@acronym{PSFEx, PSF Extractor} extracts models of the @acronym{PSF,
+Point Spread Function} from FITS images processed with SExtractor, and
+measures the quality of images.  The generated PSF models can be used for
+model-fitting photometry or morphological analyses.")
+    (license license:gpl3+)))
+
 (define-public sextractor
   (package
     (name "sextractor")
@@ -1345,7 +1410,7 @@ deconvolution).  Such post-processing is not performed by Stackistry.")
 (define-public stellarium
   (package
     (name "stellarium")
-    (version "23.4")
+    (version "24.1")
     (source
      (origin
        (method git-fetch)
@@ -1354,7 +1419,7 @@ deconvolution).  Such post-processing is not performed by Stackistry.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11l3lql3cxj7s7q7n74qd4rhbjy374b4c0lpm0dr8s85mfrq6fmc"))))
+        (base32 "15r8vg1xb4q8vwy10dfs4543bg6r3463sgrpkqk6fpxx46d8axxp"))))
     (build-system cmake-build-system)
     ;; TODO: Complete documentation build and split into dedicated outputs.
     (arguments
@@ -1546,13 +1611,13 @@ accurately in real time at any rate desired.")
 (define-public python-astropy
   (package
     (name "python-astropy")
-    (version "6.0.0")
+    (version "6.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "astropy" version))
        (sha256
-        (base32 "1nbpqx7ibm8zsyyy17y5rmfjamwz6mv0sy4drlisap9hald81k83"))
+        (base32 "175k2h039c0b8rsf0fdphmxbpjrszd138j8z9zkhh1kd6pg7bac9"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -1565,9 +1630,18 @@ accurately in real time at any rate desired.")
            ;; see https://github.com/astropy/astropy/pull/14311
            (with-directory-excursion "cextern"
              (for-each delete-file-recursively '("expat" "wcslib")))))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      #~(list "--pyargs" "astropy"
+              "-n" "auto"
+              "-k" (string-append
+                    ;; Skip tests that need remote data.
+                    "not remote_data"
+                    ;; ValueError: The truth value of an array with more than
+                    ;; one element is ambiguous. Use a.any() or a.all()
+                    " and not test_table_comp[t16-t26]"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'preparations
@@ -1587,32 +1661,18 @@ accurately in real time at any rate desired.")
           (add-before 'install 'writable-compiler
             (lambda _
               (make-file-writable "astropy/_compiler.c")))
-          (add-before 'check 'prepare-test-environment
-            (lambda _
-              ;; Some tests require a writable home.
-              (setenv "HOME" "/tmp")
-              (make-file-writable "astropy/_compiler.c")
-              ;; Extensions have to be rebuilt before running the tests.
-              (invoke "python" "setup.py" "build_ext" "--inplace"
-                      "-j" (number->string (parallel-job-count)))))
-          ;; TODO: The swap to pyproject-build-system introduced all tests
-          ;; failed due to pytest could not load conftest.py, find out how
-          ;; to resolve it and migrate completely to pyproject-build-system.
           (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
               (when tests?
-                (invoke "python" "-m" "pytest" "--pyargs" "astropy"
-                        ;; with    -n : 133.00s
-                        ;; without -n : 326.14s
-                        "-n" (number->string (parallel-job-count))
-                        "-k" (string-append
-                              ;; Skip tests that need remote data.
-                              "not remote_data"
-                              ;; E astropy.samp.errors.SAMPProxyError:
-                              ;; <SAMPProxyError 1: 'Timeout expired!'>
-                              " and not test_main"
-                              ;; E ModuleNotFoundError: No module named 'wofz'
-                              " and not test_pickle_functional"))))))))
+                (setenv "HOME" "/tmp")
+                (make-file-writable "astropy/_compiler.c")
+                ;; Extensions have to be rebuilt before running the tests.
+                (invoke "python" "setup.py" "build_ext" "--inplace"
+                        "-j" (number->string (parallel-job-count)))
+                ;; Step out of the source directory to avoid interference; we
+                ;; want to run the installed code with extensions etc.
+                (with-directory-excursion "/tmp"
+                  (apply invoke "pytest" "-v" test-flags))))))))
     (native-inputs
      (list pkg-config
            python-colorlog
@@ -1622,7 +1682,6 @@ accurately in real time at any rate desired.")
            python-h5py
            python-ipython
            python-jplephem
-           python-matplotlib
            python-objgraph
            python-pandas
            python-pyarrow
@@ -1632,21 +1691,23 @@ accurately in real time at any rate desired.")
            python-pytest-mpl
            python-pytest-xdist
            python-scikit-image
-           python-scipy
            python-setuptools-scm
            python-sgp4
            python-skyfield
+           python-threadpoolctl
            python-timezonefinder))
     (inputs
      (list expat wcslib))
     (propagated-inputs
      (list python-astropy-iers-data
            python-configobj
+           python-matplotlib
            python-numpy
            python-packaging
            python-ply
            python-pyerfa
-           python-pyyaml))
+           python-pyyaml
+           python-scipy))
     (home-page "https://www.astropy.org/")
     (synopsis "Core package for Astronomy in Python")
     (description
@@ -1658,13 +1719,13 @@ astronomy and astrophysics.")
 (define-public python-astropy-healpix
   (package
     (name "python-astropy-healpix")
-    (version "1.0.2")
+    (version "1.0.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "astropy_healpix" version))
        (sha256
-        (base32 "0fij80ws16xzbph8z9v27w54dnc3vry8fk9p3mvxrglnjgnscvq5"))))
+        (base32 "0ilpwwvdnd4nchivwnbiy1hl07hd2mdg4wb90r2p05kvr5z2lpfy"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1696,13 +1757,13 @@ astronomy and astrophysics.")
     ;; In case of changing the source method git-fetch, consider to check the
     ;; tag as it's not following the PyPI version, see
     ;; <https://github.com/astropy/astropy-iers-data/issues/17>.
-    (version "0.2024.3.18.0.29.47")
+    (version "0.2024.4.15.2.45.49")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "astropy-iers-data" version))
+       (uri (pypi-uri "astropy_iers_data" version))
        (sha256
-        (base32 "1mf03iqw09rp6d8hbby33f4jwfjan9gkb1z7xqsjr2jpj7zwpn3y"))))
+        (base32 "15wran1d5bw1mm3xl3ibp6i5aa7icj9p6g1mqcyp596qmdjnm8wp"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1737,13 +1798,13 @@ celestial-to-terrestrial coordinate transformations.")
 (define-public python-astroplan
   (package
     (name "python-astroplan")
-    (version "0.9.1")
+    (version "0.10")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "astroplan" version))
        (sha256
-        (base32 "0jrgii0f11ckxvywinr9kcsljxnpnkh7hv5638wxwcb1iyjmx36r"))))
+        (base32 "0nl7yi0h5nn4id1jifd8hpwzqdarq9z2iq56x0j2kmj3472cjw0n"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1916,26 +1977,34 @@ specifically in the C code.")
 (define-public python-bayesicfitting
   (package
     (name "python-bayesicfitting")
-    (version "3.2.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/dokester/BayesicFitting")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0q6v7w9b1xzam0qn5vsl5wrdp1fkfpsn411pzd8wyy9giznpajxi"))))
-    (build-system python-build-system)
+    (version "3.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dokester/BayesicFitting")
+             ;; Tag style has been changed, see
+             ;; <https://github.com/dokester/BayesicFitting/issues/23>.
+             (commit (string-append "v." version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0brqvy4r75vh93lj4jwv8wcrc96ka1v44f5ckjvr65y30plnfwg2"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (replace 'check
-                          (lambda* (#:key tests? #:allow-other-keys)
-                            (when tests?
-                              (invoke "python" "-m" "unittest" "discover"
-                                      "test")))))))
-    (propagated-inputs (list python-astropy python-future python-matplotlib
-                             python-numpy python-scipy))
+     (list
+      #:test-flags #~(list "-m" "unittest" "discover" "test")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (apply invoke "python" test-flags)))))))
+    (propagated-inputs
+     (list python-astropy
+           python-future
+           python-matplotlib
+           python-numpy
+           python-scipy))
     (home-page "https://www.bayesicfitting.nl")
     (synopsis "Python Toolbox for Astronimical Bayesian fitting")
     (description
@@ -1948,7 +2017,7 @@ Herschel.")
 (define-public python-casa-formats-io
   (package
     (name "python-casa-formats-io")
-    (version "0.2.2")
+    (version "0.3.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "casa-formats-io" version))
@@ -1989,8 +2058,7 @@ is independent of and does not use @code{casacore}.")
     (build-system pyproject-build-system)
     (native-inputs
      (list python-memory-profiler
-           python-pytest-astropy
-           python-semantic-version))
+           python-pytest-astropy))
     (propagated-inputs
      (list python-astropy
            python-astroscrappy
@@ -2082,13 +2150,13 @@ monochromatic sequential colormaps like @code{blue}, @code{green}, and
 (define-public python-crds
   (package
     (name "python-crds")
-    (version "11.17.19")
+    (version "11.17.20")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "crds" version))
               (sha256
                (base32
-                "1x48yw6jnz7dw0myc86ds0qaki6v1anqaihd5qzrxwrrl61kyp6x"))))
+                "0480jjklv2p60fp892dr4qglwv44k86hx29y8q1c967l9k53wc9f"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2113,7 +2181,6 @@ monochromatic sequential colormaps like @code{blue}, @code{green}, and
                          python-nose
                          python-pylint
                          python-pytest
-                         python-semantic-version
                          python-setuptools-scm))
     (home-page "https://hst-crds.stsci.edu")
     (synopsis "Calibration Reference Data System for HST and JWST")
@@ -2401,13 +2468,15 @@ can be described by @acronym{WCS, World Coordinate System} translations.")
 (define-public python-photutils
   (package
     (name "python-photutils")
-    (version "1.10.0")
+    ;; PyPI version for source archive is missing minor 0, See
+    ;; <https://github.com/astropy/photutils/issues/1727>
+    (version "1.12")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "photutils" version))
        (sha256
-        (base32 "148zhdxhlcgj6dxyzaz78bzxw1q44qa9q9sfdqbfbla0s0w2jaay"))))
+        (base32 "0y4kcj6qjnzwjswc0c2iimh11b0jz6b9ianbh58w4gnb4y71lr6r"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2415,6 +2484,16 @@ can be described by @acronym{WCS, World Coordinate System} translations.")
       #~(list "-n" "auto")
       #:phases
       #~(modify-phases %standard-phases
+          ;; setup.py was removed in 36c3231ce5b80ad470fa78be2e96df859d2daf41
+          ;; for some unknown reason, which caused the package to fail to
+          ;; build. It is being recreated based on that commit.
+          (add-after 'unpack 'create-setup.py
+            (lambda _
+              (call-with-output-file "setup.py"
+                (lambda (port)
+                  (format port "from setuptools import setup
+from extension_helpers import get_extensions
+setup(ext_modules=get_extensions())")))))
           ;; This file is opened in both install and check phases.
           (add-before 'install 'writable-compiler
             (lambda _ (make-file-writable "photutils/_compiler.c")))
@@ -2444,7 +2523,6 @@ can be described by @acronym{WCS, World Coordinate System} translations.")
            python-extension-helpers
            python-pytest-astropy
            python-pytest-xdist
-           python-semantic-version
            python-setuptools-scm))
     (home-page "https://github.com/astropy/photutils")
     (synopsis "Source detection and photometry")
@@ -2642,13 +2720,13 @@ Virtual observatory (VO) using Python.")
 (define-public python-regions
   (package
     (name "python-regions")
-    (version "0.8")
+    (version "0.9")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "regions" version))
        (sha256
-        (base32 "09401pz7926zlci7cznd78hmv9947f6jxyy2afqdqc1xaccpzcq2"))))
+        (base32 "0kvfdzqry3vcvphd7ldmppbgn3ab97hbfzwxfrlxls92yi41h3i6"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2656,14 +2734,21 @@ Virtual observatory (VO) using Python.")
       #~(list "-n" "auto")
       #:phases
       #~(modify-phases %standard-phases
+          ;; setup.py was removed in 84c80a280431adda00641cda5264c7de18b43b2f
+          ;; for some unknown reason, which caused the package to fail to
+          ;; build. It is being recreated based on that commit.
+          (add-after 'unpack 'create-setup.py
+            (lambda _
+              (call-with-output-file "setup.py"
+                (lambda (port)
+                  (format port "from setuptools import setup
+from extension_helpers import get_extensions
+setup(ext_modules=get_extensions())")))))
           ;; This file is opened in both install and check phases.
-          ;; XXX: Check if it is still required.
           (add-before 'install 'writable-compiler
             (lambda _ (make-file-writable "regions/_compiler.c")))
-          (add-before 'check 'prepare-test-environment
+          (add-before 'check 'build-extensions
             (lambda _
-              (setenv "HOME" "/tmp")
-              (make-file-writable "regions/_compiler.c")
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
     (propagated-inputs
      (list python-astropy
@@ -2673,7 +2758,7 @@ Virtual observatory (VO) using Python.")
            python-scipy
            python-shapely))
     (native-inputs
-     (list python-cython
+     (list python-cython-3
            python-extension-helpers
            python-pytest-arraydiff
            python-pytest-astropy
@@ -2688,37 +2773,45 @@ Virtual observatory (VO) using Python.")
 (define-public python-reproject
   (package
     (name "python-reproject")
-    (version "0.13.0")
+    (version "0.13.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "reproject" version))
        (sha256
-        (base32 "1qkjbx8xsawhi1gjzqimais3crvkwgbzy1pr51x6anjjln88rgll"))))
+        (base32 "1xk809h2j3zj37l5lx4l87zanf9zxbxajcrff2b2f2i0jpnmxqv3"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; FIXME: Failing tests
-      ;;
-      ;; reproject/adaptive/core.py:7: in <module>
-      ;; from .deforest import map_coordinates
-      ;; E   ModuleNotFoundError: No module named 'reproject.adaptive.deforest'
-      ;;
-      ;; Project removed setup.py and there is no alternative to `python
-      ;; setup.py build_ext'
-      ;; See: https://github.com/pypa/setuptools/discussions/3388
-      #:tests? #f
+      #:test-flags
+      #~(list "--arraydiff"
+              "--arraydiff-default-format=fits"
+              "--numprocesses" "auto"
+              "--pyargs" "reproject")
       #:phases
       #~(modify-phases %standard-phases
+          ;; setup.py was removed in a659a260bdd7635cddc8f33c4ea04a3b6d8c1f84
+          ;; for some unknown reason, which caused the package to fail to
+          ;; build. It is being recreated based on that commit.
+          ;; TODO: Check how to implement it in python-build-system.
+          (add-after 'unpack 'create-setup.py
+            (lambda _
+              (call-with-output-file "setup.py"
+                (lambda (port)
+                  (format port "from setuptools import setup
+from extension_helpers import get_extensions
+setup(ext_modules=get_extensions())")))))
           (add-before 'install 'writable-compiler
             (lambda _
               (make-file-writable "reproject/_compiler.c")))
           (add-before 'check 'writable-compiler
             (lambda _
               (make-file-writable "reproject/_compiler.c")))
-          (add-before 'check 'writable-home
+          (add-before 'check 'prepare-test-environment
             (lambda _
-              (setenv "HOME" (getcwd)))))))
+              (setenv "HOME" "/tmp")
+              ;; Cython extensions have to be built before running the tests.
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
     (propagated-inputs
      (list python-asdf
            python-astropy
@@ -2734,11 +2827,12 @@ Virtual observatory (VO) using Python.")
            python-shapely
            python-zarr))
     (native-inputs
-     (list python-cython
+     (list python-cython-3
            python-extension-helpers
-           python-pytest-astropy
-           python-semantic-version
            python-pytest
+           python-pytest-astropy
+           python-pytest-xdist
+           ;; python-sunpy ; circular dependencies, test optional
            python-setuptools-scm))
     (home-page "https://reproject.readthedocs.io")
     (synopsis "Astronomical image reprojection in Python")
@@ -2781,13 +2875,13 @@ orbits described in TLE files.")
 (define-public python-sunpy
   (package
     (name "python-sunpy")
-    (version "5.1.1")
+    (version "5.1.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sunpy" version))
        (sha256
-        (base32 "07rfdj4v29kcb718sgjfsagazvnl11r01ciqjvazr5x3yadfqrwk"))))
+        (base32 "0h62qh74xanj2drikjch7h0a5g4dsaf3v4qxx38vjazmibc37ynp"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2855,7 +2949,6 @@ python_files = test_*.py"))))))))
            python-reproject
            python-scikit-image
            python-scipy
-           python-semantic-version
            ;; python-spiceypy ; Not packed yet in Guix, long jorney.
            python-sqlalchemy
            python-tqdm
@@ -3015,7 +3108,6 @@ elevation, solar azimuth, rahukaalam, and the phases of the moon.")
            python-pytest-astropy
            python-pytest-xdist
            python-regions
-           python-semantic-version
            python-setuptools-scm))
     (home-page "https://spectral-cube.readthedocs.io/en/latest/")
     (synopsis "Library for reading and analyzing astrophysical spectral data cubes")
@@ -3038,13 +3130,13 @@ of axis order, spatial projections, and spectral units that exist in the wild.
 (define-public python-specutils
   (package
     (name "python-specutils")
-    (version "1.13.0")
+    (version "1.14.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "specutils" version))
        (sha256
-        (base32 "0cfsigvsa0i7z2nq9ci9gxccp074kqsgr01xi2npk8xf7cjisrfq"))))
+        (base32 "06l0k8hi4hbfs825cnw948nnkl627g3w48n2pf9rspbvd3vbs2qf"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3070,7 +3162,6 @@ of axis order, spatial projections, and spectral units that exist in the wild.
     (native-inputs
      (list python-matplotlib
            python-pytest-astropy
-           python-semantic-version
            python-setuptools-scm
            python-spectral-cube))
     (home-page "https://specutils.readthedocs.io/")
@@ -3139,40 +3230,40 @@ spherical polygons that represent arbitrary regions of the sky.")
   (package
     (name "python-stsci-image")
     (version "2.3.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "stsci.image" version))
-              (sha256
-               (base32
-                "1vnp4256nbdvapa69cmm80sjz11ygxa49abr9nbvssj6nyyp5icb"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "stsci.image" version))
+       (sha256
+        (base32 "1vnp4256nbdvapa69cmm80sjz11ygxa49abr9nbvssj6nyyp5icb"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (add-before 'check 'build-extensions
-                          (lambda _
-                            ;; Cython extensions have to be built before running
-                            ;; the tests.
-                            (invoke "python" "setup.py" "build_ext"
-                                    "--inplace"))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'build-extensions
+            (lambda _
+              ;; Cython extensions have to be built before running the tests.
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
     (propagated-inputs (list python-numpy python-scipy))
     (native-inputs (list python-pytest python-setuptools-scm))
     (home-page "https://github.com/spacetelescope/stsci.image")
     (synopsis "Image array manipulation functions")
     (description
-     "This package provides Python modules of @acronym{STScI, Space Telescope
-Science Institute} image array manipulation functions.")
+     "This package provides a Python module to various @acronym{STScI, Space
+Telescope Science Institute} image array manipulation functions.")
     (license license:bsd-3)))
 
 (define-public python-stsci-imagestats
   (package
     (name "python-stsci-imagestats")
-    (version "1.8.0")
+    (version "1.8.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "stsci.imagestats" version))
               (sha256
                (base32
-                "01jqqrhcna0ghin48bbcza57d12371ny4l4pqws89irwdhd8xr0r"))))
+                "1nmya85bf2747c9ggya6my5b1slk6g2a7bk16rdv8r5a4ah9hda5"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3197,49 +3288,50 @@ task}.")
 (define-public python-stsci-stimage
   (package
     (name "python-stsci-stimage")
-    (version "0.2.6")
+    ;; PyPI version was 0.2.8 but the latest version tag on GiHub was 0.2.7,
+    ;; see <https://github.com/spacetelescope/stsci.stimage/issues/38>
+    (version "0.2.8")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "stsci.stimage" version))
+              (uri (pypi-uri "stsci_stimage" version))
               (sha256
                (base32
-                "0i7xby1gaiplvbqqv8a4f4cw1is8fwj89mix1z3bqrykqi3n24g0"))))
+                "0p188my6djy65a8j6qsc3v0dpr2svqqv90n0pxxzy52vdjiz3w0w"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags #~(list "test_c")
       #:phases
       #~(modify-phases %standard-phases
-          ;; Test steps are taken from GitHub Actions.
-          ;; See https://github.com/spacetelescope/stsci.stimage/issues/27
-          (replace 'check
+          ;; Test steps are taken from GitHub Actions, see
+          ;; <https://github.com/spacetelescope/stsci.stimage/issues/27>
+          (add-before 'check 'waf-configure-build
             (lambda _
               (copy-file (string-append
-                #$(this-package-native-input "python-waf") "/bin/waf")
-               "waf")
-              (invoke "python" "waf" "configure" "build" "do_tests"))))))
-    (propagated-inputs (list python-numpy))
+                          #$(this-package-native-input "python-waf") "/bin/waf")
+                         "waf")
+              (invoke "python" "waf" "configure" "build"))))))
+    (propagated-inputs
+     (list python-numpy))
     (native-inputs
-     (list python-codecov
-           python-pytest
-           python-pytest-cov
-           python-setuptools-scm
-           python-waf))
+     (list python-pytest python-setuptools-scm python-waf))
     (home-page "https://stscistimage.readthedocs.io/en/latest/")
     (synopsis "STScI image processing")
-    (description "This package provides an astronomical Python package with
-image processing functions: @code{xyxymatch}, @code{geomap}.")
+    (description
+     "This package provides an astronomical Python package with image
+processing functions: @code{xyxymatch}, @code{geomap}.")
     (license license:bsd-3)))
 
 (define-public python-stcal
   (package
     (name "python-stcal")
-    (version "1.6.1")
+    (version "1.7.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "stcal" version))
        (sha256
-        (base32 "1rwvzjpidz0sfp52mqgs25599hbvxyc4gdc1yk0kdm8aynhdwi82"))))
+        (base32 "04ippj90dn2671xg4rvncf7jsbpcflr7dr6jc2h52z7xfd1msb4d"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3268,8 +3360,6 @@ image processing functions: @code{xyxymatch}, @code{geomap}.")
            python-pytest
            python-pytest-cov
            python-pytest-doctestplus
-           python-pytest-openfiles
-           python-semantic-version
            python-setuptools-scm))
     (home-page "https://github.com/spacetelescope/stcal")
     (synopsis "STScI tools and algorithms used in calibration pipelines")
@@ -3279,13 +3369,13 @@ image processing functions: @code{xyxymatch}, @code{geomap}.")
 (define-public python-stdatamodels
   (package
     (name "python-stdatamodels")
-    (version "1.10.0")
+    (version "1.10.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "stdatamodels" version))
        (sha256
-        (base32 "00zc7z3f2fjvmms2h7176wnzjb025v0aasc6fiib9055sk34bc94"))))
+        (base32 "1h0imp6j9qrjadhvvqcgrx6dq94qhi0023c8c8r2wddhqrh0h5lg"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3311,7 +3401,6 @@ image processing functions: @code{xyxymatch}, @code{geomap}.")
            python-pytest-doctestplus
            python-pytest-xdist
            python-scipy
-           python-semantic-version
            python-setuptools-scm))
     (home-page "https://github.com/spacetelescope/stdatamodels")
     (synopsis
@@ -3337,8 +3426,8 @@ implemented in the @acronym{JWST, James Webb Space Telescope} and
       ;; See https://github.com/spacetelescope/stpipe/issues/114
       #:test-flags #~(list "-k" "not test_roman_datamodel")))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-asdf python-astropy python-crds
-                             python-semantic-version python-stdatamodels))
+    (propagated-inputs
+     (list python-asdf python-astropy python-crds python-stdatamodels))
     (native-inputs (list python-pytest python-pytest-doctestplus
                          python-pytest-openfiles python-setuptools-scm))
     (home-page "https://github.com/spacetelescope/stpipe")
@@ -3376,7 +3465,6 @@ implementing calibration pipeline software.")
     (native-inputs (list python-pytest
                          python-pytest-astropy
                          python-pytest-astropy-header
-                         python-semantic-version
                          python-setuptools-scm))
     (home-page "https://github.com/spacetelescope/stsynphot_refactor")
     (synopsis "Synthetic photometry using Astropy for HST and JWST")
@@ -3557,7 +3645,7 @@ standard astronomy libraries:
 (define-public libxisf
   (package
     (name "libxisf")
-    (version "0.2.11")
+    (version "0.2.12")
     (source
      (origin
        (method git-fetch)
@@ -3566,7 +3654,7 @@ standard astronomy libraries:
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "02lnlsdg7f6pbcfk9amzh2k42wsb19d97yp2jq122lzivx9inwn1"))))
+        (base32 "1bvf3x0xdipkg28c75j6jav3b2llbqvfa6lkwiacxxlzmj0226s2"))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags #~(list "-DUSE_BUNDLED_LIBS=OFF")))
@@ -3729,6 +3817,85 @@ backward), and manual time control
 @end itemize")
     (license license:gpl2+)))
 
+(define-public scamp
+  (package
+    (name "scamp")
+    (version "2.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/astromatic/scamp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qic52mzw9avf1a1fsr85mlh63b7hq6d4wj2d00zgdllmclj5l9q"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "CPPFLAGS=-fcommon"
+              "--enable-openblas"
+              "--enable-plplot"
+              (string-append "--with-curl-incdir="
+                             #$(this-package-input "curl") "/include")
+              (string-append "--with-curl-libdir="
+                             #$(this-package-input "curl") "/lib")
+              (string-append "--with-fftw-incdir="
+                             #$(this-package-input "fftwf") "/include")
+              (string-append "--with-fftw-libdir="
+                             #$(this-package-input "fftwf") "/lib")
+              (string-append "--with-openblas-incdir="
+                             #$(this-package-input "openblas") "/include")
+              (string-append "--with-openblas-libdir="
+                             #$(this-package-input "openblas") "/lib")
+              (string-append "--with-plplot-incdir="
+                             #$(this-package-input "plplot") "/include")
+              (string-append "--with-plplot-libdir="
+                             #$(this-package-input "plplot") "/lib"))))
+    (native-inputs
+     (list autoconf
+           automake
+           libtool
+           pkg-config
+           python-astropy
+           python-numpy
+           python-wrapper))
+    (inputs
+     (list curl fftwf openblas plplot))
+    (home-page "https://www.astromatic.net/software/scamp/")
+    (synopsis "Compute astrometric solutions")
+    (description
+     "@acronym{Software for Calibrating AstroMetry and Photometry,SCAMP} is a
+software that computes astrometric projection parameters from source catalogues
+derived from @url{http://fits.gsfc.nasa.gov/,FITS} images.  The computed solution
+is expressed according to the
+@url{http://www.atnf.csiro.au/people/mcalabre/WCS/index.html,WCS} standard.  The
+main features of SCAMP are:
+
+@itemize
+@item compatibility with @code{SExtractor} FITS or Multi-Extension FITS
+catalogue format in input
+@item generation of WCS-compliant and @code{SWarp}-compatible FITS image headers
+in output
+@item automatic grouping of catalogues on the sky
+@item selectable on-line astrometric reference catalogue
+@item automatic determination of scale, position angle, flipping and coordinate
+shift using fast pattern-matching
+@item various astrometric calibration modes for single detectors and detector
+arrays
+@item combined astrometric solutions for multi-channel/instrument surveys
+@item highly configurable astrometric distortion polynomials
+@item correction for differential chromatic refraction
+@item proper motion measurements
+@item multi-threaded code that takes advantage of multiple processors
+@item @url{http://www.ivoa.net/documents/VOTable,VOTable}-compliant XML output
+of meta-data
+@item @url{http://en.wikipedia.org/wiki/XSLT,XSLT} filter sheet provided for
+convenient access to metadata from a regular web browser
+@end itemize")
+    (license license:gpl3+)))
+
 (define-public sgp4
   ;; Version tag v1.0 is dated to <2021-01-11>, use the lates commit instead.
   (let ((commit "6a448b4850e5fbf8c1ca03bb5f6013a9fdc1fd91")
@@ -3804,7 +3971,7 @@ floating-point (no compression, LZW- or ZIP-compressed), FITS 8-bit, 16-bit,
 (define-public indi-2.0
   (package
     (name "indi")
-    (version "2.0.6")
+    (version "2.0.7")
     (source
      (origin
        (method git-fetch)
@@ -3813,7 +3980,7 @@ floating-point (no compression, LZW- or ZIP-compressed), FITS 8-bit, 16-bit,
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0j1yr8wz6q6xi4dskv3yyhm0valsyfhcw1n8xpfgzbzbdzc8biyw"))))
+        (base32 "0w3494by88g0sz92adgvy75g7f1609ilsblink9z37n02v83dfxi"))))
     (build-system cmake-build-system)
     (arguments
      ;; TODO: fix failing tests on aarch64-system.
@@ -3973,13 +4140,13 @@ milliarcsecond).")
 (define-public python-jwst
   (package
     (name "python-jwst")
-    (version "1.13.4")
+    (version "1.14.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "jwst" version))
               (sha256
                (base32
-                "0n5cfjayg15kf5p6pns7k2zfcldqz1464ndbldgzanc33fp9wnfz"))))
+                "0knl2x0z3djsln8mi3a4bkxjz49iwmnr1v6wwsk13zvpkfq21vv4"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3996,19 +4163,21 @@ milliarcsecond).")
     (propagated-inputs (list opencv
                              python-asdf
                              python-asdf-astropy
-                             python-asdf-transform-schemas
                              python-astropy
                              python-bayesicfitting
                              python-crds
                              python-drizzle
                              python-gwcs
+                             python-importlib-metadata
                              python-jplephem
                              python-jsonschema
                              python-numpy
+                             python-packaging
                              python-photutils
                              python-poppy
                              python-psutil
                              python-pyparsing
+                             python-pysiaf
                              python-requests
                              python-scikit-image
                              python-scipy
@@ -4018,6 +4187,7 @@ milliarcsecond).")
                              python-stpipe
                              python-stsci-image
                              python-stsci-imagestats
+                             python-synphot
                              python-tweakwcs
                              python-wiimatch))
     (native-inputs (list python-colorama
@@ -4026,6 +4196,7 @@ milliarcsecond).")
                          python-pytest-doctestplus
                          python-pytest-openfiles
                          python-requests-mock
+                         ;; python-ruff ; not packed yet in Guix
                          python-setuptools-scm))
     (home-page "https://jwst-pipeline.readthedocs.io/en/latest/")
     (synopsis
@@ -4209,6 +4380,45 @@ Features:
 @end itemize")
     (license license:expat)))
 
+(define-public python-pysiaf
+  (package
+    (name "python-pysiaf")
+    (version "0.22.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pysiaf" version))
+       (sha256
+        (base32 "08wb98k9k4f04455da5ns9rif8pl9r3ih537w1yj393hkjjiyzfz"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-n" "auto"
+              ;; Disable 2 failing tests, see
+              ;; <https://github.com/spacetelescope/pysiaf/issues/338>
+              "-k" (string-append "not test_write_jwst_siaf_xlsx"
+                                  " and not test_write_jwst_siaf_xml" ))))
+    (propagated-inputs
+     (list python-astropy
+           python-lxml
+           python-matplotlib
+           python-numpy
+           python-numpydoc
+           python-openpyxl
+           python-requests
+           python-scipy))
+    (native-inputs
+     (list python-pytest python-pytest-xdist))
+    (home-page "https://pysiaf.readthedocs.io/")
+    (synopsis "Handling SIAF for space telescopes")
+    (description
+     "@code{pysiaf} is a python package to access, interpret, maintain, and
+generate @acronym{Handling of Science Instrument Aperture Files, SIAF}, in
+particular for JWST.  Tools for applying the frame transformations, plotting,
+comparison, and validation are provided.")
+    (license license:bsd-3)))
+
 (define-public python-pysynphot
   ;; XXX: 2.0.0 was released in 2021 there are a lot of changes since that
   ;; time and it failed to build with python-astropy 6.0.0, use the latest
@@ -4298,31 +4508,26 @@ object.")
 (define-public python-synphot
   (package
     (name "python-synphot")
-    (version "1.3.0")
+    (version "1.4.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "synphot" version))
        (sha256
-        (base32 "0a54bfrx9aar66040324sw9qdjz5lg67y28sjsxhyv9h3gppc7c0"))))
+        (base32 "0fk860bxaqbamrq15pkqlbvhbf70y50cra2mgvv9r0cxq37isbi6"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'check 'prepare-test-environment
-            (lambda _
-              (invoke "python" "setup.py" "build_ext" "--inplace")
-              ;; To solve pytest/conftest issue. Pytest tries to load all
-              ;; files with word 'test' in them.
-              ;;
-              ;; ImportError while loading conftest ...
-              ;; _pytest.pathlib.ImportPathMismatchError: ...
-              ;;
-              (call-with-output-file "pytest.ini"
-                (lambda (port)
-                  (format port "[pytest]
-python_files = test_*.py"))))))))
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (invoke "python" "setup.py" "build_ext" "--inplace")
+                ;; Step out of the source directory to avoid interference; we
+                ;; want to run the installed code with extensions etc.
+                (with-directory-excursion "/tmp"
+                  (apply invoke "pytest" "-v" test-flags))))))))
     (propagated-inputs
      (list python-astropy
            python-dust-extinction
@@ -4332,7 +4537,6 @@ python_files = test_*.py"))))))))
     (native-inputs
      (list python-pytest
            python-pytest-astropy
-           python-semantic-version
            python-setuptools-scm))
     (home-page "https://github.com/spacetelescope/synphot_refactor")
     (synopsis "Synthetic photometry using Astropy")
@@ -4345,27 +4549,28 @@ of the old packages.")
 (define-public python-tweakwcs
   (package
     (name "python-tweakwcs")
-    (version "0.8.6")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "tweakwcs" version))
-              (sha256
-               (base32
-                "1j75i02xzd36gp7pf6gks6nmp4ivi9cbphya4l69py5p62iaab99"))))
+    (version "0.8.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "tweakwcs" version))
+       (sha256
+        (base32 "0cch4z5zmmi1s02n1wdwss8p7qhrzyiajkaik0gga510kgdsvx48"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-astropy
-                             python-gwcs
-                             python-numpy
-                             python-packaging
-                             python-spherical-geometry
-                             python-stsci-imagestats
-                             python-stsci-stimage))
-    (native-inputs (list python-codecov
-                         python-pytest
-                         python-pytest-cov
-                         python-scipy
-                         python-semantic-version
-                         python-setuptools-scm))
+    (propagated-inputs
+     (list python-astropy
+           python-gwcs
+           python-numpy
+           python-packaging
+           python-spherical-geometry
+           python-stsci-imagestats
+           python-stsci-stimage))
+    (native-inputs
+     (list python-codecov
+           python-pytest
+           python-pytest-cov
+           python-scipy
+           python-setuptools-scm))
     (home-page "https://tweakwcs.readthedocs.io/en/latest/")
     (synopsis
      "Algorithms for matching and aligning catalogs and for tweaking the WCS")
@@ -4379,13 +4584,13 @@ between image and reference catalogs. Currently only aligning images with
 (define-public python-asdf
   (package
     (name "python-asdf")
-    (version "3.1.0")
+    (version "3.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "asdf" version))
        (sha256
-        (base32 "0fa6y3gmqc0y3nz0h68vq3a84pvx6gc5zp33wg8a4n9b4kipm464"))))
+        (base32 "1wj556g15gwp6ir5hg083l15sifdsf23giqkx0jbn4lgdwjffbgr"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4393,12 +4598,15 @@ between image and reference catalogs. Currently only aligning images with
       #~(list "-n" "auto" "-p" "no:legacypath")
       #:phases
       #~(modify-phases %standard-phases
-          ;; ImportError: Error importing plugin " no:legacypath": No module
-          ;; named ' no:legacypath'
-          (add-before 'check 'fix-tests-setup
+          (add-after 'unpack 'patch-pypojrect-toml
             (lambda _
               (substitute* "pyproject.toml"
-                ((".*:legacypath.*") "")))))))
+                ;; ImportError: Error importing plugin " no:legacypath": No
+                ;; module named ' no:legacypath'
+                ((".*:legacypath.*") "")
+                ;; TypeError: Configuration.__init__() got an unexpected
+                ;; keyword argument 'version_file'
+                (("version_file = \"asdf/_version.py\"") "")))))))
     (native-inputs
      (list python-fsspec
            python-packaging
@@ -4407,18 +4615,17 @@ between image and reference catalogs. Currently only aligning images with
            python-pytest-doctestplus
            python-pytest-remotedata
            python-pytest-xdist
-           python-semantic-version
            python-setuptools-scm))
     (propagated-inputs
      (list python-asdf-standard
            python-asdf-transform-schemas
-           python-asdf-unit-schemas
            python-attrs ;; for vendorized jsonschema
            python-importlib-metadata
            python-jmespath
            python-lz4
            python-numpy
-           python-pyyaml))
+           python-pyyaml
+           python-semantic-version))
     (home-page "https://github.com/asdf-format/asdf")
     (synopsis "Python tools to handle ASDF files")
     (description
@@ -4454,7 +4661,6 @@ implementation of the ASDF Standard.")
       (native-inputs
        (list python-numpy
              python-pytest
-             python-semantic-version
              python-setuptools-scm))
       (propagated-inputs
        (list python-asdf
@@ -4553,7 +4759,6 @@ package such as asdf-astropy.")
     (native-inputs
      (list python-pytest
            python-pytest-xdist
-           python-semantic-version
            python-setuptools-scm))
     (propagated-inputs
      (list python-asdf))
@@ -4672,7 +4877,7 @@ install an implementation package such as asdf-astropy.")
     (propagated-inputs
      (list python-asdf python-fsspec python-zarr))
     (native-inputs
-     (list python-pytest python-semantic-version python-setuptools-scm))
+     (list python-pytest python-setuptools-scm))
     (home-page "https://github.com/asdf-format/asdf-zarr")
     (synopsis "Asdf extension to support Zarr arrays")
     (description
@@ -4686,13 +4891,13 @@ specification.")
 (define-public python-asdf-astropy
   (package
     (name "python-asdf-astropy")
-    (version "0.6.0")
+    (version "0.6.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "asdf-astropy" version))
        (sha256
-        (base32 "0cxwknkjkgiavwmsz3vzk88c3spdi1cj4kwp62hgj92g2mh5k0zh"))))
+        (base32 "1ipjpjiirycj2npicbp39ka7db61vx45j8dm2iis71g5l1rzkblp"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4709,7 +4914,6 @@ specification.")
            python-pytest-astropy
            python-pytest-xdist
            python-scipy
-           python-semantic-version
            python-setuptools-scm))
     (propagated-inputs
      (list python-asdf
@@ -4743,7 +4947,6 @@ Astropy objects.")
      (list python-asdf
            python-pytest
            python-pytest-openfiles
-           python-semantic-version
            python-setuptools-scm))
     (propagated-inputs
      (list python-asdf-coordinates-schemas
@@ -4774,7 +4977,6 @@ install an implementation package such as gwcs.")
            python-pytest
            python-pytest-doctestplus
            python-pyyaml
-           python-semantic-version
            python-setuptools-scm))
     (propagated-inputs
      (list python-asdf
@@ -4798,13 +5000,13 @@ default) to world coordinates.")
 (define-public python-rad
   (package
     (name "python-rad")
-    (version "0.19.0")
+    (version "0.19.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "rad" version))
               (sha256
                (base32
-                "0cp3nrv1vq3g61zx6dq36vdlxd5i8g52vg4hwpxakmwvqvc8p3gd"))))
+                "08dh9asdjgfmczmqyjplgdvbk3n68qw6akd8h953wq6v3yr4k4rq"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4812,9 +5014,7 @@ default) to world coordinates.")
       ;; python-rad -> python-roman-datamodels -> python-crds -> python-rad
       #:test-flags #~(list "--ignore=tests/test_schemas.py")))
     (native-inputs
-     (list python-pytest
-           python-semantic-version
-           python-setuptools-scm))
+     (list python-pytest python-setuptools-scm))
     (propagated-inputs (list python-asdf python-asdf-astropy))
     (home-page "https://github.com/spacetelescope/rad")
     (synopsis "Roman Attribute Dictionary")
@@ -4900,13 +5100,13 @@ solar physics.")
 (define-public python-roman-datamodels
   (package
     (name "python-roman-datamodels")
-    (version "0.19.0")
+    (version "0.19.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "roman_datamodels" version))
               (sha256
                (base32
-                "1ym06rj637fq9gxncdrn3phplk5djrzdwqghszis0di1dvsrif4j"))))
+                "1fp9rwzm5kzm0hjwwmlx7kym7yriyhxbfg2zr3y625pyvwpnl0a8"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4919,7 +5119,6 @@ solar physics.")
               (setenv "HOME" "/tmp"))))))
     (propagated-inputs (list python-asdf
                              python-asdf-astropy
-                             python-asdf-standard
                              python-astropy
                              python-gwcs
                              python-numpy
@@ -4929,7 +5128,6 @@ solar physics.")
                          python-pytest-doctestplus
                          python-pytest-env
                          python-pytest-xdist
-                         python-semantic-version
                          python-setuptools-scm))
     (home-page "https://github.com/spacetelescope/roman_datamodels")
     (synopsis "Roman Datamodels Support")
@@ -4963,8 +5161,7 @@ pipelines.")
      (list python-astropy
            python-ccdproc
            python-pillow
-           python-pytest
-           python-semantic-version))
+           python-pytest))
     (propagated-inputs
      (list python-bottleneck
            python-numpy
@@ -4984,15 +5181,27 @@ astronomical images, especially when there is no WCS information available.")
     (version "1.48")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "skyfield" version))
+       (method git-fetch) ; PyPI tarball lacks test data
+       (uri (git-reference
+             (url "https://github.com/skyfielders/python-skyfield")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1qaz0k0lkni3y423r66mkvj99bx08qa9xgqp3cs2df70cmdz30cb"))))
-    (build-system python-build-system)
+        (base32 "0l324r4pz7d5w72c7c5akvjx40287hl7sl0qv7swvn2da53vmq0r"))))
+    (build-system pyproject-build-system)
     (arguments
-     ;; XXX: Tests depend on custom test framework
-     ;; https://github.com/brandon-rhodes/assay
-     `(#:tests? #f))
+     (list
+      #:test-flags
+      #~(list "-m" "assay" "--batch" "skyfield.tests")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "ci"
+                  (apply invoke "python" test-flags))))))))
+    (native-inputs
+     (list python-assay python-pandas))
     (propagated-inputs
      (list python-certifi
            python-jplephem
