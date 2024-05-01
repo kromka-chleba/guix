@@ -4980,7 +4980,7 @@ that the binary uses instead of the actual binary contents.")
 (define-public emacs-org-fc
   (package
     (name "emacs-org-fc")
-    (version "0.5.1")
+    (version "0.6.1")
     (source
      (origin
        (method git-fetch)
@@ -4989,7 +4989,7 @@ that the binary uses instead of the actual binary contents.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0911lr5qlk7p1fg8ady5x39ai08yws70z6yg2w1qgc8zadyqp0w4"))))
+        (base32 "12azynnz3hzbb2643chwbwzxg0q1m555k77jkxfikrmh9wzb2k35"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -9097,6 +9097,32 @@ minibuffer to enable editing the minibuffer input in another buffer with
     (synopsis "Org-Babel functions for IPython evaluation")
     (description "This package adds support to Org-Babel for evaluating Python
 source code using IPython.")
+    (license license:gpl3+)))
+
+(define-public emacs-ob-asymptote
+  (package
+    (name "emacs-ob-asymptote")
+    (version "1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/ob-asymptote-"
+                           version ".tar"))
+       (sha256
+        (base32 "1hmqbkrqg18w454xg37rg5cg0q3vd0b0fm14n5chihqrwwnwrf4l"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/hurrja/ob-asymptote")
+    (synopsis "Babel functions for Asymptote")
+    (description
+     "This package provides Org Babel support for evaluating Asymptote source
+code.  This differs from most standard languages in that:
+@itemize
+@item there is no such thing as a ``session'' in Asymptote,
+@item we are generally only going to return results of type @code{file},
+@item we are adding the @code{file} and @code{cmdline} header arguments, if
+file is omitted then the @samp{-V} option is passed to the @command{asy}
+command for interactive viewing.
+@end itemize")
     (license license:gpl3+)))
 
 (define-public emacs-ob-async
@@ -17126,7 +17152,7 @@ programming and reproducible research.")
 (define-public emacs-org-contrib
   (package
     (name "emacs-org-contrib")
-    (version "0.4.2")
+    (version "0.5")
     (source
      (origin
        (method git-fetch)
@@ -17135,7 +17161,7 @@ programming and reproducible research.")
              (commit (string-append "release_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11p83gp5lpajf3aaaijs0p6y83sd9g6cv65h7021prcn4qbvipl8"))))
+        (base32 "1iwzxaxn4nc78xn8g13xk081fbqmkxw1hsjvlkpms43xzwpdig5a"))))
     (build-system emacs-build-system)
     (arguments
      `(#:phases
@@ -19498,14 +19524,14 @@ the center of the screen and not at the bottom.")
 (define-public emacs-posframe
   (package
     (name "emacs-posframe")
-    (version "1.4.2")
+    (version "1.4.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://elpa.gnu.org/packages/"
                            "posframe-" version ".tar"))
        (sha256
-        (base32 "0ca43wgbr0n5ri7cyxjmn7blq59xq43rx9z9q02a2j4yn05w8nss"))))
+        (base32 "1kw37dhyd6qxj0h2qpzi539jrgc0pj90psf2k58z4jc9199bgsax"))))
     (build-system emacs-build-system)
     ;; emacs-minimal does not include the function font-info.
     (arguments
@@ -21008,7 +21034,7 @@ which avoids some of the issues with using Emacs’s built-in Url library.")
 (define-public emacs-ement
   (package
     (name "emacs-ement")
-    (version "0.14")
+    (version "0.15")
     (source
      (origin
        (method git-fetch)
@@ -21017,7 +21043,7 @@ which avoids some of the issues with using Emacs’s built-in Url library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0nfkxcwkyyy181y6wv64b69rq3spbb3lq634bk6j824aws7ha5rk"))))
+        (base32 "0imylq7x5nb94pxzjlhnlirxp7fr4mrmaz2rqrv762fsbim0gp48"))))
     (build-system emacs-build-system)
     (arguments
      (list #:emacs emacs))              ;need libxml support
@@ -22012,10 +22038,31 @@ lines of code.  Polymode also provides extensible facilities for external
 literate programming tools for exporting, weaving and tangling.")
     (license license:gpl3+)))
 
+(define-public emacs-ansible
+  (package
+    (name "emacs-ansible")
+    (version "0.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/k1LoW/emacs-ansible")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12k8mwlyiipsdjq5h1v04g3aa7ymjyhmy14j6vzjil4w9l6xyvdh"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-f emacs-s))
+    (home-page "https://github.com/k1LoW/emacs-ansible")
+    (synopsis "Emacs minor mode for Ansible files")
+    (description
+     "This is an Emacs minor mode for editing Ansible files.")
+    (license license:gpl2+)))
+
 (define-public emacs-polymode-ansible
   (package
     (name "emacs-polymode-ansible")
-    (version "0.3.0")
+    (version "0.4.0")
     (source
      (origin
        (method git-fetch)
@@ -22024,10 +22071,13 @@ literate programming tools for exporting, weaving and tangling.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0f0yq6gmkp194nxk90ipprglf1xkmxrgz1rkgrhfslvxq4q2l81h"))))
+        (base32 "0fmbxhn8cbfdad37m1jssm1jblia0b4fzdv89lrz0k5wqyzlkz4g"))))
     (build-system emacs-build-system)
     (propagated-inputs
-     (list emacs-ansible-doc emacs-jinja2-mode emacs-polymode
+     (list emacs-ansible
+           emacs-ansible-doc
+           emacs-jinja2-mode
+           emacs-polymode
            emacs-yaml-mode))
     (properties '((upstream-name . "poly-ansible")))
     (home-page "https://gitlab.com/mavit/poly-ansible/")
@@ -30760,7 +30810,7 @@ constant expressions.")
 (define-public emacs-dockerfile-mode
   (package
     (name "emacs-dockerfile-mode")
-    (version "1.8")
+    (version "1.9")
     (source
      (origin
        (method git-fetch)
@@ -30770,7 +30820,7 @@ constant expressions.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0bv19mii4h47jllps72h69nwrlbfvwxgca1cl4cdxvpx0zkr6qx7"))))
+         "0lz6lfyab2f9nw0fwkvvn7zx361c3wm0aar9v2vhb437c0mxzndh"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-s))
@@ -38925,7 +38975,7 @@ Fennel code within Emacs.")
 (define-public emacs-org-modern
   (package
    (name "emacs-org-modern")
-   (version "1.1")
+   (version "1.2")
    (source
      (origin
        (method git-fetch)
@@ -38933,16 +38983,16 @@ Fennel code within Emacs.")
              (url "https://github.com/minad/org-modern")
              (commit version)))
        (sha256
-        (base32 "1nanv3rnrjldr2gd55hn2w8j4zcm6b9jq1qica3m7iyq187ygbdg"))
+        (base32 "19mn29f294wng6pgm1vwncx50963wnh7zj33ipynx8qxndbi6hsm"))
        (file-name (git-file-name name version))))
    (build-system emacs-build-system)
    (propagated-inputs (list emacs-compat))
    (home-page "https://github.com/minad/org-modern")
-   (synopsis "Modern Org Style")
+   (synopsis "Modern Org style")
    (description
-"@code{emacs-org-modern} implements a modern style for your Org
-buffers using font locking and text properties.  The package styles
-headlines, keywords, tables and source blocks.")
+"Org Modern implements a modern style for your Org buffers using font locking
+and text properties.  The package styles headlines, keywords, tables and
+source blocks.")
    (license license:gpl3+)))
 
 (define-public emacs-pyimport
@@ -39249,14 +39299,14 @@ projects.")
 (define-public emacs-vundo
   (package
     (name "emacs-vundo")
-    (version "2.2.0")
+    (version "2.3.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://elpa.gnu.org/packages/vundo-"
                                   version ".tar"))
               (sha256
                (base32
-                "1vb5mq51krpcaw741dai3b9s12yicn73l1bqql41gylpanca83py"))))
+                "165y277fi0vp9301hy3pqgfnf160k29n8vri0zyq8a3vz3f8lqrl"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/casouri/vundo")
     (synopsis "Visualize the undo tree")
