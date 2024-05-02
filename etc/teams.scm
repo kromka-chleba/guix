@@ -434,6 +434,16 @@ asdf-build-system."
               (make-regexp* "^guix/scripts/")
               (make-regexp* "^guix/store/"))))
 
+(define-team documentation
+  (team 'documentation
+        #:name "Documentation"
+        #:description "Documentation: the manual and cookbook."
+        #:scope (list (make-regexp* "\\.texi$")
+                      "doc/build.scm"
+                      "gnu/system/examples/bare-bones.tmpl"
+                      "gnu/system/examples/lightweight-desktop.tmpl"
+                      "gnu/system/examples/desktop.tmpl")))
+
 (define-team core-packages
   (team 'core-packages
         #:name "Core packages"
@@ -581,7 +591,8 @@ GLib/GIO, GTK, GStreamer and Webkit."
 
 (define-member (person "Ludovic Courtès"
                        "ludo@gnu.org")
-  core home bootstrap core-packages installer mentors)
+  core home bootstrap core-packages installer
+  documentation mentors)
 
 (define-member (person "Andreas Enge"
                        "andreas@enge.fr")
@@ -625,7 +636,7 @@ GLib/GIO, GTK, GStreamer and Webkit."
 
 (define-member (person "Florian Pelz"
                        "pelzflorian@pelzflorian.de")
-  translations)
+  documentation translations)
 
 (define-member (person "Liliana Marie Prikler"
                        "liliana.prikler@gmail.com")
