@@ -429,14 +429,36 @@ from forcing GEXP-PROMISE."
   ;; <https://lists.gnu.org/archive/html/guix-devel/2017-03/msg00790.html>.
   (fold delete %supported-systems '("mips64el-linux" "powerpc-linux" "riscv64-linux")))
 
-(define-inlinable (sanitize-inputs inputs)
-  "Sanitize INPUTS by turning it into a list of name/package tuples if it's
-not already the case."
-  (cond ((null? inputs) inputs)
+(define (maybe-add-input-labels inputs)
+  "Add labels to INPUTS unless it already has them."
+  (cond ((null? inputs)
+         inputs)
         ((and (pair? (car inputs))
               (string? (caar inputs)))
          inputs)
         (else (map add-input-label inputs))))
+
+(define (add-input-labels . inputs)
+  "Add labels to all of INPUTS if needed (this is the rest-argument version of
+'maybe-add-input-labels')."
+  (maybe-add-input-labels inputs))
+
+(define-syntax sanitize-inputs
+  ;; This is written as a macro rather than as a 'define-inlinable' procedure
+  ;; because as of Guile 3.0.9, peval can handle (null? '()) but not
+  ;; (null? (list x y z)); that residual 'null?' test contributes to code
+  ;; bloat.
+  (syntax-rules (quote list)
+    "Sanitize INPUTS by turning it into a list of name/package tuples if it's
+not already the case."
+    ((_ '()) '())
+    ((_ (list args ...))
+     ;; As of 3.0.9, (list ...) is open-coded, which can lead to a long list
+     ;; of instructions.  To reduce code bloat in package modules where input
+     ;; fields may create such lists, move list allocation to the callee.
+     (add-input-labels args ...))
+    ((_ inputs)
+     (maybe-add-input-labels inputs))))
 
 (define-syntax current-location-vector
   (lambda (s)
@@ -470,7 +492,8 @@ one-indexed line numbers."
 (define-syntax define-public*
   (lambda (s)
     "Like 'define-public' but set 'current-definition-location' for the
-lexical scope of its body."
+lexical scope of its body.  (This also disables notification of \"module
+observers\", but this is unlikely to affect anyone.)"
     (define location
       (match (syntax-source s)
         (#f #f)
@@ -487,10 +510,21 @@ lexical scope of its body."
 
     (syntax-case s ()
       ((_ prototype body ...)
-       #`(define-public prototype
-           (syntax-parameterize ((current-definition-location
-                                  (lambda (s) #,location)))
-             body ...))))))
+       (with-syntax ((name (syntax-case #'prototype ()
+                             ((id _ ...) #'id)
+                             (id #'id))))
+         #`(begin
+             (define prototype
+               (syntax-parameterize ((current-definition-location
+                                      (lambda (s) #,location)))
+                 body ...))
+
+             ;; Note: Use 'module-export!' directly to avoid emitting a
+             ;; 'call-with-deferred-observers' call for each 'define-public*'
+             ;; instance, which is not only pointless but also contributes to
+             ;; code bloat and to load-time overhead in package modules.
+             (eval-when (expand load eval)
+               (module-export! (current-module) '(name)))))))))
 
 (define-syntax validate-texinfo
   (let ((validate? (getenv "GUIX_UNINSTALLED")))

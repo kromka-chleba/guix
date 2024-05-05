@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012-2023 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2018 Mark H Weaver <mhw@netris.org>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -61,6 +61,11 @@
         (string-append "% " (symbol->string type-name)
                        " abi-cookie")))))
 
+  (define (record-abi-mismatch-error type)
+    (throw 'record-abi-mismatch-error 'abi-check
+           "~a: record ABI mismatch; recompilation needed"
+           (list type) '()))
+
   (define (abi-check type cookie)
     "Return syntax that checks that the current \"application binary
 interface\" (ABI) for TYPE is equal to COOKIE."
@@ -68,9 +73,7 @@ interface\" (ABI) for TYPE is equal to COOKIE."
       #`(unless (eq? current-abi #,cookie)
           ;; The source file where this exception is thrown must be
           ;; recompiled.
-          (throw 'record-abi-mismatch-error 'abi-check
-                 "~a: record ABI mismatch; recompilation needed"
-                 (list #,type) '()))))
+          (record-abi-mismatch-error #,type))))
 
   (define* (report-invalid-field-specifier name bindings
                                            #:optional parent-form)
@@ -161,16 +164,16 @@ of TYPE matches the expansion-time ABI."
                (record-error 'name s "extraneous field initializers ~a"
                              unexpected)))
 
-           #`(make-struct/no-tail type
-                          #,@(map (lambda (field index)
-                                    (or (field-inherited-value field)
-                                        (if (innate-field? field)
-                                            (wrap-field-value
-                                             field (field-default-value field))
-                                            #`(struct-ref #,orig-record
-                                                          #,index))))
-                                  '(expected ...)
-                                  (iota (length '(expected ...))))))
+           #`(ctor #,abi-cookie
+                   #,@(map (lambda (field index)
+                             (or (field-inherited-value field)
+                                 (if (innate-field? field)
+                                     (wrap-field-value
+                                      field (field-default-value field))
+                                     #`(struct-ref #,orig-record
+                                                   #,index))))
+                           '(expected ...)
+                           (iota (length '(expected ...))))))
 
          (define (thunked-field? f)
            (memq (syntax->datum f) 'thunked))
@@ -246,8 +249,8 @@ of TYPE matches the expansion-time ABI."
                 (cond ((lset= eq? fields '(expected ...))
                        #`(let* #,(field-bindings
                                   #'((field value) (... ...)))
-                           #,(abi-check #'type abi-cookie)
-                           (ctor #,@(map field-value '(expected ...)))))
+                           (ctor #,abi-cookie
+                                 #,@(map field-value '(expected ...)))))
                       ((pair? (lset-difference eq? fields
                                                '(expected ...)))
                        (record-error 'name s
@@ -432,7 +435,13 @@ inherited."
               (sanitizers (filter-map field-sanitizer
                                       #'((field properties ...) ...)))
               (cookie     (compute-abi-cookie field-spec)))
-         (with-syntax (((field-spec* ...)
+         (with-syntax ((ctor-procedure
+                        (datum->syntax
+                         #'ctor
+                         (symbol-append (string->symbol " %")
+                                        (syntax->datum #'ctor)
+                                        '-procedure/abi-check)))
+                       ((field-spec* ...)
                         (map field-spec->srfi-9 field-spec))
                        ((field-type ...)
                         (map (match-lambda
@@ -499,7 +508,20 @@ of a record instantiation"
                                                   #'id)))))))
                thunked-field-accessor ...
                delayed-field-accessor ...
-               (make-syntactic-constructor type syntactic-ctor ctor
+
+               (define ctor-procedure
+                 ;; This procedure is *not* inlined, to reduce code bloat
+                 ;; (struct initialization takes at least one instruction per
+                 ;; field).
+                 (case-lambda
+                   ((cookie field ...)
+                    (unless (eq? cookie #,cookie)
+                      (record-abi-mismatch-error type))
+                    (ctor field ...))
+                   (_
+                    (record-abi-mismatch-error type))))
+
+               (make-syntactic-constructor type syntactic-ctor ctor-procedure
                                            (field ...)
                                            #:abi-cookie #,cookie
                                            #:thunked #,thunked

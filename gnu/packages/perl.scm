@@ -38,6 +38,7 @@
 ;;; Copyright © 2023 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2023 Jake Leporte <jakeleporte@outlook.com>
 ;;; Copyright © 2023 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2020, 2023 Tim Gesthuizen <tim.gesthuizen@yahoo.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4092,6 +4093,26 @@ algorithm from within Perl programs.  The algorithm takes as
 input a message of arbitrary length and produces as output a
 128-bit \"fingerprint\" or \"message digest\" of the input.")
     (license (package-license perl))))
+
+(define-public perl-digest-perl-md5
+  (package
+    (name "perl-digest-perl-md5")
+    (version "1.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/D/DE/DELTA/Digest-Perl-MD5-" version
+             ".tar.gz"))
+       (sha256
+        (base32 "1cfrxkzazxdg4prdfcfd9b33bvyav1xim2vxj07gni8gf6hwn03i"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/Digest-Perl-MD5")
+    (synopsis "Perl Implementation of Rivest's MD5 algorithm")
+    (description "This @code{Digest::Perl::MD5} has the same interface as the
+much faster @code{Digest::MD5}, but it's a pure Perl implementation of MD5.
+Because of this it is slow but it works without C code.")
+    (license license:perl-license)))
 
 (define-public perl-digest-sha
   (package
@@ -9618,6 +9639,50 @@ straightforward and (perhaps someday) standard way.  Spiffy borrows ideas from
 other OO languages like Python, Ruby, Java and Perl 6.")
     (license (package-license perl))))
 
+(define-public perl-spreadsheet-parseexcel
+  (package
+    (name "perl-spreadsheet-parseexcel")
+    (version "0.66")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/J/JM/JMCNAMARA/Spreadsheet-ParseExcel-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "0nzn8n928720lyv61nbd02d87xi5pfs77nhv0pf031lqpb7nmmxz"))))
+    (build-system perl-build-system)
+    (propagated-inputs (list perl-crypt-rc4
+                             perl-digest-perl-md5
+                             perl-io-stringy
+                             perl-ole-storage-lite
+                             perl-scalar-list-utils))
+    (home-page "https://metacpan.org/release/Spreadsheet-ParseExcel")
+    (synopsis "Read information from an Excel file")
+    (description "This @code{Spreadsheet::ParseExcel} module parses Microsoft
+Excel95, 97 and 2000 format files.")
+    (license license:perl-license)))
+
+(define-public perl-spreadsheet-xlsx
+  (package
+    (name "perl-spreadsheet-xlsx")
+    (version "0.17")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/A/AS/ASB/Spreadsheet-XLSX-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "0xp9rqm0j1a6pr2zxk9c1mk720vbd72bhkmpcn8305pzgj97idrk"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-test-nowarnings perl-test-warnings))
+    (propagated-inputs (list perl-archive-zip perl-spreadsheet-parseexcel))
+    (home-page "https://metacpan.org/release/Spreadsheet-XLSX")
+    (synopsis "Perl extension for reading MS Excel 2007 files")
+    (description "This module implements @code{Spreadsheet::XLSX} parsing
+Microsoft Excel 2007 xlsx files.")
+    (license license:perl-license)))
+
 (define-public perl-want
   (package
     (name "perl-want")
@@ -9967,6 +10032,26 @@ that they won't be changed.")
 a functional interface.")
     (license (package-license perl))))
 
+(define-public perl-string-util
+  (package
+    (name "perl-string-util")
+    (version "1.34")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/B/BA/BAKERSCOT/String-Util-" version
+             ".tar.gz"))
+       (sha256
+        (base32 "0sf44mky5kawj9jnf0zpv688wchr5ab5s5gs45jyahakcv6yi71i"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build-tiny))
+    (home-page "https://metacpan.org/release/String-Util")
+    (synopsis "String processing utility functions")
+    (description "A @code{String::Util} module of small, handy functions for
+processing strings in various ways.")
+    (license license:perl-license)))
+
 (define-public perl-sub-exporter
   (package
     (name "perl-sub-exporter")
@@ -10096,6 +10181,26 @@ can see them.")
     (description "Assigns a new name to referenced sub.  If package
 specification is omitted in the name, then the current package is used.  The
 return value is the sub.")
+    (license (package-license perl))))
+
+(define-public perl-sub-override
+  (package
+    (name "perl-sub-override")
+    (version "0.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://cpan.metacpan.org/authors/id/O/OV/OVID/Sub-Override-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "0ixbaxhnicx90483rqhcz5dzqzxfwjxf2crghw3lgmasairwr3bd"))))
+    (native-inputs `(("perl-test-fatal" ,perl-test-fatal)))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/Sub-Override")
+    (synopsis "Perl extension to override a subroutine")
+    (description "A @code{Sub::Override}} module that makes it easy to override
++subroutines.  Particularly useful for mocking in tests.")
     (license (package-license perl))))
 
 (define-public perl-sub-quote

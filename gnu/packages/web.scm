@@ -184,6 +184,7 @@
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages perl-check)
+  #:use-module (gnu packages perl-compression)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
@@ -3387,34 +3388,55 @@ which can be used to parse directory listings.")
 (define-public perl-finance-quote
   (package
    (name "perl-finance-quote")
-   (version "1.47")
+   (version "1.59")
    (source
     (origin
       (method url-fetch)
-      (uri (string-append "https://cpan.metacpan.org/authors/id/E/EC/ECOCODE/"
+      (uri (string-append "https://cpan.metacpan.org/authors/id/B/BP/BPSCHUCK/"
                           "Finance-Quote-" version ".tar.gz"))
       (sha256
-       (base32 "0gzbq85738f299jaw4nj3ljnka380j2y6yspmyl71rgfypqjvbr7"))
-      (patches (search-patches
-                "perl-finance-quote-unuse-mozilla-ca.patch"))))
+       (base32 "0a19y5bj2pvdlfi747ihgz5khjlfkhjakv712r0gz0n6miwjiscs"))))
    (build-system perl-build-system)
+   (native-inputs
+     (list perl-test-harness
+           perl-date-manip
+           perl-date-range
+           perl-date-simple
+           perl-datetime
+           perl-datetime-format-iso8601
+           perl-string-util
+           perl-pathtools
+           perl-test-pod
+           perl-test-pod-coverage))
    (propagated-inputs
-    (list perl-cgi
-          perl-datetime
+    (list perl-datetime
+          perl-datetime-format-strptime
           perl-html-parser
           perl-html-tableextract
+          perl-html-tokeparser-simple
           perl-html-tree
+          perl-html-treebuilder-xpath
+          perl-http-cookiejar
           perl-http-cookies
           perl-http-message
+          perl-io-string
           perl-json
           perl-libwww
           perl-lwp-protocol-https
-          perl-uri))
+          perl-mozilla-ca
+          perl-spreadsheet-xlsx
+          perl-readonly
+          perl-string-util
+          perl-text-template
+          perl-try-tiny
+          perl-web-scraper
+          perl-xml-libxml))
    (home-page "https://metacpan.org/release/Finance-Quote")
    (synopsis "Stock and mutual fund quotes")
    (description
-    "Finance::Quote gets stock quotes from various internet sources, including
-Yahoo! Finance, Fidelity Investments, and the Australian Stock Exchange.")
+    "The @code{Finance::Quote} module retries stock quotes from various
+internet sources, including Yahoo! Finance, Fidelity Investments, and the
+Australian Stock Exchange.")
    (license license:gpl2)))
 
 (define-public perl-gssapi
@@ -3535,6 +3557,27 @@ composed of HTML::Element style components.")
 syntactic legitmacy.")
     (license license:artistic2.0)))
 
+(define-public perl-html-selector-xpath
+  (package
+    (name "perl-html-selector-xpath")
+    (version "0.28")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/C/CO/CORION/HTML-Selector-XPath-" version
+             ".tar.gz"))
+       (sha256
+        (base32 "03wdwnrf0bvr2dw01njnz3a9mw2kl7ad7krh25j3vkyj7vq1f9s3"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-test-base
+                         perl-test-pod))
+    (home-page "https://metacpan.org/release/HTML-Selector-XPath")
+    (synopsis "CSS Selector to XPath compiler")
+    (description "@code{HTML::Selector::XPath} is a Perl module for parsing
+and scraping XML/HTML documents using XPath expressions.")
+    (license license:perl-license)))
+
 (define-public perl-html-tableextract
   (package
     (name "perl-html-tableextract")
@@ -3555,6 +3598,29 @@ syntactic legitmacy.")
     (description
      "HTML::TableExtract is a Perl module for extracting the content contained
 in tables within an HTML document, either as text or encoded element trees.")
+    (license license:perl-license)))
+
+(define-public perl-html-tokeparser-simple
+  (package
+    (name "perl-html-tokeparser-simple")
+    (version "3.16")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/O/OV/OVID/HTML-TokeParser-Simple-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "17aa1v62sp8ycxcicwhankmj4brs6nnfclk9z7mf1rird1f164gd"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build))
+    (propagated-inputs (list perl-html-parser
+                             perl-html-tagset
+                             perl-sub-override))
+    (home-page "https://metacpan.org/release/HTML-TokeParser-Simple")
+    (synopsis "Easy to use parsing interface")
+    (description "Provides @code{HTML::TokeParser::Simple}, a simpler interface
+to @code{HTML::TokeParser} for parsing HTML.")
     (license license:perl-license)))
 
 (define-public perl-html-tree
@@ -3648,6 +3714,26 @@ It extends standard HTML with a few new HTML-esque tags: @code{<TMPL_VAR>},
 these new tags is called a template.  Using this module you fill in the values
 for the variables, loops and branches declared in the template.  This allows
 you to separate design from the data.")
+    (license license:perl-license)))
+
+(define-public perl-html-treebuilder-xpath
+  (package
+    (name "perl-html-treebuilder-xpath")
+    (version "0.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/M/MI/MIROD/HTML-TreeBuilder-XPath-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "1wx4i1scng20n405fp3a4vrwvvq9bvbmg977wnd5j2ja8jrbvsr5"))))
+    (build-system perl-build-system)
+    (propagated-inputs (list perl-html-tree perl-xml-xpathengine))
+    (home-page "https://metacpan.org/release/HTML-TreeBuilder-XPath")
+    (synopsis "XPath support for @code{HTML::TreeBuilder}")
+    (description "This module implements @code{HTML::TreeBuilder::XPath} for
+@code{HTML::TreeBuilder}, making it easy to parse documents using XPath.")
     (license license:perl-license)))
 
 (define-public perl-http-body
@@ -4735,6 +4821,38 @@ URI::Find::Schemeless.  For a command-line interface, urifind is provided.")
     (synopsis "WebSocket support for URI package")
     (description "With this module, the URI package provides the same set of
 methods for WebSocket URIs as it does for HTTP URIs.")
+    (license license:perl-license)))
+
+(define-public perl-web-scraper
+  (package
+    (name "perl-web-scraper")
+    (version "0.38")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/M/MI/MIYAGAWA/Web-Scraper-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "1gs3fmbc83j34c0sig1hkpnm26ngnyi5kgq5dl8vxvkzimgnwnzr"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build-tiny
+                         perl-test-base
+                         perl-test-requires))
+    (propagated-inputs (list perl-html-parser
+                             perl-html-selector-xpath
+                             perl-html-tagset
+                             perl-html-tree
+                             perl-html-treebuilder-xpath
+                             perl-libwww
+                             perl-universal-require
+                             perl-uri
+                             perl-xml-xpathengine
+                             perl-yaml))
+    (home-page "https://metacpan.org/release/Web-Scraper")
+    (synopsis
+     "Web Scraping toolkit using HTML and CSS Selectors or XPath expressions")
+    (description "Perl module @code{Web::Scraper} is a toolkit for
+traversing and scraping sites, inspired by Ruby's Scapi.")
     (license license:perl-license)))
 
 (define-public perl-uri-template

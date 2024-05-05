@@ -34456,6 +34456,12 @@ Owner's group of the @code{cuirass} process.
 Number of seconds between the poll of the repositories followed by the
 Cuirass jobs.
 
+@item @code{ttl} (default: @code{2592000})
+Duration to keep build results' GC roots alive, in seconds.
+
+@item @code{threads} (default: @code{#f})
+Number of kernel threads to use for Cuirass. The default value should be appropriate for most cases.
+
 @item @code{parameters} (default: @code{#f})
 Read parameters from the given @var{parameters} file.  The supported
 parameters are described here (@pxref{Parameters,,, cuirass, Cuirass}).
@@ -34482,10 +34488,6 @@ A gexp (@pxref{G-Expressions}) that evaluates to a list of
 specifications records.  The specification record is described in the
 Cuirass manual (@pxref{Specifications,,, cuirass, Cuirass}).
 
-@item @code{use-substitutes?} (default: @code{#f})
-This allows using substitutes to avoid building every dependencies of a job
-from source.
-
 @item @code{one-shot?} (default: @code{#f})
 Only evaluate specifications and build derivations once.
 
@@ -34494,7 +34496,10 @@ When substituting a pre-built binary fails, fall back to building
 packages locally.
 
 @item @code{extra-options} (default: @code{'()})
-Extra options to pass when running the Cuirass processes.
+Extra options to pass when running the @code{cuirass register} process.
+
+@item @code{web-extra-options} (default: @code{'()})
+Extra options to pass when running the @code{cuirass web} process.
 
 @end table
 @end deftp

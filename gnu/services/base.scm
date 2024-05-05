@@ -212,6 +212,7 @@
             guix-configuration-guix
             guix-configuration-build-group
             guix-configuration-build-accounts
+            guix-configuration-build-machines
             guix-configuration-authorize-key?
             guix-configuration-authorized-keys
             guix-configuration-use-substitutes?
@@ -1848,8 +1849,8 @@ archive' public keys, with GUIX."
                     (default #f))
   (tmpdir           guix-tmpdir                   ;string | #f
                     (default #f))
-  (build-machines   guix-build-machines           ;list of gexps | #f
-                    (default #f))
+  (build-machines   guix-configuration-build-machines ;list of gexps | '()
+                    (default '()))
   (environment      guix-configuration-environment  ;list of strings
                     (default '())))
 
@@ -1876,7 +1877,8 @@ proxy of 'guix-daemon' to ~s...~%"
                           (format #t "clearing HTTP/HTTPS \
 proxy of 'guix-daemon'...~%")
                           (unsetenv "http_proxy")))
-                    (action 'guix-daemon 'restart)
+                    (perform-service-action (lookup-service 'guix-daemon)
+                                            'restart)
                     (environ environment)
                     #t)))))
 
@@ -1897,7 +1899,8 @@ proxy of 'guix-daemon'...~%")
                         (begin
                           (format #t "disable substitute servers discovery~%")
                           (unsetenv "discover")))
-                    (action 'guix-daemon 'restart)
+                    (perform-service-action (lookup-service 'guix-daemon)
+                                            'restart)
                     (environ environment)
                     #t)))))
 
@@ -2044,10 +2047,10 @@ proxy of 'guix-daemon'...~%")
         #$(and channels (install-channels-file channels))
 
         ;; ... and /etc/guix/machines.scm.
-        #$(if (guix-build-machines config)
+        #$(if (null? (guix-configuration-build-machines config))
+              #~#f
               (guix-machines-files-installation
-               #~(list #$@(guix-build-machines config)))
-              #~#f))))
+               #~(list #$@(guix-configuration-build-machines config)))))))
 
 (define-record-type* <guix-extension>
   guix-extension make-guix-extension
@@ -2093,9 +2096,9 @@ proxy of 'guix-daemon'...~%")
               (substitute-urls (append (guix-extension-substitute-urls extension)
                                        (guix-configuration-substitute-urls config)))
               (build-machines
-               (and (or (guix-build-machines config)
+               (and (or (guix-configuration-build-machines config)
                         (pair? (guix-extension-build-machines extension)))
-                    (append (or (guix-build-machines config) '())
+                    (append (guix-configuration-build-machines config)
                             (guix-extension-build-machines extension))))
               (chroot-directories
                (append (guix-extension-chroot-directories extension)

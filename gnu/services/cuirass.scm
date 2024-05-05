@@ -101,6 +101,10 @@
                     (default "cuirass"))
   (interval         cuirass-configuration-interval ;integer (seconds)
                     (default 60))
+  (ttl              cuirass-configuration-ttl ;integer
+                    (default 2592000))
+  (threads          cuirass-configuration-threads ;integer
+                    (default #f))
   (parameters       cuirass-configuration-parameters ;string
                     (default #f))
   (remote-server    cuirass-configuration-remote-server
@@ -113,13 +117,13 @@
                     (default "localhost"))
   (specifications   cuirass-configuration-specifications)
                                   ;gexp that evaluates to specification-alist
-  (use-substitutes? cuirass-configuration-use-substitutes? ;boolean
-                    (default #f))
   (one-shot?        cuirass-configuration-one-shot? ;boolean
                     (default #f))
   (fallback?        cuirass-configuration-fallback? ;boolean
                     (default #f))
   (extra-options    cuirass-configuration-extra-options
+                    (default '()))
+  (web-extra-options cuirass-configuration-web-extra-options
                     (default '())))
 
 (define (cuirass-shepherd-service config)
@@ -131,6 +135,8 @@
         (user             (cuirass-configuration-user config))
         (group            (cuirass-configuration-group config))
         (interval         (cuirass-configuration-interval config))
+        (ttl              (cuirass-configuration-ttl config))
+        (threads          (cuirass-configuration-threads config))
         (parameters       (cuirass-configuration-parameters config))
         (remote-server    (cuirass-configuration-remote-server config))
         (database         (cuirass-configuration-database config))
@@ -139,10 +145,10 @@
         (config-file      (scheme-file
                            "cuirass-specs.scm"
                            (cuirass-configuration-specifications config)))
-        (use-substitutes? (cuirass-configuration-use-substitutes? config))
         (one-shot?        (cuirass-configuration-one-shot? config))
         (fallback?        (cuirass-configuration-fallback? config))
-        (extra-options    (cuirass-configuration-extra-options config)))
+        (extra-options    (cuirass-configuration-extra-options config))
+        (web-extra-options (cuirass-configuration-web-extra-options config)))
     `(,(shepherd-service
         (documentation "Run Cuirass.")
         (provision '(cuirass))
@@ -156,13 +162,23 @@
                         "--specifications" #$config-file
                         "--database" #$database
                         "--interval" #$(number->string interval)
+                        #$@(if ttl
+                               (list (string-append
+                                      "--ttl="
+                                      (number->string ttl)
+                                                 "s"))
+                               '())
+                        #$@(if threads
+                               (list (string-append
+                                      "--threads="
+                                      (number->string threads)))
+                               '())
                         #$@(if parameters
                                (list (string-append
                                       "--parameters="
                                       parameters))
                                '())
                         #$@(if remote-server '("--build-remote") '())
-                        #$@(if use-substitutes? '("--use-substitutes") '())
                         #$@(if one-shot? '("--one-shot") '())
                         #$@(if fallback? '("--fallback") '())
                         #$@extra-options)
@@ -192,7 +208,7 @@
                                       "--parameters="
                                       parameters))
                                '())
-                        #$@extra-options)
+                        #$@web-extra-options)
 
                   #:user #$user
                   #:group #$group
