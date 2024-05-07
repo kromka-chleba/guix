@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015 Eric Dvorsak <eric@dvorsak.fr>
-;;; Copyright © 2015-2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017 Christopher Baines <mail@cbaines.net>
 ;;; Copyright © 2016, 2017 Danny Milosavljevic <dannym+a@scratchpost.org>
 ;;; Copyright © 2013, 2014, 2015, 2016, 2020 Andreas Enge <andreas@enge.fr>
@@ -1524,30 +1524,44 @@ CSS3 that adds programming capabilities and some other syntactic sugar.")
 (define-public python-jsonpickle
   (package
     (name "python-jsonpickle")
-    (version "1.5.2")
+    (version "3.0.4")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "jsonpickle" version))
               (sha256
                (base32
-                "0n93h9b9ad58lxdfbvgsh4b25mkg146qikzcgghyc75vjk7rp2cy"))))
-    (build-system python-build-system)
+                "0ay6r1bhcw7qy8k5n4xxgy9dqzhxx8syg5ra9wwqzk91ca6lrcd1"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      (invoke "pytest" "-vv"
-                              ;; Prevent running the flake8 and black
-                              ;; pytest plugins, which only tests style
-                              ;; and frequently causes harmless failures.
-                              "-o" "addopts=''"))))))
+     (list
+      #:test-flags
+      ;; Prevent running the flake8 and black pytest plugins, which only tests
+      ;; style and frequently causes harmless failures.
+      '(list "-o" "addopts=''" "tests")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-before 'check 'pre-check
+           (lambda* (#:key inputs #:allow-other-keys)
+             (setenv "TZ" "UTC")
+             (setenv "TZDIR"
+                     (search-input-directory inputs "share/zoneinfo")))))))
+    (propagated-inputs
+     (list python-importlib-metadata))
     (native-inputs
-     (list python-setuptools-scm
-           python-toml ;XXX: for setuptools_scm[toml]
-           ;; For tests.
-           python-numpy
-           python-pandas
-           python-pytest))
+     (list python-bson
+           python-ecdsa
+           python-feedparser
+           python-pymongo
+           python-pytest
+           python-pytest-benchmark
+           python-pytest-cov
+           python-pytest-enabler
+           python-setuptools
+           python-setuptools-scm
+           python-simplejson
+           python-sqlalchemy
+           python-ujson
+           tzdata-for-tests))
     (home-page "https://jsonpickle.github.io/")
     (synopsis "Serialize object graphs into JSON")
     (description
@@ -2070,16 +2084,19 @@ is Python’s.")
 (define-public python-omnipath
   (package
     (name "python-omnipath")
-    (version "1.0.6")
+    (version "1.0.8")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "omnipath" version))
               (sha256
                (base32
-                "01hmcp1202g5drs8dkxnyyb5v14g503dj4zfiqypghmigi9ipw86"))))
+                "0krr4wzfwa6fs550cs0lcqwjj90p1inyncj9kvzi4x4m26xbj89q"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      ;; These require internet access
+      '(list "-k" "not test_download_homologene and not test_complex_genes")
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'relax
@@ -2106,6 +2123,7 @@ is Python’s.")
            python-pre-commit
            python-pytest
            python-pytest-mock
+           python-pytest-socket
            python-requests-mock
            python-setuptools-scm
            python-tox))
@@ -8825,6 +8843,14 @@ possible, supporting most common functionality.")
                            (use-modules (guix build utils))
                            (delete-file "tests/profile.py")))))
     (build-system python-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'fix-tests
+                 (lambda _
+                   ;; The test expects the copyright to be updated each year.
+                   (substitute* "tests/test_daterange.py"
+                     (("time\\.strftime\\(\"%Y\"\\)") "2022")))))))
     (synopsis "HTTP REST client for Python")
     (description
      "This package provides access to any RESTful or RESTful-like API.")

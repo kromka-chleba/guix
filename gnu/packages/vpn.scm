@@ -3,7 +3,7 @@
 ;;; Copyright © 2013, 2016, 2018, 2019, 2020, 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2015 Jeff Mickey <j@codemac.net>
-;;; Copyright © 2016, 2017, 2019, 2021, 2022 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016, 2017, 2019, 2021, 2022, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016–2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2017 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2018, 2020 Pierre Langlois <pierre.langlois@gmx.com>
@@ -59,12 +59,14 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages bison)
   #:use-module (gnu packages check)
   #:use-module (gnu packages dns)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages flex)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gl)
@@ -399,7 +401,23 @@ networks bypassing intermediate firewalls.")
        (uri (string-append "https://download.strongswan.org/strongswan-"
                            version ".tar.bz2"))
        (sha256
-        (base32 "063mi0kdlpd7r7s3py35yf80hvrv3nrdfvxpyn7ns25gqajg3za5"))))
+        (base32 "063mi0kdlpd7r7s3py35yf80hvrv3nrdfvxpyn7ns25gqajg3za5"))
+       (snippet
+        #~(begin
+            (use-modules (guix build utils))
+            (with-directory-excursion "src"
+              (for-each delete-file
+                      '("starter/parser/lexer.c"
+                        "libstrongswan/settings/settings_lexer.c"
+                        "starter/parser/parser.c"
+                        "starter/parser/parser.h"
+                        "libstrongswan/settings/settings_parser.c"
+                        "libstrongswan/settings/settings_parser.h"
+                        "libstrongswan/plugins/bliss/bliss_huffman_code_1.c"
+                        "libstrongswan/plugins/bliss/bliss_huffman_code_3.c"
+                        "libstrongswan/plugins/bliss/bliss_huffman_code_4.c"
+                        "libstrongswan/asn1/oid.c"
+                        "libstrongswan/asn1/oid.h")))))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -421,7 +439,11 @@ networks bypassing intermediate firewalls.")
          (add-before 'check 'set-up-test-environment
            (lambda* (#:key inputs #:allow-other-keys)
              (setenv "TZDIR"
-                     (search-input-directory inputs "share/zoneinfo")))))
+                     (search-input-directory inputs "share/zoneinfo"))
+             ;; Speed-up the test suite on some of the architectures.
+             ,@(if (not (target-x86?))
+                   `((setenv "TESTS_SUITES_EXCLUDE" "rsa"))
+                   '()))))
        #:configure-flags
        (list
         "--disable-ldap"
@@ -435,7 +457,10 @@ networks bypassing intermediate firewalls.")
         ;; Make it usable.  The default configuration is far too minimal to be
         ;; used with most common VPN set-ups.
         ;; See <https://wiki.strongswan.org/projects/strongswan/wiki/Autoconf>.
-        "--enable-aesni"
+        ;; AESNI expects on hardware support from x86 systems.
+        ,@(if (target-x86?)
+              `("--enable-aesni")
+              `("--disable-aesni"))
         "--enable-attr-sql"
         "--enable-chapoly"
         "--enable-curl"
@@ -482,7 +507,7 @@ networks bypassing intermediate firewalls.")
            linux-pam
            openssl))
     (native-inputs
-     (list coreutils pkg-config tzdata-for-tests))
+     (list bison coreutils flex perl pkg-config tzdata-for-tests))
     (synopsis "IKEv1/v2 keying daemon")
     (description "StrongSwan is an IPsec implementation originally based upon
 the FreeS/WAN project.  It contains support for IKEv1, IKEv2, MOBIKE, IPv6,

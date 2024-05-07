@@ -1680,6 +1680,26 @@ ROCit package provides flexibility to easily evaluate threshold-bound
 metrics.")
     (license license:gpl3)))
 
+(define-public r-roi-plugin-lpsolve
+  (package
+    (name "r-roi-plugin-lpsolve")
+    (version "1.0-2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "ROI.plugin.lpsolve" version))
+       (sha256
+        (base32 "0xgg1fzq5sba3yvvrci3iw97p31walpnhv4zwnd39gw8v5z6f9dj"))))
+    (properties `((upstream-name . "ROI.plugin.lpsolve")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-lpsolveapi r-roi))
+    (home-page "https://roigrp.gitlab.io")
+    (synopsis "Plugin of lp_solve for the R optimization infrastructure")
+    (description
+     "This package enhances the @acronym{ROI, R Optimization Infrastructure} with
+the lp_solve solver.")
+    (license license:gpl3)))
+
 (define-public r-rorcid
   (package
     (name "r-rorcid")
@@ -4233,6 +4253,38 @@ categorical and continuous (time series) data, otherwise known as dependent
 mixture models.")
     (license license:gpl2+)))
 
+(define-public r-detectseparation
+  (package
+    (name "r-detectseparation")
+    (version "0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "detectseparation" version))
+       (sha256
+        (base32 "05z3p1z5mhmdj5qdknz1b8f6fwbghzckl88pv79v59cfwpbvgmz8"))))
+    (properties `((upstream-name . "detectseparation")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-lpsolveapi r-pkgload r-roi r-roi-plugin-lpsolve))
+    (native-inputs (list r-knitr))
+    (home-page "https://github.com/ikosmidis/detectseparation")
+    (synopsis
+     "Detect and check for separation and infinite maximum likelihood estimates")
+    (description
+     "This package provides pre-fit and post-fit methods for detecting separation
+and infinite maximum likelihood estimates in generalized linear models with
+categorical responses.  The pre-fit methods apply on binomial-response generalized
+liner models such as logit, probit and cloglog regression, and can be directly
+supplied as fitting methods to the @code{glm()} function.  The post-fit methods
+apply to models with categorical responses, including binomial-response
+generalized linear models and multinomial-response models, such as baseline
+category logits and adjacent category logits models; for example, the models
+implemented in the brglm2 package.  The post-fit methods successively refit the
+model with increasing number of iteratively reweighted least squares iterations,
+and monitor the ratio of the estimated standard error for each parameter to what
+it has been in the first iteration.")
+    (license license:gpl3)))
+
 (define-public r-readxl
   (package
     (name "r-readxl")
@@ -4258,6 +4310,35 @@ the embedded @code{RapidXML} C++ library.")
     ;; XXX: This package bundles a copy of 'libxsl' which is BSD-2 and
     ;; 'rapidxml' which is Boost.
     (license (list license:gpl3 license:bsd-2 license:boost1.0))))
+
+(define-public r-rearrr
+  (package
+    (name "r-rearrr")
+    (version "0.3.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "rearrr" version))
+       (sha256
+        (base32 "1inx1gikiqxaf6a8g10b02l1qs2y0zxs2yrxn6dyx9n6xlra3rnr"))))
+    (properties `((upstream-name . "rearrr")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-checkmate
+                             r-dplyr
+                             r-lifecycle
+                             r-plyr
+                             r-purrr
+                             r-r6
+                             r-rlang
+                             r-tibble))
+    (home-page "https://github.com/ludvigolsen/rearrr")
+    (synopsis "Rearranging data by a set of methods")
+    (description
+     "This package arranges data by a set of methods.  It uses rearrangers to
+reorder data points and mutators to change their values.  From basic utilities,
+to centering the greatest value, to swirling in 3-dimensional space, rearrr
+enables creativity when plotting and experimenting with data.")
+    (license license:expat)))
 
 (define-public r-model4you
   (package
@@ -8189,6 +8270,26 @@ topics for ecologists (ISBN 978-0-691-12522-0).")
 programs.  This implementation supplies a \"wrapper\" function in C and some R
 functions that solve general linear/integer problems, assignment problems, and
 transportation problems.")
+    (license license:lgpl2.0)))
+
+(define-public r-lpsolveapi
+  (package
+    (name "r-lpsolveapi")
+    (version "5.5.2.0-17.11")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "lpSolveAPI" version))
+       (sha256
+        (base32 "191zjgyap3kcsvh8fygqqyr9p0agbzm160fzynnpaxf19yp6r3dh"))))
+    (properties `((upstream-name . "lpSolveAPI")))
+    (build-system r-build-system)
+    (home-page "https://cran.r-project.org/package=lpSolveAPI")
+    (synopsis "Interface to lp_solve")
+    (description
+     "The lpSolveAPI package provides an R interface to lp_solve, a @acronym{MILP,
+Mixed Integer Linear Programming}, solver with support for pure linear, (mixed)
+integer/binary, semi-continuous and @acronym{SOS, special ordered sets} models.")
     (license license:lgpl2.0)))
 
 (define-public r-limsolve
@@ -12191,6 +12292,26 @@ facilitate data exploration.")
 experimental designs and random samples for common sampling designs.")
     (license license:expat)))
 
+(define-public r-roi
+  (package
+    (name "r-roi")
+    (version "1.0-1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "ROI" version))
+       (sha256
+        (base32 "05hnj9fskfm2klz7zv97lb0r60akjq4a1cay8p62whpi0hri9zyl"))))
+    (properties `((upstream-name . "ROI")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-checkmate r-registry r-slam))
+    (home-page "https://roi.r-forge.r-project.org/")
+    (synopsis "R optimization infrastructure")
+    (description
+     "The @acronym{ROI, R Optimization Infrastructure} is a framework for handling
+optimization problems in R.")
+    (license license:gpl3)))
+
 (define-public r-roptim
   (package
     (name "r-roptim")
@@ -13728,14 +13849,14 @@ always locate the files relative to your project root.")
 (define-public r-reticulate
   (package
     (name "r-reticulate")
-    (version "1.36.0")
+    (version "1.36.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "reticulate" version))
        (sha256
         (base32
-         "0bxxdcinpw76pwnx3a3hcqhq7gjvs4sxcza464vz333xq9s2337l"))))
+         "0c6x6fm8pqw4dj5x2xn12l01piaday0fv588hx903mw3lks3fzbw"))))
     (build-system r-build-system)
     (arguments
      (list

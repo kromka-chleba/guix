@@ -24,6 +24,7 @@
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2023, 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2024 Marco Baggio <marco.baggio@mdc-berlin.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -49,7 +50,9 @@
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
   #:use-module (gnu packages chemistry)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages cpp)
+  #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages digest)
@@ -69,6 +72,7 @@
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages simulation)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages statistics)
@@ -81,8 +85,133 @@
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix utils)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject))
+
+(define-public python-cvxpy
+  (package
+    (name "python-cvxpy")
+    (version "1.4.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "cvxpy" version))
+       (sha256
+        (base32 "0lyri9j5gyg6m1bvfy1a4q2sqdy3w45lp0bxiq9as8srq347ic5i"))))
+    (build-system pyproject-build-system)
+    ;; It's odd but cvxpy appears to need pybind11 at runtime according to its
+    ;; specification.  Moving pybind11 to native-inputs would break downstream
+    ;; packages using cvxpy.
+    (propagated-inputs (list pybind11
+                             python-clarabel
+			     python-ecos
+                             python-numpy
+                             python-osqp
+                             python-scipy
+                             python-scs))
+    (native-inputs (list python-pytest python-setuptools))
+    (home-page "https://github.com/cvxpy/cvxpy")
+    (synopsis "DSL for modeling convex optimization problems")
+    (description
+     "This package provides a domain-specific language for modeling convex
+optimization problems in Python.")
+    (license license:asl2.0)))
+
+(define-public python-ecos
+  (package
+    (name "python-ecos")
+    (version "2.0.13")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/embotech/ecos-python")
+             (commit (string-append "v" version))
+             (recursive? #true)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16ljq8maflfkgbw16rldg6cy14vgz2pb3b2iga60i7yzkq2ikmyw"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-numpy python-scipy))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/embotech/ecos")
+    (synopsis "Embedded Cone Solver")
+    (description
+     "This is the Python package for ECOS: Embedded Cone Solver.  ECOS is
+numerical software for solving convex second-order cone programs (SOCPs).")
+    (license license:gpl3)))
+
+(define-public python-osqp
+  (package
+    (name "python-osqp")
+    (version "0.6.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/osqp/osqp-python")
+             (commit (string-append "v" version))
+             (recursive? #true)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0s1nbzkfsi2h4ji3v0k14pfcrvinakrwy4xdbz320lbaq3yb0b65"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Some of these test failures are explained by
+      ;; https://github.com/osqp/osqp-python/issues/121.
+      ;; These tests require the module "vec_emosqp", which we don't have.
+      '(list "--ignore=src/osqp/tests/codegen_vectors_test.py"
+             ;; These tests need "mat_emosqp".
+             "--ignore=src/osqp/tests/codegen_matrices_test.py"
+             ;; These fail with accuracy differences
+             "--ignore=src/osqp/tests/update_matrices_test.py"
+             "--ignore=src/osqp/tests/feasibility_test.py"
+             "--ignore=src/osqp/tests/polishing_test.py"
+             ;; This requires the nonfree MKL.
+             "--ignore=src/osqp/tests/mkl_pardiso_test.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; It looks like the upgrade to scipy 1.12.0 only broke the test
+          ;; suite, not the features of this library.  See
+          ;; https://github.com/osqp/osqp-python/issues/121.
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "requirements.txt"
+                (("scipy.*1.12.0") "scipy <= 1.12.0"))))
+          (add-before 'build 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (propagated-inputs (list python-numpy python-qdldl python-scipy))
+    ;; We need setuptools-scm only for the version number.  Without it the
+    ;; version number will be "0.0.0" and downstream packages will complain.
+    (native-inputs (list cmake-minimal python-pytest python-setuptools-scm))
+    (home-page "https://osqp.org/")
+    (synopsis "OSQP: operator splitting QP solver")
+    (description "The OSQP (Operator Splitting Quadratic Program) solver is a
+numerical optimization package.")
+    (license license:asl2.0)))
+
+(define-public python-qdldl
+  (package
+    (name "python-qdldl")
+    (version "0.1.7.post2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "qdldl" version))
+       (sha256
+        (base32 "1lspam0k8gnw1yglqxvdv350fq00nkgdfmkizmx7bk0hxjjkj5ab"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list cmake-minimal pybind11))
+    (propagated-inputs (list python-numpy python-scipy))
+    (home-page "https://github.com/oxfordcontrol/qdldl-python/")
+    (synopsis "QDLDL LDL factorization routine")
+    (description "This package provides a Python interface to the QDLDL LDL
+factorization routine for quasi-definite linear system.")
+    (license license:asl2.0)))
 
 (define-public python-scipy
   (package
@@ -231,6 +360,52 @@ routines such as routines for numerical integration and optimization.")
 genetic variation data.")
     (license license:expat)))
 
+(define-public python-scikit-build-core
+  (package
+    (name "python-scikit-build-core")
+    (version "0.9.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "scikit_build_core" version))
+       (sha256
+        (base32 "146k3w3kcamyyqassmsmp6h4f5lb3cdqnbjjcbf0jm1s8wz1279l"))))
+    (build-system pyproject-build-system)
+    ;; Tests are aborted with the admonition: "setup.py install is
+    ;; deprecated. Use build and pip and other standards-based tools."
+    (arguments (list #:tests? #false))
+    (propagated-inputs (list python-exceptiongroup
+                             python-importlib-metadata
+                             python-importlib-resources
+                             python-packaging
+                             python-pathspec
+                             python-tomli
+                             python-typing-extensions))
+    (native-inputs (list pybind11
+                         python-pypa-build
+                         python-cattrs
+                         python-fastjsonschema
+                         python-hatch-fancy-pypi-readme
+                         python-hatch-vcs
+                         python-hatchling
+                         python-numpy
+                         python-pip
+                         python-pytest
+                         python-rich
+                         python-setuptools
+                         python-setuptools-scm
+                         python-virtualenv
+                         python-wheel))
+    (home-page "https://github.com/scikit-build/scikit-build-core")
+    (synopsis "Build backend for CMake based projects")
+    (description "Scikit-build-core is a build backend for Python that uses
+CMake to build extension modules.  It has a simple yet powerful static
+configuration system in pyproject.toml, and supports almost unlimited
+flexibility via CMake.  It was initially developed to support the demanding
+needs of scientific users, but can build any sort of package that uses
+CMake.")
+    (license license:asl2.0)))
+
 (define-public python-scikit-fem
   (package
     (name "python-scikit-fem")
@@ -351,7 +526,7 @@ logic, also known as grey logic.")
        (sha256
         (base32 "0ycqizgsj7q57asc1bphzhf1fx9zqn0vx5rli7q541bas64hfqiy"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-numpy python-scipy))
+    (propagated-inputs (list python-numpy python-pytorch python-scipy))
     (home-page "https://github.com/guofei9987/scikit-opt")
     (synopsis "Swarm intelligence algorithms in Python")
     (description
@@ -619,7 +794,7 @@ spheres, cubes, etc.")
 tissue-specificity metrics for gene expression.")
     (license license:gpl3+)))
 
-(define-public python-pandas
+(define-public python-pandas-1
   (package
     (name "python-pandas")
     (version "1.5.3")
@@ -760,7 +935,7 @@ doing practical, real world data analysis in Python.")
       #~(modify-phases %standard-phases
           (add-after 'unpack 'version-set-by-guix
             (lambda _
-              (with-output-to-file "_version_meson.py"
+              (with-output-to-file "_version.py"
                 (lambda _
                   (display
                    (string-append "__version__ = \""
@@ -828,13 +1003,14 @@ and intuitive.  It aims to be the fundamental high-level building block for
 doing practical, real world data analysis in Python.")
     (license license:bsd-3)))
 
+(define-public python-pandas python-pandas-2)
+
 (define-public python-pandas-stubs
   (package
     (name "python-pandas-stubs")
     ;; The versioning follows that of Pandas and uses the date of the
-    ;; python-pandas-stubs release. This is the latest version of
-    ;; python-pandas-stubs for python-pandas 1.5.3.
-    (version "1.5.3.230321")
+    ;; python-pandas-stubs release.
+    (version "2.1.1.230928")
     (source
      (origin
        ;; No tests in the PyPI tarball.
@@ -844,28 +1020,45 @@ doing practical, real world data analysis in Python.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1blwlq5053pxnmx721zdd6v8njiybz4azribx2ygq33jcpmknda6"))))
+        (base32 "13b6wcwf9ybxf492w1l8qqf2bcgch21xds5r88pfkmrvqhxwfpyr"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags #~(list "-k"
                            (string-append
-                            ;; The python-pyarrow package in Guix is not built
-                            ;; with ORC integration, causing these tests to
-                            ;; fail.
+                            ;; The python-pyarrow package in Guix is built
+                            ;; with ORC integration, but these tests fail with
+                            ;; an abort in ORC because a timezone file is not
+                            ;; in the expected location:
+                            ;; https://github.com/apache/arrow/issues/40633
                             "not test_orc"
                             " and not test_orc_path"
                             " and not test_orc_buffer"
                             " and not test_orc_columns"
-                            " and not test_orc_bytes"))
-      #:phases '(modify-phases %standard-phases
-                  (add-before 'check 'prepare-x
-                    (lambda _
-                      (system "Xvfb &")
-                      (setenv "DISPLAY" ":0")
-                      ;; xsel needs to write a log file.
-                      (setenv "HOME"
-                              (getcwd)))))))
+                            " and not test_orc_bytes"
+                            " and not test_all_read_without_lxml_dtype_backend"
+
+                            ;; Apparently "numpy.bool_" is not the same as the
+                            ;; expected "bool".
+                            " and not test_timedelta_cmp"
+                            " and not test_timedelta_cmp_rhs"
+                            " and not test_timestamp_cmp"
+                            " and not test_timestamp_eq_ne_rhs"))
+      #:phases
+      '(modify-phases %standard-phases
+         ;; We cannot yet upgrade numpy to 1.26 because numba needs numpy
+         ;; >1.24.
+         (add-after 'unpack 'relax-requirements
+           (lambda _
+             (substitute* "pyproject.toml"
+               (("numpy = \\{ version = \">=1.26.0\", python = \"<3.13\" \\}")
+                "numpy = { version = \">=1.23.0\", python = \"<3.13\" }"))))
+         (add-before 'check 'prepare-x
+           (lambda _
+             (system "Xvfb &")
+             (setenv "DISPLAY" ":0")
+             ;; xsel needs to write a log file.
+             (setenv "HOME" (getcwd)))))))
     (propagated-inputs (list python-types-pytz))
     ;; Add python-fastparquet to native inputs once it has been packaged. Its
     ;; tests will be skipped for now.
@@ -1016,7 +1209,7 @@ production-critical data pipelines or reproducible research settings.  With
 (define-public python-pyjanitor
   (package
     (name "python-pyjanitor")
-    (version "0.26.0")
+    (version "0.27.0")
     (source
      (origin
        ;; The build requires the mkdocs directory for the description in
@@ -1027,7 +1220,7 @@ production-critical data pipelines or reproducible research settings.  With
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1f8xbl1k9l2z56bapp7v6bd3016zrk48igcaz6hb553r6yfl7vfx"))))
+        (base32 "04vsg189msv8frx4zhpcg61djl7wsfvibmz0zmiih4rvkgly2cdr"))))
     (build-system pyproject-build-system)
     ;; Pyjanitor has an extensive test suite. For quick debugging, the tests
     ;; marked turtle can be skipped using "-m" "not turtle".
@@ -1036,16 +1229,29 @@ production-critical data pipelines or reproducible research settings.  With
       #:test-flags '(list
                      "-n" (number->string (parallel-job-count))
                      ;; Tries to connect to the internet.
-                     "-k" "not test_is_connected"
+                     "-k" (string-append "not test_is_connected"
+                                         ;; Test files are not included
+                                         " and not test_read_commandline_bad_cmd"
+                                         ;; This fails due to differences in accuracy
+                                         " and not test_jitter_results")
+                     ;; Test files are not included
+                     "--ignore=tests/io/test_read_csvs.py"
                      ;; PySpark has not been packaged yet.
                      "--ignore=tests/spark/functions/test_clean_names_spark.py"
                      "--ignore=tests/spark/functions/test_update_where_spark.py")
-      #:phases #~(modify-phases %standard-phases
-                   (add-before 'check 'set-env-ci
-                     (lambda _
-                       ;; Some tests are skipped if the JANITOR_CI_MACHINE
-                       ;; variable is not set.
-                       (setenv "JANITOR_CI_MACHINE" "1"))))))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Pandas 2.1.1 does not offer the BME frequency.
+          (add-after 'unpack 'pandas-compat
+            (lambda _
+              (substitute* '("tests/functions/test_select_rows.py"
+                             "tests/functions/test_select_columns.py")
+                (("freq=\"BME\"") "freq=\"BM\""))))
+          (add-before 'check 'set-env-ci
+            (lambda _
+              ;; Some tests are skipped if the JANITOR_CI_MACHINE
+              ;; variable is not set.
+              (setenv "JANITOR_CI_MACHINE" "1"))))))
     (propagated-inputs (list python-multipledispatch
                              python-natsort
                              python-pandas-flavor
@@ -1227,6 +1433,26 @@ region of practical equivalence (rope), or that the second classifier has
 higher scores.")
     (license license:expat)))
 
+(define-public python-fastcluster
+  (package
+    (name "python-fastcluster")
+    (version "1.2.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "fastcluster" version))
+       (sha256
+        (base32 "19labbgnq85p4r4jbli2p045lgh57larhi2g2anagfxnlzpqdf5a"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-numpy))
+    (native-inputs (list python-scipy))
+    (home-page "https://danifold.net/fastcluster.html")
+    (synopsis "Fast hierarchical clustering routines for R and Python")
+    (description "The fastcluster package implements seven common hierarchical
+clustering schemes efficiently.  The package is made with two interfaces to
+standard software: R and Python.")
+    (license license:bsd-2)))
+
 (define-public python-fbpca
   (package
     (name "python-fbpca")
@@ -1316,8 +1542,14 @@ multiple deep learning frameworks.")
                 "0cyldwchcrmbm1y7l1ry70kk8zdh7frxci3c6iwf4iyyj34dnra5"))))
     (build-system pyproject-build-system)
     (arguments
-     ;; This needs a more recent version of python-hypothesis
-     (list #:test-flags '(list "--ignore=xarray/tests/test_strategies.py")))
+     (list
+      #:test-flags
+      ;; This needs a more recent version of python-hypothesis
+      '(list "--ignore=xarray/tests/test_strategies.py"
+             ;; These are known to fail with Pandas 2
+             "-k"
+             (string-append "not test_datetime_conversion_warning"
+                            " and not test_timedelta_conversion_warning"))))
     (native-inputs
      (list python-setuptools-scm python-pytest))
     (propagated-inputs
@@ -1373,7 +1605,8 @@ name) using the Python's @code{dataclass}.")
         (base32 "1x1s25s6dp1f2hck9qw8vl8hgkyy23rcwag2a9vd3w0dbgrrl5i6"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-packaging python-xarray))
-    (native-inputs (list python-pytest python-zarr))
+    ;; We need setuptools-scm to correctly record the version string.
+    (native-inputs (list python-pytest python-setuptools-scm python-zarr))
     (home-page "https://github.com/xarray-contrib/datatree")
     (synopsis "Hierarchical tree-like data structures for xarray")
     (description "Datatree is a prototype implementation of a tree-like
@@ -1404,6 +1637,25 @@ being merged upstream into @code{xarray}.")
      "@code{xarray_einstats} provides wrappers around some NumPy and SciPy
 functions and around einops with an API and features adapted to xarray.")
     (license license:asl2.0)))
+
+(define-public python-xarray-schema
+  (package
+    (name "python-xarray-schema")
+    (version "0.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "xarray-schema" version))
+       (sha256
+        (base32 "08194629696z98dkc74i6c9zmy1jicvd2ajb75q0lsf0i427cv4w"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-numpy python-xarray))
+    (native-inputs (list python-pytest python-setuptools-scm))
+    (home-page "https://github.com/carbonplan/xarray-schema")
+    (synopsis "Schema validation for Xarray objects")
+    (description "This package implements schema validation for Xarray
+objects.")
+    (license license:expat)))
 
 (define-public python-pytensor
   (package
@@ -1538,6 +1790,33 @@ Python's native complex data types is also supported.")
     (description
      "Ruffus is designed to allow scientific and other analyses to be
 automated with the minimum of fuss and the least effort.")
+    (license license:expat)))
+
+(define-public python-scs
+  (package
+    (name "python-scs")
+    (version "3.2.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/bodono/scs-python")
+             (commit "3.2.4")
+             (recursive? #true)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06wd8m3ri0gaddl7qq6243g25zjlnh3da915b73jnrfh7sg1nqsj"))))
+    (build-system pyproject-build-system)
+    (inputs (list meson-python openblas))
+    (propagated-inputs (list python-numpy python-scipy))
+    (native-inputs
+     (list pkg-config
+           python-meson-python
+           python-pytest))
+    (home-page "https://github.com/bodono/scs-python")
+    (synopsis "Splitting conic solver")
+    (description "This package provides a Python interface for the
+SCS (Splitting conic solver) library.")
     (license license:expat)))
 
 (define-public python-statannot
@@ -1712,7 +1991,7 @@ of Pandas
 (define-public python-pingouin
   (package
     (name "python-pingouin")
-    (version "0.5.2")
+    (version "0.5.4")
     (source
      ;; The PyPI tarball does not contain the tests.
      (origin
@@ -1723,11 +2002,15 @@ of Pandas
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0czy7cpn6xx9fs6wbz6rq2lpkb1a89bzxj1anf2f9in1m5qyrh83"))))
-    (build-system python-build-system)
+         "1j3qkgvyc31604ddl952h4hwza7schg8kwkycmxvpvx7xjj7nn68"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:test-flags
+      ;; This one fails due to minor differences in accuracy
+      '(list "-k" "not test_logistic_regression")
+      #:phases
+      '(modify-phases %standard-phases
          (add-after 'unpack 'loosen-requirements
            (lambda _
              (substitute* '("requirements.txt" "setup.py")
@@ -1745,10 +2028,11 @@ of Pandas
              (substitute* "pingouin/__init__.py"
                (("^from outdated[^\n]*") "")
                (("^warn_if_outdated[^\n]*") ""))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest")))))))
+         (add-after 'unpack 'sklearn-compatibility
+           (lambda _
+             (substitute* "pingouin/regression.py"
+               (("kwargs\\[\"penalty\"\\] = \"none\"")
+                "kwargs[\"penalty\"] = None")))))))
     (native-inputs
      (list python-pytest python-pytest-cov))
     (propagated-inputs
@@ -1812,10 +2096,61 @@ and more
 Mathematics (GLM) library to Python.")
     (license license:zlib)))
 
+(define-public python-dask-expr
+  (package
+    (name "python-dask-expr")
+    (version "1.0.14")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dask/dask-expr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0c2q8w8wl5d2hycbjp9vavkl5f36kaz390wxlis2d8d43jnqhf0d"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #false ;need python-distributed, which needs dask-expr.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'versioneer
+            (lambda _
+              ;; Our version of versioneer needs setup.cfg.  This is adapted
+              ;; from pyproject.toml.
+              (with-output-to-file "setup.cfg"
+                (lambda ()
+                  (display "\
+[versioneer]
+VCS = git
+style = pep440
+versionfile_source = dask_expr/_version.py
+versionfile_build = dask_expr/_version.py
+tag_prefix =
+parentdir_prefix = dask_expr-
+")))
+              (invoke "versioneer" "install")
+              (substitute* "setup.py"
+                (("versioneer.get_version\\(\\)")
+                 (string-append "\"" #$version "\""))))))))
+    (propagated-inputs (list python-pandas python-pyarrow))
+    (native-inputs
+     ;; We use python-dask/bootstrap so that python-dask can propagate this
+     ;; package without creating a mutually recursive dependency.
+     (list python-dask/bootstrap
+           python-pytest
+           python-versioneer))
+    (home-page "https://github.com/dask/dask-expr")
+    (synopsis "Dask DataFrames with query optimization")
+    (description "This is a rewrite of Dask DataFrame that includes query
+optimization and generally improved organization.")
+    (license license:bsd-3)))
+
 (define-public python-distributed
   (package
     (name "python-distributed")
-    (version "2023.7.0")
+    (version "2024.4.2")
     (source
      (origin
        ;; The test files are not included in the archive on pypi
@@ -1826,12 +2161,12 @@ Mathematics (GLM) library to Python.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0b93fpwz7kw31pkzfyihpkw8mzbqshzd6rw5vcwld7n3z2aaaxxb"))))
+         "0sy9mqa8qlxsagbz8xn304csrlxhxj4b6k84yrjxdcmkp9pkx166"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      '(list "-x" "-m"
+      '(list "-m"
              (string-append "not slow"
                             " and not flaky"
                             " and not gpu"
@@ -1886,6 +2221,8 @@ Mathematics (GLM) library to Python.")
                 "test_locked_comm_drop_in_replacement"
                 "test_locked_comm_intercept_read"
                 "test_locked_comm_intercept_write"
+                "test_messages_are_ordered_bsend"
+                "test_messages_are_ordered_raw"
                 "test_mixing_clients_different_scheduler"
                 "test_multiple_listeners"
                 "test_no_dangling_asyncio_tasks"
@@ -1894,6 +2231,7 @@ Mathematics (GLM) library to Python.")
                 "test_plugin_multiple_exceptions"
                 "test_ports"
                 "test_preload_import_time"
+                "test_preload_manager_sequence"
                 "test_queue_in_task"
                 "test_quiet_client_close"
                 "test_rebalance_sync"
@@ -1933,8 +2271,11 @@ Mathematics (GLM) library to Python.")
                 "test_variable_in_task"
                 "test_worker_preload_text"
                 "test_worker_uses_same_host_as_nanny"
-                "test_nanny_timeout") ; access to 127.0.0.1
+                "test_nanny_timeout")   ; access to 127.0.0.1
                " and not ")
+
+              ;; This seems to want to use 64GB of memory.
+              " and not test_computation_object_code_dask_compute"
 
               ;; These fail because it doesn't find dask[distributed]
               " and not test_quiet_close_process"
@@ -2004,6 +2345,10 @@ parentdir_prefix = distributed-
           (add-before 'check 'pre-check
             (lambda _
               (setenv "DISABLE_IPV6" "1")
+              ;; Disable job queueing
+              (setenv "DASK_DISTRIBUTED__SCHEDULER__WORKER_SATURATION" "inf")
+              ;; Do not use dask-expr
+              (setenv "DASK_DATAFRAME__QUERY_PLANNING" "False")
               ;; The integration tests are all problematic to some
               ;; degree.  They either require network access or some
               ;; other setup.  We only run the tests in
@@ -2024,6 +2369,7 @@ parentdir_prefix = distributed-
            python-cloudpickle
            python-cryptography
            python-dask
+           python-dask-expr
            python-msgpack
            python-psutil
            python-pyyaml
@@ -2196,6 +2542,10 @@ aggregated sum and more.")
                                           "test_stack_non_linear_scale"
                                           "test_uneven_num_of_lines"
 
+                                          ;; This triggers an unexpected but harmless
+                                          ;; warning.
+                                          "test_save_method"
+
                                           ;; Missing optional modules
                                           "test_non_linear_smooth"
                                           "test_non_linear_smooth_no_ci")
@@ -2228,6 +2578,7 @@ aggregated sum and more.")
                          python-pandas
                          python-pytest
                          python-pytest-cov
+                         python-setuptools-scm
                          tzdata-for-tests))
     (home-page "https://github.com/has2k1/plotnine")
     (synopsis "Grammar of Graphics for Python")
@@ -2358,6 +2709,62 @@ build applications with traitlets in combination with the scipy stack.")
 specification and test suite in Python.")
     (license license:expat)))
 
+(define-public python-clarabel
+  (package
+    (name "python-clarabel")
+    (version "0.7.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "clarabel" version))
+       (sha256
+        (base32 "15k32ynvh45n9q905bxwamh5w5cia9bxzmwz69wbribmyhsv22m3"))
+       (patches
+        (search-patches "python-clarabel-blas.patch"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:imported-modules `(,@%cargo-build-system-modules
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build cargo-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'prepare-python-module 'build-python-module
+            (assoc-ref py:%standard-phases 'build))
+          (add-after 'build-python-module 'install-python-module
+            (assoc-ref py:%standard-phases 'install)))
+      #:cargo-inputs
+      `(("rust-amd" ,rust-amd-0.2)
+        ("rust-blas" ,rust-blas-0.22)
+        ("rust-cfg-if" ,rust-cfg-if-1)
+        ("rust-derive-builder" ,rust-derive-builder-0.11)
+        ("rust-enum-dispatch" ,rust-enum-dispatch-0.3) ;0.3.8
+        ("rust-itertools" ,rust-itertools-0.11)
+        ("rust-lapack" ,rust-lapack-0.19)
+        ("rust-lazy-static" ,rust-lazy-static-1) ;1.4
+        ("rust-libc" ,rust-libc-0.2)
+        ("rust-num-derive" ,rust-num-derive-0.2)
+        ("rust-num-traits" ,rust-num-traits-0.2)
+        ("rust-pyo3" ,rust-pyo3-0.20)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1)
+        ("rust-thiserror" ,rust-thiserror-1))
+      #:features '(list "python")
+      #:install-source? #false))
+    (inputs
+     (list maturin))
+    (native-inputs
+     (list python-wrapper))
+    (propagated-inputs (list python-numpy python-scipy))
+    (home-page "https://github.com/oxfordcontrol/Clarabel.rs")
+    (synopsis "Interior-point solver for convex conic optimisation problems")
+    (description "Clarabel.rs is a Rust implementation of an interior point
+numerical solver for convex optimization problems using a novel homogeneous
+embedding.")
+    (license license:asl2.0)))
+
 (define-public python-climin
   (package
     (name "python-climin")
@@ -2382,16 +2789,20 @@ heavily biased to machine learning scenarios.  It works on top of
 (define-public python-paramz
   (package
     (name "python-paramz")
-    (version "0.9.5")
+    (version "0.9.6")
     (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "paramz" version))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/sods/paramz")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "16hbh97kj6b1c2gw22rqnr3w3nqkszh9gj8vgx738gq81wf225q9"))))
-    (build-system python-build-system)
+                "1ywc2jzj40m6wmq227j3snxvp4434s0m1xk1abg6v6mr87pv2sa9"))))
+    (build-system pyproject-build-system)
     (propagated-inputs (list python-decorator python-numpy python-scipy
                              python-six))
+    (native-inputs (list python-nose))
     (home-page "https://github.com/sods/paramz")
     (synopsis "The Parameterization Framework")
     (description
@@ -2416,27 +2827,35 @@ for parameterized model creation and handling.  Its features include:
 (define-public python-gpy
   (package
     (name "python-gpy")
-    (version "1.10.0")
+    (version "1.13.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "GPy" version))
               (sha256
                (base32
-                "1yx65ajrmqp02ykclhlb0n8s3bx5r0xj075swwwigiqaippr7dx2"))
-             (snippet
-              #~(begin (use-modules (guix build utils))
-                       (substitute* "GPy/models/state_space_main.py"
-                         (("collections\\.Iterable") "collections.abc.Iterable"))))))
-    (build-system python-build-system)
+                "05d1ry4jpp0srsrmp3qd6s0p2bjc4c0z99450pzdr79vagbfvlk4"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-before 'check 'remove-plotting-tests
-                    ;; These fail
-                    (lambda _
-                      (delete-file "GPy/testing/plotting_tests.py"))))))
-    (native-inputs (list python-cython python-nose python-climin))
-    (propagated-inputs (list python-numpy python-paramz python-scipy
-                             python-six))
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'compatibility
+           (lambda _
+             ;; This file uses Python 2 statements
+             (delete-file "GPy/testing/mpi_test__.py")
+             (substitute* "setup.py"
+               (("scipy>=1.3.0,<1.12.0")
+                "scipy>=1.3.0,<=1.13.0"))
+             ;; Use numpy.exp because scipy.ext no longer exists
+             (substitute* "GPy/kern/src/sde_standard_periodic.py"
+               (("sp\\.exp") "np.exp"))
+             (substitute* "GPy/kern/src/sde_stationary.py"
+               (("sp\\.poly1d") "np.poly1d")
+               (("sp\\.roots") "np.roots")))))))
+    (native-inputs
+     (list python-cython python-matplotlib python-pods python-pytest))
+    (propagated-inputs
+     (list python-numpy python-paramz python-scipy python-six))
     (home-page "https://sheffieldml.github.io/GPy/")
     (synopsis "The Gaussian Process Toolbox")
     (description

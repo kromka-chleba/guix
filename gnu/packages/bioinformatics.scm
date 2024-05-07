@@ -577,6 +577,7 @@ BED, GFF/GTF, VCF.")
     (description
      "BitMapperBS is memory-efficient aligner that is designed for
 whole-genome bisulfite sequencing (WGBS) reads from directional protocol.")
+    (supported-systems '("x86_64-linux"))
     (license license:asl2.0)))
 
 (define-public bustools
@@ -2026,71 +2027,62 @@ parsing of Variant Call Format (VCF) files.")
     (license license:expat)))
 
 (define-public python-decoupler-py
-  ;; This latest commit fixes a bug in test_omnip.py.
-  (let ((commit "459b235348ddd9135217a3722d9dd1caa9a14ace")
-        (revision "1"))
-    (package
-      (name "python-decoupler-py")
-      (version (git-version "1.5.0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/saezlab/decoupler-py")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1c0xk006iilyffdaqar2d05qdhik22fbkny387zx0bndkgqifxhl"))))
-      (build-system pyproject-build-system)
-      (arguments
-       (list
-        #:test-flags
-        '(list "-k"
-               ;; These tests require internet access
-               (string-append "not test_get_resource"
-                              " and not test_show_resources"
-                              " and not test_get_dorothea"
-                              " and not test_get_progeny"
-                              " and not test_get_ksn_omnipath"
-                              ;; XXX module 'omnipath.interactions' has no
-                              ;; attribute 'CollecTRI'
-                              " and not test_get_collectri"
-                              ;; XXX This one fails because the "texts" list
-                              ;; is empty, so there are no texts to adjust.
-                              ;; It is not clear whether this a compatibility
-                              ;; problem with our adjusttext package.
-                              " and not test_plot_volcano"))
-        #:phases
-        '(modify-phases %standard-phases
-           (add-before 'check 'set-home
-             ;; Some tests require a home directory to be set.
-             (lambda _ (setenv "HOME" "/tmp")))
-           ;; Numba needs a writable dir to cache functions.
-           (add-before 'build 'set-numba-cache-dir
-             (lambda _ (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
-      (propagated-inputs (list python-adjusttext
-                               python-anndata
-                               python-ipython
-                               python-matplotlib
-                               python-nbsphinx
-                               python-numba
-                               python-numpy
-                               python-numpydoc
-                               python-omnipath
-                               python-scanpy
-                               python-scikit-learn
-                               python-scipy
-                               python-skranger
-                               python-tqdm
-                               python-typing-extensions))
-      (native-inputs (list python-pytest))
-      (home-page "https://github.com/saezlab/decoupler-py")
-      (synopsis
-       "Framework for modeling, analyzing and interpreting single-cell RNA-seq data")
-      (description
-       "This package provides different statistical methods to extract
+  (package
+    (name "python-decoupler-py")
+    (version "1.6.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/saezlab/decoupler-py")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1mqkp0i8k5hzhfnka4nc2f0phmrs0k404ynbl1lqfjzywx25y75h"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      '(list "-k"
+             ;; These tests require internet access
+             (string-append "not test_get_resource"
+                            " and not test_show_resources"
+                            " and not test_get_dorothea"
+                            " and not test_get_progeny"
+                            " and not test_get_ksn_omnipath"
+                            ;; This attempts to download things for Omnipath
+                            " and not test_get_collectri"))
+      #:phases
+      '(modify-phases %standard-phases
+         (add-before 'check 'set-home
+           ;; Some tests require a home directory to be set.
+           (lambda _ (setenv "HOME" "/tmp")))
+         ;; Numba needs a writable dir to cache functions.
+         (add-before 'build 'set-numba-cache-dir
+           (lambda _ (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
+    (propagated-inputs (list python-adjusttext
+                             python-anndata
+                             python-ipython
+                             python-matplotlib
+                             python-nbsphinx
+                             python-numba
+                             python-numpy
+                             python-numpydoc
+                             python-omnipath
+                             python-scanpy
+                             python-scikit-learn
+                             python-scipy
+                             python-skranger
+                             python-tqdm
+                             python-typing-extensions))
+    (native-inputs (list python-pytest))
+    (home-page "https://github.com/saezlab/decoupler-py")
+    (synopsis
+     "Framework for modeling, analyzing and interpreting single-cell RNA-seq data")
+    (description
+     "This package provides different statistical methods to extract
 biological activities from omics data within a unified framework.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public python-demuxem
   (package
@@ -2219,7 +2211,7 @@ servers supporting the protocol.")
 (define-public python-liana-py
   (package
     (name "python-liana-py")
-    (version "0.1.9")
+    (version "1.1.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2228,7 +2220,7 @@ servers supporting the protocol.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "00lqrmi38wmdpjlcafgmrnkwsbp0yvm2rya6qs8y6jfizww9ff8i"))))
+                "0f5al0v55haja91q9gd409v7q78mmp1wv9znsplsbjp6lfspjfnw"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2236,9 +2228,28 @@ servers supporting the protocol.")
       '(list "-k"
              ;; These tests require internet access.
              (string-append "not test_generate_lr_resource"
-                            " and not test_generate_nondefault_lr_resource"))
+                            " and not test_get_metalinks"
+                            " and not test_get_metalinks_values"
+                            " and not test_describe_metalinks"
+                            " and not test_generate_nondefault_lr_resource"
+                            ;; Minor accuracy difference
+                            " and not test_bivar_morans_perms"
+                            ;; XXX unclear failure: 'coo_matrix' object is not
+                            ;; subscriptable
+                            " and not test_bivar_product"
+                            )
+             ;; These need the optional squidpy, which we don't have yet.
+             "--ignore=liana/tests/test_misty.py"
+             ;; These need the optional corneto.
+             "--ignore=liana/tests/test_causalnet.py")
       #:phases
       '(modify-phases %standard-phases
+         (add-after 'unpack 'relax-requirements
+           (lambda _
+             ;; Don't fail the sanity check when these optional inputs aren't
+             ;; available.
+             (substitute* "pyproject.toml"
+               (("^pre-commit =.*") ""))))
          ;; Numba needs a writable directory to cache functions.
          (add-before 'build 'set-numba-cache-dir
            (lambda _ (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
@@ -2248,10 +2259,10 @@ servers supporting the protocol.")
                              python-hypothesis
                              python-ipykernel
                              python-ipython
-                             python-mofax
                              python-mudata
                              python-nbconvert
                              python-nbsphinx
+                             python-numpy
                              python-numpydoc
                              python-omnipath
                              python-pandas
@@ -2264,7 +2275,10 @@ servers supporting the protocol.")
                              python-tqdm
                              tzdata))
     (native-inputs
-     (list python-black python-pytest python-pytest-cov python-numpy))
+     (list python-black
+           python-poetry-core
+           python-pytest
+           python-pytest-cov))
     (home-page "https://github.com/saezlab/liana-py")
     (synopsis "LIANA is a ligand-receptor analysis framework")
     (description "This is a Ligand-Receptor inference framework.  The
@@ -2332,6 +2346,75 @@ single-cell sequencing data and to restore the structure of the data.  It also
 provides data pre-processing functionality such as dimensionality reduction
 and gene expression visualization.")
     (license license:gpl2+)))
+
+(define-public python-metacells
+  (package
+    (name "python-metacells")
+    (version "0.9.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "metacells" version))
+       (sha256
+        (base32 "02f63nxz6b60vl6s4n9vapaysnq1w5f3x7c179rh2rr7j2k5cf1y"))))
+    #;
+    (properties '((tunable? . #t)))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; The package "python-igraph" has been deprecated in favor of
+          ;; just "igraph".
+          (add-after 'unpack 'rename-igraph
+            (lambda _
+              (substitute* "requirements.txt"
+                (("python-igraph") "igraph"))))
+          (add-after 'unpack 'do-not-tune
+            (lambda _
+              ;; Without this they pass -march=native to the compiler.
+              (setenv "WHEEL" "1")))
+          ;; Numba needs a writable dir to cache functions.
+          (add-before 'check 'set-numba-cache-dir
+            (lambda _ (setenv "NUMBA_CACHE_DIR" "/tmp")))
+          (add-before 'build 'build-extensions
+            (lambda _
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (propagated-inputs (list python-anndata
+                             python-cvxpy
+                             python-fastcluster
+                             python-importlib-metadata
+                             python-numpy
+                             python-pandas
+                             python-psutil
+                             python-igraph
+                             python-pyyaml
+                             python-scanpy
+                             python-scipy
+                             python-threadpoolctl
+                             python-umap-learn))
+    (native-inputs (list python-black
+                         python-bumpversion
+                         python-flake8
+                         python-isort
+                         python-mypy
+                         python-mypy-extensions
+                         python-pylint
+                         python-pytest
+                         python-pytest-cov
+                         python-sphinx
+                         python-sphinx-rtd-theme
+                         python-tox
+                         python-twine))
+    (home-page "https://github.com/tanaylab/metacells.git")
+    (synopsis "Single-cell RNA Sequencing Analysis")
+    (description "The metacells package implements the improved metacell
+algorithm for single-cell RNA sequencing (scRNA-seq) data analysis within the
+scipy framework, and projection algorithm based on it.  The original metacell
+algorithm was implemented in R.  The Python package contains various
+algorithmic improvements and is scalable for larger data sets (millions of
+cells).")
+    (license license:expat)))
 
 (define-public python-parabam
   (package
@@ -2797,7 +2880,7 @@ telomerecat can produce an estimate in ~1 hour.")
 (define-public python-bioframe
   (package
     (name "python-bioframe")
-    (version "0.3.3")
+    (version "0.6.4")
     (source
      (origin
        (method git-fetch)
@@ -2808,18 +2891,21 @@ telomerecat can produce an estimate in ~1 hour.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "14lvb18d4npapyi6j2zqh9q94l658dzmka5riiizw1h0zb0kp9xb"))))
-    (build-system python-build-system)
+         "1m99hgxw4cb2x4qszb2lhp1isz57sdkqbmcgisnbqxqxkv4gba7v"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (setenv "MPLCONFIGDIR" "/tmp")
-             (when tests?
-               (invoke "pytest" "-v")))))))
+     (list
+      #:test-flags
+      '(list "-k" (string-append "not test_fetch_chromsizes"
+                                 " and not test_fetch_chromsizes_local_vs_ucsc"
+                                 " and not test_fetch_centromeres"))
+      #:phases
+      '(modify-phases %standard-phases
+         (add-before 'check 'pre-check
+           (lambda _ (setenv "MPLCONFIGDIR" "/tmp"))))))
     (native-inputs
      (list python-biopython
+           python-hatchling
            python-pysam
            python-pytest
            python-wheel))
@@ -2827,6 +2913,7 @@ telomerecat can produce an estimate in ~1 hour.")
      (list python-matplotlib
            python-numpy
            python-pandas
+           python-pyyaml
            python-requests))
     (home-page "https://github.com/open2c/bioframe")
     (synopsis "Pandas utilities for tab-delimited and other genomic files")
@@ -2866,6 +2953,11 @@ use-case, we encourage users to compose functions to achieve their goals.")
       '(modify-phases %standard-phases
          (add-after 'unpack 'use-cython
            (lambda _ (setenv "USE_CYTHON" "1")))
+         (add-after 'unpack 'pandas-compatibility
+           (lambda _
+             (substitute* "biom/tests/test_table.py"
+               (("import pandas.util.testing")
+                "import pandas.testing"))))
          (add-after 'unpack 'disable-broken-tests
            (lambda _
              (substitute* "biom/tests/test_util.py"
@@ -2877,6 +2969,24 @@ use-case, we encourage users to compose functions to achieve their goals.")
                (("^(.+)def test_from_hdf5_issue_731" m indent)
                 (string-append indent
                                "@npt.dec.skipif(True, msg='Guix')\n"
+                               m))
+               ;; Unclear why this one fails.  There is no backtrace.
+               (("^(.+)def test_to_dataframe_is_sparse" m indent)
+                (string-append indent
+                               "@npt.dec.skipif(True, msg='Guix')\n"
+                               m))
+               ;; These need skbio, but that neeeds biom-format.
+               (("^(.+)def test_align_tree_intersect_obs" m indent)
+                (string-append indent
+                               "@npt.dec.skipif(True, msg='Guix')\n"
+                               m))
+               (("^(.+)def test_align_tree_intersect_tips" m indent)
+                (string-append indent
+                               "@npt.dec.skipif(True, msg='Guix')\n"
+                               m))
+               (("^(.+)def test_align_tree_sample" m indent)
+                (string-append indent
+                               "@npt.dec.skipif(True, msg='Guix')\n"
                                m))))))))
     (propagated-inputs
      (list python-anndata
@@ -2886,7 +2996,7 @@ use-case, we encourage users to compose functions to achieve their goals.")
            python-h5py
            python-numpy
            python-pandas
-           python-scikit-bio
+           ;;python-scikit-bio ;mutually recursive dependency
            python-scipy))
     (native-inputs
      (list python-cython python-pytest python-pytest-cov python-nose))
@@ -4363,7 +4473,7 @@ UCSC genome browser.")
      (list openssl))
     (native-inputs
      `(("python-cython" ,python-cython)
-       ("python-nose" ,python-nose)
+       ("python-pytest" ,python-pytest)
        ("test-data"
         ,(origin
            (method url-fetch)
@@ -5186,25 +5296,24 @@ and record oriented data modeling and the Semantic Web.")
 (define-public python-scikit-bio
   (package
     (name "python-scikit-bio")
-    (version "0.5.9")
+    (version "0.6.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "scikit-bio" version))
               (sha256
                (base32
-                "0429060pkyq1pm19zb2n1la7czh7b633mp4a4h01j8zfigf49q3s"))
-              (patches (search-patches "python-scikit-bio-1887.patch"))))
+                "03y1n91p6m44hhxm3rpb355j6ddalydz49s94h85kbhm7iy5l40h"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
       ;; Accuracy problem
-      #:test-flags '(list "-k" "not test_fisher_alpha")
+      '(list "-k" (string-append "not test_fisher_alpha"
+                                 ;; UNEXPECTED EXCEPTION: ValueError("could
+                                 ;; not convert string to float: 'gut'")
+                                 " and not skbio.diversity"))
       #:phases
       '(modify-phases %standard-phases
-         (add-after 'unpack 'compatibility
-           (lambda _
-             (substitute* "skbio/diversity/__init__.py"
-               ((", numeric_only=True") ""))))
          (add-before 'check 'build-extensions
            (lambda _
              ;; Cython extensions have to be built before running the tests.
@@ -5214,11 +5323,10 @@ and record oriented data modeling and the Semantic Web.")
              (when tests?
                (apply invoke "python3" "-m" "skbio.test" test-flags)))))))
     (propagated-inputs
-     (list python-decorator
+     (list python-biom-format
+           python-decorator
            python-h5py
            python-hdmedians
-           python-ipython
-           python-matplotlib
            python-natsort
            python-numpy
            python-pandas
@@ -5823,6 +5931,82 @@ be of arbitrary length. Repeats with pattern size in the range from 1 to 2000
 bases are detected.")
     (license license:osl2.1)))
 
+(define-public trust4
+  (package
+    (name "trust4")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/liulab-dfci/TRUST4")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "170k4rrchg7f2jyn3v4y4fxxq1d49n1vnvhx5xcnnr6jql8q3h08"))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   ;; Remove bundled samtools
+                   (delete-file-recursively "samtools-0.1.19")))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f ;there are no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-samtools-headers
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "Makefile"
+                (("LINKPATH= -I./samtools-0.1.19 -L./samtools-0.1.19")
+                 (string-append "LINKPATH= -I."
+                                #$(this-package-native-input "samtools")
+                                "/include/samtools"
+                                " -L."
+                                #$(this-package-native-input "samtools")
+                                "/lib"))
+                (("./samtools-0.1.19/")
+                 (string-append #$(this-package-native-input
+                                   "samtools") "/lib/")))
+              (substitute* "alignments.hpp"
+                (("samtools-0.1.19")
+                 (string-append #$(this-package-native-input
+                                   "samtools") "/include/samtools")))))
+          (delete 'configure) ; No configure.
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((bin (string-append (assoc-ref outputs "out") "/bin"))
+                    (scripts (string-append #$output
+                                            "/share/trust4/scripts")))
+                (install-file "annotator" bin)
+                (install-file "bam-extractor" bin)
+                (install-file "fastq-extractor" bin)
+                (install-file "run-trust4" bin)
+                (install-file "trust4" bin)
+                ;; install scripts stored in the scrips dir
+                (for-each (lambda (file)
+                            (chmod file #o555))
+                          (find-files "scripts" "\\.p(y|l)"))
+                (copy-recursively "scripts" scripts)
+                (delete-file-recursively "scripts")
+                ;; install the rest of the scripts that are in the main dir
+                (for-each (lambda (file)
+                            (chmod file #o555)
+                            (install-file file bin))
+                          (find-files "." "\\.(pl|py|sh)"))))))))
+    (native-inputs (list automake samtools-0.1))
+    (inputs (list perl python-wrapper zlib))
+    (home-page "https://github.com/liulab-dfci/TRUST4")
+    (synopsis "TCR and BCR assembly from RNA-seq data")
+    (description "This package is analyzing @acronym{TCR, T cell receptor} and
+@acronym{BCR, B cell receptor} sequences using unselected RNA sequencing data,
+profiled from fluid and solid tissues, including tumors.  TRUST4 performs de
+novo assembly on V, J, C genes including the hypervariable @acronym{CDR3,
+complementarity-determining region 3} and reports consensus contigs of BCR/TCR
+sequences.  TRUST4 then realigns the contigs to IMGT reference gene sequences to
+identify the corresponding gene and CDR3 details.  TRUST4 supports both single-end
+and paired-end bulk or single-cell sequencing data with any read length.")
+    (license license:gpl3)))
+
 (define-public diamond
   (package
     (name "diamond")
@@ -6382,6 +6566,29 @@ Illumina paired-end data (for CASAVA 1.8+).")
      "Pyani provides a package and script for calculation of genome-scale
 average nucleotide identity.")
     (license license:expat)))
+
+(define-public python-pyahocorasick
+  (package
+    (name "python-pyahocorasick")
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/WojciechMula/pyahocorasick")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fsnivwcw56q7lwz41c5kbfvxv0v17mmkx43i2a293l49fxj08j8"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-twine python-wheel))
+    (home-page "https://github.com/WojciechMula/pyahocorasick")
+    (synopsis "Library for finding multiple key strings in text")
+    (description
+     "Pyahocorasick is a fast, memory-efficient library for multi-pattern string search.
+This means that you can find multiple key strings occurrences
+at once in some input text.")
+    (license license:bsd-3)))
 
 (define-public exonerate
   (package
@@ -8778,7 +8985,7 @@ predicts the locations of structural units in the sequences.")
 (define-public proteinortho
   (package
     (name "proteinortho")
-    (version "6.0.14")
+    (version "6.3.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -8787,45 +8994,40 @@ predicts the locations of structural units in the sequences.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0pmy617zy2z2w6hjqxjhf3rzikf5n3mpia80ysq8233vfr7wrzff"))
+                "0p8iaxq193fh67hw3cydvdah1vz1c3f18227gj1mhkww0ms7g6xa"))
               (modules '((guix build utils)))
               (snippet
                '(begin
-                  ;; remove pre-built scripts
+                  ;; Remove pre-built scripts and source tarballs.
                   (delete-file-recursively "src/BUILD/")
-                  #t))))
+                  (delete-file "src/lapack-3.8.0.tar.gz")))))
     (build-system gnu-build-system)
     (arguments
-     `(#:test-target "test"
-       #:make-flags '("CC=gcc")
+     (list
+       #:test-target "test"
+       #:parallel-tests? #f
+       #:make-flags
+       #~(list (string-append "CC=" #$(cc-for-target))
+               (string-append "CXX=" #$(cxx-for-target))
+               (string-append "PREFIX=" #$output)
+               (string-append "INSTALLDIR=" #$output "/bin"))
        #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           ;; There is no configure script, so we modify the Makefile directly.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (substitute* "Makefile"
-               (("INSTALLDIR=.*")
-                (string-append
-                 "INSTALLDIR=" (assoc-ref outputs "out") "/bin\n"))
-               (("-llapack -lblas")
-                "-lopenblas"))
-             #t))
-         (add-before 'install 'make-install-directory
-           ;; The install directory is not created during 'make install'.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (mkdir-p (string-append (assoc-ref outputs "out") "/bin"))
-             #t))
-         (add-after 'install 'wrap-programs
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((path (getenv "PATH"))
-                   (out (assoc-ref outputs "out"))
-                   (guile (search-input-file inputs "bin/guile")))
-               (for-each (lambda (script)
-                           (wrap-script script #:guile guile
-                                        `("PATH" ":" prefix (,path))))
-                         (cons (string-append out "/bin/proteinortho")
-                               (find-files out "\\.(pl|py)$"))))
-             #t)))))
+       #~(modify-phases %standard-phases
+           (delete 'configure)
+           (add-before 'install 'make-install-directory
+             ;; The install directory is not created during 'make install'.
+             (lambda* (#:key outputs #:allow-other-keys)
+               (mkdir-p (string-append (assoc-ref outputs "out") "/bin"))))
+           (add-after 'install 'wrap-programs
+             (lambda* (#:key inputs outputs #:allow-other-keys)
+               (let ((path (getenv "PATH"))
+                     (out (assoc-ref outputs "out"))
+                     (guile (search-input-file inputs "bin/guile")))
+                 (for-each (lambda (script)
+                             (wrap-script script #:guile guile
+                                          `("PATH" ":" prefix (,path))))
+                           (cons (string-append out "/bin/proteinortho")
+                                 (find-files out "\\.(pl|py)$")))))))))
     (inputs
      `(("guile" ,guile-3.0) ; for wrap-script
        ("diamond" ,diamond)
@@ -8842,6 +9044,7 @@ predicts the locations of structural units in the sequences.")
 species.  For doing so, it compares similarities of given gene sequences and
 clusters them to find significant groups.  The algorithm was designed to handle
 large-scale data and can be applied to hundreds of species at once.")
+    (properties `((tunable? . #t)))
     (license license:gpl3+)))
 
 (define-public prodigal
@@ -11760,6 +11963,47 @@ analysis of cell types, subtypes, transcriptional gradients,cell-cycle
 variation, gene modules and their regulatory models and more.")
       (license license:expat))))
 
+(define-public r-metadeconfoundr
+  ;; There are some relevant updates after the release of version 0.3.0.
+  (let ((commit "90aec0226c5128bfcbbc08903452eff460d21424")
+        (revision "1"))
+    (package
+      (name "r-metadeconfoundr")
+      (version (git-version "0.3.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/TillBirkner/metadeconfoundR")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0zkqar27p5qwq46xbxsw5x1pl50xbkgqiizw5bydlyhwb0ga2f3h"))))
+      (properties `((upstream-name . "metadeconfoundR")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-bigmemory
+                               r-detectseparation
+                               r-doparallel
+                               r-dosnow
+                               r-foreach
+                               r-futile-logger
+                               r-ggplot2
+                               r-lme4
+                               r-lmtest
+                               r-reshape2
+                               r-snow))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/TillBirkner/metadeconfoundR")
+      (synopsis "Check multiple covariates for potenial confounding effects")
+      (description
+       "This package detects naive associations between omics features and
+metadata in cross-sectional data-sets using non-parametric tests.  In a second
+step, confounding effects between metadata associated to the same omics
+feature are detected and labeled using nested post-hoc model comparison tests.
+The generated output can be graphically summarized using the built-in plotting
+function.")
+      (license license:gpl2))))
+
 (define-public r-sleuth
   (package
     (name "r-sleuth")
@@ -13159,6 +13403,45 @@ bound and non bound genomic regions to accurately identify transcription
 factors bound at the specific regions.")
     (license license:gpl2+)))
 
+(define-public r-seraster
+  ;; There are no tags or releases.
+  (let ((commit "4fdc1ffe5d3feb65de9880329d221cf276b393a1")
+        (revision "1"))
+    (package
+      (name "r-seraster")
+      (version (git-version "0.99.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/JEFworks-Lab/SEraster")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0y33lk8q0h9nfzmf7slxxvw3l0djassp4l63nsjpm3p6z4pah5s4"))))
+      (properties `((upstream-name . "SEraster")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-biocparallel
+                               r-ggplot2
+                               r-matrix
+                               r-rearrr
+                               r-sf
+                               r-spatialexperiment
+                               r-summarizedexperiment))
+      (home-page "https://github.com/JEFworks-Lab/SEraster")
+      (synopsis
+       "Rasterization framework for scalable spatial omics data analysis")
+      (description
+       "This package is a rasterization preprocessing framework that aggregates
+cellular information into spatial pixels to reduce resource requirements for
+spatial omics data analysis.  SEraster reduces the number of points in spatial
+omics datasets for downstream analysis through a process of rasterization where
+single cells gene expression or cell-type labels are aggregated into equally
+sized pixels based on a user-defined resolution.  SEraster can be incorporated
+with other packages to conduct downstream analyses for spatial omics datasets,
+such as detecting spatially variable genes.")
+      (license license:gpl3))))
+
 (define-public emboss
   (package
     (name "emboss")
@@ -14028,8 +14311,8 @@ applications for tackling some common problems in a user-friendly way.")
 ;; We use this seemingly arbitrary commit because of
 ;; https://github.com/3DGenomes/TADbit/issues/371
 (define-public tadbit
-  (let ((commit "5c4c1ddaadfbaf7e6edc58173e46d801093bdc9b")
-        (revision "1"))
+  (let ((commit "283812901a00078c725bd9f0ee33366af6783969")
+        (revision "2"))
     (package
       (name "tadbit")
       (version (git-version "1.0.1" revision commit))
@@ -14041,32 +14324,43 @@ applications for tackling some common problems in a user-friendly way.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "17nwlvjgqpa7x6jgh56m3di61ynaz34kl1jamyv7r2a5rhfcbkla"))))
+                  "07q0alxah6xl1hibaj1kj7pdzq3pg6csyapsihbwlbmqyfmllbgz"))))
       (build-system python-build-system)
       (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'fix-problems-with-setup.py
-             (lambda* (#:key outputs #:allow-other-keys)
-               (substitute* "src/test/Makefile"
-                 (("^CFLAGS=") "CFLAGS= -fcommon"))
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; Scipy 1.12 no longer has binom_test or polyfit
+            (add-after 'unpack 'scipy-compatibility
+              (lambda _
+                (substitute* '("_pytadbit/modelling/imp_modelling.py"
+                               "_pytadbit/modelling/restraints.py")
+                  (("from scipy .*import polyfit")
+                   "from numpy import polyfit"))
+                (substitute* "_pytadbit/mapping/restriction_enzymes.py"
+                  (("from scipy.stats import binom_test")
+                   "from scipy.stats import binomtest")
+                  (("binom_test\\(pats[k]['count'], nreads, 0.25\\*\\*len\\(k\\), alternative='greater'\\)")
+                   "binomtest(pats[k]['count'], nreads, 0.25**len(k), alternative='greater').pval"))))
+            (add-after 'unpack 'fix-problems-with-setup.py
+              (lambda _
+                (substitute* "src/test/Makefile"
+                  (("^CFLAGS=") "CFLAGS= -fcommon"))
 
-               ;; Don't attempt to install the bash completions to
-               ;; the home directory.
-               (rename-file "extras/.bash_completion"
-                            "extras/tadbit")
-               (substitute* "setup.py"
-                 (("\\(path.expanduser\\('~'\\)")
-                  (string-append "(\""
-                                 (assoc-ref outputs "out")
-                                 "/etc/bash_completion.d\""))
-                 (("extras/\\.bash_completion")
-                  "extras/tadbit"))))
-           (replace 'check
-             (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-               (when tests?
-                 (add-installed-pythonpath inputs outputs)
-                 (invoke "python3" "test/test_all.py")))))))
+                ;; Don't attempt to install the bash completions to
+                ;; the home directory.
+                (rename-file "extras/.bash_completion"
+                             "extras/tadbit")
+                (substitute* "setup.py"
+                  (("\\(path.expanduser\\('~'\\)")
+                   (string-append "(\"" #$output
+                                  "/etc/bash_completion.d\""))
+                  (("extras/\\.bash_completion")
+                   "extras/tadbit"))))
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "python3" "test/test_all.py")))))))
       (native-inputs
        (list `(,glib "bin") ;for gtester
              glib
@@ -14080,7 +14374,8 @@ applications for tackling some common problems in a user-friendly way.")
              python-scipy
              python-numpy
              python-matplotlib
-             python-pysam))
+             python-pysam
+             r-minimal))
       (home-page "https://3dgenomes.github.io/TADbit/")
       (synopsis "Analyze, model, and explore 3C-based data")
       (description
@@ -16328,7 +16623,7 @@ version does count multisplits.")
 (define-public minimap2
   (package
     (name "minimap2")
-    (version "2.24")
+    (version "2.28")
     (source
      (origin
        (method url-fetch)
@@ -16337,7 +16632,7 @@ version does count multisplits.")
                            "minimap2-" version ".tar.bz2"))
        (sha256
         (base32
-         "05d6h2c1h95s5vblf1fijn9g0r4g69nsvkabji42j642y0gw7m4x"))))
+         "1d50j9fdmmaj7sdf4f49xddc235f7032lwh5ijgi2afj6lkp39gz"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                      ; there are none
@@ -16349,8 +16644,6 @@ version does count multisplits.")
              (let ((system ,(or (%current-target-system)
                                 (%current-system))))
                (cond
-                 ((string-prefix? "x86_64" system)
-                  "all")
                  ((or (string-prefix? "i586" system)
                       (string-prefix? "i686" system))
                   "sse2only=1")
@@ -16358,7 +16651,7 @@ version does count multisplits.")
                   "arm_neon=1")
                  ((string-prefix? "aarch64" system)
                   "aarch64=1")
-                 (else ""))))
+                 (else "all"))))
        #:phases
        (modify-phases %standard-phases
          (delete 'configure)
@@ -16374,8 +16667,6 @@ version does count multisplits.")
                (install-file "minimap2.1" man)
                (map (cut install-file <> inc)
                     (find-files "." "\\.h$"))
-               ;; Not this file.
-               (delete-file (string-append inc "/emmintrin.h"))
                (mkdir-p (string-append lib "/pkgconfig"))
                (with-output-to-file (string-append lib "/pkgconfig/minimap2.pc")
                 (lambda _
@@ -16389,8 +16680,7 @@ version does count multisplits.")
                           Description: A versatile pairwise aligner for genomic and spliced nucleotide sequence~@
                           Libs: -L${libdir} -lminimap2~@
                           Cflags: -I${includedir}~%"
-                          out ,version))))
-             #t)))))
+                          out ,version)))))))))
     (inputs
      (list zlib))
     (home-page "https://lh3.github.io/minimap2/")
@@ -17710,6 +18000,47 @@ bound.")
 bgzipped text file that contains a pair of genomic coordinates per line.")
     (license license:expat)))
 
+(define-public python-pyrodigal
+  (package
+    (name "python-pyrodigal")
+    (version "3.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/althonos/pyrodigal")
+             (commit (string-append "v" version))
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10vxbm9i33wari0ifsr78xnfn7d0yqwzqpc5pchirjflf1mmnr6w"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:modules '((ice-9 ftw)
+                  (srfi srfi-1)
+                  (srfi srfi-26)
+                  (guix build utils)
+                  (guix build pyproject-build-system))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (let ((cwd (getcwd))
+                      (libdir (find (cut string-prefix? "lib." <>)
+                                    (scandir "build"))))
+                  (with-directory-excursion (string-append cwd "/build/" libdir)
+                    (invoke "python3" "-m" "unittest" "pyrodigal.tests" "-vv")))))))))
+    (propagated-inputs (list python-archspec python-importlib-resources))
+    (native-inputs (list python-cython-3 python-mock python-unittest2))
+    (home-page "https://github.com/althonos/pyrodigal")
+    (synopsis "Cython bindings and Python interface for Prodigal")
+    (description
+     "This package offers Cython bindings and a Python interface for Prodigal.
+ Prodigal is an ORF finder designed for both genomes and metagenomes.")
+    (license license:gpl3)))
+
 (define-public python-pyfaidx
   (package
     (name "python-pyfaidx")
@@ -17749,14 +18080,14 @@ fasta subsequences.")
 (define-public python-cooler
   (package
     (name "python-cooler")
-    (version "0.9.1")
+    (version "0.9.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cooler" version))
        (sha256
         (base32
-         "0capn4jj3mkxfwcc65cg644zvrv4sqr2wxr0ylx5w767jx3yb7p2"))))
+         "0qqb0i5449r6w871klsbjzxsjhdkpsaas3hvs9f1hc7ssrkf1vi1"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -17803,22 +18134,14 @@ such as Hi-C contact matrices.")
 (define-public python-cooltools
   (package
     (name "python-cooltools")
-    (version "0.5.1")
+    (version "0.7.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "cooltools" version))
               (sha256
                (base32
-                "08hyzd3kazr87nvv6rwp5i1g9rwj7jmrly925lqnvippz4wp7k4g"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-v")))))))
+                "076fgqzf6453cx5zs32vz0f5yvfg53w8ayq9s79jssy7gj2x89lb"))))
+    (build-system pyproject-build-system)
     (native-inputs
      (list python-cython
            python-pytest))
@@ -17879,7 +18202,7 @@ the HiCExplorer and pyGenomeTracks packages.")
 (define-public python-hicexplorer
   (package
     (name "python-hicexplorer")
-    (version "3.7.2")
+    (version "3.7.4")
     (source
      (origin
        ;; The latest version is not available on Pypi.
@@ -17890,16 +18213,7 @@ the HiCExplorer and pyGenomeTracks packages.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1yavgxry38g326z10bclvdf8glmma05fxj5m73h15m1r2l9xmw3v"))
-       (modules '((guix build utils)))
-       ;; setup.py is malformed. The requirements are defined using a catchall
-       ;; pattern for the patch version number. This has been fixed in version
-       ;; 3.7.3, but we cannot upgrade to this version yet, since some Guix
-       ;; packages are not new enough. (See upstream commit
-       ;; 4845c715ec7b105e938d0c2426e27d0181690bfe for the fix).
-       (snippet '(substitute* "setup.py"
-                   (("\\.\\*")
-                    "")))))
+         "1cjr9l0vcngd0f4dmar388ri1ah1bqybnn53jc85xwh07wfacq7l"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -17977,21 +18291,10 @@ the HiCExplorer and pyGenomeTracks packages.")
                                "general/test_hicHyperoptDetectLoopsHiCCUPS.py"
                                "general/test_hicAggregateContacts.py"
                                "general/test_hicInterIntraTAD.py")
-                  (("^memory =.*") "memory = 1\n")))))
-          ;; This is fixed in version 3.7.3, but we cannot upgrade yet as we
-          ;; don't have Pandas 2.
-          (add-after 'unpack 'scipy-compatibility
-            (lambda _
-              (substitute* "hicexplorer/hicAverageRegions.py"
-                (("from scipy.sparse import csr_matrix, save_npz, lil_matrix")
-                 "from scipy.sparse import csr_matrix, save_npz, lil_matrix, coo_matrix")
-                (("summed_matrix = np.array\\(summed_matrix\\)")
-                 "summed_matrix = coo_matrix(summed_matrix)")
-                (("data = summed_matrix\\[np.nonzero\\(summed_matrix\\)\\]")
-                 "data = summed_matrix.toarray()[np.nonzero(summed_matrix)]")))))))
+                  (("^memory =.*") "memory = 1\n"))))))))
     (propagated-inputs
      (list python-biopython
-           python-cleanlab-1
+           python-cleanlab
            python-cooler
            python-fit-nbinom
            python-future

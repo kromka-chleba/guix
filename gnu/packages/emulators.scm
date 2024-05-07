@@ -15,7 +15,7 @@
 ;;; Copyright © 2020 Christopher Howard <christopher@librehacker.com>
 ;;; Copyright © 2021 Felipe Balbi <balbi@kernel.org>
 ;;; Copyright © 2021, 2024 Felix Gruber <felgru@posteo.net>
-;;; Copyright © 2021 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2023 c4droid <c4droid@foxmail.com>
 ;;; Copyright © 2023 Yovan Naumovski <yovan@gorski.stream>
@@ -837,7 +837,7 @@ from an emulator---from save states to scaling filters.")
 (define-public mupen64plus-core
   (package
     (name "mupen64plus-core")
-    (version "2.5")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -846,10 +846,10 @@ from an emulator---from save states to scaling filters.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "116fndl6652zrp1r6ag4xv3dzp1x52mlvadj8xwflq07fd5rhri1"))))
+        (base32 "1iav8r3f0r44sq9pz4zjqrdzyspk412c117ywxz02qpjkhkf91a3"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list pkg-config which))
+     (list pkg-config nasm which))
     (inputs
      (list freetype
            glu
@@ -886,7 +886,7 @@ core library.")
 (define-public mupen64plus-audio-sdl
   (package
     (name "mupen64plus-audio-sdl")
-    (version "2.5")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -895,7 +895,7 @@ core library.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0z19amfg9vr2pqjjri1ipc7hs681fzjcnb0f9y7bjhp5n8d7p6bb"))))
+        (base32 "0j78xk78fj7lhi6jk6npr7wm9ix7qyr5cbaaqsmk6pqw6gfx81kz"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config which))
@@ -920,7 +920,7 @@ core library.")
        ;; There are no tests.
        #:tests? #f))
     (home-page "https://www.mupen64plus.org/")
-    (synopsis "Mupen64Plus SDL input plugin")
+    (synopsis "Mupen64Plus SDL audio plugin")
     (description
      "Mupen64Plus is a cross-platform plugin-based Nintendo 64 (N64) emulator
 which is capable of accurately playing many games.  This package contains the
@@ -930,7 +930,7 @@ SDL audio plugin.")
 (define-public mupen64plus-input-sdl
   (package
     (name "mupen64plus-input-sdl")
-    (version "2.5")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -939,7 +939,7 @@ SDL audio plugin.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1dyazfbdjycdfslq8jixqiqhziw0rlkvach2r9dz91229jmkyc9c"))))
+        (base32 "1nnniyiy0wpg4m9918va31xxnz8r5qvj0z08vyq2is0b47ld3kq0"))))
     (build-system gnu-build-system)
     (native-inputs
      (list which))
@@ -974,7 +974,7 @@ SDL input plugin.")
 (define-public mupen64plus-rsp-hle
   (package
     (name "mupen64plus-rsp-hle")
-    (version "2.5")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -983,7 +983,7 @@ SDL input plugin.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0pi31qzjjp7aypdvvnz6ms18g09c4gqzxi6328zj8sji94b75gf0"))))
+        (base32 "0sblabl3dp1jy9izbwyhx90690xdj96yfmwi47kpka8axzj93naq"))))
     (build-system gnu-build-system)
     (inputs
      (list mupen64plus-core))
@@ -1006,7 +1006,7 @@ SDL input plugin.")
        ;; There are no tests.
        #:tests? #f))
     (home-page "https://www.mupen64plus.org/")
-    (synopsis "Mupen64Plus SDL input plugin")
+    (synopsis "Mupen64Plus RSP high-level emulation (HLE) plugin")
     (description
      "Mupen64Plus is a cross-platform plugin-based Nintendo 64 (N64) emulator
 which is capable of accurately playing many games.  This package contains the
@@ -1016,7 +1016,7 @@ high-level emulation (HLE) RSP processor plugin.")
 (define-public mupen64plus-rsp-z64
   (package
     (name "mupen64plus-rsp-z64")
-    (version "2.0.0")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -1025,7 +1025,7 @@ high-level emulation (HLE) RSP processor plugin.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0nfyjns9k8xbg3aqs7593nfaxvlj72h3l8h467442xlk8ajfcylx"))))
+        (base32 "02w7c6b7fc6q5rrvawxv48xp64crfs5jbs06f2fqqj4smysyjfcc"))))
     (build-system gnu-build-system)
     (inputs
      (list mupen64plus-core))
@@ -1048,7 +1048,7 @@ high-level emulation (HLE) RSP processor plugin.")
        ;; There are no tests.
        #:tests? #f))
     (home-page "https://www.mupen64plus.org/")
-    (synopsis "Mupen64Plus SDL input plugin")
+    (synopsis "Mupen64Plus RSP Z64 plugin")
     (description
      "Mupen64Plus is a cross-platform plugin-based Nintendo 64 (N64) emulator
 which is capable of accurately playing many games.  This package contains the
@@ -1058,7 +1058,7 @@ Z64 RSP processor plugin.")
 (define-public mupen64plus-video-arachnoid
   (package
     (name "mupen64plus-video-arachnoid")
-    (version "2.0.0")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -1067,7 +1067,7 @@ Z64 RSP processor plugin.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1v9fqwpb6pawr8z5cm2ki7bqkks4iyr5c4jy4v5khj6h8zcv55gc"))))
+        (base32 "1bkzbmg53qiwvza9h45d76rbyn0isbb31cfp5qqza0fzmgjxhv1d"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config which))
@@ -1092,7 +1092,7 @@ Z64 RSP processor plugin.")
        ;; There are no tests.
        #:tests? #f))
     (home-page "https://www.mupen64plus.org/")
-    (synopsis "Mupen64Plus Rice Video plugin")
+    (synopsis "Mupen64Plus Arachnoid video plugin")
     (description
      "Mupen64Plus is a cross-platform plugin-based Nintendo 64 (N64) emulator
 which is capable of accurately playing many games.  This package contains the
@@ -1102,7 +1102,7 @@ Arachnoid video plugin.")
 (define-public mupen64plus-video-glide64
   (package
     (name "mupen64plus-video-glide64")
-    (version "2.0.0")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -1111,7 +1111,7 @@ Arachnoid video plugin.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0qn5za7g7796kh2ag3xpmhbqg0yf71g9liz6ks0rha8pz73lgs01"))))
+        (base32 "0jscvr2imm9wj9jsgsp5815pv27f97w8g19ix0n39y9yy851qvrg"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config which))
@@ -1123,17 +1123,9 @@ Arachnoid video plugin.")
          ;; The mupen64plus build system has no configure phase.
          (delete 'configure)
          ;; Makefile is in a subdirectory.
-         (add-before
-          'build 'cd-to-project-dir
+         (add-before 'build 'cd-to-project-dir
           (lambda _
-            (chdir "projects/unix")))
-         ;; XXX Should be unnecessary with the next release.
-         (add-before
-          'build 'use-sdl2
-          (lambda _
-            (substitute* "Makefile"
-              (("SDL_CONFIG = (.*)sdl-config" all prefix)
-               (string-append "SDL_CONFIG = " prefix "sdl2-config"))))))
+            (chdir "projects/unix"))))
        #:make-flags
        (let ((out (assoc-ref %outputs "out"))
              (m64p (assoc-ref %build-inputs "mupen64plus-core")))
@@ -1143,7 +1135,7 @@ Arachnoid video plugin.")
        ;; There are no tests.
        #:tests? #f))
     (home-page "https://www.mupen64plus.org/")
-    (synopsis "Mupen64Plus Rice Video plugin")
+    (synopsis "Mupen64Plus Glide64 video plugin")
     (description
      "Mupen64Plus is a cross-platform plugin-based Nintendo 64 (N64) emulator
 which is capable of accurately playing many games.  This package contains the
@@ -1153,7 +1145,7 @@ Glide64 video plugin.")
 (define-public mupen64plus-video-glide64mk2
   (package
     (name "mupen64plus-video-glide64mk2")
-    (version "2.5")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -1162,7 +1154,7 @@ Glide64 video plugin.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "08pm28a36dpr0cvr8pzw0n5ksdazp7jqvlmqfy2lwb4dm0cwhkqd"))))
+        (base32 "1hr0mv6y7v72101iff3zf6rd0wpqah936234m3hcb4cgna6zj9xy"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config which))
@@ -1192,7 +1184,7 @@ Glide64 video plugin.")
        ;; There are no tests.
        #:tests? #f))
     (home-page "https://www.mupen64plus.org/")
-    (synopsis "Mupen64Plus Rice Video plugin")
+    (synopsis "Mupen64Plus Glide64MK2 video plugin")
     (description
      "Mupen64Plus is a cross-platform plugin-based Nintendo 64 (N64) emulator
 which is capable of accurately playing many games.  This package contains the
@@ -1202,7 +1194,7 @@ Glide64MK2 video plugin.")
 (define-public mupen64plus-video-rice
   (package
     (name "mupen64plus-video-rice")
-    (version "2.5")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -1211,7 +1203,7 @@ Glide64MK2 video plugin.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0rpmbcq67gsj5h5jjis146378qc1mskskvx20y1ikx59yhbamh13"))))
+        (base32 "1vn24g7ahyv70jd06f5sq0j4bjs4axl2c0kfz4qdkpqsamsgxng8"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config which))
@@ -1236,7 +1228,7 @@ Glide64MK2 video plugin.")
        ;; There are no tests.
        #:tests? #f))
     (home-page "https://www.mupen64plus.org/")
-    (synopsis "Mupen64Plus Rice Video plugin")
+    (synopsis "Mupen64Plus Rice video plugin")
     (description
      "Mupen64Plus is a cross-platform plugin-based Nintendo 64 (N64) emulator
 which is capable of accurately playing many games.  This package contains the
@@ -1246,7 +1238,7 @@ Rice Video plugin.")
 (define-public mupen64plus-video-z64
   (package
     (name "mupen64plus-video-z64")
-    (version "2.0.0")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -1255,8 +1247,7 @@ Rice Video plugin.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04qa2fdd6dakpk2v0d4l80xh9b4h8gm71g80c0wyyxdhmhwk1r9c"))
-       (patches (search-patches "mupen64plus-video-z64-glew-correct-path.patch"))))
+        (base32 "1i8dxa0lhcsm5ss1bf74dqnzaa2bw5naj6f56ixw2qjvybrnsmk2"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config which))
@@ -1298,7 +1289,7 @@ Z64 video plugin.")
 (define-public mupen64plus-ui-console
   (package
     (name "mupen64plus-ui-console")
-    (version "2.5")
+    (version "2.5.9")
     (source
      (origin
        (method git-fetch)
@@ -1307,7 +1298,7 @@ Z64 video plugin.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vrf98qa6a0y3647kslsv644fag233dxh5dcr1yncjiiwickcr5a"))
+        (base32 "1dyrqdfs2jkalfd86bqidgd9y1hy03qgrgwk46d3xf3kyfmaa1cq"))
        (patches (search-patches "mupen64plus-ui-console-notice.patch"))))
     (build-system gnu-build-system)
     (native-inputs
@@ -1327,29 +1318,27 @@ Z64 video plugin.")
            mupen64plus-audio-sdl
            mupen64plus-input-sdl
            mupen64plus-rsp-hle
-           mupen64plus-video-glide64
            mupen64plus-video-glide64mk2
            mupen64plus-video-rice))
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         ;; The mupen64plus build system has no configure phase.
-         (delete 'configure)
-         ;; Makefile is in a subdirectory.
-         (add-before
-          'build 'cd-to-project-dir
-          (lambda _
-            (chdir "projects/unix"))))
-       #:make-flags
-       (let ((out (assoc-ref %outputs "out"))
-             (m64p (assoc-ref %build-inputs "mupen64plus-core")))
-         (list "all"
-               (string-append "PREFIX=" out)
-               (string-append "APIDIR=" m64p "/include/mupen64plus")
-               ;; Trailing slash matters here.
-               (string-append "COREDIR=" m64p "/lib/")))
-       ;; There are no tests.
-       #:tests? #f))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; The mupen64plus build system has no configure phase.
+          (delete 'configure)
+          ;; Makefile is in a subdirectory.
+          (add-before 'build 'cd-to-project-dir
+            (lambda _
+              (chdir "projects/unix"))))
+      #:make-flags
+      #~(let ((m64p #$(this-package-input "mupen64plus-core")))
+          (list "all"
+                (string-append "PREFIX=" #$output)
+                (string-append "APIDIR=" m64p "/include/mupen64plus")
+                ;; Trailing slash matters here.
+                (string-append "COREDIR=" m64p "/lib/")))
+      ;; There are no tests.
+      #:tests? #f))
     (home-page "https://www.mupen64plus.org/")
     (synopsis "Mupen64Plus command line user interface")
     (description
@@ -1358,6 +1347,75 @@ which is capable of accurately playing many games.  This package contains the
 command line user interface.  Installing this package is the easiest way
 towards a working Mupen64Plus for casual users.")
     (license license:gpl2+)))
+
+(define-public mupen64plus-video-gliden64
+  ;; The latest release is 5 years old, doesn't build with GCC 11.
+  (let ((commit "b021d8ee437266cfdd7251daf8c23203578b02b6")
+        (revision "0"))
+    (package
+      (name "mupen64plus-video-gliden64")
+      (version (git-version "4.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/gonetz/GLideN64")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "0kcx5m8fjgrdi2dby8qbmkl78picip3jx7hg0ah1cazk192v2x98"))
+         (modules '((guix build utils)))
+         (snippet '(begin
+                     ;; Delete 20 MiB of Windows-related files.
+                     (delete-file-recursively "projects/msvc")
+                     ;; Delete bundled library headers.
+                     (delete-file-recursively "src/GLideNHQ/inc") ;zlib, libpng
+                     (delete-file-recursively "src/inc/freetype")
+                     ;; Unbundle xxhash.
+                     (delete-file-recursively "src/xxHash")
+                     (with-fluids ((%default-port-encoding "ISO-8859-1"))
+                       (substitute* (find-files "." "\\.cpp$")
+                         (("#include \"xxHash/xxhash.h\"")
+                          "#include <xxhash.h>")))))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:tests? #f                     ;no test suite
+        #:configure-flags
+        #~(list "-DMUPENPLUSAPI=ON"
+                "-DUSE_SYSTEM_LIBS=ON"
+                ;; Enable some optimizations.
+                "-DVEC4_OPT=ON"
+                #$(if (target-x86?)
+                      ;; FIXME: Disabled for now as it causes a segmentation
+                      ;; fault (see:
+                      ;; https://github.com/gonetz/GLideN64/issues/2836).
+                      "-DX86_OPT=OFF"    ;extra X86 ASM optimizations
+                      "-DX86_OPT=OFF")
+                #$(if (target-arm?)
+                      "-DNEON_OPT=ON"
+                      "-DNEON_OPT=OFF")
+                #$(if (target-aarch64?)
+                      "-DCRC_ARMV8=ON"  ;use ARMv8 hardware to compute CRCs
+                      "-DCRC_OPT=ON"))  ;use xxHash to compute CRCs)
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              ;; The src/ subdirectory contains the root CMakeLists.txt file.
+              (lambda _
+                (chdir "src")))
+            (add-after 'chdir 'generate-Revision.h
+              (lambda _
+                (invoke "sh" "getRevision.sh" "--nogit"))))))
+      (inputs (list freetype libpng mesa xxhash zlib))
+      (home-page "https://github.com/gonetz/GLideN64")
+      (synopsis "Mupen64Plus GlideN64 video plugin")
+      (description "GLideN64 is a new generation graphics plugin for Nintendo
+64 emulators, which offers better performance and compatibility compared to
+the original Glide64 plugin.  This version is built for use with the
+Mupen64Plus emulator.")
+      (license license:gpl2+))))
 
 (define-public nestopia-ue
   (package
@@ -1461,6 +1519,10 @@ as RetroArch.")
                (substitute* "gfx/common/wayland/generate_wayland_protos.sh"
                  (("/usr/local/share/wayland-protocols")
                  (string-append wayland-protocols "/share/wayland-protocols")))
+
+               ;; Without HLSL, we can still enable GLSLANG and Vulkan support.
+               (substitute* "qb/config.libs.sh"
+                 (("[$]HAVE_GLSLANG_HLSL") "notcare"))
 
                ;; The configure script does not yet accept the extra arguments
                ;; (like ‘CONFIG_SHELL=’) passed by the default configure phase.
@@ -2191,6 +2253,48 @@ from various forks of Gens, and improved platform portability.")
      "bsnes is a Super Nintendo / Super Famicom emulator that focuses on
 performance, features, and ease of use.")
     (license license:gpl3)))
+
+(define-public zsnes
+  (package
+    (name "zsnes")
+    (version "2.0.12")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/xyproto/zsnes")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0g9l1ij3p1adkp97wkp0dz44i2xpmsvfpkxvlfkpr7190dibsgsz"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:system "i686-linux"        ;requires 32 bit libraries to build
+           #:tests? #f                  ;no test suite
+           #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target))
+                   (string-append "CXX=" #$(cxx-for-target))
+                   (string-append "PREFIX=" #$output))
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'configure)))) ;no configure script
+    (native-inputs (list nasm pkg-config))
+    (inputs (list glib libpng mesa ncurses sdl zlib))
+    (home-page "https://www.zsnes.com")
+    (synopsis "Super Nintendo Entertainment System emulator")
+    (description "ZSNES is a @acronym{Super Nintendo Entertainment System,
+SNES} emulator that can play most games at full speed with sound and special
+graphic filters.  Some of its features include:
+@itemize
+@item Support for smooth and dynamic image scaling
+@item Support for rewinding and fast-forwarding in-game
+@item JMA compression format
+@item Change the appearance of the GUI
+@item Take screenshots of currently running games
+@item Saving the game at any point by recording the console’s state
+@item Record movies of gameplay which can be played back.
+@end itemize")
+    (license license:gpl2+)
+    (supported-systems (list "x86_64-linux"))))
 
 ;; python-pwntools requires a -rc release of unicorn
 (define-public unicorn

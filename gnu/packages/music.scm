@@ -3,7 +3,7 @@
 ;;; Copyright © 2015-2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015 Paul van der Walt <paul@denknerd.org>
 ;;; Copyright © 2016 Al McElrath <hello@yrns.org>
-;;; Copyright © 2016, 2017, 2019, 2021-2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016, 2017, 2019, 2021-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2018, 2021 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016, 2017, 2019 Kei Kebreau <kkebreau@posteo.net>
 ;;; Copyright © 2016 John J. Foerch <jjfoerch@earthlink.net>
@@ -5274,6 +5274,8 @@ includes LV2 plugins and a JACK standalone client.")
            qtsvg-5
            qtx11extras
            qtxmlpatterns))
+    (propagated-inputs
+     (list `(,alsa-plugins "pulseaudio"))) ;for libasound_module_conf_pulse.so
     (synopsis "Music composition and notation software")
     (description
      "MuseScore is a music score typesetter.  Its main purpose is the creation
@@ -7295,7 +7297,8 @@ plugin and a standalone JACK application.")
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                      ; no check target
-       #:make-flags (list "CC=gcc")
+       #:make-flags (list "CC=gcc"
+                          "NOOPT=true")
        #:phases
        (modify-phases %standard-phases
          (delete 'configure)            ;no configure target
@@ -7329,6 +7332,7 @@ plugin and a standalone JACK application.")
     (description "Wolf Shaper is a waveshaper plugin with a graph editor.
 It is provided as an LV2 plugin and as a standalone Jack application.")
     (home-page "https://pdesaulniers.github.io/wolf-shaper/")
+    (properties `((tunable? . #t)))
     (license license:gpl3)))
 
 (define-public wolf-spectrum

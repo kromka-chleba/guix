@@ -10,7 +10,7 @@
 ;;; Copyright © 2015 Eric Dvorsak <eric@dvorsak.fr>
 ;;; Copyright © 2016, 2022 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2016 Christine Lemmer-Webber <cwebber@dustycloud.org>
-;;; Copyright © 2015-2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
 ;;; Copyright © 2016, 2017, 2018 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016 David Craven <david@craven.ch>
@@ -1235,7 +1235,7 @@ developed in C/C++ to MariaDB and MySQL databases.")
 (define-public galera
   (package
     (name "galera")
-    (version "26.4.13")
+    (version "26.4.18")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1244,10 +1244,12 @@ developed in C/C++ to MariaDB and MySQL databases.")
                     (recursive? #t)))
               (file-name (git-file-name name version))
               (sha256
-               (base32 "06kf6w0bjkgcmddjd3k1q4cjpg8i78l0c7hcf368h09i1hqd23i6"))))
+               (base32 "1agw763qx9778krcpmgvwcps73ipyjwl0niwsykcxldvzzs314r5"))))
     (build-system cmake-build-system)
     (inputs
-     (list check boost openssl))
+     (list boost openssl))
+    (native-inputs
+     (list check))
     (home-page "https://github.com/codership/galera/")
     (synopsis "Extension to the MariaDB database server")
     (description
@@ -4510,6 +4512,90 @@ transforms idiomatic python function calls to well-formed SQL queries.")
 the SQL language using a syntax that reflects the resulting query.")
     (license license:asl2.0)))
 
+(define-public apache-orc
+  (package
+    (name "apache-orc")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/apache/orc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1fi6d045wakks0x8clplyxgal342kljqjql7vq5gbd6a2qnaz6m2"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:build-type "Release"
+      #:configure-flags
+      #~(list "-DBUILD_JAVA=OFF"
+              "-DINSTALL_VENDORED_LIBS=OFF"
+              "-DCMAKE_CXX_FLAGS=-fPIC"
+              (string-append "-DGTEST_HOME=" #$(this-package-native-input "googletest"))
+              (string-append "-DZSTD_HOME=" (assoc-ref %build-inputs "zstd:lib"))
+              (string-append "-DZLIB_HOME=" #$(this-package-input "zlib"))
+              (string-append "-DPROTOBUF_HOME=" #$(this-package-input "protobuf"))
+              (string-append "-DLZ4_HOME=" #$(this-package-input "lz4"))
+              (string-append "-DSNAPPY_HOME=" #$(this-package-input "snappy")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-bad-test
+            (lambda _
+              ;; This one test fails with an obscure error:
+              ;;
+              ;; Expected: (std::string::npos) != (error.find(error_msg)),
+              ;; actual: 18446744073709551615 vs 18446744073709551615
+              (substitute* "tools/test/TestFileScan.cc"
+                (("findProgram\\(\"tools/src/orc-scan\"\\);" m)
+                 (string-append m "return;")))))
+          (add-after 'unpack 'do-not-download-orc-format
+            (lambda _
+              (substitute* "cmake_modules/ThirdpartyToolchain.cmake"
+                (("URL \"https://archive.apache.org/dist/orc/orc-format.*")
+                 (string-append "URL \"file://"
+                                #$(this-package-native-input "orc-format")
+                                "\"\n")))))
+          (add-after 'unpack 'timezone-fallback
+            (lambda _
+              ;; In the build container we don't have /etc/localtime
+              (substitute* "c++/src/Timezone.cc"
+                (("return getTimezoneByFilename\\(LOCAL_TIMEZONE\\);")
+                 "if (!std::filesystem::exists(std::filesystem::path(LOCAL_TIMEZONE))) {
+  return getTimezoneByName(\"UTC\");
+}
+return getTimezoneByFilename(LOCAL_TIMEZONE);"))))
+          (add-before 'check 'pre-check
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "TZDIR" (search-input-directory inputs
+                                                      "share/zoneinfo")))))))
+    (inputs
+     `(("lz4" ,lz4)
+       ("protobuf" ,protobuf)
+       ("snappy" ,snappy)
+       ("zlib" ,zlib "static")
+       ("zstd" ,zstd)
+       ("zstd:lib" ,zstd "lib")))
+    (native-inputs
+     `(("googletest" ,googletest)
+       ("orc-format" ,(origin
+                        (method url-fetch)
+                        (uri "https://archive.apache.org/dist/orc/orc-format-1.0.0/\
+orc-format-1.0.0.tar.gz")
+                        (sha256
+                         (base32
+                          "1mccbna3mqhhlqs4pw0fa4pgjnq4c41jhxrh84mq27sbz5gsx7vk"))))
+       ("pkg-config" ,pkg-config)
+       ("tzdata" ,tzdata-for-tests)))
+    (home-page "https://orc.apache.org/")
+    (synopsis "Columnar storage for Hadoop workloads")
+    (description "ORC is a self-describing type-aware columnar file format
+designed for Hadoop workloads.  It is optimized for large streaming reads, but
+with integrated support for finding required rows quickly.")
+    (license license:asl2.0)))
+
 ;; There are many wrappers for this in other languages. When touching, please
 ;; be sure to ensure all dependencies continue to build.
 (define-public apache-arrow
@@ -4542,68 +4628,69 @@ the SQL language using a syntax that reflects the resulting query.")
               (setenv "BROTLI_HOME" #$(this-package-input "brotli"))
               (setenv "FLATBUFFERS_HOME" #$(this-package-input "flatbuffers"))
               (setenv "RAPIDJSON_HOME" #$(this-package-input "rapidjson")))))
-       #:build-type "Release"
-       #:configure-flags
-       #~(list "-DARROW_PYTHON=ON"
-               "-DARROW_GLOG=ON"
-               ;; Parquet options
-               "-DARROW_PARQUET=ON"
-               "-DPARQUET_BUILD_EXECUTABLES=ON"
-               ;; The maintainers disallow using system versions of
-               ;; jemalloc:
-               ;; https://issues.apache.org/jira/browse/ARROW-3507. This
-               ;; is unfortunate because jemalloc increases performance:
-               ;; https://arrow.apache.org/blog/2018/07/20/jemalloc/.
-               "-DARROW_JEMALLOC=OFF"
+      #:build-type "Release"
+      #:configure-flags
+      #~(list "-DARROW_PYTHON=ON"
+              ;; Parquet options
+              "-DARROW_PARQUET=ON"
+              "-DPARQUET_BUILD_EXECUTABLES=ON"
+              ;; The maintainers disallow using system versions of
+              ;; jemalloc:
+              ;; https://issues.apache.org/jira/browse/ARROW-3507. This
+              ;; is unfortunate because jemalloc increases performance:
+              ;; https://arrow.apache.org/blog/2018/07/20/jemalloc/.
+              "-DARROW_JEMALLOC=OFF"
 
-               ;; The CMake option ARROW_DEPENDENCY_SOURCE is a global
-               ;; option that instructs the build system how to resolve
-               ;; each dependency. SYSTEM = Finding the dependency in
-               ;; system paths using CMake's built-in find_package
-               ;; function, or using pkg-config for packages that do not
-               ;; have this feature
-               "-DARROW_DEPENDENCY_SOURCE=SYSTEM"
-               "-Dxsimd_SOURCE=SYSTEM"
+              ;; The CMake option ARROW_DEPENDENCY_SOURCE is a global
+              ;; option that instructs the build system how to resolve
+              ;; each dependency. SYSTEM = Finding the dependency in
+              ;; system paths using CMake's built-in find_package
+              ;; function, or using pkg-config for packages that do not
+              ;; have this feature
+              "-DARROW_DEPENDENCY_SOURCE=SYSTEM"
+              "-Dxsimd_SOURCE=SYSTEM"
 
-               "-DARROW_RUNTIME_SIMD_LEVEL=NONE"
-               "-DARROW_SIMD_LEVEL=NONE"
-               "-DARROW_PACKAGE_KIND=Guix"
+              "-DARROW_RUNTIME_SIMD_LEVEL=NONE"
+              "-DARROW_SIMD_LEVEL=NONE"
+              "-DARROW_PACKAGE_KIND=Guix"
 
-               ;; Split output into its component packages.
-               (string-append "-DCMAKE_INSTALL_PREFIX=" #$output:lib)
-               (string-append "-DCMAKE_INSTALL_RPATH=" #$output:lib "/lib")
-               (string-append "-DCMAKE_INSTALL_BINDIR=" #$output "/bin")
-               (string-append "-DCMAKE_INSTALL_INCLUDEDIR=" #$output:include
-                              "/share/include")
+              ;; Split output into its component packages.
+              (string-append "-DCMAKE_INSTALL_PREFIX=" #$output:lib)
+              (string-append "-DCMAKE_INSTALL_RPATH=" #$output:lib "/lib")
+              (string-append "-DCMAKE_INSTALL_BINDIR=" #$output "/bin")
+              (string-append "-DCMAKE_INSTALL_INCLUDEDIR=" #$output:include
+                             "/share/include")
 
-               "-DARROW_WITH_SNAPPY=ON"
-               "-DARROW_WITH_ZLIB=ON"
-               "-DARROW_WITH_ZSTD=ON"
-               "-DARROW_WITH_LZ4=ON"
-               "-DARROW_COMPUTE=ON"
-               "-DARROW_CSV=ON"
-               "-DARROW_DATASET=ON"
-               "-DARROW_FILESYSTEM=ON"
-               "-DARROW_HDFS=ON"
-               "-DARROW_JSON=ON"
-               ;; Arrow Python C++ integration library (required for
-               ;; building pyarrow). This library must be built against
-               ;; the same Python version for which you are building
-               ;; pyarrow. NumPy must also be installed. Enabling this
-               ;; option also enables ARROW_COMPUTE, ARROW_CSV,
-               ;; ARROW_DATASET, ARROW_FILESYSTEM, ARROW_HDFS, and
-               ;; ARROW_JSON.
-               "-DARROW_PYTHON=ON"
+              "-DARROW_WITH_SNAPPY=ON"
+              "-DARROW_WITH_ZLIB=ON"
+              "-DARROW_WITH_ZSTD=ON"
+              "-DARROW_WITH_LZ4=ON"
+              "-DARROW_COMPUTE=ON"
+              "-DARROW_CSV=ON"
+              "-DARROW_DATASET=ON"
+              "-DARROW_FILESYSTEM=ON"
+              "-DARROW_HDFS=ON"
+              "-DARROW_JSON=ON"
+              ;; Arrow Python C++ integration library (required for
+              ;; building pyarrow). This library must be built against
+              ;; the same Python version for which you are building
+              ;; pyarrow. NumPy must also be installed. Enabling this
+              ;; option also enables ARROW_COMPUTE, ARROW_CSV,
+              ;; ARROW_DATASET, ARROW_FILESYSTEM, ARROW_HDFS, and
+              ;; ARROW_JSON.
+              "-DARROW_PYTHON=ON"
+              "-DARROW_ORC=ON"
+              "-DORC_SOURCE=SYSTEM"
 
-               ;; Building the tests forces on all the
-               ;; optional features and the use of static
-               ;; libraries.
-               "-DARROW_BUILD_TESTS=OFF"
-               "-DBENCHMARK_ENABLE_GTEST_TESTS=OFF"
-               ;;"-DBENCHMARK_ENABLE_TESTING=OFF"
-               "-DARROW_BUILD_STATIC=OFF")))
+              ;; Building the tests forces on all the
+              ;; optional features and the use of static
+              ;; libraries.
+              "-DARROW_BUILD_TESTS=OFF"
+              ;;"-DBENCHMARK_ENABLE_TESTING=OFF"
+              "-DARROW_BUILD_STATIC=OFF")))
     (inputs
-     (list boost
+     (list apache-orc
+           boost
            brotli
            bzip2
            double-conversion
@@ -4906,11 +4993,13 @@ algorithm implementations.")
          (add-before 'install 'set-pyarrow-build-options
            (lambda _
              (setenv "PYARROW_BUNDLE_ARROW_CPP_HEADERS" "0")
+             (setenv "PYARROW_WITH_ORC" "1")
              (setenv "PYARROW_WITH_PARQUET" "1")
              (setenv "PYARROW_WITH_DATASET" "1"))))))
     (propagated-inputs
      (list (list apache-arrow "lib")
            (list apache-arrow "include")
+           apache-orc
            python-numpy
            python-pandas
            python-six))

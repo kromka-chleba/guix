@@ -90,7 +90,7 @@
 ;;; Copyright © 2020 Jonathan Rostran <rostranjj@gmail.com>
 ;;; Copyright © 2020, 2021 Noah Evans <noah@nevans.me>
 ;;; Copyright © 2020 Brit Butler <brit@kingcons.io>
-;;; Copyright © 2021, 2022 Aleksandr Vityazev <avityazev@posteo.org>
+;;; Copyright © 2021, 2022, 2024 Aleksandr Vityazev <avityazev@disroot>
 ;;; Copyright © 2021 Yurii Kholodkov <urist.mckorobochka@gmail.com>
 ;;; Copyright © 2021 Alexey Abramov <levenson@mmer.org>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
@@ -26827,6 +26827,29 @@ Dumb Jump performs best with The Silver Searcher @command{ag} or ripgrep
 device tree files.")
     (license license:gpl3+)))
 
+(define-public emacs-devicetree-ts-mode
+  (package
+    (name "emacs-devicetree-ts-mode")
+    (version "0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~akagi/devicetree-ts-mode")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1aif25hqs9i1aax331s4p8b59kxrq584ynfnh640p43jzmqf5p3d"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list tree-sitter-devicetree))
+    (home-page "https://sr.ht/~akagi/devicetree-ts-mode")
+    (synopsis "Tree-sitter major mode for editing DTS files")
+    (description "This package provides tree-sitter major mode
+for editing Devicetree files.")
+    (license license:gpl3+)))
+
 (define-public emacs-daemons
   (package
     (name "emacs-daemons")
@@ -34992,11 +35015,11 @@ other @code{helm-type-file} sources such as @code{helm-locate}.")
     (license license:gpl3+)))
 
 (define-public emacs-telega-server
-  (let ((commit "d1cf1ffe289a18f366b7f3b64f827f0d0755947a")
+  (let ((commit "30615199c76333af9f71992e0992ac691ca5e197")
         (revision "0"))
     (package
       (name "emacs-telega-server")
-      (version (git-version "0.8.250" revision commit))
+      (version (git-version "0.8.255" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -35004,7 +35027,7 @@ other @code{helm-type-file} sources such as @code{helm-locate}.")
                (url "https://github.com/zevlg/telega.el")
                (commit commit)))
          (sha256
-          (base32 "0s1w4zb252d70n05dbsv2rnlfsg53paklafqxasl566nnzbi0d2q"))
+          (base32 "1kdp4wg4fkv5iiihvlkcb633d07vlqzndlv3qgak0s05vylhs72r"))
          (file-name (git-file-name "emacs-telega" version))
          (patches
           (search-patches "emacs-telega-path-placeholder.patch"
@@ -38092,6 +38115,26 @@ work on alists, hash-table and arrays.  All functions are prefixed with
     (description
      "This library provides a generic infrastructure for cross referencing
 commands, in particular @code{find-definition}.")
+    (license license:gpl3+)))
+
+(define-public emacs-xref-union
+  (package
+    (name "emacs-xref-union")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/xref-union-"
+                           version ".tar"))
+       (sha256
+        (base32
+         "0ghhasqs0xq2i576fp97qx6x3h940kgyp76a49gj5cdmig8kyfi8"))))
+    (build-system emacs-build-system)
+    (home-page "https://elpa.gnu.org/packages/xref-union.html")
+    (synopsis "Combine multiple Xref backends")
+    (description
+     "This package provides a way to combine multiple Xref source
+(e.g., Etags and Eglot) and have the results all at once.")
     (license license:gpl3+)))
 
 (define-public emacs-burly

@@ -4,7 +4,7 @@
 ;;; Copyright © 2015 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2015 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2015, 2016 Mark H Weaver <mhw@netris.org>
-;;; Copyright © 2016, 2017, 2018, 2019, 2020, 2021, 2022 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016-2022, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2016 Nikita <nikita@n0.is>
 ;;; Copyright © 2016 Lukas Gradl <lgradl@openmailbox.org>
@@ -1048,7 +1048,7 @@ tools.")
 (define-public tenacity
   (package
     (name "tenacity")
-    (version "1.3-beta2")
+    (version "1.3.1")
     (source
      (origin
        (method git-fetch)
@@ -1057,7 +1057,7 @@ tools.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0pd2vxzqzq7ikz7l2a1h9qwq08276xicvphrpn47gvmwaslah1gn"))))
+        (base32 "0qpcih96c97s4b7lmcvqac9ds09j7a7llvm41p926hll5xmjgsy1"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1077,7 +1077,11 @@ tools.")
               'i-spy-with-my-little-eye-something-in-the-wrong-folder
             (lambda _
               (symlink (string-append (getcwd) "/images")
-                       "src/images")))
+                       "src/images")
+
+              (symlink (string-append (getcwd) "/images")
+                       "src/tracks/images"))
+          )
           (add-after 'unpack 'fix-cmake-rpath
             (lambda* (#:key outputs #:allow-other-keys)
               (substitute* "CMakeLists.txt"
@@ -5443,7 +5447,9 @@ other Gnaural instances, allowing synchronous sessions between many users.")
     (arguments
      `(#:configure-flags
        (list (string-append "--with-lame-prefix="
-                            (assoc-ref %build-inputs "lame")))))
+                            (assoc-ref %build-inputs "lame")))
+       #:make-flags
+       (list "CXXFLAGS += -std=gnu++14")))
     (home-page "http://www.darkice.org/")
     (synopsis "Live audio streamer")
     (description "DarkIce is a live audio streamer.  It takes audio input from

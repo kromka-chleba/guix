@@ -447,6 +447,15 @@ large networks.")
      (list
       #:phases
       '(modify-phases %standard-phases
+         (add-after 'unpack 'patch-tests
+           (lambda _
+             ;; The warning message has changed in numpy.
+             (substitute* "test/test_data.py"
+               (("\"A sparse matrix was passed, but.*array.\",")
+                "\"Sparse data was passed, but dense data is required. Use '.toarray()' to convert to a dense numpy array.\",")
+               ;; anndata prints a warning that causes the test to fail.
+               (("import warnings" m)
+                (string-append m "\nwarnings.filterwarnings(\"ignore\")")))))
          (replace 'check
            (lambda* (#:key tests? #:allow-other-keys)
              (when tests?
@@ -552,7 +561,9 @@ algorithm for a number of different methods.")
                (("suites.append\\(test_docstrings.*")
                 "")))))))
     (propagated-inputs (list python-numpy python-scikit-image python-scipy))
-    (native-inputs (list python-coverage python-coveralls python-flake8))
+    (native-inputs
+     (list python-coverage python-coveralls python-flake8
+           python-pytest))
     (home-page "https://github.com/epfl-lts2/pygsp")
     (synopsis "Graph Signal Processing in Python")
     (description "The PyGSP is a Python package to ease signal processing on

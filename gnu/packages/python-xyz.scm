@@ -180,6 +180,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bdw-gc)
+  #:use-module (gnu packages bioinformatics)
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
@@ -341,6 +342,110 @@
 range of notification services, such as Telegram, Discord, Slack, Amazon SNS,
 Gotify, etc.")
     (license license:bsd-2)))
+
+(define-public python-archspec
+  (package
+    (name "python-archspec")
+    (version "0.2.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/archspec/archspec")
+             (commit (string-append "v" version))
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03yfn4b9xg41pd7vls2cils77wkkb9si1h2qqvnkds661fdankqj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         ;; Numba needs a writable dir to cache functions.
+         (add-before 'build 'set-numba-cache-dir
+           (lambda _
+             (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
+    (propagated-inputs (list python-boltons
+                             python-cooler
+                             python-ctxcore
+                             python-interlap
+                             python-intervaltree
+                             python-jsonschema
+                             python-networkx
+                             python-numba
+                             python-poetry-core
+                             pyscenic
+                             python-scikit-learn
+                             python-tables
+                             python-typing-extensions))
+    (native-inputs (list python-black
+                         python-flake8
+                         python-isort
+                         python-poetry-core
+                         python-pylint
+                         python-pytest
+                         python-pytest-cov))
+    (home-page "https://github.com/archspec/archspec")
+    (synopsis "Library to query system architecture")
+    (description
+     "Archspec offers human-readable labels for system architecture aspects.
+These aspects include CPU, network fabrics, etc.  In addition, it offers
+APIs to detect, query, and compare them.")
+    (license license:expat)))
+
+(define-public python-awkward-cpp
+  (package
+    (name "python-awkward-cpp")
+    (version "32")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "awkward-cpp" version))
+       (sha256
+        (base32 "1w11fjkwrian3vll7jhnisl1b6m6rk2rqx0n9d1hzyq6cbw5m35d"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-importlib-resources python-numpy))
+    (native-inputs
+     (list cmake pybind11 python-pytest python-scikit-build-core))
+    (home-page "https://github.com/scikit-hep/awkward-1.0")
+    (synopsis "CPU kernels and compiled extensions for Awkward Array")
+    (description "Awkward CPP provides precompiled routines for the awkward
+package.  It is not useful on its own, only as a dependency for awkward.")
+    (license license:bsd-3)))
+
+(define-public python-awkward
+  (package
+    (name "python-awkward")
+    (version "2.6.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "awkward" version))
+       (sha256
+        (base32 "1s280ndr4r2q9qn9c0slan5zw37p41cx8q5z6k6p988afr01c6j8"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; CUDA is and requires proprietary software.
+      '(list "--ignore-glob=tests-cuda**")))
+    (propagated-inputs (list python-awkward-cpp
+                             python-fsspec
+                             python-importlib-metadata
+                             python-numpy
+                             python-packaging
+                             python-typing-extensions))
+    (native-inputs
+     (list python-hatch-fancy-pypi-readme
+           python-hatchling
+           python-pytest))
+    (home-page "https://github.com/scikit-hep/awkward-1.0")
+    (synopsis "Manipulate JSON-like data with NumPy-like idioms")
+    (description "Awkward Array is a library for nested, variable-sized data,
+including arbitrary-length lists, records, mixed types, and missing data,
+using NumPy-like idioms.")
+    (license license:bsd-3)))
 
 (define-public python-xmldiff
   (package
@@ -984,6 +1089,27 @@ transformation of the plane.")
 from a docstring rather than the other way around.")
    (license license:mpl2.0)))
 
+(define-public python-array-api-compat
+  (package
+    (name "python-array-api-compat")
+    (version "1.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "array_api_compat" version))
+       (sha256
+        (base32 "1bvn92v52h8p2zpinwv5bl1314kdjw3msalj91nczfdbrmay78bl"))))
+    (build-system pyproject-build-system)
+    ;; Tests would require all supported array libraries, including pytorch
+    (arguments (list #:tests? #false))
+    (propagated-inputs (list python-numpy))
+    (home-page "https://data-apis.org/array-api-compat/")
+    (synopsis "Array API compatibility wrapper for NumPy et al")
+    (description
+     "This package provides a wrapper around @code{NumPy} and other array
+libraries to make them compatible with the Array API standard")
+    (license license:expat)))
+
 (define-public python-cachetools
   (package
     (name "python-cachetools")
@@ -1032,6 +1158,29 @@ decorators, including variants of the Python standard library's
 It uses a plain-text database, a location-independent library, and features
 git integration, command-line support, and a curses-based TUI.")
     (license license:expat)))
+
+(define-public python-colorcet
+  (package
+    (name "python-colorcet")
+    (version "3.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "colorcet" version))
+       (sha256
+        (base32 "1sx4m5xbz1k8bm8cr2f3x21dip167k7c1nv35npqla52h76v6899"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-nbval
+                         python-packaging
+                         python-pytest
+                         python-pytest-cov
+                         python-pytest-mpl))
+    (home-page "https://colorcet.holoviz.org/")
+    (synopsis "Collection of perceptually uniform colormaps")
+    (description "Colorcet is a collection of perceptually accurate 256-color
+colormaps for use with Python plotting programs like Bokeh, Matplotlib,
+HoloViews, and Datashader.")
+    (license license:cc-by4.0)))
 
 (define-public python-colored
   (package
@@ -8127,13 +8276,13 @@ writing C extensions for Python as easy as Python itself.")
     ;; Cython 3 is not officially released yet, so distinguish the name
     ;; for now.
     (name "python-cython-next")
-    (version "3.0.0b2")
+    (version "3.0.8")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "Cython" version))
               (sha256
                (base32
-                "0mb7gpavs87am29sbk6yqznsybxj9dk4fwj4370j9sbrcmjq0hkc"))))
+                "1rlxscrn4bgdlbhjjikknbz5s2hyvn2rjfparry5wxnmiwyl4cw3"))))
     (properties '())))
 
 ;; NOTE: when upgrading numpy please make sure that python-numba,
@@ -8441,6 +8590,47 @@ it should not be considered a full replacement.  It lacks layouts that are not
 easily generalized like @dfn{compressed sparse row/column}(CSR/CSC) and
 depends on @code{scipy.sparse} for some computations.")
     (license license:bsd-3)))
+
+(define-public python-multiscale-spatial-image
+  (package
+    (name "python-multiscale-spatial-image")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "multiscale_spatial_image" version))
+       (sha256
+        (base32 "01kcagjy797hbz5an9cp8wcl5krgp21yb7ibfimvpidb3jp5lfhb"))))
+    (build-system pyproject-build-system)
+    ;; All interesting tests require file downloads over IPFS.
+    (arguments (list #:tests? #false))
+    (propagated-inputs
+     (list `(,insight-toolkit "python")
+           python-dask
+           python-dask-image
+           python-numpy
+           python-spatial-image
+           python-xarray
+           python-xarray-datatree))
+    (native-inputs
+     (list python-fsspec
+           python-hatchling
+           python-ipfsspec
+           python-jsonschema
+           python-nbmake
+           python-pooch
+           python-pytest
+           python-pytest-mypy
+           python-urllib3
+           python-zarr))
+    (home-page "https://github.com/spatial-image/multiscale-spatial-image")
+    (synopsis "Multi-dimensional spatial image data structure")
+    (description
+     "This package lets you generate a multiscale, chunked, multi-dimensional
+spatial image data structure that can serialized to OME-NGFF.  Each scale is a
+scientific Python Xarray spatial-image Dataset, organized into nodes of an
+Xarray Datatree.")
+    (license license:asl2.0)))
 
 (define-public python-spectra
   (package
@@ -9511,6 +9701,35 @@ a simple netcat replacement with chaining support.")
 Python code against some of the style conventions in
 @url{http://www.python.org/dev/peps/pep-0008/,PEP 8}.")
     (license license:expat)))
+
+(define-public python-pyct
+  (package
+    (name "python-pyct")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyct" version))
+       (sha256
+        (base32 "1856dbrcpc0nxxhlfh3dqzz7xxn5sdi600q45hsprqyqrg2lm7yx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; These tests want to download example data from the internet.
+      '(list "-k" (string-append
+                   "not test_examples_with_use_test_data"
+                   " and not test_examples_using_test_data_and_force_with_prexisting_content_in_target"
+                   " and not test_fetch_data_using_test_data_with_no_file_in_data_copies_from_stubs"
+                   " and not test_fetch_data_using_test_data_and_force_with_file_in_data_over_writes"))))
+    (propagated-inputs (list python-param python-pyyaml))
+    (native-inputs (list python-flake8 python-pytest))
+    (home-page "https://github.com/holoviz-dev/pyct")
+    (synopsis "Common packaging tasks")
+    (description
+     "This Python package provides utilities to run common packaging tasks,
+e.g. copy examples, fetch data, etc.")
+    (license license:bsd-3)))
 
 (define-public python-multidict
   (package
@@ -13032,17 +13251,41 @@ approach.")
     (version "5.32.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "snakemake" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/snakemake/snakemake")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "13013gdavwvyj1qr9xfi9fpwhb3km8c3z53bja5b7ic3sb2z6dgz"))))
-    (build-system python-build-system)
+        (base32 "0nxp4z81vykv07kv2b6zrwk7ns8s10zqsb7vcignp8695yq3nlcm"))))
+    (build-system pyproject-build-system)
     (arguments
-     ;; TODO: Package missing test dependencies.
      (list
-      #:tests? #f
+      #:test-flags
+      '(list
+        ;; We have no TES support.
+        "--ignore=tests/test_tes.py"
+        ;; This test attempts to change S3 buckets on AWS and fails
+        ;; because there are no AWS credentials.
+        "--ignore=tests/test_tibanna.py"
+        ;; It's a similar story with this test, which requires access
+        ;; to the Google Storage service.
+        "--ignore=tests/test_google_lifesciences.py")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'tabulate-compatibility
+            (lambda _
+              (substitute* "snakemake/dag.py"
+                (("\"job\": rule,")
+                 "\"job\": rule.name,"))))
+          (add-after 'unpack 'patch-version
+            (lambda _
+              (substitute* "setup.py"
+                (("version=versioneer.get_version\\(\\)")
+                 (format #f "version=~s" #$version)))
+              (substitute* '("snakemake/_version.py"
+                             "versioneer.py")
+                (("0\\+unknown") #$version))))
           ;; For cluster execution Snakemake will call Python.  Since there is
           ;; no suitable PYTHONPATH set, cluster execution will fail.  We fix
           ;; this by calling the snakemake wrapper instead.
@@ -13050,7 +13293,9 @@ approach.")
             (lambda _
               (substitute* "snakemake/executors/__init__.py"
                 (("\\{sys.executable\\} -m snakemake")
-                 (string-append #$output "/bin/snakemake"))))))))
+                 (string-append #$output "/bin/snakemake")))))
+          (add-before 'check 'pre-check
+            (lambda _ (setenv "HOME" "/tmp"))))))
     (propagated-inputs
      (list python-appdirs
            python-configargparse
@@ -13068,6 +13313,12 @@ approach.")
            python-requests
            python-toposort
            python-wrapt))
+    (native-inputs
+     (list git-minimal
+           python-wrapper
+           python-pytest
+           python-pandas
+           python-requests-mock))
     (home-page "https://snakemake.readthedocs.io")
     (synopsis "Python-based execution environment for make-like workflows")
     (description
@@ -13106,6 +13357,11 @@ Python style, together with a fast and comfortable execution environment.")
               (substitute* "snakemake/executors/__init__.py"
                 (("\\{sys.executable\\} -m snakemake")
                  (string-append #$output "/bin/snakemake")))))
+          (add-after 'unpack 'tabulate-compatibility
+            (lambda _
+              (substitute* "snakemake/dag.py"
+                (("\"job\": rule,")
+                 "\"job\": rule.name,"))))
           (add-after 'unpack 'patch-version
             (lambda _
               (substitute* "setup.py"
@@ -13197,6 +13453,12 @@ Python style, together with a fast and comfortable execution environment.")
                  (string-append
                   "tibanna_args.command = command.replace('"
                   #$output "/bin/snakemake', 'python3 -m snakemake')")))))
+          ;; No longer needed with 7.15.2+
+          (add-after 'unpack 'tabulate-compatibility
+            (lambda _
+              (substitute* "snakemake/dag.py"
+                (("\"job\": rule,")
+                 "\"job\": rule.name,"))))
           (add-after 'unpack 'patch-version
             (lambda _
               (substitute* "setup.py"
@@ -15502,14 +15764,14 @@ tasks, sockets, files, locks, and queues.")
 (define-public python-tables
   (package
     (name "python-tables")
-    (version "3.6.1")
+    (version "3.7.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "tables" version))
        (sha256
         (base32
-         "0j8vnxh2m5n0cyk9z3ndcj5n1zj5rdxgc1gb78bqlyn2lyw75aa9"))
+         "1zp1qmas4pgcag9sn0gwd40c6ibn9bg056d6ckjq7agjsrx8hap9"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -15566,7 +15828,8 @@ tasks, sockets, files, locks, and queues.")
                       (string-append "--hdf5="
                                      (assoc-ref inputs "hdf5"))))))))
     (propagated-inputs
-     (list python-numexpr python-numpy))
+     (list python-numexpr python-numpy python-packaging
+           python-py-cpuinfo))
     (native-inputs
      (list python-cython pkg-config))
     (inputs
@@ -16281,6 +16544,38 @@ a hash value.")
 (define-public python-termcolor
   (package
     (name "python-termcolor")
+    (version "2.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "termcolor" version))
+       (sha256
+        (base32
+         "0ykvmjrsjr5w4h63x7qmx6rsdb1p5a4nv8wgg7nl3b688xhfbfda"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'fix-pyproject
+           (lambda _
+             ;; The build system doesn't like to hear of Python 3.13.
+             (substitute* "pyproject.toml"
+               (("  \"Programming Language .*") "")))))))
+    (native-inputs
+     (list python-hatch-vcs
+           python-hatchling
+           python-pytest
+           python-pytest-cov))
+    (home-page "https://pypi.org/project/termcolor/")
+    (synopsis "ANSII Color formatting for terminal output")
+    (description
+     "This package provides ANSII Color formatting for output in terminals.")
+    (license license:expat)))
+
+(define-public python-termcolor-1
+  (package
+    (inherit python-termcolor)
     (version "1.1.0")
     (source
      (origin
@@ -16289,15 +16584,8 @@ a hash value.")
        (sha256
         (base32
          "0fv1vq14rpqwgazxg4981904lfyp84mnammw7y046491cv76jv8x"))))
-    (build-system python-build-system)
-    (arguments
-     ;; There are no tests.
-     `(#:tests? #f))
-    (home-page "https://pypi.org/project/termcolor/")
-    (synopsis "ANSII Color formatting for terminal output")
-    (description
-     "This package provides ANSII Color formatting for output in terminals.")
-    (license license:expat)))
+    ;; There are no tests
+    (arguments (list #:tests? #false))))
 
 (define-public python-terminaltables
   (package
@@ -20486,18 +20774,15 @@ It uses LR parsing and does extensive error checking.")
 (define-public python-tabulate
   (package
     (name "python-tabulate")
-    (version "0.8.9")
+    (version "0.9.0")
     (source (origin
              (method url-fetch)
              (uri (pypi-uri "tabulate" version))
              (sha256
               (base32
-               "19qkdz8xwk5jxa5xn53mnk76qnh4ysm81vzj664jw1b0azr167gb"))))
-    (build-system python-build-system)
-    (arguments
-     ;; FIXME: The pypi release tarball is missing a 'test/common.py'
-     ;; and the latest release is not tagged in the upstream repository.
-     '(#:tests? #f))
+               "0g4b0qnbw55igbpxfxzciqvb6w8ncw4gmcgyq0lyavcnylmv3580"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools-scm))
     (home-page "https://bitbucket.org/astanin/python-tabulate")
     (synopsis "Pretty-print tabular data")
     (description
@@ -26833,18 +27118,52 @@ inferring type information using compile-time introspection.")
 (define-public python-pooch
   (package
     (name "python-pooch")
-    (version "1.3.0")
+    (version "1.8.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pooch" version))
        (sha256
-        (base32 "1618adsg9r8fsv422sv35z1i723q3a1iir5v7dv2sklh4pl4im1h"))))
-    (build-system python-build-system)
+        (base32 "0w32fhfp67k0ip0gxjpw8kxdx9ghybxmqkv9sbwy99nrgl4n7vr7"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f)) ;requires online data
+     (list
+      #:test-flags
+      '(list "-k"
+             (string-append
+              ;; We don't have the test archives
+              "not test_decompress"
+              " and not test_multiple_unpacking"
+              " and not test_unpack_members_with_leading_dot"
+              " and not test_unpacking"
+              " and not test_unpacking_members_then_no_members"
+              " and not test_unpacking_wrong_members_then_no_members"
+              ;; These all require access to the internet
+              " and not test_check_availability"
+              " and not test_check_availability_invalid_downloader"
+              " and not test_check_availability_on_ftp"
+              " and not test_create_and_fetch"
+              " and not test_downloader_arbitrary_progressbar"
+              " and not test_fetch_with_downloader"
+              " and not test_figshare_data_repository_versions"
+              " and not test_load_registry_from_doi"
+              " and not test_pooch_corrupted"
+              " and not test_pooch_custom_url"
+              " and not test_pooch_download"
+              " and not test_pooch_download_retry"
+              " and not test_pooch_download_retry_fails_eventually"
+              " and not test_pooch_download_retry_off_by_default"
+              " and not test_pooch_logging_level"
+              " and not test_pooch_update"
+              " and not test_retrieve"
+              " and not test_retrieve_default_path"
+              " and not test_retrieve_fname"
+              " and not test_stream_download")
+             "--ignore=pooch/tests/test_downloaders.py")))
     (propagated-inputs
-     (list python-appdirs python-packaging python-requests))
+     (list python-packaging python-platformdirs python-requests))
+    (native-inputs
+     (list python-pytest python-setuptools-scm))
     (home-page "https://github.com/fatiando/pooch")
     (synopsis "Manage your Python library's sample data files")
     (description
@@ -27365,7 +27684,7 @@ N-dimensional arrays for Python.")
 (define-public python-anndata
   (package
     (name "python-anndata")
-    (version "0.8.0")
+    (version "0.10.7")
     (source
      (origin
        ;; The tarball from PyPi doesn't include tests.
@@ -27376,29 +27695,39 @@ N-dimensional arrays for Python.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0v7npqrg1rdm8jzw22a45c0mqrmsv05r3k88i3lhzi0pzzxca1i1"))))
+         "1i08rm1xnsnq12rjv4virgdx61bra1gsfagjdq0kcpz8npxqa0as"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      '(list "-k" "not concatenation.rst")
+      '(list "-k" (string-append "not concatenation.rst"
+                                 ;; fixture 'mocker' not found
+                                 " and not test_consecutive_bool"))
       #:phases
       #~(modify-phases %standard-phases
           ;; Doctests require scanpy from (gnu packages bioinformatics)
           (add-after 'unpack 'disable-doctests
             (lambda _
+              (substitute* "conftest.py"
+                (("import pytest")
+                 (string-append "import pytest\nimport _pytest\n"))
+                (("pytest.DoctestItem")
+                 "_pytest.doctest.DoctestItem"))
               (substitute* "pyproject.toml"
                 (("--doctest-modules") ""))))
           (add-before 'build 'set-version
             (lambda _
               (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)
-              (substitute* "anndata/_metadata.py"
-                (("__version__ =.*")
-                 (string-append "__version__ = \"" #$version "\"\n")))
               ;; ZIP does not support timestamps before 1980.
-              (setenv "SOURCE_DATE_EPOCH" "315532800"))))))
+              (setenv "SOURCE_DATE_EPOCH" "315532800")))
+          ;; Numba needs a writable dir to cache functions.
+          (add-before 'check 'set-numba-cache-dir
+            (lambda _
+              (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
     (propagated-inputs
-     (list python-h5py
+     (list python-array-api-compat
+           python-exceptiongroup ;only for Python <3.11
+           python-h5py
            python-importlib-metadata
            python-natsort
            python-numcodecs
@@ -27408,9 +27737,18 @@ N-dimensional arrays for Python.")
            python-scikit-learn
            python-zarr))
     (native-inputs
-     (list python-boltons
+     (list python-awkward
+           python-boltons
+           python-dask
+           python-distributed
+           python-hatchling
+           python-hatch-vcs
            python-joblib
+           python-loompy
+           python-matplotlib
            python-pytest
+           python-pytest-doctestplus
+           python-pytest-xdist
            python-toml
            python-flit
            python-setuptools-scm))
@@ -27756,22 +28094,17 @@ they use the same path.")
 (define-public python-partd
   (package
     (name "python-partd")
-    (version "1.2.0")
+    (version "1.4.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "partd" version))
        (sha256
         (base32
-         "1sy3vdfyyx3bc5590zb7gwpsmimqz8m992x9hsydq8nmhixqjrxa"))))
+         "0rvz2si6lbyhk7hj804gilq2y2bfdi33q81iwwkmgskgkva5vhjn"))))
     (build-system pyproject-build-system)
     (propagated-inputs
-     (list python-blosc
-           python-locket
-           python-numpy
-           python-pandas
-           python-pyzmq
-           python-toolz))
+     (list python-locket python-numpy python-pandas python-pyzmq python-toolz))
     (home-page "https://github.com/dask/partd/")
     (synopsis "Appendable key-value storage")
     (description "Partd stores key-value pairs.  Values are raw bytes.  We
@@ -27826,16 +28159,16 @@ decisions with any given backend.")
 (define-public python-dask
   (package
     (name "python-dask")
-    (version "2023.7.0")
+    (version "2024.4.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/dask/dask/")
-             (commit "8523b3bae2ec0183d9d92cc536a3405f15189b7e")))
+             (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1x617m0jlc63v938kqga9mhflhac3aj1ylq5mkpf2g9pd9x2hcbz"))))
+        (base32 "1kaxlvqd5hknlb0awck5vcw9b18nl8rpxx4j78js8p9d0y5rsgw8"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -27843,9 +28176,24 @@ decisions with any given backend.")
       #:test-flags
       #~(list "-n" "auto"
               "-m" "not gpu and not slow and not network"
+              ;; These all fail with different hashes.  Doesn't seem
+              ;; problematic.
+              "--ignore-glob=**/test_tokenize.py"
+              ;; ORC tests crash Python with a failure to find the global
+              ;; localtime file.  See also
+              ;; https://github.com/apache/arrow/issues/40633.
+              "--ignore-glob=**/test_orc.py"
               "-k" (string-append
                     ;; This one cannot be interrupted.
                     "not test_interrupt"
+                    ;; This one fails with "local variable 'ctx' referenced
+                    ;; before assignment".  Maybe enable this in later
+                    ;; versions (or when pandas has been upgraded.
+                    " and not test_dt_accessor"
+                    ;; This fails when dask-expr is among the inputs.
+                    " and not test_groupby_internal_repr"
+                    ;; This fails with different job ids.
+                    " and not test_to_delayed_optimize_graph"
                     ;; This one expects a deprecation warning that never
                     ;; comes.
                     " and not test_RandomState_only_funcs")
@@ -27880,11 +28228,17 @@ parentdir_prefix = dask-
               ;; This option is not supported by our version of pytest.
               (substitute* "pyproject.toml"
                 (("--cov-config=pyproject.toml") ""))))
+          (add-after 'unpack 'patch-pyproject
+            (lambda _
+              ;; We use pyarrow > 14
+              (substitute* "pyproject.toml"
+                (("\"pyarrow_hotfix\",") ""))))
           (add-before 'check 'pre-check
             (lambda _ (chdir "/tmp"))))))
     (propagated-inputs
      (list python-click ;needed at runtime
            python-cloudpickle
+           python-dask-expr
            python-fsspec
            python-importlib-metadata ;needed at runtime for dask/_compatibility.py
            python-numpy
@@ -27909,6 +28263,66 @@ and large data collections like parallel arrays, dataframes, and lists that
 extend common interfaces like NumPy, Pandas, or Python iterators to
 larger-than-memory or distributed environments.  These parallel collections
 run on top of the dynamic task schedulers.")
+    (license license:bsd-3)))
+
+(define-public python-dask/bootstrap
+  (package
+    (inherit python-dask)
+    (properties '((hidden? . #true)))
+    (arguments
+     (substitute-keyword-arguments (package-arguments python-dask)
+       ((#:tests? _ #t) #f)))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs python-dask)
+       (delete "python-dask-expr")))))
+
+(define-public python-dask-image
+  (package
+    (name "python-dask-image")
+    (version "2023.8.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dask-image" version))
+       (sha256
+        (base32 "1dh49lvirf5fbgq5hw1c4972czg5w12fg9y689cinyjjn22qk6jy"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Flake8 attribute errors.
+      '(list "--ignore=dask_image/ndfilters/_threshold.py"
+             "--ignore=dask_image/ndfourier/_utils.py"
+             "--ignore=dask_image/ndinterp/__init__.py"
+             "--ignore=dask_image/ndmeasure/__init__.py"
+             "--ignore=dask_image/ndmeasure/_utils/_find_objects.py"
+             "--ignore=dask_image/ndmeasure/_utils/_label.py"
+             "--ignore=tests/test_dask_image/test_ndfilters/test__conv.py"
+             "--ignore=tests/test_dask_image/test_ndfourier/test_core.py"
+             "--ignore=tests/test_dask_image/test_ndinterp/test_spline_filter.py"
+             "--ignore=tests/test_dask_image/test_ndmeasure/test_core.py"
+             "--ignore=tests/test_dask_image/test_ndmeasure/test_find_objects.py")))
+    (propagated-inputs (list python-dask
+                             python-numpy
+                             python-pandas-2
+                             python-pims
+                             python-scipy
+                             python-tifffile))
+    (native-inputs
+     (list python-pytest-flake8 python-pytest))
+    (home-page "https://github.com/dask/dask-image")
+    (synopsis "Distributed image processing")
+    (description "This is a package for image processing with Dask arrays.
+Features:
+
+@itemize
+@item Provides support for loading image files.
+@item Implements commonly used N-D filters.
+@item Includes a few N-D Fourier filters.
+@item Provides some functions for working with N-D label images.
+@item Supports a few N-D morphological operators.
+@end itemize
+")
     (license license:bsd-3)))
 
 (define-public python-ilinkedlist
@@ -31788,6 +32202,48 @@ PP module features cross-platform portability and dynamic load balancing.
 Thus applications written with PP will parallelize efficiently even on
 heterogeneous and multi-platform clusters (including clusters running other
 applications with variable CPU loads).")
+    (license license:bsd-3)))
+
+(define-public python-param
+  (package
+    (name "python-param")
+    (version "2.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "param" version))
+       (sha256
+        (base32 "07z7az7xg8pzjrmaf928is7n6siw9v9nxfmf0a5vgqj7nl40pcx7"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-cloudpickle
+           python-coverage
+           python-hatchling
+           python-hatch-vcs
+           python-ipython
+           python-jsonschema
+           python-nbval
+           python-nest-asyncio
+           python-numpy
+           python-odfpy
+           python-openpyxl
+           python-pandas
+           python-pyarrow
+           python-pytest
+           python-pytest-asyncio
+           python-pytest-xdist
+           python-tables
+           python-xlrd))
+    (home-page "https://param.holoviz.org/")
+    (synopsis
+     "Make your Python code clearer and more reliable by declaring Parameters")
+    (description
+     "Param is a library for handling all the user-modifiable parameters,
+arguments, and attributes that control your code.  It provides automatic,
+robust error-checking while dramatically reducing boilerplate code, letting
+you focus on what you want your code to do rather than on checking for all the
+possible ways users could supply inappropriate values to a function or
+class.")
     (license license:bsd-3)))
 
 (define-public python-djitellopy

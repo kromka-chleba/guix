@@ -3,7 +3,7 @@
 ;;; Copyright © 2016, 2017, 2018, 2020, 2021 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016 Pjotr Prins <pjotr.guix@thebird.nl>
 ;;; Copyright © 2016 Ben Woodcroft <donttrustben@gmail.com>
-;;; Copyright © 2017, 2022 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2017, 2022, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017, 2018, 2019, 2020, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019, 2020, 2021, 2022, 2023 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2020 Peter Lo <peterloleungyau@gmail.com>
@@ -34,6 +34,7 @@
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix gexp)
+  #:use-module (guix utils)
   #:use-module (guix git-download)
   #:use-module (guix build-system r)
   #:use-module (gnu packages)
@@ -2091,6 +2092,54 @@ RNA-seq samples from Alasoo, et al. \"Shared genetic effects on chromatin and
 gene expression indicate a role for enhancer priming in immune response\", published
 in Nature Genetics, January 2018.")
     (license license:gpl2+)))
+
+;; This is available only in the devel branch of Bioconductor.
+(define-public r-memes
+  (let ((commit "55f0df1fe65c8ead5252542fdc0da0ff2339049e")
+        (revision "1"))
+    (package
+      (name "r-memes")
+      (version (git-version "1.11.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/snystrom/memes")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0mp3a610v293prmyid3w1w8fkjkppjnim60h7p9vz2884d0wdvk4"))))
+      (properties `((upstream-name . "memes")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-biostrings
+                               r-cmdfun
+                               r-dplyr
+                               r-genomicranges
+                               r-ggplot2
+                               r-ggseqlogo
+                               r-magrittr
+                               r-matrixstats
+                               r-patchwork
+                               r-processx
+                               r-purrr
+                               r-readr
+                               r-rlang
+                               r-tibble
+                               r-tidyr
+                               r-universalmotif
+                               r-usethis
+                               r-xml2))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/snystrom/memes")
+      (synopsis
+       "Motif matching, comparison, and de novo discovery using the MEME Suite")
+      (description
+       "This package facilitates motif analysis using MEME Suite tools.
+Memes provides data aware utilities for using GRanges objects as
+entrypoints to motifanalysis, data structures for examining & editing
+motif lists, and novel data visualizations.  Memes functions and data
+structures are amenable to both base R and tidyverse workflows.")
+      (license license:expat))))
 
 (define-public r-methylclockdata
   (package
@@ -14272,17 +14321,37 @@ coordinates.")
     (arguments
      (list
       #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'make-build-order-reproducible
-           (lambda _
-             (substitute* '("src/SYMPHONY/Cgl/configure.ac"
-                            "src/SYMPHONY/Cgl/configure")
-               (("for file in `ls \\*/Makefile.in`")
-                "for file in `ls */Makefile.in | sort`")))))))
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'make-build-order-reproducible
+            (lambda _
+              (substitute* '("src/SYMPHONY/Cgl/configure.ac"
+                             "src/SYMPHONY/Cgl/configure")
+                (("for file in `ls \\*/Makefile.in`")
+                 "for file in `ls */Makefile.in | sort`"))))
+          #$@(if (or (target-aarch64?)
+                     (target-riscv64?))
+                 #~((add-after 'unpack 'update-config-files
+                      (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                        (for-each
+                          (lambda (location)
+                            (for-each (lambda (file)
+                                        (install-file
+                                          (search-input-file
+                                            (or native-inputs inputs)
+                                            (string-append "/bin/" file))
+                                          (dirname location)))
+                                      '("config.guess" "config.sub")))
+                          (find-files "." "config\\.guess")))))
+                 #~()))))
     (inputs
      (list zlib))
     (native-inputs
-     (list pkg-config r-knitr))
+     (append
+       (list pkg-config r-knitr)
+       (if (or (target-aarch64?)
+               (target-riscv64?))
+           (list config)
+           '())))
     (home-page "https://r-forge.r-project.org/projects/rsymphony")
     (synopsis "Symphony integer linear programming solver in R")
     (description
