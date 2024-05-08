@@ -7865,7 +7865,7 @@ formatting information, rather than the current locale name.")
 (define-public go-github-com-prometheus-common
   (package
     (name "go-github-com-prometheus-common")
-    (version "0.4.1")
+    (version "0.45.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -7874,7 +7874,7 @@ formatting information, rather than the current locale name.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0sf4sjdckblz1hqdfvripk3zyp8xq89w7q75kbsyg4c078af896s"))))
+                "006y6mlxglr2xzmdqxl5bwh899whfx1prcgjai7qhhs5ys5dspy5"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "github.com/prometheus/common"
@@ -7922,7 +7922,7 @@ system, kernel, and process metrics from the @file{/proc} pseudo file system.")
 (define-public go-github-com-prometheus-client-golang
   (package
     (name "go-github-com-prometheus-client-golang")
-    (version "1.2.1")
+    (version "1.17.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -7931,7 +7931,7 @@ system, kernel, and process metrics from the @file{/proc} pseudo file system.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0zs49psk23n9z8wrl02d5vib5wclpym8kaxcy6n5pk696i419065"))))
+                "1v8vdvi9wlpf18nxi62diysfnh9gc3c3cqq6hvx378snsvvl6n82"))))
     (build-system go-build-system)
     (arguments
      '(#:tests? #f
@@ -8401,30 +8401,6 @@ programs that use traditional command lines.")
 provides an API similar to that of NET/HTTP to facilitate the development of
 Gemini clients and servers.")
     (license license:expat)))
-
-(define-public go-git-sr-ht-sircmpwn-getopt
-  (package
-    (name "go-git-sr-ht-sircmpwn-getopt")
-    (version "1.0.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://git.sr.ht/~sircmpwn/getopt")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0f9rammnmhaz21qkmz7qf76r8jlzi323g05ps3j7gwrxlw7442a6"))))
-    (build-system go-build-system)
-    (arguments
-     (list #:import-path "git.sr.ht/~sircmpwn/getopt"))
-    (propagated-inputs (list go-github-com-stretchr-testify))
-    (home-page "https://git.sr.ht/~sircmpwn/getopt")
-    (synopsis "POSIX getopt for Go")
-    (description
-     "This package provides a POSIX-compatible implementation of
-@code{getopt} for Go.")
-    (license license:bsd-3)))
 
 (define-public gofumpt
   (package
@@ -9248,50 +9224,6 @@ kubernetes-sigs/yaml is a permanent fork of
     (synopsis "Functions to colorize strings for terminal output")
     (description
      "Colorstring provides functions for colorizing strings for terminal output.")
-    (license license:expat)))
-
-(define-public go-git-sr-ht-emersion-go-scfg
-  (package
-    (name "go-git-sr-ht-emersion-go-scfg")
-    (version "0.0.0-20211215104734-c2c7a15d6c99")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://git.sr.ht/~emersion/go-scfg")
-             (commit (go-version->git-ref version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "02gn8hz8zfv8y0krysx2wv951gw8hmhdfqf1ysidwm7i293365w4"))))
-    (build-system go-build-system)
-    (arguments (list #:import-path "git.sr.ht/~emersion/go-scfg"))
-    (propagated-inputs
-     (list go-github-com-google-shlex
-           go-github-com-davecgh-go-spew))
-    (home-page "https://git.sr.ht/~emersion/go-scfg")
-    (synopsis "Go library for simple configuration file format")
-    (description "Package go-scfg parses scfg files.")
-    (license license:expat)))
-
-(define-public go-git-sr-ht-emersion-gqlclient
-  (package
-    (name "go-git-sr-ht-emersion-gqlclient")
-    (version "0.0.0-20230820050442-8873fe0204b9")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://git.sr.ht/~emersion/gqlclient")
-             (commit (go-version->git-ref version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0x64kcryawdr0daq1w6fada60zqrddw75yi397835b9ij7wb5gmh"))))
-    (build-system go-build-system)
-    (arguments (list #:import-path "git.sr.ht/~emersion/gqlclient"))
-    (home-page "https://git.sr.ht/~emersion/gqlclient")
-    (synopsis "GraphQL client and code generator")
-    (description
-     "This package provides a GraphQL client and code generator for Go.")
     (license license:expat)))
 
 (define-public go-github-com-google-go-jsonnet

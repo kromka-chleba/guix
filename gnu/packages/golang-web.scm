@@ -16,16 +16,19 @@
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
 ;;; Copyright © 2021 Sarah Morgensen <iskarian@mgsn.dev>
 ;;; Copyright © 2022 Adam Kandur <kefironpremise@gmail.com>
+;;; Copyright © 2022 Dhruvin Gandhi <contact@dhruvin.dev>
 ;;; Copyright © 2022 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2022 jgart via Guix-patches via <guix-patches@gnu.org>
 ;;; Copyright © 2022 muradm <mail@muradm.net>
 ;;; Copyright © 2022, 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2023 Filip Lajszczak <filip@lajszczak.dev>
 ;;; Copyright © 2023 Fries <fries1234@protonmail.com>
 ;;; Copyright © 2023 Hilton Chain <hako@ultrarare.space>
 ;;; Copyright © 2023 Katherine Cox-Buday <cox.katherine.e@gmail.com>
 ;;; Copyright © 2023 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2023 Thomas Ieong <th.ieong@free.fr>
 ;;; Copyright © 2023, 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2024 Jesse Eisses <jesse@eisses.email>
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -101,6 +104,28 @@
      "This package provides access to Google Compute Engine (GCE) metadata and
 API service accounts for Go.")
     (license license:asl2.0)))
+
+(define-public go-git-sr-ht-emersion-gqlclient
+  (package
+    (name "go-git-sr-ht-emersion-gqlclient")
+    (version "0.0.0-20230820050442-8873fe0204b9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~emersion/gqlclient")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0x64kcryawdr0daq1w6fada60zqrddw75yi397835b9ij7wb5gmh"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:import-path "git.sr.ht/~emersion/gqlclient"))
+    (home-page "https://git.sr.ht/~emersion/gqlclient")
+    (synopsis "GraphQL client and code generator")
+    (description
+     "This package provides a GraphQL client and code generator for Go.")
+    (license license:expat)))
 
 (define-public go-github-com-alexliesenfeld-health
   (package
@@ -1563,6 +1588,36 @@ which produce colorized output using github.com/fatih/color.")
     (description "OpenTracing-Go is a Go implementation of the OpenTracing API.")
     (license license:asl2.0)))
 
+(define-public go-github-com-pires-go-proxyproto
+  (package
+    (name "go-github-com-pires-go-proxyproto")
+    (version "0.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pires/go-proxyproto")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p18w555xp187fl807h1yd092cvs8jarp98pa76zl84rxlk4k2h4"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.18
+      #:import-path "github.com/pires/go-proxyproto"))
+    (home-page "https://github.com/pires/go-proxyproto")
+    (synopsis "Implementation of the PROXY protocol")
+    (description
+     "Package proxyproto implements Proxy Protocol (v1 and v2) parser and
+writer, as per specification:
+@@url{https://www.haproxy.org/download/2.3/doc/proxy-protocol.txt}.  It is to
+be used in one of or both proxy clients and proxy servers that need to support
+said protocol.  Both protocol versions, 1 (text-based) and 2 (binary-based)
+are supported. @acronym{TLV, tag-length-value} parsers extensions comming with
+this library support AWS, Azure and GCP.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-pkg-sftp
   (package
     (name "go-github-com-pkg-sftp")
@@ -1714,6 +1769,33 @@ protocol.")
 
 (define-public go-github-com-lucas-clemente-quic-go
   (deprecated-package "go-github-com-lucas-clemente-quic-go" go-github-com-quic-go-quic-go))
+
+(define-public go-github-com-sherclockholmes-webpush-go
+  (package
+    (name "go-github-com-sherclockholmes-webpush-go")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/SherClockHolmes/webpush-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qv16zvkd1c7q81v2ai8pfz590fxdrk4lfbgyymln0q7jn5wlvki"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/SherClockHolmes/webpush-go"))
+    (propagated-inputs
+     (list go-github-com-golang-jwt-jwt go-golang-org-x-crypto))
+    (home-page "https://github.com/SherClockHolmes/webpush-go")
+    (synopsis "Web Push API Encryption with VAPID support")
+    (description
+     "Web Push API Encryption with
+@url{https://datatracker.ietf.org/doc/html/draft-ietf-webpush-vapid-01, VAPID}
+support.")
+    (license license:expat)))
 
 (define-public go-github-com-sourcegraph-jsonrpc2
   (package
@@ -2064,6 +2146,33 @@ programming language, which supports draft-04, draft-06 and draft-07.")
 Signing and Encryption set of standards.  This includes support for JSON Web
 Encryption, JSON Web Signature, and JSON Web Token standards.")
     (license license:asl2.0)))
+
+(define-public go-nhooyr-io-websocket
+  (package
+    (name "go-nhooyr-io-websocket")
+    (version "1.8.11")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nhooyr/websocket")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "019pm2bkzwyvzl61127nqzihchk35q5xh57wy50aa2syn9214fxm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Tests require additional dependencies like `wasmbrowsertest`.
+      #:tests? #f
+      #:import-path "nhooyr.io/websocket"))
+    (home-page "https://nhooyr.io/websocket")
+    (synopsis "Minimal and idiomatic WebSocket library for Go")
+    (description
+     "Package websocket implements the
+@@url{https://rfc-editor.org/rfc/rfc6455.html,RFC 6455} @code{WebSocket}
+protocol.")
+    (license license:isc)))
 
 ;;;
 ;;; Executables:

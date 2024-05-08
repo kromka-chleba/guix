@@ -44,6 +44,7 @@
   #:use-module (guix build-system haskell)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system qt)
   #:use-module (gnu packages)
   #:use-module (gnu packages admin)
@@ -69,6 +70,7 @@
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
@@ -753,6 +755,33 @@ interface for those who are accustomed to the ircII way of doing things.")
                    ;; distribute binaries.
                    (license:non-copyleft "http://epicsol.org/copyright")))))
 
+(define-public python-irc-parser-tests
+  (package
+    (name "python-irc-parser-tests")
+    (version "0.0.4")
+    (source
+     (origin
+       (method git-fetch) ; PyPI has a broken tests and data locations
+       (uri (git-reference
+             (url "https://github.com/ircdocs/parser-tests")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0x0psq31f43d88b8jhaqwd9f1ykiqm4j13i8nxgcgkgp992cw002"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Tests require python-girc which fails to build on Python 3.10.
+      #:tests? #f))
+    (propagated-inputs (list python-pyyaml))
+    (home-page "https://github.com/ircdocs/parser-tests")
+    (synopsis "Tests for various IRC protocol parsers")
+    (description
+     "This package provides a library of tests for various IRC protocol
+parsers")
+    (license (list license:cc0
+                   license:public-domain))))
+
 (define-public go-gopkg-in-irc-v3
   (package
     (name "go-gopkg-in-irc-v3")
@@ -768,18 +797,68 @@ interface for those who are accustomed to the ircII way of doing things.")
         (base32 "0f2vv947yf9ygy8ylwqkd9yshybfdsbsp9pffjyvm7l7rnq5da60"))))
     (build-system go-build-system)
     (arguments
-     '(;; TODO 3 tests fail because of missing files
-       ;; https://paste.sr.ht/~whereiseveryone/784d068887a65c1b869caa7d7c2077d28a2b2187
-       #:tests? #f
-       #:import-path "gopkg.in/irc.v3" #:unpack-path "gopkg.in/irc.v3"))
+     (list
+      #:import-path "gopkg.in/irc.v3"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Testscases is a git submodule to
+          ;; <https://github.com/go-irc/irc-parser-tests> which is an
+          ;; unmaintained clone of <https://github.com/ircdocs/parser-tests>
+          ;; which is packed in Guix as python-irc-parser-tests.  Tests data
+          ;; (YAML files) are distributed as Python package and located in
+          ;; <lib/python3.10/site-packages/parser_tests/data/>.
+          (add-before 'check 'install-testcases-data
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (mkdir-p "./testcases/tests")
+                (for-each
+                 (lambda (file)
+                   (install-file file "./testcases/tests"))
+                 (find-files
+                  #$(this-package-native-input "python-irc-parser-tests") "\\.yaml$"))))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify python-irc-parser-tests))
     (propagated-inputs
-     `(("go-gopkg-in-yaml-v2" ,go-gopkg-in-yaml-v2)
-       ("go-github-com-stretchr-testify" ,go-github-com-stretchr-testify)))
+     (list go-gopkg-in-yaml-v2))
     (home-page "https://gopkg.in/irc.v3")
     (synopsis "Low-level IRC library for Go")
     (description "Package irc provides a simple IRC library meant as a
 building block for other projects.")
     (license license:expat)))
+
+(define-public go-gopkg-in-irc-v4
+  (package
+    (inherit go-gopkg-in-irc-v3)
+    (name "go-gopkg-in-irc-v4")
+    (version "4.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gopkg.in/irc.v4")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yr7m1vz7fj0jbmk8njg54nyc9hx4kv24k13sjc4zj5fyqljj0p2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gopkg.in/irc.v4"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; testcases is renamed to _testcases in v4 for some reason.
+          (add-before 'check 'adjust-testcases-data
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (mkdir-p "./_testcases/tests")
+                (for-each
+                 (lambda (file)
+                   (install-file file "./_testcases/tests"))
+                 (find-files
+                  #$(this-package-native-input "python-irc-parser-tests") "\\.yaml$"))))))))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs go-gopkg-in-irc-v3)
+       (append go-golang-org-x-time)))))
 
 (define-public chathistorysync
   (package
@@ -1006,3 +1085,75 @@ server written in C++ for Unix-like operating systems.")
 now).  It has some basic functionality only, such as seen, tell, and
 what.")
     (license license:gpl3+)))
+
+(define-public soju
+  (package
+    (name "soju")
+    (version "0.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~emersion/soju")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1a0mp8f5i1ajh67y6fasmzgca3w1ccaiz19sx87rflbyi1mrhdlz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.19
+      #:install-source? #f
+      #:import-path "git.sr.ht/~emersion/soju"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'adjust-makefile
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* "Makefile"
+                  ;; Do not set dfault config path.
+                  ((".*config_path.*:.*") "")
+                  (("-X.*=.*config_path.*' ") "")
+                  ((".*cp -f.*config_path.*") "")
+                  ;; Prevent creating /var/lib/soju.
+                  ((".*sharedstatedir.*") "")))))
+          (replace 'build
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                ;; To use an alternative SQLite library that does not require
+                ;; CGO and build with PAM.
+                (setenv "GOFLAGS" "-v -x -trimpath -tags=moderncsqlite -tags=pam")
+                (setenv "SYSCONFDIR" (string-append #$output "/etc"))
+                (invoke "make"))))
+          (replace 'install
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (setenv "PREFIX" #$output)
+                (invoke "make" "install")))))))
+    (native-inputs
+     (list go-git-sr-ht-emersion-go-scfg
+           go-git-sr-ht-emersion-go-sqlite3-fts5
+           go-git-sr-ht-sircmpwn-go-bare
+           go-github-com-emersion-go-sasl
+           go-github-com-lib-pq
+           go-github-com-mattn-go-sqlite3
+           go-github-com-msteinert-pam
+           go-github-com-pires-go-proxyproto
+           go-github-com-prometheus-client-golang
+           go-github-com-sherclockholmes-webpush-go
+           go-golang-org-x-crypto
+           go-golang-org-x-time
+           go-google-golang-org-protobuf
+           go-gopkg-in-irc-v4
+           go-nhooyr-io-websocket
+           scdoc))
+    (home-page "https://git.sr.ht/~emersion/soju")
+    (synopsis "User-friendly IRC bouncer")
+    (description
+     "Connects to upstream IRC servers on behalf of the user to provide
+extra functionality. soju supports many features
+such as multiple users, numerous @@url{https://ircv3.net/,IRCv3} extensions,
+chat history playback and detached channels.  It is well-suited for both small
+and large deployments.")
+    (license license:agpl3)))
+

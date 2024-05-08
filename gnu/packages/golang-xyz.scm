@@ -19,6 +19,7 @@
 ;;; Copyright © 2021 Sarah Morgensen <iskarian@mgsn.dev>
 ;;; Copyright © 2021 raingloom <raingloom@riseup.net>
 ;;; Copyright © 2021, 2023, 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2022 (unmatched-parenthesis <paren@disroot.org>
 ;;; Copyright © 2022 Dhruvin Gandhi <contact@dhruvin.dev>
 ;;; Copyright © 2022 Dominic Martinez <dom@dominicm.dev>
 ;;; Copyright © 2023 Benjamin <benjamin@uvy.fr>
@@ -32,8 +33,9 @@
 ;;; Copyright © 2023 Timo Wilken <guix@twilken.net>
 ;;; Copyright © 2023 Wilko Meyer <w@wmeyer.eu>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
-;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
+;;; Copyright © 2024 Jesse Eisses <jesse@eisses.email>
+;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -60,11 +62,13 @@
   #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-compression)
   #:use-module (gnu packages golang-crypto)
+  #:use-module (gnu packages golang-web)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages specifications))
 
@@ -79,6 +83,36 @@
 ;;;
 ;;; Libraries:
 ;;;
+
+(define-public go-bazil-org-fuse
+  (package
+    (name "go-bazil-org-fuse")
+    (version "0.0.0-20200117225306-7b5117fecadc")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/bazil/fuse")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bw2lp1nijpqp729k808xkhwmb8nn7igsv51hvv9jw74q805qg2f"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Tests require root access to mount file system.
+      #:tests? #f
+      #:go go-1.19
+      #:import-path "bazil.org/fuse"))
+    (propagated-inputs
+     (list go-github-com-tv42-httpunix go-golang-org-x-sys))
+    (home-page "https://bazil.org/fuse")
+    (synopsis "FUSE filesystems in Golang")
+    (description
+     "Package fuse enables writing FUSE file systems.  It is a from-scratch
+implementation of the kernel-userspace communication protocol, and does not
+use the C library from the project called FUSE.")
+    (license (list license:bsd-2 license:bsd-3 license:hpnd))))
 
 (define-public go-code-cloudfoundry-org-bytefmt
   (package
@@ -109,6 +143,127 @@
     (description
      "Package bytefmt contains helper methods and constants for converting to and from
 a human-readable byte format.")
+    (license license:asl2.0)))
+
+(define-public go-git-sr-ht-emersion-go-scfg
+  (package
+    (name "go-git-sr-ht-emersion-go-scfg")
+    (version "0.0.0-20211215104734-c2c7a15d6c99")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~emersion/go-scfg")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02gn8hz8zfv8y0krysx2wv951gw8hmhdfqf1ysidwm7i293365w4"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:import-path "git.sr.ht/~emersion/go-scfg"))
+    (propagated-inputs
+     (list go-github-com-google-shlex
+           go-github-com-davecgh-go-spew))
+    (home-page "https://git.sr.ht/~emersion/go-scfg")
+    (synopsis "Go library for simple configuration file format")
+    (description
+     "Package go-scfg parses scfg files.")
+    (license license:expat)))
+
+(define-public go-git-sr-ht-emersion-go-sqlite3-fts5
+  (package
+    (name "go-git-sr-ht-emersion-go-sqlite3-fts5")
+    (version "0.0.0-20240124102820-f3a72e8b79b1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~emersion/go-sqlite3-fts5")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1plbfb1z0y3gprddwvp4n61r0cacpp7cjn3abq00xhac5vdvig0v"))))
+    (build-system go-build-system)
+    ;; XXX: fts5.c, fts5.h, generate.sh, sqlite3.h and sqlite3ext.h are
+    ;; obtained from
+    ;; <https://www.sqlite.org/2023/sqlite-preprocessed-3440000.zip>, check if
+    ;; they may be sourced from sqlite package.
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "git.sr.ht/~emersion/go-sqlite3-fts5"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-flags
+            (lambda _
+              ;; FIXME: Find out why it's failing without these flags:
+              ;; src/git.sr.ht/~emersion/go-sqlite3-fts5/internal/internal.go:13:
+              ;; undefined reference to `sqlite3_auto_extension'collect2:
+              ;; error: ld returned 1 exit status
+              (setenv "CGO_LDFLAGS"
+                      "-Wl,--unresolved-symbols=ignore-in-object-files"))))))
+    (propagated-inputs
+     (list go-github-com-mattn-go-sqlite3))
+    (home-page "https://git.sr.ht/~emersion/go-sqlite3-fts5")
+    (synopsis "FTS5 extension for go-sqlite3")
+    (description
+     "Standalone FTS5 extension for
+@@url{https://github.com/mattn/go-sqlite3,go-sqlite3}, that provides full-text
+search functionality to database applications.")
+    (license license:expat)))
+
+(define-public go-git-sr-ht-sircmpwn-getopt
+  (package
+    (name "go-git-sr-ht-sircmpwn-getopt")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~sircmpwn/getopt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f9rammnmhaz21qkmz7qf76r8jlzi323g05ps3j7gwrxlw7442a6"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:import-path "git.sr.ht/~sircmpwn/getopt"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://git.sr.ht/~sircmpwn/getopt")
+    (synopsis "POSIX getopt for Go")
+    (description
+     "This package provides a POSIX-compatible implementation of
+@code{getopt} for Go.")
+    (license license:bsd-3)))
+
+(define-public go-git-sr-ht-sircmpwn-go-bare
+  (package
+    (name "go-git-sr-ht-sircmpwn-go-bare")
+    (version "0.0.0-20210406120253-ab86bc2846d9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~sircmpwn/go-bare")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zh36qppk8lscd8mysy0anm2vw5c74c10f4qvhd541wxm06di928"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "git.sr.ht/~sircmpwn/go-bare"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-git-sr-ht-sircmpwn-getopt))
+    (home-page "https://git.sr.ht/~sircmpwn/go-bare")
+    (synopsis "Implementation of the BARE message format")
+    (description
+     "This package provides an implementation of the @acronym{BARE, Binary
+Application Record Encoding} https://baremessages.org/ message format for
+Golang.")
     (license license:asl2.0)))
 
 (define-public go-github-com-a8m-envsubst
@@ -2167,7 +2322,7 @@ the @code{cpan} module @code{Parse::CommandLine}.")
 (define-public go-github-com-mattn-go-sqlite3
   (package
     (name "go-github-com-mattn-go-sqlite3")
-    (version "1.14.6")
+    (version "1.14.22")
     (source
      (origin
        (method git-fetch)
@@ -2176,10 +2331,11 @@ the @code{cpan} module @code{Parse::CommandLine}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04anvqkc37mmc3z1dy4xfa6cas67zlxnnab0ywii7sylk864mhxz"))))
+        (base32 "05fcdh6likz0hkvxnrkz3r3l5gzxfjh93w5015m9hs1wi6qpdqyb"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.19
       #:import-path "github.com/mattn/go-sqlite3"))
     (home-page "https://github.com/mattn/go-sqlite3")
     (synopsis "Sqlite3 driver for Go")
@@ -2454,6 +2610,60 @@ command line flags, config files, and default struct values.")
 multibase} (self identifying base encodings) in Go.")
     (license license:expat)))
 
+(define-public go-github-com-msteinert-pam
+  (package
+    (name "go-github-com-msteinert-pam")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/msteinert/pam")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1qnr0zxyxny85andq3cbj90clmz2609j8z9mp0zvdyxiwryfhyhj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; To run the full suite, the tests must be run as the root user.
+      #:tests? #f
+      #:go go-1.20
+      #:import-path "github.com/msteinert/pam"))
+    (propagated-inputs
+     (list go-golang-org-x-term
+           ;; For header files, otherwise it needs to be added as an input in
+           ;; final package to prevent build failure:
+           ;; ../../../github.com/msteinert/pam/transaction.go:7:10: fatal
+           ;; error: security/pam_appl.h: No such file or directory
+           linux-pam))
+    (home-page "https://github.com/msteinert/pam")
+    (synopsis "Golang wrapper module for the PAM API")
+    (description
+     "This package provides a wrapper for the @acronym{Pluggable
+Authentication Modules, PAM} application API.")
+    (license license:bsd-2)))
+
+(define-public go-github-com-msteinert-pam-v2
+  (package
+    (inherit go-github-com-msteinert-pam)
+    (name "go-github-com-msteinert-pam-v2")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/msteinert/pam")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1h02dcx00vgcsxgl5sly82dbixk8cimjb10q5p405bf4fz8z7q6k"))))
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-msteinert-pam)
+       ((#:import-path _ "github.com/msteinert/pam")
+        "github.com/msteinert/pam/v2")))))
+
 (define-public go-github-com-multiformats-go-multicodec
   (package
     (name "go-github-com-multiformats-go-multicodec")
@@ -2578,7 +2788,11 @@ very fast, and tries to be entropy pool friendly.")
        (sha256
         (base32 "1kl9l08aas544627zmhkgp843qx94sxs4inxm20nw1hx7gp79dz0"))))
     (build-system go-build-system)
-    (arguments '(#:import-path "github.com/nbrownus/go-metrics-prometheus"))
+    (arguments
+     (list
+      ;; The project looks abandoned, tests failed with a new go-metrics.
+      #:tests? #f
+      #:import-path "github.com/nbrownus/go-metrics-prometheus"))
     (native-inputs
      (list go-github-com-stretchr-testify))
     (propagated-inputs
@@ -2769,34 +2983,32 @@ on top of the standard library @code{flag} package.")
     (license license:bsd-3)))
 
 (define-public go-github-com-prometheus-client-model
-  (let ((commit "14fe0d1b01d4d5fc031dd4bec1823bd3ebbe8016")
-        (revision "2"))
-    (package
-      (name "go-github-com-prometheus-client-model")
-      (version (git-version "0.0.2" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/prometheus/client_model")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0zdmk6rbbx39cvfz0r59v2jg5sg9yd02b4pds5n5llgvivi99550"))))
-      (build-system go-build-system)
-      (arguments
-       '(#:import-path "github.com/prometheus/client_model"
-         #:tests? #f
-         #:phases
-         (modify-phases %standard-phases
-           ;; Source-only package
-           (delete 'build))))
-      (propagated-inputs
-       (list go-github-com-golang-protobuf-proto))
-      (synopsis "Data model artifacts for Prometheus")
-      (description "This package provides data model artifacts for Prometheus.")
-      (home-page "https://github.com/prometheus/client_model")
-      (license license:asl2.0))))
+  (package
+    (name "go-github-com-prometheus-client-model")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/prometheus/client_model")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pl9i969jx5vkhm8vd5vb8yrifv37aw6h8mjg04820pw0ygfbigy"))))
+    (build-system go-build-system)
+    (arguments
+     '(#:import-path "github.com/prometheus/client_model"
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         ;; Source-only package
+         (delete 'build))))
+    (propagated-inputs
+     (list go-github-com-golang-protobuf-proto))
+    (synopsis "Data model artifacts for Prometheus")
+    (description "This package provides data model artifacts for Prometheus.")
+    (home-page "https://github.com/prometheus/client_model")
+    (license license:asl2.0)))
 
 (define-public go-github-com-rcrowley-go-metrics
   (let ((commit "cac0b30c2563378d434b5af411844adff8e32960")

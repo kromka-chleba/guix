@@ -67,6 +67,36 @@
 used in @code{go-ipfs} and related packages to refer to a typed hunk of data.")
     (license license:expat)))
 
+(define-public go-github-com-ipfs-go-cidutil
+  (package
+    (name "go-github-com-ipfs-go-cidutil")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-cidutil")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0j18wf42rfxrrh2fjdbjsjvjqxwgvg46b9wl6y5ig22fx5hvpm1n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/ipfs/go-cidutil"))
+    (propagated-inputs
+     (list go-github-com-ipfs-go-cid
+           go-github-com-multiformats-go-multibase
+           go-github-com-multiformats-go-multicodec
+           go-github-com-multiformats-go-multihash))
+    (home-page "https://github.com/ipfs/go-cidutil")
+    (synopsis "Utility functions and types for working with CIDs")
+    (description
+     "@code{go-cidutil} implements various utilities and helper functions for working
+with @url{https://github.com/ipld/cid, CIDs}.")
+    (license license:expat)))
+
 (define-public go-github-com-ipfs-go-ipfs-cmdkit-files
   (let ((commit
           "386fcf8f18a185ec121676665fe2d9574496048d")
@@ -95,6 +125,55 @@ used in @code{go-ipfs} and related packages to refer to a typed hunk of data.")
 that are shared between @command{go-ipfs/commands} and its rewrite
 @command{go-ipfs-cmds}.")
       (license license:expat))))
+
+(define-public go-github-com-ipfs-go-detect-race
+  (package
+    (name "go-github-com-ipfs-go-detect-race")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-detect-race")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rqb0q66d7z852j5mhlr025dz698c44w014g4mx587amr1rvwqna"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/ipfs/go-log/v2"))
+    (home-page "https://github.com/ipfs/go-detect-race")
+    (synopsis "Detect if compiled with race")
+    (description "Check if the race detector is running.")
+    (license license:expat)))
+
+(define-public go-github-com-ipfs-go-ipfs-util
+  (package
+    (name "go-github-com-ipfs-go-ipfs-util")
+    (version "0.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-ipfs-util")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0x80c6a50zcv473xx0b39sz2xkwpiw3nmmjf51k5x7a4rx0rgvx4"))))
+    (build-system go-build-system)
+    (propagated-inputs (list go-github-com-mr-tron-base58
+                             go-github-com-multiformats-go-multihash))
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/ipfs/go-ipfs-util"))
+    (home-page "https://github.com/ipfs/go-ipfs-util")
+    (synopsis "Common utilities used by @code{go-ipfs} and related packages")
+    (description
+     "Common utilities used by @code{go-ipfs} and other related Go packages.")
+    (license license:expat)))
 
 (define-public go-github-com-ipfs-go-ipfs-api
   (let ((commit
@@ -143,6 +222,60 @@ that are shared between @command{go-ipfs/commands} and its rewrite
       (synopsis "Unofficial Go interface to IPFS's HTTP API")
       (description "An unofficial Go interface to IPFS's HTTP API")
       (license license:expat))))
+
+(define-public go-github-com-ipfs-go-log-v2
+  (package
+    (name "go-github-com-ipfs-go-log-v2")
+    (version "2.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-log")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yh3sw8knpy364h8h8rqw193whnjd6fbc13cxh6zs29z3x2a7aqa"))))
+    (build-system go-build-system)
+    (propagated-inputs
+     (list go-github-com-mattn-go-isatty
+           go-go-uber-org-multierr
+           go-go-uber-org-zap))
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/ipfs/go-log/v2"))
+    (home-page "https://github.com/ipfs/go-log")
+    (synopsis "Logging library used by @code{go-ipfs}")
+    (description
+     "@code{go-log} wraps @url{https://github.com/uber-go/zap, zap} to
+provide a logging facade.  @code{go-log} manages logging instances and allows for
+their levels to be controlled individually.")
+    (license license:expat)))
+
+(define-public go-github-com-ipfs-go-log
+  (package
+    (inherit go-github-com-ipfs-go-log-v2)
+    (name "go-github-com-ipfs-go-log")
+    (version "1.0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-log")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gj2yqrv6wgpkv6f9c1anmw5kwg59plv0jrcxb3zmjrnk8fsn1jr"))))
+    (propagated-inputs
+     (list go-github-com-gogo-protobuf
+           go-github-com-ipfs-go-log-v2
+           go-github-com-opentracing-opentracing-go
+           go-go-uber-org-zap))
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/ipfs/go-log"))))
 
 (define-public gx
   (package
@@ -268,7 +401,8 @@ written in Go.")
        (modules '((guix build utils)))
        (snippet '(for-each delete-file-recursively
                            ;; TODO: unbundle the rest as well
-                           '("vendor/github.com/alecthomas"
+                           '("vendor/bazil.org"
+                             "vendor/github.com/alecthomas"
                              "vendor/github.com/benbjohnson"
                              "vendor/github.com/beorn7/perks"
                              "vendor/github.com/blang"
@@ -285,6 +419,9 @@ written in Go.")
                              "vendor/github.com/gorilla"
                              "vendor/github.com/hashicorp"
                              "vendor/github.com/ipfs/go-cid"
+                             "vendor/github.com/ipfs/go-cidutil"
+                             "vendor/github.com/ipfs/go-log"
+                             "vendor/github.com/ipfs/go-ipfs-util"
                              "vendor/github.com/jackpal"
                              "vendor/github.com/jbenet"
                              "vendor/github.com/julienschmidt"
@@ -337,7 +474,7 @@ written in Go.")
                   ;; otherwise it will be sourced from provided vendor
                   ;; directory.
                   ;;
-                  ;;go-bazil-org-fuse
+                  go-bazil-org-fuse
                   ;;go-contrib-go-opencensus-io-exporter-prometheus
                   go-github-com-benbjohnson-clock
                   go-github-com-blang-semver-v4
@@ -354,7 +491,7 @@ written in Go.")
                   ;;go-github-com-ipfs-boxo
                   ;;go-github-com-ipfs-go-block-format
                   go-github-com-ipfs-go-cid
-                  ;;go-github-com-ipfs-go-cidutil
+                  go-github-com-ipfs-go-cidutil
                   ;;go-github-com-ipfs-go-datastore
                   ;;go-github-com-ipfs-go-detect-race
                   ;;go-github-com-ipfs-go-ds-badger
@@ -367,8 +504,8 @@ written in Go.")
                   ;;go-github-com-ipfs-go-ipld-format
                   ;;go-github-com-ipfs-go-ipld-git
                   ;;go-github-com-ipfs-go-ipld-legacy
-                  ;;go-github-com-ipfs-go-log
-                  ;;go-github-com-ipfs-go-log-v2
+                  go-github-com-ipfs-go-log
+                  go-github-com-ipfs-go-log-v2
                   ;;go-github-com-ipfs-go-metrics-interface
                   ;;go-github-com-ipfs-go-metrics-prometheus
                   ;;go-github-com-ipfs-go-unixfsnode
@@ -393,6 +530,7 @@ written in Go.")
                   ;;go-github-com-libp2p-go-libp2p-routing-helpers
                   ;;go-github-com-libp2p-go-libp2p-testing
                   ;;go-github-com-libp2p-go-socket-activation
+                  go-github-com-ipfs-go-ipfs-util
                   go-github-com-mitchellh-go-homedir
                   go-github-com-multiformats-go-multiaddr-0.12
                   go-github-com-multiformats-go-multiaddr-dns
