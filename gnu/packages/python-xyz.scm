@@ -17924,15 +17924,17 @@ connection pool.")
 (define-public python-argparse-manpage
   (package
     (name "python-argparse-manpage")
-    (version "1.1")
+    (version "4.5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "argparse-manpage" version))
        (sha256
         (base32
-         "0blh31zns68anina9lba5wh81d1414s97p60zw5l0d0shhh0wj5p"))))
-    (build-system python-build-system)
+         "1nq4sq1zk1xzdsqq61hd27jhj978ys136aba1zjg02x1g0c0cg11"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest python-tomli))
     (home-page "https://github.com/praiskup/argparse-manpage")
     (synopsis "Build manual page from Python's ArgumentParser object")
     (description
@@ -18031,7 +18033,7 @@ for atomic file system operations.")
 (define-public python-qstylizer
   (package
     (name "python-qstylizer")
-    (version "0.1.10")
+    (version "0.2.3")
     (source
      (origin
        (method git-fetch)
@@ -18040,25 +18042,22 @@ for atomic file system operations.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0zvkn6g1dn51kkw33v8qrlnwlmf5h6sw1ay3bh14ifjr8b9xsjjz"))))
-    (build-system python-build-system)
+        (base32 "1n11f63pbqzmb7sj9cj0jq9kv8sfinjqhg7fs0mnfsrici8435br"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:test-target "pytest"
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'set-pbr-version
-           (lambda _
-             (setenv "PBR_VERSION" "3.0.1"))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-pbr-version
+            (lambda _
+              (setenv "PBR_VERSION" "3.0.1"))))))
     (native-inputs
      (list python-pbr
            python-pytest
            python-pytest-catchlog
-           python-pytest-cov
-           python-pytest-mock
-           python-pytest-runner
-           python-pytest-xdist))
+           python-pytest-mock))
     (propagated-inputs
-     (list python-inflection python-tinycss))
+     (list python-inflection python-tinycss2))
     (home-page "https://github.com/blambright/qstylizer")
     (synopsis "Qt stylesheet generation utility for PyQt/PySide")
     (description "@code{qstylizer} is a Python package designed to help with
@@ -18107,14 +18106,16 @@ applications.")
   (package
     (name "python-click-default-group")
     (version "1.2.4")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "click_default_group" version))
-              (sha256
-               (base32
-                "07i5w47lbihcb3cvs08vynz725z9skvhhzrarnk6qi8dxjckqgzb"))))
+    (source
+     (origin
+       (method git-fetch)               ; no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/click-contrib/click-default-group")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06h12qwg0lhvxlgfm9768afibwp8j6r3r440v630a30bv0nkhngm"))))
     (build-system pyproject-build-system)
-    (arguments (list #:tests? #false)) ;there are none
     (propagated-inputs
      (list python-click))
     (native-inputs

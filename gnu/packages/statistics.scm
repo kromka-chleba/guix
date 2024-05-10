@@ -227,7 +227,7 @@ This package also provides @command{xls2csv} to export Excel files to CSV.")
 (define r-with-tests
   (package
     (name "r-with-tests")
-    (version "4.3.3")
+    (version "4.4.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://cran/src/base/R-"
@@ -235,7 +235,7 @@ This package also provides @command{xls2csv} to export Excel files to CSV.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0c03abq3kqg6d2yhrijy9j3fsl77har3k7pffwwbz19v74qi51c0"))))
+                "0c7hnmr0w26vpaf8b10m83f4w3g3fl6a7z65pi9jqvcpkdgi5r5c"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -539,14 +539,14 @@ D.V. Hinkley (1997, CUP), originally written by Angelo Canty for S.")
 (define-public r-mass
   (package
     (name "r-mass")
-    (version "7.3-60.0.1")
+    (version "7.3-60.2")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "MASS" version))
        (sha256
         (base32
-         "1gdd2gyqngvgnm0bxc3a33nykrx2rbfmxj82i7bh7f1961cr7pvl"))))
+         "13ky8mbni09zviv5lan10ff6l2klsfv7v3vmfq88dxpz8xknx75v"))))
     (properties `((upstream-name . "MASS")))
     (build-system r-build-system)
     (home-page "https://www.stats.ox.ac.uk/pub/MASS4/")
@@ -687,14 +687,14 @@ also flexible enough to handle most nonstandard requirements.")
 (define-public r-matrix
   (package
     (name "r-matrix")
-    (version "1.6-5")
+    (version "1.7-0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "Matrix" version))
        (sha256
         (base32
-         "0zdrrss4q0g7jify9bp1vvzrdpy62fc6fx3awzbd2wvfc938sv3j"))))
+         "0dxd13y6x6pz54ccbcalw2sm646h9pls4bby9zmj40ipvyhbp5zv"))))
     (properties `((upstream-name . "Matrix")))
     (build-system r-build-system)
     (propagated-inputs
@@ -811,14 +811,14 @@ analysis.")
 (define-public r-survival
   (package
     (name "r-survival")
-    (version "3.5-8")
+    (version "3.6-4")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "survival" version))
        (sha256
         (base32
-         "1d0qvw4200mjldna9n0acis0fk8xj28wwzqb8c3d4537l92zivbi"))))
+         "1zpfqslpzck10pmaiyc8x7852ajbjd0l6aw18hwfrm418wjamy1f"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-matrix))
@@ -1194,14 +1194,14 @@ solution for sending email, including attachments, from within R.")
 (define-public r-stringi
   (package
     (name "r-stringi")
-    (version "1.8.3")
+    (version "1.8.4")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "stringi" version))
        (sha256
         (base32
-         "09a964g8q3iphq24ln9c9g5158ynr75pfh3ghddarn0xvn7bw0hn"))))
+         "1wv9qqxl84l44kpvkx0lmyciinrh9pa5512jm56gsaqs9pvgh6f2"))))
     (build-system r-build-system)
     (inputs (list icu4c))
     (native-inputs (list pkg-config))
@@ -1268,13 +1268,13 @@ using just two functions: melt and dcast (or acast).")
 (define-public r-ggplot2
   (package
     (name "r-ggplot2")
-    (version "3.5.0")
+    (version "3.5.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "ggplot2" version))
        (sha256
-        (base32 "1qlh231dwsa7j0pzlw6xdm68d7r0v64916p66bg9lh1dw3a1ryh7"))))
+        (base32 "08a72kizg42mdm35170fnpn8l6r4n3j1yvbgiq1k8dlvz4jb8n3w"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-cli
@@ -3190,13 +3190,13 @@ well as additional utilities such as panel and axis annotation functions.")
 (define-public r-rcpparmadillo
   (package
     (name "r-rcpparmadillo")
-    (version "0.12.8.2.1")
+    (version "0.12.8.3.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "RcppArmadillo" version))
               (sha256
                (base32
-                "11w92xjjwfhb3sv3g0m6hdhm27nnx73ahb404zm79a29ihwrj55w"))))
+                "02sj42apznls45sapiisaggfijdvg69a2ja2mz4fraqaajrkkwc7"))))
     (properties `((upstream-name . "RcppArmadillo")))
     (build-system r-build-system)
     (propagated-inputs
@@ -3317,13 +3317,13 @@ variety of formats.")
 (define-public r-gtable
   (package
     (name "r-gtable")
-    (version "0.3.4")
+    (version "0.3.5")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "gtable" version))
               (sha256
                (base32
-                "0xvrkhcv1896mf3n43mva2mrmk0d8np7sjrykpg1pv54f69h6ckh"))))
+                "0wpavsypw2yp0pklmqw0qcwsh8smx5gr2kkxmgdmm52r0fiw37xi"))))
     (properties `((upstream-name . "gtable")))
     (build-system r-build-system)
     (propagated-inputs
@@ -5070,14 +5070,14 @@ existing packages provide.")
 (define-public r-sfsmisc
   (package
     (name "r-sfsmisc")
-    (version "1.1-17")
+    (version "1.1-18")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "sfsmisc" version))
        (sha256
         (base32
-         "06ih8zljs57scy7jfnv32yxijgv1i60vggmlyyblwnff6mr2fm60"))))
+         "1bc3qjnh3k4ia7w2sdbawr4rp8w9pmcbzbdjg7qbiwmpx6h2w19k"))))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/sfsmisc")
     (synopsis "Utilities from \"Seminar fuer Statistik\" ETH Zurich")
@@ -5629,14 +5629,14 @@ models, generalized linear models and model-based clustering.")
 (define-public r-mclust
   (package
     (name "r-mclust")
-    (version "6.1")
+    (version "6.1.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "mclust" version))
        (sha256
         (base32
-         "0mchdxkc3y0v6dw8fzjnlqd6f3zrafm3xf1c53s6ps529b66kx2x"))))
+         "0xb726ssy224mzfg37nq5hffkdwi2hwjp1y9gwngk9vfbs703myx"))))
     (build-system r-build-system)
     (native-inputs
      (list gfortran r-knitr))
@@ -5839,14 +5839,14 @@ of the points.")
 (define-public r-fpc
   (package
     (name "r-fpc")
-    (version "2.2-11")
+    (version "2.2-12")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "fpc" version))
        (sha256
         (base32
-         "06j1dzlf96qcaiqg8m5iah9rmwdppky04xjhs8k4rh0k12wr0mc2"))))
+         "11s7211mnb9c72061mrcdfdwfph6nmbwcnpjgl32i2p7qys9cnam"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-class
@@ -6913,6 +6913,8 @@ Java package that provides routines for various statistical distributions.")
                     (disable-tests (list "test/ess-test-inf.el"
                                          "test/ess-test-r.el")
                                    ("ess--derive-connection-path"
+                                    ;; Looks like an off-by-one error.
+                                    "ess--command-browser-unscoped-essr"
                                     "ess-eval-line-test"
                                     "ess-eval-region-test"
                                     "ess-mock-remote-process"
@@ -7509,20 +7511,26 @@ Calculates confidence intervals for the difference in proportion.")
           (base32 "16qbm1l1281yj1cg6fp8xgd8xdshpz9a09f0b9cyimsjbm01c2j7"))))
     (properties `((upstream-name . "DescTools")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-before 'check 'pre-check
+           (lambda _ (setenv "HOME" "/tmp"))))))
     (propagated-inputs
-      (list r-boot
-            r-cli
-            r-data-table
-            r-exact
-            r-expm
-            r-gld
-            r-httr
-            r-mass
-            r-mvtnorm
-            r-rcpp
-            r-readxl
-            r-rstudioapi
-            r-withr))
+     (list r-boot
+           r-cli
+           r-data-table
+           r-exact
+           r-expm
+           r-gld
+           r-httr
+           r-mass
+           r-mvtnorm
+           r-rcpp
+           r-readxl
+           r-rstudioapi
+           r-withr))
     (native-inputs (list gfortran r-r-rsp))
     (home-page "https://andrisignorell.github.io/DescTools/")
     (synopsis "Tools for Descriptive Statistics")
