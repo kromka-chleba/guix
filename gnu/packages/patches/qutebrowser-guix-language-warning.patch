@@ -1,0 +1,30 @@
+From 176c75d0127211935ddc6abdb79e543641f66429 Mon Sep 17 00:00:00 2001
+From: Herman Rimm <herman@rimm.ee>
+Date: Thu, 2 Oct 2025 16:53:32 +0200
+Subject: [PATCH 1/2] Make language warning Guix-specific.
+
+---
+ qutebrowser/browser/webengine/webenginesettings.py | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/qutebrowser/browser/webengine/webenginesettings.py b/qutebrowser/browser/webengine/webenginesettings.py
+index 6680fa637..6165da210 100644
+--- a/qutebrowser/browser/webengine/webenginesettings.py
++++ b/qutebrowser/browser/webengine/webenginesettings.py
+@@ -339,9 +339,10 @@ class ProfileSetter:
+             local_filename = spell.local_filename(code)
+             if not local_filename:
+                 if not self._profile.isOffTheRecord():
+-                    message.warning("Language {} is not installed - see "
+-                                    "scripts/dictcli.py in qutebrowser's "
+-                                    "sources".format(code))
++                    message.warning(
++                        f"hunspell-bdic-{code.lower().replace('_', '-')}"
++                        " .bdic files not found in $XDG_DATA_HOME"
++                        "/qutebrowser/qtwebengine_dictionaries")
+                 continue
+ 
+             filenames.append(os.path.splitext(local_filename)[0])
+-- 
+2.50.1
+
