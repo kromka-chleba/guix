@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2020, 2021 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2024, 2025 Herman Rimm <herman@rimm.ee>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -25,6 +26,7 @@
   #:use-module (guix git-download)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
+  #:use-module (guix utils)
   #:use-module (ice-9 match)
   #:use-module (gnu packages aspell)
   #:use-module (gnu packages autotools)
@@ -32,6 +34,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages perl)
+  #:use-module (gnu packages qt)
   #:use-module (gnu packages textutils))
 
 (define-public hunspell
@@ -591,3 +594,71 @@ under permissive licensing terms.  See the 'Copyright' file."))))
   "en_US"
   (synopsis "Hunspell dictionary for United States English"))
 
+(define* (aspell-compiled-word-list language synopsis #:optional nick)
+  (define base
+    (if nick
+        (aspell-word-list language synopsis nick)
+        (aspell-word-list language synopsis)))
+  (package
+    (inherit base)
+    (name (downstream-package-name "hunspell-bdic-" (or nick language)))
+    (version "2018.04.16")
+    (source base)
+    (build-system trivial-build-system)
+    (arguments
+     (list
+       #:modules '((guix build utils) (ice-9 ftw))
+       #:builder
+       #~(begin
+           (use-modules (guix build utils) (ice-9 ftw))
+           (let ((out (string-append #$output
+                                     "/share/qtwebengine_dictionaries"))
+                 (dictionary (string-append #$language ".dic")))
+             (define (convert-dict dic)
+               (invoke
+                 #$(file-append
+                     (this-package-native-input "qtwebengine")
+                     "/lib/qt6/libexec/qwebengine_convert_dict")
+                 dic (string-append out "/" (string-drop-right dic 3)
+                                    "bdic")))
+             (define (dic? file) (string-suffix? ".dic" file))
+             (chdir #$(file-append (package-source this-package)
+                                   "/share/hunspell"))
+             (copy-recursively "../doc"
+                               (string-append #$output "/share/doc"))
+             (mkdir-p out)
+             (for-each convert-dict
+                       (if (file-exists? dictionary)
+                           (list dictionary)
+                           (scandir "." dic?)))))))
+    (native-inputs (list qtwebengine))
+    (description
+     "This package provides a compiled dictionary for the Hunspell
+spell-checking library.")))
+
+(define-public hunspell-bdic-en
+  (aspell-compiled-word-list
+    "en" "Compiled Hunspell dictionary for English"))
+
+(define-public hunspell-bdic-en-au
+  (aspell-compiled-word-list
+    "en_AU" "Compiled Hunspell dictionary for Australian English"))
+
+(define-public hunspell-bdic-en-ca
+  (aspell-compiled-word-list
+    "en_CA" "Compiled Hunspell dictionary for Canadian English"))
+
+(define-public hunspell-bdic-en-gb
+  (aspell-compiled-word-list
+    "en_GB-ise"
+    "Compiled Hunspell dictionary for British English, with -ise endings"
+    "en-gb"))
+
+(define-public hunspell-bdic-en-gb-ize
+  (aspell-compiled-word-list
+    "en_GB-ize"
+    "Compiled Hunspell dictionary for British English, with -ize endings"))
+
+(define-public hunspell-bdic-en-us
+  (aspell-compiled-word-list
+    "en_US" "Compiled Hunspell dictionary for United States English"))
