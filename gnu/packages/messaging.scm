@@ -29,7 +29,7 @@
 ;;; Copyright © 2020, 2021 Robert Karszniewicz <avoidr@posteo.de>
 ;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2021, 2023 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
-;;; Copyright © 2021 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2021, 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 jgart <jgart@dismail.de>
 ;;; Copyright © 2022 Aleksandr Vityazev <avityazev@posteo.org>
 ;;; Copyright © 2022 Ricardo Wurmus <rekado@elephly.net>
@@ -1726,20 +1726,24 @@ of the most common use cases is to define avatars for MUC rooms.")))
 (define-public c-toxcore
   (package
     (name "c-toxcore")
-    (version "0.2.12")
+    (version "0.2.19")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/TokTok/c-toxcore")
-             (commit (string-append "v" version))))
+             (commit (string-append "v" version))
+             ;; XXX: c-toxcore now depends on a package called 'cmp', an
+             ;; implementation of MessagePack in C.  Fetch the submodule
+             ;; for now, maybe package it later.
+             (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0a6sqpm00d2rn0nviqfz4gh9ck1wzci6rxgmqmcyryl5ca19ffvp"))))
+         "0wq6grc5lfjip39gm0ji1cw6b1sdv1zvimg1g40haqzhj51755za"))))
     (arguments
-     `(#:tests? #f)) ; FIXME: Testsuite seems to stay stuck on test 3. Disable
-                     ; for now.
+     (list #:tests? #f ; figure out how to run the tests
+           #:configure-flags #~(list "-DENABLE_STATIC=false")))
     (build-system cmake-build-system)
     (native-inputs
      (list pkg-config))
@@ -2290,7 +2294,7 @@ building the IRC clients and bots.")
 (define-public toxic
   (package
     (name "toxic")
-    (version "0.8.4")
+    (version "0.15.1")
     (source
      (origin
        (method git-fetch)
@@ -2298,29 +2302,25 @@ building the IRC clients and bots.")
              (url "https://github.com/JFreegman/toxic")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0p1cmj1kyp506y5xm04mhlznhf5wcylvgsn6b307ms91vjqs3fg2"))
+        (base32 "1cbgw9my7nd8b215a3db2jc74nibi9kj0yk5q3c9dnh306as6wzs"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:make-flags
-       (list
-        "CC=gcc"
-        (string-append "PREFIX="
-                       (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-before 'build 'enable-python-scripting
-           (lambda _
-             ;; XXX: For compatibility with Python 3.8, adjust python3-config
-             ;; invokation to include --embed; see
-             ;; <https://github.com/JFreegman/toxic/issues/533>.
-             (substitute* "cfg/checks/python.mk"
-               (("python3-config --ldflags")
-                "python3-config --ldflags --embed"))
-             (setenv "ENABLE_PYTHON" "1")
-             #t)))))
+     (list #:tests? #f                      ; no tests
+           #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
+                                (string-append "PREFIX=" #$output))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)
+               (add-before 'build 'enable-python-scripting
+                 (lambda _
+                   ;; XXX: For compatibility with Python 3.8, adjust
+                   ;; python3-config invocation to include --embed; see
+                   ;; <https://github.com/JFreegman/toxic/issues/533>.
+                   (substitute* "cfg/checks/python.mk"
+                     (("python3-config --ldflags")
+                      "python3-config --ldflags --embed"))
+                   (setenv "ENABLE_PYTHON" "1"))))))
     (inputs
      (list c-toxcore
            curl

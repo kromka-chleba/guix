@@ -22,6 +22,7 @@
 ;;; Copyright © 2022 Roman Scherer <roman.scherer@burningswell.com>
 ;;; Copyright © 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
+;;; Copyright © 2024 Wilko Meyer <w@wmeyer.eu>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -986,6 +987,30 @@ enables you to easily do operations in Python that would otherwise
 require a spatial database such as PostGIS.")
     (license license:bsd-3)))
 
+(define-public python-overpass
+  (package
+    (name "python-overpass")
+    (version "0.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "overpass" version))
+       (sha256
+        (base32 "0l2n01j0vslag8cf3sp7jif0d4ql6i99fvfv2mgc3ajws69aqzr6"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; tests disabled, as they require network
+     (list #:tests? #f))
+    (propagated-inputs (list python-geojson
+                             python-requests
+                             python-shapely))
+    (native-inputs (list python-pytest))
+    (home-page "https://github.com/mvexel/overpass-api-python-wrapper")
+    (synopsis "Python wrapper for the OpenStreetMap Overpass API")
+    (description "This package provides python-overpass, a Python wrapper
+for the @code{OpenStreetMap} Overpass API.")
+    (license license:asl2.0)))
+
 (define-public python-ogr2osm
   (package
     (name "python-ogr2osm")
@@ -1044,7 +1069,7 @@ during conversion.")
 (define-public python-osmnx
   (package
     (name "python-osmnx")
-    (version "1.8.1")
+    (version "1.9.3")
     (source
      (origin
        ;; Fetch from github as the pypi package is missing the tests dir.
@@ -1054,7 +1079,7 @@ during conversion.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0n238n07pp5jw9cg8nqw9qhpkw8plzb5imz1gxbliw2l1idqyjcl"))))
+        (base32 "0yi9al6rrc584y24vigi7w52dq9k2l2zgblrj5ajwgk8079k8zsf"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3298,7 +3323,7 @@ latitude and longitude.")
 (define-public gplates
   (package
     (name "gplates")
-    (version "2.4")
+    (version "2.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3306,7 +3331,7 @@ latitude and longitude.")
                     (commit (string-append "GPlates-" version))))
               (sha256
                (base32
-                "1awb4igchgpmrvj6blxd1w81c617bs66w6cfrwvf30n6rjlyn6q5"))
+                "1qrislbgrsn6l1ikd3mffsqxvy61w3l53wmr8mfd8aqaj6dk1wfx"))
               (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments

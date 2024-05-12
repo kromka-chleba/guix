@@ -6979,6 +6979,24 @@ text styles of documentation.")
      "Pygments is a syntax highlighting package written in Python.")
     (license license:bsd-2)))
 
+(define-public python-vdf
+  (package
+    (name "python-vdf")
+    (version "3.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "vdf" version))
+       (sha256
+        (base32
+         "1bz2gn04pl6rj2mawlzlirz1ygg4rdypq0pxbyg018873vs1jm7x"))))
+    (build-system pyproject-build-system)
+    (home-page "https://github.com/ValvePython/vdf")
+    (synopsis "Work with Valve's VDF text format")
+    (description "This package provides @code{python-vdf}, a library for
+working with Valve's VDF text format.")
+    (license license:expat)))
+
 (define-public python-pygments-github-lexers
   (package
     (name "python-pygments-github-lexers")
@@ -10940,14 +10958,14 @@ ManimPango is internally used in Manim to render (non-LaTeX) text.")
 (define-public python-xcffib
   (package
     (name "python-xcffib")
-    (version "0.11.1")
+    (version "1.4.0")
     (source
      (origin
       (method url-fetch)
       (uri (pypi-uri "xcffib" version))
       (sha256
        (base32
-        "0nkglsm9nbhv238iagmmsjcz6lf1yfdvp5kmspphdj385vz9r50j"))))
+        "095na8zk75829c6ahxw658jh4g4qxx115g4a32p7b36kzq6w0xxr"))))
     (build-system python-build-system)
     (inputs
      (list libxcb))
@@ -10964,16 +10982,7 @@ ManimPango is internally used in Manim to render (non-LaTeX) text.")
              (let ((libxcb (assoc-ref inputs "libxcb")))
                (substitute* '("xcffib/__init__.py")
                  (("soname = ctypes.util.find_library.*xcb.*")
-                  (string-append "soname = \"" libxcb "/lib/libxcb.so\"\n")))
-               #t)))
-         (add-after 'install 'install-doc
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((doc (string-append (assoc-ref outputs "out") "/share"
-                                       "/doc/" ,name "-" ,version)))
-               (mkdir-p doc)
-               (copy-file "README.md"
-                          (string-append doc "/README.md"))
-               #t))))))
+                  (string-append "soname = \"" libxcb "/lib/libxcb.so\"\n")))))))))
     (home-page "https://github.com/tych0/xcffib")
     (synopsis "XCB Python bindings")
     (description
@@ -18345,7 +18354,7 @@ with a new public API, and RPython support.")
 (define-public python-hy
   (package
     (name "python-hy")
-    (version "0.26.0")
+    (version "0.28.0")
     (source
      (origin
        (method git-fetch)               ; no tests in PyPI release
@@ -18354,7 +18363,7 @@ with a new public API, and RPython support.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1czhh7s81sg0nrnf4zv0ydqi4f7s6sywf4ks4fd59vpx441ca39v"))))
+        (base32 "0fs9ydqlbhmp4l3lf8ap8bksbpmlscm6gz7zf9bv2kmcldkjlzsw"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -18381,7 +18390,7 @@ with a new public API, and RPython support.")
                          " and not test_macro_require"
                          " and not test_requires_pollutes_core"))))))))
     (native-inputs
-     (list python-pytest python-wheel))
+     (list python-pytest-next python-wheel))
     (propagated-inputs
      (list python-funcparserlib))
     (home-page "https://docs.hylang.org/en/stable/")
@@ -19398,13 +19407,13 @@ applications.")
 (define-public python-kombu
   (package
     (name "python-kombu")
-    (version "5.3.6")
+    (version "5.3.7")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "kombu" version))
        (sha256
-        (base32 "1n9i4hj1h3aivgy82l7accyjh1rqn20am00152l5syhl19bmpnpk"))))
+        (base32 "1gwp3b7w7jhsas40655pa9nlblm12irjapfkx0flmhamlgclq701"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags
@@ -29158,7 +29167,7 @@ time-or-computationally-expensive properties quick and easy and works in Python
 (define-public python-folium
   (package
     (name "python-folium")
-    (version "0.13.0")
+    (version "0.16.0")
     (source
      (origin
        ;; PyPI has a ".whl" file but not a proper source release.
@@ -29169,12 +29178,46 @@ time-or-computationally-expensive properties quick and easy and works in Python
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00adpdi1890zzzg7ffp04hmx59igdcdpyqa129vnmwqh54b5a006"))))
-    (build-system python-build-system)
+        (base32 "1dbndpqpd7c5pmc58yxz7m6bsll377fz7xqpzh58wm0hjn6ylc00"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags
+           ;; This file requires Selenium.
+           #~(list "--ignore" "tests/selenium/test_selenium.py"
+                   "-k" (string-append
+                         ;; The tests below also require Selenium.
+                         "not test__repr_png_is_bytes"
+                         " and not test_valid_png"
+                         " and not test_valid_png_size"
+                         " and not test_geojson"
+                         " and not test_heat_map_with_weights"
+                         ;; This performs an online request.
+                         " and not test_json_request"
+                         ;; AssertionError.
+                         " and not test_minimap"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'build 'pretend-version
+                 ;; The version string is usually derived via setuptools-scm,
+                 ;; but without the git metadata available, the version string
+                 ;; is set to '0.0.0'.
+                 (lambda _
+                   (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
+                           #$(package-version this-package)))))))
     (propagated-inputs
-     (list python-branca python-jinja2 python-numpy python-requests))
+     (list python-branca
+           python-jinja2
+           python-numpy
+           python-requests
+           python-xyzservices))
     (native-inputs
-     (list python-pytest))
+     (list python-geopandas
+           python-nbconvert
+           python-pandas
+           python-pillow
+           python-pytest
+           python-selenium
+           python-setuptools-scm))
     (home-page "https://github.com/python-visualization/folium")
     (synopsis "Make beautiful maps with Leaflet.js & Python")
     (description "@code{folium} makes it easy to visualize data that’s been

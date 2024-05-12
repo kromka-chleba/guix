@@ -1669,7 +1669,7 @@ fully-vectorial and three-dimensional methods.")
 (define-public meep
   (package
     (name "meep")
-    (version "1.8.0")
+    (version "1.28.0")
     (source (origin
               (method url-fetch)
               (uri
@@ -1678,27 +1678,27 @@ fully-vectorial and three-dimensional methods.")
                 version "/meep-" version ".tar.gz"))
               (sha256
                (base32
-                "14zyxmm3p80j5fz5b89sl7hgkgcisqjny5hjh4pi274ziqjqz8bm"))))
+                "199a29mb64cfv89azzdh8arpy9ib6050cqh86yw5ypm5jhy6178v"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags
-       (list (string-append "--with-libctl="
-                            (assoc-ref %build-inputs "libctl")
-                            "/share/libctl"))))
+     (list #:configure-flags
+           #~(list (string-append "--with-libctl="
+                                  #$(this-package-input "guile-libctl")
+                                  "/share/libctl"))))
     (native-inputs
-     `(("fortran" ,gfortran)
-       ("pkg-config" ,pkg-config)
-       ("swig" ,swig)))
+     (list gfortran
+           pkg-config
+           swig))
     (inputs
-     `(("fftw" ,fftw)
-       ("gsl" ,gsl)
-       ("guile" ,guile-2.2)
-       ("harminv" ,harminv)
-       ("hdf5" ,hdf5)
-       ("openblas" ,openblas)
-       ("libctl" ,guile-libctl)
-       ("mpb" ,mpb)
-       ("zlib" ,zlib)))
+     (list fftw
+           gsl
+           guile-2.2
+           guile-libctl
+           harminv
+           hdf5
+           mpb
+           openblas
+           zlib))
     (home-page "http://ab-initio.mit.edu/wiki/index.php/Meep")
     (synopsis "Finite-difference time-domain (FDTD) simulation software")
     (description
@@ -2652,7 +2652,7 @@ measurement devices and test equipment via GPIB, RS232, Ethernet or USB.")
 (define-public python-scikit-rf
   (package
     (name "python-scikit-rf")
-    (version "0.31.0")
+    (version "1.0.0")
     (source (origin
               (method git-fetch) ;PyPI misses some files required for tests
               (uri (git-reference
@@ -2660,7 +2660,7 @@ measurement devices and test equipment via GPIB, RS232, Ethernet or USB.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "1cidv2373lwxy26kbzg4slaqvn2gpq67mvijgp0rydfx6mm6a89i"))
+                "0qfijh2r93jn3za2h9wdv2y49gd4alcww35zrdvmxrx6kbv67m2f"))
               (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-matplotlib

@@ -2103,7 +2103,7 @@ Apprentice and Sourcerer.")
 (define-public emacs-suneater-theme
   (package
     (name "emacs-suneater-theme")
-    (version "2.4.0")
+    (version "2.5.2")
     (source
      (origin
        (method git-fetch)
@@ -2112,7 +2112,7 @@ Apprentice and Sourcerer.")
              (commit version)))
        (sha256
         (base32
-         "1j216w9c2psynlsl8gdmnya5a60cyx100ibm15zyyaav75wccn5j"))
+         "1501kj933717jw9prx03x1k8n520z7a268bl03m3m82qn5hjq0ad"))
        (file-name (git-file-name name version))))
     (build-system emacs-build-system)
     (home-page "https://git.sr.ht/~plattfot/suneater-theme")
@@ -23757,7 +23757,7 @@ according to a parsing expression grammar.")
 (define-public emacs-eldev
   (package
     (name "emacs-eldev")
-    (version "1.9.1")
+    (version "1.10")
     (source
      (origin
        (method git-fetch)
@@ -23766,7 +23766,7 @@ according to a parsing expression grammar.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1v0jwzwq0xpih8m4aymz90fdfvypkiqczh0ip5jg4kcvzikliw3f"))))
+        (base32 "02yks6nmw725b4ng97pbw3b8rh60hzysplzpgxr7czq2wdlll7zp"))))
     (build-system emacs-build-system)
     (arguments
      (list
