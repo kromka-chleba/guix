@@ -434,6 +434,18 @@ which will be used as a snippet in origin."
    "0.1.2"
    #:repository-url "https://github.com/camdencheek/tree-sitter-dockerfile"))
 
+(define-public tree-sitter-erlang
+  ;; Versions newer than 0.4.0 use tree-sitter 0.22.1
+  (let ((version "0.4.0") ; In Cargo.toml, but untagged
+        (commit "57e69513efd831f9cc8207d65d96bad917ca4aa4")
+        (revision "0"))
+  (tree-sitter-grammar
+   "erlang" "Erlang"
+   "1h0c9qc6i0kz5a0yq68xp623f84g4mc8hcp00khdbf7y7z7b9izc"
+   (git-version version revision commit)
+   #:repository-url "https://github.com/WhatsApp/tree-sitter-erlang"
+   #:commit commit)))
+
 (define-public tree-sitter-elm
   (tree-sitter-grammar
    "elm" "Elm"
@@ -709,3 +721,67 @@ which will be used as a snippet in origin."
    "1.0.8"
    ;; Version 1.2.1 is most recent, but requires tree-sitter >0.21.0
    #:repository-url "https://github.com/tlaplus-community/tree-sitter-tlaplus"))
+
+(define-public tree-sitter-kotlin
+  (tree-sitter-grammar
+   "kotlin" "Kotlin"
+   "0lqwjg778xy561hhf90c9m8zdjmv58z5kxgy0cjgys4xqsfbfri6"
+   "0.3.6"
+   #:repository-url "https://github.com/fwcd/tree-sitter-kotlin"
+   #:commit "0.3.6"))
+
+(define-public tree-sitter-awk
+  (tree-sitter-grammar
+   "awk" "AWK"
+   "1far60pxkqfrxi85hhn811g2r7vhnzdvfp5piy89fmpxk33s4vmi"
+   ;; Version 0.7.1 would be most recent, but would require tree-sitter >= 0.21.0.
+   "0.6.2"
+   #:repository-url "https://github.com/Beaglefoot/tree-sitter-awk"))
+
+(define-public tree-sitter-verilog
+  (let ((version "1.0.0") ; In package.json, but untagged
+        (commit "075ebfc84543675f12e79a955f79d717772dcef3")
+        (revision "0"))
+    (tree-sitter-grammar
+     "verilog" "Verilog"
+     "0j5iycqm5dmvzy7dssm8km1djhr7hnfgk26zyzcxanhrwwq3wi4k"
+     (git-version version revision commit)
+     #:commit commit
+     #:get-cleanup-snippet
+     (lambda _
+       #~(begin
+           (use-modules (guix build utils))
+           (delete-file "binding.gyp")
+           (delete-file-recursively "bindings"))))))
+
+(define-public tree-sitter-vhdl
+  (let ((version "0.1.1") ; In package.json, but untagged
+        (commit "a3b2d84990527c7f8f4ae219c332c00c33d2d8e5")
+        (revision "0"))
+    (tree-sitter-grammar
+     "vhdl" "VHDL"
+     "0gz2b0qg1jzi2q6wgj6k6g35kmni3pqglq4f5kblkxx909463n8a"
+     (git-version version revision commit)
+     #:repository-url "https://github.com/alemuller/tree-sitter-vhdl"
+     #:commit commit
+     #:get-cleanup-snippet
+     (lambda _
+       #~(begin
+           (use-modules (guix build utils))
+           (delete-file "binding.gyp")
+           ;; tree-sitter-vhdl does not have bindings/ directory.
+           (delete-file "src/grammar.json")
+           (delete-file "src/node-types.json")
+           (delete-file "src/parser.c")
+           (delete-file-recursively "src/tree_sitter")
+           ;; Fix a query error in the highlight.scm query test. This would be
+           ;; easier with a patch, but this works too, and we still get to use
+           ;; tree-sitter-grammar. The fix is taken from here:
+           ;; https://github.com/n8tlarsen/tree-sitter-vhdl/commit/dabf157c6bb7220d72d3ceba0ce1abd90bf62187
+           ;; This is a documented issue that has not been resolved for nearly 2
+           ;; years.
+           ;; https://github.com/alemuller/tree-sitter-vhdl/issues/2
+           (substitute* "queries/highlights.scm"
+             (("\\(integer_decimal\n") "(integer_decimal)\n")
+             (("\\(integer\\)") "")
+             (("\"0\")") "\"0\"")))))))

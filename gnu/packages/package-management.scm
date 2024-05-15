@@ -177,8 +177,8 @@
   ;; Note: the 'update-guix-package.scm' script expects this definition to
   ;; start precisely like this.
   (let ((version "1.4.0")
-        (commit "4c94b9e983bc51d9504655f1e7727c4f6d14b6b7")
-        (revision 18))
+        (commit "37719d3ec8db7f2380903c2ac6e4efb2e4639cc7")
+        (revision 20))
     (package
       (name "guix")
 
@@ -194,7 +194,7 @@
                       (commit commit)))
                 (sha256
                  (base32
-                  "19lqlfafs5mrnciw4jz4iccx5zzhj4pyb20bz6cdqcqbf9nmkfp1"))
+                  "05x0bqxzxz2d1l9cwax6cchfikvf46sv3b0fkwb8a2bk42v8bgyz"))
                 (file-name (string-append "guix-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -493,7 +493,7 @@ $(prefix)/etc/openrc\n")))
                        ("graphviz" ,graphviz-minimal)
                        ("font-ghostscript" ,font-ghostscript) ;fonts for 'dot'
                        ("help2man" ,help2man)
-                       ("po4a" ,po4a)))
+                       ("po4a" ,po4a-minimal)))
       (inputs
        `(("bzip2" ,bzip2)
          ("gzip" ,gzip)
@@ -1545,8 +1545,8 @@ environments.")
                   "0k9zkdyyzir3fvlbcfcqy17k28b51i20rpbjwlx2i1mwd2pw9cxc")))))))
 
 (define-public guix-build-coordinator
-  (let ((commit "53dddfa62c281ac428325a9d642093979dce77d2")
-        (revision "102"))
+  (let ((commit "ff814284f4cf046ad19dcee37f1b90df7d4b426c")
+        (revision "103"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1557,7 +1557,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "11i2qwnz7lhjvkg95vdv1520baa2lzqhb9slvm6xxql8lxmsjvj0"))
+                  "1x2viczp3p06f0q7673a5nx035k3sakgs1dk52vq9isch6wsnwk4"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1803,8 +1803,8 @@ in an isolated environment, in separate namespaces.")
     (license license:gpl3+)))
 
 (define-public nar-herder
-  (let ((commit "71115bd073d58c48eb4a1d456ac4c89b262799ef")
-        (revision "30"))
+  (let ((commit "0e89dbb67e4925cec6b0120c5ed9e8a861a0c1b1")
+        (revision "31"))
     (package
       (name "nar-herder")
       (version (git-version "0" revision commit))
@@ -1815,7 +1815,7 @@ in an isolated environment, in separate namespaces.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "139d2ajnm1s0y7iirbvxdr14g6ywkj7zrfskwbmvlkz5ldn7v9zb"))
+                  "1wygia36paa1qvg70krx4sa66js46nln10xc32p5i9k8zmripasd"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments

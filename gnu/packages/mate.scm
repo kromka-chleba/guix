@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2016 Fabian Harfert <fhmgufs@web.de>
-;;; Copyright © 2016, 2017 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016, 2017, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017 Nikita <nikita@n0.is>
 ;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019, 2020, 2021 Ludovic Courtès <ludo@gnu.org>
@@ -727,59 +727,63 @@ infamous 'Wanda the Fish'.")
                (("gtk-update-icon-cache") "true"))
              #t)))))
     (native-inputs
-     `(("pkg-config" ,pkg-config)
-       ("intltool" ,intltool)
-       ("itstool" ,itstool)
-       ("yelp-tools" ,yelp-tools)
-       ("glib:bin" ,glib "bin")
-       ("gobject-introspection" ,gobject-introspection)
-       ("gtk-doc" ,gtk-doc)
-       ("texlive-bin" ,texlive-bin) ;synctex
-       ("xmllint" ,libxml2)
-       ("zlib" ,zlib)))
+     (list pkg-config
+           intltool
+           itstool
+           yelp-tools
+           (list glib "bin")
+           gobject-introspection
+           gtk-doc
+           texlive-bin  ;synctex
+           libxml2
+           zlib))
     (inputs
-     `(("at-spi2-core" ,at-spi2-core)
-       ("cairo" ,cairo)
-       ("caja" ,caja)
-       ("dconf" ,dconf)
-       ("dbus" ,dbus)
-       ("dbus-glib" ,dbus-glib)
-       ("djvulibre" ,djvulibre)
-       ("fontconfig" ,fontconfig)
-       ("freetype" ,freetype)
-       ("ghostscript" ,ghostscript)
-       ("glib" ,glib)
-       ("gtk+" ,gtk+)
-       ("js-mathjax" ,js-mathjax)
-       ("libcanberra" ,libcanberra)
-       ("libsecret" ,libsecret)
-       ("libspectre" ,libspectre)
-       ("libtiff" ,libtiff)
-       ("libx11" ,libx11)
-       ("libice" ,libice)
-       ("libsm" ,libsm)
-       ("libgxps" ,libgxps)
-       ("libjpeg" ,libjpeg-turbo)
-       ("libxml2" ,libxml2)
-       ("dogtail" ,python-dogtail)
-       ("shared-mime-info" ,shared-mime-info)
-       ("gdk-pixbuf" ,gdk-pixbuf)
-       ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)
-       ("libgnome-keyring" ,libgnome-keyring)
-       ("libarchive" ,libarchive)
-       ("marco" ,marco)
-       ("openjpeg" ,openjpeg)
-       ("pango" ,pango)
-       ;;("texlive" ,texlive)
-       ;; TODO:
-       ;;   Build libkpathsea as a shared library for DVI support.
-       ;; ("libkpathsea" ,texlive-bin)
-       ("poppler" ,poppler)
-       ("webkitgtk" ,webkitgtk-for-gtk3)))
+     (list at-spi2-core
+           cairo
+           caja
+           dconf
+           dbus
+           dbus-glib
+           djvulibre
+           fontconfig
+           freetype
+           ghostscript
+           glib
+           gtk+
+           js-mathjax
+           libcanberra
+           libsecret
+           libspectre
+           libtiff
+           libx11
+           libice
+           libsm
+           libgxps
+           libjpeg-turbo
+           libxml2
+           python-dogtail
+           shared-mime-info
+           gdk-pixbuf
+           gsettings-desktop-schemas
+           libgnome-keyring
+           libarchive
+           marco
+           openjpeg
+           pango
+           ;;texlive
+           ;; TODO:
+           ;;   Build libkpathsea as a shared library for DVI support.
+           ;; ("libkpathsea" ,texlive-bin)
+           poppler
+           webkitgtk-for-gtk3))
     (home-page "https://mate-desktop.org")
     (synopsis "Document viewer for Mate")
     (description
-     "Document viewer for Mate")
+     "Atril is a simple multi-page document viewer.  It can display and print
+@acronym{PostScript, PS}, @acronym{Encapsulated PostScript EPS}, DJVU, DVI, XPS
+and @acronym{Portable Document Format PDF} files.  When supported by the
+document, it also allows searching for text, copying text to the clipboard,
+hypertext navigation, and table-of-contents bookmarks.")
     (license license:gpl2)))
 
 (define-public caja

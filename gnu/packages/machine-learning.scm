@@ -560,14 +560,13 @@ Performance is achieved by using the LLVM JIT compiler.")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'disable-unrunable-tests
-               ; test-eval-callback downloads ML model from network, cannot run
-               ; in Guix build environment
-               (lambda _
-                   (substitute* '("examples/eval-callback/CMakeLists.txt")
-                       (("add_test") "#add_test"))
-                   (substitute* '("examples/eval-callback/CMakeLists.txt")
-                       (("set_property") "#set_property"))
-                   #t))
+              ;; test-eval-callback downloads ML model from network, cannot
+              ;; run in Guix build environment
+              (lambda _
+                (substitute* '("examples/eval-callback/CMakeLists.txt")
+                  (("add_test") "#add_test"))
+                (substitute* '("examples/eval-callback/CMakeLists.txt")
+                  (("set_property") "#set_property"))))
             (add-before 'install 'install-python-scripts
               (lambda _
                 (let ((bin (string-append #$output "/bin/")))
@@ -590,7 +589,7 @@ Performance is achieved by using the LLVM JIT compiler.")
                   (make-script "convert"))))
             (add-after 'install-python-scripts 'wrap-python-scripts
               (assoc-ref python:%standard-phases 'wrap))
-            (add-after 'install  'install-main
+            (add-after 'install 'install-main
               (lambda _
                 (copy-file "bin/main" (string-append #$output "/bin/llama")))))))
       (inputs (list python))

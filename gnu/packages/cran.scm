@@ -14806,14 +14806,14 @@ Decomposition in R (Beaton et al 2014) <doi:10.1016/j.csda.2013.11.006>.")
 (define-public r-insight
   (package
     (name "r-insight")
-    (version "0.19.10")
+    (version "0.19.11")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "insight" version))
        (sha256
         (base32
-         "0sh7pwnrlggizzpi0smpdq9fds2v8ql3bwdg4yxa2z2apaq3xk6y"))))
+         "0za6f3bvkybd84jyazg1n03lhzl1w3mpca5c0qsygkgbbyhiddbj"))))
     (build-system r-build-system)
     (native-inputs
      (list r-knitr))
@@ -17736,14 +17736,14 @@ results using @code{ggplot2}.")
 (define-public r-effectsize
   (package
     (name "r-effectsize")
-    (version "0.8.7")
+    (version "0.8.8")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "effectsize" version))
        (sha256
         (base32
-         "07lfa0pvqhanjyyx9hs6gdqw1zyi1y21k539jgvgnrvixfilfkb2"))))
+         "1dx83xv98iny4pzphrr64fv277k70cgmia1s18bh7fix2h3md45k"))))
     (properties `((upstream-name . "effectsize")))
     (build-system r-build-system)
     (propagated-inputs
@@ -19878,18 +19878,19 @@ large datasets (> 100,000 samples) very efficiently.")
 (define-public r-qlcmatrix
   (package
     (name "r-qlcmatrix")
-    (version "0.9.7")
+    (version "0.9.8")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "qlcMatrix" version))
        (sha256
         (base32
-         "0iqkcvvy8rxlk0s83sjq57dd6fadb18p5z31lzy0gnzv1hsy1x8y"))))
+         "0d38jb653787s05g8syc9wgaljaifmkviijwz5rzcd881glgs8sv"))))
     (properties `((upstream-name . "qlcMatrix")))
     (build-system r-build-system)
     (propagated-inputs
      (list r-docopt r-matrix r-slam r-sparsesvd))
+    (native-inputs (list r-knitr r-rmarkdown))
     (home-page "https://cran.r-project.org/web/packages/qlcMatrix")
     (synopsis "Sparse matrix functions for quantitative language comparison")
     (description
@@ -24041,13 +24042,13 @@ either PDF/EPS files.")
 (define-public r-polspline
   (package
     (name "r-polspline")
-    (version "1.1.24")
+    (version "1.1.25")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "polspline" version))
        (sha256
-        (base32 "0mal78f79jl6cj02xabv9vqf88m4iiadmgiv3qliv117cxkc6hb6"))))
+        (base32 "18wv3v76y4xdlrz7qdp6amr0ynhyqbja1rjqmbz0lc12v56gqhr9"))))
     (build-system r-build-system)
     (native-inputs (list gfortran))
     (home-page "https://cran.r-project.org/web/packages/polspline/")
@@ -24402,13 +24403,13 @@ authoring books and technical documents with R Markdown.")
 (define-public r-options
   (package
     (name "r-options")
-    (version "0.1.0")
+    (version "0.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "options" version))
        (sha256
-        (base32 "0pprbp2pxvgh120f8dahswws44gpdm4f4nlq3h3nvqrlhnspwnb8"))))
+        (base32 "02qnbipdmnw01f40300pg1ycrcbnr37f8yiqbabm6jznf6r4ihm9"))))
     (properties `((upstream-name . "options")))
     (build-system r-build-system)
     (native-inputs (list r-knitr))
@@ -24857,14 +24858,14 @@ consists of @code{grid} grobs and viewports that can then be manipulated with
 (define-public r-farver
   (package
     (name "r-farver")
-    (version "2.1.1")
+    (version "2.1.2")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "farver" version))
        (sha256
         (base32
-         "1klnr73fhm7n46q85in1v9gi99y6rcdzzg4h4wvnbx23lxndmkqd"))))
+         "09gy2wmm3jp2k3q6zbmjl6z55a974221q7vi6xhmdd5abnwj722j"))))
     (build-system r-build-system)
     (home-page "https://github.com/thomasp85/farver")
     (synopsis "Vectorized color conversion and comparison")
@@ -30516,14 +30517,14 @@ number embedded in the file rather than the file extension.")
 (define-public r-imager
   (package
     (name "r-imager")
-    (version "1.0.1")
+    (version "1.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "imager" version))
        (sha256
         (base32
-         "0i8rkz38y4xybh28jrwijrrmzfnj4pwifpwpgl345jgf4cxg0hxm"))))
+         "0sjn3ig5p020gml200cy5bdbrbql7qv1fqhhzjpcbmhprf39113w"))))
     (properties `((upstream-name . "imager")))
     (build-system r-build-system)
     (inputs
@@ -37301,13 +37302,13 @@ other R users.")
 (define-public r-seurat
   (package
     (name "r-seurat")
-    (version "5.0.3")
+    (version "5.1.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "Seurat" version))
               (sha256
                (base32
-                "08r5l6sk8i134izd29ydfm7hva7a9b3lfglmgngc9w73qs9dzwz4"))))
+                "0nad49g13v5zg4rr2099m1cl1qcmmj1a0m09gam5xiccg8yv9kxd"))))
     (properties `((upstream-name . "Seurat")))
     (build-system r-build-system)
     (propagated-inputs
@@ -40740,14 +40741,14 @@ Service (S3).")
 (define-public r-paws-customer-engagement
   (package
     (name "r-paws-customer-engagement")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "paws.customer.engagement" version))
        (sha256
         (base32
-         "1380waqavwga17fvdzfpag4snzynkykh3pnia5bi73476y7myj5h"))))
+         "1akwx39xmkms9zpsb7i5wx2hzvhhkmi0xlxag13cf9gjpg822361"))))
     (properties
      `((upstream-name . "paws.customer.engagement")))
     (build-system r-build-system)
@@ -40788,13 +40789,13 @@ more.")
 (define-public r-paws-developer-tools
   (package
     (name "r-paws-developer-tools")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "paws.developer.tools" version))
        (sha256
-        (base32 "177q7x8l9asyidpc7j20xwpyk0bd9x9m20cy4qzlnnmr14anyvjm"))))
+        (base32 "1cj9k005267wpd9pblvhk0sdy2ll2n0wcq4ch5wjwkz9kgl02jjr"))))
     (properties `((upstream-name . "paws.developer.tools")))
     (build-system r-build-system)
     (propagated-inputs
@@ -40810,13 +40811,13 @@ deployment, and more.")
 (define-public r-paws-end-user-computing
   (package
     (name "r-paws-end-user-computing")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "paws.end.user.computing" version))
        (sha256
-        (base32 "0qz5kps9819yfqjdqjmv7wx70ll7xayfxmd5dc867k14i41f91cm"))))
+        (base32 "17550n93d0lndhfk9r8zdh2yif4hw3m4wn7wzgj53akgqy1jg10y"))))
     (properties `((upstream-name . "paws.end.user.computing")))
     (build-system r-build-system)
     (propagated-inputs
@@ -40832,14 +40833,14 @@ and more.")
 (define-public r-paws-application-integration
   (package
     (name "r-paws-application-integration")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "paws.application.integration" version))
        (sha256
         (base32
-         "1sgzp0yr1jsmbyzyk26m762rhpxb89wrwqqvrrw3xr1ib0cg06ah"))))
+         "0wmkxnrjmaf88bw1xypj7n41klxxhf538krsk0xrnwjb14v7lqla"))))
     (properties
      `((upstream-name . "paws.application.integration")))
     (build-system r-build-system)
@@ -40881,14 +40882,14 @@ more.")
 (define-public r-paws-analytics
   (package
     (name "r-paws-analytics")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "paws.analytics" version))
        (sha256
         (base32
-         "07nwa39mn749a9rqb683wf19kd8si7ksws87annbldmd57r072l8"))))
+         "0w65f4bmcybp30zas20b90f1cmw1znhpjhcsf8xnq7x4s2lnpy3d"))))
     (properties
      `((upstream-name . "paws.analytics")))
     (build-system r-build-system)
@@ -40905,14 +40906,14 @@ Elasticsearch search engine, and more.")
 (define-public r-paws-machine-learning
   (package
     (name "r-paws-machine-learning")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "paws.machine.learning" version))
        (sha256
         (base32
-         "0zcw758xsw2360571dj215gyd1amaxx07i58h1r6r5zys940lxis"))))
+         "1l2gy9bzibbjwqxb5x72dpfaylxa999c3zyb3y3359ckqkxsqgpy"))))
     (properties
      `((upstream-name . "paws.machine.learning")))
     (build-system r-build-system)
@@ -40953,14 +40954,14 @@ monitoring, Auto Scaling for automatically scaling resources, and more.")
 (define-public r-paws-networking
   (package
     (name "r-paws-networking")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "paws.networking" version))
        (sha256
         (base32
-         "0qs6bp0vlbazxir9jmdcnazh90yrvhrw6k9046id73hw1j7h5zaf"))))
+         "1lfkll2gb83vw9zfb7bnmlg4alncqhp48s1w046fkh9qlg8hc7j6"))))
     (properties
      `((upstream-name . "paws.networking")))
     (build-system r-build-system)
@@ -40977,14 +40978,14 @@ CloudFront content delivery, load balancing, and more.")
 (define-public r-paws-database
   (package
     (name "r-paws-database")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "paws.database" version))
        (sha256
         (base32
-         "0nlkbnyxd3znmvqxqb3w43sznacmikq32d9fihyc1dx7ghvmf61z"))))
+         "0jm3cwl2scfc4jgxzlwnax195xlii2b3p9kjmid48p8zx6h68hb9"))))
     (properties `((upstream-name . "paws.database")))
     (build-system r-build-system)
     (propagated-inputs
@@ -41001,14 +41002,14 @@ database, and more.")
 (define-public r-paws-storage
   (package
     (name "r-paws-storage")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "paws.storage" version))
        (sha256
         (base32
-         "0v2g1shv9m4h2fz2lvjad479g3nmxc92wlyrxj4s7fifzzs2pd97"))))
+         "1mngxy88r94n1zwbvimj71hw4w9myk5kgqpgyj0m3spwv7338rfd"))))
     (properties `((upstream-name . "paws.storage")))
     (build-system r-build-system)
     (propagated-inputs
