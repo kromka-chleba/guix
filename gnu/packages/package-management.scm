@@ -1004,8 +1004,8 @@ transactions from C or Python.")
     (license license:gpl2+)))
 
 (define-public bffe
-  (let ((commit "bdfaab91e82d7d43c35405da3b18c46cde8096de")
-        (revision "5"))
+  (let ((commit "7df2aa647d11342e3a446f44ef7626e58a1d5902")
+        (revision "6"))
     (package
       (name "bffe")
       (version (git-version "0" revision commit))
@@ -1016,7 +1016,7 @@ transactions from C or Python.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0qwnd49apwdx8wrfms2spii1kdg5ashf4591kyfyr89070jjmpa7"))
+                  "04gg21rjl3c1l8i2wnq8w1w6zfh2qmp9ay839ll90c1jf9bc3sn4"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (native-inputs
@@ -1545,8 +1545,8 @@ environments.")
                   "0k9zkdyyzir3fvlbcfcqy17k28b51i20rpbjwlx2i1mwd2pw9cxc")))))))
 
 (define-public guix-build-coordinator
-  (let ((commit "ff814284f4cf046ad19dcee37f1b90df7d4b426c")
-        (revision "103"))
+  (let ((commit "fff0017c42ceb01dd1f53f8e514bab969579b642")
+        (revision "104"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1557,7 +1557,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1x2viczp3p06f0q7673a5nx035k3sakgs1dk52vq9isch6wsnwk4"))
+                  "0nv0rpphd9vp374hwsaywxncpz4k9iv2xk5limlfrr6kmgfhlibp"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1803,8 +1803,8 @@ in an isolated environment, in separate namespaces.")
     (license license:gpl3+)))
 
 (define-public nar-herder
-  (let ((commit "0e89dbb67e4925cec6b0120c5ed9e8a861a0c1b1")
-        (revision "31"))
+  (let ((commit "bb8209bf7e238baedd0bdabe11d09518d2f44eee")
+        (revision "32"))
     (package
       (name "nar-herder")
       (version (git-version "0" revision commit))
@@ -1815,7 +1815,7 @@ in an isolated environment, in separate namespaces.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1wygia36paa1qvg70krx4sa66js46nln10xc32p5i9k8zmripasd"))
+                  "0kzf12h9c9zvaxxv6fagf4b696z5bhyiaw944x20ll1sdryals46"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments

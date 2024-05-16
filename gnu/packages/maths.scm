@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2013, 2014, 2015, 2016, 2019, 2020, 2023 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2013, 2014, 2015, 2016, 2019, 2020, 2023, 2024 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2013 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2014, 2016, 2017 John Darrington <jmd@gnu.org>
 ;;; Copyright © 2014-2022 Eric Bavier <bavier@posteo.net>
@@ -63,6 +63,8 @@
 ;;; Copyright © 2023 Jake Leporte <jakeleporte@outlook.com>
 ;;; Copyright © 2023 Camilo Q.S. (Distopico) <distopico@riseup.net>
 ;;; Copyright © 2023 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
+;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -304,6 +306,42 @@ a mathematical research tool, and it comes with built in mathematical and
 programmatic functions.")
     (home-page "http://www.isthe.com/chongo/tech/comp/calc/")
     (license license:lgpl2.1)))
+
+(define-public chuffed
+  (package
+    (name "chuffed")
+    (version "0.13.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/chuffed/chuffed")
+             (commit version)))
+       (sha256
+        (base32 "1c28q166qh84q4i5wz77fqvw7kld3fmhd245sgdvyxcbjpi2wr0m"))))
+    (build-system cmake-build-system)
+    (synopsis "Lazy clause generation solver")
+    (arguments
+     (list
+      #:tests? #f ;no 'test' target
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'build 'patch-msc
+                     (lambda _
+                       (let ((out #$output))
+                         (substitute* "chuffed.msc"
+                           ;; Replace fzn-chuffed and chuffed paths
+                           ;; before build.
+                           (("\\.\\./../..")
+                            out)
+                           (("\\.\\.")
+                            (string-append out "/share/minizinc")))))))))
+    (description
+     "Chuffed is a state of the art lazy clause solver designed from the
+ground up with lazy clause generation in mind.  Lazy clause generation
+is a hybrid approach to constraint solving that combines features of
+finite domain propagation and Boolean satisfiability.")
+    (home-page "https://github.com/chuffed/chuffed")
+    (license license:expat)))
 
 (define-public coda
   (package
@@ -2666,73 +2704,77 @@ and quadratic objectives using the Simplex algorithm.")
     (license license:epl1.0)))
 
 (define-public gecode
-  (package
-    (name "gecode")
-    (version "6.2.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/Gecode/gecode")
-                    (commit (string-append "release-" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0b1cq0c810j1xr2x9y9996p894571sdxng5h74py17c6nr8c6dmk"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  ;; delete generated sources
-                  (for-each delete-file
-                            '("gecode/kernel/var-imp.hpp"
-                              "gecode/kernel/var-type.hpp"))))))
-    (outputs '("out" "examples"))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:configure-flags
-       (list (string-append "GLDFLAGS=-Wl,-rpath="
-                            (assoc-ref %outputs "out")
-                            "/lib")
-             "--enable-examples=no")
-       #:modules ((guix build gnu-build-system)
-                  (guix build utils)
-                  (ice-9 rdelim)
-                  (ice-9 popen))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'build 'build-examples
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "make" "compileexamples")))
-         ;; The Makefile disrespects GLDFLAGS for some reason, so we have to
-         ;; patch it ourselves... *sigh*
-         (add-after 'install 'fix-rpath
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((libdir (string-append (assoc-ref outputs "out") "/lib")))
-               (for-each
-                (lambda (file)
-                  (let* ((pipe (open-pipe* OPEN_READ "patchelf"
-                                          "--print-rpath" file))
-                         (line (read-line pipe)))
-                    (and (zero? (close-pipe pipe))
-                         (invoke "patchelf" "--set-rpath"
-                                 (string-append libdir ":" line)
-                                 file))))
-                (find-files libdir ".*\\.so$")))))
-         (add-after 'install 'install-examples
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "make" "installexamples"
-                     (string-append "bindir=" (assoc-ref outputs "examples")
-                                    "/bin"))))
-         ;; Tests depend on installed libraries.
-         (delete 'check)
-         (add-after 'fix-rpath 'check
-           (assoc-ref %standard-phases 'check)))))
-    (native-inputs
-     (list patchelf perl sed))
-    (home-page "https://www.gecode.org")
-    (synopsis "Toolkit for developing constraint-based systems")
-    (description "Gecode is a C++ toolkit for developing constraint-based
+  ;; The current release is not compatible with minizinc anymore.
+  ;; Use a commit that has been tested with minizinc.
+  (let ((commit "2d20e88cae176584b6e09d909aca3eb72ae76829")
+        (revision "2"))
+    (package
+      (name "gecode")
+      (version (git-version "6.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/Gecode/gecode")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0hf7hd7m5p26xwn8f561f0gn2a6q33xz818jg3ivmvp2ysmmmm4r"))
+         (modules '((guix build utils)))
+         (snippet '(begin
+                     ;; delete generated sources
+                     (for-each delete-file
+                               '("gecode/kernel/var-imp.hpp"
+                                 "gecode/kernel/var-type.hpp"))))))
+      (outputs '("out" "examples"))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:configure-flags #~(list (string-append "GLDFLAGS=-Wl,-rpath="
+                                                 #$output "/lib")
+                                  "--enable-examples=no")
+        #:modules '((guix build gnu-build-system)
+                    (guix build utils)
+                    (ice-9 rdelim)
+                    (ice-9 popen))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'build 'build-examples
+              (lambda _
+                (invoke "make" "compileexamples")))
+            ;; The Makefile disrespects GLDFLAGS for some reason,
+            ;; so we have to patch it ourselves.
+            (add-after 'install 'fix-rpath
+              (lambda _
+                (let ((libdir (string-append #$output "/lib")))
+                  (for-each (lambda (file)
+                              (let* ((pipe (open-pipe* OPEN_READ
+                                            "patchelf"
+                                            "--print-rpath" file))
+                                     (line (read-line pipe)))
+                                (and (zero? (close-pipe pipe))
+                                     (invoke "patchelf" "--set-rpath"
+                                             (string-append libdir
+                                                            ":" line)
+                                             file))))
+                            (find-files libdir ".*\\.so$")))))
+            (add-after 'install 'install-examples
+              (lambda _
+                (invoke "make" "installexamples"
+                        (string-append "bindir="
+                                       #$output "/bin"))))
+            ;; Tests depend on installed libraries.
+            (delete 'check)
+            (add-after 'fix-rpath 'check
+              (assoc-ref %standard-phases
+                         'check)))))
+      (native-inputs (list patchelf perl sed))
+      (home-page "https://www.gecode.org")
+      (synopsis "Toolkit for developing constraint-based systems")
+      (description
+       "Gecode is a C++ toolkit for developing constraint-based
 systems and applications.  It provides a modular and extensible solver.")
-    (license license:expat)))
+      (license license:expat))))
 
 (define-public libfixmath
   (let ((commit "1416c9979635c69f344d3c1de84b3246001a6540")
@@ -4080,9 +4122,9 @@ book.")
                                (lambda (file)
                                  (member file (cons* "." ".." targets)))
                                (scandir ".")))
-                    (substitute* "libmzn.cmake"
-                      (("include\\(cmake/targets/(.*)\\)" all target)
-                       (if (member target targets) all "")))))
+                     (substitute* "libmzn.cmake"
+                       (("include\\(cmake/targets/(.*)\\)" all target)
+                        (if (member target targets) all "")))))
                   (with-directory-excursion "include/minizinc/solvers/MIP"
                     (for-each delete-file
                               (remove
@@ -4113,17 +4155,19 @@ book.")
                   #t))))
     (build-system cmake-build-system)
     (arguments
-     `(#:tests? #f ; no ‘check’ target
-       #:modules ((guix build cmake-build-system)
-                  (guix build utils)
-                  (srfi srfi-1))
+     (list
+       #:tests? #f ; no ‘check’ target
+       #:modules '((guix build cmake-build-system)
+                   (guix build utils)
+                   (srfi srfi-1))
        #:phases
-       (modify-phases %standard-phases
+       #~(modify-phases %standard-phases
          (add-after 'install 'install-solver-configs
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((gecode (assoc-ref inputs "gecode"))
-                   (pkgdatadir (string-append (assoc-ref outputs "out")
-                                                  "/share/minizinc")))
+           (lambda _
+             (let ((chuffed #$(this-package-input "chuffed"))
+                   (gecode #$(this-package-input "gecode"))
+                   (pkgdatadir (string-append #$output
+                                              "/share/minizinc")))
                (call-with-output-file (string-append pkgdatadir
                                                      "/Preferences.json")
                  (lambda (port)
@@ -4138,7 +4182,9 @@ book.")
                             port)
                    (newline port)))
 
-               (mkdir-p (string-append pkgdatadir "/solvers"))
+               (copy-recursively
+                 (string-append chuffed "/share/minizinc/solvers")
+                 (string-append pkgdatadir "/solvers"))
                (call-with-output-file (string-append pkgdatadir
                                                      "/solvers/gecode.msc")
                  (lambda (port)
@@ -4165,7 +4211,7 @@ book.")
     (native-inputs
      (list bison flex))
     (inputs
-     (list cbc gecode zlib))
+     (list cbc chuffed gecode zlib))
     (home-page "https://www.minizinc.org")
     (synopsis "High-level constraint modeling language")
     (description "MiniZinc is a high-level modeling language for constraint
@@ -9440,7 +9486,7 @@ numeric differences and differences in numeric formats.")
 (define-public why3
   (package
     (name "why3")
-    (version "1.6.0")
+    (version "1.7.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9449,38 +9495,49 @@ numeric differences and differences in numeric formats.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0k3y98xzhrl44vwzq2m6k4nrllrwp3ll69lc2gfl8d77w0wg7gkp"))))
+                "0fq8wg8ji2v2ssz1d681glmk8glps1irnmdlhqfklaggx01hlf4p"))))
     (build-system ocaml-build-system)
-    (native-inputs
-     (list autoconf automake coq ocaml which))
-    (propagated-inputs
-     (list camlzip ocaml-graph ocaml-menhir ocaml-num ocaml-zarith))
-    (inputs
-     (list coq-flocq emacs-minimal zlib))
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'bootstrap
-           (lambda _
-             (invoke "./autogen.sh")
-             (setenv "CONFIG_SHELL" (which "sh"))
-             (substitute* "configure"
-               (("#! /bin/sh") (string-append "#!" (which "sh")))
-               ;; find ocaml-num in the correct directory
-               (("\\$DIR/nums.cma") "$DIR/num.cma")
-               (("\\$DIR/num.cmi") "$DIR/core/num.cmi"))
-             #t))
-         (add-after 'configure 'fix-makefile
-           (lambda _
-             (substitute* "Makefile"
-               ;; find ocaml-num in the correct directory
-               (("site-lib/num") "site-lib"))
-             #t))
-        (add-after 'install 'install-lib
-          (lambda _
-            (invoke "make" "byte")
-            (invoke "make" "install-lib")
-            #t)))))
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'bootstrap
+                 (lambda _
+                   (invoke "./autogen.sh")
+                   (setenv "CONFIG_SHELL" (which "sh"))
+                   (substitute* "configure"
+                     (("#! /bin/sh") (string-append "#!" (which "sh")))
+                     ;; find ocaml-num in the correct directory
+                     (("\\$DIR/nums.cma") "$DIR/num.cma")
+                     (("\\$DIR/num.cmi") "$DIR/core/num.cmi"))))
+               (add-after 'configure 'fix-makefile
+                 (lambda _
+                   (substitute* "Makefile"
+                     ;; find ocaml-num in the correct directory
+                     (("site-lib/num") "site-lib"))))
+            (add-after 'install 'install-lib
+              (lambda _
+                (invoke "make" "byte")
+                (invoke "make" "install-lib"))))))
+    (native-inputs (list autoconf
+                         automake
+                         coq
+                         ocaml
+                         ocaml-findlib
+                         which))
+    (propagated-inputs (list camlzip
+                             lablgtk3
+                             ocaml-graph
+                             ocaml-lablgtk3-sourceview3
+                             ocaml-menhir
+                             ocaml-ppx-deriving
+                             ocaml-ppx-sexp-conv
+                             ocaml-num
+                             ocaml-re
+                             ocaml-sexplib
+                             ocaml-zarith))
+    (inputs (list coq-flocq
+                  emacs-minimal
+                  zlib))
     (home-page "https://why3.lri.fr")
     (synopsis "Deductive program verification")
     (description "Why3 provides a language for specification and programming,
@@ -9497,14 +9554,14 @@ of C, Java, or Ada programs.")
 (define-public frama-c
   (package
     (name "frama-c")
-    (version "27.1")
+    (version "28.1")
     (source (origin
               (method url-fetch)
-              (uri (string-append "http://frama-c.com/download/frama-c-"
-                                  version "-Cobalt.tar.gz"))
+              (uri (string-append "https://frama-c.com/download/frama-c-"
+                                  version "-Nickel.tar.gz"))
               (sha256
                (base32
-                "1lirkvhf5m53d33l0aw5jzc1fyzkwx5fkgh9g71732d52r55f4sv"))))
+                "14zmwghwhcryvri7k91vc1yampvxvhg36vwjxf64d8kx7dsbq802"))))
     (build-system dune-build-system)
     (arguments
       `(#:phases
@@ -9527,6 +9584,7 @@ of C, Java, or Ada programs.")
                          ocaml-ppx-deriving-yojson
                          ocaml-ppx-deriving-yaml
                          ocaml-ppx-import
+                         ocaml-unionfind
                          why3))
     (native-inputs (list dune-site time ocaml-menhir ocaml-graph))
     (native-search-paths

@@ -3965,7 +3965,7 @@ be used for realtime video capture via Linux-specific APIs.")
 (define-public obs
   (package
     (name "obs")
-    (version "29.0.2")
+    (version "29.1.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3975,7 +3975,7 @@ be used for realtime video capture via Linux-specific APIs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1ijn19wy52fa7ahr29v1rzvh6j0qr7i5xl129m6s9c644f7i51ac"))
+                "192p7m3g8ynbkq3s894w6a0w6gix3k237q5jwqrrr8idwfwwyh0g"))
               (patches
                (search-patches "obs-modules-location.patch"))))
     (build-system cmake-build-system)
@@ -4013,6 +4013,7 @@ be used for realtime video capture via Linux-specific APIs.")
     (inputs
      (list
       alsa-lib
+      asio
       bash-minimal
       curl
       eudev
@@ -4030,6 +4031,7 @@ be used for realtime video capture via Linux-specific APIs.")
       luajit
       mbedtls-lts
       mesa
+      nlohmann-json
       pciutils
       pipewire
       pulseaudio
@@ -4043,6 +4045,7 @@ be used for realtime video capture via Linux-specific APIs.")
       vlc
       wayland
       wayland-protocols
+      websocketpp
       zlib))
     (synopsis "Live streaming software")
     (description "Open Broadcaster Software provides a graphical interface for
@@ -4152,6 +4155,35 @@ your host privately.")
     (description "This plugin adds 3 sources for capturing audio outputs,
 inputs and applications using PipeWire.")
     (license license:gpl2+)))
+
+(define-public obs-source-record
+  (package
+    (name "obs-source-record")
+    (version "0.3.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/exeldro/obs-source-record")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "07yglklrjn3nkyw8755nwchcfgvyw7d0n4qynvja8s7rgqbbs0an"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f ;no tests
+      #:configure-flags
+      #~(list (string-append "-DLIBOBS_INCLUDE_DIR="
+                             #$(this-package-input "obs") "/lib")
+              "-DBUILD_OUT_OF_TREE=On"
+              "-Wno-dev")))
+    (inputs (list obs))
+    (home-page "https://github.com/exeldro/obs-source-record")
+    (synopsis "OBS plugin for recording sources via a filter")
+    (description "This package provides an OBS plugin for recording sources
+via a filter.")
+    (license license:gpl2)))
 
 (define-public obs-websocket
   ;; Functionality was merged into OBS.

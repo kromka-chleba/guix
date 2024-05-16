@@ -9,7 +9,7 @@
 ;;; Copyright © 2017, 2019, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018, 2019 Gábor Boskovits <boskovits@gmail.com>
 ;;; Copyright © 2018 Chris Marusich <cmmarusich@gmail.com>
-;;; Copyright © 2018-2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2018-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2019, 2020, 2021 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
 ;;; Copyright © 2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020 Raghav Gururajan <raghavgururajan@disroot.org>
@@ -3071,7 +3071,7 @@ specification.")
          (origin
            (method url-fetch)
            (uri (string-append
-                 "http://download.eclipse.org/eclipse/downloads/drops4/"
+                 "https://archive.eclipse.org/eclipse/downloads/drops4/"
                  "R-" version "-201710090410/swt-" version
                  "-gtk-linux-" file ".zip"))
            (sha256 (base32 hash))))))
@@ -3102,6 +3102,7 @@ specification.")
                ;; package output.
                (mkdir-p lib)
                (setenv "OUTPUT_DIR" lib)
+               (setenv "CC" ,(cc-for-target))
                (with-directory-excursion "src"
                  (invoke "bash" "build.sh")))))
          (add-after 'install 'install-native
@@ -11316,7 +11317,10 @@ particularly simple design.")
     (arguments
      `(#:jar-name "java-jctools-core.jar"
        #:source-dir "jctools-core/src/main/java"
-       #:test-dir "jctools-core/src/test"))
+       #:test-dir "jctools-core/src/test"
+       ;; The tests timeout on some architectures.
+       #:tests? ,(not (or (target-aarch64?)
+                          (%current-target-system)))))
     (native-inputs
      (list java-junit java-hamcrest-all))
     (home-page "https://github.com/JCTools/JCTools")

@@ -121,7 +121,7 @@
 ;;; Copyright © 2022 Peter Polidoro <peter@polidoro.io>
 ;;; Copyright © 2022, 2023 Wamm K. D. <jaft.r@outlook.com>
 ;;; Copyright © 2022 Jai Vetrivelan <jaivetrivelan@gmail.com>
-;;; Copyright © 2022 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2022-2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2022 Paul A. Patience <paul@apatience.com>
 ;;; Copyright © 2022 Jean-Pierre De Jesus DIAZ <me@jeandudey.tech>
 ;;; Copyright © 2022 Philip McGrath <philip@philipmcgrath.com>
@@ -21498,18 +21498,16 @@ inspection of types defined in the Python standard typing module.")
 (define-public python-lazy-loader
   (package
     (name "python-lazy-loader")
-    (version "0.3")
+    (version "0.4")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "lazy_loader" version))
               (sha256
                (base32
-                "0dwghffnsjjf4pi4gwbl43rx04jmap375hdamafs5cpm6j78js1v"))))
+                "1lacaz292qxpgw6kxiirkx6sv9c5883nq4ssm3hs94cvb2153is7"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pre-commit
-           python-pytest
-           python-pytest-cov))
+     (list python-numpy python-pytest))
     (propagated-inputs
      (list python-flit-core))
     (home-page "https://scientific-python.org/specs/spec-0001/")
@@ -32926,7 +32924,7 @@ used to retry a function a given number of times.")
 (define-public python-pivy
   (package
     (name "python-pivy")
-    (version "0.6.5")
+    (version "0.6.8")
     (source
       (origin
         (method git-fetch)
@@ -32935,20 +32933,20 @@ used to retry a function a given number of times.")
                (commit version)))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "0vids7sxk8w5vr73xdnf8xdci71a7syl6cd35aiisppbqyyfmykx"))))
+         (base32 "00l4r06dwmgn8h29nrl3g3yv33cfyizyylk28x1j95qyj36sggfb"))))
     (build-system python-build-system)
     (arguments
-      `(;; The test suite fails due to an import cycle between 'pivy' and '_coin'
-        #:tests? #f
-        #:phases
-        (modify-phases %standard-phases
+     (list
+      ;; The test suite fails due to an import cycle between 'pivy' and '_coin'
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-cmake-include-dirs
-           (lambda _
-             ;; Patch buildsystem to respect Coin3D include directory
-             (substitute* "CMakeLists.txt"
-                          (("\\$\\{SoQt_INCLUDE_DIRS}")
-                           "${Coin_INCLUDE_DIR};${SoQt_INCLUDE_DIRS}"))
-             #t)))))
+            (lambda _
+              ;; Patch buildsystem to respect Coin3D include directory
+              (substitute* "CMakeLists.txt"
+                (("\\$\\{SoQt_INCLUDE_DIRS}")
+                 "${Coin_INCLUDE_DIR};${SoQt_INCLUDE_DIRS}")))))))
     (native-inputs
       (list cmake swig))
     (inputs
@@ -32956,7 +32954,6 @@ used to retry a function a given number of times.")
             qtbase-5
             libxi
             libice
-            soqt
             glew
             coin3d))
     (home-page "https://github.com/coin3d/pivy")
