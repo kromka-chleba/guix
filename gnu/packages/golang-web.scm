@@ -1588,6 +1588,258 @@ which produce colorized output using github.com/fatih/color.")
     (description "OpenTracing-Go is a Go implementation of the OpenTracing API.")
     (license license:asl2.0)))
 
+(define-public go-github-com-pion-dtls
+  (package
+    (name "go-github-com-pion-dtls")
+    (version "1.5.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/dtls")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qc5dbgh31lilbd1lpmajj1fjzy4jx9iadzqgl9jd1ry9fj3ly1d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: TestClientCertificate: Client failed(x509: certificate relies on
+      ;; legacy Common Name field, use SANs instead)
+      #:tests? #f
+      #:import-path "github.com/pion/dtls"))
+    (propagated-inputs
+     (list go-github-com-pion-logging
+           go-github-com-pion-transport
+           go-golang-org-x-crypto))
+    (home-page "https://github.com/pion/dtls")
+    (synopsis "DTLS 1.2 Server/Client implementation for Go")
+    (description
+     "This package provides a native
+@url{https://datatracker.ietf.org/doc/html/rfc6347, DTLS 1.2} implementation
+in Golang.")
+    (license license:expat)))
+
+(define-public go-github-com-pion-dtls-v2
+  (package
+    (inherit go-github-com-pion-dtls)
+    (name "go-github-com-pion-dtls-v2")
+    (version "2.2.11")
+    (source
+     (origin
+       (inherit (package-source go-github-com-pion-dtls))
+       (uri (git-reference
+             (url "https://github.com/pion/dtls")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10nn9349f7snqkzncda5m013fgnzicrcxi6pb6ghc0vb6rhqkf30"))))
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/pion/dtls/v2"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pion-logging
+           go-github-com-pion-transport-v2
+           go-github-com-pion-transport-v3
+           go-golang-org-x-crypto
+           go-golang-org-x-net))))
+
+(define-public go-github-com-pion-mdns
+  (package
+    (name "go-github-com-pion-mdns")
+    (version "2.0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/mdns/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03675hx82lx3c8akkxdbkch1z4dbq54r05jk6jgdyd7mrdh9k4lm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Tests are implemented in GitHub Actions and require aditional
+      ;; packaging, see
+      ;; <https://github.com/pion/.goassets/blob/master/.github/workflows/test.reusable.yml>.
+      #:tests? #f
+      #:go go-1.21
+      #:import-path "github.com/pion/mdns"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pion-logging
+           go-github-com-pion-transport-v3
+           go-golang-org-x-net))
+    (home-page "https://github.com/pion/mdns/")
+    (synopsis "Pure Go implementation of Multicast DNS")
+    (description
+     "This package implements a mDNS (multicast DNS) used by
+@url{https://github.com/pion, Pion}.")
+    (license license:expat)))
+
+(define-public go-github-com-pion-rtp
+  (package
+    (name "go-github-com-pion-rtp")
+    (version "1.8.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/rtp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vrdvswvvbqq83kbjlyblarbsn5v0sjcwrcv03nncd605cggnbkx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/pion/rtp"))
+    (propagated-inputs
+     (list go-github-com-pion-randutil))
+    (home-page "https://github.com/pion/rtp")
+    (synopsis "Go implementation of RTP")
+    (description
+     "This package provides a @acronym{Real-time Transport Protocol, RTP}
+packetizer and depacketizer.")
+    (license license:expat)))
+
+(define-public go-github-com-pion-stun
+  (package
+    (name "go-github-com-pion-stun")
+    (version "0.6.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/stun")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0172fcm1xvzvy3d5lcpscayzpf3i5w4bpfydifdc9l4n2wslx0sm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/pion/stun"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list  go-github-com-pion-dtls-v2
+            go-github-com-pion-logging
+            go-github-com-pion-transport-v2))
+    (home-page "https://github.com/pion/stun")
+    (synopsis "Go implementation of STUN")
+    (description
+     "Package @code{stun} implements Session Traversal Utilities for
++NAT (STUN) (@url{https://tools.ietf.org/html/rfc5389, RFC 5389}) protocol and
++@url{https://pkg.go.dev/github.com/pion/stun#Client, client} with no external
++dependencies and zero allocations in hot paths.  Client
++@url{https://pkg.go.dev/github.com/pion/stun#WithRTO, supports} automatic
++request retransmissions.")
+    (license license:expat)))
+
+(define-public go-github-com-pion-stun-v2
+  (package
+    (inherit go-github-com-pion-stun)
+    (name "go-github-com-pion-stun-v2")
+    (version "2.0.0")
+    (source
+     (origin
+       (inherit (package-source go-github-com-pion-stun))
+       (uri (git-reference
+             (url "https://github.com/pion/stun")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zli55ls5izpr6cw0wj0gy44872xn9rk20i8ay9cfk7j2rb60y60"))))
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/pion/stun/v2"))
+    (propagated-inputs
+     (list go-github-com-pion-dtls-v2
+           go-github-com-pion-logging
+           go-github-com-pion-transport-v3
+           go-golang-org-x-crypto
+           go-golang-org-x-net))))
+
+(define-public go-github-com-pion-transport
+  (package
+    (name "go-github-com-pion-transport")
+    (version "0.14.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/transport")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0331kywqaa6fymc64wrqgwnxlhx31qdf299i927vifx1wdcl9ikp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Source-only package
+      #:tests? #f
+      #:import-path "github.com/pion/transport"
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pion-logging
+           go-golang-org-x-net
+           go-golang-org-x-sys))
+    (home-page "https://github.com/pion/transport")
+    (synopsis "Golang networking related functions")
+    (description
+     "This package implements a various networking related functions used
+throughout the @url{https://github.com/pion, Pion} modules.")
+    (license license:expat)))
+
+(define-public go-github-com-pion-transport-v2
+  (package
+    (inherit go-github-com-pion-transport)
+    (name "go-github-com-pion-transport-v2")
+    (version "2.2.5")
+    (source
+     (origin
+       (inherit (package-source go-github-com-pion-transport))
+       (uri (git-reference
+             (url "https://github.com/pion/transport/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00q3v37l56yr1ch25g5w70jy8y923csbvy4krvy4dv3h5f1mdpmf"))))
+    (arguments
+     (list
+      #:import-path "github.com/pion/transport/v2"))))
+
+(define-public go-github-com-pion-transport-v3
+  (package
+    (inherit go-github-com-pion-transport)
+    (name "go-github-com-pion-transport-v3")
+    (version "3.0.2")
+    (source
+     (origin
+       (inherit (package-source go-github-com-pion-transport))
+       (uri (git-reference
+             (url "https://github.com/pion/transport/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0j7ljkbyf2qd7daxg7d1rd6c92md64agi59b69g6jyqpz5jww998"))))
+    (arguments
+     (list
+      #:import-path "github.com/pion/transport/v3"))))
+
 (define-public go-github-com-pires-go-proxyproto
   (package
     (name "go-github-com-pires-go-proxyproto")
