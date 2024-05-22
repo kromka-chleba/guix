@@ -3617,7 +3617,7 @@ MouseKeys-acceleration management.")
 (define-public wlsunset
   (package
     (name "wlsunset")
-    (version "0.3.0")
+    (version "0.4.0")
     (source
      (origin
        (method git-fetch)
@@ -3627,12 +3627,12 @@ MouseKeys-acceleration management.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1wbz6m7p0czhyv7axg2gn0ffh1q1887khh6phvw35a2llichyrlc"))))
+         "1n60b2qq4ihw0g2dwisrvsvbhpml4mlv42425j0r7xhlm4w93z2k"))))
     (build-system meson-build-system)
     (inputs
      (list wayland wayland-protocols))
     (native-inputs
-     (list pkg-config))
+     (list pkg-config scdoc))
     (synopsis "Day/night gamma adjustments for Wayland compositors")
     (home-page "https://sr.ht/~kennylevinsen/wlsunset/")
     (description

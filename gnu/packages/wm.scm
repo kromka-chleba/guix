@@ -1154,7 +1154,7 @@ the XDG Autostart specification.")
 (define-public fnott
   (package
     (name "fnott")
-    (version "1.4.1")
+    (version "1.6.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1163,9 +1163,15 @@ the XDG Autostart specification.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0fmjvmsm2ikcmdzrf6xwyq6vxb9p1dd3bhvz3bvi7q7rb2g8h8pi"))))
+                "04g1d0app9lpvzq3gxs7qjkd9zgbrmlvfy2n3h464r46j0wpgsx2"))))
     (build-system meson-build-system)
-    (arguments `(#:build-type "release"))
+    (arguments `(#:build-type "release"
+                 #:phases
+                 (modify-phases %standard-phases
+                   (add-after 'unpack 'patch-dbus-install-dir
+                     (lambda _
+                       (substitute* "dbus/meson.build"
+                         (("^.*pkgconfig.*$") "")))))))
     (native-inputs
      (list pkg-config
            wayland-protocols
@@ -3324,7 +3330,7 @@ read and write, and compatible with JSON.")
     (inputs
      (list cairo
            glib
-           librsvg
+           (librsvg-for-system)
            libxcb
            libxml2
            pango
@@ -3859,7 +3865,7 @@ configuration."))))
 (define-public yambar-wayland
   (package
     (name "yambar-wayland")
-    (version "1.10.0")
+    (version "1.11.0")
     (home-page "https://codeberg.org/dnkl/yambar")
     (source
      (origin
@@ -3870,7 +3876,7 @@ configuration."))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "14lxhgyyia7sxyqjwa9skps0j9qlpqi8y7hvbsaidrwmy4857czr"))))
+         "0c3sk2i14fcb0l95pvfnj2sx0vx4ql1vldhimfccbf2qj0r30b20"))))
     (build-system meson-build-system)
     (arguments
      (list

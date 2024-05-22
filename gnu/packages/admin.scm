@@ -36,7 +36,7 @@
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020 Morgan Smith <Morgan.J.Smith@outlook.com>
 ;;; Copyright © 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
-;;; Copyright © 2021, 2023 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2021, 2023, 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2021 Stefan Reichör <stefan@xsteve.at>
 ;;; Copyright © 2021 qblade <qblade@protonmail.com>
 ;;; Copyright © 2021 Hyunseok Kim <lasnesne@lagunposprasihopre.org>
@@ -47,7 +47,7 @@
 ;;; Copyright © 2021 muradm <mail@muradm.net>
 ;;; Copyright © 2021 pineapples <guixuser6392@protonmail.com>
 ;;; Copyright © 2021 Petr Hodina <phodina@protonmail.com>
-;;; Copyright © 2021 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2021-2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2022 Wamm K. D. <jaft.r@outlook.com>
 ;;; Copyright © 2022 Roman Riabenko <roman@riabenko.com>
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
@@ -398,7 +398,8 @@ interface and is based on GNU Guile.")
                        ;; affects any system without a functional real-time
                        ;; clock (RTC), but in practice these are typically Arm
                        ;; single-board computers.
-                       (if (target-arm?)
+                       (if (or (target-arm?)
+                               (target-riscv64?))
                            guile-fibers-1.1
                            guile-fibers))))
     (inputs (modify-inputs (package-inputs shepherd-0.9)
@@ -756,7 +757,7 @@ console.")
 (define-public btop
   (package
     (name "btop")
-    (version "1.3.0")
+    (version "1.3.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -765,7 +766,7 @@ console.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0fbrkzg03n2vamg1pfzdb8wxm3xffy6gp4izhqppl45zngy3c0s1"))))
+                "084n0nbv1029lvfv4na2k9fqyray7m77dff1537b8ffk08ib4d4j"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f ;no test suite
@@ -5121,14 +5122,14 @@ Netgear devices.")
 (define-public atop
   (package
     (name "atop")
-    (version "2.9.0")
+    (version "2.10.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.atoptool.nl/download/atop-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "09prpw20ps6cd8qr63glbcip3jrvnnic0m7j1q02g8hjnw8z50ld"))
+                "14szbpvsm9czib1629cbh8qcp7pxhgn0vjrfv1yqwmw25k7p79p7"))
               (snippet
                ;; The 'mkdate' script generates a new 'versdate.h' header
                ;; containing the build date.  That makes builds
@@ -5156,8 +5157,10 @@ Netgear devices.")
                  ;; Otherwise, it creates a blank configuration file as a "default".
                  (("touch.*DEFPATH)/atop") "")
                  (("chmod.*DEFPATH)/atop") "")))))))
+    (native-inputs (list pkg-config))
     (inputs
-     (list ncurses
+     (list glib
+           ncurses
            python-wrapper       ; for `atopgpud`
            zlib))
     (home-page "https://www.atoptool.nl/")

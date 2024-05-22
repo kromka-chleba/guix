@@ -778,6 +778,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/system/images/pinebook-pro.scm		\
   %D%/system/images/rock64.scm			\
   %D%/system/images/unmatched.scm		\
+  %D%/system/images/visionfive2.scm		\
   %D%/system/images/wsl2.scm			\
 						\
   %D%/machine.scm				\
@@ -911,6 +912,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/abcl-fix-build-xml.patch	\
   %D%/packages/patches/ableton-link-system-libraries-debian.patch	\
   %D%/packages/patches/abiword-explictly-cast-bools.patch	\
+  %D%/packages/patches/abseil-cpp-20200923.3-adjust-sysinfo.patch	\
+  %D%/packages/patches/abseil-cpp-20200923.3-duration-test.patch	\
+  %D%/packages/patches/abseil-cpp-20220623.1-no-kepsilon-i686.patch	\
   %D%/packages/patches/abseil-cpp-fix-strerror_test.patch	\
   %D%/packages/patches/adb-add-libraries.patch			\
   %D%/packages/patches/adb-libssl_11-compatibility.patch	\
@@ -1814,7 +1818,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/plasp-fix-normalization.patch \
   %D%/packages/patches/plasp-include-iostream.patch \
   %D%/packages/patches/pocketfft-cpp-prefer-preprocessor-if.patch			\
-  %D%/packages/patches/podman-program-lookup.patch 		\
   %D%/packages/patches/pokerth-boost.patch			\
   %D%/packages/patches/ppsspp-disable-upgrade-and-gold.patch		\
   %D%/packages/patches/procps-strtod-test.patch                 \

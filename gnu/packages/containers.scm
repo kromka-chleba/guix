@@ -26,6 +26,7 @@
 (define-module (gnu packages containers)
   #:use-module (guix gexp)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix modules)
   #:use-module (gnu packages)
   #:use-module (guix packages)
   #:use-module (guix download)
@@ -34,6 +35,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
   #:use-module (guix build-system meson)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix utils)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
@@ -42,13 +44,19 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages man)
+  #:use-module (gnu packages pcre)
   #:use-module (gnu packages python)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages python-check)
+  #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages selinux)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages virtualization)
@@ -58,7 +66,7 @@
 (define-public crun
   (package
     (name "crun")
-    (version "1.14.1")
+    (version "1.15")
     (source
      (origin
        (method url-fetch)
@@ -68,7 +76,7 @@
              "/crun-" version ".tar.gz"))
        (sha256
         (base32
-         "02lplc2asyllb58mvy7l8b9gsk7fxs95g928xk28yzmf592ay33x"))))
+         "0zq8vcn2vg9snaqmf8k5gngskiclpm1ln0hhs1vsw8w8igjs2fx0"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags '("--disable-systemd")
@@ -104,7 +112,7 @@ Container Runtime fully written in C.")
 (define-public conmon
   (package
     (name "conmon")
-    (version "2.0.31")
+    (version "2.1.11")
     (source
      (origin
        (method git-fetch)
@@ -112,7 +120,7 @@ Container Runtime fully written in C.")
              (url "https://github.com/containers/conmon")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1cxklcihb2i4ywli0fxafkp2gi1x831r37z7spnigaj6pzj1517w"))
+        (base32 "1ax13n2npz5b7qa7f4glvnfq9biz220gyb8prh8s0jrvz6z2j221"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -281,14 +289,14 @@ network namespaces.")
 (define-public passt
   (package
     (name "passt")
-    (version "2023_12_30.f091893")
+    (version "2024_03_20.71dd405")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://passt.top/passt/snapshot/passt-" version
                            ".tar.gz"))
        (sha256
-        (base32 "1nyd4h93qlxn1r01ffijpsd7r7ny62phki5j58in8gz021jj4f3d"))))
+        (base32 "1xyi1rqc3q2nbkd5mc4mp2m488ih5jy8v3xg0dgznh0149alx3y0"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -384,6 +392,9 @@ configure network interfaces in Linux containers.")
      (list
       #:make-flags `(list ,(string-append "GIT_VERSION=v" version))
       #:test-target "test"
+      #:imported-modules
+      (source-module-closure `(,@%gnu-build-system-modules
+                               (guix build go-build-system)))
       #:phases
       #~(modify-phases %standard-phases
           (delete 'configure)
@@ -397,7 +408,9 @@ configure network interfaces in Linux containers.")
               (invoke "rm" "-r" "test")))
           (replace 'install
             (lambda _
-              (install-file "bin/gvproxy" (string-append #$output "/bin")))))))
+              (install-file "bin/gvproxy" (string-append #$output "/bin"))))
+          (add-after 'install 'remove-go-references
+            (@@ (guix build go-build-system) remove-go-references)))))
     (native-inputs (list go-1.20))
     (home-page "https://github.com/containers/gvisor-tap-vsock")
     (synopsis "Network stack for virtualization based on gVisor")
@@ -410,95 +423,142 @@ It can be used with QEMU, Hyperkit, Hyper-V and User-Mode Linux.
 The binary is called @command{gvproxy}.")
     (license license:asl2.0)))
 
-;; For podman to work, the user needs to run
-;; `sudo mount -t cgroup2 none /sys/fs/cgroup`
+(define-public catatonit
+  (package
+    (name "catatonit")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://github.com/openSUSE/catatonit/releases/download/v"
+             version "/catatonit.tar.xz"))
+       (sha256
+        (base32 "141b5lypgqib546zmldi4kqzpqfd6vvqddqqkfaz3w11fjsc4hwq"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     (list autoconf automake libtool))
+    (home-page "https://github.com/openSUSE/catatonit")
+    (synopsis "Container init")
+    (description
+     "Catatonit is a simple container init tool developed as a rewrite of
+@url{https://github.com/cyphar/initrs, initrs} in C due to the need for static
+compilation of Rust binaries with @code{musl}.  Inspired by other container
+inits like @url{https://github.com/krallin/tini, tini} and
+@url{https://github.com/Yelp/dumb-init, dumb-init}, catatonit focuses on
+correct signal handling, utilizing @code{signalfd(2)} for improved stability.
+Its main purpose is to support the key usage by @code{docker-init}:
+@code{/dev/init} – <your program>, with minimal additional features planned.")
+    (license license:gpl2+)))
 
 (define-public podman
   (package
     (name "podman")
-    (version "4.9.3")
+    (version "5.0.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/containers/podman")
              (commit (string-append "v" version))))
-       (modules '((guix build utils)))
-       ;; FIXME: Btrfs libraries not detected by these scripts.
-       (snippet '(substitute* "Makefile"
-                   ((".*hack/btrfs.*") "")))
-       (patches
-        (search-patches
-         "podman-program-lookup.patch"))
        (sha256
-        (base32 "17g7n09ndxhpjr39s9qwxdcv08wavjj0g5nmnrvrkz2wgdqigl1x"))
+        (base32 "0x8npz0i3dyiaw30vdlb5n8kiaflgjqnrdbdk0yn5zgf5k1jlb7i"))
        (file-name (git-file-name name version))))
-
     (build-system gnu-build-system)
     (arguments
      (list
       #:make-flags
-      #~(list #$(string-append "CC=" (cc-for-target))
-              (string-append "PREFIX=" #$output))
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output)
+              (string-append "HELPER_BINARIES_DIR=" #$output "/_guix")
+              (string-append "GOMD2MAN="
+                             #$go-github-com-go-md2man "/bin/go-md2man"))
       #:tests? #f                  ; /sys/fs/cgroup not set up in guix sandbox
       #:test-target "test"
+      #:imported-modules
+      (source-module-closure `(,@%gnu-build-system-modules
+                               (guix build go-build-system)))
       #:phases
       #~(modify-phases %standard-phases
           (delete 'configure)
           (add-after 'unpack 'set-env
-            (lambda* (#:key inputs #:allow-other-keys)
-              ;; when running go, things fail because
-              ;; HOME=/homeless-shelter.
-              (setenv "HOME" "/tmp")))
+            (lambda _
+              ;; When running go, things fail because HOME=/homeless-shelter.
+              (setenv "HOME" "/tmp")
+              ;; Required for detecting btrfs in hack/btrfs* due to bug in GNU
+              ;; Make <4.4 causing CC not to be propagated into $(shell ...)
+              ;; calls.  Can be removed once we update to >4.3.
+              (setenv "CC" #$(cc-for-target))))
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
-                ;; (invoke "strace" "-f" "bin/podman" "version")
                 (invoke "make" "localsystem")
                 (invoke "make" "remotesystem"))))
           (add-after 'unpack 'fix-hardcoded-paths
             (lambda _
-              (substitute* "vendor/github.com/containers/common/pkg/config/config.go"
-                (("@SLIRP4NETNS_DIR@")
-                 (string-append #$slirp4netns "/bin"))
-                (("@PASST_DIR@")
-                 (string-append #$passt "/bin")))
-              (substitute* "hack/install_catatonit.sh"
-                (("CATATONIT_PATH=\"[^\"]+\"")
-                 (string-append "CATATONIT_PATH=" (which "true"))))
               (substitute* "vendor/github.com/containers/common/pkg/config/config_linux.go"
                 (("/usr/local/libexec/podman")
                  (string-append #$output "/libexec/podman"))
                 (("/usr/local/lib/podman")
-                 (string-append #$output "/bin")))
-              (substitute* "vendor/github.com/containers/common/pkg/config/default.go"
-                (("/usr/libexec/podman/conmon") (which "conmon"))
-                (("/usr/local/libexec/cni")
-                 (string-append #$(this-package-input "cni-plugins")
-                                "/bin"))
-                (("/usr/bin/crun") (which "crun")))))
+                 (string-append #$output "/bin")))))
+          (add-after 'install 'symlink-helpers
+            (lambda _
+              (mkdir-p (string-append #$output "/_guix"))
+              (for-each
+               (lambda (what)
+                 (symlink (string-append (car what) "/bin/" (cdr what))
+                          (string-append #$output "/_guix/" (cdr what))))
+               ;; Only tools that cannot be discovered via $PATH are
+               ;; symlinked.  Rest is handled in the 'wrap-podman phase.
+               `((#$aardvark-dns     . "aardvark-dns")
+                 ;; Required for podman-machine, which is *not* supported out
+                 ;; of the box.  But it cannot be discovered via $PATH, so
+                 ;; there is no other way for the user to install it.  It
+                 ;; costs ~10MB, so let's leave it here.
+                 (#$gvisor-tap-vsock . "gvproxy")
+                 (#$netavark         . "netavark")))))
+          (add-after 'install 'wrap-podman
+            (lambda _
+              (wrap-program (string-append #$output "/bin/podman")
+                `("PATH" suffix
+                  (,(string-append #$catatonit      "/bin")
+                   ,(string-append #$conmon         "/bin")
+                   ,(string-append #$crun           "/bin")
+                   ,(string-append #$gcc            "/bin") ; cpp
+                   ,(string-append #$iptables       "/sbin")
+                   ,(string-append #$passt          "/bin")
+                   ,(string-append #$procps         "/bin") ; ps
+                   "/run/setuid-programs")))))
+          (add-after 'install 'remove-go-references
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((go (assoc-ref inputs "go")))
+                (for-each
+                 (lambda (file)
+                   (when (executable-file? file)
+                     ((@@ (guix build go-build-system) remove-store-reference)
+                      file go)))
+                 (append (find-files (string-append #$output "/bin"))
+                         (find-files (string-append #$output "/libexec"))
+                         (find-files (string-append #$output "/lib")))))))
           (add-after 'install 'install-completions
             (lambda _
               (invoke "make" "install.completions"
                       (string-append "PREFIX=" #$output)))))))
     (inputs
-     (list btrfs-progs
-           cni-plugins
-           conmon
-           crun
+     (list bash-minimal
+           btrfs-progs
            gpgme
-           go-github-com-go-md2man
-           iptables
            libassuan
            libseccomp
-           libselinux
-           passt
-           slirp4netns))
+           libselinux))
     (native-inputs
-     (list bats
+     (list (package/inherit grep
+             (inputs (list pcre2)))     ; Drop once grep on master supports -P
+           bats
            git
            go-1.21
-           ; strace ; XXX debug
+           go-github-com-go-md2man
+           mandoc
            pkg-config
            python))
     (home-page "https://podman.io")
@@ -508,67 +568,126 @@ The binary is called @command{gvproxy}.")
 volumes mounted into those containers, and pods made from groups of
 containers.
 
-The @code{machine} subcommand is not supported due to gvproxy not being
-packaged.")
+Not all commands are working out of the box due to requiring additional
+binaries to be present in the $PATH.
+
+To get @code{podman compose} working, install either @code{podman-compose} or
+@code{docker-compose} packages.
+
+To get @code{podman machine} working, install @code{qemu-minimal}, and
+@code{openssh} packages.")
     (license license:asl2.0)))
+
+(define-public podman-compose
+  (package
+    (name "podman-compose")
+    (version "1.0.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containers/podman-compose")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11dwpifkm20vyi6r3fgmiiqc01mpm4r8l0p5gfh0bawi2gklrhsf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "pytests")))
+    (native-inputs
+     (list python-pytest))
+    (propagated-inputs
+     (list python-dotenv python-pyyaml))
+    (home-page "https://github.com/containers/podman-compose")
+    (synopsis "Script to run docker-compose.yml using podman")
+    (description "This package provides an implementation of
+@url{https://compose-spec.io/, Compose Spec} for @code{podman} focused on
+being rootless and not requiring any daemon to be running.")
+    (license license:gpl2)))
 
 (define-public buildah
   (package
     (name "buildah")
-    (version "1.29.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/containers/buildah")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1mcqkz68fjccdla1bgxw57w268a586brm6x28fcm6x425ah0w07h"))))
-    (build-system go-build-system)
+    (version "1.35.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containers/buildah")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "07hr2cfp4kblnmva02ap97id5nzhbqigdfvx7c8nyrkfzw0340n0"))
+       (file-name (git-file-name name version))))
+    (build-system gnu-build-system)
     (arguments
-     (list #:import-path "github.com/containers/buildah/cmd/buildah"
-           #:unpack-path "github.com/containers/buildah"
-
-           ;; Some dependencies require go-1.18 to build.
-           #:go go-1.18
-
-           #:tests? #f
-           #:install-source? #f
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'prepare-install-docs
-                 (lambda* (#:key unpack-path #:allow-other-keys)
-                   (substitute* (string-append "src/"
-                                               unpack-path
-                                               "/docs/Makefile")
-                     (("../tests/tools/build/go-md2man")
-                      (which "go-md2man")))
-                   (substitute* (string-append "src/"
-                                               unpack-path
-                                               "/docs/Makefile")
-                     (("/usr/local") (string-append #$output)))))
-               (add-after 'build 'build-docs
-                 (lambda* (#:key unpack-path #:allow-other-keys)
-                   (let ((doc (string-append "src/" unpack-path "/docs")))
-                     (invoke "make" "-C" doc))))
-               (add-after 'install 'install-docs
-                 (lambda* (#:key unpack-path #:allow-other-keys)
-                   (let ((doc (string-append "src/" unpack-path "/docs")))
-                     (invoke "make" "-C" doc "install")))))))
-    (inputs (list btrfs-progs
-                  cni-plugins
-                  conmon
+     (list
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "PREFIX=" #$output)
+              (string-append "GOMD2MAN="
+                             #$go-github-com-go-md2man "/bin/go-md2man"))
+      #:tests? #f                  ; /sys/fs/cgroup not set up in guix sandbox
+      #:test-target "test-unit"
+      #:imported-modules
+      (source-module-closure `(,@%gnu-build-system-modules
+                               (guix build go-build-system)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'set-env
+            (lambda _
+              ;; When running go, things fail because HOME=/homeless-shelter.
+              (setenv "HOME" "/tmp")
+              ;; Required for detecting btrfs in hack/btrfs* due to bug in GNU
+              ;; Make <4.4 causing CC not to be propagated into $(shell ...)
+              ;; calls.  Can be removed once we update to >4.3.
+              (setenv "CC" #$(cc-for-target))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "make" "test-unit")
+                (invoke "make" "test-conformance")
+                (invoke "make" "test-integration"))))
+          (add-after 'install 'symlink-helpers
+            (lambda _
+              (mkdir-p (string-append #$output "/_guix"))
+              (for-each
+               (lambda (what)
+                 (symlink (string-append (car what) "/bin/" (cdr what))
+                          (string-append #$output "/_guix/" (cdr what))))
+               ;; Only tools that cannot be discovered via $PATH are
+               ;; symlinked.  Rest is handled in the 'wrap-buildah phase.
+               `((#$aardvark-dns     . "aardvark-dns")
+                 (#$netavark         . "netavark")))))
+          (add-after 'install 'wrap-buildah
+            (lambda _
+              (wrap-program (string-append #$output "/bin/buildah")
+                `("CONTAINERS_HELPER_BINARY_DIR" =
+                  (,(string-append #$output "/_guix")))
+                `("PATH" suffix
+                  (,(string-append #$crun           "/bin")
+                   ,(string-append #$gcc            "/bin") ; cpp
+                   ,(string-append #$passt          "/bin")
+                   "/run/setuid-programs")))))
+          (add-after 'install 'remove-go-references
+            (@@ (guix build go-build-system) remove-go-references))
+          (add-after 'install 'install-completions
+            (lambda _
+              (invoke "make" "install.completions"
+                      (string-append "PREFIX=" #$output)))))))
+    (inputs (list bash-minimal
+                  btrfs-progs
                   eudev
                   glib
                   gpgme
                   libassuan
                   libseccomp
-                  lvm2
-                  runc))
+                  lvm2))
     (native-inputs
-     (list go-github-com-go-md2man
-           gnu-make
+     (list bats
+           go-1.21
+           go-github-com-go-md2man
            pkg-config))
     (synopsis "Build @acronym{OCI, Open Container Initiative} images")
     (description

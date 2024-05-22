@@ -1379,7 +1379,9 @@ point and then, after each tween step, plugging back the result.")
                (base32
                 "1p4djhm1f011ficbjjxx3n8428p8481p20j4glpaawnpsi362hkl"))
               (patches
-               (search-patches "abseil-cpp-fix-strerror_test.patch"))))
+               (search-patches "abseil-cpp-fix-strerror_test.patch"
+                               "abseil-cpp-20200923.3-adjust-sysinfo.patch"
+                               "abseil-cpp-20200923.3-duration-test.patch"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags (list "-DBUILD_SHARED_LIBS=ON"
@@ -1454,7 +1456,9 @@ Google's C++ code base.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0vxh2a74g4s45yr8kdjqnzl64k10qdlc0hbnn987a4cnwdj4bp9r"))))
+                  "0vxh2a74g4s45yr8kdjqnzl64k10qdlc0hbnn987a4cnwdj4bp9r"))
+                (patches
+                 (search-patches "abseil-cpp-20220623.1-no-kepsilon-i686.patch"))))
       (arguments
        (substitute-keyword-arguments (package-arguments base)
          ((#:configure-flags flags)
@@ -1475,7 +1479,9 @@ Google's C++ code base.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1ydkkbanrpkp5i814arzsk973kyzhhjhagnp392rq6rrv16apldq"))))
+                  "1ydkkbanrpkp5i814arzsk973kyzhhjhagnp392rq6rrv16apldq"))
+                (patches
+                 (search-patches "abseil-cpp-20220623.1-no-kepsilon-i686.patch"))))
       (arguments
        (substitute-keyword-arguments (package-arguments base)
          ((#:phases phases)

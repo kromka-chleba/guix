@@ -306,6 +306,7 @@ MODULES =					\
   guix/import/kde.scm				\
   guix/import/launchpad.scm   			\
   guix/import/minetest.scm   			\
+  guix/import/npm-binary.scm			\
   guix/import/opam.scm				\
   guix/import/print.scm				\
   guix/import/pypi.scm				\
@@ -360,6 +361,7 @@ MODULES =					\
   guix/scripts/import/hexpm.scm			\
   guix/scripts/import/json.scm  		\
   guix/scripts/import/minetest.scm  		\
+  guix/scripts/import/npm-binary.scm		\
   guix/scripts/import/opam.scm			\
   guix/scripts/import/pypi.scm			\
   guix/scripts/import/stackage.scm		\
@@ -431,6 +433,7 @@ AUX_FILES =						\
   gnu/packages/aux-files/linux-libre/6.8-arm64.conf	\
   gnu/packages/aux-files/linux-libre/6.8-i686.conf	\
   gnu/packages/aux-files/linux-libre/6.8-x86_64.conf	\
+  gnu/packages/aux-files/linux-libre/6.8-riscv.conf	\
   gnu/packages/aux-files/linux-libre/6.6-arm.conf	\
   gnu/packages/aux-files/linux-libre/6.6-arm64.conf	\
   gnu/packages/aux-files/linux-libre/6.6-i686.conf	\
@@ -554,6 +557,7 @@ SCM_TESTS =					\
   tests/modules.scm				\
   tests/monads.scm				\
   tests/nar.scm				\
+  tests/npm-binary.scm				\
   tests/networking.scm				\
   tests/opam.scm				\
   tests/openpgp.scm				\
