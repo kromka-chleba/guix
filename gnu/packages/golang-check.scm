@@ -612,7 +612,7 @@ Gomega matcher library.")
   (package
     (inherit go-github-com-onsi-ginkgo)
     (name "go-github-com-onsi-ginkgo-v2")
-    (version "2.17.1")
+    (version "2.18.0")
     (source
      (origin
        (method git-fetch)
@@ -621,16 +621,16 @@ Gomega matcher library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "089x6pz5563ldbxiwaqvd2g4dqfzlr25dflmas3gfq51ibwzh4vz"))))
+        (base32 "1w5dldjjcz2kpyxml4zd9yah7galfpmhcpc2l4zc5pr3skpwpibv"))))
     (arguments
      (list
       #:go go-1.20
       #:import-path "github.com/onsi/ginkgo/v2"))
     (propagated-inputs
      (list go-github-com-go-logr-logr
-           ;; go-github-com-google-pprof ; not packed yet in Guix, for profiling
+           go-github-com-go-task-slim-sprig-v3
+           go-github-com-google-pprof
            go-github-com-onsi-gomega
-           go-github-com-go-task-slim-sprig
            go-golang-org-x-net
            go-golang-org-x-sys
            go-golang-org-x-tools))))
@@ -638,7 +638,7 @@ Gomega matcher library.")
 (define-public go-github-com-onsi-gomega
   (package
     (name "go-github-com-onsi-gomega")
-    (version "1.19.0")
+    (version "1.33.1")
     (source
      (origin
        (method git-fetch)
@@ -647,20 +647,22 @@ Gomega matcher library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "092phwk97sk4sv0nbx5pfhqs6x3x1lnrjwyda1m6b6zwrfmq5c6i"))))
+        (base32 "1jygwi2lz3q7ri85dxdxf187l1hm7r3i0c843l47iakivmld31x1"))))
     (build-system go-build-system)
     (arguments
-     (list #:import-path "github.com/onsi/gomega"
-           ;; Unless we disable the tests, we have a circular dependency on
-           ;; ginkgo/v2.
-           #:tests? #f))
+     (list
+      ;; Unless we disable the tests, we have a circular dependency on
+      ;; ginkgo/v2.
+      #:tests? #f
+      #:go go-1.21
+      #:import-path "github.com/onsi/gomega"))
     (propagated-inputs
      (list go-github-com-golang-protobuf-proto
            go-golang-org-x-net
            go-golang-org-x-sys
            go-golang-org-x-text
            go-google-golang-org-protobuf
-           go-gopkg-in-yaml-v2))
+           go-gopkg-in-yaml-v3))
     (home-page "https://github.com/onsi/gomega")
     (synopsis "Matcher library for Ginkgo")
     (description
@@ -1087,6 +1089,39 @@ gracefully enhance standard library testing package and behaviors of the
 the end of a test.")
     (license license:expat)))
 
+(define-public go-go-uber-org-mock
+  (package
+    (name "go-go-uber-org-mock")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/uber-go/mock")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mz1cy02m70mdh7hyaqks8bkh9iyv4jgj6h4psww52nr3b9pnyyy"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: The project contains subdirectory which complicate it's testing
+      ;; and it does not produce any binary.
+      #:tests? #f
+      #:go go-1.20
+      #:import-path "go.uber.org/mock"
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build))))
+    (propagated-inputs
+     (list go-golang-org-x-mod go-golang-org-x-tools))
+    (home-page "https://pkg.go.dev/go.uber.org/mock")
+    (synopsis "Mocking framework for the Golang")
+    (description
+     "This package provides a mocking framework which integrates well with
+built-in @code{testing} package, but can be used in other contexts too.")
+    (license license:asl2.0)))
+
 (define-public go-honnef-co-go-tools
   (package
     (name "go-honnef-co-go-tools")
@@ -1162,6 +1197,21 @@ thoroughly
 ;;;
 ;;; Executables:
 ;;;
+
+(define-public go-ginkgo
+  (package
+    (inherit go-github-com-onsi-ginkgo-v2)
+    (name "ginkgo")
+    (arguments
+     (list
+       #:go go-1.20
+       #:import-path "github.com/onsi/ginkgo/ginkgo"
+       #:unpack-path "github.com/onsi/ginkgo"
+       #:install-source? #f))
+    (description
+     (string-append (package-description go-github-com-onsi-ginkgo-v2)
+                    "  This package provides an command line interface (CLI)
+tool."))))
 
 (define-public go-keyify
   (package

@@ -289,14 +289,14 @@ network namespaces.")
 (define-public passt
   (package
     (name "passt")
-    (version "2024_03_20.71dd405")
+    (version "2024_05_10.7288448")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://passt.top/passt/snapshot/passt-" version
                            ".tar.gz"))
        (sha256
-        (base32 "1xyi1rqc3q2nbkd5mc4mp2m488ih5jy8v3xg0dgznh0149alx3y0"))))
+        (base32 "12lg216d0r8zb0rpxmnzzfyz4v5gc7ahdvypp811px0ip0qkzj25"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -454,7 +454,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
 (define-public podman
   (package
     (name "podman")
-    (version "5.0.2")
+    (version "5.0.3")
     (source
      (origin
        (method git-fetch)
@@ -462,7 +462,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
              (url "https://github.com/containers/podman")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0x8npz0i3dyiaw30vdlb5n8kiaflgjqnrdbdk0yn5zgf5k1jlb7i"))
+        (base32 "1wgaiwh7m547j9irz6z6ckxcbw8fwzqixh55q1fk2g7kfclfc3iw"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -609,7 +609,7 @@ being rootless and not requiring any daemon to be running.")
 (define-public buildah
   (package
     (name "buildah")
-    (version "1.35.3")
+    (version "1.35.4")
     (source
      (origin
        (method git-fetch)
@@ -617,7 +617,7 @@ being rootless and not requiring any daemon to be running.")
              (url "https://github.com/containers/buildah")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "07hr2cfp4kblnmva02ap97id5nzhbqigdfvx7c8nyrkfzw0340n0"))
+        (base32 "1p21lh8ds688nv0valzgl6s20bwzsyvr1sa15ra2mprj79azvl4r"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

@@ -1386,6 +1386,61 @@ interfaces to back that API.  Packages in the Go ecosystem can depend on it,
 while callers can implement logging with whatever backend is appropriate.")
     (license license:asl2.0)))
 
+(define-public go-github-com-go-task-slim-sprig
+  (let ((commit "afa1e2071829e4db655eb448d6c7c16eb0bc5766")
+        (revision "0"))
+    (package
+      (name "go-github-com-go-task-slim-sprig")
+      (version (git-version "2.20.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/go-task/slim-sprig")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1185y8qygv8gb3wpghx5d945wq68j4dbaiffq3h0dh453g4h1w7a"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/go-task/slim-sprig"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'remove-failing-tests
+              (lambda* (#:key import-path #:allow-other-keys)
+                (delete-file
+                 (string-append "src/" import-path "/network_test.go")))))))
+      (native-inputs
+       (list  go-github-com-stretchr-testify))
+      (home-page "https://github.com/go-task/slim-sprig")
+      (synopsis "Various useful template functions for Go")
+      (description
+       "Sprig provides over 100 functions that extend the Go template system.
+Slim-Sprig is a fork of Sprig that removes all external dependencies to make
+the library more lightweight.")
+      (license license:expat))))
+
+(define-public go-github-com-go-task-slim-sprig-v3
+  (package
+    (inherit go-github-com-go-task-slim-sprig)
+    (name "go-github-com-go-task-slim-sprig-v3")
+    (version "3.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-task/slim-sprig")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1h6m9n8w6yk0fp1kpk574kac6l3ibkh71myjakvns1nmqphb085w"))))
+    (build-system go-build-system)
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-go-task-slim-sprig)
+       ((#:import-path _) "github.com/go-task/slim-sprig/v3")))))
+
 (define-public go-github-com-gobwas-glob
   (package
     (name "go-github-com-gobwas-glob")
@@ -3302,6 +3357,36 @@ well as a program to generate applications and command files.")
       (description "This is a Go package for posting to a StatHat account.")
       (home-page "https://github.com/stathat/go")
       (license license:expat))))
+
+(define-public go-github-com-syndtr-goleveldb-leveldb
+  (package
+    (name "go-github-com-syndtr-goleveldb-leveldb")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/syndtr/goleveldb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "042k0gbzs5waqpxmd7nv5h93mlva861s66c3s9gfg1fym5dx4vmd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/syndtr/goleveldb/leveldb"
+      #:unpack-path "github.com/syndtr/goleveldb"))
+    (propagated-inputs
+     (list go-github-com-onsi-gomega
+           go-github-com-onsi-ginkgo
+           go-github-com-golang-snappy))
+    (home-page "https://github.com/syndtr/goleveldb")
+    (synopsis "LevelDB implementation in Go")
+    (description
+     "This package provides a Go implementation of the LevelDB key/value
+storage system.")
+    (license license:bsd-2)))
 
 (define-public go-github-com-tklauser-go-sysconf
   (package

@@ -5425,33 +5425,6 @@ representation suitable for computing diffs.")
 golang's database/sql package.")
     (license license:mpl2.0)))
 
-(define-public go-github-com-syndtr-goleveldb-leveldb
-  (package
-    (name "go-github-com-syndtr-goleveldb-leveldb")
-    (version "1.0.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/syndtr/goleveldb")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "042k0gbzs5waqpxmd7nv5h93mlva861s66c3s9gfg1fym5dx4vmd"))))
-    (build-system go-build-system)
-    (arguments
-     (list #:import-path "github.com/syndtr/goleveldb/leveldb"
-           #:unpack-path "github.com/syndtr/goleveldb"))
-    (propagated-inputs (list go-github-com-onsi-gomega
-                             go-github-com-onsi-ginkgo
-                             go-github-com-golang-snappy))
-    (home-page "https://github.com/syndtr/goleveldb")
-    (synopsis "LevelDB implementation in Go")
-    (description
-     "This package provides a Go implementation of the LevelDB key/value
-storage system.")
-    (license license:bsd-2)))
-
 (define-public go-github-com-lucasb-eyer-go-colorful
   (package
     (name "go-github-com-lucasb-eyer-go-colorful")
@@ -6862,34 +6835,6 @@ maps (because they are not addressable using Go reflection).")
     (description "Sprig is a library that provides more than 100 commonly used
 template functions.")
     (license license:expat)))
-
-(define-public go-github-com-go-task-slim-sprig
-  (let ((commit "afa1e2071829e4db655eb448d6c7c16eb0bc5766")
-        (revision "0"))
-    (package
-      (name "go-github-com-go-task-slim-sprig")
-      (version (git-version "2.20.0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/go-task/slim-sprig")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1185y8qygv8gb3wpghx5d945wq68j4dbaiffq3h0dh453g4h1w7a"))))
-      (build-system go-build-system)
-      (arguments
-       (list #:import-path "github.com/go-task/slim-sprig"
-             ;; Tests try to access the network.
-             #:tests? #f))
-      (home-page "https://github.com/go-task/slim-sprig")
-      (synopsis "Various useful template functions for Go")
-      (description
-       "Sprig provides over 100 functions that extend the Go template system.
-Slim-Sprig is a fork of Sprig that removes all external dependencies to make
-the library more lightweight.")
-      (license license:expat))))
 
 (define-public go-github-com-bmatcuk-doublestar
   (package
