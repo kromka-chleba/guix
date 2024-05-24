@@ -33,6 +33,7 @@
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system meson)
   #:use-module (gnu packages)
+  #:use-module (gnu packages autotools)
   #:use-module (gnu packages lisp)
   #:use-module (gnu packages ocaml)
   #:use-module (gnu packages pcre)
@@ -77,11 +78,31 @@
     (arguments
      `(#:tests? #f                      ; Tests require drivers
        #:configure-flags
-       (list
-        "--disable-static"
-        "--enable-fake")))
+       (list "--disable-static"
+             "--enable-fake")
+       #:phases
+       (modify-phases %standard-phases
+         ,@(if (this-package-native-input "config")
+               `((add-after 'unpack 'update-config-scripts
+                   (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                     (for-each
+                       (lambda (dir)
+                         (for-each (lambda (file)
+                                     (install-file
+                                       (search-input-file
+                                         (or native-inputs inputs)
+                                         (string-append "/bin/" file)) dir))
+                                   '("config.guess" "config.sub")))
+                       '("." "libltdl")))))
+               '()))))
     (native-inputs
-     (list latex2html pkg-config python-wrapper swig))
+     (append
+       (if (or (target-aarch64?)
+               (target-ppc64le?)
+               (target-riscv64?))
+           (list config)
+           '())
+       (list latex2html pkg-config python-wrapper swig)))
     (inputs
      (list glib gtk+-2 libusb-compat))
     (synopsis "Portable Braille Library")
@@ -152,17 +173,22 @@ terminals.")
             (assoc-ref python:%standard-phases
                        'add-install-to-pythonpath)))))
     (native-inputs
-     (list clisp
-           python-cython
-           doxygen
-           gettext-minimal
-           `(,icedtea "jdk")
-           ;; ("linuxdoc" ,linuxdoc-tools)
-           ocaml
-           ocaml-findlib
-           pkg-config
-           python-wrapper
-           tcl))
+     (append
+       (list clisp
+             python-cython
+             doxygen
+             gettext-minimal)
+       ;; icedtea doesn't build reliably on all architectures.
+       (if (or (target-x86?)
+               (target-aarch64?))
+           (list `(,icedtea "jdk"))
+           '())
+       (list ;; ("linuxdoc" ,linuxdoc-tools)
+             ocaml
+             ocaml-findlib
+             pkg-config
+             python-wrapper
+             tcl)))
     (inputs
      (list alsa-lib
            at-spi2-core

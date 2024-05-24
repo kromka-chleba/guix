@@ -178,7 +178,6 @@
   #:use-module (gnu packages nettle)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages ninja)
-  #:use-module (gnu packages node)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages ocr)
   #:use-module (gnu packages openldap)
@@ -1362,15 +1361,23 @@ It has miners for Facebook, Flickr, Google, ownCloud and SkyDrive.")
                 "0iil7wgix0nzhf3i2w6g1wjqly49r9rsffca97ai9kr2vfpvbv9g"))))
     (build-system meson-build-system)
     (arguments
-     (list #:configure-flags #~'("-Dgtk_doc=true")))
+     (list #:configure-flags
+           #~(list "-Dgtk_doc=true"
+                   ;; Manpages are built using pandoc.
+                   #$@(if (this-package-native-input "pandoc")
+                          #~("-Dmanpages=true")
+                          #~("-Dmanpages=false")))))
     (native-inputs
-     (list gettext-minimal
-           `(,glib "bin")
-           gi-docgen
-           gobject-introspection
-           pandoc
-           pkg-config
-           vala))
+     (append
+       (if (supported-package? pandoc)
+           (list pandoc)
+           '())
+       (list gettext-minimal
+             `(,glib "bin")
+             gi-docgen
+             gobject-introspection
+             pkg-config
+             vala)))
     (inputs
      (list gtk))
     (propagated-inputs
@@ -3259,9 +3266,8 @@ API add-ons to make GTK+ widgets OpenGL-capable.")
               (setenv "DISPLAY" ":1"))))))
     (inputs
      (append
-      ;; GJS depends on Rust, which is x86_64-only so far, so remove the GJS
-      ;; dependency on other platforms (FIXME).
-      (if (target-x86-64?)
+      ;; GJS depends on Rust so remove the GJS dependency on other platforms.
+      (if (supported-package? gjs)
           (list gjs)
           '())
       (list gtk+ libxml2)))
@@ -5596,7 +5602,7 @@ keyboard shortcuts.")
     (arguments
      (list #:glib-or-gtk? #t))
     (native-inputs (list pkg-config
-                         cmake
+                         cmake-minimal
                          gettext-minimal
                          desktop-file-utils
                          appstream-glib
@@ -9557,15 +9563,13 @@ like switching to windows and launching applications.")
      `(#:glib-or-gtk? #t))   ; To wrap binaries and/or compile schemas
     (native-inputs
      (append
-      ;; GJS depends on Rust, which is x86_64-only so far, so remove the GJS
-      ;; dependency on other platforms (FIXME).
-       (if (target-x86-64?)
-           (list gjs)
-           '())
+      ;; GJS depends on Rust so remove the GJS dependency on other platforms.
+      (if (supported-package? gjs)
+          (list gjs)
+          '())
        (list gettext-minimal
              `(,glib "bin")
              gobject-introspection
-             node
              perl
              pkg-config
              python-wrapper
@@ -10318,14 +10322,9 @@ playing media, scanning, and much more.")
   (gnome-meta-package
    (name "gnome-meta-core-utilities")
    (propagated-inputs
-    (append
-     ;; XXX: EoG requires librsvg-next, which depends on Rust, which currently
-     ;; only works on x86_64, so exclude it on other architectures.
-     (if (string-prefix? "x86_64" (%current-system))
-         (list eog)
-         '())
      (list baobab
            cheese
+           eog
            epiphany
            evince
            file-roller
@@ -10350,7 +10349,7 @@ playing media, scanning, and much more.")
            totem
            tracker-miners
            xdg-desktop-portal-gnome
-           yelp)))))
+           yelp))))
 
 (define-public gnome-essential-extras
   (gnome-meta-package
