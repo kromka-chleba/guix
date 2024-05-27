@@ -5,7 +5,7 @@
 ;;; Copyright © 2020 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2020 Jesse Dowell <jessedowell@gmail.com>
 ;;; Copyright © 2021 Brice Waegeneire <brice@waegenei.re>
-;;; Copyright © 2023 Giacomo Leidi <goodoldpaul@autistici.org>
+;;; Copyright © 2023, 2024 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -23,11 +23,14 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu services docker)
+  #:use-module (gnu image)
   #:use-module (gnu services)
   #:use-module (gnu services configuration)
   #:use-module (gnu services base)
   #:use-module (gnu services dbus)
   #:use-module (gnu services shepherd)
+  #:use-module (gnu system)
+  #:use-module (gnu system image)
   #:use-module (gnu system setuid)
   #:use-module (gnu system shadow)
   #:use-module (gnu packages admin)               ;shadow
@@ -37,7 +40,11 @@
   #:use-module (guix diagnostics)
   #:use-module (guix gexp)
   #:use-module (guix i18n)
+  #:use-module (guix monads)
   #:use-module (guix packages)
+  #:use-module (guix profiles)
+  #:use-module ((guix scripts pack) #:prefix pack:)
+  #:use-module (guix store)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 format)
   #:use-module (ice-9 match)
@@ -45,6 +52,16 @@
   #:export (docker-configuration
             docker-service-type
             singularity-service-type
+            oci-image
+            oci-image?
+            oci-image-fields
+            oci-image-repository
+            oci-image-tag
+            oci-image-value
+            oci-image-pack-options
+            oci-image-target
+            oci-image-system
+            oci-image-grafts?
             oci-container-configuration
             oci-container-configuration?
             oci-container-configuration-fields
@@ -52,14 +69,20 @@
             oci-container-configuration-group
             oci-container-configuration-command
             oci-container-configuration-entrypoint
+            oci-container-configuration-host-environment
             oci-container-configuration-environment
             oci-container-configuration-image
             oci-container-configuration-provision
+            oci-container-configuration-requirement
             oci-container-configuration-network
             oci-container-configuration-ports
             oci-container-configuration-volumes
+            oci-container-configuration-container-user
+            oci-container-configuration-workdir
+            oci-container-configuration-extra-arguments
             oci-container-service-type
-            oci-container-shepherd-service))
+            oci-container-shepherd-service
+            %oci-container-accounts))
 
 (define-maybe file-like)
 
@@ -282,6 +305,11 @@ found!")
               name el)))))
    value))
 
+(define (oci-sanitize-host-environment value)
+  ;; Expected spec format:
+  ;; '(("HOME" . "/home/nobody") "JAVA_HOME=/java")
+  (oci-sanitize-mixed-list "host-environment" value "="))
+
 (define (oci-sanitize-environment value)
   ;; Expected spec format:
   ;; '(("HOME" . "/home/nobody") "JAVA_HOME=/java")
@@ -297,7 +325,82 @@ found!")
   ;; '(("/mnt/dir" . "/dir") "/run/current-system/profile:/java")
   (oci-sanitize-mixed-list "volumes" value ":"))
 
+(define (oci-sanitize-extra-arguments value)
+  (define (valid? member)
+    (or (string? member)
+        (gexp? member)
+        (file-like? member)))
+  (map
+   (lambda (el)
+     (if (valid? el)
+         el
+         (raise
+          (formatted-message
+           (G_ "extra arguments may only be strings, gexps or file-like objects
+but ~a was found") el))))
+   value))
+
+(define (oci-image-reference image)
+  (if (string? image)
+      image
+      (string-append (oci-image-repository image)
+                     ":" (oci-image-tag image))))
+
+(define (oci-lowerable-image? image)
+  (or (manifest? image)
+      (operating-system? image)
+      (gexp? image)
+      (file-like? image)))
+
+(define (string-or-oci-image? image)
+  (or (string? image)
+      (oci-image? image)))
+
+(define list-of-symbols?
+  (list-of symbol?))
+
 (define-maybe/no-serialization string)
+
+(define-configuration/no-serialization oci-image
+  (repository
+   (string)
+   "A string like @code{myregistry.local:5000/testing/test-image} that names
+the OCI image.")
+  (tag
+   (string "latest")
+   "A string representing the OCI image tag. Defaults to @code{latest}.")
+  (value
+   (oci-lowerable-image)
+   "A @code{manifest} or @code{operating-system} record that will be lowered
+into an OCI compatible tarball.  Otherwise this field's value can be a gexp
+or a file-like object that evaluates to an OCI compatible tarball.")
+  (pack-options
+   (list '())
+   "An optional set of keyword arguments that will be passed to the
+@code{docker-image} procedure from @code{guix scripts pack}.  They can be used
+to replicate @command{guix pack} behavior:
+
+@lisp
+(oci-image
+  (repository \"guile\")
+  (tag \"3\")
+  (manifest (specifications->manifest '(\"guile\")))
+  (pack-options
+    '(#:symlinks ((\"/bin/guile\" -> \"bin/guile\"))
+      #:max-layers 2)))
+@end lisp
+
+If the @code{value} field is an @code{operating-system} record, this field's
+value will be ignored.")
+  (system
+   (maybe-string)
+   "Attempt to build for a given system, e.g. \"i686-linux\"")
+  (target
+   (maybe-string)
+   "Attempt to cross-build for a given triple, e.g. \"aarch64-linux-gnu\"")
+  (grafts?
+   (boolean #f)
+   "Whether to allow grafting or not in the pack build."))
 
 (define-configuration/no-serialization oci-container-configuration
   (user
@@ -312,28 +415,52 @@ found!")
   (entrypoint
    (maybe-string)
    "Overwrite the default entrypoint (@code{ENTRYPOINT}) of the image.")
-  (environment
+  (host-environment
    (list '())
-   "Set environment variables.  This can be a list of pairs or strings, even
-mixed:
+   "Set environment variables in the host environment where @command{docker run}
+is invoked.  This is especially useful to pass secrets from the host to the
+container without having them on the @command{docker run}'s command line: by
+setting the @code{MYSQL_PASSWORD} on the host and by passing
+@code{--env MYSQL_PASSWORD} through the @code{extra-arguments} field, it is
+possible to securely set values in the container environment.  This field's
+value can be a list of pairs or strings, even mixed:
 
 @lisp
 (list '(\"LANGUAGE\" . \"eo:ca:eu\")
       \"JAVA_HOME=/opt/java\")
 @end lisp
 
-String are passed directly to the Docker CLI.  You can refer to the
+Pair members can be strings, gexps or file-like objects. Strings are passed
+directly to @code{make-forkexec-constructor}."
+   (sanitizer oci-sanitize-host-environment))
+  (environment
+   (list '())
+   "Set environment variables inside the container.  This can be a list of pairs
+or strings, even mixed:
+
+@lisp
+(list '(\"LANGUAGE\" . \"eo:ca:eu\")
+      \"JAVA_HOME=/opt/java\")
+@end lisp
+
+Pair members can be strings, gexps or file-like objects. Strings are passed
+directly to the Docker CLI.  You can refer to the
 @url{https://docs.docker.com/engine/reference/commandline/run/#env,upstream}
 documentation for semantics."
    (sanitizer oci-sanitize-environment))
   (image
-   (string)
-   "The image used to build the container.  Images are resolved by the Docker
+   (string-or-oci-image)
+   "The image used to build the container.  It can be a string or an
+@code{oci-image} record.  Strings are resolved by the Docker
 Engine, and follow the usual format
 @code{myregistry.local:5000/testing/test-image:tag}.")
   (provision
    (maybe-string)
    "Set the name of the provisioned Shepherd service.")
+  (requirement
+   (list-of-symbols '())
+   "Set additional Shepherd services dependencies to the provisioned Shepherd
+service.")
   (network
    (maybe-string)
    "Set a Docker network for the spawned container.")
@@ -347,7 +474,8 @@ be a list of pairs or strings, even mixed:
       \"10443:443\")
 @end lisp
 
-String are passed directly to the Docker CLI.  You can refer to the
+Pair members can be strings, gexps or file-like objects. Strings are passed
+directly to the Docker CLI.  You can refer to the
 @url{https://docs.docker.com/engine/reference/commandline/run/#publish,upstream}
 documentation for semantics."
    (sanitizer oci-sanitize-ports))
@@ -361,7 +489,8 @@ list of pairs or strings, even mixed:
       \"/gnu/store:/gnu/store\")
 @end lisp
 
-String are passed directly to the Docker CLI.  You can refer to the
+Pair members can be strings, gexps or file-like objects. Strings are passed
+directly to the Docker CLI.  You can refer to the
 @url{https://docs.docker.com/engine/reference/commandline/run/#volume,upstream}
 documentation for semantics."
    (sanitizer oci-sanitize-volumes))
@@ -375,7 +504,12 @@ documentation for semantics.")
    "Set the current working for the spawned Shepherd service.
 You can refer to the
 @url{https://docs.docker.com/engine/reference/run/#workdir,upstream}
-documentation for semantics."))
+documentation for semantics.")
+  (extra-arguments
+   (list '())
+   "A list of strings, gexps or file-like objects that will be directly passed
+to the @command{docker run} invokation."
+   (sanitizer oci-sanitize-extra-arguments)))
 
 (define oci-container-configuration->options
   (lambda (config)
@@ -414,49 +548,172 @@ documentation for semantics."))
                            (list "-v" spec))
                          (oci-container-configuration-volumes config))))))))
 
+(define* (get-keyword-value args keyword #:key (default #f))
+  (let ((kv (memq keyword args)))
+    (if (and kv (>= (length kv) 2))
+        (cadr kv)
+        default)))
+
+(define (lower-operating-system os target system)
+  (mlet* %store-monad
+      ((tarball
+        (lower-object
+         (system-image (os->image os #:type docker-image-type))
+         system
+         #:target target)))
+    (return tarball)))
+
+(define (lower-manifest name image target system)
+  (define value (oci-image-value image))
+  (define options (oci-image-pack-options image))
+  (define image-reference
+    (oci-image-reference image))
+  (define image-tag
+    (let* ((extra-options
+            (get-keyword-value options #:extra-options))
+           (image-tag-option
+            (and extra-options
+                 (get-keyword-value extra-options #:image-tag))))
+      (if image-tag-option
+          '()
+          `(#:extra-options (#:image-tag ,image-reference)))))
+
+  (mlet* %store-monad
+      ((_ (set-grafting
+           (oci-image-grafts? image)))
+       (guile (set-guile-for-build (default-guile)))
+       (profile
+        (profile-derivation value
+                            #:target target
+                            #:system system
+                            #:hooks '()
+                            #:locales? #f))
+       (tarball (apply pack:docker-image
+                       `(,name ,profile
+                         ,@options
+                         ,@image-tag
+                         #:localstatedir? #t))))
+    (return tarball)))
+
+(define (lower-oci-image name image)
+  (define value (oci-image-value image))
+  (define image-target (oci-image-target image))
+  (define image-system (oci-image-system image))
+  (define target
+    (if (maybe-value-set? image-target)
+        image-target
+        (%current-target-system)))
+  (define system
+    (if (maybe-value-set? image-system)
+        image-system
+        (%current-system)))
+  (with-store store
+   (run-with-store store
+     (match value
+       ((? manifest? value)
+        (lower-manifest name image target system))
+       ((? operating-system? value)
+        (lower-operating-system value target system))
+       ((or (? gexp? value)
+            (? file-like? value))
+        value)
+       (_
+        (raise
+         (formatted-message
+          (G_ "oci-image value must contain only manifest,
+operating-system, gexp or file-like records but ~a was found")
+          value))))
+     #:target target
+     #:system system)))
+
+(define (%oci-image-loader name image tag)
+  (let ((docker (file-append docker-cli "/bin/docker"))
+        (tarball (lower-oci-image name image)))
+    (with-imported-modules '((guix build utils))
+      (program-file (format #f "~a-image-loader" name)
+       #~(begin
+           (use-modules (guix build utils)
+                        (ice-9 popen)
+                        (ice-9 rdelim))
+
+           (format #t "Loading image for ~a from ~a...~%" #$name #$tarball)
+           (define line
+             (read-line
+              (open-input-pipe
+               (string-append #$docker " load -i " #$tarball))))
+
+           (unless (or (eof-object? line)
+                       (string-null? line))
+             (format #t "~a~%" line)
+             (let ((repository&tag
+                    (string-drop line
+                                 (string-length
+                                   "Loaded image: "))))
+
+               (invoke #$docker "tag" repository&tag #$tag)
+               (format #t "Tagged ~a with ~a...~%" #$tarball #$tag))))))))
+
 (define (oci-container-shepherd-service config)
   (define (guess-name name image)
     (if (maybe-value-set? name)
         name
         (string-append "docker-"
-                       (basename (car (string-split image #\:))))))
+                       (basename
+                        (if (string? image)
+                            (first (string-split image #\:))
+                            (oci-image-repository image))))))
 
-  (let* ((docker-command (file-append docker-cli "/bin/docker"))
+  (let* ((docker (file-append docker-cli "/bin/docker"))
          (user (oci-container-configuration-user config))
          (group (oci-container-configuration-group config))
+         (host-environment
+          (oci-container-configuration-host-environment config))
          (command (oci-container-configuration-command config))
          (provision (oci-container-configuration-provision config))
+         (requirement (oci-container-configuration-requirement config))
          (image (oci-container-configuration-image config))
+         (image-reference (oci-image-reference image))
          (options (oci-container-configuration->options config))
-         (name (guess-name provision image)))
+         (name (guess-name provision image))
+         (extra-arguments
+          (oci-container-configuration-extra-arguments config)))
 
     (shepherd-service (provision `(,(string->symbol name)))
-                      (requirement '(dockerd user-processes))
+                      (requirement `(dockerd user-processes ,@requirement))
                       (respawn? #f)
                       (documentation
                        (string-append
-                        "Docker backed Shepherd service for image: " image))
+                        "Docker backed Shepherd service for "
+                        (if (oci-image? image) name image) "."))
                       (start
-                       #~(make-forkexec-constructor
-                          ;; docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
-                          (list #$docker-command "run" "--rm"
-                                "--name" #$name
-                                #$@options #$image #$@command)
-                          #:user #$user
-                          #:group #$group))
+                       #~(lambda ()
+                          (when #$(oci-image? image)
+                            (invoke #$(%oci-image-loader
+                                       name image image-reference)))
+                          (fork+exec-command
+                           ;; docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
+                           (list #$docker "run" "--rm" "--name" #$name
+                                 #$@options #$@extra-arguments
+                                 #$image-reference #$@command)
+                           #:user #$user
+                           #:group #$group
+                           #:environment-variables
+                           (list #$@host-environment))))
                       (stop
                        #~(lambda _
-                           (invoke #$docker-command "rm" "-f" #$name)))
+                           (invoke #$docker "rm" "-f" #$name)))
                       (actions
-                       (list
-                        (shepherd-action
-                         (name 'pull)
-                         (documentation
-                          (format #f "Pull ~a's image (~a)."
-                                  name image))
-                         (procedure
-                          #~(lambda _
-                              (invoke #$docker-command "pull" #$image)))))))))
+                       (if (oci-image? image)
+                           '()
+                           (list
+                            (shepherd-action
+                             (name 'pull)
+                             (documentation
+                              (format #f "Pull ~a's image (~a)."
+                                      name image))
+                             (procedure
+                              #~(lambda _
+                                  (invoke #$docker "pull" #$image))))))))))
 
 (define %oci-container-accounts
   (list (user-account
@@ -482,5 +739,5 @@ documentation for semantics."))
                 (extend append)
                 (compose concatenate)
                 (description
-                 "This service allows the management of Docker and OCI
+                 "This service allows the management of OCI
 containers as Shepherd services.")))

@@ -12192,6 +12192,18 @@ When @var{recursive?} is true, call @code{(@var{select?} @var{file}
 absolute file name and @var{stat} is the result of @code{lstat}; exclude
 entries for which @var{select?} does not return true.
 
+@var{file} can be wrapped in the @code{assume-valid-file-name} syntactic
+keyword. When this is done, there will not be a warning when
+@code{local-file} is used with a non-literal path.  The path is still
+looked up relative to the current working directory at run time.
+Wrapping is done like this:
+
+@lisp
+(define alice-key-file-path "alice.pub")
+;; ...
+(local-file (assume-valid-file-name alice-key-file-path))
+@end lisp
+
 This is the declarative counterpart of the @code{interned-file} monadic
 procedure (@pxref{The Store Monad, @code{interned-file}}).
 @end deffn
@@ -40535,6 +40547,17 @@ processes as Shepherd Services.
 (service oci-container-service-type
          (list
           (oci-container-configuration
+           (image
+            (oci-image
+             (repository "guile")
+             (tag "3")
+             (value (specifications->manifest '("guile")))
+             (pack-options '(#:symlinks (("/bin/guile" -> "bin/guile"))
+                             #:max-layers 2))))
+           (entrypoint "/bin/guile")
+           (command
+            '("-c" "(display \"hello!\n\")")))
+          (oci-container-configuration
            (image "prom/prometheus")
            (network "host")
            (ports
@@ -40574,13 +40597,30 @@ The user under whose authority docker commands will be run.
 @item @code{group} (default: @code{"docker"}) (type: string)
 The group under whose authority docker commands will be run.
 
-@item @code{command} (default: @code{()}) (type: list-of-strings)
+@item @code{command} (default: @code{'()}) (type: list-of-strings)
 Overwrite the default command (@code{CMD}) of the image.
 
 @item @code{entrypoint} (default: @code{""}) (type: string)
 Overwrite the default entrypoint (@code{ENTRYPOINT}) of the image.
 
-@item @code{environment} (default: @code{()}) (type: list)
+@item @code{host-environment} (default: @code{'()}) (type: list)
+Set environment variables in the host environment where @command{docker
+run} is invoked.  This is especially useful to pass secrets from the
+host to the container without having them on the @command{docker run}'s
+command line: by setting the @code{MYSQL_PASSWORD} on the host and by passing
+@code{--env MYSQL_PASSWORD} through the @code{extra-arguments} field, it is
+possible to securely set values in the container environment.  This field's
+value can be a list of pairs or strings, even mixed:
+
+@lisp
+(list '(\"LANGUAGE\" . \"eo:ca:eu\")
+      \"JAVA_HOME=/opt/java\")
+@end lisp
+
+Pair members can be strings, gexps or file-like objects. Strings are passed
+directly to @code{make-forkexec-constructor}.
+
+@item @code{environment} (default: @code{'()}) (type: list)
 Set environment variables. This can be a list of pairs or strings, even mixed:
 
 @lisp
@@ -40588,22 +40628,28 @@ Set environment variables. This can be a list of pairs or strings, even mixed:
       "JAVA_HOME=/opt/java")
 @end lisp
 
-String are passed directly to the Docker CLI. You can refer to the
+Pair members can be strings, gexps or file-like objects.
+Strings are passed directly to the Docker CLI.  You can refer to the
 @uref{https://docs.docker.com/engine/reference/commandline/run/#env,upstream}
 documentation for semantics.
 
-@item @code{image} (type: string)
-The image used to build the container.  Images are resolved by the
-Docker Engine, and follow the usual format
+@item @code{image} (type: string-or-oci-image)
+The image used to build the container.  It can be a string or an
+@code{oci-image} record.  Strings are resolved by the Docker Engine, and
+follow the usual format
 @code{myregistry.local:5000/testing/test-image:tag}.
 
 @item @code{provision} (default: @code{""}) (type: string)
 Set the name of the provisioned Shepherd service.
 
+@item @code{requirement} (default: @code{'()}) (type: list-of-symbols)
+Set additional Shepherd services dependencies to the provisioned
+Shepherd service.
+
 @item @code{network} (default: @code{""}) (type: string)
 Set a Docker network for the spawned container.
 
-@item @code{ports} (default: @code{()}) (type: list)
+@item @code{ports} (default: @code{'()}) (type: list)
 Set the port or port ranges to expose from the spawned container.  This can be a
 list of pairs or strings, even mixed:
 
@@ -40612,11 +40658,12 @@ list of pairs or strings, even mixed:
       "10443:443")
 @end lisp
 
-String are passed directly to the Docker CLI.  You can refer to the
+Pair members can be strings, gexps or file-like objects.
+Strings are passed directly to the Docker CLI.  You can refer to the
 @uref{https://docs.docker.com/engine/reference/commandline/run/#publish,upstream}
 documentation for semantics.
 
-@item @code{volumes} (default: @code{()}) (type: list)
+@item @code{volumes} (default: @code{'()}) (type: list)
 Set volume mappings for the spawned container.  This can be a
 list of pairs or strings, even mixed:
 
@@ -40625,7 +40672,8 @@ list of pairs or strings, even mixed:
       "/gnu/store:/gnu/store")
 @end lisp
 
-String are passed directly to the Docker CLI.  You can refer to the
+Pair members can be strings, gexps or file-like objects.
+Strings are passed directly to the Docker CLI.  You can refer to the
 @uref{https://docs.docker.com/engine/reference/commandline/run/#volume,upstream}
 documentation for semantics.
 
@@ -40639,6 +40687,62 @@ Set the current working for the spawned Shepherd service.
 You can refer to the
 @url{https://docs.docker.com/engine/reference/run/#workdir,upstream}
 documentation for semantics.
+
+@item @code{extra-arguments} (default: @code{'()}) (type: list)
+A list of strings, gexps or file-like objects that will be directly
+passed to the @command{docker run} invokation.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
+
+@c %start of fragment
+
+@deftp {Data Type} oci-image
+Available @code{oci-image} fields are:
+
+@table @asis
+@item @code{repository} (type: string)
+A string like @code{myregistry.local:5000/testing/test-image} that names
+the OCI image.
+
+@item @code{tag} (default: @code{"latest"}) (type: string)
+A string representing the OCI image tag.  Defaults to @code{latest}.
+
+@item @code{value} (type: oci-lowerable-image)
+A @code{manifest} or @code{operating-system} record that will be lowered
+into an OCI compatible tarball.  Otherwise this field's value can be a
+gexp or a file-like object that evaluates to an OCI compatible tarball.
+
+@item @code{pack-options} (default: @code{'()}) (type: list)
+An optional set of keyword arguments that will be passed to the
+@code{docker-image} procedure from @code{guix scripts pack}.  They can
+be used to replicate @command{guix pack} behavior:
+
+@lisp
+(oci-image
+  (repository "guile")
+  (tag "3")
+  (value
+    (specifications->manifest '("guile")))
+  (pack-options '(#:symlinks (("/bin/guile" -> "bin/guile"))
+                  #:max-layers 2)))
+@end lisp
+
+If the @code{value} field is an @code{operating-system} record, this field's
+value will be ignored.
+
+@item @code{system} (default: @code{""}) (type: string)
+Attempt to build for a given system, e.g. "i686-linux"
+
+@item @code{target} (default: @code{""}) (type: string)
+Attempt to cross-build for a given triple, e.g. "aarch64-linux-gnu"
+
+@item @code{grafts?} (default: @code{#f}) (type: boolean)
+Whether to allow grafting or not in the pack build.
 
 @end table
 
@@ -41089,6 +41193,122 @@ Mode for filter.
 @end deftp
 
 @c End of auto-generated fail2ban documentation.
+
+@cindex Backup
+@subsubheading Backup Services
+
+The @code{(gnu services backup)} module offers services for backing up
+file system trees.  For now, it provides the @code{restic-backup-service-type}.
+
+With @code{restic-backup-service-type}, you can periodically back up
+directories and files with @uref{https://restic.net/, Restic}, which
+supports end-to-end encryption and deduplication.  Consider the
+following configuration:
+
+@lisp
+(use-service-modules backup @dots{}) ;for 'restic-backup-service-type'
+(use-package-modules sync @dots{})   ;for 'rclone'
+
+(operating-system
+  ;; @dots{}
+  (packages (append (list rclone)    ;for use by restic
+                    %base-packages))
+  (services
+    (list
+      (service restic-backup-service-type
+               (restic-backup-configuration
+                 (jobs
+                   (list (restic-backup-job
+                           (name "remote-ftp")
+                           (repository "rclone:remote-ftp:backup/restic")
+                           (password-file "/root/.restic")
+                           ;; Every day at 23.
+                           (schedule "0 23 * * *")
+                           (files '("/root/.restic"
+                                    "/root/.config/rclone"
+                                    "/etc/ssh/ssh_host_rsa_key"
+                                    "/etc/ssh/ssh_host_rsa_key.pub"
+                                    "/etc/guix/signing-key.pub"
+                                    "/etc/guix/signing-key.sec"))))))))))
+@end lisp
+
+Each @code{restic-backup-job} translates to an mcron job which sets the
+@env{RESTIC_PASSWORD} environment variable by reading the first line of
+@code{password-file} and runs @command{restic backup}, creating backups
+using rclone of all the files listed in the @code{files} field.
+
+The @code{restic-backup-service-type} installs as well @code{restic-guix}
+to the system profile, a @code{restic} utility wrapper that allows for easier
+interaction with the Guix configured backup jobs.  For example the following
+could be used to instantaneusly trigger a backup for the above shown
+configuration, without waiting for the scheduled job:
+
+@example
+restic-guix backup remote-ftp
+@end example
+
+@c %start of fragment
+
+@deftp {Data Type} restic-backup-configuration
+Available @code{restic-backup-configuration} fields are:
+
+@table @asis
+@item @code{jobs} (default: @code{'()}) (type: list-of-restic-backup-jobs)
+The list of backup jobs for the current system.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
+
+@c %start of fragment
+
+@deftp {Data Type} restic-backup-job
+Available @code{restic-backup-job} fields are:
+
+@table @asis
+@item @code{restic} (default: @code{restic}) (type: package)
+The restic package to be used for the current job.
+
+@item @code{user} (default: @code{"root"}) (type: string)
+The user used for running the current job.
+
+@item @code{repository} (type: string)
+The restic repository target of this job.
+
+@item @code{name} (type: string)
+A string denoting a name for this job.
+
+@item @code{password-file} (type: string)
+Name of the password file, readable by the configured @code{user},
+that will be used to set the @env{RESTIC_PASSWORD} environment variable
+for the current job.
+
+@item @code{schedule} (type: gexp-or-string)
+A string or a gexp that will be passed as time specification in the
+mcron job specification (@pxref{Syntax, mcron job specifications,,
+mcron,GNU@tie{}mcron}).
+
+@item @code{files} (default: @code{'()}) (type: list-of-lowerables)
+The list of files or directories to be backed up.  It must be a list of
+values that can be lowered to strings.
+
+@item @code{verbose?} (default: @code{#f}) (type: boolean)
+Whether to enable verbose output for the current backup job.
+
+@item @code{extra-flags} (default: @code{'()}) (type: list-of-lowerables)
+A list of values that are lowered to strings.  These will be passed as
+command-line arguments to the current job @command{restic backup}
+invokation.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
 
 @node Setuid Programs
 @section Setuid Programs
