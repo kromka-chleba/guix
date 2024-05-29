@@ -1408,7 +1408,7 @@ protocol either in Wayland core, or some other protocol in wayland-protocols.")
 (define-public wayland-utils
   (package
     (name "wayland-utils")
-    (version "1.1.0")
+    (version "1.2.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1417,7 +1417,7 @@ protocol either in Wayland core, or some other protocol in wayland-protocols.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "04k1yhyh7h4xawbhpz9pf6cpfmmp1l862fdgsvvnyp4hg9n3j9aj"))))
+                "1dj9p7vrv3a0fflqkwps8im2hz3ari385a3nqb4ar1ci3crxp204"))))
     (build-system meson-build-system)
     (native-inputs (list pkg-config))
     (inputs (list libdrm wayland wayland-protocols))
@@ -3239,7 +3239,7 @@ notifies the user using any notification daemon implementing
 (define-public waypipe
   (package
     (name "waypipe")
-    (version "0.8.1")
+    (version "0.9.0")
     (source
      (origin
        (method git-fetch)
@@ -3248,7 +3248,7 @@ notifies the user using any notification daemon implementing
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1v08dv3dfz420v51ahz7qgv3429073kmgrf8f66s4c3jlpch2pa1"))))
+        (base32 "0pf1q8kyqyqa7gxar99i35q9np0k4vsf7xlrg12gyzc5k36lhknf"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config scdoc

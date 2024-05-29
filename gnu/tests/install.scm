@@ -210,9 +210,11 @@ reboot\n")
   "Return the appropriate QEMU OVMF UEFI firmware for the given SYSTEM."
   (cond
    ((string-prefix? "x86_64" system)
-    (file-append ovmf "/share/firmware/ovmf_x64.bin"))
+    (file-append ovmf-x86-64 "/share/firmware/ovmf_x64.bin"))
    ((string-prefix? "i686" system)
-    (file-append ovmf "/share/firmware/ovmf_ia32.bin"))
+    (file-append ovmf-i686 "/share/firmware/ovmf_ia32.bin"))
+   ((string-prefix? "aarch64" system)
+    (file-append ovmf-aarch64 "/share/firmware/ovmf_aarch64.bin"))
    (else #f)))
 
 (define* (run-install target-os target-os-source
@@ -287,6 +289,12 @@ such as for RAID systems."
             (define marionette
               (make-marionette
                `(,(which #$(qemu-command system))
+                 ;; Neither of these architectures have a default machine.
+                 ,@(if (or (string=? "aarch64-linux" #$system)
+                           (string=? "armhf-linux" #$system))
+                       '("-machine" "virt"
+                         "-cpu" "host")
+                       '())
                  "-no-reboot"
                  "-m" "1200"
                  ,@(if #$uefi-firmware
@@ -361,6 +369,12 @@ MiB of RAM."
                 (use-modules (srfi srfi-1))
                 `(,(string-append #$qemu-minimal "/bin/"
                                   #$(qemu-command system))
+                  ;; Neither of these architectures have a default machine.
+                  ,@(if (or (string=? "aarch64-linux" #$system)
+                            (string=? "armhf-linux" #$system))
+                        '("-machine" "virt"
+                          "-cpu" "host")
+                        '())
                   "-snapshot"           ;for the volatile, writable overlay
                   ,@(if (file-exists? "/dev/kvm")
                         '("-enable-kvm")

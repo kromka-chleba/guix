@@ -4762,6 +4762,51 @@ from/to strings, streams and files.")
 (define-public ecl-cl-csv
   (sbcl-package->ecl-package sbcl-cl-csv))
 
+(define-public sbcl-cl-data-structures
+  (let ((commit "25dd479377eb40ce54eed4ecc0d660aed32f3a78")
+        (revision "1"))
+    (package
+      (name "sbcl-cl-data-structures")
+      (version (git-version "1.4.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sirherrbatka/cl-data-structures")
+               (commit commit)))
+         (file-name (git-file-name "cl-data-structures" version))
+         (sha256
+          (base32 "1yhfahnsx56s9jzdk7jnqic5a3fiq29i1a9d0ay6fd1rg2wfa3k3"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs
+       (list sbcl-prove))
+      (inputs
+       (list sbcl-alexandria
+             sbcl-bordeaux-threads
+             sbcl-cl-ppcre
+             sbcl-closer-mop
+             sbcl-documentation-utils-extensions
+             sbcl-flexichain
+             sbcl-iterate
+             sbcl-lparallel
+             sbcl-metabang-bind
+             sbcl-more-conditions
+             sbcl-serapeum
+             sbcl-trivial-garbage))
+      (synopsis "Data Structures and streaming algorithms for Common Lisp")
+      (description
+       "CL-DATA-STRUCTURES is a Common Lisp library providing a portable
+collection of mutable and immutable data structures (dictionaries, sets,
+queues, sequences) and algorithms.")
+      (home-page "https://sirherrbatka.github.io/cl-data-structures/main.html")
+      (license license:bsd-2))))
+
+(define-public cl-data-structures
+  (sbcl-package->cl-source-package sbcl-cl-data-structures))
+
+(define-public ecl-cl-data-structures
+  (sbcl-package->ecl-package sbcl-cl-data-structures))
+
 (define-public sbcl-cl-debug
   (let ((commit "b334280806104ee7f7d3aec666bf7e08d2f89b31")
         (revision "1"))
@@ -13246,10 +13291,10 @@ diffs, \"context\" format diffs, and \"vdelta\" format binary diffs.")
   (sbcl-package->ecl-package sbcl-diff))
 
 (define-public sbcl-dissect
-  (let ((commit "cffd38479f0e64e805f167bbdb240b783ecc8d45"))
+  (let ((commit "a70cabcd748cf7c041196efd711e2dcca2bbbb2c"))
     (package
       (name "sbcl-dissect")
-      (version (git-version "1.0.0" "1" commit))
+      (version (git-version "1.0.0" "2" commit))
       (source
        (origin
          (method git-fetch)
@@ -13259,7 +13304,7 @@ diffs, \"context\" format diffs, and \"vdelta\" format binary diffs.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "0rmsjkgjl90gl6ssvgd60hb0d5diyhsiyypvw9hbc0ripvbmk5r5"))))
+           "1ym1zggwrj15l7y2mcz5l2gfk68prqxhdswffd9s5014pa6zyysr"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-cl-ppcre))
@@ -20690,6 +20735,39 @@ long-running threads.  In principle, it is like an in-Lisp process supervisor.")
 
 (define-public ecl-moira
   (sbcl-package->ecl-package sbcl-moira))
+
+(define-public sbcl-more-conditions
+  (let ((commit "b4859fb119b3b88719c3c4d5f6d7a620052fefc2")
+        (revision "1"))
+    (package
+      (name "sbcl-more-conditions")
+      (version (git-version "0.4.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/scymtym/more-conditions")
+               (commit commit)))
+         (file-name (git-file-name "cl-more-conditions" version))
+         (sha256
+          (base32 "1n0xbz0yiqn9dxf0ycm57wqvsr4gh2q4hs5fskjbv87c47d7l7zr"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs
+       (list sbcl-fiveam sbcl-let-plus))
+      (inputs
+       (list sbcl-alexandria sbcl-closer-mop))
+      (synopsis "General condition classes and signalling helpers")
+      (description
+       "This package provides some condition classes, functions and macros
+which may be useful when building slightly complex systems.")
+      (home-page "https://github.com/scymtym/more-conditions")
+      (license license:llgpl))))
+
+(define-public cl-more-conditions
+  (sbcl-package->cl-source-package sbcl-more-conditions))
+
+(define-public ecl-more-conditions
+  (sbcl-package->ecl-package sbcl-more-conditions))
 
 (define-public sbcl-montezuma
   (let ((commit "ee2129eece7065760de4ebbaeffaadcb27644738")
