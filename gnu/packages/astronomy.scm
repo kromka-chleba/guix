@@ -97,7 +97,7 @@
   #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
-  #:use-module (guix build-system python)
+  #:use-module ((guix build-system python) #:select (pypi-uri))
   #:use-module (guix build-system pyproject)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -191,20 +191,21 @@ reused in several astronomical applications, such as @code{wsclean},
 (define-public calceph
   (package
     (name "calceph")
-    (version  "3.5.5")
+    (version  "4.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://www.imcce.fr/content/medias/recherche/equipes/asd/calceph/calceph-"
-             version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.obspm.fr/imcce_calceph/calceph")
+             (commit (string-append name "_"
+                                    (string-replace-substring version "." "_")))))
        (sha256
-        (base32 "1jiaqyir2qcxzjlhk7f9fhrf6snjsiwxznvzdl996xr6m4lzbb7p"))))
-    (build-system gnu-build-system)
+        (base32 "1yabdq51plg3dijp68xajhsz395gi2fyp5qkvrj3dgv8d4qw52nw"))
+       (file-name (git-file-name name version))))
+    (build-system cmake-build-system)
     (native-inputs
      (list gfortran))
     (home-page "https://www.imcce.fr/inpop/calceph")
-    (properties `((release-monitoring-url . ,home-page)))
     (synopsis "Astronomical library to access the binary planetary ephemeris files")
     (description
      "The CALCEPH Library is designed to access the binary planetary ephemeris files,
@@ -1613,13 +1614,13 @@ accurately in real time at any rate desired.")
 (define-public python-astropy
   (package
     (name "python-astropy")
-    (version "6.0.1")
+    (version "6.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "astropy" version))
        (sha256
-        (base32 "175k2h039c0b8rsf0fdphmxbpjrszd138j8z9zkhh1kd6pg7bac9"))
+        (base32 "03wm12bpfifvjbvf7rixv9yr5ya5c9gy9p0dff862mxi21gr2fvc"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -1759,13 +1760,13 @@ astronomy and astrophysics.")
     ;; In case of changing the source method git-fetch, consider to check the
     ;; tag as it's not following the PyPI version, see
     ;; <https://github.com/astropy/astropy-iers-data/issues/17>.
-    (version "0.2024.4.15.2.45.49")
+    (version "0.2024.5.13.0.30.12")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "astropy_iers_data" version))
        (sha256
-        (base32 "15wran1d5bw1mm3xl3ibp6i5aa7icj9p6g1mqcyp596qmdjnm8wp"))))
+        (base32 "1vs3aqg0mb54bkci646h5pqbnfb50798ajim6xjg7nacpjhr8j3p"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1935,13 +1936,13 @@ to access online Astronomical data.  Each web service has its own sub-package.")
 (define-public python-astroscrappy
   (package
     (name "python-astroscrappy")
-    (version "1.1.0")
+    (version "1.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "astroscrappy" version))
        (sha256
-        (base32 "0shmfilvzpmlwz4fh0bx4kqmzr0y39fgga6vipxb5d1rx1y6q6by"))))
+        (base32 "0r2alg8imr201ykjsvr6y43bzw8mwbc4ddprn8f6qfw9k4hsx8ff"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1957,12 +1958,9 @@ to access online Astronomical data.  Each web service has its own sub-package.")
               (make-file-writable "astroscrappy/_compiler.c")
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
     (native-inputs
-     (list python-cython
+     (list python-cython-3
            python-extension-helpers
-           python-h5py
-           python-pandas
            python-pytest-astropy
-           python-scikit-image
            python-scipy
            python-setuptools-scm))
     (propagated-inputs (list python-astropy python-numpy))
@@ -2050,13 +2048,13 @@ is independent of and does not use @code{casacore}.")
 (define-public python-ccdproc
   (package
     (name "python-ccdproc")
-    (version "2.4.1")
+    (version "2.4.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ccdproc" version))
        (sha256
-        (base32 "186plgfhrj7wivs053y65jlv1x33y8ii31jdr2rm4s6pl0j7x29z"))))
+        (base32 "14faivm9nihpdwzg0jx1c9zr7jk22gjfjw78raq6h63ypl10i6yx"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-memory-profiler
@@ -2078,7 +2076,7 @@ bad pixel tracking throughout the reduction process.")
 (define-public python-cdflib
   (package
     (name "python-cdflib")
-    (version "1.2.6")
+    (version "1.3.1")
     (source
      (origin
        (method git-fetch)               ; no tests in PyPI release
@@ -2087,7 +2085,7 @@ bad pixel tracking throughout the reduction process.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wxr35sqsdqzf85xyjh1v8hmwwiyv4cn0lr7q8l1kkngfywq5l2r"))))
+        (base32 "0zmz9wjhlq43lqy5k4fld9cj5k39s1hkkaligrn3kpf9hcbd79qn"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases
@@ -2100,7 +2098,7 @@ bad pixel tracking throughout the reduction process.")
                  (lambda _
                    (setenv "HOME" (getcwd)))))))
     (propagated-inputs
-     (list python-attrs python-numpy))
+     (list python-numpy))
     (native-inputs
      (list python-astropy
            python-hypothesis
@@ -2152,13 +2150,13 @@ monochromatic sequential colormaps like @code{blue}, @code{green}, and
 (define-public python-crds
   (package
     (name "python-crds")
-    (version "11.17.20")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "crds" version))
-              (sha256
-               (base32
-                "0480jjklv2p60fp892dr4qglwv44k86hx29y8q1c967l9k53wc9f"))))
+    (version "11.17.22")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "crds" version))
+       (sha256
+        (base32 "1i2wh7cgyn7r0fnn7ikfsdqjrcpg46xsk619mhdqywk5yjcxlz9f"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2166,24 +2164,19 @@ monochromatic sequential colormaps like @code{blue}, @code{green}, and
       ;; additional test data. See:
       ;; https://github.com/spacetelescope/crds/blob/master/setup_test_cache
       #:tests? #f))
-    (propagated-inputs (list python-asdf
-                             python-astropy
-                             python-boto3
-                             python-filelock
-                             python-numpy
-                             python-parsley
-                             python-pysynphot
-                             python-roman-datamodels
-                             python-stsynphot
-                             python-requests))
-    (native-inputs (list python-flake8
-                         python-ipython
-                         python-lockfile
-                         python-mock
-                         python-nose
-                         python-pylint
-                         python-pytest
-                         python-setuptools-scm))
+    (propagated-inputs
+     (list python-asdf
+           python-astropy
+           python-boto3
+           python-filelock
+           python-numpy
+           python-parsley
+           python-pysynphot
+           python-roman-datamodels
+           python-stsynphot
+           python-requests))
+    (native-inputs
+     (list python-setuptools-scm))
     (home-page "https://hst-crds.stsci.edu")
     (synopsis "Calibration Reference Data System for HST and JWST")
     (description
@@ -2301,13 +2294,13 @@ code to be greatly simplified.")
 (define-public python-dust-extinction
   (package
     (name "python-dust-extinction")
-    (version "1.3")
+    (version "1.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "dust_extinction" version))
        (sha256
-        (base32 "14zy6kyrfi4ash7qg1k3im1zzgr2r7rnaggzk0ar3jlfmsii743k"))))
+        (base32 "0yw2mdsbsmk0cs9wzsmmrnkhriyhj1gir6irjsfxd518fa8bik2k"))))
     (build-system pyproject-build-system)
     (propagated-inputs
      (list python-astropy python-scipy))
@@ -2324,13 +2317,13 @@ implemented using the astropy.modeling framework.")
   (package
     (name "python-ephem")
     (version "4.1.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "ephem" version))
-              (sha256
-               (base32
-                "0ainqbnvw320pc61q5b6ad6f2mhn1pvrlnq489cwfx0m82mahr0c"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ephem" version))
+       (sha256
+        (base32 "0ainqbnvw320pc61q5b6ad6f2mhn1pvrlnq489cwfx0m82mahr0c"))))
+    (build-system pyproject-build-system)
     (native-inputs (list tzdata))
     (home-page "https://rhodesmill.org/pyephem/")
     (synopsis "Compute positions of the planets and stars")
@@ -2708,6 +2701,11 @@ interest, and which require portability between platforms or ease of scripting."
        (sha256
         (base32 "0cm6agaf1gvc5bi95wx6a70ngj9vn95rx78fs59vlrmpww7q2807"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Disable one failing test, see
+      ;; <https://github.com/astropy/pyvo/issues/547>.
+      #:test-flags #~(list "-k" "not test_single_table_description")))
     (native-inputs
      (list python-pytest-astropy python-requests-mock python-setuptools-scm))
     (propagated-inputs
@@ -2855,7 +2853,7 @@ changing the pixel resolution, orientation, coordinate system.")
        (uri (pypi-uri "sgp4" version))
        (sha256
         (base32 "0aalbmldks6ykgkcxwkvnp04q0avhv903m5zwvg8i7zvl99xrbfq"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-numpy))
     (home-page "https://github.com/brandon-rhodes/python-sgp4")
@@ -2877,13 +2875,13 @@ orbits described in TLE files.")
 (define-public python-sunpy
   (package
     (name "python-sunpy")
-    (version "5.1.2")
+    (version "5.1.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sunpy" version))
        (sha256
-        (base32 "0h62qh74xanj2drikjch7h0a5g4dsaf3v4qxx38vjazmibc37ynp"))))
+        (base32 "0bqpbdgd3blpa4y5f45j5cqn0xdnmqvqnqr1vmqwn5ddlx88z5lh"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3132,13 +3130,13 @@ of axis order, spatial projections, and spectral units that exist in the wild.
 (define-public python-specutils
   (package
     (name "python-specutils")
-    (version "1.14.0")
+    (version "1.15.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "specutils" version))
        (sha256
-        (base32 "06l0k8hi4hbfs825cnw948nnkl627g3w48n2pf9rspbvd3vbs2qf"))))
+        (base32 "0gx90dn9vmbvd7a53xb7a51jabskrad52g7imgy0ih1jchdls2pj"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3231,13 +3229,13 @@ spherical polygons that represent arbitrary regions of the sky.")
 (define-public python-stsci-image
   (package
     (name "python-stsci-image")
-    (version "2.3.5")
+    (version "2.3.7")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "stsci.image" version))
+       (uri (pypi-uri "stsci_image" version))
        (sha256
-        (base32 "1vnp4256nbdvapa69cmm80sjz11ygxa49abr9nbvssj6nyyp5icb"))))
+        (base32 "13sbych5929isrick2035rk31qcb1icm2l6pz7pjqsi45hsffxxm"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4111,13 +4109,13 @@ Moon position, etc.")
 (define-public python-jplephem
   (package
     (name "python-jplephem")
-    (version "2.21")
+    (version "2.22")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "jplephem" version))
        (sha256
-        (base32 "0mcdhb22vwbyavcnkcwchj0cxnxsvaw5563v464ipwlm0rhln69l"))))
+        (base32 "0b2rgb7pvwnl72pqjryf9c812mmdxr69fwiym7mnz05l2xrcr6hd"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4472,19 +4470,16 @@ spectra, and data.")
       (license license:bsd-3))))
 
 (define-public python-sep
-  (package
-    (inherit libsep)
+  (package/inherit libsep
     (name "python-sep")
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     (strip-keyword-arguments
-      '(#:make-flags) (package-arguments libsep)))
+     (list #:test-flags #~(list "test.py")))
     (native-inputs
-     (modify-inputs (package-inputs libsep)
-       (prepend python-cython)))
+     (list python-cython python-pytest))
     (propagated-inputs
-     (modify-inputs (package-inputs libsep)
-       (prepend python-numpy)))))
+     (list  python-numpy))
+    (synopsis "Python library for Source Extraction and Photometry")))
 
 (define-public python-suntime
   (package
@@ -5002,13 +4997,13 @@ default) to world coordinates.")
 (define-public python-rad
   (package
     (name "python-rad")
-    (version "0.19.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "rad" version))
-              (sha256
-               (base32
-                "08dh9asdjgfmczmqyjplgdvbk3n68qw6akd8h953wq6v3yr4k4rq"))))
+    (version "0.20.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "rad" version))
+       (sha256
+        (base32 "05b7qjhahzfjdp820m3qm69wrzb73njjqrzkk7hxkd8gbrbp0mj1"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -5017,7 +5012,8 @@ default) to world coordinates.")
       #:test-flags #~(list "--ignore=tests/test_schemas.py")))
     (native-inputs
      (list python-pytest python-setuptools-scm))
-    (propagated-inputs (list python-asdf python-asdf-astropy))
+    (propagated-inputs
+     (list python-asdf python-asdf-astropy))
     (home-page "https://github.com/spacetelescope/rad")
     (synopsis "Roman Attribute Dictionary")
     (description
@@ -5102,13 +5098,13 @@ solar physics.")
 (define-public python-roman-datamodels
   (package
     (name "python-roman-datamodels")
-    (version "0.19.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "roman_datamodels" version))
-              (sha256
-               (base32
-                "1fp9rwzm5kzm0hjwwmlx7kym7yriyhxbfg2zr3y625pyvwpnl0a8"))))
+    (version "0.20.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "roman_datamodels" version))
+       (sha256
+        (base32 "1918wnssf478w168mhv009jkirmny8hyfxrkwvl8iish36dcqagh"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -5119,18 +5115,20 @@ solar physics.")
           (add-after 'unpack 'set-env
             (lambda _
               (setenv "HOME" "/tmp"))))))
-    (propagated-inputs (list python-asdf
-                             python-asdf-astropy
-                             python-astropy
-                             python-gwcs
-                             python-numpy
-                             python-psutil
-                             python-rad))
-    (native-inputs (list python-pytest
-                         python-pytest-doctestplus
-                         python-pytest-env
-                         python-pytest-xdist
-                         python-setuptools-scm))
+    (propagated-inputs
+     (list python-asdf
+           python-asdf-astropy
+           python-astropy
+           python-gwcs
+           python-numpy
+           python-psutil
+           python-rad))
+    (native-inputs
+     (list python-pytest
+           python-pytest-doctestplus
+           python-pytest-env
+           python-pytest-xdist
+           python-setuptools-scm))
     (home-page "https://github.com/spacetelescope/roman_datamodels")
     (synopsis "Roman Datamodels Support")
     (description
@@ -5216,6 +5214,37 @@ astronomical images, especially when there is no WCS information available.")
 orbit around the Earth.")
     (license license:expat)))
 
+(define-public python-viresclient
+  (package
+    (name "python-viresclient")
+    (version "0.11.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "viresclient" version))
+       (sha256
+        (base32 "1npn5ka0cflvl6ngf5b08z59dh79hnyh5v2z4sf0872q9zkwmjjw"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-flit-core python-pytest))
+    (propagated-inputs
+     (list python-cdflib
+           python-jinja2
+           python-netcdf4
+           python-pandas
+           python-requests
+           python-tables
+           python-tqdm
+           python-xarray))
+    (home-page "https://viresclient.readthedocs.io/en/latest/")
+    (synopsis "Python client for interacting with a VirES server")
+    (description
+     "This package provides a Python client for interacting with a
+@code{VirES} server, of which there are two: VirES for
+@url{https://vires.services, Swarm} and VirES for
+@url{https://aeolus.services, Aeolus}")
+    (license license:expat)))
+
 (define-public python-wiimatch
   (package
     (name "python-wiimatch")
@@ -5238,6 +5267,85 @@ orbit around the Earth.")
 for optimal @code{matching} of weighted N-dimensional image intensity data
 using (multivariate) polynomials.")
     (license license:bsd-3)))
+
+(define-public python-yt
+  (package
+    (name "python-yt")
+    (version "4.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "yt" version))
+       (sha256
+        (base32 "03jy35vyniyd1pd3sv0zpd2f3ks2iyqw65xv28ids8nw6v1vavbv"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:build-backend "setuptools.build_meta"
+      #:test-flags
+      #~(list "-n" "auto")
+      #:phases
+      #~(modify-phases %standard-phases
+         (add-after 'unpack 'relax-requirements
+           (lambda _
+             (substitute* "pyproject.toml"
+               ;; XXX: Updating ipywidgets requires long chain of rebuilds,
+               ;; maybe for python-team.
+               ;;
+               ;; ipywidgets>=8.0.0
+               ((">=8.0.0") ">=7.6.3"))))
+          (add-before 'check 'prepare-test-environment
+            (lambda _
+              (setenv "HOME" "/tmp")
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (propagated-inputs
+     (list python-cmyt
+           python-ewah-bool-utils
+           python-ipywidgets
+           python-matplotlib
+           python-more-itertools-next
+           python-numpy
+           python-packaging
+           python-pillow
+           python-tomli-w
+           python-tqdm
+           python-unyt))
+    (native-inputs
+     (list python-cython-3
+           python-nose
+           python-nose-exclude
+           python-nose-timer
+           python-pyaml
+           python-pytest
+           python-pytest-mpl
+           python-pytest-xdist
+           python-setuptools
+           python-sympy))
+    (home-page "http://yt-project.org/")
+    (synopsis "Analyzing and visualizing volumetric data framework")
+    (description
+     "This package provides a structured, variable-resolution meshes,
+ unstructured meshes, and discrete or sampled data such as particles.  Focused on
+ driving physically-meaningful inquiry, it has been applied in domains such as
+ astrophysics, seismology, nuclear engineering, molecular dynamics, and
+ oceanography.")
+    (license (list
+              ;; COPYING.txt: for Python code.
+              ;;
+              ;; yt uses a shared copyright model. Each contributor maintains
+              ;; copyright over their contributions to yt. But, it is important
+              ;; to note that these contributions are typically only changes to
+              ;; the repositories. Thus, the yt source code, in its entirety is
+              ;; not the copyright of any single person or institution. Instead,
+              ;; it is the collective copyright of the entire yt Development
+              ;; Team. If individual contributors want to maintain a record of
+              ;; what changes/contributions they have specific copyright on,
+              ;; they should indicate their copyright in the commit message of
+              ;; the change, when they commit the change to one of the yt
+              ;; repositories.
+              license:bsd-3
+              ;; yt/frontends/artio/artio_headers/LICENSE: for C code.
+              license:lgpl3))))
 
 (define-public unsio
   ;; There is no versioned tag, use the latest commit.

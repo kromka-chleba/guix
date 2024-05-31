@@ -25778,14 +25778,14 @@ objects on other machines, also known as remote procedure calls (RPC).")
 (define-public python-phonenumbers
   (package
     (name "python-phonenumbers")
-    (version "8.9.1")
+    (version "8.13.37")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "phonenumbers" version))
        (sha256
         (base32
-         "03fmrgb4r8x3ykmddjs9i3zhs703in8smikj3a6447blqpimwyh1"))))
+         "1whw3p0p90x1iyw5cqf2pval90zy20c26ry3ywb0bsls2pnmycdx"))))
     (build-system python-build-system)
     (home-page
      "https://github.com/daviddrysdale/python-phonenumbers")
@@ -26461,6 +26461,41 @@ number of iterator building blocks inspired by constructs from APL, Haskell,
 and SML.  @code{more-itertools} includes additional building blocks for
 working with iterables.")
     (license license:expat)))
+
+;; Needed for python-yt, older version fails with exception: E ImportError:
+;; cannot import name 'mark_ends' from 'more_itertools'
+;; (<...>more_itertools/__init__.py)
+(define-public python-more-itertools-next
+  (package
+    (inherit python-more-itertools)
+    (name "python-more-itertools")
+    (version "10.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "more-itertools" version))
+       (sha256
+        (base32
+         "1q9rq9g026m4wl6ki2q8pw7xbc02vl34qqw702h9jgixqj0b9k4g"))
+       (snippet
+        ;; distutils.errors.DistutilsOptionError: No configuration found for
+        ;; dynamic 'description'. Some dynamic fields need to be specified via
+        ;; `tool.setuptools.dynamic`others must be specified via the equivalent
+        ;; attribute in `setup.py`.
+        '(delete-file "setup.py"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "python" "-m" "unittest")))))))
+    (native-inputs
+     (list python-flit-core))
+    (propagated-inputs
+     (list python-six))))
 
 (define-public python-latexcodec
   (package

@@ -611,7 +611,7 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
 (define-public electron-cash
   (package
     (name "electron-cash")
-    (version "4.4.0")
+    (version "4.4.1")
     (source
      (origin
        (method git-fetch)
@@ -620,7 +620,7 @@ other machines/servers.  Electrum does not download the Bitcoin blockchain.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1hfkp24m1yipadanjf5wm6clmyllkcbh7fbw8whnrvxa2v7sa4l8"))))
+        (base32 "11xhlssr7bvdv3p256k87y35vjzyfd93p72w8f2xy7j5jh6abhp1"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -1753,7 +1753,7 @@ following three utilities are included with the library:
 (define-public bitcoin-unlimited
   (package
     (name "bitcoin-unlimited")
-    (version "2.0.0.1")
+    (version "2.1.0.0")
     (source
      (origin
        (method git-fetch)
@@ -1762,7 +1762,7 @@ following three utilities are included with the library:
              (commit (string-append "BCHunlimited" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1kkmg0gp86qz3ya8y5a00yic1mals138b9fv2cjlm7683sfjjljx"))))
+        (base32 "0cny12s03wsgx8iijg5cbr7r6wif9ck7dn98hsv9sz8xq1i5vjk4"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf

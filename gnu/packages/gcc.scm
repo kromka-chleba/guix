@@ -808,6 +808,13 @@ It also includes runtime support libraries for these languages.")
                                        "gcc-5.0-libvtv-runpath.patch"))
               (modules '((guix build utils)))
               (snippet gcc-canadian-cross-objdump-snippet)))
+    (arguments
+     (substitute-keyword-arguments (package-arguments gcc-11)
+       ((#:phases phases #~%standard-phases)
+       (if (target-hurd?)
+           #~(modify-phases #$phases
+               (delete 'patch-hurd-libpthread))
+           phases))))
     (properties
      `((compiler-cpu-architectures
         ("aarch64" ,@%gcc-13-aarch64-micro-architectures)
@@ -1214,7 +1221,12 @@ provides the GNU compiler for the Go programming language.")
        (substitute-keyword-arguments (package-arguments gccgo)
          ((#:phases phases)
           #~(modify-phases #$phases
-              #$@(if (version>=? (package-version gccgo) "12.0")
+              #$@(if (and (version>=? (package-version gccgo) "12.0")
+                          ;; This somehow breaks gccgo@12 on riscv64-linux.
+                          (not (and (target-riscv64?)
+                                    (string=? (version-prefix
+                                                (package-version gccgo) 1)
+                                               "12"))))
                      #~((add-after 'unpack 'adjust-libgo-dependencies
                           (lambda _
                             (substitute* "Makefile.in"

@@ -242,14 +242,14 @@ Python 3.3 and later, rather than on Python 2.")
 (define-public git
   (package
    (name "git")
-   (version "2.41.0")
+   (version "2.45.1")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://kernel.org/software/scm/git/git-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "0h40arw08xbpi2cbf7pvc947v963rjxz3inb2ar81zjc8byvlj77"))))
+              "1gqj5xrlmzs4amrj7xgxx7qpqj8br8f6bk4bzcnf4yk2iq538kg6"))))
    (build-system gnu-build-system)
    (native-inputs
     `(("native-perl" ,perl)
@@ -269,7 +269,7 @@ Python 3.3 and later, rather than on Python 2.")
                 version ".tar.xz"))
           (sha256
            (base32
-            "0xsqakgy0s60zpa13ilj6zj420kdh8pf4v3nrp1nziwj8ja4qymw"))))
+            "1w6r2liifafsxydmc48p578z7z70ys0spm6qp5ygdd0l26mxf8p6"))))
       ;; For subtree documentation.
       ("asciidoc" ,asciidoc)
       ("docbook2x" ,docbook2x)
@@ -974,6 +974,20 @@ write native speed custom Git applications in any language with bindings.")
                               "deps/pcre"
                               "deps/winhttp"
                               "deps/zlib"))))))))
+
+(define-public libgit2-1.8
+  (package
+    (inherit libgit2-1.7)
+    (version "1.8.0")
+    (source (origin
+              (inherit (package-source libgit2-1.7))
+              (uri (git-reference
+                    (url "https://github.com/libgit2/libgit2")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name "libgit2" version))
+              (sha256
+               (base32
+                "0f0vqml6fp94z07xkpim2sdj2xvpxnsrwbm1q1dibx4vqjd7mh3q"))))))
 
 (define-public libgit2-1.6
   (package

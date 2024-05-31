@@ -100,6 +100,7 @@
 (define-module (gnu packages linux)
   #:use-module (gnu packages)
   #:use-module (gnu packages acl)
+  #:use-module (gnu packages adns)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages apparmor)
@@ -114,10 +115,12 @@
   #:use-module (gnu packages calendar)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cpio)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages datastructures)
   #:use-module (gnu packages dbm)
@@ -166,11 +169,14 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages polkit)
   #:use-module (gnu packages popt)
+  #:use-module (gnu packages protobuf)
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
+  #:use-module (gnu packages regex)
+  #:use-module (gnu packages rpc)
   #:use-module (gnu packages rrdtool)
   #:use-module (gnu packages rsync)
   #:use-module (gnu packages samba)
@@ -178,6 +184,7 @@
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages slang)
   #:use-module (gnu packages sqlite)
+  #:use-module (gnu packages tbb)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages textutils)
   #:use-module (gnu packages tls)
@@ -845,10 +852,34 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
          (config (search-auxiliary-file file)))
     (and config (local-file config))))
 
-(define %default-extra-linux-options
+(define (default-extra-linux-options version)
   `(;; Make the kernel config available at /proc/config.gz
     ("CONFIG_IKCONFIG" . #t)
     ("CONFIG_IKCONFIG_PROC" . #t)
+    ;; Debugging options.
+    ("CONFIG_DEBUG_INFO" . #t)          ;required by BTF
+    ,@(if (version>=? version "5.1")
+          '(("CONFIG_DEBUG_INFO_BTF" . #t))
+          '())
+    ,@(if (version>=? version "5.12")
+          '(("CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT" . #t))
+          '())
+    ("CONFIG_DEBUG_INFO_REDUCED" . #f)  ;incompatible with BTF
+    ;; Tracing and related options.
+    ,@(if (version>=? version "5.1")
+          '(("CONFIG_BPF_JIT" . #t)
+            ("CONFIG_BPF_JIT_ALWAYS_ON" . #t)
+            ("CONFIG_BPF_SYSCALL" . #t))
+          '())
+    ,@(if (version>=? version "5.13")
+          '(("BPF_UNPRIV_DEFAULT_OFF" . #t))
+          '())
+    ("CONFIG_NET_CLS_BPF" . m)         ;classify packets based on BPF filters
+    ("CONFIG_NET_ACT_BPF" . m)         ;to execute BPF code on packets
+    ;; Compress kernel modules via Zstd.
+    ,(if (version>=? version "5.13")
+         '("CONFIG_MODULE_COMPRESS_ZSTD" . #t)
+         '("CONFIG_MODULE_COMPRESS_GZIP" . #t))
     ;; Some very mild hardening.
     ("CONFIG_SECURITY_DMESG_RESTRICT" . #t)
     ;; All kernels should have NAMESPACES options enabled
@@ -901,30 +932,6 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
     ("CONFIG_CIFS" . m)
     ("CONFIG_9P_FS" . m)))
 
-;; See https://github.com/iovisor/bcc/blob/master/INSTALL.md#kernel-configuration
-(define %bpf-extra-linux-options
-  `(;; Needed for probes
-    ("CONFIG_UPROBE_EVENTS" . #t)
-    ("CONFIG_KPROBE_EVENTS" . #t)
-    ;; kheaders module also helpful for tracing
-    ("CONFIG_IKHEADERS" . #t)
-    ("CONFIG_BPF" . #t)
-    ("CONFIG_BPF_SYSCALL" . #t)
-    ("CONFIG_BPF_JIT_ALWAYS_ON" . #t)
-    ;; optional, for tc filters
-    ("CONFIG_NET_CLS_BPF" . m)
-    ;; optional, for tc actions
-    ("CONFIG_NET_ACT_BPF" . m)
-    ("CONFIG_BPF_JIT" . #t)
-    ;; for Linux kernel versions 4.1 through 4.6
-    ;; ("CONFIG_HAVE_BPF_JIT" . y)
-    ;; for Linux kernel versions 4.7 and later
-    ("CONFIG_HAVE_EBPF_JIT" . #t)
-    ;; optional, for kprobes
-    ("CONFIG_BPF_EVENTS" . #t)
-    ;; kheaders module
-    ("CONFIG_IKHEADERS" . #t)))
-
 (define (config->string options)
   (string-join (map (match-lambda
                       ((option . 'm)
@@ -958,7 +965,7 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
                            ;; for an example.
                            (configuration-file #f)
                            (defconfig "defconfig")
-                           (extra-options %default-extra-linux-options)
+                           (extra-options (default-extra-linux-options version))
                            (patches
                             `(,%boot-logo-patch
                               ,@(if (apply-infodoc-patch? version)
@@ -984,7 +991,7 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
                             ;; See kernel-config for an example.
                             (configuration-file #f)
                             (defconfig "defconfig")
-                            (extra-options %default-extra-linux-options))
+                            (extra-options (default-extra-linux-options version)))
   (package
     (name (if extra-version
               (string-append "linux-libre-" extra-version)
@@ -1016,6 +1023,7 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
               (setenv "KBUILD_BUILD_TIMESTAMP" (getenv "SOURCE_DATE_EPOCH"))
 
               ;; Other variables useful for reproducibility.
+              (setenv "KBUILD_BUILD_VERSION" "1")
               (setenv "KBUILD_BUILD_USER" "guix")
               (setenv "KBUILD_BUILD_HOST" "guix")
 
@@ -1037,7 +1045,10 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
                  "EXTRAVERSION ?="))
               (setenv "EXTRAVERSION"
                       #$(and extra-version
-                             (string-append "-" extra-version)))))
+                             (string-append "-" extra-version)))
+              ;; Use the maximum compression available for Zstd-compressed
+              ;; modules.
+              (setenv "ZSTD_CLEVEL" "19")))
           (replace 'configure
             (lambda _
               (let ((config
@@ -1068,9 +1079,15 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
                   (close-port port))
                 (invoke "make" "oldconfig"))))
           (replace 'install
-            (lambda _
+            (lambda* (#:key make-flags parallel-build? #:allow-other-keys)
               (let ((moddir (string-append #$output "/lib/modules"))
-                    (dtbdir (string-append #$output "/lib/dtbs")))
+                    (dtbdir (string-append #$output "/lib/dtbs"))
+                    (make-flags
+                     (append make-flags
+                             (list "-j"
+                                   (if parallel-build?
+                                       (number->string (parallel-job-count))
+                                       "1")))))
                 ;; Install kernel image, kernel configuration and link map.
                 (for-each (lambda (file) (install-file file #$output))
                           (find-files "." "^(\\.config|bzImage|zImage|Image\
@@ -1078,22 +1095,23 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
                 ;; Install device tree files
                 (unless (null? (find-files "." "\\.dtb$"))
                   (mkdir-p dtbdir)
-                  (invoke "make" (string-append "INSTALL_DTBS_PATH=" dtbdir)
-                          "dtbs_install"))
+                  (apply invoke "make"
+                         (string-append "INSTALL_DTBS_PATH=" dtbdir)
+                         "dtbs_install" make-flags))
                 ;; Install kernel modules
                 (mkdir-p moddir)
-                (invoke "make"
-                        ;; Disable depmod because the Guix system's module
-                        ;; directory is an union of potentially multiple
-                        ;; packages.  It is not possible to use depmod to
-                        ;; usefully calculate a dependency graph while
-                        ;; building only one of them.
-                        "DEPMOD=true"
-                        (string-append "MODULE_DIR=" moddir)
-                        (string-append "INSTALL_PATH=" #$output)
-                        (string-append "INSTALL_MOD_PATH=" #$output)
-                        "INSTALL_MOD_STRIP=1"
-                        "modules_install")
+                (apply invoke "make"
+                       ;; Disable depmod because the Guix system's module
+                       ;; directory is an union of potentially multiple
+                       ;; packages.  It is not possible to use depmod to
+                       ;; usefully calculate a dependency graph while building
+                       ;; only one of them.
+                       "DEPMOD=true"
+                       (string-append "MODULE_DIR=" moddir)
+                       (string-append "INSTALL_PATH=" #$output)
+                       (string-append "INSTALL_MOD_PATH=" #$output)
+                       "INSTALL_MOD_STRIP=1"
+                       "modules_install" make-flags)
                 (let* ((versions (filter (lambda (name)
                                            (not (string-prefix? "." name)))
                                          (scandir moddir)))
@@ -1115,11 +1133,18 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
            elfutils                  ;needed to enable CONFIG_STACK_VALIDATION
            flex
            bison
-           util-linux                ;needed for hexdump
+           util-linux          ;needed for hexdump
            ;; These are needed to compile the GCC plugins.
            gmp
            mpfr
-           mpc))
+           mpc
+           ;; These are needed when building with the CONFIG_DEBUG_INFO_BTF
+           ;; support.
+           dwarves                      ;for pahole
+           python-wrapper
+           zlib
+           ;; For Zstd compression of kernel modules.
+           zstd))
     (home-page "https://www.gnu.org/software/linux-libre/")
     (synopsis "100% free redistribution of a cleaned Linux kernel")
     (description "GNU Linux-Libre is a free (as in freedom) variant of the
@@ -1228,7 +1253,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      (append
                       `(;; needed to fix the RTC on rockchip platforms
                         ("CONFIG_RTC_DRV_RK808" . #t))
-                      %default-extra-linux-options)))
+                      (default-extra-linux-options linux-libre-version))))
 
 (define-public linux-libre-arm-generic-5.10
   (make-linux-libre* linux-libre-5.10-version
@@ -1241,7 +1266,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      (append
                       `(;; needed to fix the RTC on rockchip platforms
                         ("CONFIG_RTC_DRV_RK808" . #t))
-                      %default-extra-linux-options)))
+                      (default-extra-linux-options linux-libre-5.10-version))))
 
 (define-public linux-libre-arm-generic-5.4
   (make-linux-libre* linux-libre-5.4-version
@@ -1254,7 +1279,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      (append
                       `(;; needed to fix the RTC on rockchip platforms
                         ("CONFIG_RTC_DRV_RK808" . #t))
-                      %default-extra-linux-options)))
+                      (default-extra-linux-options linux-libre-5.4-version))))
 
 (define-public linux-libre-arm-generic-4.19
   (make-linux-libre* linux-libre-4.19-version
@@ -1306,7 +1331,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                         ("CONFIG_BATTERY_CW2015" . m)
                         ("CONFIG_CHARGER_GPIO" . m)
                         ("CONFIG_SND_SOC_ES8316" . m))
-                      %default-extra-linux-options)))
+                      (default-extra-linux-options linux-libre-version))))
 
 (define-public linux-libre-arm64-generic-5.10
   (make-linux-libre* linux-libre-5.10-version
@@ -1332,7 +1357,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                         ("CONFIG_BATTERY_CW2015" . m)
                         ("CONFIG_CHARGER_GPIO" . m)
                         ("CONFIG_SND_SOC_ES8316" . m))
-                      %default-extra-linux-options)))
+                      (default-extra-linux-options linux-libre-5.10-version))))
 
 (define-public linux-libre-arm64-generic-5.4
   (make-linux-libre* linux-libre-5.4-version
@@ -1345,7 +1370,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      (append
                       `(;; needed to fix the RTC on rockchip platforms
                         ("CONFIG_RTC_DRV_RK808" . #t))
-                      %default-extra-linux-options)))
+                      (default-extra-linux-options linux-libre-5.4-version))))
 
 (define-public linux-libre-riscv64-generic
   (make-linux-libre* linux-libre-version
@@ -1369,7 +1394,7 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                         ("CONFIG_HW_RANDOM_VIRTIO" . m)
                         ("CONFIG_VIRTIO_CONSOLE" . m)
                         ("CONFIG_CRYPTO_XTS" . m))
-                      %default-extra-linux-options)))
+                      (default-extra-linux-options linux-libre-version))))
 
 (define-public linux-libre-mips64el-fuloong2e
   (make-linux-libre* linux-libre-version
@@ -1381,28 +1406,10 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      #:extra-options
                      (append
                       `(("CONFIG_OVERLAY_FS" . m))
-                      %default-extra-linux-options)))
+                      (default-extra-linux-options linux-libre-version))))
 
 (define-public linux-libre-with-bpf
-  (let ((base-linux-libre
-         (make-linux-libre*
-          linux-libre-6.8-version
-          linux-libre-6.8-gnu-revision
-          linux-libre-6.8-source
-          '("x86_64-linux" "i686-linux" "armhf-linux"
-            "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
-          #:extra-version "bpf"
-          #:configuration-file kernel-config
-          #:extra-options
-          (append %bpf-extra-linux-options
-                  %default-extra-linux-options))))
-    (package
-      (inherit base-linux-libre)
-      (inputs (modify-inputs (package-inputs base-linux-libre)
-                (prepend cpio)))
-      (synopsis "Linux-libre with BPF support")
-      (description "This package provides GNU Linux-Libre with support
-for @acronym{BPF, the Berkeley Packet Filter}."))))
+  (deprecated-package "linux-libre-with-bpf" linux-libre))
 
 
 ;;;
@@ -2402,6 +2409,54 @@ by Robert Shea and Robert Anton Wilson.")
     (description
      "This package provides means to to read BitLocker encrypted
 partitions.  Write functionality is also provided but check the README.")
+    (license license:gpl2+)))
+
+(define-public dwarves
+  (package
+    (name "dwarves")
+    (version "1.26")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/acmel/dwarves")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0xfq0r3whc3dk922ss8i5vwyfcqhgc95dy27mm69j5niy7i5kzrd"))
+              (patches
+               (search-patches "dwarves-threading-reproducibility.patch"))))
+    (build-system cmake-build-system)
+    (arguments (list #:configure-flags #~(list "-D__LIB=lib"
+                                               "-DLIBBPF_EMBEDDED=OFF")
+                     #:tests? #f))      ;no test suite
+    (native-inputs (list pkg-config))
+    (inputs (list libbpf))
+    (home-page "https://github.com/acmel/dwarves")
+    (synopsis "Debugging information processing library and utilities")
+    (description "Dwarves is a set of tools that use the debugging information
+inserted in ELF binaries by compilers such as GCC, used by well known
+debuggers such as GDB.
+
+Utilities in the Dwarves suite include @command{pahole}, that can be used to
+find alignment holes in structures and classes in languages such as C, C++,
+but not limited to these.  These tools can also be used to encode and read the
+BTF type information format used with the kernel Linux @code{bpf} syscall.
+
+The @command{codiff} command can be used to compare the effects changes in
+source code generate on the resulting binaries.
+
+The @command{pfunct} command can be used to find all sorts of information
+about functions, inlines, decisions made by the compiler about inlining, etc.
+
+The @command{pahole} command can be used to use all this type information to
+pretty print raw data according to command line directions.
+
+Headers can have its data format described from debugging info and offsets from
+it can be used to further format a number of records.
+
+Finally, the @command{btfdiff} command can be used to compare the output of
+pahole from BTF and DWARF, to make sure they produce the same results. ")
     (license license:gpl2+)))
 
 (define-public fbset
@@ -9577,6 +9632,91 @@ set as @code{LD_PRELOAD} to override the C library file system functions.")
       (home-page "https://github.com/dex4er/fakechroot/")
       (license license:lgpl2.1+))))
 
+(define-public falcosecurity-libs
+  (package
+    (name "falcosecurity-libs")
+    (version "0.16.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/falcosecurity/libs/")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1vzymzkfipb3bnjjd9m8ykzj0l94fm8mnpcxfm8mpxz3jbd8xnv9"))
+              (patches
+               (search-patches
+                "falcosecurity-libs-pkg-config.patch"
+                "falcosecurity-libs-install-pman.patch"
+                "falcosecurity-libs-libscap-pc.patch"
+                "falcosecurity-libs-shared-library-fix.patch"
+                "falcosecurity-libs-libsinsp-pkg-config.patch"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DUSE_BUNDLED_DEPS=OFF"
+              "-DBUILD_DRIVER=OFF"
+              "-DENABLE_DKMS=OFF"
+              "-DBUILD_LIBSCAP_MODERN_BPF=ON"
+              "-DSCAP_FILES_SUITE_ENABLE=OFF" ;attempts to download scap files
+              "-DBUILD_SHARED_LIBS=ON"
+              #$(string-append "-DFALCOSECURITY_LIBS_VERSION=" version))
+      ;; Only the libsinsp test suite is run, as the one for libscap requires
+      ;; elevated privileges.
+      #:test-target "run-unit-test-libsinsp"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-problematic-tests
+            (lambda _
+              (substitute* "userspace/libsinsp/test/user.ut.cpp"
+                ;; The 'system_lookup' test assumes a root user
+                ;; exists in the build environment.
+                (("TEST_F\\(usergroup_manager_test, system_lookup)")
+                 "TEST_F(usergroup_manager_test, DISABLED_system_lookup)"))))
+          (add-after 'install 'delete-src
+            (lambda _
+              (delete-file-recursively
+               (string-append #$output "/src")))))))
+    (native-inputs (list bpftool
+                         clang
+                         googletest
+                         pkg-config
+                         valijson))     ;header-only library
+    (inputs
+     (list elfutils
+           libbpf
+           libelf))
+    (propagated-inputs
+     ;; The following inputs are in the 'Requires' field of libscap.pc and
+     ;; libsinp.pc.
+     (list c-ares
+           grpc
+           jsoncpp
+           openssl
+           protobuf
+           uthash                       ;included in libscap headers
+           zlib
+           ;; These are in the 'Requires.private' field of libscap.pc and
+           ;; libsinp.pc.  They are required because the headers are installed
+           ;; to a non-standard directory, and thus need to be found via the
+           ;; 'Cflags' field, which in turn mandates that both the pkg-config
+           ;; modules listed in the 'Requires' and 'Requires.private' be
+           ;; available.
+           curl
+           re2
+           tbb))
+    (home-page "https://github.com/falcosecurity/libs/")
+    (synopsis "libscap and lisbinsp Falco security libraries")
+    (description "The Falco security libraries include @code{libsinsp} and
+@code{libscap}.  @code{libscap} manages the data capture process, while
+@code{libsinsp} is a system inspection library that enriches events from
+@code{libscap} with machine state.  @code{libsinsp} also performs events
+filtering with rule evaluation through its internal rule engine.  These
+libraries are used by the @command{sysdig} command-line utility.")
+    (license license:asl2.0)))
+
 (define-public inputattach
   (package
     (name "inputattach")
@@ -9821,7 +9961,7 @@ persistent over reboots.")
 (define-public libbpf
   (package
     (name "libbpf")
-    (version "0.8.1")
+    (version "1.4.1")
     (source
      (origin
        (method git-fetch)
@@ -9831,33 +9971,54 @@ persistent over reboots.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1zzpkk4x3f20483dzw43b3ml03d63vvkmqf4j8y3b61b67wm59bm"))))
+         "1d0bx4bmn80nkdh0dqjfwq6j37is3qwl49cjvx4yxb4vrxq3x05x"))))
     (build-system gnu-build-system)
-    (native-inputs
-     (list pkg-config))
-    (propagated-inputs
-     ;; In Requires.private of libbpf.pc.
-     (list elfutils zlib))
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:make-flags
-       (list
-        (string-append "PREFIX=" (assoc-ref %outputs "out"))
-        (string-append "LIBDIR=$(PREFIX)/lib")
-        (string-append "CC=" ,(cc-for-target)))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-before 'build 'pre-build
-           (lambda _
-             (chdir "src"))))))
+     (list
+      #:tests? #f                       ;self-tests run in QEMU
+      #:make-flags
+      #~(list (string-append "PREFIX=" #$output)
+              (string-append "LIBDIR=$(PREFIX)/lib")
+              (string-append "CC=" #$(cc-for-target)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-before 'build 'pre-build
+            (lambda _
+              (chdir "src")))
+          (add-after 'install 'install-linux-bpf-headers
+            ;; Workaround users such as 'dwarves' requiring btf_enum64
+            ;; definition from the kernel Linux >= 6 headers (see:
+            ;; https://github.com/acmel/dwarves/issues/49).
+            ;; TODO: Remove once our 'linux-libre-headers' package is
+            ;; upgraded to a >= 6 release.
+            (lambda _
+              (let ((linux-libre-headers #$(this-package-native-input
+                                            "linux-libre-headers")))
+                (for-each (lambda (f)
+                            (install-file (string-append linux-libre-headers
+                                                         "/include/" f)
+                                          (string-append #$output "/include/"
+                                                         (dirname f))))
+                          ;; This list contains btf.h and its transitive
+                          ;; dependencies.
+                          (list "asm/posix_types.h"
+                                "asm/types.h"
+                                "asm-generic/types.h"
+                                "asm-generic/int-ll64.h"
+                                "linux/btf.h"
+                                "linux/posix_types.h"
+                                "linux/stddef.h"
+                                "linux/types.h"))))))))
+    (native-inputs (list linux-libre-headers-6.8 pkg-config))
+    (propagated-inputs (list elfutils zlib)) ;in Requires.private of libbpf.pc
     (home-page "https://github.com/libbpf/libbpf")
     (synopsis "BPF CO-RE (Compile Once – Run Everywhere)")
     (description
      "Libbpf supports building BPF CO-RE-enabled applications, which, in
 contrast to BCC, do not require the Clang/LLVM runtime or linux kernel
 headers.")
-    (license `(,license:lgpl2.1 ,license:bsd-2))))
+    (license (list license:lgpl2.1 license:bsd-2))))
 
 (define-public bcc
   (package

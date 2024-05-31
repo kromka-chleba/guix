@@ -1584,6 +1584,39 @@ functions allow Lisp programs to explore the web.")
 (define-public cl-aserve
   (sbcl-package->cl-source-package sbcl-aserve))
 
+(define-public sbcl-asn1
+  (let ((commit "b0388fa98878b20069ef266cc9cbd5aac13c4a69")
+        (revision "0"))
+    (package
+      (name "sbcl-asn1")
+      (build-system asdf-build-system/sbcl)
+      (version (git-version "0.1.0" revision commit))
+      (home-page "https://github.com/fukamachi/asn1")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url home-page)
+               (commit commit)))
+         (file-name (git-file-name "cl-asn1" version))
+         (sha256
+          (base32 "16gs4xznmg19ii0cg7g2yxrk9ls5vah8ynjj80s99rv8wi3789z1"))))
+      (native-inputs (list sbcl-cl-base64 sbcl-rove))
+      (inputs
+        (list sbcl-trivia
+              sbcl-fast-io
+              sbcl-ironclad))
+      (synopsis "ASN.1 decoder for Common Lisp")
+      (description "This package provides an ASN.1 encoder/decoder for
+Common Lisp.")
+      (license license:bsd-2))))
+
+(define-public cl-asn1
+  (sbcl-package->cl-source-package sbcl-asn1))
+
+(define-public ecl-asn1
+  (sbcl-package->ecl-package sbcl-asn1))
+
 (define-public sbcl-assoc-utils
   (let ((commit "74af16a3c0f10ad35e406167de02984744fc7854")
         (revision "1"))
@@ -2944,8 +2977,8 @@ definition objects.")
   (sbcl-package->ecl-package sbcl-cesdi))
 
 (define-public sbcl-cf
-  (let ((commit "fbc025b6f274687ee9acc8d07496d44999ac428e")
-        (revision "2"))
+  (let ((commit "d386072d1c45970c1fec3a53309ac4e6d8f244bd")
+        (revision "3"))
     (package
       (name "sbcl-cf")
       (version (git-version "1.0" revision commit))
@@ -2957,7 +2990,7 @@ definition objects.")
                (commit commit)))
          (file-name (git-file-name "cl-cf" version))
          (sha256
-          (base32 "182laa57j9qs567g75qwf8vh4xb0d22lr94x84r32dy28mrwi5ig"))))
+          (base32 "0744cja2b6404gxwzwzaxsmrr76jlgnq5713x2fff9hwxqxwhhnk"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs (list sbcl-fiveam))
       (synopsis "Continued fractions library")
@@ -12343,10 +12376,10 @@ JavaScript code.")
   (sbcl-package->ecl-package sbcl-css-lite))
 
 (define-public sbcl-ctype
-  (let ((commit "4fc4c5ae44c435ed82556969f698005bee50101c"))
+  (let ((commit "9b824aa75d7ceb9f3504590b09c6d8a57269f026"))
     (package
       (name "sbcl-ctype")
-      (version (git-version "0.0.0" "1" commit))
+      (version (git-version "0.0.0" "2" commit))
       (source
        (origin
          (method git-fetch)
@@ -12355,12 +12388,12 @@ JavaScript code.")
                (commit commit)))
          (file-name (git-file-name "cl-ctype" version))
          (sha256
-          (base32 "05smc81ml9rbcbzdhqg2mi9drnjsipq62r5q7f7qql8hbx01vl9i"))))
+          (base32 "00d82v7hb7vii6gaaaa7ykzl70hga93laz7w9z1hhdl3z7zb473a"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-alexandria))
       (arguments
-       '(#:asd-systems '("ctype" "ctype-tfun")))
+       '(#:asd-systems '("ctype" "ctype/tfun" "ctype/ext")))
       (home-page "https://github.com/s-expressionists/ctype")
       (synopsis "Common Lisp type system implementation")
       (description
@@ -17824,6 +17857,43 @@ CCL.")
 (define-public ecl-jonathan
   (sbcl-package->ecl-package sbcl-jonathan))
 
+(define-public sbcl-jose
+  (let ((commit "5b9f42dd4144138e41d75ec67ca46e6e91728f2c")
+        (revision "0"))
+    (package
+      (name "sbcl-jose")
+      (build-system asdf-build-system/sbcl)
+      (version (git-version "0.1.0" revision commit))
+      (home-page "https://github.com/fukamachi/jose")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url home-page)
+               (commit commit)))
+         (file-name (git-file-name "cl-jose" version))
+         (sha256
+          (base32 "1z7xjy4ihxa8ay5vznhnxkjflfx6xmfpgwxdakk9wmkw30p2yn4h"))))
+      (native-inputs (list sbcl-pem sbcl-rove))
+      (inputs
+        (list sbcl-alexandria
+              sbcl-assoc-utils
+              sbcl-cl-base64
+              sbcl-ironclad
+              sbcl-jonathan
+              sbcl-split-sequence
+              sbcl-trivial-utf-8))
+      (synopsis "JOSE implementation for Common Lisp")
+      (description "A JSON Object Signing and Encryption (JOSE)
+implementation for Common Lisp.")
+      (license license:bsd-2))))
+
+(define-public cl-jose
+  (sbcl-package->cl-source-package sbcl-jose))
+
+(define-public ecl-jose
+  (sbcl-package->ecl-package sbcl-jose))
+
 (define-public sbcl-jpeg-turbo
   (let ((commit "f79c646cc266c107bdace53572a31664754c6e0c")
         (revision "1"))
@@ -22803,6 +22873,41 @@ handling the accessing of files on the underlying system however.")
        ;; '(:ABSOLUTE :HOME))] In: #<process TOP-LEVEL 0x7faa2f991f80>.
        ;;
        #:tests? #f))))
+
+(define-public sbcl-pem
+  (let ((commit "1ffb17efaa786574928b5cf5089695d37e4ec550")
+        (revision "0"))
+    (package
+      (name "sbcl-pem")
+      (build-system asdf-build-system/sbcl)
+      (version (git-version "0.1.0" revision commit))
+      (home-page "https://github.com/fukamachi/pem")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url home-page)
+               (commit commit)))
+         (file-name (git-file-name "cl-pem" version))
+         (sha256
+          (base32 "1mi34anznbz12wzng4lma8vcskb20ph5ap6lpsbg0h3pc40kxrzv"))))
+      (native-inputs (list sbcl-rove))
+      (inputs
+        (list sbcl-asn1
+              sbcl-cl-ppcre
+              sbcl-trivia
+              sbcl-ironclad
+              sbcl-cl-base64))
+      (synopsis "PEM parser for Common Lisp")
+      (description "This package provides a PEM (Privacy-Enhanced Mail)
+parser for Common Lisp.")
+      (license license:bsd-2))))
+
+(define-public cl-pem
+  (sbcl-package->cl-source-package sbcl-pem))
+
+(define-public ecl-pem
+  (sbcl-package->ecl-package sbcl-pem))
 
 (define-public sbcl-percent-encoding
   (let ((commit "c1224e22bc8048fbd3ebbc9329715a0c1b673170")

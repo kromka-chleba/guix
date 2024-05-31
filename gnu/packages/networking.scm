@@ -3848,117 +3848,121 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
        (replace "llhttp" http-parser)))))
 
 (define-public opendht
-  (package
-    (name "opendht")
-    (version "3.1.7")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/savoirfairelinux/opendht")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "15jx62fm1frbbvpkxysvvwz1a8d605xi53aacf0bvp4mb1dzpddn"))))
-    (outputs '("out" "python" "tools" "debug"))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:imported-modules `((guix build python-build-system) ;for site-packages
-                           ,@%gnu-build-system-modules)
-      #:modules '(((guix build python-build-system) #:prefix python:)
-                  (guix build gnu-build-system)
-                  (guix build utils))
-      #:configure-flags
-      #~(list "--disable-static"        ;to reduce size
-              "--enable-tests"
-              "--enable-proxy-server"
-              "--enable-push-notifications"
-              "--enable-proxy-server-identity"
-              "--enable-proxy-client")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'disable-problematic-tests
-            (lambda _
-              ;; The dhtrunnertester test suite includes 'testListen', which
-              ;; is sensitive to the performance/load of the machine it runs
-              ;; on, introducing nondeterminism (see:
-              ;; https://github.com/savoirfairelinux/opendht/issues/626).
-              (substitute* "tests/Makefile.am"
-                (("\\bdhtrunnertester\\.(h|cpp)\\b")
-                 ""))))
-          (add-after 'unupack 'relax-test-timeouts
-            (lambda _
-              ;; At least the 'test_send_json' has been seen to fail
-              ;; non-deterministically, but it seems hard to reproducible that
-              ;; failure.
-              (substitute* "tests/httptester.cpp"
-                (("std::chrono::seconds\\(10)")
-                 "std::chrono::seconds(30)"))))
-          (add-after 'unpack 'fix-python-installation-prefix
-            ;; Specify the installation prefix for the compiled Python module
-            ;; that would otherwise attempt to installs itself to Python's own
-            ;; site-packages directory.
-            (lambda _
-              (substitute* "python/Makefile.am"
-                (("--root=\\$\\(DESTDIR)/")
-                 (string-append "--root=/ --single-version-externally-managed "
-                                "--prefix=" #$output:python)))))
-          (add-after 'unpack 'specify-runpath-for-python-module
-            (lambda _
-              (substitute* "python/setup.py.in"
-                (("extra_link_args=\\[(.*)\\]" _ args)
-                 (string-append "extra_link_args=[" args
-                                ", '-Wl,-rpath=" #$output "/lib']")))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "tests/opendht_unit_tests"))))
-          (add-before 'bootstrap 'delete-autogen.sh
-            (lambda _
-              ;; The autogen.sh script lacks a shebang, cannot be executed
-              ;; directly.  Let the bootstrap phase invoke autoreconf itself.
-              (delete-file "autogen.sh")))
-          (add-after 'install 'move-and-wrap-tools
-            (lambda* (#:key inputs outputs #:allow-other-keys)
-              (let* ((tools (assoc-ref outputs "tools"))
-                     (dhtcluster (string-append tools "/bin/dhtcluster"))
-                     (site-packages (python:site-packages inputs outputs)))
-                (mkdir tools)
-                (rename-file (string-append #$output "/bin")
-                             (string-append tools "/bin"))
-                ;; TODO: Contribute a patch to python/Makefile.am to
-                ;; automate this.
-                (copy-file "python/tools/dhtcluster.py" dhtcluster)
-                (chmod dhtcluster #o555)
-                (wrap-program dhtcluster
-                  `("GUIX_PYTHONPATH" prefix (,site-packages)))))))))
-    (inputs
-     (list bash-minimal
-           fmt
-           readline))
-    (propagated-inputs
-     (list msgpack-cxx                  ;included in several installed headers
-           restinio-0.6                 ;included in opendht/http.h
-           ;; The following are listed in the 'Requires.private' field of
-           ;; opendht.pc:
-           argon2
-           gnutls
-           jsoncpp
-           nettle
-           openssl                      ;required for the DHT proxy
-           python))
-    (native-inputs
-     (list autoconf
-           automake
-           pkg-config
-           python
-           python-cython
-           libtool
-           cppunit))
-    (home-page "https://github.com/savoirfairelinux/opendht/")
-    (synopsis "Lightweight Distributed Hash Table (DHT) library")
-    (description "OpenDHT provides an easy to use distributed in-memory data
+  ;; Temporarily use the latest commit, as the latest release lacks a 'detach'
+  ;; procedure used by a recent DhtNet, required by Jami.
+  (let ((commit "318d02c55a7061a771a632ff2224b0d195a80d42")
+        (revision "0"))
+    (package
+      (name "opendht")
+      (version (git-version "3.1.11" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/savoirfairelinux/opendht")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0d4m9bxvwa1pz8r0sfrjjyml4yp5v7n4vy8ad7k4hcryyvd5npb0"))))
+      (outputs '("out" "python" "tools" "debug"))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:imported-modules `((guix build python-build-system) ;for site-packages
+                             ,@%gnu-build-system-modules)
+        #:modules '(((guix build python-build-system) #:prefix python:)
+                    (guix build gnu-build-system)
+                    (guix build utils))
+        #:configure-flags
+        #~(list "--disable-static"        ;to reduce size
+                "--enable-tests"
+                "--enable-proxy-server"
+                "--enable-push-notifications"
+                "--enable-proxy-server-identity"
+                "--enable-proxy-client")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'disable-problematic-tests
+              (lambda _
+                ;; The dhtrunnertester test suite includes 'testListen', which
+                ;; is sensitive to the performance/load of the machine it runs
+                ;; on, introducing nondeterminism (see:
+                ;; https://github.com/savoirfairelinux/opendht/issues/626).
+                (substitute* "tests/Makefile.am"
+                  (("\\bdhtrunnertester\\.(h|cpp)\\b")
+                   ""))))
+            (add-after 'unupack 'relax-test-timeouts
+              (lambda _
+                ;; At least the 'test_send_json' has been seen to fail
+                ;; non-deterministically, but it seems hard to reproducible that
+                ;; failure.
+                (substitute* "tests/httptester.cpp"
+                  (("std::chrono::seconds\\(10)")
+                   "std::chrono::seconds(30)"))))
+            (add-after 'unpack 'fix-python-installation-prefix
+              ;; Specify the installation prefix for the compiled Python module
+              ;; that would otherwise attempt to installs itself to Python's own
+              ;; site-packages directory.
+              (lambda _
+                (substitute* "python/Makefile.am"
+                  (("--root=\\$\\(DESTDIR)/")
+                   (string-append "--root=/ --single-version-externally-managed "
+                                  "--prefix=" #$output:python)))))
+            (add-after 'unpack 'specify-runpath-for-python-module
+              (lambda _
+                (substitute* "python/setup.py.in"
+                  (("extra_link_args=\\[(.*)\\]" _ args)
+                   (string-append "extra_link_args=[" args
+                                  ", '-Wl,-rpath=" #$output "/lib']")))))
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "tests/opendht_unit_tests"))))
+            (add-before 'bootstrap 'delete-autogen.sh
+              (lambda _
+                ;; The autogen.sh script lacks a shebang, cannot be executed
+                ;; directly.  Let the bootstrap phase invoke autoreconf itself.
+                (delete-file "autogen.sh")))
+            (add-after 'install 'move-and-wrap-tools
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (let* ((tools (assoc-ref outputs "tools"))
+                       (dhtcluster (string-append tools "/bin/dhtcluster"))
+                       (site-packages (python:site-packages inputs outputs)))
+                  (mkdir tools)
+                  (rename-file (string-append #$output "/bin")
+                               (string-append tools "/bin"))
+                  ;; TODO: Contribute a patch to python/Makefile.am to
+                  ;; automate this.
+                  (copy-file "python/tools/dhtcluster.py" dhtcluster)
+                  (chmod dhtcluster #o555)
+                  (wrap-program dhtcluster
+                    `("GUIX_PYTHONPATH" prefix (,site-packages)))))))))
+      (inputs
+       (list bash-minimal
+             fmt
+             readline))
+      (propagated-inputs
+       (list msgpack-cxx                  ;included in several installed headers
+             restinio-0.6                 ;included in opendht/http.h
+             ;; The following are listed in the 'Requires.private' field of
+             ;; opendht.pc:
+             argon2
+             gnutls
+             jsoncpp
+             nettle
+             openssl                      ;required for the DHT proxy
+             python))
+      (native-inputs
+       (list autoconf
+             automake
+             pkg-config
+             python
+             python-cython
+             libtool
+             cppunit))
+      (home-page "https://github.com/savoirfairelinux/opendht/")
+      (synopsis "Lightweight Distributed Hash Table (DHT) library")
+      (description "OpenDHT provides an easy to use distributed in-memory data
 store.  Every node in the network can read and write values to the store.
 Values are distributed over the network, with redundancy.  It includes the
 following features:
@@ -3981,15 +3985,16 @@ library (get, put, etc.) with text values.
 @item dhtchat
 A very simple IM client working over the DHT.
 @end table")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public dhtnet
   ;; There is no tag nor release; use the latest available commit.
-  (let ((revision "2")
-        (commit "024c46fb1f14276d4adf15764ed97b733890826e"))
+  (let ((revision "3")
+        (commit "77331098ff663a5ac54fae7d0bedafe076c575a1"))
     (package
       (name "dhtnet")
-      ;; The base version is taken from the CMakeLists.txt file.
+      ;; The base version is taken from the CMakeLists.txt file (see:
+      ;; https://review.jami.net/plugins/gitiles/dhtnet/+/master/CMakeLists.txt#3).
       (version (git-version "0.0.1" revision commit))
       (source (origin
                 (method git-fetch)
@@ -3999,7 +4004,7 @@ A very simple IM client working over the DHT.
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "191gmfdg22hkmxvzh5i19lr512q4bhgajhlg9mxxgb7jq0842mc6"))))
+                  "1ch736misnlv2aqalj3n62gnz5xlhmip9xfv1aimp0aqinfc94p7"))))
       (outputs (list "out" "debug"))
       (build-system cmake-build-system)
       (arguments
@@ -4012,13 +4017,16 @@ A very simple IM client working over the DHT.
             (add-after 'unpack 'delete-problematic-tests
               (lambda _
                 (substitute* "CMakeLists.txt"
-                  ;; The connectionManager test currently segfaults (see:
-                  ;; https://git.jami.net/savoirfairelinux/dhtnet/-/issues/18).
-                  ((".*tests_connectionManager.*") "")
-                  ;; The ICE tests fail inside the containerized build
-                  ;; environment, perhaps relying on a name resolver (see:
+                  ;; The connectionaMnager, the ICE and turnCache tests fail
+                  ;; inside the containerized build environment, due to
+                  ;; relying on a name resolver (see:
                   ;; https://git.jami.net/savoirfairelinux/dhtnet/-/issues/25).
-                  ((".*tests_ice.*") "")))))))
+                  ((".*tests_connectionManager.*") "")
+                  ((".*tests_ice.*") "")
+                  ((".*tests_turnCache.*") "")
+                  ;; The peerDiscovery test fails for unknown reasons, on an
+                  ;; assertion that checks the value of 'isBobRecvChanlReq'.
+                  ((".*tests_peerDiscovery.*") "")))))))
       (native-inputs (list cppunit pkg-config))
       ;; This library depends on the Jami fork of pjproject that adds ICE
       ;; support.

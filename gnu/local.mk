@@ -1054,6 +1054,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/clang-17.0-libc-search-path.patch	\
   %D%/packages/patches/clang-17.0-link-dsymutil-latomic.patch	\
   %D%/packages/patches/clang-18.0-libc-search-path.patch	\
+  %D%/packages/patches/clang-cling-13-libc-search-path.patch	\
   %D%/packages/patches/clang-runtime-asan-build-fixes.patch	\
   %D%/packages/patches/clang-runtime-esan-build-fixes.patch	\
   %D%/packages/patches/clang-runtime-9-libsanitizer-mode-field.patch	\
@@ -1129,6 +1130,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/dune-istl-fix-solver-playground.patch	\
   %D%/packages/patches/durden-shadow-arcan.patch		\
   %D%/packages/patches/dvd+rw-tools-add-include.patch 		\
+  %D%/packages/patches/dwarves-threading-reproducibility.patch	\
   %D%/packages/patches/dynaconf-unvendor-deps.patch		\
   %D%/packages/patches/dyninst-fix-glibc-compatibility.patch	\
   %D%/packages/patches/efivar-211.patch			\
@@ -1185,6 +1187,11 @@ dist_patch_DATA =						\
   %D%/packages/patches/fail2ban-python310-server-action.patch	\
   %D%/packages/patches/fail2ban-python310-server-actions.patch	\
   %D%/packages/patches/fail2ban-python310-server-jails.patch	\
+  %D%/packages/patches/falcosecurity-libs-install-pman.patch	\
+  %D%/packages/patches/falcosecurity-libs-libscap-pc.patch	\
+  %D%/packages/patches/falcosecurity-libs-pkg-config.patch	\
+  %D%/packages/patches/falcosecurity-libs-shared-library-fix.patch	\
+  %D%/packages/patches/falcosecurity-libs-libsinsp-pkg-config.patch	\
   %D%/packages/patches/farstream-gupnp.patch                         \
   %D%/packages/patches/farstream-make.patch                          \
   %D%/packages/patches/fastcap-mulGlobal.patch			\
@@ -1506,7 +1513,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/isl-0.11.1-aarch64-support.patch	\
   %D%/packages/patches/isync-openssl3-fix.patch			\
   %D%/packages/patches/itk-snap-alt-glibc-compat.patch		\
-  %D%/packages/patches/jami-disable-integration-tests.patch	\
+  %D%/packages/patches/jami-enable-testing.patch		\
   %D%/packages/patches/jami-libjami-headers-search.patch	\
   %D%/packages/patches/jami-qwindowkit.patch			\
   %D%/packages/patches/jami-skip-tests-requiring-internet.patch	\
@@ -2079,6 +2086,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/slim-login.patch				\
   %D%/packages/patches/slim-display.patch			\
   %D%/packages/patches/stex-copy-from-immutable-store.patch	\
+  %D%/packages/patches/sysdig-shared-falcosecurity-libs.patch	\
   %D%/packages/patches/syslinux-gcc10.patch			\
   %D%/packages/patches/syslinux-strip-gnu-property.patch	\
   %D%/packages/patches/snappy-add-O2-flag-in-CmakeLists.txt.patch	\

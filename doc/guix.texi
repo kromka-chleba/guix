@@ -123,7 +123,7 @@ Copyright @copyright{} 2023 Foundation Devices, Inc.@*
 Copyright @copyright{} 2023 Thomas Ieong@*
 Copyright @copyright{} 2023 Saku Laesvuori@*
 Copyright @copyright{} 2023 Graham James Addis@*
-Copyright @copyright{} 2023 Tomas Volf@*
+Copyright @copyright{} 2023, 2024 Tomas Volf@*
 Copyright @copyright{} 2024 Herman Rimm@*
 Copyright @copyright{} 2024 Matthew Trzcinski@*
 Copyright @copyright{} 2024 Richard Sent@*
@@ -23623,6 +23623,17 @@ in @var{config}, are available.  The result should be used in place of
 Usually the X server is started by a login manager.
 @end deffn
 
+@deffn {Procedure} xorg-start-command-xinit [config]
+Return a @code{startx} script in which the modules, fonts,
+etc. specified in @var{config} are available.  The result should be used
+in place of @code{startx} and should be invoked by the user from a tty
+after login.  Unlike @code{xorg-start-command}, this script calls xinit.
+Therefore it works well when executed from a tty.  This script can be
+set up as @code{startx} using @code{startx-command-service-type} or
+@code{home-startx-command-service-type}.  If you are using a desktop
+environment, you are unlikely to need this procedure.
+@end deffn
+
 
 @defvar screen-locker-service-type
 Type for a service that adds a package for a screen locker or screen
@@ -23681,6 +23692,14 @@ Whether to setup program as setuid binary.
 @end table
 
 @end deftp
+
+@defvar startx-command-service-type
+Add @command{startx} to the system profile putting it onto @env{PATH}.
+
+The value for this service is a @code{<xorg-configuration>} object which
+is passed to the @code{xorg-start-command-xinit} procedure producing the
+@command{startx} used.  Default value is @code{(xorg-configuration)}.
+@end defvar
 
 
 @node Printing Services
@@ -46244,6 +46263,15 @@ The list of expressions to be read by @code{xmodmap} on service startup.
 
 @end table
 @end deftp
+
+@defvar home-startx-command-service-type
+Add @command{startx} to the home profile putting it onto @env{PATH}.
+
+The value for this service is a @code{<xorg-configuration>} object which
+is passed to the @code{xorg-start-command-xinit} procedure producing the
+@command{startx} used.  Default value is @code{(xorg-configuration)}.
+@end defvar
+
 
 @node Guix Home Services
 @subsection Guix Home Services
