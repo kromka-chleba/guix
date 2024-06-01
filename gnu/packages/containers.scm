@@ -112,7 +112,7 @@ Container Runtime fully written in C.")
 (define-public conmon
   (package
     (name "conmon")
-    (version "2.1.11")
+    (version "2.1.12")
     (source
      (origin
        (method git-fetch)
@@ -120,7 +120,7 @@ Container Runtime fully written in C.")
              (url "https://github.com/containers/conmon")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1ax13n2npz5b7qa7f4glvnfq9biz220gyb8prh8s0jrvz6z2j221"))
+        (base32 "0rrj4rmz5bmxycqhdjpizwvb25bimkri9jwb3wcfwzyxnx1va849"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -454,7 +454,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
 (define-public podman
   (package
     (name "podman")
-    (version "5.0.3")
+    (version "5.1.0")
     (source
      (origin
        (method git-fetch)
@@ -462,7 +462,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
              (url "https://github.com/containers/podman")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1wgaiwh7m547j9irz6z6ckxcbw8fwzqixh55q1fk2g7kfclfc3iw"))
+        (base32 "0ldzrrz8jba6ka1xfs8msiy08iz4m674xhfxbcdsnc9lmxi3ys4f"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

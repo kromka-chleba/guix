@@ -960,7 +960,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/ath9k-htc-firmware-gcc.patch		\
   %D%/packages/patches/ath9k-htc-firmware-gcc-compat.patch	\
   %D%/packages/patches/atlas-gfortran-compat.patch		\
-  %D%/packages/patches/audacity-ffmpeg-fallback.patch	\
+  %D%/packages/patches/audacity-ffmpeg-fallback.patch		\
   %D%/packages/patches/audiofile-fix-datatypes-in-tests.patch	\
   %D%/packages/patches/audiofile-fix-sign-conversion.patch	\
   %D%/packages/patches/audiofile-CVE-2015-7747.patch		\
@@ -990,6 +990,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/bazaar-CVE-2017-14176.patch		\
   %D%/packages/patches/bc-fix-cross-compilation.patch		\
   %D%/packages/patches/bdb-5.3-atomics-on-gcc-9.patch		\
+  %D%/packages/patches/biboumi-cmake-ignore-git.patch		\
   %D%/packages/patches/brightnessctl-elogind-support.patch	\
   %D%/packages/patches/bsd-games-2.17-64bit.patch		\
   %D%/packages/patches/bsd-games-add-configure-config.patch	\
@@ -2085,6 +2086,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/slim-config.patch			\
   %D%/packages/patches/slim-login.patch				\
   %D%/packages/patches/slim-display.patch			\
+  %D%/packages/patches/slurm-23-salloc-fallback-shell.patch	\
   %D%/packages/patches/stex-copy-from-immutable-store.patch	\
   %D%/packages/patches/sysdig-shared-falcosecurity-libs.patch	\
   %D%/packages/patches/syslinux-gcc10.patch			\
