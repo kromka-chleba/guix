@@ -19942,6 +19942,31 @@ a vector.")
 not support network, only raw protocol parser.")
     (license (list license:expat license:asl2.0))))
 
+(define-public rust-dns-lookup-2
+  (package
+    (name "rust-dns-lookup")
+    (version "2.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "dns-lookup" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1z74n2zij2gahycabm0gkmkyx574h76gwk7sz93yqpr3qa3n0xp5"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-cfg-if" ,rust-cfg-if-1)
+                       ("rust-libc" ,rust-libc-0.2)
+                       ("rust-socket2" ,rust-socket2-0.5)
+                       ("rust-windows-sys" ,rust-windows-sys-0.48))))
+    (home-page "https://github.com/keeperofdakeys/dns-lookup/")
+    (synopsis "DNS resolution interface")
+    (description
+     "This package provides a simple DNS resolving interface, much like Rust's
+unstable API.  It includes @code{getaddrinfo} and @code{getnameinfo} wrappers
+for libc variants.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public rust-dns-sd-0.1
   (package
     (name "rust-dns-sd")
@@ -33597,6 +33622,19 @@ values of all the exported APIs match the platform that libc is compiled for.")
     (license (list license:expat
                    license:asl2.0))))
 
+(define-public rust-libc-0.2.153
+  (package
+    (inherit rust-libc-0.2)
+    (name "rust-libc")
+    (version "0.2.153")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "libc" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1gg7m1ils5dms5miq9fyllrcp0jxnbpgkx71chd2i0lafa8qy6cw"))))))
+
 (define-public rust-libc-print-0.1
   (package
     (name "rust-libc-print")
@@ -40991,6 +41029,37 @@ nitrokey-test crate.")
     (synopsis "Unified interface for Linux network state querying")
     (description "Unified interface for Linux network state querying.")
     (license license:asl2.0)))
+
+(define-public rust-nix-0.28
+  (package
+    (name "rust-nix")
+    (version "0.28.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "nix" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1r0rylax4ycx3iqakwjvaa178jrrwiiwghcw95ndzy72zk25c8db"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-bitflags" ,rust-bitflags-2)
+                       ("rust-cfg-if" ,rust-cfg-if-1)
+                       ("rust-cfg-aliases" ,rust-cfg-aliases-0.1)
+                       ("rust-libc" ,rust-libc-0.2.153)
+                       ("rust-memoffset" ,rust-memoffset-0.9)
+                       ("rust-pin-utils" ,rust-pin-utils-0.1))
+       #:cargo-development-inputs (("rust-assert-impl" ,rust-assert-impl-0.1)
+                                   ("rust-caps" ,rust-caps-0.5)
+                                   ("rust-parking-lot" ,rust-parking-lot-0.12)
+                                   ("rust-rand" ,rust-rand-0.8)
+                                   ("rust-semver" ,rust-semver-1)
+                                   ("rust-sysctl" ,rust-sysctl-0.4)
+                                   ("rust-tempfile" ,rust-tempfile-3))))
+    (home-page "https://github.com/nix-rust/nix")
+    (synopsis "Rust friendly bindings to *nix APIs")
+    (description "Rust friendly bindings to *nix APIs")
+    (license license:expat)))
 
 (define-public rust-nix-0.27
   (package
@@ -62875,6 +62944,30 @@ implementations.")
     (description "This package provides an asynchronous drain for slog.")
     (license (list license:mpl2.0 license:expat license:asl2.0))))
 
+(define-public rust-slog-async-2-8
+  (package
+    (name "rust-slog-async")
+    (version "2.8.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "slog-async" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "113b17aw7jx7mr68vwfq2yiv6mb4702hz6a0g587jb4ai67h7j3j"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-crossbeam-channel" ,rust-crossbeam-channel-0.5)
+                       ("rust-slog" ,rust-slog-2)
+                       ("rust-take-mut" ,rust-take-mut-0.2)
+                       ("rust-thread-local" ,rust-thread-local-1))))
+    (home-page "https://github.com/slog-rs/slog")
+    (synopsis "Asynchronous drain for slog-rs")
+    (description
+     "This package provides an asynchronous drain for slog-rs, the Rust
+logging library.")
+    (license (list license:mpl2.0 license:expat license:asl2.0))))
+
 (define-public rust-slog-kvfilter-0.7
   (package
     (name "rust-slog-kvfilter")
@@ -68666,6 +68759,28 @@ used by XeTeX and Tectonic.")
 loading and layout routines of XeTeX as a crate, currently providing only
 a C API.")
     (license license:expat)))
+
+(define-public rust-temp-env-0.3
+  (package
+    (name "rust-temp-env")
+    (version "0.3.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "temp-env" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0l7hpkd0nhiy4w70j9xbygl1vjr9ipcfxii164n40iwg0ralhdwn"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-futures" ,rust-futures-0.3)
+                       ("rust-parking-lot" ,rust-parking-lot-0.12))
+       #:cargo-development-inputs (("rust-tokio" ,rust-tokio-1))))
+    (home-page "https://github.com/vmx/temp-env")
+    (synopsis "Set environment variables temporarily")
+    (description
+     "This Rust library lets you set environment variables temporarily.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public rust-temp-testdir-0.2
   (package

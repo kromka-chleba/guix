@@ -510,7 +510,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 
 ;; The current "mainline" kernel.
 
-(define-public linux-libre-6.9-version "6.9.2")
+(define-public linux-libre-6.9-version "6.9.3")
 (define-public linux-libre-6.9-gnu-revision "gnu")
 (define deblob-scripts-6.9
   (linux-libre-deblob-scripts
@@ -520,7 +520,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0b8hsr0s4f3hps27bmd5qj1yknhd73q4zplr4v3lmq7sr57mgly6")))
 (define-public linux-libre-6.9-pristine-source
   (let ((version linux-libre-6.9-version)
-        (hash (base32 "1yg5j284y1gz7zwxjz2abvlnas259m1y1vzd9lmcqqar5kgmnv6l")))
+        (hash (base32 "1bnzxparybwh320019pr2msaapas41dhjmvg4gy791rn05jc88f3")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.9)))
@@ -10017,6 +10017,36 @@ persistent over reboots.")
 contrast to BCC, do not require the Clang/LLVM runtime or linux kernel
 headers.")
     (license (list license:lgpl2.1 license:bsd-2))))
+
+(define-public libbpf-0.8
+  (package
+    (inherit libbpf)
+    (name "libbpf")
+    (version "0.8.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libbpf/libbpf")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1zzpkk4x3f20483dzw43b3ml03d63vvkmqf4j8y3b61b67wm59bm"))))
+    (arguments
+     (list
+      #:tests? #f                       ;self-tests run in QEMU
+      #:make-flags
+      #~(list (string-append "PREFIX=" #$output)
+              (string-append "LIBDIR=$(PREFIX)/lib")
+              (string-append "CC=" #$(cc-for-target)))
+      #:phases #~(modify-phases %standard-phases
+                   (delete 'configure)
+                   (add-before 'build 'pre-build
+                     (lambda _
+                       (chdir "src"))))))
+    (native-inputs (list pkg-config))
+    (propagated-inputs (list elfutils zlib)))) ;in Requires.private of libbpf.pc
 
 (define-public bcc
   (package
