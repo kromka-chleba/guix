@@ -167,14 +167,22 @@ SPIR-V, aiming to emit GLSL or MSL that looks like human-written code.")
         (base32 "0yfz02mlnf4ffn67g2ms0w8f7jgdsn438w2dbxd5mvcf5dk2x27b"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags
-       (list (string-append "-DLLVM_EXTERNAL_SPIRV_HEADERS_SOURCE_DIR="
-                            (assoc-ref %build-inputs "spirv-headers")
-                            "/include/spirv")
-             (string-append "-DLLVM_EXTERNAL_LIT="
-                            (assoc-ref %build-inputs "python-lit")
-                            "/bin/lit")
-             "-DLLVM_SPIRV_INCLUDE_TESTS=ON")))
+     ;; The test suite is known to fail on several architectures:
+     ;; https://github.com/llvm/llvm-project/issues/59637
+     (list
+       #:tests? (and (not (%current-target-system))
+                     (target-x86-64?))
+       #:configure-flags
+       #~(list (string-append "-DLLVM_EXTERNAL_SPIRV_HEADERS_SOURCE_DIR="
+                              #$(this-package-native-input "spirv-headers")
+                              "/include/spirv")
+               (string-append "-DLLVM_EXTERNAL_LIT="
+                              #$(this-package-native-input "python-lit")
+                              "/bin/lit")
+               (string-append "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-rpath="
+                              #$output "/lib")
+               "-DBUILD_SHARED_LIBS=ON"
+               "-DLLVM_SPIRV_INCLUDE_TESTS=ON")))
     (inputs (list llvm-18))
     (native-inputs (list clang-18 llvm-18 python-lit spirv-headers))
     (home-page "https://github.com/KhronosGroup/SPIRV-LLVM-Translator")
