@@ -148,14 +148,14 @@ to a minimal test case.")
 (define ldc-bootstrap
   (package
     (name "ldc")
-    (version "1.35.0")
+    (version "1.38.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/ldc-developers/ldc/releases"
                            "/download/v" version "/ldc-" version "-src.tar.gz"))
        (sha256
-        (base32 "186z4r1d8y4dfpv5cdqgz9al6w7qnfh9l4q9ws9w0xkcf29njabf"))))
+        (base32 "13pkg69wjj4ali4ikijicccpg8y6f2hghhb70z9lrqr2w3pkhqna"))))
     (build-system cmake-build-system)
     (arguments
      `(#:disallowed-references (,tzdata-for-tests)
@@ -177,8 +177,8 @@ to a minimal test case.")
          (replace 'build
            ;; Building with Make would result in "make: *** [Makefile:166:
            ;; all] Error 2".
-           (lambda* (#:key make-flags parallel-tests? #:allow-other-keys)
-             (let ((job-count (number->string (or (and parallel-tests?
+           (lambda* (#:key make-flags parallel-build? #:allow-other-keys)
+             (let ((job-count (number->string (or (and parallel-build?
                                                        (parallel-job-count))
                                                   1))))
                (apply invoke "cmake" "--build" "." "-j" job-count
@@ -191,8 +191,8 @@ to a minimal test case.")
        ("libedit" ,libedit)
        ("zlib" ,zlib)))
     (native-inputs
-     `(("lld-wrapper" ,(make-lld-wrapper lld-15 #:lld-as-ld? #t))
-       ("llvm" ,llvm-15)
+     `(("lld-wrapper" ,(make-lld-wrapper lld-17 #:lld-as-ld? #t))
+       ("llvm" ,llvm-17)
        ("ldc" ,gdmd)
        ("ninja" ,ninja)
        ("python-wrapper" ,python-wrapper)
@@ -227,7 +227,10 @@ bootstrapping more recent compilers written in D.")
                "ldc2-unittest" "all-test-runners"))
        ((#:configure-flags _ #~'())
         `(list "-GNinja"
-               "-DBUILD_SHARED_LIBS=ON"))
+               "-DBUILD_SHARED_LIBS=ON"
+               ,@(if (target-riscv64?)
+                     `("-DCMAKE_EXE_LINKER_FLAGS=-latomic")
+                     '())))
        ((#:phases phases)
         `(modify-phases ,phases
            (add-after 'unpack 'fix-compiler-rt-library-discovery
@@ -257,9 +260,10 @@ bootstrapping more recent compilers written in D.")
                                    "/lib/linux\",\n"))))))
            (add-after 'unpack 'patch-paths-in-tests
              (lambda _
-               (substitute* '("tests/dmd/Makefile"
-                              "runtime/druntime/test/profile/Makefile")
+               (substitute* "runtime/druntime/test/profile/Makefile"
                  (("/bin/bash") (which "bash")))
+               (substitute* "tests/driver/cli_CC_envvar.d"
+                 (("cc") (which "clang")))
                (substitute* "tests/linking/linker_switches.d"
                  (("echo") (which "echo")))
                (substitute* "tests/dmd/dshell/test6952.d"
@@ -276,25 +280,36 @@ bootstrapping more recent compilers written in D.")
                ;; The following tests plugins we don't have.
                (delete-file "tests/plugins/addFuncEntryCall/testPlugin.d")
                (delete-file "tests/plugins/addFuncEntryCall/testPluginLegacy.d")
-               ;; The following tests requires AVX instruction set in the CPU.
-               (substitute* "tests/dmd/runnable/cdvecfill.sh"
-                 (("^// DISABLED: ") "^// DISABLED: linux64 "))
                ;; This unit test requires networking, fails with
                ;; "core.exception.RangeError@std/socket.d(778): Range
                ;; violation".
                (substitute* "runtime/phobos/std/socket.d"
                  (("assert\\(ih.addrList\\[0\\] == 0x7F_00_00_01\\);.*")
                   ""))
+
+               ;; These tests fail on riscv64-linux.
+               (substitute* "runtime/phobos/std/math/operations.d"
+                 (("static assert\\(getNaNPayload\\(a\\)" all )
+                  (string-append "// " all)))
+               (substitute* "runtime/phobos/std/math/traits.d"
+                 (("static assert\\(signbit\\(-.*\\.nan" all)
+                  (string-append "// " all)))
+
                ;; The GDB tests suite fails; there are a few bug reports about
                ;; it upstream.
                (for-each delete-file (find-files "tests" "gdb.*\\.(c|d|sh)$"))
-               (delete-file "tests/dmd/runnable/debug_info.d")
                (delete-file "tests/dmd/runnable/b18504.d")
                (substitute* "runtime/druntime/test/exceptions/Makefile"
                  ((".*TESTS\\+=rt_trap_exceptions_drt_gdb.*")
                   ""))
                ;; Unsupported with glibc-2.35.
                (delete-file "tests/dmd/compilable/stdcheaders.c")
+               (delete-file "tests/dmd/compilable/test23958.c")
+               (delete-file "tests/dmd/runnable/test23889.c")
+               (delete-file "tests/dmd/runnable/test23402.d")
+               (delete-file "tests/dmd/runnable/helloc.c")
+               ;; Only works in 2024 and without SOURCE_DATE_EPOCH
+               (delete-file "tests/dmd/compilable/ddocYear.d")
                ;; Drop gdb_dflags from the test suite.
                (substitute* "tests/dmd/CMakeLists.txt"
                  (("\\$\\{gdb_dflags\\}") ""))
@@ -313,12 +328,12 @@ bootstrapping more recent compilers written in D.")
                                  "sanitizers/msan_noerror.d"
                                  "sanitizers/msan_uninitialized.d"
                                  "dmd/runnable_cxx/cppa.d")))
-                   (,(target-aarch64?)
+                   (,(target-riscv64?)
                      (for-each delete-file
-                               '("dmd/runnable/ldc_cabi1.d"
-                                 "sanitizers/fuzz_basic.d"
-                                 "sanitizers/msan_noerror.d"
-                                 "sanitizers/msan_uninitialized.d")))
+                               '("codegen/simd_alignment.d"
+                                 "dmd/runnable/argufilem.d"
+                                 "dmd/compilable/test23705.d"
+                                 "dmd/fail_compilation/diag7420.d")))
                    (#t '())))))
            (add-before 'configure 'set-cc-and-cxx-to-use-clang
              ;; The tests require to be built with Clang; build everything
@@ -349,13 +364,44 @@ bootstrapping more recent compilers written in D.")
                            "-R" "dmd-testsuite")
                    (display "running the defaultlib unit tests and druntime \
 integration tests...\n")
-                   (invoke "ctest" "--output-on-failure" "-j" job-count
-                           "-E" "dmd-testsuite|lit-tests|ldc2-unittest")))))))))
+                   (invoke
+                     "ctest" "--output-on-failure" "-j" job-count "-E"
+                     (string-append
+                       "dmd-testsuite|lit-tests|ldc2-unittest"
+                       ,@(cond
+                           ((target-aarch64?)
+                            `(,(string-append
+                                 "|std.internal.math.gammafunction-shared"
+                                 "|std.math.exponential-shared"
+                                 "|std.internal.math.gammafunction-debug-shared"
+                                 "|druntime-test-exceptions-debug")))
+                           ((target-riscv64?)
+                            `(,(string-append
+                                 "|std.internal.math.errorfunction-shared"
+                                 "|std.internal.math.gammafunction-shared"
+                                 "|std.math.exponential-shared"
+                                 "|std.math.trigonometry-shared"
+                                 "|std.mathspecial-shared"
+                                 "|std.socket-shared"
+                                 "|std.internal.math.errorfunction-debug-shared"
+                                 "|std.internal.math.gammafunction-debug-shared"
+                                 "|std.math.operations-debug-shared"
+                                 "|std.math.exponential-debug-shared"
+                                 "|std.math.traits-debug-shared"
+                                 "|std.mathspecial-debug-shared"
+                                 "|std.math.trigonometry-debug-shared"
+                                 "|std.socket-debug-shared"
+                                 ;; These four hang forever
+                                 "|core.thread.fiber-shared"
+                                 "|core.thread.osthread-shared"
+                                 "|core.thread.fiber-debug-shared"
+                                 "|core.thread.osthread-debug-shared")))
+                           (#t `("")))))))))))))
     (native-inputs
      (append (delete "llvm"
                      (alist-replace "ldc" (list ldc-bootstrap)
                                     (package-native-inputs ldc-bootstrap)))
-         `(("clang" ,clang-15)          ;propagates llvm and clang-runtime
+         `(("clang" ,clang-17)          ;propagates llvm and clang-runtime
            ("python-lit" ,python-lit))))))
 
 ;;; Bootstrap version of phobos that is built with GDC, using GDC's standard

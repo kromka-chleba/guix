@@ -138,6 +138,7 @@
 ;;; Copyright © 2023 Ian Eure <ian@retrospec.tv>
 ;;; Copyright © 2024 Suhail Singh <suhail@bayesians.ca>
 ;;; Copyright © 2024 dan <i@dan.games>
+;;; Copyright © 2024 Ilya Chernyshov <ichernyshovvv@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -23544,6 +23545,35 @@ as well as functions for navigating between these headings.")
 for defining recurring tasks and easily scheduling them.")
     (license license:gpl3+)))
 
+(define-public emacs-org-timeblock
+  (let ((revision "0")
+        (commit "b423b01712b9c25dff3e4203c7cde736225f62ef"))
+    (package
+      (name "emacs-org-timeblock")
+      (version (git-version "0.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri
+          (git-reference
+           (url "https://github.com/ichernyshovvv/org-timeblock")
+           (commit commit)))
+         (sha256
+          (base32 "1q0271nli4yw01rwybkzdlqcj8ivqwh5r70yv9x0qqwxa955c9k9"))
+         (file-name (git-file-name name version))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-compat))
+      (home-page "https://github.com/ichernyshovvv/org-timeblock")
+      (synopsis
+       "Schedule your day visually, using timeblocking technique inside Emacs")
+      (description "The builtin orgmode package for viewing tasks or events
+for a particular day, org-agenda, does not help you to quickly understand,
+where, for example, you have free time in your day or where you have
+overlapping tasks.  Just a list of tasks is not sufficient.  This package is
+created to fix this problem and provide some of the functionality that modern
+calendars provide.")
+      (license license:gpl3+))))
+
 (define-public emacs-org-super-agenda
   (package
     (name "emacs-org-super-agenda")
@@ -26617,6 +26647,26 @@ Emacs minor mode to escape sequences in code.")
     (synopsis "Startup screen extracted from Spacemacs")
     (description "This package provides an extensible Emacs dashboard, with
 sections for bookmarks, Projectile projects, Org Agenda and more.")
+    (license license:gpl3+)))
+
+(define-public emacs-enlight
+  (package
+    (name "emacs-enlight")
+    (version "0.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/ichernyshovvv/enlight")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0crccz28f54xc0202gdbnpkn7kfsxf66p2m2grs6wnwyjxrmpnsq"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-compat))
+    (home-page "https://github.com/ichernyshovvv/enlight")
+    (synopsis "Highly customizable startup screen for Emacs")
+    (description "Lightweight yet very flexible startup screen for Emacs.")
     (license license:gpl3+)))
 
 (define-public emacs-slime-company
