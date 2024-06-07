@@ -1647,10 +1647,119 @@ in Golang.")
            go-golang-org-x-crypto
            go-golang-org-x-net))))
 
+(define-public go-github-com-pion-ice
+  (package
+    (name "go-github-com-pion-ice")
+    (version "0.7.18")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/ice/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17108z4fkr9b2fxf5icxspgif29a40gi57bhp9a50mlfr36yv9vk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Source-only package
+      #:tests? #f
+      #:import-path "https://github.com/pion/ice"
+      #:phases
+      ;; Failed to build and only requried for inheritance:
+      ;;
+      ;; cannot use a.net (type *vnet.Net) as type transport.Net in field value:
+      ;; *vnet.Net does not implement transport.Net (wrong type for CreateDialer method)
+      ;;         have CreateDialer(*net.Dialer) vnet.Dialer
+      ;;         want CreateDialer(*net.Dialer) transport.Dialer
+      #~(modify-phases %standard-phases
+          (delete 'build))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-google-uuid
+           go-github-com-pion-dtls-v2
+           go-github-com-pion-logging
+           go-github-com-pion-mdns
+           go-github-com-pion-randutil
+           go-github-com-pion-stun
+           go-github-com-pion-transport
+           go-github-com-pion-turn-v2
+           go-golang-org-x-net))
+    (home-page "https://github.com/pion/ice/")
+    (synopsis "Go implementation of ICE")
+    (description
+     "This package provides an implementation of @acronym{ICE, Interactive
+Connectivity Establishment protocol}, specified in
+@url{https://datatracker.ietf.org/doc/html/rfc8445, RFC8445}.  It is used as a
+part of @url{https://github.com/pion, Pion} WebRTC implementation.")
+    (license license:expat)))
+
+(define-public go-github-com-pion-ice-v2
+  (package
+    (inherit go-github-com-pion-ice)
+    (name "go-github-com-pion-ice-v2")
+    (version "2.3.24")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/ice/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mh7l31vv15gxpl61f22jwpc77b5l9wx4hbjv4h8cgmpb9911cv8"))))
+    (arguments
+     (list
+      #:tests? #f ;Tests require network access.
+      #:go go-1.21
+      #:import-path "github.com/pion/ice/v2"))
+    (propagated-inputs
+     (list go-github-com-google-uuid
+           go-github-com-pion-dtls-v2
+           go-github-com-pion-logging
+           go-github-com-pion-mdns
+           go-github-com-pion-randutil
+           go-github-com-pion-stun
+           go-github-com-pion-transport-v2
+           go-github-com-pion-turn-v2
+           go-golang-org-x-net))))
+
+(define-public go-github-com-pion-ice-v3
+  (package
+    (inherit go-github-com-pion-ice)
+    (name "go-github-com-pion-ice-v3")
+    (version "3.0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/ice/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f9jy80law69zb26rkb6kl6w1c66vdghdrmifhwlmzngb644ihdb"))))
+    (arguments
+     (list
+      #:tests? #f ;Tests require network access.
+      #:go go-1.21
+      #:import-path "github.com/pion/ice/v3"))
+    (propagated-inputs
+     (list go-github-com-google-uuid
+           go-github-com-pion-dtls-v2
+           go-github-com-pion-logging
+           go-github-com-pion-mdns-v2
+           go-github-com-pion-randutil
+           go-github-com-pion-stun-v2
+           go-github-com-pion-transport-v3
+           go-github-com-pion-turn-v3
+           go-golang-org-x-net))))
+
 (define-public go-github-com-pion-mdns
   (package
     (name "go-github-com-pion-mdns")
-    (version "2.0.7")
+    (version "0.0.12")
     (source
      (origin
        (method git-fetch)
@@ -1659,7 +1768,7 @@ in Golang.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "03675hx82lx3c8akkxdbkch1z4dbq54r05jk6jgdyd7mrdh9k4lm"))))
+        (base32 "18nz0vddxik3q11mn4z65zvrfhspxv0xymxv9w3kgk2kszwq2byy"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1668,6 +1777,7 @@ in Golang.")
       ;; <https://github.com/pion/.goassets/blob/master/.github/workflows/test.reusable.yml>.
       #:tests? #f
       #:go go-1.21
+      #:unpack-path "github.com/pion/mdns"
       #:import-path "github.com/pion/mdns"))
     (native-inputs
      (list go-github-com-stretchr-testify))
@@ -1681,6 +1791,28 @@ in Golang.")
      "This package implements a mDNS (multicast DNS) used by
 @url{https://github.com/pion, Pion}.")
     (license license:expat)))
+
+(define-public go-github-com-pion-mdns-v2
+  (package
+    (inherit go-github-com-pion-mdns)
+    (name "go-github-com-pion-mdns-v2")
+    (version "2.0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/mdns/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03675hx82lx3c8akkxdbkch1z4dbq54r05jk6jgdyd7mrdh9k4lm"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments
+                                    go-github-com-pion-mdns)
+       ((#:unpack-path flags ''())
+        "github.com/pion/mdns/v2")
+       ((#:import-path flags ''())
+        "github.com/pion/mdns/v2")))))
 
 (define-public go-github-com-pion-rtp
   (package
@@ -1839,6 +1971,104 @@ throughout the @url{https://github.com/pion, Pion} modules.")
     (arguments
      (list
       #:import-path "github.com/pion/transport/v3"))))
+
+(define-public go-github-com-pion-turn
+  (package
+    (name "go-github-com-pion-turn")
+    (version "1.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/turn/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16lkgmrlks0qdzbk8jj0c0j66qfxhb54cvzgrfn4imvm56dbxp2n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;Tests require network access.
+      #:import-path "github.com/pion/turn"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pion-logging
+           go-github-com-pion-stun
+           go-github-com-pion-transport
+           go-github-com-pkg-errors))
+    (home-page "https://github.com/pion/turn/")
+    (synopsis "API for building TURN clients and servers in Golang")
+    (description
+     "This package provides a toolkit for building @acronym{TURN, Traversal
+Using Relays around NAT}, specified in
+@url{https://datatracker.ietf.org/doc/html/rfc8656, RFC 8656}, servers and
+clients.
+
+@code{pion/turn} is an API for building STUN/TURN clients and servers, not a
+binary you deploy then configure.  It may require copying the examples and
+making minor modifications to fit your need, no knowledge of Go is required
+however.
+
+The advantage of this is that you don't need to deal with complicated
+configuration files, or custom APIs to modify the state of Pion TURN.  After
+you instantiate an instance of a Pion TURN server or client you interact with
+it like any library.  The quickest way to get started is to look at the
+@url{https://github.com/pion/turn/blob/master/examples, examples} or
+@url{https://godoc.org/github.com/pion/turn, GoDoc}.")
+    (license license:expat)))
+
+(define-public go-github-com-pion-turn-v2
+  (package
+    (inherit go-github-com-pion-turn)
+    (name "go-github-com-pion-turn-v2")
+    (version "2.1.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/turn/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0iw7nvqsxpqy90k5a8mq3dyask272391m59cbiy30aak1y2wwaac"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments
+                                    go-github-com-pion-turn)
+       ((#:import-path flags ''())
+        "github.com/pion/turn/v2")))
+    (propagated-inputs
+     (list go-github-com-pion-logging
+           go-github-com-pion-randutil
+           go-github-com-pion-stun
+           go-github-com-pion-transport-v2
+           go-golang-org-x-sys))))
+
+(define-public go-github-com-pion-turn-v3
+  (package
+    (inherit go-github-com-pion-turn)
+    (name "go-github-com-pion-turn-v3")
+    (version "3.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/turn/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0l78m9ym0sv1zfalbv95lwblmr789fc53d957ph5mdznhjx89lyx"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments
+                                    go-github-com-pion-turn)
+       ((#:import-path flags ''())
+        "github.com/pion/turn/v3")))
+    (propagated-inputs
+     (list go-github-com-pion-logging
+           go-github-com-pion-randutil
+           go-github-com-pion-stun-v2
+           go-github-com-pion-transport-v3
+           go-golang-org-x-sys))))
 
 (define-public go-github-com-pires-go-proxyproto
   (package

@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2020, 2022 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2022 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2022, 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 Benjamin <benjamin@uvy.fr>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -142,7 +142,7 @@ applications.")
 (define-public kronosnet
   (package
     (name "kronosnet")
-    (version "1.28")
+    (version "1.29")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -151,7 +151,7 @@ applications.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "05kws374sj0p3yg918kf2l2jp518k0c9j5qgzb9gl327cwlbwkls"))))
+                "0dgj8wj0s8x6z7ahgp03fvrx4xv2v7lv8d0j7qbr9jw3ssj0rdc3"))))
     (build-system gnu-build-system)
     (arguments
      ;; XXX: Multiple tests failed. Tests
@@ -202,7 +202,7 @@ applications.")
 (define-public nats-server
   (package
     (name "nats-server")
-    (version "2.10.10")
+    (version "2.10.16")
     (source
      (origin
        (method git-fetch)
@@ -211,7 +211,7 @@ applications.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1sn8a3xfs1s9jc5fphrnc0ahh83h7ma2ckg2x447gdhg1p7pf9gn"))))
+        (base32 "1l5132swcxxk1d0xdwh1aqrlkcmcss9m9y6hky2yk6b33l1w681v"))))
     (build-system go-build-system)
     (inputs
      (list go-github-com-klauspost-compress
