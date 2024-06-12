@@ -1610,7 +1610,7 @@ libgit2 bindings for Emacs, intended to boost the performance of Magit.")
 (define-public emacs-llm
   (package
     (name "emacs-llm")
-    (version "0.13.0")
+    (version "0.16.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1618,8 +1618,9 @@ libgit2 bindings for Emacs, intended to boost the performance of Magit.")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256 (base32
-                       "1q7djz4zx1br4d3g46f1m5cbxwl050qjmsm2cy7zcww64rrkcj0l"))))
+                       "0gxxs7ddkka836m3cq03s5qcay3sdsrfhanmgxybbc4byh6n0zh2"))))
     (build-system emacs-build-system)
+    (propagated-inputs (list emacs-plz))
     (home-page "https://github.com/ahyatt/llm")
     (synopsis "Emacs library abstracting Large Language Model capabilities.")
     (description
@@ -5002,7 +5003,7 @@ that the binary uses instead of the actual binary contents.")
 (define-public emacs-ellama
   (package
     (name "emacs-ellama")
-    (version "0.9.1")
+    (version "0.9.10")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5010,7 +5011,7 @@ that the binary uses instead of the actual binary contents.")
                     (commit version)))
               (file-name (git-file-name name version))
               (sha256 (base32
-                       "1nwwqvl91c65r45yxa2dcl4a41r3ahw6294h79riya48nrp8kn54"))))
+                       "08kfa89m2mz6j5wfc73bwid2384v4kf944q1qymkjg3r53i1a9c7"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-dash emacs-llm emacs-spinner))
     (home-page "https://github.com/s-kostyaev/ellama")
@@ -6949,17 +6950,17 @@ intended to be.")
 (define-public emacs-ef-themes
   (package
     (name "emacs-ef-themes")
-    (version "1.4.0")
+    (version "1.7.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://git.sr.ht/~protesilaos/ef-themes")
+             (url "https://github.com/protesilaos/ef-themes")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "029pcca3ppbs22isym2hi3zzynmvk5dg7jcimpm7nd8m4qk46f49"))))
+         "0m7l3f4mn8xi4hv38fkm21xhs0idpb9idkj1ci0jnmcl5x6ggzxn"))))
     (build-system emacs-build-system)
     (home-page "https://git.sr.ht/~protesilaos/ef-themes")
     (synopsis "Colorful and legible themes")
@@ -22469,11 +22470,11 @@ from @code{groovy-mode} for editing Jenkins declarative pipeline files.")
       (license license:gpl3+))))
 
 (define-public emacs-org-tree-slide
-  (let ((commit "d6529bc2df727d09014e0e56abf4f15a8e8fc20f")
+  (let ((commit "e2599a106a26ce5511095e23df4ea04be6687a8a")
         (revision "0"))
     (package
       (name "emacs-org-tree-slide")
-      (version (git-version "2.8.18" revision commit))
+      (version (git-version "2.8.22" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -22481,7 +22482,7 @@ from @code{groovy-mode} for editing Jenkins declarative pipeline files.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1br32mpwarmrn158y2pkkmfl2ssv8q8spzknkg2avr16fil0j1pz"))
+                  "0i1mzgq178sl6x2wf7k0ad57dy1d34wbk2k99fiyvv70rfbj2yy2"))
                 (file-name (git-file-name name version))))
       (build-system emacs-build-system)
       (home-page "https://github.com/takaxp/org-tree-slide")

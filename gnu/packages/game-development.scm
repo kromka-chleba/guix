@@ -921,7 +921,7 @@ sounds from presets such as \"explosion\" or \"powerup\".")
 (define-public surgescript
   (package
     (name "surgescript")
-    (version "0.5.6.1")
+    (version "0.6.0")
     (source
      (origin
        (method git-fetch)
@@ -930,7 +930,7 @@ sounds from presets such as \"explosion\" or \"powerup\".")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1p1pxb4iixzq7z14bpy32dx3dhfaaf6mcz4y3g3g09bkdmm1ys6j"))))
+        (base32 "17k14108hvz329cqnr3g799ksmiv8d710slnghi2wmwswir8s0jd"))))
      (build-system cmake-build-system)
      (arguments
       (list #:tests? #f)) ; there are no tests
@@ -2097,7 +2097,7 @@ scripted in a Python-like language.")
 (define-public godot
   (package
     (name "godot")
-    (version "4.2.1")
+    (version "4.2.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2106,7 +2106,7 @@ scripted in a Python-like language.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0d5y678986lx4a4xjkxs5glh2dckp8wwl3r3mw72inq7gvaa18s3"))
+                "0wm0pla6f6gvk21gbm5kiihinn05dvvprk0242m6s8c78wy60wka"))
               (modules '((guix build utils)
                          (ice-9 ftw)
                          (srfi srfi-1)))

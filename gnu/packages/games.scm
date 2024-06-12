@@ -1850,7 +1850,7 @@ shadow mimic them to reach blocks you couldn't reach alone.")
 (define-public opensurge
   (package
     (name "opensurge")
-    (version "0.6.0.3")
+    (version "0.6.1.1")
     (source
      (origin
        (method git-fetch)
@@ -1859,7 +1859,7 @@ shadow mimic them to reach blocks you couldn't reach alone.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0yia2qcva741a64qpls8a59lvnx5vynqkk2i3arkflw6f1m1vb55"))))
+        (base32 "1hwnjgkbywspmsmpmmnndqil86qqyd21y2q5krs8znwi35ychd3q"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f ; there are no tests
@@ -1891,7 +1891,7 @@ shadow mimic them to reach blocks you couldn't reach alone.")
                                  "Roboto-Bold.ttf"
                                  "Roboto-Medium.ttf"))))))))
     (inputs
-     (list allegro font-google-roboto surgescript xdg-utils))
+     (list allegro font-google-roboto mesa physfs surgescript xdg-utils))
     (home-page "https://opensurge2d.org")
     (synopsis "2D retro side-scrolling game")
     (description "@code{Open Surge} is a 2D retro side-scrolling platformer
@@ -8164,7 +8164,7 @@ Strife, Chex Quest, and fan-created games like Harmony, Hacx and Freedoom.")
 (define-public odamex
   (package
     (name "odamex")
-    (version "10.4.0")
+    (version "10.5.0")
     (source
      (origin
        (method url-fetch)
@@ -8172,7 +8172,7 @@ Strife, Chex Quest, and fan-created games like Harmony, Hacx and Freedoom.")
              "mirror://sourceforge/odamex/Odamex/" version "/"
              "odamex-src-" version ".tar.xz"))
        (sha256
-        (base32 "1isrmki18471yry48mmm7lxzp1kiqma9cc7fx38cvpm2mpgfyvzk"))
+        (base32 "151dr6gygznqmp2m9wzilbrmr71lka6pwaz53lb835ry8wq3y210"))
        (modules '((guix build utils)))
        (snippet
         '(begin

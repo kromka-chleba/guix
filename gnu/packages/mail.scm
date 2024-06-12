@@ -1260,14 +1260,14 @@ security functionality including PGP, S/MIME, SSH, and SSL.")
 (define-public mu
   (package
     (name "mu")
-    (version "1.12.4")
+    (version "1.12.5")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/djcb/mu/releases/download/v"
                            version "/mu-" version ".tar.xz"))
        (sha256
-        (base32 "1ja4b9r9712zjvz8223r5vh2kmmyhkrmb7cbhxdn9hbpa5n16hdx"))))
+        (base32 "1jwalqmvk5s4mf7bnz7gnzh6rii7n348bsflgdvyinia0zir42vp"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config
@@ -1280,8 +1280,11 @@ security functionality including PGP, S/MIME, SSH, and SSL.")
      (list
       #:modules '((guix build meson-build-system)
                   (guix build emacs-utils)
+                  ((guix build guile-build-system)
+                   #:select (target-guile-effective-version))
                   (guix build utils))
       #:imported-modules `(,@%meson-build-system-modules
+                           (guix build guile-build-system)
                            (guix build emacs-utils))
       #:configure-flags
       #~(list (format #f "-Dguile-extension-dir=~a/lib" #$output))
@@ -1303,11 +1306,18 @@ security functionality including PGP, S/MIME, SSH, and SSL.")
                 (("\"libguile-mu\"")
                  (format #f "\"~a/lib/libguile-mu\"" #$output)))))
           (add-after 'install 'install-emacs-autoloads
-            (lambda* (#:key outputs #:allow-other-keys)
+            (lambda _
               (emacs-generate-autoloads
                "mu4e"
-               (string-append (assoc-ref outputs "out")
-                              "/share/emacs/site-lisp/mu4e")))))))
+               (string-append #$output
+                              "/share/emacs/site-lisp/mu4e"))))
+          (add-after 'install 'wrap-executable
+            (lambda _
+              (let* ((bin (string-append #$output "/bin"))
+                     (version (target-guile-effective-version))
+                     (scm (string-append #$output "/share/guile/site/" version)))
+                (wrap-program (string-append bin "/mu")
+                  `("GUILE_LOAD_PATH" ":" prefix (,scm)))))))))
     (home-page "https://www.djcbsoftware.nl/code/mu/")
     (synopsis "Quickly find emails")
     (description
@@ -3021,14 +3031,14 @@ easily (one at a time).")
 (define-public mpop
   (package
     (name "mpop")
-    (version "1.4.18")
+    (version "1.4.19")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://marlam.de/mpop/releases/"
                            "mpop-" version ".tar.xz"))
        (sha256
-        (base32 "1dw5kwflga26kfjl999lilq14vvk6fcapryihakr9l7phh0rb6b0"))))
+        (base32 "12jwalxf14z0rwkhdfw1whizc9dzcba9yv63wanwmszzqq9ixi13"))))
     (build-system gnu-build-system)
     (inputs
      (list gnutls))
@@ -4159,7 +4169,7 @@ It is a replacement for the @command{urlview} program.")
 (define-public mumi
   (package
     (name "mumi")
-    (version "0.2.1")
+    (version "0.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4168,7 +4178,7 @@ It is a replacement for the @command{urlview} program.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1a8farj1ppwfzlfikhabqxzyynqm2h8ljhwr6nybx83z8hk45v09"))))
+                "0b93hd6jjay70rj3520cmwzji00prn2fyjbxgys6ihw962nj3hpg"))))
     (build-system gnu-build-system)
     (arguments
      (list

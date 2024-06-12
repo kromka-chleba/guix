@@ -36,6 +36,7 @@
 ;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2024 Jesse Eisses <jesse@eisses.email>
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
+;;; Copyright © 2024 Luis Higino <luishenriquegh2701@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -744,10 +745,10 @@ indicator to any terminal application.")
 similar to Go's standard library @code{json} and @code{xml} package.")
     (license license:expat)))
 
-(define-public go-github-com-cheggaaa-pb-v3
+(define-public go-github-com-cheggaaa-pb
   (package
-    (name "go-github-com-cheggaaa-pb-v3")
-    (version "3.0.8")
+    (name "go-github-com-cheggaaa-pb")
+    (version "1.0.29")
     (source
      (origin
        (method git-fetch)
@@ -756,22 +757,43 @@ similar to Go's standard library @code{json} and @code{xml} package.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0d701s2niy39r650d1phjw19h4l27b1yfc2ih6s31f56b3zzqspx"))))
+        (base32 "0n8y589gf9aw53j72y4z8mzkgahbf6k8h19n2j0mllw5xpvpgijy"))))
     (build-system go-build-system)
     (arguments
-     '(#:import-path "github.com/cheggaaa/pb/v3"
-       #:unpack-path "github.com/cheggaaa/pb"))
+     (list
+      #:import-path "github.com/cheggaaa/pb"))
     (propagated-inputs
      (list go-github-com-fatih-color
            go-github-com-mattn-go-colorable
            go-github-com-mattn-go-isatty
-           go-github-com-mattn-go-runewidth
-           go-github-com-vividcortex-ewma))
+           go-github-com-mattn-go-runewidth))
     (home-page "https://github.com/cheggaaa/pb/")
     (synopsis "Console progress bar for Go")
     (description
      "This package is a Go library that draws progress bars on the terminal.")
     (license license:bsd-3)))
+
+(define-public go-github-com-cheggaaa-pb-v3
+  (package
+    (inherit go-github-com-cheggaaa-pb)
+    (name "go-github-com-cheggaaa-pb-v3")
+    (version "3.0.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cheggaaa/pb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0d701s2niy39r650d1phjw19h4l27b1yfc2ih6s31f56b3zzqspx"))))
+    (arguments
+     (list
+      #:import-path "github.com/cheggaaa/pb/v3"
+      #:unpack-path "github.com/cheggaaa/pb"))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs go-github-com-cheggaaa-pb)
+       (append go-github-com-vividcortex-ewma)))))
 
 (define-public go-github-com-chzyer-logex
   (package
@@ -1186,6 +1208,33 @@ atimes for files.")
 mtime,ctime and btime for files.")
     (license license:expat)))
 
+(define-public go-github-com-docopt-docopt-go
+  (let ((commit "ee0de3bc6815ee19d4a46c7eb90f829db0e014b1")
+        (revision "0"))
+    (package
+      (name "go-github-com-docopt-docopt-go")
+      (version (git-version "0.6.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/docopt/docopt.go")
+               (commit version)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0hlra7rmi5pmd7d93rv56ahiy4qkgmq8a6mz0jpadvbi5qh8lq6j"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/docopt/docopt-go"))
+      (home-page "https://github.com/docopt/docopt.go")
+      (synopsis "Implementation of docopt in Golang")
+      (description
+       "This package provides command-line arguments parser based on written
+help message which may simplify crating CLI applications, it's Golang
+implementation of http://docopt.org/.")
+      (license license:expat))))
+
 (define-public go-github-com-dustin-gojson
   (package
     (name "go-github-com-dustin-gojson")
@@ -1297,6 +1346,31 @@ Alphanum Algorithm} developed by Dave Koelle in Go.")
     (description
      "This package provides an ANSI color package to output colorized or SGR
 defined output to the standard output.")
+    (license license:expat)))
+
+(define-public go-github-com-k0kubun-go-ansi
+  (package
+    (name "go-github-com-k0kubun-go-ansi")
+    (version "0.0.0-20180517002512-3bf9e2903213")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/k0kubun/go-ansi")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "117afax4l268rbswf02icbgxncmd1pk2abkz7cv26iyszi8l26dq"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/k0kubun/go-ansi"))
+    (home-page "https://github.com/k0kubun/go-ansi")
+    (synopsis "Windows-portable ANSI escape sequence utility for Golang")
+    (description
+     "This library converts ANSI escape sequences to Windows API calls on
+Windows environment.  You can easily use this feature by replacing fmt with
+ansi.")
     (license license:expat)))
 
 (define-public go-github-com-gabriel-vasile-mimetype
@@ -3163,6 +3237,37 @@ detect the number of bytes written to a stream, so you can use it as a
 is undetermined, a customizable spinner is shown.")
     (license license:expat)))
 
+(define-public go-github-com-sergi-go-diff
+  (package
+    (name "go-github-com-sergi-go-diff")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sergi/go-diff")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cbj8nshllq102iiav0k1s01b8gwbkzj674g71n938qqna32y2pa"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/sergi/go-diff/diffmatchpatch"
+      #:unpack-path "github.com/sergi/go-diff"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/sergi/go-diff/")
+    (synopsis "Algorithms to perform operations for synchronizing plain text")
+    (description "@code{go-diff} offers algorithms to perform operations required for
+synchronizing plain text:
+@itemize
+@item compare two texts and return their differences
+@item perform fuzzy matching of text
+@item apply patches onto text
+@end itemize")
+    (license license:expat)))
+
 (define-public go-github-com-shirou-gopsutil
   (package
     (name "go-github-com-shirou-gopsutil")
@@ -3387,6 +3492,108 @@ well as a program to generate applications and command files.")
      "This package provides a Go implementation of the LevelDB key/value
 storage system.")
     (license license:bsd-2)))
+
+(define-public go-github-com-tidwall-gjson
+  (package
+    (name "go-github-com-tidwall-gjson")
+    (version "1.17.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tidwall/gjson")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gcjzbs5in4kics39d2v3j2v9gvfxkdgp0bdgbfmcsa5arqgq7g5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tidwall/gjson"))
+    (propagated-inputs
+     (list go-github-com-tidwall-match
+           go-github-com-tidwall-pretty))
+    (home-page "https://github.com/tidwall/gjson")
+    (synopsis "JSON parser for Golang")
+    (description
+     "This package provides a fast and simple way to get values from a JSON
+document.  It has features such as one line retrieval, dot notation paths,
+iteration, and parsing JSON lines.")
+    (license license:expat)))
+
+(define-public go-github-com-tidwall-match
+  (package
+    (name "go-github-com-tidwall-match")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tidwall/match")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1n25md63xr5m66r6zc77n6fgcpv2ljrlk92ivp9hvp8xya22as9k"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tidwall/match"))
+    (home-page "https://github.com/tidwall/match")
+    (synopsis "Simple string pattern matcher for Golang")
+    (description
+     "Package match provides a simple pattern matcher with unicode support.")
+    (license license:expat)))
+
+(define-public go-github-com-tidwall-pretty
+  (package
+    (name "go-github-com-tidwall-pretty")
+    (version "1.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tidwall/pretty")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0prj9vpjgrca70rvx40kkl566yf9lw4fsbcmszwamwl364696jsb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tidwall/pretty"))
+    (home-page "https://github.com/tidwall/pretty")
+    (synopsis "JSON beautifier and compactor for Golang")
+    (description
+     "This package provides fast methods for formatting JSON for human
+readability, or to compact JSON for smaller payloads.")
+    (license license:expat)))
+
+(define-public go-github-com-tidwall-sjson
+  (package
+    (name "go-github-com-tidwall-sjson")
+    (version "1.2.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tidwall/sjson")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16yaikpxiwqz00zxa70w17k2k52nr06svand88sv2br6b6i8v09r"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tidwall/sjson"))
+    (propagated-inputs
+     (list go-github-com-tidwall-gjson
+           go-github-com-tidwall-pretty))
+    (home-page "https://github.com/tidwall/sjson")
+    (synopsis "Quick value JSON values setting in Golang")
+    (description
+     "This package provides a fast and simple way to set a value in a JSON
+document.")
+    (license license:expat)))
 
 (define-public go-github-com-tklauser-go-sysconf
   (package
@@ -3755,27 +3962,10 @@ Go.")
 (define-public go-gopkg-in-alecthomas-kingpin-v2
   (package
     (inherit go-github-com-alecthomas-kingpin)
+    (name "go-gopkg-in-alecthomas-kingpin-v2")
     (arguments
      (list
       #:import-path "gopkg.in/alecthomas/kingpin.v2"))))
-
-(define-public go-gopkg-in-cheggaaa-pb-v1
-  (package
-    (inherit go-github-com-cheggaaa-pb-v3)
-    (name "go-gopkg-in-cheggaaa-pb-v1")
-    (version "1.0.28")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://gopkg.in/cheggaaa/pb.v1.git")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "13a66cqbpdif804qj12z9ad8r24va9q41gfk71qbc4zg1wsxs3rh"))))
-    (arguments
-     (list
-      #:import-path "gopkg.in/cheggaaa/pb.v1"))))
 
 (define-public go-gopkg-in-natefinch-lumberjack.v2
   (package

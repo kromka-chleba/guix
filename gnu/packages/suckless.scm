@@ -228,13 +228,13 @@ a custom raw video format with a simple container.")
 (define-public dwm
   (package
     (name "dwm")
-    (version "6.3")
+    (version "6.5")
     (source (origin
              (method url-fetch)
              (uri (string-append "https://dl.suckless.org/dwm/dwm-"
                                  version ".tar.gz"))
              (sha256
-              (base32 "1387lg370yrg7ssi3045di3904gkchxlza7rswgvl7wva8la1nms"))))
+              (base32 "0acpl05rg6rg6nrg3rv4kp388iqzp1n6dhin30a97yzjm6zrxmr1"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f
@@ -284,14 +284,14 @@ optimising the environment for the application in use and the task performed.")
 (define-public dmenu
   (package
     (name "dmenu")
-    (version "5.2")
+    (version "5.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://dl.suckless.org/tools/dmenu-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "14ipsirsfqbyqlnna0k8yla5j6mrbgh3gd9d4xrg4h4inmvwmm6l"))))
+                "0pvr6da1v7hmbnacpgxcxv1sakg1nckmw347xhwrhx1dzpk573qs"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                      ; no tests
@@ -368,14 +368,14 @@ numbers of user-defined menu items efficiently.")
 (define-public st
   (package
     (name "st")
-    (version "0.8.5")
+    (version "0.9.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://dl.suckless.org/st/st-"
                            version ".tar.gz"))
        (sha256
-        (base32 "0dxb8ksy4rcnhp5k54p7i7wwhm64ksmavf5wh90zfbyh7qh34s7a"))))
+        (base32 "0js9z5kn8hmpxzfmb2g6zsy28zkpg88j3wih5wixc89b8x7ms8bb"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                      ; no tests
