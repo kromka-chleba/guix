@@ -176,6 +176,7 @@
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages astronomy)
   #:use-module (gnu packages attr)
+  #:use-module (gnu packages audio)
   #:use-module (gnu packages backup)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
@@ -248,6 +249,7 @@
   #:use-module (gnu packages photo)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages protobuf)
+  #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
@@ -4419,6 +4421,36 @@ videos in a notebook.")
 audio playback capability for Python 3 on OSX, Windows, and Linux.")
     (license license:expat))) ; MIT license
 
+(define-public python-wavefile
+  (package
+    (name "python-wavefile")
+    (version "1.6.2")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "wavefile" version))
+              (sha256
+               (base32
+                "04mdcxq7n1vnwb9y65j0cwpy91ik5rh9vki1f45xqnh4ygz91n75"))))
+    (build-system python-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-libsndfile-path
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "wavefile/libsndfile.py"
+                     (("'libsndfile")
+                      (string-append "'" (assoc-ref inputs "libsndfile")
+                                     "/lib/libsndfile"))))))))
+    (inputs
+     (list libsndfile portaudio))
+    (propagated-inputs (list python-numpy python-pyaudio))
+    (home-page "https://github.com/vokimon/python-wavefile")
+    (synopsis "Pythonic audio file reader and writer")
+    (description
+     "This package provides pythonic libsndfile wrapper to read and write audio
+files.")
+    (license license:gpl3+)))
+
 (define-public python-jsonalias
   (package
     (name "python-jsonalias")
@@ -4484,6 +4516,30 @@ Python.")
 type hints and parse from command line, config files and environment
 variables.")
     (license license:expat)))
+
+(define-public python-pymarshal
+  (package
+    (name "python-pymarshal")
+    (version "2.2.3")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "pymarshal" version))
+              (sha256
+               (base32
+                "1lhb7yim60pvclbd440zd4n50xs1d2rvmnrhhvib3hyv0dxil5j3"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; Test fails with this error:
+     ;; "CovReportWarning: Failed to generate report: No data to report."
+     (list #:tests? #f))
+    (native-inputs
+     (list python-pytest python-pytest-cov))
+    (propagated-inputs (list python-bson python-pyyaml))
+    (home-page "https://gitlab.com/d3v-t00lz/pymarshal")
+    (synopsis "Pythonic implementation of Golang struct (un)marshalling")
+    (description "PyMarshal replicates the feature of (un)marshalling structs
+in Golang.")
+    (license license:bsd-2)))
 
 (define-public python-simplejson
   (package
@@ -36134,6 +36190,33 @@ Currently, Linux is the only platform supported by this library.")
     (description "@code{clrprint} is developed to print colorful output in the
 terminal.  It has red, blue, green, yellow, purple and black/white (default)
 colors.")
+    (license license:expat)))
+
+(define-public python-mido
+  (package
+    (name "python-mido")
+    (version "1.3.2")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "mido" version))
+              (sha256
+               (base32
+                "0j63cydiinfyrvlhydzsb00cb7dyvrw3bnhjbdyp63vkxnv2isis"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               ;; This package requires python-packaging~=23.1 which is not yet
+               ;; updated to. As per pyproject.toml, it is required to provide
+               ;; a nice version_info opbject.
+               ;; TODO: After updating python-packaging, fix this.
+               (delete 'sanity-check))))
+    (propagated-inputs (list python-importlib-metadata python-packaging))
+    (native-inputs (list python-pytest))
+    (home-page "https://mido.readthedocs.io/en/stable/")
+    (synopsis "MIDI Objects for Python")
+    (description "This library is for working with MIDI 1.0 ports, messages and
+files.")
     (license license:expat)))
 
 (define-public python-musical-scales
