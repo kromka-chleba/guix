@@ -5411,18 +5411,19 @@ files.")
 (define-public python-pyld
   (package
     (name "python-pyld")
-    (version "1.0.5")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "PyLD" version))
-              (sha256
-               (base32
-                "1ywbdbsrkg533qh8xn9ifjh2mvam6v5msrjyqq73jfpvcp89qvff"))))
+    (version "2.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "PyLD" version))
+       (sha256
+        (base32 "1k7ars8n6kramkvadxgy0qfsi5g1hipyha4wqw8l75mw1l7ka7ii"))))
     (build-system python-build-system)
+    (native-inputs (list python-lxml))
+    (propagated-inputs (list python-cachetools python-frozendict))
     (home-page "https://github.com/digitalbazaar/pyld")
     (synopsis "Python implementation of the JSON-LD specification")
-    (description
-     "PyLD is an implementation of the JSON-LD specification.")
+    (description "PyLD is an implementation of the JSON-LD specification.")
     (license license:bsd-3)))
 
 (define-public python-cli-helpers
@@ -11628,6 +11629,26 @@ finding unresolved symbols in Python code and their corresponding imports.")
      "@code{inotify-simple} is a simple wrapper around inotify library.")
     (license license:bsd-3)))
 
+(define-public python-interface-meta
+  (package
+    (name "python-interface-meta")
+    (version "1.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "interface_meta" version))
+       (sha256
+        (base32 "18brkmz2ssjikkrkb23cwccp683yi6y1alfdbmjvjgxpppw96i4a"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-poetry-core python-pytest))
+    (home-page "https://github.com/matthewwardrop/interface_meta")
+    (synopsis
+     "API for enforced method signatures and consistent documentation")
+    (description
+     "This package provides a convenient way to expose an extensible API with
+enforced method signatures and consistent documentation.")
+    (license license:expat)))
+
 (define-public python-jaraco-classes
   (package
     (name "python-jaraco-classes")
@@ -12177,15 +12198,15 @@ without using the configuration machinery.")
 (define-public python-treelib
   (package
     (name "python-treelib")
-    (version "1.6.1")
+    (version "1.7.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "treelib" version))
               (sha256
                (base32
-                "1247rv9fbb8pw3xbkbz04q3vnvvva3hcw002gp1clp5psargzgqw"))))
+                "0qgv61g1p06kzf5fd2hcim5s49nzbv8k210frnk45rmr2vs1mzwv"))))
     (build-system python-build-system)
-    (propagated-inputs (list python-future))
+    (propagated-inputs (list python-six))
     (home-page "https://github.com/caesar0301/treelib")
     (synopsis "Implementation of a tree structure in Python")
     (description
@@ -19253,13 +19274,13 @@ designed to work across multiple versions of Python.")
 (define-public python-cookiecutter
   (package
     (name "python-cookiecutter")
-    (version "2.5.0")
+    (version "2.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cookiecutter" version))
        (sha256
-        (base32 "1v1iafk8j2f5cciw9mf4263v91070c6z049cpnw42gwffhs907p6"))))
+        (base32 "0762882zrvf3sslr9r7v8wkdwjckhm2clj4d831gvx54kqbgh8fv"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -35356,14 +35377,14 @@ adapted from the @code{packaging} package.")
 (define-public python-shtab
   (package
     (name "python-shtab")
-    (version "1.5.3")
+    (version "1.7.1")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "shtab" version))
         (sha256
-          (base32 "127mymfm7r0hddk2vknqq34fj6dirj6ip990i3g4isx0lsd7pnsc"))))
-    (build-system python-build-system)
+          (base32 "0g14778c5zgiq6b92k40n9irp75c5vcsvl5541cw8bmqxq1cnjsf"))))
+    (build-system pyproject-build-system)
     (native-inputs
       (list bash
             python-pytest
@@ -35371,15 +35392,6 @@ adapted from the @code{packaging} package.")
             python-pytest-timeout
             python-setuptools-scm
             python-wheel))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace
-             'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (invoke "pytest")))))))
     (home-page "https://github.com/iterative/shtab")
     (synopsis "Automagic shell tab completion for Python CLI applications")
     (description

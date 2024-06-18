@@ -5268,41 +5268,46 @@ addon modules.")
 (define-public python-wtforms
   (package
     (name "python-wtforms")
-    (version "2.3.3")
+    (version "3.1.2")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "WTForms" version))
+       (uri (pypi-uri "wtforms" version))
        (sha256
-        (base32
-         "17427m7p9nn9byzva697dkykykwcp2br3bxvi8vciywlmkh5s6c1"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'delete-bundled-test
-           (lambda _
-             ;; Delete test copied from a third party package that fails
-             ;; with newer SQLAlchemy.  This can be removed for 3.0.
-             ;; See <https://github.com/wtforms/wtforms/issues/696>.
-             (delete-file "tests/ext_sqlalchemy.py")))
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (invoke "python" "setup.py" "compile_catalog")
-               (invoke "python" "tests/runtests.py")))))))
-    (native-inputs
-     (list python-dateutil python-sqlalchemy))
-    (propagated-inputs
-     (list python-babel python-email-validator python-markupsafe))
-    (home-page "http://wtforms.simplecodes.com/")
+        (base32 "1fblnkzvs6339glwx8bskdjy7nhn2ap90y9g6b399713sy063mzq"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-hatchling python-pytest))
+    (propagated-inputs (list python-babel python-email-validator
+                             python-markupsafe))
+    (home-page "https://wtforms.readthedocs.io/")
     (synopsis
      "Form validation and rendering library for Python web development")
     (description
      "WTForms is a flexible forms validation and rendering library
 for Python web development.  It is very similar to the web form API
 available in Django, but is a standalone package.")
+    (license license:bsd-3)))
+
+(define-public python-wtforms-sqlalchemy
+  (package
+    (name "python-wtforms-sqlalchemy")
+    (version "0.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "WTForms-SQLAlchemy" version))
+       (sha256
+        (base32 "1nx4x0ifanlbrzh3f9ns8ihnchlkzf54ilvqmgcgcz2j72vm43rp"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest))
+    (propagated-inputs (list python-sqlalchemy python-wtforms))
+    (home-page "https://github.com/wtforms/wtforms-sqlalchemy/")
+    (synopsis "SQLAlchemy tools for WTForms")
+    (description
+     "WTForms-SQLAlchemy is a fork of the @code{wtforms.ext.sqlalchemy}
+package from WTForms.  The package has been renamed to
+@code{wtforms_sqlalchemy} but otherwise should function the same as
+@code{wtforms.ext.sqlalchemy} did.")
     (license license:bsd-3)))
 
 (define-public python-paste

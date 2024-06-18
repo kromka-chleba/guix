@@ -291,7 +291,7 @@ inside Coq.")
 (define-public coq-gappa
   (package
     (name "coq-gappa")
-    (version "1.5.3")
+    (version "1.5.5")
     (source
      (origin
        (method git-fetch)
@@ -301,7 +301,7 @@ inside Coq.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1dzkb2sfglhik2ymw8p65khl163xxjsaqji9agnnkvlk5r6589v6"))))
+         "0w780wk10khzfx6d633dyzx9q0hvqgimqbzc3irjzvsbpvb0zm5c"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf
@@ -351,7 +351,7 @@ assistant.")
 (define-public coq-mathcomp
   (package
     (name "coq-mathcomp")
-    (version "1.17.0")
+    (version "1.19.0")
     (source
      (origin
        (method git-fetch)
@@ -360,7 +360,7 @@ assistant.")
              (commit (string-append "mathcomp-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "06i6kw5p2024n6h9mf8bvwn54il1a4z2h4qrgc8y0iq8hkvx4fnd"))))
+        (base32 "0dij9zl2ag083dzgrv2j16ks2kkn2xxwnk1wr5956zw1y7ynrzb3"))))
     (build-system gnu-build-system)
     (native-inputs
      (list ocaml which coq))
@@ -388,7 +388,7 @@ part of the distribution.")
 (define-public coq-coquelicot
   (package
     (name "coq-coquelicot")
-    (version "3.4.0")
+    (version "3.4.1")
     (source
      (origin
        (method git-fetch)
@@ -398,7 +398,7 @@ part of the distribution.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1f6zim6hnm6zrij964vas6rfbxh5p147qsxxmmbxm7gyb85hhy45"))))
+         "1y22dqdklh3c8rbhar0d7mzaj84q6zyfik7namx5q4ma76s2rx73"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake ocaml which coq))
@@ -471,7 +471,7 @@ provides BigN, BigZ, BigQ that used to be part of Coq standard library.")
 (define-public coq-interval
   (package
     (name "coq-interval")
-    (version "4.8.0")
+    (version "4.10.0")
     (source
      (origin
        (method git-fetch)
@@ -481,7 +481,7 @@ provides BigN, BigZ, BigQ that used to be part of Coq standard library.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0m3icx77p99ld9qfl3xjq62q572pyi4m77i1kc3whvipvg7834rh"))))
+         "039c29hc8mzp2is6zh9fps36k03hlvx6zz08h03vj6dhjgr7njz8"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake ocaml which coq))
@@ -645,7 +645,7 @@ also provided in Coq, without associated proofs.")
 (define-public coq-stdpp
   (package
     (name "coq-stdpp")
-    (version "1.8.0")
+    (version "1.10.0")
     (synopsis "Alternative Coq standard library std++")
     (source (origin
               (method git-fetch)
@@ -655,7 +655,7 @@ also provided in Coq, without associated proofs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xawh3xkh76yhs689zw52k55cbzga2gyzl4g1a3pgg6yy420chjn"))))
+                "0lnvdfn4qq2lyabiq4ikb5ya46f4jp59dynyprnhki0ay9xagz3d"))))
     (build-system gnu-build-system)
     (inputs
      (list coq))

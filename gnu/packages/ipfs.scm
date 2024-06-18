@@ -5,6 +5,7 @@
 ;;; Copyright © 2020, 2021, 2022 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2022 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2023, 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -37,6 +38,38 @@
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages python)
   #:use-module (gnu packages shells))
+
+(define-public go-github-com-ipfs-go-block-format
+  (package
+    (name "go-github-com-ipfs-go-block-format")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-block-format")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pd8ww06ss922g3w2fgi3w0q66y2mkb9b2q9x5qxabrjj65xranz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/ipfs/go-block-format"))
+    (propagated-inputs
+     (list go-github-com-multiformats-go-multihash
+           go-github-com-multiformats-go-varint
+           go-github-com-ipfs-go-cid
+           go-github-com-ipfs-go-ipfs-util))
+    (home-page "https://github.com/ipfs/go-block-format")
+    (synopsis "Set of interfaces for CID addressable blocks of data")
+    (description
+     "Package @code{blocks} contains the lowest level of @acronym{IPLD,
+InterPlanetary Linked Data} data structures. A block is raw data accompanied
+by a @acronym{Content Identifiers,CID}. The CID contains the multihash
+corresponding to the block.")
+    (license license:expat)))
 
 (define-public go-github-com-ipfs-go-cid
   (package
@@ -126,6 +159,67 @@ that are shared between @command{go-ipfs/commands} and its rewrite
 @command{go-ipfs-cmds}.")
       (license license:expat))))
 
+(define-public go-github-com-ipfs-go-ipfs-delay
+  (package
+    (name "go-github-com-ipfs-go-ipfs-delay")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-ipfs-delay")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0a5acj622sk1hibnh893mya4h86nsy1dan0wlh9q444c04iqpviw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-ipfs-delay"))
+    (home-page "https://github.com/ipfs/go-ipfs-delay")
+    (synopsis "Configurable delays to other objects")
+    (description
+     "This package implements a threadsafe configurable delays to other
+objects.")
+    (license license:expat)))
+
+(define-public go-github-com-ipfs-go-datastore
+  (package
+    (name "go-github-com-ipfs-go-datastore")
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-datastore")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1xbhh3gm7bgd2d1p821w8gmbh87aix1g1ynhbl7gjaxxyhrsh68n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-datastore"))
+    (native-inputs
+     (list go-gopkg-in-check-v1))
+    (propagated-inputs
+     (list go-github-com-google-uuid
+           go-github-com-ipfs-go-detect-race
+           go-github-com-ipfs-go-ipfs-delay
+           go-github-com-jbenet-goprocess
+           go-go-uber-org-multierr
+           go-golang-org-x-xerrors))
+    (home-page "https://github.com/ipfs/go-datastore")
+    (synopsis "Key-value datastore interfaces")
+    (description
+     "Datastore is a generic layer of abstraction for data store and database access.
+It is a simple API with the aim to enable application development in a
+datastore-agnostic way, allowing datastores to be swapped seamlessly without
+changing application code.  Thus, one can leverage different datastores with
+different strengths without committing the application to one datastore
+throughout its lifetime.")
+    (license license:expat)))
+
 (define-public go-github-com-ipfs-go-detect-race
   (package
     (name "go-github-com-ipfs-go-detect-race")
@@ -143,7 +237,7 @@ that are shared between @command{go-ipfs/commands} and its rewrite
     (arguments
      (list
       #:go go-1.21
-      #:import-path "github.com/ipfs/go-log/v2"))
+      #:import-path "github.com/ipfs/go-detect-race"))
     (home-page "https://github.com/ipfs/go-detect-race")
     (synopsis "Detect if compiled with race")
     (description "Check if the race detector is running.")
@@ -173,6 +267,35 @@ that are shared between @command{go-ipfs/commands} and its rewrite
     (synopsis "Common utilities used by @code{go-ipfs} and related packages")
     (description
      "Common utilities used by @code{go-ipfs} and other related Go packages.")
+    (license license:expat)))
+
+(define-public go-github-com-ipfs-go-ipld-format
+  (package
+    (name "go-github-com-ipfs-go-ipld-format")
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-ipld-format")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zl172ncmx9h5z2p3d0j1377xm9glw4zfyamks31p0pvvx2kyn7c"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/ipfs/go-ipld-format"))
+    (propagated-inputs
+     (list go-github-com-multiformats-go-multihash
+           go-github-com-ipfs-go-block-format
+           go-github-com-ipfs-go-cid))
+    (home-page "https://github.com/ipfs/go-ipld-format")
+    (synopsis "IPLD Node and Resolver interfaces in Go")
+    (description
+     "@code{go-ipld-format} is a set of interfaces that a type needs to implement in
+order to be a part of the @acronym{IPLD, InterPlanetary Linked Data} merkle-forest.")
     (license license:expat)))
 
 (define-public go-github-com-ipfs-go-ipfs-api
@@ -421,9 +544,14 @@ written in Go.")
                              "vendor/github.com/google/uuid"
                              "vendor/github.com/gorilla"
                              "vendor/github.com/hashicorp"
+                             "vendor/github.com/ipfs/go-block-format"
                              "vendor/github.com/ipfs/go-cid"
                              "vendor/github.com/ipfs/go-cidutil"
+                             "vendor/github.com/ipfs/go-datastore"
+                             "vendor/github.com/ipfs/go-detect-race"
+                             "vendor/github.com/ipfs/go-ipfs-delay"
                              "vendor/github.com/ipfs/go-ipfs-util"
+                             "vendor/github.com/ipfs/go-ipld-format"
                              "vendor/github.com/ipfs/go-log"
                              "vendor/github.com/jackpal"
                              "vendor/github.com/jbenet"
@@ -494,11 +622,10 @@ written in Go.")
                   go-github-com-google-uuid
                   go-github-com-hashicorp-go-multierror
                   ;;go-github-com-ipfs-boxo
-                  ;;go-github-com-ipfs-go-block-format
+                  go-github-com-ipfs-go-block-format
                   go-github-com-ipfs-go-cid
                   go-github-com-ipfs-go-cidutil
-                  ;;go-github-com-ipfs-go-datastore
-                  ;;go-github-com-ipfs-go-detect-race
+                  go-github-com-ipfs-go-datastore
                   ;;go-github-com-ipfs-go-ds-badger
                   ;;go-github-com-ipfs-go-ds-flatfs
                   ;;go-github-com-ipfs-go-ds-leveldb
@@ -506,7 +633,7 @@ written in Go.")
                   ;;go-github-com-ipfs-go-fs-lock
                   ;;go-github-com-ipfs-go-ipfs-cmds
                   ;;go-github-com-ipfs-go-ipld-cbor
-                  ;;go-github-com-ipfs-go-ipld-format
+                  go-github-com-ipfs-go-ipld-format
                   ;;go-github-com-ipfs-go-ipld-git
                   ;;go-github-com-ipfs-go-ipld-legacy
                   go-github-com-ipfs-go-log

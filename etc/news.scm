@@ -31,6 +31,18 @@
 (channel-news
  (version 0)
 
+ (entry (commit "6fad0fd1c32db2cb25447b694f08d5c7836536ad")
+        (title
+          (en "Linux-libre 6.8 removed due to end of upstream support")
+          (de "Linux-libre 6.8 wurde entfernt"))
+        (body
+          (en "The linux-libre 6.8 kernel series has reached the end of
+             its life, and is no longer supported upstream.  For this
+             reason, it has been removed from GNU Guix.")
+          (de "Die @code{linux-libre} 6.8-Versionsreihe hat ihr
+Supportende erreicht und wird nicht mehr unterstützt („end of life“). Daher ist die
+Versionsreihe aus GNU Guix entfernt worden.")))
+
  (entry (commit "8d1d98a3aa3448b9d983e4bd64243a938b96e8ab")
         (title
          (en "@command{guix git authenticate} usage simplified")

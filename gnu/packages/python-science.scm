@@ -142,6 +142,32 @@ optimization problems in Python.")
 numerical software for solving convex second-order cone programs (SOCPs).")
     (license license:gpl3)))
 
+(define-public python-formulaic
+  (package
+    (name "python-formulaic")
+    (version "1.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "formulaic" version))
+       (sha256
+        (base32 "18gvd3f2x358jj0df8vx5fhhnvzw047rsrs03vmvqnxaly97kpb4"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-astor
+                             python-cached-property
+                             python-interface-meta
+                             python-numpy
+                             python-pandas
+                             python-scipy
+                             python-typing-extensions
+                             python-wrapt))
+    (native-inputs (list python-hatchling python-hatch-vcs python-pytest))
+    (home-page "https://github.com/matthewwardrop/formulaic")
+    (synopsis "Implementation of Wilkinson formulas")
+    (description "Formulaic is a high-performance implementation of Wilkinson
+formulas for Python.")
+    (license license:expat)))
+
 (define-public python-osqp
   (package
     (name "python-osqp")
@@ -581,6 +607,63 @@ library to minimize (very) expensive and noisy black-box functions.  It
 implements several methods for sequential model-based optimization.
 @code{skopt} aims to be accessible and easy to use in many contexts.")
     (license license:bsd-3)))
+
+(define-public python-scikit-survival
+  (let ((revision "1")
+        ;; We need a later commit for support of a more recent sklearn and
+        ;; numpy 2.
+        (commit "bceb53ebb8306f959c70fae2be9d552f33dd3f21"))
+    (package
+      (name "python-scikit-survival")
+      (version (git-version "0.22.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sebp/scikit-survival")
+               (commit commit)
+               ;; This package contains a copy of Eigen.  It would be good to
+               ;; figure out how to use our own Eigen package.
+               (recursive? #true)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1m3z64nv4sgay0mdrrw4q4z5ylx63a9w2x43w1r4g8kpg7z9rdfc"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'build 'set-version
+              (lambda _
+                (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
+                        #$(version-major+minor version)))))))
+      (propagated-inputs
+       (list python-ecos
+             python-importlib-resources
+             python-joblib
+             python-numexpr
+             python-numpy
+             python-osqp
+             python-pandas
+             python-scikit-learn
+             python-scipy))
+      (native-inputs
+       (list python-black
+             python-pypa-build
+             python-coverage
+             python-cython-3
+             python-packaging
+             python-pytest
+             python-setuptools-scm
+             python-tomli
+             python-tox))
+      (home-page "https://github.com/sebp/scikit-survival")
+      (synopsis "Survival analysis built on top of scikit-learn")
+      (description "Scikit-survival is a Python module for survival analysis
+built on top of scikit-learn.  It allows doing survival analysis while
+utilizing the power of scikit-learn, e.g., for pre-processing or doing
+cross-validation.")
+      (license license:gpl3+))))
 
 (define-public python-tdda
   (package
