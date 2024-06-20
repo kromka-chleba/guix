@@ -46322,6 +46322,10 @@ defaults to @code{'()}, for Guix Home.  Otherwise to
 The list of files or directories to be backed up.  It must be a list of
 values that can be lowered to strings.
 
+@item @code{init?} (default: @code{#f}) (type: boolean)
+Whether restic-backup-service should check and (if it does not exist)
+initialize the repository before running the backup.
+
 @item @code{verbose?} (default: @code{#f}) (type: boolean)
 Whether to enable verbose output for the current backup job.
 

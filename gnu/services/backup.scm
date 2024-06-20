@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2024, 2025 Giacomo Leidi <therewasa@fishinthecalculator.me>
+;;; Copyright © 2024 Richard Sent <richard@freakingpenguin.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -45,6 +46,7 @@
             restic-backup-job-schedule
             restic-backup-job-files
             restic-backup-job-requirement
+            restic-backup-job-init?
             restic-backup-job-verbose?
             restic-backup-job-extra-flags
 
@@ -137,6 +139,9 @@ values that can be lowered to strings.")
   (verbose?
    (boolean #f)
    "Whether to enable verbose output for the current backup job.")
+  (init?
+   (boolean #f)
+   "Whether to attempt to initialize a new repository for automated bootstrap purposes.")
   (extra-flags
    (list-of-lowerables '())
    "A list of values that are lowered to strings.  These will be passed as
@@ -173,6 +178,9 @@ command-line arguments to the current job @command{restic backup} invocation."))
     #~(list (list #$@files) #$restic #$repository #$password-file
             (list #$@verbose?) (list #$@extra-flags))))
 
+(define (lower-restic-init-job config)
+  `(() #$@(cdr (lower-restic-backup-job config))))
+
 (define restic-program
   #~(lambda (action action-args job-restic repository password-file verbose? extra-flags)
       (use-modules (ice-9 format))
@@ -203,6 +211,15 @@ command-line arguments to the current job @command{restic backup} invocation."))
 
        (apply restic-exec `("backup" ,@job)))))
 
+(define (restic-init-job-program config)
+  (program-file
+   "restic-init"
+   #~(let ((restic-exec
+            #$restic-program)
+           (job (lower-restic-init-job config)))
+
+       (apply restic-exec `("init" ,@job)))))
+
 (define (restic-guix jobs)
   (program-file
    "restic-guix"
@@ -211,9 +228,10 @@ command-line arguments to the current job @command{restic backup} invocation."))
                     (srfi srfi-1))
 
        (define names '#$(map restic-backup-job-name jobs))
+       (define init-programs '#$(map restic-init-job-program jobs))
        (define programs '#$(map restic-backup-job-program jobs))
 
-       (define (get-program name)
+       (define (get-program name programs)
          (define idx
            (list-index (lambda (n) (string=? n name)) names))
          (unless idx
@@ -224,7 +242,21 @@ command-line arguments to the current job @command{restic backup} invocation."))
 
        (define (backup args)
          (define name (third args))
-         (define program (get-program name))
+         (define init-program (get-program name init-programs))
+         (define program (get-program name programs))
+
+         (when #$init?
+           ;; Use cat config to check if the repository exists. See
+           ;; https://github.com/restic/restic/issues/1690 and
+           ;; https://github.com/NixOS/nixpkgs/pull/307962.
+           ;;
+           ;; XXX: restic returns values other than 1 on failure. Check
+           ;; EXIT_SUCCESS instead of EXIT_FAILURE.
+           (unless (or (equal? EXIT_SUCCESS (system* #$restic "cat" "config"
+                                                     "-r" #$repository))
+                       (equal? EXIT_SUCCESS (system* #$init-program)))
+             (error "Failed to initialize restic repository: " #$repository)))
+
          (execlp program program))
 
        (define (validate-args args)
