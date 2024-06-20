@@ -588,7 +588,7 @@ consistent with the HTTP protocol definition.")
 (define-public go-github-com-felixge-httpsnoop
   (package
     (name "go-github-com-felixge-httpsnoop")
-    (version "1.0.1")
+    (version "1.0.4")
     (source
      (origin
        (method git-fetch)
@@ -597,7 +597,7 @@ consistent with the HTTP protocol definition.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ncd8lar5zxiwjhsp315s4hsl4bhnm271h49jhyxc66r5yffgmac"))))
+        (base32 "1xrvg5ndpz4gv9mf9xl6p6gjmvvv8bbzaspcr070qxx72jhlllkk"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "github.com/felixge/httpsnoop"))
@@ -2243,7 +2243,7 @@ the Go standard library}.")
 (define-public go-github-com-quic-go-quic-go
   (package
     (name "go-github-com-quic-go-quic-go")
-    (version "0.42.0")
+    (version "0.43.0")
     (source
      (origin
        (method git-fetch)
@@ -2252,7 +2252,7 @@ the Go standard library}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0bdr48nbcjajmhx1h11qfl1i7myxqpyqqk5n21007xyqw13qhb8c"))))
+        (base32 "1vqc1mb60flbm5jqf48gzhzm8m0k06klf9szpx6mgw30957qv3fn"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -2298,6 +2298,39 @@ the Go standard library}.")
     (description
      "This package provides a Go language implementation of the QUIC network
 protocol.")
+    (license license:expat)))
+
+(define-public go-github-com-quic-go-webtransport-go
+  (package
+    (name "go-github-com-quic-go-webtransport-go")
+    (version "0.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/quic-go/webtransport-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zwr4jg4dg2b14kkypkbs8dpai5b5s44gm5gq0vrs3mmg6vq0v97"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/quic-go/webtransport-go"))
+    (native-inputs
+     (list go-go-uber-org-mock
+           go-github-com-stretchr-testify-next))
+    (propagated-inputs
+     (list go-github-com-quic-go-quic-go
+           go-golang-org-x-exp))
+    (home-page "https://github.com/quic-go/webtransport-go")
+    (synopsis "WebTransport implementation based on quic-go")
+    (description
+     "webtransport-go is an implementation of the @code{WebTransport} protocol, based
+on @@url{https://github.com/quic-go/quic-go,quic-go}.  It currently implements
+@@url{https://www.ietf.org/archive/id/draft-ietf-webtrans-http3-02.html,draft-02}
+of the specification.")
     (license license:expat)))
 
 (define-public go-github-com-sherclockholmes-webpush-go

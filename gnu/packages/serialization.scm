@@ -20,6 +20,7 @@
 ;;; Copyright © 2024 Paul A. Patience <paul@apatience.com>
 ;;; Copyright © 2024 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2024 Wilko Meyer <w@wmeyer.eu>
+;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -901,7 +902,7 @@ game development and other performance-critical applications.")
 (define-public flatbuffers-next
   (package
     (inherit flatbuffers)
-    (version "23.1.21")
+    (version "23.5.26")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -910,18 +911,7 @@ game development and other performance-critical applications.")
               (file-name (git-file-name "flatbuffers" version))
               (sha256
                (base32
-                "1z3a6l8g2y53i5xzraswfs2i0i3kk52zv7nzc2q3fgisbyiri3pz"))))))
-
-(define-public flatbuffers-next-shared
-  (package
-    (inherit flatbuffers-next)
-    (name "flatbuffers-shared")
-    (version "23.1.21")
-    (arguments
-     (substitute-keyword-arguments (package-arguments flatbuffers-next)
-       ((#:configure-flags  flags)
-        ;; Compile with -fPIC, needed for shared lib.
-        #~(cons "-DFLATBUFFERS_CXX_FLAGS=-fPIC" #$flags))))))
+                "0cd12dvkzqdafz46q4302mzgpzbz589zmmiga7bq07f2sqy4vrvv"))))))
 
 (define-public python-flatbuffers
   (package
@@ -959,6 +949,44 @@ format for Python.")
     (description "This package provides a Python wrapper library to the
 Apache Arrow-based Feather binary columnar serialization data frame format.")
     (license license:asl2.0)))
+
+(define-public libnop
+  (let ((commit "35e800d81f28c632956c5a592e3cbe8085ecd430")
+        (revision "0"))
+    (package
+      (name "libnop")
+      (version (git-version "0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/google/libnop")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0qqbaljq54qiq0dky9nj47igfcs065ry526jg9a0aafbfl9krpy2"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:test-target "test"
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "out/test"))))
+            (replace 'install
+              (lambda _
+                (copy-recursively
+                 "include" (string-append #$output "/include")))))))
+      (native-inputs (list googletest))
+      (home-page "https://github.com/google/libnop")
+      (synopsis "C++ Native Object Protocols")
+      (description "@code{libnop} is a header-only library for serializing and
+deserializing C++ data types without external code generators or runtime
+support libraries.")
+      (license license:asl2.0))))
 
 (define-public valijson
   (package

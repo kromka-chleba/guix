@@ -13,6 +13,7 @@
 ;;; Copyright © 2020 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2021 Stefan Reichör <stefan@xsteve.at>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -458,9 +459,9 @@ command---e.g., @code{%salloc}, @code{%sbatch}, etc.")
 (define-public pthreadpool
   ;; This repository has only one tag, 0.1, which is older than what users
   ;; such as XNNPACK expect.
-  (let ((commit "1787867f6183f056420e532eec640cba25efafea")
+  (let ((commit "178e3e0646cc671708bf78e77c273940130ac637")
         (version "0.1")
-        (revision "1"))
+        (revision "2"))
     (package
       (name "pthreadpool")
       (version (git-version version revision commit))
@@ -471,7 +472,7 @@ command---e.g., @code{%salloc}, @code{%sbatch}, etc.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "02hdvxfn5krw8zivkgjx3b4rk9p02yr4mpdjlp75lsv6z1xf5yrx"))
+                  "1s86lnq9bahacf5wxn7y14w70jh3g9lq1l7y16ijwhifd01nc2km"))
                 (patches (search-patches "pthreadpool-system-libraries.patch"))))
       (build-system cmake-build-system)
       (arguments '(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")))
@@ -488,8 +489,8 @@ features.")
 (define-public cpuinfo
   ;; There's currently no tag on this repo.
   (let ((version "0.0")
-        (revision "2")
-        (commit "53298db833c5c5a1598639e9b47cc1a602bbac26"))
+        (revision "3")
+        (commit "aa4b2163b99ac9534194520f70b93eeefb0b3b4e"))
     (package
       (name "cpuinfo")
       (version (git-version version revision commit))
@@ -500,12 +501,13 @@ features.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "01kfgxya2w32dz9bd3qm3i2d6nffw0qfyql11rxl7d3g830brj5k"))
-                (patches (search-patches "cpuinfo-system-libraries.patch"))))
+                  "12x4krkyzxngf1l2ck33lnsp8pyzf6gyjj9mp9cnka9mw3h6617m"))))
       (build-system cmake-build-system)
       (arguments
        (list
-        #:configure-flags '(list "-DBUILD_SHARED_LIBS=ON")
+        #:configure-flags
+        '(list "-DBUILD_SHARED_LIBS=ON"
+               "-DUSE_SYSTEM_LIBS=ON")
         #:phases
         '(modify-phases %standard-phases
            (add-after 'unpack 'skip-bad-test
@@ -521,6 +523,9 @@ GTEST_SKIP() << \"See https://github.com/pytorch/cpuinfo/issues/132\";"))))))))
        "The cpuinfo library provides a C/C++ and a command-line interface to
 obtain information about the CPU being used: supported instruction set,
 processor name, cache information, and topology information.")
+      ;; On aarch64-linux, there is a bug reported upstream:
+      ;; https://github.com/pytorch/cpuinfo/issues/14
+      (supported-systems '("armv7-linux" "i686-linux" "x86_64-linux"))
       (license license:bsd-2))))
 
 (define-public clog
@@ -531,11 +536,14 @@ processor name, cache information, and topology information.")
               (inherit (package-source cpuinfo))
               (patches (search-patches "clog-fix-shared-build.patch"))))
     (arguments
-     (list #:configure-flags #~(list "-DBUILD_SHARED_LIBS=ON")
-           #:phases #~(modify-phases %standard-phases
-                        (add-after 'unpack 'chdir
-                          (lambda _
-                            (chdir "deps/clog"))))))
+     (list
+      #:configure-flags
+      ''("-DBUILD_SHARED_LIBS=ON"
+         "-DUSE_SYSTEM_LIBS=ON")
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'chdir
+                     (lambda _
+                       (chdir "deps/clog"))))))
     (native-inputs (list googletest))
     (inputs '())
     (synopsis "C-style logging library based on printf")

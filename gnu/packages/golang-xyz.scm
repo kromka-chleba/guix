@@ -877,138 +877,90 @@ objects can be cached in memory without increased latency or degraded
 throughput.")
     (license license:expat)))
 
-(define-public go-github-com-coreos-go-systemd-activation
+(define-public go-github-com-coreos-go-systemd-v22
   (package
-    (name "go-github-com-coreos-go-systemd-activation")
-    (version "0.0.0-20191104093116-d3cd4ed1dbcf")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/coreos/go-systemd")
-                    (commit (go-version->git-ref version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "193mgqn7n4gbb8jb5kyn6ml4lbvh4xs55qpjnisaz7j945ik3kd8"))))
+    (name "go-github-com-coreos-go-systemd-v22")
+    (version "22.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/coreos/go-systemd")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vhb4cw8nw9nx8mprx829xv8w4jnwhc2lcyjljzlfafsn8nx5nyf"))))
     (build-system go-build-system)
     (arguments
-     '(#:import-path "github.com/coreos/go-systemd/activation"
-       #:unpack-path "github.com/coreos/go-systemd"))
+     (list
+      #:import-path "github.com/coreos/go-systemd/v22"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-sdjournal-header
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* "sdjournal/journal.go"
+                  (("systemd/sd-journal.h") "elogind/sd-journal.h")
+                  (("systemd/sd-id128.h") "elogind/sd-id128.h")))))
+          ;; XXX: Activate when go-build-system supports submodules.
+          (delete 'build)
+          (add-before 'check 'remove-failing-test-files
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each delete-file
+                          (list
+                           ;; dial unix /var/run/dbus/system_bus_socket: connect: no such
+                           ;; file or directory
+                           "dbus/dbus_test.go"
+                           "dbus/methods_test.go"
+                           "dbus/subscription_set_test.go"
+                           "dbus/subscription_test.go"
+                           "import1/dbus_test.go"
+                           "login1/dbus_test.go"
+                           "machine1/dbus_test.go"
+                           ;; journal_test.go:30: journald socket not detected
+                           "journal/journal_test.go"
+                           ;; exec: "systemd-run": executable file not found
+                           ;; in $PATH
+                           "journal/journal_unix_test.go"
+                           ;; Error opening journal: unable to open a handle
+                           ;; to the library
+                           "sdjournal/journal_test.go"
+                           ;; Error getting an existing function: unable to
+                           ;; open a handle to the library
+                           "sdjournal/functions_test.go")))))
+          ;; XXX: Replace when go-build-system supports nested path.
+          (replace 'check
+            (lambda* (#:key import-path tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (inputs
+     (list elogind))
+    (propagated-inputs
+     (list go-github-com-godbus-dbus))
     (home-page "https://github.com/coreos/go-systemd")
-    (synopsis "Go bindings to systemd socket activation")
-    (description "Go bindings to systemd socket activation; for writing and
-using socket activation from Go.")
+    (synopsis "Go bindings to systemd")
+    (description
+     "This package implements a various systemd bindings and provides Golang
+submodules:
+
+@itemize
+@item @code{activation} - for writing and using socket activation from Go
+@item @code{daemon} - for notifying systemd of service status changes
+@item @code{dbus} - for starting/stopping/inspecting running services and units
+@item @code{journal} - for writing to systemd's logging service, journald
+@item @code{sdjournal} - for reading from journald by wrapping its C API
+@item @code{login1} - for integration with the systemd logind API
+@item @code{machine1} - for registering machines/containers with systemd
+@item @code{unit} - for (de)serialization and comparison of unit files
+@end itemize")
     (license license:asl2.0)))
-
-(define-public go-github-com-coreos-go-systemd-daemon
-  (package
-    (inherit go-github-com-coreos-go-systemd-activation)
-    (name "go-github-com-coreos-go-systemd-daemon")
-    (arguments
-     '(#:import-path "github.com/coreos/go-systemd/daemon"
-       #:unpack-path "github.com/coreos/go-systemd"))
-    (home-page "https://github.com/coreos/go-systemd")
-    (synopsis "Go bindings to systemd for notifications")
-    (description "Go bindings to systemd for notifying the daemon of service
-status changes")))
-
-(define-public go-github-com-coreos-go-systemd-dbus
-  (package
-    (inherit go-github-com-coreos-go-systemd-activation)
-    (name "go-github-com-coreos-go-systemd-dbus")
-    (arguments
-     '(#:tests? #f ;Tests require D-Bus daemon running.
-       #:import-path "github.com/coreos/go-systemd/dbus"
-       #:unpack-path "github.com/coreos/go-systemd"))
-    (native-inputs (list go-github-com-godbus-dbus))
-    (home-page "https://github.com/coreos/go-systemd")
-    (synopsis "Go bindings to systemd for managing services")
-    (description "Go bindings to systemd for starting/stopping/inspecting
-running services and units.")))
-
-(define-public go-github-com-coreos-go-systemd-journal
-  (package
-    (inherit go-github-com-coreos-go-systemd-activation)
-    (name "go-github-com-coreos-go-systemd-journal")
-    (arguments
-     '(#:tests? #f ;Tests require access to journald socket.
-       #:import-path "github.com/coreos/go-systemd/journal"
-       #:unpack-path "github.com/coreos/go-systemd"))
-    (home-page "https://github.com/coreos/go-systemd")
-    (synopsis "Go bindings to systemd for writing journald")
-    (description "Go bindings to systemd for writing to systemd's logging
-service, journald.")))
-
-(define-public go-github-com-coreos-go-systemd-login1
-  (package
-    (inherit go-github-com-coreos-go-systemd-activation)
-    (name "go-github-com-coreos-go-systemd-login1")
-    (arguments
-     '(#:tests? #f ;Tests require D-Bus daemon running.
-       #:import-path "github.com/coreos/go-systemd/login1"
-       #:unpack-path "github.com/coreos/go-systemd"))
-    (native-inputs (list go-github-com-godbus-dbus))
-    (home-page "https://github.com/coreos/go-systemd")
-    (synopsis "Go bindings to systemd for integration with logind API")
-    (description "Go bindings to systemd for integration with the systemd
-logind API.")))
-
-(define-public go-github-com-coreos-go-systemd-machine1
-  (package
-    (inherit go-github-com-coreos-go-systemd-activation)
-    (name "go-github-com-coreos-go-systemd-machine1")
-    (arguments
-     '(#:tests? #f ;Tests require D-Bus daemon running.
-       #:import-path "github.com/coreos/go-systemd/machine1"
-       #:unpack-path "github.com/coreos/go-systemd"))
-    (native-inputs (list go-github-com-godbus-dbus))
-    (home-page "https://github.com/coreos/go-systemd")
-    (synopsis "Go bindings to systemd for registering machines/containers")
-    (description "Go bindings to systemd for registering
-machines/containers.")))
-
-(define-public go-github-com-coreos-go-systemd-sdjournal
-  (package
-    (inherit go-github-com-coreos-go-systemd-activation)
-    (name "go-github-com-coreos-go-systemd-sdjournal")
-    (arguments
-     '(#:tests? #f ;Tests require D-Bus daemon running.
-       #:import-path "github.com/coreos/go-systemd/sdjournal"
-       #:unpack-path "github.com/coreos/go-systemd"
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-sdjournal-header
-           (lambda* (#:key import-path #:allow-other-keys)
-             (substitute* (format #f
-                                  "src/~a/journal.go"
-                                  import-path)
-               (("systemd/sd-journal.h")
-                "elogind/sd-journal.h")
-               (("systemd/sd-id128.h")
-                "elogind/sd-id128.h")))))))
-    (inputs (list elogind))
-    (synopsis "Go bindings to systemd for journald")
-    (description "Go bindings to systemd for reading from journald by wrapping
-its C API.")))
-
-(define-public go-github-com-coreos-go-systemd-unit
-  (package
-    (inherit go-github-com-coreos-go-systemd-activation)
-    (name "go-github-com-coreos-go-systemd-unit")
-    (arguments
-     '(#:tests? #f ;Tests require D-Bus daemon running.
-       #:import-path "github.com/coreos/go-systemd/unit"
-       #:unpack-path "github.com/coreos/go-systemd"))
-    (native-inputs (list go-github-com-godbus-dbus))
-    (home-page "https://github.com/coreos/go-systemd")
-    (synopsis "Go bindings to systemd for working with unit files")
-    (description "Go bindings to systemd for (de)serialization and comparison
-of unit files.")))
 
 (define-public go-github-com-cskr-pubsub
   (package
     (name "go-github-com-cskr-pubsub")
-    (version "2.0.1")
+    (version "2.0.2")
     (source
      (origin
        (method git-fetch)
@@ -1017,7 +969,7 @@ of unit files.")))
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18kqfdzkfs7z8266a5q5wldwkcvnhc7yw09b9vr8r0s7svy8d5s6"))))
+        (base32 "0iy85nxrfv6hp4i4mnqayjfx4hci7qyycqbaz4fx8wbd15n9ll66"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1376,7 +1328,7 @@ ansi.")
 (define-public go-github-com-gabriel-vasile-mimetype
   (package
     (name "go-github-com-gabriel-vasile-mimetype")
-    (version "1.4.3")
+    (version "1.4.4")
     (source
      (origin
        (method git-fetch)
@@ -1385,7 +1337,7 @@ ansi.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11swnjczhrza0xi8q2wlk056nnbcghm44vqs52zfv6rwqvy6imhj"))))
+        (base32 "199x3zbrs3bca4xc4m66c2fvs4vzywqcfylqx6n14kys0sh1p73b"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -3133,6 +3085,34 @@ on top of the standard library @code{flag} package.")
     (description
 "This package provides a logging library used by @url{https://github.com/pion,
 Pion}.")
+    (license license:expat)))
+
+(define-public go-github-com-polydawn-refmt
+  (package
+    (name "go-github-com-polydawn-refmt")
+    (version "0.89.1-0.20231129105047-37766d95467a")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/polydawn/refmt/")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0grgzacc7igfndk1v3n1g6k4wdz6bjsiqfq3n5br2zpr7n40ha9n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/polydawn/refmt"))
+    (propagated-inputs
+     (list go-github-com-urfave-cli
+           go-github-com-warpfork-go-wish
+           go-github.com-smartystreets-goconvey
+           go-gopkg-in-yaml-v2))
+    (home-page "https://github.com/polydawn/refmt/")
+    (synopsis "Object mapping for Go language")
+    (description
+     "@code{refmt} is a serialization and object-mapping library.")
     (license license:expat)))
 
 (define-public go-github-com-prometheus-client-model

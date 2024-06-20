@@ -180,7 +180,7 @@ it.")
 (define-public trealla
   (package
     (name "trealla")
-    (version "2.52.34")
+    (version "2.52.35")
     (source
      (origin
        (method git-fetch)
@@ -189,7 +189,7 @@ it.")
          (url "https://github.com/trealla-prolog/trealla")
          (commit (string-append "v" version))))
        (sha256
-        (base32 "17lyd8iy4dki9isxfkdv96brwjbvxyqmly9arvjqsdmz3rpsmn0h"))
+        (base32 "1qak8jj57kvy1v4gy19cvq6yxzn67md54d1qc3a95aihnsk0mz8j"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs
@@ -226,13 +226,13 @@ interpreter with ISO Prolog aspirations.")
 (define-public logtalk
   (package
     (name "logtalk")
-    (version "3.75.0")
+    (version "3.80.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://logtalk.org/files/logtalk-"
                            version ".tar.bz2"))
-       (sha256 (base32 "0w35br03l307wk2fwh67rybqjgvjlwpy9j5r4c3pkrywd7lhrc54"))))
+       (sha256 (base32 "0g4cc0qv921234548k3rkv1sdayicaa6zzh15vgn82ri9apwm3nh"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ;no tests

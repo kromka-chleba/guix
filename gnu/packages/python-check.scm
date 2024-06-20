@@ -19,6 +19,7 @@
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Navid Afkhami <navid.afkhami@mdc-berlin.de>
+;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -224,6 +225,48 @@ tests in cram.")
 CSV output mode for Pytest.  It can be enabled via the @option{--csv} option
 it adds to the Pytest command line interface (CLI).")
     (license license:gpl3+)))
+
+(define-public python-pytest-flakefinder
+  (package
+    (name "python-pytest-flakefinder")
+    (version "1.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest-flakefinder" version))
+       (sha256
+        (base32 "03iy80xlkpgzjs2kxa9rrj8dbnp9awyhpcl3hy8fgf5x40cjlhg2"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-pytest))
+    (home-page "https://github.com/dropbox/pytest-flakefinder")
+    (synopsis "Pytest plugin for finding flaky tests")
+    (description "This package provides a Pytest plugin to run tests multiple
+times and detect flakyness.")
+    (license license:asl2.0)))
+
+(define-public python-pytest-shard
+  (let ((commit "64610a08dac6b0511b6d51cf895d0e1040d162ad")
+        (revision "0"))
+    (package
+      (name "python-pytest-shard")
+      (version (git-version "0.1.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/AdamGleave/pytest-shard")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1h31m68igz670bzl307hazjrfbr8pk14mxflllar18ydmlrnl677"))))
+      (build-system pyproject-build-system)
+      (propagated-inputs (list python-pytest))
+      (home-page "https://github.com/AdamGleave/pytest-shard")
+      (synopsis "Pytest plugin for sharding tests")
+      (description "This package provides a Pytest extension for sharding
+tests at the granularity of individual test cases, which can be run in
+parallel and on multiple machines.")
+      (license license:expat))))
 
 (define-public python-testfixtures
   (package
@@ -2150,6 +2193,41 @@ from Python files.  It does this by detecting block comments that contain
 valid Python syntax that are likely to be commented out code.")
     (license license:expat)))
 
+(define-public python-expecttest
+  (let ((commit "683b09a352cc426851adc2e3a9f46e0ab25e4dee")
+        (revision "0"))
+    (package
+      (name "python-expecttest")
+      (version (git-version "0.2.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ezyang/expecttest")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1djwxp9x1hczzxbimv1b1bmd083am88v27l82nmlkhvzyg2cmpvv"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  ;; The test runs tests expected to fail, so the output is
+                  ;; confusing
+                  (invoke "python3" "test_expecttest.py")))))))
+      (native-inputs (list python-hypothesis poetry))
+      (home-page "https://github.com/ezyang/expecttest")
+      (synopsis "Python module for expect tests")
+      (description "@code{expecttest} is a Python module for expect tests, where
+the initial expected value of a test can be automatically set by running the
+test itself.")
+      (license license:expat))))
+
 (define-public python-robber
   (package
     (name "python-robber")
@@ -2500,6 +2578,17 @@ in an opinionated way.")
     (description "This package provides a pytest plugin to re-run tests to
 eliminate flaky failures.")
     (license license:mpl2.0)))
+
+(define-public python-pytest-rerunfailures-13
+  (package
+    (inherit python-pytest-rerunfailures)
+    (version "13.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest-rerunfailures" version))
+       (sha256
+        (base32 "16cin0chv59w4rvnd6r0fisp0s8avmp07rwn9da6yixw43jdncp1"))))))
 
 (define-public python-xunitparser
   (package
