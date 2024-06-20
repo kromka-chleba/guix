@@ -31,10 +31,10 @@
   #:use-module (guix packages)
   #:use-module (guix records)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-26)
   #:export (restic-backup-job
             restic-backup-job?
             restic-backup-job-fields
-            restic-backup-job-restic
             restic-backup-job-user
             restic-backup-job-group
             restic-backup-job-log-file
@@ -55,6 +55,7 @@
 
             restic-backup-configuration
             restic-backup-configuration?
+            restic-backup-configuration-restic
             restic-backup-configuration-jobs
 
             restic-backup-job-program
@@ -89,9 +90,6 @@
 (define-maybe/no-serialization file-like)
 
 (define-configuration/no-serialization restic-backup-job
-  (restic
-   (package restic)
-   "The restic package to be used for the current job.")
   (user
    (string "root")
    "The user used for running the current job.")
@@ -175,32 +173,37 @@ command-line arguments to the current job @command{restic backup} invocation."))
   restic-backup-configuration?
   this-restic-backup-configuration
 
+  (restic restic-backup-configuration-restic restic)
   (jobs  restic-backup-configuration-jobs  (default '()))     ; list of restic-backup-job
   (home-service? restic-backup-configuration-home-service?
                  (default for-home?) (innate)))
 
-(define (lower-restic-backup-job config)
-  (let ((restic
-         (file-append (restic-backup-job-restic config) "/bin/restic"))
-        (repository
-         (restic-backup-job-repository config))
-        (password-file
-         (maybe-value-or-false (restic-backup-job-password-file config)))
-        (password-command
-         (maybe-value-or-false (restic-backup-job-password-command config)))
-        (files
-         (restic-backup-job-files config))
-        (extra-flags
-         (restic-backup-job-extra-flags config))
-        (verbose?
-         (if (restic-backup-job-verbose? config)
-             '("--verbose")
-             '())))
+(define (lower-restic-backup-job restic config)
+  (let* ((job-restic (restic-backup-job-restic config))
+         (restic
+          (file-append (if (maybe-value-set? job-restic)
+                           job-restic
+                           restic)
+                       "/bin/restic"))
+         (repository
+          (restic-backup-job-repository config))
+         (password-file
+          (maybe-value-or-false (restic-backup-job-password-file config)))
+         (password-command
+          (maybe-value-or-false (restic-backup-job-password-command config)))
+         (files
+          (restic-backup-job-files config))
+         (extra-flags
+          (restic-backup-job-extra-flags config))
+         (verbose?
+          (if (restic-backup-job-verbose? config)
+              '("--verbose")
+              '())))
     #~(list (list #$@files) #$restic #$repository #$password-file
             (list #$@verbose?) (list #$@extra-flags))))
 
-(define (lower-restic-init-job config)
-  `(() #$@(cdr (lower-restic-backup-job config))))
+(define (lower-restic-init-job restic config)
+  `(() #$@(cdr (lower-restic-backup-job restic config))))
 
 (define restic-program
   #~(lambda (action action-args job-restic repository password-file verbose? extra-flags)
@@ -229,25 +232,25 @@ command-line arguments to the current job @command{restic backup} invocation."))
 
       (apply execlp `(,restic ,@command))))
 
-(define (restic-backup-job-program config)
+(define (restic-backup-job-program restic config)
   (program-file
    "restic-backup"
    #~(let ((restic-exec
             #$restic-program)
-           (job #$(lower-restic-backup-job config)))
+           (job #$(lower-restic-backup-job restic config)))
 
        (apply restic-exec `("backup" ,@job)))))
 
-(define (restic-init-job-program config)
+(define (restic-init-job-program restic config)
   (program-file
    "restic-init"
    #~(let ((restic-exec
             #$restic-program)
-           (job (lower-restic-init-job config)))
+           (job (lower-restic-init-job restic config)))
 
        (apply restic-exec `("init" ,@job)))))
 
-(define (restic-guix jobs)
+(define (restic-guix restic-package jobs)
   (program-file
    "restic-guix"
    #~(begin
@@ -255,8 +258,8 @@ command-line arguments to the current job @command{restic backup} invocation."))
                     (srfi srfi-1))
 
        (define names '#$(map restic-backup-job-name jobs))
-       (define init-programs '#$(map restic-init-job-program jobs))
-       (define programs '#$(map restic-backup-job-program jobs))
+       (define init-programs '#$(map (cut restic-init-job-program restic-package <>) jobs))
+       (define programs '#$(map (cut restic-backup-job-program restic-package <>) jobs))
 
        (define (get-program name programs)
          (define idx
@@ -388,13 +391,13 @@ command-line arguments to the current job @command{restic backup} invocation."))
                                       (documentation "Manually trigger a backup,
 without waiting for the scheduled time.")))))))
 
-(define (restic-guix-wrapper-package jobs)
+(define (restic-guix-wrapper-package restic jobs)
   (let ((extra-packages (append-map restic-backup-job-extra-packages
                                     jobs)))
     (package
       (name "restic-backup-service-wrapper")
       (version "0.0.0")
-      (source (restic-guix restic-package jobs))
+      (source (restic-guix restic jobs))
       (build-system copy-build-system)
       (arguments
        (list #:install-plan #~'(("./" "/bin"))))
@@ -406,16 +409,17 @@ without waiting for the scheduled time.")))))))
 by the @code{restic-backup-service-type}.  It allows for easily interacting
 with Guix configured backup jobs, for example for manually triggering a backup
 without waiting for the scheduled job to run.")
-      (inputs extra-packages)
+      (inputs (cons restic extra-packages))
       (license license:gpl3+))))
 
-(define restic-backup-service-profile
-  (lambda (config)
-    (define jobs (restic-backup-configuration-jobs config))
-    (if (> (length jobs) 0)
-        (list
-         (restic-guix-wrapper-package jobs))
-        '())))
+(define (restic-backup-service-profile config)
+  (let ((jobs (restic-backup-configuration-jobs config))
+        (restic (restic-backup-configuration-restic config)))
+    ;; Even if we provide a wrapper we need to add restic to the profile so
+    ;; the service works in containers and VMs which only see a subset of
+    ;; /gnu/store. https://issues.guix.gnu.org/70553. Ergo pass restic to
+    ;; the wrapper package so it is added as an input.
+    (list (restic-guix-wrapper-package restic jobs))))
 
 (define restic-backup-service-type
   (service-type (name 'restic-backup)
@@ -425,10 +429,10 @@ without waiting for the scheduled job to run.")
                                      restic-backup-service-profile)
                   (service-extension shepherd-root-service-type
                                      (match-record-lambda <restic-backup-configuration>
-                                         (jobs home-service?)
+                                         (restic jobs home-service?)
                                        (map (lambda (job)
                                               (restic-backup-job->shepherd-service
-                                               job #:home-service? home-service?))
+                                               restic job #:home-service? home-service?))
                                             jobs)))))
                 (compose concatenate)
                 (extend

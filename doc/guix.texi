@@ -46257,6 +46257,9 @@ sudo herd trigger remote-ftp
 Available @code{restic-backup-configuration} fields are:
 
 @table @asis
+@item @code{restic} (default: @code{restic}) (type: package)
+The restic package to use for all jobs.
+
 @item @code{jobs} (default: @code{'()}) (type: list-of-restic-backup-jobs)
 The list of backup jobs for the current system.
 
@@ -46273,9 +46276,6 @@ The list of backup jobs for the current system.
 Available @code{restic-backup-job} fields are:
 
 @table @asis
-@item @code{restic} (default: @code{restic}) (type: package)
-The restic package to be used for the current job.
-
 @item @code{user} (default: @code{"root"}) (type: string)
 The user used for running the current job.
 
