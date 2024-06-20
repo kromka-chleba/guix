@@ -85,6 +85,7 @@
 (define-maybe/no-serialization number)
 (define-maybe/no-serialization symbol)
 (define-maybe/no-serialization list-of-symbols)
+(define-maybe/no-serialization file-like)
 
 (define-configuration/no-serialization restic-backup-job
   (restic
@@ -118,10 +119,16 @@ having multiple instances running concurrently.")
    (string)
    "The restic repository target of this job.")
   (password-file
-   (string)
+   (maybe-string)
    "Name of the password file, readable by the configured @code{user}, that
 will be used to set the @code{RESTIC_PASSWORD} environment variable for the
 current job.")
+  (password-command
+   (maybe-file-like)
+   "An executable file who's path is stored in @code{RESTIC_PASSWORD_COMMAND}.
+When run, the file writes the password to standard output. Due to the nature
+of the store this command will be globally executable and should have external
+protections to ensure unauthorized users cannot retrieve the password.")
   (schedule
    (gexp-or-string)
    "A string or a gexp representing the frequency of the backup.  Gexp must
@@ -147,6 +154,14 @@ values that can be lowered to strings.")
    "A list of values that are lowered to strings.  These will be passed as
 command-line arguments to the current job @command{restic backup} invocation."))
 
+(define (verify-restic-backup-job-configuration config)
+  (unless (or (maybe-value-set? (restic-backup-job-password-file config))
+              (maybe-value-set? (restic-backup-job-password-command config)))
+    (error "either password-file or password-command must be configured."))
+  (when (and (maybe-value-set? (restic-backup-job-password-file config))
+             (maybe-value-set? (restic-backup-job-password-command config)))
+    (error "password-file and password-command can not be configured simultaneously.")))
+
 ;; (for-home (restic-backup-configuration ...)) is not able to replace for-home? with #t,
 ;; pk prints #f. Once for-home will be able to work with (gnu services configuration) the
 ;; record can be migrated back to define-configuration.
@@ -166,7 +181,9 @@ command-line arguments to the current job @command{restic backup} invocation."))
         (repository
          (restic-backup-job-repository config))
         (password-file
-         (restic-backup-job-password-file config))
+         (maybe-value-or-false (restic-backup-job-password-file config)))
+        (password-command
+         (maybe-value-or-false (restic-backup-job-password-command config)))
         (files
          (restic-backup-job-files config))
         (extra-flags
@@ -195,7 +212,13 @@ command-line arguments to the current job @command{restic backup} invocation."))
           ,@extra-flags
           ,action ,@action-args))
 
-      (setenv "RESTIC_PASSWORD_FILE" password-file)
+      (or (and=> password-file (lambda (x)
+                                 (setenv "RESTIC_PASSWORD_FILE" x)))
+          (and=> #$password-command (lambda (x)
+                                      (setenv "RESTIC_PASSWORD_COMMAND" x)))
+          ;; Have a backup error message in case
+          ;; verify-restic-backup-job-configuration is messed with
+          (error "Neither password-file or password-command set"))
 
       (when (> (length verbose?) 0)
         (format #t "Running~{ ~a~}~%" command))
@@ -315,6 +338,8 @@ command-line arguments to the current job @command{restic backup} invocation."))
          '())))
 
 (define* (restic-backup-job->shepherd-service config #:key (home-service? #f))
+  (verify-restic-backup-job-configuration config)
+
   (let ((schedule (restic-backup-job-schedule config))
         (name (restic-backup-job-name config))
         (files (restic-backup-job-files config))

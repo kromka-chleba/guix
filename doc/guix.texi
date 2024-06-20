@@ -46308,6 +46308,13 @@ Name of the password file, readable by the configured @code{user},
 that will be used to set the @env{RESTIC_PASSWORD} environment variable
 for the current job.
 
+@item @code{password-command} (type: file-like)
+String path or file-like object representing the executable file that
+prints password to stdout.  If a file-like object is used, it is placed
+in the store globally executable and in plain text.  The executable
+should be designed such that it does not compromise the password if an
+unauthorized user runs it.
+
 @item @code{schedule} (type: gexp-or-string)
 A string or a gexp representing the frequency of the backup.  Gexp must
 evaluate to @code{calendar-event} records or to strings.  Strings must contain
