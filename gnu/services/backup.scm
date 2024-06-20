@@ -48,6 +48,7 @@
             restic-backup-job-requirement
             restic-backup-job-init?
             restic-backup-job-verbose?
+            restic-backup-job-extra-packages
             restic-backup-job-extra-flags
 
             lower-restic-backup-job
@@ -143,6 +144,9 @@ defaults to @code{'()}, for Guix Home.  Otherwise to
    (list-of-lowerables '())
    "The list of files or directories to be backed up.  It must be a list of
 values that can be lowered to strings.")
+  (extra-packages
+   (list-of-packages '())
+   "The list of extra packages needed for restic to run this backup job.")
   (verbose?
    (boolean #f)
    "Whether to enable verbose output for the current backup job.")
@@ -385,22 +389,25 @@ command-line arguments to the current job @command{restic backup} invocation."))
 without waiting for the scheduled time.")))))))
 
 (define (restic-guix-wrapper-package jobs)
-  (package
-    (name "restic-backup-service-wrapper")
-    (version "0.0.0")
-    (source (restic-guix jobs))
-    (build-system copy-build-system)
-    (arguments
-     (list #:install-plan #~'(("./" "/bin"))))
-    (home-page "https://restic.net")
-    (synopsis
-     "Easily interact from the CLI with Guix configured backups")
-    (description
-     "This package provides a simple wrapper around @code{restic}, handled
+  (let ((extra-packages (append-map restic-backup-job-extra-packages
+                                    jobs)))
+    (package
+      (name "restic-backup-service-wrapper")
+      (version "0.0.0")
+      (source (restic-guix restic-package jobs))
+      (build-system copy-build-system)
+      (arguments
+       (list #:install-plan #~'(("./" "/bin"))))
+      (home-page "https://restic.net")
+      (synopsis
+       "Easily interact from the CLI with Guix configured backups")
+      (description
+       "This package provides a simple wrapper around @code{restic}, handled
 by the @code{restic-backup-service-type}.  It allows for easily interacting
 with Guix configured backup jobs, for example for manually triggering a backup
 without waiting for the scheduled job to run.")
-    (license license:gpl3+)))
+      (inputs extra-packages)
+      (license license:gpl3+))))
 
 (define restic-backup-service-profile
   (lambda (config)

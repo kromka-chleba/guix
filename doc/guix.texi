@@ -46336,6 +46336,10 @@ initialize the repository before running the backup.
 @item @code{verbose?} (default: @code{#f}) (type: boolean)
 Whether to enable verbose output for the current backup job.
 
+@item @code{extra-packages} (default: @code{'()} (type: list-of-packages)
+The list of extra packages needed for restic to run the current backup
+job.
+
 @item @code{extra-flags} (default: @code{'()}) (type: list-of-lowerables)
 A list of values that are lowered to strings.  These will be passed as
 command-line arguments to the current job @command{restic backup}
