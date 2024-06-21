@@ -9,6 +9,7 @@
 ;;; Copyright © 2021 Cees de Groot <cg@evrl.com>
 ;;; Copyright © 2024 Andrew Tropin <andrew@trop.in>
 ;;; Copyright © 2024 Ivan Sokolov <ivan-p-sokolov@ya.ru>
+;;; Copyright © 2024 Igor Goryachev <igor@goryachev.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -33,13 +34,14 @@
   #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (gnu packages)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages erlang)
   #:use-module (gnu packages version-control))
 
 (define-public elixir
   (package
     (name "elixir")
-    (version "1.14.0")
+    (version "1.16.3")
     (source
      (origin
        (method git-fetch)
@@ -48,7 +50,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16rc4qaykddda6ax5f8zw70yhapgwraqbgx5gp3f40dvfax3d51l"))
+        (base32 "0db1f6p8409ld81lfd9ln9ir4v55h48lzsbd91jz0hns7ninlh2r"))
        (patches (search-patches "elixir-path-length.patch"))))
     (build-system gnu-build-system)
     (arguments
@@ -57,59 +59,85 @@
       #:parallel-tests? #f ;see <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=32171#23>
       #:make-flags #~(list (string-append "PREFIX=" #$output))
       #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'make-git-checkout-writable
-            (lambda _
-              (for-each make-file-writable (find-files "."))))
-          (add-after 'make-git-checkout-writable 'replace-paths
-            (lambda* (#:key inputs #:allow-other-keys)
-              ;; Note: references end up obfuscated in binary BEAM files where
-              ;; they may be invisible to the GC and graft code:
-              ;; <https://issues.guix.gnu.org/54304#11>.
-              (substitute* '("lib/mix/lib/mix/release.ex"
-                             "lib/mix/lib/mix/tasks/release.init.ex")
-                (("#!/bin/sh")
-                 (string-append "#!" (search-input-file inputs "/bin/sh"))))
-              (substitute* "bin/elixir"
-                (("ERTS_BIN=\n")
-                 (string-append
-                  "ERTS_BIN="
-                  ;; Elixir Releases will prepend to ERTS_BIN the path of
-                  ;; a copy of erl.  We detect if a release is being generated
-                  ;; by checking the initial ERTS_BIN value: if it's empty, we
-                  ;; are not in release mode and can point to the actual erl
-                  ;; binary in Guix store.
-                  "\nif [ -z \"$ERTS_BIN\" ]; then ERTS_BIN="
-                  (string-drop-right (search-input-file inputs "/bin/erl") 3)
-                  "; fi\n")))
-              (substitute* "bin/mix"
-                (("#!/usr/bin/env elixir")
-                 (string-append "#!" #$output "/bin/elixir")))))
-          (add-before 'build 'make-current
-            ;; The Elixir compiler checks whether or not to compile files by
-            ;; inspecting their timestamps.  When the timestamp is equal to the
-            ;; epoch no compilation will be performed.  Some tests fail when
-            ;; files are older than Jan 1, 2000.
-            (lambda _
-              (for-each (lambda (file)
-                          (let ((recent 1400000000))
-                            (utime file recent recent 0 0)))
-                        (find-files "." ".*"))))
-          (add-before 'check 'set-home
-            (lambda* (#:key inputs #:allow-other-keys)
-              ;; Some tests require access to a home directory.
-              (setenv "HOME" "/tmp")))
-          (delete 'configure)
-          (add-after 'install 'wrap-programs
-            (lambda* (#:key inputs outputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
-                     (programs '("elixir" "elixirc" "iex")))
-                ;; mix can be sourced as an elixir script by other elixir
-                ;; program, for example `iex -S mix`, so we should not wrap
-                ;; mix into shell script.
-                (substitute* (string-append out "/bin/mix")
-                  (("Mix.start\\(\\)")
-                   (format #f "\
+      #~(let* ((compiler-path "lib/elixir/src/elixir_erl_compiler.erl")
+               (compiler-path-orig (string-append compiler-path ".orig")))
+          (modify-phases %standard-phases
+            (add-after 'unpack 'make-git-checkout-writable
+              (lambda _
+                (for-each make-file-writable (find-files "."))))
+            (add-after 'make-git-checkout-writable 'replace-paths
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; Note: references end up obfuscated in binary BEAM files
+                ;; where they may be invisible to the GC and graft code:
+                ;; <https://issues.guix.gnu.org/54304#11>.
+                (substitute* '("lib/mix/lib/mix/release.ex"
+                               "lib/mix/lib/mix/tasks/release.init.ex")
+                  (("#!/bin/sh")
+                   (string-append "#!" (search-input-file inputs "/bin/sh"))))
+                (substitute* "bin/elixir"
+                  (("ERTS_BIN=\n")
+                   (string-append
+                    "ERTS_BIN="
+                    ;; Elixir Releases will prepend to ERTS_BIN the path of
+                    ;; a copy of erl.  We detect if a release is being
+                    ;; generated by checking the initial ERTS_BIN value: if
+                    ;; it's empty, we are not in release mode and can point
+                    ;; to the actual erl binary in Guix store.
+                    "\nif [ -z \"$ERTS_BIN\" ]; then ERTS_BIN="
+                    (string-drop-right
+                     (search-input-file inputs "/bin/erl") 3)
+                    "; fi\n")))
+                (substitute* "bin/mix"
+                  (("#!/usr/bin/env elixir")
+                   (string-append "#!" #$output "/bin/elixir")))))
+            (add-after 'replace-paths 'pre-install-source
+              (lambda* (#:key outputs #:allow-other-keys)
+                (copy-recursively
+                 "lib"
+                 (string-append (assoc-ref outputs "src") "/source/lib"))))
+            ;; Temporarily patch the compiler to place correct source
+            ;; locations into module info instead of build directory.
+            (add-after 'pre-install-source 'patch-elixir-compiler
+              (lambda* (#:key outputs #:allow-other-keys)
+                (copy-recursively compiler-path compiler-path-orig)
+                (let ((source (string-append "/tmp/guix-build-" #$name "-"
+                                             #$version ".drv-0"))
+                      (destination (assoc-ref outputs "src")))
+                  (substitute* compiler-path
+                    (("source, Source")
+                     (string-append "source, string:replace(Source, \""
+                                    source "\", \"" destination "\")"))))))
+            (add-before 'build 'make-current
+              ;; The Elixir compiler checks whether or not to compile files
+              ;; by inspecting their timestamps.  When the timestamp is
+              ;; equal to the epoch no compilation will be performed.  Some
+              ;; tests fail when files are older than Jan 1, 2000.
+              (lambda _
+                (for-each (lambda (file)
+                            (let ((recent 1400000000))
+                              (utime file recent recent 0 0)))
+                          (find-files "." ".*"))))
+            ;; Unpatch the compiler and recompile it.
+            (add-after 'build 'restore-and-recompile
+              (lambda _
+                (copy-recursively compiler-path-orig compiler-path)
+                (delete-file compiler-path-orig)
+                (invoke "make")))
+            (add-before 'check 'set-home
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; Some tests require access to a home directory.
+                (setenv "HOME" "/tmp")))
+            (delete 'configure)
+            (add-after 'install 'wrap-programs
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (let* ((out (assoc-ref outputs "out"))
+                       (programs '("elixir" "elixirc" "iex")))
+                  ;; mix can be sourced as an elixir script by other elixir
+                  ;; program, for example `iex -S mix`, so we should not wrap
+                  ;; mix into shell script.
+                  (substitute* (string-append out "/bin/mix")
+                    (("Mix.start\\(\\)")
+                     (format #f "\
 ~~w[GUIX_ELIXIR_LIBS ERL_LIBS]
 |> Enum.map(&System.get_env/1)
 |> Enum.reject(&is_nil/1)
@@ -117,18 +145,21 @@
 |> case do \"\" -> :ok; erl_libs -> System.put_env(\"ERL_LIBS\", erl_libs) end
 System.put_env(\"MIX_REBAR3\", System.get_env(\"MIX_REBAR3\", \"~a\"))
 Mix.start()"
-                           (search-input-file inputs "/bin/rebar3"))))
-                (for-each (lambda (program)
-                            (wrap-program (string-append out "/bin/" program)
-                              '("ERL_LIBS" prefix ("${GUIX_ELIXIR_LIBS}"))))
-                          programs)))))))
-    (inputs (list erlang rebar3 git))
+                             (search-input-file inputs "/bin/rebar3"))))
+                  (for-each
+                   (lambda (program)
+                     (wrap-program (string-append out "/bin/" program)
+                       '("ERL_LIBS" prefix ("${GUIX_ELIXIR_LIBS}"))))
+                   programs))))))))
+    (outputs '("out" "src"))
+    (inputs (list bash-minimal erlang rebar3 git))
     (native-search-paths
      (list (search-path-specification
             (variable "GUIX_ELIXIR_LIBS")
-            (files (list (string-append "lib/elixir/" (version-major+minor version)))))))
+            (files (list (string-append "lib/elixir/" (version-major+minor
+                                                       version)))))))
     (home-page "https://elixir-lang.org/")
-    (synopsis "Elixir programming language")
+    (synopsis "Functional meta-programming aware language")
     (description "Elixir is a dynamic, functional language used to build
 scalable and maintainable applications.  Elixir leverages the Erlang VM, known
 for running low-latency, distributed and fault-tolerant systems, while also
@@ -138,7 +169,7 @@ being successfully used in web development and the embedded software domain.")
 (define-public elixir-hex
   (package
     (name "elixir-hex")
-    (version "2.0.5")
+    (version "2.1.1")
     (source
      (origin
        (method git-fetch)
@@ -148,7 +179,7 @@ being successfully used in web development and the embedded software domain.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1kvczwvij58kgkhak68004ap81pl26600bczg21mymy2sypkgxmj"))))
+         "0fmrbl7dj8ndq1z7h13qgx3cv7vw3b1zf6krdrahcmx43bcdsix4"))))
     ;; The mix-build-system assumes that Hex exists.
     ;; We build Hex using the gnu-build-system.
     ;; Other Elixir packages use the mix-build-system.
