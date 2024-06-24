@@ -2403,21 +2403,12 @@ the Cryptsetup/LUKS utilities to do that (see @inlinefmtifelse{html,
 @uref{https://linux.die.net/man/8/cryptsetup, @code{man cryptsetup}},
 @code{man cryptsetup}} for more information).
 
-@quotation Warning
-While efforts are in progress to extend support to LUKS2, please note
-that Guix only supports devices of type LUKS1 at the moment. You can
-verify that your existing LUKS device is of the right type by running
-@command{cryptsetup luksDump @var{device}}. Alternatively, you can
-create a new LUKS1 device with @command{cryptsetup luksFormat --type
-luks1 @var{device}}.
-@end quotation
-
 Assuming you want to store the root partition on @file{/dev/sda2}, the
-command sequence to format it as a LUKS1 partition would be along these
+command sequence to format it as a LUKS partition would be along these
 lines:
 
 @example
-cryptsetup luksFormat --type luks1 /dev/sda2
+cryptsetup luksFormat /dev/sda2
 cryptsetup open /dev/sda2 my-partition
 mkfs.ext4 -L my-root /dev/mapper/my-partition
 @end example
@@ -21016,24 +21007,27 @@ the user mode network stack,,, qemu, QEMU Documentation}).
 
 @cindex DHCP, networking service
 @defvar dhcp-client-service-type
-This is the type of services that run @var{dhcp}, a Dynamic Host Configuration
-Protocol (DHCP) client.
+This is the type of services that run @var{dhclient}, the ISC Dynamic
+Host Configuration Protocol (DHCP) client.
 @end defvar
 
 @deftp {Data Type} dhcp-client-configuration
-Data type representing the configuration of the DHCP client service.
+Data type representing the configuration of the ISC DHCP client service.
 
 @table @asis
 @item @code{package} (default: @code{isc-dhcp})
-DHCP client package to use.
+The ISC DHCP client package to use.
 
 @item @code{interfaces} (default: @code{'all})
-Either @code{'all} or the list of interface names that the DHCP client
-should listen on---e.g., @code{'("eno1")}.
+Either @code{'all} or the list of interface names that the ISC DHCP
+client should listen on---e.g., @code{'("eno1")}.
 
-When set to @code{'all}, the DHCP client listens on all the available
-non-loopback interfaces that can be activated.  Otherwise the DHCP
-client listens only on the specified interfaces.
+When set to @code{'all}, the ISC DHCP client listens on all the
+available non-loopback interfaces that can be activated.  Otherwise the
+ISC DHCP client listens only on the specified interfaces.
+
+@item @code{config-file} (default: @code{#f})
+The configuration file for the ISC DHCP client.
 
 @item @code{shepherd-requirement} (default: @code{'()})
 @itemx @code{shepherd-provision} (default: @code{'(networking)})
@@ -21044,7 +21038,7 @@ networks.
 
 Likewise, @code{shepherd-provision} is a list of Shepherd service names
 (symbols) provided by this service.  You might want to change the
-default value if you intend to run several DHCP clients, only one of
+default value if you intend to run several ISC DHCP clients, only one of
 which provides the @code{networking} Shepherd service.
 @end table
 @end deftp
@@ -32133,7 +32127,9 @@ you don't have a key or you don't want to use HTTPS.
 Whether the server should add its configuration to response.
 
 @item @code{raw-content} (default: @code{'()})
-A list of raw lines added to the server block.
+A list of strings or file-like objects to be appended to the server
+block.  Each item is prefixed with indentation and suffixed with a new
+line.  Nested lists are flattened.
 
 @end table
 @end deftp
@@ -32170,11 +32166,13 @@ URI which this location block matches.
 
 @anchor{nginx-location-configuration body}
 @item @code{body}
-Body of the location block, specified as a list of strings.  This can contain
-many
-configuration directives.  For example, to pass requests to a upstream
-server group defined using an @code{nginx-upstream-configuration} block,
-the following directive would be specified in the body @samp{(list "proxy_pass
+Body of the location block, specified as a list of strings or file-like
+objects.  Each item is prefixed with indentation and suffixed with a new
+line.  Nested lists are flattened.
+
+For example, to pass requests to a upstream server group defined using
+an @code{nginx-upstream-configuration} block, the following directive
+would be specified in the body @samp{(list "proxy_pass
 http://upstream-name;")}.
 
 @end table

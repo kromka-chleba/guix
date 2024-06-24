@@ -29,6 +29,7 @@
 ;;; Copyright © 2022 Jai Vetrivelan <jaivetrivelan@gmail.com>
 ;;; Copyright © 2022 dan <i@dan.games>
 ;;; Copyright © 2023 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1927,7 +1928,7 @@ games.")
 (define-public godot-lts
   (package
     (name "godot")
-    (version "3.4.2")
+    (version "3.5.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1936,7 +1937,7 @@ games.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1bm9yl995chvx6jwkdia12yjrgwcpzb1r9bmj606q8z264aw2ma5"))
+                "0zibc6am9axbbm8l57jf2d324a2m44pf6ncp2i4h1b219jjq89l6"))
               (modules '((guix build utils)
                          (ice-9 ftw)
                          (srfi srfi-1)))
@@ -1948,7 +1949,6 @@ games.")
                   (with-directory-excursion "thirdparty"
                     (let* ((preserved-files
                             '("README.md"
-                              "assimp"
                               "certs"
                               "cvtt"
                               "embree"
@@ -1966,105 +1966,109 @@ games.")
                               "oidn"
                               "pvrtccompressor"
                               "recastnavigation"
+                              "rvo2"
                               "squish"
                               "stb_rect_pack"
                               "tinyexr"
                               "vhacd"
                               "xatlas")))
                       (for-each delete-file-recursively
-                                (lset-difference string=?
-                                                 (scandir ".")
-                                                 (cons* "." ".." preserved-files)))))))))
+                                (lset-difference
+                                 string=?
+                                 (scandir ".")
+                                 (cons* "." ".." preserved-files)))))))))
     (build-system scons-build-system)
     (arguments
-     `(#:scons ,scons-python2
-       #:scons-flags (list "platform=x11" "target=release_debug"
-                           ;; Avoid using many of the bundled libs.
-                           ;; Note: These options can be found in the SConstruct file.
-                           "builtin_bullet=no"
-                           "builtin_freetype=no"
-                           "builtin_glew=no"
-                           "builtin_libmpdec=no"
-                           "builtin_libogg=no"
-                           "builtin_libpng=no"
-                           "builtin_libtheora=no"
-                           "builtin_libvorbis=no"
-                           "builtin_libvpx=no"
-                           "builtin_libwebp=no"
-                           "builtin_mbedtls=no"
-                           "builtin_opus=no"
-                           "builtin_pcre2=no"
-                           "builtin_wslay=no"
-                           "builtin_zlib=no"
-                           "builtin_zstd=no")
-       #:tests? #f                      ; There are no tests
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'scons-use-env
-           (lambda _
-             ;; Scons does not use the environment variables by default,
-             ;; but this substitution makes it do so.
-             (substitute* "SConstruct"
-               (("env_base = Environment\\(tools=custom_tools\\)")
-                (string-append
-                 "env_base = Environment(tools=custom_tools)\n"
-                 "env_base = Environment(ENV=os.environ)")))))
-         ;; Build headless tools, used for packaging games without depending on X.
-         (add-after 'build 'build-headless
-           (lambda* (#:key scons-flags #:allow-other-keys)
-             (apply invoke "scons"
-                    `(,(string-append "-j" (number->string (parallel-job-count)))
-                      "platform=server" ,@(delete "platform=x11" scons-flags)))))
-         (replace 'install
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (headless (assoc-ref outputs "headless"))
-                    (zenity (assoc-ref inputs "zenity")))
-               ;; Strip build info from filenames.
-               (with-directory-excursion "bin"
-                 (for-each
-                  (lambda (file)
-                    (let ((dest (car (string-split (basename file) #\.))))
-                      (rename-file file dest)))
-                  (find-files "." "godot.*\\.x11\\.opt\\.tools.*"))
-                 (install-file "godot" (string-append out "/bin"))
-                 (install-file "godot_server" (string-append headless "/bin")))
-               ;; Tell the editor where to find zenity for OS.alert().
-               (wrap-program (string-append out "/bin/godot")
-                 `("PATH" ":" prefix (,(string-append zenity "/bin")))))))
-         (add-after 'install 'wrap
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             ;; FIXME: Mesa tries to dlopen libudev.so.0 and fails.  Pending a
-             ;; fix of the mesa package we wrap the pcb executable such that
-             ;; Mesa can find libudev.so.0 through LD_LIBRARY_PATH.
-             ;; also append ld path for pulseaudio and alsa-lib
-             (let* ((out (assoc-ref outputs "out"))
-                    (udev_path (string-append (assoc-ref inputs "eudev") "/lib"))
-                    (pulseaudio_path (string-append (assoc-ref inputs "pulseaudio") "/lib"))
-                    (alas_lib_path (string-append (assoc-ref inputs "alsa-lib") "/lib")))
-               (wrap-program (string-append out "/bin/godot")
-                 `("LD_LIBRARY_PATH" ":" prefix (,udev_path ,pulseaudio_path ,alas_lib_path))))))
-         (add-after 'install 'install-godot-desktop
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (applications (string-append out "/share/applications"))
-                    (icons (string-append out "/share/icons/hicolor")))
-               (mkdir-p applications)
-               (copy-file "misc/dist/linux/org.godotengine.Godot.desktop"
-                          (string-append applications "/godot.desktop"))
-               (for-each (lambda (icon dest)
-                           (mkdir-p (dirname dest))
-                           (copy-file icon dest))
-                         '("icon.png" "icon.svg")
-                         `(,(string-append icons "/256x256/apps/godot.png")
-                           ,(string-append icons "/scalable/apps/godot.svg")))))))))
+     (list
+      ;; Avoid using many of the bundled libs.
+      ;; Note: These options can be found in the SConstruct file.
+      #:scons-flags #~(list "platform=x11" "target=release_debug"
+                            "builtin_bullet=no"
+                            "builtin_freetype=no"
+                            "builtin_glew=no"
+                            "builtin_libmpdec=no"
+                            "builtin_libogg=no"
+                            "builtin_libpng=no"
+                            "builtin_libtheora=no"
+                            "builtin_libvorbis=no"
+                            "builtin_libvpx=no"
+                            "builtin_libwebp=no"
+                            "builtin_mbedtls=no"
+                            "builtin_opus=no"
+                            "builtin_pcre2=no"
+                            "builtin_wslay=no"
+                            "builtin_zlib=no"
+                            "builtin_zstd=no")
+      #:tests? #f                      ; There are no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'scons-use-env
+            (lambda _
+              ;; Scons does not use the environment variables by default,
+              ;; but this substitution makes it do so.
+              (substitute* "SConstruct"
+                (("env_base = Environment\\(tools=custom_tools\\)")
+                 (string-append
+                  "env_base = Environment(tools=custom_tools)\n"
+                  "env_base = Environment(ENV=os.environ)")))))
+          ;; Build headless tools, to package games without depending on X.
+          (add-after 'build 'build-headless
+            (lambda* (#:key scons-flags #:allow-other-keys)
+              (apply invoke "scons"
+                     `(,(string-append
+                         "-j" (number->string (parallel-job-count)))
+                       "platform=server"
+                       ,@(delete "platform=x11" scons-flags)))))
+          (replace 'install
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (headless (assoc-ref outputs "headless"))
+                     (zenity (assoc-ref inputs "zenity")))
+                ;; Strip build info from filenames.
+                (with-directory-excursion "bin"
+                  (for-each
+                   (lambda (file)
+                     (let ((dest (car (string-split (basename file) #\.))))
+                       (rename-file file dest)))
+                   (find-files "." "godot.*\\.x11\\.opt\\.tools.*"))
+                  (install-file "godot" (string-append out "/bin"))
+                  (install-file "godot_server"
+                                (string-append headless "/bin")))
+                ;; Tell the editor where to find zenity for OS.alert().
+                (wrap-program (string-append out "/bin/godot")
+                  `("PATH" ":" prefix (,(string-append zenity "/bin")))))))
+          (add-after 'install 'wrap-ld-path
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (pulseaudio_path (string-append
+                                       (assoc-ref inputs "pulseaudio") "/lib"))
+                     (alas_lib_path (string-append
+                                     (assoc-ref inputs "alsa-lib") "/lib")))
+                (wrap-program (string-append out "/bin/godot")
+                  `("LD_LIBRARY_PATH" ":" prefix
+                    (,pulseaudio_path ,alas_lib_path))))))
+          (add-after 'install 'install-godot-desktop
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (applications (string-append out "/share/applications"))
+                     (icons (string-append out "/share/icons/hicolor")))
+                (mkdir-p applications)
+                (copy-file "misc/dist/linux/org.godotengine.Godot.desktop"
+                           (string-append applications "/godot.desktop"))
+                (for-each (lambda (icon dest)
+                            (mkdir-p (dirname dest))
+                            (copy-file icon dest))
+                          '("icon.png" "icon.svg")
+                          `(,(string-append icons "/256x256/apps/godot.png")
+                            ,(string-append icons
+                                            "/scalable/apps/godot.svg")))))))))
     (outputs '("out" "headless"))
     (native-inputs
      (list pkg-config))
     (inputs
      (list alsa-lib
            bullet
-           freetype
+           freetype-with-brotli
            glew
            glu
            libtheora
@@ -2081,7 +2085,7 @@ games.")
            opusfile
            pcre2
            pulseaudio
-           eudev                        ; FIXME: required by mesa
+           eudev
            wslay
            zenity
            `(,zstd "lib")))

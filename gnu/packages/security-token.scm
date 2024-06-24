@@ -355,7 +355,7 @@ website for more information about Yubico and the YubiKey.")
 (define-public opensc
   (package
     (name "opensc")
-    (version "0.25.0")
+    (version "0.25.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -363,23 +363,22 @@ website for more information about Yubico and the YubiKey.")
                     version "/opensc-" version ".tar.gz"))
               (sha256
                (base32
-                "0bv2sq3k8bl712yi1gi7f8km8g2x09is8ynnr5x3g2jh59pbdmz6"))))
+                "0yxk97aj29pybvya6r9ix9xh00hdzcfrc2lcns4vb3kwpplamjr3"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; By setting an absolute path here, we arrange for OpenSC to
-         ;; successfully dlopen libpcsclite.so.1 by default.  The user can
-         ;; still override this if they want to, by specifying a custom OpenSC
-         ;; configuration file at runtime.
-         (add-after 'unpack 'set-default-libpcsclite.so.1-path
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((libpcsclite (search-input-file inputs
-                                                   "/lib/libpcsclite.so.1")))
-               (substitute* "configure"
-                 (("DEFAULT_PCSC_PROVIDER=\"libpcsclite\\.so\\.1\"")
-                  (string-append
-                   "DEFAULT_PCSC_PROVIDER=\"" libpcsclite "\"")))))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; By setting an absolute path here, we arrange for OpenSC to
+          ;; successfully dlopen libpcsclite.so.1 by default.  The user can
+          ;; still override this if they want to, by specifying a custom OpenSC
+          ;; configuration file at runtime.
+          (add-after 'unpack 'set-default-libpcsclite.so.1-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((libpcsclite (search-input-file inputs "/lib/libpcsclite.so.1")))
+                (substitute* "configure"
+                  (("DEFAULT_PCSC_PROVIDER=\"libpcsclite\\.so\\.1\"")
+                   (string-append "DEFAULT_PCSC_PROVIDER=\"" libpcsclite "\"")))))))))
     (inputs
      (list readline openssl-1.1 pcsc-lite ccid))
     (native-inputs

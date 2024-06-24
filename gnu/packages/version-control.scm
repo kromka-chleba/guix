@@ -242,14 +242,14 @@ Python 3.3 and later, rather than on Python 2.")
 (define-public git
   (package
    (name "git")
-   (version "2.45.1")
+   (version "2.45.2")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://kernel.org/software/scm/git/git-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "1gqj5xrlmzs4amrj7xgxx7qpqj8br8f6bk4bzcnf4yk2iq538kg6"))))
+              "1nws1vjgj54sv32wxl1h3n1jkcpabqv7a605hhafsby0n5zfigsi"))))
    (build-system gnu-build-system)
    (native-inputs
     `(("native-perl" ,perl)
@@ -269,7 +269,7 @@ Python 3.3 and later, rather than on Python 2.")
                 version ".tar.xz"))
           (sha256
            (base32
-            "1w6r2liifafsxydmc48p578z7z70ys0spm6qp5ygdd0l26mxf8p6"))))
+            "1pqrp46kwbxycqld39027ph1cvkq9am156y3sswn6w2khsg30f09"))))
       ;; For subtree documentation.
       ("asciidoc" ,asciidoc)
       ("docbook2x" ,docbook2x)
@@ -2369,14 +2369,14 @@ following features:
 (define-public subversion
   (package
     (name "subversion")
-    (version "1.14.2")
+    (version "1.14.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://apache/subversion/"
                                   "subversion-" version ".tar.bz2"))
               (sha256
                (base32
-                "0a6csc84hfymm8b5cnvq1n1p3rjjf33qy0z7y1k8lwkm1f6hw4y9"))))
+                "0h54l4p2dlk1rm4zm428hi6ij6xpqxqlqmvkhmz5yhq9392zv7ll"))))
     (build-system gnu-build-system)
     (arguments
      (list

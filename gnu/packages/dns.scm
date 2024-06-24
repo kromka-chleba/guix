@@ -337,14 +337,14 @@ and BOOTP/TFTP for network booting of diskless machines.")
     ;; When updating, check whether isc-dhcp's bundled copy should be as well.
     ;; The BIND release notes are available here:
     ;; https://www.isc.org/bind/
-    (version "9.19.21")
+    (version "9.19.24")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://ftp.isc.org/isc/bind9/" version
                            "/bind-" version ".tar.xz"))
        (sha256
-        (base32 "133f1aq8acaz9z03cl0gcrj4pq0hqm6c3sm4hz67d37phndsjs1b"))))
+        (base32 "171668qgjvf257m3r04lxmbsiz9lnn57djnlmn8plh1lj77fw3nh"))))
     (build-system gnu-build-system)
     (outputs `("out" "utils"))
     (inputs
@@ -1228,35 +1228,41 @@ and TCP-capable recursive DNS server for finding domains on the internet.")
 (define-public openresolv
   (package
     (name "openresolv")
-    (version "3.12.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://roy.marples.name/downloads/openresolv/"
-                                  "openresolv-" version ".tar.xz"))
-              (sha256
-               (base32
-                "15qvp5va2yrqpz0ba54clvn8cbc66v4sl7k3bi9ji8jpx040bcs2"))
-              (patches
-               (search-patches "openresolv-restartcmd-guix.patch"))))
+    (version "3.13.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/NetworkConfiguration/openresolv")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "03m8n0j0kxxm5kpl66gz4lxr1qqgrp8zlkaq9j8fz27fih0g75xf"))
+       (patches
+        (search-patches "openresolv-restartcmd-guix.patch"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; No test suite
-       #:configure-flags
-       (list (string-append "--sysconfdir=/etc"))
-       #:make-flags
-       (list (string-append "SYSCONFDIR=/" (assoc-ref %outputs "out") "/etc"))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'wrap-program
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out"))
-                   (coreutils (assoc-ref inputs "coreutils-minimal")))
-               (substitute* (string-append out "/sbin/resolvconf")
-                 (("RESOLVCONF=\"\\$0\"")
-                  (format #f "\
-RESOLVCONF=\"$0\"
-PATH=~a/bin:$PATH"
-                          coreutils)))))))))
+     (list #:tests? #f                  ; No test suite
+
+           #:configure-flags
+           #~(list (string-append "--prefix=" #$output:out)
+                   "--sysconfdir=/etc"
+                   "--rundir=/run")
+
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'install
+                 (lambda* (#:key make-flags #:allow-other-keys)
+                   (apply invoke "make" "install"
+                          (string-append "SYSCONFDIR=" #$output "/etc")
+                          make-flags)))
+               (add-after 'install 'wrap-program
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* (string-append #$output "/sbin/resolvconf")
+                     (("RESOLVCONF=\"\\$0\"")
+                      (format #f "RESOLVCONF=\"$0\"\nPATH=~a/bin:$PATH"
+                              (assoc-ref inputs "coreutils-minimal")))))))))
     (inputs
      (list coreutils-minimal))
     (home-page "https://roy.marples.name/projects/openresolv/")
