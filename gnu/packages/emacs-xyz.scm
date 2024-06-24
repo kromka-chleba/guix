@@ -97,7 +97,7 @@
 ;;; Copyright © 2021, 2022 Stefan Reichör <stefan@xsteve.at>
 ;;; Copyright © 2021, 2022, 2023 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2021 Eugene Klimov <lipklim@mailbox.org>
-;;; Copyright © 2021 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2021, 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2021 David Dashyan <mail@davie.li>
 ;;; Copyright © 2021 Dhruvin Gandhi <contact@dhruvin.dev>
 ;;; Copyright © 2021 Matthew James Kraai <kraai@ftbfs.org>
@@ -141,6 +141,7 @@
 ;;; Copyright © 2024 Ilya Chernyshov <ichernyshovvv@gmail.com>
 ;;; Copyright © 2024 Wilko Meyer <w@wmeyer.eu>
 ;;; Copyright © 2024 Noé Lopez <noelopez@free.fr>
+;;; Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -17139,7 +17140,7 @@ passive voice.")
 (define-public emacs-org
   (package
     (name "emacs-org")
-    (version "9.7.4")
+    (version "9.7.5")
     (source
      (origin
        (method git-fetch)
@@ -17148,7 +17149,7 @@ passive voice.")
              (commit (string-append "release_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00crs2q4yvmv2jgzmcfyl2g6m7g42zpggyssmcj8anwrsp748z9b"))))
+        (base32 "1a2l5y2f5jciv90nfa9rybfw37zqibwl3jaxcd0z15h3alfiyb2d"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -37016,46 +37017,43 @@ a @samp{date} keywords, and optionally, a @samp{filetags} keyword.")
     (license license:bsd-3)))
 
 (define-public emacs-ddskk
-  ;; XXX: Upstream adds code names to their release tags, so version and code
-  ;; name below need to be updated together.
-  (let ((version "17.1")
-        (code-name "Neppu"))
+  (let ((commit "8c47f46e38a29a0f3eabcd524268d20573102467")
+        (revision "0"))
     (package
       (name "emacs-ddskk")
-      (version version)
+      (version (git-version "17.1" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/skk-dev/ddskk")
-               (commit (string-append "ddskk-" version "_" code-name))))
+               (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0xm53rybxki2784gyjkafg6956viyhhcq51kbmnrwc6aw3yzh7aw"))))
+          (base32 "0vfdbab3ncns8wwrna8h6y2w0grkphzr9s65sgxq98lpqmxbbr72"))))
       (build-system gnu-build-system)
       (arguments
-       `(#:modules ((guix build gnu-build-system)
-                    (guix build utils)
-                    (guix build emacs-utils))
-         #:imported-modules (,@%gnu-build-system-modules
-                             (guix build emacs-utils))
-         #:test-target "test"
-         #:phases
-         (modify-phases %standard-phases
-           (replace 'configure
-             (lambda* (#:key outputs #:allow-other-keys)
-               (make-file-writable "SKK-MK")
-               (emacs-substitute-variables "SKK-MK"
-                 ("PREFIX" (assoc-ref outputs "out"))
-                 ("LISPDIR" '(expand-file-name "/share/emacs/site-lisp" PREFIX))
-                 ("SKK_PREFIX" "")
-                 ("SKK_INFODIR" '(expand-file-name "info" PREFIX)))
-               (for-each make-file-writable (find-files "./doc"))
-               #t))
-           (add-after 'unpack 'fix-test
-             (lambda _
-               (substitute* "Makefile"
-                 (("/bin/rm") (which "rm"))))))))
+       (list #:modules '((guix build gnu-build-system)
+                         (guix build utils)
+                         (guix build emacs-utils))
+             #:imported-modules `(,@%gnu-build-system-modules
+                                  (guix build emacs-utils))
+             #:test-target "test"
+             #:phases
+             #~(modify-phases %standard-phases
+                 (replace 'configure
+                   (lambda _
+                     (emacs-substitute-variables "SKK-MK"
+                       ("PREFIX" #$output)
+                       ("LISPDIR" '(expand-file-name "/share/emacs/site-lisp" PREFIX))
+                       ("SKK_PREFIX" "")
+                       ("SKK_INFODIR" '(expand-file-name "info" PREFIX)))))
+                 (add-after 'unpack 'fix-test
+                   (lambda _
+                     (substitute* "Makefile"
+                       (("/bin/rm") (which "rm")))
+                     (substitute* "nicola/Makefile"
+                       (("/bin/rm") (which "rm"))))))))
       (native-inputs
        (list emacs-minimal ruby))
       (home-page "https://github.com/skk-dev/ddskk")
@@ -37072,25 +37070,23 @@ conversion program}, a Japanese input method on Emacs.")
     (propagated-inputs
      (list emacs-ddskk))
     (arguments
-     `(#:make-flags
-       (let ((out (assoc-ref %outputs "out")))
-         (append
-          (list (string-append "PREFIX=" out)
-                (string-append "LISPDIR=" out "/share/emacs/site-lisp"))))
-       #:tests? #f                      ; no tests in this subtree
-       ,@(substitute-keyword-arguments (package-arguments emacs-ddskk)
-           ((#:phases phases)
-            `(modify-phases ,phases
-               (add-after 'unpack 'chdir
-                 (lambda _
-                   (chdir "nicola")
-                   #t))
-               (replace 'configure
-                 (lambda* (#:key outputs #:allow-other-keys)
-                   (make-file-writable "NICOLA-DDSKK-CFG")
-                   (emacs-substitute-sexps "NICOLA-DDSKK-CFG"
-                     ("setq NICOLA-DDSKK_PREFIX" ""))
-                   #t)))))))
+     (append
+      (list #:make-flags
+            #~(append
+                 (list (string-append "PREFIX=" #$output)
+                       (string-append "LISPDIR=" #$output "/share/emacs/site-lisp")))
+            ;; no tests in this subtree
+            #:tests? #f)
+      (substitute-keyword-arguments (package-arguments emacs-ddskk)
+        ((#:phases phases)
+         #~(modify-phases #$phases
+             (add-after 'fix-test 'chdir
+               (lambda _
+                 (chdir "nicola")))
+             (replace 'configure
+               (lambda _
+                 (emacs-substitute-sexps "NICOLA-DDSKK-CFG"
+                   ("setq NICOLA-DDSKK_PREFIX" "")))))))))
     (synopsis "Nicola layout for Daredevil SKK")
     (description
      "Daredevil SKK is a version of @acronym{SKK, Simple Kana to Kanji

@@ -5181,8 +5181,8 @@ Cloud.")
     (license license:expat)))
 
 (define-public guix-data-service
-  (let ((commit "d74422c2686890c7df26dd52104d65bfd042e7bd")
-        (revision "50"))
+  (let ((commit "eeb026b654939c3f7457f0a355757f17745a16ab")
+        (revision "51"))
     (package
       (name "guix-data-service")
       (version (string-append "0.0.1-" revision "." (string-take commit 7)))
@@ -5194,7 +5194,7 @@ Cloud.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "06np60hd0vlwbhkh8x9drnzndykykgxw4f7qmgnp8p3rxrzh8y9g"))))
+                  "0b2fg0vd3mvkmrc52p7kfzwhra0ji4cmnxjyzab8m87ijrpgh13l"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -8228,6 +8228,37 @@ in Perl but is not nearly as capable as @code{HTML::Tidy}.")
 @item TLS/SSL and proxy support.
 @end itemize")
       (license license:bsd-2))))
+
+(define-public gemget
+  (package
+    (name "gemget")
+    (version "1.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/makew0rld/gemget")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03x9apk73lwyafc4fd2vs033z7vcpk4k0jf97452l7pnlx2v57rz"))))
+    (build-system go-build-system)
+    (native-inputs
+     (list go-github-com-dustin-go-humanize
+           go-github-com-makeworld-the-better-one-go-gemini
+           go-github-com-makeworld-the-better-one-go-gemini-socks5
+           go-github-com-schollz-progressbar-v3
+           go-github-com-spf13-pflag))
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "github.com/makeworld-the-better-one/gemget"))
+    (home-page "https://github.com/makew0rld/gemget")
+    (synopsis "Command line downloader for the Gemini protocol")
+    (description
+     "Gemget is a command line downloader for the Gemini protocol.
+It works well with streams and can print headers for debugging as well.")
+    (license license:expat)))
 
 (define-public geomyidae
   (package

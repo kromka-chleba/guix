@@ -1081,6 +1081,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/converseen-hide-updates-checks.patch	\
   %D%/packages/patches/converseen-hide-non-free-pointers.patch	\
   %D%/packages/patches/cool-retro-term-wctype.patch		\
+  %D%/packages/patches/coq-autosubst-1.8-remove-deprecated-files.patch		\
   %D%/packages/patches/coreutils-gnulib-tests.patch		\
   %D%/packages/patches/cppcheck-disable-char-signedness-test.patch	\
   %D%/packages/patches/cppdap-add-CPPDAP_USE_EXTERNAL_GTEST_PACKAGE.patch\
@@ -1173,7 +1174,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/ergodox-firmware-fix-json-target.patch	\
   %D%/packages/patches/ergodox-firmware-fix-numpad.patch	\
   %D%/packages/patches/erlang-man-path.patch			\
-  %D%/packages/patches/esmini-no-clutter-log.patch		\
   %D%/packages/patches/esmini-use-pkgconfig.patch		\
   %D%/packages/patches/esmtp-add-lesmtp.patch		\
   %D%/packages/patches/eudev-rules-directory.patch		\

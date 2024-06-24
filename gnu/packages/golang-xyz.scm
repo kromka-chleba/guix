@@ -1300,31 +1300,6 @@ Alphanum Algorithm} developed by Dave Koelle in Go.")
 defined output to the standard output.")
     (license license:expat)))
 
-(define-public go-github-com-k0kubun-go-ansi
-  (package
-    (name "go-github-com-k0kubun-go-ansi")
-    (version "0.0.0-20180517002512-3bf9e2903213")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/k0kubun/go-ansi")
-             (commit (go-version->git-ref version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "117afax4l268rbswf02icbgxncmd1pk2abkz7cv26iyszi8l26dq"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/k0kubun/go-ansi"))
-    (home-page "https://github.com/k0kubun/go-ansi")
-    (synopsis "Windows-portable ANSI escape sequence utility for Golang")
-    (description
-     "This library converts ANSI escape sequences to Windows API calls on
-Windows environment.  You can easily use this feature by replacing fmt with
-ansi.")
-    (license license:expat)))
-
 (define-public go-github-com-gabriel-vasile-mimetype
   (package
     (name "go-github-com-gabriel-vasile-mimetype")
@@ -1787,6 +1762,34 @@ expressing configuration which is easy for both humans and machines to read.")
 @end itemize")
     (license license:bsd-3)))
 
+(define-public go-github-com-ianlancetaylor-demangle
+  ;; No release, see <https://github.com/ianlancetaylor/demangle/issues/21>.
+  (package
+    (name "go-github-com-ianlancetaylor-demangle")
+    (version "0.0.0-20230524184225-eabc099b10ab")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ianlancetaylor/demangle")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pvlg1adp50hnw8dz7il473xb197ixirg26cy5hj3ngb4qlajwvc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ianlancetaylor/demangle"))
+    (home-page "https://github.com/ianlancetaylor/demangle")
+    (synopsis "Symbol name demangler written in Go")
+    (description
+     "This package defines functions that demangle GCC/LLVM C++ and Rust
+symbol names.  This package recognizes names that were mangled according to
+the C++ ABI defined at https://codesourcery.com/cxx-abi/ and the
+@url{https://rust-lang.github.io/rfcs/2603-rust-symbol-name-mangling-v0.html,Rust
+ABI}.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-jbenet-go-random
   (package
     (name "go-github-com-jbenet-go-random")
@@ -1939,33 +1942,30 @@ storing only one copy of each unique string in memory.  All functions may be
 called concurrently with themselves and each other.")
     (license license:expat)))
 
-(define-public go-github-com-ianlancetaylor-demangle
-  ;; No release, see <https://github.com/ianlancetaylor/demangle/issues/21>.
+(define-public go-github-com-k0kubun-go-ansi
   (package
-    (name "go-github-com-ianlancetaylor-demangle")
-    (version "0.0.0-20230524184225-eabc099b10ab")
+    (name "go-github-com-k0kubun-go-ansi")
+    (version "0.0.0-20180517002512-3bf9e2903213")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/ianlancetaylor/demangle")
+             (url "https://github.com/k0kubun/go-ansi")
              (commit (go-version->git-ref version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1pvlg1adp50hnw8dz7il473xb197ixirg26cy5hj3ngb4qlajwvc"))))
+        (base32 "117afax4l268rbswf02icbgxncmd1pk2abkz7cv26iyszi8l26dq"))))
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/ianlancetaylor/demangle"))
-    (home-page "https://github.com/ianlancetaylor/demangle")
-    (synopsis "Symbol name demangler written in Go")
+      #:import-path "github.com/k0kubun/go-ansi"))
+    (home-page "https://github.com/k0kubun/go-ansi")
+    (synopsis "Windows-portable ANSI escape sequence utility for Golang")
     (description
-     "This package defines functions that demangle GCC/LLVM C++ and Rust
-symbol names.  This package recognizes names that were mangled according to
-the C++ ABI defined at https://codesourcery.com/cxx-abi/ and the
-@url{https://rust-lang.github.io/rfcs/2603-rust-symbol-name-mangling-v0.html,Rust
-ABI}.")
-    (license license:bsd-3)))
+     "This library converts ANSI escape sequences to Windows API calls on
+Windows environment.  You can easily use this feature by replacing fmt with
+ansi.")
+    (license license:expat)))
 
 (define-public go-github-com-k0kubun-pp
   (package
@@ -2507,6 +2507,29 @@ Domain Name Service}.  The API follows the less-is-more principle, by
 presenting a small interface.")
     (license license:bsd-3)))
 
+(define-public go-github-com-mitchellh-colorstring
+  (package
+    (name "go-github-com-mitchellh-colorstring")
+    (version "0.0.0-20190213212951-d06e56a500db")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mitchellh/colorstring")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1d2mi5ziszfzdgaz8dg4b6sxa63nw1jnsvffacqxky6yz9m623kn"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mitchellh/colorstring"))
+    (home-page "https://github.com/mitchellh/colorstring")
+    (synopsis "Functions to colorize strings for terminal output")
+    (description
+     "Colorstring provides functions for colorizing strings for terminal output.")
+    (license license:expat)))
+
 (define-public go-github-com-modern-go-concurrent
   (package
     (name "go-github-com-modern-go-concurrent")
@@ -2605,6 +2628,60 @@ command line flags, config files, and default struct values.")
 @url{https://github.com/judwhite/go-svc/raw/master/svc/svc_windows_test.go,here}.")
       (license license:expat))))
 
+(define-public go-github-com-msteinert-pam
+  (package
+    (name "go-github-com-msteinert-pam")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/msteinert/pam")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1qnr0zxyxny85andq3cbj90clmz2609j8z9mp0zvdyxiwryfhyhj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; To run the full suite, the tests must be run as the root user.
+      #:tests? #f
+      #:go go-1.20
+      #:import-path "github.com/msteinert/pam"))
+    (propagated-inputs
+     (list go-golang-org-x-term
+           ;; For header files, otherwise it needs to be added as an input in
+           ;; final package to prevent build failure:
+           ;; ../../../github.com/msteinert/pam/transaction.go:7:10: fatal
+           ;; error: security/pam_appl.h: No such file or directory
+           linux-pam))
+    (home-page "https://github.com/msteinert/pam")
+    (synopsis "Golang wrapper module for the PAM API")
+    (description
+     "This package provides a wrapper for the @acronym{Pluggable
+Authentication Modules, PAM} application API.")
+    (license license:bsd-2)))
+
+(define-public go-github-com-msteinert-pam-v2
+  (package
+    (inherit go-github-com-msteinert-pam)
+    (name "go-github-com-msteinert-pam-v2")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/msteinert/pam")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1h02dcx00vgcsxgl5sly82dbixk8cimjb10q5p405bf4fz8z7q6k"))))
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-msteinert-pam)
+       ((#:import-path _ "github.com/msteinert/pam")
+        "github.com/msteinert/pam/v2")))))
+
 (define-public go-github-com-multiformats-go-base32
   (package
     (name "go-github-com-multiformats-go-base32")
@@ -2690,60 +2767,6 @@ command line flags, config files, and default struct values.")
      "Implementation of @url{https://github.com/multiformats/multibase,
 multibase} (self identifying base encodings) in Go.")
     (license license:expat)))
-
-(define-public go-github-com-msteinert-pam
-  (package
-    (name "go-github-com-msteinert-pam")
-    (version "1.2.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/msteinert/pam")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1qnr0zxyxny85andq3cbj90clmz2609j8z9mp0zvdyxiwryfhyhj"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      ;; To run the full suite, the tests must be run as the root user.
-      #:tests? #f
-      #:go go-1.20
-      #:import-path "github.com/msteinert/pam"))
-    (propagated-inputs
-     (list go-golang-org-x-term
-           ;; For header files, otherwise it needs to be added as an input in
-           ;; final package to prevent build failure:
-           ;; ../../../github.com/msteinert/pam/transaction.go:7:10: fatal
-           ;; error: security/pam_appl.h: No such file or directory
-           linux-pam))
-    (home-page "https://github.com/msteinert/pam")
-    (synopsis "Golang wrapper module for the PAM API")
-    (description
-     "This package provides a wrapper for the @acronym{Pluggable
-Authentication Modules, PAM} application API.")
-    (license license:bsd-2)))
-
-(define-public go-github-com-msteinert-pam-v2
-  (package
-    (inherit go-github-com-msteinert-pam)
-    (name "go-github-com-msteinert-pam-v2")
-    (version "2.0.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/msteinert/pam")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1h02dcx00vgcsxgl5sly82dbixk8cimjb10q5p405bf4fz8z7q6k"))))
-    (arguments
-     (substitute-keyword-arguments
-         (package-arguments go-github-com-msteinert-pam)
-       ((#:import-path _ "github.com/msteinert/pam")
-        "github.com/msteinert/pam/v2")))))
 
 (define-public go-github-com-multiformats-go-multicodec
   (package
