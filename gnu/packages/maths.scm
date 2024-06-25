@@ -9534,23 +9534,34 @@ of C, Java, or Ada programs.")
 (define-public frama-c
   (package
     (name "frama-c")
-    (version "28.1")
+    (version "29.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://frama-c.com/download/frama-c-"
-                                  version "-Nickel.tar.gz"))
+                                  version "-Copper.tar.gz"))
               (sha256
                (base32
-                "14zmwghwhcryvri7k91vc1yampvxvhg36vwjxf64d8kx7dsbq802"))))
+                "14vlvynp3yfmnkixm676c1ip0jlkiqjzmrp9f9c990zzs2wb7yyj"))))
     (build-system dune-build-system)
     (arguments
-      `(#:phases
-        (modify-phases %standard-phases
-          (add-before 'build 'set-env
-            (lambda _
-              (setenv "CC" "gcc"))))))
+     (list #:phases
+           #~(modify-phases %standard-phases
+             (add-before 'build 'set-env
+               (lambda _
+                 (setenv "CC" "gcc")))
+             (add-after 'install 'wrap-programs
+               (lambda _
+                 (let ((ocamlpath
+                         `(,(string-append #$output "/lib/ocaml/site-lib")
+                           ,@(search-path-as-string->list
+                               (getenv "OCAMLPATH")))))
+                   (for-each
+                     (lambda (program)
+                       (wrap-program (string-append #$output "/bin/" program)
+                         `("OCAMLPATH" ":" prefix ,ocamlpath)))
+                     '("frama-c" "frama-c-gui"))))))))
     (inputs
-     (list gmp zlib))
+     (list bash-minimal gmp zlib))
     (propagated-inputs (list
                          graphviz
                          lablgtk3

@@ -2375,15 +2375,15 @@ associated with an address.")
 (define-public python-maxminddb
   (package
     (name "python-maxminddb")
-    (version "2.2.0")
+    (version "2.6.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "maxminddb" version))
        (sha256
         (base32
-         "1rc4a403r3b4vhmhb03gidd0fmsbvfpbf3qfcw25h4db9zn0fxz3"))))
-    (build-system python-build-system)
+         "0r7jcqzr3hy9jims0ygjdhndysbs02hsaybx9f4vq2k2w8r2v13x"))))
+    (build-system pyproject-build-system)
     (arguments
      `(#:tests? #f)) ;; Tests require a copy of the maxmind database
     (inputs
@@ -2398,19 +2398,21 @@ MaxMind DB files.")
 (define-public python-geoip2
   (package
     (name "python-geoip2")
-    (version "2.9.0")
+    (version "4.8.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "geoip2" version))
        (sha256
         (base32
-         "1w7cay5q6zawjzivqbwz5cqx1qbdjw6kbriccb7l46p7b39fkzzp"))))
-    (build-system python-build-system)
+         "0ddcm6a0f5xr66r84hpn6jr6b7hl77axb0d41qj285ylny0c376x"))))
+    (build-system pyproject-build-system)
     (arguments
      `(#:tests? #f)) ;; Tests require a copy of the maxmind database
     (inputs
-     (list python-maxminddb python-requests))
+     (list python-maxminddb
+           python-requests
+           python-aiohttp))
     (home-page "https://www.maxmind.com/")
     (synopsis "MaxMind GeoIP2 API")
     (description "Provides an API for the GeoIP2 web services and databases.
