@@ -948,6 +948,69 @@ safety and thread safety guarantees.")
          (inherit (package-source base-rust))
          (patches '()))))))
 
+(define-public rust-1.76
+  (let ((base-rust (rust-bootstrapped-package rust-1.75 "1.76.0"
+                    "08f06shp6l72qrv5fwg1is7yzr6kwj8av0l9h5k243bz781zyp4y")))
+    (package
+      (inherit base-rust)
+      ;; Need llvm >= 16.0
+      (inputs (modify-inputs (package-inputs base-rust)
+                             (replace "llvm" llvm-17))))))
+
+(define-public rust-1.77
+  (let ((base-rust (rust-bootstrapped-package rust-1.76 "1.77.0"
+                    "11rda8d8qj24a5mkjzj1x6x9pkvaq0zlhkgdp5b39zj5m0gwsv0d")))
+    (package
+      (inherit base-rust)
+      (arguments
+       (substitute-keyword-arguments (package-arguments base-rust)
+         ((#:phases phases)
+          `(modify-phases ,phases
+             (add-after 'configure 'no-optimized-compiler-builtins
+               (lambda _
+                 ;; Pre-1.77, the behavior was equivalent to this flag being
+                 ;; "false" if the llvm-project submodule wasn't checked out.
+                 ;;
+                 ;; Now there's an explicit check, so the build fails if we don't
+                 ;; manually disable this (given that we don't have the submodule checked out).
+                 ;; Thus making the build behave the same as it did in 1.76 and earlier.
+                 ;;
+                 ;; TODO - make the build system depend on system llvm for this, so we
+                 ;; can get the performance benefits of setting this to true?
+                 (substitute* "config.toml"
+                   (("\\[build\\]")
+                    "[build]\noptimized-compiler-builtins = false")))))))))))
+
+(define-public rust-1.78
+  (rust-bootstrapped-package
+   rust-1.77 "1.78.0" "1afmj5g3bz7439w4i8zjhd68zvh0gqg7ymr8h5rz49ybllilhm7z"))
+
+(define-public rust-1.79
+  (let ((base-rust (rust-bootstrapped-package rust-1.78 "1.79.0"
+                    "1h282jb1yxc69999w4nhvqb08rw2jy32i9njdjqrz78zglycybhp")))
+    (package
+      (inherit base-rust)
+      (source
+       (origin
+         (inherit (package-source base-rust))
+         (snippet
+          '(begin
+             (for-each delete-file-recursively
+                       '("src/llvm-project"
+                         "vendor/jemalloc-sys-0.5.4+5.3.0-patched/jemalloc"
+                         "vendor/openssl-src-111.28.1+1.1.1w/openssl"
+                         "vendor/tikv-jemalloc-sys-0.5.4+5.3.0-patched/jemalloc"))
+             ;; Remove vendored dynamically linked libraries.
+             ;; find . -not -type d -executable -exec file {} \+ | grep ELF
+             ;; Also remove the bundled (mostly Windows) libraries.
+             (for-each delete-file
+                       (find-files "vendor" "\\.(a|dll|exe|lib)$"))
+             ;; Adjust vendored dependency to explicitly use rustix with libc backend.
+             (substitute* '("vendor/tempfile-3.7.1/Cargo.toml"
+                            "vendor/tempfile-3.10.1/Cargo.toml")
+               (("features = \\[\"fs\"" all)
+                (string-append all ", \"use-libc\""))))))))))
+
 (define (make-ignore-test-list strs)
   "Function to make creating a list to ignore tests a bit easier."
   (map (lambda (str)
