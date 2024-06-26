@@ -51,6 +51,7 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
@@ -78,7 +79,7 @@
 (define-public mate-common
   (package
     (name "mate-common")
-    (version "1.26.0")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
@@ -86,7 +87,7 @@
                            name "-" version ".tar.xz"))
        (sha256
         (base32
-         "014wpfqpqmfkzv81paap4fz15mj1gsyvaxlrfqsp9a3yxw4f7jaf"))))
+         "02ms4s6kfxkbghc24rx9g1axdv50rndzdm0s3iz1vxv8wb7c5ds2"))))
     (build-system gnu-build-system)
     (home-page "https://mate-desktop.org/")
     (synopsis "Common files for development of MATE packages")
@@ -98,14 +99,14 @@ MATE applications.")
 (define-public mate-power-manager
   (package
     (name "mate-power-manager")
-    (version "1.26.1")
+    (version "1.28.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-power-manager-" version ".tar.xz"))
        (sha256
-        (base32 "0hhhzfmnr9vxz1w34wl7c93qm2npql71mrshpfcbzfh4xli9vk90"))))
+        (base32 "08gf3vvmh335pyrhqaswag77pygqvrn19a59dcrnis07nrscpgcf"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config
@@ -121,10 +122,12 @@ MATE applications.")
            cairo
            dbus
            libnotify
+           mate-desktop
            mate-panel
            libxrandr
            libcanberra
            libsecret
+           startup-notification
            upower))
     (home-page "https://mate-desktop.org/")
     (synopsis "Power manager for MATE")
@@ -137,7 +140,7 @@ actions.")
 (define-public mate-icon-theme
   (package
     (name "mate-icon-theme")
-    (version "1.26.0")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
@@ -145,7 +148,7 @@ actions.")
                            name "-" version ".tar.xz"))
        (sha256
         (base32
-         "0nha555fhhn0j5wmzmdc7bh93ckzwwdm8mwmzma5whkzslv09xa1"))))
+         "0fkdk9pqgplmdlsikjb1fp804zcblgpf87cj892zfpfac280gmll"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config intltool icon-naming-utils))
@@ -223,14 +226,14 @@ themes for both gtk+-2 and gtk+-3.")
 (define-public mate-desktop
   (package
     (name "mate-desktop")
-    (version "1.26.1")
+    (version "1.28.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-desktop-" version ".tar.xz"))
        (sha256
-        (base32 "04d2h1y5v225xzwsrf57cy281fr1k3rx70akjdhbs6mc4y56dl8j"))))
+        (base32 "18jajrj5bs98gnx4qjwqa1v48k9bm0c9rbmqw70r3cql41wlpfrj"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config
@@ -253,16 +256,14 @@ desktop and the mate-about program.")
 (define-public libmateweather
   (package
     (name "libmateweather")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "libmateweather-" version ".tar.xz"))
        (sha256
-        (base32 "0fpgc2l46024j2sqqsvclg9c6x33hyjk2zbg5h74v7cf9c7rj062"))
-       (patches
-        (list (search-patch "libmateweather-use-TZDIR.patch")))))
+        (base32 "1dfj68q3x9camd7h94pcwv8a5969cv5d4p979gcbk4xknpg76hsm"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags
@@ -297,14 +298,14 @@ the MATE desktop environment.")
 (define-public mate-terminal
   (package
     (name "mate-terminal")
-    (version "1.26.1")
+    (version "1.28.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-terminal-" version ".tar.xz"))
        (sha256
-        (base32 "1l71w64vf49iqaknja2p6h8m3blzq7w76ki7r7l8fy5ly03044vw"))))
+        (base32 "14ly8v4wcz735caw0rdvwrsdgkxlzla1kp5jxjc2gqiakqdfndgi"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list pkg-config
@@ -336,14 +337,14 @@ configurations (profiles).")
 (define-public mate-session-manager
   (package
     (name "mate-session-manager")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-session-manager-" version ".tar.xz"))
        (sha256
-        (base32 "0y22plz44pspjk02gasfyv6m6g29lxksp0iqhqy2k77x85j7v32v"))))
+        (base32 "0yrd1acnhp7gl60418532jr77n9br0mky83p0wlnbnm1bdcy8b6k"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:configure-flags (list "--with-elogind"
@@ -378,14 +379,14 @@ configuration program to choose applications starting on login.")
 (define-public mate-settings-daemon
   (package
     (name "mate-settings-daemon")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-settings-daemon-" version ".tar.xz"))
        (sha256
-        (base32 "0n8q9dg0ascqhskx45l3vb19q06kd3994lhlcsvw4899aidsczk9"))))
+        (base32 "0fhsc505p34zk1bln764fbh7dfq32x0vi0h2zkzrxjd4manwvmsf"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list pkg-config intltool gobject-introspection))
@@ -417,14 +418,14 @@ configuration program to choose applications starting on login.")
 (define-public libmatemixer
   (package
     (name "libmatemixer")
-    (version "1.26.0")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "libmatemixer-" version ".tar.xz"))
        (sha256
-        (base32 "1wcz4ppg696m31f5x7rkyvxxdriik2vprsr83b4wbs97bdhcr6ws"))))
+        (base32 "1ix0f3c40b535wsvbc9d4q7c6inf5d9ync4m7j76hq3z74ibjwsx"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list pkg-config intltool gobject-introspection))
@@ -441,14 +442,14 @@ sound systems.")
 (define-public libmatekbd
   (package
     (name "libmatekbd")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "libmatekbd-" version ".tar.xz"))
        (sha256
-        (base32 "1vdwjyryv1f12yx6np4nrl13vn0v4g8p90zxi3mfwi994n8qv4v3"))))
+        (base32 "03p8dx7n0fi77qdh1r6pi40wqa0ap7w8hk6j0csx68rb7i45hbjx"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list pkg-config intltool gobject-introspection))
@@ -469,14 +470,14 @@ MATE desktop environment.")
 (define-public mate-menus
   (package
     (name "mate-menus")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-menus-" version ".tar.xz"))
        (sha256
-        (base32 "130xvpszl1p3407b8annbvj8p0sa9jazxya02z9cfl5nwnd5k3a5"))))
+        (base32 "13ahf1cy9mzasswhnkx8qqmj5ii54338z0k994fss2kggmfcfh6g"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -507,14 +508,14 @@ assorted menu related utility programs.")
 (define-public mate-applets
   (package
     (name "mate-applets")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-applets-" version ".tar.xz"))
        (sha256
-        (base32 "1hn22xxmkm3s1477war7w7lb7yh77b3251y1why37p3nncfzdf1s"))))
+        (base32 "11k66nfgs403r70isc8ccss994hv9c793zr8r2fzn9nksmmyysqv"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list pkg-config
@@ -532,7 +533,7 @@ assorted menu related utility programs.")
            glib
            gucharmap
            gtk+
-           gtksourceview-3
+           gtksourceview-4
            libgtop
            libmateweather
            libnl
@@ -540,6 +541,7 @@ assorted menu related utility programs.")
            libx11
            libxml2
            libwnck
+           mate-desktop
            mate-panel
            pango
            polkit ; either polkit or setuid
@@ -580,14 +582,14 @@ Interactive Weather Information Network (IWIN).
 (define-public mate-media
   (package
     (name "mate-media")
-    (version "1.26.1")
+    (version "1.28.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-media-" version ".tar.xz"))
        (sha256
-        (base32 "02zb4rgahs50pick4nw9xhycshc5kbs1dlnr0ry5r4bd54da5ci8"))))
+        (base32 "04lr7bl0k1m88m1qf2m3wrq3a48wx44cgmb667k5agzn48p11p5w"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list pkg-config intltool gettext-minimal gobject-introspection))
@@ -612,14 +614,14 @@ mate-volume-control, a MATE volume control application and applet.")
 (define-public mate-panel
   (package
     (name "mate-panel")
-    (version "1.26.3")
+    (version "1.28.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            name "-" version ".tar.xz"))
        (sha256
-        (base32 "0ag03lbslsqva5ycrnv6ksm304s8miav42n7iklsf2s54zai0gzk"))))
+        (base32 "0cxsmp92cpvlvqfjxzc0bmzg0v4hpccxzz84894ih9xa6zl472k7"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:configure-flags
@@ -682,7 +684,7 @@ infamous 'Wanda the Fish'.")
 (define-public atril
   (package
     (name "atril")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
@@ -690,7 +692,7 @@ infamous 'Wanda the Fish'.")
                            name "-" version ".tar.xz"))
        (sha256
         (base32
-         "194inkvgsj49pp0f46xfl1mq7kniah15kgviss5a20cprcx62fm5"))))
+         "0qji6nsf0r3rp5x7mah8pafx42dyqcygqsv7cgmc8wcvdrgp5m6f"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:configure-flags (list (string-append "--with-openjpeg="
@@ -761,6 +763,7 @@ infamous 'Wanda the Fish'.")
            libgxps
            libjpeg-turbo
            libxml2
+           mate-desktop
            python-dogtail
            shared-mime-info
            gdk-pixbuf
@@ -775,6 +778,7 @@ infamous 'Wanda the Fish'.")
            ;;   Build libkpathsea as a shared library for DVI support.
            ;; ("libkpathsea" ,texlive-bin)
            poppler
+           startup-notification
            webkitgtk-for-gtk3))
     (home-page "https://mate-desktop.org")
     (synopsis "Document viewer for Mate")
@@ -789,7 +793,7 @@ hypertext navigation, and table-of-contents bookmarks.")
 (define-public caja
   (package
     (name "caja")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
@@ -797,7 +801,7 @@ hypertext navigation, and table-of-contents bookmarks.")
                            name "-" version ".tar.xz"))
        (sha256
         (base32
-         "01scw5wk4fgps8fk9l7ic2q6p1wplxzsv678wbv010m301pnxz9h"))))
+         "0ylm46wgg7linppid6pdfaixhdb8zgyrxl3lxz17x0am2k718c0y"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:configure-flags '("--disable-update-mimedb")
@@ -847,14 +851,14 @@ icons on the MATE desktop.  It works on local and remote file systems.")
 (define-public caja-extensions
   (package
     (name "caja-extensions")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "caja-extensions-" version ".tar.xz"))
        (sha256
-        (base32 "086mw7650n8blnr2wkg9xdb6lhwqamcbkk5575i2s90hzbiik72q"))))
+        (base32 "0x9ikq8biaq08wzj0qqpmy8k5w7axqimigfgf7i5z0s00xg6r66j"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:configure-flags (list "--enable-sendto"
@@ -865,6 +869,11 @@ icons on the MATE desktop.  It works on local and remote file systems.")
                                "--enable-image-converter"
                                "--enable-open-terminal" "--enable-share"
                                "--enable-wallpaper" "--enable-xattr-tags"
+                               "--enable-av=no"
+                               ; Guix does not have rust packages
+                               		; gstreamer-tag-1.0
+		                            ; gstreamer-pbutils-1.0
+                               ; so disable search for them
                                (string-append "--with-cajadir="
                                               (assoc-ref %outputs "out")
                                               "/lib/caja/extensions-2.0/"))))
@@ -883,6 +892,7 @@ icons on the MATE desktop.  It works on local and remote file systems.")
            dbus
            dbus-glib
            gajim ;runtime only?
+           gstreamer
            gtk+
            graphicsmagick
            mate-desktop
@@ -971,14 +981,14 @@ of various aspects of your desktop.")
 (define-public marco
   (package
     (name "marco")
-    (version "1.26.2")
+    (version "1.28.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            name "-" version ".tar.xz"))
        (sha256
-        (base32 "18q71r4bkrldscp414qm0457i0jnk841wwc490qg0whhzraa5w8j"))))
+        (base32 "1qf219zmg6m1kf6xlx66h65yq3gxz3hc6fj995lcv0791vjfb5i4"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list pkg-config
@@ -1021,7 +1031,7 @@ for use with MATE or as a standalone window manager.")
 (define-public mate-user-guide
   (package
     (name "mate-user-guide")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
@@ -1029,7 +1039,7 @@ for use with MATE or as a standalone window manager.")
                            name "-" version ".tar.xz"))
        (sha256
         (base32
-         "0by2gzvhx3ksb9shw9374a7dsjpchn79jf248a8g6bvznxscj12x"))))
+         "17jb0537xzlhiilzjzjgy6lx7j0w4bjppav1xla4cm06yla0ivsk"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -1060,14 +1070,14 @@ sessions, panels, menus, file management, and preferences.")
 (define-public mate-calc
   (package
     (name "mate-calc")
-    (version "1.26.0")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-calc-" version ".tar.xz"))
        (sha256
-        (base32 "0mddfh9ixhh60nfgx5kcprcl9liavwqyina11q3pnpfs3n02df3y"))))
+        (base32 "1x98wsjssmbkxqvl95xgp5r99cdq5adxl5pq9bkv2r183rfi4jw0"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list gettext-minimal intltool pkg-config yelp-tools))
@@ -1089,7 +1099,7 @@ sessions, panels, menus, file management, and preferences.")
 (define-public mate-backgrounds
   (package
     (name "mate-backgrounds")
-    (version "1.26.0")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
@@ -1097,7 +1107,7 @@ sessions, panels, menus, file management, and preferences.")
                            name "-" version ".tar.xz"))
        (sha256
         (base32
-         "0379hngy3ap1r5kmqvmzs9r710k2c9nal2ps3hq765df4ir15j8d"))))
+         "0hv97805gb89v64f90laskq4h483lgpvd9m54an0ggc64k8azlah"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list intltool))
@@ -1150,14 +1160,14 @@ Re-decorates windows on un-maximise.
 (define-public mate-screensaver
   (package
     (name "mate-screensaver")
-    (version "1.26.2")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-screensaver-" version ".tar.xz"))
        (sha256
-        (base32 "0zpzlmbb6m2hqsr67rc6mqpabl1idpzfqzlj4ifxanql4k7015ys"))))
+        (base32 "0w7awc8a9q2hsqz51p2zln4adb6l7zk57aql07hrabsaz2l283va"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:configure-flags
@@ -1220,7 +1230,7 @@ can be used as backgrounds in the MATE Desktop environment.")
 (define-public mate-utils
   (package
     (name "mate-utils")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
@@ -1228,7 +1238,7 @@ can be used as backgrounds in the MATE Desktop environment.")
                            name "-" version ".tar.xz"))
        (sha256
         (base32
-         "08066w98y45ilna6sn2kj8jnyhafra7sbpfrjdddv48939dlflrg"))))
+         "1lw85zr38666y5zywsy2gzs9f7n2k1z9zjkq7gq0z40x1mx9si2q"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list gettext-minimal
@@ -1250,8 +1260,10 @@ can be used as backgrounds in the MATE Desktop environment.")
            libgtop
            libx11
            libxext
+           mate-desktop
            mate-panel
            pango
+           startup-notification
            udisks
            zlib))
     (home-page "https://mate-desktop.org/")
@@ -1273,14 +1285,14 @@ can be used as backgrounds in the MATE Desktop environment.")
 (define-public eom
   (package
     (name "eom")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "eom-" version ".tar.xz"))
        (sha256
-        (base32 "0q4r9f3dcb6w6fia06sm9h3lzpq86gj13clzw1i6qzjg94li49dm"))))
+        (base32 "1g1sspnj7r077bfaywj6qhq4gvc2y7jylrf8b1r8q6jsk6rcl0cs"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list gettext-minimal
@@ -1321,14 +1333,14 @@ can be used as backgrounds in the MATE Desktop environment.")
 (define-public engrampa
   (package
     (name "engrampa")
-    (version "1.26.1")
+    (version "1.28.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "engrampa-" version ".tar.xz"))
        (sha256
-        (base32 "0jkci8gaxrx978laqj9ayx62r05czajqmry915iymsd4lw3l28ph"))))
+        (base32 "0siqhm6vh0lwx0qh7v4asn4m15ac9g93hm97iymfw24brydlqp4w"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:configure-flags (list "--disable-schemas-compile"
@@ -1373,14 +1385,14 @@ can be used as backgrounds in the MATE Desktop environment.")
 (define-public pluma
   (package
     (name "pluma")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            name "-" version ".tar.xz"))
        (sha256
-        (base32 "1wcl74pbmgwcrlm5vfmv1g8klxni1qnj0kgnb5k113hisziyqnar"))))
+        (base32 "1m51cmcl6z68bx37zhi72wfl58kq9bg7xcih1sjr6l1li6axz2ma"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(; Tests can not succeed.
@@ -1409,10 +1421,12 @@ can be used as backgrounds in the MATE Desktop environment.")
            libpeas
            libxml2
            libice
+           mate-desktop
            packagekit
            pango
            python
-           scrollkeeper))
+           scrollkeeper
+           startup-notification))
     (home-page "https://mate-desktop.org/")
     (synopsis "Text Editor for MATE")
     (description
@@ -1457,7 +1471,7 @@ MATE Desktop to monitor your system resources and usage.")
 (define-public mate-polkit
   (package
     (name "mate-polkit")
-    (version "1.26.1")
+    (version "1.28.1")
     (source
      (origin
        (method url-fetch)
@@ -1465,7 +1479,7 @@ MATE Desktop to monitor your system resources and usage.")
                            name "-" version ".tar.xz"))
        (sha256
         (base32
-         "0mq3a9ab4fxpkah6c5p7a0zsy8cixfc5j9030k204cy5vysv1dzm"))))
+         "1s2ac2p5smiwr7lf4snciyb9waclychjmzrw32f2qspdm381s2im"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list gettext-minimal gtk-doc intltool libtool pkg-config))
@@ -1499,6 +1513,33 @@ used to bring up authentication dialogs.")
                ;; To avoid a conflict if both MATE and XFCE are installed.
                (rename-file old new)))))))
     (properties `((hidden? . #t)))))
+
+
+(define-public mozo
+  (package
+    (name "mozo")
+    (version "1.28.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://mate/" (version-major+minor version) "/"
+                           "mozo-" version ".tar.xz"))
+       (sha256
+        (base32 "0929yk7g7103d18p400ysi19pqrxl3dyzg4l0mnw7a3azm7ri67y"))))
+    (build-system glib-or-gtk-build-system)
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list gettext-minimal
+           mate-menus
+           python
+           python-pygobject))
+    (home-page "https://mate-desktop.org/")
+    (synopsis "Menu editor for MATE")
+    (description "Mozo is a menu editor for MATE using the freedesktop.org menu
+specification")
+    (license (list license:lgpl2.0+))))
+
 
 (define-public mate
   (package
@@ -1558,6 +1599,7 @@ used to bring up authentication dialogs.")
                    mate-polkit
                    mate-system-monitor
                    mate-utils
+                   mozo
                    pluma
                    pinentry-gnome3
                    pulseaudio
