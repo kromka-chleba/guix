@@ -3505,7 +3505,7 @@ will reconstruct the object along its delta-base chain and return it.")
            go-github-com-xeipuuv-gojsonreference
            go-github-com-xeipuuv-gojsonpointer
            go-golang-org-x-net
-           go-golang.org-x-sync-semaphore
+           go-golang-org-x-sync
            go-github-com-ssgelm-cookiejarparser
            go-github-com-rubyist-tracerx
            go-github-com-olekukonko-ts
@@ -3849,8 +3849,8 @@ If several repos are related, it helps to see their status together.")
            go-github-com-motemen-go-colorine
            go-github-com-saracen-walker
            go-github-com-urfave-cli-v2
-           go-golang-org-x-net-html
-           go-golang.org-x-sync-errgroup))
+           go-golang-org-x-net
+           go-golang-org-x-sync))
     (synopsis "Manage remote repository clones")
     (description
      "@code{ghq} provides a way to organize remote repository clones, like

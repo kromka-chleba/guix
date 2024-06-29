@@ -20560,7 +20560,12 @@ like Ruby's ActiveRecord.
   (sbcl-package->cl-source-package sbcl-mito))
 
 (define-public ecl-mito
-  (sbcl-package->ecl-package sbcl-mito))
+  (let ((pkg (sbcl-package->ecl-package sbcl-mito)))
+    (package
+      (inherit pkg)
+      (arguments
+       ;; FIXME: Tests never end.
+       '(#:tests? #f)))))
 
 (define-public sbcl-mk-string-metrics
   (package
@@ -26410,7 +26415,7 @@ the Processing language and shares some of the API.")
   ;; Update together with emacs-slime.
   (package
     (name "sbcl-slime-swank")
-    (version "2.29.1")
+    (version "2.30")
     (source
      (origin
        (file-name (git-file-name "cl-slime-swank" version))
@@ -26419,7 +26424,7 @@ the Processing language and shares some of the API.")
              (url "https://github.com/slime/slime/")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1fcasqsdfwsphkfx1vd3r5mr89vgvzb9g2dbw82mc9lijg1mr1ki"))
+        (base32 "1z9mi663cs5gks1fz5yy9dycx47sbs6fdr47z05yc1nl8znqib99"))
        (modules '((guix build utils)))
        (snippet
         ;; The doc folder drags `gawk' into the closure.  Doc is already

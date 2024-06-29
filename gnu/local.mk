@@ -1226,6 +1226,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/firebird-riscv64-support-pt2.patch	\
   %D%/packages/patches/flann-cmake-3.11.patch			\
   %D%/packages/patches/flatpak-fix-path.patch			\
+  %D%/packages/patches/flatpak-fix-fonts-icons.patch	\
   %D%/packages/patches/flatpak-unset-gdk-pixbuf-for-sandbox.patch	\
   %D%/packages/patches/fluxbox-1.3.7-no-dynamic-cursor.patch	\
   %D%/packages/patches/fluxbox-1.3.7-gcc.patch			\
@@ -1329,12 +1330,15 @@ dist_patch_DATA =						\
   %D%/packages/patches/geoclue-config.patch			\
   %D%/packages/patches/gettext-libunicode-update.patch		\
   %D%/packages/patches/ghc-8.0-fall-back-to-madv_dontneed.patch	\
+  %D%/packages/patches/ghc-9.2-cabal-support-package-path.patch \
   %D%/packages/patches/ghc-9.2-glibc-2.33-link-order.patch \
   %D%/packages/patches/ghc-9.2-grep-warnings.patch \
   %D%/packages/patches/ghc-testsuite-dlopen-pie.patch		\
   %D%/packages/patches/ghc-testsuite-grep-compat.patch		\
+  %D%/packages/patches/ghc-aeson-encodeDouble.patch		\
   %D%/packages/patches/ghc-basement-fix-32bit.patch		\
   %D%/packages/patches/ghc-bytestring-handle-ghc9.patch	\
+  %D%/packages/patches/ghc-clock-realfrag.patch	\
   %D%/packages/patches/ghc-language-haskell-extract-ghc-8.10.patch	\
   %D%/packages/patches/ghc-memory-fix-32bit.patch		\
   %D%/packages/patches/ghc-persistent-fix-32bit.patch		\

@@ -79,7 +79,7 @@
 (define-public go-golang-org-x-crypto
   (package
     (name "go-golang-org-x-crypto")
-    (version "0.4.0")
+    (version "0.14.0")
     (source
      (origin
        (method git-fetch)
@@ -89,7 +89,7 @@
        (file-name (string-append "go.googlesource.com-crypto-"
                                  version "-checkout"))
        (sha256
-        (base32 "13i0yz4hvc4qdr438nmzilvl5ns73v3910bakcddny3jbzq72i2m"))))
+        (base32 "08124qkp0l0blq6rw68llfbf84kp99255q0yvxyv27c05b0wkh66"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "golang.org/x/crypto"
@@ -100,7 +100,10 @@
          ;; Source-only package
          (delete 'build))))
     (propagated-inputs
-     (list go-golang-org-x-sys))
+     (list go-golang-org-x-net
+           go-golang-org-x-sys
+           go-golang-org-x-term
+           go-golang-org-x-text))
     (home-page "https://go.googlesource.com/crypto/")
     (synopsis "Supplementary cryptographic libraries in Go")
     (description "This package provides supplementary cryptographic libraries
@@ -238,6 +241,8 @@ loading algorithms.")
         #~(modify-phases %standard-phases
             ;; Source-only package
             (delete 'build))))
+      (propagated-inputs
+       (list go-golang-org-x-sys go-golang-org-x-term go-golang-org-x-text))
       (home-page "https://go.googlesource.com/net")
       (synopsis "Go supplemental networking libraries")
       (description "This package provides supplemental Go networking libraries.")
@@ -262,116 +267,80 @@ loading algorithms.")
          (sha256
           (base32 "17zhim2m0r8nyy18g2lsawxm4rawix2qbjyn80x9vc6jc8fv05m9")))))))
 
-(define-public go-golang-org-x-net-html
-  (package
-    (inherit go-golang-org-x-net)
-    (name "go-golang-org-x-net-html")
-    (arguments
-     '(#:import-path "golang.org/x/net/html"
-       #:unpack-path "golang.org/x/net"))
-    (propagated-inputs (list go-golang-org-x-text))
-    (home-page "https://godoc.org/golang.org/x/net/html")
-    (synopsis "HTML5-compliant tokenizer and parser")
-    (description
-     "This package provides an HTML5-compliant tokenizer and parser.")))
-
 (define-public go-golang-org-x-sync
-  (let ((commit "8fcdb60fdcc0539c5e357b2308249e4e752147f1")
-        (revision "1"))
-    (package
-      (name "go-golang-org-x-sync")
-      (version (git-version "0.1.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://go.googlesource.com/sync")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "07qrhni6f5hh5p95k1yk6s4wsj341q663irvx6rllrxfsymj6a0z"))))
-      (build-system go-build-system)
-      (arguments
-       `(#:import-path "golang.org/x/sync"
-         #:tests? #f
-         ;; Source-only package
-         #:phases (modify-phases %standard-phases
-                    (delete 'build))))
-      (home-page "https://go.googlesource.com/sync/")
-      (synopsis "Additional Go concurrency primitives")
-      (description "This package provides Go concurrency primitives in
-addition to the ones provided by the language and “sync” and “sync/atomic”
-packages.")
-      (license license:bsd-3))))
-
-(define-public go-golang.org-x-sync-errgroup
-  (let ((commit "cd5d95a43a6e21273425c7ae415d3df9ea832eeb")
-        (revision "0"))
-    (package
-      (name "go-golang.org-x-sync-errgroup")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://go.googlesource.com/sync")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1nqkyz2y1qvqcma52ijh02s8aiqmkfb95j08f6zcjhbga3ds6hds"))))
-      (build-system go-build-system)
-      (arguments
-       '(#:import-path "golang.org/x/sync/errgroup"
-         #:unpack-path "golang.org/x/sync"))
-      (home-page "https://godoc.org/golang.org/x/sync/errgroup")
-      (synopsis "Synchronization, error propagation, and Context cancellation
-for groups of goroutines working on subtasks of a common task")
-      (description "This package provides synchronization, error
-propagation, and Context cancellation for groups of goroutines working on
-subtasks of a common task.")
-      (license license:bsd-3))))
-
-(define-public go-golang.org-x-sync-semaphore
   (package
-    (inherit go-golang.org-x-sync-errgroup)
-    (name "go-golang.org-x-sync-semaphore")
+    (name "go-golang-org-x-sync")
+    (version "0.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/sync")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03yq3pnjwqxqy1cvbkaa39ca2b9cli1k5wnz76l3a65n9fafai6q"))))
+    (build-system go-build-system)
     (arguments
-     '(#:import-path "golang.org/x/sync/semaphore"
-       #:unpack-path "golang.org/x/sync"))
-    (home-page "https://godoc.org/golang.org/x/sync/semaphore")
-    (synopsis "Weighted semaphore implementation in Go")
-    (description "Weighted semaphore implementation in Go.")))
+     (list
+      #:import-path "golang.org/x/sync"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Workaround for go-build-system's lack of Go modules
+          ;; support.
+          (delete 'build)
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (home-page "https://go.googlesource.com/sync/")
+    (synopsis "Additional Go concurrency primitives")
+    (description
+     "This package provides Go concurrency primitives in addition to the ones
+provided by the language and @code{sync} and @code{sync/atomic} packages.
+The package provides several Golang submodules:
+@itemize
+@item @code{errgroup} - synchronization, error propagation, and Context
+cancelation for groups of goroutines working on subtasks of a common task
+@item @code{semaphore} - a weighted semaphore implementation
+@item @code{singleflight} - a duplicate function call suppression mechanism
+@item @code{syncmap} - a concurrent map implementation
+@end itemize")
+    (license license:bsd-3)))
 
 (define-public go-golang-org-x-sys
-  (let ((commit "ca59edaa5a761e1d0ea91d6c07b063f85ef24f78")
-        (revision "0"))
-    (package
-      (name "go-golang-org-x-sys")
-      (version (git-version "0.8.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://go.googlesource.com/sys")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1p81niiin8dwyrjl2xsc95136w3vdw4kmj0w3mlh0vh5v134s4xq"))))
-      (build-system go-build-system)
-      (arguments
-       (list
-        #:import-path "golang.org/x/sys"
-        ;; Source-only package
-        #:tests? #f
-        #:phases
-        #~(modify-phases %standard-phases
-            ;; Source-only package
-            (delete 'build))))
-      (home-page "https://go.googlesource.com/sys")
-      (synopsis "Go support for low-level system interaction")
-      (description "This package provides supplemental libraries offering Go
+  (package
+    (name "go-golang-org-x-sys")
+    (version "0.21.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/sys")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "000fcyi863sbmamdn3cwfv3s3z9ls5l34xnjavcbgjs591ghki8y"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "golang.org/x/sys"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Workaround for go-build-system's lack of Go modules
+          ;; support.
+          (delete 'build)
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (home-page "https://go.googlesource.com/sys")
+    (synopsis "Go support for low-level system interaction")
+    (description "This package provides supplemental libraries offering Go
 support for low-level interaction with the operating system.")
-      (license license:bsd-3))))
+    (license license:bsd-3)))
 
 (define-public go-golang-org-x-term
   (package

@@ -860,37 +860,17 @@ manager and a system tray.")
 (define-public xmonad
   (package
     (name "xmonad")
-    (version "0.17.1")
-    (source (origin
-              (method url-fetch)
-              (uri (hackage-uri "xmonad" version))
-              (sha256
-               (base32
-                "1apqwyqmc51gamfgsvlanzqqig9qvjss89ibcamhnha1gs1k4jl8"))
-              (patches (search-patches "xmonad-dynamic-linking.patch"))))
+    (version "0.17.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "xmonad" version))
+       (sha256
+        (base32 "19qz9a23377nzc0qq8nca45s745mfncd4i2vwba14gi7ipipfcil"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "xmonad")))
     (inputs (list ghc-x11 ghc-data-default-class ghc-setlocale))
     (native-inputs (list ghc-quickcheck ghc-quickcheck-classes))
-    (arguments
-      (list
-       #:phases
-       #~(modify-phases %standard-phases
-           (add-after 'install 'install-xsession
-             (lambda _
-               (let ((xsessions (string-append #$output "/share/xsessions")))
-                 (mkdir-p xsessions)
-                 (call-with-output-file (string-append xsessions
-                                                       "/xmonad.desktop")
-                  (lambda (port)
-                    (format port "~
-                     [Desktop Entry]~@
-                     Name=~a~@
-                     Comment=xmonad window manager~@
-                     Exec=~a/bin/xmonad~@
-                     Type=Application~%" #$name #$output)))))))
-       #:cabal-revision '("2"
-                          "1rgwrnyb7kijzl2mqm8ks2nydh37q5vkbg4400rg9n6x13w2r9b3")))
     (home-page "http://xmonad.org")
     (synopsis "Tiling window manager")
     (description
@@ -950,7 +930,11 @@ tiled on several screens.")
          (add-before 'build 'patch-test-shebang
            (lambda* (#:key inputs #:allow-other-keys)
              (substitute* "test/Xmobar/Plugins/Monitors/AlsaSpec.hs"
-               (("/bin/bash") (which "bash"))))))))
+               (("/bin/bash") (which "bash")))))
+         (add-before 'build 'patch-cairo-path
+           (lambda _
+             (substitute* "src/Xmobar/X11/CairoSurface.hsc"
+               (("cairo/cairo-xlib.h") "cairo-xlib.h")))))))
     (home-page "https://xmobar.org")
     (synopsis "Haskell library for minimalistic text based status bars")
     (description
@@ -2426,7 +2410,6 @@ wlr-output-management-unstable-v1 protocol.")
      (list sbcl-alexandria
            sbcl-cl-ppcre
            sbcl-clx))
-    (outputs '("out" "lib"))
     (arguments
      (list
       #:phases
@@ -2439,12 +2422,12 @@ wlr-output-management-unstable-v1 protocol.")
           (add-after 'create-asdf-configuration 'build-program
             (lambda* (#:key outputs #:allow-other-keys)
               (build-program
-               (string-append (assoc-ref outputs "out") "/bin/stumpwm")
+               (string-append #$output "/bin/stumpwm")
                outputs
                #:entry-program '((stumpwm:stumpwm) 0))))
           (add-after 'build-program 'create-desktop-file
             (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
+              (let* ((out #$output)
                      (xsessions (string-append out "/share/xsessions")))
                 (mkdir-p xsessions)
                 (call-with-output-file
@@ -2461,7 +2444,7 @@ wlr-output-management-unstable-v1 protocol.")
                        out))))))
           (add-after 'install 'install-manual
             (lambda* (#:key (make-flags '()) outputs #:allow-other-keys)
-              (let* ((out  (assoc-ref outputs "out"))
+              (let* ((out  #$output)
                      (info (string-append out "/share/info")))
                 (invoke "./autogen.sh")
                 (invoke "sh" "./configure" "SHELL=sh")
@@ -2469,8 +2452,7 @@ wlr-output-management-unstable-v1 protocol.")
                 (install-file "stumpwm.info" info))))
           (add-after 'install-manual 'remove-temporary-cache
             (lambda* (#:key outputs #:allow-other-keys)
-              (delete-file-recursively (string-append (assoc-ref outputs "lib")
-                                                      "/.cache")))))))
+              (delete-file-recursively (string-append #$output "/.cache")))))))
     (synopsis "Window manager written in Common Lisp")
     (description
      "Stumpwm is a window manager written entirely in Common Lisp.
@@ -2490,10 +2472,8 @@ productive, customizable lisp based systems.")
   (package
     (inherit stumpwm)
     (name "stumpwm-with-slynk")
-    (outputs '("out"))
     (inputs
-     `(("stumpwm" ,stumpwm "lib")
-       ("slynk" ,sbcl-slynk)))
+     (list sbcl-slynk stumpwm))
     (arguments
      (substitute-keyword-arguments (package-arguments stumpwm)
        ((#:phases phases)
@@ -2508,8 +2488,7 @@ productive, customizable lisp based systems.")
                                 #:dependencies '("stumpwm" "slynk")
                                 #:dependency-prefixes
                                 (map (lambda (input) (assoc-ref inputs input))
-                                     '("stumpwm" "slynk")))
-                 #t)))
+                                     '("stumpwm" "sbcl-slynk"))))))
            (delete 'copy-source)
            (delete 'build)
            (delete 'check)
@@ -2533,7 +2512,7 @@ productive, customizable lisp based systems.")
           (base32 "1g8h2vd5qsmaiz6ixlx9ykrv6a08izmkf0js18fvljvznpyhsznz"))))
       (build-system asdf-build-system/sbcl)
       (inputs
-       `(("stumpwm" ,stumpwm "lib")))
+       (list stumpwm))
       (home-page "https://github.com/stumpwm/stumpwm-contrib")
       (synopsis "StumpWM extra modules")
       (description "This package provides extra modules for StumpWM.")
@@ -2578,7 +2557,7 @@ productive, customizable lisp based systems.")
                 (sha256
                  (base32
                   "0djcrr16bx40l7b60d4j507vk5l42fdgmjpgrnk86z1ba8wlqim8"))))
-      (inputs (list pamixer `(,stumpwm "lib")))
+      (inputs (list pamixer stumpwm))
       (build-system asdf-build-system/sbcl)
       (arguments
        (list #:asd-systems ''("pamixer")
@@ -2620,8 +2599,7 @@ mouse control mode for StumpWM.")
     (inherit stumpwm-contrib)
     (name "sbcl-stumpwm-ttf-fonts")
     (inputs
-     `(("stumpwm" ,stumpwm "lib")
-       ("clx-truetype" ,sbcl-clx-truetype)))
+     (list sbcl-clx-truetype stumpwm))
     (arguments
      '(#:asd-systems '("ttf-fonts")
        #:tests? #f
@@ -2733,9 +2711,7 @@ between windows.")
        (modify-phases %standard-phases
          (add-after 'unpack 'chdir (lambda _ (chdir "modeline/stumptray") #t)))))
     (inputs
-     `(("stumpwm" ,stumpwm "lib")
-       ("xembed" ,sbcl-clx-xembed)
-       ("alexandria" ,sbcl-alexandria)))
+     (list sbcl-alexandria sbcl-clx-xembed stumpwm))
     (home-page
      "https://github.com/stumpwm/stumpwm-contrib/tree/master/modeline/stumptray")
     (synopsis "Modeline support for stumptray connectivity")
@@ -2810,9 +2786,7 @@ layouts in StumpWM.")
          (add-after 'unpack 'chdir
            (lambda _ (chdir "modeline/disk") #t)))))
     (inputs
-     `(("stumpwm" ,stumpwm "lib")
-       ("cl-diskspace" ,sbcl-cl-diskspace)
-       ("cl-mount-info" ,sbcl-cl-mount-info)))
+     (list sbcl-cl-diskspace sbcl-cl-mount-info stumpwm))
     (home-page "https://github.com/stumpwm/stumpwm-contrib")
     (synopsis "StumpWM modeline support to show disk usage")
     (description "StumpWM modeline support to show disk usage")
@@ -2860,8 +2834,7 @@ one in Emacs.")
     (inherit stumpwm-contrib)
     (name "sbcl-stumpwm-screenshot")
     (inputs
-     `(("stumpwm" ,stumpwm "lib")
-       ("zpng" ,sbcl-zpng)))
+     (list sbcl-zpng stumpwm))
     (arguments
      '(#:asd-systems '("screenshot")
        #:tests? #f
@@ -2910,7 +2883,7 @@ modeline.")
      (list sbcl-bordeaux-threads
            sbcl-dbus
            sbcl-xml-emitter
-           (list stumpwm "lib")))
+           stumpwm))
     (arguments
      '(#:asd-systems '("notify")
        #:phases
@@ -2930,8 +2903,7 @@ by default.")
     (name "sbcl-stumpwm-battery-portable")
     (build-system asdf-build-system/sbcl)
     (inputs
-     (list sbcl-cl-ppcre
-           (list stumpwm "lib")))
+     (list sbcl-cl-ppcre stumpwm))
     (arguments
      '(#:asd-systems '("battery-portable")
        #:phases
