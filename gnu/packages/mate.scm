@@ -1571,6 +1571,7 @@ specification")
                    caja
                    dbus
                    dconf
+                   dconf-editor
                    engrampa
                    eom
                    font-abattis-cantarell
