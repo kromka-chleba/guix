@@ -19070,6 +19070,10 @@ symlink:
 (extra-special-file "/usr/bin/env"
                     (file-append coreutils "/bin/env"))
 @end lisp
+
+This procedure is meant for @code{/bin/sh}, @code{/usr/bin/env} and
+similar targets.  In particular, use for targets under @code{/etc} might
+not work as expected if the target is managed by Guix in other ways.
 @end deffn
 
 @defvar host-name-service-type
@@ -19675,7 +19679,7 @@ might want to turn it off for instance in a virtual machine that does
 not need it and where the extra boot time is a problem.
 
 @anchor{guix-configuration-channels}
-@item @code{channels} (default: @code{%default-channels})
+@item @code{channels} (default: @code{#f})
 List of channels to be specified in @file{/etc/guix/channels.scm}, which
 is what @command{guix pull} uses by default (@pxref{Invoking guix
 pull}).
@@ -32073,8 +32077,17 @@ configuration.  Values may themselves be association lists.
 @end lisp
 
 @item @code{extra-content} (default: @code{""})
-Extra content for the @code{http} block.  Should be string or a string
-valued G-expression.
+Additional content to be appended to the @code{http} block.  Can either
+be a value that can be lowered into a string or a list of such values.
+In the former case, it is inserted directly.  In the latter, it is
+prefixed with indentation and suffixed with a newline.  Nested lists are
+flattened into one line.
+
+@lisp
+(extra-content "include /etc/nginx/custom-config.conf;")
+(extra-content `("include /etc/nginx/custom-config.conf;"
+                 ("include " ,%custom-config.conf ";")))
+@end lisp
 
 @end table
 @end deftp
@@ -44079,7 +44092,7 @@ Services,,, shepherd, The GNU Shepherd Manual}, for details.
 When true, this is the delay in seconds before restarting a failed
 service.
 
-@item @code{start}
+@item @code{start} (default: @code{#~(const #t)})
 @itemx @code{stop} (default: @code{#~(const #f)})
 The @code{start} and @code{stop} fields refer to the Shepherd's
 facilities to start and stop processes (@pxref{Service De- and
@@ -44097,6 +44110,30 @@ This is a list of @code{shepherd-action} objects (see below) defining
 @example
 herd @var{action} @var{service} [@var{arguments}@dots{}]
 @end example
+
+@item @code{free-form} (default: @code{#f})
+When set, this field replaces the @code{start}, @code{stop}, and
+@code{actions} fields.  It is meant to be used when the service
+definition comes from some other source, typically the service
+collection provided by the Shepherd proper (@pxref{Service Collection,,,
+shepherd, The GNU Shepherd Manual}).
+
+@cindex REPL service, for shepherd
+For example, the snippet below defines a service for the Shepherd's
+built-in @acronym{REPL, read-eval-print loop} service (@pxref{REPL
+Service,,, shepherd, The GNU Shepherd Manual}):
+
+@lisp
+(shepherd-service
+  (provision '(repl))
+  (modules '((shepherd service repl)))
+  (free-form #~(repl-service)))
+@end lisp
+
+In this case, the service object is returned by the @code{repl-service}
+procedure of the Shepherd, so all the @code{free-form} G-expression does
+is call that procedure.  Note that the @code{provision} field must be
+consistent with the actual service provision.
 
 @item @code{auto-start?} (default: @code{#t})
 Whether this service should be started automatically by the Shepherd.  If it

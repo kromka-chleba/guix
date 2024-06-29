@@ -190,6 +190,44 @@ result and details about the health status of each component.")
 the parse trees produced by the html package.")
     (license license:bsd-2)))
 
+(define-public go-github-com-audriusbutkevicius-pfilter
+  (package
+    (name "go-github-com-audriusbutkevicius-pfilter")
+    (version "0.0.11")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/AudriusButkevicius/pfilter")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03kwi1hnhcz9qdblmhpaqg2063k2ch29hc5dr8cl2z7q5rp81m9i"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/AudriusButkevicius/pfilter"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-failing-tests
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each delete-file
+                          ;; Remove tests requiring setting up local
+                          ;; connection.
+                          (list "quic_test.go"))))))))
+    (propagated-inputs
+     (list go-github-com-pkg-errors
+           go-github-com-quic-go-quic-go
+           go-golang-org-x-net))
+    (home-page "https://github.com/AudriusButkevicius/pfilter")
+    (synopsis "Filter packets into multiple virtual connections")
+    (description
+     "Pfilter is a Go package for filtering packets into multiple virtual
+connections from a single physical connection.")
+    (license license:expat)))
+
 (define-public go-github-com-aws-sdk
   (package
     (name "go-github-com-aws-sdk")
@@ -399,6 +437,34 @@ for Go")
     (description "This package provides a CSS parser and inliner.")
     (license license:expat)))
 
+(define-public go-github-com-azure-go-ntlmssp
+  (package
+    (name "go-github-com-azure-go-ntlmssp")
+    (version "0.0.0-20221128193559-754e69321358")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Azure/go-ntlmssp")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dg20fwylf5lpsc5fgnnzw7jxz0885bg97lla1b5wrlhjas6lidn"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; See <https://github.com/Azure/go-ntlmssp/issues/40>.
+      #:tests? #f
+      #:import-path "github.com/Azure/go-ntlmssp"))
+    (propagated-inputs
+     (list go-golang-org-x-crypto))
+    (home-page "https://github.com/Azure/go-ntlmssp")
+    (synopsis "NTLM negotiation in Go")
+    (description
+     "This package provides @acronym{NT (New Technology) LAN
+Manager,NTLM}/Negotiate authentication over HTTP.")
+    (license license:expat)))
+
 (define-public go-github-com-bep-golibsass
   (package
     (name "go-github-com-bep-golibsass")
@@ -455,6 +521,30 @@ for Go")
     (description
      "This package provides SCSS compiler support for Go applications.")
     (license license:expat)))
+
+(define-public go-github-com-ccding-go-stun
+  (package
+    (name "go-github-com-ccding-go-stun")
+    (version "0.1.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ccding/go-stun")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wjhckyg42kp04njhj7gni84cyk0s7m17n13kqf6r7mjzx8a83pw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ccding/go-stun"))
+    (home-page "https://github.com/ccding/go-stun")
+    (synopsis "STUN client implementation")
+    (description
+     "Go-stun is a go implementation of the STUN client (RFC 3489
+and RFC 5389).")
+    (license license:asl2.0)))
 
 (define-public go-github-com-cenkalti-backoff-v4
   (package
@@ -723,6 +813,44 @@ Signing and Encryption set of standards.  This includes support for JSON Web
 Encryption, JSON Web Signature, and JSON Web Token standards.")
     (license license:asl2.0)))
 
+(define-public go-github-com-go-ldap-ldap
+  (package
+    (name "go-github-com-go-ldap-ldap")
+    (version "3.4.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-ldap/ldap")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fbmhlc8ss5vn6zz0iiifvy4pm0mwaf13qpz70k83mmnv9vrv16x"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-ldap/ldap/v3"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-failing-tests
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each delete-file
+                          ;; FAIL <...> LDAP Result Code 200 "Network Error":
+                          ;; dial tcp: lookup ldap.itd.umich.edu on <...>
+                          (list "ldap_test.go"))))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-azure-go-ntlmssp
+           go-github-com-go-asn1-ber-asn1-ber
+           go-github-com-google-uuid))
+    (home-page "https://github.com/go-ldap/ldap")
+    (synopsis "LDAP v3 functionality for Go")
+    (description "This package provides basic LDAP v3 functionality in the Go
+language.")
+    (license license:expat)))
+
 (define-public go-github-com-go-telegram-bot-api-telegram-bot-api
   (package
     (name "go-github-com-go-telegram-bot-api-telegram-bot-api")
@@ -905,7 +1033,7 @@ language.")
 (define-public go-github-com-gorilla-csrf
   (package
     (name "go-github-com-gorilla-csrf")
-    (version "1.7.0")
+    (version "1.7.2")
     (source
      (origin
        (method git-fetch)
@@ -914,13 +1042,14 @@ language.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0iryq0z48yi7crfbd8jxyn7lh1gsglpiglvjgnf23bz6xfisssav"))))
+        (base32 "01d56sr9yggn6gs4lf5bnj15q6bkwvsim8kzj8m4arv1ccj7918j"))))
     (build-system go-build-system)
-    (propagated-inputs
-     `(("github.com/gorilla/securecookie" ,go-github-com-gorilla-securecookie)
-       ("github.com/pkg/errors" ,go-github-com-pkg-errors)))
     (arguments
-     '(#:import-path "github.com/gorilla/csrf"))
+     (list
+      #:import-path "github.com/gorilla/csrf"))
+    (propagated-inputs
+     (list go-github-com-gorilla-securecookie
+           go-github-com-pkg-errors))
     (home-page "https://github.com/gorilla/csrf")
     (synopsis "Cross Site Request Forgery (CSRF) prevention middleware")
     (description
@@ -1149,6 +1278,35 @@ with other clients.")
 used like a user interface for humans, to read and edit before passing the
 JSON data to the machine.")
     (license license:expat)))
+
+(define-public go-github-com-jackpal-gateway
+  (package
+    (name "go-github-com-jackpal-gateway")
+    (version "1.0.15")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jackpal/gateway")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dlspnbdz63b3kpavibd2764hdy53mx1v3vrqi721dsjy77r9ig3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/jackpal/gateway"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-golang-org-x-net))
+    (home-page "https://github.com/jackpal/gateway")
+    (synopsis "Discover the address of a LAN gateway")
+    (description
+     "@code{gateway} is a Go library for discovering the IP address of the
+default LAN gateway.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-jackpal-go-nat-pmp
   (package
@@ -1670,6 +1828,80 @@ which produce colorized output using github.com/fatih/color.")
     (synopsis "OpenTracing API for Go")
     (description "OpenTracing-Go is a Go implementation of the OpenTracing API.")
     (license license:asl2.0)))
+
+(define-public go-github-com-oschwald-geoip2-golang
+  (package
+    (name "go-github-com-oschwald-geoip2-golang")
+    (version "1.11.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/oschwald/geoip2-golang")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0670cv1b9c2p0lx63rlwl7kplbvzr79apbw13109v0pv4qlapmhx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ; Requires some unpackaged software and test data
+      #:go go-1.21
+      #:import-path "github.com/oschwald/geoip2-golang"))
+    (propagated-inputs
+     (list go-github-com-oschwald-maxminddb-golang))
+    (home-page "https://github.com/oschwald/geoip2-golang")
+    (synopsis "MaxMind GeoIP2 reader")
+    (description
+     "This package provides a library for reading MaxMind GeoLite2 and GeoIP2
+databases in Go.")
+    (license license:isc)))
+
+(define-public go-github-com-oschwald-maxminddb-golang
+  (package
+    (name "go-github-com-oschwald-maxminddb-golang")
+    (version "1.13.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/oschwald/maxminddb-golang")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p0c10r6850znvarc9h3y0jlwika9qmq0ys7rmg2aj8x2cffz3z6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/oschwald/maxminddb-golang"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Remove most of the tests requiring test-data from submodule
+          ;; <https://github.com/maxmind/MaxMind-DB>, there is a documented
+          ;; process on how to generate it, consider to pack and activate
+          ;; tests in the next update cycle.
+          (add-after 'unpack 'remove-failing-tests
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each delete-file
+                          (list "decoder_test.go"
+                                "deserializer_test.go"
+                                "example_test.go"
+                                "reader_test.go"
+                                "traverse_test.go"
+                                "verifier_test.go"))))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-golang-org-x-sys))
+    (home-page "https://github.com/oschwald/maxminddb-golang")
+    (synopsis "MaxMind DB Reader for Go")
+    (description
+     "This is a Go reader for the MaxMind DB format.  Although this can be
+used to read GeoLite2 and GeoIP2 databases, @code{geoip2} provides a
+higher-level API for doing so.")
+    (license license:isc)))
 
 (define-public go-github-com-pion-dtls
   (package

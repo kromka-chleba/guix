@@ -13915,6 +13915,50 @@ for analyzing gene-level association tests in meta-analyses for binary
 trait.")
     (license license:gpl3)))
 
+(define-public r-rnacrosslinkoo
+  (let ((commit "a317e0fa6ddf34c309529d57390769e2b2b5bfb7")
+        (revision "1"))
+    (package
+      (name "r-rnacrosslinkoo")
+      (version (git-version "0.1.3" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/cran/rnaCrosslinkOO")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0csv9924z0ish960k034qzv3gxh1yabnxni8hsrn5j6xl1r3cdpl"))))
+      (properties `((upstream-name . "rnaCrosslinkOO")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-classdiscovery
+                               r-doparallel
+                               r-foreach
+                               r-genomicranges
+                               r-ggplot2
+                               r-ggrepel
+                               r-heatmap3
+                               r-igraph
+                               r-iranges
+                               r-mass
+                               r-mixtools
+                               r-patchwork
+                               r-r4rna
+                               r-rcolorbrewer
+                               r-reshape2
+                               r-rrna
+                               r-s4vectors
+                               r-seqinr
+                               r-tidyverse
+                               r-topdom))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/cran/rnaCrosslinkOO")
+      (synopsis "Analysis of RNA crosslinking data")
+      (description
+       "The package is ideal for analyzing RNA structure and chemical probing data.")
+      (license license:gpl3))))
+
 (define-public r-rnaseqdtu
   (let ((commit "5bee1e769d2e1dc6a3f1cecb78078050eeb5b9ac")
         (revision "1"))
@@ -14132,6 +14176,58 @@ working with SAM and BAM files.  Current parallelised functionality is
 an important subset of samtools functionality, including view, index,
 sort, markdup, and depth.")
     (license license:gpl2+)))
+
+(define-public r-rphyloxml
+  (let ((commit "a30e39249239b2de01d6964ae2a2205a6c48b475")
+        (revision "1"))
+    (package
+      (name "r-rphyloxml")
+      (version (git-version "0.0-9000" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/USCbiostats/rphyloxml")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "15ijzqvjxx6vqyqlg5asdbqlhw1g0ix6palf1rism3si0qapddgw"))
+         (snippet
+          '(delete-file "docs/jquery.sticky-kit.min.js"))))
+      (properties `((upstream-name . "rphyloxml")))
+      (build-system r-build-system)
+      (arguments
+       (list
+        #:modules
+        '((guix build r-build-system)
+          (guix build minify-build-system)
+          (guix build utils))
+        #:imported-modules
+        `(,@%r-build-system-modules (guix build minify-build-system))
+        #:phases
+        '(modify-phases %standard-phases
+           (add-after 'unpack 'process-javascript
+             (lambda* (#:key inputs #:allow-other-keys)
+               (with-directory-excursion "inst/"
+                 (minify (assoc-ref inputs "js-jquery-sticky-kit")
+                         #:target "docs/jquery.sticky-kit.min.js")))))))
+      (propagated-inputs (list r-ape r-xml2))
+      (native-inputs
+       `(("esbuild" ,esbuild)
+         ("js-jquery-sticky-kit"
+          ,(origin
+             (method url-fetch)
+             (uri "https://raw.githubusercontent.com/leafo/sticky-kit/\
+v1.1.2/jquery.sticky-kit.js")
+             (sha256
+              (base32
+               "17c3a1hqc3ybwj7hpw8prazajp2x98aq7nyfn71h6lzjvblq297g"))))))
+      (home-page "https://github.com/USCbiostats/rphyloxml")
+      (synopsis "Read and write phyloXML files in R")
+      (description
+       "The package reads phylogenetic data in the @code{phyloXML} format.
+It also includes functions for writing data in this format.")
+      (license license:expat))))
 
 (define-public ritornello
   (package

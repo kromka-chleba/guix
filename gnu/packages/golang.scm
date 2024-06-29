@@ -6603,31 +6603,6 @@ characters with their ASCII approximations.")
       (description "Go library that pluralizes and singularizes English nouns.")
       (license license:bsd-2))))
 
-(define-public go-github-com-klauspost-cpuid
-  (package
-    (name "go-github-com-klauspost-cpuid")
-    (version "1.2.3")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://github.com/klauspost/cpuid")
-                     (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1s510210wdj5dkamii1qrk7v87k4qpdcrrjzflp5ha9iscw6b06l"))))
-    (build-system go-build-system)
-    (arguments
-     `(#:import-path "github.com/klauspost/cpuid"))
-    (home-page "https://github.com/klauspost/cpuid")
-    (synopsis "CPU feature identification for Go")
-    (description "@code{cpuid} provides information about the CPU running the
-current program.  CPU features are detected on startup, and kept for fast access
-through the life of the application.  Currently x86 / x64 (AMD64) is supported,
-and no external C (cgo) code is used, which should make the library very eas
-to use.")
-    (license license:expat)))
-
 (define-public go-github-com-surge-glog
   (let ((commit "2578deb2b95c665e6b1ebabf304ce2085c9e1985")
         (revision "1"))
@@ -6704,34 +6679,6 @@ various ways.  It is a Go implementation of some string manipulation libraries
 of Java Apache Commons.")
     (license license:asl2.0)))
 
-(define-public go-github-com-masterminds-semver
-  (package
-    (name "go-github-com-masterminds-semver")
-    (version "3.1.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/Masterminds/semver")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1g1wizfdy29d02l9dh8gsb029yr4m4swp13swf0pnh9ryh5f1msz"))))
-    (build-system go-build-system)
-    (arguments
-     `(#:import-path "github.com/Masterminds/semver"))
-    (home-page "https://github.com/Masterminds/semver/")
-    (synopsis "@code{semver} helps to work with semantic versions")
-    (description "The semver package provides the ability to work with
-semantic versions.  Specifically it provides the ability to:
-@itemize
-@item Parse semantic versions
-@item Sort semantic versions
-@item Check if a semantic version fits within a set of constraints
-@item Optionally work with a @code{v} prefix
-@end itemize\n")
-    (license license:expat)))
-
 (define-public go-github-com-huandu-xstrings
   (package
     (name "go-github-com-huandu-xstrings")
@@ -6804,40 +6751,6 @@ maps (because they are not addressable using Go reflection).")
     (native-inputs
      (list go-gopkg-in-yaml-v3))))
 
-(define-public go-github-com-masterminds-sprig
-  (package
-    (name "go-github-com-masterminds-sprig")
-    (version "3.1.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/Masterminds/sprig")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0wwi8n2adjc5jlga25lqq0hrz4jcgd5vpll68y2dfji034caaq18"))))
-    (build-system go-build-system)
-    (arguments
-     `(#:tests? #f ;network tests only
-       #:import-path "github.com/Masterminds/sprig"))
-    (native-inputs
-     (list go-github-com-masterminds-goutils
-           go-github-com-masterminds-semver
-           go-github-com-google-uuid
-           go-github-com-huandu-xstrings
-           go-github-com-imdario-mergo
-           go-github-com-mitchellh-reflectwalk
-           go-github-com-mitchellh-copystructure
-           go-github-com-spf13-cast
-           go-golang-org-x-crypto
-           go-github-com-stretchr-testify))
-    (home-page "https://github.com/Masterminds/sprig/")
-    (synopsis "Template functions for Go templates")
-    (description "Sprig is a library that provides more than 100 commonly used
-template functions.")
-    (license license:expat)))
-
 (define-public go-github-com-bmatcuk-doublestar
   (package
     (name "go-github-com-bmatcuk-doublestar")
@@ -6889,26 +6802,23 @@ matching and globbing with support for \"doublestar\" patterns.")
       #:unpack-path "github.com/bmatcuk/doublestar/v2"
       #:import-path "github.com/bmatcuk/doublestar/v2"))))
 
-(define-public go-github-com-dlclark-regexp2
+(define-public go-github-com-bmatcuk-doublestar-v4
   (package
-    (name "go-github-com-dlclark-regexp2")
-    (version "1.4.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/dlclark/regexp2")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1irfv89b7lfkn7k3zgx610ssil6k61qs1wjj31kvqpxb3pdx4kry"))))
-    (build-system go-build-system)
+    (inherit go-github-com-bmatcuk-doublestar)
+    (name "go-github-com-bmatcuk-doublestar-v4")
+    (version "4.6.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/bmatcuk/doublestar")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12rf4a9isgg2nh927gikgbmyaynaqp4kjahgscb4qnr04m3vpr41"))))
     (arguments
-     `(#:import-path "github.com/dlclark/regexp2"))
-    (home-page "https://github.com/dlclark/regexp2/")
-    (synopsis "Full featured regular expressions for Go")
-    (description "Regexp2 is a feature-rich RegExp engine for Go.")
-    (license license:expat)))
+     (list
+      #:import-path "github.com/bmatcuk/doublestar/v4"))))
 
 (define-public go-github-com-alecthomas-colour
   (package

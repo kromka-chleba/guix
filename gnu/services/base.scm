@@ -448,7 +448,11 @@ upon boot."
                       ;; Make sure PID 1 doesn't keep TARGET busy.
                       (chdir "/")
 
-                      (umount #$target)
+                      #$(if (file-system-mount-may-fail? file-system)
+                            #~(catch 'system-error
+                                (lambda () (umount #$target))
+                                (const #f))
+                            #~(umount #$target))
                       #f))
 
             ;; We need additional modules.
@@ -1855,7 +1859,7 @@ archive' public keys, with GUIX."
   (generate-substitute-key? guix-configuration-generate-substitute-key?
                             (default #t))         ;Boolean
   (channels         guix-configuration-channels ;file-like
-                    (default %default-channels))
+                    (default #f))
   (chroot-directories guix-configuration-chroot-directories ;list of file-like/strings
                       (default '()))
   (max-silent-time  guix-configuration-max-silent-time ;integer

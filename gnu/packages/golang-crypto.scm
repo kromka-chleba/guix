@@ -1,9 +1,10 @@
 ;;; GNU Guix --- Functional package management for GNU
+;;; Copyright © 2017-2020 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2018 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2019 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2019 Vagrant Cascadian <vagrant@debian.org>
-;;; Copyright © 2019, 2020 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2020, 2022 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2021 Collin J. Doering <collin@rekahsoft.ca>
 ;;; Copyright © 2021 LibreMiami <packaging-guix@libremiami.org>
@@ -11,16 +12,15 @@
 ;;; Copyright © 2021 Sarah Morgensen <iskarian@mgsn.dev>
 ;;; Copyright © 2021 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2022 (unmatched-parenthesis <paren@disroot.org>
-;;; Copyright © 2022 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022, 2023 Nicolas Graves <ngraves@ngraves.fr>
-;;; Copyright © 2023, 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2023 Benjamin <benjamin@uvy.fr>
 ;;; Copyright © 2023 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2023 Felix Lechner <felix.lechner@lease-up.com>
 ;;; Copyright © 2023 Jack Hill <jackhill@jackhill.us>
-;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
+;;; Copyright © 2023, 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Jesse Eisses <jesse@eisses.email>
+;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -321,6 +321,42 @@ the Ristretto prime-order group built from Edwards25519.")
 xxHash algorithm (XXH64).")
     (license license:expat)))
 
+(define-public go-github-com-chmduquesne-rollinghash
+  (let ((commit "9a5199be7309f50c496efc87d29bd08788605ae7")
+        (revision "1"))
+    (package
+      (name "go-github-com-chmduquesne-rollinghash")
+      (version (git-version "4.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/chmduquesne/rollinghash")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1gkdgsgrmwagwyp4lmd4k11mbwi8f1yw9c9rhnkmav87gy1k84jr"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/chmduquesne/rollinghash/"
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; XXX: Run all tests, workaround for go-build-system's lack of Go
+            ;; modules support.
+            (replace 'check
+              (lambda* (#:key tests? import-path #:allow-other-keys)
+                (when tests?
+                  (with-directory-excursion (string-append "src/" import-path)
+                    (invoke "go" "test" "-v" "./..."))))))))
+      (propagated-inputs
+       (list go-code-cloudfoundry-org-bytefmt))
+      (home-page "https://github.com/chmduquesne/rollinghash")
+      (synopsis "Rolling hashes in Go")
+      (description
+       "This package provides a Go implementation of several rolling hashes.")
+      (license license:expat))))
+
 (define-public go-github-com-cloudflare-circl
   (package
     (name "go-github-com-cloudflare-circl")
@@ -453,6 +489,30 @@ zero round-trip encryption, and other advanced features.")
 providing bidirectional mapping values to their names, plus enum convenience
 for values.")
     (license license:bsd-3)))
+
+(define-public go-github-com-go-asn1-ber-asn1-ber
+  (package
+    (name "go-github-com-go-asn1-ber-asn1-ber")
+    (version "1.5.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-asn1-ber/asn1-ber")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xa1s1q2is9fr02pvrc9sq8zfq9ba6gk64yg1ncglppp30f50q52"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-asn1-ber/asn1-ber"))
+    (home-page "https://github.com/go-asn1-ber/asn1-ber")
+    (synopsis "ASN.1 BER encoding and decoding in Go")
+    (description
+     "This package provides @acronym{Abstract Syntax Notation One, ASN.1} BER
+encoding and decoding in the Go language.")
+    (license license:expat)))
 
 (define-public go-github-com-golang-jwt-jwt
   (package

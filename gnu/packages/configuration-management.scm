@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -19,6 +20,7 @@
 (define-module (gnu packages configuration-management)
   #:use-module (gnu packages)
   #:use-module (guix build-system go)
+  #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
@@ -45,38 +47,40 @@
                 "0ildvlq7v8vnw74y4fgnv3hpq49bpl6zh1wmakfh46crwg7ffmjb"))))
     (build-system go-build-system)
     (arguments
-     `(#:import-path "github.com/twpayne/chezmoi"
-       #:install-source? #f
-       #:phases
-       (modify-phases %standard-phases
-       ;; Remove test script which expect additional user's programs available
-       ;; in the PATH. The testdata directory is removed in the latest version
-       ;; (2.46.1) of the program.
-         (add-after 'unpack 'remove-failing-test-scripts
-           (lambda* (#:key import-path #:allow-other-keys)
-             (for-each (lambda (f)
-                         (delete-file (string-append "src/" import-path "/testdata/scripts/" f)))
-                       '("bitwarden.txt"
-                         "cd.txt"
-                         "cd_unix.txt"
-                         "completion.txt"
-                         "diff.txt"
-                         "edit.txt"
-                         "editconfig.txt"
-                         "git.txt"
-                         "gopass.txt"
-                         "keepassxc.txt"
-                         "lastpass.txt"
-                         "onepassword.txt"
-                         "pass.txt"
-                         "runscriptdir_unix.txt"
-                         "script_unix.txt"
-                         "secretgeneric.txt"
-                         "secretgopass.txt"
-                         "secretkeepassxc.txt"
-                         "secretlastpass.txt"
-                         "secretonepassword.txt"
-                         "secretpass.txt")))))))
+     (list
+      #:go go-1.21
+      #:import-path "github.com/twpayne/chezmoi"
+      #:install-source? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Remove test script which expect additional user's programs available
+          ;; in the PATH. The testdata directory is removed in the latest version
+          ;; (2.46.1) of the program.
+          (add-after 'unpack 'remove-failing-test-scripts
+            (lambda* (#:key import-path #:allow-other-keys)
+              (for-each (lambda (f)
+                          (delete-file (string-append "src/" import-path "/testdata/scripts/" f)))
+                        '("bitwarden.txt"
+                          "cd.txt"
+                          "cd_unix.txt"
+                          "completion.txt"
+                          "diff.txt"
+                          "edit.txt"
+                          "editconfig.txt"
+                          "git.txt"
+                          "gopass.txt"
+                          "keepassxc.txt"
+                          "lastpass.txt"
+                          "onepassword.txt"
+                          "pass.txt"
+                          "runscriptdir_unix.txt"
+                          "script_unix.txt"
+                          "secretgeneric.txt"
+                          "secretgopass.txt"
+                          "secretkeepassxc.txt"
+                          "secretlastpass.txt"
+                          "secretonepassword.txt"
+                          "secretpass.txt")))))))
     (native-inputs
      (list go-etcd-io-bbolt
            go-github-com-alecthomas-chroma
@@ -92,19 +96,12 @@
            go-github-com-google-go-querystring
            go-github-com-google-goterm
            go-github-com-google-renameio
-           go-github-com-google-uuid
            go-github-com-gorilla-css
-           go-github-com-huandu-xstrings
-           go-github-com-imdario-mergo
            go-github-com-lucasb-eyer-go-colorful
-           go-github-com-masterminds-goutils
-           go-github-com-masterminds-semver
-           go-github-com-masterminds-sprig
+           go-github-com-masterminds-sprig-v3
            go-github-com-mattn-go-isatty
            go-github-com-mattn-go-runewidth
            go-github-com-microcosm-cc-bluemonday
-           go-github-com-mitchellh-copystructure
-           go-github-com-mitchellh-reflectwalk
            go-github-com-muesli-reflow-ansi
            go-github-com-muesli-reflow-indent
            go-github-com-muesli-reflow-padding
@@ -124,7 +121,6 @@
            go-github-com-yuin-goldmark
            go-github-com-zalando-go-keyring
            go-github-go-git
-           go-golang-org-x-crypto
            go-golang-org-x-net
            go-golang-org-x-oauth2
            go-golang-org-x-term

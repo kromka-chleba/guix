@@ -1,9 +1,9 @@
 ;;; GNU Guix --- Functional package management for GNU
+;;; Copyright © 2017, 2019 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2018 Christopher Baines <mail@cbaines.net>
 ;;; Copyright © 2018 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2018 Pierre-Antoine Rouby <pierre-antoine.rouby@inria.fr>
 ;;; Copyright © 2019 Brian Leung <bkleung89@gmail.com>
-;;; Copyright © 2019 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2019 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
 ;;; Copyright © 2020 Joseph LaFreniere <joseph@lafreniere.xyz>
@@ -731,6 +731,57 @@ Go application.")
      "Package gostub is used for stubbing variables in tests, and resetting the
 original value once the test has been run.")
     (license license:expat)))
+
+(define-public go-github-com-petermattis-goid
+  (let ((commit "bb94eb51e7a772d09cef11768f3248ac25adf9f9")
+        (revision "2"))
+    (package
+      (name "go-github-com-petermattis-goid")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/petermattis/goid")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0hr94frr0rhac4mb9r7ixdgr6hm63rxh6z43rhn2wn7fdy8csw11"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/petermattis/goid"))
+      (home-page "https://github.com/petermattis/goid")
+      (synopsis "Identify the running goroutine")
+      (description
+       "This package offers a method of programmatically retrieving the
+current goroutine's ID.")
+      (license license:asl2.0))))
+
+(define-public go-github-com-sasha-s-go-deadlock
+  (package
+    (name "go-github-com-sasha-s-go-deadlock")
+    (version "0.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sasha-s/go-deadlock")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0arb35idnyz4n118xz7p2snazqi35gk1975h1xfk0y4riiks58yz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/sasha-s/go-deadlock"))
+    (propagated-inputs
+     (list go-github-com-petermattis-goid))
+    (home-page "https://github.com/sasha-s/go-deadlock")
+    (synopsis "Deadlock detection in go")
+    (description
+     "This package provides tools for detecting deadlocks at run-time in Go.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-stretchr-testify
   (package
