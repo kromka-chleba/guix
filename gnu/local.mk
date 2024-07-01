@@ -271,6 +271,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/fabric-management.scm		\
   %D%/packages/fcitx.scm			\
   %D%/packages/fcitx5.scm			\
+  %D%/packages/fediverse.scm			\
   %D%/packages/figlet.scm			\
   %D%/packages/file.scm				\
   %D%/packages/file-systems.scm			\
@@ -441,7 +442,6 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/machine-learning.scm		\
   %D%/packages/magic-wormhole.scm		\
   %D%/packages/man.scm				\
-  %D%/packages/mastodon.scm			\
   %D%/packages/mail.scm				\
   %D%/packages/make-bootstrap.scm		\
   %D%/packages/markup.scm			\
@@ -1727,7 +1727,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/memtest86+-build-reproducibly.patch	\
   %D%/packages/patches/mercurial-hg-extension-path.patch	\
   %D%/packages/patches/mercurial-openssl-compat.patch		\
-  %D%/packages/patches/mes-0.26.1-fixups.patch			\
   %D%/packages/patches/mhash-keygen-test-segfault.patch		\
   %D%/packages/patches/mia-fix-boost-headers.patch		\
   %D%/packages/patches/mia-vtk9.patch				\
@@ -1740,8 +1739,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/minisat-install.patch			\
   %D%/packages/patches/miniz-for-pytorch.patch			\
   %D%/packages/patches/mit-krb5-hurd.patch			\
-  %D%/packages/patches/mixxx-link-qtscriptbytearray-qtscript.patch	\
-  %D%/packages/patches/mixxx-system-googletest-benchmark.patch	\
   %D%/packages/patches/mpc123-initialize-ao.patch		\
   %D%/packages/patches/mpg321-CVE-2019-14247.patch		\
   %D%/packages/patches/mpg321-gcc-10.patch			\

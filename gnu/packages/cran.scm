@@ -704,6 +704,40 @@ to other implementations such a @code{purrr::partial()} the operators in
 etc.")
     (license license:gpl2+)))
 
+(define-public r-cutpointr
+  (package
+    (name "r-cutpointr")
+    (version "1.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "cutpointr" version))
+       (sha256
+        (base32 "1qxnh20hs3bh9v04ls7gwwl7lfc6bwl8c88dn8lkcdqyp3nyr01j"))))
+    (properties `((upstream-name . "cutpointr")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-dplyr
+                             r-foreach
+                             r-ggplot2
+                             r-gridextra
+                             r-purrr
+                             r-rcpp
+                             r-rlang
+                             r-tibble
+                             r-tidyr
+                             r-tidyselect))
+    (native-inputs (list r-knitr))
+    (home-page "https://github.com/thie1e/cutpointr")
+    (synopsis "Determine optimal cutpoints for binary classification")
+    (description
+     "This package estimates optimal cutpoints for binary classification metrics.
+It also validates performance using bootstrapping.  Some methods for more
+robust cutpoint estimation are supported, e.g. a parametric method assuming
+normal distributions, bootstrapped cutpoints, and smoothing of the metric
+values per cutpoint using Generalized Additive Models.  Various plotting
+functions are included.")
+    (license license:gpl3)))
+
 (define-public r-datawizard
   (package
     (name "r-datawizard")
@@ -5255,6 +5289,30 @@ memory leakage.  This can be problematic in cases where many different keys
 are used.  Fastmap avoids this memory leak issue by implementing the map using
 data structures in C++.")
     (license license:expat)))
+
+(define-public r-fastglm
+  (package
+    (name "r-fastglm")
+    (version "0.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "fastglm" version))
+       (sha256
+        (base32 "0283kgk81cxbii7ljmp1rzqg5mzkvf7cj7lflhhhkgj5ljqina2i"))))
+    (properties `((upstream-name . "fastglm")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-bh r-bigmemory r-rcpp r-rcppeigen))
+    (native-inputs (list r-knitr))
+    (home-page "https://cran.r-project.org/package=fastglm")
+    (synopsis
+     "Fast and stable fitting of generalized linear models using 'RcppEigen'")
+    (description
+     "This package fits generalized linear models efficiently using @code{RcppEigen}'.
+The iteratively reweighted least squares implementation utilizes the
+step-halving approach of Marschner to help safeguard against convergence
+issues.")
+    (license license:gpl2+)))
 
 (define-public r-fastghquad
   (package
