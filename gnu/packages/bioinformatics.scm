@@ -752,6 +752,54 @@ directly access various slots (e.g. X, obs, var), or convert the data into
 @code{SingleCellExperiment} and Seurat objects.")
       (license license:expat))))
 
+(define-public r-anpan
+  (let ((commit "286b88dcf5e9e963a595482139aade154ee1dc86")
+        (revision "1"))
+    (package
+      (name "r-anpan")
+      (version (git-version "0.3.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/biobakery/anpan")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "10nw5v69gn4pxb4g5gd8nh9r1ywd6yczapl3dpdfms0434wcmkxm"))))
+      (properties `((upstream-name . "anpan")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-ape
+                               r-cmdstanr
+                               r-data-table
+                               r-dplyr
+                               r-fastglm
+                               r-furrr
+                               r-future
+                               r-ggdendro
+                               r-ggnewscale
+                               r-ggplot2
+                               r-loo
+                               r-mass
+                               r-patchwork
+                               r-phylogram
+                               r-posterior
+                               r-progressr
+                               r-purrr
+                               r-r-utils
+                               r-stringr
+                               r-tibble
+                               r-tidyselect))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/biobakery/anpan")
+      (synopsis "Quantifying microbial strain-host associations")
+      (description
+       "The goal of anpan is to consolidate statistical methods for strain
+analysis.  This includes automated filtering of metagenomic functional
+profiles, testing genetic elements for association with outcomes, phylogenetic
+association testing, and pathway-level random effects models.")
+      (license license:expat))))
+
 (define-public r-bedtorch
   (let ((commit "f5ff4f83b94f59eac660333c64e4b2f296b35cea")
         (revision "1"))
@@ -4441,6 +4489,102 @@ with MOFA+ in Python.")
      "Mudata is a Python package for multi-omics data analysis.
 It is designed to provide functionality to load, process, and store multimodal
 omics data.")
+    (license license:bsd-3)))
+
+(define-public python-mofapy2
+  (package
+    (name "python-mofapy2")
+    (version "0.7.1")
+    (source
+     (origin
+       ;; The tarball from PyPi doesn't include tests.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/bioFAM/mofapy2")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0ahhnqk6gjrhyq286mrd5n7mxcv8l6040ffsawbjx9maqx8wbam0"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; cupy is an optional dependency, which
+      ;; itself has nonfree dependencies (CUDA)
+      '(list "--ignore=mofapy2/notebooks/test_cupy.py")))
+    (propagated-inputs (list python-anndata
+                             python-h5py
+                             python-numpy
+                             python-pandas
+                             python-scikit-learn
+                             python-scipy))
+    (native-inputs (list python-poetry-core
+                         python-pytest))
+    (home-page "https://biofam.github.io/MOFA2/")
+    (synopsis "Multi-omics factor analysis")
+    (description "MOFA is a factor analysis model that provides a general
+framework for the integration of multi-omic data sets in an unsupervised
+fashion.  Intuitively, MOFA can be viewed as a versatile and statistically
+rigorous generalization of principal component analysis to multi-omics data.
+Given several data matrices with measurements of multiple -omics data types on
+the same or on overlapping sets of samples, MOFA infers an interpretable
+low-dimensional representation in terms of a few latent factors.  These learnt
+factors represent the driving sources of variation across data modalities,
+thus facilitating the identification of cellular states or disease
+subgroups.")
+    (license license:lgpl3)))
+
+(define-public python-muon
+  (package
+    (name "python-muon")
+    (version "0.1.6")
+    (source
+     (origin
+       ;; The tarball from PyPi doesn't include tests.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/scverse/muon")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1kd3flgy41dc0sc71wfnirh8vk1psxgyjxkbx1zx9yskkh6anbgw"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Even providing a random seed, scipy.sparse.rand produces inconsistent
+      ;; results across scipy versions.
+      '(list "-k" "not test_tfidf")
+      #:phases
+      '(modify-phases %standard-phases
+         ;; Numba needs a writable dir to cache functions.
+         (add-before 'build 'set-numba-cache-dir
+           (lambda _
+             (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
+    (propagated-inputs (list python-anndata
+                             python-h5py
+                             python-matplotlib
+                             python-mofapy2
+                             python-mudata
+                             python-numba
+                             python-numpy
+                             python-pandas
+                             python-protobuf
+                             python-pybedtools
+                             python-pysam
+                             python-scanpy
+                             python-scikit-learn
+                             python-seaborn
+                             python-tqdm
+                             python-umap-learn))
+    (native-inputs (list python-flit-core
+                         python-pytest
+                         python-pytest-flake8))
+    (home-page "https://github.com/scverse/muon")
+    (synopsis "Multimodal omics analysis framework")
+    (description "muon is a multimodal omics Python framework.")
     (license license:bsd-3)))
 
 (define-public python-pyega3
