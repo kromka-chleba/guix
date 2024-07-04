@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2023 Pierre-Henry Fröhring <phfrohring@deeplinks.com>
+;;; Copyright © 2024 Igor Goryachev <igor@goryachev.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -23,6 +24,8 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages base)
   #:use-module (gnu packages)
+  #:use-module (guix build mix-build-system)
+  #:use-module (guix build utils)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system mix)
   #:use-module (guix download)
@@ -36,13 +39,13 @@
 (define-public elixir-nimble-parsec
   (package
     (name "elixir-nimble-parsec")
-    (version "1.3.1")
+    (version "1.4.0")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri name version))
        (sha256
-        (base32 "0rxiw6jzz77v0j460wmzcprhdgn71g1hrz3mcc6djn7bnb0f70i6"))))
+        (base32 "0a6gs7950gpkdax18x167g8v6dy4sbbx47cchglq7cqgh5i5hmlw"))))
     (build-system mix-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (synopsis "Text-based parser combinators")
@@ -55,20 +58,44 @@ for higher-level combinators through composition.")
 (define-public elixir-makeup
   (package
     (name "elixir-makeup")
-    (version "1.1.0")
+    (version "1.1.2")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri name version))
        (sha256
-        (base32 "19jpprryixi452jwhws3bbks6ki3wni9kgzah3srg22a3x8fsi8a"))))
+        (base32 "1b3civqrznn3dxqa3iybwbpgj8dj6f7q1zlgr8gd5jzvh5mmdqfc"))))
     (build-system mix-build-system)
     (propagated-inputs (list elixir-nimble-parsec))
-    (arguments (list #:tests? #f)) ; no tests
+    (arguments
+     `(#:tests? #f ; no tests
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'make-reproducible
+           (lambda _
+             (substitute* "lib/makeup/token/utils.ex"
+               (("@precedence Hierarchy.hierarchy_to_precedence\\(@hierarchy\\)")
+                ""))
+             (substitute* "lib/makeup/token/utils.ex"
+               (("@token_to_class_map Hierarchy.style_to_class_map\\(@hierarchy\\)")
+                ""))
+             (substitute* "lib/makeup/token/utils.ex"
+               (("@standard_token_types Map.keys\\(@token_to_class_map\\)")
+                ""))
+             (substitute* "lib/makeup/token/utils.ex"
+               (("@precedence")
+                "Hierarchy.hierarchy_to_precedence(@hierarchy)"))
+             (substitute* "lib/makeup/token/utils.ex"
+               (("@token_to_class_map")
+                "Hierarchy.style_to_class_map(@hierarchy)"))
+             (substitute* "lib/makeup/token/utils.ex"
+               (("@standard_token_types")
+                "Map.keys(token_to_class_map())")))))))
     (synopsis "Syntax highlighter for source code")
     (description
-     "Makeup is a generic syntax highlighter in the style of Pygments suitable for use in code hosting,
-forums, wikis or other applications that need to prettify source code.")
+     "Makeup is a generic syntax highlighter in the style of Pygments suitable
+for use in code hosting, forums, wikis or other applications that need to prettify
+source code.")
     (home-page "https://hexdocs.pm/makeup/")
     (license license:bsd-2)))
 
@@ -86,23 +113,22 @@ forums, wikis or other applications that need to prettify source code.")
     (arguments (list #:tests? #f)) ; no tests
     (synopsis "JSON parser and generator")
     (description
-     "Parser and generator are written in pure Elixir and optimized for speed. They
-are at least twice as fast as other Elixir/Erlang libraries (e.g.
-Poison). The performance is comparable to jiffy, which is implemented in C as
-a NIF.")
+     "Parser and generator are written in pure Elixir and optimized for speed.  They
+are at least twice as fast as other Elixir/Erlang libraries (e.g. Poison).  The
+performance is comparable to jiffy, which is implemented in C as a NIF.")
     (home-page "https://hexdocs.pm/jason/")
     (license license:asl2.0)))
 
 (define-public elixir-file-system
   (package
     (name "elixir-file-system")
-    (version "0.2.10")
+    (version "1.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri name version))
        (sha256
-        (base32 "1p0myxmnjjds8bbg69dd6fvhk8q3n7lb78zd4qvmjajnzgdmw6a1"))
+        (base32 "0vakv2hmqcj0ijxlbh8bvdwislxrvpcfxvracq7a3idfcqnhjlk7"))
        (snippet #~(begin
                     (use-modules (guix build utils) (ice-9 ftw))
                     (mkdir "source")
@@ -127,13 +153,13 @@ https://github.com/synrc/fs.")
 (define-public elixir-bunt
   (package
     (name "elixir-bunt")
-    (version "0.2.1")
+    (version "1.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri name version))
        (sha256
-        (base32 "19bp6xh052ql3ha0v3r8999cvja5d2p6cph02mxphfaj4jsbyc53"))))
+        (base32 "1ddnkg6w3iqzb8z18b7sr7jlmmbn9rf77w4nh1mzmxm512m8cpyw"))))
     (build-system mix-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (synopsis "256 color ANSI coloring in the terminal")
@@ -167,13 +193,13 @@ inline docs.")
 (define-public elixir-castore
   (package
     (name "elixir-castore")
-    (version "1.0.4")
+    (version "1.0.7")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri name version))
        (sha256
-        (base32 "1y44amb8falsmrfzpkmf7qp6215g9kdl76g91dpna4af2jwc264l"))))
+        (base32 "1xaw8n8g7qfygf8z8sz7f7pwmdl4lxshi9lj2b6j386jn2j8axys"))))
     (build-system mix-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (synopsis "Up-to-date CA certificate store")
@@ -185,20 +211,20 @@ an up-to-date CA certificate store file for Elixir applications.")
 (define-public elixir-excoveralls
   (package
     (name "elixir-excoveralls")
-    (version "0.18.0")
+    (version "0.18.1")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri name version))
        (sha256
-        (base32 "02x69ll5scvraky0k5gacvnnmldv5k04kgk02x087d9w3y8vn28i"))))
+        (base32 "138bls6hfk87mid2zfwsidk7j06yfich2iihyach7ckb2kdpjpyn"))))
     (build-system mix-build-system)
     (propagated-inputs (list elixir-castore elixir-jason))
     (arguments (list #:tests? #f)) ; no tests
     (synopsis "Coverage report tool with coveralls.io integration")
     (description
      "Library that reports test coverage statistics, with the option to
-post to coveralls.io service. It uses Erlang's cover to generate coverage
+post to coveralls.io service.  It uses Erlang's cover to generate coverage
 information, and posts the test coverage results to coveralls.io through the
 JSON API.")
     (home-page "https://hexdocs.pm/excoveralls/")
@@ -207,13 +233,13 @@ JSON API.")
 (define-public elixir-credo
   (package
     (name "elixir-credo")
-    (version "1.7.1")
+    (version "1.7.7")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri name version))
        (sha256
-        (base32 "18jqi9s9r1587njzdxycvmmbma30cay9iamni4f3ih54jmh1r1z9"))))
+        (base32 "0bigri1xh29ims5gwh94pns6jys6h82pn6zhj0zxrb5ar6b79j4b"))))
     (build-system mix-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (propagated-inputs (list elixir-bunt elixir-file-system elixir-jason))
@@ -221,7 +247,7 @@ JSON API.")
     (synopsis "Static code analysis tool")
     (description
      "Credo is a static code analysis tool for the Elixir language with a focus on
-teaching and code consistency. Credo can show you refactoring opportunities in
+teaching and code consistency.  Credo can show you refactoring opportunities in
 your code, complex code fragments, warn you about common mistakes, show
 inconsistencies in your naming scheme and - if needed - help you enforce a
 desired coding style.")
@@ -231,13 +257,13 @@ desired coding style.")
 (define-public elixir-erlex
   (package
     (name "elixir-erlex")
-    (version "0.2.6")
+    (version "0.2.7")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri name version))
        (sha256
-        (base32 "0x8c1j62y748ldvlh46sxzv5514rpzm809vxn594vd7y25by5lif"))))
+        (base32 "1c7gcm9nhf7m3pq0776sav744ak1sph63shcpzvc6i58s5wmzn9y"))))
     (build-system mix-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (synopsis
@@ -251,13 +277,13 @@ things like Dialyzer errors and Observer.")
 (define-public elixir-dialyxir
   (package
     (name "elixir-dialyxir")
-    (version "1.4.1")
+    (version "1.4.3")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri name version))
        (sha256
-        (base32 "00cqwhd1wabwds44jz94rvvr8z8cp12884d3lp69fqkrszb9bdw4"))))
+        (base32 "11m9hxs5byidqyxpzv34m1hwd69jcqqv2h81qfz0cl2wrmsznb5z"))))
     (build-system mix-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (propagated-inputs (list elixir-erlex))
@@ -270,13 +296,13 @@ things like Dialyzer errors and Observer.")
 (define-public elixir-machete
   (package
     (name "elixir-machete")
-    (version "0.2.8")
+    (version "0.3.3")
     (source
      (origin
        (method url-fetch)
        (uri (hexpm-uri name version))
        (sha256
-        (base32 "0952603bmqsf6v3ja99zpbnbx5d52i4xksjkfj3irl45ccq5pgq9"))))
+        (base32 "0705qp9l8yakdfpbafsf351b7xzqn86qcma1jm7i1n64r6bxkh31"))))
     (build-system mix-build-system)
     (native-inputs (list elixir-credo elixir-dialyxir))
     (synopsis "Literate test matchers for ExUnit")

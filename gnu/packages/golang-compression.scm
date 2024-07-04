@@ -63,6 +63,56 @@ the @code{c2go} tool at
 @url{https://github.com/andybalholm/c2go,https://github.com/andybalholm/c2go}.")
     (license license:expat)))
 
+(define-public go-github-com-dsnet-compress
+  (package
+    (name "go-github-com-dsnet-compress")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dsnet/compress")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wwjaymzb1xxq3ybch3nwn72xhi2s40cvz0cl986yad3w1xwzj91"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dsnet/compress"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Testdata directories contains some compressed files requiring
+          ;; for running tests but not required on run time.
+          (add-after 'check 'remove-testdata
+            (lambda* (#:key import-path #:allow-other-keys)
+              (delete-file-recursively
+               (string-append "src/" import-path "/bzip2/testdata"))
+              (delete-file-recursively
+               (string-append "src/" import-path "/brotli/testdata"))
+              (delete-file-recursively
+               (string-append "src/" import-path "/testdata")))))))
+    (propagated-inputs
+     (list go-github-com-dsnet-golib
+           go-github-com-klauspost-compress
+           go-github-com-ulikunitz-xz))
+    (home-page "https://github.com/dsnet/compress")
+    (synopsis "Collection of compression libraries for Golang")
+    (description
+     "Package compress is a collection of compression libraries implementing
+Golang moduels:
+@table @code
+@item brotli
+Implements the Brotli format, described in RFC 7932.
+@item bzip2
+Implements the BZip2 compressed data format.
+@item flate
+Implements the DEFLATE format, described in RFC 1951.
+@item xflate
+Implements the XFLATE format, an random-access extension to DEFLATE.
+@end table")
+    (license license:bsd-3)))
+
 (define-public go-github-com-golang-snappy
   (package
     (name "go-github-com-golang-snappy")
@@ -171,6 +221,30 @@ time, as otherwise the internal gzip library will likely be faster.")
 (define-public go-github-com-nwaples-rardecode
   (package
     (name "go-github-com-nwaples-rardecode")
+    (version "1.1.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nwaples/rardecode")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0s00b8a9gppka3yxkxh7z5wy0ahygl8wbb0fbyx2r0rj879a1c2z"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/nwaples/rardecode"))
+    (home-page "https://github.com/nwaples/rardecode")
+    (synopsis "Reading RAR archives in Go")
+    (description
+     "This package provides a library for reading RAR archives with Golang.")
+    (license license:bsd-2)))
+
+(define-public go-github-com-nwaples-rardecode-v2
+  (package
+    (inherit  go-github-com-nwaples-rardecode)
+    (name "go-github-com-nwaples-rardecode-v2")
     (version "2.0.0-beta.2")
     (source
      (origin
@@ -181,15 +255,9 @@ time, as otherwise the internal gzip library will likely be faster.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1344mxfdgs5fps6mqxk6352arrfszi33kmq394rgmqpf4394f1y7"))))
-    (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/nwaples/rardecode"))
-    (home-page "https://github.com/nwaples/rardecode")
-    (synopsis "Reading RAR archives in Go")
-    (description
-     "This package provides a library for reading RAR archives with Golang.")
-    (license license:bsd-2)))
+      #:import-path "github.com/nwaples/rardecode/v2"))))
 
 (define-public go-github-com-pierrec-lz4
   (package

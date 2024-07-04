@@ -3603,6 +3603,32 @@ APIs.")
 than Python’s urllib2 library.")
     (license license:asl2.0)))
 
+(define-public python-requests-next
+  (package
+    (name "python-requests")
+    (version "2.31.0")
+    (source (origin
+             (method url-fetch)
+             (uri (pypi-uri "requests" version))
+             (sha256
+              (base32
+               "1qfidaynsrci4wymrw3srz8v1zy7xxpcna8sxpm91mwqixsmlb4l"))))
+    (build-system python-build-system)
+    (propagated-inputs
+     (list python-certifi
+           python-charset-normalizer
+           python-idna
+           python-urllib3))
+    (arguments
+     ;; FIXME: Some tests require network access.
+     '(#:tests? #f))
+    (home-page "http://python-requests.org/")
+    (synopsis "Python HTTP library")
+    (description
+     "Requests is a Python HTTP client library.  It aims to be easier to use
+than Python’s urllib2 library.")
+    (license license:asl2.0)))
+
 (define-public python-requests-kerberos
   (package
     (name "python-requests-kerberos")
@@ -3974,6 +4000,41 @@ addon for removing tracking fields from URLs.")
         (sha256
          (base32
           "01dkqv0rsjqyw4wrp6yj8h3bcnl7c678qkj845596vs7p4bqff4a"))))
+    (build-system python-build-system)
+    (arguments `(#:tests? #f))
+    (propagated-inputs
+     (append
+       ;; These 5 inputs are used to build urrlib3[secure]
+       (list python-certifi)
+       (if (member (%current-system)
+                   (package-transitive-supported-systems python-cryptography))
+         (list python-cryptography)
+         '())
+       (list python-idna)
+       (if (member (%current-system)
+                   (package-transitive-supported-systems python-pyopenssl))
+         (list python-pyopenssl)
+         '())
+       (list python-pysocks)))
+    (home-page "https://urllib3.readthedocs.io/")
+    (synopsis "HTTP library with thread-safe connection pooling")
+    (description
+     "Urllib3 supports features left out of urllib and urllib2 libraries.  It
+can reuse the same socket connection for multiple requests, it can POST files,
+supports url redirection and retries, and also gzip and deflate decoding.")
+    (license license:expat)))
+
+(define-public python-urllib3-next
+  (package
+    (name "python-urllib3")
+    (version "1.26.17")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "urllib3" version))
+        (sha256
+         (base32
+          "08fzhaf77kbjj5abpl9xag6fpfxkdp1k5s7sqd3ayacdq91a5mi4"))))
     (build-system python-build-system)
     (arguments `(#:tests? #f))
     (propagated-inputs
@@ -6693,7 +6754,7 @@ files.")
 (define-public python-websockets
   (package
     (name "python-websockets")
-    (version "11.0.3")
+    (version "12.0")
     (source
      (origin
        (method git-fetch)
@@ -6703,7 +6764,7 @@ files.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1hn1qzpk1fvhi5j5nz4xlvzwkj9y16c9gryrb4n4dza84qi1pna5"))))
+         "1a587a1knjsy9zmgab9v2yncx0803pg2hfcvf7kz6vs8ixaggqmh"))))
     (build-system python-build-system)
     (arguments
      (list #:phases

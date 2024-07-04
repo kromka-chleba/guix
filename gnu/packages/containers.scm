@@ -7,6 +7,7 @@
 ;;; Copyright © 2023 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2024 Tomas Volf <~@wolfsden.cz>
 ;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
+;;; Copyright © 2024 Jean-Pierre De Jesus DIAZ <jean@foundation.xyz>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -392,12 +393,15 @@ configure network interfaces in Linux containers.")
      (list
       #:make-flags `(list ,(string-append "GIT_VERSION=v" version))
       #:test-target "test"
-      #:imported-modules
-      (source-module-closure `(,@%gnu-build-system-modules
-                               (guix build go-build-system)))
       #:phases
       #~(modify-phases %standard-phases
           (delete 'configure)
+          ;; Add -trimpath flag to avoid keeping references to go package
+          ;; in the store.
+          (add-after 'unpack 'patch-go-reference
+            (lambda _
+              (substitute* "Makefile"
+                (("go build") "go build -trimpath"))))
           (add-before 'build 'setenv
             (lambda _
               ;; For golang toolchain.
@@ -408,9 +412,7 @@ configure network interfaces in Linux containers.")
               (invoke "rm" "-r" "test")))
           (replace 'install
             (lambda _
-              (install-file "bin/gvproxy" (string-append #$output "/bin"))))
-          (add-after 'install 'remove-go-references
-            (@@ (guix build go-build-system) remove-go-references)))))
+              (install-file "bin/gvproxy" (string-append #$output "/bin")))))))
     (native-inputs (list go-1.20))
     (home-page "https://github.com/containers/gvisor-tap-vsock")
     (synopsis "Network stack for virtualization based on gVisor")
@@ -454,7 +456,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
 (define-public podman
   (package
     (name "podman")
-    (version "5.1.0")
+    (version "5.1.1")
     (source
      (origin
        (method git-fetch)
@@ -462,7 +464,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
              (url "https://github.com/containers/podman")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0ldzrrz8jba6ka1xfs8msiy08iz4m674xhfxbcdsnc9lmxi3ys4f"))
+        (base32 "1rhlwd350ll472jn7gm4nbkfkbm609d5s97wdqfb7lfagqwi1vny"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -472,12 +474,10 @@ Its main purpose is to support the key usage by @code{docker-init}:
               (string-append "PREFIX=" #$output)
               (string-append "HELPER_BINARIES_DIR=" #$output "/_guix")
               (string-append "GOMD2MAN="
-                             #$go-github-com-go-md2man "/bin/go-md2man"))
+                             #$go-github-com-go-md2man "/bin/go-md2man")
+              (string-append "BUILDFLAGS=-trimpath"))
       #:tests? #f                  ; /sys/fs/cgroup not set up in guix sandbox
       #:test-target "test"
-      #:imported-modules
-      (source-module-closure `(,@%gnu-build-system-modules
-                               (guix build go-build-system)))
       #:phases
       #~(modify-phases %standard-phases
           (delete 'configure)
@@ -529,17 +529,6 @@ Its main purpose is to support the key usage by @code{docker-init}:
                    ,(string-append #$passt          "/bin")
                    ,(string-append #$procps         "/bin") ; ps
                    "/run/setuid-programs")))))
-          (add-after 'install 'remove-go-references
-            (lambda* (#:key inputs #:allow-other-keys)
-              (let ((go (assoc-ref inputs "go")))
-                (for-each
-                 (lambda (file)
-                   (when (executable-file? file)
-                     ((@@ (guix build go-build-system) remove-store-reference)
-                      file go)))
-                 (append (find-files (string-append #$output "/bin"))
-                         (find-files (string-append #$output "/libexec"))
-                         (find-files (string-append #$output "/lib")))))))
           (add-after 'install 'install-completions
             (lambda _
               (invoke "make" "install.completions"
@@ -629,9 +618,6 @@ being rootless and not requiring any daemon to be running.")
                              #$go-github-com-go-md2man "/bin/go-md2man"))
       #:tests? #f                  ; /sys/fs/cgroup not set up in guix sandbox
       #:test-target "test-unit"
-      #:imported-modules
-      (source-module-closure `(,@%gnu-build-system-modules
-                               (guix build go-build-system)))
       #:phases
       #~(modify-phases %standard-phases
           (delete 'configure)
@@ -643,6 +629,12 @@ being rootless and not requiring any daemon to be running.")
               ;; Make <4.4 causing CC not to be propagated into $(shell ...)
               ;; calls.  Can be removed once we update to >4.3.
               (setenv "CC" #$(cc-for-target))))
+          ;; Add -trimpath to build flags to avoid keeping references to go
+          ;; packages.
+          (add-after 'set-env 'patch-buildflags
+            (lambda _
+              (substitute* "Makefile"
+                (("BUILDFLAGS :=") "BUILDFLAGS := -trimpath "))))
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
@@ -670,8 +662,6 @@ being rootless and not requiring any daemon to be running.")
                    ,(string-append #$gcc            "/bin") ; cpp
                    ,(string-append #$passt          "/bin")
                    "/run/setuid-programs")))))
-          (add-after 'install 'remove-go-references
-            (@@ (guix build go-build-system) remove-go-references))
           (add-after 'install 'install-completions
             (lambda _
               (invoke "make" "install.completions"

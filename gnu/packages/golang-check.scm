@@ -62,6 +62,33 @@
 ;;; Libraries:
 ;;;
 
+(define-public go-atomicgo-dev-assert
+  (package
+    (name "go-atomicgo-dev-assert")
+    (version "0.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/atomicgo/assert")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ra5bx3w6vynwbxgsz5knibk2xwmfi6654fsi29zsmk77f39g8vv"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "atomicgo.dev/assert"))
+    (home-page "https://atomicgo.dev/assert")
+    (synopsis "Go package with tons of assertions")
+    (description
+     "Package assert provides obj set of assertion functions.  Every assertion
+function returns obj boolean.  This package does not integrate into the
+testing package automatically and requires to check the returning boolean
+value and call @code{t.Fatal()} if the assertion fails.")
+    (license license:expat)))
+
 (define-public go-github-com-alecthomas-assert-v2
   (package
     (name "go-github-com-alecthomas-assert-v2")
@@ -577,6 +604,51 @@ Many times certain facilities are not available, or tests must run
 differently.")
     (license license:expat)))
 
+(define-public go-github-com-marvinjwendt-testza
+  (package
+    (name "go-github-com-marvinjwendt-testza")
+    (version "0.5.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/MarvinJWendt/testza")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mqvs9142wx3a352yj0zxcm8f3mclyqzzxjlpn1rsb3vrskgs8v9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/MarvinJWendt/testza"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; An error that should be nil is not nil.  Error message: "creating
+          ;; snapshot failed: <...> permission denied
+          (add-before 'check 'writable-test-file
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/"
+                                                       import-path
+                                                       "/testdata/snapshots")
+                (for-each make-file-writable
+                          (list "TestSnapshotCreate_file_content.testza"
+                                "TestSnapshotCreate_file_content_string.testza"))))))))
+    (propagated-inputs
+     (list go-atomicgo-dev-assert
+           go-github-com-sergi-go-diff
+           go-github-com-davecgh-go-spew
+           go-github-com-klauspost-cpuid-v2
+           go-github-com-pterm-pterm))
+    (home-page "https://github.com/MarvinJWendt/testza")
+    (synopsis "Full-featured test framework for Golang")
+    (description
+     "Package testza is a full-featured testing framework for Go.  It
+integrates with the default test runner, so you can use it with the standard
+@code{go test} tool.  Testza contains easy to use methods, like assertions,
+output capturing, mocking, and much more.")
+    (license license:expat)))
+
 (define-public go-github-com-onsi-ginkgo
   (package
     (name "go-github-com-onsi-ginkgo")
@@ -668,6 +740,31 @@ Gomega matcher library.")
     (description
      "Gomega is the preferred matcher/assertion library for the Ginkgo test
 framework.")
+    (license license:expat)))
+
+(define-public go-github-com-otiai10-mint
+  (package
+    (name "go-github-com-otiai10-mint")
+    (version "1.6.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/otiai10/mint")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0g5zhz4znp68427p2a1yvrxbq90y7caagdd7zsb4iygnhdszfm7w"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/otiai10/mint"))
+    (home-page "https://github.com/otiai10/mint")
+    (synopsis "Minimal assertion for Golang testing framework")
+    (description
+     "Mint (@code{mint.Mint}) is wrapper for @code{*testing.T} blending
+testing type to omit repeated @code{t}.")
     (license license:expat)))
 
 (define-public go-github-com-pkg-profile

@@ -41,7 +41,7 @@
 (define-public elixir
   (package
     (name "elixir")
-    (version "1.16.3")
+    (version "1.17.1")
     (source
      (origin
        (method git-fetch)
@@ -50,7 +50,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0db1f6p8409ld81lfd9ln9ir4v55h48lzsbd91jz0hns7ninlh2r"))
+        (base32 "1nav5mv52l2sd37rhdnr4scqfnnnb04r481qabdqvfmfdvikxc3b"))
        (patches (search-patches "elixir-path-length.patch"))))
     (build-system gnu-build-system)
     (arguments
@@ -136,7 +136,7 @@
                   ;; program, for example `iex -S mix`, so we should not wrap
                   ;; mix into shell script.
                   (substitute* (string-append out "/bin/mix")
-                    (("Mix.start\\(\\)")
+                    (("Mix.CLI.main\\(\\)")
                      (format #f "\
 ~~w[GUIX_ELIXIR_LIBS ERL_LIBS]
 |> Enum.map(&System.get_env/1)
@@ -144,7 +144,7 @@
 |> Enum.join(\":\")
 |> case do \"\" -> :ok; erl_libs -> System.put_env(\"ERL_LIBS\", erl_libs) end
 System.put_env(\"MIX_REBAR3\", System.get_env(\"MIX_REBAR3\", \"~a\"))
-Mix.start()"
+Mix.CLI.main()"
                              (search-input-file inputs "/bin/rebar3"))))
                   (for-each
                    (lambda (program)
@@ -174,7 +174,7 @@ being successfully used in web development and the embedded software domain.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/hexpm/hex.git")
+             (url "https://github.com/hexpm/hex")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
@@ -201,9 +201,14 @@ being successfully used in web development and the embedded software domain.")
           (replace 'install
             (lambda* (#:key inputs outputs #:allow-other-keys)
               (define X.Y #$(version-major+minor (package-version elixir)))
-              (define out (string-append (assoc-ref outputs "out") "/lib/elixir/" X.Y "/hex"))
+              (define out (string-append (assoc-ref outputs "out")
+                                         "/lib/elixir/" X.Y "/hex"))
               (mkdir-p out)
-              (copy-recursively "_build/prod/lib/hex" out))))))
+              (let* ((prod-dir "_build/prod/lib/hex")
+                     (prod-dir-mix (string-append prod-dir "/.mix")))
+                (and (directory-exists? prod-dir-mix)
+                     (delete-file-recursively prod-dir-mix))
+              (copy-recursively "_build/prod/lib/hex" out)))))))
     (synopsis "Package manager for the Erlang VM")
     (description
      "This project provides tasks that integrate with Mix, Elixir's build
