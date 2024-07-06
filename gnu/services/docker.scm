@@ -74,6 +74,10 @@
             oci-container-configuration-image
             oci-container-configuration-provision
             oci-container-configuration-requirement
+            oci-container-configuration-log-file
+            oci-container-configuration-auto-start?
+            oci-container-configuration-respawn?
+            oci-container-configuration-shepherd-actions
             oci-container-configuration-network
             oci-container-configuration-ports
             oci-container-configuration-volumes
@@ -325,6 +329,17 @@ found!")
   ;; '(("/mnt/dir" . "/dir") "/run/current-system/profile:/java")
   (oci-sanitize-mixed-list "volumes" value ":"))
 
+(define (oci-sanitize-shepherd-actions value)
+  (map
+   (lambda (el)
+     (if (shepherd-action? el)
+         el
+         (raise
+          (formatted-message
+           (G_ "shepherd-actions may only be shepherd-action records
+but ~a was found") el))))
+   value))
+
 (define (oci-sanitize-extra-arguments value)
   (define (valid? member)
     (or (string? member)
@@ -461,6 +476,24 @@ Engine, and follow the usual format
    (list-of-symbols '())
    "Set additional Shepherd services dependencies to the provisioned Shepherd
 service.")
+  (log-file
+   (maybe-string)
+   "When @code{log-file} is set, it names the file to which the service’s
+standard output and standard error are redirected.  @code{log-file} is created
+if it does not exist, otherwise it is appended to.")
+  (auto-start?
+   (boolean #t)
+   "Whether this service should be started automatically by the Shepherd.  If it
+is @code{#f} the service has to be started manually with @command{herd start}.")
+  (respawn?
+   (boolean #f)
+   "Whether to restart the service when it stops, for instance when the
+underlying process dies.")
+  (shepherd-actions
+   (list '())
+   "This is a list of @code{shepherd-action} records defining actions supported
+by the service."
+   (sanitizer oci-sanitize-shepherd-actions))
   (network
    (maybe-string)
    "Set a Docker network for the spawned container.")
@@ -664,13 +697,19 @@ operating-system, gexp or file-like records but ~a was found")
                             (oci-image-repository image))))))
 
   (let* ((docker (file-append docker-cli "/bin/docker"))
+         (actions (oci-container-configuration-shepherd-actions config))
+         (auto-start?
+          (oci-container-configuration-auto-start? config))
          (user (oci-container-configuration-user config))
          (group (oci-container-configuration-group config))
          (host-environment
           (oci-container-configuration-host-environment config))
          (command (oci-container-configuration-command config))
+         (log-file (oci-container-configuration-log-file config))
          (provision (oci-container-configuration-provision config))
          (requirement (oci-container-configuration-requirement config))
+         (respawn?
+          (oci-container-configuration-respawn? config))
          (image (oci-container-configuration-image config))
          (image-reference (oci-image-reference image))
          (options (oci-container-configuration->options config))
@@ -680,7 +719,8 @@ operating-system, gexp or file-like records but ~a was found")
 
     (shepherd-service (provision `(,(string->symbol name)))
                       (requirement `(dockerd user-processes ,@requirement))
-                      (respawn? #f)
+                      (respawn? respawn?)
+                      (auto-start? auto-start?)
                       (documentation
                        (string-append
                         "Docker backed Shepherd service for "
@@ -698,6 +738,9 @@ operating-system, gexp or file-like records but ~a was found")
                                   #$image-reference #$@command)
                             #:user #$user
                             #:group #$group
+                            #$@(if (maybe-value-set? log-file)
+                                   (list #:log-file log-file)
+                                   '())
                             #:environment-variables
                             (list #$@host-environment))))
                       (stop
@@ -706,15 +749,17 @@ operating-system, gexp or file-like records but ~a was found")
                       (actions
                        (if (oci-image? image)
                            '()
-                           (list
-                            (shepherd-action
-                             (name 'pull)
-                             (documentation
-                              (format #f "Pull ~a's image (~a)."
-                                      name image))
-                             (procedure
-                              #~(lambda _
-                                  (invoke #$docker "pull" #$image))))))))))
+                           (append
+                            (list
+                             (shepherd-action
+                              (name 'pull)
+                              (documentation
+                               (format #f "Pull ~a's image (~a)."
+                                       name image))
+                              (procedure
+                               #~(lambda _
+                                   (invoke #$docker "pull" #$image)))))
+                            actions))))))
 
 (define %oci-container-accounts
   (list (user-account

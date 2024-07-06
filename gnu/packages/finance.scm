@@ -296,14 +296,14 @@ Accounting.")
 (define-public homebank
   (package
     (name "homebank")
-    (version "5.7.4")
+    (version "5.8.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.gethomebank.org/public/sources"
                                   "/homebank-" version ".tar.gz"))
               (sha256
                (base32
-                "1r2lpf2qjvyc9l4llgy6453dn527pylvd49kr6ihrskmr1373kj2"))))
+                "00fwadn6q2hryx7q1xf5fhb5q3ywfnlb1r4xxn7yq6ilzvm5zhv0"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list pkg-config intltool))
@@ -2175,15 +2175,15 @@ editing on the Web.")
 (define-public quantlib
   (package
     (name "quantlib")
-    (version "1.26")
+    (version "1.34")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://github.com/lballabio/QuantLib/releases/download/QuantLib-v"
+             "https://github.com/lballabio/QuantLib/releases/download/v"
              version "/QuantLib-" version ".tar.gz"))
        (sha256
-        (base32 "1sbk6rg51x5xpa93xmqmrj32a1l9vba51xck0017cxzblg0nrzh4"))))
+        (base32 "0l7yn9bal0csyix0ydzcfj003kma4sx7w5hyfxhh6mbnxn6am1zb"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -2228,13 +2228,13 @@ interactive controls.  This package provides a GTK+ graphical user interface
 (define-public python-ta-lib
   (package
     (name "python-ta-lib")
-    (version "0.4.21")
+    (version "0.4.32")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "TA-Lib" version))
        (sha256
-        (base32 "17sf222mq2vx924f15qlz5czkkq5vsnsjy9ibwkrk8lalr6g5lkl"))))
+        (base32 "186sgkpggy50gs2pa2p22zppl57xgfhpmja5l13xiskv44iw6x7v"))))
     (build-system python-build-system)
     (inputs
      (list ta-lib))

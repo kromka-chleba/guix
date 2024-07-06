@@ -1670,7 +1670,7 @@ fully-vectorial and three-dimensional methods.")
 (define-public meep
   (package
     (name "meep")
-    (version "1.28.0")
+    (version "1.29.0")
     (source (origin
               (method url-fetch)
               (uri
@@ -1679,7 +1679,7 @@ fully-vectorial and three-dimensional methods.")
                 version "/meep-" version ".tar.gz"))
               (sha256
                (base32
-                "199a29mb64cfv89azzdh8arpy9ib6050cqh86yw5ypm5jhy6178v"))))
+                "1511849g6wlpa42kfrj6zvmc3ivad9ync8r01xp2ld7r5j39y9v8"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -2629,7 +2629,7 @@ measurement devices and test equipment via GPIB, RS232, Ethernet or USB.")
 (define-public python-scikit-rf
   (package
     (name "python-scikit-rf")
-    (version "1.0.0")
+    (version "1.1.0")
     (source (origin
               (method git-fetch) ;PyPI misses some files required for tests
               (uri (git-reference
@@ -2637,7 +2637,7 @@ measurement devices and test equipment via GPIB, RS232, Ethernet or USB.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "0qfijh2r93jn3za2h9wdv2y49gd4alcww35zrdvmxrx6kbv67m2f"))
+                "0ji1c8b9cbgb0w18dx976hza690npkypz8kav4a3yin2wysjvf64"))
               (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-matplotlib

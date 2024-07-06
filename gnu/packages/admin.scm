@@ -67,6 +67,7 @@
 ;;; Copyright © 2024 dan <i@dan.games>
 ;;; Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2024 Richard Sent <richard@freakingpenguin.com>
+;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2862,13 +2863,13 @@ specified directories.")
 (define-public ansible-core
   (package
     (name "ansible-core")
-    (version "2.15.5")
+    (version "2.17.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "ansible-core" version))
+       (uri (pypi-uri "ansible_core" version))
        (sha256
-        (base32 "00hnwjk4dxgxbz4xlza2wqx20yks5xr7074hzlzsyja3ip5kkicc"))))
+        (base32 "007ginimzbizx2c3fp3vccizscyki0fp4yg3bzl3qz6ipdqrsi26"))))
     (build-system python-build-system)
     (arguments
      `(#:modules ((guix build python-build-system)
@@ -3000,13 +3001,13 @@ provides the following commands:
 (define-public ansible
   (package
     (name "ansible")
-    (version "8.5.0")
+    (version "10.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ansible" version))
        (sha256
-        (base32 "0bazj5h12wraf30bb2schzwk553y20n9vh45km4b5kgmvadm0z1j"))))
+        (base32 "0apj783acx4jzkf3bnibn4y5jc6jd8ly7l0rdqq8f1jpgxal933x"))))
     (build-system python-build-system)
     (propagated-inputs (list ansible-core))
     ;; The Ansible collections are found by ansible-core via the Python search

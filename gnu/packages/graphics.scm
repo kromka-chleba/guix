@@ -496,14 +496,14 @@ typically encountered in feature film production.")
 (define-public blender
   (package
     (name "blender")
-    (version "3.6.10")                   ;3.6.x is the current LTS version
+    (version "3.6.13")                   ;3.6.x is the current LTS version
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.blender.org/source/"
                                   "blender-" version ".tar.xz"))
               (sha256
                (base32
-                "1srwr365y40hhpjmfsg52rphdybvin0ay2r23pknm7b9pkpw0wqs"))))
+                "1sx2yz1y37h8g2p6k8cjf2935p3nlvn9nvjc9yfzp79bg4ypfpbz"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -715,7 +715,7 @@ baking tools to produce normal maps.")
 (define-public openshadinglanguage
   (package
     (name "openshadinglanguage")
-    (version "1.13.8.0")
+    (version "1.13.10.0")
     (source
      (origin
        (method git-fetch)
@@ -724,7 +724,7 @@ baking tools to produce normal maps.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ji4bw8z4ylsh0jvir3d40p6xyhr63g588gh3bag7bzsr3flsb02"))))
+        (base32 "1x97w4infifw33r4ii53q3v1ia0p21lbacd7z01vsz4vq7sy0dxn"))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags
@@ -1325,16 +1325,17 @@ with strong support for multi-part, multi-channel use cases.")
 (define-public openimageio
   (package
     (name "openimageio")
-    (version "2.5.10.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/OpenImageIO/oiio")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "06x3lqj9qjh5m0zbr5g2g9ii6jk340pgzrhr4fb353y1y2pkx5sw"))))
+    (version "2.5.13.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/AcademySoftwareFoundation/OpenImageIO")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0bqalfcfjjk31a7zv2hyx0jz8jpdhpsmc3sqwmfl4zf431g45hpb"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f ; half the tests require online data or use redirection
@@ -1344,14 +1345,22 @@ with strong support for multi-part, multi-channel use cases.")
      (list pkg-config))
     (inputs
      (list boost
+           dcmtk
            fmt
+           freetype
            giflib
            imath
+           libglvnd
            libheif
            libjpeg-turbo
            libpng
+           libraw
            libtiff
+           libwebp
+           opencolorio
            openexr
+           openjpeg
+           ;; openvdb ; OpenVDB needs OIIO to be built with C++17 or higher
            pugixml
            pybind11
            python-wrapper
@@ -1363,7 +1372,7 @@ with strong support for multi-part, multi-channel use cases.")
 related classes, utilities, and applications.  There is a particular emphasis
 on formats and functionality used in professional, large-scale animation and
 visual effects work for film.")
-    (home-page "https://www.openimageio.org")
+    (home-page "https://github.com/AcademySoftwareFoundation/OpenImageIO")
     (license license:bsd-3)))
 
 (define-public openscenegraph

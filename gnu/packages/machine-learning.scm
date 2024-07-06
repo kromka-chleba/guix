@@ -2169,13 +2169,13 @@ data by providing clean labels during training.")
 (define-public python-cma
   (package
     (name "python-cma")
-    (version "3.3.0")
+    (version "3.4.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "cma" version))
               (sha256
                (base32
-                "1v31b2vnnr4v6ack7zfmw7zb47vbzjr9nyvx2lbfhyjf7zhbhj5p"))))
+                "0v0gs46n4ividm9viml09sllxw2cymxlp8nm2lvvwwcqp5lxksx1"))))
     (build-system python-build-system)
     (arguments
      (list #:phases #~(modify-phases %standard-phases
@@ -2388,13 +2388,13 @@ discrete, and conditional dimensions.")
 (define-public python-deepxde
   (package
     (name "python-deepxde")
-    (version "1.11.0")
+    (version "1.11.1")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "DeepXDE" version))
+              (uri (pypi-uri "deepxde" version))
               (sha256
                (base32
-                "0qx6iq8n2j8ab80bs2n85v8g6xi2bnq83vfiaj7a4nsmf62rhkzg"))))
+                "1dkhgka0ris2fkqkm3riwsqrq2q9rk7lk36gaf4av1mhz6c0sa64"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f                  ; there are no tests
@@ -5579,22 +5579,22 @@ linear algebra routines needed for structured matrices (or operators).")
 (define-public python-gpytorch
   (package
     (name "python-gpytorch")
-    (version "1.11")
+    (version "1.12")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "gpytorch" version))
               (sha256
                (base32
-                "0q17bml53vixk3cwj3p893809927hz81fprwsmxpxqv5i4mvgyvj"))))
+                "1pwsccll1hrgkifdmlxzcn6cvnwvyq2cimqzbfgihr13yw51cb6w"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags
-           ;; The error message in test_t_matmul_matrix suggests the error may
-           ;; be due to a bug in gpytorch.  test_deprecated_methods fails with
-           ;; an AssertionError.
-           #~(list "-k" (string-append "not test_deprecated_methods"
-                                       " and not test_t_matmul_matrix"))))
-    (propagated-inputs (list python-linear-operator python-scikit-learn))
+           ;; test_deprecated_methods fails with an AssertionError.
+           #~(list "-k" (string-append "not test_deprecated_methods"))))
+    (propagated-inputs (list python-linear-operator
+                             python-mpmath
+                             python-scikit-learn
+                             python-scipy))
     (native-inputs (list python-coverage
                          python-flake8
                          python-flake8-print
