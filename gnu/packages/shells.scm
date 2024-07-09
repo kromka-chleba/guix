@@ -24,6 +24,7 @@
 ;;; Copyright © 2023 David Pflug <david@pflug.io>
 ;;; Copyright © 2023 Jaeme Sifat <jaeme@runbox.com>
 ;;; Copyright © 2024 Tanguy Le Carrour <tanguy@bioneland.org>
+;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -46,6 +47,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
+  #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crates-crypto)
   #:use-module (gnu packages crates-graphics)
@@ -65,11 +67,14 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-check)
+  #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages rust)
   #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages scheme)
+  #:use-module (gnu packages terminals)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages xdisorg)
@@ -79,6 +84,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system trivial)
   #:use-module (guix download)
@@ -547,18 +553,18 @@ ksh, and tcsh.")
 (define-public xonsh
   (package
     (name "xonsh")
-    (version "0.15.1")
+    (version "0.17.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "xonsh" version))
         (sha256
           (base32
-           "0427mimr4k75myg5mnig564kq7xbb5f5hws2ly3gxxl6g8mk79il"))
+           "17jhhxwm1nbh7yq72y7d4n880x46817iami7lvcj3ywdbzrfg6r9"))
         (modules '((guix build utils)))
         (snippet
          #~(begin
-             (substitute* "setup.py"
+             (substitute* "pyproject.toml"
                (("\"xonsh\\.ply\\.ply\",") ""))
              ;; Use our properly packaged PLY instead.
              (substitute* (list "setup.py"
@@ -566,28 +572,65 @@ ksh, and tcsh.")
                                 "xonsh/lexer.py"
                                 "xonsh/parsers/base.py"
                                 "xonsh/parsers/completion_context.py"
+                                "xonsh/parsers/v310.py"
                                 "xonsh/xonfig.py")
                (("from xonsh\\.ply\\.(.*) import" _ module)
                 (format #f "from ~a import" module))
-               (("from xonsh\\.ply import") "import"))
-             #t))))
-    (build-system python-build-system)
+               (("from xonsh\\.ply import") "import"))))))
+    (build-system pyproject-build-system)
     (arguments
-     (list ;; TODO Try running run the test suite.
-           ;; See 'requirements-tests.txt' in the source distribution for more
-           ;; information.
-           #:tests? #f
+     ;; Some tests are failing for reasons like not accessing parent directory
+     ;; with os.getcwd(), not activating virtual environments, not finding
+     ;; some commands (man, echo), and not running subprocesses.
+     (list #:test-flags
+           #~(list "-k"
+                   (string-append
+                    "not "
+                    (string-join
+                     (list "test_aliases_print"
+                           "test_argv0"
+                           "test_bash_and_is_alias_is_only_functional_alias"
+                           "test_bash_completer"
+                           "test_bash_completer_empty_prefix"
+                           "test_complete_command"
+                           "test_complete_dots"
+                           "test_dirty_working_directory"
+                           "test_equal_sign_arg"
+                           "test_man_completion"
+                           "test_parser_show"
+                           "test_printfile"
+                           "test_printname"
+                           "test_quote_handling"
+                           "test_script"
+                           "test_skipper_command"
+                           "test_sourcefile"
+                           "test_spec_modifier_alias_output_format"
+                           "test_vc_get_branch"
+                           "test_xonsh_activator"
+                           "test_xonsh_lexer")
+                     " and not ")))
            #:phases
            #~(modify-phases %standard-phases
                (replace 'install
-                 (lambda* (#:key outputs #:allow-other-keys)
-                   (let* ((out (assoc-ref outputs "out")))
-                     (invoke "python" "-m" "compileall"
-                             "--invalidation-mode=unchecked-hash" out)
-                     (invoke "python" "setup.py" "install" "--root=/"
-                             (string-append "--prefix=" out))))))))
+                 (lambda _
+                   (invoke "python" "-m" "compileall"
+                           "--invalidation-mode=unchecked-hash" #$output)
+                   (invoke "python" "setup.py" "install" "--root=/"
+                           (string-append "--prefix=" #$output))))
+               ;; Some tests run os.mkdir().
+               (add-before 'check 'writable-home
+                 (lambda _
+                   (setenv "HOME" "/tmp"))))))
     (native-inputs
-     (list python-setuptools                      ;needed at build time
+     (list git-minimal
+           python-pyte
+           python-pytest
+           python-pytest-mock
+           python-pytest-rerunfailures
+           python-pytest-subprocess
+           python-pytest-timeout
+           python-requests
+           python-setuptools                      ;needed at build time
            python-wheel))
     (inputs
      (list python-distro

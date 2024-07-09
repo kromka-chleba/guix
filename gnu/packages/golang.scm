@@ -6706,59 +6706,6 @@ matching and globbing with support for \"doublestar\" patterns.")
      (list
       #:import-path "github.com/bmatcuk/doublestar/v4"))))
 
-(define-public go-github-com-alecthomas-colour
-  (package
-    (name "go-github-com-alecthomas-colour")
-    (version "0.1.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/alecthomas/colour")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "10zbm12j40ppia4b5ql2blmsps5jhh5d7ffphxx843qk7wlbqnjb"))))
-    (build-system go-build-system)
-    (arguments
-     `(#:import-path "github.com/alecthomas/colour"))
-    (native-inputs
-     (list go-github-com-mattn-go-isatty))
-    (home-page "https://github.com/alecthomas/colour/")
-    (synopsis "Colour terminal text for Go")
-    (description "Package colour provides Quake-style colour formatting for
-Unix terminals.
-
-The package level functions can be used to write to stdout (or strings or
-other files).  If stdout is not a terminal, colour formatting will be
-stripped.")
-    (license license:expat)))
-
-(define-public go-github-com-alecthomas-repr
-  (package
-    (name "go-github-com-alecthomas-repr")
-    (version "0.3.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/alecthomas/repr")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1zq30b36vvg4kzxkff64gjwvcjaw0d13dqzfjfai66hkh3ijdzwl"))))
-    (build-system go-build-system)
-    (arguments
-     `(#:go ,go-1.18
-       #:import-path "github.com/alecthomas/repr"))
-    (native-inputs
-     (list go-github-com-stretchr-testify))
-    (home-page "https://github.com/alecthomas/repr/")
-    (synopsis "Represent Go values in an almost direct form")
-    (description "This package attempts to represent Go values in a form that
-can be used almost directly in Go source code.")
-    (license license:expat)))
-
 (define-public go-github-com-muesli-reflow-wordwrap
   (package
     (name "go-github-com-muesli-reflow-wordwrap")
@@ -7903,49 +7850,6 @@ additions.")
 systems can import this package to enable running programs as services without
 modifying them.")
     (license license:zlib)))
-
-(define-public go-github-com-goccy-yaml
-  (package
-    (name "go-github-com-goccy-yaml")
-    (version "1.11.3")
-    (home-page "https://github.com/goccy/go-yaml")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url home-page)
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1rm2rfnlvv704zkb1mnjqv5xx32vfkzv7r2kc8if6gr9ryb7hmbf"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:go go-1.18
-      #:import-path "github.com/goccy/go-yaml"
-      #:phases #~(modify-phases %standard-phases
-                   (add-after 'unpack 'remove-benchmarks
-                     (lambda* (#:key import-path #:allow-other-keys)
-                       (delete-file-recursively
-                        (string-append "src/" import-path "/benchmarks")))))))
-    (propagated-inputs
-     (list go-github-com-fatih-color go-golang-org-x-xerrors))
-    (native-inputs
-     (list go-github-com-go-playground-validator-v10
-           go-github-com-google-go-cmp-cmp))
-    (synopsis "YAML support for the Go language")
-    (description
-     "This package provides features beyond the
-@uref{https://github.com/go-yaml/yaml, defacto YAML library} including:
-
-@itemize
-@item Pretty format for error notifications
-@item Support Scanner or Lexer or Parser as public API
-@item Support Anchor and Alias to Marshaler
-@item Allow referencing elements declared in another file via anchors
-@item Extract value or AST by YAMLPath (YAMLPath is like a JSONPath)
-@end itemize")
-    (license license:expat)))
 
 (define-public go-github-com-tekwizely-go-parsing
   (let ((commit "1548cfb17df54d365ce9febed0677c06a40a8ceb")

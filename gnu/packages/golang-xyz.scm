@@ -473,7 +473,7 @@ syntax highlighted HTML, ANSI-coloured text, etc.")
   (package
     (inherit go-github-com-alecthomas-chroma)
     (name "go-github-com-alecthomas-chroma-v2")
-    (version "2.12.0")
+    (version "2.14.0")
     (source
      (origin
        (method git-fetch)
@@ -482,15 +482,59 @@ syntax highlighted HTML, ANSI-coloured text, etc.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1j9zz77ppi4r4ncnanzj84h7bsg0qdqrhgd5kkjiv09afm31jx83"))))
+        (base32 "1qgr4gywjks869sc85wb8nby612b8wvsa1dwpsbanjsljq7wq7mp"))))
     (arguments
-     (list #:go go-1.19
-           #:import-path "github.com/alecthomas/chroma/v2"))
+     (list
+      #:go go-1.19
+      #:import-path "github.com/alecthomas/chroma/v2"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-failing-testdata-and-cmd-files
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each delete-file-recursively
+                          (list "lexers/testdata/python2/test_complex_file1.actual"
+                                ;; Executible is packed as separate package.
+                                "cmd")))))
+          ;; XXX: Replace when go-build-system supports nested path.
+          (replace 'check
+            (lambda* (#:key import-path tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
     (propagated-inputs
      (list go-github-com-dlclark-regexp2))
     (native-inputs
      (list go-github-com-alecthomas-assert-v2
            go-github-com-alecthomas-repr))))
+
+(define-public go-github-com-alecthomas-colour
+  (package
+    (name "go-github-com-alecthomas-colour")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alecthomas/colour")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10zbm12j40ppia4b5ql2blmsps5jhh5d7ffphxx843qk7wlbqnjb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/alecthomas/colour"))
+    (native-inputs
+     (list go-github-com-mattn-go-isatty))
+    (home-page "https://github.com/alecthomas/colour/")
+    (synopsis "Colour terminal text for Go")
+    (description
+     "Package colour provides Quake-style colour formatting for Unix
+terminals.  The package level functions can be used to write to stdout (or
+strings or other files).  If stdout is not a terminal, colour formatting will
+be stripped.")
+    (license license:expat)))
 
 (define-public go-github-com-alecthomas-kingpin
   (package
@@ -543,6 +587,37 @@ syntax highlighted HTML, ANSI-coloured text, etc.")
     (native-inputs
      (list go-github-com-stretchr-testify))))
 
+(define-public go-github-com-alecthomas-kong
+  (package
+    (name "go-github-com-alecthomas-kong")
+    (version "0.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alecthomas/kong")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0a9arf30h84ll8k612jh50c3vjmvdfj6i7dbvfnw3dalm6dn2aan"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; One test failed when set to go-1.18 o lower, see
+      ;; <https://github.com/alecthomas/kong/issues/437>
+      #:go go-1.19
+      #:import-path "github.com/alecthomas/kong"))
+    (native-inputs
+     (list go-github-com-alecthomas-assert-v2))
+    (propagated-inputs
+     (list go-github-com-alecthomas-repr))
+    (home-page "https://github.com/alecthomas/kong")
+    (synopsis "Command-line parser for Golang")
+    (description
+     "Package kong aims to support arbitrarily complex command-line structures
+with as little developer effort as possible.")
+    (license license:expat)))
+
 (define-public go-github-com-alecthomas-participle-v2
   (package
     (name "go-github-com-alecthomas-participle-v2")
@@ -569,6 +644,33 @@ syntax highlighted HTML, ANSI-coloured text, etc.")
 parsers from definitions in struct tags and parses directly into those
 structs.  The approach is similar to how other marshallers work in Golang,
 \"unmarshalling\" an instance of a grammar into a struct.")
+    (license license:expat)))
+
+(define-public go-github-com-alecthomas-repr
+  (package
+    (name "go-github-com-alecthomas-repr")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alecthomas/repr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ikvl78dighkn87bxk6gki4wcz9f138n7kbqkagj5vbdb690yjkl"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.18
+      #:import-path "github.com/alecthomas/repr"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/alecthomas/repr/")
+    (synopsis "Represent Go values in an almost direct form")
+    (description
+     "This package attempts to represent Go values in a form that can be used
+almost directly in Go source code.")
     (license license:expat)))
 
 (define-public go-github-com-alecthomas-template
@@ -1670,6 +1772,41 @@ designed to deliver dynamic configurations with unparalleled accuracy, safety,
 and speed.")
     (license license:expat)))
 
+(define-public go-github-com-facebookgo-atomicfile
+  (package
+    (name "go-github-com-facebookgo-atomicfile")
+    (version "0.0.0-20151019160806-2de1f203e7d5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/facebookarchive/atomicfile")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vsx6r6y601jxvjqc8msbpr5v1037dfxxdd8h1q3s8wm6xhvj2v6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/facebookgo/atomicfile"))
+    (home-page "https://github.com/facebookgo/atomicfile")
+    (synopsis "Atomically written/replaced file")
+    (description
+     "Package atomicfile provides the ability to write a file with an eventual
+rename on Close (using @code{os.Rename}).  This allows for a file to always be
+in a consistent state and never represent an in-progress write.")
+    ;; patents
+    ;;
+    ;; Additional Grant of Patent Rights Version 2
+    ;; <...>
+    ;; Facebook, Inc. ("Facebook") hereby grants to each recipient of the
+    ;; Software ("you") a perpetual, worldwide, royalty-free, non-exclusive,
+    ;; irrevocable (subject to the termination provision below) license under
+    ;; any Necessary Claims, to make, have made, use, sell, offer to sell,
+    ;; import, and otherwise transfer the Software.
+    ;; <...>
+    (license license:bsd-3)))
+
 (define-public go-github-com-facette-natsort
   (package
     (name "go-github-com-facette-natsort")
@@ -1914,6 +2051,57 @@ the library more lightweight.")
     (synopsis "Go globbing library")
     (description
      "This package provides a Go implementation of globs.")
+    (license license:expat)))
+
+(define-public go-github-com-goccy-go-yaml
+  (package
+    (name "go-github-com-goccy-go-yaml")
+    (version "1.11.3")
+    (home-page "https://github.com/goccy/go-yaml")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url home-page)
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rm2rfnlvv704zkb1mnjqv5xx32vfkzv7r2kc8if6gr9ryb7hmbf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.18
+      #:import-path "github.com/goccy/go-yaml"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-benchmarks
+            (lambda* (#:key import-path #:allow-other-keys)
+              (delete-file-recursively
+               (string-append "src/" import-path "/benchmarks"))))
+          ;; XXX: Replace when go-build-system supports nested path.
+          (replace 'check
+            (lambda* (#:key import-path tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (native-inputs
+     (list go-github-com-go-playground-validator-v10
+           go-github-com-google-go-cmp-cmp))
+    (propagated-inputs
+     (list go-github-com-fatih-color
+           go-golang-org-x-xerrors))
+    (synopsis "YAML support for the Go language")
+    (description
+     "This package provides features beyond the
+@uref{https://github.com/go-yaml/yaml, defacto YAML library} including:
+
+@itemize
+@item Pretty format for error notifications
+@item Support Scanner or Lexer or Parser as public API
+@item Support Anchor and Alias to Marshaler
+@item Allow referencing elements declared in another file via anchors
+@item Extract value or AST by YAMLPath (YAMLPath is like a JSONPath)
+@end itemize")
     (license license:expat)))
 
 (define-public go-github-com-gookit-color
@@ -4261,7 +4449,7 @@ Use waterutil with it to work with TUN/TAP packets/frames.")
       #:go go-1.21
       #:import-path "github.com/Songmu/gitconfig"))
     (propagated-inputs
-     (list go-github-com-goccy-yaml))
+     (list go-github-com-goccy-go-yaml))
     (home-page "https://github.com/songmu/gitconfig")
     (synopsis "Go library to get configuration values from gitconfig")
     (description
@@ -4317,9 +4505,9 @@ well as a program to generate applications and command files.")
       (home-page "https://github.com/stathat/go")
       (license license:expat))))
 
-(define-public go-github-com-syndtr-goleveldb-leveldb
+(define-public go-github-com-syndtr-goleveldb
   (package
-    (name "go-github-com-syndtr-goleveldb-leveldb")
+    (name "go-github-com-syndtr-goleveldb")
     (version "1.0.0")
     (source
      (origin
@@ -4334,8 +4522,16 @@ well as a program to generate applications and command files.")
     (arguments
      (list
       #:go go-1.21
-      #:import-path "github.com/syndtr/goleveldb/leveldb"
-      #:unpack-path "github.com/syndtr/goleveldb"))
+      #:import-path "github.com/syndtr/goleveldb"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Replace when go-build-system supports nested path.
+          (delete 'build)
+          (replace 'check
+            (lambda* (#:key import-path tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
     (propagated-inputs
      (list go-github-com-onsi-gomega
            go-github-com-onsi-ginkgo
@@ -4648,6 +4844,57 @@ encoded values to create the picture in a code with no inherent errors.")
      "This package implements algorithms for
 @url{https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average,exponentially
 weighted moving averages}.")
+    (license license:expat)))
+
+(define-public go-github-com-whyrusleeping-base32
+  (package
+    (name "go-github-com-whyrusleeping-base32")
+    (version "0.0.0-20170828182744-c30ac30633cc")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/whyrusleeping/base32")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "060jj8j9rnm3m47vv7jfz9ddybch3ryvn1p9vhc63bqn73knalhf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/whyrusleeping/base32"))
+    (home-page "https://github.com/whyrusleeping/base32")
+    (synopsis "BASE32 encoding package from go with NoPadding option")
+    (description
+     "This package provides a base32 encoding package from go with NoPadding
+option.")
+    ;; No license provided, see
+    ;; <https://github.com/whyrusleeping/base32/issues/5>
+    (license  license:public-domain)))
+
+(define-public go-github-com-whyrusleeping-go-keyspace
+  (package
+    (name "go-github-com-whyrusleeping-go-keyspace")
+    (version "0.0.0-20160322163242-5b898ac5add1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/whyrusleeping/go-keyspace")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fkk7i7qxwbz1g621mm6a6inb69lr57cyc9ayyfiwhnjwfz78rbb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/whyrusleeping/go-keyspace"))
+    (home-page "https://github.com/whyrusleeping/go-keyspace")
+    (synopsis "Comparing key metrics within a given keyspace")
+    (description
+     "This is a package extracted from @code{go-ipfs}.  Its purpose to be used
+to compare a set of keys based on a given metric.  The primary metric used is
+XOR, as in kademlia.")
     (license license:expat)))
 
 (define-public go-github-com-whyrusleeping-go-sysinfo
@@ -4998,6 +5245,40 @@ values.")
 ;;;
 ;;; Executables:
 ;;;
+
+(define-public go-chroma
+  (package
+    (name "go-chroma")
+    (version "2.14.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/alecthomas/chroma")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1qgr4gywjks869sc85wb8nby612b8wvsa1dwpsbanjsljq7wq7mp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.19
+      #:install-source? #f
+      #:import-path "github.com/alecthomas/chroma/cmd/chroma"))
+    (native-inputs
+     (list go-github-com-alecthomas-assert-v2
+           go-github-com-alecthomas-chroma-v2
+           go-github-com-alecthomas-kong
+           go-github-com-mattn-go-colorable
+           go-github-com-mattn-go-isatty))
+    (home-page "https://github.com/alecthomas/chroma")
+    (synopsis "General purpose syntax highlighter in pure Golang")
+    (description
+     (string-append (package-description go-github-com-alecthomas-chroma-v2)
+                    "  This package provides an command line interface (CLI)
+tool."))
+    (license license:asl2.0)))
 
 (define-public go-hclogvet
   (package

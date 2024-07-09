@@ -20017,7 +20017,7 @@ encoding algorithms to do fuzzy string matching.")
 (define-public python-pdfminer-six
   (package
     (name "python-pdfminer-six")
-    (version "20201018")
+    (version "20231228")
     ;; There are no tests in the PyPI tarball.
     (source
      (origin
@@ -20027,23 +20027,19 @@ encoding algorithms to do fuzzy string matching.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a2fxxnnjqbx344znpvx7cnv1881dk6585ibw01inhfq3w6yj2lr"))))
-    (build-system python-build-system)
+        (base32 "1anyr0gm7amwls8qifflql1viz5rq6q95lfwcg43v3180h4w8wrd"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; Tests write to the source tree.
-         (add-after 'unpack 'make-git-checkout-writable
-           (lambda _
-             (for-each make-file-writable (find-files "."))
-             #t))
-         (replace 'check
-           (lambda _
-             (invoke "make" "test"))))))
+     (list #:phases
+           #~(modify-phases %standard-phases
+               ;; Tests write to the source tree.
+               (add-after 'unpack 'make-git-checkout-writable
+                 (lambda _
+                   (for-each make-file-writable (find-files ".")))))))
     (propagated-inputs
-     (list python-chardet python-cryptography python-sortedcontainers))
+     (list python-charset-normalizer python-cryptography))
     (native-inputs
-     (list python-nose python-tox))
+     (list python-pytest))
     (home-page "https://github.com/pdfminer/pdfminer.six")
     (synopsis "PDF parser and analyzer")
     (description "@code{pdfminer.six} is a community maintained fork of
@@ -23331,23 +23327,33 @@ efficient as possible on all supported Python versions.")
 Mustache templating language renderer.")
     (license license:expat)))
 
+;; XXX: Try to inherit from duckdb and build from source with all extentions.
 (define-public python-duckdb
   (package
     (name "python-duckdb")
-    (version "0.8.1")
+    (version "1.0.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "duckdb" version))
               (sha256
                (base32
-                "1sgfmii5xlkbx3hzyjxg80gl2ni1rxpabahl4gww9by2mgs3fkd5"))))
+                "0lyl6di1c7j31i2mk384j711kzyyf9rjd3nqx5mbgmf7gfvmk852"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      '(list "--ignore=tests/slow/test_h2oai_arrow.py"
-             ;; Don't install anything, thank you.
-             "-k" "not test_install_non_existent_extension")
+      #~(list "--numprocesses" "auto"
+              "--ignore=tests/slow/test_h2oai_arrow.py"
+              ;; Do not relay on mypy.
+              "--ignore=tests/stubs/test_stubs.py"
+              "-k" (string-append
+                    ;; Don't install anything, thank you.
+                    "not test_install_non_existent_extension"
+                    ;; See <https://github.com/duckdb/duckdb/issues/11961>.
+                    " and not test_fetchmany"
+                    ;; See <https://github.com/duckdb/duckdb/issues/10702>.
+                    " and not test_connection_interrupt"
+                    " and not test_query_interruption"))
       #:phases
       #~(modify-phases %standard-phases
           ;; Tests need this
@@ -23366,17 +23372,19 @@ Mustache templating language renderer.")
                                "pyfilesystem.hpp"
                                "pybind11/conversions/pyconnection_default.hpp")
                   (("const_name") "_"))))))))
+    (propagated-inputs
+     (list python-adbc-driver-manager))
     (native-inputs
      (list pybind11
            python-fsspec
            python-google-cloud-storage
-           python-mypy
            python-numpy
            python-pandas
            python-psutil
            python-pyarrow
            python-pytest
            python-pytest-runner
+           python-pytest-xdist
            python-setuptools-scm))
     (home-page "https://www.duckdb.org")
     (synopsis "DuckDB embedded database")
@@ -33803,6 +33811,38 @@ It currently provides descriptions for most user-mode x86, x86_64, and k1om
 instructions up to AVX-512 and SHA (including 3dnow!+, XOP, FMA3, FMA4, TBM
 and BMI2).")
       (license license:bsd-2))))
+
+(define-public python-itanium-demangler
+  (package
+    (name "python-itanium-demangler")
+    (version "1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             ;; PyPI only provides wheels and no source code.
+             (url "https://github.com/whitequark/python-itanium_demangler")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1q47aqm5z3db6pasdzw05d6236vnb8hnapfy88fcmn9dr5ym98r3"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "tests"
+                  (invoke "python" "-m" "unittest"))))))))
+    (home-page "https://github.com/whitequark/python-itanium_demangler/")
+    (synopsis "Pure Python Itanium C++ ABI demangler")
+    (description
+"This Python module provides an implementation of the Itanium C++ ABI symbol
+mangling language.  The demangler generates an abstract syntax tree from
+mangled symbols, which can be used for directly extracting type information.")
+    (license license:bsd-0)))
 
 (define-public python-peachpy
   ;; There is no tag in this repo.

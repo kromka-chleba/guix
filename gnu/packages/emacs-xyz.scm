@@ -17983,6 +17983,31 @@ files in Emacs.  Files of this type (e.g., @file{BUILD.gn} or @file{*.gni})
 are common in Chromium-derived projects.")
     (license license:bsd-3)))
 
+(define-public emacs-gnosis
+  (package
+    (name "emacs-gnosis")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.thanosapollo.org/gnosis")
+             (commit version)))
+       (sha256
+        (base32
+         "19mzyg4hg6mplv3s2kb8xiaw06zkbj7a3gvfvy51cwvb8k979ap6"))
+       (file-name (git-file-name name version))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-compat emacs-emacsql))
+    (home-page "https://thanosapollo.org/projects/gnosis")
+    (synopsis "Spaced repetition system for GNU Emacs")
+    (description
+     "Gnosis is a spaced repetition system for note-taking and self-testing
+where notes are formatted as Question/Answer/Explanation. Notes are reviewed
+at spaced intervals based on the success or failure in recalling the answer to
+each question.")
+    (license license:gpl3+)))
+
 (define-public emacs-drag-stuff
   (package
     (name "emacs-drag-stuff")
@@ -20272,8 +20297,8 @@ one if it fails.")
 
 (define-public emacs-jabber
   ;; No releases available.
-  (let ((commit "af0315e174fa6446d5c4dd3e6465d48912950e58")
-        (revision "0"))
+  (let ((commit "e766d84b81d5df6abc30fcbbb94f7c8640ea54e2")
+        (revision "1"))
     (package
       (name "emacs-jabber")
       (version (git-version "0.8.92" revision commit))
@@ -20285,7 +20310,7 @@ one if it fails.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "08q0hbm4pvp8sf261w1ihqa93sg8blfybfkhq7wrnvgs6kasgwvq"))))
+                  "0b6msdyvhjr4v4j8hl6kmcjks88iq001w1fhjgfvg8ii9n77n6xn"))))
       (build-system emacs-build-system)
       (arguments
        (list
@@ -34861,43 +34886,45 @@ contrast and few colors.")
       (license license:gpl3+))))
 
 (define-public emacs-doom-themes
-  (package
-    (name "emacs-doom-themes")
-    (version "2.3.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/hlissner/emacs-doom-themes")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32 "120pcas0l1m6w551qxfcl2fx0aysjqp91nn47zdxrr8rs01654wr"))))
-    (build-system emacs-build-system)
-    (native-inputs
-     (list emacs-ert-runner))
-    (arguments
-     (list #:tests? #t
-           #:test-command #~(list "ert-runner")
-           #:modules '((guix build emacs-build-system)
-                       (guix build utils)
-                       (guix build emacs-utils)
-                       (srfi srfi-1))
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'move-themes
-                 (lambda _
-                   ;; Move the source files to the top level, which is in the
-                   ;; EMACSLOADPATH.
-                   (for-each (lambda (f)
-                               (rename-file f (basename f)))
-                             (append
-                                 (find-files "./themes" ".*\\.el$")
-                                 (find-files "./extensions" ".*\\.el$"))))))))
-    (synopsis "Wide collection of color themes for Emacs")
-    (description "Emacs-doom-themes contains numerous popular color themes for
+  (let ((commit "188ab05eefe2bdc46b4464aadb4a52ff9cb42f7f")
+        (revision "0"))
+    (package
+      (name "emacs-doom-themes")
+      (version (git-version "2.3.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/doomemacs/themes")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32 "08avm5jfp887r2l77s6i0zn72wlv4kp47b2vzv3kywf3d0gkpgp8"))))
+      (build-system emacs-build-system)
+      (native-inputs
+       (list emacs-ert-runner))
+      (arguments
+       (list #:tests? #t
+             #:test-command #~(list "ert-runner")
+             #:modules '((guix build emacs-build-system)
+                         (guix build utils)
+                         (guix build emacs-utils)
+                         (srfi srfi-1))
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'move-themes
+                   (lambda _
+                     ;; Move the source files to the top level, which is in the
+                     ;; EMACSLOADPATH.
+                     (for-each (lambda (f)
+                                 (rename-file f (basename f)))
+                               (append
+                                (find-files "./themes" ".*\\.el$")
+                                (find-files "./extensions" ".*\\.el$"))))))))
+      (synopsis "Wide collection of color themes for Emacs")
+      (description "Emacs-doom-themes contains numerous popular color themes for
 Emacs that integrate with major modes like Org-mode.")
-    (home-page "https://github.com/hlissner/emacs-doom-themes")
-    (license license:expat)))
+      (home-page "https://github.com/doomemacs/themes")
+      (license license:expat))))
 
 (define-public emacs-modus-themes
   (package
@@ -35180,6 +35207,28 @@ available.")
     (description "This library adds a list of 'Did you mean...' suggestions
 when the command was not found in Eshell.  The suggestions are found after the
 commands that bear resemblance to the input command.")
+    (license license:gpl3+)))
+
+(define-public emacs-eshell-git-prompt
+  (package
+    (name "emacs-eshell-git-prompt")
+    (version "0.1.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xuchunyang/eshell-git-prompt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "13b7nr0819pgzyvh0szi0zjyazgpxmsbqcz65cccyhh2pq48zb7j"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-dash))
+    (home-page "https://github.com/xuchunyang/eshell-git-prompt")
+    (synopsis "Themes for Emacs Shell (Eshell) prompt")
+    (description
+     "This package provides a variety of themes for Emacs Shell (Eshell)
+prompt.")
     (license license:gpl3+)))
 
 (define-public emacs-unfill
