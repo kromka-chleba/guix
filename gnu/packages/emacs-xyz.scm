@@ -1269,6 +1269,25 @@ out of the box.")
 is based off of Slim mode.")
     (license license:gpl3+)))
 
+(define-public emacs-sed-mode
+  (package
+    (name "emacs-sed-mode")
+    (version "1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/sed-mode-" version
+                           ".tar"))
+       (sha256
+        (base32 "0zhga0xsffdcinh10di046n6wbx35gi1zknnqzgm9wvnm2iqxlyn"))))
+    (build-system emacs-build-system)
+    (home-page "https://elpa.gnu.org/packages/sed-mode.html")
+    (synopsis "Major mode to edit sed scripts")
+    (description
+     "The Sed major mode provides basic support for sed scripts.  The
+functionalities supported are font-locking and auto-indentation.")
+    (license license:gpl3+)))
+
 (define-public emacs-spaceline-all-the-icons
   (package
     (name "emacs-spaceline-all-the-icons")
@@ -3729,6 +3748,43 @@ Specification (MPRIS) protocol from Emacs.  It uses Emacs' Completing Read
 framework as the user interface, which integrates well with Vertico or
 Selectrum.")
     (license license:gpl3+)))
+
+(define-public emacs-empv
+  (let ((commit "8cc9b0a425b6989d30f91bf90e9b09bd00581f07")
+        (revision "1"))
+    (package
+      (name "emacs-empv")
+      (version (git-version "4.3.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/isamert/empv.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "06dphwj9vi39dbpif3kzp6azs80klh13s9l22a6ddz91kmds2myy"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:phases #~(modify-phases %standard-phases
+                     (add-after 'unpack 'set-default-binaries
+                       (lambda* (#:key inputs #:allow-other-keys)
+                         (emacs-substitute-variables "empv.el"
+                           ("empv-fd-binary" (search-input-file inputs "/bin/fd"))
+                           ("empv-mpv-binary" (search-input-file inputs "/bin/mpv"))))))))
+      (inputs (list fd mpv))
+      (propagated-inputs (list emacs-compat emacs-consult emacs-s))
+      (home-page "https://github.com/isamert/empv.el")
+      (synopsis
+       "Emacs multimedia player, media library manager, YouTube frontend")
+      (description
+       "This package is an Emacs multimedia player based on mpv.  It offers
+a comprehensive interface to mpv, including convenient features such as an
+embedded radio manager, YouTube integration, and a local music and video
+library manager.")
+      (license license:gpl3+))))
 
 (define-public emacs-marginalia-emprise
   (package
@@ -23271,8 +23327,8 @@ object has been freed.")
   (license license:unlicense)))
 
 (define-public emacs-emacsql
-  (let ((commit "29194a63ede3ee24c7457c2fde03b0f1320ca4b1")
-        (revision "1"))
+  (let ((commit "efddd69c5e69214dbbe921fbf90f938501414894")
+        (revision "2"))
     (package
       (name "emacs-emacsql")
       (version (git-version "3.1.1" revision commit))
@@ -23284,7 +23340,7 @@ object has been freed.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "14yj53xxqi3009bdj39k2fqwyc896yp2m7gdkgyv47wlkh1xwzxh"))))
+          (base32 "1abwc7kzlmk6z68glnya6kxffrrqrhgpwrpzqpjc1l179gg1i1rg"))))
       (build-system emacs-build-system)
       (arguments
        (list
@@ -26425,6 +26481,27 @@ perform regression test for packages that provide font-lock rules.")
 It follows DrRacket concepts where applicable.")
       (license license:gpl2+))))
 
+(define-public emacs-ob-racket
+  (package
+    (name "emacs-ob-racket")
+    (version "1.3.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/hasu/emacs-ob-racket")
+                    (commit version)))
+              (sha256
+               (base32
+                "0bqhxi1nikxwc0gyqsnxc7ya2s41vc06w39s24qz64kja8zqzzya"))
+              (file-name (git-file-name name version))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/hasu/emacs-ob-racket")
+    (synopsis "Org Babel support for Racket")
+    (description
+     "This package adds spport for working with Racket code blocks with
+Org Babel in Org mode.")
+    (license license:gpl3+)))
+
 (define-public emacs-grep-context
   (let ((commit "5a4e3efdf775755c1bbefcfe4b461c1166d81d7d")
         (revision "1"))
@@ -29235,10 +29312,10 @@ and comments.")
       (license license:gpl3+))))
 
 (define-public emacs-yeetube
-  (let ((commit "c9721a295f4fd30a44e94b3424151fa8a14d22ae")) ;version bump
+  (let ((commit "5c0a3efd2fb5cc25a6a90741ad198e31fdb15640")) ;version bump
     (package
       (name "emacs-yeetube")
-      (version "2.1.6")
+      (version "2.1.7")
       (source
        (origin
          (method git-fetch)
@@ -29247,7 +29324,7 @@ and comments.")
                (commit commit)))
          (sha256
           (base32
-           "0lrcs0n30h800sm6py4av44a3fcfgasmj223mnl76q34syyrgz6k"))
+           "0a3pm8cz6yl5s2xnbnjvdwm8mf5hyman419xl4fyyfgwy6vrxp70"))
          (file-name (git-file-name name version))))
       (build-system emacs-build-system)
       (arguments
@@ -29269,13 +29346,12 @@ and comments.")
       (inputs (list mpv torsocks yt-dlp))
       (propagated-inputs (list emacs-compat))
       (home-page "https://thanosapollo.org/projects/yeetube/")
-      (synopsis "Youtube and Invidious front-end for Emacs")
+      (synopsis "Youtube front-end for Emacs")
       (description
-       "This package offers an Emacs interface that allows you to search YouTube
-or an Invidious instance for a specific query.  The search results are shown
-as links in an Org mode buffer.  The videos can be opened to a user-defined
+       "This package provides the ability to scrape YouTube, with the results
+displayed in a tabulated list format.  The videos can be opened with a user-defined
 video player (by default @command{mpv}) or downloaded using @command{yt-dlp}.
-This package also includes a @code{yt-dlp} front-end.")
+This package also includes a minimal @code{yt-dlp} wrapper.")
       (license license:gpl3+))))
 
 (define-public emacs-org-web-tools

@@ -130,8 +130,9 @@ Scheme machine types, or '#f' if none is defined."
     #f)
    ((target-ppc32? system)
     "ppc32")
-   ((target-riscv64? system)
-    "rv64")
+   ;; This is apparently not ready in chez-scheme-for-racket.
+   ;((target-riscv64? system)
+   ; "rv64")
    ((string-prefix? "loongarch64-" system)
     "la64")
    (else
@@ -297,7 +298,7 @@ will name the threaded machine type unless THREADS? is provided as #f."
     (name "chez-scheme-for-racket")
     ;; The version should match `(scheme-version-number #t)`.
     ;; See s/cmacros.ss c. line 360.
-    (version "9.9.9-pre-release.23")
+    (version "10.1.0-pre-release.1")
     (source #f)
     (build-system gnu-build-system)
     (inputs `(,@(if (nix-system->native-chez-machine-type)
@@ -329,8 +330,6 @@ will name the threaded machine type unless THREADS? is provided as #f."
         (ice-9 match)
         (srfi srfi-34))
       #:out-of-source? #t
-      ;; Intermittent failures: https://github.com/cisco/ChezScheme/issues/809
-      #:tests? #f
       #:test-target "test" ; test-one test-some-fast test-some test test-more
       #:configure-flags
       #~`(,@(let* ((chez+version (strip-store-file-name #$output))
@@ -509,6 +508,7 @@ version of Chez Scheme.")
                 "1q66vafhiwk617z51qkm1v64r3bxqhhf5lzrmsa4l9d5yhvlyk09"))
               (file-name (git-file-name name version))
               (patches (search-patches "chez-scheme-backport-configure.patch"
+                                       "chez-scheme-backport-signal.patch"
                                        "chez-scheme-bin-sh.patch"))
               (snippet #~(begin
                            (use-modules (guix build utils))
