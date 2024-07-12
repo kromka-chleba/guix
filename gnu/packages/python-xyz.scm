@@ -99,7 +99,7 @@
 ;;; Copyright © 2021 LibreMiami <packaging-guix@libremiami.org>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
-;;; Copyright © 2021, 2023 jgart <jgart@dismail.de>
+;;; Copyright © 2021, 2023-2024 jgart <jgart@dismail.de>
 ;;; Copyright © 2021 Danial Behzadi <dani.behzi@ubuntu.com>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2021 Hugo Lecomte <hugo.lecomte@inria.fr>
@@ -153,6 +153,7 @@
 ;;; Copyright © 2024 Navid Afkhami <navid.afkhami@mdc-berlin.de>
 ;;; Copyright © 2024 TakeV <takev@disroot.org>
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2024 Rick Huijzer <ikbenrickhuyzer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2070,7 +2071,7 @@ task of adding retry behavior to just about anything.")
 (define-public python-pytelegrambotapi
   (package
     (name "python-pytelegrambotapi")
-    (version "3.7.4")
+    (version "4.21.0")
     (source
      (origin
        (method git-fetch)
@@ -2079,21 +2080,21 @@ task of adding retry behavior to just about anything.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0r7g5zs0fk3g2dxvbpl0pi730x7r2kalrhn30fs0pvc15a59fmxz"))))
-    (build-system python-build-system)
+        (base32 "14df0mll9q8x4fka4lihmz4vdlgrvc4i13bspxnig2qz1b3k4ivv"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (with-directory-excursion "tests"
-                 (invoke "py.test")))
-             #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "tests"
+                  (invoke "py.test"))))))))
     (propagated-inputs
      (list python-requests))
     (native-inputs
-     (list python-pytest))
+     (list python-hatchling python-pytest))
     (home-page "https://github.com/eternnoir/pyTelegramBotAPI")
     (synopsis "Python Telegram bot api")
     (description "This package provides a simple, but extensible Python
@@ -2112,13 +2113,14 @@ implementation for the Telegram Bot API.")
         (base32 "1s7x0v872h8aks8xp01wmv6hzisxqjrh1svbbcycir0980h76krl"))))
     (build-system python-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (invoke "python" "-m" "pytest")))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key inputs outputs tests? #:allow-other-keys)
+              (when tests?
+                (add-installed-pythonpath inputs outputs)
+                (invoke "python" "-m" "pytest")))))))
     (native-inputs
      (list python-pytest))
     (home-page "https://github.com/borntyping/python-colorlog")
@@ -24689,6 +24691,35 @@ manipulation, or @code{stdout}.")
      and integration into other projects.")
       (license license:asl2.0))))
 
+(define-public python-sacn
+  (package
+    (name "python-sacn")
+    (version "1.10.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "sacn" version))
+       (sha256
+        (base32 "02pqfwwx83lgb8nj9p0s6vyi1s7wjgbx9k0bzlyz8qapszzdsr37"))))
+    (build-system python-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "pytest" "-vv")))))))
+    (native-inputs (list python-pytest))
+    (home-page "https://github.com/Hundemeier/sacn")
+    (synopsis
+     "Python library for sending and receiving sACN data")
+    (description
+     "This package provides a Python library for sending and receiving
+     sACN (Streaming Architecture for Control Networks) data, a standard
+     protocol used for controlling lighting and other devices over
+     a network.")
+    (license license:expat)))
+
 (define-public python-bagit
   (package
     (name "python-bagit")
@@ -26269,6 +26300,7 @@ source bytes using the UTF-8 encoding and then rewrites Python 3.6 style
 @code{f} strings.")
     (license license:expat)))
 
+;; TODO: https://github.com/python/typed_ast/issues/179
 (define-public python-typed-ast
   (package
     (name "python-typed-ast")
@@ -26284,11 +26316,12 @@ source bytes using the UTF-8 encoding and then rewrites Python 3.6 style
        (file-name (git-file-name name version))))
     (build-system python-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "pytest"))))))
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "pytest" "-vv")))))))
     (native-inputs (list python-pytest))
     (home-page "https://github.com/python/typed_ast")
     (synopsis "Fork of Python @code{ast} modules with type comment support")

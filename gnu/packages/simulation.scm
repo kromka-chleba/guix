@@ -5,6 +5,7 @@
 ;;; Copyright © 2022 Liliana Marie Prikler <liliana.prikler@gmail.com>
 ;;; Copyright © 2023 Reza Housseini <reza@housseini.me>
 ;;; Copyright © 2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1180,30 +1181,68 @@ command-line utility for mesh optimisation.")
     (name "python-dolfin-adjoint")
     (version "2019.1.0")
     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-              (url "https://github.com/dolfin-adjoint/pyadjoint")
-              (commit version)))
-        (file-name (git-file-name name version))
-        (sha256
-          (base32
-           "0xhy76a5f33hz94wc9g2mc5qmwkxfccbbc6yxl7psm130afp8lhn"))
-        (modules '((guix build utils)))
-        (snippet
-         '(begin
-            ;; One of the migration tests attempts to call openmpi
-            ;; recursively and fails.  See
-            ;; https://bitbucket.org/mpi4py/mpi4py/issues/95.  Run the
-            ;; test sequentially instead.
-            (with-directory-excursion "tests/migration/optimal_control_mms"
-              (substitute* "test_optimal_control_mms.py"
-                (("\\\"mpirun\\\", \\\"-n\\\", \\\"2\\\", ") "")))
-            ;; Result files are regenerated in the check phase.
-            (delete-file-recursively
-             "tests/migration/viscoelasticity/test-results")
-            #t))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dolfin-adjoint/pyadjoint")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xhy76a5f33hz94wc9g2mc5qmwkxfccbbc6yxl7psm130afp8lhn"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; One of the migration tests attempts to call openmpi
+           ;; recursively and fails.  See
+           ;; https://bitbucket.org/mpi4py/mpi4py/issues/95.  Run the
+           ;; test sequentially instead.
+           (with-directory-excursion "tests/migration/optimal_control_mms"
+             (substitute* "test_optimal_control_mms.py"
+               (("\\\"mpirun\\\", \\\"-n\\\", \\\"2\\\", ") "")))
+           ;; Result files are regenerated in the check phase.
+           (delete-file-recursively
+            "tests/migration/viscoelasticity/test-results")))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; Ignore tests which require missing packages and/or failed during
+         ;; tests collection.
+         "--ignore=tests/firedrake_adjoint/test_assignment.py"
+         "--ignore=tests/firedrake_adjoint/test_burgers_newton.py"
+         "--ignore=tests/firedrake_adjoint/test_dynamic_meshes.py"
+         "--ignore=tests/firedrake_adjoint/test_hessian.py"
+         "--ignore=tests/firedrake_adjoint/test_reduced_functional.py"
+         "--ignore=tests/firedrake_adjoint/test_shape_derivatives.py"
+         "--ignore=tests/firedrake_adjoint/test_solving.py"
+         "--ignore=tests/firedrake_adjoint/test_tlm.py"
+         "--ignore=tests/migration/burgers_newton/test_burgers_newton.py"
+         "--ignore=tests/migration/linear_solver/test_linear_solver.py"
+         "--ignore=tests/migration/optimization_scipy/test_optimization_scipy.py"
+         "--ignore=tests/migration/projection/test_projection.py"
+         "--ignore=tests/migration/reduced_functional/test_reduced_functional.py"
+         "--ignore=tests/migration/split/test_split.py"
+         "-k" (string-append "not test_read_checkpoint"
+                             " and not test_krylov_solver_preconditioner_function_ctrl"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'build 'mpi-setup #$%openmpi-setup)
+          (add-before 'check 'set-environment-variables
+            (lambda _
+              (setenv "HOME" (getcwd))))
+          (add-after 'install 'install-doc
+            (lambda _
+              (let* ((doc (string-append #$output "/share/doc/" #$name "-" #$version))
+                     (examples (string-append doc "/examples")))
+                (mkdir-p examples)
+                (copy-recursively "examples" examples))))
+          ;; Remove 'sanity-check, because it tries to import
+          ;; firedrake_adjoint after importing fenics_adjoint.
+          ;; Both load a module named 'backend' and firedrake_adjoint
+          ;; fails with an ImportError if it sees that the backend module
+          ;; has already been loaded.
+          (delete 'sanity-check))))
     (inputs
      (list fenics openmpi pybind11))
     (native-inputs
@@ -1214,48 +1253,18 @@ command-line utility for mesh optimisation.")
            python-pkgconfig
            python-pytest))
     (propagated-inputs
-     `(("scipy" ,python-scipy)))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'build 'mpi-setup
-                    ,%openmpi-setup)
-         (add-after 'install 'install-doc
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((doc (string-append (assoc-ref outputs "out")
-                                        "/share/doc/" ,name "-"
-                                        ,version))
-                    (examples (string-append doc "/examples")))
-               (mkdir-p examples)
-               (copy-recursively "examples" examples))
-             #t))
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (setenv "HOME" (getcwd))
-               (and (invoke "py.test" "-v" "tests/fenics_adjoint"
-                            "-k" "not test_read_checkpoint")
-                    (invoke "py.test" "-v" "tests/migration")
-                    (invoke "py.test" "-v" "tests/pyadjoint")))
-             #t))
-         ;; Remove 'sanity-check, because it tries to import
-         ;; firedrake_adjoint after importing fenics_adjoint.
-         ;; Both load a module named 'backend' and firedrake_adjoint
-         ;; fails with an ImportError if it sees that the backend module
-         ;; has already been loaded.
-         (delete 'sanity-check))))
+     (list python-scipy))
     (home-page "https://www.dolfin-adjoint.org")
     (synopsis "Automatic differentiation library")
-    (description "@code{python-dolfin-adjoint} is a solver of
-differential equations associated with a governing system and a
-functional of interest.  Working from the forward model the solver
-automatically derives the discrete adjoint and tangent linear models.
-These additional models are key ingredients in many algorithms such as
-data assimilation, optimal control, sensitivity analysis, design
-optimisation and error estimation.  The dolfin-adjoint project
-provides the necessary tools and data structures for cases where the
-forward model is implemented in @code{fenics} or
+    (description
+     "@code{python-dolfin-adjoint} is a solver of differential equations
+associated with a governing system and a functional of interest.  Working from
+the forward model the solver automatically derives the discrete adjoint and
+tangent linear models.  These additional models are key ingredients in many
+algorithms such as data assimilation, optimal control, sensitivity analysis,
+design optimisation and error estimation.  The dolfin-adjoint project provides
+the necessary tools and data structures for cases where the forward model is
+implemented in @code{fenics} or
 @url{https://firedrakeproject.org,firedrake}.")
     (license license:lgpl3)))
 
