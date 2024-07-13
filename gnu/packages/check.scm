@@ -73,6 +73,7 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages boost)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
@@ -87,6 +88,7 @@
   #:use-module (gnu packages guile)
   #:use-module (gnu packages guile-xyz)
   #:use-module (gnu packages maths)
+  #:use-module (gnu packages ncurses)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
@@ -989,6 +991,63 @@ macros for defining tests, grouping them into suites, and providing a test
 runner.  It is quite unopinionated with most of its features being optional.")
    (license license:isc)))
 
+(define-public klee-uclibc
+  (let ((commit "955d502cc1f0688e82348304b053ad787056c754"))
+    (package
+      (name "klee-uclibc")
+      (version (git-version "20230612" "0" commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/klee/klee-uclibc")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "12fnr5mq80cxwvv09gi844mi31jgi8067swagxnlxlhxj4mi125j"))))
+      (build-system gnu-build-system)
+      (arguments
+       `(#:tests? #f ;upstream uClibc tests do not work in the fork
+         #:strip-directories '() ;only ships a static library, so don't strip anything.
+         #:phases (modify-phases %standard-phases
+                    ;; Disable locales as these would have to be downloaded and
+                    ;; shouldn't really be needed for symbolic execution either.
+                    (add-after 'unpack 'patch-config
+                      (lambda _
+                        (substitute* "klee-premade-configs/x86_64/config"
+                          (("UCLIBC_DOWNLOAD_PREGENERATED_LOCALE_DATA=y")
+                           "UCLIBC_DOWNLOAD_PREGENERATED_LOCALE_DATA=n")
+                          (("UCLIBC_PREGENERATED_LOCALE_DATA=y")
+                           "UCLIBC_PREGENERATED_LOCALE_DATA=n")
+                          (("UCLIBC_HAS_LOCALE=y")
+                           "UCLIBC_HAS_LOCALE=n")
+                          (("UCLIBC_HAS_XLOCALE=y")
+                           "UCLIBC_HAS_XLOCALE=n"))))
+
+                    ;; Upstream uses a custom non-GNU configure script written
+                    ;; in Python, replace the default configure phase accordingly.
+                    (replace 'configure
+                      (lambda _
+                        (invoke "./configure" "--make-llvm-lib"
+                                "--enable-release")))
+
+                    ;; Custom install phase to only install the libc.a file manually.
+                    ;; This is the only file which is used/needed by KLEE itself.
+                    (replace 'install
+                      (lambda* (#:key outputs #:allow-other-keys)
+                        (install-file "lib/libc.a"
+                                      (string-append (assoc-ref outputs "out")
+                                                     "/lib/klee")))))))
+      ;; ncurses is only needed for the `make menuconfig` interface.
+      (native-inputs (list clang-13 llvm-13 python ncurses))
+      (synopsis "Variant of uClibc tailored to symbolic execution")
+      (description
+       "Modified version of uClibc for symbolic execution of
+Unix userland software.  This library can only be used in conjunction
+with the @code{klee} package.")
+      (home-page "https://klee-se.org/")
+      (license license:lgpl2.1))))
+
 (define-public klee
   (package
    (name "klee")
@@ -1004,13 +1063,32 @@ runner.  It is quite unopinionated with most of its features being optional.")
       (base32 "1nma6dqi8chjb97llsa8mzyskgsg4dx56lm8j514j5wmr8vkafz6"))))
    (arguments
     (list
+     #:phases
+     #~(modify-phases %standard-phases
+                      (add-after 'unpack 'patch
+                        (lambda _
+                          (substitute* "CMakeLists.txt"
+                            (("\\$\\{KLEE_UCLIBC_PATH\\}/lib/libc\\.a")
+                             "${KLEE_UCLIBC_PATH}"))))
+                      (add-after 'install 'wrap-hooks
+                        (lambda* (#:key inputs outputs #:allow-other-keys)
+                          (let* ((out (assoc-ref outputs "out"))
+                                 (bin (string-append out "/bin"))
+                                 (lib (string-append out "/lib")))
+                            ;; Ensure that KLEE finds runtime libraries (e.g. uclibc).
+                            (wrap-program (string-append bin "/klee")
+                              `("KLEE_RUNTIME_LIBRARY_PATH" =
+                                (,(string-append lib "/klee/runtime/"))))))))
      #:configure-flags
      #~(list (string-append "-DLLVMCC="
                             (search-input-file %build-inputs "/bin/clang"))
              (string-append "-DLLVMCXX="
-                            (search-input-file %build-inputs "/bin/clang++")))))
+                            (search-input-file %build-inputs "/bin/clang++"))
+             (string-append "-DKLEE_UCLIBC_PATH="
+                            (search-input-file %build-inputs "/lib/klee/libc.a"))
+             "-DENABLE_POSIX_RUNTIME=ON")))
    (native-inputs (list clang-13 llvm-13 python-lit))
-   (inputs (list gperftools sqlite z3))
+   (inputs (list bash-minimal klee-uclibc gperftools sqlite z3))
    (build-system cmake-build-system)
    (home-page "https://klee-se.org/")
    (synopsis "Symbolic execution engine")
@@ -3396,8 +3474,8 @@ provides a simple way to achieve this.")
     (license license:gpl2)))
 
 (define-public rapidcheck
-  (let ((commit "a5724ea5b0b00147109b0605c377f1e54c353ba2")
-        (revision "0"))
+  (let ((commit "ff6af6fc683159deb51c543b065eba14dfcf329b")
+        (revision "1"))
     (package
       (name "rapidcheck")
       (version (git-version "0.0.0" revision commit))
@@ -3410,24 +3488,33 @@ provides a simple way to achieve this.")
            (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0f2dmsym8ibnwkaidxmgp73mg0sdniwsyn6ppskh74246h29bbcy"))))
+          (base32 "1s2qva1amhs887jcdj12ppxk9kkfvy25xy7vzhkwb7rljr3gj713"))
+         (modules '((guix build utils)))
+         (snippet
+          #~(begin
+              (make-file-writable "ext/CMakeLists.txt")
+              (call-with-output-file "ext/CMakeLists.txt"
+                (lambda (out)
+                  (display "find_package(Catch2 REQUIRED GLOBAL)\n" out)
+                  (display "find_package(GTest GLOBAL)\n" out)
+                  (display "find_package(Boost GLOBAL)\n" out)))
+              (substitute* "extras/boost/test/CMakeLists.txt"
+                (("^([ ]*)boost" all spaces)
+                 (string-append spaces "Boost::boost")))))))
       (arguments
        (list
-        #:tests? #f                     ;require fetching submodules
-        #:configure-flags #~(list "-DCMAKE_POSITION_INDEPENDENT_CODE=ON")
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'install 'install-extra-headers
-              (lambda _
-                (with-directory-excursion "../source/extras"
-                  (for-each
-                   (lambda (dir)
-                     (let ((dir (string-append dir "/include/rapidcheck/"))
-                           (dest (string-append #$output
-                                                "/include/rapidcheck")))
-                       (copy-recursively dir dest)))
-                   '("boost" "boost_test" "catch" "gmock" "gtest"))))))))
+        #:configure-flags #~(list "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+                                  "-DRC_ENABLE_BOOST=on"
+                                  "-DRC_ENABLE_CATCH=on"
+                                  "-DRC_ENABLE_DOCTEST=on"
+                                  "-DRC_ENABLE_GTEST=on"
+                                  "-DRC_ENABLE_TESTS=on")))
       (build-system cmake-build-system)
+      (inputs (list boost
+                    catch2
+                    doctest
+                    googletest))
+      (native-inputs (list catch2 googletest))
       (home-page "https://github.com/emil-e/rapidcheck")
       (synopsis "Property based testing framework for C++")
       (description "Rapidcheck is a property based testing framework for C++.

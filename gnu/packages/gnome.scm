@@ -78,6 +78,7 @@
 ;;; Copyright © 2023 Dominik Delgado Steuter <d@delgado.nrw>
 ;;; Copyright © 2023 Zhu Zihao <all_but_last@163.com>
 ;;; Copyright © 2024 Dariqq <dariqq@posteo.net>
+;;; Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -11555,34 +11556,34 @@ views can be printed as PDF or PostScript files, or exported to HTML.")
 (define-public lollypop
   (package
     (name "lollypop")
-    (version "1.4.35")
+    (version "1.4.40")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://adishatz.org/lollypop/"
                            "lollypop-" version ".tar.xz"))
        (sha256
-        (base32 "0rvwj18x1gs7fgvniijzvlmgmzcgr7il22zclzsn5nkl8xbwgzk0"))))
+        (base32 "1laj5xwfz2bz29scga2ahhnhlgll4a0n21wwy8mlr4jsl81g0jsa"))))
     (build-system meson-build-system)
     (arguments
-     `(#:imported-modules (,@%meson-build-system-modules
-                           (guix build python-build-system))
-       #:modules ((guix build meson-build-system)
-                  ((guix build python-build-system) #:prefix python:)
-                  (guix build utils))
-       #:glib-or-gtk? #t
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'disable-gtk-update-icon-cache
-           (lambda _
-             (setenv "DESTDIR" "/")))
-         (add-after 'install 'wrap-program
-           (lambda* (#:key outputs #:allow-other-keys)
-             (wrap-program (search-input-file outputs "bin/lollypop")
-               `("GI_TYPELIB_PATH" ":" prefix
-                 (,(getenv "GI_TYPELIB_PATH"))))))
-         (add-after 'install 'wrap-python
-           (assoc-ref python:%standard-phases 'wrap)))))
+     (list #:imported-modules `(,@%meson-build-system-modules
+                                (guix build python-build-system))
+           #:modules '((guix build meson-build-system)
+                       ((guix build python-build-system) #:prefix python:)
+                       (guix build utils))
+           #:glib-or-gtk? #t
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'disable-gtk-update-icon-cache
+                 (lambda _
+                   (setenv "DESTDIR" "/")))
+               (add-after 'install 'wrap-program
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (wrap-program (search-input-file outputs "bin/lollypop")
+                     (list "GI_TYPELIB_PATH" ":" 'prefix
+                           (list (getenv "GI_TYPELIB_PATH"))))))
+               (add-after 'install 'wrap-python
+                 (assoc-ref python:%standard-phases 'wrap)))))
     (native-inputs
      (list gettext-minimal
            `(,glib "bin")               ; For glib-compile-resources
