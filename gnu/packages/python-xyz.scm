@@ -200,6 +200,7 @@
   #:use-module (gnu packages docker)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages elf)
+  #:use-module (gnu packages emulators)
   #:use-module (gnu packages enchant)
   #:use-module (gnu packages file)
   #:use-module (gnu packages fonts)
@@ -33790,6 +33791,253 @@ instructions up to AVX-512 and SHA (including 3dnow!+, XOP, FMA3, FMA4, TBM
 and BMI2).")
       (license license:bsd-2))))
 
+(define-public python-ailment
+  (package
+    (name "python-ailment")
+    ;; Must be the same version as python-angr.
+    (version "9.2.46")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ailment" version))
+       (sha256
+        (base32 "073fcssbjis1ckwv2w0dcz2dfl6715bj4d4qdhspajj911mvng2f"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases (modify-phases %standard-phases
+                  (replace 'check
+                    ;; Many tests are skipped due to cyclic dependencies.
+                    (lambda* (#:key tests? #:allow-other-keys)
+                      (when tests?
+                        (with-directory-excursion "tests"
+                          (invoke "python" "-m" "unittest"))))))))
+    (home-page "https://github.com/angr/ailment")
+    (synopsis "The angr intermediate language")
+    (description
+     "This Python module implements an @acronym{IL, Intermediate Language},
+also known as @acronym{IR, Intermediate Representation}, used by the angr
+binary analysis platform.")
+    (license license:bsd-2)))
+
+(define-public python-cle
+  (package
+    (name "python-cle")
+    ;; Must be the same version as python-angr.
+    (version "9.2.46")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "cle" version))
+       (sha256
+        (base32 "0mswv9gd2p2ws7zfsshqv5ybbj27wkdwakdcknq4vsrx9ry9k4yc"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f))
+    (propagated-inputs (list python-pefile python-pyelftools python-pyvex
+                             python-sortedcontainers))
+    (native-inputs (list python-cffi))
+    (home-page "https://github.com/angr/cle")
+    (synopsis "Python loader for binaries and their associated libraries")
+    (description
+     "CLE loads binaries and their associated libraries, resolves
+imports and provides an abstraction of process memory the same way as if
+it was loader by the operating system's loader.")
+    (license license:bsd-2)))
+
+(define-public python-pyvex
+  (package
+    (name "python-pyvex")
+    ;; Must be the same version as python-angr.
+    (version "9.2.46")
+    (source
+     (origin
+       (method url-fetch)
+       (patches (search-patches "python-pyvex-remove-angr-dependency.patch"))
+       (uri (pypi-uri "pyvex" version))
+       (sha256
+        (base32 "1v64rn7gxy6fg065bgsy38z6r494k5ri5r6sn4g08hjj32ihx1ka"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests?
+                         (with-directory-excursion "tests"
+                           (invoke "python" "-m" "unittest")))))
+
+                   (add-before 'build 'set-cc
+                     (lambda _
+                       (setenv "CC" #$(cc-for-target))
+                       (setenv "CC_NATIVE" "gcc"))))))
+    (propagated-inputs (list python-archinfo python-bitstring python-cffi))
+    (home-page "https://github.com/angr/pyvex")
+    (synopsis "Python interface to libVEX and VEX IR")
+    (description
+     "This package provides a Python interface the libVEX and VEX IR.
+VEX is the intermediate representation (also known as intermediate
+language) used by the Valgrind analysis tool.  As such, VEX is designed
+to enable all kinds of binary analysis tasks.")
+    (license license:bsd-2)))
+
+(define-public python-claripy
+  (package
+    (name "python-claripy")
+    ;; Must be the same version as python-angr.
+    (version "9.2.46")
+    (source
+     (origin
+       ;; Fetching from Git as pypi release doesn't include all test files.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/angr/claripy")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nmawpi1596d9plafrp2db36cjsidy2fagkzkja51jwlx2m1ngai"))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   (substitute* "setup.cfg"
+                     ;; Relax the z3 version constraint.
+                     ;; See https://github.com/angr/claripy/commit/d1fe2df
+                     (("z3-solver==4.10.2.0")
+                      ""))))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases (modify-phases %standard-phases
+                  (replace 'check
+                    (lambda* (#:key tests? #:allow-other-keys)
+                      (when tests?
+                        (with-directory-excursion "tests"
+                          (invoke "python" "-m" "unittest"))))))))
+    (propagated-inputs (list python-cachetools python-decorator python-pysmt
+                             z3))
+    (home-page "https://github.com/angr/claripy")
+    (synopsis "Abstraction layer for constraint solvers")
+    (description
+     "This Python module provides an abstraction layer for interacting
+with constraint solvers.  Specifically, it is intended to be used with
+SMT solvers and is built on top of the Z3 solver.")
+    (license license:bsd-2)))
+
+(define-public python-pysmt
+  (package
+    (name "python-pysmt")
+    (version "0.9.5")
+    (source
+     (origin
+       ;; Fetching from Git as pypi release doesn't include all test files.
+       (method git-fetch)
+       (patches (search-patches "python-pysmt-fix-pow-return-type.patch"
+                 "python-pysmt-fix-smtlib-serialization-test.patch"))
+       (uri (git-reference
+             (url "https://github.com/pysmt/pysmt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hrxv23y5ip4ijfx5pvbwc2fq4zg9jz42wc9zqgqm0g0mjc9ckvh"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases (modify-phases %standard-phases
+                  (add-before 'check 'set-pysmt-solver
+                    (lambda _
+                      (setenv "PYSMT_SOLVER" "z3"))))))
+    (native-inputs (list python-pytest))
+    (propagated-inputs (list z3))
+    (home-page "https://github.com/pysmt/pysmt")
+    (synopsis
+     "Solver-agnostic library for SMT formula manipulation and solving")
+    (description
+     "This Python module provides a solver-agnostic abstraction for
+working with @acronym{SMT, Satisfiability Modulo Theory} formulas.  For example,
+it allows manipulation and solving such formulas.")
+    (license license:asl2.0)))
+
+(define-public python-rpyc
+  (package
+    (name "python-rpyc")
+    (version "5.3.1")
+    (source
+     (origin
+       ;; Fetching from Git as pypi release doesn't include all test files.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tomerfiliba-org/rpyc")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15mnp9qkyw3mmxmr5y4kf3xkvxyp00n892vqaqwznr7al35apgnr"))
+       (snippet '(begin
+                   ;; Disable deploy tests, these rely on OpenSSH and require
+                   ;; configuring the SSH client manually to accept the host key.
+                   (delete-file "tests/test_deploy.py")
+                   ;; Disable tests requiring network access.  These tests
+                   ;; presently fail with the error "Network is unreachable".
+                   (delete-file "tests/test_registry.py")))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases (modify-phases %standard-phases
+                  (replace 'check
+                    (lambda* (#:key tests? #:allow-other-keys)
+                      (when tests?
+                        (with-directory-excursion "tests"
+                          (invoke "python" "-m" "unittest"))))))))
+    (propagated-inputs (list python-hatchling python-plumbum))
+    (home-page "https://github.com/tomerfiliba-org/rpyc")
+    (synopsis
+     "Remote Python Call (RPyC) is a symmetric distributed computing library")
+    (description
+     "This Python module enables remote procedure calls, clustering, and
+distributed-computing.  For this purpose, it makes use of object-proxying, a technique
+that employs python's dynamic nature, to overcome the physical boundaries between
+processes and computers, so that remote objects can be manipulated as if they
+were local.")
+    (license license:expat)))
+
+(define-public python-nampa
+  (package
+    (name "python-nampa")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "nampa" version))
+       (sha256
+        (base32 "0k6cq2gflpkm40qhgqbbcjmq5lq589c15bmk567qyh3d08062hvd"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-future))
+    (home-page "https://github.com/thebabush/nampa")
+    (synopsis "Python implementation of IDA Pro's FLIRT technology")
+    (description
+     "This Python module implements the @acronym{FLIRT, Fast Library Identification
+and Recognition Technology}.  This technology is useful for identifying
+common library subroutines in disassembled binaries.")
+    (license license:lgpl3)))
+
+(define-public python-mulpyplexer
+  (package
+    (name "python-mulpyplexer")
+    (version "0.09")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "mulpyplexer" version))
+       (sha256
+        (base32 "0c5xzci1djy1yi9hxxh8g67l6ms8r7ad7ja20pv8hfbdysdrwkhl"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases (modify-phases %standard-phases
+                  (replace 'check
+                    (lambda* (#:key tests? #:allow-other-keys)
+                      (when tests?
+                        (invoke "python" "mulpyplexer.py")))))))
+    (home-page "https://github.com/zardus/mulpyplexer/")
+    (synopsis "Multiplexes interactions with lists of Python objects")
+    (description "This module provides utilities for multiplexing
+interactions with lists of Python objects.")
+    (license license:bsd-2)))
+
 (define-public python-itanium-demangler
   (package
     (name "python-itanium-demangler")
@@ -33821,6 +34069,103 @@ and BMI2).")
 mangling language.  The demangler generates an abstract syntax tree from
 mangled symbols, which can be used for directly extracting type information.")
     (license license:bsd-0)))
+
+(define-public python-angr
+  (package
+    (name "python-angr")
+    (version "9.2.46")
+    (source
+     (origin
+       ;; Fetching from Git as pypi release doesn't include all test files.
+       (method git-fetch)
+       (patches (search-patches "python-angr-addition-type-error.patch"
+                                "python-angr-check-exec-deps.patch"))
+       (uri (git-reference
+             (url "https://github.com/angr/angr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18y9wyf7va7gvp9zd6lhw82j9a2x2ajsvbawh96xnxzml0jwlwjm"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'patch-tests
+                     (lambda* (#:key inputs #:allow-other-keys)
+                       (let ((coreutils (assoc-ref inputs "coreutils")))
+                         (substitute* "tests/test_vault.py"
+                           (("/bin/false")
+                            (which "false")))
+                         (substitute* "tests/common.py"
+                           (("\\[\"cc\"\\]")
+                            "[\"gcc\"]")))))
+                   (replace 'check
+                     (lambda* (#:key inputs tests? #:allow-other-keys)
+                       (when tests?
+                         (copy-recursively #$(this-package-native-input "binaries")
+                                           "../binaries")
+                         (with-directory-excursion "tests"
+                           ;; test_mips32_missing_offset_in_instructions fails
+                           ;; with capstone 5 and passes with capstone 4. Might
+                           ;; be a capstone regressions, needs investigation.
+                           ;;
+                           ;; test_concrete_memset is a non-deterministic benchmark.
+                           (invoke "pytest" "-vv" "-x" "--dist" "loadfile"
+                                   "-k" "not test_mips32_missing_offset_in_instructions and not test_concrete_memset"
+                                   "-n" (number->string (parallel-job-count)))))))
+                   (add-before 'build 'set-cc
+                     (lambda _
+                       (setenv "CC" "gcc"))))))
+    (propagated-inputs (list python-ailment
+                             python-archinfo
+                             python-cachetools
+                             python-cffi
+                             python-claripy
+                             python-cle
+                             python-colorama
+                             python-cppheaderparser
+                             python-dpkt
+                             python-gitpython
+                             python-mulpyplexer
+                             python-nampa
+                             python-networkx
+                             python-protobuf
+                             python-psutil
+                             python-itanium-demangler
+                             python-pycparser
+                             python-pyvex
+                             python-progressbar2
+                             python-rpyc
+                             python-sortedcontainers
+                             python-sqlalchemy
+                             python-sympy
+                             unicorn))
+    (native-inputs `(("python-pytest" ,python-pytest)
+                     ("python-pytest-xdist" ,python-pytest-xdist)
+                     ("binaries"
+                      ;; This repository ships several binaries used only for testing
+                      ;; purpose.  The binaries are not executed and not part of the
+                      ;; angr distribution, they are only used to test angr's binary
+                      ;; analysis capabilities.  In the context of the GNU FSDG, these
+                      ;; files should be considered non-functional data.
+                      ,(origin
+                         (method git-fetch)
+                         (uri (git-reference (url
+                                              "https://github.com/angr/binaries")
+                                             (commit (string-append "v"
+                                                                    version))))
+                         (file-name (git-file-name "angr-binaries" version))
+                         (sha256 (base32
+                                  "1f286b2239zavxzwg1184hj1zs380cr9qr549mvy3vywvm8bsmgr"))))))
+    (home-page "https://github.com/angr/angr")
+    (synopsis "Multi-architecture binary analysis toolkit")
+    (description
+     "This package provides a versatile binary analysis platform with the
+ability to perform dynamic symbolic execution as well as various
+static analyses directly on binaries.  As such, it can be used for all
+kinds of reverse engineering, vulnerability discovery, exploit
+generation, and software testing purposes.")
+    (license license:bsd-2)))
 
 (define-public python-peachpy
   ;; There is no tag in this repo.
