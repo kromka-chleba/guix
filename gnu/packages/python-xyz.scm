@@ -2164,7 +2164,7 @@ of a loop structure or other iterative computation.")
     (arguments (list #:tests? #false))  ;there are none
     (propagated-inputs
      (list python-beautifulsoup4
-           python-emoji
+           python-emoji-for-gh-md-to-html
            python-pillow
            python-requests
            python-shellescape
@@ -10011,6 +10011,28 @@ Storage or Compound Document, Microsoft Office).  It is an improved version of
 the OleFileIO module from PIL, the Python Image Library.")
     (license license:bsd-3)))
 
+(define-public python-property-cached
+  (package
+    (name "python-property-cached")
+    (version "1.6.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "property-cached" version ".zip"))
+       (sha256
+        (base32 "0wxv5sdx1p7ils36j6j6hfscz8v2vzbq212i8y8r0lrnxpqlx71y"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; AssertionError.
+      #:test-flags #~(list "-k" "not test_threads_ttl_expiry")))
+    (native-inputs (list python-freezegun python-pytest unzip))
+    (home-page "https://github.com/althonos/property-cached/")
+    (synopsis "Decorator for caching properties in classes")
+    (description "This package provides a decorator for caching properties in
+classes.  It is forked from @code{cached-property}.")
+    (license license:bsd-3)))
+
 (define-public python-pypdf3
   (package
     (name "python-pypdf3")
@@ -14100,29 +14122,39 @@ replacement for dictionaries where immutability is desired.")
 (define-public python-emoji
   (package
     (name "python-emoji")
+    (version "2.12.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "emoji" version))
+       (sha256
+        (base32 "1svk94pad8gcvjwd329zmfrw09wakwh6qjvnhf6sa6k92y44i82a"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-typing-extensions))
+    (home-page "https://github.com/carpedm20/emoji/")
+    (synopsis "Emoji terminal output for Python")
+    (description
+     "This package provides Emoji terminal output for Python.  The
+entire set of Emoji codes as defined by the Unicode Consortium is supported in
+addition to a bunch of aliases.")
+    (license license:bsd-3)))
+
+;; TODO: Remove this package when upgrading python-gh-md-to-html to the
+;; latest version. The latest gh-md-to-html does not build successfully from
+;; the PyPI distribution. Let's resolve #72102 while keeping gh-md-to-html at
+;; version 1.21.2 from failing.
+;; https://issues.guix.gnu.org/72102
+;; https://github.com/phseiff/github-flavored-markdown-to-html/issues/73
+(define-public python-emoji-for-gh-md-to-html
+  (package
+    (inherit python-emoji)
     (version "1.6.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "emoji" version))
        (sha256
-        (base32 "0923mpixwq6hdpkgvi4r46alfvf608iq975rb8lnqpq29j71mmjk"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "python" "-m" "pytest")))))))
-    (native-inputs
-     (list python-pytest))
-    (home-page "https://github.com/carpedm20/emoji/")
-    (synopsis "Emoji terminal output for Python")
-    (description "This package provides Emoji terminal output for Python.  The
-entire set of Emoji codes as defined by the Unicode Consortium is supported in
-addition to a bunch of aliases.")
-    (license license:bsd-3)))
+        (base32 "0923mpixwq6hdpkgvi4r46alfvf608iq975rb8lnqpq29j71mmjk"))))))
 
 (define-public python-sarge
   (package
@@ -15991,17 +16023,14 @@ Python code formatter \"black\".")
 (define-public python-geojson
   (package
     (name "python-geojson")
-    (version "2.5.0")
+    (version "3.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "geojson" version))
        (sha256
-        (base32 "12k5bzqskvq3gqzkryarhdjl0df47y5k9cf8r3clasi2wjnbfjvf"))))
-    (build-system python-build-system)
-    (arguments
-     ;; https://github.com/jazzband/geojson/issues/175
-     `(#:tests? #f))
+        (base32 "1b5df7skx3906046j12yjv8gdbcy17q9y3lbqbpmi83yf90gm9sq"))))
+    (build-system pyproject-build-system)
     (home-page "https://github.com/jazzband/geojson")
     (synopsis "Python bindings and utilities for GeoJSON")
     (description
@@ -16009,6 +16038,21 @@ Python code formatter \"black\".")
 @uref{http://geojson.org/, GeoJSON}, a format for encoding geographic data
 structures.")
     (license license:bsd-3)))
+
+;; pyowm only accepts a version less than version 3.
+(define-public python-geojson-for-pyowm
+  (package
+    (inherit python-geojson)
+    (version "2.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "geojson" version))
+       (sha256
+        (base32 "12k5bzqskvq3gqzkryarhdjl0df47y5k9cf8r3clasi2wjnbfjvf"))))
+    (arguments
+     ;; https://github.com/jazzband/geojson/issues/175
+     (list #:tests? #f))))
 
 (define-public wfetch
   (let ((commit "e1cfa37814aebc9eb56ce994ebe877b6a6f9a715")
@@ -18404,45 +18448,24 @@ with a new public API, and RPython support.")
 (define-public python-hy
   (package
     (name "python-hy")
-    (version "0.28.0")
+    (version "0.29.0")
     (source
      (origin
-       (method git-fetch)               ; no tests in PyPI release
+       (method git-fetch) ;no tests in PyPI release
        (uri (git-reference
              (url "https://github.com/hylang/hy")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fs9ydqlbhmp4l3lf8ap8bksbpmlscm6gz7zf9bv2kmcldkjlzsw"))))
-    (build-system python-build-system)
+        (base32 "0fp5x94hyckjfap2pb1rj551a3q70vrljxark7hj9kdhr7prbggi"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; Hy includes a script that writes a version.py file that Hy uses to
-          ;; report its version. That script uses information from the git
-          ;; repository or the HY_VERSION environment variable. Therefore,
-          ;; these phases set HY_VERSION and then remove the support scripts
-          ;; which get installed in the root of the output.
-          (add-after 'unpack 'set-version
-            (lambda _
-              (setenv "HY_VERSION" #$version)))
-          (add-after 'install 'remove-installed-build-scripts
-            (lambda _
-              (delete-file-recursively (string-append #$output "/get_version"))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "python" "-m" "pytest" "-k"
-                        (string-append   ; skip some failed tests
-                         "not test_sys_executable"
-                         " and not test_circular_macro_require"
-                         " and not test_macro_require"
-                         " and not test_requires_pollutes_core"))))))))
-    (native-inputs
-     (list python-pytest-next python-wheel))
-    (propagated-inputs
-     (list python-funcparserlib))
+      ;; This test expects the hy executable to be called 'hy', but in Guix
+      ;; it's .hy-real.
+      #:test-flags #~(list "-k" "not test_sys_executable")))
+    (native-inputs (list python-pytest-next python-wheel))
+    (propagated-inputs (list python-funcparserlib))
     (home-page "https://docs.hylang.org/en/stable/")
     (synopsis "Lisp frontend to Python")
     (description

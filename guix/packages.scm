@@ -160,6 +160,11 @@
             %cuirass-supported-systems
             supported-package?
 
+            &unsupported-cross-compilation-target-error
+            unsupported-cross-compilation-target-error?
+            unsupported-cross-compilation-target-error-build-system
+            unsupported-cross-compilation-target-error-target
+
             &package-error
             package-error?
             package-error-package
@@ -173,6 +178,9 @@
             package-error-invalid-input
             &package-cross-build-system-error
             package-cross-build-system-error?
+            &package-unsupported-target-error
+            package-unsupported-target-error?
+            package-unsupported-target-error-target
 
             package->bag
             bag->derivation
@@ -831,6 +839,11 @@ exist, return #f instead."
 
 ;; Error conditions.
 
+(define-condition-type &unsupported-cross-compilation-target-error &error
+  unsupported-cross-compilation-target-error?
+  (build-system unsupported-cross-compilation-target-error-build-system)
+  (target unsupported-cross-compilation-target-error-target))
+
 (define-condition-type &package-error &error
   package-error?
   (package package-error-package))
@@ -849,6 +862,10 @@ exist, return #f instead."
 
 (define-condition-type &package-cross-build-system-error &package-error
   package-cross-build-system-error?)
+
+(define-condition-type &package-unsupported-target-error &package-error
+  package-unsupported-target-error?
+  (target package-unsupported-target-error-target))
 
 (define* (package-full-name package #:optional (delimiter "@"))
   "Return the full name of PACKAGE--i.e., `NAME@VERSION'.  By specifying

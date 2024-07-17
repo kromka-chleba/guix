@@ -2627,6 +2627,65 @@ specification can be downloaded at @url{http://3mf.io/specification/}.")
 measurement devices and test equipment via GPIB, RS232, Ethernet or USB.")
     (license license:expat)))
 
+(define-public python-pandapower
+  (package
+    (name "python-pandapower")
+    (version "2.14.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pandapower" version ".zip"))
+       (sha256
+        (base32 "0c5vgiq795kd5q4wcy2x7s3l7x9xdj2nqyfx188dmhgqckrym161"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pyproj python-pytest unzip))
+    (propagated-inputs (list python-deepdiff
+                             python-geojson
+                             python-networkx
+                             python-numpy
+                             python-packaging
+                             python-pandas
+                             python-scipy
+                             python-tqdm
+                             python-typing-extensions))
+    (home-page "https://www.pandapower.org/")
+    (synopsis "Power system modelling and analysis")
+    (description "@code{pandapower} is an easy to use network calculation
+program aimed to automate the analysis and optimization of power systems.
+It uses the data analysis library @code{pandas} and is compatible with the
+commonly used @code{MATPOWER} / @code{PYPOWER} case format.  @code{pandapower}
+allows using different solvers including an improved Newton-Raphson power flow
+implementation, all @code{PYPOWER} solvers, the C++ library solvers for fast
+steady-state distribution power system analysis of @code{PowerGridModel}, the
+Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
+@code{PowerModels.jl} library.")
+    (license license:bsd-3)))
+
+(define-public python-pandapipes
+  (package
+    (name "python-pandapipes")
+    (version "0.10.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pandapipes" version ".zip"))
+       (sha256
+        (base32 "06yqqd25hxa6q49qcbpy0njwxkqzfhbff4frrrxd84391njgvdhq"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-nbmake
+                         python-pytest
+                         python-pytest-xdist
+                         unzip))
+    (propagated-inputs (list python-matplotlib
+                             python-pandapower
+                             python-shapely))
+    (home-page "http://www.pandapipes.org")
+    (synopsis "Simulation of multi energy grids")
+    (description
+     "This package provides a pipeflow calculation tool that complements
+@code{pandapower} in the simulation of multi energy grids.")
+    (license license:bsd-3)))
+
 (define-public python-scikit-rf
   (package
     (name "python-scikit-rf")
@@ -2663,6 +2722,41 @@ measurement devices and test equipment via GPIB, RS232, Ethernet or USB.")
     (description "Scikit-rf, or @code{skrf}, is a Python package for RF and
 Microwave engineering.")
     (license license:bsd-3)))
+
+(define-public python-lcapy
+  (package
+    (name "python-lcapy")
+    (version "1.23")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "lcapy" version))
+       (sha256
+        (base32 "13swd2nd2s20hixy4as924sr223flcvcy9zw3qlzsrcvhppzb84n"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; This test fails by FileNotFoundError (a schematic file), possibly
+      ;; because it's not included in PyPI.
+      #:test-flags #~(list "-k" "not test_circuitgraph")))
+    (propagated-inputs (list python-ipython
+                             python-matplotlib
+                             python-networkx
+                             python-numpy
+                             python-property-cached
+                             python-scipy
+                             python-sympy
+                             python-wheel))
+    (native-inputs (list python-pytest))
+    (home-page "https://github.com/mph-/lcapy")
+    (synopsis "Symbolic linear circuit analysis")
+    (description "Lcapy is a Python package for linear circuit analysis.  It
+uses SymPy for symbolic mathematics.
+
+Lcapy can symbolically analyse circuits described with netlists or by
+series/parallel combinations of components.  It can also manipulate
+ontinuous-time and discret-time expressions.")
+    (license license:lgpl2.1+)))
 
 (define-public openscad
   (package

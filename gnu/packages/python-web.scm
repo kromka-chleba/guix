@@ -6114,7 +6114,7 @@ event loop.  It is implemented in Cython and uses libuv under the hood.")
         (base32
          "1s7670qw36x90bgmazmgib170i5gnpyb2ypxzlla7y0mpasniag0"))))
     (outputs '("out" "doc"))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -6164,6 +6164,7 @@ event loop.  It is implemented in Cython and uses libuv under the hood.")
                    ,(map (lambda (output)
                            (string-append output sitedir))
                          (list python out))))))))))
+    (inputs (list bash-minimal))
     (native-inputs
      (list binutils ;; for ctypes.util.find_library()
            python-aiohttp
@@ -6180,6 +6181,21 @@ Unicorn project.  The Gunicorn server is broadly compatible with
 various web frameworks, simply implemented, light on server resources,
 and fairly speedy.")
   (license license:expat)))
+
+(define-public gunicorn-next
+  (package
+    (inherit gunicorn)
+    (name "gunicorn")
+    (version "22.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "gunicorn" version))
+       (sha256
+        (base32
+         "0qzc3ghayc137hlwrqqwkkhaf8f5h9ja21qwy4rznxpz75i462sa"))))
+    ;; CVE-2024-1135 is fixed in version 22.0.0.
+    (properties `((lint-hidden-cve . ("CVE-2024-1135"))))))
 
 ;; break cyclic dependency for python-aiohttp, which depends on gunicorn for
 ;; its tests
@@ -6981,15 +6997,24 @@ changed the process is restarted.")
 (define-public python-pyowm
   (package
     (name "python-pyowm")
-    (version "3.2.0")
+    (version "3.3.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pyowm" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/csparpa/pyowm")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1pm8w6phr4m3xayndfndid366vhf1fpvdgjsp2zicxarmgc0pm53"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-geojson python-pysocks python-requests))
+        (base32
+         "1ha4pp96y3jk33qnyir5851cnj4dc06q6wqn1b0w54l3fsds28vi"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-flags #~(list "tests/unit")))
+    (native-inputs (list python-pytest))
+    (propagated-inputs
+     (list python-geojson-for-pyowm
+           python-pysocks
+           python-requests))
     (home-page "https://github.com/csparpa/pyowm")
     (synopsis "Python wrapper around OpenWeatherMap web APIs")
     (description

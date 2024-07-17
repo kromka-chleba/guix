@@ -2711,40 +2711,31 @@ projects while introducing many more.")
 (define-public smplayer
   (package
     (name "smplayer")
-    (version "21.10.0")
+    (version "23.12.0")
     (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "mirror://sourceforge/smplayer/SMPlayer/" version
-                    "/smplayer-" version ".tar.bz2"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/smplayer-dev/smplayer")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
               (sha256
-               (base32
-                "12nvcl0cfix1xay9hfi7856vg4lpv8y5b0a22212bsjbvl5g22rc"))))
+               (base32 "0yrm57rib910h9m4avhg6mkmkzy9xjb3f185c5zr6jls100az8h1"))))
     (build-system qt-build-system)
     (native-inputs
      (list qttools-5))
     (inputs
-     (list bash-minimal qtbase-5 zlib mpv))
+     (list bash-minimal
+           qtbase-5
+           qtdeclarative-5
+           zlib
+           mpv))
     (arguments
      (list #:tests? #false              ; no tests
            #:make-flags #~(list (string-append "PREFIX=" #$output)
-                                (string-append "CC=" #+(cc-for-target))
-                                ;; A KLUDGE to turn off invoking lrelease on the
-                                ;; project for now, because it fails consistently
-                                ;; with "WARNING: Could not find qmake spec
-                                ;; 'default'". See below.
-                                "LRELEASE=true")
+                                (string-append "CC=" #+(cc-for-target)))
            #:phases
            #~(modify-phases %standard-phases
                (delete 'configure)
-               ;; Due to the above, we must run lrelease separately on each .ts file
-               ;; (as opposed to running `lrelease-pro smplayer.pro` for the entire
-               ;; project, as the Makefile does normally without the above kludge).
-               (add-after 'build 'compile-ts-files
-                 (lambda _
-                   (for-each (lambda (file)
-                               (invoke "lrelease" file))
-                             (find-files "./" "\\.ts$"))))
                (add-after 'install 'wrap-executable
                  (lambda* (#:key inputs outputs #:allow-other-keys)
                    (let* ((out (assoc-ref outputs "out"))
