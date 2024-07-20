@@ -3,6 +3,7 @@
 ;;; Copyright © 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022 Dominic Martinez <dom@dominicm.dev>
 ;;; Copyright © 2022 dan <i@dan.games>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -317,18 +318,22 @@ IM module for GTK+3 applications.
         (base32 "0jdisavns5k718vrnh2lmmyrnys101szbw107d200nfl4i26wllj"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags
-       (list (string-append "-DCMAKE_INSTALL_QT5PLUGINDIR="
-                            %output "/lib/qt5/plugins")
-             "-DENABLE_QT4=Off")))
-    (inputs
-     `(("fcitx5" ,fcitx5)
-       ("libxcb" ,libxcb)
-       ("libxkbcommon" ,libxkbcommon)
-       ("qtbase" ,qtbase-5)
-       ("gettext" ,gettext-minimal)))
-    (native-inputs
-     (list extra-cmake-modules))
+     (list #:configure-flags
+           #~(list (string-append "-DCMAKE_INSTALL_QT5PLUGINDIR="
+                                  #$output "/lib/qt5/plugins")
+                   (string-append "-DCMAKE_INSTALL_QT6PLUGINDIR="
+                                  #$output "/lib/qt6/plugins")
+                   "-DENABLE_QT4=Off"
+                   "-DENABLE_QT6=ON")))
+    (inputs (list fcitx5
+                  libxcb
+                  libxkbcommon
+                  qtbase-5
+                  qtbase
+                  qtwayland
+                  wayland
+                  gettext-minimal))
+    (native-inputs (list extra-cmake-modules))
     (home-page "https://github.com/fcitx/fcitx5-qt")
     (synopsis "Qt library and IM module for Fcitx 5")
     (description "Fcitx5-qt provides Qt library for development and IM module
@@ -439,19 +444,20 @@ including input methods previous bundled inside Fcitx 4:
        (sha256
         (base32 "1pnwrj6kgha91djfvd2439nbhrmjargpw8ashhb91y5h3cdz7vhz"))))
     (build-system cmake-build-system)
+    (arguments (list #:configure-flags #~(list "-DUSE_QT6=ON")))
     (inputs
      (list fcitx5
            fcitx5-qt
-           qtbase-5
-           qtx11extras
-           qtdeclarative-5
-           qtquickcontrols2-5
+           qtbase
+           qtdeclarative
+           ksvg
+           kcmutils
            ki18n
            kpackage
            kdeclarative
            kiconthemes
            kcoreaddons
-           plasma-framework
+           libplasma
            kitemviews
            kwidgetsaddons
            kwindowsystem

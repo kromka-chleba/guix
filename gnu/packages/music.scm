@@ -5389,7 +5389,7 @@ includes LV2 plugins and a JACK standalone client.")
 (define-public musescore
   (package
     (name "musescore")
-    (version "4.2.1")
+    (version "4.3.2")
     (source
      (origin
        (method git-fetch)
@@ -5398,7 +5398,7 @@ includes LV2 plugins and a JACK standalone client.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0rc5ma1k0cjllfl86apbyj61sh0691lsmqnvqicyn0zi53z8w9v0"))
+        (base32 "1hx0l6d7avyfbh88hwn01h9q51mgd9zix91q2kgg1ax73pqxhfs2"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -6127,8 +6127,8 @@ console music players.")
     (license license:gpl3+)))
 
 (define-public demlo
-  (let ((commit "fe9ec4c8ac2fa995ec18e6ac86d50d46df06ec01")
-        (revision "0"))
+  (let ((commit "985f81047a67c795e67f628b550064558476a7c3")
+        (revision "1"))
     (package
       (name "demlo")
       (version (git-version "3.8" revision commit))
@@ -6142,7 +6142,7 @@ console music players.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "1afkbqhzn6da7zaf5ab7dvyqj1izqhzprwfb4hw448fllda9bdvk"))))
+           "1wx7pwgvg1fiq55jdc22353frcdlz548g97dy4j353lqxy8vxfyj"))))
       (build-system go-build-system)
       (native-inputs
        (list lua
@@ -6157,7 +6157,8 @@ console music players.")
       (inputs
        (list chromaprint ffmpeg))
       (arguments
-       `(#:import-path "gitlab.com/ambrevar/demlo"
+       `(#:go ,go-1.17
+         #:import-path "gitlab.com/ambrevar/demlo"
          #:phases
          (modify-phases %standard-phases
            (add-after 'install 'wrap-program

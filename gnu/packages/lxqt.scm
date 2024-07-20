@@ -11,6 +11,7 @@
 ;;; Copyright © 2020 Fakhri Sajadi <f.sajadi@pantherx.org>
 ;;; Copyright © 2020 André Batista <nandre@riseup.net>
 ;;; Copyright © 2021, 2022 Brendan Tildesley <mail@brendan.scot>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -227,7 +228,7 @@ applications.")
                 "DESTINATION \"share/polkit-1/actions"))
              #t)))))
     (inputs
-     (list kwindowsystem
+     (list kwindowsystem-5
            libqtxdg
            libxscrnsaver
            polkit-qt
@@ -280,7 +281,7 @@ and memory usage or network traffic.")
         (base32 "08b922gyg4591b399pw0y9zl3gr2627dw20c33abqpl30iq1fmd9"))))
     (build-system cmake-build-system)
     (inputs
-     (list kwindowsystem
+     (list kwindowsystem-5
            liblxqt
            libqtxdg
            qtbase-5
@@ -315,7 +316,7 @@ LXQt and the system it's running on.")
         (base32 "1p9959rvj5kh1svv2p9dsfnf008xvrhllcccrsxnk4s8vzjhdqjp"))))
     (build-system cmake-build-system)
     (inputs
-     (list kwindowsystem
+     (list kwindowsystem-5
            liblxqt
            libqtxdg
            polkit-qt
@@ -354,7 +355,7 @@ the operating system LXQt is running on.")
     (build-system cmake-build-system)
     (inputs
      (list eudev
-           kwindowsystem
+           kwindowsystem-5
            liblxqt
            libqtxdg
            libxcursor
@@ -362,7 +363,7 @@ the operating system LXQt is running on.")
            qtbase-5
            qtsvg-5
            qtx11extras
-           solid
+           solid-5
            xf86-input-libinput
            xkeyboard-config
            zlib))
@@ -371,7 +372,7 @@ the operating system LXQt is running on.")
     ;; XXX: This is a workaround so libkscreen can find the backends as we
     ;; dont have a way specify them. We may want to  patch like Nix does.
     (propagated-inputs
-     (list libkscreen))
+     (list libkscreen-5))
     (arguments
      '(#:tests? #f                      ; no tests
        #:phases
@@ -404,7 +405,7 @@ configuration of both LXQt and the underlying operating system.")
         (base32 "17km7yl5fqwhjy35w700s4rjxf9ann3vv6mw6l4r1cf7pvzmxhy7"))))
     (build-system cmake-build-system)
     (inputs
-     (list kwindowsystem
+     (list kwindowsystem-5
            liblxqt
            libqtxdg
            qtbase-5
@@ -433,7 +434,7 @@ as a whole and are not limited to distinct applications.")
         (base32 "182mjvc17dvavk8vznhgnk6j1lv594bqv4796p2p1f4zdhq6fgm6"))))
     (build-system cmake-build-system)
     (inputs
-     (list kwindowsystem
+     (list kwindowsystem-5
            liblxqt
            libqtxdg
            qtbase-5
@@ -461,7 +462,7 @@ according to the Desktop Notifications Specification.")
         (base32 "014jpyw4sgr63kjqdmksi6fsaz7pm5gkzr17f5rkaadx640ij4m0"))))
     (build-system cmake-build-system)
     (inputs
-     (list kwindowsystem
+     (list kwindowsystem-5
            liblxqt
            libqtxdg
            qtbase-5
@@ -508,7 +509,7 @@ of other programs.")
            qtbase-5
            qtsvg-5
            qtx11extras
-           solid
+           solid-5
            xcb-util
            xcb-util-image
            xkeyboard-config))
@@ -517,7 +518,7 @@ of other programs.")
     (propagated-inputs
      ;; Propagating KWINDOWSYSTEM so that the list of opened applications
      ;; shows up in lxqt-panel's taskbar plugin.
-     (list kwindowsystem lxmenu-data))
+     (list kwindowsystem-5 lxmenu-data))
     (arguments
      '(#:tests? #f                      ; no tests
        #:phases
@@ -548,7 +549,7 @@ of other programs.")
         (base32 "051lb4kx29rx3ls3whlrbi83r9z9pdiqwyb1wbni56aqilv0svh0"))))
     (build-system cmake-build-system)
     (inputs
-     (list kwindowsystem
+     (list kwindowsystem-5
            liblxqt
            libqtxdg
            pcre
@@ -578,15 +579,15 @@ LXQt.")
         (base32 "17d1wh50pjjzqyxv3w7b4qlc1ym1p16yvbhyah9bzl2825irz9ar"))))
     (build-system cmake-build-system)
     (inputs
-     (list kidletime
-           kwindowsystem
+     (list kidletime-5
+           kwindowsystem-5
            liblxqt
            libqtxdg
            lxqt-globalkeys
            qtbase-5
            qtsvg-5
            qtx11extras
-           solid))
+           solid-5))
     (native-inputs
      (list lxqt-build-tools qttools-5))
     (arguments '(#:tests? #f))          ; no tests
@@ -647,7 +648,7 @@ Qt with LXQt.")
         (base32 "1916cl12v09x4iqrgvp2dwchy50wa97a0y68q4rdigarpdrp3x7j"))))
     (build-system cmake-build-system)
     (inputs
-     (list kwindowsystem
+     (list kwindowsystem-5
            liblxqt
            libqtxdg
            lxqt-globalkeys
@@ -679,7 +680,7 @@ allows for launching applications or shutting down the system.")
     (build-system cmake-build-system)
     (inputs
      (list eudev
-           kwindowsystem
+           kwindowsystem-5
            liblxqt
            qtxdg-tools
            procps
@@ -736,7 +737,7 @@ for the LXQt desktop environment.")
         (base32 "0pqz2pkzwq3af70s90p9x3a8rvlpl2jjb4mnjwgs1wz30cb7jrii"))))
     (build-system cmake-build-system)
     (inputs
-     (list kwindowsystem
+     (list kwindowsystem-5
            liblxqt
            libqtxdg
            qtbase-5
@@ -964,7 +965,7 @@ window manager OpenBox.")
         (base32 "126zkj9jvjwxrh2fcm9h0c2iq9m5rm5hbkh155swijn2i8airxgx"))))
     (build-system cmake-build-system)
     (inputs
-     (list kwindowsystem
+     (list kwindowsystem-5
            libxrender
            liblxqt
            libqtxdg
@@ -1040,7 +1041,7 @@ QTermWidget.")
         (base32 "0xc004h7i2hnl3jj4p8v6wkqav2v07k1mzdvys3ya171z4ffmc9j"))))
     (build-system cmake-build-system)
     (inputs
-     (list kwindowsystem libqtxdg qtbase-5 qtsvg-5 qtx11extras))
+     (list kwindowsystem-5 libqtxdg qtbase-5 qtsvg-5 qtx11extras))
     (native-inputs
      (list pkg-config perl qttools-5))
     (arguments
@@ -1096,7 +1097,7 @@ like @command{tar} and @command{zip}.")
            (base32 "087641idpg7n8yhh5biis4wv52ayw3rddirwqb34bf5fwj664pw9"))))
       (build-system cmake-build-system)
       (inputs
-        (list kwindowsystem
+        (list kwindowsystem-5
               qtbase-5
               qtsvg-5
               liblxqt

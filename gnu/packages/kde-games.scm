@@ -45,15 +45,16 @@
 (define-public ktuberling
   (package
     (name "ktuberling")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/ktuberling-" version ".tar.xz"))
-      (sha256
-       (base32 "0zk7wijp425657s2j7xq7mhybgyddpam88ih8i0sbpcs0sliyz7k"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/ktuberling-" version ".tar.xz"))
+       (sha256
+        (base32 "15fizh4f1y6j475c91myw87fg8h5d0wi79niby19wgwwbhphzb2r"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools perl))
     (inputs
@@ -67,11 +68,10 @@
            kwidgetsaddons
            kxmlgui
            libkdegames
-           python-wrapper
-           qtbase-5
-           qtmultimedia-5
-           qtdeclarative-5
-           qtsvg-5))
+                                        ;python-wrapper
+           qtmultimedia
+           qtdeclarative
+           qtsvg))
     (home-page "https://apps.kde.org/ktuberling/")
     (synopsis "Stamp drawing toy")
     (description "KTuberling is a drawing toy intended for small children and
@@ -94,15 +94,16 @@ This package is part of the KDE games module.")
 (define-public picmi
   (package
     (name "picmi")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/picmi-" version ".tar.xz"))
-      (sha256
-       (base32 "1x1iv6a840jwldfpx44wvh1vki1jz1hixzvzhdfx2mhw05v91fjx"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/picmi-" version ".tar.xz"))
+       (sha256
+        (base32 "0xx3bwib7p1g0xzykpsln07606rms8awrh1myr46lx65r1xffw05"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -115,9 +116,8 @@ This package is part of the KDE games module.")
            knewstuff
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
     (home-page "https://apps.kde.org/picmi/")
     (synopsis "Number logic game")
     (description "Picmi is a number logic game in which cells in a grid have
@@ -130,15 +130,16 @@ This package is part of the KDE games module.")
 (define-public kolf
   (package
     (name "kolf")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kolf-" version ".tar.xz"))
        (sha256
-        (base32 "0wbdpclc6nimjzs2pqbzaxnqn516hci1yk1dgig0jgdy1jv2nyhv"))))
+        (base32 "0i0rh3dw90j8p46dhfmmcl6nah080ilmhy9d1m9jwlb6xd03zg66"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -153,8 +154,7 @@ This package is part of the KDE games module.")
            kxmlgui
            ktextwidgets
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
     (home-page "https://apps.kde.org/kolf/")
     (synopsis "Miniature golf game")
     (description "Kolf is a miniature golf game for one to ten players.  The
@@ -177,17 +177,18 @@ This package is part of the KDE games module.")
 (define-public libkmahjongg
   (package
     (name "libkmahjongg")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/"
-                          version "/src/libkmahjongg-" version ".tar.xz"))
-      (sha256
-       (base32 "1a0c0q34h5yxwx76y6934ibn6hm1ip1hc2xvl11q1kaazq0alca3"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/libkmahjongg-" version ".tar.xz"))
+       (sha256
+        (base32 "1bjsrnkwkv4w94q5q4nhfy11jfrvxsl2v2kjv6dcm47z0k9y9v63"))))
     (build-system qt-build-system)
     (arguments
      (list
+      #:qtbase qtbase
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-tileset-dir
@@ -195,13 +196,13 @@ This package is part of the KDE games module.")
               ;; Add "$out/share" to XDG_DATA_DIRS so that the default tileset
               ;; is always available.
               (substitute* "src/kmahjonggtileset.cpp"
-                (("_inited = true;")
+                (("d->buildElementIdTable\\(\\);")
                  (format #f "QByteArray x = qgetenv(\"XDG_DATA_DIRS\");
 if (!x.isEmpty()) {
   QString datadirs = QString::fromLocal8Bit(x) + QLatin1String(\":~a\");
   qputenv(\"XDG_DATA_DIRS\", datadirs.toLocal8Bit());
 }
-_inited = true;"
+d->buildElementIdTable();"
                          (string-append
                           (assoc-ref outputs "out") "/share")))))))))
     (native-inputs
@@ -209,14 +210,12 @@ _inited = true;"
     (inputs
      (list kauth
            kcompletion
-           ;("kconfig" ,kconfig)
            kcodecs
            kconfigwidgets
            kcoreaddons
            ki18n
            kwidgetsaddons
-           qtbase-5
-           qtsvg-5))
+           qtsvg))
     (home-page "https://games.kde.org/")
     (synopsis "Shared library for kmahjongg and kshisen")
     (description "Shared library and common files for kmahjongg, kshisen and
@@ -226,14 +225,14 @@ other Mah Jongg like games.")
 (define-public kmahjongg
   (package
     (name "kmahjongg")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/"
-                          version "/src/kmahjongg-" version ".tar.xz"))
-      (sha256
-       (base32 "1q2aq8y3c4a84rjvqk4gz6mlyflfnzw6im68p96wmcn98s5gsc22"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/kmahjongg-" version ".tar.xz"))
+       (sha256
+        (base32 "07x3rxxhg3z538bbwqi75mv1z546gvzssav43xzgyga3zg7179b6"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -247,9 +246,9 @@ other Mah Jongg like games.")
            kxmlgui
            libkdegames
            libkmahjongg
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/kmahjongg/")
     (synopsis "Tile laying patience")
     (description "In KMahjongg the tiles are scrambled and staked on top of
@@ -265,19 +264,17 @@ This package is part of the KDE games module.")
 (define-public kshisen
   (package
     (name "kshisen")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/"
-                          version "/src/kshisen-" version ".tar.xz"))
-      (sha256
-       (base32 "0bfk6nbwl35sfqxhf7cdv3n61ybi5962i2lvg7m1vlpp21q0diz8"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/kshisen-" version ".tar.xz"))
+       (sha256
+        (base32 "1bx28jlvmwfh5rrvwd2kiq1c5r83s9lr49kl3x1rm5w7w5hlxyf1"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules
-           ;("perl" ,perl)
-           ;("pkg-config" ,pkg-config)
            kdoctools))
     (inputs
      (list kauth
@@ -290,8 +287,8 @@ This package is part of the KDE games module.")
            kxmlgui
            libkdegames
            libkmahjongg
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/kshisen/")
     (synopsis "Shisen-Sho solitaire game")
     (description "KShisen is a solitaire-like game played using the standard
@@ -304,44 +301,45 @@ This package is part of the KDE games module.")
 (define-public kajongg
   (package
     (name "kajongg")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/"
-                          version "/src/kajongg-" version ".tar.xz"))
-      (sha256
-       (base32 "16v87x0qikfk9jpp8dfxnb7mnjzzi0qlkp5lbn2xypkfhqaz99fi"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/kajongg-" version ".tar.xz"))
+       (sha256
+        (base32 "0xwnin738zj6kh607asmwdq7n6jva9wk240c9rc53ja98nw4crpv"))))
     (build-system qt-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-paths
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "src/mjresource.py"
-               (("'share', 'kmahjongglib'" all)
-                (string-append "'" (assoc-ref inputs "libkmahjongg")
-                               "/share', 'kmahjongglib'")))
-             (substitute* "src/sound.py"
-               (("oggBinary = 'ogg123'")
-                (format #f "oggBinary = '~a'"
-                        (search-input-file inputs "bin/ogg123"))))
-             (substitute* "src/common.py"
-               (("interpreterName = 'python3'")
-                (format #f "interpreterName = '~a'"
-                        (search-input-file inputs "bin/python3"))))))
-         (add-after 'qt-wrap 'wrap
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (for-each (lambda (program)
-                           (wrap-program program
-                             `("GUIX_PYTHONPATH" ":" prefix
-                               (,(getenv "GUIX_PYTHONPATH")))))
-                         (list (string-append out "/bin/kajongg")
-                               (string-append out "/bin/kajonggserver")))))))))
+     (list
+      #:qtbase qtbase
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "src/mjresource.py"
+                (("'share', 'kmahjongglib'" all)
+                 (string-append "'" (assoc-ref inputs "libkmahjongg")
+                                "/share', 'kmahjongglib'")))
+              (substitute* "src/sound.py"
+                (("oggBinary = 'ogg123'")
+                 (format #f "oggBinary = '~a'"
+                         (search-input-file inputs "bin/ogg123"))))
+              (substitute* "src/common.py"
+                (("interpreterName = 'python3'")
+                 (format #f "interpreterName = '~a'"
+                         (search-input-file inputs "bin/python3"))))))
+          (add-after 'qt-wrap 'wrap
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((out (assoc-ref outputs "out")))
+                (for-each (lambda (program)
+                            (wrap-program program
+                              `("GUIX_PYTHONPATH" ":" prefix
+                                (,(getenv "GUIX_PYTHONPATH")))))
+                          (list (string-append out "/bin/kajongg")
+                                (string-append out "/bin/kajonggserver")))))))))
     (native-inputs
      (list extra-cmake-modules
-           ;("perl" ,perl)
            kdoctools))
     (inputs
      (list bash-minimal
@@ -355,8 +353,7 @@ This package is part of the KDE games module.")
            python-twisted
            python-qtpy
            python-zope-interface
-           qtbase-5
-           qtsvg-5
+           qtsvg
            vorbis-tools))
     (home-page "https://apps.kde.org/kajongg/")
     (synopsis "Classical Mah Jongg game for 4 players")
@@ -376,15 +373,16 @@ This package is part of the KDE games module.")
 (define-public kbreakout
   (package
     (name "kbreakout")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/kbreakout-" version ".tar.xz"))
-      (sha256
-       (base32 "08fq0s1c71ag6jzyxz6spc5ylmzpbqpyqi9lqjk0x7y7brkfk9fq"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kbreakout-" version ".tar.xz"))
+       (sha256
+        (base32 "0qnsvmhil1ybs94g533r26sqrfkqb06jh6gk4siqdd32dyyn7x3q"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -398,8 +396,7 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
     (home-page "https://apps.kde.org/kbreakout/")
     (synopsis "Breakout like game")
     (description "KBreakout is similar to the classics breakout and xboing,
@@ -413,15 +410,16 @@ This package is part of the KDE games module.")
 (define-public kmines
   (package
     (name "kmines")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/kmines-" version ".tar.xz"))
-      (sha256
-       (base32 "0x301dsppn0sav31ds5hpbfkbbisjg640ri13103s1jn0y2b90b9"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kmines-" version ".tar.xz"))
+       (sha256
+        (base32 "1ng0bda7q2ha7kmr83rlf9z24pkf14id5w6jzzgjw2yc21mbnwhm"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -436,8 +434,7 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
     (home-page "https://apps.kde.org/kmines/")
     (synopsis "Classical mine sweeper game")
     (description "KMines is a classic Minesweeper game.  The idea is to
@@ -450,15 +447,16 @@ This package is part of the KDE games module.")
 (define-public konquest
   (package
     (name "konquest")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/"
-                          version "/src/konquest-" version ".tar.xz"))
-      (sha256
-       (base32 "0svzaibs8v1xd36ysj3wk7sxma26fl5pz6yp774jg0g9zi9rlkff"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/konquest-" version ".tar.xz"))
+       (sha256
+        (base32 "0bykh3ihigvzaxkzhk801hfr28frxq4hkwixicapzdfamhc22w95"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -472,9 +470,9 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtscxml
+           qtdeclarative
+           qtsvg))
     (home-page "https://apps.kde.org/konquest/")
     (synopsis "Simple turn-based strategy game")
     (description "Konquest is the KDE version of Gnu-Lactic Konquest.  Players
@@ -489,15 +487,16 @@ This package is part of the KDE games module.")
 (define-public kbounce
   (package
     (name "kbounce")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/"
-                          version "/src/kbounce-" version ".tar.xz"))
-      (sha256
-       (base32 "06b0q4f4yn8m8gy7wgax54ldwnkgykr8yfr2h0ih8mfg3w8xsx7s"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/kbounce-" version ".tar.xz"))
+       (sha256
+        (base32 "0s9009qi40fdi24lwp789cydgy1rm0n9f0fsb8pbldi9rmdk9x60"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -511,9 +510,8 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
     (home-page "https://apps.kde.org/kbounce/")
     (synopsis "Jezzball arcade game")
     (description "KBounce is a single player arcade game with the elements of
@@ -527,15 +525,16 @@ This package is part of the KDE games module.")
 (define-public kblocks
   (package
     (name "kblocks")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/"
-                          version "/src/kblocks-" version ".tar.xz"))
-      (sha256
-       (base32 "1z5f2zpnmfh05vlmjw85jj2d0sfxl5w1kg30ky6gmgmmfzj2sjzx"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/kblocks-" version ".tar.xz"))
+       (sha256
+        (base32 "05l2g21rzpln7kzywgraplqymgfdk1wvr1jfm3ffk0nzdyi0fy08"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -549,9 +548,8 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
     (home-page "https://apps.kde.org/kblocks/")
     (synopsis "Single player falling blocks puzzle game")
     (description "KBlocks is the classic Tetris-like falling blocks game.
@@ -567,15 +565,16 @@ This package is part of the KDE games module.")
 (define-public ksudoku
   (package
     (name "ksudoku")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/"
-                          version "/src/ksudoku-" version ".tar.xz"))
-      (sha256
-       (base32 "03hrwyvwzhxdbq7pp03c7lkz0dhv9yi6lcwvz3s63mn01wyq6iv3"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/ksudoku-" version ".tar.xz"))
+       (sha256
+        (base32 "1hygl0m26ylj0gm9i8mm7cr2aclq27z8ammydhw824d1nwjw98b0"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -584,6 +583,7 @@ This package is part of the KDE games module.")
            kconfigwidgets
            kcoreaddons
            kcrash
+           kdbusaddons
            kguiaddons
            ki18n
            kiconthemes
@@ -592,9 +592,8 @@ This package is part of the KDE games module.")
            kxmlgui
            libkdegames
            glu
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
     (home-page "https://apps.kde.org/ksudoku/")
     (synopsis "Sudoku puzzle game and solver")
     (description "KSudoku is a Sudoku game and solver, supporting a range of
@@ -627,15 +626,16 @@ This package is part of the KDE games module.")
 (define-public klines
   (package
     (name "klines")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/klines-" version ".tar.xz"))
-      (sha256
-       (base32 "1dny7wsj90c3vbgbrpxvxfy44j9ip3vdylc7889ckzbliivipxk4"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/klines-" version ".tar.xz"))
+       (sha256
+        (base32 "1c6y071h2w1v3bn7cc5qy1l5m3s1s0vah72196y8gdh7bfx7kaxx"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -648,8 +648,7 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
     (home-page "https://apps.kde.org/klines/")
     (synopsis "Place 5 equal pieces together, but wait, there are 3 new ones")
     (description "KLines is a simple but highly addictive one player game.
@@ -670,15 +669,16 @@ This package is part of the KDE games module.")
 (define-public kgoldrunner
   (package
     (name "kgoldrunner")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/kgoldrunner-" version ".tar.xz"))
-      (sha256
-       (base32 "0acavby9lwbqbx577a3az9lcahchngcs15571va2ndnq1r16paxf"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kgoldrunner-" version ".tar.xz"))
+       (sha256
+        (base32 "10v280785ds03h6ra384hhck422dwy8zz57x4wpcq87azzf0mi4c"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -691,8 +691,8 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtbase
+           qtdeclarative))
     (home-page "https://apps.kde.org/kgoldrunner/")
     (synopsis "Action and puzzle solving game")
     (description "KGoldrunner is an action game where the hero runs through a
@@ -710,15 +710,16 @@ This package is part of the KDE games module.")
 (define-public kdiamond
   (package
     (name "kdiamond")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/kdiamond-" version ".tar.xz"))
-      (sha256
-       (base32 "038lpp387m45zcy49rgmisiz5ajrvxwxnf424wllrjkihxy1siyn"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kdiamond-" version ".tar.xz"))
+       (sha256
+        (base32 "1ql8psh6lyahrdiqj0qji1dsyz8jl260msp76k804jk0477gjw8h"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -734,8 +735,7 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
     (home-page "https://apps.kde.org/kdiamond/")
     (synopsis "Three-in-a-row game")
     (description "KDiamond is a three-in-a-row game like Bejeweled.  It
@@ -748,15 +748,16 @@ This package is part of the KDE games module.")
 (define-public kfourinline
   (package
     (name "kfourinline")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/kfourinline-" version ".tar.xz"))
-      (sha256
-       (base32 "0chfjp0k4ps5f6vy8nxqc2xlj4xql08llxnzsz6c2x611n69aszm"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kfourinline-" version ".tar.xz"))
+       (sha256
+        (base32 "15l1bvz3c7h3pv0inaq73haqhwh2v5gdqnxsrhi5ra6dw5nm0d8l"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -765,13 +766,13 @@ This package is part of the KDE games module.")
            kconfigwidgets
            kcoreaddons
            kcrash
+           kdbusaddons
            kdnssd
            ki18n
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
     (home-page "https://apps.kde.org/kfourinline/")
     (synopsis "Place 4 pieces in a row")
     (description "KFourInLine is a board game for two players based on the
@@ -786,15 +787,16 @@ This package is part of the KDE games module.")
 (define-public kblackbox
   (package
     (name "kblackbox")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/kblackbox-" version ".tar.xz"))
-      (sha256
-       (base32 "0h7byd7g52yvmz3gxrzp2frs4iifm0r6lq8fjz2nxbl1rkw9ljbp"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kblackbox-" version ".tar.xz"))
+       (sha256
+        (base32 "0andcfwrq8nhb75diif3pm2a1y6lrmkdncaszjhyan1v9mycdi8r"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -808,9 +810,8 @@ This package is part of the KDE games module.")
            ktextwidgets
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
     (home-page "https://apps.kde.org/kblackbox/")
     (synopsis "Find atoms in a grid by shooting electrons")
     (description "KBlackbox is a game of hide and seek played on a grid of
@@ -826,15 +827,16 @@ This package is part of the KDE games module.")
 (define-public knetwalk
   (package
     (name "knetwalk")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/knetwalk-" version ".tar.xz"))
-      (sha256
-       (base32 "1xqqwsbm3f8bmid7afbnacxlg1hih644f0nw0i87pr746m1sskgz"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/knetwalk-" version ".tar.xz"))
+       (sha256
+        (base32 "1p6d27l2j6h5kqyjpws4s0ilvzhrhbd3lwd7776z1lmidqixvwfq"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -849,8 +851,7 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
     (home-page "https://apps.kde.org/knetwalk/")
     (synopsis "Turn the board pieces to get all computers connected")
     (description "KNetWalk is a small game where you have to build up a
@@ -867,14 +868,14 @@ This package is part of the KDE games module.")
 (define-public bomber
   (package
     (name "bomber")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/bomber-" version ".tar.xz"))
        (sha256
-        (base32 "0qgixhmlkcjni5i9391hjg3sfc3ps24lmk9v8199lmnplrybklqj"))))
+        (base32 "1sw3a2nvwciq7m8d30k0ipzx5gsa48jwflxkih8ha354wl5mk1cs"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -887,8 +888,8 @@ This package is part of the KDE games module.")
            ki18n
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/bomber/")
     (synopsis "Arcade bombing game")
     (description "Bomber is a single player arcade game.
@@ -908,14 +909,14 @@ This package is part of the KDE games module.")
 (define-public granatier
   (package
     (name "granatier")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/granatier-" version ".tar.xz"))
-      (sha256
-       (base32 "1zyadmgnpgsx728gzd55qyijsm13pb9cxs1y4l4c4m9lnz4y183v"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/granatier-" version ".tar.xz"))
+       (sha256
+        (base32 "0g38sfx4x61isvi3h6b8xmdbbqrvq8z8rrxb0xdbz3fkwxyigy75"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -931,9 +932,9 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/granatier/")
     (synopsis "Bomberman clone")
     (description "Granatier is a clone of the classic Bomberman game,
@@ -945,19 +946,20 @@ This package is part of the KDE games module.")
 (define-public ksirk
   (package
     (name "ksirk")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/ksirk-" version ".tar.xz"))
+                           "/src/ksirk-" version ".tar.xz"))
        (sha256
-        (base32 "1sp5mhnf8r3fvifz0kw74436j5kwsmiw66myygb4rsggb8amh5x4"))))
+        (base32 "0ki9z8p4flrs7msihya8ykxs3p4w10v3ivmgf43ldygjjndyhql9"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
      (list kcrash
+           kdbusaddons
            ki18n
            kiconthemes
            kio
@@ -966,11 +968,13 @@ This package is part of the KDE games module.")
            kxmlgui
            libkdegames
            phonon
-           qca
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5
+           qca-qt6
+           qt5compat
+           qtdeclarative
+           qtmultimedia
+           qtsvg
            zlib))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/ksirk/")
     (synopsis "Computerized version of the well known strategy board game
 'Risk'")
@@ -1000,14 +1004,14 @@ This package is part of the KDE games module.")
 (define-public palapeli
   (package
     (name "palapeli")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/palapeli-" version ".tar.xz"))
        (sha256
-        (base32 "19xh03rhb48m4bbdmpga4aqij6agqg047ghl92p98z1phg5lxzrv"))))
+        (base32 "1436rbfrppjb73k8p9amzwa6hhjns3hjli279r8fqscjimil0vv4"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1018,8 +1022,7 @@ This package is part of the KDE games module.")
            kconfigwidgets
            kcoreaddons
            kcrash
-           kcrash
-           ki18n
+           kdbusaddons
            ki18n
            kio
            kitemviews
@@ -1028,10 +1031,10 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5
+           qtdeclarative
+           qtsvg
            shared-mime-info))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/palapeli/")
     (synopsis "Jigsaw puzzle game")
     (description "Palapeli is a jigsaw puzzle game.  Unlike other games in
@@ -1047,14 +1050,14 @@ This package is part of the KDE games module.")
 (define-public kiriki
   (package
     (name "kiriki")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kiriki-" version ".tar.xz"))
        (sha256
-        (base32 "13lzpbhkp48r9m0bcrzfqacz9xvc89xavf3yn3ql50g3jjlkq41v"))))
+        (base32 "0gysvh9afr1zhjv5d5kan6m6b8b45jd1p3f2kssiql84m5xv7jsy"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1069,8 +1072,8 @@ This package is part of the KDE games module.")
            kiconthemes
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/kiriki/")
     (synopsis "Yahtzee dice game")
     (description "Kiriki is an addictive and fun dice game, designed to be
@@ -1085,14 +1088,14 @@ This package is part of the KDE games module.")
 (define-public kigo
   (package
     (name "kigo")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kigo-" version ".tar.xz"))
        (sha256
-        (base32 "0qx9plrs588210rdgvb2bkm5yjw4pna9q7v38cb166nfgkh6gv63"))))
+        (base32 "18jdv0dwxysf3i3c8d663x95h1pbkbvlw860lqgapdx9cnybqz1a"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1108,9 +1111,9 @@ This package is part of the KDE games module.")
            ktextwidgets
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/kigo/")
     (synopsis "Go board game")
     (description "Kigo is an open-source implementation of the popular Go
@@ -1131,14 +1134,14 @@ This package is part of the KDE games module.")
 (define-public kubrick
   (package
     (name "kubrick")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kubrick-" version ".tar.xz"))
        (sha256
-        (base32 "0nank1ga4c4xfsw0m1cqhjhyz2wpbsxplyyb9x3l2vpg92gj5dbs"))))
+        (base32 "05mcrjbf6gm7dldww3iqhhrknzf59xj8fw4rzbb6l79rrvp1vrvz"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1148,14 +1151,16 @@ This package is part of the KDE games module.")
            kconfigwidgets
            kcoreaddons
            kcrash
+           kdbusaddons
            ki18n
            kio
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtbase
+           qtdeclarative
+           qtsvg))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/kubrick/")
     (synopsis "Game based on Rubik's Cube")
     (description "Kubrick is a game based on the Rubik's Cube puzzle.
@@ -1172,14 +1177,14 @@ This package is part of the KDE games module.")
 (define-public lskat
   (package
     (name "lskat")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/lskat-" version ".tar.xz"))
        (sha256
-        (base32 "1qphzc1r26qwc8sl5rjkw16ia3lsj7c2lg9fxnhk08k8mxncymxg"))))
+        (base32 "1p5gq8zkjr3cl7scq9irhiaf96az02k1fk3c0myqh0l9nyxakpsw"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1188,14 +1193,15 @@ This package is part of the KDE games module.")
            kconfig
            kcoreaddons
            kcrash
+           kdbusaddons
            kguiaddons
            ki18n
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/lskat/")
     (synopsis "Lieutnant Skat card game")
     (description "Lieutnant Skat (from German \"Offiziersskat\") is a fun and
@@ -1210,14 +1216,14 @@ This package is part of the KDE games module.")
 (define-public kapman
   (package
     (name "kapman")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/kapman-" version ".tar.xz"))
-      (sha256
-       (base32 "0ildsd7pig3lm9n616kw5mpl8hbwidsnbzdfifx8nnffslrr4bv7"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kapman-" version ".tar.xz"))
+       (sha256
+        (base32 "1lwxrd8ky9bkrxjg42spyyywxv17lp5idm5xr4xybq3sqi2gahhx"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1231,9 +1237,9 @@ This package is part of the KDE games module.")
            ki18n
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/kapman/")
     (synopsis "Pac-Man clone")
     (description "Kapman is a clone of the well known game Pac-Man.
@@ -1249,14 +1255,14 @@ This package is part of the KDE games module.")
 (define-public kspaceduel
   (package
     (name "kspaceduel")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kspaceduel-" version ".tar.xz"))
        (sha256
-        (base32 "1mpry73vvi332wxyw2wymh3lsrj2amblg50dym9ni1lj2af657ia"))))
+        (base32 "04sjx32b4jgz9hwjmfyjcxlrd6jwg355sr6knr8vdxhjg18k2wa0"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1270,9 +1276,9 @@ This package is part of the KDE games module.")
            ki18n
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/kspaceduel/")
     (synopsis "Two player game with shooting spaceships flying around a sun")
     (description "KSpaceduel is a space battle game for one or two players,
@@ -1284,14 +1290,14 @@ This package is part of the KDE games module.")
 (define-public bovo
   (package
     (name "bovo")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/bovo-" version ".tar.xz"))
        (sha256
-        (base32 "1zds6d4rmcf4sa2sfhyp1i5n7s7cgslikvbra4pz2kpi0hmvihi1"))))
+        (base32 "0rcnc3v4p0xgkybk4csjwkd7mfiffhqfwx3c5yfwnnrh7rdrmh5j"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1303,9 +1309,9 @@ This package is part of the KDE games module.")
            ki18n
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/bovo/")
     (synopsis "Classic pen and paper game: five in a line")
     (description "Bovo is a Gomoku (from Japanese 五目並べ - lit.  \"five
@@ -1320,15 +1326,16 @@ This package is part of the KDE games module.")
 (define-public killbots
   (package
     (name "killbots")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/killbots-" version ".tar.xz"))
        (sha256
-        (base32 "0ygg2cmp7wqzw9nsn768vzgjs8i44k3skwcn2abg1jj5k64wp9cb"))))
+        (base32 "1vs4prhflmy6z9p3ab6r3qgzqn2vqv4abc0mhq04zbnh7sqcy0k7"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -1342,8 +1349,7 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
     (home-page "https://apps.kde.org/killbots/")
     (synopsis "Port of the classic BSD console game robots")
     (description "Killbots is a simple game of evading killer robots.
@@ -1361,15 +1367,16 @@ This package is part of the KDE games module.")
 (define-public ksnakeduel
   (package
     (name "ksnakeduel")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/ksnakeduel-" version ".tar.xz"))
-      (sha256
-       (base32 "182z9664p0shyx4rbr1cn32mzlfzl80x96nwakvv1ss7sf7dp1x3"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/ksnakeduel-" version ".tar.xz"))
+       (sha256
+        (base32 "11v8zrbwb8dhdmaa76rhv5qa084raxldl8sjp9299hd8wk34297b"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -1383,9 +1390,8 @@ This package is part of the KDE games module.")
            ki18n
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
     (home-page "https://apps.kde.org/ksnakeduel/")
     (synopsis "Snake race played against the computer")
     (description "KSnakeDuel is a fast action game where you steer a snake
@@ -1399,15 +1405,16 @@ This package is part of the KDE games module.")
 (define-public kollision
   (package
     (name "kollision")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/kollision-" version ".tar.xz"))
-      (sha256
-       (base32 "0g9nz3df8nibcwlrjlyw306dnrx58nlga2lljn7a9acpmvbp6qgi"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kollision-" version ".tar.xz"))
+       (sha256
+        (base32 "1fvhbvb72w5xgz6hyp795j07ngc78isbk4i9g0yfznl1z59hygs7"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -1420,8 +1427,7 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
     (home-page "https://apps.kde.org/kollision/")
     (synopsis "Simple ball dodging game")
     (description "In Kollision you use mouse to control a small blue ball in a
@@ -1436,15 +1442,16 @@ This package is part of the KDE games module.")
 (define-public knavalbattle
   (package
     (name "knavalbattle")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/knavalbattle-" version ".tar.xz"))
-      (sha256
-       (base32 "1brj2dvymgpf74vbsrs2m81lxxfxsly9pafd13g8rkzdx3hn1n0q"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/knavalbattle-" version ".tar.xz"))
+       (sha256
+        (base32 "0smr35f76hhy7gzla6q2ly9ip01ly3v33xhqq9dqpp144bs4vkab"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -1460,8 +1467,7 @@ This package is part of the KDE games module.")
            ktextwidgets
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
     (home-page "https://apps.kde.org/knavalbattle/")
     (synopsis "Battleship board game with built-in game server")
     (description "KBattleship is a Battle Ship game for KDE.
@@ -1476,15 +1482,16 @@ This package is part of the KDE games module.")
 (define-public kreversi
   (package
     (name "kreversi")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/kreversi-" version ".tar.xz"))
-      (sha256
-       (base32 "1mb1xrywk5p7ipjml1g2mjqfs7rlpa41if3yc7p9zcrkcasnbffv"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kreversi-" version ".tar.xz"))
+       (sha256
+        (base32 "1vrh1kl2qh03826m5n3nvj5fn0jrakqvkrlc3jxr9hm26c2k26ah"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -1499,9 +1506,8 @@ This package is part of the KDE games module.")
            kio
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
     (home-page "https://apps.kde.org/kreversi/")
     (synopsis "Old reversi board game, also known as othello")
     (description "KReversi is a simple one player strategy game played
@@ -1518,15 +1524,16 @@ This package is part of the KDE games module.")
 (define-public ksquares
   (package
     (name "ksquares")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/ksquares-" version ".tar.xz"))
-      (sha256
-       (base32 "0b3r99hfhm5r4jxkwiji0lww703r7dj60x2m55ginvdy7ixm46rm"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/ksquares-" version ".tar.xz"))
+       (sha256
+        (base32 "1nmlnqirgp53h03kyj0cwg0nny0dckb6c7vs16jkqr11rmb39g1v"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -1540,8 +1547,7 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5))
+           qtdeclarative))
     (home-page "https://apps.kde.org/ksquares/")
     (synopsis "Dots and Boxes game")
     (description "KSquares is an implementation of the popular paper based
@@ -1554,15 +1560,16 @@ This package is part of the KDE games module.")
 (define-public kjumpingcube
   (package
     (name "kjumpingcube")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://kde/stable/release-service/" version
-                          "/src/kjumpingcube-" version ".tar.xz"))
-      (sha256
-       (base32 "09bh57vzjnn56dnhpp4szx72wyskc5g714vlyp6c27vr27xry8fi"))))
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kjumpingcube-" version ".tar.xz"))
+       (sha256
+        (base32 "1ihll2x7inc76752xwj3dfs2653i9c5prfllh2p8vfc1ss0raa34"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -1576,9 +1583,8 @@ This package is part of the KDE games module.")
            kwidgetsaddons
            kxmlgui
            libkdegames
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5))
+           qtdeclarative
+           qtsvg))
     (home-page "https://apps.kde.org/kjumpingcube/")
     (synopsis "Simple tactical game for number-crunchers")
     (description "KJumpingcube is a simple tactical game for one or two
@@ -1591,7 +1597,7 @@ This package is part of the KDE games module.")
 (define-public kde-games
   (package
     (name "kde-games")
-    (version "23.04.3")
+    (version "24.05.2")
     (source #f)
     (build-system trivial-build-system)
     (arguments

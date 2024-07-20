@@ -949,7 +949,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/antlr3-3_1-fix-java8-compilation.patch	\
   %D%/packages/patches/antlr3-3_3-fix-java8-compilation.patch	\
   %D%/packages/patches/aoflagger-use-system-provided-pybind11.patch \
-  %D%/packages/patches/appstream-force-reload-stemmer.patch	\
   %D%/packages/patches/apr-fix-atomics.patch			\
   %D%/packages/patches/apr-skip-getservbyname-test.patch	\
   %D%/packages/patches/aria2-unbundle-wslay.patch		\
@@ -1249,6 +1248,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/freecad-vtk-9.3.patch		\
   %D%/packages/patches/freedink-engine-fix-sdl-hints.patch	\
   %D%/packages/patches/freeimage-libtiff-compat.patch		\
+  %D%/packages/patches/freeimage-libraw-0.21-compat.patch	\
   %D%/packages/patches/freeimage-unbundle.patch		\
   %D%/packages/patches/freeimage-CVE-2020-21428.patch		\
   %D%/packages/patches/freeimage-CVE-2020-22524.patch		\
@@ -1469,7 +1469,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/gtk4-respect-GUIX_GTK4_PATH.patch    	\
   %D%/packages/patches/gtkglext-disable-disable-deprecated.patch \
   %D%/packages/patches/gtksourceview-2-add-default-directory.patch \
-  %D%/packages/patches/gwenview-kimageannotator.patch		\
   %D%/packages/patches/gzdoom-search-in-installed-share.patch	\
   %D%/packages/patches/gzdoom-find-system-libgme.patch	\
   %D%/packages/patches/hdf4-reproducibility.patch 		\
@@ -1639,7 +1638,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libofa-ftbfs-2.diff		\
   %D%/packages/patches/libotr-test-auth-fix.patch		\
   %D%/packages/patches/libksieve-Fix-missing-link-libraries.patch \
-  %D%/packages/patches/libksysguard-qdiriterator-follow-symlinks.patch \
   %D%/packages/patches/libmad-armv7-thumb-pt1.patch		\
   %D%/packages/patches/libmad-armv7-thumb-pt2.patch		\
   %D%/packages/patches/libmad-length-check.patch		\
@@ -1990,6 +1988,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-versioneer-guix-support.patch	\
   %D%/packages/patches/python-waitress-fix-tests.patch		\
   %D%/packages/patches/python-werkzeug-tests.patch		\
+  %D%/packages/patches/python-xmp-toolkit-add-missing-error-codes.patch	\
   %D%/packages/patches/python-zeep-Fix-pytest_httpx-test-cases.patch	\
   %D%/packages/patches/qemu-7.2.4-build-info-manual.patch	\
   %D%/packages/patches/qemu-build-info-manual.patch		\
@@ -2217,6 +2216,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/vinagre-newer-freerdp.patch             \
   %D%/packages/patches/vinagre-newer-rdp-parameters.patch      \
   %D%/packages/patches/virtuoso-ose-remove-pre-built-jar-files.patch	\
+  %D%/packages/patches/virt-manager-fix-gtk-cursor-theme-backtace.patch	\
   %D%/packages/patches/vsearch-unbundle-cityhash.patch		\
   %D%/packages/patches/vte-CVE-2012-2738-pt1.patch			\
   %D%/packages/patches/vte-CVE-2012-2738-pt2.patch			\

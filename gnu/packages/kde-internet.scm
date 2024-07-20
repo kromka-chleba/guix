@@ -3,6 +3,7 @@
 ;;; Copyright © 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -69,32 +70,32 @@
         (base32 "0zm4nkpmvd181xlkis7ydzx54p3vn0zgpdzgh54f1hsjy6ahsq16"))))
     (build-system qt-build-system)
     (native-inputs
-     (list extra-cmake-modules kdoctools pkg-config))
+     (list extra-cmake-modules kdoctools-5 pkg-config))
     (inputs
-     (list attica
-           kcmutils
-           kconfigwidgets
-           kcoreaddons
+     (list attica-5
+           kcmutils-5
+           kconfigwidgets-5
+           kcoreaddons-5
            kemoticons
-           kglobalaccel
-           kguiaddons
-           ki18n
-           kio
-           knotifications
-           knotifyconfig
-           kparts
-           ktextwidgets
-           kwallet
-           kwidgetsaddons
-           kxmlgui
+           kglobalaccel-5
+           kguiaddons-5
+           ki18n-5
+           kio-5
+           knotifications-5
+           knotifyconfig-5
+           kparts-5
+           ktextwidgets-5
+           kwallet-5
+           kwidgetsaddons-5
+           kxmlgui-5
            ;; TODO: telepathy
            breeze-icons ; default icon set
-           purpose
+           purpose-5
            qca
            qoauth
            qtbase-5
            qtnetworkauth-5
-           sonnet))
+           sonnet-5))
     (home-page "https://kde.org/applications/internet/org.kde.choqok")
     (synopsis "Micro-Blogging Client")
     (description "Choqok is a fast, efficient and simple to use micro-blogging
@@ -118,7 +119,7 @@ Other notable features include:
 (define-public falkon
   (package
     (name "falkon")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
@@ -126,18 +127,23 @@ Other notable features include:
                            "/src/falkon-" version ".tar.xz"))
        (sha256
         (base32
-         "11r1iwimdzabfah68gsvw6xi67cj539anqa6s1rg33agsi5y56d3"))))
+         "0j930i2nvg71p05z881inbk59c54gx8dzhyjb8iaqkw8i5s5r983"))))
     (build-system qt-build-system)
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "ctest" "-E"
-                             "(locationbartest|qmltabsapitest)")))))))
+               (add-after 'install 'wrap
+                 (lambda* (#:key inputs outputs #:allow-other-keys)
+                   (let ((qtwebengineprocess
+                          (search-input-file inputs
+                                             "lib/qt6/libexec/QtWebEngineProcess")))
+                     ;; The program fails to find the QtWebEngineProcess program, so
+                     ;; we set QTWEBENGINEPROCESS_PATH to help it.
+                     (wrap-program (string-append #$output "/bin/falkon")
+                       `("QTWEBENGINEPROCESS_PATH" =
+                         (,qtwebengineprocess)))))))))
     (native-inputs
-     (list extra-cmake-modules pkg-config qttools-5))
+     (list extra-cmake-modules pkg-config qttools))
     (inputs
      (list karchive
            kcoreaddons
@@ -147,11 +153,10 @@ Other notable features include:
            kwallet
            openssl
            purpose
-           qtquickcontrols-5
-           qtsvg-5
-           qtwebengine-5
-           qtx11extras
-           qtwayland-5
+           qt5compat
+           qtsvg
+           qtwebengine
+           qtwayland
            xcb-util))
     (home-page "https://www.falkon.org/")
     (synopsis "Qt-based web browser for KDE")
@@ -162,21 +167,23 @@ Other notable features include:
 (define-public kget
   (package
     (name "kget")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kget-" version ".tar.xz"))
        (sha256
-        (base32 "1n9wnm1si4g4rv8zaqpr8m3c2aav0mj8i7z96m78dk1apippx77r"))))
+        (base32 "0xm3a3bxk4gb1yxpq3icg1wh5sqpmxqlr9n8j1gffszzd6c9x8mn"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools pkg-config))
     (inputs
      (list boost
            gmp
-           gpgme
+           ;; TODO: enable when we qgpgme support qt6.
+           ;; gpgme
+           ;; qgpgme
            kcmutils
            kcompletion
            kconfig
@@ -184,7 +191,6 @@ Other notable features include:
            kcoreaddons
            kcrash
            kdbusaddons
-           kdelibs4support ;; KLocale
            ki18n
            kiconthemes
            kio
@@ -193,6 +199,7 @@ Other notable features include:
            knotifyconfig
            kparts
            kservice
+           kstatusnotifieritem
            ktextwidgets
            kwallet
            kwidgetsaddons
@@ -200,20 +207,11 @@ Other notable features include:
            kxmlgui
            libgcrypt
            libktorrent
-           ;; TODO: libmms
-           ;; TODO: LibKWorkspace - plasma-workspace?
+           libmms
            breeze-icons ; default icon set
-           qca
-           qgpgme
-           qtbase-5))
+           qca-qt6))
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests? ;; FIXME: two tests fails.
-               (invoke "ctest" "-E" "(schedulertest|filedeletertest)"))
-             #t)))))
+     (list #:qtbase qtbase))
     (home-page "https://www.kde.org/")
     (synopsis "Versatile and user-friendly download manager")
     (description "KGet is an advanced download manager with support for
@@ -228,17 +226,17 @@ This package is part of the KDE networking module.")
 (define-public konversation
   (package
     (name "konversation")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/konversation-" version ".tar.xz"))
        (sha256
-        (base32 "1ip0jlz71fad5l0ppbc6w914hqk7h626s12ssbb9p1c2yvlr1j1v"))))
+        (base32 "1migcrl2d3i4iadijhpap0mm2cd7irp3g2962flll41mv5nhzwsl"))))
     (build-system qt-build-system)
     (native-inputs
-     (list extra-cmake-modules kdoctools))
+     (list extra-cmake-modules kdoctools qttools))
     (inputs
      (list karchive
            kbookmarks
@@ -247,7 +245,6 @@ This package is part of the KDE networking module.")
            kcoreaddons
            kcrash
            kdbusaddons
-           kemoticons
            kglobalaccel
            ki18n
            kiconthemes
@@ -258,16 +255,19 @@ This package is part of the KDE networking module.")
            knotifications
            knotifyconfig
            kparts
+           kstatusnotifieritem
+           ktextwidgets
            kwallet
            kwidgetsaddons
            kwindowsystem
            breeze-icons ; default icon set
            phonon
-           qtbase-5
-           qca
-           qtmultimedia-5
+           qca-qt6
+           qtmultimedia
+           qt5compat
            solid
            sonnet))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/konversation/")
     (synopsis "Graphical Internet Relay Chat (IRC) client for KDE")
     (description "Konversation is a graphical Internet Relay Chat client (IRC)
@@ -377,38 +377,46 @@ This package is part of the KDE networking module.")
 (define-public krdc
   (package
     (name "krdc")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/krdc-" version ".tar.xz"))
        (sha256
-        (base32 "0jva74n11fpm4ix4sbi0y1xnbly97lnap7dfj0bliw5s2d0sdjr0"))))
+        (base32 "0xw9ks43llm4lnnswv1h81gmr8mr6191bblmd21c1a5a6vvr935h"))))
     (build-system qt-build-system)
     (native-inputs
-     (list extra-cmake-modules kdoctools))
+     (list extra-cmake-modules pkg-config kdoctools))
     (inputs
-     (list kbookmarks
+     (list breeze-icons ; default icon set
+           kbookmarks
            freerdp
            kcmutils
            kcompletion
            kconfig
            kdnssd
            ki18n
+           kio
            kiconthemes
            knotifications
            knotifyconfig
+           kstatusnotifieritem
            kwallet
            kwidgetsaddons
            kwindowsystem
            kxmlgui
+           plasma-activities
            libssh
            libvnc
-           breeze-icons ; default icon set
-           qtbase-5))
-    (arguments ;; FIXEME: libvnc can't be found for some reason.
-     (list #:configure-flags #~(list "-DWITH_VNC=NO")))
+           ;; XXX: libvnc's Libs.private, remove when we use pkgconf
+           lzo
+           libjpeg-turbo
+           libgcrypt
+           gnutls))
+    (arguments
+     (list #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")
+           #:qtbase qtbase))
     (home-page "https://apps.kde.org/krdc/")
     (synopsis "Remote desktop client")
     (description "KRDC is a client application that allows you to view or even
@@ -422,15 +430,16 @@ This package is part of the KDE networking module.")
 (define-public ktorrent
   (package
     (name "ktorrent")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ktorrent-" version ".tar.xz"))
        (sha256
-        (base32 "17q6ivnbh4zxqnbm1bdzz3hri1434sq2rs9y57lvn4bb2xdwn1z5"))))
+        (base32 "1m96ch4rfrjnrw9rd7ad3ipc0hvhxl2awb7aqfnk4dd1g8hhjkq0"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -444,6 +453,7 @@ This package is part of the KDE networking module.")
            kcrash
            kdbusaddons
            kdnssd
+           kglobalaccel
            ki18n
            kiconthemes
            kio
@@ -451,18 +461,16 @@ This package is part of the KDE networking module.")
            knotifyconfig
            kparts
            kplotting
-           kross
+           kstatusnotifieritem
            kwidgetsaddons
            kwindowsystem
            kxmlgui
            libgcrypt
            libktorrent
-           ;; TODO: LibKWorkspace -> plasma-workspace?
            breeze-icons ; default icon set
            phonon
-           qtbase-5
-           qtscript
-           qtwebengine-5
+           qt5compat
+           qtwebengine
            solid
            syndication
            taglib))
@@ -477,30 +485,30 @@ a full-featured client for BitTorrent.")
 (define-public libktorrent
   (package
     (name "libktorrent")
-    (version "23.04.3")
+    (version "24.05.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/" name "-" version ".tar.xz"))
        (sha256
-        (base32 "1m6gyk1bids7qr9wfh6gcfq73ac9j5b2bljvfvfsw9f1ky1cmwab"))))
+        (base32 "1gr31v09jz5kdvhrpln9abncnnih7db35j3af73m3vlg6izw9z98"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules))
     (inputs
      (list boost
            gmp
-           karchive
            kcrash
            ki18n
            kio
            libgcrypt
-           qca
-           qtbase-5
+           qca-qt6
            solid))
+    (propagated-inputs (list karchive qt5compat))
     (home-page "https://invent.kde.org/network/libktorrent")
-    (synopsis "BitTorrent protocol library for C++ / Qt 5 / KDE Frameworks")
+    (synopsis "BitTorrent protocol library for C++ / Qt 6 / KDE Frameworks")
     (description "The KTorrent library supports connectivity to HTTP and UDP
 trackers, mainline DHT and the new generation Micro Transport
 Protocol (uTP).  In addition, it provides many powerful BitTorrent network

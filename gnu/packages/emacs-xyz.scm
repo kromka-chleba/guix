@@ -33160,10 +33160,37 @@ all of your projects, then override or add variables on a per-project basis.")
      "Casual Avy is an opinionated Transient-based porcelain for Emacs Avy.")
     (license license:gpl3+)))
 
+(define-public emacs-casual-calc
+  (package
+    (name "emacs-casual-calc")
+    (version "1.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kickingvegas/casual-calc")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qdi6p3aybg0zwscf35l2dx51q7h4rz2g7r4xf7ml520dag7h5cw"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _ (chdir "lisp"))))))
+    (propagated-inputs (list emacs-casual-lib))
+    (home-page "https://github.com/kickingvegas/casual-calc")
+    (synopsis "Transient-based porcelain for calc")
+    (description
+     "Casual Calc is an opinionated Transient-based porcelain for Emacs Calc.")
+    (license license:gpl3+)))
+
 (define-public emacs-casual-dired
   (package
     (name "emacs-casual-dired")
-    (version "1.5.0")
+    (version "1.6.0")
     (source
      (origin
        (method git-fetch)
@@ -33172,7 +33199,7 @@ all of your projects, then override or add variables on a per-project basis.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17a2jgm01hjhq1nkx50bm5qakb0inf0x6vry57n33jq4ay1kfnfq"))))
+        (base32 "01yyhamslbnzf7w2hn5c8gpjjnw1aclyf9265pvdnxsyb4jdyi5k"))))
     (build-system emacs-build-system)
     (arguments
      (list

@@ -29,6 +29,7 @@
   #:use-module (guix git-download)
   #:use-module (guix download)
   #:use-module (guix build-system go)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
@@ -56,7 +57,6 @@
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.21
       #:import-path "github.com/ipfs/go-block-format"))
     (propagated-inputs
      (list go-github-com-multiformats-go-multihash
@@ -88,7 +88,6 @@ corresponding to the block.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.21
       #:import-path "github.com/ipfs/go-cid"))
     (propagated-inputs
      (list go-github-com-multiformats-go-multihash
@@ -117,7 +116,6 @@ used in @code{go-ipfs} and related packages to refer to a typed hunk of data.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.21
       #:import-path "github.com/ipfs/go-cidutil"))
     (propagated-inputs
      (list go-github-com-ipfs-go-cid
@@ -150,7 +148,9 @@ with @url{https://github.com/ipld/cid, CIDs}.")
               "0qk6fshgdmhp8dip2ksm13j6nywi41m9mn0czkvmw6b697z85l2r"))))
       (build-system go-build-system)
       (arguments
-       `(#:go ,go-1.16
+       `(#:go ,@(if (supported-package? go-1.16)
+                    `(,go-1.16)
+                    `(,gccgo-11))
          #:unpack-path "github.com/ipfs/go-ipfs-cmdkit"
          #:import-path "github.com/ipfs/go-ipfs-cmdkit/files"))
       (home-page "https://github.com/ipfs/go-ipfs-cmdkit")
@@ -237,7 +237,6 @@ throughout its lifetime.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.21
       #:import-path "github.com/ipfs/go-detect-race"))
     (home-page "https://github.com/ipfs/go-detect-race")
     (synopsis "Detect if compiled with race")
@@ -262,7 +261,6 @@ throughout its lifetime.")
                              go-github-com-multiformats-go-multihash))
     (arguments
      (list
-      #:go go-1.21
       #:import-path "github.com/ipfs/go-ipfs-util"))
     (home-page "https://github.com/ipfs/go-ipfs-util")
     (synopsis "Common utilities used by @code{go-ipfs} and related packages")
@@ -286,7 +284,6 @@ throughout its lifetime.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.21
       #:import-path "github.com/ipfs/go-ipld-cbor"))
     (propagated-inputs
      (list go-github-com-ipfs-go-block-format
@@ -360,7 +357,6 @@ IPLD graph as detailed below.  Objects are demonstrated here using both
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.21
       #:import-path "github.com/ipfs/go-ipld-format"))
     (propagated-inputs
      (list go-github-com-multiformats-go-multihash
@@ -372,6 +368,64 @@ IPLD graph as detailed below.  Objects are demonstrated here using both
      "@code{go-ipld-format} is a set of interfaces that a type needs to implement in
 order to be a part of the @acronym{IPLD, InterPlanetary Linked Data} merkle-forest.")
     (license license:expat)))
+
+(define-public go-github-com-ipfs-go-ipld-legacy
+  (package
+    (name "go-github-com-ipfs-go-ipld-legacy")
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-ipld-legacy")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sc2zc3lyxy30fzynwdpfrl8jhh1ynwixn1crrv8hzn93yix6550"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/ipfs/go-ipld-legacy"))
+    (native-inputs (list go-github-com-stretchr-testify))
+    (propagated-inputs (list go-github-com-ipfs-go-block-format
+                             go-github-com-ipfs-go-cid
+                             go-github-com-ipfs-go-ipld-format
+                             go-github-com-ipld-go-ipld-prime))
+    (home-page "https://github.com/ipfs/go-ipld-legacy")
+    (synopsis "Translation layer for IPLD legacy code")
+    (description
+     "@code{go-ipld-format} is a translation layer between @code{go-ipld-prime} nodes
+and @code{go-ipld-format} legacy interface.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public go-github-com-ipld-go-codec-dagpb
+  (package
+    (name "go-github-com-ipld-go-codec-dagpb")
+    (version "1.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipld/go-codec-dagpb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jbrwbgr222wsi95gdflbj350csja6k8vphdq7c9bm50ipr8bvkq"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.21
+      #:import-path "github.com/ipld/go-codec-dagpb"))
+    (propagated-inputs (list go-github-com-ipfs-go-cid
+                             go-github-com-ipld-go-ipld-prime
+                             go-google-golang-org-protobuf))
+    (home-page "https://github.com/ipld/go-codec-dagpb/")
+    (synopsis "Implementation of the DAG-PB spec for Go")
+    (description
+     "An implementation of the @url{https://ipld.io/, IPLD DAG-PB} spec for
+@code{go-ipld-prime}.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public go-github-com-ipld-go-ipld-prime
   (package
@@ -389,7 +443,6 @@ order to be a part of the @acronym{IPLD, InterPlanetary Linked Data} merkle-fore
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.21
       #:unpack-path "github.com/ipld/go-ipld-prime/"
       #:import-path "github.com/ipld/go-ipld-prime/"
       #:phases
@@ -489,7 +542,6 @@ basic operations on IPLD objects (traversals, etc).")
            go-go-uber-org-zap))
     (arguments
      (list
-      #:go go-1.21
       #:import-path "github.com/ipfs/go-log/v2"))
     (home-page "https://github.com/ipfs/go-log")
     (synopsis "Logging library used by @code{go-ipfs}")
@@ -520,8 +572,36 @@ their levels to be controlled individually.")
            go-go-uber-org-zap))
     (arguments
      (list
-      #:go go-1.21
       #:import-path "github.com/ipfs/go-log"))))
+
+(define-public go-github-com-libp2p-go-socket-activation
+  (package
+    (name "go-github-com-libp2p-go-socket-activation")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-socket-activation")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cqxzmjfg7838xifs07kigys9icardwlj1wl426mzgzmbwn6pg5s"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-socket-activation"))
+    (propagated-inputs
+     (list go-github-com-coreos-go-systemd-v22
+           go-github-com-ipfs-go-log
+           go-github-com-multiformats-go-multiaddr-0.12))
+    (home-page "https://github.com/libp2p/go-socket-activation")
+    (synopsis "Multiaddr backed systemd socket activation")
+    (description
+     "This package provides access to sockets registered by the system's init
+daemon as described in
+@url{http://0pointer.de/blog/projects/socket-activation}.")
+    (license license:expat)))
 
 (define-public go-github-com-whyrusleeping-cbor-gen
   (package
@@ -551,6 +631,9 @@ their levels to be controlled individually.")
 types.")
     (license license:expat)))
 
+;; XXX: No updates for 4 years, and depends on dated Golang modules which
+;; require go-1.16 to compile, see
+;; <https://github.com/whyrusleeping/gx/issues/247>.
 (define-public gx
   (package
     (name "gx")
@@ -609,6 +692,9 @@ powerful and simple.")
      '(#:unpack-path "github.com/whyrusleeping/gx"
        #:import-path "github.com/whyrusleeping/gx/gxutil"))))
 
+;; XXX: No updates for 4 years, and depends on dated Golang modules which
+;; require go-1.16 to compile, see
+;; <https://github.com/whyrusleeping/gx-go/issues/65>.
 (define-public gx-go
   (package
     (name "gx-go")
@@ -715,12 +801,15 @@ written in Go.")
                              "vendor/github.com/ipfs/go-ipld-cbor"
                              "vendor/github.com/ipfs/go-ipld-format"
                              "vendor/github.com/ipfs/go-ipld-git"
+                             "vendor/github.com/ipfs/go-ipld-legacy"
                              "vendor/github.com/ipfs/go-log"
+                             "vendor/github.com/ipld/go-codec-dagpb"
                              "vendor/github.com/ipld/go-ipld-prime"
                              "vendor/github.com/jackpal"
                              "vendor/github.com/jbenet"
                              "vendor/github.com/julienschmidt"
                              "vendor/github.com/klauspost"
+                             "vendor/github.com/libp2p/go-socket-activation"
                              "vendor/github.com/mattn"
                              "vendor/github.com/mgutz"
                              "vendor/github.com/miekg"
@@ -753,7 +842,6 @@ written in Go.")
      (list
       #:unpack-path "github.com/ipfs/kubo"
       #:import-path "github.com/ipfs/kubo/cmd/ipfs"
-      #:go go-1.21
       #:phases
       #~(modify-phases %standard-phases
           ;; https://github.com/ipfs/kubo/blob/master/docs/command-completion.md
@@ -803,7 +891,7 @@ written in Go.")
                   go-github-com-ipfs-go-ipld-cbor
                   go-github-com-ipfs-go-ipld-format
                   go-github-com-ipfs-go-ipld-git
-                  ;;go-github-com-ipfs-go-ipld-legacy
+                  go-github-com-ipfs-go-ipld-legacy
                   go-github-com-ipfs-go-log
                   go-github-com-ipfs-go-log-v2
                   ;;go-github-com-ipfs-go-metrics-interface
@@ -813,7 +901,7 @@ written in Go.")
                   ;;go-github-com-ipfs-shipyard-nopfs-ipfs
                   ;;go-github-com-ipld-go-car
                   ;;go-github-com-ipld-go-car-v2
-                  ;;go-github-com-ipld-go-codec-dagpb
+                  go-github-com-ipld-go-codec-dagpb
                   go-github-com-ipld-go-ipld-prime
                   go-github-com-jbenet-go-random
                   go-github-com-jbenet-go-temp-err-catcher
@@ -829,7 +917,7 @@ written in Go.")
                   ;;go-github-com-libp2p-go-libp2p-record
                   ;;go-github-com-libp2p-go-libp2p-routing-helpers
                   ;;go-github-com-libp2p-go-libp2p-testing
-                  ;;go-github-com-libp2p-go-socket-activation
+                  go-github-com-libp2p-go-socket-activation
                   go-github-com-mitchellh-go-homedir
                   go-github-com-multiformats-go-multiaddr-0.12
                   go-github-com-multiformats-go-multiaddr-dns
@@ -856,7 +944,7 @@ written in Go.")
                   go-go-uber-org-multierr
                   go-go-uber-org-zap
                   go-golang-org-x-crypto
-                  go-golang-org-x-exp-2023
+                  go-golang-org-x-exp
                   go-golang-org-x-mod
                   go-golang-org-x-sync
                   go-golang-org-x-sys

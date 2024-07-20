@@ -143,7 +143,7 @@
 (define-public appstream
   (package
     (name "appstream")
-    (version "0.16.4")
+    (version "1.0.3")
     (source
      (origin
        (method url-fetch)
@@ -152,9 +152,7 @@
                        "appstream/releases/"
                        "AppStream-" version ".tar.xz"))
        (sha256
-        (base32 "1val1b3dggn9g33q2r9q7wsl75a64x4lcvswvkcjjbvakkbj5xyl"))
-       (patches
-        (search-patches "appstream-force-reload-stemmer.patch"))))
+        (base32 "195snvg2jw5ywqxz02xfb570yhxvaqp9d4w5a2lpay2fck7zddjs"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -166,9 +164,9 @@
             (lambda* (#:key inputs #:allow-other-keys)
               (let ((libstemmer.h (search-input-file inputs
                                                      "include/libstemmer.h")))
-              (substitute* "meson.build"
-                (("/usr/include")
-                 (dirname libstemmer.h))))))
+                (substitute* "meson.build"
+                  (("/usr/include")
+                   (dirname libstemmer.h))))))
           (add-before 'check 'check-setup
             (lambda _
               (setenv "HOME" (getcwd)))))))
@@ -184,7 +182,8 @@
            itstool
            libxslt
            pkg-config
-           python-wrapper))
+           python-wrapper
+           gi-docgen))
     (inputs
      (list curl libsoup-minimal-2 libstemmer libxmlb libxml2 libyaml lmdb))
     (propagated-inputs
@@ -213,7 +212,21 @@ application-centers for distributions.")
     (arguments
      (substitute-keyword-arguments (package-arguments appstream)
        ((#:configure-flags flags #~'())
-        #~(append '("-Dqt=true") #$flags))))))
+        #~(append '("-Dqt=true" "-Dqt-versions=5") #$flags))))))
+
+(define-public appstream-qt6
+  (package/inherit appstream
+    (name "appstream-qt6")
+    (native-inputs
+     (modify-inputs (package-native-inputs appstream)
+       (prepend qttools)))
+    (inputs
+     (modify-inputs (package-inputs appstream)
+       (prepend qtbase)))
+    (arguments
+     (substitute-keyword-arguments (package-arguments appstream)
+       ((#:configure-flags flags #~'())
+        #~(append '("-Dqt=true" "-Dqt-versions=6") #$flags))))))
 
 (define-public farstream
   (package
@@ -1404,6 +1417,19 @@ protocol either in Wayland core, or some other protocol in wayland-protocols.")
      '((release-monitoring-url
         . "https://wayland.freedesktop.org/releases.html")))
     (license license:expat)))
+
+(define-public wayland-protocols-next
+  (package (inherit wayland-protocols)
+           (name "wayland-protocols-next")
+           (version "1.36")
+           (source (origin
+                     (method url-fetch)
+                     (uri (string-append "https://gitlab.freedesktop.org/wayland/"
+                                         "wayland-protocols/-/releases/" version "/downloads/"
+                                         "wayland-protocols-" version ".tar.xz"))
+                     (sha256
+                      (base32
+                       "14kyxywpfkgpjpkrybs28q1s2prnz30k1b4zap5a3ybrbvh4vzbi"))))))
 
 (define-public wayland-utils
   (package
@@ -3111,16 +3137,22 @@ interfaces.")
 (define-public xdg-desktop-portal-kde
   (package
     (name "xdg-desktop-portal-kde")
-    (version "5.27.6")
+    (version "6.1.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version "/"
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0wzp21l521d9z9mnfgiapzljqpg5qc5ghyzndpr8cz54c2bf9mdf"))))
+                "0dksk5zs4w79n9l8wspwdgzx2fj1xafsjjk4d6bv2hrhhly7bnxr"))))
     (build-system qt-build-system)
-    (native-inputs (list extra-cmake-modules pkg-config))
+    (arguments (list
+                #:tests? #f ;; colorschemetest test fail, because require dbus.
+                #:qtbase qtbase))
+    (native-inputs (list extra-cmake-modules pkg-config
+                         ;; require by test.
+                         python-minimal
+                         python-pygobject))
     (inputs (list cups
                   kcoreaddons
                   kconfig
@@ -3129,20 +3161,22 @@ interfaces.")
                   kio
                   kirigami
                   knotifications
-                  plasma-framework
+                  libplasma
                   plasma-wayland-protocols
+                  kstatusnotifieritem
                   kwayland
                   kwidgetsaddons
                   kwindowsystem
                   kiconthemes
-                  qtdeclarative-5
-                  qtwayland-5
+                  qtdeclarative
+                  qtwayland
                   wayland
                   kglobalaccel
                   kguiaddons
                   libxkbcommon
-                  kio-fuse
                   wayland-protocols))
+    (propagated-inputs
+     (list xdg-desktop-portal))
     (synopsis "Backend implementation for xdg-desktop-portal using Qt/KF5")
     (description "This package provides a backend implementation
 for xdg-desktop-portal that is using Qt/KF5.")

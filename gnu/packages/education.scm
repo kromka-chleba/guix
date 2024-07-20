@@ -114,7 +114,6 @@
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.18
       #:install-source? #f
       #:import-path "github.com/xalanq/cf-tool"
       #:phases
@@ -221,7 +220,7 @@ of categories with some of the activities available in that category.
 (define-public gcompris-qt
   (package
     (name "gcompris-qt")
-    (version "3.2")
+    (version "4.1")
     (source
      (origin
        (method url-fetch)
@@ -229,7 +228,7 @@ of categories with some of the activities available in that category.
              "mirror://kde/stable/gcompris/qt/src/gcompris-qt-"
              version ".tar.xz"))
        (sha256
-        (base32 "06yisr5qd2ri8qgpmlri0yic45fdfcdjn12anp17f6kvv83lk2js"))))
+        (base32 "1186ba3vn59fqdpgbvnvxqm8a3b7ginmw1sb3m5fr2az40xiqg9z"))))
     (build-system qt-build-system)
     (arguments
      `(#:phases
@@ -678,34 +677,56 @@ hours.")
 language and very flexible regarding to new or unknown keyboard layouts.")
     (license license:gpl3+)))
 
+(define-public kqtquickcharts
+  (package
+    (name "kqtquickcharts")
+    (version "24.05.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://kde/stable/release-service/"
+                                  version "/src/kqtquickcharts-" version ".tar.xz"))
+              (sha256
+               (base32
+                "0b0nqg77lzfw6accfsr4yg9fgq78skryd1qwkqf1zijhq4h65708"))))
+    (build-system qt-build-system)
+    (native-inputs (list extra-cmake-modules))
+    (inputs (list qtdeclarative-5))
+    (home-page "https://invent.kde.org/libraries/kqtquickcharts")
+    (synopsis "QtQuick plugin to render beautiful and interactive charts")
+    (description
+     "This package provides a QtQuick plugin to render beautiful and interactive
+charts.")
+    (license (list license:lgpl2.0+ license:gpl2+))))
+
 (define-public ktouch
   (package
     (name "ktouch")
-    (version "21.12.2")
+    (version "24.05.2")
     (source
-      (origin
-        (method url-fetch)
-        (uri (string-append "mirror://kde/stable/release-service/"
-                            version "/src/ktouch-" version ".tar.xz"))
-        (sha256
-         (base32 "1rq2n8395sb17rqd295axv2pbwzhqs8ikjqx5ryn4lv1713alabl"))))
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/"
+                           version "/src/ktouch-" version ".tar.xz"))
+       (sha256
+        (base32 "1636s1brigmd7wbmjlfgz2qlrrp592rrk9nylh9bi0j1nf3xa8c5"))))
     (build-system qt-build-system)
     (native-inputs
-     (list extra-cmake-modules kdoctools pkg-config))
+     (list extra-cmake-modules kdoctools-5 pkg-config))
     (inputs
-     (list kcmutils
-           kcompletion
-           kconfig
-           kconfigwidgets
-           kcoreaddons
-           kdeclarative
-           ki18n
-           kiconthemes
-           kitemviews
-           ktextwidgets
-           kwidgetsaddons
-           kwindowsystem
-           kxmlgui
+     (list kcmutils-5
+           kcompletion-5
+           kconfig-5
+           kconfigwidgets-5
+           kcoreaddons-5
+           kdeclarative-5
+           ki18n-5
+           kiconthemes-5
+           kitemviews-5
+           ktextwidgets-5
+           kwidgetsaddons-5
+           kwindowsystem-5
+           kxmlgui-5
+           kqtquickcharts
            libxcb
            libxkbfile
            qtbase-5

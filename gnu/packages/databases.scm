@@ -4650,7 +4650,7 @@ with integrated support for finding required rows quickly.")
 (define-public apache-arrow
   (package
     (name "apache-arrow")
-    (version "15.0.1")
+    (version "16.1.0")
     (source
      (origin
        (method git-fetch)
@@ -4660,7 +4660,7 @@ with integrated support for finding required rows quickly.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0zrcwsq9c976xncc1kg6lw24s5r3ag8vfzhmcnkvi5z2c9x4lvvc"))))
+         "1xl7apk7yaiv7cikpw5h846bsqb935cr3212b8bzhxqvkswxsm7f"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -5503,7 +5503,6 @@ compatible with SQLite using a graphical user interface.")
     (build-system go-build-system)
     (arguments
      (list
-      #:go go-1.21
       #:install-source? #f
       #:import-path "github.com/lighttiger2505/sqls"))
     (native-inputs
