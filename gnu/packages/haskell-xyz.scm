@@ -450,6 +450,26 @@ colored output using the ansi-terminal package.")
 style.")
     (license license:bsd-3)))
 
+(define-public ghc-aspell-pipe
+  (package
+    (name "ghc-aspell-pipe")
+    (version "0.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "aspell-pipe" version))
+       (sha256
+        (base32 "09dw4v4j5pmqi8pdh3p7kk7f8pph5w33s7vd21fgvhv3arnrj6p8"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "aspell-pipe")))
+    (inputs (list ghc-async))
+    (home-page "https://hackage.haskell.org/package/aspell-pipe")
+    (synopsis "Pipe-based interface to the Aspell program")
+    (description
+     "This package provides a pipe-based interface to the Aspell program (no
+dynamic linking required).")
+    (license license:bsd-3)))
+
 (define-public ghc-assoc
   (package
     (name "ghc-assoc")
@@ -950,6 +970,27 @@ storing and transmitting loosely structured data.")
     (home-page "https://github.com/ekmett/bifunctors/")
     (synopsis "Bifunctors for Haskell")
     (description "This package provides bifunctors for Haskell.")
+    (license license:bsd-3)))
+
+(define-public ghc-bimap
+  (package
+    (name "ghc-bimap")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "bimap" version))
+       (sha256
+        (base32 "158cdwk9jwklcfgbn62dqq255i40w13ifggsdps87sxc5q7lpd5h"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "bimap")))
+    (native-inputs (list ghc-quickcheck))
+    (home-page "https://github.com/joelwilliamson/bimap")
+    (synopsis "Bidirectional mapping between two key types")
+    (description
+     "This package provides a data structure representing a bidirectional
+mapping between two key types.  Each value in the bimap is associated with
+exactly one value of the opposite type.")
     (license license:bsd-3)))
 
 (define-public ghc-bindings-dsl
@@ -1787,6 +1828,31 @@ Haskell.  It aims to process Markdown efficiently and in the most forgiving
 possible way.  It is designed to deal with any input, including garbage, with
 linear performance.  Output is sanitized by default for protection against
 cross-site scripting (@dfn{XSS}) attacks.")
+    (license license:bsd-3)))
+
+(define-public ghc-checkers
+  (package
+    (name "ghc-checkers")
+    (version "0.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "checkers" version))
+       (sha256
+        (base32 "1r4rsa4k0fy8xig3m530ryflry9viv9v47g4gh7h0ld27rbd6z60"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "checkers")))
+    (inputs (list ghc-random ghc-quickcheck ghc-semigroupoids))
+    (arguments
+     `(#:cabal-revision ("1"
+                         "0wkvf57zd7i87z18vj285whjpcl9pscpwxz2cp7v7w6kk0769p0i")))
+    (home-page "https://github.com/haskell-checkers/checkers")
+    (synopsis "Check properties on standard classes and data structures")
+    (description
+     "Checkers wraps up the expected properties associated with various
+standard type classes as @code{QuickCheck} properties.  It also provides some
+morphism properties, arbitrary instances, and generator combinators for common
+data types.")
     (license license:bsd-3)))
 
 (define-public ghc-chell
@@ -7497,6 +7563,28 @@ that are much lighter weight than IO-threads.")
 and other added capabilities layered on top of the @code{Par} monad.")
     (license license:bsd-3)))
 
+(define-public ghc-monad-parallel
+  (package
+    (name "ghc-monad-parallel")
+    (version "0.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "monad-parallel" version))
+       (sha256
+        (base32 "1j905cwc440g7rvbhsdkqf50ag7p2bi6cy2rqsk918rn80fqqra4"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "monad-parallel")))
+    (inputs (list ghc-parallel ghc-transformers-compat))
+    (home-page "https://hub.darcs.net/blamario/SCC.wiki/")
+    (synopsis "Parallel execution of monadic computations")
+    (description
+     "This package defines classes of monads that can perform multiple
+executions in parallel and combine their results.  For any monad that's an
+instance of the class, the package re-implements a subset of the
+@code{Control.Monad} interface, but with parallel execution.")
+    (license license:bsd-3)))
+
 (define-public ghc-monadrandom
   (package
     (name "ghc-monadrandom")
@@ -8431,13 +8519,13 @@ plus the length of the UTF-8 encoded payload.")
 (define-public ghc-text-zipper
   (package
     (name "ghc-text-zipper")
-    (version "0.12")
+    (version "0.13")
     (source (origin
               (method url-fetch)
               (uri (hackage-uri "text-zipper" version))
               (sha256
                (base32
-                "00k7d6qfznhp6l2ihw3pppkn580pwd7ac7wx9vidil4y9hjagaw6"))))
+                "1acq583wmgb53viqslbkgl454300fawg5lryxddfiy1mqk3iqlh6"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "text-zipper")))
     (inputs (list ghc-vector))
@@ -11669,6 +11757,28 @@ features.")
 source and a sink.")
     (license license:bsd-3)))
 
+(define-public ghc-stm-delay
+  (package
+    (name "ghc-stm-delay")
+    (version "0.1.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "stm-delay" version))
+       (sha256
+        (base32 "0cla21v89gcvmr1iwzibq13v1yq02xg4h6k9l6kcprj7mhd5hcmi"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "stm-delay")))
+    (home-page "https://github.com/joeyadams/haskell-stm-delay")
+    (synopsis "Updatable one-shot timer polled with STM")
+    (description
+     "This library lets you create a one-shot timer, poll it using STM, and
+update it to ring at a different time than initially specified.  It uses GHC
+event manager timeouts when available, yielding performance similar to
+@code{threadDelay} and @code{registerDelay}.  Otherwise, it falls back to
+forked threads and @code{threadDelay}.")
+    (license license:bsd-3)))
+
 (define-public ghc-stmonadtrans
   (package
     (name "ghc-stmonadtrans")
@@ -13277,6 +13387,31 @@ operations.  Uniplate has similar goals to the original Scrap Your Boilerplate
 work, but is substantially simpler and faster.")
     (license license:bsd-3)))
 
+(define-public ghc-unique
+  (package
+    (name "ghc-unique")
+    (version "0.4.7.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "Unique" version))
+       (sha256
+        (base32 "14f1qnmhdmbam8qis725dhwq1mk9h86fsnzhkwhsx73ny9z29s1l"))
+       (patches (search-patches "ghc-unique-support-newer-hashable.patch"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "Unique")))
+    (inputs (list ghc-extra ghc-hashable ghc-unordered-containers))
+    (native-inputs (list ghc-hspec ghc-quickcheck))
+    (arguments
+     `(#:cabal-revision ("1"
+                         "10s0npnfkh7naj49afmyrvnilikp6426fbhi49f97pxrgcmy4dvw")))
+    (home-page "https://hackage.haskell.org/package/Unique")
+    (synopsis "Haskell functionality like \"uniq\" tool")
+    (description
+     "This library provides the functions to find unique and duplicate
+elements in a list.")
+    (license license:bsd-3)))
+
 (define-public ghc-unix-compat
   (package
     (name "ghc-unix-compat")
@@ -13295,9 +13430,31 @@ work, but is substantially simpler and faster.")
     (home-page "https://github.com/jacobstanley/unix-compat")
     (synopsis "Portable POSIX-compatibility layer")
     (description
-     "This package provides portable implementations of parts of the unix
-package.  This package re-exports the unix package when available.  When it
-isn't available, portable implementations are used.")
+     "This package provides portable implementations of parts of the
+@code{unix} package.  This package re-exports the @code{unix} package when
+available.  When it isn't available, portable implementations are used.")
+    (license license:bsd-3)))
+
+(define-public ghc-unix-compat-7
+  (package
+    (name "ghc-unix-compat")
+    (version "0.7.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "unix-compat" version))
+       (sha256
+        (base32 "0gz30f4g3gyjz60jbcg072ms67pwdn4by6wvdkg63hjshgl0cj60"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "unix-compat")))
+    (native-inputs (list ghc-monad-parallel ghc-hspec ghc-hunit ghc-extra
+                         ghc-temporary))
+    (home-page "https://github.com/haskell-pkg-janitors/unix-compat")
+    (synopsis "Portable POSIX-compatibility layer")
+    (description
+     "This package provides portable implementations of parts of the unix package.
+This package re-exports the unix package when available.  When it isn't
+available, portable implementations are used.")
     (license license:bsd-3)))
 
 (define-public ghc-unix-time
@@ -13973,6 +14130,67 @@ given term should not exist.")
     (description
      "vty is a terminal GUI library in the niche of ncurses, intended to be easy
 to use and to provide good support for common terminal types.")
+    (license license:bsd-3)))
+
+(define-public ghc-vty-6
+  (package
+    (inherit ghc-vty)
+    (name "ghc-vty")
+    (version "6.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "vty" version))
+       (sha256
+        (base32 "0ywqfdngfv5pnsk5pa99yizpbhdq856sy3z70q2hmpmlc2r4h7vg"))))
+    (properties '((upstream-name . "vty")))
+    (inputs (list ghc-blaze-builder ghc-microlens ghc-microlens-mtl
+                  ghc-utf8-string ghc-vector))))
+
+(define-public ghc-vty-crossplatform
+  (package
+    (name "ghc-vty-crossplatform")
+    (version "0.4.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "vty-crossplatform" version))
+       (sha256
+        (base32 "06iwxgqrqzz05hmic7z5hxd48x0i49sk935vm0xfi0xq28sl7r9m"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "vty-crossplatform")))
+    (inputs (list ghc-vty-6 ghc-vty-unix ghc-random ghc-string-qq))
+    (home-page "https://hackage.haskell.org/package/vty-crossplatform")
+    (synopsis "Cross-platform support for Vty")
+    (description
+     "This package provides a generic interface for multiple Vty platforms in
+one package so you don't have to conditionally depend on them in your cabal
+file.")
+    (license license:bsd-3)))
+
+(define-public ghc-vty-unix
+  (package
+    (name "ghc-vty-unix")
+    (version "0.2.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "vty-unix" version))
+       (sha256
+        (base32 "1hfxc7qw884vlq8qshhyndl3zs10jc2xr6i69vhasjywkvh6gay2"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "vty-unix")))
+    (inputs (list ghc-blaze-builder
+                  ghc-vty-6
+                  ghc-vector
+                  ghc-utf8-string
+                  ghc-microlens
+                  ghc-microlens-mtl
+                  ghc-microlens-th
+                  ghc-ansi-terminal))
+    (home-page "https://hackage.haskell.org/package/vty-unix")
+    (synopsis "Unix backend for Vty")
+    (description "This package provides Unix terminal support for Vty.")
     (license license:bsd-3)))
 
 (define-public ghc-wave
@@ -14922,6 +15140,28 @@ footnotes, math, and more.")
 Pandoc types.")
     (license license:bsd-3)))
 
+(define-public ghc-hclip
+  (package
+    (name "ghc-hclip")
+    (version "3.0.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "Hclip" version))
+       (sha256
+        (base32 "04ppwm7vfzndrys8x1n8vfb41vzwx59r9xp4dkbiqmrms390pj6q"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "Hclip")))
+    (inputs (list ghc-strict))
+    (home-page "https://github.com/jetho/Hclip")
+    (synopsis
+     "Small cross-platform library for reading and modifying the system clipboard")
+    (description
+     "This package provides a small cross-platform library for reading and
+modifying the system clipboard.  It uses @code{xclip} or @code{xsel}
+at runtime.")
+    (license license:bsd-3)))
+
 (define-public ghc-hslua-module-path
   (package
     (name "ghc-hslua-module-path")
@@ -15631,6 +15871,59 @@ pages.")
 purposes.  See the
 [README](https://github.com/aaronallen8455/breakpoint#breakpoint) for details.")
     (license license:expat)))
+
+(define-public ghc-brick
+  (package
+    (name "ghc-brick")
+    (version "2.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "brick" version))
+       (sha256
+        (base32 "160np0bz1mcfkp077yc936i026s3zv1czn8lj3k3qr6scldavw35"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "brick")))
+    (inputs (list ghc-vty-6
+                  ghc-vty-crossplatform
+                  ghc-bimap
+                  ghc-data-clist
+                  ghc-microlens
+                  ghc-microlens-th
+                  ghc-microlens-mtl
+                  ghc-config-ini
+                  ghc-vector
+                  ghc-text-zipper
+                  ghc-unix-compat-7
+                  ghc-word-wrap
+                  ghc-random))
+    (native-inputs (list ghc-quickcheck))
+    (home-page "https://github.com/jtdaugherty/brick/")
+    (synopsis "Declarative terminal user interface library")
+    (description
+     "Brick helps you write @dfn{terminal user interfaces} (TUIs).  You write
+an event handler and a drawing function and the library does the rest.")
+    (license license:bsd-3)))
+
+(define-public ghc-brick-skylighting
+  (package
+    (name "ghc-brick-skylighting")
+    (version "1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "brick-skylighting" version))
+       (sha256
+        (base32 "1nw2x9zn0jlvykm89v80fh4187bxgn8l4cljgnf4mp4ci7aqjmkr"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "brick-skylighting")))
+    (inputs (list ghc-brick ghc-vty-6 ghc-skylighting-core))
+    (home-page "https://github.com/jtdaugherty/brick-skylighting/")
+    (synopsis "Show syntax-highlighted text in your Brick UI")
+    (description
+     "This package provides a module to use Skylighting to perform syntax
+highlighting and display the results in Brick-based interfaces.")
+    (license license:bsd-3)))
 
 (define-public ghc-githash
   (package

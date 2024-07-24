@@ -814,6 +814,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/tests/desktop.scm				\
   %D%/tests/dict.scm				\
   %D%/tests/docker.scm				\
+  %D%/tests/emacs.scm				\
   %D%/tests/file-sharing.scm			\
   %D%/tests/ganeti.scm				\
   %D%/tests/gdm.scm				\
@@ -1346,6 +1347,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/ghc-language-haskell-extract-ghc-8.10.patch	\
   %D%/packages/patches/ghc-memory-fix-32bit.patch		\
   %D%/packages/patches/ghc-persistent-fix-32bit.patch		\
+  %D%/packages/patches/ghc-unique-support-newer-hashable.patch	\
   %D%/packages/patches/ghostscript-CVE-2023-36664.patch		\
   %D%/packages/patches/ghostscript-CVE-2023-36664-fixup.patch	\
   %D%/packages/patches/ghostscript-leptonica-hurd.patch		\
@@ -2057,6 +2059,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/rust-ndarray-0.13-remove-blas-src.patch	\
   %D%/packages/patches/rust-ndarray-0.14-remove-blas-src.patch	\
   %D%/packages/patches/rust-nettle-disable-vendor.patch		 \
+  %D%/packages/patches/rust-poem-1-fewer-deps.patch		\
   %D%/packages/patches/rust-rspec-1-remove-clippy.patch	\
   %D%/packages/patches/rust-trash-2-update-windows.patch	\
   %D%/packages/patches/rust-webbrowser-remove-unsupported-os.patch	\

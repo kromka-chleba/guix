@@ -218,6 +218,86 @@ library.  This is beneficial for large amounts of data, say more than 1MB at a
 time, as otherwise the internal gzip library will likely be faster.")
     (license (list license:bsd-3 license:expat))))
 
+(define-public go-github-com-mholt-archiver-v3
+  (package
+    (name "go-github-com-mholt-archiver-v3")
+    (version "3.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mholt/archiver")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1py186hfy4p69wghqmbsyi1r3xvw1nyl55pz8f97a5qhmwxb3mwp"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mholt/archiver/v3"))
+    (propagated-inputs
+     (list go-github-com-andybalholm-brotli
+           go-github-com-dsnet-compress
+           go-github-com-golang-snappy
+           go-github-com-klauspost-compress
+           go-github-com-klauspost-pgzip
+           go-github-com-nwaples-rardecode
+           go-github-com-pierrec-lz4-v4
+           go-github-com-ulikunitz-xz
+           go-github-com-xi2-xz))
+    (home-page "https://github.com/mholt/archiver")
+    (synopsis "Multi format archiver Golang library and CLI commad")
+    (description
+     "Package archiver facilitates convenient, cross-platform, high-level
+archival and compression operations for a variety of formats and compression
+algorithms.
+
+Features:
+@itemize
+@item stream-oriented APIs
+@item automatically identify archive and compression formats
+@item traverse directories, archive files, and any other file uniformly as
+@code{io/fs} file systems
+@item compress and decompress files
+@item create and extract archive files
+@item walk or traverse into archive files
+@item extract only specific files from archives
+@item insert (append) into .tar and .zip archives
+@item read from password-protected 7-Zip files
+@item numerous archive and compression formats supported
+@item extensible (add more formats just by registering them)
+@item cross-platform, static binary
+@item pure Golang (no cgo)
+@item multithreaded Gzip
+@item adjust compression levels
+@item automatically add compressed files to zip archives without
+re-compressing
+@item open password-protected rar archives
+@end itemize
+
+Supported compression formats:
+@itemize
+@item brotli (.br)
+@item bzip2 (.bz2)
+@item flate (.zip)
+@item gzip (.gz)
+@item lz4 (.lz4)
+@item lzip (.lz)
+@item snappy (.sz)
+@item xz (.xz)
+@item zlib (.zz)
+@item zstandard (.zst)
+@end itemize
+
+Supported archive formats:
+@itemize
+@item .zip
+@item .tar (including any compressed variants like .tar.gz)
+@item .rar (read-only)
+@item .7z (read-only)
+@end itemize")
+    (license license:expat)))
+
 (define-public go-github-com-nwaples-rardecode
   (package
     (name "go-github-com-nwaples-rardecode")
@@ -331,9 +411,51 @@ decompressing data.  The package is completely written in Go and doesn't have
 any dependency on any C code.")
     (license license:bsd-3)))
 
+(define-public go-github-com-xi2-xz
+  (package
+    (name "go-github-com-xi2-xz")
+    (version "0.0.0-20171230120015-48954b6210f8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xi2/xz")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "178r0fa2dpzxf0sabs7dn0c8fa7vs87zlxk6spkn374ls9pir7nq"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/xi2/xz"))
+    (home-page "https://github.com/xi2/xz")
+    (synopsis "Native Golang XZ decompression package")
+    (description
+     "This package implements a native XZ decompression in Golang.")
+    ;; This package is a modified version of XZ Embedded
+    ;; <http://tukaani.org/xz/embedded.html>: 0BSD
+    ;;
+    ;; The contents of the testdata directory are modified versions of the
+    ;; test files from XZ Utils <http://tukaani.org/xz/>: 0BSD
+    (license license:public-domain)))
+
 ;;;
 ;;; Executables:
 ;;;
+
+(define-public go-arc
+  (package
+    (inherit go-github-com-mholt-archiver-v3)
+    (name "go-arc")
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "github.com/mholt/archiver/cmd/arc"
+      #:unpack-path "github.com/mholt/archiver"))
+    (description
+     (string-append (package-description go-github-com-mholt-archiver-v3)
+                    "\nThis package provides an command line interface (CLI)
+tool."))))
 
 (define-public go-lz4c
   (package

@@ -612,6 +612,144 @@ AES-NI available, or you'll need to use a different implementation.")
 abstraction for CPRNGs.")
     (license license:bsd-3)))
 
+(define-public ghc-crypton
+  (package
+    (name "ghc-crypton")
+    (version "0.34")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "crypton" version))
+       (sha256
+        (base32 "1mhypjhzn95in853bp7ary0a2xc6lsji6j8hrrgn2mfa4ilq8i24"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "crypton")))
+    (inputs (list ghc-memory ghc-basement))
+    (native-inputs (list ghc-tasty ghc-tasty-quickcheck ghc-tasty-hunit
+                         ghc-tasty-kat))
+    (home-page "https://github.com/kazu-yamamoto/crypton")
+    (synopsis "Cryptography Primitives sink")
+    (description
+     "This package provides a repository of cryptographic primitives.
+
+@itemize @bullet
+@item Symmetric ciphers: AES, DES, 3DES, CAST5, Blowfish, Twofish, Camellia,
+  RC4, Salsa, XSalsa, ChaCha.
+@item Hash: SHA1, SHA2, SHA3, SHAKE, MD2, MD4, MD5, Keccak, Skein, Ripemd,
+ Tiger, Whirlpool, Blake2.
+@item MAC: HMAC, KMAC, Poly1305
+@item Asymmetric crypto: DSA, RSA, DH, ECDH, ECDSA, ECC, Curve25519, Curve448,
+  Ed25519, Ed448
+@item Key Derivation Function: PBKDF2, Scrypt, HKDF, Argon2, BCrypt,
+  BCryptPBKDF
+@item Cryptographic Random generation: System Entropy, Deterministic Random
+  Generator
+@item Data related: Anti-Forensic Information Splitter (AFIS)
+@end itemize")
+    (license license:bsd-3)))
+
+(define-public ghc-crypton-x509
+  (package
+    (name "ghc-crypton-x509")
+    (version "1.7.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "crypton-x509" version))
+       (sha256
+        (base32 "1zyaz0krf08g36g30zr5wn8f2x51l4dj2zcjnhpiw9h05p54mdzb"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "crypton-x509")))
+    (inputs (list ghc-memory
+                  ghc-hourglass
+                  ghc-pem
+                  ghc-asn1-types
+                  ghc-asn1-encoding
+                  ghc-asn1-parse
+                  ghc-crypton))
+    (native-inputs (list ghc-tasty ghc-tasty-quickcheck ghc-x509))
+    (arguments
+     `(#:cabal-revision ("1"
+                         "10a2x47znhbayyfr6fqgq27623akpycyjbfxz4hnavavf1x6ary5")
+       ;; build phase fails when tests are activated.
+       ;; See https://github.com/kazu-yamamoto/crypton-certificate/pull/7
+       #:tests? #f))
+    (home-page "https://github.com/kazu-yamamoto/crypton-certificate")
+    (synopsis "X509 reader and writer")
+    (description "This package provides generic X509 support for Haskell.")
+    (license license:bsd-3)))
+
+(define-public ghc-crypton-x509-store
+  (package
+    (name "ghc-crypton-x509-store")
+    (version "1.6.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "crypton-x509-store" version))
+       (sha256
+        (base32 "0vr5b9cyf9x016wn1g0bryslf5nz8jq2sy8r3llwqfg02apihqiy"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "crypton-x509-store")))
+    (inputs (list ghc-pem ghc-asn1-types ghc-asn1-encoding ghc-crypton
+                  ghc-crypton-x509))
+    (native-inputs (list ghc-tasty ghc-tasty-hunit))
+    (home-page "https://github.com/kazu-yamamoto/crypton-certificate")
+    (synopsis "X.509 collection accessing and storing methods")
+    (description
+     "This package provides methods for accessing and storing X.509
+collections of certificates, certificate revocation lists, and exception
+lists.")
+    (license license:bsd-3)))
+
+(define-public ghc-crypton-x509-system
+  (package
+    (name "ghc-crypton-x509-system")
+    (version "1.6.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "crypton-x509-system" version))
+       (sha256
+        (base32 "1jilnr9715njlx1hqvg5lrsrwk12r04maypmh18di0sybwg2cdm4"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "crypton-x509-system")))
+    (inputs (list ghc-pem ghc-crypton-x509 ghc-crypton-x509-store))
+    (home-page "https://github.com/kazu-yamamoto/crypton-certificate")
+    (synopsis "Handle per-operating-system X.509 accessors and storage")
+    (description
+     "This package provides tools for operating system dependent X.509 stores,
+storage methods, and accessors.")
+    (license license:bsd-3)))
+
+(define-public ghc-crypton-x509-validation
+  (package
+    (name "ghc-crypton-x509-validation")
+    (version "1.6.12")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "crypton-x509-validation" version))
+       (sha256
+        (base32 "1xjhwvmkcy47a6xiqxb3xy944ca7g660203jdrz5xzd46zibfq0f"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "crypton-x509-validation")))
+    (inputs (list ghc-memory
+                  ghc-hourglass
+                  ghc-data-default-class
+                  ghc-pem
+                  ghc-asn1-types
+                  ghc-asn1-encoding
+                  ghc-crypton-x509
+                  ghc-crypton-x509-store
+                  ghc-crypton))
+    (native-inputs (list ghc-tasty ghc-tasty-hunit))
+    (home-page "https://github.com/kazu-yamamoto/crypton-certificate")
+    (synopsis "X.509 Certificate and CRL validation")
+    (description "This package provides Haskell tools for X.509 certificate
+and @dfn{Certificates revocation list} (CRL) validation.")
+    (license license:bsd-3)))
+
 (define-public ghc-cprng-aes
   (package
     (name "ghc-cprng-aes")
@@ -719,6 +857,43 @@ type system, high level constructions and common Haskell features.  Currently
 implement the SSL3.0, TLS1.0, TLS1.1 and TLS1.2 protocol, and support RSA and
 Ephemeral (Elliptic curve and regular) Diffie Hellman key exchanges, and many
 extensions.")
+    (license license:bsd-3)))
+
+(define-public ghc-tls-1.9
+  (package
+    (name "ghc-tls")
+    (version "1.9.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "tls" version))
+       (sha256
+        (base32 "0gj3af9sqd0bw7dpcqfyvbslpxsk2ij00a77kl710fwhw35vj1an"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "tls")))
+    (inputs (list ghc-cereal
+                  ghc-data-default-class
+                  ghc-memory
+                  ghc-crypton
+                  ghc-asn1-types
+                  ghc-asn1-encoding
+                  ghc-crypton-x509
+                  ghc-crypton-x509-store
+                  ghc-crypton-x509-validation
+                  ghc-async
+                  ghc-unix-time
+                  ghc-network))
+    (native-inputs (list ghc-tasty ghc-tasty-quickcheck ghc-quickcheck))
+    (home-page "https://github.com/haskell-tls/hs-tls")
+    (synopsis "TLS/SSL protocol native implementation (server and client)")
+    (description
+     "This package provides a native Haskell TLS and SSL protocol
+implementation for server and client.  It provides a high-level implementation
+of a sensitive security protocol, eliminating a common set of security issues
+through the use of the advanced type system, high level constructions and
+common Haskell features.  It currently implements the SSL3.0, TLS1.0, TLS1.1
+and TLS1.2 protocol, and supports RSA and Ephemeral (Elliptic curve and
+regular) Diffie Hellman key exchanges, and many extensions.")
     (license license:bsd-3)))
 
 (define-public ghc-hsopenssl

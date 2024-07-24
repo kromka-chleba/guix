@@ -512,7 +512,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.9-version "6.9.9")
+(define-public linux-libre-6.9-version "6.9.10")
 (define-public linux-libre-6.9-gnu-revision "gnu")
 (define deblob-scripts-6.9
   (linux-libre-deblob-scripts
@@ -522,7 +522,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "18vfz1fx4vjssfh1w7aqfjf91y2g34a2qnzbl9pyawa7qnqxq33n")))
 (define-public linux-libre-6.9-pristine-source
   (let ((version linux-libre-6.9-version)
-        (hash (base32 "1f8y88rif3z5lp1bq00g66fd0xs1227qlqkxd2zs6fdjgr45pq1b")))
+        (hash (base32 "18adcli0pazz7x62ws4hrj64prs6fmxln3p3xaii6zd6bwrjxlgg")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.9)))
@@ -532,7 +532,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.40")
+(define-public linux-libre-6.6-version "6.6.41")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -542,12 +542,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "15xb4miirfmi1khlq4zhb8zmmh82f41jhsfbsfpv8v98yfka2nmb")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "0f7mmw5pzd174376m7r928xbi9mdcla0vy6plq0xdf2mq01kqfjw")))
+        (hash (base32 "1vrjw0yhzmmnbrxyzjrfyz1s8bixciv1ly9pkgcqbasqh5brrjcy")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.99")
+(define-public linux-libre-6.1-version "6.1.100")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -557,42 +557,42 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "11jbnj0d3262grf9vkn0668kvfxifxw98ccvn81wkaykll01k5nx")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "1lsdwdx7i7xw1rzq88k3bz8sar77gb4rnmjx11pbmvmiwaffx1n0")))
+        (hash (base32 "1fd8cmdni1lgjzgn74i5dih5kx3b1axqyhiddxn4s8qgl30nxamr")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.162")
+(define-public linux-libre-5.15-version "5.15.163")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
    linux-libre-5.15-version
    linux-libre-5.15-gnu-revision
    (base32 "18ac30kxg2mf2f6gk3p935hzhz2qs110jy4xwk21kblnnkskbxj8")
-   (base32 "0p6spfkf3smm4wlgfmqahzcfnlzij5nkhqh297h91r3xqxis0l1y")))
+   (base32 "1l8dhfby3qx8vs8fq6yybixzrghbh03wflzwly4rq08wabcr87z8")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "0z0s5gk8akcbpb99jp08px78fhr8r6kkb7dpl01b3rrc2pmc1gwi")))
+        (hash (base32 "00mkipkhz0i5xld7kyaxcj8cj8faw4gmjl5fribg832nn7ccfpq2")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
 
-(define-public linux-libre-5.10-version "5.10.221")
+(define-public linux-libre-5.10-version "5.10.222")
 (define-public linux-libre-5.10-gnu-revision "gnu1")
 (define deblob-scripts-5.10
   (linux-libre-deblob-scripts
    linux-libre-5.10-version
    linux-libre-5.10-gnu-revision
    (base32 "1b33rkn32b923025iiz4xzxiy8y5ii9j5qk4021mg575890rl4ch")
-   (base32 "12csh2zyjrqzgqcv799gv8h4xaw1irxh2zqddn4jqp5p7psx4j5k")))
+   (base32 "1isiih0laz4wbivsg0pcvlgrflq3lv10fakv9lvg2b4s0yd9ybdn")))
 (define-public linux-libre-5.10-pristine-source
   (let ((version linux-libre-5.10-version)
-        (hash (base32 "09975sby114mwfb8x2rlpaps6vb60dvs8f20cmb7hkxcxdzx87fs")))
+        (hash (base32 "1jshn64g165rdshyjvq38ni6pkbskp50048pbz407fss7f00cbbv")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.10)))
 
-(define-public linux-libre-5.4-version "5.4.279")
+(define-public linux-libre-5.4-version "5.4.280")
 (define-public linux-libre-5.4-gnu-revision "gnu1")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
@@ -602,12 +602,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0x0xg0fcykpd117x3q0gim8jilhx922ashhckjvafxv2gk2zzjhj")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "0pja69n66hsl1r5jbzqww1hwsmqdlxmq6qv9rqx5qnrr4rml765j")))
+        (hash (base32 "0hix0dywf2ybvzxkijjsjmkrj7sx61hwq6mg1wqsq317p1zccxm9")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
 
-(define-public linux-libre-4.19-version "4.19.317")
+(define-public linux-libre-4.19-version "4.19.318")
 (define-public linux-libre-4.19-gnu-revision "gnu1")
 (define deblob-scripts-4.19
   (linux-libre-deblob-scripts
@@ -617,7 +617,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0fgkp3v7qgqpn7l1987xcwwlrmwsbscqnxfv06p8nkavrhymrv3c")))
 (define-public linux-libre-4.19-pristine-source
   (let ((version linux-libre-4.19-version)
-        (hash (base32 "109mk4zscm8611xs3bchnr94gasvw3vxsi6zhp3f2y132g670aq6")))
+        (hash (base32 "14vl0288apl76rvxa9yxfggrc4600bjsn4gw097m4gy5ldiaapqd")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.19)))

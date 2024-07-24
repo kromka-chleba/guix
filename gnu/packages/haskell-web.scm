@@ -89,6 +89,36 @@ for screen-scraping.")
     (description "HTTP cookie parsing and rendering library for Haskell.")
     (license license:expat)))
 
+(define-public ghc-crypton-connection
+  (package
+    (name "ghc-crypton-connection")
+    (version "0.3.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "crypton-connection" version))
+       (sha256
+        (base32 "07lrkv6lwphsyp4797yp8ywnndzd270bk58r8gwyby0hr4xy52r0"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "crypton-connection")))
+    (inputs (list ghc-basement
+                  ghc-data-default-class
+                  ghc-network
+                  ghc-tls-1.9
+                  ghc-socks
+                  ghc-crypton-x509
+                  ghc-crypton-x509-store
+                  ghc-crypton-x509-system
+                  ghc-crypton-x509-validation))
+    (home-page "https://github.com/kazu-yamamoto/crypton-connection")
+    (synopsis "Simple and easy network connections API")
+    (description
+     "This package provides a simple network library for all your connection
+needs.  Features: Really simple to use, SSL/TLS, SOCKS.  This library provides
+a very simple API to create sockets to a destination with the choice of
+SSL/TLS, and SOCKS.")
+    (license license:bsd-3)))
+
 (define-public ghc-curl
   (package
     (name "ghc-curl")
@@ -814,6 +844,67 @@ attacks.")
 Haskell.")
     (license license:bsd-3)))
 
+(define-public ghc-mattermost-api
+  (package
+    (name "ghc-mattermost-api")
+    (version "90000.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "mattermost-api" version))
+       (sha256
+        (base32 "1ka3r4bnfwlbjnkws8vkg8i9gj8wzsyss137p7hxrx4sr75s6iyv"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "mattermost-api")))
+    (inputs (list ghc-websockets
+                  ghc-aeson
+                  ghc-crypton-connection
+                  ghc-memory
+                  ghc-resource-pool
+                  ghc-http
+                  ghc-http-media
+                  ghc-network-uri
+                  ghc-modern-uri
+                  ghc-unordered-containers
+                  ghc-hashable
+                  ghc-gitrev
+                  ghc-microlens
+                  ghc-microlens-th
+                  ghc-pretty-show
+                  ghc-split
+                  ghc-connection))
+    (native-inputs (list ghc-tasty ghc-tasty-hunit ghc-hunit))
+    (arguments
+     (list #:tests? #f)) ;tests require networking and Mattermost Docker image
+    (home-page "https://hackage.haskell.org/package/mattermost-api")
+    (synopsis "Client API for Mattermost chat system")
+    (description
+     "This package implements the client API for the Mattermost chat system.
+Mattermost is a flexible messaging platform.  This library provides network
+API interaction with the Mattermost server.")
+    (license license:bsd-3)))
+
+(define-public ghc-mattermost-api-qc
+  (package
+    (name "ghc-mattermost-api-qc")
+    (version "90000.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "mattermost-api-qc" version))
+       (sha256
+        (base32 "0lrb8l8nbrdp4y2ala8hchr8ikv5hqw710ffiiw1sz6z2dqiqbxm"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "mattermost-api-qc")))
+    (inputs (list ghc-mattermost-api ghc-quickcheck))
+    (home-page "https://github.com/matterhorn-chat/mattermost-api-qc")
+    (synopsis "QuickCheck instances for the Mattermost client API library")
+    (description
+     "This package provides a library providing @code{QuickCheck} for the
+mattermost-api library to allow testing.  This is provided as a separate
+library to allow use of the API library without testing dependencies.")
+    (license license:isc)))
+
 (define-public ghc-mime-types
   (package
     (name "ghc-mime-types")
@@ -831,6 +922,36 @@ Haskell.")
     (description
      "This library provides basic MIME type handling types and functions.")
     (license license:expat)))
+
+(define-public ghc-modern-uri
+  (package
+    (name "ghc-modern-uri")
+    (version "0.3.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "modern-uri" version))
+       (sha256
+        (base32 "1sag8l91qd7xs56rlx8r6dz9zxxmqsnfw0v47az7l8nirv7zjih2"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "modern-uri")))
+    (inputs (list ghc-quickcheck
+                  ghc-hashable
+                  ghc-megaparsec
+                  ghc-profunctors
+                  ghc-reflection
+                  ghc-tagged))
+    (native-inputs (list ghc-hspec
+                         ghc-hspec-megaparsec
+                         ghc-hspec-discover))
+    (arguments
+     `(#:cabal-revision ("1"
+                         "0c0mr8aqs963nmy7i8yfih24snaijgwkxim2q2khw12capshac0q")))
+    (home-page "https://github.com/mrkkrp/modern-uri")
+    (synopsis "Library for working with URIs")
+    (description "This is a library for working with URIs in Haskell as
+per RFC 3986.")
+    (license license:bsd-3)))
 
 (define-public ghc-html
   (package

@@ -41,6 +41,31 @@
   #:use-module (gnu packages shells)
   #:use-module (gnu packages specifications))
 
+(define-public go-github-com-ipfs-bbloom
+  (package
+    (name "go-github-com-ipfs-bbloom")
+    (version "0.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/bbloom")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dcdn7nlysynl7yrbivv8m7j83jq7pabhcff8mvfjdk583rgnkp2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/bbloom"))
+    (home-page "https://github.com/ipfs/bbloom")
+    (synopsis "Fast bit set Bloom filter")
+    (description
+     "This package implements a fast bloom filter with real @code{bitset} and
+JSONMarshal/JSONUnmarshal to store/reload the Bloom filter.")
+    (license (list license:expat             ; bbloom.go
+                   license:public-domain)))) ; siphash.go
+
 (define-public go-github-com-ipfs-go-block-format
   (package
     (name "go-github-com-ipfs-go-block-format")
@@ -71,6 +96,73 @@ InterPlanetary Linked Data} data structures. A block is raw data accompanied
 by a @acronym{Content Identifiers,CID}. The CID contains the multihash
 corresponding to the block.")
     (license license:expat)))
+
+(define-public go-github-com-ipfs-go-ipfs-blockstore
+  (package
+    (name "go-github-com-ipfs-go-ipfs-blockstore")
+    (version "1.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-ipfs-blockstore")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1a3a0fm8k8njdlq2w795qff01piadjfp6r5r2hww69fxqsplln9l"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-ipfs-blockstore"))
+    (propagated-inputs
+     (list go-github-com-hashicorp-golang-lru
+           go-github-com-ipfs-bbloom
+           go-github-com-ipfs-go-block-format
+           go-github-com-ipfs-go-cid
+           go-github-com-ipfs-go-datastore
+           go-github-com-ipfs-go-ipfs-ds-help
+           go-github-com-ipfs-go-ipfs-util
+           go-github-com-ipfs-go-ipld-format
+           go-github-com-ipfs-go-log
+           go-github-com-ipfs-go-metrics-interface
+           go-github-com-multiformats-go-multihash
+           go-go-uber-org-atomic))
+    (home-page "https://github.com/ipfs/go-ipfs-blockstore")
+    (synopsis "Caching wrapper over a IPFS datastore")
+    (description
+     "@code{go-ipfs-blockstore} implements a thin wrapper over an IPFS datastore,
+giving a clean interface for getting and putting block objects.")
+    (license license:expat)))
+
+(define-public go-github-com-ipfs-go-ipfs-blocksutil
+  ;; Use the latest commit from the "master" branch to fix the build with
+  ;; go-1.21, see <https://github.com/ipfs/go-ipfs-blocksutil/issues/25>.
+  (let ((commit "ce0497f5ee55c479db98905aec8ff56c27aad2a2")
+        (revision "0"))
+    (package
+      (name "go-github-com-ipfs-go-ipfs-blocksutil")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ipfs/go-ipfs-blocksutil")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1ya6376wphp51rv48nmv4jw3x0mf6ym5yx1650fbkp5l5crqpdb8"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/ipfs/go-ipfs-blocksutil"))
+      (propagated-inputs
+       (list go-github-com-ipfs-go-block-format))
+      (home-page "https://github.com/ipfs/go-ipfs-blocksutil")
+      (synopsis "Utility functions for working with IPFS blocks")
+      (description
+       "This package provides an utility functions for working with
+@url{https://github.com/ipfs/go-block-format, IPFS blocks}.")
+      (license license:expat))))
 
 (define-public go-github-com-ipfs-go-cid
   (package
@@ -184,6 +276,35 @@ that are shared between @command{go-ipfs/commands} and its rewrite
 objects.")
     (license license:expat)))
 
+(define-public go-github-com-ipfs-go-ipfs-ds-help
+  (package
+    (name "go-github-com-ipfs-go-ipfs-ds-help")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-ipfs-ds-help")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1xmn9pdyrcim9ahqs9pkh0c9ac71gilb3pb48kcagq8zxf22i4bj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-ipfs-ds-help"))
+    (propagated-inputs
+     (list go-github-com-ipfs-go-cid
+           go-github-com-ipfs-go-datastore
+           go-github-com-multiformats-go-base32
+           go-github-com-multiformats-go-multihash))
+    (home-page "https://github.com/ipfs/go-ipfs-ds-help")
+    (synopsis "Utilities for parsing and creating datastore keys")
+    (description
+     "@code{go-ipfs-ds-help} provides utilities for parsing and creating datastore
+keys used by @code{go-ipfs} (Kubo).")
+    (license license:expat)))
+
 (define-public go-github-com-ipfs-go-datastore
   (package
     (name "go-github-com-ipfs-go-datastore")
@@ -241,6 +362,32 @@ throughout its lifetime.")
     (home-page "https://github.com/ipfs/go-detect-race")
     (synopsis "Detect if compiled with race")
     (description "Check if the race detector is running.")
+    (license license:expat)))
+
+(define-public go-github-com-ipfs-go-ipfs-exchange-interface
+  (package
+    (name "go-github-com-ipfs-go-ipfs-exchange-interface")
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-ipfs-exchange-interface")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0h5jizhjq4yz9sikqc6yhv5gsb8fgv67v0qjzagyhfznfx8kwv1d"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-ipfs-exchange-interface"))
+    (propagated-inputs
+     (list go-github-com-ipfs-go-block-format
+           go-github-com-ipfs-go-cid))
+    (home-page "https://github.com/ipfs/go-ipfs-exchange-interface")
+    (synopsis "The IPFS Exchange interface")
+    (description
+     "@code{go-ipfs-exchange-interface} defines the IPFS exchange interface.")
     (license license:expat)))
 
 (define-public go-github-com-ipfs-go-ipfs-util
@@ -574,6 +721,36 @@ their levels to be controlled individually.")
      (list
       #:import-path "github.com/ipfs/go-log"))))
 
+(define-public go-github-com-ipfs-go-metrics-interface
+  (package
+    (name "go-github-com-ipfs-go-metrics-interface")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-metrics-interface")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09xc71175sfnqlizkbw066jagnbag9ihvs240z6g6dm2yx3w5xgy"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-metrics-interface"))
+    (propagated-inputs
+     (list go-github-com-ipfs-go-cid
+           go-github-com-ipfs-go-datastore
+           go-github-com-multiformats-go-base32
+           go-github-com-multiformats-go-multihash))
+    (home-page "https://github.com/ipfs/go-metrics-interface")
+    ;; XXX: The project neither has no a proper description, nor a README, see
+    ;; <https://github.com/ipfs/go-metrics-interface/issues/1>.
+    (synopsis "Metrics interface for IPFS")
+    (description
+     "Metrics interface for IPFS (Kubo).")
+    (license license:expat)))
+
 (define-public go-github-com-libp2p-go-socket-activation
   (package
     (name "go-github-com-libp2p-go-socket-activation")
@@ -803,6 +980,7 @@ written in Go.")
                              "vendor/github.com/ipfs/go-ipld-git"
                              "vendor/github.com/ipfs/go-ipld-legacy"
                              "vendor/github.com/ipfs/go-log"
+                             "vendor/github.com/ipfs/go-metrics-interface"
                              "vendor/github.com/ipld/go-codec-dagpb"
                              "vendor/github.com/ipld/go-ipld-prime"
                              "vendor/github.com/jackpal"
@@ -894,7 +1072,7 @@ written in Go.")
                   go-github-com-ipfs-go-ipld-legacy
                   go-github-com-ipfs-go-log
                   go-github-com-ipfs-go-log-v2
-                  ;;go-github-com-ipfs-go-metrics-interface
+                  go-github-com-ipfs-go-metrics-interface
                   ;;go-github-com-ipfs-go-metrics-prometheus
                   ;;go-github-com-ipfs-go-unixfsnode
                   ;;go-github-com-ipfs-shipyard-nopfs

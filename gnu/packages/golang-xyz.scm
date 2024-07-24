@@ -2644,33 +2644,33 @@ and stop units of work, which may receive @code{Close} signals from many clients
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1hbpxcrcsbi975lklrhzyzk0fzn79pxicvfyf2sckmd2n6jb4ayy"))))
+        (base32 "1hbpxcrcsbi975lklrhzyzk0fzn79pxicvfyf2sckmd2n6jb4ayy"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Module name has been changed upstream.
+            (substitute* (find-files "." "\\.go$")
+              (("gopkg.in/neurosnap/sentences.v1")
+               "github.com/neurosnap/sentences"))))))
     (build-system go-build-system)
     (arguments
      (list
-      ;; FIXME: Adjust tests sute or check with upstram:
-      ;; === Failed
-      ;; === FAIL: nlp/segment TestGoldenRules (0.00s)
-      ;;     segment_test.go:143: 25. Double quotations inside sentence
-      ;;     segment_test.go:144: Actual: [She turned to him, "This is great." she said.]
-      ;;     segment_test.go:145: Actual: 2, Expected: 1
-      ;;     segment_test.go:146: ===
-      #:tests? #f
       #:import-path "github.com/jdkato/twine"
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-module-import-path
-            (lambda* (#:key import-path #:allow-other-keys)
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" import-path)
-                (substitute* (find-files "." "\\.go$")
-                  (("gopkg.in/neurosnap/sentences.v1")
-                   "github.com/neurosnap/sentences")))))
-          (replace 'build
-            (lambda* (#:key import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                (invoke "go" "build" "-v" "-x" "-ldflags=-s -w" "-trimpath" "./...")))))))
-    (native-inputs
-     (list gotestsum))
+                (substitute* "nlp/segment/segment_test.go"
+                  (("TestGoldenRules") "OffTestGoldenRules")))))
+          ;; XXX: Workaround for go-build-system's lack of Go modules
+          ;; support.
+          (delete 'build)
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
     (propagated-inputs
      (list go-github-com-montanaflynn-stats
            go-github-com-neurosnap-sentences
@@ -3903,6 +3903,61 @@ registry.")
 list of sentences.")
     (license license:expat)))
 
+(define-public go-github-com-niklasfasching-go-org
+  (package
+    (name "go-github-com-niklasfasching-go-org")
+    (version "1.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/niklasfasching/go-org")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "100ay19a7my2m1za1ih0wvqxf5mq77byas1f23mx69qsbp391w04"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/niklasfasching/go-org"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; FIXME: Pattern embedded: cannot embed directory embedded:
+          ;; contains no embeddable files.
+          ;;
+          ;; This happens due to Golang can't determine the valid directory of
+          ;; the module which is sourced during setup environment phase, but
+          ;; easy resolved after coping to expected directory "vendor" within
+          ;; the current package, see details in Golang source:
+          ;;
+          ;; - URL: <https://github.com/golang/go/blob/>
+          ;; - commit: 82c14346d89ec0eeca114f9ca0e88516b2cda454
+          ;; - file: src/cmd/go/internal/load/pkg.go#L2059
+          (add-before 'build 'copy-input-to-vendor-directory
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (mkdir "vendor")
+                (copy-recursively
+                 (string-append
+                  #$(this-package-input "go-github-com-alecthomas-chroma-v2")
+                  "/src/github.com")
+                 "vendor/github.com"))))
+          (add-before 'install 'remove-vendor-directory
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "vendor")))))))
+    (propagated-inputs
+     (list go-golang-org-x-net
+           go-github-com-pmezard-go-difflib
+           go-github-com-alecthomas-chroma-v2))
+    (home-page "https://github.com/niklasfasching/go-org")
+    (synopsis "Org mode parser and render for Golang")
+    (description
+     "This package provides a library and CLI program to parse the
+@code{org-mode} file format alongside a static site generator with HTML &
+pretty printed rendering in Golang.")
+    (license license:expat)))
+
 (define-public go-github-com-nsqio-go-diskqueue
   (package
     (name "go-github-com-nsqio-go-diskqueue")
@@ -4576,6 +4631,13 @@ well as a program to generate applications and command files.")
       #:import-path "github.com/syndtr/goleveldb"
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? unpack-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (substitute* (find-files "." "\\_test.go$")
+                  ;; XXX Failing on i686-linux:
+                  ;; failed on input 0xde6d70588e18c85b, 0x85261e67
+                  (("TestBatchHeader") "OffTestBatchHeader")))))
           ;; XXX: Replace when go-build-system supports nested path.
           (delete 'build)
           (replace 'check

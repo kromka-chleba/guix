@@ -2024,6 +2024,35 @@ used to read GeoLite2 and GeoIP2 databases, @code{geoip2} provides a
 higher-level API for doing so.")
     (license license:isc)))
 
+(define-public go-github-com-pion-datachannel
+  (package
+    (name "go-github-com-pion-datachannel")
+    (version "1.5.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/datachannel")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0v2xwrzvflrh1s8x6p1dj9h0hmxsp30h8whbl5p544r30rvsbnp2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/pion/datachannel"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pion-logging
+           go-github-com-pion-sctp
+           go-github-com-pion-transport-v3))
+    (home-page "https://github.com/pion/datachannel")
+    (synopsis "Implementation of WebRTC Data Channels in Golang")
+    (description
+     "This package implements @code{WebRTC} Data Channels.")
+    (license license:expat)))
+
 (define-public go-github-com-pion-dtls
   (package
     (name "go-github-com-pion-dtls")
@@ -2270,6 +2299,37 @@ part of @url{https://github.com/pion, Pion} WebRTC implementation.")
     (description
      "This package provides a @acronym{Real-time Transport Protocol, RTP}
 packetizer and depacketizer.")
+    (license license:expat)))
+
+(define-public go-github-com-pion-sctp
+  (package
+    (name "go-github-com-pion-sctp")
+    (version "1.8.19")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/sctp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19yzpyrlmk3gvpkpn5846rad9cc8ffxw9jqwnpr6szqax7k0l0zw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/pion/sctp"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pion-logging
+           go-github-com-pion-randutil
+           go-github-com-pion-transport-v3))
+    (home-page "https://github.com/pion/sctp")
+    (synopsis "Implementation of SCTP in Golang")
+    (description
+     "This package implements the @acronym{Stream Control Transmission
+Protocol,SCTP} as specified in
+@uref{https://rfc-editor.org/rfc/rfc9260.html,RFC 9260}.")
     (license license:expat)))
 
 (define-public go-github-com-pion-stun
