@@ -142,6 +142,7 @@
   #:use-module (gnu packages textutils)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages video)
+  #:use-module (gnu packages vulkan)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xiph)
@@ -2421,7 +2422,7 @@ QMatrixClient project.")
 (define-public mtxclient
   (package
     (name "mtxclient")
-    (version "0.9.1")
+    (version "0.10.0")
     (source
      (origin
        (method git-fetch)
@@ -2430,20 +2431,19 @@ QMatrixClient project.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0m8agc3c4n03r92nz3gxkpxmj2c3ncf125nmfdv0jf24gxib126z"))))
-    (arguments
-     `(#:configure-flags
-       (list
-        ;; Disable example binaries (not installed)
-        "-DBUILD_LIB_EXAMPLES=OFF")
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'disable-network-tests
-           (lambda _
-             (substitute* "CMakeLists.txt"
-               (("add_test\\((BasicConnectivity|ClientAPI|Devices|MediaAPI|Encryption|Pushrules)")
-                "# add_test")))))))
+        (base32 "10iidyxjk3w6cljw2r62i5azx84nw3p8hw97d8vy7r5gh1nrrrcn"))))
     (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list  "-DBUILD_LIB_EXAMPLES=OFF") ; disable example binaries (not installed)
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'disable-network-tests
+            (lambda _
+              (substitute* "CMakeLists.txt"
+                (("add_test\\((BasicConnectivity|ClientAPI|Devices|MediaAPI|Encryption|Pushrules)")
+                 "# add_test")))))))
     (inputs
      (list boost
            coeurl
@@ -2467,7 +2467,7 @@ for the Matrix protocol.  It is built on to of @code{Boost.Asio}.")
 (define-public nheko
   (package
     (name "nheko")
-    (version "0.11.3")
+    (version "0.12.0")
     (source
      (origin
        (method git-fetch)
@@ -2476,41 +2476,25 @@ for the Matrix protocol.  It is built on to of @code{Boost.Asio}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0yjbxyba87nkpjmql7s6nv2r2i9s956zgwlfhdi4jjg96v2rgmnr"))
+        (base32 "113ids1k2pjmvs9cgh025vkpg5mipw295dlkx7n3ydi0r8mzw1l5"))
        (modules '((guix build utils)))
-       (snippet
-        '(begin
-           (delete-file-recursively "third_party")))))
+       (snippet '(delete-file-recursively "third_party"))))
     (arguments
      (list
       #:tests? #f                       ;no test target
+      #:qtbase qtbase
       #:configure-flags
       #~(list "-DCMAKE_BUILD_TYPE=Release"
               ;; Fix required because we are using a static SingleApplication
               "-DCMAKE_CXX_FLAGS= \"-DQAPPLICATION_CLASS=QApplication\" "
               ;; Compile Qml will make Nheko faster, but you will need to recompile
               ;; it, when you update Qt.  That's fine for us.
-              "-DCOMPILE_QML=ON")
+              "-DCOMPILE_QML=ON"
+              ;; Use system libraries.
+              "-DUSE_BUNDLED_BLURHASH=OFF"
+              "-DUSE_BUNDLED_CPPHTTPLIB=OFF")
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'unbundle-dependencies
-            (lambda* (#:key inputs #:allow-other-keys)
-              (let ((libSingleApplication.a
-                     (search-input-file inputs "lib/libSingleApplication.a"))
-                    (httplib.h (search-input-file inputs "include/httplib.h")))
-                (substitute* "CMakeLists.txt"
-                  ;; Remove include and source dirs,replace with the correct one
-                  (("third_party/blurhash/blurhash\\.[ch]pp") "")
-                  (("third_party/cpp-httplib-0\\.5\\.12")
-                   (dirname httplib.h))
-                  (("add_subdirectory.*third_party/SingleApplication.*") "")
-                  ;; Link using the correct static/shared libs
-                  (("SingleApplication::SingleApplication")
-                   (string-append
-                    ;; Dynamic libraries
-                    "httplib" "\n" "blurhash" "\n"
-                    ;; Static library
-                    libSingleApplication.a))))))
           (add-after 'unpack 'fix-determinism
             (lambda _
               ;; Make Qt deterministic.
@@ -2522,37 +2506,37 @@ for the Matrix protocol.  It is built on to of @code{Boost.Asio}.")
                   `("GST_PLUGIN_SYSTEM_PATH" ":" prefix (,gst-plugin-path)))))))))
     (build-system qt-build-system)
     (inputs
-     (list boost
-           blurhash
-           cpp-httplib
+     (list blurhash
+           brotli
            cmark
            coeurl
+           cpp-httplib
            curl
            gst-plugins-base
            gst-plugins-bad              ; sdp & webrtc for voip
            gst-plugins-good-qt          ; rtpmanager for voip
-           nlohmann-json
+           kdsingleapplication
            libevent
            libnice                      ; for voip
-           olm
+           libxkbcommon
            lmdb
            lmdbxx
            mtxclient
+           nlohmann-json
+           olm
            openssl
-           qtbase-5
-           qtdeclarative-5
-           qtkeychain
+           qtdeclarative
            qtgraphicaleffects
-           qtmultimedia-5
-           qtquickcontrols2-5
-           qtsvg-5
+           qtkeychain-qt6
+           qtmultimedia
+           qtsvg
            re2
            spdlog
-           single-application-qt5
-           xcb-util-wm
+           vulkan-headers
+           vulkan-loader
            zlib))
     (native-inputs
-     (list asciidoc pkg-config qttools-5))
+     (list asciidoc pkg-config qttools))
     (home-page "https://github.com/Nheko-Reborn/nheko")
     (synopsis "Desktop client for Matrix using Qt and C++14")
     (description "@code{Nheko} want to provide a native desktop app for the
