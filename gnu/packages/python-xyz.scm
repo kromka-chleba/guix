@@ -16073,7 +16073,7 @@ structures.")
 
 (define-public wfetch
   (let ((commit "e1cfa37814aebc9eb56ce994ebe877b6a6f9a715")
-        (revision "1"))
+        (revision "2"))
     (package
       (name "wfetch")
       (version (git-version "0.1-pre" revision commit))
@@ -16101,7 +16101,10 @@ structures.")
                  (mkdir-p share)
                  (substitute* "wfetch/wfetch.py"
                    (("os.sep, 'opt', 'wfetch'") (string-append "'" share "'")))
-                 (install-file "wfetch/wfetch.py" bin)
+                 ; The documentation expects the executable to be named
+                 ; 'wfetch', not 'wfetch.py'.
+                 (rename-file "wfetch/wfetch.py" "wfetch/wfetch")
+                 (install-file "wfetch/wfetch" bin)
                  (copy-recursively "wfetch/icons" share)))))))
       (inputs (list python-pyowm python-fire python-termcolor python-requests))
       (synopsis "Command-line tool to display weather info")
@@ -19254,16 +19257,19 @@ templates into Python modules.")
 (define-public python-waitress
   (package
     (name "python-waitress")
-    (version "1.1.0")
+    (version "3.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "waitress" version))
-       (patches (search-patches "python-waitress-fix-tests.patch"))
        (sha256
         (base32
-         "1a85gyji0kajc3p0s1pwwfm06w4wfxjkvvl4rnrz3h164kbd6g6k"))))
-    (build-system python-build-system)
+         "18dq4bibsv6cfhv6a3b16w2xwycxqkkiwbb0vpcwsd21n1ws8p80"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; https://github.com/Pylons/waitress/issues/443
+     (list #:test-flags #~(list "-k" "not test_service_port")))
+    (native-inputs (list python-pytest python-pytest-cov))
     (home-page "https://github.com/Pylons/waitress")
     (synopsis "Waitress WSGI server")
     (description "Waitress is meant to be a production-quality pure-Python WSGI

@@ -1006,6 +1006,7 @@ runner.  It is quite unopinionated with most of its features being optional.")
          (sha256
           (base32 "12fnr5mq80cxwvv09gi844mi31jgi8067swagxnlxlhxj4mi125j"))))
       (build-system gnu-build-system)
+      (supported-systems '("x86_64-linux"))
       (arguments
        `(#:tests? #f ;upstream uClibc tests do not work in the fork
          #:strip-directories '() ;only ships a static library, so don't strip anything.
@@ -1063,24 +1064,45 @@ with the @code{klee} package.")
       (base32 "1nma6dqi8chjb97llsa8mzyskgsg4dx56lm8j514j5wmr8vkafz6"))))
    (arguments
     (list
+     #:strip-directories #~(list "bin") ;don't strip LLVM bitcode in /lib
+     #:test-target "check"
      #:phases
      #~(modify-phases %standard-phases
                       (add-after 'unpack 'patch
                         (lambda _
+                          ;; Allow specification of an absolute full path to uclibc.
                           (substitute* "CMakeLists.txt"
                             (("\\$\\{KLEE_UCLIBC_PATH\\}/lib/libc\\.a")
-                             "${KLEE_UCLIBC_PATH}"))))
-                      (add-after 'install 'wrap-hooks
+                             "${KLEE_UCLIBC_PATH}"))
+                          ;; Make sure that we retain the value of the GUIX_PYTHONPATH
+                          ;; environment variable in the test environmented created by
+                          ;; python-lit.  Otherwise, the test scripts won't be able to
+                          ;; find the python-tabulate dependency, causing test failures.
+                          (substitute* "test/lit.cfg"
+                            (("addEnv\\('PWD'\\)" env)
+                             (string-append env "\n" "addEnv('GUIX_PYTHONPATH')")))))
+                      (add-after 'install 'wrap-programs
                         (lambda* (#:key inputs outputs #:allow-other-keys)
                           (let* ((out (assoc-ref outputs "out"))
                                  (bin (string-append out "/bin"))
                                  (lib (string-append out "/lib")))
-                            ;; Ensure that KLEE finds runtime libraries (e.g. uclibc).
+                            ;; Ensure that klee-stats finds its Python dependencies.
+                            (wrap-program (string-append bin "/klee-stats")
+                              `("GUIX_PYTHONPATH" ":" prefix
+                                ,(search-path-as-string->list
+                                   (getenv "GUIX_PYTHONPATH"))))
+                            ;; Ensure that klee finds runtime libraries (e.g. uclibc).
                             (wrap-program (string-append bin "/klee")
                               `("KLEE_RUNTIME_LIBRARY_PATH" =
                                 (,(string-append lib "/klee/runtime/"))))))))
      #:configure-flags
-     #~(list (string-append "-DLLVMCC="
+     #~(list "-DENABLE_UNIT_TESTS=ON"
+             "-DENABLE_SYSTEM_TESTS=ON"
+             (string-append "-DGTEST_SRC_DIR="
+                            #+(package-source googletest))
+             (string-append "-DGTEST_INCLUDE_DIR="
+                            #+(package-source googletest) "/googletest/include")
+             (string-append "-DLLVMCC="
                             (search-input-file %build-inputs "/bin/clang"))
              (string-append "-DLLVMCXX="
                             (search-input-file %build-inputs "/bin/clang++"))
@@ -1088,8 +1110,9 @@ with the @code{klee} package.")
                             (search-input-file %build-inputs "/lib/klee/libc.a"))
              "-DENABLE_POSIX_RUNTIME=ON")))
    (native-inputs (list clang-13 llvm-13 python-lit))
-   (inputs (list bash-minimal klee-uclibc gperftools sqlite z3))
+   (inputs (list bash-minimal klee-uclibc gperftools sqlite z3 python python-tabulate))
    (build-system cmake-build-system)
+   (supported-systems '("x86_64-linux"))
    (home-page "https://klee-se.org/")
    (synopsis "Symbolic execution engine")
    (description "KLEE is a symbolic virtual machine built on top of the LLVM
