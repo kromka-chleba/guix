@@ -1765,6 +1765,46 @@ different units.")
 scatter plots, histograms and heatmaps in the terminal using braille dots.")
     (license license:expat)))
 
+(define-public python-poetry-dynamic-versioning
+  (package
+    (name "python-poetry-dynamic-versioning")
+    (version "1.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "poetry_dynamic_versioning" version))
+       (sha256
+        (base32 "19v9jrawbx1nwnwrd6giyzwfq50y2mjzkrsx0ga2sbx2a2yphlbj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--ignore=tests/test_integration.py"
+              ;; E RuntimeError: Unable to detect version control system. Not
+              ;; installed: Git, Mercurial, Darcs, Subversion, Bazaar, Fossil,
+              ;; Pijul.
+              "-k"
+              (string-append
+               "not test__get_version__defaults"
+               " and not test__get_version__format_jinja"
+               " and not test__get_version__format_jinja_with_enforced_style"
+               " and not test__get_version__format_jinja_imports_with_module_only"
+               " and not test__get_version__format_jinja_imports_with_module_and_item"))))
+    (native-inputs
+     (list python-poetry-core
+           python-pytest))
+    (propagated-inputs
+     (list poetry
+           python-dunamai
+           python-jinja2
+           python-tomlkit))
+    (home-page "https://github.com/mtkennerly/poetry-dynamic-versioning")
+    (synopsis "Poetry plugin enabling VCS tags dynamic versioning")
+    (description
+     "This package provides a build backend that patches Poetry Core to enable
+the versioning system in PEP 517 build frontends.")
+    (license license:expat)))
+
 (define-public python-portpicker
   (package
     (name "python-portpicker")
@@ -2341,6 +2381,42 @@ programming in Python.  EasyGUI is different from other GUI generators in that
 EasyGUI is NOT event-driven.  Instead, all GUI interactions are invoked by
 simple function calls.")
     (license license:bsd-3)))
+
+(define-public python-echo
+  (package
+    (name "python-echo")
+    (version "0.8.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "echo" version))
+       (sha256
+        (base32 "1hr2kgjmf5gcjbg1mry03ca1dayfwy8mi8as42jfg0apsa3bfvvj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'start-xorg-server
+            (lambda _
+              ;; The test suite requires a running X server.
+              (system "Xvfb :99 -screen 0 1024x768x24 &")
+              (setenv "DISPLAY" ":99.0"))))))
+    (propagated-inputs
+     (list python-numpy
+           python-qtpy
+           python-pyqt-6))
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-setuptools-scm
+           xorg-server-for-tests))
+    (home-page "https://github.com/glue-viz/echo")
+    (synopsis "Callback Properties in Python")
+    (description
+     "Echo is a small library for attaching callback functions to property
+state changes.")
+    (license license:expat)))
 
 (define-public python-pymd4c
   (package
@@ -5045,33 +5121,51 @@ and is not compatible with JSON.")
     (license license:expat)))
 
 (define-public python-extension-helpers
-(package
-  (name "python-extension-helpers")
-  (version "1.0.0")
-  (source
-    (origin
-      (method url-fetch)
-      (uri (pypi-uri "extension-helpers" version))
-      (sha256
-        (base32 "1rjha07ds633fb81hn3i2yzk3v2flbi6qa091ix4mkvrgk3gl6ya"))))
-  (build-system pyproject-build-system)
-  ;; FIXME: pytest failed to load test suit, find out why.
-  ;;  - _pytest.pathlib.ImportPathMismatchError: ('extension_helpers.conftes
-  (arguments (list #:tests? #f))
-  (native-inputs
-    (list python-coverage
-          python-pytest
-          python-pytest-astropy
-          python-pytest-cov
-          python-setuptools-scm))
-  (home-page "https://extension-helpers.readthedocs.io")
-  (synopsis "Astropy ecosystem utilities for building and installing packages")
-  (description
-    "The extension-helpers package includes convenience helpers to assist with
+  (package
+    (name "python-extension-helpers")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch) ; no tests in the PyPI tarball
+       (uri (git-reference
+             (url "https://github.com/astropy/extension-helpers")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lkhypg21ydx03z03dppbf05zff40dyl0kn6nichzfdfpqnr5055"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; It tries to install it via pip: E ModuleNotFoundError: No module named
+      ;; 'helpers_test_package_fd9cc3a9_11fa_4a1a_b80e_c5b043949604'
+      #:test-flags #~(list "-k" "not test_only_pyproject[True]")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; LookupError: setuptools-scm was unable to detect version for
+          ;; /tmp/guix-build-python-extension-helpers-1.1.1.drv-0/source.
+          (add-before 'build 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)))
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (setenv "HOME" "/tmp")
+                (with-directory-excursion "/tmp"
+                  (apply invoke "pytest" "-v" test-flags))))))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-astropy
+           python-pytest-cov
+           python-setuptools-scm
+           python-tomli))
+    (home-page "https://extension-helpers.readthedocs.io")
+    (synopsis "Astropy ecosystem utilities for building and installing packages")
+    (description
+     "The extension-helpers package includes convenience helpers to assist with
 building Python packages with compiled C/Cython extensions.  It is developed by
 the Astropy project but is intended to be general and usable by any Python
 package.")
-  (license license:bsd-3)))
+    (license license:bsd-3)))
 
 (define-public python-extras
   (package
@@ -23424,6 +23518,47 @@ system.")
     ;; Can be used with either license.
     (license (list license:asl2.0 license:gpl2+))))
 
+(define-public python-dunamai
+  (package
+    (name "python-dunamai")
+    (version "1.21.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dunamai" version))
+       (sha256
+        (base32 "1i35i8ym6n8mpgrq31hivrvfciy12gv26jwlzimmkx9jy2spz0h5"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" "not test__version__from_git__shallow")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; These steps are taked from NixOS package definition:
+          ;; nixpkgs/pkgs/development/python-modules/dunamai/default.nix
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "PATH" (string-append #$output "/bin:" (getenv "PATH")))
+              (setenv "HOME" "/tmp")
+              (invoke "git" "config" "--global" "user.email" "nobody@example.com")
+              (invoke "git" "config" "--global" "user.name" "Nobody"))))))
+    (propagated-inputs
+     (list python-packaging))
+    (native-inputs
+     (list git-minimal
+           python-poetry-core
+           python-pytest))
+    (home-page "https://github.com/mtkennerly/dunamai")
+    (synopsis "Dynamic version generation")
+    (description
+     "Dunamai is Python library and command line tool for producing dynamic,
+standards-compliant version strings, derived from tags in your version control
+system.  This facilitates uniquely identifying nightly or per-commit builds in
+continuous integration and releasing new versions of your software simply by
+creating a tag.")
+    (license license:expat)))
+
 (define-public python-pbkdf2
   (package
     (name "python-pbkdf2")
@@ -34405,6 +34540,34 @@ needed and registers the function with its annotations.")
     (description "This library provides algorithms and data types for solving
 symbolic expressions in pure Python using the technique of logical unification.")
     (license license:bsd-3)))
+
+(define-public python-looseversion
+  (package
+    (name "python-looseversion")
+    (version "1.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "looseversion" version))
+       (sha256
+        (base32 "17k625ws83lwksa7yyy4mn0i39lmxgrzxihn22l335dvyvrnbppb"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; No tests provided.
+      #:tests? #f))
+    (native-inputs
+     (list python-hatchling))
+    (home-page "https://github.com/effigies/looseversion")
+    (synopsis "Version numbering for anarchists and software realists")
+    (description
+     "This package provides a drop-in replacement for the original
+@code{LooseVersion}.  It implements an identical interface and comparison
+logic to @code{LooseVersion}.  The only major change is that a
+@code{looseversion.LooseVersion} is comparable to a
+@code{distutils.version.LooseVersion}, which means tools should not need to
+worry whether all dependencies that use LooseVersion have migrated.")
+    (license license:psfl)))
 
 (define-public python-cons
   (package

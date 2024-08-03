@@ -1241,6 +1241,10 @@ can be used as backgrounds in the MATE Desktop environment.")
         (base32
          "1lw85zr38666y5zywsy2gzs9f7n2k1z9zjkq7gq0z40x1mx9si2q"))))
     (build-system glib-or-gtk-build-system)
+    (arguments
+     ;; Newer itstool does the following--and that causes parallel builds to fail:
+     ;; <https://github.com/itstool/itstool/commit/d3adf0264ee2b6fd28b7eff7dec33501d6e75a7c>
+     (list #:parallel-build? #f))
     (native-inputs
      (list gettext-minimal
            gtk-doc

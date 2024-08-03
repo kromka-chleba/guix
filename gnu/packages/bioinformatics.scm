@@ -26,6 +26,7 @@
 ;;; Copyright © 2022, 2023, 2024 Navid Afkhami <navid.afkhami@mdc-berlin.de>
 ;;; Copyright © 2022 Antero Mejr <antero@mailbox.org>
 ;;; Copyright © 2024 Alexis Simon <alexis.simon@runbox.com>
+;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -4258,38 +4259,38 @@ splice junctions between exons.")
 (define-public bwa
   (package
     (name "bwa")
-    (version "0.7.17")
+    (version "0.7.18")
     (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/lh3/bwa/releases/download/v"
-                    version "/bwa-" version ".tar.bz2"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/lh3/bwa")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1zfhv2zg9v1icdlq4p9ssc8k01mca5d1bd87w71py2swfi74s6yy"))))
+                "1vf3iwkzxqkzhcfz2q3qyvcv3jrvbb012qy21pfgjl8lv20ywfr1"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:tests? #f ;no "check" target
-       #:make-flags '("CFLAGS=-fcommon")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin"))
-                    (lib (string-append out "/lib"))
-                    (doc (string-append out "/share/doc/bwa"))
-                    (man (string-append out "/share/man/man1")))
-               (install-file "bwa" bin)
-               (install-file "libbwa.a" lib)
-               (install-file "README.md" doc)
-               (install-file "bwa.1" man))))
-           ;; no "configure" script
-          (delete 'configure))))
+     (list #:tests? #f ;no "check" target
+           #:make-flags #~(list "CFLAGS=-fcommon"
+                                (string-append "CC=" #$(cc-for-target)))
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'install
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (let* ((out (assoc-ref outputs "out"))
+                          (bin (string-append out "/bin"))
+                          (lib (string-append out "/lib"))
+                          (doc (string-append out "/share/doc/bwa"))
+                          (man (string-append out "/share/man/man1")))
+                     (install-file "bwa" bin)
+                     (install-file "libbwa.a" lib)
+                     (install-file "README.md" doc)
+                     (install-file "bwa.1" man))))
+               ;; no "configure" script
+               (delete 'configure))))
     (inputs (list zlib))
-    ;; Non-portable SSE instructions are used so building fails on platforms
-    ;; other than x86_64.
-    (supported-systems '("x86_64-linux"))
+    (supported-systems '("x86_64-linux" "aarch64-linux"))
     (home-page "https://bio-bwa.sourceforge.net/")
     (synopsis "Burrows-Wheeler sequence aligner")
     (description
@@ -4305,7 +4306,8 @@ and more accurate.  BWA-MEM also has better performance than BWA-backtrack for
     (license license:gpl3+)))
 
 (define-public bwa-pssm
-  (package (inherit bwa)
+  (package
+    (inherit bwa)
     (name "bwa-pssm")
     (version "0.5.11")
     (source (origin
@@ -4320,12 +4322,12 @@ and more accurate.  BWA-MEM also has better performance than BWA-backtrack for
     (build-system gnu-build-system)
     (arguments
      (substitute-keyword-arguments (package-arguments bwa)
-       ((#:phases phases '%standard-phases)
-        `(modify-phases ,phases
-           (add-after 'unpack 'patch-C-error
-             (lambda _
-               (substitute* "pssm.c"
-                 (("inline int map") "int map"))))))))
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (add-after 'unpack 'patch-C-error
+              (lambda _
+                (substitute* "pssm.c"
+                  (("inline int map") "int map"))))))))
     (inputs
      (list gdsl zlib perl))
     ;; https://bwa-pssm.binf.ku.dk is down, and all Web Archived copies are

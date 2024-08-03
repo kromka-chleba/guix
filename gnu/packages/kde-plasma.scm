@@ -98,14 +98,14 @@
 (define-public bluedevil
   (package
     (name "bluedevil")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version "/"
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1ss1xdrpq9yjcic9xmr6x3j5slj5l4mjw381fsgdb5sf7s0ypy9b"))))
+                "0f9bd2i1kdpn90cmx4xvm6f5wfynrj3hirg9inynf68s6q6qi8mr"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs (list extra-cmake-modules pkg-config qttools))
@@ -134,14 +134,14 @@
 (define-public breeze
   (package
     (name "breeze")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version "/"
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1kvx8ynb5m66m1zdrfk5bzpjs879sl8m1ap914199i21v58dqmnl"))))
+                "1lbnspr3r6rhmam56ba6x3g0r6xcvfq7mpjn8r9raxfhvs6vlnzi"))))
     (build-system qt-build-system)
     ;; TODO: Check whether is makes sence splitting into several outputs.
     (native-inputs
@@ -186,7 +186,7 @@ the Plasma Desktop.  Breeze is the default theme for the KDE Plasma desktop.")
 (define-public breeze-gtk
   (package
     (name "breeze-gtk")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -194,7 +194,7 @@ the Plasma Desktop.  Breeze is the default theme for the KDE Plasma desktop.")
                                   "-" version ".tar.xz"))
               (sha256
                (base32
-                "04gcrbf5b53sqk3ybwwqzbqah04ag03wcplahqw997kgxdqd37sv"))))
+                "1ny5k9968m2x7wfis760pfn4vq39wyqiw679vr26ijvwqk8z89x5"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -242,7 +242,7 @@ Breeze is the default theme for the KDE Plasma desktop.")
 (define-public discover
   (package
     (name "discover")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -254,7 +254,7 @@ Breeze is the default theme for the KDE Plasma desktop.")
                                   ".tar.xz"))
               (sha256
                (base32
-                "16awva2q379z3rpiqlj7dby03k19d9c3d45y0vz5yd8lpavb9a3f"))))
+                "10sii3wsb0afi9p7ac9v0wkhnc4sv9wbw2ysinyalw4hrggrg8j5"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -313,7 +313,7 @@ games, and tools.")
 (define-public drkonqi
   (package
     (name "drkonqi")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -321,7 +321,7 @@ games, and tools.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "19965cim06lfmkaansmrx814axfz7fxsmgfl52x2q3ar5vrmn05a"))))
+                "1b90m22x5fzcwfns14rz5p7lj367wsa4sq1w7vkxvq2g8jgak8bv"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -388,7 +388,7 @@ games, and tools.")
 (define-public kactivitymanagerd
   (package
     (name "kactivitymanagerd")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -396,7 +396,7 @@ games, and tools.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1zfaqaw50qr0s2shm2vxfbzvys2jp2s7hqgq8n928cily37wz8h8"))))
+                "0q3lac62crvjjnv66nylrd0639g3m51a9fngck23jw7ybbk9ii20"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs (list extra-cmake-modules))
@@ -417,7 +417,7 @@ concept.")
 (define-public krdp
   (package
     (name "krdp")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -425,7 +425,7 @@ concept.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0xp1zi51fpw9zcyry6g8qrm7k94pbi6kw3d8dakdnq5qrkcsvc8g"))))
+                "1snk8srpa8ljccglrnd6sihffy678zfjn9wk5p3lhvz7kkxbk5wp"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase
                      #:phases
@@ -468,14 +468,14 @@ RDP server.")
 (define-public kde-gtk-config
   (package
     (name "kde-gtk-config")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/kde-gtk-config-" version ".tar.xz"))
               (sha256
                (base32
-                "099n4dyyqirjm8ixgl3ifiral3jb2ivg74gzfv2xmfgj0cjwszza"))))
+                "0ijf80c6cms29i98hrssw1x0ysfp7zz7g9jlskb8lgd9axazk90g"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -509,14 +509,14 @@ applications.")
 (define-public kdecoration
   (package
     (name "kdecoration")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/kdecoration-" version ".tar.xz"))
               (sha256
                (base32
-                "1gmyxp3gk47rci4xdlgsdbp9wa2zx2790pqv1z4y7zmwg395vs41"))))
+                "1yqd3f0prfy3nw2bxdadjp4swr11ljd15lwl4rsvcjpb8aglgp8m"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -533,7 +533,7 @@ manager which re-parents a Client window to a window decoration frame.")
 (define-public kde-cli-tools
   (package
     (name "kde-cli-tools")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -541,7 +541,7 @@ manager which re-parents a Client window to a window decoration frame.")
               (patches (search-patches "kde-cli-tools-delay-mime-db.patch"))
               (sha256
                (base32
-                "06vms60wrddj9b8bagk5xhwjff4pi81vxs0zja8mk5fscv0750bi"))))
+                "0yn89fqmh84nibpd9hy6pwy2ysp46i4268mw1sq6xjij50g0asfr"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -581,14 +581,14 @@ KDE Frameworks 5 to better interact with the system.")
 (define-public kdeplasma-addons
   (package
     (name "kdeplasma-addons")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1q8jhj9b9sj7bdkr0bvk4grjjrylq86svwvr96knnpicxbjf633c"))))
+                "1ph5hdpm9z2bfq5wakfm2x6frb99hsm62gwz58ns11mwlqjpmxwx"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -636,7 +636,7 @@ KDE Frameworks 5 to better interact with the system.")
 (define-public kgamma
   (package
     (name "kgamma")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -644,7 +644,7 @@ KDE Frameworks 5 to better interact with the system.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0qr6crka2a71izg54vz0y7ahsfxr7xh1j3bb53c7pfhs3dq8wgfb"))))
+                "0nskvsh4xagv55lv0wsm62m50y4hdjslhrzl2cb190ghaa245vdd"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs (list extra-cmake-modules kdoctools))
@@ -663,7 +663,7 @@ KDE Frameworks 5 to better interact with the system.")
 (define-public kglobalacceld
   (package
     (name "kglobalacceld")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -671,7 +671,7 @@ KDE Frameworks 5 to better interact with the system.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1p38lqiw9r1w6grp5847pm9lh27d765in62fnc2vlrkb99krxcr7"))))
+                "0qm0lahlmksjd2q6qlp6h71chbfwwv8mwy76g9qz4j298prmb49m"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase
                      #:phases
@@ -708,14 +708,14 @@ functionality")
 (define-public kinfocenter
   (package
     (name "kinfocenter")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0g5hvsgj7v1zc5kavq6kr44rnf2gzk719wsaypdj8cqy8nijph31"))))
+                "0f2pqjzkgxa2sylcr560nw1ly998yvzyvpjpvb1q1af5jyzvxi39"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -800,7 +800,7 @@ computer's hardware.")
 (define-public kmenuedit
   (package
     (name "kmenuedit")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -808,7 +808,7 @@ computer's hardware.")
                                   ".tar.xz"))
               (sha256
                (base32
-                "0wypmw265n8ni6i0hgb60fmaa5m5v759kwwh9pybc3hw81wb8m4l"))))
+                "11adzhl76ii7zd7ag2hh1xay92az2k465dlxizagml6aal7gn1lh"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs (list extra-cmake-modules kdoctools))
@@ -829,16 +829,16 @@ computer's hardware.")
 (define-public kongress
   (package
     (name "kongress")
-    (version "23.01.0")
+    (version "24.05.2")
     (source (origin
               (method url-fetch)
-              (uri (string-append "mirror://kde/stable/plasma-mobile/" version
-                                  "/kongress-" version ".tar.xz"))
+              (uri (string-append "mirror://kde/stable/release-service/" version
+                                  "/src/kongress-" version ".tar.xz"))
               (sha256
                (base32
-                "0yma1b44sjnvhsw31r5bndrpj2sjgwgchpzc8bf9380l6an9k4r5"))))
+                "1bg7fsa4va59cg84r9vjiycl7g4b130m6m6sis9pc6w44jkcbjg2"))))
     (build-system qt-build-system)
-    (native-inputs (list extra-cmake-modules))
+    (native-inputs (list extra-cmake-modules python-minimal))
     ;; NOTE: Reporting bugs is linked to web browser, better not link it and let
     ;; it reslove through xdg-open in the run time
     (inputs (list kirigami
@@ -853,11 +853,9 @@ computer's hardware.")
                   knotifications
                   kxmlgui
                   kiconthemes
-                  qtbase-5
-                  qtdeclarative-5
-                  qtquickcontrols2-5
-                  qtgraphicaleffects
-                  qtsvg-5))
+                  qtdeclarative
+                  qtsvg))
+    (arguments (list #:qtbase qtbase))
     (home-page "https://apps.kde.org/kongress/")
     (synopsis "Companion application for conferences")
     (description "This application provides list of upcoming conferences with
@@ -867,14 +865,14 @@ the schedule and venue information.")
 (define-public kpipewire
   (package
     (name "kpipewire")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
                                   version "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0wfmf28w2fmv1fx02azv6k2k5xkqz3j8jpxgnpgizdrzf9fm03r5"))))
+                "1ydf3f5v4hjr7yq3c0yj29wvk84cm2ys1fa8fmvs9wrv9q11f8pb"))))
     (build-system cmake-build-system)
     (native-inputs (list extra-cmake-modules pkg-config))
     (propagated-inputs (list qtbase qtdeclarative
@@ -904,7 +902,7 @@ PipeWire in Qt projects.")
 (define-public kscreen
   (package
     (name "kscreen")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -912,7 +910,7 @@ PipeWire in Qt projects.")
                                   ".tar.xz"))
               (sha256
                (base32
-                "0p5x7413xs7i0lahvpqn3w69n6vyhcccxisn8hff0nmcd9llm1bz"))))
+                "0sq5wrx021yzwi0gmigl9y5mxqxhwf6kd38y2hjx9wbrb8q1j29h"))))
     (build-system cmake-build-system)
     (arguments
      ;; TODO: All tests fail
@@ -947,14 +945,14 @@ KDE Plasma Workspaces.")
 (define-public ksshaskpass
   (package
     (name "ksshaskpass")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/ksshaskpass-" version ".tar.xz"))
               (sha256
                (base32
-                "13kfvai8gcv8gbkw2ydixlbik1a113h4ais9wlna3jlnb1y0rya9"))))
+                "0say4khh6lzl9zj7im4lrv3srsa6cic42zmc8y7niaf16bfm7agi"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -972,7 +970,7 @@ call it if it is not associated to a terminal.")
 (define-public ksystemstats
   (package
     (name "ksystemstats")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -980,7 +978,7 @@ call it if it is not associated to a terminal.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0fv96n03j6q2ainhw922abwwq1qrc8djqwk2cg6cjlnlkvvx9m1i"))))
+                "11af0fxpp22czgn6slbm6kq06nqjm0n4jv1av5k3ykyc8z6bbzf9"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1055,14 +1053,14 @@ an elegant and intuitive experience for your tasks and plasmoids.")
 (define-public layer-shell-qt
   (package
     (name "layer-shell-qt")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/layer-shell-qt-" version ".tar.xz"))
               (sha256
                (base32
-                "02gmfvvzjdhgsqwqr9ga43bjkbz0hnv1sz08zq19m5l3qy66ds0p"))))
+                "00pqbdjf42lvpp8xhx405vf79bw2gz0gxp3mmrnfjc3ihqybs0d2"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -1081,14 +1079,14 @@ an elegant and intuitive experience for your tasks and plasmoids.")
 (define-public kscreenlocker
   (package
     (name "kscreenlocker")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/kscreenlocker-" version ".tar.xz"))
               (sha256
                (base32
-                "1nk23jbi4n22hhffriqxx2845b4kfn676y910dv85c2b1mkipcxs"))))
+                "0lz61kn9xp0afyb08f9ws4ayakwm5zdy0m57rcrsj4a1hq4hz762"))))
     (build-system qt-build-system)
     (arguments
      (list #:tests? #f ;TODO: make tests pass
@@ -1143,14 +1141,14 @@ an elegant and intuitive experience for your tasks and plasmoids.")
 (define-public libkscreen
   (package
     (name "libkscreen")
-    (version "6.1.2")
+    (version "6.1.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/plasma/" version "/"
                            name "-" version ".tar.xz"))
        (sha256
-        (base32 "1f4pb09b9n6fbwlcs5fva3wpfamg9maz2k4rf0dyr2ihyjwh3p1n"))))
+        (base32 "14xjncc9gfz441j8gmyggz2qwnhm3k0mj5xzp3vignf3drrz724r"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -1230,14 +1228,14 @@ basic needs and easy to configure for those who want special setups.")
 (define-public libksysguard
   (package
     (name "libksysguard")
-    (version "6.1.2")
+    (version "6.1.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/plasma/" version
                            "/libksysguard-" version ".tar.xz"))
        (sha256
-        (base32 "1l1fy5i9yxh7fnxfyfsk0hnyd1vfzac336kcfwklkqa7l796hpc0"))))
+        (base32 "197zbddmykdfw6gh137fbpvnwv6f094932vzprgkvlv3m89n7s3a"))))
     (native-inputs
      (list bash-minimal extra-cmake-modules pkg-config qttools))
     (inputs
@@ -1284,7 +1282,7 @@ with a ksysguardd daemon, which may also run on a remote system.")
 (define-public kwallet-pam
   (package
     (name "kwallet-pam")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -1292,7 +1290,7 @@ with a ksysguardd daemon, which may also run on a remote system.")
                                   ".tar.xz"))
               (sha256
                (base32
-                "1d7b192rislaljz7j8wpjzw529a9hy94pzr063nnlz982251nm77"))))
+                "1nj00y67fpw5mk2nqx3gfqydddlzj9ysdnpp46cgl46873c7303b"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -1309,7 +1307,7 @@ you login.")
 (define-public kwayland-integration
   (package
     (name "kwayland-integration")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -1317,7 +1315,7 @@ you login.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "16wlnsavxbm54am6am29667scilvdksgbaskwqdkaazqqjxn298a"))))
+                "1k8ki5828x4y14k9sgjflcrj7cs89q69vqzhy576c3wnwp286hdl"))))
     (build-system qt-build-system)
     (arguments
      (list #:phases #~(modify-phases %standard-phases
@@ -1355,7 +1353,7 @@ KDE Frameworks components.")
 (define-public kwin
   (package
     (name "kwin")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -1364,7 +1362,7 @@ KDE Frameworks components.")
               (patches (search-patches "kwin-unwrap-executable-name-for-dot-desktop-search.patch"))
               (sha256
                (base32
-                "03y0als06vryf1cwiladnn9a3vnsp32gp9bcvp42mm017g485ic2"))))
+                "1gy61kfldrzrg1xrzjji75jsfdxihjhsrwykbi2sj6rqhp8bj8zv"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -1529,7 +1527,7 @@ conjunction with the KDE Plasma Desktop.")
 (define-public kwrited
   (package
     (name "kwrited")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -1537,7 +1535,7 @@ conjunction with the KDE Plasma Desktop.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1h8njjh277jk66r4bm913m953irgdy3126gsamnjzjkrd13qlr45"))))
+                "08x0b3cxm9ynazanf6qq1hmyl86cqg8vh34k5zji6a4r19zdcj1l"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list kcoreaddons ki18n kpty knotifications))
@@ -1581,7 +1579,7 @@ and minimalistic.")
 (define-public milou
   (package
     (name "milou")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -1589,7 +1587,7 @@ and minimalistic.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "15vr74s66aj617vh0szf6r3s5iffbg8mwchf1kkvhbw5fnw912lm"))))
+                "127b16gcazpddnrx28iw8g1q8nym27iw3p2nnwvg75yjavf8lsfy"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list kcoreaddons
@@ -1612,7 +1610,7 @@ on top of Baloo.")
 (define-public qqc2-breeze-style
   (package
     (name "qqc2-breeze-style")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -1620,7 +1618,7 @@ on top of Baloo.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1n8yqiyvn5cyvxl7mp33x2jbkxzzqfzd1wvgdzybqx1hw3m3lh1j"))))
+                "0s5ya52iixvps2vjq299qgs3q379c3dwdrmzz8yr50kj3qp32is9"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase))
@@ -1637,7 +1635,7 @@ on top of Baloo.")
 (define-public oxygen-sounds
   (package
     (name "oxygen-sounds")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -1645,7 +1643,7 @@ on top of Baloo.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "02yz7mlnbylhv2d66hl1dvp6ylnp9lj5f07ivdjcwpq556agxljf"))))
+                "1m5slcxigcdcg9i10i3xnb0p2ji26lrnllr3p7b9kv39prlp29vz"))))
     (build-system cmake-build-system)
     (native-inputs (list extra-cmake-modules))
     (home-page "https://community.kde.org/Frameworks")
@@ -1656,7 +1654,7 @@ on top of Baloo.")
 (define-public ocean-sound-theme
   (package
     (name "ocean-sound-theme")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -1664,7 +1662,7 @@ on top of Baloo.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0ysgx7bg5njgfv3rxdz5bzqh0iki1qb0pwqk4dmnwc3hx3c89ynb"))))
+                "064s4ms3ga2985181gzzi4ky20g53c3djz1dblmjnq3i908npy86"))))
     (build-system cmake-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list qtbase))
@@ -1762,14 +1760,14 @@ on top of Baloo.")
 (define-public plasma5support
   (package
     (name "plasma5support")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "17cwd0iyrzggb56xc37mvw7n7r0ddiasmxgfhzgh67sdxwpp7kzj"))))
+                "0vgp3yjp44z17bdi9h2swxrvw7aqdhlixhww80xlc3cggzvpbn1p"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase
 
@@ -1893,14 +1891,14 @@ active window on Plasma Desktop.")
 (define-public plasma-browser-integration
   (package
     (name "plasma-browser-integration")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "07wsbq3p55k9jha341zpxgk6v4iaj3j4agp45h32m2881fjrwb80"))))
+                "1h39nznvnfn3a9yvz8ml4kca5pzlrwj9n702nsa3srbqvr7nmwwy"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules pkg-config))
     ;; TODO: Figure out how to integrate this package into web browsers
@@ -1933,14 +1931,14 @@ the KDE Plasma 6 desktop.")
 (define-public plasma-desktop
   (package
     (name "plasma-desktop")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1n72hynnvgyy0ja0f20p322c2y5yvb5ra1i4jrlxwji795y09r19"))))
+                "1b8zq81kdzqghp8ivm4zq5b645siayzldqddzpbrbhpi3bx68brn"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules
                          dbus
@@ -2084,7 +2082,7 @@ activities effectively, without being distracting.")
 (define-public plasma-disks
   (package
     (name "plasma-disks")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -2092,7 +2090,7 @@ activities effectively, without being distracting.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1rk8356fpy2vgfi79kz2xlkz032jb3cd9y6rsp9f875bik5j25hz"))))
+                "1ipkgy6cfd9bdvwjis8ak4qfr313w1021sx7zm3pr25j26rxwvhi"))))
     (build-system qt-build-system)
     (arguments (list
                 #:qtbase qtbase
@@ -2127,7 +2125,7 @@ activities effectively, without being distracting.")
 (define-public plasma-firewall
   (package
     (name "plasma-firewall")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -2135,7 +2133,7 @@ activities effectively, without being distracting.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0k2rf8w5iwsxnq0amrss8p0ncl3q4sxl06531p3d2ga6glh0kspn"))))
+                "14yg8dwbja0dj26v14igvbb37si4m6bkdw50476k15ln057ag87j"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs (list extra-cmake-modules))
@@ -2155,7 +2153,7 @@ activities effectively, without being distracting.")
 (define-public plasma-integration
   (package
     (name "plasma-integration")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -2163,7 +2161,7 @@ activities effectively, without being distracting.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0108pzfjwd84ysysq705k8ccy4hi9mmx412ll3d751dc50lj6np1"))))
+                "0nz5wczzpk28rmhsvilw94s30763zp04a9jn7i5lszazbdwp7vx3"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -2214,14 +2212,14 @@ integration of Qt applications when running on a KDE Plasma workspace.")
 (define-public plasma-nano
   (package
     (name "plasma-nano")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
                                   version "/plasma-nano-" version ".tar.xz"))
               (sha256
                (base32
-                "1dyap53ad32s27sxx7rzszp3q0avfiqwfc05a2f5sbqqrwf4bpk3"))))
+                "16482994pskvsnsvradcn6jcb1pvxn2mf4j248a2p8jirgfmsv13"))))
     (build-system cmake-build-system)
     (native-inputs (list extra-cmake-modules pkg-config qttools))
     (inputs (list qtbase
@@ -2242,7 +2240,7 @@ integration of Qt applications when running on a KDE Plasma workspace.")
 (define-public plasma-nm
   (package
     (name "plasma-nm")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -2250,7 +2248,7 @@ integration of Qt applications when running on a KDE Plasma workspace.")
                                   ".tar.xz"))
               (sha256
                (base32
-                "02148q5707cck0qix2c3k7npp9kblnq5h79xvb99rq45sbwc51pr"))))
+                "0z0ij2mh04zwvvg7d43qy1sjavaqss2z8vh39gxb53l0gjnh4lav"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -2381,7 +2379,7 @@ customizable platform for mobile devices.")
 (define-public plasma-pa
   (package
     (name "plasma-pa")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -2389,7 +2387,7 @@ customizable platform for mobile devices.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0rj4dffgzinxj5b1wgjz2mmc73c51bx845g9vvx17k7xdcry117x"))))
+                "1xxdda41vj0afqr7byq1rmfzw5v04s2238y2liay903d0dgv04a2"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase
                      ;; test require selenium-webdriver-at-spi-run
@@ -2550,14 +2548,14 @@ Desktop.")
 (define-public plasma-vault
   (package
     (name "plasma-vault")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1y8f2n6g018gy1dxxhgsq6d341asxhjxingd9vizf89y85h6vacn"))))
+                "0w0v8jh2wd2v5srcgrm10jkwyg3ck62vcba1yn4n4v6f087z456h"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules pkg-config))
     (inputs (list kio
@@ -2612,14 +2610,14 @@ vaults.")
 (define-public plasma-systemmonitor
   (package
     (name "plasma-systemmonitor")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version "/"
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1v329hfr0jjqbkbidkbb52i235c4g4ix2x3mngyfvjf3ykvxd1xs"))))
+                "1yfqnby1b6231m918rvpd4lc9wq9w21sfdr5cln3skc4gbyy50pz"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list ki18n
@@ -2651,7 +2649,7 @@ sensors, process information and other system resources.")
 (define-public plasma-welcome
   (package
     (name "plasma-welcome")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/"
@@ -2660,7 +2658,7 @@ sensors, process information and other system resources.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "19d0p1nsg9jjpv9d8948hnpb75gnrjj4xv6r0i4dzbg4mz25vb32"))))
+                "075l6j83p7zzx0hfska9bd1v44pr76xdym6p6m0z8adfvrl3ava1"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config))
@@ -2697,14 +2695,14 @@ sensors, process information and other system resources.")
 (define-public plasma-workspace
   (package
     (name "plasma-workspace")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "16k55b08q42nc89slp49ivqssx6rs21zlzshwmjqx1na5nwikw27"))))
+                "1jnmqj16ivi2qv3q9i5fggknaw85drf216ml7ckvfvc5abxxx73r"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules kdoctools pkg-config qtsvg
                          qttools
@@ -2889,14 +2887,14 @@ hardware management, and a high degree of customizability.")
 (define-public plasma-workspace-wallpapers
   (package
     (name "plasma-workspace-wallpapers")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0vm2v7hdfqcbxdl5gy3kx8az4q1y06iisf2rh5v4zc40vjjgf6cn"))))
+                "0cbnv28nf6130wrzsimlw9dfwblkc7p522mknqcphrqb3iql0jr1"))))
     (build-system cmake-build-system)
     (native-inputs (list extra-cmake-modules))
     (home-page "https://community.kde.org/Frameworks")
@@ -2908,14 +2906,14 @@ hardware management, and a high degree of customizability.")
 (define-public print-manager
   (package
     (name "print-manager")
-    (version "6.1.2")
+    (version "6.1.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/plasma/" version
                            "/print-manager-" version ".tar.xz"))
        (sha256
-        (base32 "19gmqd48wjg9q8h57xdsa1d4nhvbp3h169v519pgw06lrrhia5hl"))))
+        (base32 "015vvl0q3fccjacszdzd78vsh1wykn6r9inxpvj660z2hsg4c1cm"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -2945,14 +2943,14 @@ hardware management, and a high degree of customizability.")
 (define-public polkit-kde-agent
   (package
     (name "polkit-kde-agent")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version "/"
                                   name "-1-" version ".tar.xz"))
               (sha256
                (base32
-                "1mr0fmmnvd92msrp0y1fib2hyjif4lycg74ycpiqylnxhvm6v4c8"))))
+                "0vrry89icr1z30wf3lgz0gfyjhgsizy421mnlfn0f7bb0mjxmf97"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs (list extra-cmake-modules))
@@ -2976,14 +2974,14 @@ UI for Plasma")
 (define-public powerdevil
   (package
     (name "powerdevil")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "052hv22ps90sm44wrdf5f4x2iz633nypl75xjwv257pn6ravia6l"))))
+                "1wqqk4imnhrmqwr1ynkgqcfh58hz70dacwmvcmq3qv85k2a8qkv2"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules qttools pkg-config))
     (inputs (list bluez-qt
@@ -3030,14 +3028,14 @@ of a Plasma shell.")
 (define-public system-settings
   (package
     (name "system-settings")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version
                                   "/systemsettings-" version ".tar.xz"))
               (sha256
                (base32
-                "1dj6ic2i2pm01xyc1nl4k7v5r3rq1lwb638sfkbjch5g1gndsylh"))))
+                "0c9130zvdrn7lm256adsx7knzmd95q5m8sx0r6wgxnxl5br09fk5"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list kauth

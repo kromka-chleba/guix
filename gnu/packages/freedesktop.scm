@@ -38,6 +38,7 @@
 ;;; Copyright © 2022 Samuel Culpepper <sculpepper@newstore.com>
 ;;; Copyright © 2024 aurtzy <aurtzy@gmail.com>
 ;;; Copyright © 2024 Dariqq <dariqq@posteo.net>
+;;; Copyright © 2024 Wilko Meyer <w@wmeyer.eu>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -117,6 +118,7 @@
   #:use-module (gnu packages networking)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages package-management)
+  #:use-module (gnu packages pciutils)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages perl-check)
   #:use-module (gnu packages pkg-config)
@@ -2475,6 +2477,37 @@ files.
 @end table")
     (license license:gpl2+)))
 
+(define-public drm-info
+  (package
+    (name "drm-info")
+    (version "2.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.freedesktop.org/emersion/drm_info.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0fc1rd3c16ddzbdpcj473ykszipzblj98lk376slk63v7mqvc1qm"))))
+    (build-system meson-build-system)
+    (arguments (list #:configure-flags
+                     #~(list "-Dman-pages=enabled"
+                             "-Dlibpci=enabled")))
+    (native-inputs
+     (append (if (%current-target-system)
+                 (list pkg-config-for-build)
+                 '())
+             (list pkg-config scdoc)))
+    (inputs
+     (list libdrm json-c pciutils))
+    (home-page "https://gitlab.freedesktop.org/emersion/drm_info")
+    (synopsis "Dump DRM device info")
+    (description "Displaying and dumping information on Direct
+Rendering Manager devices.")
+    (license license:expat)))
+
 (define-public xdg-user-dirs
   (package
     (name "xdg-user-dirs")
@@ -3137,14 +3170,14 @@ interfaces.")
 (define-public xdg-desktop-portal-kde
   (package
     (name "xdg-desktop-portal-kde")
-    (version "6.1.2")
+    (version "6.1.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/plasma/" version "/"
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0dksk5zs4w79n9l8wspwdgzx2fj1xafsjjk4d6bv2hrhhly7bnxr"))))
+                "1iiwl45gfj04hdzdk159chyj3f09sn92d09ah1zvx1ap0rxzwk42"))))
     (build-system qt-build-system)
     (arguments (list
                 #:tests? #f ;; colorschemetest test fail, because require dbus.

@@ -7,6 +7,7 @@
 ;;; Copyright © 2021, 2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Mehmet Tekman <mtekman89@gmail.com>
+;;; Copyright @ 2022, Kitzman <kitzman@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -26,6 +27,7 @@
 (define-module (gnu packages vnc)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system meson)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -38,6 +40,7 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages avahi)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages c)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crypto)
@@ -54,7 +57,9 @@
   #:use-module (gnu packages guile)
   #:use-module (gnu packages image)
   #:use-module (gnu packages java)
+  #:use-module (gnu packages libevent)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages man)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
@@ -65,6 +70,7 @@
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages video)
+  #:use-module (gnu packages web)
   #:use-module (gnu packages webkit)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xorg))
@@ -651,3 +657,67 @@ client")
 easily implement VNC server or client functionality in your program.")
     (license ;; GPL for programs, FDL for documentation
      (list license:gpl2+ license:fdl1.2+))))
+
+(define-public neatvnc
+  (package
+    (name "neatvnc")
+    (version "0.8.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/any1/neatvnc")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "07vjagx14yiqgaiba24xvb3qbiznlfab23c14arx225y0rlw82h4"))))
+    (build-system meson-build-system)
+    (native-inputs (list pkg-config))
+    (inputs
+     (list libdrm libglvnd libxkbcommon pixman aml gnutls libjpeg-turbo zlib))
+    (home-page "https://github.com/any1/neatvnc")
+    (synopsis "Lightweight VNC server library")
+    (description "NeatVNC is a lightweight VNC server library, supporting
+authentication, SSH tunneling, and ZRLE or Tight encoding.")
+    (license license:isc)))
+
+(define-public wayvnc
+  (package
+    (name "wayvnc")
+    (version "0.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/any1/wayvnc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1k02i70v8niqvadzfrki8q6wiymcfdqanc9zlmzdslw2bpdhqq90"))))
+    (build-system meson-build-system)
+    (native-inputs
+     (append (if (%current-target-system)
+                 ;; for wayland-scanner
+                 (list wayland)
+                 '())
+             (list pkg-config scdoc)))
+    (inputs (list aml
+                  neatvnc
+                  zlib
+                  libjpeg-turbo
+                  gnutls
+                  jansson
+                  libdrm
+                  pixman
+                  libglvnd
+                  libxkbcommon
+                  wayland))
+    (home-page "https://github.com/any1/wayvnc")
+    (synopsis "VNC server for wlroots-based Wayland compositors")
+    (description
+     "This is a VNC server for wlroots-based Wayland compositors.
+It attaches to a running Wayland session, creates virtual input devices, and
+exposes a single display via the RFB protocol.  The Wayland session may be a
+headless one, so it is also possible to run wayvnc without a physical display
+attached.")
+    (license license:isc)))

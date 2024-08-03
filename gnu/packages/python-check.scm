@@ -840,22 +840,14 @@ access to test session metadata.")
 (define-public python-pytest-openfiles
   (package
     (name "python-pytest-openfiles")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "pytest-openfiles" version))
+       (uri (pypi-uri "pytest_openfiles" version))
        (sha256
-        (base32 "0n0a7fdc9m86360y96l23fvdmd6rw04bl6h5xqgl9qxfv08jk70p"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             ;; Make the installed plugin discoverable by Pytest.
-             (add-installed-pythonpath inputs outputs)
-             (invoke "pytest" "-vv"))))))
+        (base32 "14x9f1l9a5ghf527i5qfcfa003mkrky1dhx2hfwq5nma9v1n0lgz"))))
+    (build-system pyproject-build-system)
     (native-inputs
      (list python-setuptools-scm python-pytest))
     (propagated-inputs

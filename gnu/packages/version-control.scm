@@ -52,6 +52,7 @@
 ;;; Copyright © 2023 Steve George <steve@futurile.net>
 ;;; Copyright © 2023 Josselin Poiret <dev@jpoiret.xyz>
 ;;; Copyright © 2024 Hilton Chain <hako@ultrarare.space>
+;;; Copyright © 2024 Suhail Singh <suhail@bayesians.ca>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -830,6 +831,52 @@ on @command{git}, and use any regular Git hosting service.")
 to GitHub contributions calendar.")
     (license license:expat)))
 
+(define-public git-tools
+  (package
+    (name "git-tools")
+    (version "2022.12")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/MestreLion/git-tools")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0s8x74ggcr6nqzplr0jfzp3cavq0nmdm35hqywzs2bbq75i1mijd"))))
+    (build-system copy-build-system)
+    (arguments
+     `(#:install-plan '(("git-branches-rename" "bin/git-branches-rename")
+                        ("git-clone-subset" "bin/git-clone-subset")
+                        ("git-find-uncommitted-repos"
+                         "bin/git-find-uncommitted-repos")
+                        ("git-rebase-theirs" "bin/git-rebase-theirs")
+                        ("git-restore-mtime" "bin/git-restore-mtime")
+                        ("git-strip-merge" "bin/git-strip-merge")
+                        ("./man1/" "share/man/man1"
+                         #:include-regexp (".*\\.1$")))))
+    (inputs (list bash-minimal git-minimal python-minimal))
+    (home-page "https://github.com/MestreLion/git-tools")
+    (synopsis "Assorted git-related scripts and tools")
+    (description
+     "@code{git-tools} is a collection of bash and python scripts.
+Specifically, it includes the following tools:
+
+@itemize
+@item @code{git-branches-rename}: Batch rename branches with a matching prefix
+to another prefix
+@item @code{git-clone-subset}: Clone a subset of a git repository
+@item @code{git-find-uncommitted-repos}: Recursively list repositories in the
+given directory(ies) that have uncommitted changes
+@item @code{git-rebase-theirs}: Resolve rebase conflicts and failed
+cherry-picks by favoring \"theirs\" version
+@item @code{git-restore-mtime}: Restore modification time of files based on
+the date of the most recent commit that modified them
+@item @code{git-strip-merge}: A git-merge wrapper that deletes files on a
+\"foreign\" branch before merging
+@end itemize")
+    (license license:gpl3+)))
+
 (define-public xdiff
   (let ((revision "0")
         (commit "a137bc7ee6c76618ed1737c257548eaa10ac0089"))
@@ -1145,8 +1192,8 @@ collaboration using typical untrusted file hosts or services.")
    (license license:gpl3+)))
 
 (define-public cgit
-  (let ((commit "b2c939af4bbd24882fcd28aa6b75319ca61c7c5b")
-        (rev "4"))
+  (let ((commit "9811bf07ef6868cdf5618cbbd8b9db5ada936622")
+        (rev "5"))
     (package
       (name "cgit")
       ;; Update the ‘git-source’ input as well.
@@ -1158,7 +1205,7 @@ collaboration using typical untrusted file hosts or services.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "09la0xhs9mn8k5j5z5s44pa2fv73akn4lhqpbma08f3xdhjpb3fv"))
+                  "1ga73789lixd7l7f1vs7vi8c0lvqjzq036k64lyrv7v6r7yxpn5p"))
                 (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (arguments
@@ -1234,9 +1281,9 @@ collaboration using typical untrusted file hosts or services.")
              (method url-fetch)
              ;; cgit is tightly bound to git.  Use GIT_VER from the Makefile,
              ;; which may not match the current (package-version git).
-             (uri "mirror://kernel.org/software/scm/git/git-2.45.2.tar.xz")
+             (uri "mirror://kernel.org/software/scm/git/git-2.46.0.tar.xz")
              (sha256
-              (base32 "1nws1vjgj54sv32wxl1h3n1jkcpabqv7a605hhafsby0n5zfigsi"))))
+              (base32 "15bzq9m6c033qiz5q5gw1nqw4m452vvqax30wbms6z4bl9i384kz"))))
          ("bash-minimal" ,bash-minimal)
          ("openssl" ,openssl)
          ("python" ,python)
