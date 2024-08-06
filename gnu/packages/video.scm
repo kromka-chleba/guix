@@ -4061,6 +4061,127 @@ and JACK.")
     (home-page "https://obsproject.com")
     (license license:gpl2+)))
 
+(define-public obs-advanced-masks
+  (package
+    (name "obs-advanced-masks")
+    (version "1.1.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/FiniteSingularity/obs-advanced-masks")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0vhilhzdfv0wa8hqz8ffavr272w3d5b75vvldf8rfy9pm5c8xn9n"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cmake-build-system)
+                  (guix build utils))
+      #:tests? #f ;no tests
+      #:configure-flags
+      #~(list (string-append "-DLIBOBS_INCLUDE_DIR="
+                             #$(this-package-input "obs") "/lib")
+              "-DBUILD_OUT_OF_TREE=On"
+              "-Wno-dev")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'move-shaders
+            (lambda _
+              (mkdir-p
+               (string-append
+                #$output
+                "/share/obs/obs-plugins/obs-advanced-masks"))
+              (rename-file
+               (string-append
+                #$output
+                "/data/obs-plugins/obs-advanced-masks/shaders")
+               (string-append
+                #$output
+                "/share/obs/obs-plugins/obs-advanced-masks/shaders")))))))
+    (inputs (list obs qtbase-5))
+    (home-page "https://github.com/FiniteSingularity/obs-advanced-masks")
+    (synopsis "Advanced masking plugin for OBS")
+    (description "OBS Advanced Masks is a project designed to expand the
+masking functionalities within OBS Studio.  This plug-in provides filters for
+users to create intricate and customized masks for their OBS Scenes and
+Sources.
+
+@itemize
+@item Advanced Masks provides both Alpha Masking and Adjustment Masking.
+@item Shape masks allow for dynamically generated Rectangle, Circle,
+Elliptical, Regular Polygon, Star, and Heart shaped masks, with many
+adjustable parameters.
+@item Source Masks allow an existing OBS source to be used as a mask, using
+any combination of the red, green, blue, or alpha channels from said source.
+@item Image Masks include all of the same functionality as Source Masks, but
+applied via a static image (.png, .jpeg, etc).
+@item Gradient Masks allow a fading mask using a user-specified gradient.
+@end itemize\n")
+    (license license:gpl2)))
+
+(define-public obs-composite-blur
+  (package
+    (name "obs-composite-blur")
+    (version "1.1.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/FiniteSingularity/obs-composite-blur")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1mlbc1zi4bp8xwiq0ynjciysqvlbrxa0v5an9hkzsl9vwxgz9jc9"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cmake-build-system)
+                  (guix build utils))
+      #:tests? #f ;no tests
+      #:configure-flags
+      #~(list (string-append "-DLIBOBS_INCLUDE_DIR="
+                             #$(this-package-input "obs") "/lib")
+              "-DBUILD_OUT_OF_TREE=On"
+              "-Wno-dev")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'move-shaders
+            (lambda _
+              (mkdir-p
+               (string-append
+                #$output
+                "/share/obs/obs-plugins/obs-composite-blur"))
+              (rename-file
+               (string-append
+                #$output
+                "/data/obs-plugins/obs-composite-blur/shaders")
+               (string-append
+                #$output
+                "/share/obs/obs-plugins/obs-composite-blur/shaders")))))))
+    (inputs (list obs qtbase-5))
+    (home-page "https://github.com/FiniteSingularity/obs-composite-blur")
+    (synopsis "Different blur algorithms for OBS")
+    (description "Composite Blur Plugin is a comprehensive blur plugin that
+provides blur algorithms and types for all levels of quality and computational
+need.
+
+@itemize
+@item Composite Blur provides several highly optimized blur algorithms
+including Gaussian, Multi-Pass Box, Dual Kawase, and Pixelate.
+@item Composite Blur provides multiple blur effects to give a different look
+and feel to the blur including Area, Directional, Zoom, Motion, and
+Tilt-Shift.
+@item Composite Blur also allows setting a Background Source so that it can
+properly composite blurred masks, allowing you to properly layer blurred
+sources.
+@item Finally, Composite Blur provides an option to mask where and how much
+blurring occurs on the source via Crop, Rectangle, Circle, Source, and Image
+masks.
+@end itemize\n")
+    (license license:gpl2)))
+
 (define-public obs-looking-glass
   (package
     (name "obs-looking-glass")
@@ -4133,6 +4254,80 @@ This may help improve your viewers watching experience, and allows you to use
 your host privately.")
     (license license:gpl2+)))
 
+(define-public obs-move-transition
+  (package
+    (name "obs-move-transition")
+    (version "3.0.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/exeldro/obs-move-transition")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0kni1a8zqqbgx5mmaw4k4chswsy0i9qk89zcbg58mvspz9zzv4id"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cmake-build-system)
+                  (guix build utils))
+      #:tests? #f ;no tests
+      #:configure-flags
+      #~(list (string-append "-DLIBOBS_INCLUDE_DIR="
+                             #$(this-package-input "obs") "/lib")
+              "-DBUILD_OUT_OF_TREE=On"
+              "-Wno-dev")))
+    (inputs (list obs qtbase-5))
+    (home-page "https://github.com/exeldro/obs-move-transition")
+    (synopsis "Move transition for OBS Studio")
+    (description "Plugin for OBS Studio to move source to a new position
+during scene transition.")
+    (license license:gpl2)))
+
+(define-public obs-multi-rtmp
+  (package
+    (name "obs-multi-rtmp")
+    (version "0.3.0.2-OBS29.1.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/sorayuki/obs-multi-rtmp")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "192zkihn3ahh93fn3mkpbx7apa04lmcxc637hpxwkivdjbq3nbk3"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cmake-build-system)
+                  (guix build utils))
+      #:tests? #f ;no tests
+      #:configure-flags
+      #~(list (string-append "-DLIBOBS_INCLUDE_DIR="
+                             #$(this-package-input "obs") "/lib")
+              "-DBUILD_OUT_OF_TREE=On"
+              "-Wno-dev")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'obs-plugins
+            (lambda* (#:key outputs #:allow-other-keys)
+              (mkdir-p (string-append #$output "/lib/obs-plugins"))
+              (symlink
+               (string-append #$output
+                              "/obs-plugins/64bit/obs-multi-rtmp.so")
+               (string-append #$output
+                              "/lib/obs-plugins/obs-multi-rtmp.so")))))))
+    (inputs (list obs qtbase-5))
+    (home-page "https://github.com/sorayuki/obs-multi-rtmp")
+    (synopsis "Multi-site simultaneous broadcast plugin for OBS Studio")
+    (description "This is a plugin to streaming to multiple RTMP servers
+concurrently.  It's able to share encoders with main output of OBS to save CPU
+power.  It can also use standalone encoders with basic
+configuration (bitrate).")
+    (license license:gpl2)))
+
 (define-public obs-pipewire-audio-capture
   (package
     (name "obs-pipewire-audio-capture")
@@ -4161,6 +4356,66 @@ your host privately.")
     (description "This plugin adds 3 sources for capturing audio outputs,
 inputs and applications using PipeWire.")
     (license license:gpl2+)))
+
+(define-public obs-source-clone
+  (package
+    (name "obs-source-clone")
+    (version "0.1.5")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/exeldro/obs-source-clone")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1rw0qknlkljzn4rk41g2jjnf113vald5k7kpvxvz0mpaywa6vc6j"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cmake-build-system)
+                  (guix build utils))
+      #:tests? #f ;no tests
+      #:configure-flags
+      #~(list (string-append "-DLIBOBS_INCLUDE_DIR="
+                             #$(this-package-input "obs") "/lib")
+              "-DBUILD_OUT_OF_TREE=On"
+              "-Wno-dev")))
+    (inputs (list obs qtbase-5))
+    (home-page "https://github.com/exeldro/obs-source-clone")
+    (synopsis "Plugin for OBS Studio to clone sources")
+    (description "Add source to OBS that lets you clone sources to allow
+different filters than the original.")
+    (license license:gpl2)))
+
+(define-public obs-source-copy
+  (package
+    (name "obs-source-copy")
+    (version "0.2.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/exeldro/obs-source-copy")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1l3ls3j57yh03vkwiah6yj1xnnmq7q2ngjjn1k4h1sqqk0dxn86j"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f ;no tests
+      #:configure-flags
+      #~(list (string-append "-DLIBOBS_INCLUDE_DIR="
+                             #$(this-package-input "obs") "/lib")
+              "-DBUILD_OUT_OF_TREE=On"
+              "-Wno-dev")))
+    (inputs (list obs qtbase-5))
+    (home-page "https://github.com/exeldro/obs-source-copy")
+    (synopsis "OBS plugin for copy and paste scenes, sources and filters")
+    (description "This package provides an OBS plugin for copy and paste
+scenes, sources and filters.")
+    (license license:gpl2)))
 
 (define-public obs-source-record
   (package

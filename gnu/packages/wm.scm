@@ -804,7 +804,7 @@ desktop environment.")
 (define-public icewm
   (package
     (name "icewm")
-    (version "3.5.1")
+    (version "3.6.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -812,7 +812,7 @@ desktop environment.")
                     version "/icewm-" version ".tar.lz"))
               (sha256
                (base32
-                "0fjxpc46nlv91ijbxkyk33rlwbg2gd9xkr2mikimrba07zahfns5"))))
+                "0xmw4ilzsc932fxqahxvqix66x940nzf54p5mz5p67rplg9sz7wp"))))
     (build-system gnu-build-system)
     (native-inputs (list pkg-config))
     (inputs (list fontconfig
@@ -1142,7 +1142,7 @@ the XDG Autostart specification.")
 (define-public fnott
   (package
     (name "fnott")
-    (version "1.6.0")
+    (version "1.7.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1151,7 +1151,7 @@ the XDG Autostart specification.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "04g1d0app9lpvzq3gxs7qjkd9zgbrmlvfy2n3h464r46j0wpgsx2"))))
+                "0x3wfqkkz6lf9w00nl5mchcw04gx884jxxz6f7z3fxpsjx582nr9"))))
     (build-system meson-build-system)
     (arguments `(#:build-type "release"
                  #:phases
