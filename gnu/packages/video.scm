@@ -4182,6 +4182,37 @@ masks.
 @end itemize\n")
     (license license:gpl2)))
 
+(define-public obs-gradient-source
+  (package
+    (name "obs-gradient-source")
+    (version "0.3.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/exeldro/obs-gradient-source")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1s1frbax6md9bvlm4zynp9lab9fmh95xk7dq9b2f8q0rhprnb6g6"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cmake-build-system)
+                  (guix build utils))
+      #:tests? #f ;no tests
+      #:configure-flags
+      #~(list (string-append "-DLIBOBS_INCLUDE_DIR="
+                             #$(this-package-input "obs") "/lib")
+              "-DBUILD_OUT_OF_TREE=On"
+              "-Wno-dev")))
+    (inputs (list obs qtbase-5))
+    (home-page "https://github.com/exeldro/obs-gradient-source")
+    (synopsis "Plugin for adding a gradient Source to OBS Studio")
+    (description "This package provides a plugin for adding a gradient Source
+to OBS Studio.")
+    (license license:gpl2)))
+
 (define-public obs-looking-glass
   (package
     (name "obs-looking-glass")
@@ -4356,6 +4387,55 @@ configuration (bitrate).")
     (description "This plugin adds 3 sources for capturing audio outputs,
 inputs and applications using PipeWire.")
     (license license:gpl2+)))
+
+(define-public obs-shaderfilter
+  (package
+    (name "obs-shaderfilter")
+    (version "2.0.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/exeldro/obs-shaderfilter")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1kqa8323gcnyqjcya4ynhwvd38y0xsxvxndzndpmg18q88svyiq8"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cmake-build-system)
+                  (guix build utils))
+      #:tests? #f ;no tests
+      #:configure-flags
+      #~(list (string-append "-DLIBOBS_INCLUDE_DIR="
+                             #$(this-package-input "obs") "/lib")
+              "-DBUILD_OUT_OF_TREE=On"
+              "-Wno-dev")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'fix-effects
+            (lambda _
+              (for-each
+               (lambda (directory)
+                 (mkdir-p
+                  (string-append
+                   #$output "/share/obs/obs-plugins/obs-shaderfilter"))
+                 (rename-file
+                  (string-append
+                   #$output "/data/obs-plugins/obs-shaderfilter/" directory)
+                  (string-append
+                   #$output "/share/obs/obs-plugins/obs-shaderfilter/"
+                   directory)))
+               '("examples" "textures")))))))
+    (inputs (list obs qtbase-5))
+    (home-page "https://github.com/exeldro/obs-shaderfilter")
+    (synopsis "OBS filter for applying an arbitrary shader to a source")
+    (description "Plugin for OBS Studio which is intended to allow users to
+apply their own shaders to OBS sources.  This theoretically makes possible
+some simple effects like drop shadows that can be implemented strictly in
+shader code.")
+    (license license:gpl2)))
 
 (define-public obs-source-clone
   (package

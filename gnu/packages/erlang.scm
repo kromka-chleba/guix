@@ -49,7 +49,7 @@
 (define-public erlang
   (package
     (name "erlang")
-    (version "26.2.5")
+    (version "27.0.1")
     (source (origin
               (method git-fetch)
               ;; The tarball from http://erlang.org/download contains many
@@ -61,7 +61,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0hd4flm9x8254rcv8hj0hra5lh5n51vcpharxy2d1ph8059vfsmx"))
+                "1gzlvbbc1zm87910pnhi94mcpag1zxylhy7m2g4vhlmclyir7gd1"))
               (patches (search-patches "erlang-man-path.patch"))))
     (build-system gnu-build-system)
     (native-inputs
@@ -69,13 +69,17 @@
 
        ;; Erlang's documentation is distributed in a separate tarball.
        ("erlang-manpages"
-        ,(origin
-           (method url-fetch)
-           (uri (string-append "https://github.com/erlang/otp/releases/download"
-                               "/OTP-" version "/otp_doc_man_" version ".tar.gz"))
-           (sha256
-            (base32
-             "08ngil8578asjzmqa657l4zdy0cr0h9spkg88wp9kxl95bfyli8p"))))))
+        ;; Manpages tarball is not released for 27.0.1, so we take it from the
+        ;; previous version. Details:
+        ;; https://erlangforums.com/t/patch-package-otp-27-0-1-released/3824/4
+        ,(let ((version "27.0"))
+           (origin
+             (method url-fetch)
+             (uri (string-append "https://github.com/erlang/otp/releases/download"
+                                 "/OTP-" version "/otp_doc_man_" version ".tar.gz"))
+             (sha256
+              (base32
+               "0f3w2152090860aci4a38d1bd19c5sslbwadwxc7sjza487fm8lm")))))))
     (inputs
      (list ncurses openssl wxwidgets))
     (propagated-inputs
@@ -84,6 +88,7 @@
      `(#:test-target "release_tests"
        #:configure-flags
        (list "--disable-saved-compile-time"
+             "--enable-deterministic-build"
              "--enable-dynamic-ssl-lib"
              "--enable-native-libs"
              "--enable-shared-zlib"
@@ -106,34 +111,22 @@
                     (time-utc->date
                      (make-time time-utc 0 (string->number
                                             (getenv "SOURCE_DATE_EPOCH"))))))
-               (substitute* "lib/reltool/src/reltool_target.erl"
-                 (("Date = date\\(\\),")
-                  (string-append "Date = "
-                                 (date->string source-date-epoch
-                                               "'{~Y,~m,~d}',"))))
-               (substitute* "lib/reltool/src/reltool_target.erl"
-                 (("Time = time\\(\\),")
-                  (string-append "Time = "
-                                 (date->string source-date-epoch
-                                               "'{~H,~M,~S}',"))))
-               (substitute* '("lib/reltool/src/reltool_target.erl"
-                              "lib/sasl/src/systools_make.erl")
-                 (("date\\(\\), time\\(\\),")
-                  (date->string source-date-epoch
-                                "{~Y,~m,~d}, {~H,~M,~S},")))
                (substitute* "lib/dialyzer/test/small_SUITE_data/src/gs_make.erl"
                  (("tuple_to_list\\(date\\(\\)\\),tuple_to_list\\(time\\(\\)\\)")
                   (date->string
                    source-date-epoch
-                   "tuple_to_list({~Y,~m,~d}), tuple_to_list({~H,~M,~S})")))
-               (substitute* "lib/snmp/src/compile/snmpc_mib_to_hrl.erl"
-                 (("\\{Y,Mo,D\\} = date\\(\\),")
-                  (date->string source-date-epoch
-                                "{Y,Mo,D} = {~Y,~m,~d},")))
-               (substitute* "lib/snmp/src/compile/snmpc_mib_to_hrl.erl"
-                 (("\\{H,Mi,S\\} = time\\(\\),")
-                  (date->string source-date-epoch
-                                "{H,Mi,S} = {~H,~M,~S},"))))))
+                   "tuple_to_list({~Y,~m,~d}), tuple_to_list({~H,~M,~S})"))))))
+         ;; When compiling with 'deterministic' option the important meta
+         ;; information is still needed for some Erlang's dependants, such as
+         ;; Elixir. We make compiler to preserve it.
+         ;; For more info see: https://github.com/erlang/otp/issues/8602
+         (add-after 'unpack 'preserve-source-meta
+           (lambda _
+             (substitute* "lib/compiler/src/compile.erl"
+               (("\\[\\{source,Source\\} \\| Info0\\];")
+                "[{source,Source} | Info0];
+                 [_|_] = Source when IsDeterministic ->
+                 [{source,Source} | Info0];"))))
          (add-after 'unpack 'patch-/bin/sh
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((sh (search-input-file inputs "/bin/sh")))
@@ -160,10 +153,21 @@
                         "lib/reltool/examples/display_args"
                         "lib/reltool/examples/mnesia_core_dump_viewer"
                         "lib/snmp/src/compile/snmpc.src"
-                        "make/verify_runtime_dependencies"
-                        "make/emd2exml.in"))))
+                        "make/verify_runtime_dependencies"))))
                (substitute* escripts
                  (("/usr/bin/env") (which "env"))))))
+         ;; Copy modified compiler to bootstrap. It is deterministic, but
+         ;; preserves 'source' meta information to be used by dependants
+         ;; of Erlang.
+         (add-after 'build 'copy-modified-compiler
+           (lambda _
+             (copy-recursively "lib/compiler/ebin/compile.beam"
+                               "bootstrap/lib/compiler/ebin/compile.beam")))
+         ;; ... clean everything and rebuild with modified bootstrap.
+         (add-after 'copy-modified-compiler 'clean-and-make-again
+           (lambda _
+             (invoke "make" "clean")
+             (invoke "make")))
          (add-before 'configure 'set-erl-top
            (lambda _
              (setenv "ERL_TOP" (getcwd))))
@@ -290,26 +294,29 @@ printing extending the io:format syntax to add colours.")
     (license license:expat)))
 
 (define-public erlang-yamerl
-  (package
-    (name "erlang-yamerl")
-    (version "0.10.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             ;; There are no tests included on Hex.
-             (url "https://github.com/yakaz/yamerl")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0if8abgmispcfk7zhd0a5dndzwzbsmqrbyrm5shk375r2dbbwak6"))))
-    (build-system rebar-build-system)
-    (synopsis "YAML and JSON parser in pure Erlang")
-    (description
-     "Erlang application to parse YAML 1.1 and YAML 1.2 documents, as well as
+  (let ((commit "a24f448c0a8084f70b751dc38621047e56fb53cc")
+        (revision "0"))
+    (package
+      (name "erlang-yamerl")
+      (version (git-version "0.10.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               ;; There are no tests included on Hex.
+               (url "https://github.com/yakaz/yamerl")
+               ;; Fetching commit which includes Erlang 27+ related fixes.
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1csq0z4igyybjgmrynz4d49ysv437iyd2xzkhifb5x47lpdpfpkq"))))
+      (build-system rebar-build-system)
+      (synopsis "YAML and JSON parser in pure Erlang")
+      (description
+       "Erlang application to parse YAML 1.1 and YAML 1.2 documents, as well as
 JSON documents.")
-    (home-page "https://hexdocs.pm/yamerl/")
-    (license license:bsd-2)))
+      (home-page "https://hexdocs.pm/yamerl/")
+      (license license:bsd-2))))
 
 (define-public erlang-covertool
   (package
@@ -541,6 +548,16 @@ testing of stateful systems.")
                (base32
                 "1wr7jkxm6nlgvd52xhniav64xr9rml2ngb35rwjwqlqvq7ywhp0c"))))
     (build-system rebar-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         ;; Fix tests for running under Erlang 27+.
+         (add-after 'unpack 'fix-tests-for-erlang-27
+           (lambda _
+             (substitute* "src/jsx_decoder.erl"
+               (("\\{\"-0\\.0\", \\[\\{float, 0\\.0\\}, end_json\\], <<\"-0\\.0\">>\\},")
+                "{\"0.0\", [{float, 0.0}, end_json], <<\"0.0\">>},
+{\"-0.0\", [{float, -0.0}, end_json], <<\"-0.0\">>},")))))))
     (synopsis "Streaming, evented JSON parsing toolkit")
     (description
      "An Erlang application for consuming, producing and manipulating json.")
