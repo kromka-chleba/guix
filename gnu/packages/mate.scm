@@ -856,8 +856,12 @@ icons on the MATE desktop.  It works on local and remote file systems.")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://mate/" (version-major+minor version) "/"
-                           "caja-extensions-" version ".tar.xz"))
+       (uri (string-append "mirror://mate/"
+                           (version-major+minor version)
+                           "/"
+                           "caja-extensions-"
+                           version
+                           ".tar.xz"))
        (sha256
         (base32 "0x9ikq8biaq08wzj0qqpmy8k5w7axqimigfgf7i5z0s00xg6r66j"))))
     (build-system glib-or-gtk-build-system)
@@ -865,40 +869,38 @@ icons on the MATE desktop.  It works on local and remote file systems.")
      `(#:configure-flags (list "--enable-sendto"
                                ;; TODO: package "gupnp" to enable 'upnp', package
                                ;; "gksu" to enable 'gksu'.
-                               (string-append "--with-sendto-plugins=removable-devices,"
-                                              "caja-burn,emailclient,pidgin,gajim")
+                               (string-append
+                                "--with-sendto-plugins=removable-devices,"
+                                "caja-burn,emailclient,pidgin,gajim")
                                "--enable-image-converter"
-                               "--enable-open-terminal" "--enable-share"
-                               "--enable-wallpaper" "--enable-xattr-tags"
-                               "--enable-av=no"
-                               ; Guix does not have rust packages
-                               		; gstreamer-tag-1.0
-		                            ; gstreamer-pbutils-1.0
-                               ; so disable search for them
+                               "--enable-open-terminal"
+                               "--enable-share"
+                               "--enable-wallpaper"
+                               "--enable-xattr-tags"
+                               "--enable-av=yes"
+
                                (string-append "--with-cajadir="
                                               (assoc-ref %outputs "out")
                                               "/lib/caja/extensions-2.0/"))))
-    (native-inputs
-     `(("intltool" ,intltool)
-       ("gettext" ,gettext-minimal)
-       ("glib:bin" ,glib "bin")
-       ("gobject-introspection" ,gobject-introspection)
-       ("gtk-doc" ,gtk-doc)
-       ("libxml2" ,libxml2)
-       ("pkg-config" ,pkg-config)))
-    (inputs
-     (list attr
-           brasero
-           caja
-           dbus
-           dbus-glib
-           gajim ;runtime only?
-           gstreamer
-           gtk+
-           graphicsmagick
-           mate-desktop
-           pidgin ;runtime only?
-           startup-notification))
+    (native-inputs `(("intltool" ,intltool)
+                     ("gettext" ,gettext-minimal)
+                     ("glib:bin" ,glib "bin")
+                     ("gobject-introspection" ,gobject-introspection)
+                     ("gtk-doc" ,gtk-doc)
+                     ("libxml2" ,libxml2)
+                     ("pkg-config" ,pkg-config)))
+    (inputs (list attr
+                  brasero
+                  caja
+                  dbus
+                  dbus-glib
+                  gajim ;runtime only?
+                  gst-plugins-base
+                  gtk+
+                  graphicsmagick
+                  mate-desktop
+                  pidgin ;runtime only?
+                  startup-notification))
     (home-page "https://mate-desktop.org/")
     (synopsis "Extensions for the File manager Caja")
     (description
@@ -911,17 +913,21 @@ icons on the MATE desktop.  It works on local and remote file systems.")
 (define-public mate-control-center
   (package
     (name "mate-control-center")
-    (version "1.26.1")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-control-center-" version ".tar.xz"))
        (sha256
-        (base32 "022nbgdvhfjj9zdy9zaiagigh3f8r0dzfz4gqmpsayk57cm4jpz0"))))
+        (base32 "1g0lg4x3idilaxhwq1s90pajkvv9i012kzrnk0pxqj2jzl2cgwpb"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      '(#:phases (modify-phases %standard-phases
+                  (add-before 'configure 'use-elogind-as-systemd
+                    (lambda _
+                      (substitute* "configure"
+                        (("systemd") "libelogind"))))
                   (add-before 'build 'fix-polkit-action
                     (lambda* (#:key outputs #:allow-other-keys)
                       ;; Make sure the polkit file refers to the right
@@ -948,11 +954,14 @@ icons on the MATE desktop.  It works on local and remote file systems.")
        ("dconf" ,dconf)
        ("dbus" ,dbus)
        ("dbus-glib" ,dbus-glib)
+       ("elogind" ,elogind)
        ("fontconfig" ,fontconfig)
        ("freetype" ,freetype)
        ("glib" ,glib)
        ("gtk+" ,gtk+)
+       ("libappindicator" ,libappindicator)
        ("libcanberra" ,libcanberra)
+       ("libgtop" ,libgtop)
        ("libmatekbd" ,libmatekbd)
        ("libx11" ,libx11)
        ("libxcursor" ,libxcursor)
@@ -969,7 +978,8 @@ icons on the MATE desktop.  It works on local and remote file systems.")
        ("mate-settings-daemon" ,mate-settings-daemon)
        ("pango" ,pango)
        ("polkit" ,polkit)
-       ("startup-notification" ,startup-notification)))
+       ("startup-notification" ,startup-notification)
+       ("udisks" ,udisks)))
     (propagated-inputs
      (list (librsvg-for-system)))        ;mate-slab.pc
     (home-page "https://mate-desktop.org/")
@@ -1441,15 +1451,17 @@ can be used as backgrounds in the MATE Desktop environment.")
 (define-public mate-system-monitor
   (package
     (name "mate-system-monitor")
-    (version "1.26.0")
+    (version "1.28.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://mate/" (version-major+minor version) "/"
                            "mate-system-monitor-" version ".tar.xz"))
        (sha256
-        (base32 "13rkrk7c326ng8164aqfp6i7334n7zrmbg61ncpjprbrvlx2qiw3"))))
+        (base32 "09asjqln7sn6rbqy8anwfnnf5wfnhdwm9xhkphg3dd8gp7b67mj2"))))
     (build-system glib-or-gtk-build-system)
+    (arguments
+     `(#:configure-flags '("--enable-systemd=no")))
     (native-inputs
      (list autoconf gettext-minimal intltool pkg-config yelp-tools))
     (inputs
@@ -1541,9 +1553,9 @@ used to bring up authentication dialogs.")
            python-pygobject))
     (home-page "https://mate-desktop.org/")
     (synopsis "Menu editor for MATE")
-    (description "Mozo is a menu editor for MATE using the freedesktop.org menu
-specification")
-    (license (list license:lgpl2.0+))))
+    (description "Mozo is a menu editor for MATE using the freedesktop.org
+menu specification.")
+    (license (list license:lgpl2.1+))))
 
 
 (define-public mate
