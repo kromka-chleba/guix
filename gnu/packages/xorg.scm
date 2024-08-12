@@ -6169,7 +6169,7 @@ basic eye-candy effects.")
        (sha256
         (base32 "1x1ld2p3q47irqq6p1b3rd9ffbi7kvgxyvfmgi0skfin17b2aqx4"))
        (patches (search-patches "xpra-6.0-systemd-run.patch"
-                                "xpra-6.0-install_libs.patch"))))
+                                "xpra-6.1-install_libs.patch"))))
     (build-system python-build-system)
     (inputs
      (list bash-minimal                 ; for wrap-program

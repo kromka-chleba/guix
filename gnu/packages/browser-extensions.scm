@@ -58,7 +58,7 @@ supported content to the Kodi media center.")
   ;; Arbitrary commit of branch master,
   ;; Update when updating uBlockOrigin.
   (let* ((name "ublock-main-assets")
-         (commit "fd83ae724c8851e3d494863169a959f3e1b84e3a")
+         (commit "f44ac328b718bab3118f759880128fe420afb906")
          (revision "2")
          (version (git-version "0" revision commit)))
     (origin
@@ -68,13 +68,13 @@ supported content to the Kodi media center.")
             (commit commit)))
       (file-name (git-file-name name version))
       (sha256
-       (base32 "0rinh6cyxq4mlkr61g7imhpb2wmr2kfzzhfmpimqcl64y8imm67l")))))
+       (base32 "06rglm8fl44aazpdpc9616fncfbkqy0hj945afrkihpk3fpwgxjy")))))
 
 (define ublock-prod-assets
   ;; Arbitrary commit of branch gh-pages,
   ;; Update when updating uBlockOrigin.
   (let* ((name "ublock-prod-assets")
-         (commit "b81083649f704db63c55f08f3a1ac0972ac244ed")
+         (commit "a1409d83d46d49b6cd5c40ec956cc7acdff481ef")
          (revision "2")
          (version (git-version "0" revision commit)))
     (origin
@@ -84,12 +84,12 @@ supported content to the Kodi media center.")
             (commit commit)))
       (file-name (git-file-name name version))
       (sha256
-       (base32 "16bkrrr1lf9j6ka00v9987hm01flvlwfag78j0f7l7jp4hkidvm3")))))
+       (base32 "07ih6gxnv3q3cbxlaw9yk4l08v4qli3wri9rgfb6ick2wd4xp89d")))))
 
 (define ublock-origin
   (package
     (name "ublock-origin")
-    (version "1.58.0")
+    (version "1.59.0")
     (home-page "https://github.com/gorhill/uBlock")
     (source (origin
               (method git-fetch)
@@ -99,7 +99,7 @@ supported content to the Kodi media center.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0q8rm4l3gdgy1j2x0kmsfs9i1vyvr7glsxjjz3ikxy6hcnv6sd4m"))))
+                "0d050fbfpja3hw0ap09bdlnqnr3vbwsjmkrpdkdp4861x8y5gbsf"))))
     (build-system gnu-build-system)
     (outputs '("xpi" "firefox" "chromium"))
     (properties '((addon-id . "uBlock0@raymondhill.net")))
@@ -256,7 +256,7 @@ with the @uref{https://keepassxc.org, KeePassXC} password manager.")
 (define noscript
   (package
     (name "noscript")
-    (version "11.4.29")
+    (version "11.4.31")
     (source (origin
               (method url-fetch/zipbomb)
               (uri (string-append
@@ -264,7 +264,7 @@ with the @uref{https://keepassxc.org, KeePassXC} password manager.")
                     ".xpi"))
               (sha256
                (base32
-                "1k94zvv2ypmhc29f5d2zrvigwh1xgi5kwm1kqfxarwjyn108if85"))))
+                "1iqhdm32mf3k4a2x66nqi17s8dm5g6x71sbq8fvqy6j76ish0b5j"))))
     (build-system copy-build-system)
     (properties '((addon-id . "{73a6fe31-595d-460b-a920-fcc0f8843232}")))
     (arguments
