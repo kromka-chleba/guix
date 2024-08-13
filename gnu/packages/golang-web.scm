@@ -22,6 +22,7 @@
 ;;; Copyright © 2022 jgart via Guix-patches via <guix-patches@gnu.org>
 ;;; Copyright © 2022 muradm <mail@muradm.net>
 ;;; Copyright © 2022, 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2023 Felix Lechner <felix.lechner@lease-up.com>
 ;;; Copyright © 2023 Filip Lajszczak <filip@lajszczak.dev>
 ;;; Copyright © 2023 Fries <fries1234@protonmail.com>
 ;;; Copyright © 2023 Hilton Chain <hako@ultrarare.space>
@@ -3646,6 +3647,53 @@ programming language, which supports draft-04, draft-06 and draft-07.")
      "This package contains a client implementation for OAuth 2.0
  spec in Go.")
     (license license:bsd-3)))
+
+(define-public go-golang-zx2c4-com-wireguard
+  (package
+    (name "go-golang-zx2c4-com-wireguard")
+    (version "0.0.0-20231211153847-12269c276173")
+    (source
+     (origin
+       (method git-fetch)
+       ;; NOTE: module URL is a redirect
+       ;; target: git.zx2c4.com/wireguard-go
+       ;; source: golang.zx2c4.com/wireguard
+       (uri (git-reference
+             (url "https://git.zx2c4.com/wireguard-go/")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fbc6m0ahifhrd6jdrpdxi8l3b2slpp8fmv20kpq2yzz19vzzgkf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "golang.zx2c4.com/wireguard"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Workaround for go-build-system's lack of Go modules
+          ;; support.
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v"
+                          ;; "./tune/..." ; Requires gvisor.dev/gvisor, not packed yet
+                          "./"
+                          "./conn/..."
+                          "./device/..."
+                          "./ipc/..."
+                          "./ratelimiter/..."
+                          "./replay/..."
+                          "./rwcancel/..."
+                          "./tai64n/..."))))))))
+    (propagated-inputs
+     (list go-golang-org-x-crypto
+           go-golang-org-x-net
+           go-golang-org-x-sys))
+    (home-page "https://git.zx2c4.com/wireguard")
+    (synopsis "Implementation of WireGuard in Go")
+    (description "This package is a Go Implementation of WireGuard.")
+    (license license:expat)))
 
 ;; XXX: This repository has been archived by the owner on Feb 27, 2023. It is
 ;; now read-only and it is DEPRECATED.

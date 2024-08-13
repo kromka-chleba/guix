@@ -20,6 +20,7 @@
 ;;; Copyright © 2023 Kaelyn Takata <kaelyn.alexi@protonmail.com>
 ;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Liliana Marie Prikler <liliana.prikler@gmail.com>
+;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -924,7 +925,7 @@ OpenGL.")
 (define-public glfw
   (package
     (name "glfw")
-    (version "3.3.9")
+    (version "3.3.10")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/glfw/glfw"
@@ -932,7 +933,7 @@ OpenGL.")
                                   "/glfw-" version ".zip"))
               (sha256
                (base32
-                "023dn97n4h14n5lbjpzjv0y6a2plj254c0w3rr3wraf3z08189jm"))))
+                "1f5xs4cj1y5wk1jimv1mylk6n6vh7433js28mfd1kf7p2zw3whz8"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -993,6 +994,21 @@ OpenGL.")
 desktop computers.  It provides a simple API for creating windows, contexts
 and surfaces, receiving input and events.")
     (license license:zlib)))
+
+(define-public glfw-3.4
+  (package
+    (inherit glfw)
+    (version "3.4")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/glfw/glfw"
+                                  "/releases/download/" version
+                                  "/glfw-" version ".zip"))
+              (sha256
+               (base32
+                "1sd396kkn53myp61kxrd18h7b1q4ix173hhxhvl0iz8j4x5h1v5m"))))
+    (native-inputs (modify-inputs (package-native-inputs glfw)
+                     (prepend pkg-config)))))
 
 (define-public nanovg-for-extempore
   (let ((version "0.7.1")
