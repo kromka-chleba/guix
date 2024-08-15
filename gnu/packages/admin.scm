@@ -3618,14 +3618,14 @@ a new command using the matched rule, and runs it.")
 (define-public di
   (package
     (name "di")
-    (version "4.52")
+    (version "4.53")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/diskinfo-di/"
                            "di-" version ".tar.gz"))
        (sha256
-        (base32 "07vsnn1gxm3r7dchbrq63iazd64gza2ac7b2m1039708rf5flxdp"))))
+        (base32 "0gp806m7jk2rfymy5r62a2lfd8jq879qy94blrjqvb0xq7pmpp80"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -5169,14 +5169,14 @@ Netgear devices.")
 (define-public atop
   (package
     (name "atop")
-    (version "2.10.0")
+    (version "2.11.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.atoptool.nl/download/atop-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "14szbpvsm9czib1629cbh8qcp7pxhgn0vjrfv1yqwmw25k7p79p7"))
+                "083fckjn2s3276fqyjb3rcwqrws7qc3fgk1f82zzgzrfc1kcd54v"))
               (snippet
                ;; The 'mkdate' script generates a new 'versdate.h' header
                ;; containing the build date.  That makes builds

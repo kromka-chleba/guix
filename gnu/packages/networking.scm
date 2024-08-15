@@ -1848,14 +1848,14 @@ network frames.")
 (define-public fping
   (package
     (name "fping")
-    (version "5.1")
+    (version "5.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://fping.org/dist/fping-"
                            version ".tar.gz"))
        (sha256
-        (base32 "1zh9fkyn0bixgn77v9z6ayv446nqwx960hmly9m68xix0s62dr8y"))))
+        (base32 "0bz4n0c4p5v8yh1fzvfvbbydpg4vy6krligpw5vbpc1zsw82ssd7"))))
     (build-system gnu-build-system)
     (arguments '(#:configure-flags '("--enable-ipv6")))
     (home-page "https://fping.org/")
@@ -4619,7 +4619,7 @@ QUIC protocol.")
 (define-public yggdrasil
   (package
     (name "yggdrasil")
-    (version "0.5.7")
+    (version "0.5.8")
     (source
      (origin
        (method git-fetch)
@@ -4630,7 +4630,7 @@ QUIC protocol.")
          (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0dsca3208mi221ayq3a2rikf20yphalxswsh97r4maxv69x1ka44"))
+        (base32 "0qcly06bljlilihrqrylhq53w3l4bfzmqqjq4cbn55nvsz2gbify"))
       (patches (search-patches "yggdrasil-extra-config.patch"))))
     (build-system go-build-system)
     (arguments

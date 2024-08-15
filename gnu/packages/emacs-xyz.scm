@@ -1902,10 +1902,10 @@ leveraging built-in functionality.")
                    license:fdl1.3+)))) ; GFDLv1.3+ for the manual
 
 (define-public emacs-meyvn
-  (let ((commit "f2b809da1d1bf66f1a215a0e5c64f95d10118b76")) ;version bump
+  (let ((commit "62802ab42ee021f89f980bd3de3e1336ad760944")) ;version bump
     (package
       (name "emacs-meyvn")
-      (version "1.3")
+      (version "1.4")
       (source
        (origin
          (method git-fetch)
@@ -1914,7 +1914,7 @@ leveraging built-in functionality.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1zcckiqk046lbc059jxkh94sjicpvpsf1xkgi8i73rds2xxjyvpk"))))
+          (base32 "0821sk0mq1602mk3hp7igcafp8fpfg586nk41iz9syc06xbh0if7"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-cider
                                emacs-dash
@@ -17994,7 +17994,7 @@ you to deal with multiple log levels.")
 (define-public emacs-denote
   (package
     (name "emacs-denote")
-    (version "3.0.7")
+    (version "3.0.8")
     (source
      (origin
        (method git-fetch)
@@ -18003,7 +18003,7 @@ you to deal with multiple log levels.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0dq0djv5baz6pab6vf5p52yywxz91smpb9fqlx1hyzl3cvgs8aml"))))
+        (base32 "1lmnb20pw7fh6mpw5jg11m8z550w0xci63pi92mfgwn0p10wn7h9"))))
     (build-system emacs-build-system)
     (native-inputs (list texinfo))
     (home-page "https://protesilaos.com/emacs/denote/")
@@ -19133,7 +19133,7 @@ actually changing the buffer's text.")
 (define-public emacs-diff-hl
   (package
     (name "emacs-diff-hl")
-    (version "1.9.2")
+    (version "1.10.0")
     (source
      (origin
        (method git-fetch)
@@ -19142,7 +19142,7 @@ actually changing the buffer's text.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0nh3rrvjjddyng5j7wjrk4ls7l6cjx3fpf8ksg4kjq7wzw4abf1s"))))
+        (base32 "0vfqyhzf3lyrhn788fbyc4p3lf36fkh8qnxvg6vddg4bxmqcjnsw"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/dgutov/diff-hl")
     (synopsis "Highlight uncommitted changes using VC")
@@ -32043,7 +32043,7 @@ as Emacs Lisp.")
 (define-public emacs-transient
   (package
     (name "emacs-transient")
-    (version "0.7.3")
+    (version "0.7.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -32052,7 +32052,7 @@ as Emacs Lisp.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "11yygh8h2ggslym3mly9dfgyml9srmcqkx1i9n190idv5a4gkjm7"))))
+                "0ad0qkcvc9w6ry8f4b6xrdy52vlxm8nrp67k2p97w6prhyfxbp7p"))))
     (build-system emacs-build-system)
     (arguments
      `(#:tests? #f                      ;no test suite
