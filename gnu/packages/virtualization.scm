@@ -34,6 +34,7 @@
 ;;; Copyright © 2023, 2024 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2024 Raven Hallsby <karl@hallsby.com>
+;;; Copyright © 2024 jgart <jgart@dismail.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -146,6 +147,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
   #:use-module (guix build-system meson)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system ruby)
   #:use-module (guix build-system trivial)
@@ -1661,15 +1663,15 @@ three libraries:
 (define-public python-libvirt
   (package
     (name "python-libvirt")
-    (version "8.6.0")
+    (version "10.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://libvirt.org/sources/python/libvirt-python-"
                            version ".tar.gz"))
        (sha256
-        (base32 "0wa86jliq71x60dd4vyzsj4lcrb82i5qsgxz9azvwgsgi9j9mx41"))))
-    (build-system python-build-system)
+        (base32 "1r3rvkgnc6j813mcdr7fdfnxx58imzl16azjkg54yy2gfayrq9g4"))))
+    (build-system pyproject-build-system)
     (inputs
      (list libvirt))
     (propagated-inputs

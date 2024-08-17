@@ -28,6 +28,7 @@
 ;;; Copyright © 2023 Andrew Kravchuk <awkravchuk@gmail.com>
 ;;; Copyright © 2024 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2024 bigbug <bigbookofbug@proton.me>
+;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -67,6 +68,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bdw-gc)
+  #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages curl)
@@ -85,15 +87,19 @@
   #:use-module (gnu packages libffcall)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages libsigsegv)
+  #:use-module (gnu packages libunwind)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages notcurses)
   #:use-module (gnu packages onc-rpc)
   #:use-module (gnu packages perl)
+  #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages tcl)
@@ -230,7 +236,7 @@ integration with code written in C.")
     (name "ccl")
     ;; XXX When updating this package, check whether we can simply append
     ;; VERSION to the ccl-bootstrap URL again, instead of per architecture.
-    (version "1.12.1")
+    (version "1.13")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -239,7 +245,7 @@ integration with code written in C.")
               (file-name (git-file-name "ccl" version))
               (sha256
                (base32
-                "1zz291lvsrr7pps8wfl2kdxsnzjngqi4v3mil14pga4r5zanmsi7"))))
+                "12cb3gp43bhl7nyms3a4lix8j1s3arnp124d3ahc2lhlrjirs0mr"))))
     (build-system gnu-build-system)
     ;; CCL consists of a "lisp kernel" and "heap image", both of which are
     ;; shipped in precompiled form in source tarballs.  The former is a C
@@ -253,18 +259,18 @@ integration with code written in C.")
            (uri (string-append
                  "https://github.com/Clozure/ccl/releases/download/v"
                  (match (%current-system)
-                   ("armhf-linux" "1.12/linuxarm")
+                   ("armhf-linux" "1.13/linuxarm")
                    ;; XXX: This source only works on x86, but provide it as a
                    ;; catch-all to prevent errors when querying this package
                    ;; on unsupported platforms.
-                   (_ "1.12.1/linuxx86"))
+                   (_ "1.13/linuxx86"))
                  ".tar.gz"))
            (sha256
             (base32
              (match (%current-system)
                ("armhf-linux"
-                "0x4bjx6cxsjvxyagijhlvmc7jkyxifdvz5q5zvz37028va65243c")
-               (_ "0ll017ajcfsyx8f7zsy4394y8xxvz40iz0gcsmznp0n3mf0xi67c"))))))))
+                "1mlj7lgn4p9bw1ki7gk00sj89cjv0cjpdmpp65brhx9q3fvkk9xf")
+               (_ "04ry8zwrcjjmzbxp43nkknchabk6i6mclrzg5biwfp1h64bcnzfx"))))))))
     (native-inputs
      (list cl-asdf m4))
     (arguments
@@ -366,6 +372,81 @@ implementation featuring fast compilation speed, native threads, a precise,
 generational, compacting garbage collector, and a convenient foreign-function
 interface.")
     (license license:asl2.0)))
+
+(define-public clasp-cl
+  (package
+    (name "clasp-cl")
+    (version "2.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://github.com/clasp-developers/clasp/releases/download/"
+             version "/clasp-" version ".tar.gz"))
+       (sha256
+        (base32 "10jjhcid6qp64gx29iyy5rqqijwy8hrvx66f0xabdj8w3007ky39"))))
+    (build-system gnu-build-system)
+    (inputs
+     (list boost clang-15 fmt `(,gcc "lib") gmp libelf libunwind llvm-15))
+    (native-inputs
+     (list binutils-gold ninja pkg-config sbcl))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (delete 'check)
+         (add-after 'unpack 'patch-koga
+           (lambda* _
+             (call-with-port (open-file "src/koga/units.lisp" "a")
+               (lambda (p)
+                 (display "(defmethod configure-unit (c (u (eql :git))))\n" p)))))
+         (add-before 'configure 'set-configure-environment
+           (lambda* _
+             (setenv "SOURCE_DATE_EPOCH" "1")
+             (setenv "ASDF_OUTPUT_TRANSLATIONS"
+                     (string-append (getenv "PWD")
+                                    ":"
+                                    (getenv "PWD")
+                                    "/__fasls"))))
+         (replace 'configure
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out"))
+                   (clang (assoc-ref inputs "clang"))
+                   (ld-flags
+                    (string-join
+                     (apply append
+                            (map (lambda (f)
+                                   (list "-L" f "-rpath" f))
+                                 (string-split (getenv "LIBRARY_PATH") #\:)))
+                     ",")))
+               (invoke "sbcl"
+                       "--script"
+                       "./koga"
+                       "--skip-sync"
+                       "--build-mode=bytecode-faso"
+                       (string-append "--cc=" clang "/bin/clang")
+                       (string-append "--cxx=" clang "/bin/clang++")
+                       (string-append "--ldflags=-Wl," ld-flags)
+                       "--reproducible-build"
+                       "--package-path=/"
+                       (string-append "--bin-path=" out "/bin")
+                       (string-append "--lib-path=" out "/lib")
+                       (string-append "--share-path=" out "/share")))))
+         (replace 'build
+           (lambda* _
+             (invoke "ninja" "-C" "build")))
+         (replace 'install
+           (lambda* _
+             (invoke "ninja" "-C" "build" "install"))))))
+    (home-page "https://clasp-developers.github.io/")
+    (synopsis "Common Lisp implementation based on LLVM and C++")
+    (description "Clasp is a new Common Lisp implementation that seamlessly
+ interoperates with C++ libraries and programs using LLVM for compilation to
+ native code.  This allows Clasp to take advantage of a vast array of
+ preexisting libraries and programs, such as out of the scientific computing
+ ecosystem.  Embedding them in a Common Lisp environment allows you to make use
+ of rapid prototyping, incremental development, and other capabilities that
+ make it a powerful language.")
+    (license license:lgpl2.1+)))
 
 (define-public cl-asdf
   (package
