@@ -710,13 +710,13 @@ and operations on them using LAPACK and SuiteSparse.")
 (define-public r-nlme
   (package
     (name "r-nlme")
-    (version "3.1-165")
+    (version "3.1-166")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "nlme" version))
        (sha256
-        (base32 "16clxh0b8sr2k3vddfip3awimn17ffkd5kwgygi8n4y2jfjbndzw"))))
+        (base32 "0qlpj3hjnlvd7x3ayjhvvpxlc2z4bfwk9qpglw8mnxbqipp18yi3"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-lattice))
@@ -1607,13 +1607,13 @@ syntax that can be converted to XHTML or other formats.")
 (define-public r-yaml
   (package
     (name "r-yaml")
-    (version "2.3.8")
+    (version "2.3.10")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "yaml" version))
               (sha256
                (base32
-                "1n1zlbnq3ldipnnm08whpvm8r21vxg4c9jzg7x7j3blw2pi7kl4y"))))
+                "0v9al1fh82vpjhml91j73sim7gfyc0154kxaam41sdkf6qnx8dp2"))))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/yaml/")
     (synopsis "Methods to convert R data to YAML and back")
@@ -1625,13 +1625,13 @@ emitter (http://pyyaml.org/wiki/LibYAML) for R.")
 (define-public r-knitr
   (package
     (name "r-knitr")
-    (version "1.47")
+    (version "1.48")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "knitr" version))
               (sha256
                (base32
-                "1kx6g8ddbigwx3bmq771gwi3din3fxjn59l801904kjaz6dq9pgs"))))
+                "15zipywk2ayrmy0p7q4d18512c2cgr9kk1lmc7gyi8bxv8k5j6sh"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-evaluate r-highr r-xfun r-yaml))
@@ -2739,14 +2739,14 @@ R version.")
 (define-public r-checkmate
   (package
     (name "r-checkmate")
-    (version "2.3.1")
+    (version "2.3.2")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "checkmate" version))
        (sha256
         (base32
-         "1xl4313kav3fy32ff9mdlm03za1mrwlym6d5abrkf0a0r86bmrp7"))))
+         "1qw81bs3lhwr1m6wlbs0l0j669051n60x4ca2821599ddhnp6mbj"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-backports))
@@ -2937,14 +2937,14 @@ collation, and NAMESPACE files.")
 (define-public r-openssl
   (package
     (name "r-openssl")
-    (version "2.2.0")
+    (version "2.2.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "openssl" version))
        (sha256
         (base32
-         "1cyx2yv2l446xwf0a0im70zfd6jlpg8113ncgdydajyvx1mb9f0q"))))
+         "13gp6q8s0pdjvnd7mnmdqhmmsb0mf4m3snq99j6js8c4sll27895"))))
     (properties
      `((upstream-name . "openssl")
        (updater-extra-inputs . ("openssl"))))
@@ -3090,13 +3090,13 @@ tools to simplify the devolpment of R packages.")
 (define-public r-withr
   (package
     (name "r-withr")
-    (version "3.0.0")
+    (version "3.0.1")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "withr" version))
               (sha256
                (base32
-                "1rz0pgm1bg3cnc09s8q8yyg83lmf8bv9arlasciqqr0fdpgfwy4c"))))
+                "0h9qbaa4i63awk176i3pm7bia7wgssav9zk9jvc7sg3k5yng2wym"))))
     (build-system r-build-system)
     (native-inputs
      (list r-knitr))
@@ -3227,13 +3227,13 @@ well as additional utilities such as panel and axis annotation functions.")
 (define-public r-rcpparmadillo
   (package
     (name "r-rcpparmadillo")
-    (version "0.12.8.4.0")
+    (version "14.0.0-1")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "RcppArmadillo" version))
               (sha256
                (base32
-                "0iihy2pbmc56s5s6x7ac1c1biqda60gyqkddvn2c211j0xjnigya"))))
+                "145sci5fkwzrngqx2ykpxvvy3wn5wjfjfl7wmw92gn9yvkxd9i40"))))
     (properties `((upstream-name . "RcppArmadillo")))
     (build-system r-build-system)
     (propagated-inputs
@@ -3255,13 +3255,13 @@ the header files from the templated Armadillo library.")
 (define-public r-bitops
   (package
     (name "r-bitops")
-    (version "1.0-7")
+    (version "1.0-8")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "bitops" version))
               (sha256
                (base32
-                "1i0phmq5yynla5x0frqll1gbf5ww59p3sgz1s06a354zqf9grdg9"))))
+                "0f1744pi3qb1av41man6xp2xalwcjslz3qbk35gccpb4d6glp8bq"))))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/bitops")
     (synopsis "Bitwise operations")
@@ -3471,13 +3471,13 @@ engine (version 3.8.8.2) is included.")
 (define-public r-rcurl
   (package
     (name "r-rcurl")
-    (version "1.98-1.14")
+    (version "1.98-1.16")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "RCurl" version))
               (sha256
                (base32
-                "1kq3ydvm7hvy8pxk9iy13pkq5mxyxqlx4mpjsadzl7a7jj32gbgf"))))
+                "19qddkyasfwa61mj0r0m4wk2xhpsqxf2dikih0s1fdjr207c938s"))))
     (properties `((upstream-name . "RCurl")))
     (build-system r-build-system)
     (arguments
@@ -3632,14 +3632,14 @@ statements.")
 (define-public r-segmented
   (package
     (name "r-segmented")
-    (version "2.1-0")
+    (version "2.1-1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "segmented" version))
        (sha256
         (base32
-         "1whcch1lw9y5fgy205377hr69xdjmav57z63vzgj7ammihja0yvd"))))
+         "1p83g6qj8y4xblggm12bhr9zpsqbrrc7lbbigxcafhhi9c8v08v7"))))
     (build-system r-build-system)
     (propagated-inputs (list r-mass r-nlme))
     (home-page "https://cran.r-project.org/web/packages/segmented")
@@ -3674,13 +3674,13 @@ worker processes and collect and return the results on the master.")
 (define-public r-sparsem
   (package
     (name "r-sparsem")
-    (version "1.84")
+    (version "1.84-2")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "SparseM" version))
               (sha256
                (base32
-                "05pxj16l1d9smlsn9h3pxcnd49s8l7f6088xvn808pa1f3h9dybn"))))
+                "0rc6x466jhalb6baxxhffmmcpi03nndvvighp696rrvrhsxzv015"))))
     (properties
      `((upstream-name . "SparseM")))
     (native-inputs
@@ -5758,14 +5758,14 @@ regression methodology including model selections and multivariate statistics.")
 (define-public r-pcapp
   (package
     (name "r-pcapp")
-    (version "2.0-4")
+    (version "2.0-4-1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "pcaPP" version))
        (sha256
         (base32
-         "0cw18pcbpsr5rc8fxbwnzfag5g76j4hscij7j08zlbyr2436gifn"))))
+         "04xqicm1c16ajhzvlg17w8y50qnbqjisj3xvgpi3k18idkmmf6xx"))))
     (properties `((upstream-name . "pcaPP")))
     (build-system r-build-system)
     (propagated-inputs
@@ -5975,14 +5975,14 @@ based on an interface to Fortran implementations by M. J. D. Powell.")
 (define-public r-rcppeigen
   (package
     (name "r-rcppeigen")
-    (version "0.3.4.0.0")
+    (version "0.3.4.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "RcppEigen" version))
        (sha256
         (base32
-         "0djiyimgka7g3kfakb6mfaq7cxna9kn6kgib59x9p7qj24ha1m18"))))
+         "09jf5bvz77qsx4m6draarm7an07yxvip6bbmjbfsl2mm93qliv95"))))
     (properties `((upstream-name . "RcppEigen")))
     (build-system r-build-system)
     (propagated-inputs
@@ -6100,14 +6100,14 @@ algorithms.")
 (define-public r-lme4
   (package
     (name "r-lme4")
-    (version "1.1-35.4")
+    (version "1.1-35.5")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "lme4" version))
        (sha256
         (base32
-         "1zwr0wyrxllysbm2ca7hawzh4kmyxk23hkvszvzddjgi7wkw76jq"))))
+         "0w2i2d3q19kbx3scd7p7dyfpfpcqb3d5h47y5rb2jr59gvdn8rkx"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-boot
@@ -7508,13 +7508,13 @@ L-Moments and Distributional Least Absolutes.")
 (define-public r-exact
   (package
     (name "r-exact")
-    (version "3.2")
+    (version "3.3")
     (source
       (origin
         (method url-fetch)
         (uri (cran-uri "Exact" version))
         (sha256
-          (base32 "0a33gbhzd580i31xxsjxigg0nl8ag1x4xz3jqmq5jqappc6f5d2k"))))
+          (base32 "0hikz8f19blywxs66xj6zf4krwyivsy3w165qvrnb0m2l6dx1l7v"))))
     (properties `((upstream-name . "Exact")))
     (build-system r-build-system)
     (propagated-inputs (list r-rootsolve))
@@ -7537,13 +7537,13 @@ Calculates confidence intervals for the difference in proportion.")
 (define-public r-desctools
   (package
     (name "r-desctools")
-    (version "0.99.54")
+    (version "0.99.55")
     (source
       (origin
         (method url-fetch)
         (uri (cran-uri "DescTools" version))
         (sha256
-          (base32 "16qbm1l1281yj1cg6fp8xgd8xdshpz9a09f0b9cyimsjbm01c2j7"))))
+          (base32 "07dgif06kl2p2qzcg827y05al1k1qy21a5gkz24jbd6xds161mg5"))))
     (properties `((upstream-name . "DescTools")))
     (build-system r-build-system)
     (arguments
