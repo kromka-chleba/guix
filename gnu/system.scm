@@ -77,6 +77,7 @@
   #:use-module (gnu system locale)
   #:use-module (gnu system pam)
   #:use-module (gnu system linux-initrd)
+  #:use-module (gnu system privilege)
   #:use-module (gnu system setuid)
   #:use-module (gnu system uuid)
   #:use-module (gnu system file-systems)
@@ -130,6 +131,7 @@
             operating-system-keyboard-layout
             operating-system-name-service-switch
             operating-system-pam-services
+            operating-system-privileged-programs
             operating-system-setuid-programs
             operating-system-skeletons
             operating-system-sudoers-file
@@ -174,6 +176,7 @@
 
             local-host-aliases                    ;deprecated
             %root-account
+            %default-privileged-programs
             %setuid-programs
             %sudoers-specification
             %base-packages
@@ -301,9 +304,11 @@ VERSION is the target version of the boot-parameters record."
 
   (pam-services operating-system-pam-services     ; list of PAM services
                 (default (base-pam-services)))
+  (privileged-programs operating-system-privileged-programs ; list of <privileged-program>
+                       (default %default-privileged-programs))
   (setuid-programs operating-system-setuid-programs
-                   (default %setuid-programs)     ; list of <setuid-program>
-                   (sanitize ensure-setuid-program-list))
+                   ;; For backwards compatibility; will be removed.
+                   (default %setuid-programs))    ; list of <setuid-program>
 
   (sudoers-file operating-system-sudoers-file     ; file-like
                 (default %sudoers-specification))
@@ -821,8 +826,9 @@ bookkeeping."
             (operating-system-environment-variables os))
            (service host-name-service-type host-name)
            procs root-fs
-           (service setuid-program-service-type
-                    (operating-system-setuid-programs os))
+           (service privileged-program-service-type
+                    (append (operating-system-privileged-programs os)
+                            (operating-system-setuid-programs os)))
            (service profile-service-type
                     (operating-system-packages os))
            boot-fs non-boot-fs
@@ -860,8 +866,9 @@ bookkeeping."
                               (list `("hosts" ,hosts-file)))
               (service hosts-service-type
                        (local-host-entries host-name)))
-          (service setuid-program-service-type
-                   (operating-system-setuid-programs os))
+          (service privileged-program-service-type
+                   (append (operating-system-privileged-programs os)
+                           (operating-system-setuid-programs os)))
           (service profile-service-type (operating-system-packages os)))))
 
 (define* (operating-system-services os)
@@ -1023,10 +1030,10 @@ the /etc directory."
           (plain-file "login.defs"
                       (string-append
                         "# Default paths for non-login shells started by su(1).\n"
-                        "ENV_PATH    /run/setuid-programs:"
+                        "ENV_PATH    /run/privileged/bin:"
                         "/run/current-system/profile/bin:"
                         "/run/current-system/profile/sbin\n"
-                        "ENV_SUPATH  /run/setuid-programs:"
+                        "ENV_SUPATH  /run/privileged/bin:"
                         "/run/current-system/profile/bin:"
                         "/run/current-system/profile/sbin\n"
 
@@ -1089,8 +1096,8 @@ do
   fi
 done
 
-# Prepend setuid programs.
-export PATH=/run/setuid-programs:$PATH
+# Prepend privileged programs.
+export PATH=/run/privileged/bin:$PATH
 
 # Arrange so that ~/.config/guix/current/share/info comes first.
 export INFOPATH=\"$HOME/.config/guix/current/share/info:$INFOPATH\"
@@ -1240,33 +1247,7 @@ use 'plain-file' instead~%")
     ;; when /etc/machine-id is missing.  Make sure these warnings are non-fatal.
     ("DBUS_FATAL_WARNINGS" . "0")))
 
-;; Ensure LST is a list of <setuid-program> records and warn otherwise.
-(define-with-syntax-properties (ensure-setuid-program-list (lst properties))
-  (%ensure-setuid-program-list lst properties))
-
-;; We want to be able to use defines, so define a procedure.
-(define (%ensure-setuid-program-list lst properties)
-  (define warned? #f)
-
-  (define (warn-once)
-    (unless warned?
-      (warning (source-properties->location properties)
-               (G_ "representing setuid programs with file-like objects is \
-deprecated; use 'setuid-program' instead~%"))
-      (set! warned? #t)))
-
-  (map (match-lambda
-         ((? setuid-program? program)
-          program)
-         (program
-          ;; PROGRAM is a file-like or a gexp like #~(string-append #$foo
-          ;; "/bin/bar").
-          (warn-once)
-          (setuid-program (program program))))
-       lst))
-
-(define %setuid-programs
-  ;; Default set of setuid-root programs.
+(define %default-privileged-programs
   (let ((shadow (@ (gnu packages admin) shadow)))
     (map file-like->setuid-program
          (list (file-append shadow "/bin/passwd")
@@ -1287,6 +1268,12 @@ deprecated; use 'setuid-program' instead~%"))
                ;; be setuid-root.
                (file-append util-linux "/bin/mount")
                (file-append util-linux "/bin/umount")))))
+
+(define %setuid-programs
+  ;; Do not add to this list or use it in new code!  It's defined only to ease
+  ;; transition to %default-privileged-programs and will be removed.  Some rare
+  ;; use cases already break, such as the obvious (remove … %setuid-programs).
+  '())
 
 (define %sudoers-specification
   ;; Default /etc/sudoers contents: 'root' and all members of the 'wheel'

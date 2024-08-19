@@ -8,6 +8,7 @@
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2020 Christine Lemmer-Webber <cwebber@dustycloud.org>
 ;;; Copyright © 2021 Brice Waegeneire <brice@waegenei.re>
+;;; Copyright © 2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -27,7 +28,7 @@
 
 (define-module (gnu build activation)
   #:use-module (gnu system accounts)
-  #:use-module (gnu system setuid)
+  #:use-module (gnu system privilege)
   #:use-module (gnu build accounts)
   #:use-module (gnu build linux-boot)
   #:use-module (guix build utils)
@@ -41,7 +42,7 @@
   #:export (activate-users+groups
             activate-user-home
             activate-etc
-            activate-setuid-programs
+            activate-privileged-programs
             activate-special-files
             activate-modprobe
             activate-firmware
@@ -279,56 +280,80 @@ they already exist."
                      string<?)))
 
 (define %setuid-directory
-  ;; Place where setuid programs are stored.
+  ;; Place where setuid programs used to be stored.  It exists for backwards
+  ;; compatibility & will be removed.  Use %PRIVILEGED-PROGRAM-DIRECTORY instead.
   "/run/setuid-programs")
 
-(define (activate-setuid-programs programs)
-  "Turn PROGRAMS, a list of file setuid-programs record, into setuid programs
-stored under %SETUID-DIRECTORY."
-  (define (make-setuid-program program setuid? setgid? uid gid)
-    (let ((target (string-append %setuid-directory
+(define %privileged-program-directory
+  ;; Place where privileged copies of programs are stored.
+  "/run/privileged/bin")
+
+(define (activate-privileged-programs programs libcap)
+  "Turn PROGRAMS, a list of file privileged-programs records, into privileged
+copies stored under %PRIVILEGED-PROGRAM-DIRECTORY, using LIBCAP's setcap(8)
+binary if needed."
+  (define (ensure-empty-directory directory)
+    (if (file-exists? directory)
+        (for-each (compose delete-file
+                           (cut string-append directory "/" <>))
+                  (scandir directory
+                           (lambda (file)
+                             (not (member file '("." ".."))))
+                           string<?))
+        (mkdir-p directory))    )
+
+  (define (make-privileged-program program setuid? setgid? uid gid capabilities)
+    (let ((target (string-append %privileged-program-directory
                                  "/" (basename program)))
           (mode (+ #o0555                   ; base permissions
                    (if setuid? #o4000 0)    ; setuid bit
                    (if setgid? #o2000 0)))) ; setgid bit
       (copy-file program target)
       (chown target uid gid)
-      (chmod target mode)))
+      (chmod target mode)
+      (when (and capabilities libcap)
+        (system* (string-append libcap "/sbin/setcap")
+                 "-q" capabilities target))))
 
-  (format #t "setting up setuid programs in '~a'...~%"
-          %setuid-directory)
-  (if (file-exists? %setuid-directory)
-      (for-each (compose delete-file
-                         (cut string-append %setuid-directory "/" <>))
-                (scandir %setuid-directory
-                         (lambda (file)
-                           (not (member file '("." ".."))))
-                         string<?))
-      (mkdir-p %setuid-directory))
+  (define (make-deprecated-wrapper program)
+    ;; This will eventually become a script that warns on usage, then vanish.
+    (symlink (string-append %privileged-program-directory
+                            "/" (basename program))
+             (string-append %setuid-directory
+                            "/" (basename program))))
+
+  (format #t "setting up privileged programs in '~a'...~%"
+          %privileged-program-directory)
+  (ensure-empty-directory %privileged-program-directory)
+  (ensure-empty-directory %setuid-directory)
 
   (for-each (lambda (program)
               (catch 'system-error
                 (lambda ()
-                  (let* ((program-name (setuid-program-program program))
-                         (setuid?      (setuid-program-setuid? program))
-                         (setgid?      (setuid-program-setgid? program))
-                         (user         (setuid-program-user program))
-                         (group        (setuid-program-group program))
+                  (let* ((program-name (privileged-program-program program))
+                         (setuid?      (privileged-program-setuid? program))
+                         (setgid?      (privileged-program-setgid? program))
+                         (user         (privileged-program-user program))
+                         (group        (privileged-program-group program))
+                         (capabilities (privileged-program-capabilities program))
                          (uid (match user
                                 ((? string?) (passwd:uid (getpwnam user)))
                                 ((? integer?) user)))
                          (gid (match group
                                 ((? string?) (group:gid (getgrnam group)))
                                 ((? integer?) group))))
-                    (make-setuid-program program-name setuid? setgid? uid gid)))
+                    (make-privileged-program program-name
+                                             setuid? setgid? uid gid
+                                             capabilities)
+                    (make-deprecated-wrapper program-name)))
                 (lambda args
-                  ;; If we fail to create a setuid program, better keep going
-                  ;; so that we don't leave %SETUID-DIRECTORY empty or
-                  ;; half-populated.  This can happen if PROGRAMS contains
+                  ;; If we fail to create a privileged program, better keep going
+                  ;; so that we don't leave %PRIVILEGED-PROGRAM-DIRECTORY empty
+                  ;; or half-populated.  This can happen if PROGRAMS contains
                   ;; incorrect file names: <https://bugs.gnu.org/38800>.
                   (format (current-error-port)
-                          "warning: failed to make ~s setuid/setgid: ~a~%"
-                          (setuid-program-program program)
+                          "warning: failed to privilege ~s: ~a~%"
+                          (privileged-program-program program)
                           (strerror (system-error-errno args))))))
             programs))
 
