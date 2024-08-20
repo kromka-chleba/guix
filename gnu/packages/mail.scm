@@ -1262,14 +1262,14 @@ security functionality including PGP, S/MIME, SSH, and SSL.")
 (define-public mu
   (package
     (name "mu")
-    (version "1.12.5")
+    (version "1.12.6")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/djcb/mu/releases/download/v"
                            version "/mu-" version ".tar.xz"))
        (sha256
-        (base32 "1jwalqmvk5s4mf7bnz7gnzh6rii7n348bsflgdvyinia0zir42vp"))))
+        (base32 "0qdpag5skcwml4mrhz8205wfirayn55cqdydsy7ng6f9hyv3k9gq"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config
@@ -2315,17 +2315,14 @@ hashing scheme (such as scrypt) plug-in for @code{Dovecot}.")
 (define-public isync
   (package
     (name "isync")
-    (version "1.4.4")
+    (version "1.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/isync/isync/"
                            version "/isync-" version ".tar.gz"))
        (sha256 (base32
-                "1zq0wwvmqsl9y71546dr0aygzn9gjjfiw19hlcq87s929y4p6ckw"))
-       (patches
-        ;; Likely to be included in next version
-        (search-patches "isync-openssl3-fix.patch"))))
+                "13gpawspfpiw87wm2p6gzrm98xwy741k2ib1l6fjggw7jc81xj50"))))
     (build-system gnu-build-system)
     (arguments
      (list

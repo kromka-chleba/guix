@@ -14,6 +14,7 @@
 ;;; Copyright © 2021 Stefan Reichör <stefan@xsteve.at>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2024 Romain Garbage <romain.garbage@inria.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -51,6 +52,7 @@
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages freeipmi)
+  #:use-module (gnu packages libevent)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
@@ -227,6 +229,7 @@ when jobs finish.")
                   `(,hwloc-2 "lib")
                   json-c
                   linux-pam
+                  openpmix
                   munge
                   numactl
                   readline))
@@ -242,6 +245,14 @@ when jobs finish.")
                                   (ungexp (this-package-input "hwloc") "lib"))
                    (string-append "--with-json=" #$(this-package-input "json-c"))
                    (string-append "--with-munge=" #$(this-package-input "munge"))
+
+                   ;; Use PMIx bundled with Open MPI (this is required for Open MPI 5.x).
+                   ;; Note: Older versions that inherit from this package lack the
+                   ;; 'openpmix' dependency.
+                   #$(let ((openmpix (this-package-input "openpmix")))
+                       (if openmpix
+                           #~(string-append "--with-pmix=" #$openmpix)
+                           "--without-pmix"))
 
                    ;; 32-bit support is marked as deprecated and needs to be
                    ;; explicitly enabled.
@@ -304,10 +315,10 @@ by managing a queue of pending work.")
 
 (define-public slurm-21.08
   (package
-    (inherit slurm)
+    (inherit slurm-22.05)
     (version "21.08.8")
     (source (origin
-              (inherit (package-source slurm))
+              (inherit (package-source slurm-22.05))
               (method url-fetch)
               (uri (string-append
                     "https://download.schedmd.com/slurm/slurm-"
@@ -315,14 +326,19 @@ by managing a queue of pending work.")
               (patches '())                       ;drop 'salloc' patch
               (sha256
                (base32
-                "1sjln54idc9rhg8f2nvm38sgs6fncncyzslas8ixy65pqz2hphbf"))))))
+                "1sjln54idc9rhg8f2nvm38sgs6fncncyzslas8ixy65pqz2hphbf"))))
+
+    ;; This and older versions of slurm have PMIx support but they seem to
+    ;; require an older version of openpmix.  Disable PMIx support.
+    (inputs (modify-inputs (package-inputs slurm-22.05)
+              (delete "openpmix")))))
 
 (define-public slurm-20.11
   (package
-    (inherit slurm)
+    (inherit slurm-21.08)
     (version "20.11.9")
     (source (origin
-              (inherit (package-source slurm))
+              (inherit (package-source slurm-21.08))
               (method url-fetch)
               (uri (string-append
                     "https://download.schedmd.com/slurm/slurm-"
@@ -334,10 +350,10 @@ by managing a queue of pending work.")
 
 (define-public slurm-20.02
   (package
-    (inherit slurm)
+    (inherit slurm-20.11)
     (version "20.02.6-1")
     (source (origin
-              (inherit (package-source slurm))
+              (inherit (package-source slurm-20.11))
               (method url-fetch)
               (uri (string-append
                     "https://download.schedmd.com/slurm/slurm-"
@@ -347,7 +363,7 @@ by managing a queue of pending work.")
                (base32
                 "0qj4blfymrd2ry2qmb58l3jbr4jwygc3adcfw7my27rippcijlyc"))))
     (arguments
-     (substitute-keyword-arguments (package-arguments slurm)
+     (substitute-keyword-arguments (package-arguments slurm-20.11)
        ((#:configure-flags flags ''())
         #~(append '("CFLAGS=-O2 -g -fcommon" "LDFLAGS=-fcommon")
                   #$flags))))))
@@ -357,7 +373,7 @@ by managing a queue of pending work.")
     (inherit slurm-20.02)
     (version "19.05.8")
     (source (origin
-              (inherit (package-source slurm))
+              (inherit (package-source slurm-20.02))
               (method url-fetch)
               (uri (string-append
                     "https://download.schedmd.com/slurm/slurm-"
@@ -370,11 +386,11 @@ by managing a queue of pending work.")
 ;; Same as Debian 10
 (define-public slurm-18.08
   (package
-    (inherit slurm-20.02)
+    (inherit slurm-19.05)
     (version "18.08.9")
     (source
       (origin
-        (inherit (package-source slurm))
+        (inherit (package-source slurm-20.02))
         (uri (string-append
                "https://download.schedmd.com/slurm/slurm-"
                version ".tar.bz2"))
@@ -612,3 +628,63 @@ debug information.
        "This header-only C++ library provides a portable interface to
 single-instruction multiple-data (SIMD) intrinsics.")
       (license license:expat))))
+
+(define-public openpmix
+  (package
+   (name "openpmix")
+   (version "4.2.8")
+   (source (origin
+            (method url-fetch)
+            (uri (string-append
+                  "https://github.com/openpmix/openpmix/releases/download/v"
+                  version "/pmix-" version ".tar.bz2"))
+            (sha256
+             (base32
+              "1j9xlhqrrmgjdkwakamn78y5gj756adi53hn25zksgr3is3l5d09"))))
+   (build-system gnu-build-system)
+   (arguments
+    (list #:configure-flags
+          #~(list (string-append "--with-hwloc="
+                                 (ungexp (this-package-input "hwloc") "lib")))))
+   (inputs (list libevent `(,hwloc "lib")))
+   (native-inputs (list perl python))
+   (synopsis "PMIx library")
+   (description
+    "PMIx is an application programming interface standard that provides
+libraries and programming models with portable and well-defined access to
+commonly needed services in distributed and parallel computing systems.")
+   (home-page "https://pmix.org/")
+   ;; The provided license is kind of BSD-style but specific.
+   (license (license:fsf-free "https://github.com/openpmix/openpmix?tab=License-1-ov-file#License-1-ov-file"))))
+
+(define-public prrte
+  (package
+   (name "prrte")
+   (version "3.0.6")
+   (source (origin
+            (method url-fetch)
+            (uri (string-append
+                  "https://github.com/openpmix/prrte/releases/download/v"
+                  version "/prrte-" version ".tar.bz2"))
+            (sha256
+             (base32
+              "0wiy0vk37v4db1jgxza8bci0cczcvj34dalzsrlz05dk45zb7dl3"))))
+   (build-system gnu-build-system)
+   (arguments
+    (list #:configure-flags #~(list (string-append "--with-hwloc="
+                                                   (assoc-ref %build-inputs "hwloc"))
+                                    (string-append "--with-pmix=" #$(this-package-input "openpmix")))))
+   (inputs (list libevent
+                 `(,hwloc "lib")
+                 openpmix))
+   (native-inputs (list perl))
+   (synopsis "PMIx Reference RunTime Environment (PRRTE)")
+   (description
+    "The PMIx Reference RunTime Environment is a runtime environment
+containing the reference implementation and capable of operating
+within a host SMS. The reference RTE therefore provides an easy way of
+exploring PMIx capabilities and testing PMIx-based applications
+outside of a PMIx-enabled environment.")
+   (home-page "https://openpmix.github.io/")
+   ;; The provided license is kind of BSD-style but specific.
+   (license (license:fsf-free "https://github.com/openpmix/prrte?tab=License-1-ov-file#License-1-ov-file"))))

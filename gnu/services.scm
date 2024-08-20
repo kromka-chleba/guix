@@ -915,9 +915,14 @@ FILES must be a list of name/file-like object pairs."
       #~(begin
           (use-modules (gnu system privilege))
 
-          (activate-privileged-programs (list #$@programs)
-                                        #$(and (supported-package? libcap)
-                                               libcap))))))
+          (let ((libcap #$(let-system (system target)
+                            ;; When cross-compiling, assume libcap is
+                            ;; available on GNU/Linux only.
+                            (and (if target
+                                     (string-suffix? "linux-gnu" target)
+                                     (supported-package? libcap system))
+                                 libcap))))
+            (activate-privileged-programs (list #$@programs) libcap))))))
 
 (define privileged-program-service-type
   (service-type (name 'privileged-program)
@@ -935,7 +940,7 @@ The deprecated @file{/run/setuid-programs} directory is also populated with
 symbolic links to their @file{/run/privileged/bin} counterpart.  It will be
 removed in a future Guix release.")))
 
-(define setuid-program-service-type
+(define-deprecated/alias setuid-program-service-type
   ;; Deprecated alias to ease transition.  Will be removed!
   privileged-program-service-type)
 
