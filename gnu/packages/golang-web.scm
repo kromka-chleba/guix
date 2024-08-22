@@ -657,6 +657,55 @@ and stop increasing when a certain threshold is met.")
     (description "This package provides a CSS parser and inliner.")
     (license license:expat)))
 
+(define-public go-github-com-containerd-typeurl
+  (package
+    (name "go-github-com-containerd-typeurl")
+    (version "1.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containerd/typeurl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wvfxlxgkln11d9s6rxay965c715bnpk203klbsq8m8qpjqrz620"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:import-path "github.com/containerd/typeurl"))
+    (propagated-inputs
+     (list go-github-com-gogo-protobuf
+           go-github-com-pkg-errors))
+    (home-page "https://github.com/containerd/typeurl")
+    (synopsis "Managing marshaled types to @code{protobuf.Any}")
+    (description
+     "This package implements a functionality of managing the registration,
+marshaling, and unmarshaling of encoded types.  It helps when types are sent
+over a ttrpc/GRPC API and marshaled as a protobuf
+@url{https://pkg.go.dev/google.golang.org/protobuf@@v1.27.1/types/known/anypb#Any,
+Any}.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-containerd-typeurl-v2
+  (package
+    (inherit go-github-com-containerd-typeurl)
+    (name "go-github-com-containerd-typeurl-v2")
+    (version "2.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containerd/typeurl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1n43s8zqwwrvpzb0pczm73xx4w8yb96ax31cripzxmfhj43z21b5"))))
+    (arguments
+     (list #:import-path "github.com/containerd/typeurl/v2"))
+    (propagated-inputs
+     (list go-github-com-gogo-protobuf
+           go-google-golang-org-protobuf))))
+
 (define-public go-github-com-coreos-go-oidc
   (package
     (name "go-github-com-coreos-go-oidc")
@@ -1008,6 +1057,34 @@ RFC 5321.")
 developers to use @code{http} methods explicitly and in a way that's
 consistent with the HTTP protocol definition.")
     (license license:expat)))
+
+(define-public go-github-com-evanphx-json-patch
+  (package
+    (name "go-github-com-evanphx-json-patch")
+    (version "0.5.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/evanphx/json-patch")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00sib9ba8j1h1n3r1cxx48zn8hs6sxwnrh78p6wbs28wcpz8nqxi"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/evanphx/json-patch"))
+    (propagated-inputs
+     (list go-github-com-jessevdk-go-flags go-github-com-pkg-errors))
+    (home-page "https://github.com/evanphx/json-patch")
+    (synopsis "Apply and create JSON (RFC6902 and RFC7386) patches for Golang")
+    (description
+     "@code{jsonpatch} is a library which provides functionality for both
+applying @url{http://tools.ietf.org/html/rfc6902,RFC6902 JSON patches} against
+documents, as well as for calculating & applying
+@url{https://tools.ietf.org/html/rfc7396,RFC7396 JSON merge patches}.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-felixge-httpsnoop
   (package
@@ -1748,6 +1825,61 @@ user interface for humans, to read and edit before passing the JSON data to
 the machine.")
     (license license:expat)))
 
+(define-public go-github-com-huin-goupnp
+  (package
+    (name "go-github-com-huin-goupnp")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/huin/goupnp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04j5rmrfawjxcimiqpyjm9gm5phdndjxrmydf9f1ylij6m360nwl"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packed as separated
+            ;; packages:
+            ;;
+            ;; - github.com/huin/goupnp/v2alpha
+            (for-each delete-file-recursively
+                      (list "v2alpha"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/huin/goupnp"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Run all tests, workaround for go-build-system's lack of Go
+          ;; modules support.
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (home-page "https://github.com/huin/goupnp")
+    (propagated-inputs
+     (list go-golang-org-x-sync))
+    (synopsis "UPnP client library for Go")
+    (description
+     "@code{goupnp} is a @acronym{Universal Plug and Play, UPnP} client
+library for Go.
+
+Core components:
+@itemize
+@item @code{goupnp}: core library - contains datastructures and utilities
+typically used by the implemented DCPs
+@item @code{httpu}: HTTPU implementation, underlies SSDP
+@item @code{ssdp}: SSDP client implementation (simple service discovery
+protocol) - used to discover UPnP services on a network
+@item @code{soap}: SOAP client implementation (simple object access protocol)
+- used to communicate with discovered services
+@end itemize")
+    (license license:bsd-2)))
+
 (define-public go-github-com-jackpal-gateway
   (package
     (name "go-github-com-jackpal-gateway")
@@ -2021,6 +2153,119 @@ jsoniter and variable type declarations (if any).  jsoniter interfaces gives
 router.")
     (license license:bsd-3)))
 
+(define-public go-github-com-koron-go-ssdp
+  (package
+    (name "go-github-com-koron-go-ssdp")
+    (version "0.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/koron/go-ssdp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0agzxzlwvnhgwk6sxswjq7v1ghmf0l02gr7zpdih24i3g457af4f"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/koron/go-ssdp"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "\\_test.go$")
+                  ;; Test requiring network setup.
+                  (("TestAdvertise_Alive") "OffTestAdvertise_Alive")
+                  (("TestAdvertise_Bye") "OffTestAdvertise_Bye")
+                  (("TestAnnounceAlive") "OffTestAnnounceAlive")
+                  (("TestAnnounceBye") "OffTestAnnounceBye")
+                  (("TestInterfaces") "OffTestInterfaces")
+                  (("TestSearch_Request") "OffTestSearch_Request")
+                  (("TestSearch_Response") "OffTestSearch_Response")
+                  (("TestSearch_ServiceRawHeader") "OffTestSearch_ServiceRawHeader")))))
+          ;; XXX: Run all tests, workaround for go-build-system's lack of Go
+          ;; modules support.
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (propagated-inputs
+     (list go-golang-org-x-net))
+    (home-page "https://github.com/koron/go-ssdp")
+    (synopsis "SSDP library for Golang")
+    (description
+     "@code{go-ssdp} is a @url{https://tools.ietf.org/html/draft-cai-ssdp-v1-03,
+@acronym{Simple Service Discovery Protocol, SSDP}} library for Golang.")
+    (license license:expat)))
+
+(define-public go-github-com-libp2p-go-nat
+  (package
+    (name "go-github-com-libp2p-go-nat")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-nat")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yyb3knxvfr7fi759nh7mhh88ap1jpkb7nky7niqrh75737phgh0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-nat"))
+    (propagated-inputs
+     (list go-github-com-huin-goupnp
+           go-github-com-jackpal-go-nat-pmp
+           go-github-com-koron-go-ssdp
+           go-github-com-libp2p-go-netroute))
+    (home-page "https://github.com/libp2p/go-nat")
+    (synopsis "NAT port mapping library for Golang")
+    (description
+     "Package @code{go-nat} implements NAT handling facilities.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-libp2p-go-netroute
+  (package
+    (name "go-github-com-libp2p-go-netroute")
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-netroute")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06p68j63fd5nf2gf1fz2pnksmdmv735swpbpvnhb15vrgg3r528g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-netroute"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "\\_test.go$")
+                  ;; Test requiring network access: no route found for 8.8.8.8
+                  (("TestRoute") "OffTestRoute"))))))))
+    (propagated-inputs
+     (list go-github-com-google-gopacket
+           go-golang-org-x-net
+           go-golang-org-x-sys))
+    (home-page "https://github.com/libp2p/go-netroute")
+    (synopsis "Routing table abstraction library for Golang")
+    (description
+     "@code{go-netroute} provides an implementation of the
+@url{https://godoc.org/github.com/google/gopacket/routing#Router,
+gopacket/routing.Router} interface for Golang.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-makeworld-the-better-one-go-gemini
   (package
     (name "go-github-com-makeworld-the-better-one-go-gemini")
@@ -2074,6 +2319,38 @@ clients that speak the Gemini protocol.")
      "This package provides SOCKS5 proxy for
 @@url{https://github.com/makeworld-the-better-one/go-gemini,go-gemini}.")
     (license license:expat)))
+
+(define-public go-github-com-mattbaird-jsonpatch
+  (package
+    (name "go-github-com-mattbaird-jsonpatch")
+    (version "0.0.0-20240118010651-0ba75a80ca38")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mattbaird/jsonpatch")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1nxbrpk8bvvmfgl4sfsbx82g0q44i2sakl7vigbsj3prx6nql5iv"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mattbaird/jsonpatch"))
+    (native-inputs
+     (list go-github-com-evanphx-json-patch go-github-com-stretchr-testify))
+    (home-page "https://github.com/mattbaird/jsonpatch")
+    (synopsis "JSON Patch library for Go")
+    (description
+     "@url{http://jsonpatch.com/, JSON Patch} implementation for Go as
+specified in @url{https://datatracker.ietf.org/doc/html/rfc6902/, RFC 6902}
+from the IETF.
+
+JSON Patch allows you to generate JSON that describes changes you want to make
+to a document, so you don't have to send the whole doc.  JSON Patch format is
+supported by HTTP PATCH method, allowing for standards based partial updates
+via REST APIs.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-microcosm-cc-bluemonday
   (package

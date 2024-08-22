@@ -1432,6 +1432,33 @@ levels that works by wrapping the standard @code{log} library.")
      "Readline is a pure Go implementation of a GNU-Readline like library.")
     (license license:expat)))
 
+(define-public go-github-com-containerd-fifo
+  (package
+    (name "go-github-com-containerd-fifo")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containerd/fifo")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ddb1spairbsjkvxqysa7pzb5za07dvv1aay3mqr160gh2za3kd4"))))
+    (build-system go-build-system)
+    (arguments
+     `(#:import-path "github.com/containerd/fifo"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-golang-org-x-sys))
+    (home-page "https://github.com/containerd/fifo")
+    (synopsis "FIFO package for Golang")
+    (description
+     "This package implements a functionality of handling FIFOs in a sane
+way.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-coocood-freecache
   (package
     (name "go-github-com-coocood-freecache")
@@ -2542,6 +2569,59 @@ the library more lightweight.")
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-gofrs-flock
+  (package
+    (name "go-github-com-gofrs-flock")
+    (version "0.12.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gofrs/flock/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kfnbcahr9x61k40wsrqzxxr3ybix0jqsm4ibpjgnhfgrln7ag8v"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gofrs/flock"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-golang-org-x-sys))
+    (home-page "https://github.com/gofrs/flock/")
+    (synopsis "Thread-safe file locking library in Go")
+    (description
+     "@code{flock} implements a thread-safe file lock.  It also includes a
+non-blocking @code{TryLock} function to allow locking without blocking
+execution.")
+    (license license:bsd-3)))
+
+(define-public go-github-com-google-subcommands
+  (package
+    (name "go-github-com-google-subcommands")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/google/subcommands")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00w7fx92696z5p3isvpg71b4023g8f686xnhy56k08vc2q1r2hhw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/google/subcommands"))
+    (home-page "https://github.com/google/subcommands")
+    (synopsis "Go subcommand library")
+    (description
+     "@code{subcommands} implements a functionality for a single command to
+have many subcommands, each of which takes arguments.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-gookit-color
   (package
     (name "go-github-com-gookit-color")
@@ -3389,6 +3469,81 @@ pattern is called repeatedly.")
 database/sql package.")
     (license license:expat)))
 
+(define-public go-github-com-libp2p-go-buffer-pool
+  (package
+    (name "go-github-com-libp2p-go-buffer-pool")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-buffer-pool")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0514rsnin6wjqifpg66dp5nrwh40smqlkgs3kxyz9cansi78c2n1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-buffer-pool"))
+    (home-page "https://github.com/libp2p/go-buffer-pool")
+    (synopsis "Variable size buffer pool for Golang")
+    (description
+     "This package provides a variable size buffer pool for Golang.
+
+@code{go-buffer-pool} provides:
+@itemize
+@item @code{BufferPool}: A pool for re-using byte slices of varied sizes.
+This pool will always return a slice with at least the size requested and a capacity
+up to the next power of two.  Each size class is pooled independently which makes the
+@code{BufferPool} more space efficient than a plain @code{sync.Pool} when used in
+situations where data size may vary over an arbitrary range.
+@item @code{Buffer}: a buffer compatible with @code{bytes.Buffer} but backed by a
+@code{BufferPool}.  Unlike @code{bytes.Buffer}, @code{Buffer} will automatically
+shrink on read, using the buffer pool to avoid causing too much work for the
+allocator.  This is primarily useful for long lived buffers that usually sit empty.
+@end itemize")
+    ;; There are two license files provided by the project: LICENSE and
+    ;; LICENSE-BSD.
+    (license (list license:expat license:bsd-3))))
+
+(define-public go-github-com-libp2p-go-msgio
+  (package
+    (name "go-github-com-libp2p-go-msgio")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-msgio")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "005cdmkcgsfqlf8478wxyzmy5iixqa8fhjrbig912n8ngnqx1029"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-msgio"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Replace when go-build-system supports nested path.
+          (replace 'check
+            (lambda* (#:key import-path tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (propagated-inputs
+     (list go-github-com-gogo-protobuf
+           go-github-com-libp2p-go-buffer-pool
+           go-github-com-multiformats-go-varint
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/libp2p/go-msgio")
+    (synopsis "Read and write length-delimited slices")
+    (description
+     "@code{go-msgio} implements functionality to read and write
+length-delimited slices.  It's helpful for building wire protocols.")
+    (license license:expat)))
+
 (define-public go-github-com-logrusorgru-aurora
   (package
     (name "go-github-com-logrusorgru-aurora")
@@ -3999,6 +4154,31 @@ explicit ownership.")
      "This library provides a reflect api for Go programs
 without the runtime cost of the standard library reflect.Value.")
     (license license:asl2.0)))
+
+(define-public go-github-com-mohae-deepcopy
+  (package
+    (name "go-github-com-mohae-deepcopy")
+    (version "0.0.0-20170308212314-bb9b5e7adda9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mohae/deepcopy")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "173j05wv4yy8jh9ccjw46xfy1knxwvv1ir6b8l6g9pc5j5damm1f"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mohae/deepcopy"))
+    (home-page "https://github.com/mohae/deepcopy")
+    (synopsis "Copy of pointers and values for Golang")
+    (description
+     "@code{deepcopy} implements a functionality of deep copies of things.  A
+standard @code{copy} will copy the pointers where @code{deepcopy} copies the
+values pointed to.  Unexported field values are not copied.")
+    (license license:expat)))
 
 (define-public go-github-com-mreiferson-go-options
   (package
@@ -5864,6 +6044,18 @@ tool."))
      "@code{hclogvet} is a @code{go vet} tool for checking that the
 Trace/Debug/Info/Warn/Error methods on @code{hclog.Logger} are used
 correctly.")))
+
+(define-public go-msgio
+  (package
+    (inherit go-github-com-libp2p-go-msgio)
+    (name "go-msgio")
+    (arguments
+     (list
+      #:tests? #f ; no tests
+      #:install-source? #f
+      #:import-path "github.com/libp2p/go-msgio/msgio"
+      #:unpack-path "github.com/libp2p/go-msgio"))
+    (synopsis "CLI tool to wrap messages with msgio header.")))
 
 (define-public go-numcpus
   (package

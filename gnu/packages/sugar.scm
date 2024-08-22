@@ -23,6 +23,7 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages compression)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages game-development)
   #:use-module (gnu packages gettext)
@@ -329,6 +330,23 @@ and metadata, and the journal with querying and full text search.")
               (substitute* "autogen.sh"
                 (("^\"\\$srcdir/configure" m)
                  (string-append "#" m)))))
+          (add-after 'unpack 'patch-references
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "src/sugar3/eggsmclient-xsmp.c"
+                (("/bin/rm") (search-input-file inputs "/bin/rm")))
+              (substitute* "src/sugar3/mime.py"
+                (("'/usr/local/share/'" m)
+                 (string-append m ", '/run/current-system/profile/share'")))
+              (substitute* "src/sugar3/bundle/activitybundle.py"
+                (("'update-mime-database', mime_dir")
+                 (string-append "'"
+                                (search-input-file inputs "/bin/update-mime-database")
+                                "', mime_dir")))
+              (substitute* "src/sugar3/bundle/bundle.py"
+                (("'unzip', '-o'")
+                 (string-append "'"
+                                (search-input-file inputs "/bin/unzip")
+                                "', '-o'")))))
           (add-after 'glib-or-gtk-wrap 'python-and-gi-wrap
             (lambda* (#:key inputs outputs #:allow-other-keys)
               (wrap-program (search-input-file outputs "bin/sugar-activity3")
@@ -345,7 +363,9 @@ and metadata, and the journal with querying and full text search.")
            libx11
            libxfixes
            libxi
-           python))
+           python
+           shared-mime-info
+           unzip))
     (propagated-inputs
      ;; The gi typelib files are needed by users of this library.
      (list gdk-pixbuf
@@ -483,6 +503,64 @@ a Tetris-like game.")
                    license:gpl2+
                    license:gpl3+))))
 
+(define-public sugar-cellgame-activity
+  (let ((commit "4a22fd177af224d2df588590eb835affacd5ca72")
+        (revision "1"))
+    (package
+      (name "sugar-cellgame-activity")
+      (version (git-version "5" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/sugarlabs/cellgame")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "09dxq06dr43i3g8im4j1xffl19rzr1pwbixwgb0kipnmbx8pln5c"))))
+      (build-system python-build-system)
+      (arguments
+       (list
+        #:test-target "check"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-launcher
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "activity/activity.info"
+                  (("exec = sugar-activity3")
+                   (string-append "exec = "
+                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+            (add-after 'unpack 'inject-load-path
+              (lambda _
+                (substitute* "activity.py"
+                  (("^import pygame")
+                   (string-append "\
+import sys
+for directory in \"" (getenv "GUIX_PYTHONPATH") "\".split(\":\"):
+    try:
+        sys.path.index(directory)
+    except ValueError:
+        sys.path.insert(1, directory)
+import pygame
+")))))
+            (replace 'install
+              (lambda _
+                (setenv "HOME" "/tmp")
+                (invoke "python" "setup.py" "install"
+                        (string-append "--prefix=" #$output)))))))
+      ;; All these libraries are accessed via gobject introspection.
+      (propagated-inputs
+       (list gtk+
+             sugar-toolkit-gtk3))
+      (inputs (list python-pygame))
+      (native-inputs
+       (list gettext-minimal))
+      (home-page "https://github.com/sugarlabs/cellgame")
+      (synopsis "Cell game for Sugar")
+      (description "This game for the Sugar desktop is based on the mechanisms
+present in gene regulatory networks.")
+      (license license:gpl3+))))
+
 (define-public sugar-chat-activity
   ;; The last release was in 2019 and since then commits have been published
   ;; that include build fixes and translation updates.
@@ -533,6 +611,119 @@ a Tetris-like game.")
       (synopsis "Sugar activity to chat")
       (description "Chat is an activity used to exchange messages with friends
 or classmates.")
+      (license license:gpl2+))))
+
+(define-public sugar-classify-cats-activity
+  (let ((commit "83aa89788c65bfdd3f77e24ac5a32b37f9518e54")
+        (revision "1"))
+    (package
+      (name "sugar-classify-cats-activity")
+      (version (git-version "2" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/sugarlabs/classify-cats")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "101drh1dqgr9qsz3r1fzkcn5h6z720zskaqnz2aixzp2ybvh17wk"))))
+      (build-system python-build-system)
+      (arguments
+       (list
+        #:test-target "check"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-launcher
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "activity/activity.info"
+                  (("exec = sugar-activity3")
+                   (string-append "exec = "
+                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+            (replace 'install
+              (lambda _
+                (setenv "HOME" "/tmp")
+                (invoke "python" "setup.py" "install"
+                        (string-append "--prefix=" #$output)))))))
+      ;; All these libraries are accessed via gobject introspection.
+      (propagated-inputs
+       (list gdk-pixbuf
+             gobject-introspection
+             gtk+
+             python-pygobject
+             sugar-toolkit-gtk3))
+      (native-inputs
+       (list gettext-minimal))
+      (home-page "https://github.com/sugarlabs/classify-cats")
+      (synopsis "Classify cats based on various criteria")
+      (description "This is a Sugar activity where players classify cats based
+on various criteria.")
+      (license license:gpl3+))))
+
+(define-public sugar-commander-activity
+  (let ((commit "a018652903e1c52c86ebf23e3250e7b68327427f")
+        (revision "1"))
+    (package
+      (name "sugar-commander-activity")
+      (version (git-version "11" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/sugarlabs/sugar-commander")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "02n5wqh9cwr3jnjaxyd9kxcls4h3fdhhxdcyvvxmya08h20idvgd"))))
+      (build-system python-build-system)
+      (arguments
+       (list
+        #:test-target "check"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-launcher
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "activity/activity.info"
+                  (("exec = sugar-activity3")
+                   (string-append "exec = "
+                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+            (add-after 'unpack 'inject-load-path
+              (lambda _
+                (substitute* "sugarcommander.py"
+                  (("^import logging")
+                   (string-append "\
+import sys
+for directory in \"" (getenv "GUIX_PYTHONPATH") "\".split(\":\"):
+    try:
+        sys.path.index(directory)
+    except ValueError:
+        sys.path.insert(1, directory)
+import logging
+")))))
+            (replace 'install
+              (lambda _
+                (setenv "HOME" "/tmp")
+                (invoke "python" "setup.py" "install"
+                        (string-append "--prefix=" #$output)))))))
+      ;; All these libraries are accessed via gobject introspection.
+      (propagated-inputs
+       (list cairo
+             gdk-pixbuf
+             gobject-introspection
+             gtk+
+             python-pygobject
+             sugar-toolkit-gtk3))
+      (inputs (list python-pygame))
+      (native-inputs
+       (list gettext-minimal))
+      (home-page "https://github.com/sugarlabs/sugar-commander")
+      (synopsis "Manage your Sugar journal")
+      (description "Sugar-commander lets you import items from removeable
+devices like USB drives and SD cards using a familiar hierarchical view of
+files on these devices, as opposed to the flattened Journal view that the
+Sugar Journal gives to these devices.  It also enables you to see how much
+disk space each Journal entry uses, generates thumbnails, and does other
+things to enhance your use of the Journal.")
       (license license:gpl2+))))
 
 (define-public sugar-help-activity
@@ -839,6 +1030,66 @@ handheld mode, with extremely low power consumption and simple navigation
 controls.")
       (license license:gpl2+))))
 
+(define-public sugar-river-crossing-activity
+  (let ((commit "0abbeb455363672ed29d734e6e48f50ef78ec48b")
+        (revision "1"))
+    (package
+      (name "sugar-river-crossing-activity")
+      (version (git-version "1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/sugarlabs/river-crossing-activity")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0h7c3i288vwz249figw3jwyylwhlh9qlgjhlbs902ldpmib0k237"))))
+      (build-system python-build-system)
+      (arguments
+       (list
+        #:test-target "check"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-launcher
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "activity/activity.info"
+                  (("exec = sugar-activity3")
+                   (string-append "exec = "
+                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+            (add-after 'unpack 'inject-load-path
+              (lambda _
+                (substitute* "activity.py"
+                  (("^import pygame")
+                   (string-append "\
+import sys
+for directory in \"" (getenv "GUIX_PYTHONPATH") "\".split(\":\"):
+    try:
+        sys.path.index(directory)
+    except ValueError:
+        sys.path.insert(1, directory)
+import pygame
+")))))
+            (replace 'install
+              (lambda _
+                (setenv "HOME" "/tmp")
+                (invoke "python" "setup.py" "install"
+                        (string-append "--prefix=" #$output)))))))
+      ;; These libraries are accessed via gobject introspection.
+      (propagated-inputs
+       (list gtk+))
+      (inputs
+       (list python-pygame
+             sugar-toolkit-gtk3
+             gettext-minimal))
+      (home-page "https://github.com/sugarlabs/river-crossing-activity")
+      (synopsis "Puzzle game for Sugar desktop")
+      (description "A farmer is to ferry across a river a goat, a cabbage, and
+a wolf.  The boat allows the farmer to carry only one of the three at a time.
+Without supervision, the goat will gobble the cabbage whereas the wolf will
+not hesitate to feast on the goat.")
+      (license license:gpl3+))))
+
 (define-public sugar-terminal-activity
   (let ((commit "a1f92b9da6121bc9a6fbba2c3f3b885dd26d4617")
         (revision "1"))
@@ -969,6 +1220,72 @@ entry point for beginners.  It also has “high ceiling” programming, graphics
 mathematics, and Computer Science features which will challenge the more
 adventurous student.")
       (license license:expat))))
+
+(define-public sugar-turtlepond-activity
+  (let ((commit "e460fc472d2f900c4c71659dbec07a715a3847a7")
+        (revision "1"))
+    (package
+      (name "sugar-turtlepond-activity")
+      (version (git-version "10" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/sugarlabs/turtlepond")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0j7jzbwi2aph312f5dazmwgxqzh458b4yzz8mvrdxpr91ksxd4h4"))))
+      (build-system python-build-system)
+      (arguments
+       (list
+        #:test-target "check"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-launcher
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "activity/activity.info"
+                  (("exec = sugar-activity3")
+                   (string-append "exec = "
+                                  (search-input-file inputs "/bin/sugar-activity3"))))))
+            #;
+            (add-after 'unpack 'inject-load-path
+              (lambda _
+                (substitute* "TurtlePondActivity.py"
+                  (("^import logging")
+                   (string-append "\
+import sys
+for directory in \"" (getenv "GUIX_PYTHONPATH") "\".split(\":\"):
+    try:
+        sys.path.index(directory)
+    except ValueError:
+        sys.path.insert(1, directory)
+import logging
+")))))
+            (replace 'install
+              (lambda _
+                (setenv "HOME" "/tmp")
+                (invoke "python" "setup.py" "install"
+                        (string-append "--prefix=" #$output)))))))
+      ;; All these libraries are accessed via gobject introspection.
+      (propagated-inputs
+       (list cairo
+             gdk-pixbuf
+             gobject-introspection
+             gtk+
+             python-pygobject
+             sugar-toolkit-gtk3))
+      (native-inputs
+       (list gettext-minimal))
+      (home-page "https://github.com/sugarlabs/sugar-commander")
+      (synopsis "Manage your Sugar journal")
+      (description "Sugar-commander lets you import items from removeable
+devices like USB drives and SD cards using a familiar hierarchical view of
+files on these devices, as opposed to the flattened Journal view that the
+Sugar Journal gives to these devices.  It also enables you to see how much
+disk space each Journal entry uses, generates thumbnails, and does other
+things to enhance your use of the Journal.")
+      (license license:gpl2+))))
 
 (define-public sugar-typing-turtle-activity
   (package

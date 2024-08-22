@@ -145,6 +145,7 @@
 ;;; Copyright © 2024 Daniel Szmulewicz <daniel.szmulewicz@gmail.com>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2024 Spencer King <spencer.king@nursiapress.com>
 
 ;;;
 ;;; This file is part of GNU Guix.
@@ -14819,6 +14820,28 @@ provides the following features:
 @end itemize")
     (license license:gpl3+)))
 
+(define-public emacs-tinysegmenter
+  (let ((commit "872134704bd25c13a4c59552433da4c6881b5230"))
+    (package
+      (name "emacs-tinysegmenter")
+      (version "0.1")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/myuhe/tinysegmenter.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1n8cn6mr26hgmsm2mkbj5gs6dv61d0pap8ija4g0n1vsibfhzd8j"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/myuhe/tinysegmenter.el")
+      (synopsis "Compact Japanese tokenizer in Emacs Lisp")
+      (description
+       "This package provides functions for tokenizing Japanese text in
+Emacs buffers.")
+      (license license:bsd-3))))
+
 (define-public emacs-markdown-mode
   (package
     (name "emacs-markdown-mode")
@@ -18267,7 +18290,7 @@ are common in Chromium-derived projects.")
         (base32 "0c8gal7lfibaryb5w85zcmzpmvifdjp959v5bcjxjl37cdws0cnd"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-compat emacs-emacsql))
-    (home-page "https://github.com/emacsorphanage/ac-ispell")
+    (home-page "https://thanosapollo.org/projects/gnosis")
     (synopsis "Spaced repetition system for GNU Emacs.")
     (description
      "Gnosis is a spaced repetition system for note-taking and self-testing
@@ -22481,19 +22504,27 @@ literate programming tools for exporting, weaving and tangling.")
     (build-system emacs-build-system)
     (arguments
      (list
-      #:include #~(list "maint/poly-ansible-jinja2-filters-generator.el")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'move-source-files
             (lambda _
               (let ((el-files (find-files "./lisp" ".*\\.el$")))
                 (for-each (lambda (f) (copy-file f (basename f)))
-                          el-files)))))))
+                          el-files))))
+          ;; Autoloads file include a reference to "systemd-autoload-regexp".
+          ;; Require `systemd' to load its definition and let
+          ;; `validate-compiled-autoloads' phase run peacefully.
+          (add-after 'make-autoloads 'require-systemd-mode
+            (lambda _
+              (substitute* "polymode-ansible-autoloads.el"
+                ((";;; Code:" lead)
+                 (string-append lead "\n(require 'systemd)"))))))))
     (propagated-inputs
      (list emacs-ansible
            emacs-ansible-doc
            emacs-jinja2-mode
            emacs-polymode
+           emacs-systemd-mode
            emacs-yaml-mode))
     (properties '((upstream-name . "poly-ansible")))
     (home-page "https://gitlab.com/mavit/poly-ansible/")
@@ -26452,8 +26483,8 @@ browse the phrases by the paper section and fill-in the blanks if required.")
       (license license:gpl3+))))
 
 (define-public emacs-auto-yasnippet
-  (let ((commit "624b0d9711222073a2a3f2186e2605eb99fc83c9")
-        (revision "2"))
+  (let ((commit "6a9e406d0d7f9dfd6dff7647f358cb05a0b1637e")
+        (revision "3"))
     (package
       (name "emacs-auto-yasnippet")
       (version (git-version "0.3.0" revision commit))
@@ -26465,7 +26496,7 @@ browse the phrases by the paper section and fill-in the blanks if required.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "15g8wi067f345xhpi0c12w0h04p4f4lpccwmdjdfj8hzfl4gyxy9"))))
+                  "0ifzbwnm2axb8kmfp3jvg05wq02j121iwp2m64pi70c7mza0i886"))))
       (build-system emacs-build-system)
       (arguments
        '(#:tests? #t
@@ -31400,7 +31431,6 @@ constant expressions.")
     (propagated-inputs
      (list emacs-aio
            emacs-dash
-           emacs-docker-tramp
            emacs-json-mode
            emacs-s
            emacs-tablist))
@@ -35100,12 +35130,18 @@ count matches, etc.")
                (base32
                 "0ylgnvpfindg4cxccbqy02ic7p0i9rygf1w16dm1filwhbqvjplq"))))
     (build-system emacs-build-system)
-    (arguments '(#:include '("\\.el$" "\\.txt$")))
+    (arguments
+     (list #:include #~(cons* "\\.txt$" %default-include)
+           #:tests? #true
+           #:test-command #~(list "emacs" "-Q" "--batch"
+                                  "-L" "."
+                                  "-l" "test/systemd-tests.el"
+                                  "-f" "ert-run-tests-batch-and-exit")))
     (home-page "https://github.com/holomorph/systemd-mode")
-    (synopsis
-     "Major mode for editing systemd units")
+    (synopsis "Major mode for editing Systemd units")
     (description
-     "Major mode for editing systemd units in GNU Emacs.")
+     "This package provides a major mode for editing Systemd unit files in GNU
+Emacs.")
     (license license:gpl3+)))
 
 (define-public emacs-ssh-config-mode
@@ -35162,6 +35198,28 @@ passphrase.
 
 It can also be useful on Unix-like platforms to delay having to enter your
 passphrase until the first time you push to a remote.")
+    (license license:gpl3+)))
+
+(define-public emacs-ssh-deploy
+  (package
+    (name "emacs-ssh-deploy")
+    (version "3.1.16")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/ssh-deploy-" version
+                           ".tar"))
+       (sha256
+	(base32 "0fb88l3270d7l808q8x16zcvjgsjbyhgifgv17syfsj0ja63x28p"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/cjohansson/emacs-ssh-deploy")
+    (synopsis "Deployment via Tramp, global or per directory")
+    (description
+     "SSH Deploy enables automatic deploys on explicit-save actions, manual
+uploads, renaming, deleting, downloads, file and directory differences,
+launching remote terminals (Eshell, Shell), detection of remote changes,
+remote directory browsing, remote SQL database sessions and running custom
+deployment scripts via Tramp.")
     (license license:gpl3+)))
 
 (define-public emacs-super-save
@@ -36862,6 +36920,33 @@ Wordnet.")
 @code{xref} results.")
     (license license:gpl3+)))
 
+(define-public emacs-helm-css-scss
+  (let ((commit "2169d83d8fdc661241df208cb3235112735d936e")
+        (revision "0"))
+    (package
+      (name "emacs-helm-css-scss")
+      (version (git-version "1.3" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emacsorphanage/helm-css-scss")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0jjjw7fw2ngrpgvd599vjd291zr8zr1m7xnxfq2dpqc3mf0s397z"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-helm))
+      (home-page "https://github.com/emacsorphanage/helm-css-scss")
+      (synopsis
+       "Helm interface for navigating CSS, SCSS, and LESS selectors in Emacs")
+      (description
+       "This package provides Helm integration for quickly navigating and
+ searching CSS, SCSS, and LESS selectors in Emacs.  It enables you to view and
+ jump to selectors across multiple buffers, enhancing your workflow when
+ editing stylesheets.")
+      (license license:gpl3+))))
+
 (define-public emacs-metal-mercury-mode
   (let ((commit "99e2d8fb7177cae3bfa2dec2910fc28216d5f5a8")
         (revision "1")
@@ -37714,8 +37799,8 @@ go directly to where they belong.")
       (license license:gpl3+))))
 
 (define-public emacs-org-roam
-  (let ((commit "74422df546a515bc984c2f3d3a681c09d6f43916")
-        (revision "0"))
+  (let ((commit "0b9fcbc97b65b349826e63bad89ca121a08fd2be")
+        (revision "1"))
     (package
       (name "emacs-org-roam")
       (version (git-version "2.2.2" revision commit))
@@ -37727,7 +37812,7 @@ go directly to where they belong.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0vhl69y6yk2zzfixjdwr8vxl2k921h0syshk5123r1nm9jp3i1s9"))))
+          (base32 "04vqwrsb71jdb66fkahmxwvx8cssgqamrradbdgp3ygf8alwc7ml"))))
       (build-system emacs-build-system)
       (arguments
        (list

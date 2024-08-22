@@ -38780,6 +38780,64 @@ This package contains the protobuf logic.")
     (description "This package provides Rust bindings to libsensors.")
     (license license:miros)))
 
+(define-public rust-libspa-sys-0.7
+  (package
+    (name "rust-libspa-sys")
+    (version "0.7.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "libspa-sys" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0ifkg4k7azfqbz4i1lk31d77nhlc2w36s133yf78a3z7yfihrrxk"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-bindgen" ,rust-bindgen-0.66)
+                       ("rust-cc" ,rust-cc-1)
+                       ("rust-system-deps" ,rust-system-deps-6))))
+    (native-inputs
+     (list pkg-config clang))
+    (inputs
+     (list pipewire))
+    (home-page "https://pipewire.org")
+    (synopsis "Rust FFI bindings for libspa")
+    (description "This package provides Rust FFI bindings for libspa.")
+    (license license:expat)))
+
+(define-public rust-libspa-0.7
+  (package
+    (name "rust-libspa")
+    (version "0.7.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "libspa" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1i58ayw50brjh1a7gzfs9ijwl42lqmq2k4b7c2w1ijnx41q62d04"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:tests? #f ; NOTE: 1 fail, `async_seq_panic' test should panic.
+       #:cargo-inputs (("rust-bitflags" ,rust-bitflags-2)
+                       ("rust-cc" ,rust-cc-1)
+                       ("rust-convert-case" ,rust-convert-case-0.6)
+                       ("rust-cookie-factory" ,rust-cookie-factory-0.3)
+                       ("rust-libc" ,rust-libc-0.2)
+                       ("rust-libspa-sys" ,rust-libspa-sys-0.7)
+                       ("rust-nix" ,rust-nix-0.26)
+                       ("rust-nom" ,rust-nom-7)
+                       ("rust-system-deps" ,rust-system-deps-6)
+                       ("rust-pipewire" ,rust-pipewire-0.7))))
+    (native-inputs
+     (list pkg-config clang))
+    (inputs
+     (list pipewire))
+    (home-page "https://pipewire.org")
+    (synopsis "Rust bindings for libspa")
+    (description "This package provides Rust bindings for libspa.")
+    (license license:expat)))
+
 (define-public rust-libsqlite3-sys-0.28
   (package
     (name "rust-libsqlite3-sys")
@@ -53579,6 +53637,63 @@ along with strong support for variations and the core header tables.")
         ("rust-futures-util" ,rust-futures-util-0.3))
        #:cargo-development-inputs
        (("rust-futures" ,rust-futures-0.3))))))
+
+(define-public rust-pipewire-sys-0.7
+  (package
+    (name "rust-pipewire-sys")
+    (version "0.7.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "pipewire-sys" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0r4z0farzflycgfp6x7z65h57np4l1qnpj4r8z5lcwkkgd70h349"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-bindgen" ,rust-bindgen-0.66)
+                       ("rust-libspa-sys" ,rust-libspa-sys-0.7)
+                       ("rust-system-deps" ,rust-system-deps-6))))
+    (native-inputs
+     (list pkg-config clang))
+    (inputs
+     (list pipewire))
+    (home-page "https://pipewire.org")
+    (synopsis "Rust FFI bindings for PipeWire")
+    (description
+     "This package provides Rust FFI bindings for @code{PipeWire}.")
+    (license license:expat)))
+
+(define-public rust-pipewire-0.7
+  (package
+    (name "rust-pipewire")
+    (version "0.7.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "pipewire" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1sg9cbvhp0s07a337zwli0xm40f8wkvm06d72nsr1s35vp40kl52"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-anyhow" ,rust-anyhow-1)
+                       ("rust-bitflags" ,rust-bitflags-2)
+                       ("rust-libc" ,rust-libc-0.2)
+                       ("rust-libspa" ,rust-libspa-0.7)
+                       ("rust-libspa-sys" ,rust-libspa-sys-0.7)
+                       ("rust-nix" ,rust-nix-0.26)
+                       ("rust-once-cell" ,rust-once-cell-1)
+                       ("rust-pipewire-sys" ,rust-pipewire-sys-0.7)
+                       ("rust-thiserror" ,rust-thiserror-1))))
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list pipewire clang))
+    (home-page "https://pipewire.org")
+    (synopsis "Rust bindings for PipeWire")
+    (description "This package provides Rust bindings for @code{PipeWire}.")
+    (license license:expat)))
 
 (define-public rust-pkg-config-0.3
   (package

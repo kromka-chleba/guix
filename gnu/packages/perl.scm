@@ -33,7 +33,7 @@
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022, 2023 Evgeny Pisemsky <mail@pisemsky.site>
-;;; Copyright © 2022, 2023 gemmaro <gemmaro.dev@gmail.com>
+;;; Copyright © 2022, 2023, 2024 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2023 Mădălin Ionel Patrașcu <madalinionel.patrascu@mdc-berlin.de>
 ;;; Copyright © 2023 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2023 Jake Leporte <jakeleporte@outlook.com>
@@ -6877,6 +6877,46 @@ from various sources.  For instance, it contains all IANA types and the
 knowledge of Apache.")
     (license (package-license perl))))
 
+(define-public perl-minimumversion
+  (package
+    (name "perl-minimumversion")
+    (version "1.40")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/D/DB/DBOOK/Perl-MinimumVersion-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "145yl4qv14xcrr74w1qvdb6s0h5lj8smnfawfnj0rmv0rdwab2bm"))))
+    (build-system perl-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'install 'wrap-programs
+                     (lambda _
+                       (wrap-program (string-append #$output "/bin/perlver")
+                         (list "PERL5LIB" ":"
+                               'prefix
+                               (list (string-append (getenv "PERL5LIB") ":"
+                                                    #$output
+                                                    "/lib/perl5/site_perl")))))))))
+    (inputs (list bash-minimal))
+    (propagated-inputs (list perl-file-find-rule
+                             perl-file-find-rule-perl
+                             perl-params-util
+                             perl-ppi
+                             perl-ppix-regexp
+                             perl-ppix-utils))
+    (home-page "https://metacpan.org/release/Perl-MinimumVersion")
+    (synopsis "Find a minimum required version of perl for Perl code")
+    (description
+     "@samp{Perl::MinimumVersion} takes Perl source code and calculates the minimum
+version of perl required to be able to run it.  Because it is based on the @samp{PPI}
+(Perl Parsing Interface), it can do this without loading the code.  The distribution
+comes with a script called @samp{perlver}.")
+    (license license:perl-license)))
+
 (define-public perl-mixin-linewise
   (package
     (name "perl-mixin-linewise")
@@ -9146,6 +9186,28 @@ are organized into modules by the kind of @code{PPI} class they relate to, by
 replacing the \"@code{PPI}\" at the front of the module name with
 \"@code{PPIx::Utilities}\", e.g. functionality related to @code{PPI::Nodes} is
 in @code{PPIx::Utilities::Node}.")
+    (license license:perl-license)))
+
+(define-public perl-ppix-utils
+  (package
+    (name "perl-ppix-utils")
+    (version "0.003")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/D/DB/DBOOK/PPIx-Utils-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "04dszlp7yas3yi7gm1l2g47h88i52n7gwj3jnq0vw0xdivycr6ra"))))
+    (build-system perl-build-system)
+    (propagated-inputs (list perl-b-keywords perl-ppi))
+    (home-page "https://metacpan.org/release/PPIx-Utils")
+    (synopsis "Utility functions for Perl PPI")
+    (description
+     "@samp{PPIx::Utils} is a collection of utility functions for working
+with @samp{PPI} documents.  The functions are organized into
+submodules, and may be imported from the appropriate submodules or via
+this module.")
     (license license:perl-license)))
 
 (define-public perl-probe-perl

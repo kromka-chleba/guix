@@ -547,6 +547,40 @@ order to be a part of the @acronym{IPLD, InterPlanetary Linked Data} merkle-fore
 and @code{go-ipld-format} legacy interface.")
     (license (list license:expat license:asl2.0))))
 
+;; XXX: This repository has been archived by the owner on Jun 20, 2023. It is
+;; now read-only.  We highly recommend switching to the maintained version at
+;; https://github.com/ipfs/boxo/tree/main/verifcid.  It's still in use by some
+;; dependencies chain for unbundled inputs in Kubo.
+(define-public go-github-com-ipfs-go-verifcid
+  (package
+    (name "go-github-com-ipfs-go-verifcid")
+    (version "0.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-verifcid")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05i6wp2nln0mlr1pivmva7j6bwa09k7jl04acx1lw65h4d9nxsjm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-verifcid"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-ipfs-go-cid go-github-com-multiformats-go-multihash))
+    (home-page "https://github.com/ipfs/go-verifcid")
+    (synopsis "CID security code")
+    (description
+     "@code{go-verifcid} provides @url{https://github.com/ipld/cid, CID} security
+code prior to it getting merged into @code{go-cid}.")
+    ;; This library is dual-licensed under Apache 2.0 and MIT terms:
+    ;; LICENSE-MIT and LICENSE-APACHE.
+    (license (list license:expat license:asl2.0))))
+
 (define-public go-github-com-ipld-go-codec-dagpb
   (package
     (name "go-github-com-ipld-go-codec-dagpb")
@@ -969,6 +1003,7 @@ written in Go.")
                              "vendor/github.com/google/uuid"
                              "vendor/github.com/gorilla"
                              "vendor/github.com/hashicorp"
+                             "vendor/github.com/huin"
                              "vendor/github.com/ipfs/go-block-format"
                              "vendor/github.com/ipfs/go-cid"
                              "vendor/github.com/ipfs/go-cidutil"
@@ -982,12 +1017,18 @@ written in Go.")
                              "vendor/github.com/ipfs/go-ipld-legacy"
                              "vendor/github.com/ipfs/go-log"
                              "vendor/github.com/ipfs/go-metrics-interface"
+                             "vendor/github.com/ipfs/go-verifcid"
                              "vendor/github.com/ipld/go-codec-dagpb"
                              "vendor/github.com/ipld/go-ipld-prime"
                              "vendor/github.com/jackpal"
                              "vendor/github.com/jbenet"
                              "vendor/github.com/julienschmidt"
                              "vendor/github.com/klauspost"
+                             "vendor/github.com/koron"
+                             "vendor/github.com/libp2p/go-buffer-pool"
+                             "vendor/github.com/libp2p/go-msgio"
+                             "vendor/github.com/libp2p/go-nat"
+                             "vendor/github.com/libp2p/go-netroute"
                              "vendor/github.com/libp2p/go-socket-activation"
                              "vendor/github.com/mattn"
                              "vendor/github.com/mgutz"
@@ -1014,6 +1055,7 @@ written in Go.")
                              "vendor/github.com/whyrusleeping"
                              "vendor/go.uber.org"
                              "vendor/golang.org"
+                             "vendor/google.golang.org/protobuf"
                              "vendor/gopkg.in"
                              "vendor/lukechampine.com")))))
     (build-system go-build-system)
@@ -1148,8 +1190,11 @@ written in Go.")
                   go-github-com-gorilla-websocket             ; github.com/libp2p/go-libp2p
                   go-github-com-hashicorp-golang-lru          ; github.com/libp2p/go-libp2p-kad-dht
                   go-github-com-hashicorp-golang-lru-v2       ; github.com/ipfs/boxo
-                  go-github-com-jackpal-go-nat-pmp            ; github.com/libp2p/go-nat
+                  go-github-com-ipfs-go-verifcid              ; github.com/ipfs/go-blockservice
                   go-github-com-klauspost-compress            ; github.com/libp2p/go-libp2p
+                  go-github-com-libp2p-go-buffer-pool         ; github.com/libp2p/go-libp2p
+                  go-github-com-libp2p-go-msgio               ; github.com/libp2p/go-libp2p-kad-dht
+                  go-github-com-libp2p-go-nat                 ; github.com/libp2p/go-libp2p
                   go-github-com-multiformats-go-multiaddr-fmt ; github.com/libp2p/go-libp2p
                   go-github-com-multiformats-go-multistream   ; github.com/libp2p/go-libp2p
                   go-github-com-quic-go-quic-go               ; github.com/libp2p/go-libp2p
