@@ -19,6 +19,7 @@
 ;;; Copyright © 2023 Camilo Q.S. (Distopico) <distopico@riseup.net>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2024 Brian Kubisiak <brian@kubisiak.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -51,8 +52,8 @@
   #:use-module (gnu packages bison)
   #:use-module (gnu packages check)
   #:use-module (gnu packages flex)
-  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages libunistring)
   #:use-module (gnu packages ncurses)
@@ -402,6 +403,66 @@ all of the regexes given on the command line in order.")
     (home-page "https://github.com/rupa/z")
     (license license:expat)))
 
+(define-public shfmt
+  (package
+    (name "shfmt")
+    (version "3.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mvdan/sh")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qqrggliwicmrqzwv9ivg7w1chy1b97w8p7ifpvqfsbal0qcr1xi"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "mvdan.cc/sh/v3/cmd/shfmt"
+      #:unpack-path "mvdan.cc/sh/v3"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-version
+            (lambda* (#:key unpack-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (let ((fixed-version (string-append #$version " (GNU Guix)")))
+                  ;; shfmt uses modules to look up the version at runtime;
+                  ;; since our build system does not yet support modules,
+                  ;; inject the version string here instead
+                  (substitute* "cmd/shfmt/main.go"
+                    (("version = \"\\(devel\\)\"")
+                     (format #f "version = \"~a\"" fixed-version)))
+                  (substitute* "cmd/shfmt/testdata/script/flags.txtar"
+                    (("devel\\|v3") #$version))))))
+          ;; XXX: Replace when go-build-system supports nested path.
+          (replace 'check
+            (lambda* (#:key import-path tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (native-inputs
+     (list go-github-com-creack-pty
+           go-github-com-go-quicktest-qt
+           go-github-com-google-go-cmp
+           go-github-com-google-renameio-v2
+           go-github-com-muesli-cancelreader
+           go-github-com-rogpeppe-go-internal
+           go-golang-org-x-sync
+           go-golang-org-x-sys
+           go-golang-org-x-term
+           go-mvdan-cc-editorconfig))
+    (home-page "https://github.com/mvdan/sh")
+    (synopsis "Shell formatter with bash support")
+    (description
+     "This package provides a shell formatter.  Supports
+@url{https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html,POSIX
+Shell}, @url{https://www.gnu.org/software/bash/,Bash}, and
+@url{http://www.mirbsd.org/mksh.htm,mksh}.")
+    (license license:bsd-3)))
+
+
 (define-public envstore
   (package
     (name "envstore")
@@ -577,8 +638,10 @@ Latin script and other languages.")
                  ;; direnv executable that's generated is removed.
                  (invoke "make" "clean"))))))))
     (native-inputs
-     (list go-github-com-burntsushi-toml go-github-com-direnv-go-dotenv
-           go-github-com-mattn-go-isatty go-golang-org-x-mod which))
+     (list go-github-com-burntsushi-toml
+           go-github-com-mattn-go-isatty
+           go-golang-org-x-mod
+           which))
     (home-page "https://direnv.net/")
     (synopsis "Environment switcher for the shell")
     (description

@@ -41,6 +41,7 @@
 ;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2235,15 +2236,18 @@ corrupted input.")
 (define-public plzip
   (package
     (name "plzip")
-    (version "1.10")
+    (version "1.11")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://savannah/lzip/plzip/"
                            "plzip-" version ".tar.gz"))
        (sha256
-        (base32 "16408n8z21hfxp0qnx3hh1d0c47g8z9i3vflbgbrmf6qcn1abyj3"))))
+        (base32 "0sv2sp0ppxkdds4qiwb3ddvlv22ydv61n3hk74rkh8ljbkjcpqyq"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list (string-append "CXX=" #$(cxx-for-target)))))
     (inputs
      (list lzlib))
     (home-page "https://www.nongnu.org/lzip/plzip.html")

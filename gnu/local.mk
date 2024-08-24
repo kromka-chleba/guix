@@ -1431,7 +1431,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/gpaste-fix-paths.patch			\
   %D%/packages/patches/gpm-glibc-2.26.patch			\
   %D%/packages/patches/gpodder-disable-updater.patch		\
-  %D%/packages/patches/gpsbabel-fix-i686-test.patch		\
   %D%/packages/patches/grantlee-fix-i586-precision.patch	\
   %D%/packages/patches/grantlee-register-metaenumvariable.patch	\
   %D%/packages/patches/grep-timing-sensitive-test.patch		\
@@ -1816,6 +1815,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/openssh-trust-guix-store-directory.patch	\
   %D%/packages/patches/openresolv-restartcmd-guix.patch	\
   %D%/packages/patches/openrgb-unbundle-hueplusplus.patch	\
+  %D%/packages/patches/openscad-fix-boost-join.patch		\
+  %D%/packages/patches/openscad-with-cgal-5.3.patch		\
+  %D%/packages/patches/openscad-with-cgal-5.4.patch		\
   %D%/packages/patches/opensles-add-license-file.patch			\
   %D%/packages/patches/openssl-1.1-c-rehash-in.patch		\
   %D%/packages/patches/openssl-3.0-c-rehash-in.patch		\

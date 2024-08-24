@@ -429,8 +429,8 @@ interface.")
                        "--reproducible-build"
                        "--package-path=/"
                        (string-append "--bin-path=" out "/bin")
-                       (string-append "--lib-path=" out "/lib")
-                       (string-append "--share-path=" out "/share")))))
+                       (string-append "--lib-path=" out "/lib/clasp")
+                       (string-append "--share-path=" out "/share/clasp")))))
          (replace 'build
            (lambda* _
              (invoke "ninja" "-C" "build")))
@@ -1353,14 +1353,14 @@ be built as a stand-alone REPL interpreter.")
 (define-public sbcl
   (package
     (name "sbcl")
-    (version "2.4.5")
+    (version "2.4.7")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/sbcl/sbcl/" version "/sbcl-"
                            version "-source.tar.bz2"))
        (sha256
-        (base32 "1lbvb9rzlkl3h8s75i2js4dnmgxmvs41jxjb5dj0f603r688xxjd"))
+        (base32 "1lhia29g0byj7w3akd99sjb8kxp95adwqk2kbl0wsnk30cjlsm38"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -1506,8 +1506,9 @@ be built as a stand-alone REPL interpreter.")
                                          `("clisp")))
                      (string-append "--prefix="
                                     (assoc-ref outputs "out"))
-                     ,@(if (target-ppc32?)
-                         ;; 3072 is too much for this architecture.
+                     ,@(if (or (target-ppc32?)
+                               (target-x86-32?))
+                         ;; 3072 is too much for these architectures.
                          `("--dynamic-space-size=2048")
                          `("--dynamic-space-size=3072"))
                      "--with-sb-core-compression"
@@ -1650,7 +1651,7 @@ the HTML documentation of TXR.")
 (define-public txr
   (package
     (name "txr")
-    (version "295")
+    (version "296")
     (source
      (origin
        (method git-fetch)
@@ -1659,7 +1660,7 @@ the HTML documentation of TXR.")
              (commit (string-append "txr-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fpvsz31ark1gyhzyg2x85fxfssfjfc6k0v9hvqdp0y1q5bf66az"))))
+        (base32 "1b91s5kpsf62j9qdk352kh94knd9iykk64dvbrba09h3zryankyv"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags

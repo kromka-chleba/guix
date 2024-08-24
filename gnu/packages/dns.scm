@@ -845,7 +845,7 @@ Extensions} (DNSSEC).")
 (define-public knot
   (package
     (name "knot")
-    (version "3.3.4")
+    (version "3.3.8")
     (source
      (origin
        (method git-fetch)
@@ -854,7 +854,7 @@ Extensions} (DNSSEC).")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0w7drq0pj94d43qn9wmzxab34mjhxj9x84rixbswc270ywh6d9pr"))
+        (base32 "0iaardlmvcp6f0vccs81f202bb53y7fkcw5n12ahgqymqzhafpmq"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -984,14 +984,14 @@ synthesis, and on-the-fly re-configuration.")
 (define-public knot-resolver
   (package
     (name "knot-resolver")
-    (version "5.7.1")
+    (version "5.7.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://secure.nic.cz/files/knot-resolver/"
                                   "knot-resolver-" version ".tar.xz"))
               (sha256
                (base32
-                "18n3jh17d22xmzpg8syw2dm85vv7jchdc4hzk5x78lqxqqav856s"))))
+                "1j6rig8mb4sh11q6cfhqmlsaxw41fwiglkflz8d08a38y3nacvbb"))))
     (build-system meson-build-system)
     (outputs '("out" "doc"))
     (arguments

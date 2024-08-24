@@ -130,9 +130,8 @@ Scheme machine types, or '#f' if none is defined."
     #f)
    ((target-ppc32? system)
     "ppc32")
-   ;; This is apparently not ready in chez-scheme-for-racket.
-   ;((target-riscv64? system)
-   ; "rv64")
+   ((target-riscv64? system)
+    "rv64")
    ((string-prefix? "loongarch64-" system)
     "la64")
    (else
@@ -296,7 +295,7 @@ will name the threaded machine type unless THREADS? is provided as #f."
 (define-public chez-scheme-for-racket
   (package
     (name "chez-scheme-for-racket")
-    ;; The version should match `(scheme-version-number #t)`.
+    ;; The version should match `(scheme-version #t)`.
     ;; See s/cmacros.ss c. line 360.
     (version "10.1.0-pre-release.1")
     (source #f)

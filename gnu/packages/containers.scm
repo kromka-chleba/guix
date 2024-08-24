@@ -464,7 +464,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
 (define-public podman
   (package
     (name "podman")
-    (version "5.1.2")
+    (version "5.2.1")
     (source
      (origin
        (method git-fetch)
@@ -472,7 +472,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
              (url "https://github.com/containers/podman")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1v0qqzfl0nqkqmqimv89nrggb7n1ryhqpdi8v7yn2c7m0dm8xq91"))
+        (base32 "1xa629vbh6mpish5cwr87pcv01hgzh92y7k7jdpm9wz7z445y1n7"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -536,7 +536,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
                    ,(string-append #$iptables       "/sbin")
                    ,(string-append #$passt          "/bin")
                    ,(string-append #$procps         "/bin") ; ps
-                   "/run/setuid-programs")))))
+                   "/run/privileged/bin")))))
           (add-after 'install 'install-completions
             (lambda _
               (invoke "make" "install.completions"
@@ -669,7 +669,7 @@ being rootless and not requiring any daemon to be running.")
                   (,(string-append #$crun           "/bin")
                    ,(string-append #$gcc            "/bin") ; cpp
                    ,(string-append #$passt          "/bin")
-                   "/run/setuid-programs")))))
+                   "/run/privileged/bin")))))
           (add-after 'install 'install-completions
             (lambda _
               (invoke "make" "install.completions"

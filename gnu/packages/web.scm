@@ -340,7 +340,7 @@ and its related documentation.")
 (define-public miniflux
   (package
     (name "miniflux")
-    (version "2.1.4")
+    (version "2.2.0")
     (source
      (origin
        (method git-fetch)
@@ -349,7 +349,7 @@ and its related documentation.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1m1rcxcjswni3adgjkn3hvb59cbfdh9cl22d5qqwn0lxs8mgqhfl"))))
+        (base32 "0w8q8x9rw4xq065va96xvlzjzl1qrvzfb1zah3dnnb5g34gjqk94"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -521,14 +521,14 @@ the same, being completely separated from the Internet.")
     ;; Track the ‘mainline’ branch.  Upstream considers it more reliable than
     ;; ’stable’ and recommends that “in general you deploy the NGINX mainline
     ;; branch at all times” (https://www.nginx.com/blog/nginx-1-6-1-7-released/)
-    (version "1.27.0")
+    (version "1.27.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nginx.org/download/nginx-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "170ja338zh7wdyva34cr7f3wfq59434sssn51d5jvakyz0y0w8xp"))))
+                "1z5x0i0k1hmnxm7mb3dfn6qrz9am96my5ivinxl3gsp1dj5acyxx"))))
     (build-system gnu-build-system)
     (inputs (list libxml2 libxslt openssl pcre zlib))
     (arguments
@@ -619,9 +619,9 @@ and as a proxy to reduce the load on back-end HTTP or mail servers.")
 
 (define-public nginx-documentation
   ;; This documentation should be relevant for the current nginx package.
-  (let ((version "1.27.0")
-        (revision 3081)
-        (changeset "1b23e39a3b94"))
+  (let ((version "1.27.1")
+        (revision 3114)
+        (changeset "051789a80bcb"))
     (package
       (name "nginx-documentation")
       (version (simple-format #f "~A-~A-~A" version revision changeset))
@@ -633,7 +633,7 @@ and as a proxy to reduce the load on back-end HTTP or mail servers.")
                (file-name (string-append name "-" version))
                (sha256
                 (base32
-                 "0xnfda8xh8mv00fsycqbwicm8bb7rsvdqmmwv0h372kiwxnazjkh"))))
+                 "0p198cjnhypssmj4mrj6wx2lbrfgw84i2fa4ydzdbjgkdzp803mv"))))
       (build-system gnu-build-system)
       (arguments
        '(#:tests? #f                    ; no test suite
@@ -5194,8 +5194,8 @@ Cloud.")
     (license license:expat)))
 
 (define-public guix-data-service
-  (let ((commit "eeda1bf33b42a81a8a295c9e498f3bb44e95d6f1")
-        (revision "53"))
+  (let ((commit "a204bda36d0433b5835375cbdc9e640a2a196674")
+        (revision "54"))
     (package
       (name "guix-data-service")
       (version (string-append "0.0.1-" revision "." (string-take commit 7)))
@@ -5207,7 +5207,7 @@ Cloud.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1dvlzm359iq6dghr7q1prqlkngxcy1198nb0xbv5rpwjp69j2vg9"))))
+                  "0f86sxxm0gnbkkb3x0kzrf9ld561y3mch4nkjylbmqdihh0609f0"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -5434,7 +5434,7 @@ you'd expect.")
 (define-public go-github-com-mikefarah-yq-v4
   (package
     (name "go-github-com-mikefarah-yq-v4")
-    (version "4.34.2")
+    (version "4.44.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5443,7 +5443,7 @@ you'd expect.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0y5i0p4fiq0kad9xqihhyclhd9d3l2r5yligdkvsdc90hlqjmql3"))))
+                "0s7c8r6y5jv6wda2v3k47hawfdr9j3rwk717l6byvh5qsbbml0vd"))))
     (build-system go-build-system)
     (arguments
      (list #:import-path "github.com/mikefarah/yq/v4"
@@ -5456,6 +5456,7 @@ you'd expect.")
     (propagated-inputs
      (list go-github-com-a8m-envsubst
            go-github-com-alecthomas-participle-v2
+           go-github-com-alecthomas-repr
            go-github-com-dimchansky-utfbom
            go-github-com-elliotchance-orderedmap
            go-github-com-fatih-color
@@ -5464,7 +5465,10 @@ you'd expect.")
            go-github-com-jinzhu-copier
            go-github-com-magiconair-properties
            go-github-com-pelletier-go-toml-v2
+           go-github-com-pkg-diff
            go-github-com-spf13-cobra
+           go-github-com-spf13-pflag
+           go-github-com-yuin-gopher-lua
            go-golang-org-x-net
            go-golang-org-x-text
            go-gopkg-in-op-go-logging-v1
@@ -5494,53 +5498,30 @@ JSON, XML, properties, CSV and TSV.")
     (propagated-inputs '())
     (inputs (package-propagated-inputs go-github-com-mikefarah-yq-v4))))
 
-(define-public go-github-com-itchyny-timefmt-go
+(define-public go-github-com-itchyny-gojq
   (package
-    (name "go-github-com-itchyny-timefmt-go")
-    (version "0.1.4")
+    (name "go-github-com-itchyny-gojq")
+    (version "0.12.16")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/itchyny/timefmt-go")
+             (url "https://github.com/itchyny/gojq")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0z5z8hy5lbjqdxp544mf238i77n7pf7bv3psgr5gffh0630dsyag"))))
+        (base32 "0favs281iaq98cmqwf47amk12xpksznpwgfid24z8migkp8628wl"))))
     (build-system go-build-system)
     (arguments
-     (list #:import-path "github.com/itchyny/timefmt-go"))
-    (home-page "https://github.com/itchyny/timefmt-go")
-    (synopsis "Efficient time formatting library (strftime, strptime) for Golang")
-    (description
-     "@code{timefmt-go} is a Go language package for formatting and parsing date
-time strings.")
-    (license license:expat)))
-
-(define-public go-github-com-itchyny-gojq
-  (package
-    (name "go-github-com-itchyny-gojq")
-    (version "0.12.11")
-    (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/itchyny/gojq")
-               (commit (string-append "v" version))))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1dqmnxnipi497nx9x10ifack09w41579svryss5q2w5wxy0pg764"))))
-    (build-system go-build-system)
+     (list
+      #:import-path "github.com/itchyny/gojq/cmd/gojq"
+      #:unpack-path "github.com/itchyny/gojq"))
     (inputs
      (list go-github-com-google-go-cmp
            go-github-com-itchyny-timefmt-go
            go-github-com-mattn-go-isatty
            go-github-com-mattn-go-runewidth
            go-gopkg-in-yaml-v3))
-    (arguments
-     (list
-      #:import-path "github.com/itchyny/gojq/cmd/gojq"
-      #:unpack-path "github.com/itchyny/gojq"))
     (home-page "https://github.com/itchyny/gojq")
     (synopsis "Pure Go implementation of jq")
     (description
@@ -9018,7 +8999,7 @@ in mind.  It has features such as:
 (define-public kiln
   (package
     (name "kiln")
-    (version "0.4.0")
+    (version "0.4.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9027,7 +9008,7 @@ in mind.  It has features such as:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1lvzv46hn80gffw47mcc28iahwqng7pvg500s9jlrq6mhr4k5ih4"))))
+                "1ynb079jsyv6viwdksavwar5lqj84ssfw39dl5da98z683xrvch5"))))
     (build-system go-build-system)
     (arguments
      (list
