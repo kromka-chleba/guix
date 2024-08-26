@@ -687,7 +687,7 @@ blockchain.")
   ;; the system's dynamically linked library.
   (package
     (name "monero")
-    (version "0.18.3.3")
+    (version "0.18.3.4")
     (source
      (origin
        (method git-fetch)
@@ -705,7 +705,7 @@ blockchain.")
             delete-file-recursively
             '("external/miniupnp" "external/rapidjson"))))
        (sha256
-        (base32 "1d3dnkz18v0mlspafnzm301lmdiz6pwjzdbsdq23mn7cyynzgnc9"))))
+        (base32 "0rjyxcggg7pdp5026kbb49mk7vnvldvbr7qlkn76n4sq20cpk3v9"))))
     (build-system cmake-build-system)
     (native-inputs
      (list doxygen
@@ -754,30 +754,28 @@ blockchain.")
                  (lambda _
                    (for-each make-file-writable
                              (find-files "tests/data/" "wallet_9svHk1.*"))))
-               ;; Only try tests that don't need access to network or system
                (replace 'check
+                 ;; Only try tests that don't need access to network or system
                  (lambda* (#:key tests? #:allow-other-keys)
                    ;; Core tests sometimes fail, at least on i686-linux.
                    ;; Let's disable them for now and just try hash tests
                    ;; and unit tests.
                    ;; (invoke "make" "ARGS=-R 'hash|core_tests' --verbose" "test")))
                    (when tests?
-                     (invoke "make" "ARGS=-R 'hash' --verbose" "test"))))
-               (add-after 'check 'unit-tests
-                 (lambda _
-                   (let ((excluded-unit-tests
-                          (string-join
-                           '("AddressFromURL.Success"
-                             "AddressFromURL.Failure"
-                             "DNSResolver.IPv4Success"
-                             "DNSResolver.DNSSECSuccess"
-                             "DNSResolver.DNSSECFailure"
-                             "DNSResolver.GetTXTRecord"
-                             "is_hdd.linux_os_root")
-                           ":")))
-                     (invoke "tests/unit_tests/unit_tests"
-                             (string-append "--gtest_filter=-"
-                                            excluded-unit-tests)))))
+                     (invoke "make" "ARGS=-R 'hash' --verbose" "test")
+                     (let ((excluded-unit-tests
+                            (string-join
+                             '("AddressFromURL.Success"
+                               "AddressFromURL.Failure"
+                               "DNSResolver.IPv4Success"
+                               "DNSResolver.DNSSECSuccess"
+                               "DNSResolver.DNSSECFailure"
+                               "DNSResolver.GetTXTRecord"
+                               "is_hdd.linux_os_root")
+                             ":")))
+                       (invoke "tests/unit_tests/unit_tests"
+                               (string-append "--gtest_filter=-"
+                                              excluded-unit-tests))))))
                (add-after 'install 'delete-unused-files
                  (lambda* (#:key outputs #:allow-other-keys)
                    (delete-file-recursively
@@ -792,7 +790,7 @@ the Monero command line client and daemon.")
 (define-public monero-gui
   (package
     (name "monero-gui")
-    (version "0.18.3.3")
+    (version "0.18.3.4")
     (source
      (origin
        (method git-fetch)
@@ -808,7 +806,7 @@ the Monero command line client and daemon.")
            ;; See the 'extract-monero-sources' phase.
            (delete-file-recursively "monero")))
        (sha256
-        (base32 "1yy98y37l5nfxj921h6rbhni6fk0fic9bs4gqbnq2n4397h7jamj"))))
+        (base32 "09x8184kbpw74qlak2x9amz7j3qkacnk9l0c1cws1d0fghlm6n9m"))))
     (build-system qt-build-system)
     (native-inputs
      `(,@(package-native-inputs monero)
@@ -2317,7 +2315,7 @@ and manipulation.")
 (define-public xmrig
   (package
     (name "xmrig")
-    (version "6.21.3")
+    (version "6.22.0")
     (source
      (origin
        (method git-fetch)
@@ -2325,7 +2323,7 @@ and manipulation.")
              (url "https://github.com/xmrig/xmrig")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
-       (sha256 (base32 "0nykvw45s9c5rpf01mmvam4na7ka5jryyrxnbml89raqkp22nlnn"))
+       (sha256 (base32 "1h3qcs176xbfs1k2silr5rf13y0nag6qgsaz14qi3nrxxc0d8n4h"))
        (modules '((guix build utils)))
        (snippet
         ;; TODO: Try to use system libraries instead of bundled ones in
@@ -2374,7 +2372,7 @@ mining.")
 (define-public p2pool
   (package
     (name "p2pool")
-    (version "4.0")
+    (version "4.1")
     (source
      (origin
        (method git-fetch)
@@ -2383,7 +2381,7 @@ mining.")
              (commit (string-append "v" version))
              (recursive? #t)))
        (file-name (git-file-name name version))
-       (sha256 (base32 "0x6s7fm5gn0q2274b2nja8hj84cvmxp4rr9x4xw050sxj74880jh"))
+       (sha256 (base32 "1ijj3ci0kx87yjv29c6p9wqj15aij7r87sdbjwhzcmbdf46krj3q"))
        (modules '((guix build utils)))
        (snippet
         #~(for-each delete-file-recursively

@@ -333,6 +333,55 @@ using Amazon's Signature Verification V4 signing procedure, using credentials
 from the default AWS credential chain.")
     (license license:asl2.0)))
 
+(define-public go-github-com-prometheus-exporter-toolkit
+  (package
+    (name "go-github-com-prometheus-exporter-toolkit")
+    (version "0.11.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/prometheus/exporter-toolkit")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1n46jw3b13g355iv8phxxnnci7a877y5dscc1rlj3rpz4vy6yfzx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/prometheus/exporter-toolkit"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "\\_test.go$")
+                  ;; Some tests require network set up.
+                  (("TestServerBehaviour") "OffTestServerBehaviour")
+                  (("TestConfigReloading") "OffTestConfigReloading")))))
+          ;; XXX: Workaround for go-build-system's lack of Go modules support.
+          (delete 'build)
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (propagated-inputs
+     (list go-github-com-alecthomas-kingpin-v2
+           go-github-com-coreos-go-systemd-v22
+           go-github-com-go-kit-log
+           ; Imported for go-github-com-prometheus-common to break the cycle.
+           go-github-com-prometheus-client-golang
+           go-github-com-prometheus-common
+           go-golang-org-x-crypto
+           go-golang-org-x-sync
+           go-gopkg-in-yaml-v2))
+    (home-page "https://github.com/prometheus/exporter-toolkit")
+    (synopsis "Utility package to build Prometheus exporters")
+    (description
+     "This package provides tooling to build Prometheus exporters")
+    (license license:asl2.0)))
+
 (define-public go-github-com-prometheus-procfs
   (package
     (name "go-github-com-prometheus-procfs")
@@ -350,9 +399,22 @@ from the default AWS credential chain.")
     (arguments
      (list
       #:import-path "github.com/prometheus/procfs"
-      ;; The tests require Go modules, which are not yet supported in Guix's
-      ;; Go build system.
-      #:tests? #f))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'unpack-testdata
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (invoke "./ttar" "-C" "testdata/" "-x" "-f" "testdata/fixtures.ttar"))))
+          ;; XXX: Replace when go-build-system supports nested path.
+          (replace 'check
+            (lambda* (#:key import-path tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./...")))))
+          (add-after 'check 'remove-testdata
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "testdata")))))))
     (propagated-inputs
      (list go-github-com-google-go-cmp
            go-golang-org-x-sync
@@ -362,6 +424,69 @@ from the default AWS credential chain.")
     (description
      "The @code{procfs} Go package provides functions to retrieve system,
 kernel, and process metrics from the @file{/proc} pseudo file system.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-prometheus-statsd-exporter
+  (package
+    (name "go-github-com-prometheus-statsd-exporter")
+    (version "0.27.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/prometheus/statsd_exporter")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0y8n02h46q22wkcm2yy62bzsi9hxrarmvjamfpn2sygqhbb1pv38"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/prometheus/statsd_exporter"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; FIXME: pattern landing_page.css: cannot embed irregular file
+          ;; landing_page.css
+          ;;
+          ;; This happens due to Golang can't determine the valid directory of
+          ;; the module which is sourced during setup environment phase, but
+          ;; easy resolved after coping to expected directory "vendor" within
+          ;; the current package, see details in Golang source:
+          ;;
+          ;; - URL: <https://github.com/golang/go/blob/>
+          ;; - commit: 82c14346d89ec0eeca114f9ca0e88516b2cda454
+          ;; - file: src/cmd/go/internal/load/pkg.go#L2059
+          (add-before 'build 'copy-input-to-vendor-directory
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (mkdir "vendor")
+                (copy-recursively
+                 (string-append
+                  #$(this-package-input "go-github-com-prometheus-exporter-toolkit")
+                  "/src/github.com")
+                 "vendor/github.com"))))
+          (add-before 'install 'remove-vendor-directory
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "vendor")))))))
+    (native-inputs
+     (list go-github-com-stvp-go-udp-testing))
+    (propagated-inputs
+     (list go-github-com-alecthomas-kingpin-v2
+           go-github-com-go-kit-log
+           go-github-com-golang-groupcache
+           go-github-com-prometheus-client-golang
+           go-github-com-prometheus-client-model
+           go-github-com-prometheus-common
+           go-github-com-prometheus-exporter-toolkit
+           go-gopkg-in-yaml-v2))
+    (home-page "https://github.com/prometheus/statsd_exporter")
+    (synopsis "StatsD to Prometheus metrics exporter")
+    (description
+     "The StatsD exporter is a drop-in replacement for
+@url{https://github.com/statsd/statsd,StatsD}.  The exporter translates StatsD
+metrics to Prometheus metrics via configured mapping rules.  This package
+provdies a Golang module and @code{statsd_exporter} executable command.")
     (license license:asl2.0)))
 
 ;;;

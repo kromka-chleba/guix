@@ -391,6 +391,35 @@ throughout its lifetime.")
      "@code{go-ipfs-exchange-interface} defines the IPFS exchange interface.")
     (license license:expat)))
 
+(define-public go-github-com-ipfs-go-ipfs-redirects-file
+  (package
+    (name "go-github-com-ipfs-go-ipfs-redirects-file")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-ipfs-redirects-file")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16lisd5jbniang85jzfwfigw0kmz73913fsrfj49nh92mpw50qpz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-ipfs-redirects-file"))
+    (native-inputs
+     (list go-github-com-tj-assert))
+    (propagated-inputs
+     (list go-github-com-pkg-errors
+           go-github-com-ucarion-urlpath))
+    (home-page "https://github.com/ipfs/go-ipfs-redirects-file")
+    (synopsis "IPFS Web Gateway _redirects file format parser")
+    (description
+     "Package redirects provides Netlify style _redirects file format
+parsing.")
+    (license license:expat)))
+
 (define-public go-github-com-ipfs-go-ipfs-util
   (package
     (name "go-github-com-ipfs-go-ipfs-util")
@@ -656,54 +685,6 @@ batteries-included codec implementations of IPLD for CBOR and JSON, and tooling 
 basic operations on IPLD objects (traversals, etc).")
     (license license:expat)))
 
-(define-public go-github-com-ipfs-go-ipfs-api
-  (let ((commit
-          "dafc2a13a4389ac1a6c2786e34ab70a4f26d3a3f")
-        (revision "0"))
-    (package
-      (name "go-github-com-ipfs-go-ipfs-api")
-      (version (git-version "1.3.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/ipfs/go-ipfs-api")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "06kibnwb037sqynk99j07wm8alvxwx3bari9gdax4jv93396kycj"))))
-      (build-system go-build-system)
-      (arguments
-       '(#:import-path "github.com/ipfs/go-ipfs-api"
-         ;; TODO: Tests fail, might need network access.
-         #:tests? #f))
-      (native-inputs
-       (list go-github-com-ipfs-go-ipfs-cmdkit-files
-             go-github-com-libp2p-go-libp2p-metrics
-             go-github-com-libp2p-go-flow-metrics
-             go-github-com-libp2p-go-libp2p-peer
-             go-github-com-libp2p-go-libp2p-protocol
-             go-github-com-libp2p-go-libp2p-crypto
-             go-github-com-mitchellh-go-homedir
-             go-github-com-multiformats-go-multiaddr
-             go-github-com-multiformats-go-multiaddr-net
-             go-github-com-btcsuite-btcd-btcec
-             go-github-com-gogo-protobuf
-             go-github-com-minio-blake2b-simd
-             go-github-com-minio-sha256-simd
-             go-github-com-mr-tron-base58
-             go-github-com-multiformats-go-multihash
-             go-golang-org-x-crypto
-             go-github-com-spaolacci-murmur3
-             go-github-com-gxed-hashland-keccakpg
-             go-github-com-whyrusleeping-tar-utils
-             go-github-com-cheekybits-is))
-      (home-page "https://github.com/ipfs/go-ipfs-api")
-      (synopsis "Unofficial Go interface to IPFS's HTTP API")
-      (description "An unofficial Go interface to IPFS's HTTP API")
-      (license license:expat))))
-
 (define-public go-github-com-ipfs-go-log-v2
   (package
     (name "go-github-com-ipfs-go-log-v2")
@@ -806,7 +787,7 @@ their levels to be controlled individually.")
     (propagated-inputs
      (list go-github-com-coreos-go-systemd-v22
            go-github-com-ipfs-go-log
-           go-github-com-multiformats-go-multiaddr-0.12))
+           go-github-com-multiformats-go-multiaddr))
     (home-page "https://github.com/libp2p/go-socket-activation")
     (synopsis "Multiaddr backed systemd socket activation")
     (description
@@ -843,120 +824,6 @@ daemon as described in
 types.")
     (license license:expat)))
 
-;; XXX: No updates for 4 years, and depends on dated Golang modules which
-;; require go-1.16 to compile, see
-;; <https://github.com/whyrusleeping/gx/issues/247>.
-(define-public gx
-  (package
-    (name "gx")
-    (version "0.14.3")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/whyrusleeping/gx")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1sk20kv3rfsnizgwmcmmr69jb1b2iwzqh9wwwd6wg6x0pnqm8swc"))))
-    (build-system go-build-system)
-    (arguments
-     '(#:import-path "github.com/whyrusleeping/gx"))
-    (native-inputs
-     (list go-github-com-blang-semver
-           go-github-com-gxed-hashland-keccakpg
-           go-github-com-ipfs-go-ipfs-api
-           go-github-com-ipfs-go-ipfs-cmdkit-files
-           go-github-com-libp2p-go-flow-metrics
-           go-github-com-libp2p-go-libp2p-crypto
-           go-github-com-libp2p-go-libp2p-metrics
-           go-github-com-libp2p-go-libp2p-peer
-           go-github-com-libp2p-go-libp2p-protocol
-           go-github-com-minio-blake2b-simd
-           go-github-com-minio-sha256-simd
-           go-github-com-mitchellh-go-homedir
-           go-github-com-mr-tron-base58
-           go-github-com-multiformats-go-multiaddr
-           go-github-com-multiformats-go-multiaddr-net
-           go-github-com-multiformats-go-multihash
-           go-github-com-spaolacci-murmur3
-           go-github-com-whyrusleeping-tar-utils
-           go-github-com-btcsuite-btcd-btcec
-           go-github-com-gogo-protobuf
-           go-github-com-sabhiram-go-gitignore
-           go-github-com-urfave-cli
-           go-github-com-whyrusleeping-json-filter
-           go-github-com-whyrusleeping-progmeter
-           go-github-com-whyrusleeping-stump
-           go-golang-org-x-crypto))
-    (home-page "https://github.com/whyrusleeping/gx")
-    (synopsis "Package management tool using IPFS")
-    (description "@command{gx} is a packaging tool built around the
-distributed, content addressed file system IPFS.  It aims to be flexible,
-powerful and simple.")
-    (license license:expat)))
-
-(define-public go-github-com-whyrusleeping-gx-util
-  (package
-    (inherit gx)
-    (name "go-github-com-whyrusleeping-gx-util")
-    (arguments
-     '(#:unpack-path "github.com/whyrusleeping/gx"
-       #:import-path "github.com/whyrusleeping/gx/gxutil"))))
-
-;; XXX: No updates for 4 years, and depends on dated Golang modules which
-;; require go-1.16 to compile, see
-;; <https://github.com/whyrusleeping/gx-go/issues/65>.
-(define-public gx-go
-  (package
-    (name "gx-go")
-    (version "1.9.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/whyrusleeping/gx-go")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0fdy4b3ymqw6hzvvjwq37mfrdmizc8lxm53axw93n3x6118na9jc"))))
-    (build-system go-build-system)
-    (arguments
-     '(#:import-path "github.com/whyrusleeping/gx-go"))
-    (native-inputs
-     (list go-github-com-whyrusleeping-gx-util
-           go-github-com-kr-fs
-           go-github-com-gxed-hashland-keccakpg
-           go-github-com-ipfs-go-ipfs-api
-           go-github-com-ipfs-go-ipfs-cmdkit-files
-           go-github-com-libp2p-go-flow-metrics
-           go-github-com-libp2p-go-libp2p-crypto
-           go-github-com-libp2p-go-libp2p-metrics
-           go-github-com-libp2p-go-libp2p-peer
-           go-github-com-libp2p-go-libp2p-protocol
-           go-github-com-minio-blake2b-simd
-           go-github-com-minio-sha256-simd
-           go-github-com-mitchellh-go-homedir
-           go-github-com-mr-tron-base58
-           go-github-com-multiformats-go-multiaddr
-           go-github-com-multiformats-go-multiaddr-net
-           go-github-com-multiformats-go-multihash
-           go-github-com-spaolacci-murmur3
-           go-github-com-whyrusleeping-tar-utils
-           go-github-com-btcsuite-btcd-btcec
-           go-github-com-gogo-protobuf
-           go-github-com-sabhiram-go-gitignore
-           go-github-com-urfave-cli
-           go-github-com-whyrusleeping-progmeter
-           go-github-com-whyrusleeping-stump
-           go-golang-org-x-crypto))
-    (home-page "https://github.com/whyrusleeping/gx-go")
-    (synopsis "Golang subtool for the @command{gx} package manager")
-    (description "A subtool for the @command{gx} package manager for packages
-written in Go.")
-    (license license:expat)))
-
 (define-public kubo
   (package
     (name "kubo")
@@ -976,7 +843,7 @@ written in Go.")
                            '("vendor/bazil.org"
                              "vendor/github.com/alecthomas"
                              "vendor/github.com/benbjohnson"
-                             "vendor/github.com/beorn7/perks"
+                             "vendor/github.com/beorn7"
                              "vendor/github.com/blang"
                              "vendor/github.com/cenkalti"
                              "vendor/github.com/cespare"
@@ -992,15 +859,14 @@ written in Go.")
                              "vendor/github.com/francoispqt"
                              "vendor/github.com/fsnotify"
                              "vendor/github.com/gabriel-vasile"
-                             "vendor/github.com/go-logr/logr"
+                             "vendor/github.com/go-kit"
+                             "vendor/github.com/go-logfmt"
+                             "vendor/github.com/go-logr"
                              "vendor/github.com/go-task"
                              "vendor/github.com/godbus"
                              "vendor/github.com/gogo"
-                             "vendor/github.com/golang/groupcache"
-                             "vendor/github.com/golang/snappy"
-                             "vendor/github.com/google/gopacket"
-                             "vendor/github.com/google/pprof"
-                             "vendor/github.com/google/uuid"
+                             "vendor/github.com/golang"
+                             "vendor/github.com/google"
                              "vendor/github.com/gorilla"
                              "vendor/github.com/hashicorp"
                              "vendor/github.com/huin"
@@ -1010,6 +876,7 @@ written in Go.")
                              "vendor/github.com/ipfs/go-datastore"
                              "vendor/github.com/ipfs/go-detect-race"
                              "vendor/github.com/ipfs/go-ipfs-delay"
+                             "vendor/github.com/ipfs/go-ipfs-redirects-file"
                              "vendor/github.com/ipfs/go-ipfs-util"
                              "vendor/github.com/ipfs/go-ipld-cbor"
                              "vendor/github.com/ipfs/go-ipld-format"
@@ -1026,6 +893,7 @@ written in Go.")
                              "vendor/github.com/klauspost"
                              "vendor/github.com/koron"
                              "vendor/github.com/libp2p/go-buffer-pool"
+                             "vendor/github.com/libp2p/go-flow-metrics"
                              "vendor/github.com/libp2p/go-msgio"
                              "vendor/github.com/libp2p/go-nat"
                              "vendor/github.com/libp2p/go-netroute"
@@ -1043,15 +911,13 @@ written in Go.")
                              "vendor/github.com/pkg"
                              "vendor/github.com/pmezard"
                              "vendor/github.com/polydawn"
-                             "vendor/github.com/prometheus/client_golang"
-                             "vendor/github.com/prometheus/client_model"
-                             "vendor/github.com/prometheus/common"
-                             "vendor/github.com/prometheus/procfs"
-                             "vendor/github.com/quic-go/quic-go"
+                             "vendor/github.com/prometheus"
+                             "vendor/github.com/quic-go"
                              "vendor/github.com/spaolacci"
                              "vendor/github.com/stretchr"
                              "vendor/github.com/syndtr"
                              "vendor/github.com/tidwall"
+                             "vendor/github.com/ucarion"
                              "vendor/github.com/whyrusleeping"
                              "vendor/go.uber.org"
                              "vendor/golang.org"
@@ -1140,7 +1006,7 @@ written in Go.")
                   ;;go-github-com-libp2p-go-libp2p-testing
                   go-github-com-libp2p-go-socket-activation
                   go-github-com-mitchellh-go-homedir
-                  go-github-com-multiformats-go-multiaddr-0.12
+                  go-github-com-multiformats-go-multiaddr
                   go-github-com-multiformats-go-multiaddr-dns
                   go-github-com-multiformats-go-multibase
                   go-github-com-multiformats-go-multicodec
@@ -1183,21 +1049,25 @@ written in Go.")
                   go-github-com-felixge-httpsnoop             ; go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
                   go-github-com-flynn-noise                   ; github.com/libp2p/go-libp2p
                   go-github-com-gabriel-vasile-mimetype       ; github.com/ipfs/boxo
-                  go-github-com-go-logr-logr                  ; go.opentelemetry.io/otel
+                  go-github-com-go-logr-stdr                  ; go.opentelemetry.io/otel
                   go-github-com-golang-groupcache             ; go.opencensus.io/trace
                   go-github-com-google-gopacket               ; github.com/libp2p/go-libp2p-kad-dht
                   go-github-com-gorilla-mux                   ; github.com/ipfs/boxo
                   go-github-com-gorilla-websocket             ; github.com/libp2p/go-libp2p
                   go-github-com-hashicorp-golang-lru          ; github.com/libp2p/go-libp2p-kad-dht
                   go-github-com-hashicorp-golang-lru-v2       ; github.com/ipfs/boxo
+                  go-github-com-ipfs-go-ipfs-redirects-file   ; github.com/ipfs/boxo
                   go-github-com-ipfs-go-verifcid              ; github.com/ipfs/go-blockservice
                   go-github-com-klauspost-compress            ; github.com/libp2p/go-libp2p
                   go-github-com-libp2p-go-buffer-pool         ; github.com/libp2p/go-libp2p
+                  go-github-com-libp2p-go-flow-metrics        ; github.com/libp2p/go-libp2p
                   go-github-com-libp2p-go-msgio               ; github.com/libp2p/go-libp2p-kad-dht
                   go-github-com-libp2p-go-nat                 ; github.com/libp2p/go-libp2p
                   go-github-com-multiformats-go-multiaddr-fmt ; github.com/libp2p/go-libp2p
                   go-github-com-multiformats-go-multistream   ; github.com/libp2p/go-libp2p
+                  go-github-com-prometheus-statsd-exporter    ; contrib.go.opencensus.io/exporter/prometheus
                   go-github-com-quic-go-quic-go               ; github.com/libp2p/go-libp2p
+                  go-github-com-quic-go-webtransport-go       ; github.com/libp2p/go-libp2p
                   go-github-com-whyrusleeping-base32          ; github.com/ipfs/boxo
                   go-github-com-whyrusleeping-cbor            ; github.com/ipld/go-car
                   go-github-com-whyrusleeping-chunker         ; github.com/ipfs/boxo

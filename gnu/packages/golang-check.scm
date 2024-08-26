@@ -950,6 +950,30 @@ Features include:
       (propagated-inputs
        (list go-gopkg-in-yaml-v3)))))
 
+(define-public go-github-com-stvp-go-udp-testing
+  (package
+    (name "go-github-com-stvp-go-udp-testing")
+    (version "0.0.0-20201019212854-469649b16807")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/stvp/go-udp-testing")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03dzhwnvbshiivbcawaxsl963d8hh18yf3ydvzvhyjgz60g8lxil"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/stvp/go-udp-testing"))
+    (home-page "https://github.com/stvp/go-udp-testing")
+    (synopsis "UDP test helpers for Golang")
+    (description
+     "This package implements UDP test helpers.  It lets assert that certain
+strings must or must not be sent to a given local UDP listener.")
+    (license license:expat)))
+
 (define-public go-github-com-tdewolff-test
   (package
     (name "go-github-com-tdewolff-test")
@@ -972,6 +996,33 @@ Features include:
     (description
      "This package implements a few functions that are useful for io testing,
 such as readers and writers that fail after N consecutive reads/writes.")
+    (license license:expat)))
+
+(define-public go-github-com-tj-assert
+  (package
+    (name "go-github-com-tj-assert")
+    (version "0.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tj/assert")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1j5swk3fjq1h5fpqkipddz2ccnbidr7qrpm5dpdaflg9q5jnc673"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tj/assert"))
+    (propagated-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/tj/assert")
+    (synopsis "Golang @code{testify/assert} but as @code{testify/require}")
+    (description
+     "Package assert implements the same assertions as the
+@url{https://github.com/stretchr/testify, assert} package but stops test
+execution when a test fails.")
     (license license:expat)))
 
 (define-public go-github.com-smartystreets-assertions

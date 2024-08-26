@@ -25,6 +25,7 @@
 ;;; Copyright © 2022 (unmatched-parenthesis <paren@disroot.org>
 ;;; Copyright © 2022 Dhruvin Gandhi <contact@dhruvin.dev>
 ;;; Copyright © 2022 Dominic Martinez <dom@dominicm.dev>
+;;; Copyright © 2022 Leo Nikkilä <hello@lnikki.la>
 ;;; Copyright © 2022 kiasoc5 <kiasoc5@disroot.org>
 ;;; Copyright © 2023 Benjamin <benjamin@uvy.fr>
 ;;; Copyright © 2023 Fries <fries1234@protonmail.com>
@@ -891,6 +892,39 @@ optimized for sparse nodes of
      "The @code{ical} package provides an ICS/iCalender parser and serialiser
 for Go.")
     (license license:asl2.0)))
+
+(define-public go-github-com-asaskevich-govalidator
+  (package
+    (name "go-github-com-asaskevich-govalidator")
+    (version "11.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/asaskevich/govalidator")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0aab1pym5c6di8vidynp6ly5j4kcqv6lp2737gw0a07zng0nn8lw"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/asaskevich/govalidator"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "\\_test.go$")
+                  ;; XXX: Some validation are failed in the test.
+                  (("TestIsExistingEmail") "OffTestIsExistingEmail"))))))))
+    (home-page "https://github.com/asaskevich/govalidator")
+    (synopsis "Collection of various validators for Golang")
+    (description
+     "This package provides validators and sanitizers for strings, structs and
+collections.  It was based on
+@url{https://github.com/chriso/validator.js,validator.js}.")
+    (license license:expat)))
 
 (define-public go-github-com-audriusbutkevicius-recli
   (package
@@ -1840,6 +1874,38 @@ gist (https://gist.github.com/kballard/272720).")
 more complicated parallel cases.")
     (license license:expat)))
 
+(define-public go-github-com-dennwc-varint
+  (package
+    (name "go-github-com-dennwc-varint")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dennwc/varint")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0w6fnh7i55155cv55cjdqq436zb2y08rglxvz58vv67bb4hj7dkk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dennwc/varint"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "\\_test.go$")
+                  ;; XXX: varint_test.go:94: unexpected error: -11.
+                  (("TestUvarint") "OffTestUvarint"))))))))
+    (home-page "https://github.com/dennwc/varint")
+    (synopsis "Fast varint library for Golang")
+    (description
+     "This package provides an optimized implementation of protobuf's varint
+encoding/decoding.  It has no dependencies.")
+    (license license:expat)))
+
 (define-public go-github-com-dimchansky-utfbom
   (package
     (name "go-github-com-dimchansky-utfbom")
@@ -2034,6 +2100,42 @@ Implements string conversion functionality for unit prefixes.
     (description
      "This package provides a fork of Golang's @code{encoding/json} with the
 scanner API made public.")
+    (license license:bsd-3)))
+
+(define-public go-github-com-edsrzf-mmap-go
+  (package
+    (name "go-github-com-edsrzf-mmap-go")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/edsrzf/mmap-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11xpfcacfvmrkbp0pv4j8pg2gyjnxpfp7l93j42h0svwxywhjmrc"))))
+    (build-system go-build-system)
+    (propagated-inputs (list go-golang-org-x-sys))
+    (arguments
+     (list
+      #:import-path "github.com/edsrzf/mmap-go"))
+    (home-page "https://github.com/edsrzf/mmap-go")
+    (synopsis "Memory mapped fiels (mmap) in Golang")
+    (description
+     "This package implements functinoality of mapping files into memory.  It
+tries to provide a simple interface, but doesn't go out of its way to abstract
+away every little platform detail.
+
+This specifically means:
+@itemize
+@item forked processes may or may not inherit mappings
+@item a file's timestamp may or may not be updated by writes through mappings
+@item specifying a size larger than the file's actual size can increase the
+file's size
+@item if the mapped file is being modified by another process while your
+program's running, don't expect consistent results between platforms
+@end itemize")
     (license license:bsd-3)))
 
 (define-public go-github-com-elliotchance-orderedmap
@@ -2536,6 +2638,33 @@ interfaces to back that API.  Packages in the Go ecosystem can depend on it,
 while callers can implement logging with whatever backend is appropriate.")
     (license license:asl2.0)))
 
+(define-public go-github-com-go-logr-stdr
+  (package
+    (name "go-github-com-go-logr-stdr")
+    (version "1.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-logr/stdr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dl2rzvjacwqlnvw7azrxqbh4jvzaq8v399f6drs146l39ss21c1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ; no tests for stdr.go
+      #:import-path "github.com/go-logr/stdr"))
+    (propagated-inputs
+     (list go-github-com-go-logr-logr))
+    (home-page "https://github.com/go-logr/stdr")
+    (synopsis "Minimal Go logging using logr and Go's standard library")
+    (description
+     "Package stdr implements github.com/go-logr/logr.Logger in terms of Go's
+standard log package.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-go-playground-locales
   (package
     (name "go-github-com-go-playground-locales")
@@ -2570,6 +2699,33 @@ implemented features include
 @item Contains Number, Currency, Accounting and Percent formatting functions
 @item Supports the \"Gregorian\" calendar only
 @end itemize")
+    (license license:expat)))
+
+(define-public go-github-com-go-stack-stack
+  (package
+    (name "go-github-com-go-stack-stack")
+    (version "1.8.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/go-stack/stack")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01m6l9w84yq2yyly8bdfsgc386hla1gn9431c7vr3mfa3bchj5wb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/go-stack/stack"))
+    (home-page "https://github.com/go-stack/stack")
+    (synopsis "Utilities to capture, manipulate, and format call stacks")
+    (description
+     "Package @code{stack} implements utilities to capture, manipulate,
+and format call stacks.  It provides a simpler API than package
+@code{runtime}.  The implementation takes care of the minutia and special
+cases of interpreting the program counter (pc) values returned by
+@code{runtime.Callers}.")
     (license license:expat)))
 
 (define-public go-github-com-go-task-slim-sprig
@@ -4276,36 +4432,6 @@ language, namely support for record length-delimited message streaming.")
 colored strings.")
       (license license:expat))))
 
-(define-public go-github-com-miekg-dns
-  (package
-    (name "go-github-com-miekg-dns")
-    (version "1.1.48")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/miekg/dns")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "14m4wnbgmc1prj4ds1fsz1nwb1awaq365lhbp8clzsidxmhjf3hl"))))
-    (build-system go-build-system)
-    (arguments '(#:import-path "github.com/miekg/dns"))
-    (propagated-inputs
-     (list go-golang-org-x-tools
-           go-golang-org-x-sys
-           go-golang-org-x-sync
-           go-golang-org-x-net))
-    (home-page "https://github.com/miekg/dns")
-    (synopsis "Domain Name Service library in Go")
-    (description
-     "This package provides a fully featured interface to the @acronym{DNS,
-Domain Name System}.  Both server and client side programming is supported.
-The package allows complete control over what is sent out to the @acronym{DNS,
-Domain Name Service}.  The API follows the less-is-more principle, by
-presenting a small interface.")
-    (license license:bsd-3)))
-
 (define-public go-github-com-mitchellh-colorstring
   (package
     (name "go-github-com-mitchellh-colorstring")
@@ -4919,6 +5045,93 @@ queue.")
 @code{Producer} types as well as low-level functions to communicate over the
 NSQ protocol @url{https://nsq.io/}.")
     (license license:expat)))
+
+(define-public go-github-com-oklog-run
+  (package
+    (name "go-github-com-oklog-run")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/oklog/run")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0r55p3kgdkgw55i33lqvvvl60mjp92mhd1170m980sw98z9150jk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/oklog/run"))
+    (home-page "https://github.com/oklog/run")
+    (synopsis "Universal mechanism to manage goroutine lifecycles")
+    (description
+     "@code{run.Group} is a universal mechanism to manage goroutine
+lifecycles, written to manage component lifecycles in @code{func main} for OK
+Log.  It's useful in any circumstance where you need to orchestrate multiple
+goroutines as a unit whole.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-oklog-ulid
+  (package
+    (name "go-github-com-oklog-ulid")
+    (version "1.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/oklog/ulid")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hybwyid820n80axrk863k2py93hbqlq6hxhf84ppmz0qd0ys0gq"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/oklog/ulid"))
+    (home-page "https://github.com/oklog/ulid")
+    (synopsis "Universally Unique Lexicographically Sortable Identifier in Golang")
+    (description
+     "This package implements @acronym{ULID, Universally Unique
+Lexicographically Sortable Identifier} as specificed in
+@url{https://github.com/ulid/spec}.
+
+Features of ULID:
+@itemize
+@item 128-bit compatibility with UUID
+@item 1.21e+24 unique ULIDs per millisecond
+@item lexicographically sortable
+@item canonically encoded as a 26 character string, as opposed to the 36
+character UUID
+@item uses Crockford's base32 for better efficiency and readability (5 bits
+per character)
+@item case insensitive
+@item no special characters (URL safe)
+@item monotonic sort order (correctly detects and handles the same
+millisecond)
+@end itemize")
+    (license license:asl2.0)))
+
+(define-public go-github-com-oklog-ulid-v2
+  (package
+    (inherit go-github-com-oklog-ulid)
+    (name "go-github-com-oklog-ulid-v2")
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/oklog/ulid")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pxjrg48zrmzzdjpsz7b2d56x1vwix2wywgbbv3sdi5mqf0hz17y"))))
+    (arguments
+     (list
+      #:import-path "github.com/oklog/ulid/v2"))))
 
 (define-public go-github-com-op-go-logging
   (package
@@ -6493,6 +6706,142 @@ Go.")
 values.")
     (license license:asl2.0)))
 
+(define-public go-k8s-io-klog
+  (package
+    (name "go-k8s-io-klog")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes/klog")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cgannfmldcrcksb2wqdn2b5qabqyxl9r25w9y4qbljw24hhnlvn"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "k8s.io/klog"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "\\_test.go$")
+                  ;; Disable test requiring write access to creat test files.
+                  (("TestRollover") "OffTestRollover"))))))))
+    (propagated-inputs
+     (list go-github-com-go-logr-logr))
+    (home-page "https://github.com/kubernetes/klog")
+    (synopsis "Leveled execution logs for Go")
+    (description
+     "Package klog implements logging analogous to the Google-internal C++
+INFO/ERROR/V setup.  It provides functions @code{Info}, @code{Warning},
+@code{Error}, @code{Fatal}, plus formatting variants such as @code{Infof}.  It
+also provides V-style logging controlled by the @code{-v} and
+@code{-vmodule=file=2} flags.  It's a is a permanent fork of
+@code{https://github.com/golang/glog}.")
+    (license license:asl2.0)))
+
+(define-public go-k8s-io-klog-v2
+  (package
+    (inherit go-k8s-io-klog)
+    (name "go-k8s-io-klog-v2")
+    (version "2.130.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kubernetes/klog")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12q9jhxfpq75sgmdxgcz85znbgdi04ic9zy3rm0c47n24clz6z73"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "k8s.io/klog/v2"))))
+
+(define-public go-go-mongodb-org-mongo-driver
+  (package
+    (name "go-go-mongodb-org-mongo-driver")
+    (version "1.16.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mongodb/mongo-go-driver")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "160hwrk8y8h3nl9sh5v6pxnlyw1ywbssjgzb72lj0x68akgl8gff"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "go.mongodb.org/mongo-driver"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples-and-benchmarks
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each delete-file-recursively
+                          (list "benchmark"
+                                "examples"
+                                "cmd/godriver-benchmark")))))
+          (add-before 'check 'disable-failing-tests
+            (lambda* (#:key tests? unpack-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (substitute* (find-files "." "\\_test.go$")
+                  ;; Some tests require running database and available network connection.
+                  (("TestAggregate") "OffTestAggregate")
+                  (("TestPollSRVRecords") "OffTestPollSRVRecords")
+                  (("TestPollSRVRecordsServiceName")
+                   "OffTestPollSRVRecordsServiceName")
+                  (("TestPollingSRVRecordsLoadBalanced")
+                   "OffTestPollingSRVRecordsLoadBalanced")
+                  (("TestPollingSRVRecordsSpec")
+                   "OffTestPollingSRVRecordsSpec")
+                  (("TestServerHeartbeatOffTimeout")
+                   "OffTestServerHeartbeatTimeout")
+                  (("TestServerHeartbeatTimeout")
+                   "OffTestServerHeartbeatTimeout")
+                  (("TestTimeCodec") "OffTestTimeCodec")
+                  (("TestTopologyConstructionLogging")
+                   "OffTestTopologyConstructionLogging")
+                  (("TestURIOptionsSpec") "OffTestURIOptionsSpec")))))
+          ;; XXX: Workaround for go-build-system's lack of Go modules support.
+          (delete 'build)
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (for-each
+                   (lambda (package)
+                     (invoke "go" "test" (string-append "./" package "/...")))
+                   (list "bson" "event" "internal" "tag" "x")))))))))
+    (native-inputs
+     (list go-github-com-aws-aws-lambda-go))
+    (propagated-inputs
+     (list go-github-com-davecgh-go-spew
+           go-github-com-golang-snappy
+           go-github-com-google-go-cmp
+           go-github-com-klauspost-compress
+           go-github-com-montanaflynn-stats
+           go-github-com-xdg-go-scram
+           go-github-com-xdg-go-stringprep
+           go-github-com-youmark-pkcs8
+           go-golang-org-x-crypto
+           go-golang-org-x-sync))
+    (home-page "https://go.mongodb.org/mongo-driver")
+    (synopsis "MongoDB Go Driver")
+    (description
+     "This package provides a driver for @code{Mongo} data base.")
+    (license license:asl2.0)))
+
 (define-public go-mvdan-cc-editorconfig
   (package
     (name "go-mvdan-cc-editorconfig")
@@ -6662,6 +7011,22 @@ tool."))))
       #:unpack-path "github.com/BurntSushi/toml"))
     (description
      (string-append (package-description go-github-com-burntsushi-toml)
+                    " This package provides an command line interface (CLI)
+tool."))))
+
+(define-public go-ulid
+  (package
+    (inherit go-github-com-oklog-ulid-v2)
+    (name "go-ulid")
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "github.com/oklog/ulid/v2/cmd/ulid"
+      #:unpack-path "github.com/oklog/ulid/v2"))
+    (native-inputs
+     (list go-github-com-pborman-getopt))
+    (description
+     (string-append (package-description go-github-com-oklog-ulid)
                     " This package provides an command line interface (CLI)
 tool."))))
 

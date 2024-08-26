@@ -4290,34 +4290,6 @@ generation features.  This code generation is used to achieve:
     (home-page "https://github.com/gogo/protobuf")
     (license license:bsd-3)))
 
-(define-public go-github-com-libp2p-go-flow-metrics
-  (let ((commit "7e5a55af485341567f98d6847a373eb5ddcdcd43")
-        (revision "0"))
-    (package
-      (name "go-github-com-libp2p-go-flow-metrics")
-      (version (git-version "0.2.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/libp2p/go-flow-metrics")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "1p87iyk6q6f3g3xkncssx400qlld8f2z93qiz8m1f97grfyhjif1"))))
-      (build-system go-build-system)
-      (arguments
-       `(#:import-path "github.com/libp2p/go-flow-metrics"
-         ;; TODO: Tests hang.
-         #:tests? #f))
-      (home-page
-       "https://github.com/libp2p/go-flow-metrics")
-      (synopsis "Simple library for tracking flow metrics")
-      (description "A simple alternative to rcrowley's @command{go-metrics}
-that's a lot faster (and only does simple bandwidth metrics).")
-      (license license:expat))))
-
 (define-public go-github-com-btcsuite-btclog
   (let ((commit "84c8d2346e9fc8c7b947e243b9c24e6df9fd206a")
         (revision "0"))
@@ -4446,39 +4418,6 @@ required by Go's standard Hash interface.")
       (home-page "https://github.com/libp2p/go-libp2p-protocol")
       (synopsis "Type for protocol strings in Golang")
       (description "Just a type for protocol strings.  Nothing more.")
-      (license license:expat))))
-
-(define-public go-github-com-libp2p-go-libp2p-metrics
-  (let ((commit "a10ff6e75dae3c868023867e8caa534a04bdc624")
-        (revision "0"))
-    (package
-      (name "go-github-com-libp2p-go-libp2p-metrics")
-      (version (git-version "2.1.6" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/libp2p/go-libp2p-metrics")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "05wy0cq4h6yg9bzgapcvm2criwriicbswx80ma82gyn4a9fdrk8m"))))
-      (build-system go-build-system)
-      (arguments
-       '(#:import-path "github.com/libp2p/go-libp2p-metrics"))
-      (propagated-inputs
-       (list go-github-com-libp2p-go-flow-metrics
-             go-github-com-libp2p-go-libp2p-peer
-             go-github-com-libp2p-go-libp2p-protocol
-             go-github-com-libp2p-go-libp2p-crypto
-             go-github-com-multiformats-go-multihash
-             go-github-com-btcsuite-btcd-btcec
-             go-github-com-gogo-protobuf))
-      (home-page "https://github.com/libp2p/go-libp2p-metrics")
-      (synopsis "Connection wrapper for go-libp2p that provides bandwidth metrics")
-      (description "A connection wrapper for @command{go-libp2p} that provides bandwidth
-statistics for wrapped connections.")
       (license license:expat))))
 
 (define-public go-github-com-mitchellh-go-homedir
@@ -5427,7 +5366,7 @@ a cron spec parser and job runner.")
 (define-public go-github-com-google-uuid
   (package
     (name "go-github-com-google-uuid")
-    (version "1.1.1")
+    (version "1.6.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5436,7 +5375,7 @@ a cron spec parser and job runner.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0hfxcf9frkb57k6q0rdkrmnfs78ms21r1qfk9fhlqga2yh5xg8zb"))))
+                "131d01minir79dq6d4jq55018343yidl5cs2bfhynx1klnr7ssam"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "github.com/google/uuid"))
