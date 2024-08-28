@@ -13,6 +13,7 @@
 ;;; Copyright © 2021 Tim Howes <timhowes@lavabit.com>
 ;;; Copyright © 2021 Nicolas Vallet <nls.vallet@gmail.com>
 ;;; Copyright © 2023 Navid Afkhami <Navid.Afkhami@mdc-berlin.de>
+;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -5884,13 +5885,13 @@ calculation in parallel.")
 (define-public r-dmrcate
   (package
     (name "r-dmrcate")
-    (version "3.0.5")
+    (version "3.0.8")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "DMRcate" version))
               (sha256
                (base32
-                "1m5ilcpknzxd3cdk0kyvqqsahshlwxi7xpscigr4w7a83p775vqc"))))
+                "1j3s3lcsfwywyaaifiyz1pl9wd8s5wbdwjx71827wz346gpppkbv"))))
     (properties `((upstream-name . "DMRcate")))
     (build-system r-build-system)
     (propagated-inputs
@@ -6516,14 +6517,14 @@ Michailidis G (2016) <doi:10.1093/bioinformatics/btw410>.")
 (define-public r-nmf
   (package
     (name "r-nmf")
-    (version "0.27")
+    (version "0.28")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "NMF" version))
        (sha256
         (base32
-         "1y9y7xpfd9y8j5b8s2x5g61455ilpgqpdhrirpz58xjarbph4hxg"))))
+         "1yzf5vcvyb2lypxcfyhah7y2yblkar1is7c50645yppf4frygpvp"))))
     (properties `((upstream-name . "NMF")))
     (build-system r-build-system)
     (propagated-inputs
@@ -7897,14 +7898,14 @@ visualization of Illumina DNA methylation array data.")
 (define-public r-ensembldb
   (package
     (name "r-ensembldb")
-    (version "2.28.0")
+    (version "2.28.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "ensembldb" version))
        (sha256
         (base32
-         "10h3ngwq99y0d3ksf0303qjw263ard1zsawpq1pw5n9r5g7xll47"))))
+         "0gfwz7gznxpnqis7ack3106gvpbhcarlmj41ivndxzvksnxc3yq1"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-annotationdbi
@@ -14505,6 +14506,30 @@ algorithm to segment DNA copy number data and identify genomic regions with
 abnormal copy number.")
     (license license:gpl2+)))
 
+(define-public r-hmmcopy
+  (package
+    (name "r-hmmcopy")
+    (version "1.46.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (bioconductor-uri "HMMcopy" version))
+       (sha256
+        (base32 "1i2n4i4vkxqfgdcmwhz1vcbhxk716m1blc2drzh5449y6x3qd026"))))
+    (properties `((upstream-name . "HMMcopy")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-data-table))
+    (home-page "https://bioconductor.org/packages/HMMcopy")
+    (synopsis
+     "Copy number prediction with correction for GC and mappability bias for HTS data")
+    (description
+     "This package corrects GC and mappability biases for
+readcounts (i.e. coverage) in non-overlapping windows of fixed length for
+single whole genome samples, yielding a rough estimate of copy number for
+further analysis.  It was designed for rapid correction of high coverage whole
+genome tumor and normal samples.")
+    (license license:gpl3)))
+
 ;; This is a CRAN package, but it uncharacteristically depends on a
 ;; Bioconductor package.
 (define-public r-htscluster
@@ -16037,18 +16062,26 @@ information about samples and features can be added to the plot.")
 (define-public r-gosemsim
   (package
     (name "r-gosemsim")
-    (version "2.30.0")
+    (version "2.30.2")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "GOSemSim" version))
        (sha256
         (base32
-         "0985w9b2iw7jbmpymfvqmpzshsy0lvqw7whc1djdnh58lwscnhcq"))))
+         "009rh51mndpkqw9vmr836ll2zsmsb4wlrjhvda5qiggznlhixrcv"))))
     (properties `((upstream-name . "GOSemSim")))
     (build-system r-build-system)
     (propagated-inputs
-     (list r-annotationdbi r-go-db r-rcpp r-rlang r-yulab-utils))
+     (list r-annotationdbi
+           r-dbi
+           r-digest
+           r-go-db
+           r-httr2
+           r-r-utils
+           r-rcpp
+           r-rlang
+           r-yulab-utils))
     (native-inputs
      (list r-knitr))
     (home-page "https://guangchuangyu.github.io/software/GOSemSim")
@@ -16196,14 +16229,14 @@ to multiple hypothesis correction.")
 (define-public r-dose
   (package
     (name "r-dose")
-    (version "3.30.2")
+    (version "3.30.4")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "DOSE" version))
        (sha256
         (base32
-         "1jf6l0ngmdz1lca2rcjg3rhi9qdrv1pzmn93wa09svi4glsfhy1h"))))
+         "07pljijlyp4labxg4q3kf6wq4acw6axyyw57k1bws3hcf4m1d92x"))))
     (properties `((upstream-name . "DOSE")))
     (build-system r-build-system)
     (propagated-inputs
@@ -16212,10 +16245,8 @@ to multiple hypothesis correction.")
            r-fgsea
            r-ggplot2
            r-gosemsim
-           r-hdo-db
            r-qvalue
-           r-reshape2
-           r-yulab-utils))
+           r-reshape2))
     (native-inputs
      (list r-knitr))
     (home-page "https://guangchuangyu.github.io/software/DOSE/")
@@ -16332,14 +16363,14 @@ attempts to assess their statistical significance.")
 (define-public r-clusterprofiler
   (package
     (name "r-clusterprofiler")
-    (version "4.12.2")
+    (version "4.12.5")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "clusterProfiler" version))
        (sha256
         (base32
-         "07vccjiizzk2z7v4448jybrsapcjxc3y6g6bhlclzdl80h566xxv"))))
+         "139qfvfqwb09k72srjn233hw9i6rh4bp8i9nqn215cn3qvvrw9zz"))))
     (properties
      `((upstream-name . "clusterProfiler")))
     (build-system r-build-system)
@@ -17664,14 +17695,14 @@ based on @dfn{Continuous Wavelet Transform} (CWT).")
 (define-public r-xcms
   (package
     (name "r-xcms")
-    (version "4.2.2")
+    (version "4.2.3")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "xcms" version))
        (sha256
         (base32
-         "1zk9l4ll3047fj0rngvjka2hkg2by26n2h3xm1iyvfiw5068y74y"))))
+         "10b3jj7m278df0s83icbl95rbp5m7y0avhsjzfy0mkgyvm13y5ls"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-biobase
@@ -19622,14 +19653,14 @@ metrics, with methods for objects produced by the @code{methylumi} and
 (define-public r-gdsfmt
   (package
     (name "r-gdsfmt")
-    (version "1.40.0")
+    (version "1.40.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "gdsfmt" version))
        (sha256
         (base32
-         "1ska6q1800mmsxi6jilpnq4f6cy3vk0nb98gz3ik94lmbv2ram97"))
+         "0m5ws1qnbx7a3vj8bd9ggqi5w4icgzd5zi60qcy942j6zv4sswig"))
        (modules '((guix build utils)))
        ;; Remove bundled sources of zlib, lz4, and xz.  Don't attempt to build
        ;; them and link with system libraries instead.
@@ -20093,14 +20124,14 @@ data.")
 (define-public r-universalmotif
   (package
     (name "r-universalmotif")
-    (version "1.22.1")
+    (version "1.22.2")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "universalmotif" version))
        (sha256
         (base32
-         "0nb2xc0rw9k6nr7bgf4ip33g2cs5vnhy55ms6zkwsnd30hi69wyy"))))
+         "12svaygg47j5smay57j5lkxj8llky1fm4s8ni0nzikq5a9j47w5y"))))
     (properties
      `((upstream-name . "universalmotif")))
     (build-system r-build-system)
@@ -23757,14 +23788,14 @@ all RNA-Seq libraries of each species integrated in Bgee.")
 (define-public r-bgeedb
   (package
     (name "r-bgeedb")
-    (version "2.30.0")
+    (version "2.30.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "BgeeDB" version))
        (sha256
         (base32
-         "1jbb93inv7z0i8b1jr6ax98gqkqn73m86hj61irgyysk7hn4bbg6"))))
+         "16fghmms2yb7i9rj6p3jypx6m7c3flgm8dmnkng7fvxcckaa4lry"))))
     (properties `((upstream-name . "BgeeDB")))
     (build-system r-build-system)
     (propagated-inputs
@@ -24813,13 +24844,13 @@ interest on transformed methylation proportions.")
 (define-public r-omnipathr
   (package
     (name "r-omnipathr")
-    (version "3.11.10")
+    (version "3.12.3")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "OmnipathR" version))
        (sha256
-        (base32 "1izy0ycrvac0k67dxq8879rbdghkrczd3s2g5v607js7bmfxybjz"))))
+        (base32 "17a8zyvqn3avr7dwy0gr3yb8zghplyjxm1yyp5plbw91yhk8f287"))))
     (properties `((upstream-name . "OmnipathR")))
     (build-system r-build-system)
     (arguments

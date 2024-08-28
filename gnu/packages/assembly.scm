@@ -15,6 +15,7 @@
 ;;; Copyright © 2023 Simon South <simon@simonsouth.net>
 ;;; Copyright © 2023 B. Wilson <elaexuotee@wilsonb.com>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -458,23 +459,25 @@ Supported architectures are:
 (define-public xa
   (package
     (name "xa")
-    (version "2.3.14")
+    (version "2.4.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.floodgap.com/retrotech/xa"
                                   "/dists/xa-" version ".tar.gz"))
               (sha256
                (base32
-                "0bph41aglxl07rnggrir2dl1x97f52hm0bl51d0vklyqvfyvm6qv"))))
+                "1hrspv9hxgk2nkbbh24g84hn0rglfwj8p7849zrn9qx869m2mhb3"))))
     (build-system gnu-build-system)
     (arguments
      (list
-      #:tests? #f           ; TODO: custom test harness, not sure how it works
+      #:test-target "test"
       #:phases
       #~(modify-phases %standard-phases
           (delete 'configure))          ; no "configure" script
       #:make-flags
-      #~(list (string-append "DESTDIR=" #$output)))) ; no $prefix support
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "LD=" #$(cc-for-target))
+              (string-append "DESTDIR=" #$output)))) ; no $prefix support
     (native-inputs (list perl))
     (home-page "https://www.floodgap.com/retrotech/xa/")
     (synopsis "Two-pass portable cross-assembler")

@@ -70,14 +70,14 @@
 (define-public parallel
   (package
     (name "parallel")
-    (version "20240722")
+    (version "20240822")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "mirror://gnu/parallel/parallel-"
                           version ".tar.bz2"))
       (sha256
-       (base32 "1w2k1s7fmbj7csnmxxzvg07i5vgja1ddhjj6m6z2ibvnyxqm8cy7"))
+       (base32 "179hr24gs3gpz7c5mnnncg0dixym70hvsk705cbhp61ifrdxkfyp"))
       (snippet
        '(begin
           (use-modules (guix build utils))
@@ -117,11 +117,12 @@
                          '("perl"
                            "procps")))))))
          (add-after 'wrap-program 'post-install-test
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke (string-append
-                      (assoc-ref outputs "out") "/bin/parallel")
-                     "echo"
-                     ":::" "1" "2" "3"))))))
+           (lambda* (#:key tests? outputs #:allow-other-keys)
+             (when tests?
+               (invoke (string-append
+                        (assoc-ref outputs "out") "/bin/parallel")
+                       "echo"
+                       ":::" "1" "2" "3")))))))
     (native-inputs
      (list perl pod2pdf))
     (inputs

@@ -4,7 +4,7 @@
 ;;; Copyright © 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2020 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
-;;; Copyright © 2021, 2022 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2021, 2022, 2024 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Mehmet Tekman <mtekman89@gmail.com>
 ;;; Copyright @ 2022, Kitzman <kitzman@disroot.org>
@@ -173,7 +173,7 @@ RDP, VNC, SPICE, NX, XDMCP, SSH and EXEC network protocols are supported.")
 (define-public tigervnc-client
   (package
     (name "tigervnc-client")
-    (version "1.13.1")
+    (version "1.14.0")
     (source
      (origin
        (method git-fetch)
@@ -181,11 +181,11 @@ RDP, VNC, SPICE, NX, XDMCP, SSH and EXEC network protocols are supported.")
              (url "https://github.com/TigerVNC/tigervnc")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1ymyay51sig9cs74ggb1vnyy7dzddkqa0ijjxvhb2v9v9y920ab1"))
+        (base32 "1nj34l9yy7ij7i52sdrgvjjxbhhwbszg9pwh5bc03c8ihgzma1af"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
-     '(#:tests? #f                   ; Tests that do exists are not automated.
+     '(#:tests? #f                   ; tests that do exists are not automated
        #:phases (modify-phases %standard-phases
                   (replace 'install
                     (lambda* (#:key outputs #:allow-other-keys)
@@ -197,6 +197,7 @@ RDP, VNC, SPICE, NX, XDMCP, SSH and EXEC network protocols are supported.")
      (list zlib
            gnutls
            libjpeg-turbo
+           ;;ffmpeg                     ;TODO: add this for h264 encoding
            fltk
            linux-pam
            libx11
@@ -206,13 +207,20 @@ RDP, VNC, SPICE, NX, XDMCP, SSH and EXEC network protocols are supported.")
            libxdamage
            pixman))
     (home-page "https://tigervnc.org/")
-    (synopsis "High-performance, platform-neutral
-implementation of VNC (client)")
-    (description "TigerVNC is a client/server implementation of VNC (Virtual
-Network Computing).  It provides enough performance to run even 3D and video
+    (synopsis "High-performance VNC remote desktop client")
+    (description "TigerVNC implements a @acronym{VNC, Virtual Network Computing}
+client and server.  @dfn{VNC} is a remote display system that lets you view and
+interact with a virtual desktop environment running on another computer on the
+network.  Client and server may be running on different operating systems and
+architectures.
+
+TigerVNC uses a variant of Tight encoding that is greatly accelerated by the use
+of the libjpeg-turbo JPEG codec and performs fast enough to run even 3D or video
 applications.  It also provides extensions for advanced authentication methods
-and TLS encryption.  This package installs only the VNC client, the
-application which is needed to connect to VNC servers.")
+and @acronym{TLS, Transport-Level Security} encryption.
+
+This package installs only the VNC client (@command{vncviewer}), the application
+used to connect to VNC servers such as the tigervnc-server package.")
     (license license:gpl2)))
 
 (define %tigervnc-client-source (package-source tigervnc-client))
@@ -257,7 +265,7 @@ application which is needed to connect to VNC servers.")
        ;; Patch the xorg-server build system so that it builds the VNC
        ;; extension.
        (patches (cons (file-append %tigervnc-client-source
-                                   "/unix/xserver21.1.1.patch")
+                                   "/unix/xserver21.patch")
                       (origin-patches (package-source xorg-server))))
        (file-name (string-append name "-" version ".tar.xz"))))
     (arguments
@@ -266,7 +274,7 @@ application which is needed to connect to VNC servers.")
        ((#:tests? #f #f)
         #f)
        ((#:configure-flags flags)
-        #~(cons* "--with-pic"           ; Taken from BUILDING.txt
+        #~(cons* "--with-pic"           ; taken from BUILDING.txt
                  "--without-dtrace"
                  "--disable-static"
                  "--disable-dri2"
@@ -309,12 +317,12 @@ application which is needed to connect to VNC servers.")
                            (string-append #$(this-package-input "font-alias")
                                           "share/fonts/X11")
                            all))
-                  ;; Adjust the location used to locate of the .desktop files.
+                  ;; Adjust the location where .desktop files will be saved.
                   (("/usr/share/xsessions")
                    "/run/current-system/profile/share/xsessions")
-                  ;; Do not require a system-provided Xsession shell script,
-                  ;; as Guix System has none.  This causes the foreach loop to
-                  ;; iterate an empty list (disabled).
+                  ;; Do not require a system-provided Xsession shell script.
+                  ;; Guix System has none, causing the for loop to iterate
+                  ;; over an empty list.
                   (("\"/etc/X11/xinit/Xsession\", \"/etc/X11/Xsession\"")
                    "()")
                   (("if \\(not defined \\$Xsession)")
@@ -375,12 +383,21 @@ application which is needed to connect to VNC servers.")
     (propagated-inputs
      (modify-inputs (package-propagated-inputs xorg-server)
        (prepend xauth)))
-    (description "TigerVNC is a client/server implementation of VNC (Virtual
-Network Computing).  It provides enough performance to run even 3D and video
+    (synopsis "High-performance VNC remote desktop server based on Xorg")
+    (description "TigerVNC implements a @acronym{VNC, Virtual Network Computing}
+client and server.  @dfn{VNC} is a remote display system that lets you view and
+interact with a virtual desktop environment running on another computer on the
+network.  Client and server may be running on different operating systems and
+architectures.
+
+TigerVNC uses a variant of Tight encoding that is greatly accelerated by the use
+of the libjpeg-turbo JPEG codec and performs fast enough to run even 3D or video
 applications.  It also provides extensions for advanced authentication methods
-and TLS encryption.  This package installs the VNC server, a program that will
-enable users with VNC clients to log into a graphical session on the machine
-where the server is installed.")))
+and @acronym{TLS, Transport-Level Security} encryption.
+
+This package installs the VNC server.  Permitted users can log into a graphical
+session on the machine where the server is running, using a VNC client such as
+the tigervnc-client package.")))
 
 (define-public turbovnc
   (package

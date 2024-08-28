@@ -1229,7 +1229,7 @@ Emacs package archive}.")
                (base32
                 "1hwl2jhv1fhsdrspfhprq77n763i4zsj350q024ajy0m2kaql6ws"))))
     (build-system emacs-build-system)
-    (home-page "http://mumble.net/~campbell/emacs/paredit/")
+    (home-page "https://mumble.net/~campbell/emacs/paredit/")
     (synopsis "Emacs minor mode for editing parentheses")
     (description
      "ParEdit (paredit.el) is a minor mode for performing structured editing
@@ -8083,6 +8083,29 @@ colors random but consistent between same tags, colors are generated from the
 hash of the tag names.")
       (license license:gpl3+))))
 
+(define-public emacs-comment-tags
+  ;; Upstream didn't tag a working version.
+  (let ((commit "7d914097f0a03484af71e621db533737fc692f58")
+        (revision "1"))
+    (package
+      (name "emacs-comment-tags")
+      (version (git-version "0.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/vincekd/comment-tags.git")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0s86a7078arck9z4gzkp2hnxyklprl0zh5hsw7nkyyscjydly80i"))))
+      (build-system emacs-build-system)
+      (synopsis "Minor mode to show comments which have tags like TODO")
+      (description "This package provides a minor mode to show all lines that
+have a comment with a tag, for example listing them right next to each other.")
+      (home-page "https://github.com/vincekd/comment-tags")
+      (license license:gpl3+))))
+
 (define-public emacs-org-rich-yank
   (package
     (name "emacs-org-rich-yank")
@@ -9604,6 +9627,10 @@ build jobs.")
               (substitute* "src/configure"
                 (("/bin/sh") (which "sh"))
                 (("/usr/bin/file") (which "file")))
+              (substitute* "zmq.el"
+                ;; This typo is already fixed in master--but no release was
+                ;; made.
+                (("zmq-mesage-more-p") "zmq-message-more-p"))
               (invoke "make")))
           (add-after 'install 'install-shared-object
             (lambda* (#:key inputs outputs #:allow-other-keys)
@@ -19735,6 +19762,32 @@ guidelines.  It also includes a couple handy IDE-type features such as
 documentation search and a source and class browser.")
     (license license:gpl3+)))
 
+(define-public emacs-composer
+  (let ((commit "791a7104be2ef2748757a186094c1e8f7f531a01")
+        (revision "0"))
+    (package
+      (name "emacs-composer")
+      (version (git-version "0.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/zonuexe/composer.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "01kb74nlkp4fvpbz6wdx776q3v7jfknhax1qmg85kj2ilkadfrd0"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/zonuexe/composer.el")
+      (synopsis "Emacs interface for managing PHP dependencies with Composer")
+      (description
+       "This package provides an Emacs interface for working with PHP
+ dependencies managed by Composer.  It allows users to run Composer commands
+ directly from Emacs, including installing and updating packages, and managing
+ Composer configurations.  The package aims to streamline the development
+ workflow for PHP projects within Emacs.")
+      (license license:gpl3+))))
+
 (define-public emacs-pippel
   (let ((commit "cb194952ee150e77601d3233dabdb521b976ee79")
         (revision "0"))
@@ -21458,6 +21511,57 @@ multiplexer.")
     (description
      "This package provides HTTP library for Emacs.  It uses Curl as a backend,
 which avoids some of the issues with using Emacs’s built-in Url library.")
+    (license license:gpl3+)))
+
+(define-public emacs-plz-media-type
+  (package
+    (name "emacs-plz-media-type")
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/r0man/plz-media-type")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bxrinp276rzz1jwnqrs5xginm96vzxr0b1k5q3y56lnin8sp18x"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-plz))
+    (arguments (list #:tests? #f))
+    (home-page "https://github.com/r0man/plz-media-type")
+    (synopsis "HTTP media type extension for plz.el")
+    (description
+     "The @code{plz-media-type} library enhances MIME type handling for HTTP
+requests within Emacs.  It leverages the Plz HTTP library for networking calls
+and introduces a mechanism to process responses based on the content type
+header.  This library defines various classes and methods for parsing and
+processing standard MIME types, including JSON, XML, HTML, and binary data, in
+a streaming and non-streaming way.")
+    (license license:gpl3+)))
+
+(define-public emacs-plz-event-source
+  (package
+    (name "emacs-plz-event-source")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/r0man/plz-event-source")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rg3dmaqnhzvzqsyfnk3y77s88jrjpwpzkj1fyz40j8b184q3qcs"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-plz-media-type))
+    (arguments (list #:tests? #f))
+    (home-page "https://github.com/r0man/plz-event-source")
+    (synopsis "Server Sent Events extension for Plz")
+    (description
+     "The @code{plz-event-source} library provides a @code{plz-media-type},
+a parser, and an event source implementation for the @acronym{SSE, Server Sent
+Event} protocol.")
     (license license:gpl3+)))
 
 (define-public emacs-ement
@@ -31709,6 +31813,31 @@ interface for debuggers.")
 Protocol (DAP), a wire protocol for communication between client and
 debug server.  It is similar to the LSP but provides integration with
 Debug server.")
+    (license license:gpl3+)))
+
+(define-public emacs-fortran-tags
+  (package
+    (name "emacs-fortran-tags")
+    (version "1.5.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/raullaasner/fortran-tags.git")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1f22p0nsdayxqdh03s41qs833gamdhv4q7a4csm6vgwp4ivn3z1g"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:include #~(cons "^fortran-tags.py" %default-include)))
+    (inputs
+     (list python))
+    (synopsis "Emacs plugin for source code indexing of modern Fortran")
+    (description "This package provides an Emacs plugin for source code
+indexing of modern Fortran.")
+    (home-page "https://github.com/raullaasner/fortran-tags")
     (license license:gpl3+)))
 
 (define-public emacs-bfuture

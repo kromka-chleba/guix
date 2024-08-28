@@ -44,6 +44,7 @@
 ;;; Copyright © 2024 Jesse Eisses <jesse@eisses.email>
 ;;; Copyright © 2024 Luis Higino <luishenriquegh2701@gmail.com>
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
+;;; Copyright © 2024 Spencer Peters <spencerpeters@protonmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2484,6 +2485,10 @@ quoting, commenting, and escaping.")
     (build-system go-build-system)
     (arguments
      (list
+      ;; XXX: Check if the most of the tests may be enabled:
+      ;; src/github.com/fxamacker/cbor/v2/decode_test.go:328:9: cannot convert
+      ;; 1000000000000 (untyped int constant) to type uint
+      #:tests? (target-64bit?)
       #:import-path "github.com/fxamacker/cbor/v2"))
     (propagated-inputs
      (list go-github-com-x448-float16))
@@ -6396,29 +6401,61 @@ Go host programs.")
 (define-public go-go-etcd-io-bbolt
   (package
     (name "go-go-etcd-io-bbolt")
-    (version "1.3.6")
+    (version "1.3.11")
     (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/etcd-io/bbolt")
-               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "0pj5245d417za41j6p09fmkbv05797vykr1bi9a6rnwddh1dbs8d"))))
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/etcd-io/bbolt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16s2l1yjn55rgybc9k8kh88zg7z8igm10y1xmx2qx1a147k64d31"))))
     (build-system go-build-system)
     (arguments
-     `(#:import-path "go.etcd.io/bbolt"
-       ;; Extending the test timeout to 30 minutes still times out on aarch64.
-       #:tests? ,(not target-arm?)))
+     (list
+      ;; Extending the test timeout to 30 minutes still times out on aarch64.
+      #:tests? (not target-arm?)
+      #:import-path "go.etcd.io/bbolt"))
+    (native-inputs
+     (list go-github-com-stretchr-testify
+           go-go-etcd-io-gofail
+           go-golang-org-x-sync))
     (propagated-inputs
      (list go-golang-org-x-sys))
     (home-page "https://go.etcd.io/bbolt")
     (synopsis "Embedded key/value database for Go")
-    (description "Bolt is a pure Go key/value store inspired by Howard Chu's
-LMDB project.  The goal of the project is to provide a simple, fast, and
-reliable database for projects that don't require a full database server such as
-Postgres or MySQL.")
+    (description
+     "Bolt is a pure Go key/value store inspired by Howard Chu's LMDB project.
+The goal of the project is to provide a simple, fast, and reliable database
+for projects that don't require a full database server such as Postgres or
+MySQL.")
+    (license license:expat)))
+
+(define-public go-go-senan-xyz-flagconf
+  (package
+    (name "go-go-senan-xyz-flagconf")
+    (version "0.1.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sentriz/flagconf")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rms7hj1cdi5gfyhf1am1f8c4lq9ll4ashqi87yc6aq93gqgkag0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "go.senan.xyz/flagconf"))
+    (propagated-inputs
+     (list go-github-com-rogpeppe-go-internal))
+    (home-page "https://go.senan.xyz/flagconf")
+    (synopsis "Extensions to Go's flag package")
+    (description
+     "Flagconf provides extensions to Go's flag package to support prefixed
+environment variables and a simple config file format.")
     (license license:expat)))
 
 (define-public go-go-uber-org-atomic

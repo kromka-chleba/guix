@@ -1498,18 +1498,22 @@ terminal are replicated to the others.
 (define-public tio
   (package
     (name "tio")
-    (version "3.3")
+    (version "3.6")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://github.com/tio/tio/releases/download/v"
-             version "/tio-" version ".tar.xz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tio/tio")
+             (commit (string-append "v" version))))
        (sha256
-        (base32 "13favpvl343nbc0h26snn53lddwbznvd106rvvinnc12x6r3arjh"))))
+        (base32 "050zm7nh9niag1amjql859cj3xc9gbidk3zz546h6fhhh3vykmfl"))))
     (build-system meson-build-system)
     (native-inputs (list pkg-config))
     (inputs (list glib lua))
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-Dbashcompletiondir=share/bash-completion/completions")))
     (home-page "https://tio.github.io/")
     (synopsis "Simple TTY terminal I/O application")
     (description "tio is a simple TTY terminal application which features a

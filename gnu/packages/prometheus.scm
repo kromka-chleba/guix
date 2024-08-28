@@ -30,6 +30,7 @@
   #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
+  #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
@@ -141,6 +142,10 @@ registry.")
     (build-system go-build-system)
     (arguments
      (list
+      ;; XXX: Check if the most of the tests may be enabled:
+      ;; api/prometheus/v1/api_test.go:1063:23: cannot use 1634644800304
+      ;; (untyped int constant) as int value in map literal (overflows)
+      #:tests? (target-64bit?)
       #:import-path "github.com/prometheus/client_golang"
       #:phases
       #~(modify-phases %standard-phases
@@ -241,11 +246,21 @@ Prometheus metrics.")
               (when tests?
                 (with-directory-excursion (string-append "src/" import-path)
                   (invoke "go" "test" "-v"
-                          ;; "./config/..." requries
+                          ;; Skipp, as it requires
                           ;; <github.com/prometheus/client_golang/prometheus>,
-                          ;; which introduce cycle.
+                          ;; which introduces cycle.
+                          ;; "./config/..."
+
+                          ;; Some tests fail on non x86_64 architecture:
+                          ;; Cannot use 9223372036 (untyped int constant) as int
+                          ;; value in ;; struct literal (overflows).
+                          ;; Cannot use math.MaxInt64
+                          ;; (untyped int constant 9223372036854775807) as int value
+                          ;; in argument to HumanizeTimestamp (overflows)
+                          #$@(if (target-x86-64?)
+                                 '("./helpers/...")
+                                 '())
                           "./expfmt/..."
-                          "./helpers/..."
                           "./model/..."
                           "./promlog/..."
                           "./route/..."
@@ -398,6 +413,11 @@ from the default AWS credential chain.")
     (build-system go-build-system)
     (arguments
      (list
+      ;; XXX: Check if the most of the tests may be enabled on non x86_64
+      ;; architectures, disable for now: ./proc_stat_test.go:98:49: cannot use
+      ;; math.MinInt64 (untyped int constant -9223372036854775808) as int
+      ;; value in struct literal (overflows).
+      #:tests? (target-x86-64?)
       #:import-path "github.com/prometheus/procfs"
       #:phases
       #~(modify-phases %standard-phases

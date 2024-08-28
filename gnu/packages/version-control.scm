@@ -3254,24 +3254,25 @@ a built-in wiki, built-in file browsing, built-in tickets system, etc.")
 (define-public stagit
   (package
     (name "stagit")
-    (version "1.0")
+    (version "1.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                     (url "git://git.codemadness.org/stagit")
-                     (commit version)))
+                    ;; NOTE: It can only be cloned using the git protocol
+                    (url "git://git.codemadness.org/stagit")
+                    (commit version)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0j2242vx5pbwdv79gcjxdbrwii48qphr8gk1lk7szj2irxdql171"))))
+                "17yggk3fbm731z98warvix332487s0k6knhxnf9zc6f667qi2mlr"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f ; No tests
-       #:make-flags (list (string-append "CC=" ,(cc-for-target))
-                          (string-append "PREFIX=" %output))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)))) ; No configure script
+     (list #:tests? #f ; No tests
+           #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
+                                (string-append "PREFIX=" #$output))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)))) ; No configure script
     (inputs
      (list libgit2))
     (home-page "https://git.codemadness.org/stagit/")

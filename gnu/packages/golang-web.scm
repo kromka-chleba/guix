@@ -210,6 +210,34 @@ required dependencies.  The HTTP response contains the aggregated health
 result and details about the health status of each component.")
     (license license:expat)))
 
+(define-public go-github-com-anaskhan96-soup
+  (package
+    (name "go-github-com-anaskhan96-soup")
+    (version "1.2.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/anaskhan96/soup")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0s19119sy4zqf05sgpdymcbdaz5bg86n7xwgd2m1vvxjmp485k5p"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/anaskhan96/soup"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-golang-org-x-net))
+    (home-page "https://github.com/anaskhan96/soup")
+    (synopsis "Web Scraper in Go, similar to BeautifulSoup")
+    (description
+     "Small web scraper package for Go, with its interface highly similar to
+that of BeautifulSoup.")
+    (license license:expat)))
+
 (define-public go-github-com-andybalholm-cascadia
   (package
     (name "go-github-com-andybalholm-cascadia")
@@ -2633,6 +2661,43 @@ router.")
 @acronym{Simple Service Discovery Protocol, SSDP}} library for Golang.")
     (license license:expat)))
 
+(define-public go-github-com-libp2p-go-cidranger
+  (package
+    (name "go-github-com-libp2p-go-cidranger")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-cidranger")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05hzlk5hx7qna5znr3q1crr0qb7h8yrv1v96pj015dh0kbdkdaba"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: Check if the most of the tests may be enabled:
+      ;; src/github.com/libp2p/go-cidranger/trie_test.go:557:8: cannot use
+      ;; 4294967295 (untyped int constant) as int value in assignment
+      ;; (overflows).
+      #:tests? (target-64bit?)
+      #:import-path "github.com/libp2p/go-cidranger"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-ipfs-go-detect-race))
+    (home-page "https://github.com/libp2p/go-cidranger")
+    (synopsis "Fast IP to CIDR lookup in Golang")
+    (description
+     "Fast IP to @url{https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing,
+CIDR} block(s) lookup using trie in Golang, inspired by
+@url{https://vincent.bernat.im/en/blog/2017-ipv4-route-lookup-linux, IPv4
+route lookup Linux}.  Possible use cases include detecting if a IP address is
+from published cloud provider CIDR blocks (e.g. 52.95.110.1 is contained in
+published AWS Route53 CIDR 52.95.110.0/24), IP routing rules, etc.")
+    (license license:expat)))
+
 (define-public go-github-com-libp2p-go-flow-metrics
   (package
     (name "go-github-com-libp2p-go-flow-metrics")
@@ -2659,6 +2724,36 @@ router.")
     (description
      "A simple alternative to rcrowley's @command{go-metrics} that's a lot
 faster (and only does simple bandwidth metrics).")
+    (license license:expat)))
+
+(define-public go-github-com-libp2p-go-libp2p-asn-util
+  (package
+    (name "go-github-com-libp2p-go-libp2p-asn-util")
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-libp2p-asn-util")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1c94sq43bl1kp04lllcfrfyiy5z3zcfz0s65sm1vgb2s40zrwpr7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-libp2p-asn-util"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-golang-org-x-exp))
+    (home-page "https://github.com/libp2p/go-libp2p-asn-util")
+    (synopsis "Golang library for IP to ASN mapping")
+    (description
+     "@code{go-libp2p-asn-util} is a Golang library to lookup the
+@acronym{ASN, Autonomous System Number} for an IP address.  It uses the IPv6
+to ASN database downloaded from https://iptoasn.com/.  Supports only IPv6
+addresses for now.")
     (license license:expat)))
 
 (define-public go-github-com-libp2p-go-nat
@@ -2725,6 +2820,99 @@ faster (and only does simple bandwidth metrics).")
 @url{https://godoc.org/github.com/google/gopacket/routing#Router,
 gopacket/routing.Router} interface for Golang.")
     (license license:bsd-3)))
+
+(define-public go-github-com-libp2p-go-reuseport
+  (package
+    (name "go-github-com-libp2p-go-reuseport")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-reuseport")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "012kgriw1bchf0apk6ff4y34n9mffbh0cmi15348v9vj3h4w3sa5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-reuseport"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-google-gopacket
+           go-golang-org-x-net
+           go-golang-org-x-sys))
+    (home-page "https://github.com/libp2p/go-reuseport")
+    (synopsis "Reuse TCP/UDP ports in Golang")
+    (description
+     "@code{go-reuseport} enables listening and dialing from the same TCP or
+UDP port.  This means that @code{SO_REUSEADDR} and @code{SO_REUSEPORT} socket
+options may be set.  This is particularly important when attempting to do TCP
+NAT hole-punching, which requires a process to both @code{Listen} and
+@code{Dial} on the same TCP port.  @code{go-reuseport} provides some utilities
+around enabling this behaviour on various operating systems.")
+    (license license:isc)))
+
+(define-public go-github-com-libp2p-go-socket-activation
+  (package
+    (name "go-github-com-libp2p-go-socket-activation")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-socket-activation")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cqxzmjfg7838xifs07kigys9icardwlj1wl426mzgzmbwn6pg5s"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-socket-activation"))
+    (propagated-inputs
+     (list go-github-com-coreos-go-systemd-v22
+           go-github-com-ipfs-go-log
+           go-github-com-multiformats-go-multiaddr))
+    (home-page "https://github.com/libp2p/go-socket-activation")
+    (synopsis "Multiaddr backed systemd socket activation")
+    (description
+     "This package provides access to sockets registered by the system's init
+daemon as described in
+@url{http://0pointer.de/blog/projects/socket-activation}.")
+    (license license:expat)))
+
+(define-public go-github-com-libp2p-go-yamux-v4
+  (package
+    (name "go-github-com-libp2p-go-yamux-v4")
+    (version "4.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-yamux")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "13px8fcjjp02cricabbf3x410jkr8sb6r369nqq1zrgr7v90s22j"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-yamux/v4"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-libp2p-go-buffer-pool))
+    (home-page "https://github.com/libp2p/go-yamux")
+    (synopsis "Reuse TCP/UDP ports in Golang")
+    (description
+     "Yamux (Yet another Multiplexer) is a multiplexing library for Golang.
+It relies on an underlying connection to provide reliability and ordering,
+such as TCP or Unix domain sockets, and provides stream-oriented multiplexing.
+It is inspired by SPDY but is not interoperable with it.")
+    (license (list license:mpl2.0 license:bsd-3))))
 
 (define-public go-github-com-mailru-easyjson
   (package

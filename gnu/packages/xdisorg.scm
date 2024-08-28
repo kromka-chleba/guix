@@ -64,6 +64,7 @@
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Igor Goryachev <igor@goryachev.org>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024 Spencer Peters <spencerpeters@protonmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -117,6 +118,7 @@
   #:use-module (gnu packages gl)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gtk)
@@ -370,6 +372,38 @@ list of options (usually programs to launch).  It renders the menu graphically
 with X11 or Wayland, or in a text terminal with ncurses.")
     (license (list license:gpl3+ ; client program[s] and other sources
                    license:lgpl3+))))   ; library and bindings
+
+(define-public cliphist
+  (package
+    (name "cliphist")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sentriz/cliphist")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cbhrw9vk8c0in9yyhlp0k9rldgjwbcj00d7vqh69p3igznhdgsk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "go.senan.xyz/cliphist"))
+    (native-inputs
+     (list go-github-com-rogpeppe-go-internal
+           go-go-etcd-io-bbolt
+           go-go-senan-xyz-flagconf
+           go-golang-org-x-image))
+    (home-page "https://github.com/sentriz/cliphist")
+    (synopsis "Clipboard history manager for wayland with support for images")
+    (description
+     "A Wayland clipboard history manager.  It can write clipboard changes to
+a history file, recall history with any picker which accepts input from
+stdin (including dmenu, rofi, and wofi), copy and past both images and text,
+and preserve leading and trailing whitespace.")
+    (license license:gpl3)))
 
 (define-public copyq
   (package
@@ -1453,15 +1487,15 @@ Escape key when Left Control is pressed and released on its own.")
 (define-public libwacom
   (package
     (name "libwacom")
-    (version "2.12.1")
+    (version "2.12.2")
     (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/linuxwacom/libwacom/releases/download/"
-                    "libwacom-" version "/libwacom-" version ".tar.xz"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/linuxwacom/libwacom")
+                    (commit (string-append "libwacom-" version))))
               (sha256
                (base32
-                "0wjmv0rnxbd143cb5a73drflpdaxpb0mck0r9rsds08bs8l7l12v"))))
+                "1z8p8k19j4snl90rh1j9m53m1wq4vamsdny3hq9azwmzwf3xf6bp"))))
     (build-system meson-build-system)
     (arguments
      (list

@@ -2219,7 +2219,7 @@ Python library and command line interface.")
 (define-public python-glymur
   (package
     (name "python-glymur")
-    (version "0.12.9")
+    (version "0.13.5")
     (source
      (origin
        (method git-fetch)   ; no tests data in PyPi package
@@ -2228,7 +2228,7 @@ Python library and command line interface.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0awyav7071nn9z2g4mmpg33y0y0nfandfr6nr3j5vyb8hnprcmns"))))
+        (base32 "1n2n7bj5w29w5y2gcl4hxhqf85n0j2crkln9i0mprq3xw8finxpx"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2607,13 +2607,13 @@ with Numpy and SciPy.")
 (define-public python-shapely
   (package
     (name "python-shapely")
-    (version "2.0.2")
+    (version "2.0.5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "shapely" version))
        (sha256
-        (base32 "1rs90q4ys5cav0hz1dq72wq2mk4aqlqqbfjrnb2zzfkiq42cq4qp"))))
+        (base32 "0cpyziixzdj7xqkya4k6fwr0qmrw8k84fsrx6p5sdgw6qxmkdwmz"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2629,7 +2629,7 @@ with Numpy and SciPy.")
      (list geos))
     (propagated-inputs
      (list python-numpy))
-    (home-page "https://github.com/Toblerity/Shapely")
+    (home-page "https://github.com/shapely/shapely")
     (synopsis "Library for the manipulation and analysis of geometric objects")
     (description "Shapely is a Python package for manipulation and analysis of
 planar geometric objects.  It is based on the @code{GEOS} library.")
@@ -11015,16 +11015,19 @@ your favourite programs.")
 (define-public python-click-didyoumean
   (package
     (name "python-click-didyoumean")
-    (version "0.3.0")
+    (version "0.3.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "click-didyoumean" version))
+       (method git-fetch)               ;no tests in PyPI archive
+       (uri (git-reference
+             (url "https://github.com/click-contrib/click-didyoumean")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0dc0xrmqbw0idpx843ahzzvivmvx3fcfsm3k54lnssyra7cg117i"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f))              ; no tests in PyPI and no setup.py in github
+        (base32 "1byfqs3m87zfpvssm1al9dvq94gjd0iddpwrzk6205n18wjsphqb"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-poetry-core python-pytest))
     (propagated-inputs
      (list python-click))
     (home-page "https://github.com/timofurrer/click-didyoumean")
@@ -31652,7 +31655,7 @@ accessor layer.")
 (define-public pyzo
   (package
     (name "pyzo")
-    (version "4.15.0")
+    (version "4.16.0")
     (source
      (origin
        (method git-fetch)
@@ -31662,7 +31665,7 @@ accessor layer.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0m2sp65q21hhlfkvyby4sjc8cmwv3l0avw42xsna8za8ax9xadxr"))))
+         "18775dhd5z7l505khrh1vsv5w1x1icshv34av8bbhfj8dz8nvgx5"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
