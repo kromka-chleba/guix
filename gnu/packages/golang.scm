@@ -951,7 +951,7 @@ in the style of communicating sequential processes (@dfn{CSP}).")
   (package
     (inherit go-1.21)
     (name "go")
-    (version "1.22.5")
+    (version "1.22.6")
     (source
      (origin
        (method git-fetch)
@@ -960,7 +960,7 @@ in the style of communicating sequential processes (@dfn{CSP}).")
              (commit (string-append "go" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ahcxhyfr4wa4yahpl1jzdr1pizp5xpa6cy96jz649zsp21640d9"))))
+        (base32 "1rjplx7wa6p2c19grx6hhkhn16mmbib5cwmhz9k8ywymlbmhhsyd"))))
     (arguments
      (substitute-keyword-arguments (package-arguments go-1.21)
        ((#:phases phases)
@@ -981,9 +981,22 @@ in the style of communicating sequential processes (@dfn{CSP}).")
     (native-inputs
      ;; Go 1.22 and later requires Go 1.20 (min. 1.20.6, which we don't have)
      ;; as the bootstrap toolchain.
-     (alist-replace "go"
-                    (list go-1.21)
-                    (package-native-inputs go-1.21)))))
+     (alist-replace "go" (list go-1.21) (package-native-inputs go-1.21)))))
+
+(define-public go-1.23
+  (package
+    (inherit go-1.22)
+    (name "go")
+    (version "1.23.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/golang/go")
+             (commit (string-append "go" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yq7fmha7x6fiah68mpx7cvffsd8a7z569cfq2dj5s66pbgzmji9"))))))
 
 ;;
 ;; Default Golang version used in guix/build-system/go.scm to build packages.
@@ -1031,6 +1044,7 @@ in the style of communicating sequential processes (@dfn{CSP}).")
 (define-public go-std-1.20 (make-go-std go-1.20))
 (define-public go-std-1.21 (make-go-std go-1.21))
 (define-public go-std-1.22 (make-go-std go-1.22))
+(define-public go-std-1.23 (make-go-std go-1.23))
 
 (define-public go-0xacab-org-leap-shapeshifter
   (let ((commit "0aa6226582efb8e563540ec1d3c5cfcd19200474")

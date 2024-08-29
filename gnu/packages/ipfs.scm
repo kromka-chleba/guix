@@ -67,6 +67,30 @@ JSONMarshal/JSONUnmarshal to store/reload the Bloom filter.")
     (license (list license:expat             ; bbloom.go
                    license:public-domain)))) ; siphash.go
 
+(define-public go-github-com-ipfs-go-bitfield
+  (package
+    (name "go-github-com-ipfs-go-bitfield")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-bitfield")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zhgwdg2kizhk0hb9q5p0pwrwldd2pacz8l1pnapxh6qm3fqs663"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-bitfield"))
+    (home-page "https://github.com/ipfs/go-bitfield")
+    (synopsis "Allocated up-front Bitfield for Golang")
+    (description
+     "This package implements a functionality similar to standard
+@code{big.Int} with some optimizations to use in IPFS.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public go-github-com-ipfs-go-block-format
   (package
     (name "go-github-com-ipfs-go-block-format")
@@ -164,6 +188,33 @@ giving a clean interface for getting and putting block objects.")
        "This package provides an utility functions for working with
 @url{https://github.com/ipfs/go-block-format, IPFS blocks}.")
       (license license:expat))))
+
+;; XXX: This repository has been archived by the owner on Jun 20, 2023. It is
+;; now read-only.
+(define-public go-github-com-ipfs-go-ipfs-posinfo
+  (package
+    (name "go-github-com-ipfs-go-ipfs-posinfo")
+    (version "0.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-ipfs-posinfo")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wgd3708gr42f37dcva41w1pkb5iywf8jdx6pgfhwwlw2s4lrn0p"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-ipfs-posinfo"))
+    (propagated-inputs
+     (list go-github-com-ipfs-go-ipld-format))
+    (home-page "https://github.com/ipfs/go-ipfs-posinfo")
+    (synopsis "Wrap offset information for IPFS filestore nodes")
+    (description
+     "@code{go-ipfs-posinfo} wraps offset information for IPFS filestore nodes.")
+    (license license:expat)))
 
 (define-public go-github-com-ipfs-go-cid
   (package
@@ -841,12 +892,14 @@ types.")
                              "vendor/github.com/gorilla"
                              "vendor/github.com/hashicorp"
                              "vendor/github.com/huin"
+                             "vendor/github.com/ipfs/go-bitfield"
                              "vendor/github.com/ipfs/go-block-format"
                              "vendor/github.com/ipfs/go-cid"
                              "vendor/github.com/ipfs/go-cidutil"
                              "vendor/github.com/ipfs/go-datastore"
                              "vendor/github.com/ipfs/go-detect-race"
                              "vendor/github.com/ipfs/go-ipfs-delay"
+                             "vendor/github.com/ipfs/go-ipfs-posinfo"
                              "vendor/github.com/ipfs/go-ipfs-redirects-file"
                              "vendor/github.com/ipfs/go-ipfs-util"
                              "vendor/github.com/ipfs/go-ipld-cbor"
@@ -865,6 +918,7 @@ types.")
                              "vendor/github.com/koron"
                              "vendor/github.com/libp2p/go-buffer-pool"
                              "vendor/github.com/libp2p/go-cidranger"
+                             "vendor/github.com/libp2p/go-doh-resolver"
                              "vendor/github.com/libp2p/go-flow-metrics"
                              "vendor/github.com/libp2p/go-libp2p-asn-util"
                              "vendor/github.com/libp2p/go-msgio"
@@ -989,7 +1043,7 @@ types.")
                   go-github-com-jbenet-go-temp-err-catcher
                   go-github-com-jbenet-goprocess
                   go-github-com-julienschmidt-httprouter
-                  ;;go-github-com-libp2p-go-doh-resolver
+                  go-github-com-libp2p-go-doh-resolver
                   ;;go-github-com-libp2p-go-libp2p
                   ;;go-github-com-libp2p-go-libp2p-http
                   ;;go-github-com-libp2p-go-libp2p-kad-dht
@@ -1051,6 +1105,7 @@ types.")
                   go-github-com-gorilla-websocket             ; github.com/libp2p/go-libp2p
                   go-github-com-hashicorp-golang-lru          ; github.com/libp2p/go-libp2p-kad-dht
                   go-github-com-hashicorp-golang-lru-v2       ; github.com/ipfs/boxo
+                  go-github-com-ipfs-go-bitfield              ; github.com/ipfs/boxo
                   go-github-com-ipfs-go-ipfs-redirects-file   ; github.com/ipfs/boxo
                   go-github-com-ipfs-go-verifcid              ; github.com/ipfs/go-blockservice
                   go-github-com-klauspost-compress            ; github.com/libp2p/go-libp2p
