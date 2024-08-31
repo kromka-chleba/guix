@@ -32,6 +32,7 @@
 ;;; Copyright © 2024 Timotej Lazar <timotej.lazar@araneo.si>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -441,7 +442,18 @@ input bits thoroughly but are not suitable for cryptography.")
         (base32 "0dc9fxcdmppbs9s06jvq61zbk552laxps0xyk098gj41697ihd96"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list gettext-minimal))
+     (list gettext-minimal autoconf automake))
+    (arguments (list #:phases
+                     #~(modify-phases %standard-phases
+                         ;; AC_FUNC_MALLOC and AC_FUNC_REALLOC usually unneeded
+                         ;; see https://lists.gnu.org/archive/html/autoconf/2003-02/msg00017.html
+                         (add-after 'unpack 'fix-rpl_malloc
+                           (lambda _
+                             (substitute* "configure.ac"
+                               (("AC_FUNC_MALLOC") "")
+                               (("AC_FUNC_REALLOC") ""))
+                             ;; let bootstrap phase run.
+                             (delete-file "./configure"))))))
     (home-page "https://billposer.org/Software/a2b.html")
     (synopsis "Convert between ASCII, hexadecimal and binary representations")
     (description "The two programs are useful for generating test data, for
@@ -475,29 +487,28 @@ useful when it is desired to reformat numbers.
 (define-public uniutils
   (package
     (name "uniutils")
-    (version "2.27")
+    (version "2.28")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "http://billposer.org/Software/Downloads/"
+       (uri (string-append "https://billposer.org/Software/Downloads/"
                            "uniutils-" version ".tar.bz2"))
        (sha256
-        (base32 "19w1510w87gx7n4qy3zsb0m467a4rn5scvh4ajajg7jh6x5xri08"))))
+        (base32 "0z4ibnd2zzya489vl84cfh82bmdwdhf0isf1myqwrs3s9s0vqyyn"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:configure-flags '("--disable-dependency-tracking")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'build 'fix-paths
-           (lambda* (#:key outputs inputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out"))
-                   (a2b (assoc-ref inputs "ascii2binary"))
-                   (iconv (assoc-ref inputs "libiconv")))
-               (substitute* "utf8lookup"
-                 (("^ascii2binary ") (string-append a2b "/bin/ascii2binary "))
-                 (("^uniname ") (string-append out "/bin/uniname "))
-                 (("^iconv ") (string-append iconv "/bin/iconv ")))
-             #t))))))
+     (list #:configure-flags #~(list "--disable-dependency-tracking")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'build 'fix-paths
+                 (lambda* (#:key outputs inputs #:allow-other-keys)
+                   (let ((out (assoc-ref outputs "out"))
+                         (a2b (assoc-ref inputs "ascii2binary"))
+                         (iconv (assoc-ref inputs "libiconv")))
+                     (substitute* "utf8lookup"
+                       (("^ascii2binary ") (string-append a2b "/bin/ascii2binary "))
+                       (("^uniname ") (string-append out "/bin/uniname "))
+                       (("^iconv ") (string-append iconv "/bin/iconv ")))))))))
     (inputs
      (list ascii2binary libiconv))
     (home-page "https://billposer.org/Software/unidesc.html")
