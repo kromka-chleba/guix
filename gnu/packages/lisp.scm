@@ -71,6 +71,7 @@
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages dbm)
   #:use-module (gnu packages elf)
@@ -1044,7 +1045,8 @@ libraries for Machine Learning, Neural Nets and statistical estimation.")
                    #t))))
     (build-system gnu-build-system)
     (inputs
-     `(("openssl" ,openssl)))
+     `(("libxcrypt" ,libxcrypt)
+       ("openssl" ,openssl)))
     (arguments
      `(#:system ,(match (%current-system)
                    ((or "armhf-linux" "aarch64-linux")
@@ -1717,6 +1719,7 @@ the HTML documentation of TXR.")
     (inputs
      (list bash-minimal
            libffi
+           libxcrypt
            zlib))
     (synopsis "General-purpose, multi-paradigm programming language")
     (description

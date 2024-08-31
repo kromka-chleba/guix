@@ -90,7 +90,7 @@
     (build-system gnu-build-system)
     (arguments
      (list #:modules
-           `(,@%gnu-build-system-modules
+           `(,@%default-gnu-modules
              (ice-9 textual-ports))
            #:test-target "test"
            #:configure-flags
@@ -663,7 +663,6 @@ its features are:
                          python-wrapper
                          which
                          ;; For documentation
-                         libxml2        ;for XML_CATALOG_FILES
                          libxslt
                          docbook-xml
                          docbook-xsl))

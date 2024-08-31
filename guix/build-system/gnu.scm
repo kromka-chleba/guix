@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012-2023 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012-2024 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -19,6 +19,7 @@
 (define-module (guix build-system gnu)
   #:use-module (guix store)
   #:use-module (guix utils)
+  #:use-module (guix deprecation)
   #:use-module (guix memoization)
   #:use-module (guix gexp)
   #:use-module (guix monads)
@@ -27,7 +28,8 @@
   #:use-module (guix packages)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match)
-  #:export (%gnu-build-system-modules
+  #:export (%default-gnu-imported-modules
+            %default-gnu-modules
             %strip-flags
             %strip-directories
             gnu-build
@@ -48,14 +50,17 @@
 ;;
 ;; Code:
 
-(define %gnu-build-system-modules
+(define %default-gnu-imported-modules
   ;; Build-side modules imported and used by default.
   '((guix build gnu-build-system)
     (guix build utils)
     (guix build gremlin)
     (guix elf)))
 
-(define %default-modules
+(define-deprecated/public-alias %gnu-build-system-modules
+  %default-gnu-imported-modules)
+
+(define %default-gnu-modules
   ;; Modules in scope in the build-side environment.
   '((guix build gnu-build-system)
     (guix build utils)))
@@ -184,21 +189,22 @@ flags for VARIABLE, the associated value is augmented."
             (input input))
            inputs))
 
-    (package (inherit p)
+    (package
+      (inherit p)
       (arguments
        (let ((args (package-arguments p)))
          (substitute-keyword-arguments args
            ((#:configure-flags flags)
             (let* ((var= (string-append variable "="))
                    (len  (string-length var=)))
-              `(cons ,(string-append var= value)
-                     (map (lambda (flag)
-                            (if (string-prefix? ,var= flag)
-                                (string-append
-                                 ,(string-append var= value " ")
-                                 (substring flag ,len))
-                                flag))
-                          ,flags)))))))
+              #~(cons #$(string-append var= value)
+                      (map (lambda (flag)
+                             (if (string-prefix? #$var= flag)
+                                 (string-append
+                                  #$(string-append var= value " ")
+                                  (substring flag #$len))
+                                 flag))
+                           #$flags)))))))
       (replacement
        (let ((replacement (package-replacement p)))
          (and replacement
@@ -237,10 +243,10 @@ exact build phases are defined by PHASES."
       (arguments
        ;; Use the right phases and modules.
        (substitute-keyword-arguments (package-arguments p)
-         ((#:modules modules %default-modules)
+         ((#:modules modules %default-gnu-modules)
           `((guix build gnu-dist)
             ,@modules))
-         ((#:imported-modules modules %gnu-build-system-modules)
+         ((#:imported-modules modules %default-gnu-imported-modules)
           `((guix build gnu-dist)
             ,@modules))
          ((#:phases _ #f)
@@ -356,11 +362,12 @@ standard packages used as implicit inputs of the GNU build system."
                     (make-dynamic-linker-cache? #t)
                     (license-file-regexp %license-file-regexp)
                     (phases '%standard-phases)
-                    (locale "en_US.utf8")
+                    (locale "C.UTF-8")
+                    (separate-from-pid1? #t)
                     (system (%current-system))
                     (build (nix-system->gnu-triplet system))
-                    (imported-modules %gnu-build-system-modules)
-                    (modules %default-modules)
+                    (imported-modules %default-gnu-imported-modules)
+                    (modules %default-gnu-modules)
                     (substitutable? #t)
                     allowed-references
                     disallowed-references)
@@ -399,6 +406,7 @@ are allowed to refer to."
                                           (sexp->gexp phases)
                                           phases)
                            #:locale #$locale
+                           #:separate-from-pid1? #$separate-from-pid1?
                            #:bootstrap-scripts #$bootstrap-scripts
                            #:configure-flags #$(if (pair? configure-flags)
                                                    (sexp->gexp configure-flags)
@@ -499,11 +507,12 @@ is one of `host' or `target'."
 
                           (license-file-regexp %license-file-regexp)
                           (phases '%standard-phases)
-                          (locale "en_US.utf8")
+                          (locale "C.UTF-8")
+                          (separate-from-pid1? #t)
                           (system (%current-system))
                           (build (nix-system->gnu-triplet system))
-                          (imported-modules %gnu-build-system-modules)
-                          (modules %default-modules)
+                          (imported-modules %default-gnu-imported-modules)
+                          (modules %default-gnu-modules)
                           (substitutable? #t)
                           allowed-references
                           disallowed-references)
@@ -545,6 +554,7 @@ platform."
                                   (sexp->gexp phases)
                                   phases)
                    #:locale #$locale
+                   #:separate-from-pid1? #$separate-from-pid1?
                    #:bootstrap-scripts #$bootstrap-scripts
                    #:configure-flags #$configure-flags
                    #:make-flags #$make-flags

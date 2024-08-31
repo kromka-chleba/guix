@@ -12,7 +12,7 @@
 ;;; Copyright © 2018 Joshua Sierles, Nextjournal <joshua@nextjournal.com>
 ;;; Copyright © 2018 Gábor Boskovits <boskovits@gmail.com>
 ;;; Copyright © 2018-2023 Mădălin Ionel Patrașcu <madalinionel.patrascu@mdc-berlin.de>
-;;; Copyright © 2019, 2020, 2021 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019, 2020, 2021, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2019 Brian Leung <bkleung89@gmail.com>
 ;;; Copyright © 2019 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2020 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
@@ -85,6 +85,7 @@
   #:use-module (gnu packages cran)
   #:use-module (gnu packages crates-io)
   #:use-module (gnu packages curl)
+  #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages datastructures)
@@ -1744,7 +1745,8 @@ different from MFE computed with random sequences.")
                  "Ribotaper_ORF_find.sh"
                  "Ribotaper.sh")))))))
     (inputs
-     (list bedtools-2.18
+     (list bash-minimal
+           bedtools-2.18
            samtools-0.1
            r-minimal
            r-foreach
@@ -3296,7 +3298,7 @@ files.")
                                `("PERL5LIB" ":" prefix (,path))))
                            (find-files bin "\\.pl$")))))))))
     (inputs
-     (list perl-module-build perl-data-stag perl-libwww perl-uri))
+     (list bash-minimal perl-module-build perl-data-stag perl-libwww perl-uri))
     (native-inputs
      (list perl-test-most))
     (home-page "https://metacpan.org/release/BioPerl")
@@ -6173,7 +6175,8 @@ apart transcripts derived from paralogous genes.")
                (wrap-program (string-append bin "/RepeatMasker")
                  `("PERL5LIB" ":" prefix (,path ,share)))))))))
     (inputs
-     (list perl
+     (list bash-minimal
+           perl
            perl-text-soundex
            python
            python-h5py
@@ -6464,8 +6467,7 @@ and utility programs for sequence analysis.")
                        (substitute* "rchive.go"
                          ;; This go library does not have any license.
                          (("github.com/fiam/gounidecode/unidecode")
-                          "golang.org/rainycape/unidecode"))
-                       #t))))
+                          "golang.org/rainycape/unidecode"))))))
     (build-system perl-build-system)
     (arguments
      `(#:phases
@@ -6478,8 +6480,7 @@ and utility programs for sequence analysis.")
              ;; Ignore errors about missing xtract.Linux and rchive.Linux.
               (substitute* "pm-refresh"
                 (("cat \\\"\\$target")
-                 "grep ^[[:digit:]] \"$target"))
-              #t))
+                 "grep ^[[:digit:]] \"$target"))))
          (replace 'install
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let ((bin (string-append (assoc-ref outputs "out") "/bin"))
@@ -6495,8 +6496,7 @@ and utility programs for sequence analysis.")
                (symlink (string-append edirect-go "/bin/xtract.Linux")
                         (string-append bin "/xtract"))
                (symlink (string-append edirect-go "/bin/rchive.Linux")
-                        (string-append bin "/rchive")))
-             #t))
+                        (string-append bin "/rchive")))))
          (add-after 'install 'wrap-program
            (lambda* (#:key outputs #:allow-other-keys)
               ;; Make sure everything can run in a pure environment.
@@ -6513,16 +6513,15 @@ and utility programs for sequence analysis.")
                                            ,(dirname (which "grep"))
                                            ,(dirname (which "perl"))
                                            ,(dirname (which "uname"))))))
-                  (find-files out ".")))
-              #t))
+                  (find-files out ".")))))
          (add-after 'wrap-program 'check
            (lambda* (#:key outputs #:allow-other-keys)
              (invoke (string-append (assoc-ref outputs "out")
                                     "/bin/edirect.pl")
-                     "-filter" "-help")
-             #t)))))
+                     "-filter" "-help"))))))
     (inputs
-     (list edirect-go-programs
+     (list bash-minimal
+           edirect-go-programs
            perl-html-parser
            perl-encode-locale
            perl-file-listing
@@ -8811,8 +8810,7 @@ selection, etc.).")
                (("^rm -f mafft-distance mafft-distance.exe") ")#")
                ;; do not install MAN pages in libexec folder
                (("^\t\\$\\(INSTALL\\) -m 644 \\$\\(MANPAGES\\) \
-\\$\\(DESTDIR\\)\\$\\(LIBDIR\\)") "#"))
-             #t))
+\\$\\(DESTDIR\\)\\$\\(LIBDIR\\)") "#"))))
          (add-after 'enter-dir 'patch-paths
            (lambda* (#:key inputs #:allow-other-keys)
              (substitute* '("pairash.c"
@@ -8820,8 +8818,7 @@ selection, etc.).")
                (("perl") (which "perl"))
                (("([\"`| ])awk" _ prefix)
                 (string-append prefix (which "awk")))
-               (("grep") (which "grep")))
-             #t))
+               (("grep") (which "grep")))))
          (delete 'configure)
          (add-after 'install 'wrap-programs
            (lambda* (#:key inputs outputs #:allow-other-keys)
@@ -8834,7 +8831,7 @@ selection, etc.).")
                              `("PATH" ":" prefix (,path))))
                          (find-files bin))))))))
     (inputs
-     (list perl ruby gawk grep coreutils))
+     (list bash-minimal perl ruby gawk grep coreutils))
     (home-page "https://mafft.cbrc.jp/alignment/software/")
     (synopsis "Multiple sequence alignment program")
     (description
@@ -9288,12 +9285,13 @@ predicts the locations of structural units in the sequences.")
                            (cons (string-append out "/bin/proteinortho")
                                  (find-files out "\\.(pl|py)$")))))))))
     (inputs
-     `(("guile" ,guile-3.0) ; for wrap-script
-       ("diamond" ,diamond)
-       ("perl" ,perl)
-       ("python" ,python-wrapper)
-       ("blast+" ,blast+)
-       ("openblas" ,openblas)))
+     (list bash-minimal
+           guile-3.0         ; for wrap-script
+           diamond
+           perl
+           python-wrapper
+           blast+
+           openblas))
     (native-inputs
      (list which))
     (home-page "https://www.bioinf.uni-leipzig.de/Software/proteinortho")
@@ -9368,8 +9366,7 @@ partial genes, and identifies translation initiation sites.")
              (for-each (lambda (file)
                          (display file)(display "\n")
                          (invoke "perl" file))
-                       (find-files "t" ".*\\.t$"))
-             #t))
+                       (find-files "t" ".*\\.t$"))))
          (replace 'install
            ;; There is no 'install' target in the Makefile.
            (lambda* (#:key outputs #:allow-other-keys)
@@ -9380,8 +9377,7 @@ partial genes, and identifies translation initiation sites.")
                (mkdir-p bin)
                (mkdir-p perl)
                (copy-recursively "bin" bin)
-               (copy-recursively "lib" perl)
-               #t)))
+               (copy-recursively "lib" perl))))
          (add-after 'install 'wrap-programs
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -9407,39 +9403,39 @@ partial genes, and identifies translation initiation sites.")
                      (,(string-append r-site-lib ":" out "/site-library/"))))
                  (wrap-program file
                    `("PATH" ":" prefix
-                     (,(string-append coreutils-path ":" out "/bin"))))))
-             #t)))))
+                     (,(string-append coreutils-path ":" out "/bin")))))))))))
     (native-inputs
      (list perl-env-path perl-test-files perl-test-most perl-test-output))
     (inputs
-     `(("perl-array-utils" ,perl-array-utils)
-       ("bioperl" ,bioperl-minimal)
-       ("perl-digest-md5-file" ,perl-digest-md5-file)
-       ("perl-exception-class" ,perl-exception-class)
-       ("perl-file-find-rule" ,perl-file-find-rule)
-       ("perl-file-grep" ,perl-file-grep)
-       ("perl-file-slurper" ,perl-file-slurper)
-       ("perl-file-which" ,perl-file-which)
-       ("perl-graph" ,perl-graph)
-       ("perl-graph-readwrite" ,perl-graph-readwrite)
-       ("perl-log-log4perl" ,perl-log-log4perl)
-       ("perl-moose" ,perl-moose)
-       ("perl-perlio-utf8_strict" ,perl-perlio-utf8_strict)
-       ("perl-text-csv" ,perl-text-csv)
-       ("bedtools" ,bedtools)
-       ("cd-hit" ,cd-hit)
-       ("blast+" ,blast+)
-       ("mcl" ,mcl)
-       ("parallel" ,parallel)
-       ("prank" ,prank)
-       ("mafft" ,mafft)
-       ("fasttree" ,fasttree)
-       ("grep" ,grep)
-       ("sed" ,sed)
-       ("gawk" ,gawk)
-       ("r-minimal" ,r-minimal)
-       ("r-ggplot2" ,r-ggplot2)
-       ("coreutils" ,coreutils)))
+     (list bash-minimal
+           perl-array-utils
+           bioperl-minimal
+           perl-digest-md5-file
+           perl-exception-class
+           perl-file-find-rule
+           perl-file-grep
+           perl-file-slurper
+           perl-file-which
+           perl-graph
+           perl-graph-readwrite
+           perl-log-log4perl
+           perl-moose
+           perl-perlio-utf8_strict
+           perl-text-csv
+           bedtools
+           cd-hit
+           blast+
+           mcl
+           parallel
+           prank
+           mafft
+           fasttree
+           grep
+           sed
+           gawk
+           r-minimal
+           r-ggplot2
+           coreutils))
     (home-page "https://sanger-pathogens.github.io/Roary/")
     (synopsis "High speed stand-alone pan genome pipeline")
     (description
@@ -9571,7 +9567,7 @@ phylogenies.")
                            "rsem-run-ebseq"
                            "rsem-run-prsem-testing-procedure"))))))))
     (inputs
-     (list boost r-minimal perl htslib-1.3 zlib))
+     (list bash-minimal boost r-minimal perl htslib-1.3 zlib))
     (home-page "https://deweylab.biostat.wisc.edu/rsem/")
     (synopsis "Estimate gene expression levels from RNA-Seq data")
     (description
@@ -13317,7 +13313,8 @@ data.  It also generates basic statistics for your sequences.")
              (when tests?
                (invoke "make" "check")))))))
     (inputs
-     (list boost
+     (list bash-minimal
+           boost
            htslib
            python
            python-biopython
@@ -13619,7 +13616,8 @@ secondary structure and comparative analysis in R.")
                     `("GUILE_LOAD_COMPILED_PATH" ":" = (,path))
                     `("R_LIBS_SITE" ":" = (,(getenv "R_LIBS_SITE"))))))))))
       (inputs
-       (list r-minimal
+       (list bash-minimal
+             r-minimal
              r-rcas
              guile-3.0
              guile-json-4
@@ -17171,29 +17169,35 @@ Thus the per-base error rate is similar to the raw input reads.")
         (base32 "1bbsn5f5x8wlspg4pbibqz6m5vin8c19nl224f3z3km0pkc97rwv"))))
     (build-system qt-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda _
-             (invoke "qmake" "Bandage.pro")))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (substitute* "tests/bandage_command_line_tests.sh"
-                 (("^bandagepath=.*")
-                  (string-append "bandagepath=" (getcwd) "/Bandage\n")))
-               (with-directory-excursion "tests"
-                 (setenv "XDG_RUNTIME_DIR" (getcwd))
-                 (invoke "./bandage_command_line_tests.sh")))
-             #t))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (install-file "Bandage" (string-append out "/bin"))
-               #t))))))
+     (list
+      ;; TODO: Once <https://issues.guix.gnu.org/47475> is fixed,
+      ;; consider uncommenting the following:
+      ;;
+      ;; Prevent the (rarely updated) imagemagick/stable package from
+      ;; ending up in the closure.
+      ;; #:disallowed-references (list imagemagick/stable)
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda _
+              (invoke "qmake" "Bandage.pro")))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (substitute* "tests/bandage_command_line_tests.sh"
+                  (("^bandagepath=.*")
+                   (string-append "bandagepath=" (getcwd) "/Bandage\n")))
+                (with-directory-excursion "tests"
+                  (setenv "XDG_RUNTIME_DIR" (getcwd))
+                  (invoke "./bandage_command_line_tests.sh")))))
+          (replace 'install
+            (lambda _
+              (install-file "Bandage" (string-append #$output "/bin")))))))
     (inputs
      (list qtbase-5 qtsvg-5))
     (native-inputs
+     ;; imagemagick/stable cannot be used here, as it will end up in
+     ;; the closure.  See <https://issues.guix.gnu.org/47475>.
      (list imagemagick))
     (home-page "https://rrwick.github.io/Bandage/")
     (synopsis
@@ -19176,7 +19180,8 @@ datasets.")
           (add-after 'register 'remove-libraries
             (lambda* (#:key outputs #:allow-other-keys)
               (delete-file-recursively (string-append (assoc-ref outputs "out") "/lib")))))))
-    (inputs (list prodigal
+    (inputs (list bash-minimal
+                  prodigal
                   bwa
                   samtools
                   minimap2
@@ -19320,7 +19325,8 @@ phase + query phase).")
                 (substitute* "scripts/read_info_histograms.sh"
                   (("awk") (which "gawk"))))))))
       (inputs
-       (list gawk                     ;for read_info_histograms.sh
+       (list bash-minimal
+             gawk                     ;for read_info_histograms.sh
              python-wrapper           ;required for histogram.py
              zlib))
       (home-page "https://github.com/rrwick/Filtlong/")
@@ -19393,7 +19399,8 @@ choosing which reads pass the filter.")
                                          `("PERL5LIB" ":" prefix (,perl5lib))))
                           (find-files scripts "\\.pl"))))))))
     (inputs
-     (list guile-3.0                    ;for wrappers
+     (list bash-minimal
+           guile-3.0                    ;for wrappers
            eigen
            hdf5
            htslib
@@ -19744,7 +19751,8 @@ includes a command line tool and an analysis pipeline.")
                 (wrap-program (string-append bin "/draw_fusions.R")
                   `("R_LIBS_SITE" ":" prefix (,(getenv "R_LIBS_SITE"))))))))))
     (inputs
-     (list htslib
+     (list bash-minimal
+           htslib
            r-minimal
            r-circlize
            r-genomicalignments
@@ -22860,9 +22868,9 @@ single-cell data named @url{https://github.com/PMBio/cardelino, cardelino}.")
      `(#:make-flags '("GUILE_AUTO_COMPILE=0") ; to prevent guild warnings
        #:modules (((guix build guile-build-system)
                    #:select (target-guile-effective-version))
-                  ,@%gnu-build-system-modules)
+                  ,@%default-gnu-modules)
        #:imported-modules ((guix build guile-build-system)
-                           ,@%gnu-build-system-modules)
+                           ,@%default-gnu-imported-modules)
        #:phases
        (modify-phases %standard-phases
          (add-after 'patch-source-shebangs 'patch-more-source-shebangs
@@ -22883,9 +22891,9 @@ single-cell data named @url{https://github.com/PMBio/cardelino, cardelino}.")
                    (,(string-append out "/lib/guile/" effective-version "/site-ccache")
                     ,(getenv "GUILE_LOAD_COMPILED_PATH"))))))))))
     (inputs
-     `(("bash" ,bash-minimal)
-       ("guile" ,guile-3.0)
-       ("guile-libyaml" ,guile-libyaml)))
+     (list bash-minimal
+           guile-3.0
+           guile-libyaml))
     (native-inputs
      (list pkg-config
            lzip
@@ -23127,9 +23135,8 @@ module capable of computing base-level alignments for very large sequences.")
               "-DGDCM_DOCUMENTATION:BOOL=ON"
               "-DGDCM_PDF_DOCUMENTATION:BOOL=OFF"
               (string-append "-DGDCM_INSTALL_DOC_DIR="
-                             #$output:doc "/share/doc/" #$name)
-              "-DGDCM_BUILD_DOCBOOK_MANPAGES:BOOL=OFF"))) ; TODO: need ‘xsl-ns’
-    (native-inputs (list doxygen graphviz))
+                             #$output:doc "/share/doc/" #$name))))
+    (native-inputs (list docbook-xsl doxygen graphviz libxslt))
     (home-page "https://gdcm.sourceforge.net/wiki/index.php/Main_Page")
     (synopsis "Grassroots DICOM library")
     (description
@@ -23234,7 +23241,8 @@ sum test, etc).")
            python-tqdm))
     ;; Used by rpy2
     (inputs
-     (list r-minimal  ;for R_LIBS_SITE
+     (list bash-minimal
+           r-minimal  ;for R_LIBS_SITE
            r-apeglm   ;for runDE
            r-deseq2   ;for runDE
            r-drimseq  ;for runDS

@@ -11,7 +11,7 @@
 ;;; Copyright © 2019 Miguel <rosen644835@gmail.com>
 ;;; Copyright © 2020, 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020 EuAndreh <eu@euandre.org>
-;;; Copyright © 2022 gemmaro <gemmaro.dev@gmail.com>
+;;; Copyright © 2022, 2024 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2023 Maxim Cournoyer maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -237,7 +237,7 @@ from Markdown files.")
 (define-public po4a
   (package
     (name "po4a")
-    (version "0.69")
+    (version "0.73")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/mquinson/po4a"
@@ -245,8 +245,7 @@ from Markdown files.")
                                   version "/po4a-" version ".tar.gz"))
               (sha256
                (base32
-                "15llrfdp4ilbrxy65hmmxka86xj0mrbqfiyzv715wrk16vqszm3w"))
-              (patches (search-patches "po4a-partial-texinfo-menu-fix.patch"))))
+                "184f0cv0w3xa301gwm74srn5s6g8qdn3ksip84wpg8xjihnzh63g"))))
     (build-system perl-build-system)
     (arguments
      (list
@@ -278,10 +277,6 @@ from Markdown files.")
                             (wrap-program file
                               `("PERL5LIB" ":" prefix (,path))))
                           (find-files bin "\\.*$")))))
-          (add-before 'check 'disable-failing-tests
-            (lambda _
-              ;; FIXME: fails despite of importing SGMLS
-              (delete-file "t/fmt-sgml.t")))
           #$@(if (system-hurd?)
                  #~((add-after 'unpack 'skip-tests/hurd
                       (lambda _
@@ -293,14 +288,15 @@ from Markdown files.")
      (list gettext-minimal
            perl-module-build
            docbook-xsl
-           libxml2
            libxslt
            ;; For tests.
-           docbook-xml-4.1.2
+           docbook-sgml-4.1
+           docbook-xml-4.5
            perl-test-pod
            (texlive-updmap.cfg)))
     (inputs
      (list bash-minimal
+           opensp
            perl-gettext
            perl-pod-parser
            perl-sgmls

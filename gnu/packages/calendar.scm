@@ -42,6 +42,7 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
   #:use-module (gnu packages dav)
   #:use-module (gnu packages docbook)
@@ -84,7 +85,8 @@
          (patches
           ;; Install pkg-config files
           ;; https://github.com/HowardHinnant/date/pull/538
-          (search-patches "date-output-pkg-config-files.patch"))))
+          (search-patches "date-ignore-zonenow.patch"
+                          "date-output-pkg-config-files.patch"))))
       (inputs (list tzdata))
       (build-system cmake-build-system)
       (arguments
@@ -270,7 +272,7 @@ interface} named 'ikhal'.")
                 (list "bin/cm2rem.tcl"
                       "bin/tkremind"))))))))
     (inputs
-     (list inetutils tcl tcllib tk))
+     (list bash-minimal inetutils tcl tcllib tk))
     (home-page "https://dianne.skoll.ca/projects/remind/")
     (synopsis "Sophisticated calendar and alarm program")
     (description

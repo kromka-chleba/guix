@@ -54,6 +54,7 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
@@ -275,7 +276,18 @@ of external libraries that provide additional functionality.")
     (build-system cmake-build-system)
     (arguments
      ;; XXX: GPU tests are failing.
-     (list #:configure-flags #~(list "-DOCIO_BUILD_GPU_TESTS=false")))
+     (list #:configure-flags #~(list "-DOCIO_BUILD_GPU_TESTS=false")
+           #:phases #~(modify-phases %standard-phases
+                        (add-after 'install 'fix-OpenColorIOConfig
+                          (lambda _
+                            ;; Work around a CMake Zlib-detection bug:
+                            ;; https://gitlab.kitware.com/cmake/cmake/-/issues/25200
+                            ;; make OpenColorIOConfig.cmake is a normal cmake file
+                            (substitute*
+                                (string-append #$output
+                                               "/lib/cmake/OpenColorIO/OpenColorIOConfig.cmake")
+                              (("\\.#define ZLIB_VERSION \"1\\.3\"")
+                               "")))))))
     (native-inputs
      ;; XXX: OCIO has unit tests for OpenShadingLanguage, but they fail.
      ;; They also require OIIO, but OCIO is an optional dependency to it.
@@ -1483,7 +1495,8 @@ combine the information contained in both.")
                                           "/lib/qt5/plugins"))
                          '("qtbase" "qtdeclarative-5"))))))))))
     (inputs
-     (list curl
+     (list bash-minimal
+           curl
            fftw
            fftwf
            glu
@@ -1556,37 +1569,30 @@ full-featured UI aimed at clinical researchers.")
          (sha256
           (base32 "0r7n3a6bvcxkbpda4mwmrpicii09iql5z69nkjqygkwxw7ny3309"))))
       (build-system gnu-build-system)
-      (inputs
-       `(("giflib" ,giflib)
-         ("libjpeg" ,libjpeg-turbo)
-         ("libpng" ,libpng)
-         ("perl" ,perl)))
-      (native-inputs
-       `(("pkg-config" ,pkg-config)
-         ("docbook-xml" ,docbook-xml)
-         ("docbook-xsl" ,docbook-xsl)
-         ("xsltproc" ,libxslt)))
       (arguments
-       `(#:tests? #f                    ; No tests.
-         #:make-flags (list
-                       (string-append "PREFIX=" (assoc-ref %outputs "out"))
-                       (string-append "MANPAGE_XSL="
-                                      (assoc-ref %build-inputs "docbook-xsl")
-                                      "/xml/xsl/docbook-xsl-*/manpages/docbook.xsl"))
-         #:phases
-         (modify-phases %standard-phases
-           (delete 'configure)
-           (add-before 'install 'make-local-docbook-xml
-             (lambda* (#:key inputs #:allow-other-keys)
-               (substitute* "metapixel.xml"
-                 (("http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd")
-                  (string-append (assoc-ref inputs "docbook-xml")
-                                 "/xml/dtd/docbook/docbookx.dtd")))
-               #t))
-           (add-before 'install 'fix-directory-creation
-             (lambda* (#:key outputs #:allow-other-keys)
-               (mkdir-p (string-append (assoc-ref outputs "out") "/share/man/man1"))
-               #t)))))
+       (list
+        #:tests? #f                    ; No tests.
+        #:make-flags
+        #~(list
+           (string-append "PREFIX=" #$output)
+           (format #f "MANPAGE_XSL=~a/xml/xsl/~a-~a/manpages/docbook.xsl"
+                   #$(this-package-native-input "docbook-xsl")
+                   #$(package-name
+                      (this-package-native-input "docbook-xsl"))
+                   #$(package-version
+                      (this-package-native-input "docbook-xsl"))))
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            (add-before 'install 'fix-directory-creation
+              (lambda _
+                (mkdir-p (string-append #$output "/share/man/man1")))))))
+      (inputs
+       (list giflib libjpeg-turbo libpng
+             perl))
+      (native-inputs
+       (list docbook-xml-4.2 docbook-xsl
+             libxslt pkg-config))
       (home-page "https://www.complang.tuwien.ac.at/schani/metapixel/")
       (synopsis "Photomosaics generator")
       (description "Metapixel is a program for generating photomosaics.  It can

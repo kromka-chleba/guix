@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2014, 2017, 2018, 2021 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2015, 2016, 2017, 2018, 2020 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015, 2016, 2017, 2018, 2020, 2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015, 2016, 2017, 2021 Stefan Reichör <stefan@xsteve.at>
 ;;; Copyright © 2016 Raimon Grau <raimonster@gmail.com>
@@ -397,9 +397,9 @@ them in order to efficiently transfer a minimal amount of data.")
                    ;; In 0.3.1 release simple pipeline wasn't enabled for
                    ;; x86_64 by mistake, it's enabled a couple commits later.
                    ;; Remove this expression on the next release.
-                   #$(if (target-x86-64?)
-                         "-Dpipelines=ipu3,vimc,uvcvideo,simple"
-                         "")
+                   #$@(if (target-x86-64?)
+                          '("-Dpipelines=ipu3,vimc,uvcvideo,simple")
+                          '())
                    "-Dudev=enabled"
                    "-Dtest=true" "-Dv4l2=true"
                    ;; XXX: Requires bundled pybind11.
@@ -407,13 +407,17 @@ them in order to efficiently transfer a minimal amount of data.")
            #:phases
            #~(modify-phases %standard-phases
                #$@(if (target-aarch64?)
-                      ;; The 'log_process' test fails on aarch64-linux with a
-                      ;; SIGinvalid error (see:
-                      ;; https://bugs.libcamera.org/show_bug.cgi?id=173).
                       #~((add-after 'unpack 'disable-problematic-tests
                            (lambda _
+                             ;; The 'log_process' test fails on aarch64-linux with a
+                             ;; SIGinvalid error (see:
+                             ;; https://bugs.libcamera.org/show_bug.cgi?id=173).
                              (substitute* "test/log/meson.build"
                                ((".*'name': 'log_process'.*")
+                                ""))
+                             ;; The 'file' test fails on aarch64-linux with SIGinvalid.
+                             (substitute* "test/meson.build"
+                               ((".*'name': 'file'.*")
                                 "")))))
                       #~())
                (add-after 'install 'move-doc-and-gst
@@ -983,7 +987,8 @@ systems with no further dependencies.")
            intltool
            pkg-config))
     (inputs
-     (list bluez
+     (list bash-minimal
+           bluez
            dbus
            (librsvg-for-system)
            glib
@@ -1221,7 +1226,7 @@ and SSH, and it can use both TCP and UDP as transport mechanisms.")
 (define-public socat
   (package
     (name "socat")
-    (version "1.7.4.3")
+    (version "1.7.4.4")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1229,10 +1234,10 @@ and SSH, and it can use both TCP and UDP as transport mechanisms.")
                     version ".tar.bz2"))
               (sha256
                (base32
-                "01w0hpqf5xmgn40s1ablfd4y67dlrx5y9zlx24spc1qm8h81hwyl"))))
+                "1b40ccdvxq5kaghsbwg4q3dq5aw4acw1bpqvs3v3ljp5y392pm7v"))))
     (build-system gnu-build-system)
     (arguments '(#:tests? #f))          ; no test suite
-    (inputs (list openssl))
+    (inputs (list openssl readline))
     (home-page "http://www.dest-unreach.org/socat/")
     (synopsis
      "Open bidirectional communication channels from the command line")
@@ -1653,28 +1658,34 @@ intended as a substitute for the PPPStatus and EthStatus projects.")
                 (("if build_ping == true")
                  "if false")))))))
     (native-inputs
-     (list gettext-minimal
-           pkg-config
-           docbook-xsl
-           docbook-xml
-           libxml2                      ;for XML_CATALOG_FILES
-           libxslt))
+     (list docbook-xsl docbook-xml-5.0.1
+           gettext-minimal libxslt pkg-config))
     (inputs
      (list libcap libidn2 openssl))
     (synopsis "Collection of network utilities")
     (description
      "This package contains a variety of tools for dealing with network
 configuration, troubleshooting, or servers.  Utilities included are:
-
-@itemize @bullet
-@item @command{arping}: Ping hosts using the @dfn{Address Resolution Protocol}.
-@item @command{clockdiff}: Compute time difference between network hosts
-using ICMP TSTAMP messages.
-@item @command{ping}: Use ICMP ECHO messages to measure round-trip delays
-and packet loss across network paths.
-@item @command{tracepath}: Trace network path to an IPv4 or IPv6 address and
-discover MTU along the way.
-@end itemize")
+@table @command
+@item arping
+Ping hosts using @acronym{ARP, Address Resolution Protocol}.
+@item clockdiff
+Compute time difference between network hosts using ICMP TSTAMP messages.
+@item ninfod
+Daemon that responds to IPv6 Node Information Queries.
+@item ping
+Use ICMP ECHO messages to measure round-trip delays and packet loss across
+network paths.
+@item rarpd
+Answer RARP requests from clients.
+@item rdisc
+Populate network routing tables with information from the ICMP router
+discovery protocol.
+@item tftpd
+Trivial file transfer protocol server.
+@item tracepath
+Trace network path to an IPv4 or IPv6 address and discover MTU along the way.
+@end table")
     ;; The various utilities are covered by different licenses, see LICENSE
     ;; for details.
     (license (list license:gpl2+        ;arping, tracepath
@@ -1777,7 +1788,7 @@ and up to 1 Mbit/s downstream.")
             (lambda _
               (setenv "HAVE_ICONV" "1"))))))
     (inputs
-     (list libidn2))
+     (list libidn2 libxcrypt))
     (native-inputs
      (list gettext-minimal
            perl
@@ -2100,6 +2111,7 @@ TCP connection, TLS handshake and so on) in the terminal.")
            openldap
            linux-pam
            libcap
+           libxcrypt
            cyrus-sasl
            expat
            libxml2
@@ -3741,6 +3753,7 @@ and check if the WLAN key or the master key was transmitted unencrypted.")
        (patches (search-patches "dante-non-darwin.patch"))))
     (build-system gnu-build-system)
     (arguments '(#:configure-flags '("--with-libc=libc.so.6")))
+    (inputs (list libxcrypt))
     (home-page "https://www.inet.no/dante/")
     (synopsis "SOCKS server and client")
     (description "Dante is a SOCKS client and server implementation.  It can
@@ -3901,7 +3914,7 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
       (arguments
        (list
         #:imported-modules `((guix build python-build-system) ;for site-packages
-                             ,@%gnu-build-system-modules)
+                             ,@%default-gnu-imported-modules)
         #:modules '(((guix build python-build-system) #:prefix python:)
                     (guix build gnu-build-system)
                     (guix build utils))
@@ -3923,7 +3936,7 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
                 (substitute* "tests/Makefile.am"
                   (("\\bdhtrunnertester\\.(h|cpp)\\b")
                    ""))))
-            (add-after 'unupack 'relax-test-timeouts
+            (add-after 'unpack 'relax-test-timeouts
               (lambda _
                 ;; At least the 'test_send_json' has been seen to fail
                 ;; non-deterministically, but it seems hard to reproducible that
@@ -4091,7 +4104,7 @@ for interacting with an OpenDHT distributed network.")
                 "1r7gh5h27ii7d1d0z0x48wx7hs8vvympv3gqvy3cwzg05q5vk9xs"))))
     (build-system gnu-build-system)
     (inputs
-     (list c-ares json-c libcap libyang readline))
+     (list c-ares json-c libcap libxcrypt libyang readline))
     (native-inputs
      (list perl pkg-config python-wrapper python-pytest))
     (home-page "https://frrouting.org/")
@@ -4385,7 +4398,8 @@ easy-to-understand binary values.")
            (lambda _
              (setenv "CC" "gcc")
              (invoke "make" "tunctl")))
-         ;; TODO: Requires docbook2x to generate man page from SGML.
+         ;; TODO: Requires docbook-to-man (unrelated to docbook2x and
+         ;; docbook-utils) to generate man page from SGML.
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))

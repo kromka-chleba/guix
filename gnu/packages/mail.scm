@@ -388,6 +388,7 @@ example, modify the message headers or body, or encrypt or sign the message.")
            readline
            linux-pam
            libltdl
+           libxcrypt
            gdbm
            ;; Required for SEARCH CHARSET.
            libunistring))
@@ -1012,7 +1013,8 @@ mailpack.  What can alterMIME do?
            w3m
            xorg-server-for-tests))
     (inputs
-     (list boost
+     (list bash-minimal
+           boost
            gmime
            gobject-introspection        ; it is referenced
            gtkmm-3
@@ -1409,7 +1411,7 @@ Notmuch.")
          (file-name (string-append name "-" version "-checkout"))))
       (build-system python-build-system)
       (inputs
-       (list python-notmuch python-pygobject gobject-introspection
+       (list bash-minimal python-notmuch python-pygobject gobject-introspection
              libnotify gtk+))
       (arguments
        `(#:phases
@@ -2072,6 +2074,7 @@ delivery.")
            gzip
            libnsl
            libxaw
+           libxcrypt
            libxt
            perl
            perl-file-fcntllock
@@ -2113,6 +2116,7 @@ facilities for checking incoming mail.")
            libsodium ; extra password algorithms
            libstemmer
            libunwind
+           libxcrypt
            linux-pam
            lz4
            openssl
@@ -2892,7 +2896,8 @@ DKIM and/or DomainKeys.")
                               "perl-net-dns"
                               "perl-timedate"))))))))
     (inputs
-     (list perl
+     (list bash-minimal
+           perl
            perl-crypt-openssl-rsa
            perl-cryptx
            perl-io-socket-inet6
@@ -3297,6 +3302,7 @@ from the Cyrus IMAP project.")
            libevent
            libressl
            linux-pam
+           libxcrypt
            zlib))
     (native-inputs
      (list bison
@@ -3379,6 +3385,7 @@ to esoteric or niche requirements.")
     (inputs
      `(("libressl" ,libressl)
        ("libevent" ,libevent)
+       ("libxcrypt" ,libxcrypt)         ;required by Python.h
        ("mysql" ,mariadb "dev")
        ("opensmtpd" ,opensmtpd)
        ("postgresql" ,postgresql)
@@ -3868,7 +3875,11 @@ on the fly.  Both programs are written in C and are very fast.")
         (base32 "131i2b1yxhnbqkfk4kky40pfanqw2c5lcgbnjhfqp5cvpawpk2ai"))))
     (build-system perl-build-system)
     (inputs
-     (list perl-io-socket-inet6 perl-net-dns perl-net-ssleay perl-socket6)) ; used by perl-io-socket-inet6
+     (list bash-minimal
+           perl-io-socket-inet6
+           perl-net-dns
+           perl-net-ssleay
+           perl-socket6)) ; used by perl-io-socket-inet6
     (arguments
      `(#:tests? #f                      ; no tests
        #:phases
@@ -3876,8 +3887,7 @@ on the fly.  Both programs are written in C and are very fast.")
          (add-after 'unpack 'set-build_version
            (lambda _
              (substitute* "swaks"
-               (("\"DEVRELEASE\"") (format #f "\"~a\"" ,version)))
-             #true))
+               (("\"DEVRELEASE\"") (format #f "\"~a\"" ,version)))))
          (delete 'configure)
          (replace 'build
            (lambda _
@@ -3886,14 +3896,12 @@ on the fly.  Both programs are written in C and are very fast.")
            (lambda* (#:key outputs #:allow-other-keys)
              (let ((out (assoc-ref outputs "out")))
                (install-file "swaks" (string-append out "/bin"))
-               (install-file "swaks.1" (string-append out "/share/man/man1")))
-             #t))
+               (install-file "swaks.1" (string-append out "/share/man/man1")))))
          (add-after 'install 'wrap-program
            (lambda* (#:key outputs #:allow-other-keys)
              (wrap-program (string-append (assoc-ref outputs "out")
                                           "/bin/swaks")
-               `("PERL5LIB" ":" = (,(getenv "PERL5LIB"))))
-             #t)))))
+               `("PERL5LIB" ":" = (,(getenv "PERL5LIB")))))))))
     (home-page "https://jetmore.org/john/code/swaks/")
     (synopsis "Featureful SMTP test tool")
     (description "Swaks is a flexible, scriptable, transaction-oriented SMTP
@@ -3932,6 +3940,7 @@ operators and scripters.")
     (arguments
      `(#:make-flags
        (list (string-append "CC=" ,(cc-for-target)))
+       #:parallel-build? #f             ;fails otherwise
        #:configure-flags (list (string-append "--with-ssl-include-dir="
                                               (assoc-ref %build-inputs "openssl")
                                               "/include/openssl")
@@ -3968,6 +3977,7 @@ operators and scripters.")
            mit-krb5
            aspell
            tcl
+           libxcrypt
            linux-pam))
     (home-page "https://repo.or.cz/alpine.git")
     (synopsis "Alternatively Licensed Program for Internet News and Email")
@@ -4222,7 +4232,7 @@ It is a replacement for the @command{urlview} program.")
                    #:select (target-guile-effective-version))
                   (guix build utils))
       #:imported-modules `((guix build guile-build-system)
-                           ,@%gnu-build-system-modules)
+                           ,@%default-gnu-imported-modules)
 
       #:configure-flags '(list "--localstatedir=/var")
 
@@ -4873,7 +4883,7 @@ ex-like commands on it.")
                   ((guix build emacs-build-system) #:prefix emacs:)
                   (guix build utils)
                   (ice-9 string-fun))
-       #:imported-modules (,@%gnu-build-system-modules
+       #:imported-modules (,@%default-gnu-imported-modules
                            (guix build emacs-build-system)
                            (guix build emacs-utils))
        #:make-flags (list (string-append "prefix=" %output)

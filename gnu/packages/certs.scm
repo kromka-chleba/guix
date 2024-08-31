@@ -7,6 +7,7 @@
 ;;; Copyright © 2021 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -25,6 +26,7 @@
 
 (define-module (gnu packages certs)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module ((guix search-paths) #:select ($SSL_CERT_DIR $SSL_CERT_FILE))
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (guix download)
@@ -128,10 +130,10 @@ that was originally contributed to Debian.")
 (define-public nss-certs
   (package
     (name "nss-certs")
-    ;; XXX We used to refer to the nss package here, but that eventually caused
+    ;; FIXME We used to refer to the nss package here, but that eventually caused
     ;; module cycles.  The below is a quick copy-paste job that must be kept in
     ;; sync manually.  Surely there's a better way…?
-    (version "3.88.1")
+    (version "3.99")
     (source (origin
               (method url-fetch)
               (uri (let ((version-with-underscores
@@ -142,7 +144,7 @@ that was originally contributed to Debian.")
                       "nss-" version ".tar.gz")))
               (sha256
                (base32
-                "15il9fsmixa1r4446zq1wl627sg0hz9h67w6kjxz273xz3nl7li7"))
+                "1g89ig40gfi1sp02gybvl2z818lawcnrqjzsws36cdva834c5maw"))
               ;; Create nss.pc and nss-config.
               (patches (search-patches "nss-3.56-pkgconfig.patch"
                                        "nss-getcwd-nonnull.patch"
@@ -188,21 +190,48 @@ taken from the NSS package and thus ultimately from the Mozilla project.")
     (home-page "https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS")
     (license license:mpl2.0)))
 
-(define-public nss-certs-3.99
-  (package
-    (inherit nss-certs)
-    (version "3.99")
-    (source (origin
-              (method url-fetch)
-              (uri (let ((version-with-underscores
-                          (string-join (string-split version #\.) "_")))
-                     (string-append
-                      "https://ftp.mozilla.org/pub/mozilla.org/security/nss/"
-                      "releases/NSS_" version-with-underscores "_RTM/src/"
-                      "nss-" version ".tar.gz")))
-              (sha256
-               (base32
-                "1g89ig40gfi1sp02gybvl2z818lawcnrqjzsws36cdva834c5maw"))))))
+(define-public nss-certs-for-test
+  (hidden-package
+   (package
+     (inherit nss-certs)
+     (name "nss-certs-for-test")
+     (source #f)
+     (build-system trivial-build-system)
+     (native-inputs (list nss-certs))
+     (inputs '())
+     (propagated-inputs '())
+     (arguments
+      (list #:modules '((guix build utils)
+                        (rnrs io ports)
+                        (srfi srfi-26))
+            #:builder
+            #~(begin
+                (use-modules (guix build utils)
+                             (rnrs io ports)
+                             (srfi srfi-26))
+                (define certs-dir (string-append #$output "/etc/ssl/certs/"))
+                (define ca-files
+                  (find-files (string-append #+(this-package-native-input
+                                                "nss-certs")
+                                             "/etc/ssl/certs")
+                              (lambda (file stat)
+                                (string-suffix? ".pem" file))))
+                (define (concatenate-files files result)
+                  "Make RESULT the concatenation of all of FILES."
+                  (define (dump file port)
+                    (display (call-with-input-file file get-string-all) port)
+                    (newline port))
+                  (call-with-output-file result
+                    (lambda (port)
+                      (for-each (cut dump <> port) files))))
+
+                (mkdir-p certs-dir)
+                (concatenate-files
+                 ca-files (string-append certs-dir "/ca-certificates.crt"))
+                (for-each (cut install-file <> certs-dir) ca-files))))
+     (native-search-paths
+      (list $SSL_CERT_DIR
+            $SSL_CERT_FILE)))))
 
 (define-public le-certs
   (package

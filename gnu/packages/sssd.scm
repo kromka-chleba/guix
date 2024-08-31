@@ -92,7 +92,6 @@
            docbook-xml-4.3
            docbook-xsl
            libtool
-           libxml2                      ;for XML_CATALOG_FILES
            libxslt
            util-linux                   ;For `rev` command used in tests.
            xmlto))
@@ -163,10 +162,7 @@ fundamental object types for C.")
                              #$(this-package-native-input "docbook-xsl")
                              "/xml/xsl/docbook-xsl-"
                              #$(package-version (this-package-native-input "docbook-xsl"))
-                             "/manpages/docbook.xsl")
-              ;; Remove "--postvalid" option, because that requires access to
-              ;; online DTDs.
-              "XMLLINT_FLAGS = --catalogs --nonet --noent --xinclude --noout")
+                             "/manpages/docbook.xsl"))
       #:configure-flags
       #~(list "--localstatedir=/var" ; for /var/lib/sss, /var/run/sssd.pid, etc.
               "--sysconfdir=/etc"    ; /etc/sssd
@@ -283,7 +279,7 @@ fundamental object types for C.")
            bc ; for tests
            check ; for tests
            cmocka ; for tests
-           docbook-xml
+           docbook-xml-4.4
            docbook-xsl
            doxygen
            gettext-minimal

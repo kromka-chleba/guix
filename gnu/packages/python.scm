@@ -84,6 +84,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages dbm)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages pkg-config)
@@ -211,7 +212,20 @@
              "CFLAGS=-fno-semantic-interposition"
              (string-append "LDFLAGS=-Wl,-rpath="
                             (assoc-ref %outputs "out") "/lib"
-                            " -fno-semantic-interposition"))
+                            " -fno-semantic-interposition")
+             ;; Add a reference to libxcrypt in LIBS so that the sysconfigdata
+             ;; file records it and propagates it to programs linking against
+             ;; Python.
+             (let ((libxcrypt
+                    (false-if-exception
+                     (dirname
+                      (search-input-file %build-inputs
+                                         "lib/libcrypt.so.1")))))
+               (string-append
+                "LIBS="
+                (if libxcrypt
+                    (string-append "-L" libxcrypt)
+                    ""))))
        ;; With no -j argument tests use all available cpus, so provide one.
        #:make-flags
        (list (string-append
@@ -312,6 +326,18 @@
                      '("email/test" "ctypes/test" "unittest/test" "tkinter/test"
                        "sqlite3/test" "bsddb/test" "lib-tk/test" "json/tests"
                        "distutils/tests"))))))))
+         (add-after 'install 'add-libxcrypt-reference-pkgconfig
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (define out (assoc-ref outputs "out"))
+             (define libxcrypt
+               (false-if-exception
+                (dirname (search-input-file inputs "lib/libcrypt.so.1"))))
+             (when libxcrypt
+               (substitute*
+                   (find-files (string-append out "/lib/pkgconfig")
+                               ".*\\.pc")
+                 (("-lcrypt")
+                  (string-append "-L" libxcrypt " -lcrypt"))))))
          (add-after 'remove-tests 'move-tk-inter
            (lambda* (#:key outputs #:allow-other-keys)
              ;; When Tkinter support is built move it to a separate output so
@@ -387,6 +413,8 @@
            expat
            gdbm
            libffi ; for ctypes
+           libxcrypt ; crypto module slated for removal in 3.13, re-enable
+                     ; python tests of libxcrypt when that happens
            sqlite ; for sqlite extension
            openssl-1.1
            readline
@@ -425,7 +453,6 @@ data types.")
     (inherit python-2)
     (name "python")
     (version "3.10.7")
-    (replacement python-3.10/fixed)
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.python.org/ftp/python/"
@@ -435,6 +462,7 @@ data types.")
                         "python-3-deterministic-build-info.patch"
                         "python-3-fix-tests.patch"
                         "python-3-hurd-configure.patch"
+                        "python-3-reproducible-build.patch"
                         "python-3-search-paths.patch"))
               (sha256
                (base32
@@ -517,7 +545,7 @@ data types.")
                        (substitute* "Makefile.pre.in"
                          (("-j0") "-j1")))))
                  '())
-           (add-after 'unpack 'remove-windows-binaries
+           (add-after 'unpack 'remove-vendored-wheel-content
              (lambda _
                ;; Delete .exe from embedded .whl (zip) files
                (for-each
@@ -531,6 +559,40 @@ data types.")
                         (for-each delete-file
                                   (find-files "." "\\.exe$"))
                         (delete-file whl)
+
+                        ;; Search for cacert.pem, delete it, and rewrite the
+                        ;; file which directs python to look for it.
+                        (let ((cacert (find-files "." "cacert\\.pem")))
+                          (unless (null? cacert)
+                            (let ((certifi (dirname (car cacert))))
+                              (delete-file (string-append certifi "/cacert.pem"))
+                              (delete-file (string-append certifi "/core.py"))
+                              (with-output-to-file (string-append certifi "/core.py")
+                                (lambda _
+                                  (display "\"\"\"
+certifi.py
+~~~~~~~~~~
+This file is a Guix-specific version of core.py.
+
+This module returns the installation location of SSL_CERT_FILE or
+/etc/ssl/certs/ca-certificates.crt, or its contents.
+\"\"\"
+import os
+
+_CA_CERTS = None
+
+try:
+    _CA_CERTS = os.environ [\"SSL_CERT_FILE\"]
+except:
+    _CA_CERTS = os.path.join(\"/etc\", \"ssl\", \"certs\", \"ca-certificates.crt\")
+
+def where() -> str:
+    return _CA_CERTS
+
+def contents() -> str:
+    with open(where(), \"r\", encoding=\"ascii\") as data:
+        return data.read()"))))))
+
                         ;; Reset timestamps to prevent them from ending
                         ;; up in the Zip archive.
                         (ftw "." (lambda (file stat flag)
@@ -984,81 +1046,6 @@ packages; exception-based error handling; and very high level dynamic
 data types.")
     (properties '((cpe-name . "python")))
     (license license:psfl)))
-
-(define python-3.10/fixed
-  (package
-    (inherit python-3.10)
-    (arguments
-     (substitute-keyword-arguments (package-arguments python-3.10)
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            ;; Also remove the bundled CA certificates.
-            ;; TODO: Rename this phase when merging back into python.
-            (replace 'remove-windows-binaries
-              (lambda _
-                ;; Delete .exe from embedded .whl (zip) files
-                (for-each
-                 (lambda (whl)
-                   (let ((dir "whl-content")
-                         (circa-1980 (* 10 366 24 60 60)))
-                     (mkdir-p dir)
-                     (with-directory-excursion dir
-                       (let ((whl (string-append "../" whl)))
-                         (invoke "unzip" whl)
-                         (for-each delete-file
-                                   (find-files "." "\\.exe$"))
-                         (delete-file whl)
-
-                         ;; Search for cacert.pem, delete it, and rewrite the
-                         ;; file which directs python to look for it.
-                         (let ((cacert (find-files "." "cacert\\.pem")))
-                           (unless (null? cacert)
-                             (let ((certifi (dirname (car cacert))))
-                               (delete-file (string-append certifi "/cacert.pem"))
-                               (delete-file (string-append certifi "/core.py"))
-                               (with-output-to-file (string-append certifi "/core.py")
-                                 (lambda _
-                                   (display "\"\"\"
-certifi.py
-~~~~~~~~~~
-This file is a Guix-specific version of core.py.
-
-This module returns the installation location of SSL_CERT_FILE or
-/etc/ssl/certs/ca-certificates.crt, or its contents.
-\"\"\"
-import os
-
-_CA_CERTS = None
-
-try:
-    _CA_CERTS = os.environ [\"SSL_CERT_FILE\"]
-except:
-    _CA_CERTS = os.path.join(\"/etc\", \"ssl\", \"certs\", \"ca-certificates.crt\")
-
-def where() -> str:
-    return _CA_CERTS
-
-def contents() -> str:
-    with open(where(), \"r\", encoding=\"ascii\") as data:
-        return data.read()"))))))
-
-                         ;; Reset timestamps to prevent them from ending
-                         ;; up in the Zip archive.
-                         (ftw "." (lambda (file stat flag)
-                                    (utime file circa-1980 circa-1980)
-                                    #t))
-                         (apply invoke "zip" "-X" whl
-                                (find-files "." #:directories? #t))))
-                     (delete-file-recursively dir)))
-                 (find-files "Lib/ensurepip" "\\.whl$"))))))))
-    (native-search-paths
-     (list (guix-pythonpath-search-path (package-version python-3.10))
-           $SSL_CERT_FILE
-           ;; Used to locate tzdata by the zoneinfo module introduced in
-           ;; Python 3.9.
-           (search-path-specification
-            (variable "PYTHONTZPATH")
-            (files (list "share/zoneinfo")))))))
 
 ;; Next 3.x version.
 (define-public python-next python-3.12)

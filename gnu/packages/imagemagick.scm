@@ -4,7 +4,7 @@
 ;;; Copyright © 2015 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016, 2021 Mark H Weaver <mhw@netris.org>
-;;; Copyright © 2017 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2017, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Alex Vong <alexvong1995@gmail.com>
 ;;; Copyright © 2020 Marius Bakke <marius@gnu.org>
@@ -65,72 +65,65 @@
      ;; The 7 release series has an incompatible API, while the 6 series is still
      ;; maintained. Don't update to 7 until we've made sure that the ImageMagick
      ;; users are ready for the 7-series API.
-     (version "6.9.11-48")
+     (version "6.9.13-5")
      (source (origin
                (method url-fetch)
                (uri (string-append "mirror://imagemagick/ImageMagick-"
                                    version ".tar.xz"))
                (sha256
                 (base32
-                 "0m8nkmywkqwyrr01q7aiakj6mi4rb2psjgzv8n0x82x3s1rpfyql"))))
+                 "1j1chkw33vjc37509vdwss28qywfvckvs73pvscldj8d0wnwypa8"))))
      (build-system gnu-build-system)
      (arguments
-      `(#:configure-flags '("--with-frozenpaths" "--without-gcc-arch"
-
-                            ;; Do not embed the build date in binaries.
-                            "--enable-reproducible-build")
-
-        ;; FIXME: The test suite succeeded before version 6.9.6-2.
-        ;; Try enabling it again with newer releases.
-        #:tests? #f
-        #:phases (modify-phases %standard-phases
-                   (add-before
-                       'build 'pre-build
-                     (lambda* (#:key outputs #:allow-other-keys)
-                       (substitute* "Makefile"
-                         ;; Clear the `LIBRARY_PATH' setting, which otherwise
-                         ;; interferes with our own use.
-                         (("^LIBRARY_PATH[[:blank:]]*=.*$")
-                          "")
-
-                         ;; Since the Makefile overrides $docdir, modify it to
-                         ;; refer to what we want.
-                         (("^DOCUMENTATION_PATH[[:blank:]]*=.*$")
-                          (let ((doc (assoc-ref outputs "doc")))
-                            (string-append "DOCUMENTATION_PATH = "
-                                           doc "/share/doc/"
-                                           ,name "-"
-                                           ,(package-version this-package) "\n"))))
-                       #t))
-                   (add-before
-                       'configure 'strip-configure-xml
-                     (lambda _
-                       (substitute* "config/configure.xml.in"
-                         ;; Do not record 'configure' arguments in the
-                         ;; configure.xml file that gets installed: That would
-                         ;; include --docdir, and thus retain a reference to the
-                         ;; 'doc' output.
-                         (("@CONFIGURE_ARGS@")
-                          "not recorded"))
-                       #t)))))
+      (list
+       #:configure-flags
+       #~(list "--with-frozenpaths"
+               "--without-gcc-arch"
+               (string-append "--with-gs-font-dir="
+                              (search-input-directory %build-inputs
+                                                      "share/fonts/type1"))
+               ;; No documentation in the stable version.
+               "--disable-docs"
+               ;; Do not embed the build date in binaries.
+               "--enable-reproducible-build")
+       #:phases
+       #~(modify-phases %standard-phases
+           (add-before 'build 'pre-build
+             (lambda _
+               (substitute* "Makefile"
+                 ;; Clear the `LIBRARY_PATH' setting, which otherwise
+                 ;; interferes with our own use.
+                 (("^LIBRARY_PATH[[:blank:]]*=.*$") ""))))
+           (add-before 'configure 'strip-configure-xml
+             (lambda _
+               (substitute* "config/configure.xml.in"
+                 ;; Do not record 'configure' arguments in the
+                 ;; configure.xml file that gets installed: That would
+                 ;; include --docdir, and thus retain a reference to the
+                 ;; 'doc' output.
+                 (("@CONFIGURE_ARGS@")
+                  "not recorded")))))))
      ;; TODO: Add Jasper etc.
-     (inputs `(("fftw" ,fftw)
-               ("graphviz" ,graphviz)
-               ("ghostscript" ,ghostscript)
-               ("lcms" ,lcms)
-               ("libx11" ,libx11)
-               ("zlib" ,zlib)
-               ("libxml2" ,libxml2)
-               ("libtiff" ,libtiff)
-               ("libpng" ,libpng)
-               ("libjpeg" ,libjpeg-turbo)
-               ("pango" ,pango)
-               ("freetype" ,freetype)
-               ("bzip2" ,bzip2)
-               ("xz" ,xz)))
-     (native-inputs (list pkg-config))
-     (outputs '("out"
-                "doc"))                 ; 26 MiB of HTML documentation
+     (inputs
+      (list bzip2
+            fftw
+            freetype
+            ghostscript
+            graphviz
+            lcms
+            libjpeg-turbo
+            libpng
+            libtiff
+            libwebp
+            libx11
+            libxml2
+            pango
+            xz
+            zlib
+            zstd))
+     (native-inputs
+      (list font-ghostscript
+            pkg-config))
      (home-page "https://www.imagemagick.org/")
      (synopsis "Create, edit, compose, or convert bitmap images")
      (description
@@ -145,23 +138,35 @@ text, lines, polygons, ellipses and Bézier curves.")
 (define-public imagemagick
   (package
     (inherit imagemagick/stable)
+    (outputs '("out" "doc"))    ; 11 MiB of HTML documentation
     (properties (alist-delete 'hidden? (package-properties imagemagick/stable)))
     ;; The 7 release series has an incompatible API, while the 6 series is still
     ;; maintained. Don't update to 7 until we've made sure that the ImageMagick
     ;; users are ready for the 7-series API.
-    (version "6.9.12-4")
+    (version "6.9.13-5")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://imagemagick/ImageMagick-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1pkwij76yz7vd5grl6520pgpa912qb6kh34qamx4zfndwcx6cf6b"))
-              (patches
-               (search-patches "imagemagick-ReadDCMImage-fix.patch"
-                               "imagemagick-ReadDCMPixels-fix.patch"
-                               "imagemagick-WriteTHUMBNAILImage-fix.patch"
-                               "imagemagick-CVE-2020-27829.patch"))))))
+                "1j1chkw33vjc37509vdwss28qywfvckvs73pvscldj8d0wnwypa8"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments imagemagick/stable)
+       ((#:configure-flags flags #~'())
+        #~(delete "--disable-docs" #$flags))
+       ((#:phases phases #~'%standard-phases)
+        #~(modify-phases #$phases
+            (add-before 'build 'set-doc-directory
+              (lambda _
+                (substitute* "Makefile"
+                  ;; Since the Makefile overrides $docdir, modify it to
+                  ;; refer to what we want.
+                  (("^DOCUMENTATION_PATH[[:blank:]]*=.*$")
+                   (string-append "DOCUMENTATION_PATH = "
+                                  #$output:doc "/share/doc/"
+                                  #$(package-name this-package) "-"
+                                  #$(package-version this-package) "\n")))))))))))
 
 (define-public perl-image-magick
   (package

@@ -1460,7 +1460,8 @@ KDE Frameworks components.")
                   eudev
                   fontconfig
                   freetype
-                  `(,hwdata "pnp")
+
+                  hwdata
                   plasma-activities
                   kcmutils
                   kcompletion
@@ -2774,6 +2775,7 @@ sensors, process information and other system resources.")
                   mpfr
                   eudev
                   libsm
+                  libxcrypt
                   libxft
                   libxkbcommon
                   libxrender

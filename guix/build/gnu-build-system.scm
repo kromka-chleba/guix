@@ -2,7 +2,7 @@
 ;;; Copyright © 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2018 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2020 Brendan Tildesley <mail@brendan.scot>
-;;; Copyright © 2021 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021, 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -72,6 +72,42 @@ there are none."
     ((first . _) first)
     (_ #f)))
 
+(define* (separate-from-pid1 #:key (separate-from-pid1? #t)
+                             #:allow-other-keys)
+  "When running as PID 1 and SEPARATE-FROM-PID1? is true, run build phases as
+a child process; PID 1 then becomes responsible for reaping child processes."
+  (if separate-from-pid1?
+      (if (= 1 (getpid))
+          (dynamic-wind
+            (const #t)
+            (lambda ()
+              (match (primitive-fork)
+                (0 #t)
+                (builder-pid
+                 (format (current-error-port)
+                         "build process now running as PID ~a~%"
+                         builder-pid)
+                 (let loop ()
+                   ;; Running as PID 1 so take responsibility for reaping
+                   ;; child processes.
+                   (match (waitpid WAIT_ANY)
+                     ((pid . status)
+                      (if (= pid builder-pid)
+                          (if (zero? status)
+                              (primitive-exit 0)
+                              (begin
+                                (format (current-error-port)
+                                        "build process ~a exited with status ~a~%"
+                                        pid status)
+                                (primitive-exit 1)))
+                          (loop))))))))
+            (const #t))
+          (format (current-error-port) "not running as PID 1 (PID: ~a)~%"
+                  (getpid)))
+      (format (current-error-port)
+              "build process running as PID ~a; not forking~%"
+              (getpid))))
+
 (define* (set-paths #:key target inputs native-inputs
                     (search-paths '()) (native-search-paths '())
                     #:allow-other-keys)
@@ -123,7 +159,7 @@ there are none."
               native-search-paths)))
 
 (define* (install-locale #:key
-                         (locale "en_US.utf8")
+                         (locale "C.UTF-8")
                          (locale-category LC_ALL)
                          #:allow-other-keys)
   "Try to install LOCALE; emit a warning if that fails.  The main goal is to
@@ -608,21 +644,36 @@ and 'man/'.  This phase moves directories to the right place if needed."
     (((names . directories) ...)
      (for-each process-directory directories))))
 
-(define* (compress-documentation #:key outputs
+(define* (compress-documentation #:key
+                                 outputs
                                  (compress-documentation? #t)
-                                 (documentation-compressor "gzip")
-                                 (documentation-compressor-flags
+                                 (info-compressor "gzip")
+                                 (info-compressor-flags
                                   '("--best" "--no-name"))
-                                 (compressed-documentation-extension ".gz")
+                                 (info-compressor-file-extension ".gz")
+                                 (man-compressor (if (which "zstd")
+                                                     "zstd"
+                                                     info-compressor))
+                                 (man-compressor-flags
+                                  (if (which "zstd")
+                                      (list "-19" "--rm"
+                                            "--threads" (number->string
+                                                         (parallel-job-count)))
+                                      info-compressor-flags))
+                                 (man-compressor-file-extension
+                                  (if (which "zstd")
+                                      ".zst"
+                                      info-compressor-file-extension))
                                  #:allow-other-keys)
-  "When COMPRESS-DOCUMENTATION? is true, compress man pages and Info files
-found in OUTPUTS using DOCUMENTATION-COMPRESSOR, called with
-DOCUMENTATION-COMPRESSOR-FLAGS."
-  (define (retarget-symlink link)
+  "When COMPRESS-INFO-MANUALS? is true, compress Info files found in OUTPUTS
+using INFO-COMPRESSOR, called with INFO-COMPRESSOR-FLAGS.  Similarly, when
+COMPRESS-MAN-PAGES? is true, compress man pages files found in OUTPUTS using
+MAN-COMPRESSOR, using MAN-COMPRESSOR-FLAGS."
+  (define (retarget-symlink link extension)
     (let ((target (readlink link)))
       (delete-file link)
-      (symlink (string-append target compressed-documentation-extension)
-               (string-append link compressed-documentation-extension))))
+      (symlink (string-append target extension)
+               (string-append link extension))))
 
   (define (has-links? file)
     ;; Return #t if FILE has hard links.
@@ -640,23 +691,23 @@ DOCUMENTATION-COMPRESSOR-FLAGS."
           (symbolic-link? target-absolute))
         (lambda args
           (if (= ENOENT (system-error-errno args))
-              (begin
-                (format (current-error-port)
-                        "The symbolic link '~a' target is missing: '~a'\n"
-                        symlink target-absolute)
-                #f)
+              (format (current-error-port)
+                      "The symbolic link '~a' target is missing: '~a'\n"
+                      symlink target-absolute)
               (apply throw args))))))
 
-  (define (maybe-compress-directory directory regexp)
+  (define (maybe-compress-directory directory regexp
+                                    compressor
+                                    compressor-flags
+                                    compressor-extension)
     (when (directory-exists? directory)
       (match (find-files directory regexp)
-        (()                                     ;nothing to compress
+        (()                             ;nothing to compress
          #t)
-        ((files ...)                            ;one or more files
+        ((files ...)                    ;one or more files
          (format #t
                  "compressing documentation in '~a' with ~s and flags ~s~%"
-                 directory documentation-compressor
-                 documentation-compressor-flags)
+                 directory compressor compressor-flags)
          (call-with-values
              (lambda ()
                (partition symbolic-link? files))
@@ -666,20 +717,26 @@ DOCUMENTATION-COMPRESSOR-FLAGS."
              ;; unchanged ('gzip' would refuse to compress them anyway.)
              ;; Also, do not retarget symbolic links pointing to other
              ;; symbolic links, since these are not compressed.
-             (for-each retarget-symlink
+             (for-each (cut retarget-symlink <> compressor-extension)
                        (filter (lambda (symlink)
                                  (and (not (points-to-symlink? symlink))
                                       (string-match regexp symlink)))
                                symlinks))
-             (apply invoke documentation-compressor
-                    (append documentation-compressor-flags
+             (apply invoke compressor
+                    (append compressor-flags
                             (remove has-links? regular-files)))))))))
 
   (define (maybe-compress output)
     (maybe-compress-directory (string-append output "/share/man")
-                              "\\.[0-9]+$")
+                              "\\.[0-9]+[:alpha:]*$"
+                              man-compressor
+                              man-compressor-flags
+                              man-compressor-file-extension)
     (maybe-compress-directory (string-append output "/share/info")
-                              "\\.info(-[0-9]+)?$"))
+                              "\\.info(-[0-9]+)?$"
+                              info-compressor
+                              info-compressor-flags
+                              info-compressor-file-extension))
 
   (if compress-documentation?
       (match outputs
@@ -872,7 +929,8 @@ that traversing all the RUNPATH entries entails."
   ;; Standard build phases, as a list of symbol/procedure pairs.
   (let-syntax ((phases (syntax-rules ()
                          ((_ p ...) `((p . ,p) ...)))))
-    (phases set-SOURCE-DATE-EPOCH set-paths install-locale unpack
+    (phases separate-from-pid1
+            set-SOURCE-DATE-EPOCH set-paths install-locale unpack
             bootstrap
             patch-usr-bin-file
             patch-source-shebangs configure patch-generated-file-shebangs

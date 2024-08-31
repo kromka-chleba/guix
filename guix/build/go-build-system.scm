@@ -256,8 +256,12 @@ unpacking."
                 (_ #f))
               inputs))))
 
-(define* (build #:key import-path build-flags #:allow-other-keys)
+(define* (build #:key import-path build-flags (parallel-build? #t)
+                #:allow-other-keys)
   "Build the package named by IMPORT-PATH."
+  (let* ((njobs (if parallel-build? (parallel-job-count) 1)))
+    (setenv "GOMAXPROCS" (number->string njobs)))
+
   (with-throw-handler
     #t
     (lambda _
@@ -275,9 +279,12 @@ unpacking."
       (invoke "go" "env"))))
 
 ;; Can this also install commands???
-(define* (check #:key tests? import-path #:allow-other-keys)
+(define* (check #:key tests? import-path (parallel-tests? #t)
+                #:allow-other-keys)
   "Run the tests for the package named by IMPORT-PATH."
   (when tests?
+    (let* ((njobs (if parallel-tests? (parallel-job-count) 1)))
+      (setenv "GOMAXPROCS" (number->string njobs)))
     (invoke "go" "test" import-path))
   #t)
 

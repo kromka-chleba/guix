@@ -254,11 +254,10 @@ persistent, single-file databases with support for secondary indexes.")
                     ,(string-append (assoc-ref inputs "postgresql")
                                     "/bin")
                     ;; For getsocket.
-                    ,(string-append out "/bin")))))
-             #t)))
+                    ,(string-append out "/bin"))))))))
        #:test-target "test"))
     (inputs
-     (list postgresql util-linux))
+     (list bash-minimal postgresql util-linux))
     (native-inputs
      ;; For tests.
      (list ruby which))
@@ -973,12 +972,12 @@ auto-completion and syntax highlighting.")
                             ,(string-append coreutils "/bin")
                             ,(string-append grep "/bin")
                             ,(string-append ps "/bin")
-                            ,(string-append sed "/bin"))))
-                       #t))))))
+                            ,(string-append sed "/bin"))))))))))
     (native-inputs
      (list bison perl pkg-config))
     (inputs
-     (list boost-for-mysql
+     (list bash-minimal
+           boost-for-mysql
            coreutils
            gawk
            grep
@@ -1933,8 +1932,7 @@ for example from a shell script.")
          (add-before 'check 'set-check-environment
            (lambda _
              (setenv "TZ" "UTC")
-             (setenv "HOME" "/tmp")
-             #t))
+             (setenv "HOME" "/tmp")))
          (add-after 'install 'wrap-program
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -1943,8 +1941,7 @@ for example from a shell script.")
                  `("PERL5LIB" ":" prefix
                    (,(string-append out "/lib/perl5/site_perl"
                                     ":"
-                                    path)))))
-             #t)))))
+                                    path))))))))))
     (native-inputs
      (list perl-capture-tiny
            perl-io-pager
@@ -1961,38 +1958,39 @@ for example from a shell script.")
            perl-test-nowarnings
            perl-test-warn))
     (inputs
-     `(("perl-class-xsaccessor" ,perl-class-xsaccessor)
-       ("perl-clone" ,perl-clone)
-       ("perl-config-gitlike" ,perl-config-gitlike)
-       ("perl-datetime" ,perl-datetime)
-       ("perl-datetime-timezone" ,perl-datetime-timezone)
-       ("perl-dbd-mysql" ,perl-dbd-mysql)
-       ("perl-dbd-pg" ,perl-dbd-pg)
-       ("perl-dbd-sqlite" ,perl-dbd-sqlite)
-       ("perl-dbi" ,perl-dbi)
-       ("perl-devel-stacktrace" ,perl-devel-stacktrace)
-       ("perl-encode-locale" ,perl-encode-locale)
-       ("perl-hash-merge" ,perl-hash-merge)
-       ("perl-ipc-run3" ,perl-ipc-run3)
-       ("perl-ipc-system-simple" ,perl-ipc-system-simple)
-       ("perl-libintl-perl" ,perl-libintl-perl)
-       ("perl-list-moreutils" ,perl-list-moreutils)
-       ("perl-moo" ,perl-moo)
-       ("perl-mysql-config" ,perl-mysql-config)
-       ("perl-namespace-autoclean" ,perl-namespace-autoclean)
-       ("perl-path-class" ,perl-path-class)
-       ("perl-perlio-utf8_strict" ,perl-perlio-utf8_strict)
-       ("perl-string-formatter" ,perl-string-formatter)
-       ("perl-string-shellquote" ,perl-string-shellquote)
-       ("perl-sub-exporter" ,perl-sub-exporter)
-       ("perl-template-tiny" ,perl-template-tiny)
-       ("perl-template-toolkit" ,perl-template-toolkit)
-       ("perl-throwable" ,perl-throwable)
-       ("perl-try-tiny" ,perl-try-tiny)
-       ("perl-type-tiny" ,perl-type-tiny)
-       ("perl-type-tiny-xs" ,perl-type-tiny-xs)
-       ("perl-uri" ,perl-uri)
-       ("perl-uri-db" ,perl-uri-db)))
+     (list bash-minimal
+           perl-class-xsaccessor
+           perl-clone
+           perl-config-gitlike
+           perl-datetime
+           perl-datetime-timezone
+           perl-dbd-mysql
+           perl-dbd-pg
+           perl-dbd-sqlite
+           perl-dbi
+           perl-devel-stacktrace
+           perl-encode-locale
+           perl-hash-merge
+           perl-ipc-run3
+           perl-ipc-system-simple
+           perl-libintl-perl
+           perl-list-moreutils
+           perl-moo
+           perl-mysql-config
+           perl-namespace-autoclean
+           perl-path-class
+           perl-perlio-utf8_strict
+           perl-string-formatter
+           perl-string-shellquote
+           perl-sub-exporter
+           perl-template-tiny
+           perl-template-toolkit
+           perl-throwable
+           perl-try-tiny
+           perl-type-tiny
+           perl-type-tiny-xs
+           perl-uri
+           perl-uri-db))
     (home-page "https://sqitch.org/")
     (synopsis "Database change management tool")
     (description
@@ -2051,10 +2049,9 @@ changes.")
                (invoke "./configure"
                        (string-append "--prefix=" out))))))))
     (native-inputs
-     (list ;; TODO: Build the documentation.
-           ;; ("docbook-xsl" ,docbook-xsl)
-           ;; ("libxml2" ,libxml2)
-           ;; ("libxslt" ,libxslt)
+     (list docbook-xsl
+           libxcrypt
+           libxslt
            python ;for the Waf build system
            which))
     (home-page "https://tdb.samba.org/")
@@ -2609,6 +2606,11 @@ similar to BerkeleyDB, LevelDB, etc.")
                 ;; "background AOF rewrite to finish", perhaps because dead
                 ;; processes persist as zombies in the build environment.
                 (("unit/aofrw") "")
+                ;; The OOM score tests try to raise the current OOM score, but
+                ;; our build environment already sets it for all children to
+                ;; the highest possible one (1000).  We can't lower it because
+                ;; we don't have CAP_SYS_RESOURCE.
+                (("unit/oom-score-adj") "")
                 (("integration/aof(-multi-part)?") "")
                 (("integration/failover") "")
                 (("integration/replication-4") "")
@@ -4512,8 +4514,8 @@ is designed to have a low barrier to entry.")
                    ,(map (lambda (output)
                            (string-append output sitedir))
                          (list python out))))))))))
-    (native-inputs
-     (list python-pytest))
+    (native-inputs (list python-pytest))
+    (inputs (list bash-minimal))
     (home-page "https://github.com/andialbrecht/sqlparse")
     (synopsis "Non-validating SQL parser")
     (description "Sqlparse is a non-validating SQL parser for Python.  It

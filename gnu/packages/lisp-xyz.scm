@@ -11258,7 +11258,7 @@ selectors.  It makes use of the Plump-DOM and is used by lQuery.")
       (arguments
        `(#:phases
          (modify-phases %standard-phases
-           (add-after 'install 'unpatch-shebangs
+           (add-after 'strip 'unpatch-shebangs
              (lambda* (#:key outputs #:allow-other-keys)
                ;; The documentation Makefile rely on shell scripts.
                ;; TODO: Build it!
@@ -20949,7 +20949,7 @@ library for Ruby, which is itself based on the Lucene library for Java.")
                  ((":relative-to lift-test")
                   ":relative-to moptilities-test"))
                #t))
-           (add-after 'install 'remove-test-results
+           (add-after 'check 'remove-test-results
              ;; Otherwise the drag the SBCL package into the closure of the CL
              ;; package.
              (lambda* (#:key outputs #:allow-other-keys)

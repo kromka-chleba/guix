@@ -11,7 +11,7 @@
 ;;; Copyright © 2016–2023 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018, 2020, 2024 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2018 okapi <okapi@firemail.cc>
-;;; Copyright © 2018, 2020, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2018, 2020, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2018 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2018 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2018, 2019, 2022 Marius Bakke <marius@gnu.org>
@@ -72,6 +72,7 @@
   #:use-module (gnu packages avahi)
   #:use-module (gnu packages backup)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages build-tools)
@@ -304,55 +305,40 @@ displays a histogram of the roundtrip time jitter.")
 (define-public webrtc-audio-processing
   (package
     (name "webrtc-audio-processing")
-    (version "0.3.1")
+    (version "1.3")
     (source
      (origin
        (method url-fetch)
        (uri
         (string-append "http://freedesktop.org/software/pulseaudio/"
-                       name "/" name "-" version ".tar.xz"))
+                       name "/" name "-" version ".tar.gz"))
        (sha256
-        (base32 "1gsx7k77blfy171b6g3m0k0s0072v6jcawhmx1kjs9w5zlwdkzd0"))))
-    (build-system gnu-build-system)
+        (base32 "0xfvq5lxg612vfzk3zk6896zcb4cgrrb7fq76w9h40magz0jymcm"))))
+    (build-system meson-build-system)
     (arguments
-     ;; TODO: Move this to a snippet/patch or remove with the upgrade to 1.0.
-     (if (or (target-riscv64?)
-             (target-powerpc?))
-       (list
-         #:phases
-         #~(modify-phases %standard-phases
-             (add-after 'unpack 'patch-source
-               (lambda* (#:key inputs #:allow-other-keys)
-                 (let ((patch-file
-                        #$(local-file
-                           (search-patch
-                             "webrtc-audio-processing-big-endian.patch"))))
-                   (invoke "patch" "--force" "-p1" "-i" patch-file)
-                   (substitute* "webrtc/typedefs.h"
-                     (("defined\\(__aarch64__\\)" all)
-                      (string-append
-                        ;; powerpc-linux
-                        "(defined(__PPC__) && __SIZEOF_SIZE_T__ == 4)\n"
-                        "#define WEBRTC_ARCH_32_BITS\n"
-                        "#define WEBRTC_ARCH_BIG_ENDIAN\n"
-                        ;; powerpc64-linux
-                        "#elif (defined(__PPC64__) && defined(_BIG_ENDIAN))\n"
-                        "#define WEBRTC_ARCH_64_BITS\n"
-                        "#define WEBRTC_ARCH_BIG_ENDIAN\n"
-                        ;; aarch64-linux
-                        "#elif " all
-                        ;; riscv64-linux
-                        " || (defined(__riscv) && __riscv_xlen == 64)"
-                        ;; powerpc64le-linux
-                        " || (defined(__PPC64__) && defined(_LITTLE_ENDIAN))"))))))))
-       '()))
-    (native-inputs
-     (if (or (target-riscv64?)
-             (target-powerpc?))
-       (list
-         (local-file (search-patch "webrtc-audio-processing-big-endian.patch"))
-         patch)
-       '()))
+     (list #:configure-flags (if (target-x86-32?)
+                                 #~(list "-Dc_args=-DPFFFT_SIMD_DISABLE")
+                                 #~'())
+           #:phases
+           (if (or (target-x86-32?) (target-powerpc?))
+               #~(modify-phases %standard-phases
+                   (add-after 'unpack 'apply-patches
+                     (lambda _
+                       (define (patch file)
+                         (invoke "patch" "-p1" "--force" "-i" file))
+
+                       ;; https://gitlab.freedesktop.org/pulseaudio/webrtc-audio-processing/-/issues/5
+                       ;; TODO: Move to the 'patches' field of the origin on
+                       ;; the next rebuild.
+                       (patch #$(local-file
+                                 (search-patch
+                                  "webrtc-audio-processing-byte-order-pointer-size.patch")))
+                       (patch #$(local-file
+                                 (search-patch
+                                  "webrtc-audio-processing-x86-no-sse.patch"))))))
+               #~%standard-phases)))
+    (native-inputs (list pkg-config))
+    (inputs (list abseil-cpp))
     (synopsis "WebRTC's Audio Processing Library")
     (description "WebRTC-Audio-Processing library based on Google's
 implementation of WebRTC.")
@@ -1031,7 +1017,7 @@ engineers, musicians, soundtrack editors and composers.")
            (lambda* (#:key inputs #:allow-other-keys)
              (substitute* '("libraries/lib-files/FileNames.cpp")
                (("\"/usr/include/linux/magic.h\"") "<linux/magic.h>"))))
-         (add-after 'wrap-program 'glib-or-gtk-wrap
+         (add-after 'install 'glib-or-gtk-wrap
            (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap)))
        ;; The test suite is not "well exercised" according to the developers,
        ;; and fails with various errors.  See
@@ -1118,7 +1104,7 @@ tools.")
                 (lambda ()
                   (apply %configure args))
                 #:unwind? #t)))
-          (add-after 'wrap-program 'glib-or-gtk-wrap
+          (add-after 'install 'glib-or-gtk-wrap
             (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap)))
       ;; Test suite?  Which test suite?
       #:tests? #f))
@@ -1347,10 +1333,6 @@ plugins are provided.")
            fftw))
     (native-inputs
      (list pkg-config))
-    (native-search-paths
-     (list (search-path-specification
-            (variable "LV2_PATH")
-            (files '("lib/lv2")))))
     (home-page "http://calf.sourceforge.net/")
     (synopsis "Audio plug-in pack for LV2 and JACK environments")
     (description
@@ -2456,10 +2438,6 @@ partial release of the General MIDI sound set.")
            gettext-minimal
            pkg-config
            sassc))
-    (native-search-paths
-     (list (search-path-specification
-            (variable "LV2_PATH")
-            (files '("lib/lv2")))))
     (home-page "https://guitarix.org/")
     (synopsis "Virtual guitar amplifier")
     (description "Guitarix is a virtual guitar amplifier running JACK.
@@ -2567,10 +2545,6 @@ well suited to all musical instruments and vocals.")
            zita-convolver))
     (native-inputs
      (list pkg-config))
-    (native-search-paths
-     (list (search-path-specification
-            (variable "LV2_PATH")
-            (files '("lib/lv2")))))
     (home-page "https://tomszilagyi.github.io/plugins/ir.lv2")
     (synopsis "LV2 convolution reverb")
     (description
@@ -2668,6 +2642,7 @@ synchronous execution of all clients, and low latency operation.")
                  prefix (,(getenv "GUIX_PYTHONPATH")))))))))
     (inputs
      (list alsa-lib
+           bash-minimal
            dbus
            expat
            libsamplerate
@@ -2828,6 +2803,10 @@ plugin function as a JACK application.")
                  (("^CPP.*")           "CPP = g++\n")))
              #t))
          (delete 'build))))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "LADSPA_PATH")
+            (files '("lib/ladspa")))))
     ;; Since the home page is gone, we provide a link to the archived version.
     (home-page
      "https://web.archive.org/web/20140729190945/http://www.ladspa.org/")
@@ -3166,6 +3145,10 @@ significantly faster and have minimal dependencies.")
      (list libsndfile))
     (native-inputs
      (list pkg-config))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "LV2_PATH")
+            (files '("lib/lv2")))))
     (home-page "https://lv2plug.in/")
     (synopsis "LV2 audio plugin specification")
     (description
@@ -3231,10 +3214,6 @@ generate C headers from Turtle files.")
      (list lv2 lvtk))
     (native-inputs
      (list pkg-config ttl2c))
-    (native-search-paths
-     (list (search-path-specification
-            (variable "LV2_PATH")
-            (files '("lib/lv2")))))
     (home-page "https://elephly.net/lv2/mdapiano.html")
     (synopsis "LV2 port of the mda Piano plugin")
     (description "An LV2 port of the mda Piano VSTi.")
@@ -3328,7 +3307,7 @@ lv2-c++-tools.")
 (define-public openal
   (package
     (name "openal")
-    (version "1.22.2")
+    (version "1.23.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -3336,30 +3315,27 @@ lv2-c++-tools.")
                     version ".tar.bz2"))
               (sha256
                (base32
-                "081xgkma2a19dscwx21xdpklh8gq399w4f1fx737qsx7rnawr55f"))))
+                "08avhhfd96x4c18p8ys3va85nhx31xgpa3bz1ckmfkjc2f4lnvvr"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:tests? #f  ; no check target
-       #:phases
-       (modify-phases %standard-phases
-         (add-after
-          'unpack 'use-full-library-paths
-          (lambda* (#:key inputs #:allow-other-keys)
-            (substitute* "alc/backends/pulseaudio.cpp"
-              (("#define PALIB \"libpulse\\.so\\.0\"")
-               (string-append "#define PALIB \""
-                              (assoc-ref inputs "pulseaudio")
-                              "/lib/libpulse.so.0"
-                              "\"")))
-            (substitute* "alc/backends/alsa.cpp"
-              (("LoadLib\\(\"libasound\\.so\\.2\"\\)")
-               (string-append "LoadLib(\""
-                              (assoc-ref inputs "alsa-lib")
-                              "/lib/libasound.so.2"
-                              "\")")))
-            #t)))))
-    (inputs
-     (list alsa-lib pulseaudio))
+     (list
+      #:tests? #f                       ; no check target
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-full-library-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "alc/backends/pulseaudio.cpp"
+                (("#define PALIB \"libpulse\\.so\\.0\"")
+                 (string-append "#define PALIB \""
+                                (search-input-file inputs "lib/libpulse.so.0")
+                                "\"")))
+              (substitute* "alc/backends/alsa.cpp"
+                (("LoadLib\\(\"libasound\\.so\\.2\"\\)")
+                 (string-append "LoadLib(\""
+                                (search-input-file inputs "lib/libasound.so.2")
+                                "/lib/libasound.so.2"
+                                "\")"))))))))
+    (inputs (list alsa-lib pulseaudio))
     (synopsis "3D audio API")
     (description
      "OpenAL provides capabilities for playing audio in a virtual 3D
@@ -3740,13 +3716,6 @@ filters using the so-called @emph{window method}.")
      (list fftw libsamplerate)) ;required by rubberband.pc
     (native-inputs
      (list pkg-config))
-    (native-search-paths
-     (list (search-path-specification
-            (variable "LV2_PATH")
-            (files '("lib/lv2")))
-           (search-path-specification
-            (variable "LADSPA_PATH")
-            (files '("lib/ladspa")))))
     (home-page "https://breakfastquay.com/rubberband/")
     (synopsis "Audio time-stretching and pitch-shifting library")
     (description
@@ -6378,10 +6347,6 @@ systems.")
      (list lv2))
     (native-inputs
      (list pkg-config))
-    (native-search-paths
-     (list (search-path-specification
-            (variable "LV2_PATH")
-            (files '("lib/lv2")))))
     (home-page "https://drobilla.net/software/mda-lv2.html")
     (synopsis "Audio plug-in pack for LV2")
     (description

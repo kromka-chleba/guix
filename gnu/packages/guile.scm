@@ -42,6 +42,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bdw-gc)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages dbm)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages gawk)
@@ -109,7 +110,19 @@
 
                       ;; The usual /bin/sh...
                       (substitute* "ice-9/popen.scm"
-                        (("/bin/sh") (which "sh"))))))
+                        (("/bin/sh") (which "sh")))))
+                  (add-after 'install 'add-libxcrypt-reference-pkgconfig
+                    (lambda* (#:key inputs outputs #:allow-other-keys)
+                      (define out (assoc-ref outputs "out"))
+                      (define libxcrypt
+                        (false-if-exception
+                         (dirname (search-input-file inputs "lib/libcrypt.so.1"))))
+                      (when libxcrypt
+                        (substitute*
+                            (find-files (string-append out "/lib/pkgconfig")
+                                        ".*\\.pc")
+                          (("-lcrypt")
+                           (string-append "-L" libxcrypt " -lcrypt")))))))
 
                 ;; XXX: Several numerical tests and tests related to
                 ;; 'inet-pton' fail on glibc 2.33/GCC 10.  Disable them.
@@ -122,7 +135,7 @@
                       `(("self" ,this-package))
                       '()))
 
-   (inputs (list gawk readline))
+   (inputs (list gawk libxcrypt readline))
 
    ;; Since `guile-1.8.pc' has "Libs: ... -lgmp -lltdl", these must be
    ;; propagated.
@@ -163,7 +176,7 @@ without requiring the source code to be rewritten.")
                 (list this-package)
                 '())))
    (inputs
-    (append (list libffi)
+    (append (list libffi libxcrypt)
             (libiconv-if-needed)
 
             ;; We need Bash when cross-compiling because some of the scripts
@@ -238,7 +251,19 @@ without requiring the source code to be rewritten.")
                          '(search-input-file inputs "/bin/bash"))
                         (else
                          '(string-append bash "/bin/bash")))))
-              #t))))))
+              #t)))
+        (add-after 'install 'add-libxcrypt-reference-pkgconfig
+          (lambda* (#:key inputs outputs #:allow-other-keys)
+            (define out (assoc-ref outputs "out"))
+            (define libxcrypt
+              (false-if-exception
+               (dirname (search-input-file inputs "lib/libcrypt.so.1"))))
+            (when libxcrypt
+              (substitute*
+                  (find-files (string-append out "/lib/pkgconfig")
+                              ".*\\.pc")
+                (("-lcrypt")
+                 (string-append "-L" libxcrypt " -lcrypt")))))))))
 
    (native-search-paths
     (list (search-path-specification
@@ -882,7 +907,8 @@ manipulate repositories of the Git version control system.")
   (package-for-guile-2.2 guile-git))
 
 (define-public guile2.0-git
-  (package-for-guile-2.0 guile-git))
+  ;; Guile-Git 0.8.0 no longer supports Guile 2.0.
+  (deprecated-package "guile2.0-git" guile2.2-git))
 
 (define-public guile-zlib
   (package

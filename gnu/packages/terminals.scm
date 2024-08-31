@@ -349,7 +349,6 @@ compatibility to existing emulators like xterm, gnome-terminal, konsole, etc.")
              automake
              libtool
              libxslt ;to build the man page
-             libxml2 ;for XML_CATALOG_FILES
              docbook-xsl))
       (inputs
        `(("libdrm" ,libdrm)
@@ -1092,6 +1091,7 @@ usable with any list--including files, command history, processes and more.")
                              (string-append zsh-completion "/_fzf"))))))))))
     (inputs
      `(,@(package-inputs go-github-com-junegunn-fzf)
+       ("bash" ,bash-minimal) ; for wrap-program
        ("findutils" ,findutils)
        ("ncurses" ,ncurses)))))
 

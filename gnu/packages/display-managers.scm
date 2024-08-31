@@ -48,6 +48,7 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gl)
@@ -386,6 +387,7 @@ experience for your users, your family and yourself")
           (add-before 'check 'pre-check
             (lambda _
               (wrap-program "tests/src/test-python-greeter"
+                #:sh (which "bash")
                 `("GUIX_PYTHONPATH"      ":" prefix (,(getenv "GUIX_PYTHONPATH")))
                 `("GI_TYPELIB_PATH" ":" prefix (,(getenv "GI_TYPELIB_PATH"))))
               ;; Avoid printing locale warnings, which trip up the text
@@ -531,6 +533,7 @@ GTK+, lets you select a desktop session and log in to it.")
                   libjpeg-turbo
                   libpng
                   libx11
+                  libxcrypt
                   libxft
                   libxmu
                   libxrandr

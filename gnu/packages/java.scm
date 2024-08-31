@@ -580,8 +580,8 @@
 
                  ;; This is necessary because the certificate directory contains
                  ;; files with non-ASCII characters in their names.
-                 (setlocale LC_ALL "en_US.utf8")
-                 (setenv "LC_ALL" "en_US.utf8")
+                 (setlocale LC_ALL "C.UTF-8")
+                 (setenv "LC_ALL" "C.UTF-8")
 
                  (for-each import-cert (find-files certs-dir "\\.pem$"))
                  (mkdir-p (string-append (assoc-ref outputs "out")
@@ -723,7 +723,7 @@ IcedTea build harness.")
       (arguments
        `(#:imported-modules
          ((guix build ant-build-system)
-          ,@%gnu-build-system-modules)
+          ,@%default-gnu-imported-modules)
 
          #:disallowed-references ,(list (gexp-input icedtea-7 "jdk"))
 
@@ -744,6 +744,11 @@ IcedTea build harness.")
                    "--enable-nss"
                    ,(string-append "--with-parallel-jobs="
                                    (number->string (parallel-job-count)))
+                   ;; Java Flight Recorder isn't supported on some architectures.
+                   ,@(if ,(target-ppc32?)
+                       `("--enable-jfr=no")
+                       '())
+                   "--disable-docs"     ; This phase can take hours on slow machines.
                    "--disable-downloading"
                    "--disable-system-pcsc"
                    "--disable-system-sctp"
@@ -758,6 +763,10 @@ IcedTea build harness.")
                  (delete 'patch-patches)
                  (delete 'patch-bitrot)
                  (delete 'use-classpath)
+                 ;; Prevent passing -j (parallel-job-count) to make
+                 (replace 'build
+                   (lambda* (#:key (make-flags '()) #:allow-other-keys)
+                     (apply invoke "make" make-flags)))
                  ;; Prevent the keytool from recording the current time when
                  ;; adding certificates at build time.
                  (add-after 'unpack 'patch-keystore
@@ -881,20 +890,27 @@ new Date();"))
               (sha256
                (base32
                 "1v92nzdqx07c35x945awzir4yk0fk22vky6fpp8mq9js930sxsz0"))
-              (patches (search-patches "openjdk-9-pointer-comparison.patch"
-                                       "openjdk-9-setsignalhandler.patch"
-                                       "openjdk-currency-time-bomb.patch"))))
+              (patches
+               (search-patches "openjdk-9-pointer-comparison.patch"
+                               "openjdk-9-classlist-reproducibility.patch"
+                               "openjdk-currency-time-bomb.patch"
+                               "openjdk-9-jar-reproducibility.patch"
+                               "openjdk-9-module-reproducibility.patch"
+                               "openjdk-9-module2-reproducibility.patch"
+                               "openjdk-9-module3-reproducibility.patch"
+                               "openjdk-9-idlj-reproducibility.patch"
+                               "openjdk-9-setsignalhandler.patch"))))
     (build-system gnu-build-system)
     (outputs '("out" "jdk" "doc"))
     (arguments
      `(#:imported-modules
        ((guix build ant-build-system)
-        ,@%gnu-build-system-modules)
+        ,@%default-gnu-imported-modules)
        #:modules
        ((guix build utils)
         (guix build gnu-build-system)
         (ice-9 popen))
-       #:tests? #f; require jtreg
+       #:tests? #f                      ; require jtreg
        #:make-flags '("all")
        #:disallowed-references ,(list (gexp-input icedtea-8)
                                       (gexp-input icedtea-8 "jdk"))
@@ -983,80 +999,80 @@ new Date();"))
                               file))))
                 (find-files "."
                             "\\.c$|\\.h$")))))
-           ;; By default OpenJDK only generates an empty keystore.  In order to
-           ;; be able to use certificates in Java programs we need to generate a
-           ;; keystore from a set of certificates.  For convenience we use the
-           ;; certificates from the nss-certs package.
-           (add-after 'install 'install-keystore
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (use-modules (ice-9 rdelim))
-               (let* ((keystore  "cacerts")
-                      (certs-dir (search-input-directory inputs
-                                                         "etc/ssl/certs"))
-                      (keytool   (string-append (assoc-ref outputs "jdk")
-                                                "/bin/keytool")))
-                 (define (extract-cert file target)
-                   (call-with-input-file file
-                     (lambda (in)
-                       (call-with-output-file target
-                         (lambda (out)
-                           (let loop ((line (read-line in 'concat))
-                                      (copying? #f))
-                             (cond
-                              ((eof-object? line) #t)
-                              ((string-prefix? "-----BEGIN" line)
-                               (display line out)
-                               (loop (read-line in 'concat) #t))
-                              ((string-prefix? "-----END" line)
-                               (display line out)
-                               #t)
-                              (else
-                               (when copying? (display line out))
-                               (loop (read-line in 'concat) copying?)))))))))
-                 (define (import-cert cert)
-                   (format #t "Importing certificate ~a\n" (basename cert))
-                   (let ((temp "tmpcert"))
-                     (extract-cert cert temp)
-                     (let ((port (open-pipe* OPEN_WRITE keytool
-                                             "-import"
-                                             "-alias" (basename cert)
-                                             "-keystore" keystore
-                                             "-storepass" "changeit"
-                                             "-file" temp)))
-                       (display "yes\n" port)
-                       (when (not (zero? (status:exit-val (close-pipe port))))
-                         (format #t "failed to import ~a\n" cert)))
-                     (delete-file temp)))
+         ;; By default OpenJDK only generates an empty keystore.  In order to
+         ;; be able to use certificates in Java programs we need to generate a
+         ;; keystore from a set of certificates.  For convenience we use the
+         ;; certificates from the nss-certs package.
+         (add-after 'install 'install-keystore
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (use-modules (ice-9 rdelim))
+             (let* ((keystore  "cacerts")
+                    (certs-dir (search-input-directory inputs
+                                                       "etc/ssl/certs"))
+                    (keytool   (string-append (assoc-ref outputs "jdk")
+                                              "/bin/keytool")))
+               (define (extract-cert file target)
+                 (call-with-input-file file
+                   (lambda (in)
+                     (call-with-output-file target
+                       (lambda (out)
+                         (let loop ((line (read-line in 'concat))
+                                    (copying? #f))
+                           (cond
+                            ((eof-object? line) #t)
+                            ((string-prefix? "-----BEGIN" line)
+                             (display line out)
+                             (loop (read-line in 'concat) #t))
+                            ((string-prefix? "-----END" line)
+                             (display line out)
+                             #t)
+                            (else
+                             (when copying? (display line out))
+                             (loop (read-line in 'concat) copying?)))))))))
+               (define (import-cert cert)
+                 (format #t "Importing certificate ~a\n" (basename cert))
+                 (let ((temp "tmpcert"))
+                   (extract-cert cert temp)
+                   (let ((port (open-pipe* OPEN_WRITE keytool
+                                           "-import"
+                                           "-alias" (basename cert)
+                                           "-keystore" keystore
+                                           "-storepass" "changeit"
+                                           "-file" temp)))
+                     (display "yes\n" port)
+                     (when (not (zero? (status:exit-val (close-pipe port))))
+                       (format #t "failed to import ~a\n" cert)))
+                   (delete-file temp)))
 
-                 ;; This is necessary because the certificate directory contains
-                 ;; files with non-ASCII characters in their names.
-                 (setlocale LC_ALL "en_US.utf8")
-                 (setenv "LC_ALL" "en_US.utf8")
+               ;; This is necessary because the certificate directory contains
+               ;; files with non-ASCII characters in their names.
+               (setlocale LC_ALL "C.UTF-8")
+               (setenv "LC_ALL" "C.UTF-8")
 
-                 (copy-file (string-append (assoc-ref outputs "out")
-                                           "/lib/security/cacerts")
-                            keystore)
-                 (chmod keystore #o644)
-                 (for-each import-cert (find-files certs-dir "\\.pem$"))
-                 (mkdir-p (string-append (assoc-ref outputs "out")
-                                         "/lib/security"))
-                 (mkdir-p (string-append (assoc-ref outputs "jdk")
-                                         "/lib/security"))
+               (copy-file (string-append (assoc-ref outputs "out")
+                                         "/lib/security/cacerts")
+                          keystore)
+               (chmod keystore #o644)
+               (for-each import-cert (find-files certs-dir "\\.pem$"))
+               (mkdir-p (string-append (assoc-ref outputs "out")
+                                       "/lib/security"))
+               (mkdir-p (string-append (assoc-ref outputs "jdk")
+                                       "/lib/security"))
 
-                 ;; The cacerts files we are going to overwrite are chmod'ed as
-                 ;; read-only (444) in icedtea-8 (which derives from this
-                 ;; package).  We have to change this so we can overwrite them.
-                 (chmod (string-append (assoc-ref outputs "out")
-                                       "/lib/security/" keystore) #o644)
-                 (chmod (string-append (assoc-ref outputs "jdk")
-                                       "/lib/security/" keystore) #o644)
+               ;; The cacerts files we are going to overwrite are chmod'ed as
+               ;; read-only (444) in icedtea-8 (which derives from this
+               ;; package).  We have to change this so we can overwrite them.
+               (chmod (string-append (assoc-ref outputs "out")
+                                     "/lib/security/" keystore) #o644)
+               (chmod (string-append (assoc-ref outputs "jdk")
+                                     "/lib/security/" keystore) #o644)
 
-                 (install-file keystore
-                               (string-append (assoc-ref outputs "out")
-                                              "/lib/security"))
-                 (install-file keystore
-                               (string-append (assoc-ref outputs "jdk")
-                                              "/lib/security")))))
+               (install-file keystore
+                             (string-append (assoc-ref outputs "out")
+                                            "/lib/security"))
+               (install-file keystore
+                             (string-append (assoc-ref outputs "jdk")
+                                            "/lib/security")))))
          ;; Some of the libraries in the lib/ folder link to libjvm.so.
          ;; But that shared object is located in the server/ folder, so it
          ;; cannot be found.  This phase creates a symbolic link in the
@@ -1089,48 +1105,96 @@ new Date();"))
                (copy-recursively (string-append images "/images/docs") doc))))
          (add-after 'install 'strip-zip-timestamps
            (lambda* (#:key outputs #:allow-other-keys)
-             (for-each (lambda (zip)
-                         (let ((dir (mkdtemp "zip-contents.XXXXXX")))
-                           (with-directory-excursion dir
-                             (invoke "unzip" zip))
-                           (delete-file zip)
-                           (for-each (lambda (file)
-                                       (let ((s (lstat file)))
-                                         (unless (eq? (stat:type s) 'symlink)
-                                           (format #t "reset ~a~%" file)
-                                           (utime file 0 0 0 0))))
-                                     (find-files dir #:directories? #t))
-                           (with-directory-excursion dir
-                             (let ((files (find-files "." ".*" #:directories? #t)))
-                               (apply invoke "zip" "-0" "-X" zip files)))))
-                       (find-files (assoc-ref outputs "doc") ".*.zip$")))))))
+             (for-each
+              (lambda (zip)
+                (let ((dir (mkdtemp "zip-contents.XXXXXX")))
+                  (with-directory-excursion dir
+                    ;; This is an exact copy of the implementation of invoke,
+                    ;; but this accepts exit code 1 as OK.
+                    (let ((code (system* "unzip" "--" zip)))
+                      ;; jmod files are zip files with an extra header in
+                      ;; front.  unzip will warn about that -- but otherwise
+                      ;; work.
+                      (when (> (status:exit-val code) 1) ; 1 is just a warning
+                        (raise
+                         (condition
+                          (&invoke-error
+                           (program "unzip")
+                           (arguments (list "--" zip))
+                           (exit-status (status:exit-val code))
+                           (term-signal (status:term-sig code))
+                           (stop-signal (status:stop-sig code))))))))
+                  (delete-file zip)
+                  (for-each (lambda (file)
+                              (let ((s (lstat file)))
+                                (format #t "reset ~a~%" file)
+                                (utime file 1 1 0 0
+                                       AT_SYMLINK_NOFOLLOW)))
+                            (find-files dir #:directories? #t))
+                  (with-directory-excursion dir
+                    (let ((files (cons "./META-INF/MANIFEST.MF"
+                                       (append
+                                        (find-files "./META-INF" ".*")
+                                        ;; for jmod:
+                                        (list "./classes/module-info.class")
+                                        (find-files "." ".*")))))
+                      (apply invoke "zip" "--symlinks" "-0" "-X" zip files)
+                      (when (string-suffix? ".jmod" zip)
+                        (let ((new-zip (string-append zip "n"))
+                              (contents (call-with-input-file zip
+                                          (@ (ice-9 binary-ports)
+                                             get-bytevector-all))))
+                          (call-with-output-file new-zip
+                            (lambda (output-port)
+                              ((@ (ice-9 binary-ports) put-bytevector)
+                               output-port
+                               #vu8(#x4a #x4d #x01 #x00)) ; JM
+                              ((@ (ice-9 binary-ports) put-bytevector)
+                               output-port
+                               contents)))
+                          (rename-file new-zip zip)))))))
+              (append (find-files (string-append
+                                   (assoc-ref outputs "doc")
+                                   "/api")
+                                  "\\.zip$")
+                      (find-files (assoc-ref outputs "doc") "src\\.zip$")
+                      (find-files (assoc-ref outputs "jdk") "src\\.zip$")
+                      (find-files (assoc-ref outputs "jdk") "\\.jmod$")
+                      (find-files (assoc-ref outputs "jdk") "\\.diz$")
+                      (find-files (assoc-ref outputs "out") "\\.diz$")
+
+                      (list (string-append (assoc-ref outputs "jdk")
+                                           "/lib/jrt-fs.jar"))
+                      (find-files (string-append (assoc-ref outputs "jdk")
+                                                 "/demo")
+                                  "\\.jar$"))))))))
     (inputs
-     `(("alsa-lib" ,alsa-lib)
-       ("cups" ,cups)
-       ("fontconfig" ,fontconfig)
-       ("freetype" ,freetype)
-       ("giflib" ,giflib)
-       ("lcms" ,lcms)
-       ("libelf" ,libelf)
-       ("libjpeg" ,libjpeg-turbo)
-       ("libice" ,libice)
-       ("libpng" ,libpng)
-       ("libx11" ,libx11)
-       ("libxcomposite" ,libxcomposite)
-       ("libxi" ,libxi)
-       ("libxinerama" ,libxinerama)
-       ("libxrender" ,libxrender)
-       ("libxt" ,libxt)
-       ("libxtst" ,libxtst)))
+     (list alsa-lib
+           cups
+           fontconfig
+           freetype
+           giflib
+           lcms
+           libelf
+           libjpeg-turbo
+           libice
+           libpng
+           libx11
+           libxcomposite
+           libxi
+           libxinerama
+           libxrender
+           libxt
+           libxtst))
     (native-inputs
-     `(("icedtea-8" ,icedtea-8)
-       ("icedtea-8:jdk" ,icedtea-8 "jdk")
-       ;; XXX: The build system fails with newer versions of GNU Make.
-       ("make@4.2" ,gnu-make-4.2)
-       ("nss-certs" ,nss-certs)
-       ("unzip" ,unzip)
-       ("which" ,which)
-       ("zip" ,zip)))
+     (list icedtea-8
+           `(,icedtea-8 "jdk")
+           ;; XXX: The build system fails with newer versions of GNU Make.
+           gnu-make-4.2
+           nss-certs
+           unzip
+           which
+           zip))
     (home-page "https://openjdk.org/projects/jdk9/")
     (synopsis "Java development kit")
     (description
@@ -1155,7 +1219,15 @@ new Date();"))
                (base32
                 "0i47ar8lxzjrkkiwbzybfxs473390h4jq9ahm3xqdvy5zpchxy3y"))
               (patches (search-patches
+                        "openjdk-10-char-reproducibility.patch"
+                        "openjdk-10-classlist-reproducibility.patch"
+                        "openjdk-10-corba-reproducibility.patch"
                         "openjdk-10-idlj-reproducibility.patch"
+                        "openjdk-10-module-reproducibility.patch"
+                        "openjdk-10-module3-reproducibility.patch"
+                        "openjdk-10-module4-reproducibility.patch"
+                        "openjdk-10-jar-reproducibility.patch"
+                        "openjdk-10-jtask-reproducibility.patch"
                         "openjdk-10-pointer-comparison.patch"
                         "openjdk-10-setsignalhandler.patch"
                         "openjdk-currency-time-bomb2.patch"))))
@@ -1181,6 +1253,11 @@ new Date();"))
                ;; this exact first line.
                (substitute* "make/data/blacklistedcertsconverter/blacklisted.certs.pem"
                  (("^#!.*") "#! java BlacklistedCertsConverter SHA-256\n"))))
+           (add-after 'unpack 'remove-timestamping
+             (lambda _
+               (substitute* "./src/hotspot/share/runtime/vm_version.cpp"
+                 (("__DATE__") "")
+                 (("__TIME__") ""))))
            (replace 'configure
              (lambda* (#:key inputs outputs #:allow-other-keys)
                (invoke "bash" "./configure"
@@ -1230,8 +1307,14 @@ new Date();"))
               (modules '((guix build utils)))
               (snippet
                '(for-each delete-file (find-files "." "\\.(bin|exe|jar)$")))
-              (patches (search-patches
-                        "openjdk-currency-time-bomb2.patch"))))
+              (patches
+               (search-patches "openjdk-10-module3-reproducibility.patch"
+                               "openjdk-10-module4-reproducibility.patch"
+                               "openjdk-10-char-reproducibility.patch"
+                               "openjdk-11-classlist-reproducibility.patch"
+                               "openjdk-10-jar-reproducibility.patch"
+                               "openjdk-10-jtask-reproducibility.patch"
+                               "openjdk-currency-time-bomb2.patch"))))
     (build-system gnu-build-system)
     (outputs '("out" "jdk" "doc"))
     (arguments
@@ -1265,6 +1348,10 @@ new Date();"))
          "--with-libjpeg=system"
          "--with-libpng=system"
          "--with-version-pre="
+         ;; Should be set by SOURCE_DATE_EPOCH handler, but isn't being
+         ;; set; do it manually.
+         "--with-hotspot-build-time=1970-01-01T00:00:01"
+         "--enable-reproducible-build"  ; to be sure
          ;; Allow the build system to locate the system freetype.
          (string-append "--with-freetype-include="
                         #$(this-package-input "freetype") "/include")
@@ -1278,6 +1365,11 @@ new Date();"))
               ;; this exact first line.
               (substitute* "make/data/blockedcertsconverter/blocked.certs.pem"
                 (("^#!.*") "#! java BlockedCertsConverter SHA-256\n"))))
+          (add-after 'unpack 'remove-timestamping
+            (lambda _
+              (substitute* "src/hotspot/share/runtime/abstract_vm_version.cpp"
+                (("__DATE__") "")
+                (("__TIME__") ""))))
           (add-after 'unpack 'patch-jni-libs
             ;; Hardcode dynamically loaded libraries.
             (lambda _
@@ -1397,7 +1489,7 @@ new Date();"))
                                            ((name . dir)
                                             dir))
                                          outputs)))))
-          (add-after 'remove-diz-file 'strip-archive-timestamps
+          (add-after 'remove-extraneous-files 'strip-archive-timestamps
             (lambda _
               (use-modules (ice-9 binary-ports)
                            (rnrs bytevectors))
@@ -1478,7 +1570,7 @@ new Date();"))
            libxtst))
     (native-inputs
      (list autoconf
-           bash                     ; not bash-minimal, needs ulimit
+           bash                         ; not bash-minimal, needs ulimit
            openjdk10
            `(,openjdk10 "jdk")
            gnu-make-4.2
@@ -1487,7 +1579,7 @@ new Date();"))
            unzip
            which
            zip))
-    (home-page "https://openjdk.java.net/projects/jdk/11/")
+    (home-page "https://openjdk.org/projects/jdk/11/")
     (synopsis "Java development kit")
     (description
      "This package provides the Java development kit OpenJDK.")
@@ -1564,6 +1656,11 @@ new Date();"))
                          (string-append "Interpreter specific version of call_VM_base\n"
                                         "  using MacroAssembler::call_VM_leaf_base;"))))))
                 #~())
+           (replace 'remove-timestamping
+             (lambda _
+               (substitute* "src/hotspot/share/runtime/vm_version.cpp"
+                (("__DATE__") "")
+                (("__TIME__") ""))))
            (replace 'fix-java-shebangs
              (lambda _
                ;; 'blocked' was renamed to 'blacklisted' in this version for
@@ -1576,9 +1673,20 @@ blacklisted.certs.pem"
 (define-public openjdk13
   (make-openjdk openjdk12 "13.0.14"
                 "1v92i5rhahqkjw8mz09c9qasnxqc67ygy0y266kdmm534z0da755"
-  (source (origin
-            (inherit (package-source base))
-            (patches '())))))
+   (source (origin
+             (inherit (package-source base))
+             (patches (search-patches "openjdk-13-classlist-reproducibility.patch"
+                                      "openjdk-10-jtask-reproducibility.patch"))))
+   (arguments
+    (substitute-keyword-arguments (package-arguments openjdk12)
+      ((#:phases phases)
+       #~(modify-phases #$phases
+           (replace 'remove-timestamping
+             (lambda _
+               (substitute*
+                "src/hotspot/share/runtime/abstract_vm_version.cpp"
+                (("__DATE__") "")
+                (("__TIME__") ""))))))))))
 
 (define-public openjdk14
   (make-openjdk
@@ -1593,7 +1701,9 @@ blacklisted.certs.pem"
                  (substitute* "make/autoconf/basics.m4"
                    (("if help") "if command -v"))
                  (for-each delete-file (find-files "." "\\.(bin|exe|jar)$"))))
-             (patches (search-patches "openjdk-10-setsignalhandler.patch"))))))
+             (patches (search-patches "openjdk-10-setsignalhandler.patch"
+                                      "openjdk-10-jtask-reproducibility.patch"
+                                      "openjdk-13-classlist-reproducibility.patch"))))))
 
 (define-public openjdk15
   (make-openjdk
@@ -1604,7 +1714,8 @@ blacklisted.certs.pem"
              (modules '())
              (snippet #f)
              (patches
-              (search-patches "openjdk-15-xcursor-no-dynamic.patch"))))
+              (search-patches "openjdk-15-jtask-reproducibility.patch"
+                              "openjdk-15-xcursor-no-dynamic.patch"))))
    (inputs
     (modify-inputs (package-inputs base)
       (append libxcursor)))             ;for our patch to work
@@ -8114,7 +8225,7 @@ discards all logging messages.")
     (arguments
      `(#:tests? #f ; no test target
        #:imported-modules ((guix build ant-build-system)
-                           ,@%gnu-build-system-modules)
+                           ,@%default-gnu-imported-modules)
        #:modules (((guix build ant-build-system) #:prefix ant:)
                   (guix build gnu-build-system)
                   (guix build utils))
@@ -8711,7 +8822,7 @@ Python generated sources by ANTLR.")))
              #t))
          ;; tests require to have a working antlr4 binary
          (delete 'check)
-         (add-after 'bin-install 'check
+         (add-after 'install 'check
            (lambda _
              (invoke "ant" "compile-tests")
              (invoke "ant" "check" "-Dtest.home=runtime-testsuite/test")

@@ -9,6 +9,7 @@
 ;;; Copyright © 2020 Sebastian Schott <sschott@mailbox.org>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020. 2021, 2022, 2024 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022, 2023 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
@@ -117,7 +118,8 @@
     (native-inputs
      (list file intltool gobject-introspection))
     (inputs
-     `(("gdk-pixbuf" ,gdk-pixbuf)
+     `(("bash" ,bash-minimal) ; for wrap-program
+       ("gdk-pixbuf" ,gdk-pixbuf)
        ("gexiv2" ,gexiv2)
        ("gst-libav" ,gst-libav)
        ("gst-plugins-base" ,gst-plugins-base)
@@ -331,6 +333,7 @@ MTP, and much more.")
                           (lib (dirname (dirname (car pm)))))
                      (wrap-program (string-append #$output "/bin/exiftool")
                        `("PERL5LIB" prefix (,lib)))))))))
+    (inputs (list bash-minimal))
     (home-page "https://metacpan.org/release/Image-ExifTool")
     (synopsis "Program and Perl library to manipulate EXIF and other metadata")
     (description "This package provides the @code{exiftool} command and the
@@ -721,13 +724,14 @@ such as Batch image processing.")
            gettext-minimal
            `(,glib "bin")
            gobject-introspection
-           gtk-doc
+           gtk-doc/stable
            itstool
            libxml2
            perl
            pkg-config))
     (inputs
-     (list gdk-pixbuf
+     (list bash-minimal
+           gdk-pixbuf
            gexiv2
            gst-plugins-base
            gstreamer

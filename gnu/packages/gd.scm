@@ -1,11 +1,12 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2013, 2016, 2023 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013, 2016, 2023-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015, 2016 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2016, 2017 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2017, 2021 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -30,6 +31,7 @@
   #:use-module (guix download)
   #:use-module (gnu packages)
   #:use-module (gnu packages perl)
+  #:use-module (gnu packages perl-check)
   #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages fontutils)
@@ -43,38 +45,44 @@
     ;; Note: With libgd.org now pointing to github.com, genuine old
     ;; tarballs are no longer available.  Notably, versions 2.0.x are
     ;; missing.
-    (version "2.3.2")
+    (version "2.3.3")
     (source (origin
-             (method url-fetch)
-             (uri (string-append
-                   "https://github.com/libgd/libgd/releases/download/gd-"
-                   version "/libgd-" version ".tar.xz"))
-             (sha256
-              (base32
-               "1yypywkh8vphcy4qqpf51kxpb0a3r7rjqk3fc61rpn70hiq092j7"))
-             (patches
-              (search-patches "gd-fix-tests-on-i686.patch"
-                              "gd-brect-bounds.patch"
-                              ;; Drop when
-                              ;; https://github.com/libgd/libgd/issues/691
-                              ;; is solved.
-                              "gd-Revert-fix-303-gdlib.pc.patch"))))
+              (method url-fetch)
+              (uri (string-append
+                    "https://github.com/libgd/libgd/releases/download/gd-"
+                    version "/libgd-" version ".tar.xz"))
+              (sha256
+               (base32
+                "0qas3q9xz3wgw06dm2fj0i189rain6n60z1vyq50d5h7wbn25s1z"))
+              (patches
+               (search-patches "gd-fix-tests-on-i686.patch"
+                               "gd-brect-bounds.patch"))))
     (build-system gnu-build-system)
     (arguments
-      ;; As recommended by github.com/libgd/libgd/issues/278 to fix rounding
-      ;; issues on aarch64 and other architectures.
-     `(#:make-flags '("CFLAGS=-ffp-contract=off")
-       #:configure-flags '("--disable-static")
-       #:phases
-       (modify-phases %standard-phases
-         ;; This test is known to fail on most architectures:
-         ;; https://github.com/libgd/libgd/issues/359
-         ;; TODO Replace this substitution with an upstream bug fix.
-         (add-after 'unpack 'disable-failing-test
-           (lambda _
-             (substitute* "tests/gdimagegrayscale/basic.c"
-               (("return gdNumFailures\\(\\)")
-                 "return 0")))))))
+     ;; As recommended by github.com/libgd/libgd/issues/278 to fix rounding
+     ;; issues on aarch64 and other architectures.
+     (list #:make-flags #~(list "CFLAGS=-ffp-contract=off"
+
+                                ;; XXX: This test fails on i686-linux.
+                                ;; See <https://issues.guix.gnu.org/71996>.
+                                #$@(if (and (not (%current-target-system))
+                                            (string-prefix? "i686"
+                                                            (%current-system)))
+                                       #~("XFAIL_TESTS=gdimagegrayscale/basic")
+                                       #~()))
+           #:configure-flags #~(list "--disable-static")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'remove-libtool-archives
+                 ;; Libtool archives lists the whole transitive dependencies,
+                 ;; which is unnecessary unless producing static archives and
+                 ;; leads to overlinking, e.g. causing the configure script of
+                 ;; texlive-bin to fail due to looking for a transitive jpeg
+                 ;; library.
+                 (lambda _
+                   (for-each delete-file
+                             (find-files (string-append #$output "/lib")
+                                         "\\.la$")))))))
     (native-inputs
      (list pkg-config))
     (inputs
@@ -102,14 +110,14 @@ most common applications of GD involve website development.")
 (define-public perl-gd
   (package
     (name "perl-gd")
-    (version "2.73")
+    (version "2.78")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://cpan/authors/id/R/RU/RURBAN/"
                            "GD-" version ".tar.gz"))
        (sha256
-        (base32 "0arjpa8id6k5yjxfq0j2hsinhhjzjch5lwk6gscf48l54drrw729"))))
+        (base32 "1r3fpr8jhpwi48i66rickiphyj442hypsqnk4df4yjs2ym5hacb8"))))
     (build-system perl-build-system)
     (inputs
      (list fontconfig
@@ -119,7 +127,8 @@ most common applications of GD involve website development.")
            libjpeg-turbo
            zlib))
     (native-inputs
-     (list perl-extutils-pkgconfig))
+     (list perl-extutils-pkgconfig
+           perl-test-nowarnings))
     (arguments
      (list #:make-maker-flags
            #~(list (string-append "--lib_jpeg_path="

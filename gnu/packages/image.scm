@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2013, 2017, 2019, 2021-2022 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013, 2017, 2019, 2021-2023 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2013, 2015, 2016 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2014, 2015, 2016, 2020 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2014, 2015 Alex Kost <alezost@gmail.com>
@@ -200,7 +200,7 @@ code is Valgrind-clean and unit tested.")
 (define-public libpng
   (package
    (name "libpng")
-   (version "1.6.37")  ; Remember to also update libpng-apng if possible!
+   (version "1.6.39")  ; Remember to also update libpng-apng if possible!
    (source (origin
             (method url-fetch)
             (uri (list (string-append "mirror://sourceforge/libpng/libpng16/"
@@ -213,7 +213,7 @@ code is Valgrind-clean and unit tested.")
                         "/libpng16/libpng-" version ".tar.xz")))
             (sha256
              (base32
-              "1jl8in381z0128vgxnvn33nln6hzckl7l7j9nqvkaf1m9n1p0pjh"))))
+              "0dv90dxvmqpk7mbywyjbz8lh08cv4b0ksqp1y62mzvmlf379cihz"))))
    (build-system gnu-build-system)
    (arguments
     `(#:configure-flags '("--disable-static")))
@@ -895,7 +895,7 @@ work.")
     (outputs (list "out" "pbmtools"))
     (arguments
      `(#:modules ((srfi srfi-26)
-                  ,@%gnu-build-system-modules)
+                  ,@%default-gnu-modules)
        #:phases
        (modify-phases %standard-phases
          (delete 'configure)            ; no configure script
@@ -1447,8 +1447,7 @@ language bindings to VIGRA.")
 (define-public libwebp
   (package
     (name "libwebp")
-    (version "1.2.4")
-    (replacement libwebp/fixed)
+    (version "1.3.2")
     (source
      (origin
        ;; No tarballs are provided for >0.6.1.
@@ -1459,7 +1458,7 @@ language bindings to VIGRA.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1jndbc99dd19a6d7h4ds51xyak7gfddkbi41nxdm8n23w7ks35r8"))))
+         "1x37795gpc63g1ma9kqw4q3dikwhrjklixqzjjsj6viqksa19z41"))))
     (build-system gnu-build-system)
     (inputs
      (list freeglut
@@ -1486,22 +1485,6 @@ with lossy compression and typically provides 3x smaller file sizes compared
 to PNG when lossy compression is acceptable for the red/green/blue color
 channels.")
     (license license:bsd-3)))
-
-(define libwebp/fixed
-  (package
-    (inherit libwebp)
-    (name "libwebp")
-    (version "1.3.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://chromium.googlesource.com/webm/libwebp")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1x37795gpc63g1ma9kqw4q3dikwhrjklixqzjjsj6viqksa19z41"))))))
 
 (define-public libmng
   (package
@@ -2714,20 +2697,19 @@ GIF, TIFF, WEBP, BMP, PNG, XPM formats.")
                     (gtk+ (assoc-ref inputs "gtk+")))
                (wrap-program (string-append out "/bin/mypaint")
                  `("GI_TYPELIB_PATH" ":" prefix
-                   (,(getenv "GI_TYPELIB_PATH"))))
-               #t)))
+                   (,(getenv "GI_TYPELIB_PATH")))))))
          (add-before 'check 'pre-check
            (lambda _
              ;; Tests need writing access
-             (setenv "HOME" "/tmp")
-             #t)))))
+             (setenv "HOME" "/tmp"))))))
     (native-inputs
-     `(("pkg-config" ,pkg-config)
-       ("gobject-introspection" ,gobject-introspection)
-       ("swig" ,swig)
-       ("gettext" ,gettext-minimal)))
+     (list pkg-config
+           gobject-introspection
+           swig
+           gettext-minimal))
     (inputs
-     (list gtk+
+     (list bash-minimal
+           gtk+
            (librsvg-for-system)
            hicolor-icon-theme
            libmypaint

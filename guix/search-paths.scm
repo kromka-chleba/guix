@@ -35,6 +35,8 @@
 
             $CPLUS_INCLUDE_PATH
             $C_INCLUDE_PATH
+            $OBJC_INCLUDE_PATH
+            $OBJCPLUS_INCLUDE_PATH
             $LIBRARY_PATH
             $GUIX_EXTENSIONS_PATH
             $PATH
@@ -42,8 +44,11 @@
             $SSL_CERT_DIR
             $SSL_CERT_FILE
             $TZDIR
+            $SGML_CATALOG_FILES
+            $XML_CATALOG_FILES
 
             %gcc-search-paths
+            %libxslt-search-paths
 
             search-path-specification->sexp
             sexp->search-path-specification
@@ -75,17 +80,29 @@
   (file-pattern search-path-specification-file-pattern ;#f | string
                 (default #f)))
 
-(define $C_INCLUDE_PATH
+(define $CPLUS_INCLUDE_PATH
   (search-path-specification
    (variable "CPLUS_INCLUDE_PATH")
    ;; Add 'include/c++' here so that <cstdlib>'s "#include_next
    ;; <stdlib.h>" finds GCC's <stdlib.h>, not libc's.
    (files '("include/c++" "include"))))
 
-(define $CPLUS_INCLUDE_PATH
+(define $C_INCLUDE_PATH
   (search-path-specification
    (variable "C_INCLUDE_PATH")
    (files '("include"))))
+
+(define $OBJC_INCLUDE_PATH
+  (search-path-specification
+   (variable "OBJC_INCLUDE_PATH")
+   (files '("include"))))
+
+(define $OBJCPLUS_INCLUDE_PATH
+  (search-path-specification
+   (variable "OBJCPLUS_INCLUDE_PATH")
+   ;; Add 'include/c++' here so that <cstdlib>'s "#include_next
+   ;; <stdlib.h>" finds GCC's <stdlib.h>, not libc's.
+   (files '("include/c++" "include"))))
 
 (define $LIBRARY_PATH
   (search-path-specification
@@ -100,6 +117,8 @@
   ;; the typical /usr/include headers on an FHS system.
   (list $C_INCLUDE_PATH
         $CPLUS_INCLUDE_PATH
+        $OBJC_INCLUDE_PATH
+        $OBJCPLUS_INCLUDE_PATH
         $LIBRARY_PATH))
 
 (define $PATH
@@ -153,6 +172,32 @@
    (variable "TZDIR")
    (files '("share/zoneinfo"))
    (separator #f)))                     ;single entry
+
+;; Some packages (notably libxml2) make use of 'XML_CATALOG_FILES'
+;; and 'SGML_CATALOG_FILES' for remapping URI references or public/system
+;; identifiers to other URI references.
+(define $SGML_CATALOG_FILES
+  ;; $SGML_CATALOG_FILES lists 'catalog' or 'CATALOG' or '*.cat' files found
+  ;; under the 'sgml' sub-directory of any given package.
+  (search-path-specification
+   (variable "SGML_CATALOG_FILES")
+   (separator ":")
+   (files '("sgml"))
+   (file-pattern "^catalog$|^CATALOG$|^.*\\.cat$")
+   (file-type 'regular)))
+
+(define $XML_CATALOG_FILES
+  ;; $XML_CATALOG_FILES lists 'catalog.xml' files found in under the 'xml'
+  ;; sub-directory of any given package.
+  (search-path-specification
+   (variable "XML_CATALOG_FILES")
+   (separator " ")
+   (files '("xml"))
+   (file-pattern "^catalog\\.xml$")
+   (file-type 'regular)))
+
+(define %libxslt-search-paths
+  (list $SGML_CATALOG_FILES $XML_CATALOG_FILES))
 
 (define (search-path-specification->sexp spec)
   "Return an sexp representing SPEC, a <search-path-specification>.  The sexp

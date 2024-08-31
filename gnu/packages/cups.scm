@@ -1,13 +1,13 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015, 2019, 2021 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2015, 2016, 2017, 2019, 2021 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2015, 2016, 2017, 2019, 2021, 2023 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015-2018, 2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2017 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2017 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2017–2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
-;;; Copyright © 2021, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -31,7 +31,9 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages avahi)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages fonts)     ; font-dejavu
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages ghostscript)
@@ -42,6 +44,7 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
+  #:use-module (gnu packages photo)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages polkit)
   #:use-module (gnu packages pretty-print)
@@ -128,7 +131,7 @@ driver is known to work with these printers:
 (define-public cups-filters
   (package
     (name "cups-filters")
-    (version "1.28.15")
+    (version "1.28.16")
     (source
      (origin
        (method url-fetch)
@@ -136,7 +139,7 @@ driver is known to work with these printers:
         (string-append "https://openprinting.org/download/cups-filters/"
                        "cups-filters-" version ".tar.xz"))
        (sha256
-        (base32 "12s7s2jgnh4q7ws7r2is6xp3pqq818jhnm4vpyzyywmvkxvfq1x9"))
+        (base32 "1h4s35xkbxhxpid39yaiy0gmaj3lck8lhzfdfl3h58hxfpx0nh1s"))
        (modules '((guix build utils)))
        (snippet
         ;; Install backends, banners and filters to cups-filters output
@@ -179,7 +182,11 @@ driver is known to work with these printers:
                                   (assoc-ref %build-inputs "bash")
                                   "/bin/bash")
                    (string-append "--with-rcdir="
-                                  #$output "/etc/rc.d"))
+                                  #$output "/etc/rc.d")
+                   ;; QPDF headers include C++17 libraries such as
+                   ;; std::string_view.
+                   "CFLAGS=-std=gnu17"
+                   "CXXFLAGS=-std=gnu++17")
            #:phases
            #~(modify-phases %standard-phases
                (add-after 'unpack 'patch-foomatic-hardcoded-file-names
@@ -199,9 +206,11 @@ driver is known to work with these printers:
                       (wrap-program file
                         `("PATH" ":" prefix
                           (,(string-append
+                             #$(this-package-input "coreutils") "/bin:"
                              #$(this-package-input "ghostscript-with-cups")
                              "/bin:"
-                             #$(this-package-input "grep") "/bin")))))
+                             #$(this-package-input "grep") "/bin:"
+                             #$(this-package-input "sed") "/bin")))))
                     (find-files (string-append #$output
                                                "/lib/cups/filter"))))))))
     (native-inputs
@@ -212,21 +221,25 @@ driver is known to work with these printers:
                    pkg-config)))
     (inputs
      (list avahi
+           bash-minimal
+           coreutils
+           cups-minimal
+           dbus
+           font-dejavu                  ;also needed by test suite
            fontconfig
            freetype
-           font-dejavu                  ; also needed by test suite
            ghostscript/cups
+           glib
            grep
            ijs
-           dbus
            lcms
+           libexif
            libjpeg-turbo
            libpng
            libtiff
-           glib
-           qpdf
            poppler
-           cups-minimal))
+           qpdf
+           sed))
     (home-page "https://wiki.linuxfoundation.org/openprinting/cups-filters")
     (synopsis "OpenPrinting CUPS filters and backends")
     (description
@@ -249,8 +262,7 @@ filters for the PDF-centric printing workflow introduced by OpenPrinting.")
 (define-public cups-minimal
   (package
     (name "cups-minimal")
-    (version "2.4.2")
-    (replacement cups-minimal/fixed)
+    (version "2.4.9")
     (source
      (origin
        (method git-fetch)
@@ -260,7 +272,7 @@ filters for the PDF-centric printing workflow introduced by OpenPrinting.")
        ;; Avoid NAME confusion: these are the complete CUPS sources.
        (file-name (git-file-name "cups" version))
        (sha256
-        (base32 "01nn6ij7kpf2vzikinn7mk4crjx4ab8m4pplvsccc8gg30a2q9y9"))))
+        (base32 "08wjd1flyaslhnwvxl39403qi3g675rk532ysiyk6cda4r8ks1g1"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -323,7 +335,7 @@ filters for the PDF-centric printing workflow introduced by OpenPrinting.")
                           (if (%current-target-system)
                               (list this-package)
                               '())))
-    (inputs (list zlib gnutls))
+    (inputs (list zlib gnutls libxcrypt))
     (home-page "https://openprinting.github.io/cups")
     (synopsis "The Common Unix Printing System")
     (description
@@ -339,20 +351,6 @@ supported through legacy PPD-based printer drivers called ``printer
 applications''.  These must be installed separately.")
     ;; CUPS is Apache 2.0 with exceptions, see the NOTICE file.
     (license license:asl2.0)))
-
-(define cups-minimal/fixed
-  (package
-    (inherit cups-minimal)
-    (version "2.4.9")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/OpenPrinting/cups")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name "cups" version))
-       (sha256
-        (base32 "08wjd1flyaslhnwvxl39403qi3g675rk532ysiyk6cda4r8ks1g1"))))))
 
 (define-public cups
   (package/inherit cups-minimal
@@ -565,7 +563,7 @@ should only be used as part of the Guix cups-pk-helper service.")
     (arguments
      (list
       #:imported-modules `((guix build python-build-system)
-                           ,@%gnu-build-system-modules)
+                           ,@%default-gnu-imported-modules)
       #:modules '((guix build gnu-build-system)
                   (guix build utils)
                   ((guix build python-build-system) #:prefix python:))
@@ -847,7 +845,11 @@ printer/driver specific, but spooler-independent PPD file.")
        #:tests? #f                                ;no tests
        #:make-flags '("CC=gcc")))
     (inputs
-     (list coreutils sed ghostscript foomatic-filters))   ;for 'foomatic-rip'
+     (list bash-minimal
+           coreutils
+           sed
+           ghostscript
+           foomatic-filters))           ;for 'foomatic-rip'
     (native-inputs
      (list bc groff))
     ;; The domain has expired and no one has meaningfully taken up the torch.
@@ -884,7 +886,7 @@ HP@tie{}LaserJet, and possibly other printers.  See @file{README} for details.")
     (arguments
      (list #:modules
            `((srfi srfi-26)
-             ,@%gnu-build-system-modules)
+             ,@%default-gnu-modules)
            #:configure-flags
            #~(list "--disable-static"
                    (string-append "--prefix=" #$output)
@@ -945,7 +947,7 @@ language.")
       (arguments
        `(#:modules
          ((srfi srfi-26)
-          ,@%gnu-build-system-modules)
+          ,@%default-gnu-modules)
          #:make-flags
          (list (string-append "CUPSDRV="
                               (assoc-ref %outputs "out") "/share/cups/drv")
@@ -995,14 +997,14 @@ obtained and installed separately.")
 (define-public python-pycups
   (package
     (name "python-pycups")
-    (version "1.9.74")
+    (version "2.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pycups" version ".tar.bz2"))
        (sha256
         (base32
-         "1ffp7sswhdsfpy88zg0cc8kl04wygkjs01rlm9f0spbwk8jhy2c6"))))
+         "140c7073bkhx8w9qpaynllhynkkg0rzj3a4wjh9fnj15yvjlqhsp"))))
     (build-system python-build-system)
     (arguments
      '(;; Tests require CUPS to be running

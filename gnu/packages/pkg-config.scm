@@ -2,7 +2,7 @@
 ;;; Copyright © 2012, 2013, 2014, 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2019 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
-;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -29,6 +29,13 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system trivial)
   #:use-module (gnu packages bash)
+
+  ;; Note: Because this module defines the 'pkg-config' macro, it cannot be
+  ;; caught in a cycle with other package modules or the macro wouldn't be
+  ;; visible at the time those other modules are compiled.  To fulfill that
+  ;; constraint, load (gnu packages check) lazily.
+  #:autoload   (gnu packages check) (atf kyua)
+
   #:use-module (guix memoization)
   #:export (pkg-config))
 
@@ -172,16 +179,23 @@ exec ~a \"$@\""
 (define-public pkgconf
   (package
     (name "pkgconf")
-    (version "2.0.2")
+    (version "2.1.0")
     (source (origin
               (method url-fetch)
               (uri (string-append  "https://distfiles.dereferenced.org/"
                                    name "/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "00a4cv1f8cxsb4jhpgxxrwrl92b1zdsirqn0gqvva7i5izpjanpa"))))
+                "0qbpczwrrsq2981mdv3iil26vq9ac8v1sfi9233jpiaixrhmhv96"))))
     (build-system gnu-build-system)
-    (arguments (list #:tests? #f))      ;TODO: package kyua
+    (arguments
+     (list #:phases #~(modify-phases %standard-phases
+                        (add-after 'unpack 'set-HOME
+                          (lambda _
+                            ;; Kyua requires a writable HOME.
+                            (setenv "HOME" "/tmp"))))))
+    (native-inputs (list atf kyua))
+    (native-search-paths (list $PKG_CONFIG_PATH))
     (home-page "http://pkgconf.org/")
     (synopsis "Package compiler and linker metadata toolkit")
     (description "@command{pkgconf} is a program which helps to configure

@@ -41,6 +41,7 @@
   #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
@@ -491,7 +492,8 @@ with optional @acronym{TLS, Transport-Level Security} to protect credentials.")
     (native-inputs
      (list pkg-config))
     (inputs
-     (list boost
+     (list bash-minimal
+           boost
            ncurses
            openssl
            perl
@@ -539,7 +541,7 @@ responsive, especially over Wi-Fi, cellular, and long-distance links.")
                        (substitute* "src/default_options.h"
                          (("#define DROPBEAR_X11FWD 0")
                           "#define DROPBEAR_X11FWD 1")))))))
-    (inputs (list libtomcrypt libtommath zlib))
+    (inputs (list libtomcrypt libtommath libxcrypt zlib))
     (synopsis "Small SSH server and client")
     (description "Dropbear is a relatively small SSH server and
 client.  It runs on a variety of POSIX-based platforms.  Dropbear is
@@ -620,7 +622,8 @@ basis for almost any application.")
            ;; The server (lshd) invokes xauth when X11 forwarding is requested.
            ;; This adds 24 MiB (or 27%) to the closure of lsh.
            xauth
-           libxau))             ;also required for x11-forwarding
+           libxau                       ;also required for x11-forwarding
+           libxcrypt))
     (arguments
      '(;; Skip the `configure' test that checks whether /dev/ptmx &
        ;; co. work as expected, because it relies on impurities (for

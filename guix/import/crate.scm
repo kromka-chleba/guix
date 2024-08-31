@@ -3,6 +3,7 @@
 ;;; Copyright © 2019, 2020, 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2019, 2020 Martin Becze <mjbecze@riseup.net>
 ;;; Copyright © 2021 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2021 Sarah Morgensen <iskarian@mgsn.dev>
 ;;; Copyright © 2022 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2023 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2023, 2024 Efraim Flashner <efraim@flashner.co.il>
@@ -141,19 +142,36 @@ record or #f if it was not found."
 ;;; Converting crates to Guix packages.
 ;;;
 
+(define* (package-names->package-inputs names #:optional (output #f))
+  "Given a list of PACKAGE-NAMES or (PACKAGE-NAME VERSION) pairs, and an
+optional OUTPUT, tries to generate a quoted list of inputs, as suitable to
+use in an 'inputs' field of a package definition."
+  (define (make-input input version)
+    (cons* input (list 'unquote (string->symbol
+                                 (if version
+                                     (string-append input "-" version)
+                                     input)))
+           (or (and output (list output))
+               '())))
+
+  (map (match-lambda
+         ((input version) (make-input input version))
+         (input (make-input input #f)))
+       names))
+
 (define (maybe-cargo-inputs package-names)
   (match (package-names->package-inputs package-names)
     (()
      '())
     ((package-inputs ...)
-     `(#:cargo-inputs ,package-inputs))))
+     `(#:cargo-inputs (,'unquote (list ,@package-inputs))))))
 
 (define (maybe-cargo-development-inputs package-names)
   (match (package-names->package-inputs package-names)
     (()
      '())
     ((package-inputs ...)
-     `(#:cargo-development-inputs ,package-inputs))))
+     `(#:cargo-development-inputs (,'unquote (list ,@package-inputs))))))
 
 (define (maybe-arguments arguments)
   (match arguments

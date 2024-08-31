@@ -337,12 +337,14 @@ itself."))))
     (name "font-canada1500")
     (version "1.101")
     (source (origin
-              (method url-fetch)
+              (method url-fetch/zipbomb)
               (uri "https://typodermicfonts.com/wp-content/uploads/2017/06/canada1500.zip")
               (sha256
                (base32
                 "0cdcb89ab6q7b6jd898bnvrd1sifbd2xr42qgji98h8d5cq4b6fp"))))
     (build-system font-build-system)
+    (arguments
+     '(#:license-file-regexp "^license.pdf$"))
     (home-page "https://typodermicfonts.com/canada1500/")
     (synopsis "Canadian typeface that supports English, French and Aboriginal languages")
     (description "Canada1500 is a display typeface originally created for the
@@ -417,7 +419,7 @@ all characters maximally distinguishable from one another.")
     (name "font-lato")
     (version "2.015")                   ; also update description
     (source (origin
-              (method url-fetch/zipbomb)
+              (method url-fetch)
               (uri (string-append "https://www.latofonts.com/download/Lato2OFL.zip"))
               (sha256
                (base32
@@ -592,7 +594,8 @@ and Bitstream Vera Sans Mono).
                 "0x7cz6hvhpil1rh03rax9zsfzm54bh7r4bbrq8rz673gl9h47v0v"))))
     (build-system font-build-system)
     (arguments
-     `(#:phases
+     `(#:license-file-regexp "^(GPL|LICENCE|OFL-1\\.1)\\.txt$"
+       #:phases
        (modify-phases %standard-phases
          (add-before 'install 'build
            (lambda _
@@ -855,6 +858,8 @@ variants.")
                (base32
                 "1mkmxq8g2hjcglb3zajfqj20r4r88l78ymsp2xyl5yav8w3f7dz4"))))
     (build-system font-build-system)
+    (arguments
+     '(#:license-file-regexp "^(COPYING|README)$"))
     (home-page "http://wenq.org/wqy2/")
     (synopsis "CJK font")
     (description
@@ -882,6 +887,8 @@ ko (Korean) locales for @code{fontconfig}.")
                (base32
                 "0gi1yxqph8xx869ichpzzxvx6y50wda5hi77lrpacdma4f0aq0i8"))))
     (build-system font-build-system)
+    (arguments
+     '(#:license-file-regexp "^(LICENSE.*|README)\\.txt$"))
     (home-page "http://wenq.org/wqy2/")
     (synopsis "CJK font")
     (description
@@ -980,9 +987,9 @@ OpenType variant of these fonts.")
     (build-system gnu-build-system)
     (arguments
      (list
-      #:imported-modules `(,@%gnu-build-system-modules
+      #:imported-modules `(,@%default-gnu-imported-modules
                            (guix build font-build-system))
-      #:modules `(,@%gnu-build-system-modules
+      #:modules `(,@%default-gnu-modules
                   ((guix build font-build-system) #:prefix font:))
       #:phases #~(modify-phases %standard-phases
                    (add-after 'unpack 'patch-source
@@ -1649,7 +1656,10 @@ Terminal, and is now the default font in Visual Studio as well.")
              (match (find-files "." (format #f "^Fira_~a_[0-9]" variant)
                                 #:directories? #t)
                ((dir)
-                (chdir dir))))))))
+                (chdir dir)))))
+         (add-before 'install-license-files 'enter-license-directory
+           (lambda _
+             (chdir "../OFL_Licence"))))))
     ;; While the repository has moved,
     ;; this specimen still works well as the home-page:
     (home-page "https://mozilla.github.io/Fira/")
@@ -1689,6 +1699,13 @@ It includes regular, medium, and bold weights.")
                (base32
                 "10rcfg1fijv00yxv5n9l3lm0axhafa1irkg42zpmasd70flgg655"))))
     (build-system font-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install-license-files 'enter-license-directory
+            (lambda _
+              (chdir "OFL_Licence"))))))
     (home-page "https://github.com/bBoxType/FiraGO")
     (synopsis "Multilingual extension of the Fira Sans font family")
     (description "FiraGO is a multilingual extension of the Fira Sans font
@@ -1841,8 +1858,7 @@ later hand-tweaked with the gbdfed(1) editor:
          ;; several hidden files to be installed.
          (add-before 'install 'delete-macosx-files
            (lambda _
-             (delete-file-recursively "__MACOSX")
-             #t))
+             (delete-file-recursively "__MACOSX")))
          (add-after 'install 'install-conf
            (lambda* (#:key outputs #:allow-other-keys)
              (let ((conf-dir (string-append (assoc-ref outputs "out")
@@ -1861,8 +1877,10 @@ later hand-tweaked with the gbdfed(1) editor:
       <family>Comic Neue</family>
     </prefer>
   </alias>
-</fontconfig>\n"))))
-             #t)))))
+</fontconfig>\n"))))))
+         (add-before 'install-license-files 'enter-license-directory
+           (lambda _
+             (chdir (string-append "comic-neue-" ,version)))))))
     (home-page "https://www.comicneue.com/")
     (synopsis "Font that fixes the shortcomings of Comic Sans")
     (description
@@ -2171,15 +2189,6 @@ most CJK characters are same height, and double width as ASCII characters.")))
         (base32 "1aiivn0rl7ydiyqvsr0fa2hx82h3br3x48w3100fcly23n0fdcby"))))
     (build-system font-build-system)
     ;; TODO: Package fontmake and gftools and build from source.
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'install-license-files
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (doc (string-append out "/share/doc/" ,name "-" ,version)))
-               (install-file "OFL.txt" doc)
-               #t))))))
     (home-page "https://floriankarsten.github.io/space-grotesk/")
     (synopsis "Proportional variant of the fixed-width Space Mono family")
     (description
@@ -2210,13 +2219,17 @@ and stylistic alternates.")
                   "1aq6mnjayks55gd9ahavk6jfydlq5lm4xm0xk4pd5sqa74p5p74d"))))
       (build-system font-build-system)
       (arguments
-       `(#:phases
+       `(#:license-file-regexp "^(LICENSE|PATENTS)$"
+         #:phases
          (modify-phases %standard-phases
            (add-before 'install 'chdir
              (lambda _
                (chdir "font/gofont/ttfs")
-               #t)))))
-      (home-page "https://blog.golang.org/go-fonts")
+               #t))
+           (add-before 'install-license-files 'enter-license-directory
+             (lambda _
+               (chdir "../../.."))))))
+      (home-page "https://go.dev/blog/go-fonts")
       (synopsis "The Go font family")
       (description
        "The Go font family is a set of WGL4 TrueType fonts from the Bigelow &
@@ -2327,7 +2340,7 @@ variants.")
     (version "1.7")
     (source
      (origin
-       (method url-fetch/zipbomb)
+       (method url-fetch)
        (uri (string-append "https://web.archive.org/web/20180228233737/"
                            "https://www.impallari.com/media/releases/dosis-"
                            "v" version ".zip"))
@@ -2361,7 +2374,8 @@ ExtraLight, Light, Book, Medium, Semibold, Bold & ExtraBold")
          "02akysgsqhi15cck54xcacm16q5raf4l7shgb8fnj7xr3c1pbfyp"))))
     (build-system font-build-system)
     (arguments
-     `(#:phases
+     `(#:license-file-regexp "^GNU-GPL|LICENSE"
+       #:phases
        (modify-phases %standard-phases
          (add-before 'install 'build
            (lambda _
@@ -2643,7 +2657,7 @@ have been designed to be very distinguishable from each other.")
     (version "0.46")
     (source
       (origin
-        (method url-fetch/zipbomb)
+        (method url-fetch)
         (uri
           (string-append "https://github.com/keshikan/DSEG/"
                          "releases/download/v" version
@@ -2654,20 +2668,17 @@ have been designed to be very distinguishable from each other.")
           (base32 "13133kpa1ndsji9yq5ppkds5yq2y094qvrv2f83ah74p40sz9hm6"))))
     (build-system font-build-system)
     (arguments
-     `(#:phases
+     `(#:license-file-regexp "^DSEG-LICENSE.txt$"
+       #:phases
        (modify-phases %standard-phases
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
                     (font-dir (string-append out "/share/fonts"))
                     (truetype-dir (string-append font-dir "/truetype")))
-               (with-directory-excursion
-                 (string-append "fonts-DSEG_v"
-                                (apply string-append (string-split ,version
-                                                                   #\.)))
-                 (for-each (lambda (f) (install-file f truetype-dir))
-                           (find-files "." "\\.ttf$"))
-               #t)))))))
+               (for-each (lambda (f) (install-file f truetype-dir))
+                         (find-files "." "\\.ttf$"))
+               #t))))))
     (home-page "https://www.keshikan.net/fonts-e.html")
     (synopsis "DSEG: 7-segment and 14-segment fonts")
     (description
@@ -2718,13 +2729,7 @@ a different style of marking.")
            ;; Find the license file outside of the default subdirectory.
            (lambda _
              (chdir "..")
-             #t))
-         (replace 'install-license-files
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (doc (string-append out "/share/doc/" ,name "-" ,version)))
-               (install-file "OFL.txt" doc)
-               #t))))))
+             #t)))))
     (home-page "https://www.jetbrains.com/lp/mono/")
     (synopsis "Mono typeface for developers")
     (description
@@ -3108,11 +3113,11 @@ modified to cover most CJK unified ideograph characters.")
              ;; This directory, TrueType（サポート外）, is not properly encoded,
              ;; which makes rename-file fail. Instead, use shell globbing to
              ;; select and rename the directory.
-             (invoke "sh" "-c" "mv TrueType* TrueType")
-             #t)))))
-    (native-inputs
-     `(("bash" ,bash-minimal)
-       ("coreutils" ,coreutils)))
+             (invoke "sh" "-c" "mv TrueType* TrueType")))
+         (add-before 'install-license-files 'enter-license-directory
+           (lambda _
+             (chdir "IPAexfont00201"))))))
+    (native-inputs (list bash-minimal coreutils))
     (home-page "http://www.fontna.com/blog/1122/")
     (synopsis "Mix font of gothic kanji and minchou kana")
     (description "Antique is a font that is popular to write manga bubbles,
@@ -3339,6 +3344,7 @@ optimized for using musical symbols inline with regular text.")
          (sha256
           (base32 "1j8iv2dl695zrabs2knb7jsky8mjis29a2ddpna4by8mlvqrf0ml"))))
       (build-system font-build-system)
+      (arguments (list #:license-file-regexp "^Charter license.txt$"))
       (home-page "https://practicaltypography.com/charter.html")
       (synopsis "Charter fonts in OpenType and TrueType formats")
       (description "Charter was designed by Matthew Carter in 1987 and was
@@ -3776,6 +3782,8 @@ Most characters are just 4px wide, which is brilliant for low dpi(90-120) displa
          "02vf72bgrp30vrbfhxjw82s115z27dwfgnmmzfb0n9wfhxxfpyf6"))
        (snippet '(delete-file "._Tuffy.otf"))))
     (build-system font-build-system)
+    ;; TODO: remove this when font-build-system have 'zstd'.
+    (native-inputs (list zstd))
     (home-page "http://tulrich.com/fonts/")
     (synopsis "The Tuffy Truetype Font Family")
     (description

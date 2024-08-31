@@ -411,7 +411,8 @@ as.POSIXct(if (\"\" != Sys.getenv(\"SOURCE_DATE_EPOCH\")) {\
            pkg-config
            texinfo                      ; for building HTML manuals
            (texlive-updmap.cfg
-            (list texlive-fancyvrb
+            (list texlive-etoolbox
+                  texlive-fancyvrb
                   texlive-inconsolata
                   texlive-upquote
                   texlive-xkeyval))
@@ -6906,7 +6907,7 @@ Java package that provides routines for various statistical distributions.")
           #:modules '((guix build gnu-build-system)
                       (guix build utils)
                       (guix build emacs-utils))
-          #:imported-modules `(,@%gnu-build-system-modules
+          #:imported-modules `(,@%default-gnu-imported-modules
                                (guix build emacs-build-system)
                                (guix build emacs-utils))
           #:make-flags

@@ -59,7 +59,7 @@ extension, such as '.tar.gz'."
 (define %python-build-system-modules
   ;; Build-side modules imported by default.
   `((guix build python-build-system)
-    ,@%gnu-build-system-modules))
+    ,@%default-gnu-imported-modules))
 
 (define (default-python)
   "Return the default Python package."
@@ -179,7 +179,9 @@ pre-defined variants."
                        (guile #f)
                        (imported-modules %python-build-system-modules)
                        (modules '((guix build python-build-system)
-                                  (guix build utils))))
+                                  (guix build utils)))
+                       allowed-references
+                       disallowed-references)
   "Build SOURCE using PYTHON, and with INPUTS.  This assumes that SOURCE
 provides a 'setup.py' file as its build system."
   (define build
@@ -204,14 +206,15 @@ provides a 'setup.py' file as its build system."
                                                       search-paths))
                               #:inputs %build-inputs)))))
 
-
   (mlet %store-monad ((guile (package->derivation (or guile (default-guile))
                                                   system #:graft? #f)))
     (gexp->derivation name build
                       #:system system
                       #:graft? #f                 ;consistent with 'gnu-build'
                       #:target #f
-                      #:guile-for-build guile)))
+                      #:guile-for-build guile
+                      #:allowed-references allowed-references
+                      #:disallowed-references disallowed-references)))
 
 (define python-build-system
   (build-system

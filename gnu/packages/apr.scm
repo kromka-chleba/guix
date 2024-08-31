@@ -26,6 +26,7 @@
   #:use-module (guix utils)
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages autotools))
@@ -33,14 +34,14 @@
 (define-public apr
   (package
     (name "apr")
-    (version "1.7.0")
+    (version "1.7.4")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://apache/apr/apr-"
                                  version ".tar.bz2"))
              (sha256
               (base32
-               "1spp6r2a3xcl5yajm9safhzyilsdzgagc2dadif8x6z9nbq4iqg2"))
+               "0xsmqgjiyw3s6va5dm86djnjzg9r0qc1zsldwz4sd8pkhglqsr7w"))
              (patches
               (search-patches "apr-skip-getservbyname-test.patch"))
              (patch-flags '("-p0"))))
@@ -51,16 +52,25 @@
      ;; Thus, build sequentially.
      `(#:parallel-build? #f
        #:parallel-tests? #f
-       ,@(if (target-ppc32?)
-           `(#:phases
-             (modify-phases %standard-phases
-               (add-after 'unpack 'patch-sources
-                 (lambda* (#:key inputs native-inputs #:allow-other-keys)
-                   (invoke "patch" "-p1" "--force" "--input"
-                           (assoc-ref (or native-inputs inputs)
-                                      "atomics-patch"))))))
-           '())))
-    (inputs (list perl libltdl))
+       #:phases
+       (modify-phases %standard-phases
+         ,@(if (target-ppc32?)
+               `((add-after 'unpack 'patch-sources
+                   (lambda* (#:key inputs native-inputs #:allow-other-keys)
+                     (invoke "patch" "-p1" "--force" "--input"
+                             (assoc-ref (or native-inputs inputs)
+                                        "atomics-patch")))))
+               '())
+         (add-after 'install 'patch-libxcrypt-reference
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (define out (assoc-ref outputs "out"))
+             (define libxcrypt
+               (dirname (search-input-file inputs "/lib/libcrypt.so.1")))
+             (substitute* (list (string-append out "/bin/apr-1-config")
+                                (string-append out "/lib/pkgconfig/apr-1.pc"))
+               (("-lcrypt")
+                (string-append "-L" libxcrypt " -lcrypt"))))))))
+    (inputs (list perl libltdl libxcrypt))
     (native-inputs
      `(,@(if (target-ppc32?)
            `(("atomics-patch"
@@ -81,17 +91,17 @@ around or take advantage of platform-specific deficiencies or features.")
 (define-public apr-util
   (package
     (name "apr-util")
-    (version "1.6.1")
+    (version "1.6.3")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://apache/apr/apr-util-"
                                  version ".tar.bz2"))
              (sha256
               (base32
-               "0nq3s1yn13vplgl6qfm09f7n0wm08malff9s59bqf9nid9xjzqfk"))))
+               "1dbjjwyfqvq7xa7xsxq2rv0clkwsmna2j12575n34ih7f7ipc454"))))
     (build-system gnu-build-system)
     (inputs
-     (list apr))
+     (list apr libxcrypt))
     (propagated-inputs
      (list expat))
     (arguments

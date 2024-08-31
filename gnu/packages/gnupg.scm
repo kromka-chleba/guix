@@ -21,7 +21,7 @@
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2021 Nikita Domnitskii <nikita@domnitskii.me>
 ;;; Copyright © 2021 Aleksandr Vityazev <avityazev@posteo.org>
-;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
@@ -45,6 +45,7 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages adns)
   #:use-module (gnu packages autotools)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages base)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages crypto)
@@ -93,69 +94,63 @@
 (define-public libgpg-error
   (package
     (name "libgpg-error")
-    (version "1.45")
+    (version "1.47")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "mirror://gnupg/libgpg-error/libgpg-error-"
-                           version ".tar.bz2"))
-       (sha256
-        (base32
-         "09haz1kk48b8q0hd58g98whylah0fp121yfgjms7pzsbzgj8w3sp"))))
+      (method url-fetch)
+      (uri (string-append "mirror://gnupg/libgpg-error/libgpg-error-"
+                          version ".tar.bz2"))
+      (sha256
+       (base32
+        "1nwvpg5inpjzbq7r6wqsgmwcnfqyahcw9hi8discqvmrcq4nfg4y"))))
     (build-system gnu-build-system)
     (arguments
-     (cond
-      ((%current-target-system)
-       (list
-        #:modules '((guix build gnu-build-system)
-                    (guix build utils))
-        #:phases
-        #~(modify-phases %standard-phases
-            ;; If this is left out, some generated header
-            ;; files will be sprinkled with ‘\c’, which
-            ;; the compiler won't like.
-            (add-after 'unpack 'fix-gen-lock-obj.sh
-              (lambda _
-                (substitute* "src/gen-lock-obj.sh"
-                  (("if test -n `echo -n`") "if ! test -n `echo -n`"))))
-            ;; When cross-compiling, some platform specific properties cannot
-            ;; be detected. Create a symlink to the appropriate platform
-            ;; file if required. Note that these platform files depend on
-            ;; both the operating system and architecture!
-            ;;
-            ;; See Cross-Compiling section at:
-            ;; https://github.com/gpg/libgpg-error/blob/master/README
-            (add-after 'unpack 'cross-symlinks
-              (lambda _
-                (define (link triplet source)
-                  (symlink (string-append "lock-obj-pub." triplet ".h")
-                           (string-append "src/syscfg/lock-obj-pub."
-                                          source ".h")))
-                #$(let ((target (%current-target-system)))
-                    (cond ((target-linux? target)
-                           (match (string-take target
-                                               (string-index target #\-))
-                             ("armhf"
-                              `(link "arm-unknown-linux-gnueabi" "linux-gnu"))
-                             ("mips64el"
-                              `(link "mips-unknown-linux-gnu" "linux-gnu"))
-                             ;; Don't always link to the "linux-gnu"
-                             ;; configuration, as this is not correct for
-                             ;; all architectures.
-                             (_ #t)))
-                          (#t #t))))))))
-      ((system-hurd?)
-       (list
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'unpack 'skip-tests
-              (lambda _
-                (substitute*
-                    "tests/t-syserror.c"
-                  (("(^| )main *\\(.*" all)
-                   (string-append all "{\n  exit (77);//"))))))))
-      (else
-       '())))
+     (list
+      #:configure-flags #~(list "--enable-install-gpg-error-config")
+      #:phases
+      #~(modify-phases %standard-phases
+      #$@(cond
+          ((%current-target-system)
+           ;; If this is left out, some generated header
+           ;; files will be sprinkled with ‘\c’, which
+           ;; the compiler won't like.
+           #~((add-after 'unpack 'fix-gen-lock-obj.sh
+                (lambda _
+                  (substitute* "src/gen-lock-obj.sh"
+                    (("if test -n `echo -n`") "if ! test -n `echo -n`"))))
+              ;; When cross-compiling, some platform specific properties cannot
+              ;; be detected. Create a symlink to the appropriate platform
+              ;; file if required. Note that these platform files depend on
+              ;; both the operating system and architecture!
+              ;;
+              ;; See Cross-Compiling section at:
+              ;; https://github.com/gpg/libgpg-error/blob/master/README
+              (add-after 'unpack 'cross-symlinks
+                (lambda _
+                  (define (link triplet source)
+                    (symlink (string-append "lock-obj-pub." triplet ".h")
+                             (string-append "src/syscfg/lock-obj-pub."
+                                            source ".h")))
+                  #$(let ((target (%current-target-system)))
+                      (cond ((target-linux? target)
+                             (match (string-take target
+                                                 (string-index target #\-))
+                                    ("armhf"
+                                     `(link "arm-unknown-linux-gnueabi" "linux-gnu"))
+                                    ("mips64el"
+                                     `(link "mips-unknown-linux-gnu" "linux-gnu"))
+                                    ;; Don't always link to the "linux-gnu"
+                                    ;; configuration, as this is not correct for
+                                    ;; all architectures.
+                                    (_ #t)))
+                            (#t #t)))))))
+          ((system-hurd?)
+           #~((add-after 'unpack 'skip-tests
+                (lambda _
+                  (substitute* "tests/t-syserror.c"
+                    (("(^| )main *\\(.*" all)
+                     (string-append all "{\n  exit (77);//")))))))
+          (else #~())))))
     (native-inputs (list gettext-minimal))
     (home-page "https://gnupg.org")
     (synopsis "Library of error values for GnuPG components")
@@ -228,7 +223,7 @@ generation.")
 (define-public libassuan
   (package
     (name "libassuan")
-    (version "2.5.5")
+    (version "2.5.6")
     (source
      (origin
       (method url-fetch)
@@ -236,7 +231,7 @@ generation.")
                           version ".tar.bz2"))
       (sha256
        (base32
-        "1r1lvcp67gn5lfrj1g388sd77ca6qwnmxndirdysd71gk362z34f"))))
+        "09pllidbv01km8qrls21dcz1qwa22ydqyy1r9r79152kilhjgzg9"))))
     (build-system gnu-build-system)
     (arguments (if (%current-target-system)
                    (list #:configure-flags
@@ -445,7 +440,12 @@ libskba (working with X.509 certificates and CMS data).")
       (sha256
        (base32 "17hfigfnq6xz45b5xrp299f68b5mwx0aysd51sx5v4nf8yp4w79n"))))
     (build-system gnu-build-system)
-    (native-inputs
+    (arguments
+     (list
+      #:configure-flags
+      #~(let ((gpg-bins (dirname (search-input-file %build-inputs "/bin/gpg"))))
+          (list (string-append "--enable-fixed-path=" gpg-bins)))))
+    (inputs
      (list gnupg))
     (propagated-inputs
      ;; As required by the pkg-config's Requires.private.
@@ -788,16 +788,16 @@ parties.")
     (native-inputs
      ;; autoconf-wrapper is required due to the non-standard
      ;; 'configure phase.
-     `(("autoconf" ,autoconf-wrapper)
-       ("automake" ,automake)))
-    (inputs (list perl
+     (list autoconf-wrapper automake))
+    (inputs (list bash-minimal
+                  perl
                   perl-text-template
                   perl-mime-tools
                   perl-gnupg-interface
                   perl-net-idn-encode
                   libmd))
     (arguments
-     `(#:tests? #f ; no test suite
+     `(#:tests? #f                      ; no test suite
        #:phases
        (modify-phases %standard-phases
          (replace 'configure
@@ -815,8 +815,7 @@ parties.")
                               "keylookup/Makefile" "sig2dot/Makefile"
                               "springgraph/Makefile")
                  (("/usr") out))
-               (setenv "CONFIG_SHELL" (which "sh")))
-             #t))
+               (setenv "CONFIG_SHELL" (which "sh")))))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys #:rest args)
              (let ((out (assoc-ref outputs "out"))
@@ -841,15 +840,13 @@ parties.")
                 '("caff.1" "pgp-clean.1" "pgp-fixkey.1" "gpgdir.1"
                   "gpg-key2ps.1" "gpglist.1" "gpg-mailkeys.1"
                   "gpgparticipants.1" "gpgsigs.1" "gpgwrap.1"
-                  "process_keys.1" "pgpring.1" "keyanalyze.1")))
-             #t))
+                  "process_keys.1" "pgpring.1" "keyanalyze.1")))))
          (add-after 'install 'wrap-programs
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out")))
                (wrap-program
                    (string-append out "/bin/caff")
-                 `("PERL5LIB" ":" prefix (,(getenv "PERL5LIB")))))
-             #t)))))
+                 `("PERL5LIB" ":" prefix (,(getenv "PERL5LIB"))))))))))
     (synopsis "Collection of scripts for simplifying gnupg key signing")
     (description
      "Signing-party is a collection for all kinds of PGP/GnuPG related things,
@@ -997,7 +994,7 @@ passphrase when @code{gpg} is run and needs it.")))
      `(#:modules
        ((ice-9 match)
         (ice-9 ftw)
-        ,@%gnu-build-system-modules)
+        ,@%default-gnu-modules)
        #:phases
        (modify-phases
            %standard-phases
@@ -1011,14 +1008,13 @@ passphrase when @code{gpg} is run and needs it.")))
                  (("." ".." version)
                   (wrap-program
                       (string-append bin "pinentry-rofi")
-                    (list "PATH" ":" 'prefix `(,rofi-bin)))
-                  #t)))))
+                    (list "PATH" ":" 'prefix `(,rofi-bin))))))))
          (add-after 'compress-documentation 'installcheck
            (lambda* rest
              (invoke "make" "installcheck"))))))
     (native-inputs
      (list autoconf autoconf-archive automake pkg-config texinfo))
-    (inputs (list guile-3.0 rofi))
+    (inputs (list bash-minimal guile-3.0 rofi))
     (synopsis "Rofi GUI for GnuPG's passphrase input")
     (description "Pinentry-rofi is a simple graphical user interface for
 passphrase or PIN when required by @code{gpg} or other software.  It is using
@@ -1134,16 +1130,15 @@ however, pgpdump produces more detailed and easier to understand output.")
              (let ((out (assoc-ref outputs "out"))
                    (gnupg (assoc-ref inputs "gnupg")))
                (wrap-program (string-append out "/bin/gpa")
-                 `("PATH" ":" prefix (,(string-append gnupg "/bin"))))
-               #t))))))
-    (native-inputs
-     (list pkg-config))
+                 `("PATH" ":" prefix (,(string-append gnupg "/bin"))))))))))
+    (native-inputs (list pkg-config))
     (inputs
-     `(("gnupg" ,gnupg)
-       ("gpgme" ,gpgme)
-       ("libassuan" ,libassuan)
-       ("libgpg-error" ,libgpg-error)
-       ("gtk+-2" ,gtk+-2)))
+     (list bash-minimal
+           gnupg
+           gpgme
+           libassuan
+           libgpg-error
+           gtk+-2))
     (home-page "https://gnupg.org/software/gpa/")
     (synopsis "Graphical user interface for GnuPG")
     (description
@@ -1168,7 +1163,8 @@ files, to verify signatures, and to manage the private and public keys.")
                 "10gal2h8ihg7nnzy3adw942axd2ia1rcn1fw3a3v07n5mm8kqrx9"))))
     (build-system perl-build-system)
     (inputs
-     (list gnupg
+     (list bash-minimal
+           gnupg
            perl-clone
            perl-config-general
            perl-file-homedir

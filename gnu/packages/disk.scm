@@ -273,8 +273,6 @@ tmpfs/ramfs filesystems.")
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-locales-and-python
             (lambda _
-              (substitute* "tests/t0251-gpt-unicode.sh"
-                (("C.UTF-8") "en_US.utf8")) ;not in Glibc locales
               (substitute* "tests/msdos-overlap"
                 (("/usr/bin/python") (which "python"))))))))
     (inputs
@@ -327,6 +325,7 @@ tables.  It includes a library and command-line utility.")
     (inputs
      `(("gettext" ,gettext-minimal)
        ("guile" ,guile-1.8)
+       ("libxcrypt" ,libxcrypt)
        ("util-linux" ,util-linux "lib")
        ("parted" ,parted)))
     ;; The build neglects to look for its own headers in its own tree.  A next
@@ -954,7 +953,7 @@ Duperemove can also take input from the @command{fdupes} program.")
                 "0lfjrpv3z4h0knd3v94fijrw2zjba51mrp3mjqx2c98wr428l26f"))))
     (build-system python-build-system)
     (inputs
-     (list w3m))
+     (list bash-minimal w3m))
     (native-inputs
      (list which
            ;; For tests.
@@ -964,7 +963,7 @@ Duperemove can also take input from the @command{fdupes} program.")
        #:test-target "test_pytest"
        #:phases
        (modify-phases %standard-phases
-         (add-after 'configure 'wrap-program
+         (add-after 'install 'wrap-program
            ;; Tell 'ranger' where 'w3mimgdisplay' is.
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let* ((out  (assoc-ref outputs "out"))
@@ -973,8 +972,7 @@ Duperemove can also take input from the @command{fdupes} program.")
                     (w3mimgdisplay (string-append w3m
                                    "/libexec/w3m/w3mimgdisplay")))
                (wrap-program ranger
-                 `("W3MIMGDISPLAY_PATH" ":" prefix (,w3mimgdisplay)))
-               #t)))
+                 `("W3MIMGDISPLAY_PATH" ":" prefix (,w3mimgdisplay))))))
          (replace 'check
            ;; The default check phase simply prints 'Ran 0 tests in 0.000s'.
            (lambda* (#:key test-target #:allow-other-keys)
@@ -1042,12 +1040,13 @@ and its highly optimized now for efficient performance.")
     (native-inputs
      (list pkg-config swig python-3))           ; used to generate the Python bindings
     (inputs
-     `(("cryptsetup" ,cryptsetup)
-       ("nss" ,nss)
-       ("libblkid" ,util-linux "lib")
-       ("lvm2" ,lvm2)                   ; for "-ldevmapper"
-       ("glib" ,glib)
-       ("gpgme" ,gpgme)))
+     (append
+      (cons cryptsetup (libcryptsetup-propagated-inputs))
+      (cons lvm2 (libdevmapper-propagated-inputs))
+      (list nss
+            (list util-linux "lib")
+            glib
+            gpgme)))
     (arguments
      `(#:tests? #f ; not sure how tests are supposed to pass, even when run manually
        #:phases
@@ -1203,22 +1202,23 @@ to create devices with respective mappings for the ATARAID sets discovered.")
            python-wrapper
            util-linux))
     (inputs
-     (list btrfs-progs
-           cryptsetup
-           dosfstools
-           dmraid
-           eudev
-           glib
-           kmod
-           libbytesize
-           libyaml
-           lvm2
-           mdadm
-           ndctl
-           nss
-           parted
-           volume-key
-           xfsprogs))
+     (append
+      (cons cryptsetup (libcryptsetup-propagated-inputs))
+      (list btrfs-progs
+            dosfstools
+            dmraid
+            eudev
+            glib
+            kmod
+            libbytesize
+            libyaml
+            lvm2
+            mdadm
+            ndctl
+            nss
+            parted
+            volume-key
+            xfsprogs)))
     (home-page "https://github.com/storaged-project/libblockdev")
     (synopsis "Library for manipulating block devices")
     (description
@@ -1466,6 +1466,7 @@ that support this feature).")
      `(#:configure-flags
        (list (string-append "--docdir=" (assoc-ref %outputs "out")
                             "/share/doc/" ,name "-" ,version))
+       #:parallel-build? #f             ;fails otherwise
        #:tests? #f ; Tests require a NUMA-enabled system.
        #:phases
        (modify-phases %standard-phases

@@ -2,7 +2,7 @@
 ;;; Copyright © 2012 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2013, 2017, 2020, 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2013, 2015 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2015, 2016, 2017, 2018, 2019, 2021 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015-2019, 2021, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2015, 2017 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2015, 2017 Cyril Roelandt <tipecaml@gmail.com>
 ;;; Copyright © 2016 Sou Bunnbu <iyzsong@gmail.com>
@@ -24,6 +24,7 @@
 ;;; Copyright © 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 Liliana Marie Prikler <liliana.prikler@gmail.com>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -63,6 +64,7 @@
   #:use-module (guix build-system python)
   #:use-module (guix download)
   #:use-module (guix gexp)
+  #:use-module (guix utils)
   #:use-module (guix git-download)
   #:use-module (guix licenses)
   #:use-module (guix packages))
@@ -135,13 +137,13 @@ expressions.")
   (package
     (name "python-tzdata")
     ;; This package should be kept in sync with tzdata in (gnu packages base).
-    (version "2022.1")
+    (version "2023.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "tzdata" version))
        (sha256
-        (base32 "1lsjhlwzvzxpp4mpa9gy5b58z3qilf9l365k889pbh1xqs76llwb"))
+        (base32 "1ja8c6ybwhbzr37a0r56g4j555gxzss4k5irfwn54ra7557wjm6x"))
        (modules '((guix build utils)))
        (snippet #~(delete-file-recursively "src/tzdata/zoneinfo"))))
     (build-system pyproject-build-system)
@@ -167,14 +169,14 @@ expressions.")
   (package
     (name "python-pytz")
     ;; This package should be kept in sync with tzdata in (gnu packages base).
-    (version "2022.1")
+    (version "2023.3.post1")
     (source
      (origin
       (method url-fetch)
       (uri (pypi-uri "pytz" version))
       (sha256
        (base32
-        "19ya5sh7if819flgmszz585glailhi7rr8frng03n5m8wqphwxhy"))))
+        "0yrxykwhk18x22lp0hjlj98mgnzrzlclz8kxam5vl7jap6zdskvv"))))
     (build-system python-build-system)
     (home-page "http://pythonhosted.org/pytz")
     (synopsis "Python timezone library")
@@ -579,9 +581,7 @@ printing the returned time and/or setting the system clock.")
 (define-public datefudge
   (package
     (name "datefudge")
-    ;; XXX When updating this package, make sure to do something about the
-    ;; archive.org backup URI.
-    (version "1.23")
+    (version "1.26")
     (source (origin
               ;; Source code is available from
               ;; <https://salsa.debian.org/debian/datefudge.git>.  However,
@@ -589,34 +589,25 @@ printing the returned time and/or setting the system clock.")
               ;; (since Git -> GnuTLS -> datefudge).
               (method url-fetch)
               (uri (list
-                     ;; For some reason this tarball was removed from Debian's
-                     ;; servers. Remove this archive.org URL when updating
-                     ;; datefudge, or add the new tarball to archive.org and
-                     ;; update the URL.
                      (string-append
-                       "https://archive.org/download/datefudge_" version
-                       ".tar_202112/" "datefudge_" version ".tar.xz")
+                       "mirror://debian/pool/main/d/datefudge/datefudge_"
+                       version ".tar.xz")
+                     ;; Update the Debian snapshot URL when updating the package.
                      (string-append
-                      "mirror://debian/pool/main/d/datefudge/datefudge_"
-                      version ".tar.xz")))
+                       "https://snapshot.debian.org/archive/debian/"
+                       "20240115T092401Z/pool/main/d/datefudge/"
+                       "datefudge_1.26.tar.xz")))
               (sha256
                (base32
-                "0ifnlb0mc8qc2kb5042pbz0ns6rwcb7201di8wyrsphl0yhnhxiv"))
-              (patches (search-patches "datefudge-gettimeofday.patch"))))
+                "09cjds76gzkwk6ssmsk3cgkcfhglfi9kmbahi1h17v4311v432iz"))))
     (build-system gnu-build-system)
     (arguments
      `(#:test-target "test"
-       #:make-flags (list "CC=gcc"
+       #:make-flags (list (string-append "CC=" ,(cc-for-target))
+                          (string-append "VERSION=" ,version)
                           (string-append "prefix=" (assoc-ref %outputs "out")))
        #:phases
        (modify-phases %standard-phases
-         (add-after 'unpack 'patch-makefile
-           (lambda _
-             (substitute* "Makefile"
-               ((" -o root -g root") "")
-               (("VERSION := \\$\\(shell dpkg-parsechangelog .*")
-                (string-append "VERSION = " ,version)))
-             #t))
          (delete 'configure))))
     (native-inputs
      (list perl))

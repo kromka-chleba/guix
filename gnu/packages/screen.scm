@@ -33,6 +33,8 @@
   #:use-module (guix build-system gnu)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
+  #:use-module (gnu packages bash)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages hurd)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages ncurses)
@@ -56,7 +58,7 @@
     (native-inputs
      (list autoconf automake texinfo))
     (inputs
-     (list linux-pam ncurses perl))
+     (list libxcrypt linux-pam ncurses perl))
     (arguments
      `(#:configure-flags
          ;; GNU_SOURCE must be defined for mallocmock_reset() to be defined
@@ -123,7 +125,8 @@ controlling terminal and attach to it later.")
        (patches (search-patches "byobu-writable-status.patch"))))
     (build-system gnu-build-system)
     (inputs
-     `(("python" ,python-wrapper)       ; for config and session GUIs
+     `(("bash" ,bash-minimal) ; for wrap-program
+       ("python" ,python-wrapper)       ; for config and session GUIs
        ("python-newt" ,newt "python")))
     (arguments
      `(#:phases

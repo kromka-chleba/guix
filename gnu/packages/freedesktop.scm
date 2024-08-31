@@ -82,6 +82,7 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages cups)
   #:use-module (gnu packages curl)
@@ -292,7 +293,6 @@ application-centers for distributions.")
            gobject-introspection
            gtk-doc/stable
            libtool
-           libxml2                      ;for XML_CATALOG_FILES
            libxslt
            perl
            pkg-config
@@ -524,7 +524,7 @@ display servers.  It supports many different languages and emoji.")
         #:make-flags #~(list (string-append "DESTDIR=" #$output)
                              #$(string-append "CC=" (cc-for-target)))
         #:imported-modules `((guix build copy-build-system)
-                             ,@%gnu-build-system-modules)
+                             ,@%default-gnu-imported-modules)
         #:modules `((guix build gnu-build-system)
                     ((guix build copy-build-system) #:prefix copy:)
                     (guix build utils))
@@ -627,7 +627,8 @@ database is translated at Transifex.")
          "1nai806smz3zcb2l5iny4x7li0fak0rzmjg6vlyhdqm8z25b166p"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list docbook-xsl docbook-xml-4.1.2 libxslt w3m-for-tests xmlto))
+     (list docbook-xsl docbook-xml-4.1.2
+           libxslt xmlto w3m-for-tests))
     (inputs
      (list bash-minimal                 ;for 'wrap-program'
            coreutils
@@ -643,7 +644,7 @@ database is translated at Transifex.")
      (list
       #:tests? #f                       ;no check target
       #:modules `((srfi srfi-26)
-                  ,@%gnu-build-system-modules)
+                  ,@%default-gnu-modules)
       #:phases
       #~(modify-phases %standard-phases
         (add-after 'unpack 'patch-hardcoded-paths
@@ -654,32 +655,6 @@ database is translated at Transifex.")
             (substitute* "scripts/xdg-open.in"
               (("/usr/bin/printf")
                (search-input-file inputs "bin/printf")))))
-        (add-before 'build 'locate-catalog-files
-          (lambda* (#:key native-inputs inputs #:allow-other-keys)
-            (let* ((native (or native-inputs inputs))
-                   (xmldoc (search-input-directory native
-                                                   "xml/dtd/docbook"))
-                   (xsldoc (search-input-directory
-                            native
-                            (string-append "xml/xsl/docbook-xsl-"
-                                           #$(package-version
-                                              (this-package-native-input
-                                               "docbook-xsl"))))))
-              (for-each (lambda (file)
-                          (substitute* file
-                            (("http://.*/docbookx\\.dtd")
-                             (string-append xmldoc "/docbookx.dtd"))))
-                        (find-files "scripts/desc" "\\.xml$"))
-              (substitute* "scripts/Makefile"
-                ;; Apparently `xmlto' does not bother to looks up the stylesheets
-                ;; specified in the XML, unlike the above substitition. Instead it
-                ;; uses a hard-coded URL. Work around it here, but if this is
-                ;; common perhaps we should hardcode this path in xmlto itself.
-                (("\\$\\(XMLTO\\) man")
-                 (string-append "$(XMLTO) -x " xsldoc
-                                "/manpages/docbook.xsl man")))
-              (setenv "STYLESHEET"
-                      (string-append xsldoc "/html/docbook.xsl")))))
         (add-after 'install 'wrap-executables
           (lambda* (#:key inputs outputs #:allow-other-keys)
             (let* ((dependencies '("awk" "grep" "hostname" "ls" "mimeopen"
@@ -704,15 +679,16 @@ freedesktop.org project.")
   ;; Updating this will rebuild over 700 packages through libinput-minimal.
   (package
     (name "libinput")
-    (version "1.22.1")
+    (version "1.24.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://gitlab.freedesktop.org/libinput/libinput.git")
                     (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "17a5qlym2d6lg2j8fdpxda9k7x5zr35flb4wlj1bz7h0mnkh8326"))))
+                "0xk0dljykjfmkks7kjxvbia6g3wadmy7lihfygm8icywkq8j0dw1"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags '("-Ddocumentation=false")
@@ -722,7 +698,7 @@ freedesktop.org project.")
        ;; Meson target anyway.
        #:build-type "release"))
     (native-inputs
-     (append (list check pkg-config)
+     (append (list check pkg-config python-minimal-wrapper python-pytest)
              (if (%current-target-system)
                (list pkg-config-for-build)
                '())))
@@ -737,8 +713,8 @@ freedesktop.org project.")
                (list check)
                '())))
     (propagated-inputs
-     `(;; libinput.h requires <libudev.h>, so propagate it.
-       ("udev" ,eudev)))
+     ;; libinput.h requires <libudev.h>, so propagate it.
+     (list eudev))
     (home-page "https://www.freedesktop.org/wiki/Software/libinput/")
     (synopsis "Input devices handling library")
     (description
@@ -852,7 +828,10 @@ the freedesktop.org XDG Base Directory specification.")
              "-Dcgroup-controller=elogind"
              "-Dman=true"
              ;; Disable some tests.
-             "-Dslow-tests=false"))
+             "-Dslow-tests=false"
+             ;; Adjust the default user shell to /bin/sh (otherwise it is set
+             ;; to /bin/bash).
+             "-Ddefault-user-shell=/bin/sh"))
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'fix-pkttyagent-path
@@ -871,11 +850,8 @@ the freedesktop.org XDG Base Directory specification.")
                (("PKGSYSCONFDIR") "\"/etc/elogind\""))))
          (add-after 'unpack 'adjust-tests
            (lambda _
-             ;; Skip the user-util tests, which depends on users such as
-             ;; 'root' existing in the build environment.
              (substitute* "src/test/meson.build"
-               ((".*'test-user-util.c'.*") "")
-               ((".*'test-cgroup.c'.*") ""))
+               ((".*'test-cgroup.c'.*") "")) ;no cgroup in container
              ;; This test tries to copy some bytes from /usr/lib/os-release,
              ;; which does not exist in the build container.  Choose something
              ;; more likely to be available.
@@ -921,7 +897,6 @@ the freedesktop.org XDG Base Directory specification.")
            docbook-xsl
            gettext-minimal
            gperf
-           libxml2                      ;for XML_CATALOG_FILES
            m4
            pkg-config
            python
@@ -934,6 +909,7 @@ the freedesktop.org XDG Base Directory specification.")
           '())
       (list linux-pam
             libcap
+            libxcrypt
             `(,util-linux "lib")        ;for 'libmount'
             shadow                      ;for 'nologin'
             shepherd                    ;for 'halt' and 'reboot', invoked
@@ -1152,7 +1128,6 @@ with localed.  This package is extracted from the broader systemd package.")
            gettext-minimal
            `(,glib "bin")
            gobject-introspection
-           libxml2                      ;for XML_CATALOG_FILES
            libxslt
            pkg-config
            python-wrapper
@@ -1377,7 +1352,7 @@ Python.")
           (list pkg-config-for-build
                 this-package)           ;for wayland-scanner
           '())))
-    (inputs (list expat libxml2))       ;for XML_CATALOG_FILES
+    (inputs (list expat libxml2))
     (propagated-inputs (list libffi))
     (home-page "https://wayland.freedesktop.org/")
     (synopsis "Core Wayland window system code and protocol")
@@ -1760,85 +1735,65 @@ Analysis and Reporting Technology) functionality.")
                 "06cq52kp1nyy15qzylywy9s7hhhqc45k0s3y68crf0zsmjyng0yj"))))
     (build-system gnu-build-system)
     (native-inputs
-     `(("docbook-xml" ,docbook-xml-4.3) ; to build the manpages
-       ("docbook-xsl" ,docbook-xsl)
-       ("glib:bin" ,glib "bin")         ; for glib-mkenums
-       ("gnome-common" ,gnome-common)   ; TODO: Why is this needed?
-       ("gobject-introspection" ,gobject-introspection)
-       ("gtk-doc" ,gtk-doc/stable)
-       ("intltool" ,intltool)
-       ("pkg-config" ,pkg-config)
-       ("xsltproc" ,libxslt)))
+     (list docbook-xml-4.3              ; to build the manpages
+           docbook-xsl
+           `(,glib "bin")               ; for glib-mkenums
+           gnome-common                 ; TODO: Why is this needed?
+           gobject-introspection
+           gtk-doc/stable
+           intltool
+           pkg-config
+           libxslt))
     (propagated-inputs
-     (list glib)) ; required by udisks2.pc
+     (list glib))                       ; required by udisks2.pc
     (inputs
-     `(,acl
-       ;; TODO(staging): Make unconditional.
-       ,@(if (%current-target-system)
-             (list bash-minimal) ; for wrap-program
-             '())
-       ,cryptsetup
-       ,libatasmart
-       ,libblockdev
-       ,libgudev
-       ,polkit
-       ,util-linux))
+     (list acl
+           bash-minimal
+           cryptsetup
+           kmod
+           libatasmart
+           libblockdev
+           libgudev
+           polkit
+           util-linux))
     (outputs '("out"
-               "doc"))                            ;5 MiB of gtk-doc HTML
+               "doc"))                  ;5 MiB of gtk-doc HTML
     (arguments
-     `(#:tests? #f ; requiring system message dbus
-       #:disallowed-references ("doc")            ;enforce separation of "doc"
-       #:configure-flags
-       (list "--enable-man"
-             "--enable-available-modules" ; Such as lvm2, btrfs, etc.
-             "--localstatedir=/var"
-             "--enable-fhs-media"     ;mount devices in /media, not /run/media
-             (string-append "--with-html-dir="
-                            (assoc-ref %outputs "doc")
-                            "/share/doc/udisks/html")
-             (string-append "--with-udevdir=" %output "/lib/udev"))
-       #:make-flags
-       (let*  ((docbook-xsl-name-version ,(string-append
-                                           (package-name docbook-xsl) "-"
-                                           (package-version  docbook-xsl)))
-               (docbook-xsl-catalog-file (string-append
-                                          (assoc-ref %build-inputs "docbook-xsl")
-                                          "/xml/xsl/"
-                                          docbook-xsl-name-version
-                                          "/catalog.xml"))
-               (docbook-xml-catalog-file (string-append
-                                          (assoc-ref %build-inputs "docbook-xml")
-                                          "/xml/dtd/docbook/catalog.xml")))
-         ;; Reference the catalog files required to build the manpages.
-         (list (string-append "XML_CATALOG_FILES=" docbook-xsl-catalog-file " "
-                              docbook-xml-catalog-file)))
-       #:phases
-       (modify-phases %standard-phases
-         (add-before
-          'configure 'fix-girdir
-          (lambda _
-            ;; Install introspection data to its own output.
-            (substitute* "udisks/Makefile.in"
-              (("girdir = .*")
-               "girdir = $(datadir)/gir-1.0\n")
-              (("typelibsdir = .*")
-               "typelibsdir = $(libdir)/girepository-1.0\n"))))
-         (add-after 'install 'wrap-udisksd
-           (lambda* (#:key outputs inputs #:allow-other-keys)
-             ;; Tell 'udisksd' where to find the 'mount' command.
-             (let ((out   (assoc-ref outputs "out"))
-                   (utils (assoc-ref inputs "util-linux"))
-                   (cryptsetup (assoc-ref inputs "cryptsetup"))
-                   (parted (assoc-ref inputs "parted")))
-               (wrap-program (string-append out "/libexec/udisks2/udisksd")
-                 `("PATH" ":" prefix
-                   (,(string-append utils "/bin") ;for 'mount'
-                    ;; cryptsetup is required for setting encrypted
-                    ;; partitions, e.g. in gnome-disks
-                    ,(string-append cryptsetup "/sbin")
-                    "/run/current-system/profile/bin"
-                    "/run/current-system/profile/sbin")))
-               #t))))))
+     (list
+      #:tests? #f                       ; requiring system message dbus
+      #:disallowed-references '("doc")  ;enforce separation of "doc"
+      #:configure-flags
+      #~(list "--enable-man"
+              "--enable-available-modules" ; Such as lvm2, btrfs, etc.
+              "--localstatedir=/var"
+              "--enable-fhs-media"    ;mount devices in /media, not /run/media
+              (string-append "--with-html-dir=" #$output:doc
+                             "/share/doc/udisks/html")
+              (string-append "--with-udevdir=" #$output "/lib/udev"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'fix-girdir
+            (lambda _
+              ;; Install introspection data to its own output.
+              (substitute* "udisks/Makefile.in"
+                (("girdir = .*")
+                 "girdir = $(datadir)/gir-1.0\n")
+                (("typelibsdir = .*")
+                 "typelibsdir = $(libdir)/girepository-1.0\n"))))
+          (add-after 'install 'wrap-udisksd
+            (lambda _
+              ;; Tell 'udisksd' where to find the 'mount' command.
+              (let ((utils #$(this-package-input "util-linux"))
+                    (cryptsetup #$(this-package-input "cryptsetup"))
+                    (parted #$(this-package-input "parted")))
+                (wrap-program (string-append #$output "/libexec/udisks2/udisksd")
+                  `("PATH" ":" prefix
+                    (,(string-append utils "/bin") ;for 'mount'
+                     ;; cryptsetup is required for setting encrypted
+                     ;; partitions, e.g. in gnome-disks
+                     ,(string-append cryptsetup "/sbin")
+                     "/run/current-system/profile/bin"
+                     "/run/current-system/profile/sbin")))))))))
     (home-page "https://www.freedesktop.org/wiki/Software/udisks/")
     (synopsis "Disk manager service")
     (description
@@ -1904,7 +1859,6 @@ message bus.")
            glibc-locales                    ;for tests
            gobject-introspection
            gtk-doc
-           libxml2                      ;for XML_CATALOG_FILES
            libxslt
            pkg-config
            vala
@@ -1919,6 +1873,7 @@ message bus.")
            coreutils-minimal
            dbus
            elogind
+           libxcrypt
            shadow))
     (propagated-inputs
      ;; accountsservice.pc 'Requires' these:
@@ -2294,14 +2249,25 @@ iChat interoperability, and multi-user chats and Tubes using the
               (sha256
                (base32
                 "1l61ydb0zv2ffilwpapgz5mm3bznr28zl16xqbxnz6kdsrb6cimr"))))
+    (outputs '("out" "doc"))
     (build-system meson-build-system)
-    (arguments '(#:tests? #f            ;require the colord system service
-                 ;; Building documentation fails with: "Cannot build man pages
-                 ;; without docbook-xsl-ns".
-                 #:configure-flags (list "-Ddocs=false" "-Dman=false")))
+    (arguments
+     (list
+      #:tests? #f            ;require the colord system service
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'split-package
+            (lambda _
+              (let* ((old (string-append #$output "/share/gtk-doc"))
+                     (new (string-append #$output:doc "/share/gtk-doc")))
+                (mkdir-p (dirname new))
+                (rename-file old new)))))))
     (native-inputs
-     (list gettext-minimal
+     (list docbook-xsl
+           gettext-minimal
            gobject-introspection
+           gtk-doc/stable
+           libxslt
            pkg-config
            vala))
     (inputs
@@ -2520,29 +2486,10 @@ Rendering Manager devices.")
                (base32 "13216b8rfkzak5k6bvpx6jvqv3cnbgpijnjwj8a8d3kq4cl0a1ra"))))
     (build-system gnu-build-system)
     (native-inputs
-     `(("gettext" ,gettext-minimal)
-       ("docbook-xsl" ,docbook-xsl)
-       ("docbook-xml" ,docbook-xml-4.3)
-       ("xsltproc" ,libxslt)))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'locate-catalog-files
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((xmldoc (string-append (assoc-ref inputs "docbook-xml")
-                                          "/xml/dtd/docbook"))
-                   (xsldoc (string-append (assoc-ref inputs "docbook-xsl")
-                                          "/xml/xsl/docbook-xsl-"
-                                          ,(package-version docbook-xsl))))
-               (for-each (lambda (file)
-                           (substitute* file
-                             (("http://.*/docbookx\\.dtd")
-                              (string-append xmldoc "/docbookx.dtd"))))
-                         (find-files "man" "\\.xml$"))
-               (substitute* "man/Makefile"
-                 (("http://.*/docbook\\.xsl")
-                  (string-append xsldoc "/manpages/docbook.xsl")))
-               #t))))))
+     (list gettext-minimal
+           docbook-xsl
+           docbook-xml-4.3
+           libxslt))
     (home-page "https://www.freedesktop.org/wiki/Software/xdg-user-dirs/")
     (synopsis "Tool to help manage \"well known\" user directories")
     (description "xdg-user-dirs is a tool to help manage \"well known\" user
@@ -2617,11 +2564,7 @@ applications define in those files.")
         (base32
          "1i5iw6ri0w9clwpqf40xmsh4isc8xvx2lyf2r5g34886i6rsdgpn"))))
     (build-system perl-build-system)
-    (inputs
-     ;; TODO(staging): Make unconditional.
-     (if (%current-target-system)
-         (list bash-minimal) ; for wrap-program
-         '()))
+    (inputs (list bash-minimal))        ;for wrap-program
     ;; If the tests are fixed, add perl-test-pod, perl-test-pod-coverage, and
     ;; perl-test-tiny as native-inputs.
     (propagated-inputs
@@ -2652,8 +2595,7 @@ applications define in those files.")
                                   #~(,(string-append
                                        (getenv "PERL5LIB")
                                        ":" out "/lib/perl5/site_perl"))))))
-                      '("mimeopen" "mimetype")))
-                   #t)))))
+                      '("mimeopen" "mimetype"))))))))
     (home-page "https://metacpan.org/release/File-MimeInfo")
     (synopsis "Determine file type from the file name")
     (description
@@ -2726,19 +2668,16 @@ Python, that binds to the C library @code{uchardet} to increase performance.")
          "0z0gk8l6rv4np29kfdalmy4q3900005sxhjg0jz1aa8irdcsp1qz"))))
     (build-system python-build-system)
     (native-inputs
-     `(("asciidoc" ,asciidoc)
-       ("gettext" ,gettext-minimal)
-       ("gobject-introspection" ,gobject-introspection)))
+     (list asciidoc
+           gettext-minimal
+           gobject-introspection))
     (inputs
-     ;; TODO(staging): Make unconditional.
-     `(,@(if (%current-target-system)
-             (list bash-minimal)
-             '())
-       ,gobject-introspection
-       ,gtk+
-       ,libappindicator
-       ,libnotify
-       ,udisks))
+     (list bash-minimal
+           gobject-introspection
+           gtk+
+           libappindicator
+           libnotify
+           udisks))
     (propagated-inputs
      (list python-docopt python-pygobject python-keyutils python-pyxdg
            python-pyyaml))
@@ -2809,7 +2748,6 @@ Its features include:
     (native-inputs
      (list gettext-minimal
            pkg-config
-           libxml2                      ;for XML_CATALOG_FILES
            libxslt
            docbook-xsl
            docbook-xml))

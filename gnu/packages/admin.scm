@@ -415,7 +415,7 @@ interface and is based on GNU Guile.")
               (replace "guile-fibers"
                 (this-package-native-input "guile-fibers"))))))
 
-(define-public shepherd shepherd-0.9)
+(define-public shepherd shepherd-0.10)
 
 (define-public guile2.2-shepherd
   (package
@@ -532,9 +532,10 @@ inspired by @command{vi}.")
                               (list "bin/readlink"
                                     "sbin/sfdisk")))))))))))
     (inputs
-     (list coreutils                    ; for readlink
+     (list bash-minimal                 ;for wrap-program
+           coreutils                    ;for readlink
            python
-           util-linux))                 ; sfdisk for growpart
+           util-linux))                 ;sfdisk for growpart
     (home-page "https://launchpad.net/cloud-utils")
     (synopsis "Set of utilities for cloud computing environments")
     (description
@@ -628,7 +629,7 @@ services.")
      "daemonize runs a command as a Unix daemon.  It will close all open file
 descriptors, change working directory of the process to the root filesystem,
 reset its umask, run in the background, ignore I/O signals, handle
-@code{SIGCLD}, etc.  Most programs that are designed to be run as daemons do
+@code{SIGCHLD}, etc.  Most programs that are designed to be run as daemons do
 that work for themselves.  However, you’ll occasionally run across one that
 does not.  When you must run a daemon program that does not properly make
 itself into a true Unix daemon, you can use daemonize to force it to run as a
@@ -650,7 +651,7 @@ true daemon.")
         "0m1fd7l85ckb7bq4c5c3g257bkjglm8gq7x42pkmpp87fkknc94n"))))
    (build-system cmake-build-system)
    (arguments '(#:tests? #f)) ; There are no tests.
-   (native-inputs `(("gettext" ,gettext-minimal)))
+   (native-inputs (list gettext-minimal))
    (home-page "https://projects.gw-computing.net/projects/dfc")
    (synopsis "Display file system space usage using graphs and colors")
    (description
@@ -950,6 +951,7 @@ memory, disks, network and processes.  It's a Python port and continuation of
                           (("\"/bin/sh\"")
                            (string-append "\"" bash "/bin/sh\"")))))))))
     (native-inputs (list bison flex))
+    (inputs (list libxcrypt))
     (home-page "https://www.gnu.org.ua/software/pies/")
     (synopsis "Program invocation and execution supervisor")
     (description
@@ -962,45 +964,48 @@ re-executing them as necessary.")
 (define-public inetutils
   (package
     (name "inetutils")
-    (version "2.3")
+    (version "2.5")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/inetutils/inetutils-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "1dj4ilxy1wrfxhxc85iya3x28h1mhjpqc5nv862xcq3ww2gqkv8w"))))
+                "0q1257ci22g2jbdiqs00mharc1lqkbibdlkhj23f3si6qjxkn17s"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags '("--localstatedir=/var"
+     (list
+      #:configure-flags
+      #~(list "--localstatedir=/var"
 
-                           ;; Make sure 'PATH_PROCNET_DEV' gets defined when
-                           ;; cross-compiling (by default it does not.)
-                           ,@(if (%current-target-system)
-                                 '("--with-path-procnet-dev=/proc/net/dev")
-                                 '())
-                           ,@(if (target-hurd?)
-                                 '("--disable-rcp"
-                                   "--disable-rexec"
-                                   "--disable-rexecd"
-                                   "--disable-rlogin"
-                                   "--disable-rlogind"
-                                   "--disable-rsh"
-                                   "--disable-rshd"
-                                   "--disable-uucpd"
-                                   "--disable-whois")
-                                 '()))
-       ;; Make sure that canonical "coreutils" package is not referred.
-       #:make-flags
-       (list (string-append "CPPFLAGS=-DPATHDEF_CP=\\\""
-                            (search-input-file %build-inputs "bin/cp")
-                            "\\\""))
-       ;; On some systems, 'libls.sh' may fail with an error such as:
-       ;; "Failed to tell switch -a apart from -A".
-       #:parallel-tests? #f))
+              ;; Make sure 'PATH_PROCNET_DEV' gets defined when
+              ;; cross-compiling (by default it does not.)
+              #$@(if (%current-target-system)
+                     '("--with-path-procnet-dev=/proc/net/dev")
+                     '())
+              #$@(if (target-hurd?)
+                     '("--disable-rcp"
+                       "--disable-rexec"
+                       "--disable-rexecd"
+                       "--disable-rlogin"
+                       "--disable-rlogind"
+                       "--disable-rsh"
+                       "--disable-rshd"
+                       "--disable-uucpd"
+                       "--disable-whois")
+                     '()))
+      ;; Make sure that canonical "coreutils" package is not referred.
+      #:make-flags
+      #~(list (string-append "CPPFLAGS=-DPATHDEF_CP=\\\""
+                             (search-input-file %build-inputs "bin/cp")
+                             "\\\""))
+      ;; On some systems, 'libls.sh' may fail with an error such as:
+      ;; "Failed to tell switch -a apart from -A".
+      #:parallel-tests? #f))
     (inputs
      (list coreutils
            shadow                     ;for login (used in telnetd and rlogind)
+           libxcrypt
            ncurses
            readline))                   ;for 'ftp'
     (native-inputs
@@ -1051,9 +1056,7 @@ hostname.")
          ,@(if (%current-target-system)
                '((add-before 'configure 'set-runtime-shell
                    (lambda* (#:key inputs #:allow-other-keys)
-                     (let ((shell (string-append
-                                   (assoc-ref inputs "bash")
-                                   "/bin/bash")))
+                     (let ((shell (search-input-file inputs "/bin/bash")))
                        (setenv "RUNTIME_SHELL" shell)
                        (substitute* "configure.ac"
                          (("\\$SHELL")
@@ -1084,12 +1087,13 @@ hostname.")
                (delete-file (string-append bin "/groups"))
                (for-each delete-file (find-files man "^groups\\."))))))))
     (inputs
-     `(,@(if (target-hurd?)
-           '()
-           `(("linux-pam" ,linux-pam)))
-       ,@(if (%current-target-system)
-             `(("bash" ,bash-minimal))
-             '())))
+     (append (if (target-hurd?)
+                 '()
+                 (list linux-pam))
+             (if (%current-target-system)
+                 (list bash-minimal)
+                 '())
+             (list libxcrypt)))
     (home-page "https://github.com/shadow-maint/shadow")
     (synopsis "Authentication-related tools such as passwd, su, and login")
     (description
@@ -1802,8 +1806,7 @@ by bandwidth they use.")
              (substitute* (list "lib/App/ClusterSSH/Config.pm"
                                 "t/15config.t")
                (("xterm")
-                (which "xterm")))
-             #t))
+                (which "xterm")))))
          (add-before 'check 'delete-failing-tests
            (lambda _
              ;; This checks whether all code is nicely formatted.  The above
@@ -1811,8 +1814,7 @@ by bandwidth they use.")
              (delete-file "t/perltidy.t")
              ;; Update the manifest so t/manifest.t happily passes.
              (substitute* "MANIFEST"
-               (("t/perltidy.t\n") ""))
-             #t))
+               (("t/perltidy.t\n") ""))))
          (add-after 'install 'augment-library-path
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -1837,8 +1839,7 @@ by bandwidth they use.")
                                                "perl-try-tiny"
                                                "perl-x11-protocol"
                                                "perl-x11-protocol-other")))))))
-                  (find-files "." ".*")))
-               #t))))))
+                  (find-files "." ".*")))))))))
     (native-inputs
      (list perl-cpan-changes
            perl-file-slurp
@@ -1853,7 +1854,8 @@ by bandwidth they use.")
            perl-test-trap
            perltidy))
     (inputs
-     (list perl-exception-class
+     (list bash-minimal                 ;for wrap-program
+           perl-exception-class
            perl-sort-naturally
            perl-tk
            perl-try-tiny
@@ -1942,10 +1944,10 @@ realms/domains like Active Directory or IPA.")
                     (wrap-program program
                       `("PERL5LIB" ":" prefix
                         (,(string-append out "/lib/perl5/site_perl")))))
-                  (find-files "." ".*")))
-               #t))))))
+                  (find-files "." ".*")))))))))
     (native-inputs
      (list perl-module-build perl-test-pod perl-test-pod-coverage))
+    (inputs (list bash-minimal))        ;for wrap-program
     (home-page "https://metacpan.org/pod/distribution/File-Rename/rename.PL")
     (synopsis "Perl extension for renaming multiple files")
     (description
@@ -2176,6 +2178,8 @@ commands and their arguments.")
        #:tests? #f))                 ; no test suite
     (native-inputs
      (list bison))
+    (inputs
+     (list libxcrypt))
     (home-page "https://github.com/Duncaen/OpenDoas")
     (synopsis "Portable version of OpenBSD's doas command")
     (description "Doas is a minimal replacement for the venerable sudo.  It was
@@ -2334,10 +2338,14 @@ command.")
     (native-inputs
      ;; For icons.
      (modify-inputs (package-native-inputs wpa-supplicant)
-       (prepend imagemagick inkscape/stable)))
+       (prepend imagemagick/stable
+                inkscape/stable)))
     (build-system qt-build-system)
     (arguments
      (list
+      ;; Make sure the (rarely updated) package 'imagemagick/stable'
+      ;; does not end up in the closure.
+      #:disallowed-references (list imagemagick/stable)
       #:test-target "check"
       #:phases
       #~(modify-phases %standard-phases
@@ -3458,7 +3466,8 @@ rules is done with the @code{auditctl} utility.")
        ;; Nmap can't cope with out-of-source building.
        #:out-of-source? #f))
     (inputs
-     (list libpcap
+     (list bash-minimal                 ;for wrap-program
+           libpcap
            lua
            openssl-3.0
            pcre
@@ -3494,26 +3503,26 @@ results (ndiff), and a packet generation and response analysis tool (nping).")
                                 "dstat-skip-devices-without-io.patch"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no make check
-       #:make-flags
-       (list (string-append "prefix=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-python3-DeprecationWarning
-           (lambda _
-             (substitute* "dstat"
-               (("collections") "collections.abc"))
-             #t))
-         (delete 'configure)            ; no configure script
-         (add-after 'install 'wrap
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (wrap-program (string-append out "/bin/dstat")
-                 `("GUIX_PYTHONPATH" ":" prefix (,(getenv "GUIX_PYTHONPATH"))))
-               #t))))))
+     (list
+      #:tests? #f                       ; no make check
+      #:make-flags
+      #~(list (string-append "prefix=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-python3-DeprecationWarning
+            (lambda _
+              (substitute* "dstat"
+                (("collections") "collections.abc"))))
+          (delete 'configure)           ; no configure script
+          (add-after 'install 'wrap
+            (lambda _
+              (wrap-program (string-append #$output "/bin/dstat")
+                `("GUIX_PYTHONPATH" ":" prefix
+                  (,(getenv "GUIX_PYTHONPATH")))))))))
     (inputs
-     `(("python" ,python-wrapper)
-       ("python-six" ,python-six)))
+     (list bash-minimal                 ;for wrap-program
+           python-wrapper
+           python-six))
     (synopsis "Versatile resource statistics tool")
     (description "Dstat is a versatile replacement for @command{vmstat},
 @command{iostat}, @command{netstat}, and @command{ifstat}.  Dstat overcomes
@@ -4364,7 +4373,7 @@ hard-coded.")
            autoconf-archive
            automake
            `(,glib "bin") ; for glib-genmarshal, etc.
-           gtk-doc
+           gtk-doc/stable
            pkg-config))
     (inputs
      (list dbus-glib libevdev libxml2 upower xz))

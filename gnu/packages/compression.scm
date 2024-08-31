@@ -112,7 +112,7 @@
 (define-public zlib
   (package
     (name "zlib")
-    (version "1.2.13")
+    (version "1.3")
     (source
      (origin
        (method url-fetch)
@@ -122,7 +122,7 @@
                                  version "/zlib-" version ".tar.gz")))
        (sha256
         (base32
-         "0c5b8vw40dy178xlpddw65q9gf1h2186jcc3p4swinwggbllv8mk"))))
+         "0gjrz8p70mgkic7mxjh1vqwws4x8z7hq2fhbackvqg81jb1a82zz"))))
     (build-system gnu-build-system)
     (outputs '("out" "static"))
     (arguments
@@ -257,14 +257,14 @@ adding and extracting files to/from a tar archive.")
 (define-public gzip
   (package
    (name "gzip")
-   (version "1.12")
+   (version "1.13")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/gzip/gzip-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "0mhrx5wk9gazmxdw7vmbpg036yzqqhsww6h12kwf2dzn37jh6pnf"))))
+              "0mx0j7765l4cyj3hyvlks2s3izdyzaqf3hknamjwc5yv6mlynm3l"))))
    (build-system gnu-build-system)
    (synopsis "General file (de)compression (using lzw)")
    (arguments
@@ -530,7 +530,7 @@ formats, including zstd, xz, gzip, and bgzf.")
 (define-public xz
   (package
    (name "xz")
-   (version "5.2.8")
+   (version "5.4.5")
    (source (origin
             (method url-fetch)
             (uri (list (string-append "http://tukaani.org/xz/xz-" version
@@ -539,7 +539,7 @@ formats, including zstd, xz, gzip, and bgzf.")
                                       version ".tar.gz")))
             (sha256
              (base32
-              "0z9056ydsy76ib5cl1z60jkcqgr0x12d3lw1p2qnlcwi1fgxlp7c"))))
+              "1mmpwl4kg1vs6n653gkaldyn43dpbjh8gpk7sk0gps5f6jwr0p0k"))))
    (build-system gnu-build-system)
    (arguments
     `(#:phases

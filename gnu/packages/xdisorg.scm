@@ -107,6 +107,7 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages datastructures)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
@@ -265,7 +266,7 @@ command line, without displaying a keyboard at all.")
                (wrap-program (string-append out "/bin/arandr")
                  `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path)))))))
        #:tests? #f)) ;no tests
-    (inputs (list gtk+ python-pycairo python-pygobject xrandr))
+    (inputs (list bash-minimal gtk+ python-pycairo python-pygobject xrandr))
     (native-inputs (list gettext-minimal python-docutils))
     (home-page "https://christian.amsuess.com/tools/arandr/")
     (synopsis "Another RandR graphical user interface")
@@ -555,6 +556,7 @@ avoiding password prompts when X11 forwarding has already been setup.")
               (sha256
                (base32
                 "0awwz5pg9x5bj0d7dpg4a7bd4gl6k55mlpxwb12534fkrpn19p0f"))))
+    (outputs '("out" "doc"))
     (build-system meson-build-system)
     (inputs
      (list libx11
@@ -572,13 +574,30 @@ avoiding password prompts when X11 forwarding has already been setup.")
          (list pkg-config-for-build)
          '())))
     (arguments
-     (list #:configure-flags
-           #~(list (string-append "-Dxkb-config-root="
-                                  (search-input-directory
-                                   %build-inputs "share/X11/xkb"))
-                   (string-append "-Dx-locale-root="
-                                  (search-input-directory
-                                   %build-inputs "share/X11/locale")))))
+     (list
+      #:configure-flags
+      #~(list (string-append "-Dxkb-config-root="
+                             (search-input-directory
+                              %build-inputs "share/X11/xkb"))
+              (string-append "-Dx-locale-root="
+                             (search-input-directory
+                              %build-inputs "share/X11/locale")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'move-doc
+            (lambda _
+              (let ((old (string-append #$output "/share/doc"))
+                    (new (string-append #$output:doc "/share/doc")))
+                (mkdir-p (dirname new))
+                (rename-file old new))))
+          (add-after 'install 'symlink-pc
+            ;; in Requires.private of xkbregistry.pc
+            ;; XXX: Symlink libxml-2.0.pc in order to avoid putting
+            ;; libxml2 as a propagated input.
+            (lambda _
+              (let ((stem "/lib/pkgconfig/libxml-2.0.pc"))
+                (symlink (string-append #$(this-package-input "libxml2") stem)
+                         (string-append #$output stem))))))))
     (home-page "https://xkbcommon.org/")
     (synopsis "Library to handle keyboard descriptions")
     (description "Xkbcommon is a library to handle keyboard descriptions,
@@ -1205,7 +1224,7 @@ shows it again when the mouse cursor moves or a mouse button is pressed.")
                              "/lib/X11/app-defaults"))
       #:tests? #f))                     ;no such thing as a test suite
     (inputs
-     (list libx11 libxext libxt linux-pam))
+     (list libx11 libxcrypt libxext libxt linux-pam))
     (home-page "https://sillycycle.com/xlockmore.html")
     (synopsis "Screen locker for the X Window System")
     (description
@@ -1250,7 +1269,7 @@ X Window System.")
                      (install-file "xtrlock.1"
                                    (string-append out
                                                   "/share/man/man1/"))))))))
-    (inputs (list libx11 libxi libxfixes))
+    (inputs (list libx11 libxcrypt libxi libxfixes))
     (home-page "https://packages.debian.org/sid/xtrlock")
     (synopsis "Minimal X display lock program")
     (description
@@ -1569,7 +1588,7 @@ driver for the X.Org X Server version 1.7 and later (X11R7.5 or later).")
          "1fi27b73x85qqar526dbd33av7mahca2ykaqwr7siqiw1qqcby6j"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:imported-modules (,@%gnu-build-system-modules
+     `(#:imported-modules (,@%default-gnu-imported-modules
                            (guix build python-build-system))
        #:phases
        (modify-phases %standard-phases
@@ -1595,8 +1614,7 @@ driver for the X.Org X Server version 1.7 and later (X11R7.5 or later).")
                               (string-append out "/share/" dir)
                               (string-append gtk "/share/" dir))
                              (delete-file-recursively dir))
-                           '("appdata" "icons")))
-               #t)))
+                           '("appdata" "icons"))))))
          (add-after 'split-outputs 'wrap
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let* ((gtk (assoc-ref outputs "gtk"))
@@ -1606,13 +1624,13 @@ driver for the X.Org X Server version 1.7 and later (X11R7.5 or later).")
                (wrap-program (string-append gtk "/bin/redshift-gtk")
                  `("GUIX_PYTHONPATH" ":" prefix
                    (,(string-append site ":" (getenv "GUIX_PYTHONPATH"))))
-                 `("GI_TYPELIB_PATH" ":" prefix (,(getenv "GI_TYPELIB_PATH"))))
-               #t))))))
+                 `("GI_TYPELIB_PATH" ":" prefix (,(getenv "GI_TYPELIB_PATH"))))))))))
     (outputs '("out" "gtk"))
     (native-inputs
      (list pkg-config intltool))
     (inputs
-     (list libdrm
+     (list bash-minimal
+           libdrm
            libx11
            libxcb
            libxxf86vm
@@ -1752,7 +1770,8 @@ to an arbitrary balanced color.")
            libtool
            pkg-config))
     (inputs
-     (list glib
+     (list bash-minimal
+           glib
            gtk+
            libappindicator
            libdrm
@@ -1817,6 +1836,7 @@ less if you are working in front of the screen at night.")
      (list pkg-config intltool))
     (inputs
      (list libx11
+           libxcrypt
            libxext
            libxi
            libxt
@@ -2893,15 +2913,13 @@ Wayland.")
              (let ((out          (assoc-ref outputs "out"))
                    (wl-clipboard (assoc-ref inputs "wl-clipboard")))
                (wrap-program (string-append out "/bin/wl-clipboard-x11")
-                `("PATH" prefix (,(string-append wl-clipboard "/bin")))))
-             #t))
+                `("PATH" prefix (,(string-append wl-clipboard "/bin")))))))
          (add-after 'wrap-binary 'symlink-utilities
            ;; As seen in the Makefile.
            (lambda* (#:key outputs #:allow-other-keys)
              (let ((bin (string-append (assoc-ref outputs "out") "/bin/")))
                (symlink "wl-clipboard-x11" (string-append bin "xclip"))
-               (symlink "wl-clipboard-x11" (string-append bin "xsel")))
-             #t)))))
+               (symlink "wl-clipboard-x11" (string-append bin "xsel"))))))))
     (inputs
      (list bash-minimal wl-clipboard))
     (home-page "https://github.com/brunelli/wl-clipboard-x11")
@@ -2994,11 +3012,11 @@ can optionally use some appearance settings from XSettings, tint2 and GTK.")
       #:tests? #f                       ;no test suite
       #:modules `(((guix build guile-build-system)
                    #:select (target-guile-effective-version))
-                  ,@%gnu-build-system-modules
+                  ,@%default-gnu-imported-modules
                   (srfi srfi-26))
       #:phases
       (with-imported-modules `((guix build guile-build-system)
-                               ,@%gnu-build-system-modules)
+                               ,@%default-gnu-imported-modules)
         #~(modify-phases %standard-phases
             (add-after 'install 'wrap
               (lambda* (#:key inputs #:allow-other-keys)
@@ -3643,7 +3661,7 @@ if there's more than one.")
         (base32 "1xa6sgvnwynl2qrjnsppvb2vg4p5v1pisrfhrmnlymw1fzhh6s9p"))))
     (build-system gnu-build-system)
     (inputs
-     (list libx11 perl perl-tk))
+     (list bash-minimal libx11 perl perl-tk))
     (arguments
      `(#:tests? #f                      ; There are none.
        #:make-flags
@@ -3665,14 +3683,13 @@ if there's more than one.")
            (lambda* (#:key outputs #:allow-other-keys)
              (wrap-program (string-append (assoc-ref outputs "out")
                                           "/bin/xkbset-gui")
-               `("PERL5LIB" ":" prefix (,(getenv "PERL5LIB"))))
-             #t))
+               `("PERL5LIB" ":" prefix (,(getenv "PERL5LIB"))))))
          (replace 'install-license-files
            (lambda* (#:key outputs #:allow-other-keys)
              (install-file "COPYRIGHT"
-                           (string-append (assoc-ref outputs "out")
-                                          "/share/doc/" ,name "-" ,version))
-             #t)))))
+                           (string-append
+                            (assoc-ref outputs "out")
+                            "/share/doc/" ,name "-" ,version)))))))
     (home-page "https://stephenmontgomerysmith.github.io/software/#xkbset")
     (synopsis "User-preference utility for XKB extensions for X")
     (description

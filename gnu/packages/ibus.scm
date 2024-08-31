@@ -46,6 +46,7 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
@@ -181,7 +182,7 @@
               (rename-file
                (string-append #$output "/share/gtk-doc")
                (string-append #$output:doc "/share/gtk-doc"))))
-          (add-after 'wrap-program 'wrap-with-additional-paths
+          (add-after 'glib-or-gtk-wrap 'wrap-with-additional-paths
             (lambda* (#:key outputs #:allow-other-keys)
               ;; Make sure 'ibus-setup' runs with the correct GI_TYPELIB_PATH.
               (wrap-program (search-input-file outputs "bin/ibus-setup")
@@ -316,7 +317,7 @@ may also simplify input method development.")
       '(list "--enable-opencc")
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'wrap-program 'wrap-with-additional-paths
+          (add-after 'glib-or-gtk-wrap 'wrap-with-additional-paths
             (lambda _
               ;; Make sure 'ibus-setup-libpinyin' runs with the correct
               ;; PYTHONPATH and GI_TYPELIB_PATH.
@@ -336,7 +337,8 @@ may also simplify input method development.")
                                    "/share/ibus-libpinyin/setup/")
                    ,(getenv "GI_TYPELIB_PATH")))))))))
     (inputs
-     (list ibus
+     (list bash-minimal
+           ibus
            libpinyin
            bdb
            sqlite
@@ -457,7 +459,8 @@ Chinese pinyin input methods.")
            util-linux                   ;for getopt
            xorg-server-for-tests))
     (inputs
-     (list anthy
+     (list bash-minimal
+           anthy
            gtk+
            ibus
            gobject-introspection
@@ -521,7 +524,7 @@ traditional Chinese output.")
     (build-system gnu-build-system)
     (arguments
      `(#:modules ((ice-9 match)
-                  ,@%gnu-build-system-modules)
+                  ,@%default-gnu-modules)
        #:tests? #f                  ; no tests
        #:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
        #:phases
@@ -909,7 +912,8 @@ hanja dictionary and small hangul character classification.")
        ("gettext" ,gettext-minimal)
        ("glib:bin" ,glib "bin")))
     (inputs
-     (list ibus
+     (list bash-minimal
+           ibus
            glib
            python-pygobject
            gtk+

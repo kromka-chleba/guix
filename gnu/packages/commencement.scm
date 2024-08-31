@@ -1,19 +1,20 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012-2023 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2012 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2014, 2015, 2017 Mark H Weaver <mhw@netris.org>
-;;; Copyright © 2017, 2018, 2019, 2021, 2022 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2017, 2018, 2019, 2021, 2022, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2018, 2019, 2020, 2021, 2022, 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2018, 2019, 2020, 2021, 2022, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2019-2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020, 2022 Timothy Sample <samplet@ngyro.com>
 ;;; Copyright © 2020 Guy Fleury Iteriteka <gfleury@disroot.org>
 ;;; Copyright © 2021 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2021 Julien Lepiller <julien@lepiller.eu>
-;;; Copyright © 2022 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2022 Ekaitz Zarraga <ekaitz@elenq.tech>
+;;; Copyright © 2021 Pierre Langlois <pierre.langlois@gmx.com>
+;;; Copyright © 2022, 2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2022, 2023 Ekaitz Zarraga <ekaitz@elenq.tech>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -57,10 +58,14 @@
   #:use-module (gnu packages xml)
   #:use-module (guix gexp)
   #:use-module (guix packages)
-  #:use-module ((guix store) #:select (%store-monad))
+  #:use-module (guix platform)
+  #:use-module ((guix store) #:select (%store-monad
+                                       store-lift
+                                       built-in-builders))
   #:use-module (guix monads)
   #:use-module (guix download)
-  #:use-module ((guix git-download) #:select (git-reference git-file-name))
+  #:use-module ((guix git-download)
+                #:select (git-fetch git-reference git-file-name))
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system trivial)
   #:use-module ((guix licenses) #:prefix license:)
@@ -68,8 +73,7 @@
   #:use-module (guix utils)
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 vlist)
-  #:use-module (ice-9 match)
-  #:export (make-gcc-toolchain))
+  #:use-module (ice-9 match))
 
 ;;; Commentary:
 ;;;
@@ -93,37 +97,53 @@
 ;;;
 ;;; Code:
 
+(define built-in-builders*
+  (store-lift built-in-builders))
+
 (define* (git-fetch-from-tarball tarball)
   "Return an <origin> method equivalent to 'git-fetch', except that it fetches
 the checkout from TARBALL, a tarball containing said checkout.
 
   The purpose of this procedure is to work around bootstrapping issues:
 'git-fetch' depends on Git, which is much higher in the dependency graph."
-  (lambda* (url hash-algo hash
+  (lambda* (ref hash-algo hash
                 #:optional name
                 #:key (system (%current-system))
                 (guile %bootstrap-guile))
-    (mlet %store-monad ((guile (package->derivation guile system)))
-      (gexp->derivation
-       (or name "git-checkout")
-       (with-imported-modules '((guix build utils))
-         #~(begin
-             (use-modules (guix build utils)
-                          (ice-9 ftw)
-                          (ice-9 match))
-             (setenv "PATH"
-                     #+(file-append %bootstrap-coreutils&co "/bin"))
-             (invoke "tar" "xf" #$tarball)
-             (match (scandir ".")
-               (("." ".." directory)
-                (copy-recursively directory #$output)))))
-       #:recursive? #t
-       #:hash-algo hash-algo
-       #:hash hash
-       #:system system
-       #:guile-for-build guile
-       #:graft? #f
-       #:local-build? #t))))
+    (mlet %store-monad ((builtins (built-in-builders*)))
+      ;; Use the 'git-download' built-in builder when it's available: it's the
+      ;; preferred and most reliable method.
+      (if (member "git-download" builtins)
+          (git-fetch ref hash-algo hash name #:system system)
+
+          ;; This method is kept for compatibility with daemons that lack
+          ;; 'git-download' to work around bootstrapping issues.
+          (mlet %store-monad ((guile (package->derivation guile system)))
+            (gexp->derivation
+             (or name "git-checkout")
+             (with-imported-modules '((guix build utils))
+               #~(begin
+                   (use-modules (guix build utils)
+                                (ice-9 ftw)
+                                (ice-9 match))
+                   (setenv "PATH"
+                           #+(file-append %bootstrap-coreutils&co "/bin"))
+
+                   ;; FIXME: This assumes that TARBALL, an origin, was
+                   ;; successfully downloaded under its given hash; however
+                   ;; that hash is bound to change over time since it's a
+                   ;; generated tarball.
+                   (invoke "tar" "xf" #$tarball)
+                   (match (scandir ".")
+                     (("." ".." directory)
+                      (copy-recursively directory #$output)))))
+             #:recursive? #t
+             #:hash-algo hash-algo
+             #:hash hash
+             #:system system
+             #:guile-for-build guile
+             #:graft? #f
+             #:local-build? #t))))))
 
 (define bootar
   (package
@@ -145,7 +165,7 @@ the checkout from TARBALL, a tarball containing said checkout.
        #:tests? #f
        #:guile ,%bootstrap-guile
        #:imported-modules ((guix build gnu-bootstrap)
-                           ,@%gnu-build-system-modules)
+                           ,@%default-gnu-imported-modules)
        #:phases
        (begin
          (use-modules (guix build gnu-bootstrap))
@@ -185,7 +205,7 @@ pure Scheme to Tar and decompression in one easy step.")
        #:tests? #f
        #:guile ,%bootstrap-guile
        #:imported-modules ((guix build gnu-bootstrap)
-                           ,@%gnu-build-system-modules)
+                           ,@%default-gnu-imported-modules)
        #:phases
        (begin
          (use-modules (guix build gnu-bootstrap))
@@ -214,7 +234,7 @@ pure Scheme to Tar and decompression in one easy step.")
        #:tests? #f
        #:guile ,%bootstrap-guile
        #:imported-modules ((guix build gnu-bootstrap)
-                           ,@%gnu-build-system-modules)
+                           ,@%default-gnu-imported-modules)
        #:phases
        (begin
          (use-modules (guix build gnu-bootstrap))
@@ -302,97 +322,24 @@ pure Scheme to Tar and decompression in one easy step.")
     ("bootar" ,bootar)
     ("guile" ,%bootstrap-guile)))
 
-(define bootstrap-seeds
-  (package
-    (name "bootstrap-seeds")
-    (version "1.0.0")
-    (source (origin
-              (method url-fetch)
-              (uri (list
-                    (string-append "mirror://gnu/guix/mirror/"
-                                   "bootstrap-seeds-" version ".tar.gz")
-                    (string-append
-                     "https://lilypond.org/janneke/guix/20220501/"
-                     "bootstrap-seeds-" version ".tar.gz")))
-       (sha256
-        (base32
-         "0scz2bx8fd8c821h6y1j3x6ywgxxns7iinyn9z32dnkiacfdcpfn"))))
-    (native-inputs (list bootar))
-    (build-system trivial-build-system)
-    (arguments
-     (list #:guile %bootstrap-guile
-           #:modules '((guix build utils))
-           #:builder
-           #~(begin
-               (use-modules (guix build utils))
-               (let ((source #$(package-source this-package))
-                     (tar #$(this-package-native-input "bootar"))
-                     (out #$output))
-                 (setenv "PATH" (string-append tar "/bin:"))
-                 (invoke "tar" "xvf" source)
-                 (mkdir-p out)
-                 (copy-recursively "bootstrap-seeds" out)))))
-    (home-page "https://github.com/oriansj/bootstrap-seeds")
-    (synopsis "The initial bootstrap seeds: 357-byte hex0 and kaem shell")
-    (description
-     "This package provides pre-built binaries of the bootstrap seeds.  It
-contains a hex0-seed and an optional kaem-minimal shell.  The size of the hex0
-seeds are for knight: 250 bytes, x86-linux: 357 bytes, x86_64-linux: 431
-bytes, and aarch64-linux 526 bytes.  These can be used to build stage0: hex0,
-hex1, hex2, M1, and M2-Planet.")
-    (license license:gpl3+)))
-
 (define stage0-posix
   ;; The initial bootstrap package: no binary inputs except those from
   ;; `bootstrap-seeds, for x86 a 357 byte binary seed: `x86/hex0-seed'.
-  (let* ((mescc-tools-version "1.4.0")
-         (m2-planet-version "1.9.0")
-         (mescc-tools
-          (origin
-            (method url-fetch)
-            (uri (list
-                  (string-append
-                   "mirror://gnu/guix/mirror/"
-                   "mescc-tools-" mescc-tools-version ".tar.gz")
-                  (string-append
-                   "https://lilypond.org/janneke/guix/20220502/"
-                   "mescc-tools-" mescc-tools-version ".tar.gz")))
-            (sha256
-             (base32
-              "1xi6f48pf5bhajhfis189gpizxij7nbp1vzvsb1aafhz4skkiqvg"))))
-         (m2-planet
-          (origin
-            (method url-fetch)
-            (uri (list
-                  (string-append
-                   "mirror://gnu/guix/mirror/"
-                   "M2-Planet-" m2-planet-version ".tar.gz")
-                  (string-append
-                   "https://lilypond.org/janneke/guix/20220502/"
-                   "M2-Planet-" m2-planet-version ".tar.gz")))
-            (sha256
-             (base32
-              "1xrn69sc5nz4hwaishqyrcidp1ncxwib9zswl45x378ddz3mmk7g")))))
     (package
       (name "stage0-posix")
-      (version "1.4")
+      (version "1.6.0")
       (source (origin
                 (method url-fetch)
-                (uri (list
-                      (string-append "mirror://gnu/guix/mirror/"
-                                     "stage0-posix-" version ".tar.gz")
-                      (string-append
-                       "https://lilypond.org/janneke/guix/20220502/"
-                       "stage0-posix-" version ".tar.gz")))
+                (uri (string-append
+                       "https://github.com/oriansj/" name "/releases/download/"
+                       "Release_" version "/" name "-" version ".tar.gz"))
                 (sha256
                  (base32
-                  "1ammifkj33205qrpfm84yb1c99lwgbn4jsl1hd08aab8c9ffz6p4"))))
+                  "0p06wn95y6xbp2kcd81h2fm3wxvldd1qqyxgav0farl34xlzyq4j"))))
       (supported-systems '("i686-linux" "x86_64-linux"
                            "aarch64-linux"
                            "riscv64-linux"))
-      (native-inputs
-       `(("bootstrap-seeds" ,bootstrap-seeds)
-         ,@(%boot-gash-inputs)))
+      (native-inputs (%boot-gash-inputs))
       (build-system trivial-build-system)
       (arguments
        (list
@@ -401,9 +348,7 @@ hex1, hex2, M1, and M2-Planet.")
         #:builder
         #~(begin
             (use-modules (guix build utils))
-            (let* ((bootstrap-seeds #$(this-package-native-input
-                                       "bootstrap-seeds"))
-                   (source #$(package-source this-package))
+            (let* ((source #$(package-source this-package))
                    (tar #$(this-package-native-input "bootar"))
                    (bash #$(this-package-native-input "bash"))
                    (coreutils #$(this-package-native-input "coreutils"))
@@ -422,32 +367,18 @@ hex1, hex2, M1, and M2-Planet.")
                       "riscv64")
                      (else
                       (error "stage0-posix: system not supported" target))))
-                   (kaem (string-append "../bootstrap-seeds/POSIX/"
+                   (kaem (string-append "bootstrap-seeds/POSIX/"
                                         stage0-cpu "/kaem-optional-seed")))
               (setenv "PATH" (string-append tar "/bin:"
                                             coreutils "/bin:"
                                             bash "/bin"))
               (invoke "tar" "xvf" source)
               (chdir (string-append "stage0-posix-" #$version))
-              (copy-recursively bootstrap-seeds "bootstrap-seeds")
-              (invoke "tar" "xvf" #$mescc-tools)
-              (rmdir "mescc-tools")
-              (symlink (string-append "mescc-tools-" #$mescc-tools-version)
-                       "mescc-tools")
-              (invoke "tar" "xvf" #$m2-planet)
-              (rmdir "M2-Planet")
-              (symlink (string-append "M2-Planet-" #$m2-planet-version)
-                       "M2-Planet")
-              (rmdir "M2libc")
-              (symlink "M2-Planet/M2libc" "M2libc")
               (mkdir-p bindir)
-              (with-directory-excursion stage0-cpu
-                (with-output-to-file "mes-m2.kaem"
-                  (lambda _ (display "")))
-                (with-output-to-file "mescc-tools-extra.kaem"
-                  (lambda _ (display "")))
-                (invoke kaem "kaem.run"))
-              (with-directory-excursion "bin"
+              ;; Keep the same capitalization between the file name and the folder.
+              (rename-file "kaem.aarch64" "kaem.AArch64")
+              (invoke kaem (string-append "kaem." stage0-cpu))
+              (with-directory-excursion (string-append stage0-cpu "/bin")
                 (install-file "hex2" bindir)
                 (install-file "M1" bindir)
                 (install-file "blood-elf" bindir)
@@ -460,13 +391,14 @@ hex1, hex2, M1, and M2-Planet.")
 the bootstrap-seeds, the stage0-posix package first builds hex0 and then all
 the way up: hex1, catm, hex2, M0, cc_x86, M1, M2, get_machine (that's all of
 MesCC-Tools), and finally M2-Planet.")
-      (license license:gpl3+))))
+      (license license:gpl3+)))
+
 
 (define mes-boot
   (package
     (inherit mes)
     (name "mes-boot")
-    (version "0.24.2")
+    (version "0.25.1")
     (source (origin
               (method url-fetch)
               (uri (list (string-append "mirror://gnu/mes/"
@@ -475,10 +407,10 @@ MesCC-Tools), and finally M2-Planet.")
                                         "mes-" version ".tar.gz")))
               (sha256
                (base32
-                "0vp8v88zszh1imm3dvdfi3m8cywshdj7xcrsq4cgmss69s2y1nkx"))))
+                "03np6h4qx94givjdvq2rmhvab38y5f91254n0avg4vq2j0cx78in"))))
     (inputs '())
     (propagated-inputs '())
-    (supported-systems '("i686-linux" "x86_64-linux"))
+    (supported-systems '("i686-linux" "x86_64-linux" "riscv64-linux"))
     (native-inputs
      `(("m2-planet" ,stage0-posix)
        ("nyacc-source" ,(bootstrap-origin
@@ -507,9 +439,17 @@ MesCC-Tools), and finally M2-Planet.")
                                            dir "/nyacc-1.00.2/module"))
                 (invoke "gash" "configure.sh"
                         (string-append "--prefix=" out)
-                        "--host=i686-linux-gnu"))))
+                        (string-append "--host="
+                          #$(cond
+                              ((target-x86-64?) "i686-linux-gnu")
+                              (#t (platform-system->target
+                                    (%current-system)))))))))
           (replace 'build
             (lambda _
+              ;; TODO: GUILE_LOAD_PATH is leaking. We need to clean it.
+              (substitute* "kaem.run"
+                (("cp bin/mes-m2 bin/mes" all)
+                 (string-append "GUILE_LOAD_PATH=/fubar\n" all)))
               (invoke "gash" "bootstrap.sh")))
           (delete 'check)
           (replace 'install
@@ -558,7 +498,7 @@ MesCC-Tools), and finally M2-Planet.")
   (package
     (inherit tcc)
     (name "tcc-boot0")
-    (version "0.9.26-1136-g5bba73cc")
+    (version "0.9.26-1149-g46a75d0c")
     (source (origin
               (method url-fetch)
               (uri (list
@@ -568,9 +508,9 @@ MesCC-Tools), and finally M2-Planet.")
                                    "tcc-" version ".tar.gz")))
               (sha256
                (base32
-                "1y2f04qwdqg7dgxiscbf0ibybx2gclniwbbcsxpayazzii2cvji3"))))
+                "068x3r55fnz7pdxb6q01s8s26pb4kpxm61q8mwsa4cf6389cxxpl"))))
     (build-system gnu-build-system)
-    (supported-systems '("i686-linux" "x86_64-linux"))
+    (supported-systems '("i686-linux" "x86_64-linux" "riscv64-linux"))
     (inputs '())
     (propagated-inputs '())
     (native-inputs
@@ -605,6 +545,7 @@ MesCC-Tools), and finally M2-Planet.")
                 (setenv "prefix" out)
                 (setenv "GUILE_LOAD_PATH"
                         (string-append dir "/nyacc-1.00.2/module"))
+                (setenv "ONE_SOURCE" "true")
                 (invoke "sh" "configure"
                         "--cc=mescc"
                         (string-append "--prefix=" out)
@@ -937,27 +878,28 @@ MesCC-Tools), and finally M2-Planet.")
     (native-inputs (%boot-tcc-inputs))
     (supported-systems '("i686-linux" "x86_64-linux"))
     (arguments
-     `(#:implicit-inputs? #f
-       #:guile ,%bootstrap-guile
-       #:tests? #f                      ; runtest: command not found
-       #:parallel-build? #f
-       #:strip-binaries? #f             ; no strip yet
-       #:configure-flags
-       (let ((cppflags (string-append " -D __GLIBC_MINOR__=6"
-                                      " -D MES_BOOTSTRAP=1"))
-             (bash (assoc-ref %build-inputs "bash")))
-         `(,(string-append "CONFIG_SHELL=" bash "/bin/sh")
-           ,(string-append "CPPFLAGS=" cppflags)
-           "AR=tcc -ar"
-           "CXX=false"
-           "RANLIB=true"
-           ,(string-append "CC=tcc" cppflags)
-           "--disable-nls"
-           "--disable-shared"
-           "--disable-werror"
-           "--build=i686-unknown-linux-gnu"
-           "--host=i686-unknown-linux-gnu"
-           "--with-sysroot=/"))))))
+     (list #:implicit-inputs? #f
+           #:guile %bootstrap-guile
+           #:tests? #f ; runtest: command not found
+           #:parallel-build? #f
+           #:strip-binaries? #f ; no strip yet
+           #:configure-flags
+           #~(let ((cppflags (string-append
+                              " -D __GLIBC_MINOR__=6"
+                              " -D MES_BOOTSTRAP=1"))
+                   (bash (assoc-ref %build-inputs "bash")))
+               `(,(string-append "CONFIG_SHELL=" bash "/bin/sh")
+                 ,(string-append "CPPFLAGS=" cppflags)
+                 "AR=tcc -ar"
+                 "CXX=false"
+                 "RANLIB=true"
+                 ,(string-append "CC=tcc" cppflags)
+                 "--disable-nls"
+                 "--disable-shared"
+                 "--disable-werror"
+                 "--build=i686-unknown-linux-gnu"
+                 "--host=i686-unknown-linux-gnu"
+                 "--with-sysroot=/"))))))
 
 (define gcc-core-mesboot0
   ;; Gcc-2.95.3 is the most recent GCC that is supported by what the Mes C
@@ -1266,14 +1208,13 @@ ac_cv_c_float_format='IEEE (little-endian)'
     (arguments
      (substitute-keyword-arguments (package-arguments binutils-mesboot0)
        ((#:configure-flags configure-flags)
-        '(let ((out (assoc-ref %outputs "out")))
-           `("--disable-nls"
-             "--disable-shared"
-             "--disable-werror"
-             "--build=i686-unknown-linux-gnu"
-             "--host=i686-unknown-linux-gnu"
-             "--with-sysroot=/"
-             ,(string-append "--prefix=" out))))))))
+        #~(let ((out (assoc-ref %outputs "out")))
+            `("--disable-nls" "--disable-shared"
+              "--disable-werror"
+              "--build=i686-unknown-linux-gnu"
+              "--host=i686-unknown-linux-gnu"
+              "--with-sysroot=/"
+              ,(string-append "--prefix=" out))))))))
 
 (define gnu-make-mesboot
   (package
@@ -1926,6 +1867,11 @@ exec " gcc "/bin/" program
   (let ((pkg (mesboot-package "grep-mesboot" grep)))
     (package
       (inherit pkg)
+      (arguments
+       (substitute-keyword-arguments
+         (strip-keyword-arguments
+           '(#:configure-flags)
+           (package-arguments pkg))))
       (native-inputs
        `(("sed" ,sed-mesboot)
          ,@(package-native-inputs pkg))))))
@@ -2088,10 +2034,7 @@ exec " gcc "/bin/" program
        ,@(%bootstrap-inputs+toolchain)))
     (arguments
      `(#:implicit-inputs? #f
-       ;; Ignore test failure in gnulib for armhf/aarch64.
-       #:tests? ,(not (target-arm?))
        #:guile ,%bootstrap-guile
-
        ;; The build system assumes we have done a mistake when time_t is 32-bit
        ;; on a 64-bit system.  Ignore that for our bootstrap toolchain.
        ,@(substitute-keyword-arguments (package-arguments findutils)
@@ -2108,17 +2051,29 @@ exec " gcc "/bin/" program
               ,flags))
            ((#:phases phases '%standard-phases)
             `(modify-phases ,phases
-              ;; 'test-fnmatch' fails when using glibc-mesboot@2.16, due
-              ;; to incorrect handling of the [:alpha:] regexp character
-              ;; class.  Ignore it.
-               ,@(if (member (%current-system)
-                             '("x86_64-linux" "i686-linux"))
-                     '((add-before 'check 'skip-fnmatch-test
-                         (lambda _
-                           (substitute* "gnulib-tests/Makefile"
-                             (("^XFAIL_TESTS =")
-                              "XFAIL_TESTS = test-fnmatch ")))))
-                     '()))))))))
+               (add-before 'check 'skip-problematic-tests
+                 (lambda _
+                   ,(match (%current-system)
+                     ;; 'test-fnmatch' fails when using glibc-mesboot@2.16, due
+                     ;; to incorrect handling of the [:alpha:] regexp character
+                     ;; class.  Ignore it.
+                     ((or "x86_64-linux" "i686-linux")
+                      '(substitute* "gnulib-tests/Makefile"
+                         (("^XFAIL_TESTS =")
+                          "XFAIL_TESTS = test-fnmatch ")))
+                     ("armhf-linux"
+                      '(substitute* "gnulib-tests/Makefile"
+                         (("^XFAIL_TESTS =")
+                          "XFAIL_TESTS = test-fnmatch ")
+                         (("test-pthread-thread\\$\\(EXEEXT\\)") "")))
+                     (_
+                      ;; XXX: The pthread tests are known to fail at least on
+                      ;; ARM; skip them.
+                      '(substitute* "gnulib-tests/Makefile"
+                         (("test-pthread\\$\\(EXEEXT\\)") "")
+                         (("test-pthread-thread\\$\\(EXEEXT\\)") "")
+                         (("test-pthread_sigmask1\\$\\(EXEEXT\\)") "")
+                         (("test-pthread_sigmask2\\$\\(EXEEXT\\)") "")))))))))))))
 
 (define file
   (package
@@ -2244,32 +2199,40 @@ exec " gcc "/bin/" program
     (source (bootstrap-origin (package-source binutils)))
     (name "binutils-cross-boot0")
     (arguments
-     `(#:guile ,%bootstrap-guile
-       #:implicit-inputs? #f
+     (append (list #:guile %bootstrap-guile
+                   #:implicit-inputs? #f
 
-       #:modules ((guix build gnu-build-system)
-                  (guix build utils)
-                  (ice-9 ftw))                    ; for 'scandir'
-       #:phases (modify-phases %standard-phases
-                  (add-after 'install 'add-symlinks
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      ;; The cross-gcc invokes 'as', 'ld', etc, without the
-                      ;; triplet prefix, so add symlinks.
-                      (let ((out (assoc-ref outputs "out"))
-                            (triplet-prefix (string-append ,(boot-triplet) "-")))
-                        (define (has-triplet-prefix? name)
-                          (string-prefix? triplet-prefix name))
-                        (define (remove-triplet-prefix name)
-                          (substring name (string-length triplet-prefix)))
-                        (with-directory-excursion (string-append out "/bin")
-                          (for-each (lambda (name)
-                                      (symlink name (remove-triplet-prefix name)))
-                                    (scandir "." has-triplet-prefix?)))))))
+                   #:modules '((guix build gnu-build-system)
+                               (guix build utils)
+                               (ice-9 ftw)) ; for 'scandir'
+                   #:phases
+                   #~(modify-phases %standard-phases
+                       (add-after 'install 'add-symlinks
+                         (lambda* (#:key outputs #:allow-other-keys)
+                           ;; The cross-gcc invokes 'as', 'ld', etc, without the
+                           ;; triplet prefix, so add symlinks.
+                           (let ((out (assoc-ref outputs "out"))
+                                 (triplet-prefix (string-append #$(boot-triplet)
+                                                                "-")))
+                             (define (has-triplet-prefix? name)
+                               (string-prefix? triplet-prefix name))
+                             (define (remove-triplet-prefix name)
+                               (substring name
+                                          (string-length triplet-prefix)))
 
-       ,@(substitute-keyword-arguments (package-arguments binutils)
-           ((#:configure-flags cf)
-            `(cons ,(string-append "--target=" (boot-triplet))
-                   ,cf)))))
+                             (with-directory-excursion (string-append out "/bin")
+                               (for-each (lambda (name)
+                                           (symlink name
+                                                    (remove-triplet-prefix name)))
+                                         (scandir "."
+                                                  has-triplet-prefix?))))))))
+             (substitute-keyword-arguments (package-arguments binutils)
+               ((#:configure-flags cf)
+                #~(append (list #$(string-append "--target="
+                                                 (boot-triplet))
+                                "--disable-gprofng") ;requires Bison
+                          #$cf)))))
+    (native-inputs '())                           ;no Bison
     (inputs (%boot0-inputs))))
 
 (define libstdc++-boot0
@@ -2501,27 +2464,34 @@ exec " gcc "/bin/" program
     (source (bootstrap-origin (package-source perl)))
     (inputs (%boot0-inputs))
     (arguments
-     `(#:implicit-inputs? #f
-       #:guile ,%bootstrap-guile
-       #:validate-runpath? #f
+     (append (list #:implicit-inputs? #f
+                   #:guile %bootstrap-guile
+                   #:validate-runpath? #f
 
-       ;; At the very least, this must not depend on GCC & co.
-       #:disallowed-references ,(list %bootstrap-binutils)
+                   ;; At the very least, this must not depend on GCC & co.
+                   #:disallowed-references (list %bootstrap-binutils))
+             (substitute-keyword-arguments (package-arguments perl)
+               ((#:phases phases)
+                #~(modify-phases #$phases
+                    ;; Pthread support is missing in the bootstrap compiler
+                    ;; (broken spec file), so disable it.
+                    (add-before 'configure 'disable-pthreads
+                      (lambda _
+                        (substitute* "Configure"
+                          (("^libswanted=(.*)pthread" _ before)
+                           (string-append "libswanted=" before)))))))
+               ;; Do not configure with '-Dusethreads' since pthread
+               ;; support is missing.
+               ((#:configure-flags configure-flags)
+                #~(delete "-Dusethreads"
 
-       ,@(substitute-keyword-arguments (package-arguments perl)
-           ((#:phases phases)
-            `(modify-phases ,phases
-               ;; Pthread support is missing in the bootstrap compiler
-               ;; (broken spec file), so disable it.
-               (add-before 'configure 'disable-pthreads
-                 (lambda _
-                   (substitute* "Configure"
-                     (("^libswanted=(.*)pthread" _ before)
-                      (string-append "libswanted=" before)))))))
-           ;; Do not configure with '-Dusethreads' since pthread
-           ;; support is missing.
-           ((#:configure-flags configure-flags)
-            `(delete "-Dusethreads" ,configure-flags)))))))
+                          ;; On i586-gnu, linking fails with "undefined
+                          ;; reference to `__stack_chk_guard'" so avoid
+                          ;; '-fstack-protector'.
+                          #$(if (target-hurd?)
+                                #~(cons* "-A" "ccflags=-fno-stack-protector"
+                                         #$configure-flags)
+                                configure-flags))))))))
 
 (define m4-boot0
   (package
@@ -2665,7 +2635,7 @@ memoized as a function of '%current-system'."
    (package
      (inherit gnumach-headers)
      (name "gnumach-headers-boot0")
-     (version "1.8+git20221224")
+     (version "1.8+git20230410")
      (source
       (origin
         (inherit (package-source gnumach-headers))
@@ -2678,7 +2648,7 @@ memoized as a function of '%current-system'."
                   "gnumach-" version ".tar.gz"))
             (sha256
              (base32
-              "0vb19ynvrxz302snqxkd0wgizwa5fw2x06a4zjsllqb9ijbq9mc8")))))))
+              "1s09256g2ny46idrn8frzs7r51la9ni45bmglmswlsmz9ii7dpi4")))))))
      (native-inputs (list autoconf-boot0 automake-boot0 texinfo-boot0))
      (arguments
       (substitute-keyword-arguments (package-arguments gnumach-headers)
@@ -2717,18 +2687,18 @@ memoized as a function of '%current-system'."
                           gnumach-headers-boot0))
      (inputs (list flex-boot0 gnumach-headers-boot0))
      (arguments
-      (list
-       #:configure-flags
-       #~(list (string-append "LDFLAGS=-Wl,-rpath="
-                              #$(this-package-native-input "flex")
-                              "/lib/")))))))
+      (substitute-keyword-arguments (package-arguments mig)
+        ((#:configure-flags flags '())
+         #~(list (string-append "LDFLAGS=-Wl,-rpath="
+                                #$(this-package-native-input "flex")
+                                "/lib/"))))))))
 
 (define hurd-headers-boot0
   (with-boot0
    (package
      (inherit hurd-headers)
      (name "hurd-headers-boot0")
-     (version "0.9.git20230216")
+     (version "0.9.git20230520")
      (source
       (origin
         (inherit (package-source hurd-headers))
@@ -2741,7 +2711,7 @@ memoized as a function of '%current-system'."
                   "hurd-v" version ".tar.gz"))
             (sha256
              (base32
-              "1f75nlkcl00dqnnrbrj1frvzs2qibfpygj3gwywqi85aldjl48y7")))))))
+              "0ybmx7bhy21zv1if2hfdspn13zn68vki1na72sw2jj87gj8przna")))))))
      (native-inputs
       (list autoconf-boot0 automake-boot0 mig-boot0))
      (inputs '()))))
@@ -2822,6 +2792,7 @@ memoized as a function of '%current-system'."
     ;; pthreads, which is missing on non-x86 platforms at this stage.
     ;; Python 3.6 technically supports being built without threading
     ;; support, but requires additional patches.
+    (name "python-boot0")
     (version "3.5.9")
     (source (bootstrap-origin
              (origin
@@ -3140,27 +3111,6 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
     ("gcc" ,gcc-boot0-wrapped)
     ,@(fold alist-delete (%boot1-inputs) '("libc" "gcc" "linux-libre-headers"))))
 
-(define binutils-final
-  (package
-    (inherit binutils)
-    (source (bootstrap-origin (package-source binutils)))
-    (arguments
-     `(#:guile ,%bootstrap-guile
-       #:implicit-inputs? #f
-       #:allowed-references
-       ,@(match (%current-system)
-         ((? target-powerpc?)
-          `(("out" ,glibc-final ,static-bash-for-glibc)))
-         (_
-          `(("out" ,glibc-final))))
-       ,@(package-arguments binutils)))
-    (inputs
-     (match (%current-system)
-       ((? target-powerpc?)
-        `(("bash" ,static-bash-for-glibc)
-          ,@(%boot2-inputs)))
-       (_ (%boot2-inputs))))))
-
 (define libstdc++
   ;; Intermediate libstdc++ that will allow us to build the final GCC
   ;; (remember that GCC-BOOT0 cannot build libstdc++.)
@@ -3189,6 +3139,36 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
       (outputs '("out"))
       (inputs (%boot2-inputs))
       (synopsis "GNU C++ standard library (intermediate)"))))
+
+(define binutils-final
+  (package
+    (inherit binutils)
+    (source (bootstrap-origin (package-source binutils)))
+    (arguments
+     (append (list #:guile %bootstrap-guile
+                   #:implicit-inputs? #f
+                   #:allowed-references `("out" ,glibc-final
+                                          ,(this-package-native-input
+                                            "libstdc++")
+                                          ,@(if (target-powerpc? (%current-system))
+                                                (list static-bash-for-glibc)
+                                                '())))
+             (substitute-keyword-arguments (package-arguments binutils)
+               ((#:configure-flags flags #~'())
+                ;; For gprofng, tell the build system where to look for libstdc++.
+                #~(append #$flags
+                          (list (string-append "LDFLAGS=-L"
+                                               #$(this-package-native-input
+                                                  "libstdc++")
+                                               "/lib")))))))
+    (native-inputs (list bison-boot0
+                         libstdc++))              ;for gprofng
+    (inputs
+     (match (%current-system)
+       ((? target-powerpc?)
+        `(("bash" ,static-bash-for-glibc)
+          ,@(%boot2-inputs)))
+       (_ (%boot2-inputs))))))
 
 (define zlib-final
   ;; Zlib used by GCC-FINAL.
@@ -3236,7 +3216,7 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
       ;; Additional modules for the libstdc++ phase below.
       #:modules `((srfi srfi-1)
                   (srfi srfi-26)
-                  ,@%gnu-build-system-modules)
+                  ,@%default-gnu-modules)
 
       (substitute-keyword-arguments (package-arguments gcc)
         ((#:make-flags flags)
@@ -3348,8 +3328,18 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
 (define-public guile-final
   ;; This package must be public because other modules refer to it.  However,
   ;; mark it as hidden so that 'fold-packages' ignores it.
-  (with-boot4 (hidden-package
-               (package-with-bootstrap-guile guile-3.0/pinned))))
+  (let ((parent (with-boot4 (hidden-package
+                             (package-with-bootstrap-guile guile-3.0/pinned)))))
+    (package
+      (inherit parent)
+      (inputs
+       (modify-inputs (package-inputs parent)
+         (delete "libxcrypt")))
+      (arguments
+       (substitute-keyword-arguments (package-arguments parent)
+         ((#:phases phases #~%standard-phases)
+          #~(modify-phases #$phases
+              (delete 'add-libxcrypt-reference-pkgconfig))))))))
 
 (define-public glibc-utf8-locales-final
   ;; Now that we have GUILE-FINAL, build the UTF-8 locales.  They are needed
@@ -3389,27 +3379,21 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
                    #:guile guile-final
                    #:bash bash-final))
 
-(define (%boot5-inputs)
-  ;; Now with UTF-8 locales.  Remember that the bootstrap binaries were built
-  ;; with an older libc, which cannot load the new locale format.  See
-  ;; <https://lists.gnu.org/archive/html/guix-devel/2015-08/msg00737.html>.
-  `(("locales" ,(if (target-hurd?)
-                    glibc-utf8-locales-final/hurd
-                    glibc-utf8-locales-final))
-    ,@(%boot4-inputs)))
+;; There used to be a "stage 5" including a variant of the
+;; 'glibc-utf8-locales' package.  This is no longer necessary since 'glibc'
+;; embeds the "C.UTF-8" locale, but these aliases are kept for convenience.
+(define %boot5-inputs %boot4-inputs)
+(define with-boot5 with-boot4)
 
-(define with-boot5
-  (package-with-explicit-inputs %boot5-inputs))
-
-(define gnu-make-final
-  ;; The final GNU Make, which uses the final Guile.
+(define (make-gnu-make-final)
+  "Compute the final GNU Make, which uses the final Guile."
   (let ((pkg-config (package
                       (inherit %pkg-config)       ;the native pkg-config
                       (inputs `(("guile" ,guile-final)
                                 ,@(%boot5-inputs)))
                       (arguments
                        `(#:implicit-inputs? #f
-                         ,@(package-arguments pkg-config))))))
+                         ,@(package-arguments %pkg-config))))))
     (package
       (inherit (package-with-bootstrap-guile gnu-make))
       (inputs `(("guile" ,guile-final)
@@ -3438,8 +3422,10 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
   ;; built before gzip.
   (let ((grep (with-boot5 (package-with-bootstrap-guile grep))))
     (package/inherit grep
-                     (inputs (alist-delete "pcre" (package-inputs grep)))
-                     (native-inputs `(("perl" ,perl-boot0))))))
+      (arguments (strip-keyword-arguments '(#:configure-flags)
+                                          (package-arguments grep)))
+      (inputs (alist-delete "pcre2" (package-inputs grep)))
+      (native-inputs `(("perl" ,perl-boot0))))))
 
 (define xz-final
   ;; The final xz.  We need to replace the bootstrap xz with a newer one
@@ -3484,21 +3470,23 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
                    ("diffutils" ,diffutils)
                    ("patch" ,patch/pinned)
                    ("findutils" ,findutils)
-                   ("gawk" ,gawk)))
+                   ("gawk" ,(package/inherit gawk
+                              (native-inputs
+                               (list (if (target-hurd?)
+                                         glibc-utf8-locales-final/hurd
+                                         glibc-utf8-locales-final)))))
+                   ("zstd" ,zstd)))
           ("sed" ,sed-final)
           ("grep" ,grep-final)
           ("xz" ,xz-final)
           ("coreutils" ,coreutils-final)
-          ("make" ,gnu-make-final)
+          ("make" ,(make-gnu-make-final))
           ("bash" ,bash-final)
           ("ld-wrapper" ,ld-wrapper)
           ("binutils" ,binutils-final)
           ("gcc" ,gcc-final)
           ("libc" ,glibc-final)
-          ("libc:static" ,glibc-final "static")
-          ("locales" ,(if (target-hurd? (%current-system))
-                          glibc-utf8-locales-final/hurd
-                          glibc-utf8-locales-final)))))))
+          ("libc:static" ,glibc-final "static"))))))
 
 (define-public canonical-package
   (let ((name->package (mlambda (system)
@@ -3509,6 +3497,10 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
                                                 package result))))
                                vlist-null
                                `(("guile" ,guile-final)
+                                 ("glibc-utf8-locales"
+                                  ,(if (target-hurd? system)
+                                       glibc-utf8-locales-final/hurd
+                                       glibc-utf8-locales-final))
                                  ,@(%final-inputs system))))))
     (lambda (package)
       "Return the 'canonical' variant of PACKAGE---i.e., if PACKAGE is one of
@@ -3574,15 +3566,7 @@ COREUTILS-FINAL vs. COREUTILS, etc."
                                                      "libc-debug")))
                        (union-build (assoc-ref %outputs "static")
                                     (list (assoc-ref %build-inputs
-                                                     "libc-static")))
-                       ;; XXX Remove once an empty librt.a is added to
-                       ;; libc:out.
-                       (copy-file
-                        (string-append (assoc-ref %outputs "out")
-                                       "/lib/libpthread.a")
-                        (string-append (assoc-ref %outputs "out")
-                                       "/lib/librt.a"))
-                       #t))))
+                                                     "libc-static")))))))
 
       (native-search-paths
        (append (package-native-search-paths gcc)

@@ -90,6 +90,7 @@
   #:use-module (gnu packages code)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages dejagnu)
@@ -206,7 +207,7 @@
                (mkdir-p share)
                (copy-recursively "unix/resources" share)))))))
     (inputs
-     (list boost muparser freetype qtbase-5 qtsvg-5))
+     (list bash-minimal boost muparser freetype qtbase-5 qtsvg-5))
     (native-inputs
      (list pkg-config which))
     (home-page "https://librecad.org/")
@@ -258,6 +259,7 @@ plans and designs.")
            glib
            gtk+-2
            guile-2.0
+           libxcrypt
            shared-mime-info
            m4
            pcb
@@ -568,7 +570,7 @@ featuring various improvements and bug fixes.")))
        #:parallel-build? #f
        #:tests? #f ;; no tests-suite
        #:modules ((srfi srfi-1)
-                  ,@%gnu-build-system-modules)
+                  ,@%default-gnu-modules)
        #:phases
        (modify-phases %standard-phases
          (add-after 'build 'make-doc
@@ -665,7 +667,7 @@ multipole-accelerated algorithm.")
        #:parallel-build? #f
        #:tests? #f ;; no tests-suite
        #:modules ((srfi srfi-1)
-                  ,@%gnu-build-system-modules)
+                  ,@%default-gnu-modules)
        #:phases
        (modify-phases %standard-phases
          (delete 'configure)
@@ -1429,9 +1431,10 @@ WiFi signal strength maps.  It visualizes them using a Voronoi diagram.")
                  `("PATH" ":" prefix
                    (,(string-append python "/bin:"))))))))))
     (inputs
-     `(("boost" ,boost)
-       ("python" ,python-wrapper)
-       ("python-mako" ,python-mako)))
+     (list bash-minimal                 ;for wrap-program
+           boost
+           python-wrapper
+           python-mako))
     (home-page "https://www.libvolk.org/")
     (synopsis "Vector-Optimized Library of Kernels")
     (description
@@ -2284,8 +2287,7 @@ parallel computing platforms.  It also supports serial execution.")
            (lambda _
              (substitute* "v2cc/gvhdl.in"
                (("--mode=link") "--mode=link --tag=CXX")
-               (("-lm") "-lm FREEHDL/lib/freehdl/libieee.la"))
-             #t))
+               (("-lm") "-lm FREEHDL/lib/freehdl/libieee.la"))))
          (add-after 'patch-gvhdl 'patch-freehdl-gennodes
            (lambda* (#:key inputs #:allow-other-keys)
              (substitute* "freehdl/freehdl-gennodes.in"
@@ -2293,8 +2295,7 @@ parallel computing platforms.  It also supports serial execution.")
                 (search-input-file inputs "/bin/guile"))
                (("\\(debug") ";(debug")
                (("\\(@ ") "(apply-emit")
-               (("\\(@@ ") "(apply-mini-format"))
-             #t))
+               (("\\(@@ ") "(apply-mini-format"))))
          (add-after 'configure 'patch-freehdl-pc
            (lambda* (#:key inputs #:allow-other-keys)
              (substitute* "freehdl.pc"
@@ -2303,9 +2304,8 @@ parallel computing platforms.  It also supports serial execution.")
                                "/bin/g++"))
                (("=libtool")
                 (string-append "=" (assoc-ref inputs "libtool")
-                               "/bin/libtool")))
-             #t))
-         (add-after 'install-scripts 'make-wrapper
+                               "/bin/libtool")))))
+         (add-after 'install 'make-wrapper
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let ((out (assoc-ref outputs "out")))
                ;; 'gvhdl' invokes the C compiler directly, so hard-code its
@@ -2323,10 +2323,11 @@ parallel computing platforms.  It also supports serial execution.")
                     ,(string-append (assoc-ref inputs "coreutils")
                                     "/bin"))))
                (wrap-program (string-append out "/bin/freehdl-config")
-                 `("PKG_CONFIG_PATH" ":" prefix (,(string-append out "/lib/pkgconfig")))))
-             #t)))))
+                 `("PKG_CONFIG_PATH" ":" prefix
+                   (,(string-append out "/lib/pkgconfig"))))))))))
     (inputs
-     (list coreutils
+     (list bash-minimal
+           coreutils
 
            ;; Lazily resolve the gcc-toolchain to avoid a circular dependency.
            (module-ref (resolve-interface '(gnu packages commencement))
@@ -2943,7 +2944,8 @@ comments.")))
            python-pyside-2-tools
            swig))
     (inputs
-     (list boost
+     (list bash-minimal
+           boost
            coin3d
            double-conversion
            eigen
@@ -3152,6 +3154,7 @@ format.")
                      (cmake (assoc-ref inputs "cmake")))
                  (mkdir-p "build")
                  (invoke "cmake"
+                         "-DCMAKE_CXX_FLAGS=-DBOOST_TIMER_ENABLE_DEPRECATED"
                          (string-append "-DCMAKE_INSTALL_PREFIX=" out)))))
            (delete 'configure))))
       (home-page "https://github.com/Heeks/libarea")
@@ -3390,7 +3393,7 @@ program that can perform mesh processing tasks in batch mode, without a GUI.")
      (list
       #:imported-modules `((guix build emacs-build-system)
                            (guix build emacs-utils)
-                           ,@%gnu-build-system-modules)
+                           ,@%default-gnu-imported-modules)
       #:modules '((guix build gnu-build-system)
                   ((guix build emacs-build-system) #:prefix emacs:)
                   (guix build utils))
@@ -3511,16 +3514,18 @@ dynamic calibration of the milling depth.")
                            `("GSETTINGS_SCHEMA_DIR" =
                              (,(string-append (assoc-ref inputs "gtk+")
                                               "/share/glib-2.0/schemas")))))))))
-      (inputs (list cairo
-                    eigen
-                    freetype
-                    gtkmm-3
-                    json-c
-                    libpng
-                    libspnav            ;spaceware
-                    mimalloc
-                    mesa
-                    zlib))
+      (inputs
+       (list bash-minimal
+             cairo
+             eigen
+             freetype
+             gtkmm-3
+             json-c
+             libpng
+             libspnav            ;spaceware
+             mimalloc
+             mesa
+             zlib))
       (synopsis
        "Parametric 2D/3D @acronym{CAD, computer-aided design} software")
       (description
@@ -4464,7 +4469,8 @@ python bindings.  It belongs to the Cura project from Ultimaker.")
            python-pytest
            python-requests))
     (inputs
-     (list cura-engine
+     (list bash-minimal
+           cura-engine
            libcharon
            libsavitar
            python

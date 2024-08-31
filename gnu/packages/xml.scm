@@ -33,6 +33,7 @@
 ;;; Copyright © 2021 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2021 David Larsson <david.larsson@selfhosted.xyz>
 ;;; Copyright © 2021 Matthew James Kraai <kraai@ftbfs.org>
+;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -84,6 +85,7 @@
   #:use-module (guix build-system python)
   #:use-module (guix deprecation)
   #:use-module (guix utils)
+  #:use-module (guix search-paths)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages pkg-config))
 
@@ -198,42 +200,36 @@ hierarchical form with variable field lengths.")
     (build-system gnu-build-system)
     (outputs '("out" "static" "doc"))
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-after 'install 'use-other-outputs
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let ((src (assoc-ref outputs "out"))
-                            (doc (string-append (assoc-ref outputs "doc") "/share"))
-                            (dst (string-append (assoc-ref outputs "static")
-                                                "/lib")))
-                        (mkdir-p doc)
-                        (mkdir-p dst)
-                        (for-each (lambda (dir)
-                                    (rename-file (string-append src "/share/" dir)
-                                                 (string-append doc "/" dir)))
-                                  '("gtk-doc"))
-                        (for-each (lambda (ar)
-                                    (rename-file ar (string-append dst "/"
-                                                                   (basename ar))))
-                                  (find-files (string-append src "/lib") "\\.a$"))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'use-other-outputs
+            (lambda _
+              (let ((doc (string-append #$output:doc "/share/"))
+                    (static (string-append #$output:static "/lib/")))
+                (for-each mkdir-p (list doc static))
 
-                        ;; Remove reference to the static library from the .la
-                        ;; file such that Libtool does the right thing when both
-                        ;; the shared and static variants are available.
-                        (substitute* (string-append src "/lib/libxml2.la")
-                          (("^old_library='libxml2.a'") "old_library=''"))))))))
+                (rename-file (string-append #$output "/share/gtk-doc")
+                             (string-append doc "/gtk-doc"))
+
+                (for-each
+                 (lambda (ar)
+                   (rename-file ar
+                                (string-append static (basename ar))))
+                 (find-files (string-append #$output "/lib") "\\.a$"))
+
+                ;; Remove reference to the static library from the .la
+                ;; file such that Libtool does the right thing when both
+                ;; the shared and static variants are available.
+                (substitute* (string-append #$output "/lib/libxml2.la")
+                  (("^old_library='libxml2.a'") "old_library=''"))))))))
     (home-page "http://www.xmlsoft.org/")
     (synopsis "C parser for XML")
     (inputs (list xz))
     (propagated-inputs (list zlib)) ; libxml2.la says '-lz'.
     (native-inputs (list perl))
-    ;; $XML_CATALOG_FILES lists 'catalog.xml' files found in under the 'xml'
-    ;; sub-directory of any given package.
-    (native-search-paths (list (search-path-specification
-                                (variable "XML_CATALOG_FILES")
-                                (separator " ")
-                                (files '("xml"))
-                                (file-pattern "^catalog\\.xml$")
-                                (file-type 'regular))))
+    (native-search-paths
+     (list $SGML_CATALOG_FILES $XML_CATALOG_FILES))
     (search-paths native-search-paths)
     (description
      "Libxml2 is the XML C parser and toolkit developed for the Gnome
@@ -371,6 +367,7 @@ formulas and hyperlinks to multiple worksheets in an Excel 2007+ XLSX file.")
            xz))
     (native-inputs
      (list pkg-config))
+    (native-search-paths %libxslt-search-paths)
     (description
      "Libxslt is an XSLT C library developed for the GNOME project.  It is
 based on libxml for XML parsing, tree manipulation and XPath support.")
@@ -1039,17 +1036,36 @@ RSS 0.91, RSS 1.0, RSS 2.0, Atom")
 (define-public perl-xml-xpath
   (package
     (name "perl-xml-xpath")
-    (version "1.44")
+    (version "1.48")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://cpan/authors/id/M/MA/MANWAR/"
                                   "XML-XPath-" version ".tar.gz"))
               (sha256
                (base32
-                "03yxj7w5a43ibbpiqsvb3lswj2b71dydsx4rs2fw0p8n0l3i3j8w"))))
+                "1kch6w4zk7rzfimbwakz8qyhjhrvnp97158af0p5p7i3dgimpivv"))))
     (build-system perl-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-xpath
+            (lambda _
+              (let ((xpath (string-append #$output "/bin/xpath"))
+                    (perl5lib
+                     (search-path-as-list
+                      '("/lib/perl5/site_perl")
+                      (list #$(this-package-input "perl-xml-parser")
+                            #$output))))
+                (wrap-program xpath
+                  `("PERL5LIB" ":" prefix ,perl5lib)))))
+          (add-after 'wrap-xpath 'check-wrap
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (unsetenv "PERL5LIB")
+                (invoke/quiet (string-append #$output "/bin/xpath"))))))))
     (native-inputs
-     (list perl-path-tiny))
+     (list perl-path-tiny perl-test-leaktrace))
     (propagated-inputs
      (list perl-xml-parser))
     (home-page "https://metacpan.org/release/XML-XPath")
@@ -1057,7 +1073,7 @@ RSS 0.91, RSS 1.0, RSS 2.0, Atom")
     (description
      "This module aims to comply exactly to the @url{XPath specification,
 https://www.w3.org/TR/xpath} and yet allow extensions to be added in
-the form of functions.")
+the form of functions.  It also provides the command @command{xpath}.")
     (license license:perl-license)))
 
 (define-public pugixml
@@ -1128,16 +1144,18 @@ code for classes that correspond to data structures defined by XMLSchema.")
     (build-system gnu-build-system)
     (arguments
      ;; Make sure the reference to util-linux's 'getopt' is kept in 'xmlto'.
-     '(#:configure-flags (list (string-append "GETOPT="
-                                              (assoc-ref %build-inputs
-                                                         "util-linux")
-                                              "/bin/getopt"))))
+     (list
+      #:configure-flags
+      #~(list (string-append "GETOPT="
+                             #$(this-package-input "util-linux")
+                             "/bin/getopt"))))
     (native-inputs
      (list util-linux))
     (inputs
      (list util-linux ; for 'getopt'
            libxml2 ; for 'xmllint'
            libxslt))                     ; for 'xsltproc'
+    (native-search-paths %libxslt-search-paths)
     (home-page "http://cyberelk.net/tim/software/xmlto/")
     (synopsis "Front-end to an XSL toolchain")
     (description
@@ -1750,7 +1768,6 @@ modular implementation of XML-RPC for C and C++.")
     (native-inputs
      (list docbook-xml-4.1.2
            docbook-xsl
-           libxml2                      ;for XML_CATALOG_DIR
            xmlto
            ;; Dependencies to regenerate the 'configure' script.
            autoconf
@@ -1788,14 +1805,7 @@ modular implementation of XML-RPC for C and C++.")
                 (("^\tOSGMLNORM=`echo osgmlnorm\\|sed '\\$\\(transform\\)'`\\\\")
                  "\tOSGMLNORM=`echo osgmlnorm|sed '$(transform)'`")
                 (("^\t\\$\\(SHELL\\)\n") "")))))))
-    ;; $SGML_CATALOG_FILES lists 'catalog' or 'CATALOG' or '*.cat' files found
-    ;; under the 'sgml' sub-directory of any given package.
-    (native-search-paths (list (search-path-specification
-                                (variable "SGML_CATALOG_FILES")
-                                (separator ":")
-                                (files '("sgml"))
-                                (file-pattern "^catalog$|^CATALOG$|^.*\\.cat$")
-                                (file-type 'regular))))
+    (native-search-paths (list $SGML_CATALOG_FILES))
     (home-page "https://openjade.sourceforge.net/")
     (synopsis "Suite of SGML/XML processing tools")
     (description "OpenSP is an object-oriented toolkit for SGML parsing and

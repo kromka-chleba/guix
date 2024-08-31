@@ -7,7 +7,7 @@
 ;;; Copyright © 2015, 2017 Cyril Roelandt <tipecaml@gmail.com>
 ;;; Copyright © 2015 Federico Beffa <beffa@fbengineering.ch>
 ;;; Copyright © 2015 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2015, 2016, 2018-2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015, 2016, 2018-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 Christine Lemmer-Webber <cwebber@dustycloud.org>
 ;;; Copyright © 2016, 2017 Danny Milosavljevic <dannym+a@scratchpost.org>
@@ -26,7 +26,7 @@
 ;;; Copyright © 2017 Nikita <nikita@n0.is>
 ;;; Copyright © 2015, 2017, 2018, 2020, 2021, 2023, 2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016-2022 Marius Bakke <marius@gnu.org>
-;;; Copyright © 2017, 2018, 2020, 2021 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2017-2018, 2020-2021, 2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2018 Fis Trivial <ybbs.daans@hotmail.com>
 ;;; Copyright © 2019, 2021 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2019 Chris Marusich <cmmarusich@gmail.com>
@@ -35,7 +35,7 @@
 ;;; Copyright © 2020 Josh Marshall <joshua.r.marshall.1991@gmail.com>
 ;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
-;;; Copyright © 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020, 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Hugo Lecomte <hugo.lecomte@inria.fr>
 ;;; Copyright © 2022 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022, 2023 David Elsing <david.elsing@posteo.net>
@@ -80,6 +80,8 @@
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
+  #:use-module (gnu packages lua)
+  #:use-module (gnu packages gdb)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages golang)
@@ -122,6 +124,44 @@
   #:use-module (guix deprecation)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1))
+
+(define-public atf
+  (package
+    (name "atf")
+    (version "0.21")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/freebsd/atf")
+                    (commit (string-append name "-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0jwzz6g9jdi5f8v10y0wf3hq73vxyv5qqhkh832ddsj36gn8rlcz"))
+              (patches (search-patches "atf-execute-with-shell.patch"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list (string-append "ATF_SHELL="
+                                  #$(this-package-input "bash-minimal")
+                                  "/bin/sh"))))
+    (native-inputs (list autoconf automake libtool))
+    (inputs (list bash-minimal))
+    (home-page "https://github.com/freebsd/atf")
+    (synopsis "C/C++ Automated Testing Framework libraries")
+    (description "ATF, or Automated Testing Framework, is a collection of
+libraries to write test programs in C, C++ and POSIX shell.
+
+The ATF libraries offer a simple API.  The API is orthogonal through the
+various bindings, allowing developers to quickly learn how to write test
+programs in different languages.
+
+ATF-based test programs offer a consistent end-user command-line interface to
+allow both humans and automation to run the tests.
+
+ATF-based test programs rely on an execution engine to be run and this
+execution engine is not shipped with ATF.  Kyua is the engine of choice.")
+    (license (list license:bsd-2 license:bsd-3))))
 
 (define-public pict
   (package
@@ -913,6 +953,73 @@ has been designed to be fast, light and unintrusive.")
       (description
        "This package provides a simple and limited unit-test framework for C++.")
       (license license:boost1.0))))
+
+(define-public kyua
+  (package
+    (name "kyua")
+    (version "0.13")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/freebsd/kyua")
+                    (commit (string-append name "-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1jzdal9smhmivj18683a5gy8jd2p1dbni7kcpaxq4g9jgjdidcrq"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda _
+              (substitute* '("Makefile.am"
+                             "utils/process/isolation_test.cpp"
+                             "utils/stacktrace_test.cpp"
+                             "integration/utils.sh"
+                             "integration/cmd_test_test.sh")
+                (("/bin/sh")
+                 ;; The 'local-kyua' generated script in Makefile.am is used
+                 ;; to run the built kyua binary for tests.
+                 (which "sh")))))
+          (add-after 'unpack 'fix-to_absolute-test
+            ;; This test checks for the existence of /bin and /bin/ls.
+            (lambda _
+              (substitute* "utils/fs/path_test.cpp"
+                (("chdir\\(\"/bin\")")
+                 (format #f "chdir(~s)" (dirname (which "ls"))))
+                (("\"/bin/ls\"")
+                 (string-append "\"" (which "ls") "\"")))))
+          (add-before 'check 'prepare-for-tests
+            (lambda _
+              ;; The test suite expects HOME to be writable.
+              (setenv "HOME" "/tmp")
+              ;; Generate the autom4te-generated testsuite script, which
+              ;; contains a '/bin/sh' shebang.
+              (invoke "make" "bootstrap/testsuite")
+              (substitute* "bootstrap/testsuite"
+                (("/bin/sh")
+                 (which "sh")))))
+          (add-after 'unpack 'disable-problematic-tests
+            (lambda _
+              ;; The stacktrace tests expect core files to be dumped to the
+              ;; current directory, which doesn't happen with our kernel
+              ;; configuration (see:
+              ;; https://github.com/freebsd/kyua/issues/214).
+              (substitute* "utils/Kyuafile"
+                ((".*atf_test_program.*stacktrace_test.*")
+                 "")))))))
+    (native-inputs (list autoconf automake gdb pkg-config))
+    (inputs (list atf lutok sqlite))
+    (home-page "https://github.com/freebsd/kyua")
+    (synopsis "Testing framework for infrastructure software")
+    (description "Kyua is a testing framework for infrastructure software.
+Kyua is lightweight and simple, and integrates well with various build systems
+and continuous integration frameworks.  Kyua features an expressive test suite
+definition language, a safe runtime engine for test suites and a powerful
+report generation engine.")
+    (license license:bsd-3)))
 
 (define-public python-gixy
   ;; The 0.1.20 release is missing some important fixes.
@@ -2648,17 +2755,18 @@ seamlessly into your existing Python unit testing work flow.")
 programs, something like CSmith, a random generator of C programs.")
     (license license:mpl2.0)))
 
+;; WARNING: This package is a dependency of mesa.
 (define-public python-lit
   (package
     (name "python-lit")
-    (version "17.0.6")
+    (version "18.1.8")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "lit" version))
         (sha256
          (base32
-          "06z3p85gsy5hw3rbk0ym8aig9mvry1327gz7dfjhjigwandszafz"))))
+          "1nsf3ikvlgvqqf185yz5smkvw0268jipdvady0qfh6llhshp9ha7"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -3507,7 +3615,11 @@ allowing you to declaratively define \"match\" rules.")
               (sha256
                (base32 "0sxb3835nly1jxn071f59fwbdzmqi74j040r81fanxyw3s1azw0i"))))
     (arguments
-     `(#:tests? #f))                     ; It's run after build automatically.
+     (list
+      #:tests? #f                       ; It's run after build automatically.
+      ;; Fix 'Version:' setting in .pc file. See:
+      ;; <https://github.com/unittest-cpp/unittest-cpp/pull/188>
+      #:configure-flags #~(list (string-append "-DPACKAGE_VERSION=" #$version))))
     (build-system cmake-build-system)
     (home-page "https://github.com/unittest-cpp/unittest-cpp")
     (synopsis "Lightweight unit testing framework for C++")
@@ -3544,6 +3656,32 @@ portable to just about any platform.")
               (substitute* "src/faketime.c"
                 (("\"date\"")
                  (format #f "~s" (search-input-file inputs "bin/date"))))))
+
+          #$@(if (target-64bit?)
+                 #~()
+                 #~((add-after 'unpack 'switch-libc-call
+                      (lambda _
+                        (substitute* "src/libfaketime.c"
+                          (("#define _GNU_SOURCE")
+                           ;; Make sure to use the 64-bit 'struct timespec' in
+                           ;; replacement functions.
+                           (string-append "#define _GNU_SOURCE\n"
+                                          "#define _FILE_OFFSET_BITS 64\n"
+                                          "#define _TIME_BITS 64\n"))
+                          (("\"__clock_gettime\"")
+                           ;; Replace '__clock_gettime64' rather than
+                           ;; '__clock_gettime64' since this is what
+                           ;; newly-built applications use.
+                           "\"__clock_gettime64\""))
+
+                        ;; XXX: Turn off 'pthread_cond_timedwait' etc.: tests
+                        ;; related to this are failing and this feature is
+                        ;; probably not useful for the purposes of running
+                        ;; code at a fixed date.
+                        (substitute* "src/Makefile"
+                          (("-DFAKE_PTHREAD")
+                           ""))))))
+
           (replace 'configure
             (lambda* (#:key outputs #:allow-other-keys)
               (setenv "CC" #$(cc-for-target))
@@ -3562,8 +3700,14 @@ portable to just about any platform.")
           (add-before 'check 'pre-check
             (lambda _
               (substitute* "test/functests/test_exclude_mono.sh"
-                (("/bin/bash") (which "bash"))))))))
-    (native-inputs (list perl))         ;for tests
+                (("/bin/bash") (which "bash")))
+              #$@(if (target-64bit?)
+                     #~()
+                     ;; XXX: This test uses Perl to call 'clock_gettime' and
+                     ;; fails for unclear reasons on i686-linux.
+                     #~((delete-file
+                         "test/functests/test_exclude_mono.sh"))))))))
+    (native-inputs (list perl))                   ;for tests
     (inputs (list coreutils-minimal))
     (synopsis "Fake the system time for single applications")
     (description
@@ -3977,7 +4121,7 @@ markers to simplify testing of asynchronous tornado applications.")
           (add-after 'build 'check
             (lambda _
               (invoke "guile" "proba.scm" "run" "tests")))
-          (add-after 'install 'install-wrapped-script
+          (add-after 'check 'install-wrapped-script
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((out (assoc-ref outputs "out"))
                      (bin-dir (string-append out "/bin"))
@@ -3989,7 +4133,7 @@ markers to simplify testing of asynchronous tornado applications.")
                   `("GUILE_LOAD_PATH" prefix (,(getenv "GUILE_LOAD_PATH")))
                   `("GUILE_LOAD_COMPILED_PATH" prefix
                     (,(getenv "GUILE_LOAD_COMPILED_PATH")))))))
-          (add-after 'install 'install-manual
+          (add-after 'build-manual 'install-manual
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((out (assoc-ref outputs "out"))
                      (info-dir (string-append out "/share/info")))

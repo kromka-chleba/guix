@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012, 2013, 2014, 2015, 2016 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012-2016, 2023 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014, 2015 Mark H Weaver <mhw@netris.org>
-;;; Copyright © 2018, 2022 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2018, 2022, 2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021, 2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2022 Paul A. Patience <paul@apatience.com>
 ;;;
@@ -39,13 +39,13 @@
 (define-public gawk
   (package
    (name "gawk")
-   (version "5.2.1")
+   (version "5.3.0")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/gawk/gawk-" version
                                 ".tar.xz"))
             (sha256
-             (base32 "0kvy78jdv6lww1s6y2jm1w2cj46mz1fhflgdj9bwq64y3ywm6db7"))))
+             (base32 "02x97iyl9v84as4rkdrrkfk2j4vy4r3hpp3rkp3gh3qxs79id76a"))))
    (build-system gnu-build-system)
    (arguments
     (list #:phases
@@ -78,6 +78,10 @@
                   (substitute* "test/watchpoint1.ok"
                     (("#! /usr/bin/gawk")
                      (string-append "#!" (which "gawk")))))))))
+
+   ;; Tests explicitly require en_US.UTF-8, fr_FR.UTF-8, ru_RU.UTF-8 and
+   ;; ja_JP.UTF-8.
+   (native-inputs (list (libc-utf8-locales-for-target)))
 
    (inputs (list libsigsegv
                  ;; Use the full-fledged Bash package, otherwise the test suite
@@ -179,6 +183,7 @@ of fewer features and extensions.")
          (add-after 'unpack 'fix-paths
            (lambda _
              (substitute* "bin/cppawk"
+               (("/bin/sh") (which "sh"))
                (("/bin/bash") (which "bash"))
                (("dirname") (which "dirname"))
                (("mktemp") (which "mktemp"))
@@ -186,13 +191,20 @@ of fewer features and extensions.")
                (("printf ") (string-append (which "printf") " "))
                (("rm -f") (string-append (which "rm") " -f"))
                (("prepro=cpp") (string-append "prepro=" (which "cpp")))
-               (("sed -e") (string-append (which "sed") " -e")))))
+               (("sed -e") (string-append (which "sed") " -e")))
+             (substitute* '("runtests"
+                            "testdir/testawk"
+                            "testdir/testcpp"
+                            "testdir/testdel")
+               (("/bin/sh") (which "sh")))
+             (substitute* "testsuite.awk"
+               (("/usr/bin/awk") (which "awk")))))
          (add-after 'fix-paths 'fix-awk-paths
            (lambda _
              (substitute* "bin/cppawk"
                (("awk=gawk") (string-append "awk=" (which "gawk")))
                (("awk '") (string-append (which "gawk") " '")))))
-         (add-after 'build 'check
+         (add-after 'fix-awk-paths 'check
            (lambda _
              (invoke "./runtests"))))))
     (native-inputs

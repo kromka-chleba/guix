@@ -225,22 +225,6 @@ highlighting your own code that seemed comprehensible when you wrote it.")
                    (substitute* "globash/globash.in"
                      (("/bin/echo")
                       (search-input-file inputs "bin/echo")))))
-               (add-after 'post-install 'install-plugins
-                 (lambda _
-                   (with-directory-excursion "plugin-factory"
-                     (invoke "make" "install"))))
-               (add-before 'install 'dont-install-to-/var
-                 (lambda _
-                   (substitute* "gozilla/Makefile"
-                     (("DESTDIR\\)\\$\\{localstatedir\\}")
-                      "TMPDIR)"))))
-               (add-after 'install-plugins 'wrap-program
-                 (lambda _
-                   (wrap-program
-                       (string-append #$output
-                                      "/share/gtags/script/pygments_parser.py")
-                     `("GUIX_PYTHONPATH" ":" prefix
-                       (,(getenv "GUIX_PYTHONPATH"))))))
                (add-after 'install 'post-install
                  (lambda _
                    ;; Install the plugin files in the right place.
@@ -258,7 +242,23 @@ highlighting your own code that seemed comprehensible when you wrote it.")
                      (rename-file (string-append data "/gtags.vim")
                                   (string-append vim  "/gtags.vim"))
                      (rename-file (string-append data "/gtags-cscope.vim")
-                                  (string-append vim  "/gtags-cscope.vim"))))))))
+                                  (string-append vim  "/gtags-cscope.vim")))))
+               (add-after 'post-install 'install-plugins
+                 (lambda _
+                   (with-directory-excursion "plugin-factory"
+                     (invoke "make" "install"))))
+               (add-before 'install 'dont-install-to-/var
+                 (lambda _
+                   (substitute* "gozilla/Makefile"
+                     (("DESTDIR\\)\\$\\{localstatedir\\}")
+                      "TMPDIR)"))))
+               (add-after 'install-plugins 'wrap-program
+                 (lambda _
+                   (wrap-program
+                       (string-append #$output
+                                      "/share/gtags/script/pygments_parser.py")
+                     `("GUIX_PYTHONPATH" ":" prefix
+                       (,(getenv "GUIX_PYTHONPATH")))))))))
     (inputs
       (list bash-minimal                ; for wrap-program
             coreutils
@@ -349,7 +349,8 @@ COCOMO model or user-provided parameters.")
         (base32 "0j7qwc5n1y05jl3rq83mf1d0pavkz9z0waqi8dxblkgw4pwwnjyv"))))
     (build-system gnu-build-system)
     (inputs
-     (list coreutils
+     (list bash-minimal
+           coreutils
            perl
            perl-algorithm-diff
            perl-digest-md5
@@ -575,9 +576,8 @@ expressions, and its ability to generate emacs-style TAGS files.")
            (lambda* (#:key outputs #:allow-other-keys)
              (let ((out (assoc-ref outputs "out")))
                (wrap-program (string-append out "/bin/geninfo")
-                 `("PERL5LIB" ":" prefix (,(getenv "PERL5LIB")))))
-             #t)))))
-    (inputs (list perl perl-io-compress perl-json))
+                 `("PERL5LIB" ":" prefix (,(getenv "PERL5LIB"))))))))))
+    (inputs (list bash-minimal perl perl-io-compress perl-json))
     (home-page "https://ltp.sourceforge.net/coverage/lcov.php")
     (synopsis "Code coverage tool that enhances GNU gcov")
     (description "LCOV is an extension of @command{gcov}, a tool part of the

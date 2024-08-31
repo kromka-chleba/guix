@@ -246,6 +246,7 @@ external dependencies.")
             jansson
             libarchive
             libtirpc
+            libxcrypt
             linux-pam
             lmdb
             mit-krb5
@@ -278,8 +279,7 @@ external dependencies.")
              ;; For generating man pages.
              docbook-xml-4.2
              docbook-xsl
-             libxslt
-             libxml2)))                 ;for XML_CATALOG_FILES
+             libxslt)))
      (home-page "https://www.samba.org/")
      (synopsis
       "The standard Windows interoperability suite of programs for GNU and Unix")
@@ -322,6 +322,14 @@ Desktops into Active Directory environments using the winbind daemon.")
     (arguments
      '(#:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'remove-crypt-reference
+           ;; The following is needed because Python.h propagates
+           ;; HAVE_CRYPT_H, which is then seen from lib/replace/ but talloc
+           ;; doesn't need it at all.
+           (lambda _
+             (substitute* "lib/replace/replace.h"
+               (("#include <crypt.h>")
+                ""))))
          (replace 'configure
            (lambda* (#:key outputs #:allow-other-keys)
              ;; talloc uses a custom configuration script that runs a Python
@@ -389,6 +397,14 @@ destructors.  It is the core memory allocator used in Samba.")
     (arguments
      '(#:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'remove-crypt-reference
+           ;; The following is needed because Python.h propagates
+           ;; HAVE_CRYPT_H, which is then seen from lib/replace/ but talloc
+           ;; doesn't need it at all.
+           (lambda _
+             (substitute* "lib/replace/replace.h"
+               (("#include <crypt.h>")
+                ""))))
          (replace 'configure
            ;; tevent uses a custom configuration script that runs waf.
            (lambda* (#:key outputs #:allow-other-keys)
@@ -435,6 +451,14 @@ many event types, including timers, signals, and the classic file descriptor eve
        #:tests? (assoc-ref %build-inputs "lmdb")
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'remove-crypt-reference
+           ;; The following is needed because Python.h propagates
+           ;; HAVE_CRYPT_H, which is then seen from lib/replace/ but talloc
+           ;; doesn't need it at all.
+           (lambda _
+             (substitute* "lib/replace/replace.h"
+               (("#include <crypt.h>")
+                ""))))
          (replace 'configure
            ;; ldb use a custom configuration script that runs waf.
            (lambda* (#:key outputs #:allow-other-keys)
@@ -492,7 +516,7 @@ key-value pair databases and a real LDAP database.")
     (native-inputs
      (list autoconf automake libtool))
     (inputs
-     (list libpcap openssl))
+     (list libpcap libxcrypt openssl))
     (synopsis "Implementation of the Point-to-Point Protocol")
     (home-page "https://ppp.samba.org/")
     (description

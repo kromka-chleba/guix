@@ -161,7 +161,6 @@
            docbook-xsl
            doxygen
            libtool
-           libxml2 ;for XML_CATALOG_FILES
            libxslt
            which
            xmlto
@@ -532,7 +531,7 @@ functions for strings and common data structures.")
        `(("docbook-xml-4.2" ,docbook-xml-4.2)
          ("docbook-xml-4.5" ,docbook-xml)
          ("docbook-xsl" ,docbook-xsl)
-         ("gtk-doc" ,gtk-doc)
+         ("gtk-doc" ,gtk-doc/stable)
          ("libxml2" ,libxml2)
          ("xsltproc" ,libxslt)
          ,@(package-native-inputs base)))
@@ -751,7 +750,7 @@ The intltool collection can be used to do these things:
                "1jl7gsr7aclb9nvqazr039m86y7f7ivfhl2pixcrbfqjkb97r6kb"))))
     (build-system gnu-build-system)
     (inputs
-     (list libxml2 python-libxml2 python))
+     (list bash-minimal libxml2 python-libxml2 python))
     (arguments
      (list
       #:phases
@@ -1029,7 +1028,7 @@ useful for C++.")
 (define-public python-pygobject
   (package
     (name "python-pygobject")
-    (version "3.46.0")
+    (version "3.47.0")
     (source
      (origin
        (method url-fetch)
@@ -1037,7 +1036,8 @@ useful for C++.")
                            (version-major+minor version)
                            "/pygobject-" version ".tar.xz"))
        (sha256
-        (base32 "1z6aagb46fhhdd0bb3zk6dfdw3s4y2fva0vv3jpwjj6mvar0hq22"))
+        (base32
+         "082dpm34a350bnhgmkdv8myxzjgnrflckkpn46vnvs36f7bbfdij"))
        (modules '((guix build utils)))
        (snippet
         ;; We disable these tests in a snippet so that they are inherited

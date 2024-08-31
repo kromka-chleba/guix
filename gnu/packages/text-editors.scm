@@ -74,6 +74,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages crates-io)
+  #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages datastructures)
   #:use-module (gnu packages documentation)
@@ -115,14 +116,14 @@
 (define-public ed
   (package
     (name "ed")
-    (version "1.18")
+    (version "1.20.1")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://gnu/ed/ed-"
                                  version ".tar.lz"))
              (sha256
               (base32
-               "0krb8rsb0cd8mgz0c5pqgnjbbrj7zjl7mf9099r8gi80k2nyza5c"))))
+               "1jmvpbs2mnrmk870js11v7g5qr3z8w0ws7sbdj3zjhd1jyr6795i"))))
     (build-system gnu-build-system)
     (native-inputs (list lzip))
     (arguments
@@ -201,7 +202,7 @@ extensions over the standard utility.")
            (sha256
             (base32 "1jsvg2lg3xqfgi79x08kx94mc34mh62ivca10vsci6fqsk68jbd0"))
            (file-name (git-file-name "vis-test" version))))))
-    (inputs (list lua ncurses libtermkey lua-lpeg tre))
+    (inputs (list bash-minimal lua ncurses libtermkey lua-lpeg tre))
     (synopsis "Vim-like text editor")
     (description
      "Vis aims to be a modern, legacy free, simple yet efficient vim-like text
@@ -451,6 +452,7 @@ bindings and many of the powerful features of GNU Emacs.")
      (list pkg-config xorg-server-for-tests))
     (inputs
      (list aspell
+           bash-minimal
            boost
            clang-11               ;XXX: must be the same version as Mesas LLVM
            gtkmm-3
@@ -768,7 +770,8 @@ scripts/input/X11/C/Shell/HTML/Dired): 49KB.
     (native-inputs
      (list pkg-config qttools-5))       ; for lrelease
     (inputs
-     (list hunspell
+     (list bash-minimal
+           hunspell
            qtbase-5
            qtdeclarative-5
            qtmultimedia-5
@@ -982,6 +985,7 @@ editors.")
      (list freetype
            guile-1.8
            libjpeg-turbo
+           libxcrypt
            perl
            python-wrapper
            qtbase-5
@@ -1236,7 +1240,7 @@ used with the Scintilla editing component.")
            ))
     (arguments
      `(#:imported-modules ((guix build glib-or-gtk-build-system)
-                           ,@%gnu-build-system-modules)
+                           ,@%default-gnu-imported-modules)
        #:modules (((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
                   (guix build gnu-build-system)
                   (guix build utils))

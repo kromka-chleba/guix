@@ -31,6 +31,7 @@
   #:use-module (guix build-system python)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages gawk)
@@ -309,7 +310,7 @@ and white.")
        `(#:modules ((guix build gnu-build-system)
                     ((guix build python-build-system) #:prefix python:)
                     (guix build utils))
-         #:imported-modules (,@%gnu-build-system-modules
+         #:imported-modules (,@%default-gnu-imported-modules
                              (guix build python-build-system))
          #:test-target "test"
          #:phases
@@ -346,7 +347,8 @@ and white.")
                    `("PATH" ":" prefix (,(string-append djvulibre "/bin"))))))))))
       (native-inputs (list python-nose))
       (inputs
-       (list djvulibre
+       (list bash-minimal
+             djvulibre
              minidjvu
              python-gamera
              python-pillow
@@ -380,7 +382,8 @@ and background layers of images, which can then be encoded into a DjVu file.")
       (native-inputs
        (list libxml2 python-nose python-pillow))
       (inputs
-       (list djvulibre
+       (list bash-minimal
+             djvulibre
              ocrad
              python-djvulibre
              python-future
@@ -395,7 +398,7 @@ and background layers of images, which can then be encoded into a DjVu file.")
         #:modules '((guix build gnu-build-system)
                     ((guix build python-build-system) #:prefix python:)
                     (guix build utils))
-        #:imported-modules `(,@%gnu-build-system-modules
+        #:imported-modules `(,@%default-gnu-imported-modules
                              (guix build python-build-system))
         #:test-target "test"
         #:phases

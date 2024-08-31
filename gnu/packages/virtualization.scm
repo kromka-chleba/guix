@@ -251,7 +251,7 @@
                   (srfi srfi-26)
                   (ice-9 ftw)
                   (ice-9 match)
-                  ,@%gnu-build-system-modules)
+                  ,@%default-gnu-modules)
       #:phases
       #~(modify-phases %standard-phases
           ;; Since we removed the bundled firmwares above, many tests
@@ -757,10 +757,10 @@ firmware blobs.  You can
                                        "ganeti-relax-dependencies.patch"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:imported-modules (,@%gnu-build-system-modules
+     `(#:imported-modules (,@%default-gnu-imported-modules
                            (guix build haskell-build-system)
                            (guix build python-build-system))
-       #:modules (,@%gnu-build-system-modules
+       #:modules (,@%default-gnu-modules
                   ((guix build haskell-build-system) #:prefix haskell:)
                   ((guix build python-build-system) #:select (site-packages))
                   (srfi srfi-1)
@@ -1030,7 +1030,8 @@ firmware blobs.  You can
        ("shelltestrunner" ,shelltestrunner)
        ("tzdata" ,tzdata-for-tests)))
     (inputs
-     (list iputils                      ;for 'arping'
+     (list bash-minimal
+           iputils                      ;for 'arping'
            curl
            fping
            iproute
@@ -1329,8 +1330,7 @@ of one or more RISC-V harts.")
      (list `(,glib "bin")                ;glib-mkenums, etc.
            gobject-introspection
            gtk-doc/stable
-           `(,hwdata "pci")
-           `(,hwdata "usb")
+           hwdata
            vala
            intltool
            pkg-config))
@@ -1758,7 +1758,8 @@ virtualization library.")
                (add-after 'wrap 'glib-or-gtk-wrap
                  (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap)))))
     (inputs
-     (list dconf
+     (list bash-minimal
+           dconf
            gtk+
            gtk-vnc
            gtksourceview-4
@@ -1963,7 +1964,7 @@ client desktops.
     (build-system gnu-build-system)
     (arguments
      `(#:test-target "test"
-       #:tests? #f ; tests require mounting as root
+       #:tests? #f                      ; tests require mounting as root
        #:make-flags
        (list (string-append "PREFIX=" (assoc-ref %outputs "out"))
              (string-append "LIBDIR=$(PREFIX)/lib")
@@ -1978,20 +1979,10 @@ client desktops.
                             (search-input-file %build-inputs
                                                "/bin/xmlto")))
        #:modules ((ice-9 ftw)
-                  ,@%gnu-build-system-modules)
+                  ,@%default-gnu-modules)
        #:phases
        (modify-phases %standard-phases
          (delete 'configure)            ; no configure script
-         (add-after 'unpack 'fix-documentation
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (substitute* "Documentation/Makefile"
-               (("-m custom.xsl")
-                (string-append
-                 "-m custom.xsl --skip-validation -x "
-                 (assoc-ref inputs "docbook-xsl") "/xml/xsl/"
-                 ,(package-name docbook-xsl) "-"
-                 ,(package-version docbook-xsl)
-                 "/manpages/docbook.xsl")))))
          (add-after 'unpack 'hardcode-variables
            (lambda* (#:key inputs outputs #:allow-other-keys)
              ;; Hardcode arm version detection
@@ -1999,14 +1990,13 @@ client desktops.
                (("ARMV.*:=.*") "ARMV := 7\n"))
              ;; Hard-code the correct PLUGINDIR above.
              (substitute* "criu/include/plugin.h"
-               (("/var") (string-append (assoc-ref outputs "out"))))
-             ))
+               (("/var") (string-append (assoc-ref outputs "out"))))))
          ;; TODO: use
          ;; (@@ (guix build python-build-system) ensure-no-mtimes-pre-1980)
          ;; when it no longer throws due to trying to call UTIME on symlinks.
          (add-after 'unpack 'ensure-no-mtimes-pre-1980
            (lambda _
-             (let ((early-1980 315619200))  ; 1980-01-02 UTC
+             (let ((early-1980 315619200)) ; 1980-01-02 UTC
                (ftw "." (lambda (file stat flag)
                           (unless (or (<= early-1980 (stat:mtime stat))
                                       (eq? (stat:type stat) 'symlink))
@@ -2040,15 +2030,16 @@ client desktops.
              (let ((out (assoc-ref outputs "out")))
                (for-each delete-file (find-files out "\\.a$"))))))))
     (inputs
-     `(("protobuf" ,protobuf)
-       ("python-protobuf" ,python-protobuf)
-       ("iproute" ,iproute)
-       ("libaio" ,libaio)
-       ("libcap" ,libcap)
-       ("libnet" ,libnet)
-       ("libnl" ,libnl)
-       ("libbsd" ,libbsd)
-       ("nftables" ,nftables)))
+     (list bash-minimal
+           protobuf
+           python-protobuf
+           iproute
+           libaio
+           libcap
+           libnet
+           libnl
+           libbsd
+           nftables))
     (native-inputs
      (list pkg-config
            perl
@@ -2360,7 +2351,7 @@ Open Container Initiative (OCI) image layout and its tagged images.")
       #:tests? #f                       ; The tests require Docker
       #:test-target "test-unit"
       #:imported-modules
-      (source-module-closure `(,@%gnu-build-system-modules
+      (source-module-closure `(,@%default-gnu-imported-modules
                                (guix build go-build-system)))
       #:phases
       #~(modify-phases %standard-phases
@@ -2716,6 +2707,7 @@ DOS or Microsoft Windows.")
            iproute                      ; TODO: patch invocations
            libaio
            libx11
+           libxcrypt                    ; required by Python.h
            yajl
            ncurses
            openssl

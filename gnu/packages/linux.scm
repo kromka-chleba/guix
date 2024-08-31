@@ -42,7 +42,7 @@
 ;;; Copyright © 2020 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2020 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
-;;; Copyright © 2020, 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2020, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020 Morgan Smith <Morgan.J.Smith@outlook.com>
 ;;; Copyright © 2020 John Soo <jsoo1@asu.edu>
 ;;; Copyright © 2020, 2022 Michael Rohleder <mike@rohleder.de>
@@ -285,7 +285,7 @@ of 'uname -r' behind the Linux version numbers."
     (arguments
      (substitute-keyword-arguments
          (package-arguments linux)
-       ((#:imported-modules imported-modules %gnu-build-system-modules)
+       ((#:imported-modules imported-modules %default-gnu-imported-modules)
         `((guix build kconfig) ,@imported-modules))
        ((#:modules modules)
         `((guix build kconfig) ,@modules))
@@ -1937,10 +1937,10 @@ accepted as a quirk (ie AMD Vega 10).")
                                 "linux-pam-no-setfsuid.patch"))))
 
     (build-system gnu-build-system)
+    (inputs (list libxcrypt))
     (native-inputs
      (list flex
            ;; TODO: optional dependencies
-           ;; ("libxcrypt" ,libxcrypt)
            ;; ("cracklib" ,cracklib)
            ))
     (arguments
@@ -2281,11 +2281,7 @@ deviation, and minimum and maximum values.  It can show a nice histogram too.")
                      ;; Change the test to refer to the right file.
                      (substitute* "tests/ts/misc/mcookie"
                        (("/etc/services")
-                        services))
-
-                     ;; The C.UTF-8 locale does not exist in our libc.
-                     (substitute* "tests/ts/column/invalid-multibyte"
-                       (("C\\.UTF-8") "en_US.utf8")))))
+                        services)))))
                (add-before 'check 'disable-setarch-test
                  (lambda _
                    ;; The setarch tests are unreliable in QEMU's user-mode
@@ -2961,7 +2957,7 @@ intercept and print the system calls executed by the program.")
 (define-public alsa-ucm-conf
   (package
     (name "alsa-ucm-conf")
-    (version "1.2.4")
+    (version "1.2.11")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2969,7 +2965,7 @@ intercept and print the system calls executed by the program.")
                     version ".tar.bz2"))
               (sha256
                (base32
-                "0h6kzi1cfdqyxp4pwpqh5wb89c8s9wrgix315bvamffwfxf56frc"))))
+                "10dfzvrmpp9swflw47nxf35an6gj3ilb4wlggdnng8g2637h2z1q"))))
     (build-system copy-build-system)
     (arguments
      '(#:install-plan
@@ -3009,15 +3005,15 @@ configuration files that can be used for specific audio hardware.")
 (define-public alsa-lib
   (package
     (name "alsa-lib")
-    (version "1.2.4")
+    (version "1.2.11")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "ftp://ftp.alsa-project.org/pub/lib/alsa-lib-"
-                    version ".tar.bz2"))
+                    "https://www.alsa-project.org/files/pub/lib/"
+                    name "-" version ".tar.bz2"))
               (sha256
                (base32
-                "1xq8d48wfy59qw4x7383j32n8j5njndw5hcgnmlg9pvclphlnmgp"))))
+                "0kdvjlknc50fwfdkxj0z12xbz21skb3gnwlh6lvsvycmp5ljygwz"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags (list (string-append "LDFLAGS=-Wl,-rpath="
@@ -3056,45 +3052,35 @@ MIDI functionality to the Linux-based operating system.")
 (define-public alsa-utils
   (package
     (name "alsa-utils")
-    (version "1.2.4")
+    (version "1.2.11")
     (source (origin
-             (method url-fetch)
-             (uri (string-append "ftp://ftp.alsa-project.org/pub/utils/"
-                                 name "-" version ".tar.bz2"))
-             (sha256
-              (base32
-               "09m4dnn4kplawprd2bl15nwa0b4r1brab3x44ga7f1fyk7aw5zwq"))))
+              (method url-fetch)
+              (uri (string-append
+                    "https://www.alsa-project.org/files/pub/utils/"
+                    name "-" version ".tar.bz2"))
+              (sha256
+               (base32
+                "19r8qi6b7sd2p1mhxfqrp18wrgjw5s6rp5ygimb1w59zi0xcmils"))))
     (build-system gnu-build-system)
     (arguments
-     ;; XXX: Disable man page creation until we have DocBook.
-     '(#:configure-flags (list "--disable-xmlto"
-
-                               ;; The udev rule is responsible for restoring
-                               ;; the volume.
-                               (string-append "--with-udev-rules-dir="
-                                              (assoc-ref %outputs "out")
-                                              "/lib/udev/rules.d"))
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'disable-broken-test
-           (lambda _
-             ;; XXX: The 1.1.8 release tarball is missing a header that's
-             ;; required for this test to work.  Fixed in 1.1.9.
-             (substitute* "axfer/test/Makefile"
-               ((".*container-test.*") ""))
-             #t))
-         (add-before
-           'install 'pre-install
-           (lambda _
-             ;; Don't try to mkdir /var/lib/alsa.
-             (substitute* "Makefile"
-               (("\\$\\(MKDIR_P\\) .*ASOUND_STATE_DIR.*")
-                "true\n"))
-             #t)))))
+     (list
+      #:configure-flags
+      #~(list
+         ;; The udev rule is responsible for restoring the volume.
+         (string-append "--with-udev-rules-dir=" #$output "/lib/udev/rules.d"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'pre-install
+            (lambda _
+              ;; Don't try to mkdir /var/lib/alsa.
+              (substitute* "Makefile"
+                (("\\$\\(MKDIR_P\\) .*ASOUND_STATE_DIR.*")
+                 "true\n")))))))
     (native-inputs
-     `(("gettext" ,gettext-minimal)))
+     (list docbook-xml-4.2 docbook-xsl xmlto
+           gettext-minimal))
     (inputs
-     (list libsamplerate ncurses alsa-lib xmlto))
+     (list libsamplerate ncurses alsa-lib))
     (home-page "http://www.alsa-project.org/")
     (synopsis "Utilities for the Advanced Linux Sound Architecture (ALSA)")
     (description
@@ -3370,7 +3356,7 @@ that the Ethernet protocol is much simpler than the IP protocol.")
 (define-public iproute
   (package
     (name "iproute2")
-    (version "6.0.0")
+    (version "6.4.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -3378,7 +3364,7 @@ that the Ethernet protocol is much simpler than the IP protocol.")
                     version ".tar.xz"))
               (sha256
                (base32
-                "02jq36p7py8zs8s8jj49ap82sgf5wi5yfbgsfiirkv1awzlkjcaj"))))
+                "0wm2g70vfhnf8wb6py3zmzwxp4zv1icny1pvkwaxmr67rggbhlac"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -3644,7 +3630,8 @@ configuration and monitoring interfaces.")
                    ((string=? python "python2")
                     `(("python-2" ,python-2)))
                    ((string=? python "python3")
-                    `(("python-3" ,python-3))))))
+                    `(("python-3" ,python-3))))
+                ("libxcrypt" ,libxcrypt))) ;required by Python.h
       (propagated-inputs (list libnl))
       (outputs '("out"))
       (arguments
@@ -4247,7 +4234,8 @@ NUMA performance on your system.")
     (native-inputs
      (list autoconf pkg-config))
     (inputs
-     `(("bzip2" ,bzip2)
+     `(("bash" ,bash-minimal) ; for wrap-program
+       ("bzip2" ,bzip2)
        ("gzip" ,gzip)
        ("pam" ,linux-pam)
        ("xz" ,xz)
@@ -4343,37 +4331,27 @@ to use Linux' inotify mechanism, which allows file accesses to be monitored.")
                 "0am54mi5rk72g5q7k6l6f36gw3r9vwgjmyna43ywcjhqmakyx00b"))
               (patches (search-patches "kmod-module-directory.patch"))))
     (build-system gnu-build-system)
-    (native-inputs
-     (list pkg-config
-           ;; For tests.
-           zstd))
-    (inputs
-     `(("xz" ,xz)
-       ("zlib" ,zlib)
-       ("zstd-lib" ,zstd "lib")))
     (arguments
-     `(#:configure-flags '("--with-xz" "--with-zlib" "--with-zstd"
-                           "--disable-test-modules")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'disable-tests
-           (lambda _
-             ;; XXX: These tests need '--sysconfdir=/etc' to pass.
-             (substitute* "Makefile.in"
-               (("testsuite/test-modprobe") "")
-               (("testsuite/test-depmod") "")
-               (("testsuite/test-blacklist") ""))
-             #t))
-         (add-after 'install 'install-modprobe&co
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin")))
-               (for-each (lambda (tool)
-                           (symlink "kmod"
-                                    (string-append bin "/" tool)))
-                         '("insmod" "rmmod" "lsmod" "modprobe"
-                           "modinfo" "depmod"))
-               #t))))))
+     (list #:configure-flags #~(list "--with-xz" "--with-zlib" "--with-zstd"
+                                     "--disable-test-modules")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'disable-tests
+                 (lambda _
+                   ;; XXX: These tests need '--sysconfdir=/etc' to pass.
+                   (substitute* "Makefile.in"
+                     (("testsuite/test-modprobe") "")
+                     (("testsuite/test-depmod") "")
+                     (("testsuite/test-blacklist") ""))))
+               (add-after 'install 'install-modprobe&co
+                 (lambda _
+                   (for-each (lambda (tool)
+                               (symlink "kmod"
+                                        (string-append #$output "/bin/" tool)))
+                             '("insmod" "rmmod" "lsmod" "modprobe"
+                               "modinfo" "depmod")))))))
+    (native-inputs (list pkg-config zstd)) ;zstd needed for tests
+    (inputs (list xz zlib `(,zstd "lib")))
     (supported-systems (delete "i586-gnu" %supported-systems))
     (home-page "https://www.kernel.org/")
     (synopsis "Kernel module tools")
@@ -4521,7 +4499,6 @@ to the in-kernel OOM killer.")
            ;; For documentation.
            docbook-xml-4.2
            docbook-xsl
-           libxml2            ;for $XML_CATALOG_FILES
            libxslt))
     (inputs
      ;; When linked against libblkid, eudev can populate /dev/disk/by-label
@@ -4747,13 +4724,16 @@ mapper.  Kernel components are part of Linux-libre.")
     ;; Command-line tools are GPLv2.
     (license (list license:gpl2 license:lgpl2.1))))
 
+(define-public (libdevmapper-propagated-inputs)
+  (list eudev))
+
 (define-public lvm2-static
   (package
     (inherit lvm2)
     (name "lvm2-static")
 
-    ;; Propagate udev because libdevmapper.a depends on libudev.
-    (propagated-inputs `(("udev:static" ,eudev "static")))
+    (inputs `(,@(package-inputs lvm2)
+              ("udev:static" ,eudev "static")))
 
     (arguments
      (substitute-keyword-arguments (package-arguments lvm2)
@@ -4767,19 +4747,28 @@ mapper.  Kernel components are part of Linux-libre.")
                  ;; it until the situation improves.
                  (delete "--enable-dmeventd" ,flags)))
        ((#:phases phases)
-        `(modify-phases ,phases
-           (add-before 'configure 'adjust-Makefile
-             (lambda _
-               ;; These fixes are related to the upstream libdm->device_mapper
-               ;; migration and will hopefully be fixed upstream in due time.
-               (substitute* "tools/Makefile.in"
-                 ;; This variable is empty in a static configuration and causes
-                 ;; an erroneous GCC command line.
-                 (("-L\\$\\(interfacebuilddir\\)") "")
-                 ;; Remove obsolete reference to libdevmapper.a.
-                 (("-ldevmapper") ""))
-               #t))))))
-    (synopsis "Logical volume management for Linux (statically linked)")))
+        #~(modify-phases #$phases
+            (add-before 'configure 'adjust-Makefile
+              (lambda _
+                ;; These fixes are related to the upstream libdm->device_mapper
+                ;; migration and will hopefully be fixed upstream in due time.
+                (substitute* "tools/Makefile.in"
+                  ;; This variable is empty in a static configuration and causes
+                  ;; an erroneous GCC command line.
+                  (("-L\\$\\(interfacebuilddir\\)") "")
+                  ;; Remove obsolete reference to libdevmapper.a.
+                  (("-ldevmapper") ""))
+                #t))
+            (add-after 'install 'adjust-pkgconfig
+              ;; The static eudev is missing its pkg config file, and I am not
+              ;; rebuilding it at this point.
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* (string-append #$output "/lib/pkgconfig/devmapper.pc")
+                  (("Requires.private: .*") "")
+                  (("Libs.private:")
+                   (format #f "Libs.private: -L~a -ludev"
+                           (dirname (search-input-file inputs "lib/libudev.a")))))))))))
+  (synopsis "Logical volume management for Linux (statically linked)")))
 
 (define-public thin-provisioning-tools
   (package
@@ -5250,6 +5239,13 @@ in a digital read-out.")
              (setenv "SHELL_PATH" (which "bash"))
              (chdir "tools/perf")
 
+             ;; In Linux 6.10.6, 'Makefile.config' overrides PKG_CONFIG_PATH
+             ;; when looking for libtraceevent and thus fails to find it.
+             ;; Remove that.
+             (substitute* "Makefile.config"
+               (("PKG_CONFIG_PATH=[[:graph:]]+")
+                ""))
+
              ;; This file hard-codes file system layouts for specific distros
              ;; but not for ours; address that.  With this change, one can run
              ;; "perf report --symfs=$HOME/.guix-profile" (without
@@ -5274,21 +5270,21 @@ in a digital read-out.")
            ;; There are build scripts written in these languages.
            perl
            python-2
-           python-3))
+           python-3
+           ;; Documentation
+           docbook-xsl
+           xmlto
+           asciidoc))
     (inputs
      (list slang ;for the interactive TUI
+           zlib
            ;; newt
            python-2                            ;'perf' links against libpython
            elfutils
            libiberty                 ;used alongside BDF for symbol demangling
            libunwind                 ;better stack walking
            libtraceevent
-           numactl                   ;for 'perf bench numa mem'
-           ;; Documentation.
-           libxml2                                ;for $XML_CATALOG_FILES
-           docbook-xsl
-           xmlto
-           asciidoc))
+           numactl))                 ;for 'perf bench numa mem'
     (home-page "https://perf.wiki.kernel.org/")
     (synopsis "Linux profiling with performance counters")
     (description
@@ -5395,7 +5391,8 @@ thanks to the use of namespaces.")
                    (string-append (which "env") " "
                                   #$output "/bin/singularity")))))))))
     (inputs
-     (list coreutils
+     (list bash-minimal
+           coreutils
            libarchive
            python-wrapper
            squashfs-tools
@@ -5858,7 +5855,7 @@ arrays when needed.")
                     (for-each delete-file-recursively directories)
                     (remove-store-references "sbin/mdadm")
                     (delete-file "sbin/mdmon")))))))
-       ((#:modules modules %gnu-build-system-modules)
+       ((#:modules modules %default-gnu-modules)
         `((ice-9 ftw) ,@modules))
        ((#:strip-flags _ '())
         ''("--strip-all"))                        ;strip a few extra KiB
@@ -5992,6 +5989,13 @@ Linux Device Mapper multipathing driver:
            #:test-target "partcheck"    ; need root for a full 'check'
            #:phases
            #~(modify-phases %standard-phases
+               (add-after 'unpack 'disable-problematic-tests
+                 (lambda _
+                   (with-directory-excursion "harness/cases"
+                     ;; The 21.t test fails with "Expected 4096, got
+                     ;; 18446744073709551605" (see:
+                     ;; https://pagure.io/libaio/issue/26).
+                     (rename-file "21.t" "21.t.disabled"))))
                (delete 'configure)      ; no configure script
                #$@(if (target-riscv64?)
                     #~((add-after 'unpack 'patch-test
@@ -6083,7 +6087,7 @@ Bluetooth audio output devices like headphones or loudspeakers.")
 (define-public bluez
   (package
     (name "bluez")
-    (version "5.66")
+    (version "5.72")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -6091,7 +6095,7 @@ Bluetooth audio output devices like headphones or loudspeakers.")
                     version ".tar.xz"))
               (sha256
                (base32
-                "0x5mn9x6g626izxnw236933wvq83qagsh9qc9ac9550cb55sdzir"))))
+                "0vjk4ihywzv8k07bxq7clqgi2afrw54nfp0gcnxw35m98nipz7a9"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -6099,6 +6103,7 @@ Bluetooth audio output devices like headphones or loudspeakers.")
       #~(list "--sysconfdir=/etc"
               "--localstatedir=/var"
               "--enable-library"
+              "--enable-wiimote"
               "--disable-systemd"
               ;; TODO: is this needed?  Not installed by default since 5.55.
               "--enable-hid2hci"
@@ -6135,10 +6140,12 @@ Bluetooth audio output devices like headphones or loudspeakers.")
     (native-inputs
      (list gettext-minimal
            pkg-config
-           python-docutils))
+           python
+           python-docutils
+           python-pygments))
     (inputs
      (list glib dbus eudev libical readline))
-    (home-page "http://www.bluez.org/")
+    (home-page "https://www.bluez.org/")
     (synopsis "Linux Bluetooth protocol stack")
     (description
      "BlueZ provides support for the core Bluetooth layers and protocols.  It
@@ -7338,7 +7345,7 @@ graphically visualizing a @file{perf.data} file.")
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags (list "--disable-pywrap")
-       #:modules (,@%gnu-build-system-modules
+       #:modules (,@%default-gnu-modules
                   (ice-9 binary-ports)
                   (rnrs bytevectors)
                   (srfi srfi-26))
@@ -8896,17 +8903,20 @@ comparing system environments.")
        (sha256
         (base32 "1znmw83rmippv0fwz0x7lgylfk17dr9ckll8lrm4z7kclspnqpj8"))))
     (build-system gnu-build-system)
-    (inputs `(("rdma-core" ,rdma-core)
-              ,@(match (%current-system)
-                       ((member (package-supported-systems psm))
-                        `(("psm" ,psm)))
-                       (_ `()))
-              ("psm2" ,psm2)
-              ("libnl" ,libnl)))
+    (inputs
+     (let ((if-supported                          ;XXX: copied from openmpi
+            (lambda (package)
+              (if (and (not (%current-target-system))
+                       (member (%current-system)
+                               (package-supported-systems package)))
+                  (list package)
+                  '()))))
+       (append (list rdma-core libnl)
+               (if-supported psm)
+               (if-supported psm2))))
     (arguments
      (list #:configure-flags
-           #~(list "--enable-psm2"
-                   "--enable-efa"
+           #~(list "--enable-efa"
                    "--enable-verbs")))
     (home-page "https://ofiwg.github.io/libfabric/")
     (synopsis "Open Fabric Interfaces")
@@ -8940,7 +8950,15 @@ libraries, which are often integrated directly into libfabric.")
                  "psm-arch.patch"     ; uname -p returns "unknown" on Debian 9
                  "psm-ldflags.patch"  ; build shared lib with LDFLAGS
                  "psm-repro.patch"    ; reproducibility
-                 "psm-disable-memory-stats.patch"))))
+                 "psm-disable-memory-stats.patch"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; That file declares its own 'strlcat' as static.  To avoid a
+        ;; conflict with the function now in glibc 2.39, give it a
+        ;; different name.
+        #~(substitute* "ptl_ips/ips_proto_dump.c"
+            (("strlcat")
+             "psm_custom_strlcat")))))
     (build-system gnu-build-system)
     (outputs '("out" "debug"))
     (inputs `(("libuuid" ,util-linux "lib")))
@@ -9194,7 +9212,15 @@ privileges.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "04nar65ac11qqx41vkfs7iip8kfiah0zms7l4rmsxncpiz2iqfik"))))
+                "04nar65ac11qqx41vkfs7iip8kfiah0zms7l4rmsxncpiz2iqfik"))
+              (modules '((guix build utils)))
+              (snippet
+               ;; That file declares its own 'strlcat' as static.  To avoid a
+               ;; conflict with the function now in glibc 2.39, give it a
+               ;; different name.
+               #~(substitute* "ptl_ips/ips_proto_dump.c"
+                   (("strlcat")
+                    "psm2_custom_strlcat")))))
     (build-system gnu-build-system)
     (arguments
      (list #:make-flags
@@ -9524,7 +9550,7 @@ the superuser to make device nodes.")
 (define-public fakeroot
   (package
     (name "fakeroot")
-    (version "1.31")
+    (version "1.35.1")
     (source
      (origin
        ;; There are no tags in the repository, so take this snapshot.
@@ -9533,7 +9559,7 @@ the superuser to make device nodes.")
                            "fakeroot/fakeroot_" version ".orig.tar.gz"))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "0br0gvvribfs2kpkhwr51lsinhl6l36334wx1cbwfmhww50nv233"))
+        (base32 "1p2zcng64sigixppmh42gd3ava771pmq9a6lwva7flp05lxya3ba"))
        (modules '((guix build utils)
                   (ice-9 ftw)))
        (snippet
@@ -9918,14 +9944,14 @@ platforms, it is not limited to resource-constrained systems.")
 (define-public kexec-tools
   (package
     (name "kexec-tools")
-    (version "2.0.23")
+    (version "2.0.26")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kernel.org/linux/utils/kernel"
                                   "/kexec/kexec-tools-" version ".tar.xz"))
               (sha256
                (base32
-                "06r44i91g1s9f7k5b9kmvb58j9vrqvysfh32pb70cnyrgmncsqxa"))))
+                "1kbh8l67rbz0d3k6x7g5vj5ahg6f7lwvxcj1br8mrk818436mqvz"))))
     (build-system gnu-build-system)
     (arguments
      ;; There are no automated tests.
@@ -10388,7 +10414,7 @@ provides user-space tools for creating EROFS file systems.")
               ;; line lets sysconfdir correctly pick up DESTDIR.
               (substitute* "configure.ac"
                 (("^test .* sysconfdir=/etc\n$") ""))))
-          (add-after 'wrap 'wrap-rasdaemon
+          (add-after 'install 'wrap-rasdaemon
             (lambda* (#:key inputs #:allow-other-keys)
               (let ((path (map dirname
                                (list (search-input-file inputs "/sbin/dmidecode")

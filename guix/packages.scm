@@ -5,7 +5,7 @@
 ;;; Copyright © 2016 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2017, 2019, 2020, 2022 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2019 Marius Bakke <mbakke@fastmail.com>
-;;; Copyright © 2020, 2021 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020, 2021, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2022 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
@@ -912,17 +912,12 @@ identifiers.  The result is inferred from the file names of patches."
                          (module-ref (resolve-interface module) var))))))
     `(("tar"   ,(ref '(gnu packages base) 'tar))
       ("xz"    ,(ref '(gnu packages compression) 'xz))
+      ("zstd"  ,(ref '(gnu packages compression) 'zstd))
       ("bzip2" ,(ref '(gnu packages compression) 'bzip2))
       ("gzip"  ,(ref '(gnu packages compression) 'gzip))
       ("lzip"  ,(ref '(gnu packages compression) 'lzip))
       ("unzip" ,(ref '(gnu packages compression) 'unzip))
-      ("patch" ,(ref '(gnu packages base) 'patch/pinned))
-      ("locales"
-       ,(parameterize ((%current-target-system #f)
-                       (%current-system system))
-          (canonical
-           ((module-ref (resolve-interface '(gnu packages base))
-                        'libc-utf8-locales-for-target))))))))
+      ("patch" ,(ref '(gnu packages base) 'patch/pinned)))))
 
 (define (default-guile)
   "Return the default Guile package used to run the build code of
@@ -980,32 +975,32 @@ specifies modules in scope when evaluating SNIPPET."
     ;; Return true if DIRECTORY is a checkout (git, svn, etc).
     (string-suffix? "-checkout" directory))
 
-  (define (tarxz-name file-name)
-    ;; Return a '.tar.xz' file name based on FILE-NAME.
+  (define (tar-file-name file-name ext)
+    ;; Return a '$filename.tar.$ext' file name based on FILE-NAME and EXT.
     (let ((base (if (numeric-extension? file-name)
                     original-file-name
                     (file-sans-extension file-name))))
       (string-append base
                      (if (equal? (file-extension base) "tar")
-                         ".xz"
-                         ".tar.xz"))))
+                         (string-append "." ext)
+                         (string-append ".tar." ext)))))
 
   (define instantiate-patch
     (match-lambda
-      ((? string? patch)                          ;deprecated
+      ((? string? patch)                ;deprecated
        (local-file patch #:recursive? #t))
-      ((? struct? patch)                          ;origin, local-file, etc.
+      ((? struct? patch)                ;origin, local-file, etc.
        patch)))
 
-  (let ((tar     (lookup-input "tar"))
-        (gzip    (lookup-input "gzip"))
-        (bzip2   (lookup-input "bzip2"))
-        (lzip    (lookup-input "lzip"))
-        (xz      (lookup-input "xz"))
-        (patch   (lookup-input "patch"))
-        (locales (lookup-input "locales"))
-        (comp    (and=> (compressor source-file-name) lookup-input))
-        (patches (map instantiate-patch patches)))
+  (let* ((tar     (lookup-input "tar"))
+         (gzip    (lookup-input "gzip"))
+         (bzip2   (lookup-input "bzip2"))
+         (lzip    (lookup-input "lzip"))
+         (xz      (lookup-input "xz"))
+         (zstd    (lookup-input "zstd"))
+         (patch   (lookup-input "patch"))
+         (comp    (and=> (compressor source-file-name) lookup-input))
+         (patches (map instantiate-patch patches)))
     (define build
       (with-imported-modules '((guix build utils))
         #~(begin
@@ -1014,14 +1009,18 @@ specifies modules in scope when evaluating SNIPPET."
                          (ice-9 regex)
                          (srfi srfi-1)
                          (srfi srfi-26)
+                         (srfi srfi-34)
+                         (srfi srfi-35)
                          (guix build utils))
 
             ;; The --sort option was added to GNU tar in version 1.28, released
             ;; 2014-07-28.  During bootstrap we must cope with older versions.
             (define tar-supports-sort?
-              (zero? (system* (string-append #+tar "/bin/tar")
+              (guard (c ((message-condition? c) #f))
+                (invoke/quiet (string-append #+tar "/bin/tar")
                               "cf" "/dev/null" "--files-from=/dev/null"
-                              "--sort=name")))
+                              "--sort=name")
+                #t))
 
             (define (apply-patch patch)
               (format (current-error-port) "applying '~a'...~%" patch)
@@ -1062,26 +1061,36 @@ specifies modules in scope when evaluating SNIPPET."
                          '("--no-recursion"
                            "--files-from=.file_list"))))
 
+            (let ((line (cond-expand (guile-2.0 _IOLBF)
+                                     (else 'line))))
+              (setvbuf (current-output-port) line)
+              (setvbuf (current-error-port) line))
+
             ;; Encoding/decoding errors shouldn't be silent.
             (fluid-set! %default-port-conversion-strategy 'error)
 
-            (when #+locales
-              ;; First of all, install a UTF-8 locale so that UTF-8 file names
-              ;; are correctly interpreted.  During bootstrap, LOCALES is #f.
-              (setenv "LOCPATH"
-                      (string-append #+locales "/lib/locale/"
-                                     #+(and locales
-                                            (version-major+minor
-                                             (package-version locales)))))
-              (setlocale LC_ALL "en_US.utf8"))
+            ;; First of all, install a UTF-8 locale so that UTF-8 file names
+            ;; are correctly interpreted.  During bootstrap, locales are
+            ;; missing.
+            (let ((locale "C.UTF-8"))
+              (catch 'system-error
+                (lambda ()
+                  (setlocale LC_ALL locale))
+                (lambda args
+                  (format (current-error-port)
+                          "failed to install '~a' locale: ~a~%"
+                          locale (system-error-errno args)))))
 
             (setenv "PATH"
-                    (string-append #+xz "/bin"
-                                   (if #+comp
-                                       (string-append ":" #+comp "/bin")
-                                       "")))
+                    (string-join
+                     (map (cut string-append <> "/bin")
+                          ;; Fallback to xz in case zstd is not
+                          ;; available, such as for bootstrap packages.
+                          (delete-duplicates
+                           (filter-map identity (list #+zstd #+xz #+comp))))
+                     ":"))
 
-            (setenv "XZ_DEFAULTS" (string-join (%xz-parallel-args)))
+            (setenv "ZSTD_NBTHREADS" (number->string (parallel-job-count)))
 
             ;; SOURCE may be either a directory, a tarball or a simple file.
             (let ((name (strip-store-file-name #+source))
@@ -1136,10 +1145,13 @@ specifies modules in scope when evaluating SNIPPET."
                (else                    ;single uncompressed file
                 (copy-file file #$output)))))))
 
-    (let ((name (if (or (checkout? original-file-name)
-                        (not (compressor original-file-name)))
-                    original-file-name
-                    (tarxz-name original-file-name))))
+    (let* ((ext (if zstd
+                    "zst"               ;usual case
+                    "xz"))              ;zstd-less bootstrap-origin
+           (name (if (or (checkout? original-file-name)
+                         (not (compressor original-file-name)))
+                     original-file-name
+                     (tar-file-name original-file-name ext))))
       (gexp->derivation name build
                         #:graft? #f
                         #:system system
