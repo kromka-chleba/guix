@@ -2672,13 +2672,13 @@ measurement devices and test equipment via GPIB, RS232, Ethernet or USB.")
 (define-public python-pandapower
   (package
     (name "python-pandapower")
-    (version "2.14.9")
+    (version "2.14.11")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pandapower" version ".zip"))
        (sha256
-        (base32 "0c5vgiq795kd5q4wcy2x7s3l7x9xdj2nqyfx188dmhgqckrym161"))))
+        (base32 "139ahp08kci8asmv35bcibbnkfr5s1ff5j84n490s47ibsglk4yi"))))
     (build-system pyproject-build-system)
     (native-inputs (list python-pyproj python-pytest unzip))
     (propagated-inputs (list python-deepdiff
@@ -2731,7 +2731,7 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
 (define-public python-scikit-rf
   (package
     (name "python-scikit-rf")
-    (version "1.1.0")
+    (version "1.3.0")
     (source (origin
               (method git-fetch) ;PyPI misses some files required for tests
               (uri (git-reference
@@ -2739,7 +2739,7 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "0ji1c8b9cbgb0w18dx976hza690npkypz8kav4a3yin2wysjvf64"))
+                "0idr730zdwlxdqyvh3s24720pxrjhwixih24gbqzipgp8nh0713i"))
               (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-matplotlib
@@ -2768,13 +2768,13 @@ Microwave engineering.")
 (define-public python-lcapy
   (package
     (name "python-lcapy")
-    (version "1.23")
+    (version "1.24")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "lcapy" version))
        (sha256
-        (base32 "13swd2nd2s20hixy4as924sr223flcvcy9zw3qlzsrcvhppzb84n"))))
+        (base32 "0lmprghkr274l3ykiq80a31njrzj7qqgm02wifkkwh2935shbk76"))))
     (build-system pyproject-build-system)
     (arguments
      (list

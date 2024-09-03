@@ -2,6 +2,7 @@
 ;;; Copyright © 2018 Sou Bunnbu <iyzsong@member.fsf.org>
 ;;; Copyright © 2019–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -41,7 +42,7 @@
 (define-public liblcf
   (package
     (name "liblcf")
-    (version "0.7.0")
+    (version "0.8")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -49,7 +50,7 @@
                     "/liblcf-" version ".tar.gz"))
               (sha256
                (base32
-                "10ghpwww5r3iwlaw1mvf6kamn142nyr2zwdabqghy3k4xv837cih"))))
+                "0kskflh2izc8q5p5x0rfxw8xa3591xfkmqf74rj72ff34xri4nj1"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config))
@@ -76,7 +77,7 @@ It can read and write LCF and XML files.")
 (define-public easyrpg-player
   (package
     (name "easyrpg-player")
-    (version "0.7.0")
+    (version "0.8")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -84,11 +85,12 @@ It can read and write LCF and XML files.")
                     "/easyrpg-player-" version ".tar.gz"))
               (sha256
                (base32
-                "1hm4hdi4l8c9jw0x3kcm6iwgfv8parlfj13va3r3p90040gs7s8l"))))
+                "1brx2iix9d5i2lyjjcs03pq1xgl1gyh0yas8avazahgd9sn47696"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags
-       (list (string-append "--with-bash-completion-dir="
+       (list "--enable-fmmidi"
+             (string-append "--with-bash-completion-dir="
                             %output "/etc/bash_completion.d/"))))
     (native-inputs
      (list pkg-config))

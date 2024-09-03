@@ -8017,6 +8017,24 @@ types.")
 @code{rust-bitcoin}.")
     (license license:cc0)))
 
+(define-public rust-bitfield-0.14
+  (package
+    (name "rust-bitfield")
+    (version "0.14.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "bitfield" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1b26k9acwss4qvrl60lf9n83l17d4hj47n5rmpd3iigf9j9n0zid"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/dzamlo/rust-bitfield")
+    (synopsis "Macros to generate bitfield-like struct")
+    (description
+     "This Rust crate provides macros to generate bitfield-like struct.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public rust-bitflags-2
   (package
     (name "rust-bitflags")
@@ -39739,6 +39757,26 @@ harness used by @code{rustc --test}.")
         ("rust-rayon" ,rust-rayon-1)
         ("rust-structopt" ,rust-structopt-0.3)
         ("rust-termcolor" ,rust-termcolor-1))))))
+
+(define-public rust-libudev-sys-0.1
+  (package
+    (name "rust-libudev-sys")
+    (version "0.1.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "libudev-sys" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "09236fdzlx9l0dlrsc6xx21v5x8flpfm3d5rjq9jr5ivlas6k11w"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-libc" ,rust-libc-0.2)
+                       ("rust-pkg-config" ,rust-pkg-config-0.3))))
+    (home-page "https://github.com/dcuddeback/libudev-sys")
+    (synopsis "FFI bindings to libudev")
+    (description "This package provides FFI bindings to libudev.")
+    (license license:expat)))
 
 (define-public rust-listenfd-1
   (package
@@ -85802,6 +85840,30 @@ Unicode character database.")
 with the Unicode character database.")
     (license (list license:asl2.0
                    license:expat))))
+
+(define-public rust-udev-0.7
+  (package
+    (name "rust-udev")
+    (version "0.7.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "udev" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "06hr927z0fdn7ay0p817b9x19i5fagmpmvz95yhl4d1pf3bbpgaf"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-libc" ,rust-libc-0.2)
+                       ("rust-libudev-sys" ,rust-libudev-sys-0.1)
+                       ("rust-mio" ,rust-mio-0.6)
+                       ("rust-mio" ,rust-mio-0.7)
+                       ("rust-mio" ,rust-mio-0.8)
+                       ("rust-pkg-config" ,rust-pkg-config-0.3))))
+    (home-page "https://github.com/Smithay/udev-rs")
+    (synopsis "libudev bindings for Rust")
+    (description "This package provides libudev bindings for Rust.")
+    (license license:expat)))
 
 (define-public rust-ufmt-0.2
   (package

@@ -463,17 +463,19 @@ and linear forms into vectors.")
 (define-public python-scikit-fuzzy
   (package
     (name "python-scikit-fuzzy")
-    (version "0.4.2")
+    (version "0.5.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "scikit-fuzzy" version))
+       (uri (pypi-uri "scikit_fuzzy" version))
        (sha256
-        (base32 "0bp1n771fj44kdp7a00bcvfwirvv2rc803b7g6yf3va7v0j29c8s"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))   ;XXX: not compatible with newer numpy.testing
+        (base32 "0zsfyd8cpd2l82fwh3smxbwhb3bkqwlq17cbav53axma4c2k9r9f"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "--pyargs" "skfuzzy")))
     (native-inputs
-     (list python-nose))
+     (list python-pytest))
     (propagated-inputs
      (list python-networkx python-numpy python-scipy))
     (home-page "https://github.com/scikit-fuzzy/scikit-fuzzy")
