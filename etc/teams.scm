@@ -511,11 +511,12 @@ asdf-build-system."
   (team 'mozilla
         #:name "Mozilla"
         #:description
-        "Taking care about Icecat and Icedove, built from Mozilla Firefox
-and Thunderbird."
+        "Taking care of Icedove and Web Browsers based on Mozilla Thunderbird
+and Firefox."
         #:scope (list "gnu/build/icecat-extension.scm"
                       "gnu/packages/browser-extensions.scm"
                       "gnu/packages/gnuzilla.scm"
+                      "gnu/packages/librewolf.scm"
                       "gnu/packages/tor-browsers.scm")))
 
 (define-team racket
@@ -742,6 +743,10 @@ GLib/GIO, GTK, GStreamer and Webkit."
 (define-member (person "Nicolas Goaziou"
                        "guix@nicolasgoaziou.fr")
   tex)
+
+(define-member (person "André Batista"
+                       "nandre@riseup.net")
+  mozilla)
 
 
 (define (find-team name)

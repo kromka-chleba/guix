@@ -4542,7 +4542,7 @@ for the basic TCP/IP protocols.")
                        ;; Append the test modules to sys.path to avoid
                        ;; namespace conflict which breaks SSL tests.
                        "--import-mode=append")))))))
-    (native-inputs (list python-dpkt python-pytest))
+    (native-inputs (list nss-certs-for-test python-dpkt python-pytest))
     (propagated-inputs (list python-brotli python-certifi python-gevent
                              python-six python-urllib3))
     (home-page "https://github.com/geventhttpclient/geventhttpclient")
@@ -6604,7 +6604,8 @@ and serve updated contents upon changes to the directory.")
                             "test_extra_info")
                           " and not "))))
     (native-inputs
-     (list python-pytest
+     (list nss-certs-for-test
+           python-pytest
            python-pytest-asyncio
            python-pytest-cov
            python-pytest-httpbin
@@ -6679,7 +6680,8 @@ Some things HTTP Core does do:
               ;; 'function' object has no attribute 'name'".
               " and not test_main"))))
     (native-inputs
-     (list python-cryptography
+     (list nss-certs-for-test
+           python-cryptography
            python-hatchling
            python-hatch-fancy-pypi-readme
            python-pytest
@@ -8168,13 +8170,13 @@ of the CRC32C hashing algorithm.")
 (define-public python-google-auth
   (package
     (name "python-google-auth")
-    (version "2.17.3")
+    (version "2.34.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "google-auth" version))
+       (uri (pypi-uri "google_auth" version))
        (sha256
-        (base32 "1z2f0vj374rscvlivhvf9xxjlg4lng4mgpqnygfhy4wbqlmiwcff"))))
+        (base32 "1k04kkg5n3pi4awjxxsa50ail68wwf2gklmb686v46aw8fb77f4f"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -8190,7 +8192,8 @@ of the CRC32C hashing algorithm.")
            python-rsa
            python-six))
     (native-inputs
-     (list python-flask
+     (list nss-certs-for-test
+           python-flask
            python-freezegun
            python-mock
            python-oauth2client

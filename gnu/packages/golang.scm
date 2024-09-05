@@ -6447,10 +6447,13 @@ temporal directories.")
                 "002yb1s2mxq2xijkl39ip1iyc3l52k23ikyi9ijfl4bgqxy79ljg"))))
     (build-system go-build-system)
     (arguments
-     `(#:import-path "github.com/go-git/go-git-fixtures/v4"
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'reset-gzip-timestamps))))
+     (list
+      ;; XXX: panic: runtime error: makeslice: cap out of range
+      #:tests? (target-64bit?)
+      #:import-path "github.com/go-git/go-git-fixtures/v4"
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'reset-gzip-timestamps))))
     (native-inputs
      (list go-github-com-alcortesm-tgz go-github-com-go-git-go-billy
            go-golang-org-x-sys go-gopkg-in-check-v1))
@@ -6654,20 +6657,34 @@ RFC-5802 and RFC-7677.")
 (define-public go-github-com-godbus-dbus
   (package
     (name "go-github-com-godbus-dbus")
-    (version "5.1.0")
+    (version "0.0.0-20190726142602-4481cbc300e2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/godbus/dbus")
-                    (commit (string-append "v" version))))
+                    (commit (go-version->git-ref version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1kayd4x7idrhi06ahh5kqkgwzgh9icvv71mjar2d0jl486dfs8r5"))))
+                "0h0cl1r136g0kxbw3i7ggb9mhavpi1yr7d7312iwhkxm93dxkphg"))))
     (build-system go-build-system)
     (arguments
-     `(#:tests? #f ;no /var/run/dbus/system_bus_socket
-       #:import-path "github.com/godbus/dbus"))
+     (list
+      #:import-path "github.com/godbus/dbus"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? unpack-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (substitute* (find-files "." "\\_test.go$")
+                  ;; Disable tests which require a system D-Bus instance.
+                  (("TestSystemBus") "OffTestSystemBus")
+                  (("TestConnectSystemBus") "OffTestConnectSystemBus")))))
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "dbus-run-session" "--" "go" "test" "./..."))))))))
     (native-inputs
      (list dbus)) ;dbus-launch
     (home-page "https://github.com/godbus/dbus/")
@@ -6675,6 +6692,26 @@ RFC-5802 and RFC-7677.")
     (description "@code{dbus} is a library that implements native Go client
 bindings for the D-Bus message bus system.")
     (license license:bsd-2)))
+
+(define-public go-github-com-godbus-dbus-v5
+  (package
+    (inherit go-github-com-godbus-dbus)
+    (name "go-github-com-godbus-dbus-v5")
+    (version "5.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/godbus/dbus")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1kayd4x7idrhi06ahh5kqkgwzgh9icvv71mjar2d0jl486dfs8r5"))))
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-godbus-dbus)
+       ((#:import-path _ "github.com/godbus/dbus")
+        "github.com/godbus/dbus/v5")))))
 
 (define-public go-github-com-delthas-go-libnp
   (let ((commit "0e45ece1f878f202fee2c74801e287804668f677"))
@@ -6692,7 +6729,7 @@ bindings for the D-Bus message bus system.")
                     "1hylpvwz3kb8wr00knba6mggjacak2vmqafwysansj0ns038lp8w"))))
       (build-system go-build-system)
       (arguments `(#:import-path "github.com/delthas/go-libnp"))
-      (propagated-inputs (list go-github-com-godbus-dbus))
+      (propagated-inputs (list go-github-com-godbus-dbus-v5))
       (home-page "https://github.com/delthas/go-libnp")
       (synopsis "Tiny library providing information about now-playing media")
       (description "@code{go-libnp} is a tiny cross-platform library for
@@ -6725,7 +6762,7 @@ formatting information, rather than the current locale name.")
 (define-public go-github-com-zalando-go-keyring
   (package
     (name "go-github-com-zalando-go-keyring")
-    (version "0.1.0")
+    (version "0.2.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6734,13 +6771,31 @@ formatting information, rather than the current locale name.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0kj54nkiyccy6m9iy9a53f6412a54xk96j88jaiq35yzdgfa4z3p"))))
+                "1p6qlsbj9rmqiwz9ly4c7jmifcx8m45xjhsbdwdvw2jzw5jc2ch1"))))
     (build-system go-build-system)
     (arguments
-     `(#:tests? #f ;XXX: Fix dbus tests
-       #:import-path "github.com/zalando/go-keyring"))
+     (list
+      #:import-path "github.com/zalando/go-keyring"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? unpack-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (substitute* (find-files "." "\\_test.go$")
+                  ;; Disable tests which require a system DBus instance.
+                  (("TestDelete") "OffTestDelete")
+                  (("TestGet") "OffTestGet")
+                  (("TestSet") "OffTestSet")))))
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "dbus-run-session" "--"
+                          "go" "test" "-v" "./..."))))))))
+    (native-inputs
+     (list dbus))
     (propagated-inputs
-     (list go-github-com-godbus-dbus dbus))
+     (list go-github-com-godbus-dbus-v5))
     (home-page "https://github.com/zalando/go-keyring/")
     (synopsis "Library for working with system keyring")
     (description "@code{go-keyring} is a library for setting, getting and
@@ -7565,32 +7620,30 @@ aware of your profiles and configuration in ~/.aws/config.")
     (license license:expat)))
 
 (define-public go-github-com-gsterjov-go-libsecret
-  (let ((commit "a6f4afe4910cad8688db3e0e9b9ac92ad22d54e1")
-        (revision "0"))
-    (package
-      (name "go-github-com-gsterjov-go-libsecret")
-      (version "5.0.1")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/gsterjov/go-libsecret")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "09zaiadnll83vs22ib89agg7anj0blw5fywvmckxllsgif6ak6v7"))))
-      (build-system go-build-system)
-      (native-inputs
-       (list go-github-com-godbus-dbus))
-      (arguments
-       '(#:import-path "github.com/gsterjov/go-libsecret"
-         #:phases %standard-phases))
-      (synopsis "Manage secrets via the \"Secret Service\" DBus API")
-      (description
-       "This native Go library manages secrets via the freedesktop.org
-\"Secret Service\" DBus interface.")
-      (home-page "https://github.com/gsterjov/go-libsecret")
-      (license license:expat))))
+  (package
+    (name "go-github-com-gsterjov-go-libsecret")
+    (version "0.0.0-20161001094733-a6f4afe4910c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gsterjov/go-libsecret")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09zaiadnll83vs22ib89agg7anj0blw5fywvmckxllsgif6ak6v7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gsterjov/go-libsecret"))
+    (propagated-inputs
+     (list go-github-com-godbus-dbus))
+    (home-page "https://github.com/gsterjov/go-libsecret")
+    (synopsis "Manage secrets via the @code{Secret Service} DBus API")
+    (description
+     "This native Go library manages secrets via the freedesktop.org
+@code{Secret Service} DBus interface.")
+    (license license:expat)))
 
 (define-public go-github-com-mtibben-androiddnsfix
   (let ((commit "ff02804463540c36e3a148dcf4b009d003cf2a31")

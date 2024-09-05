@@ -154,6 +154,7 @@
 ;;; Copyright © 2024 TakeV <takev@disroot.org>
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2024 Rick Huijzer <ikbenrickhuyzer@gmail.com>
+;;; Copyright © 2024 Peter Kannewitz <petre-vps@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -185,6 +186,7 @@
   #:use-module (gnu packages bdw-gc)
   #:use-module (gnu packages bioinformatics)
   #:use-module (gnu packages build-tools)
+  #:use-module (gnu packages certs)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
@@ -7299,7 +7301,7 @@ to deprecate classes, functions or methods.")
      (list python-cryptography python-deprecated python-pyjwt
            python-pynacl python-requests))
     (native-inputs
-     (list python-httpretty python-pytest))
+     (list nss-certs-for-test python-httpretty python-pytest))
     (home-page "https://pygithub.readthedocs.io/en/latest/")
     (synopsis "Python library for the GitHub API")
     (description "This library allows managing GitHub resources such as
@@ -16181,6 +16183,22 @@ structures.")
     (arguments
      ;; https://github.com/jazzband/geojson/issues/175
      (list #:tests? #f))))
+
+(define-public python-gpxpy
+  (package
+    (name "python-gpxpy")
+    (version "1.6.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "gpxpy" version))
+       (sha256
+        (base32 "1bh1dkrbmcqb46r7j4fazzq7j6zfr2f04frm6h4bhhpcjx5lhb57"))))
+    (build-system pyproject-build-system)
+    (home-page "https://github.com/tkrajina/gpxpy")
+    (synopsis "Python GPX parser")
+    (description "GPX file parser and GPS track manipulation library.")
+    (license license:asl2.0)))
 
 (define-public wfetch
   (let ((commit "e1cfa37814aebc9eb56ce994ebe877b6a6f9a715")

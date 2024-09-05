@@ -16,7 +16,7 @@
 ;;; Copyright © 2019 Jesse Gildersleve <jessejohngildersleve@protonmail.com>
 ;;; Copyright © 2019-2024 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2019 Brett Gilio <brettg@gnu.org>
-;;; Copyright © 2020 Konrad Hinsen <konrad.hinsen@fastmail.net>
+;;; Copyright © 2020, 2024 Konrad Hinsen <konrad.hinsen@fastmail.net>
 ;;; Copyright © 2020 Dimakis Dimakakos <me@bendersteed.tech>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2020, 2021, 2022 Adam Kandur <rndd@tuta.io>
@@ -5421,6 +5421,39 @@ with other libraries which may also use Freetype.")
 
 (define-public ecl-cl-freetype2
   (sbcl-package->ecl-package sbcl-cl-freetype2))
+
+(define-public sbcl-cl-ftp
+  (let ((commit "530f1ec06427c69966d83c86638be628eacb9502")
+        (revision "0"))
+    (package
+      (name "sbcl-cl-ftp")
+      (version (git-version "1.6.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/pinterface/cl-ftp")
+               (commit commit)))
+         (file-name (git-file-name "cl-ftp" version))
+         (sha256
+          (base32  "0q5x9g419crvaf106q33k0xkh4xvglzjyjhibz9siymcngyc7zdh"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs
+       (list sbcl-split-sequence
+             sbcl-usocket))
+      (synopsis "FTP client for Common Lisp")
+      (description
+       "CL-FTP is a library which provides FTP client functionality
+to a Common Lisp program.  CL-FTP uses the USOCKET package for network
+sockets and the SPLIT-SEQUENCE package for some parsing needs.")
+      (home-page "https://github.com/pinterface/cl-ftp")
+      (license license:expat))))
+
+(define-public cl-ftp
+  (sbcl-package->cl-source-package sbcl-cl-ftp))
+
+(define-public ecl-cl-ftp
+  (sbcl-package->ecl-package sbcl-cl-ftp))
 
 (define-public sbcl-cl-gamepad
   (let ((commit "d5b99fbaa2e39294d23061699e8f1e761eda7205")
@@ -14950,6 +14983,42 @@ attributes not supported by the Common Lisp standard functions.")
 (define-public cl-file-attributes
   (sbcl-package->cl-source-package sbcl-file-attributes))
 
+(define-public sbcl-file-finder
+  (let ((commit "ec392d775eee33dbdea0d6532d20952438991f99")
+        (revision "0"))
+    (package
+      (name "sbcl-file-finder")
+      (version (git-version "0.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/lisp-maintainers/file-finder")
+               (commit commit)))
+         (file-name (git-file-name "cl-file-finder" version))
+         (sha256
+          (base32 "1mpasi7n0ysggx0inxdbzlwavh08m0jxvv220ammvcyn3xybbchj"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs
+       (list sbcl-alexandria
+             sbcl-cl-str
+             sbcl-file-attributes
+             sbcl-local-time
+             sbcl-named-readtables
+             sbcl-serapeum))
+      (synopsis "Enable rapid file search, inspection and manipulation")
+      (description
+       "This library provides modern file handling for Common Lisp, which
+avoids many of the pitfalls of pathnames.")
+      (home-page "https://github.com/lisp-maintainers/file-finder")
+      (license license:gpl3+))))
+
+(define-public ecl-file-finder
+  (sbcl-package->ecl-package sbcl-file-finder))
+
+(define-public cl-file-finder
+  (sbcl-package->cl-source-package sbcl-file-finder))
+
 (define-public sbcl-file-notify
   (let ((commit "f12dc2f2aae5fee13355cd93a8cae0c4c412b76d")
         (revision "0"))
@@ -20791,8 +20860,8 @@ compliance control.")
   (sbcl-package->cl-source-package sbcl-modularize-interfaces))
 
 (define-public sbcl-moira
-  (let ((commit "21f1cfd5942fcaea2ed2e4f6055b2a5a39ac4c6e")
-        (revision "0"))
+  (let ((commit "448d8e77b95f5de7b41d2897a2167c4b1fb85a76")
+        (revision "1"))
     (package
       (name "sbcl-moira")
       (version (git-version "0.0.0" revision commit))
@@ -20804,7 +20873,7 @@ compliance control.")
                (commit commit)))
          (file-name (git-file-name "cl-moira" version))
          (sha256
-          (base32 "0r6hvq8j04y1i85f8jwhhafylgfrkg8c1z5746nsbv0v0348sf5h"))))
+          (base32 "01wxjg122flla4pgys57hya3fwrkyjkpp26j5ypl5885zz1ip5b7"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-alexandria
@@ -23860,6 +23929,37 @@ pattern-matching-like, but a char-by-char procedural parser.")
 (define-public ecl-proc-parse
   (sbcl-package->ecl-package sbcl-proc-parse))
 
+(define-public sbcl-progressons
+  (let ((commit "69a8092e43876d66943aef709ab641818d52f2da")
+        (revision "0"))
+    (package
+      (name "sbcl-progressons")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/vindarel/progressons")
+               (commit commit)))
+         (file-name (git-file-name "cl-progressons" version))
+         (sha256
+          (base32 "1i93khd0l1aphzh6qb4yy9cpi2nmqac08b90yx95p4zymap03nly"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs
+       (list sbcl-cl-ansi-text
+             sbcl-cl-str))
+      (synopsis "Display a progress bar on one line")
+      (description
+       "This library can be used to display a progress bar on one line.")
+      (home-page "https://github.com/vindarel/progressons")
+      (license license:expat))))
+
+(define-public cl-progressons
+  (sbcl-package->cl-source-package sbcl-progressons))
+
+(define-public ecl-progressons
+  (sbcl-package->ecl-package sbcl-progressons))
+
 (define-public sbcl-prometheus
   (package
     (name "sbcl-prometheus")
@@ -25725,6 +25825,35 @@ conditions.")
 
 (define-public ecl-sealable-metaobjects
   (sbcl-package->ecl-package sbcl-sealable-metaobjects))
+
+(define-public sbcl-secret-values
+  (let ((commit "72996c0551eea338afa355ee90e20171ac74ebd4")
+        (revision "0"))
+    (package
+      (name "sbcl-secret-values")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/rotatef/secret-values")
+               (commit commit)))
+         (file-name (git-file-name "cl-secret-values" version))
+         (sha256
+          (base32  "07ph49s27gvjzx60yy094bb9ddwiys34r8cx5l837i34nm2fn3nh"))))
+      (build-system asdf-build-system/sbcl)
+      (synopsis "Hide passwords and similar secret inputs")
+      (description
+       "This library provides a wrapper type for secret values, to reduce the
+risk of accidentally revealing them.")
+      (home-page "https://github.com/rotatef/secret-values")
+      (license license:expat))))
+
+(define-public cl-secret-values
+  (sbcl-package->cl-source-package sbcl-secret-values))
+
+(define-public ecl-secret-values
+  (sbcl-package->ecl-package sbcl-secret-values))
 
 (define-public sbcl-seedable-rng
   (let ((commit "aa1a1564b6e07e2698df37c7a98348c4f762cb15")
@@ -27944,6 +28073,36 @@ provides a method for determining which capabilities a terminal
 
 (define-public ecl-terminfo
   (sbcl-package->ecl-package sbcl-terminfo))
+
+(define-public sbcl-termp
+  (let ((commit "29789fe83db624679b6f341e3fae3f2577ce6a45")
+        (revision "0"))
+    (package
+      (name "sbcl-termp")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/vindarel/termp")
+               (commit commit)))
+         (file-name (git-file-name "cl-termp" version))
+         (sha256
+          (base32 "03r5cv01q4yg0a2dv2ckn2xys53y9isrq3hkp0dqa96q8wrindlh"))))
+      (build-system asdf-build-system/sbcl)
+      (synopsis "Test for real vs. dumb terminal window")
+      (description
+       "This is a trivial utility for distinguishing between a process running
+in a real terminal window and a process running in a dumb one, e.g.
+emacs-slime.")
+      (home-page "https://github.com/vindarel/termp")
+      (license license:expat))))
+
+(define-public cl-termp
+  (sbcl-package->cl-source-package sbcl-termp))
+
+(define-public ecl-termp
+  (sbcl-package->ecl-package sbcl-termp))
 
 (define-public sbcl-terrable
   (let ((commit "e4fe23ffa08e8d53a8168105b413861da59cc786")

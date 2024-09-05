@@ -3521,15 +3521,15 @@ September 2004}")
 (define-public petsc
   (package
     (name "petsc")
-    (version "3.16.1")
+    (version "3.21.4")
     (source
      (origin
       (method url-fetch)
       ;; The *-lite-* tarball does not contain the *large* documentation
-      (uri (string-append "http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/"
+      (uri (string-append "https://web.cels.anl.gov/projects/petsc/download/release-snapshots/"
                           "petsc-lite-" version ".tar.gz"))
       (sha256
-       (base32 "0sm03vpg010q9icidiq587n325m0598cj6hab2rdv85nwyygg74h"))))
+       (base32 "1394ybnchawb2kghx4xk36gw26930aa73lxyw96diiqp8rnhgbm9"))))
     (outputs '("out"                    ; libraries and headers
                "examples"))             ; ~30MiB of examples
     (build-system gnu-build-system)
@@ -3589,8 +3589,10 @@ September 2004}")
                     "Machine characteristics: Linux-x.x.x"))
                 (substitute* (find-files "." "petscvariables")
                   ;; Do not expose build machine characteristics, set to defaults.
-                  (("MAKE_NP = [:digit:]+") "MAKE_NP = 2")
-                  (("NPMAX = [:digit:]+") "NPMAX = 2")))))
+                  (("MAKE_NP = [[:digit:]]+") "MAKE_NP = 2")
+                  (("MAKE_TEST_NP = [[:digit:]]+") "MAKE_TEST_NP = 2")
+                  (("MAKE_LOAD = .*") "MAKE_LOAD = 256.0\n")
+                  (("NPMAX = [[:digit:]]+") "NPMAX = 2")))))
           (add-after 'install 'clean-install
             ;; Try to keep installed files from leaking build directory names.
             (lambda* (#:key inputs outputs #:allow-other-keys)
@@ -3625,6 +3627,16 @@ September 2004}")
                 (("([[:graph:]]+)/bin/diff") "diff")
                 (("([[:graph:]]+)/bin/sed") "sed")
                 (("([[:graph:]]+)/bin/gfortran") "gfortran")))))
+
+          ;; Some of the tests get linked with '-L$prefix/lib -lpetsc' (even
+          ;; though that's unnecessary because they also explicitly link
+          ;; against 'libpetsc.so' from the build directory).  To work around
+          ;; it, run tests after installation.  See
+          ;; <https://gitlab.com/petsc/petsc/-/issues/1634>.
+          (delete 'check)
+          (add-after 'install 'check
+            (assoc-ref %standard-phases 'check))
+
           (add-after 'install 'move-examples
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((out (assoc-ref outputs "out"))
@@ -3633,7 +3645,7 @@ September 2004}")
                      (exdir' (string-append examples "/share/petsc/examples")))
                 (copy-recursively exdir exdir')
                 (delete-file-recursively exdir)))))))
-    (home-page "https://www.mcs.anl.gov/petsc")
+    (home-page "https://petsc.org")
     (synopsis "Library to solve PDEs")
     (description "PETSc, pronounced PET-see (the S is silent), is a suite of
 data structures and routines for the scalable (parallel) solution of
@@ -3728,41 +3740,31 @@ scientific applications modeled by partial differential equations.")
 (define-public python-petsc4py
   (package
     (name "python-petsc4py")
-    (version "3.16.1")
+    (version "3.21.4")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "petsc4py" version))
         (sha256
           (base32
-           "0pxr6qa7p0pmpq0av29lx8lzlrdcfdzj87ynixzr8dn42y13a662"))
-        (modules '((guix build utils)))
-        (snippet
-         '(begin
-            ;; Ensure source file is regenerated in the build phase.
-            (delete-file "src/petsc4py.PETSc.c")
-            ;; Remove legacy GC code.  See
-            ;; https://bitbucket.org/petsc/petsc4py/issues/125.
-            (substitute* "src/PETSc/cyclicgc.pxi"
-                         ((".*gc_refs.*") "" )
-                         ((".*PyGC_Head.*") ""))
-            #t))))
+           "1kffxhcwkx6283n2p83ymanz6m8j2xmz5kpa5s8qc4f9iiah59sb"))))
     (build-system python-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'pre-build
-           (lambda _
-             ;; Define path to PETSc installation.
-             (setenv "PETSC_DIR" (assoc-ref %build-inputs "petsc"))
-             #t))
-         (add-before 'check 'mpi-setup
-           ,%openmpi-setup))))
-    (native-inputs
-     (list python-cython))
-    (inputs
-     `(("petsc" ,petsc-openmpi)
-       ("python-numpy" ,python-numpy)))
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'build 'set-PETSC_DIR
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   ;; Define path to PETSc installation.
+                   (setenv "PETSC_DIR"
+                           (assoc-ref inputs "petsc-openmpi"))))
+               (add-before 'check 'mpi-setup
+                 #$%openmpi-setup)
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "python" "test/runtests.py")))))))
+    (native-inputs (list python-cython-3))
+    (inputs (list petsc-openmpi python-numpy))
     (home-page "https://bitbucket.org/petsc/petsc4py/")
     (synopsis "Python bindings for PETSc")
     (description "PETSc, the Portable, Extensible Toolkit for
@@ -3939,7 +3941,7 @@ integration of real-, complex-, and vector-valued functions.")
 (define-public slepc
   (package
     (name "slepc")
-    (version "3.16.1")
+    (version "3.21.1")
     (source
      (origin
        (method url-fetch)
@@ -3947,7 +3949,7 @@ integration of real-, complex-, and vector-valued functions.")
                            version ".tar.gz"))
        (sha256
         (base32
-         "1ysfm77s5fcissv3q0k5d65mlp93zi4anqg62q3cd25dn66sva5i"))))
+         "12kdgnw9lm5q6bq5wp27ygdp1bjdz3fhkb8m9ds83kn32l53zcxy"))))
     (build-system gnu-build-system)
     (native-inputs
      `(("python" ,python)
@@ -4053,31 +4055,32 @@ arising after the discretization of partial differential equations.")
 (define-public python-slepc4py
   (package
     (name "python-slepc4py")
-    (version "3.16.1")
+    (version "3.21.1")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "slepc4py" version))
         (sha256
           (base32
-            "0fq997y73ymvcvdrxycp450pxwdgnqaw62gv9rwncfgsfplkvs9w"))))
+            "01vvpl8g73knkwnh6mbxd45vwcs4zsw814147fvgkvj30qkhx3mw"))))
     (build-system python-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'pre-build
-           (lambda _
-             ;; Define path to PETSc installation.
-             (setenv "PETSC_DIR" (assoc-ref %build-inputs "petsc"))
-             ;; Define path to SLEPc installation.
-             (setenv "SLEPC_DIR" (assoc-ref %build-inputs "slepc"))
-             #t))
-         (add-before 'check 'mpi-setup
-           ,%openmpi-setup))))
-    (inputs
-     `(("python-numpy" ,python-numpy)
-       ("python-petsc4py" ,python-petsc4py)
-       ("slepc" ,slepc-openmpi)))
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'build 'pre-build
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   ;; Define path to PETSc installation.
+                   (setenv "PETSC_DIR" (assoc-ref inputs "petsc-openmpi"))
+                   ;; Define path to SLEPc installation.
+                   (setenv "SLEPC_DIR" (assoc-ref inputs "slepc-openmpi"))))
+               (add-before 'check 'mpi-setup
+                 #$%openmpi-setup)
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "python" "test/runtests.py")))))))
+    (native-inputs (list python-cython-3))
+    (inputs (list python-numpy python-petsc4py petsc-openmpi slepc-openmpi))
     (home-page "https://bitbucket.org/slepc/slepc4py/")
     (synopsis "Python bindings for SLEPc")
     (description "SLEPc, the Scalable Library for Eigenvalue Problem
@@ -6882,14 +6885,14 @@ A unique design feature of Trilinos is its focus on packages.")
 (define-public dealii
   (package
     (name "dealii")
-    (version "9.5.1")
+    (version "9.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/dealii/dealii/releases/"
                            "download/v" version "/dealii-" version ".tar.gz"))
        (sha256
-        (base32 "0phgcfnil4rb41xipsdbm4lxrymlqxbiccakg3pkm3a8wqsva658"))
+        (base32 "1vbvw76xv8h1diwfgybgarm7qwn51rxd1kp2jgy2rvcfxgq26lv7"))
        (modules '((guix build utils)))
        (snippet
         ;; Remove bundled boost, Kokkos, muparser, TBB and UMFPACK.
@@ -7185,6 +7188,7 @@ set.")
                   texlive-alphalph
                   texlive-capt-of
                   texlive-caption
+                  texlive-changepage
                   texlive-cmap
                   texlive-courier
                   texlive-enumitem
@@ -7221,59 +7225,63 @@ set.")
     (inputs
      (list openblas))
     (arguments
-     `(#:modules ((srfi srfi-1)
-                  ,@%default-gnu-modules)
-       #:configure-flags '("--enable-shared"
-                           "--disable-fortran"
-                           "--without-MPI"
-                           "--with-openmp"
-                           "--with-fei"
-                           "--with-lapack"
-                           "--with-blas")
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'chdir-src
-           (lambda _ (chdir "src")))
-         (replace 'configure
-           (lambda* (#:key build target configure-flags
+     (list #:modules `((srfi srfi-1)
+                       ,@%default-gnu-modules)
+           #:configure-flags #~'("--enable-shared"
+                                 "--disable-fortran"
+                                 "--without-MPI"
+                                 "--with-openmp"
+                                 "--with-fei"
+                                 "--with-lapack"
+                                 "--with-blas")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'chdir-src
+                 (lambda _
+                   (chdir "src")))
+               (replace 'configure
+                 (lambda* (#:key build target configure-flags
                            #:allow-other-keys #:rest args)
-             (let* ((configure (assoc-ref %standard-phases 'configure)))
-               (apply configure
-                      (append args
-                              (list #:configure-flags
-                                    (cons (string-append
-                                           "--host=" (or target build))
-                                          configure-flags)))))))
-         (add-after 'build 'build-docs
-           (lambda _
-             (invoke "make" "-C" "docs")))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (setenv "LD_LIBRARY_PATH"
-                       (string-append (getcwd) "/hypre/lib"))
-               (setenv "PATH"
-                       (string-append "." ":"
-                                      (getenv "PATH")))
-               (invoke "make" "check" "CHECKRUN=")
-               (for-each (lambda (filename)
-                           (let ((size (stat:size (stat filename))))
-                             (when (positive? size)
-                               (error (format #f
-                                       "~a size ~d; error indication~%"
-                                       filename size)))))
-                         (find-files "test" ".*\\.err$")))))
-         (add-after 'install 'install-docs
-           (lambda* (#:key outputs #:allow-other-keys)
-             ;; Custom install because docs/Makefile doesn't honor ${docdir}.
-             (let* ((doc (assoc-ref outputs "doc"))
-                    (docdir (string-append doc "/share/doc/hypre-" ,version)))
-               (with-directory-excursion "docs"
-                 (for-each (lambda (base)
-                             (install-file (string-append base ".pdf") docdir)
-                             (copy-recursively (string-append base "-html")
-                                               (string-append docdir "/" base)))
-                           '("usr-manual" "ref-manual")))))))))
+                   (let* ((configure (assoc-ref %standard-phases 'configure)))
+                     (apply configure
+                            (append args
+                                    (list #:configure-flags
+                                          (cons (string-append "--host="
+                                                               (or target build))
+                                                configure-flags)))))))
+               (add-after 'build 'build-docs
+                 (lambda _
+                   (invoke "make" "-C" "docs")))
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (setenv "LD_LIBRARY_PATH"
+                             (string-append (getcwd) "/hypre/lib"))
+                     (setenv "PATH"
+                             (string-append "." ":" (getenv "PATH")))
+                     (invoke "make" "check" "CHECKRUN=")
+                     (for-each (lambda (filename)
+                                 (let ((size (stat:size (stat filename))))
+                                   (when (positive? size)
+                                     (error (format #f
+                                                    "~a size ~d; error indication~%"
+                                                    filename size)))))
+                               (find-files "test" ".*\\.err$")))))
+               (add-after 'install 'install-docs
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   ;; Custom install because docs/Makefile doesn't honor ${docdir}.
+                   (let* ((doc (assoc-ref outputs "doc"))
+                          (docdir (string-append doc "/share/doc/hypre-"
+                                                 #$version)))
+                     (with-directory-excursion "docs"
+                       (for-each (lambda (base)
+                                   (install-file (string-append base
+                                                                ".pdf") docdir)
+                                   (copy-recursively (string-append base
+                                                                    "-html")
+                                                     (string-append docdir
+                                                                    "/" base)))
+                                 '("usr-manual" "ref-manual")))))))))
     (home-page "https://computing.llnl.gov/projects\
 /hypre-scalable-linear-solvers-multigrid-methods")
     (synopsis "Library of solvers and preconditioners for linear equations")
@@ -7294,12 +7302,11 @@ problems.")
     (arguments
      (substitute-keyword-arguments (package-arguments hypre)
        ((#:configure-flags flags)
-        ``("--with-MPI"
-           ,@(delete "--without-MPI" ,flags)))
+        #~`("--with-MPI" ,@(delete "--without-MPI" #$flags)))
        ((#:phases phases)
-        `(modify-phases ,phases
-           (add-before 'check 'mpi-setup
-	     ,%openmpi-setup)))))
+        #~(modify-phases #$phases
+            (add-before 'check 'mpi-setup
+              #$%openmpi-setup)))))
     (synopsis "Parallel solvers and preconditioners for linear equations")
     (description
      "HYPRE is a software library of high performance preconditioners and
@@ -7444,14 +7451,14 @@ Longest Commons Subsequence of a set of strings.")
 (define-public jacal
   (package
     (name "jacal")
-    (version "1c7")
+    (version "1c8")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "http://groups.csail.mit.edu/mac/ftpdir/scm/jacal-"
+                    "https://groups.csail.mit.edu/mac/ftpdir/scm/jacal-"
                     version ".zip"))
               (sha256
-               (base32 "06a5sx9ikd62bpnd898g3yk818b020b1a27mk7dbfla2zizib4xz"))))
+               (base32 "0dn706gl5nd36177m7rkx9sdzpxy116jy2mdmc0dcb758r64qvmw"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -7481,7 +7488,7 @@ Longest Commons Subsequence of a set of strings.")
                      (string-append "--prefix="
                                     (assoc-ref outputs "out"))))))))
     (inputs (list scm))
-    (native-inputs (list unzip texinfo))
+    (native-inputs (list time unzip texinfo))
     (synopsis "Symbolic mathematics system")
     (description "GNU JACAL is an interactive symbolic mathematics program based on
 Scheme.  It manipulate and simplify a range of mathematical expressions such
@@ -8044,7 +8051,7 @@ and comparisons are supported.")
 (define-public sundials
   (package
     (name "sundials")
-    (version "6.2.0")
+    (version "7.1.1")
     (source
      (origin
        (method url-fetch)
@@ -8052,32 +8059,35 @@ and comparisons are supported.")
                            version "/sundials-" version ".tar.gz"))
        (sha256
         (base32
-         "07gk9060xk3bzfqf8v4fqlp0rcxswiwlsy887zv87i1gfy9map8r"))))
+         "1fwlgbcdxz30dzsqw3y1b6ic1rhzfadghj7cq7yxsj14npgnwzga"))))
     (build-system cmake-build-system)
     (native-inputs
-     (list python-2))          ; For tests; syntax incompatible with Python 3.
+     (list pkg-config python-2)) ;for tests; syntax incompatible with Python 3
     (inputs
      (list openblas suitesparse))
     (arguments
-     '(#:configure-flags `("-DCMAKE_C_FLAGS=-O2 -g -fcommon"
+     (list #:configure-flags
+           #~(list "-DCMAKE_C_FLAGS=-O2 -g -fcommon"
 
-                           "-DSUNDIALS_INDEX_SIZE=32"
-                           ;; Incompatible with 32-bit indices.
-                           ;;"-DBUILD_FORTRAN_MODULE_INTERFACE:BOOL=ON"
+                   "-DSUNDIALS_INDEX_SIZE=32"
+                   ;; Incompatible with 32-bit indices.
+                   ;;"-DBUILD_FORTRAN_MODULE_INTERFACE:BOOL=ON"
 
-                           "-DEXAMPLES_ENABLE_C:BOOL=ON"
-                           "-DEXAMPLES_ENABLE_CXX:BOOL=ON"
-                           ;; Requires -DBUILD_FORTRAN_MODULE_INTERFACE:BOOL=ON.
-                           ;;"-DEXAMPLES_ENABLE_F2003:BOOL=ON"
-                           "-DEXAMPLES_INSTALL:BOOL=OFF"
+                   "-DEXAMPLES_ENABLE_C:BOOL=ON"
+                   "-DEXAMPLES_ENABLE_CXX:BOOL=ON"
+                   ;; Requires -DBUILD_FORTRAN_MODULE_INTERFACE:BOOL=ON.
+                   ;;"-DEXAMPLES_ENABLE_F2003:BOOL=ON"
+                   "-DEXAMPLES_INSTALL:BOOL=OFF"
 
-                           "-DENABLE_KLU:BOOL=ON"
-                           ,(string-append "-DKLU_INCLUDE_DIR="
-                                           (assoc-ref %build-inputs "suitesparse")
-                                           "/include")
-                           ,(string-append "-DKLU_LIBRARY_DIR="
-                                           (assoc-ref %build-inputs "suitesparse")
-                                           "/lib"))))
+                   "-DENABLE_KLU:BOOL=ON"
+                   (string-append "-DKLU_INCLUDE_DIR="
+                                  (dirname
+                                   (search-input-file %build-inputs
+                                                      "include/klu.h")))
+                   (string-append "-DKLU_LIBRARY_DIR="
+                                  (dirname
+                                   (search-input-file %build-inputs
+                                                      "lib/libklu.so"))))))
     (home-page "https://computation.llnl.gov/projects/sundials")
     (synopsis "Suite of nonlinear and differential/algebraic equation solvers")
     (description "SUNDIALS is a family of software packages implemented with
@@ -8098,23 +8108,27 @@ easily be incorporated into existing simulation codes.")
            petsc-openmpi))
     (arguments
      (substitute-keyword-arguments (package-arguments sundials)
-       ((#:configure-flags flags '())
-        `(cons* "-DENABLE_MPI:BOOL=ON"
-                "-DENABLE_HYPRE:BOOL=ON"
-                (string-append "-DHYPRE_INCLUDE_DIR="
-                               (assoc-ref %build-inputs "hypre-openmpi")
-                               "/include")
-                (string-append "-DHYPRE_LIBRARY_DIR="
-                               (assoc-ref %build-inputs "hypre-openmpi")
-                               "/lib")
-                "-DENABLE_PETSC:BOOL=ON"
-                (string-append "-DPETSC_DIR="
-                               (assoc-ref %build-inputs "petsc-openmpi"))
-                ,flags))
-       ((#:phases phases '%standard-phases)
-        `(modify-phases ,phases
-           (add-before 'check 'mpi-setup
-             ,%openmpi-setup)))))
+       ((#:configure-flags flags #~())
+        #~(cons* "-DENABLE_MPI:BOOL=ON"
+                 "-DENABLE_HYPRE:BOOL=ON"
+                 (string-append "-DHYPRE_INCLUDE_DIR="
+                                (dirname
+                                 (search-input-file %build-inputs
+                                                    "include/HYPRE.h")))
+                 (string-append "-DHYPRE_LIBRARY_DIR="
+                                (dirname
+                                 (search-input-file %build-inputs
+                                                    "lib/libHYPRE.so")))
+                 "-DENABLE_PETSC:BOOL=ON"
+                 (string-append "-DPETSC_INCLUDE_DIRS="
+                                (dirname
+                                 (search-input-file %build-inputs
+                                                    "include/petsc.h")))
+                 #$flags))
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (add-before 'check 'mpi-setup
+              #$%openmpi-setup)))))
     (synopsis "SUNDIALS with MPI support")))
 
 (define-public sundials-5

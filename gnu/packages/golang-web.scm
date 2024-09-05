@@ -2944,6 +2944,35 @@ such as TCP or Unix domain sockets, and provides stream-oriented multiplexing.
 It is inspired by SPDY but is not interoperable with it.")
     (license (list license:mpl2.0 license:bsd-3))))
 
+(define-public go-github-com-libp2p-zeroconf-v2
+  (package
+    (name "go-github-com-libp2p-zeroconf-v2")
+    (version "2.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/zeroconf")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xrqdi7s8296963zh7gz450ivbniar7723xlr8v9nh90cyy1ah3r"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ; it requires netwok setup
+      #:import-path "github.com/libp2p/zeroconf/v2"))
+    (propagated-inputs
+     (list go-github-com-miekg-dns go-golang-org-x-net))
+    (home-page "https://github.com/libp2p/zeroconf")
+    (synopsis "mDNS/DNS-SD Service Discovery in pure Golang")
+    (description
+     "This package implements a service discovery functionality specified in
+@url{https://tools.ietf.org/html/rfc6762, RFC 6762} (mDNS) and
+@url{https://tools.ietf.org/html/rfc6763, RFC 6763} (DNS-SD) standards which
+intends to be compatible with Avahi.")
+    (license license:expat)))
+
 (define-public go-github-com-mailru-easyjson
   (package
     (name "go-github-com-mailru-easyjson")
@@ -3489,7 +3518,7 @@ in Golang.")
   (package
     (inherit go-github-com-pion-dtls)
     (name "go-github-com-pion-dtls-v2")
-    (version "2.2.11")
+    (version "2.2.12")
     (source
      (origin
        (inherit (package-source go-github-com-pion-dtls))
@@ -3498,7 +3527,7 @@ in Golang.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "10nn9349f7snqkzncda5m013fgnzicrcxi6pb6ghc0vb6rhqkf30"))))
+        (base32 "0fihyk4p7mqilj4ymdrgns6fg3c2pfsi12v145im5vy1gxy6lc42"))))
     (arguments
      (list
       #:import-path "github.com/pion/dtls/v2"))
@@ -3507,9 +3536,33 @@ in Golang.")
     (propagated-inputs
      (list go-github-com-pion-logging
            go-github-com-pion-transport-v2
-           go-github-com-pion-transport-v3
            go-golang-org-x-crypto
            go-golang-org-x-net))))
+
+(define-public go-github-com-pion-dtls-v3
+  (package
+    (inherit go-github-com-pion-dtls-v2)
+    (name "go-github-com-pion-dtls-v3")
+    (version "3.0.2")
+    (source
+     (origin
+       (inherit (package-source go-github-com-pion-dtls))
+       (uri (git-reference
+             (url "https://github.com/pion/dtls")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0czn0v2i9czq6934sirbimgkn6avgzvw63ifm2b0bkh2qmmpim01"))))
+    (arguments
+     (list
+      #:import-path "github.com/pion/dtls/v3"))
+    (native-inputs
+     (modify-inputs (package-native-inputs go-github-com-pion-dtls-v2)
+       (delete go-github-com-stretchr-testify)))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs go-github-com-pion-dtls-v2)
+       (replace "go-github-com-pion-transport-v2"
+         go-github-com-pion-transport-v3)))))
 
 (define-public go-github-com-pion-ice
   (package
@@ -3564,7 +3617,7 @@ part of @url{https://github.com/pion, Pion} WebRTC implementation.")
   (package
     (inherit go-github-com-pion-ice)
     (name "go-github-com-pion-ice-v2")
-    (version "2.3.24")
+    (version "2.3.34")
     (source
      (origin
        (method git-fetch)
@@ -3573,7 +3626,7 @@ part of @url{https://github.com/pion, Pion} WebRTC implementation.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0mh7l31vv15gxpl61f22jwpc77b5l9wx4hbjv4h8cgmpb9911cv8"))))
+        (base32 "1hiiwd3xchlybbvgd33s0i7rcwgrdiw3q963avzziycimia0qyvz"))))
     (arguments
      (list
       #:tests? #f ;Tests require network access.
@@ -3617,6 +3670,38 @@ part of @url{https://github.com/pion, Pion} WebRTC implementation.")
            go-github-com-pion-transport-v3
            go-github-com-pion-turn-v3
            go-golang-org-x-net))))
+
+(define-public go-github-com-pion-interceptor
+  (package
+    (name "go-github-com-pion-interceptor")
+    (version "0.1.30")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/interceptor")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1b0mmrzb9m9xsskylambdcw3g9xfd1fdfagcw8k0l8886ckqjprr"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/pion/interceptor"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pion-logging
+           go-github-com-pion-rtcp
+           go-github-com-pion-rtp
+           go-github-com-pion-transport-v3))
+    (home-page "https://github.com/pion/interceptor")
+    (synopsis "Pluggable RTP/RTCP processors for building real time communication")
+    (description
+     "Interceptor is a framework for building RTP/RTCP communication software.
+This framework defines a interface that each interceptor must satisfy.  These
+interceptors are then run sequentially.")
+    (license license:expat)))
 
 (define-public go-github-com-pion-mdns
   (package
@@ -3675,6 +3760,33 @@ part of @url{https://github.com/pion, Pion} WebRTC implementation.")
        ((#:import-path flags ''())
         "github.com/pion/mdns/v2")))))
 
+(define-public go-github-com-pion-rtcp
+  (package
+    (name "go-github-com-pion-rtcp")
+    (version "1.2.14")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/rtcp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00hfq0l17zq47slzfbrghgfc0v808hqiyaab3ni9kh1v7nmvp5ic"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/pion/rtcp"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/pion/rtcp")
+    (synopsis "Implementation of RTCP protocol in Golang")
+    (description
+     "Package rtcp implements encoding and decoding of RTCP packets according
+to @url{https://www.rfc-editor.org/rfc/rfc3550, RFC 3550},
+@url{https://www.rfc-editor.org/rfc/rfc5506, RFC 5506}.")
+    (license license:expat)))
+
 (define-public go-github-com-pion-rtp
   (package
     (name "go-github-com-pion-rtp")
@@ -3730,6 +3842,63 @@ packetizer and depacketizer.")
      "This package implements the @acronym{Stream Control Transmission
 Protocol,SCTP} as specified in
 @uref{https://rfc-editor.org/rfc/rfc9260.html,RFC 9260}.")
+    (license license:expat)))
+
+(define-public go-github-com-pion-sdp-v3
+  (package
+    (name "go-github-com-pion-sdp-v3")
+    (version "3.0.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/sdp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "08d3glli1n45ayc26qwaxm7k5knrf99x5nwkllmmhf29g8kwc89n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/pion/sdp/v3"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pion-randutil))
+    (home-page "https://github.com/pion/sdp")
+    (synopsis "Implementation of the SDP protocol in Golang")
+    (description
+     "Package sdp implements @acronym{Session Description Protocol,SDP}.")
+    (license license:expat)))
+
+(define-public go-github-com-pion-srtp-v2
+  (package
+    (name "go-github-com-pion-srtp-v2")
+    (version "2.0.20")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/srtp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ijwx9mrc0ha8fam6y6xxih59dyr8hg9ly476kv6gfw564qfp7hk"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/pion/srtp/v2"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pion-logging
+           go-github-com-pion-rtcp
+           go-github-com-pion-rtp
+           go-github-com-pion-transport-v2))
+    (home-page "https://github.com/pion/srtp")
+    (synopsis "Implementation of SRTP protocol in Golang")
+    (description
+     "Package srtp implements Secure Real-time Transport Protocol.")
     (license license:expat)))
 
 (define-public go-github-com-pion-stun
@@ -3829,7 +3998,7 @@ throughout the @url{https://github.com/pion, Pion} modules.")
   (package
     (inherit go-github-com-pion-transport)
     (name "go-github-com-pion-transport-v2")
-    (version "2.2.5")
+    (version "2.2.10")
     (source
      (origin
        (inherit (package-source go-github-com-pion-transport))
@@ -3838,10 +4007,15 @@ throughout the @url{https://github.com/pion, Pion} modules.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00q3v37l56yr1ch25g5w70jy8y923csbvy4krvy4dv3h5f1mdpmf"))))
+        (base32 "0g5pg6mz61blprccxzysbwldkil84qgwp6404lsp4m9wh44312hf"))))
     (arguments
      (list
-      #:import-path "github.com/pion/transport/v2"))))
+      #:import-path "github.com/pion/transport/v2"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs go-github-com-pion-transport)
+       (prepend go-github-com-wlynxg-anet)))))
 
 (define-public go-github-com-pion-transport-v3
   (package
@@ -3958,6 +4132,69 @@ it like any library.  The quickest way to get started is to look at the
            go-github-com-pion-stun-v2
            go-github-com-pion-transport-v3
            go-golang-org-x-sys))))
+
+(define-public go-github-com-pion-webrtc-v3
+  (package
+    (name "go-github-com-pion-webrtc-v3")
+    (version "3.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pion/webrtc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1f421a2s00mj5l9bj96xlignwfdfkp6kwk9qjs3vhazpmvqxzsgi"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: Figure out why tests timeout and fail eventually.
+      #:tests? #f
+      #:import-path "github.com/pion/webrtc/v3"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples-and-benchmarks
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each delete-file-recursively
+                          (list "examples"))))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pion-datachannel
+           go-github-com-pion-dtls-v2
+           go-github-com-pion-ice-v2
+           go-github-com-pion-interceptor
+           go-github-com-pion-logging
+           go-github-com-pion-randutil
+           go-github-com-pion-rtcp
+           go-github-com-pion-rtp
+           go-github-com-pion-sctp
+           go-github-com-pion-sdp-v3
+           go-github-com-pion-srtp-v2
+           go-github-com-pion-stun
+           go-github-com-pion-transport-v2
+           go-golang-org-x-net))
+    (home-page "https://github.com/pion/webrtc")
+    (synopsis "Implementation of the WebRTC API in Golang")
+    (description
+     "Package webrtc implements the @code{WebRTC} (Real-Time Communication in
+Browsers) 1.0 as defined in W3C @url{https://www.w3.org/TR/webrtc/,WebRTC}
+specification document.
+Features:
+@itemize
+@item implementation of @url{https://w3c.github.io/webrtc-pc/,webrtc-pc} and
+@code{https://www.w3.org/TR/webrtc-stats/,webrtc-stats}
+@item DataChannels
+@item Send/Receive audio and video
+@item Renegotiation
+@item Plan-B and Unified Plan
+@item SettingEngine for Pion specific extensions
+@item implemented connectivity - Full ICE Agent, ICE Restart, Trickle ICE,
+STUN, TURN mDNS candidates
+@end itemize")
+    (license license:expat)))
 
 (define-public go-github-com-pires-go-proxyproto
   (package
@@ -4238,6 +4475,48 @@ protocol.")
 on @@url{https://github.com/quic-go/quic-go,quic-go}.  It currently implements
 @@url{https://www.ietf.org/archive/id/draft-ietf-webtrans-http3-02.html,draft-02}
 of the specification.")
+    (license license:expat)))
+
+(define-public go-github-com-rs-cors
+  (package
+    (name "go-github-com-rs-cors")
+    (version "1.11.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rs/cors")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qbzxk1aabn8k2smrkpz3h59mwr6s2zvg4faj6kjsp78hyi172xn"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodule(s) with their own go.mod files and packed as
+            ;; separated packages:
+            ;;
+            ;; - github.com/rs/cors/wrapper/gin
+            (for-each delete-file-recursively
+                      (list "wrapper/gin"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/rs/cors"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Examples requires additional dependencies and comes with their
+          ;; own go.mod, consider to pack it as separate package if required.
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key import-path #:allow-other-keys)
+              (delete-file-recursively
+               (string-append "src/" import-path "/examples")))))))
+    (home-page "https://github.com/rs/cors")
+    (synopsis "Golang @code{net/http} configurable handler for CORS requests")
+    (description
+     "Package cors is @code{net/http} handler to handle @acronym{Cross-origin
+resource sharing,CORS} related requests as defined by
+@url{http://www.w3.org/TR/cors/,http://www.w3.org/TR/cors/}.")
     (license license:expat)))
 
 (define-public go-github-com-sherclockholmes-webpush-go
@@ -4699,6 +4978,33 @@ https://github.com/restic/restic project.")
 @url{https://github.com/jbenet/go-multiaddr,multiaddr} formatted cidr
 netmasks.")
     (license license:expat)))
+
+(define-public go-github-com-wlynxg-anet
+  (package
+    (name "go-github-com-wlynxg-anet")
+    (version "0.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/wlynxg/anet")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0i8sqq9d2k19jxplqhb1phzv6qxgzchbpdazq8l26h7pihzsq1gg"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/wlynxg/anet"))
+    (home-page "https://github.com/wlynxg/anet")
+    (synopsis "Adjusted @code{net.Interfaces()} for Golang")
+    (description
+     "This package implements a functionality to resolve some problems for
+Android environment where standard @code{net} and @code{golang.org/x/net}
+missing it.  It address the issues
+@url{https://github.com/golang/go/issues/40569, #40569} and
+@url{https://github.com/golang/go/issues/68082, #68082}.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-xeipuuv-gojsonpointer
   (let ((commit "4e3ac2762d5f479393488629ee9370b50873b3a6")

@@ -7,6 +7,7 @@
 ;;; Copyright © 2017 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2017, 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -62,7 +63,7 @@
     (arguments
      `(#:configure-flags
          ;; GNU_SOURCE must be defined for mallocmock_reset() to be defined
-         '("CFLAGS=-D_GNU_SOURCE=1"
+         '("CFLAGS=-O2 -g -D_GNU_SOURCE=1"
 
        ;; By default, screen supports 16 colors, but we want 256 when
        ;; ~/.screenrc contains 'term xterm-256color'.
