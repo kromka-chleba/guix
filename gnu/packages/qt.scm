@@ -153,7 +153,8 @@
     (build-system qt-build-system)
     (arguments
      (list #:configure-flags
-           #~(list (string-append "-DUSE_QT_VERSION="
+           #~(list "-DCMAKE_CXX_FLAGS=-fPIC"
+                   (string-append "-DUSE_QT_VERSION="
                                   #$(version-major
                                      (package-version
                                       (this-package-input "qtbase")))))))
@@ -169,6 +170,7 @@ of C++20 coroutines in connection with certain asynchronous Qt actions.")
   (package
     (inherit qcoro-qt5)
     (name "qcoro-qt6")
+    (synopsis "C++ Coroutine Library for Qt6")
     (inputs (modify-inputs (package-inputs qcoro-qt5)
               (replace "qtbase" qtbase)
               (replace "qtdeclarative" qtdeclarative)

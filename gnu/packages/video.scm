@@ -1546,7 +1546,7 @@ libebml is a C++ library to read and write EBML files.")
 (define-public libplacebo
   (package
     (name "libplacebo")
-    (version "6.338.2")
+    (version "7.349.0")
     (source
      (origin
        (method git-fetch)
@@ -1555,7 +1555,7 @@ libebml is a C++ library to read and write EBML files.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0d8pvv88bw21myf3pvnls2cv6bvdzsv76n5iy5hy3c3gf4mb4kl0"))))
+        (base32 "1q12yf04z570a2l3vkig2iqm7bgqr90hdxmn78sk2injrsyx124q"))))
     (build-system meson-build-system)
     (arguments
      (list #:configure-flags
@@ -2690,6 +2690,7 @@ SVCD, DVD, 3ivx, DivX 3/4/5, WMV and H.264 movies.")
            ladspa
            lcms
            libbs2b
+           libsixel
            mpg123
            rsound
            vulkan-headers

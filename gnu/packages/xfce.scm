@@ -111,7 +111,7 @@
 (define-public libxfce4util
   (package
     (name "libxfce4util")
-    (version "4.18.1")
+    (version "4.18.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/xfce/"
@@ -119,7 +119,7 @@
                                   "/" name "-" version ".tar.bz2"))
               (sha256
                (base32
-                "07xhs4lpirn5hgmpf76j7sc5k6whjxlyxnfa70i2arnwb8x0clla"))))
+                "0ly3i4w2xb9rcmkr34d8yrig3fvb4yxzranl1i9f5xvq5cc2k8yr"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config gobject-introspection intltool vala))
@@ -185,7 +185,7 @@ storage system.")
 (define-public libxfce4ui
   (package
     (name "libxfce4ui")
-    (version "4.18.4")
+    (version "4.18.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/xfce/"
@@ -193,7 +193,7 @@ storage system.")
                                   name "-" version ".tar.bz2"))
               (sha256
                (base32
-                "0k6b8al8cy2w5zi8iywkzjsz2cgiz9r8ir2dflzxw9kdgiwzxvl7"))))
+                "1k9hrq4mlpknv6kb32aakp57n0vaxv3q7716kkvcgin8dhh9kpbp"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -270,7 +270,7 @@ it to your needs by using several command line options.")
 (define-public elementary-xfce-icon-theme
   (package
     (name "elementary-xfce-icon-theme")
-    (version "0.18")
+    (version "0.19")
     (source (origin
               (method git-fetch)
               (uri
@@ -280,7 +280,7 @@ it to your needs by using several command line options.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "124bdgghkjkpcsfn9a2ad6zqy233pi9jqmv8w8a3ha6q3al2s11s"))))
+                "0yvn8s7z18g4far37xyq6d5hw9x89injkdcy21sibpwjkv2cy6kv"))))
     (build-system gnu-build-system)
     (arguments
      '(#:tests? #f                      ; no check target
@@ -525,7 +525,7 @@ keys for controlling the audio volume.")
 (define-public xfce4-whiskermenu-plugin
   (package
     (name "xfce4-whiskermenu-plugin")
-    (version "2.7.3")
+    (version "2.8.3")
     (source
      (origin
        (method url-fetch)
@@ -533,28 +533,21 @@ keys for controlling the audio volume.")
                            "xfce4-whiskermenu-plugin/" (version-major+minor version) "/"
                            "xfce4-whiskermenu-plugin-" version ".tar.bz2"))
        (sha256
-        (base32 "1sg6kx52c5j1l7y6z156gxk4b0ppj210i40hzbvqqf35jvn9j9ns"))))
+        (base32 "1l4wzirqk754cliwyhl28f460xkqzqi9a9s7jirx164gcn3w4xp7"))))
     (build-system cmake-build-system)
     (native-inputs
      (list pkg-config intltool))
     (inputs
-     (list xfce4-panel
+     (list accountsservice
+           xfce4-panel
            garcon
            gettext-minimal
            exo
            gtk
+           gtk-layer-shell
            libxfce4ui))
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-shell-script
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* (string-append "panel-plugin/xfce4-popup-whiskermenu.in")
-               (("@CMAKE_INSTALL_FULL_BINDIR@")
-                (string-append (assoc-ref inputs "xfce4-panel") "/bin"))
-               (("gettext") (which "gettext")))
-             #t)))))
+     (list #:tests? #f))                ; no tests
     (home-page "https://goodies.xfce.org/projects/panel-plugins/xfce4-whiskermenu-plugin")
     (synopsis "Application menu panel plugin for Xfce")
     (description
@@ -630,7 +623,7 @@ your system in categories, so you can quickly find and launch them.")
 (define-public xfce4-session
   (package
     (name "xfce4-session")
-    (version "4.18.3")
+    (version "4.18.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/xfce/"
@@ -638,7 +631,7 @@ your system in categories, so you can quickly find and launch them.")
                                   "xfce4-session-" version ".tar.bz2"))
               (sha256
                (base32
-                "1v4lfgz7az8iqp01a1ww8sxxjfmr676bijhrhw4r6r7cjvh96brq"))
+                "05k5w3n3hyb93a74f0qc6q0lky4vc51vdlsra8d8i2rkqxs5174s"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -682,7 +675,7 @@ allows you to shut down the computer from Xfce.")
 (define-public xfce4-settings
   (package
     (name "xfce4-settings")
-    (version "4.18.4")
+    (version "4.18.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/xfce/"
@@ -690,7 +683,7 @@ allows you to shut down the computer from Xfce.")
                                   name "-" version ".tar.bz2"))
               (sha256
                (base32
-                "1p513i8zwc3glv2cf3x2abwm4hvdb7clamj19yadj2036v85a37i"))
+                "1zkvcsgx3bnk8gwcgwg7656pw5p9a4xl1fv4divddv96c0dhbafr"))
               (patches (search-patches "xfce4-settings-defaults.patch"))))
     (build-system gnu-build-system)
     (arguments
@@ -727,7 +720,7 @@ like appearance, display, keyboard and mouse settings.")
 (define-public thunar
   (package
     (name "thunar")
-    (version "4.18.10")                           ;stable version = even minor
+    (version "4.18.11")                           ;stable version = even minor
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/xfce/"
@@ -735,7 +728,7 @@ like appearance, display, keyboard and mouse settings.")
                                   "thunar-" version ".tar.bz2"))
               (sha256
                (base32
-                "020xrwzdnk5b7cli8vmv3yn7sfq6pg7bz57m4p0xh0ln2cgqlc78"))))
+                "04nnfnm1913vva3d8515l3vs99q61rhbafj0gl9qqmka0zidl2vx"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      '(#:configure-flags '("--with-custom-thunarx-dirs-enabled")))
@@ -1272,7 +1265,7 @@ system resources, while still being visually appealing and user friendly.")
 (define-public xfce4-power-manager
   (package
     (name "xfce4-power-manager")
-    (version "4.18.3")
+    (version "4.18.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/xfce/"
@@ -1280,7 +1273,7 @@ system resources, while still being visually appealing and user friendly.")
                                   "xfce4-power-manager-" version ".tar.bz2"))
               (sha256
                (base32
-                "1w445v3911cf7l6w5c0f84aphv8s579f8srnhjrhf3drd07xsy8d"))))
+                "0x6qychcgqxc5dwwxzypqw2da35y6cd25ngg42zxndnrvixqz4bn"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config intltool))
@@ -1389,7 +1382,7 @@ several different time zones.")
 (define-public xfce4-notifyd
   (package
     (name "xfce4-notifyd")
-    (version "0.9.4")
+    (version "0.9.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/apps/"
@@ -1397,7 +1390,7 @@ several different time zones.")
                                   name "-" version ".tar.bz2"))
               (sha256
                (base32
-                "063qxbcy8djijsb0clzkai3mwg43mmlswwrg403vsi2w0n614v5f"))))
+                "0w967np9ik74lg63sn7g7448f10pjspd7h62ncqmr0vxr9f2clwy"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      (list #:phases
@@ -1431,7 +1424,7 @@ sending standard messages over D-Bus using the
 (define-public xfburn
   (package
     (name "xfburn")
-    (version "0.7.0")
+    (version "0.7.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.xfce.org/src/apps/xfburn/"
@@ -1439,7 +1432,7 @@ sending standard messages over D-Bus using the
                                   "xfburn-" version ".tar.bz2"))
               (sha256
                (base32
-                "0i8zpgp4mj78pn2023pdhzb7552r3b52phzp2gjr6jq4kakhx5ms"))))
+                "09crg8vd6vs671lbbhy1ch9hf3d3xvfynh6vj5zlhpikyzch3fy2"))))
     (build-system gnu-build-system)
     (native-inputs
      (list intltool pkg-config))
@@ -1505,7 +1498,7 @@ of data to either CD/DVD/BD.")
 (define-public xfce4-screenshooter
   (package
    (name "xfce4-screenshooter")
-   (version "1.10.5")
+   (version "1.11.1")
    (source (origin
             (method url-fetch)
             (uri (string-append "https://archive.xfce.org/src/apps/"
@@ -1515,7 +1508,7 @@ of data to either CD/DVD/BD.")
                                 version ".tar.bz2"))
             (sha256
              (base32
-              "0732f1v6s1zkflq47rgdsimq73k7q94gwag1y9sza5smd8m1ywgs"))))
+              "0kfk6x6g1y49wqs8vvhv257dwkjac9ac5g8l6bbzc9lvmhvllk6r"))))
    (build-system gnu-build-system)
    (native-inputs
     (list pkg-config intltool

@@ -28,6 +28,7 @@
 ;;; Copyright © 2024 Timothee Mathieu <timothee.mathieu@inria.fr>
 ;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2024 Andy Tai <atai@atai.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1331,7 +1332,7 @@ in terms of new algorithms.")
 (define-public onnx
   (package
     (name "onnx")
-    (version "1.12.0")
+    (version "1.16.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1339,70 +1340,88 @@ in terms of new algorithms.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "1g9f1hviksbn7gi6fnd0dsm7nf0w3yia0mjj33d9mggklrl0db6x"))
+                "0f5h204ksfz4ir3qq38ckxja1jfhf1vn5xzwrj83vkkbfjq6fv16"))
               (file-name (git-file-name name version))
-              (patches (search-patches "onnx-use-system-googletest.patch"
-                                       "onnx-shared-libraries.patch"
-                                       "onnx-skip-model-downloads.patch"))
+              (patches (search-patches
+                        "onnx-shared-libraries.patch"
+                        "onnx-skip-model-downloads.patch"))
               (modules '((guix build utils)))
               (snippet '(delete-file-recursively "third_party"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'relax-requirements
-                    (lambda _
-                      ;; Does this difference really matter?
-                      (substitute* "requirements.txt"
-                        (("3.20.1") "3.20.2"))))
-                  (add-before 'build 'pass-cmake-arguments
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      ;; Pass options to the CMake-based build process.
-                      (define out
-                        (assoc-ref outputs "out"))
+     (list
+      ;; python-nbval depends transitively on Rust.
+      #:tests?
+      (->bool (member (or (%current-target-system)
+                          (%current-system))
+                      (package-transitive-supported-systems python-nbval)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'pass-cmake-arguments
+            (lambda* (#:key outputs tests? #:allow-other-keys)
+              ;; For derived package use
+              (substitute* "CMakeLists.txt"
+                (("set\\(ONNX_ROOT.*") "")
+                (("\\$\\{ROOT_DIR\\}(/tools.*)" _ rest)
+                 (string-append "${PROJECT_SOURCE_DIR}" rest)))
+              ;; Pass options to the CMake-based build process.
+              (define out
+                (assoc-ref outputs "out"))
 
-                      (define args
-                        ;; Copy arguments from 'cmake-build-system', plus ask
-                        ;; for shared libraries.
-                        (list "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
-                              (string-append "-DCMAKE_INSTALL_PREFIX=" out)
-                              "-DCMAKE_INSTALL_LIBDIR=lib"
-                              "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE"
-                              (string-append "-DCMAKE_INSTALL_RPATH=" out
-                                             "/lib")
-                              "-DCMAKE_VERBOSE_MAKEFILE=ON"
+              (define args
+                ;; Copy arguments from 'cmake-build-system', plus ask
+                ;; for shared libraries.
+                (list "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+                      (string-append "-DCMAKE_INSTALL_PREFIX=" out)
+                      "-DCMAKE_INSTALL_LIBDIR=lib"
+                      "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE"
+                      (string-append "-DCMAKE_INSTALL_RPATH=" out
+                                     "/lib")
+                      "-DCMAKE_VERBOSE_MAKEFILE=ON"
+                      (string-append "-DONNX_BUILD_TESTS="
+                                     (if tests? "ON" "OFF"))
+                      "-DBUILD_SHARED_LIBS=ON"
+                      "-DONNX_USE_PROTOBUF_SHARED_LIBS=ON"
+                      (string-append
+                       "-DONNX_ROOT=" #$(package-source this-package))))
 
-                              "-DBUILD_SHARED_LIBS=ON"))
+              ;; This environment variable is honored by 'setup.py',
+              ;; which passes it down to 'cmake'.
+              (setenv "CMAKE_ARGS" (string-join args))
 
-                      ;; This environment variable is honored by 'setup.py',
-                      ;; which passes it down to 'cmake'.
-                      (setenv "CMAKE_ARGS" (string-join args))
-
-                      ;; This one is honored by 'setup.py' and passed to 'make
-                      ;; -j'.
-                      (setenv "MAX_JOBS"
-                              (number->string (parallel-job-count)))))
-                  (add-before 'check 'make-test-directory-writable
-                    (lambda _
-                      ;; Make things writable for tests.
-                      (setenv "HOME" (getcwd))
-                      (for-each make-file-writable
-                                (find-files "onnx/examples" "."
-                                            #:directories? #t))))
-                  (add-after 'install 'install-from-cmake
-                    (lambda _
-                      ;; Run "make install" in the build tree 'setup.py'
-                      ;; created for CMake so that libonnx.so,
-                      ;; libonnx_proto.so, etc. are installed.
-                      (invoke "make" "install"
-                              "-C" ".setuptools-cmake-build"))))))
+              ;; This one is honored by 'setup.py' and passed to 'make -j'.
+              (setenv "MAX_JOBS"
+                      (number->string (parallel-job-count)))))
+          (add-before 'check 'make-test-directory-writable
+            (lambda _
+              ;; Make things writable for tests.
+              (setenv "HOME" (getcwd))
+              (for-each make-file-writable
+                        (find-files "onnx/examples" "."
+                                    #:directories? #t))))
+          (add-after 'install 'install-from-cmake
+            (lambda _
+              ;; Run "make install" in the build tree 'setup.py'
+              ;; created for CMake so that libonnx.so,
+              ;; libonnx_proto.so, etc. are installed.
+              (invoke "make" "install"
+                      "-C" ".setuptools-cmake-build"))))))
     (native-inputs
-     (list cmake
-           googletest
-           pybind11
-           python-coverage
-           python-nbval
-           python-pytest
-           python-pytest-runner))
+     (append
+      (list cmake-minimal
+            googletest
+            pybind11
+            python-coverage
+            python-fb-re2
+            python-parameterized-next
+            python-pytest
+            python-pytest-runner)
+      (filter
+       (lambda (pkg)
+         (member (or (%current-target-system)
+                     (%current-system))
+                 (package-transitive-supported-systems pkg)))
+       (list python-nbval))))
     (inputs
      (list protobuf))
     (propagated-inputs
@@ -1417,35 +1436,6 @@ an extensible computation graph model, as well as definitions of built-in
 operators and standard data types.")
     (license license:expat)))
 
-(define-public onnx-for-torch2
-  (package
-    (inherit onnx)
-    (name "onnx")
-    (version "1.13.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/onnx/onnx")
-                    (commit (string-append "v" version))))
-              (sha256
-               (base32
-                "16967dbq2j40diqd0s37r19llsab8q8vbxkg1ppgy0p9fpdhfhyp"))
-              (file-name (git-file-name name version))
-              (patches (search-patches "onnx-1.13.1-use-system-googletest.patch"
-                                       "onnx-shared-libraries.patch"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  (delete-file-recursively "third_party")
-                  (substitute* "onnx/backend/test/runner/__init__.py"
-                    (("urlretrieve\\(.*") "raise unittest.SkipTest('Skipping download')\n"))))))
-    (arguments
-     ;; reuse build system tweaks
-     (substitute-keyword-arguments (package-arguments onnx)
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            (delete 'relax-requirements)))))))
-
 (define-public python-onnx
   ;; This used to be called "python-onnx" because it provided nothing but
   ;; Python bindings.  The package now provides shared libraries and C++
@@ -1455,8 +1445,8 @@ operators and standard data types.")
 (define-public onnx-optimizer
   (package
     (name "onnx-optimizer")
-    ;; Note: 0.2.x is *more* recent than 1.5.0.
-    (version "0.2.6")
+    ;; Note: 0.3.x is *more* recent than 1.5.0.
+    (version "0.3.19")
     (home-page "https://github.com/onnx/optimizer")
     (source (origin
               (method git-fetch)
@@ -1465,7 +1455,7 @@ operators and standard data types.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "1wkqqdxcxpfbf8zpbdfdd3zz5jkw775g31gyykj11z4y6pp659l6"))
+                "1mx3hsl42na6fr05nh2x3j9kxm56cpfmwk6lwl2cfq9zs3gv929w"))
               (file-name (git-file-name name version))
               (patches (search-patches "onnx-optimizer-system-library.patch"))
               (modules '((guix build utils)))
@@ -1476,10 +1466,35 @@ operators and standard data types.")
      (substitute-keyword-arguments (package-arguments onnx)
        ((#:phases phases)
         #~(modify-phases #$phases
-            (delete 'relax-requirements)))))
+            (add-after 'pass-cmake-arguments
+                'pass-onnx-optimizer-cmake-arguments
+              (lambda _
+                (setenv
+                 "CMAKE_ARGS"
+                 (string-append
+                  (getenv "CMAKE_ARGS")
+                  " -DONNX_OPT_USE_SYSTEM_PROTOBUF=ON"
+                  " -DCMAKE_CXX_FLAGS=\"-DONNX_ML=1 -DONNX_NAMESPACE=onnx\""))))
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (if tests?
+                    (invoke "pytest" "-vv" "-k"
+                            ;; These tests fail with upstream ONNX:
+                            ;; https://github.com/onnx/optimizer/issues/138
+                            (string-append
+                             "not test_fuse_matmul"
+                             " and not test_fuse_consecutive"
+                             " and not test_fuse_transpose")))))))))
     (native-inputs
-     (list cmake python-pytest python-pytest-runner python-nbval
-           python-coverage))
+     (append
+      (list cmake-minimal python-pytest python-pytest-runner
+            python-coverage)
+      (filter
+       (lambda (pkg)
+         (member (or (%current-target-system)
+                     (%current-system))
+                 (package-transitive-supported-systems pkg)))
+       (list python-nbval))))
     (inputs
      (list onnx protobuf pybind11))
     (propagated-inputs
@@ -1495,14 +1510,6 @@ some will need additional backend-specific information---but many can, and the
 aim is to provide all such passes along with ONNX so that they can be re-used
 with a single function call.")
     (license license:expat)))
-
-(define-public onnx-optimizer-for-torch2
-  (hidden-package
-   (package
-     (inherit onnx-optimizer)
-     (inputs
-      (modify-inputs (package-inputs onnx-optimizer)
-        (replace "onnx" onnx-for-torch2))))))
 
 (define-public rxcpp
   (package
@@ -3881,8 +3888,8 @@ that:
 
 (define-public gloo
   (let ((version "0.0.0")                         ; no proper version tag
-        (commit "c22a5cfba94edf8ea4f53a174d38aa0c629d070f")
-        (revision "1"))
+        (commit "81925d1c674c34f0dc34dd9a0f2151c1b6f701eb")
+        (revision "2"))
     (package
       (name "gloo")
       (version (git-version version revision commit))
@@ -3895,7 +3902,7 @@ that:
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "1crmqgybzkgkpbmcx16912gsl5qsj49swa0ikx6mhqgph0chrh11"))))
+           "16zs8ndbiv9nppn8bv6lfanzyyssz7g5pawxiqcnafwq3nvxpj9m"))))
       (build-system cmake-build-system)
       (native-inputs
        (list googletest))
@@ -3907,6 +3914,7 @@ that:
       (arguments
        (list #:configure-flags #~'("-DBUILD_SHARED_LIBS=ON"
                                    "-DBUILD_TEST=1"
+                                   "-DCMAKE_CXX_STANDARD=17"
                                    #$@(if (this-package-input "rdma-core")
                                           #~("-DUSE_IBVERBS=ON")
                                           #~()))
@@ -3922,6 +3930,7 @@ that:
 number of collective algorithms useful for machine learning applications.
 These include a barrier, broadcast, and allreduce.")
       (home-page "https://github.com/facebookincubator/gloo")
+      (supported-systems %64bit-supported-systems)
       (license license:bsd-3))))
 
 (define-public python-tensorly
@@ -4045,7 +4054,9 @@ and Darknet.")
              pthreadpool
              googletest))
       (native-inputs
-       (list python python-peachpy python-six))
+       `(,python
+         ,@(if (target-x86-64?) (list python-peachpy) '())
+         ,python-six))
       ;; Supported for Linux.
       (supported-systems '("x86_64-linux" "armhf-linux" "aarch64-linux"))
       (license license:bsd-2))))
@@ -4104,7 +4115,7 @@ on quantized 8-bit tensors.")
 (define-public xnnpack
   ;; There's currently no tag on this repo.
   (let ((version "0.0")
-        (commit "51a987591a6fc9f0fc0707077f53d763ac132cbf")
+        (commit "08f1489fc815e8f121d4d2676c4863d2b51bfe73")
         (revision "3"))
     (package
       (name "xnnpack")
@@ -4117,16 +4128,153 @@ on quantized 8-bit tensors.")
          (file-name (git-file-name name version))
          (sha256
           (base32
+           "00jjhz0nfggbdnqqvcznba03pcyy7gssd24yhhzjhincnz9qh8jr"))
+         (modules '((guix build utils)
+                    (ice-9 ftw)
+                    (ice-9 textual-ports)
+                    (srfi srfi-26)))
+         (snippet
+          '(begin
+             ;; Remove autogenerated files, which contain the string
+             ;; "Auto-generated file"
+             (for-each
+              (lambda (dir)
+                (for-each
+                 (lambda (name)
+                   (let ((path (string-append dir "/" name)))
+                     (when (call-with-input-file path
+                             (lambda (port)
+                               (string-contains
+                                (get-string-all port)
+                                "Auto-generated file")))
+                       (delete-file path))))
+                 (scandir dir (negate (cut member <> '("." ".." "simd"))))))
+              (cons*
+               "test" "bench" "eval" "models" "src/enums" "src/xnnpack"
+               "gen" "cmake/gen"
+               (filter
+                identity
+                (map
+                 (lambda (dir)
+                   (let ((path
+                          (string-append "src/" dir "/gen")))
+                     (and (file-exists? path) path)))
+                 (scandir "src" (negate (cut member <> '("." ".."))))))))))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:build-type "Release" ;; Debugging symbols require a lot of disk space
+        #:configure-flags ''("-DXNNPACK_USE_SYSTEM_LIBS=YES"
+                             "-DBUILD_SHARED_LIBS=ON"
+                             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+                             "-DXNNPACK_LIBRARY_TYPE=shared"
+                             "-DXNNPACK_BUILD_BENCHMARKS=FALSE"
+                             ;; Tests fail to build with -DXNNPACK_LIBRARY_TYPE=shared:
+                             ;; https://github.com/google/XNNPACK/issues/6285
+                             "-DXNNPACK_BUILD_TESTS=OFF")
+        #:tests? #f
+        #:modules '((ice-9 ftw)
+                    (guix build cmake-build-system)
+                    (guix build utils))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-cmake
+              (lambda _
+                (substitute* "CMakeLists.txt"
+                  (("TARGET_INCLUDE_DIRECTORIES\\((pthreadpool|cpuinfo).*") "")
+                  (("AMD64") "x86_64"))))
+            (add-after 'patch-source-shebangs 'generate-files
+              (lambda _
+                ;; This script just calls two other scripts.
+                (delete-file "scripts/generate-tests-and-benchmarks.sh")
+                ;; The bash scripts run all jobs at once and then wait, so we
+                ;; convert them to Makefiles.
+                (for-each
+                 (lambda (name)
+                   (define counter 0) ; For the targets
+                   (define target-deps "")
+                   (when (and (string-prefix? "generate" name)
+                              (string-suffix? ".sh" name))
+                     (let ((file (string-append "scripts/" name)))
+                       (substitute* file
+                         ;; Turn the commands into targets and remove trailing
+                         ;; '&' characters
+                         (("(.*(\\.sh|\\.py|-o |--output)[^&]*)&?[[:space:]]*$" _ command)
+                          (begin
+                            (set! counter (+ counter 1))
+                            (string-append "target" (number->string counter)
+                                           ":" target-deps
+                                           "\n\t" command "\n")))
+                         (("[[:space:]]*wait[[:space:]]*") "")
+                         ;; The commands after this line depend on the
+                         ;; previous commands in the file.
+                         (("JIT requires assembly files to be generated first.*" all)
+                          (begin
+                            (set! target-deps
+                                  (string-append
+                                   target-deps " target"
+                                   (string-join
+                                    (map number->string (iota counter 1)) " target")))
+                            all)))
+                       (display (string-append "Running " name "\n"))
+                       (apply invoke "make" "-s" "-f" file "-j"
+                              (number->string (parallel-job-count))
+                              (map
+                               (lambda (i)
+                                 (string-append "target" (number->string i)))
+                               (iota counter 1))))))
+                 (scandir "scripts"))
+                ;; These need to run after the above scripts
+                (display "Remaining files\n")
+                (invoke "python3" "tools/update-microkernels.py")
+                (invoke "python3" "tools/update-microkernels.py" "-a")
+                (invoke "python3" "tools/generate-lut-norm-test.py"
+                        "--spec" "test/u8-lut32norm.yaml"
+                        "--output" "test/u8-lut32norm.cc")
+                (invoke "python3" "tools/generate-gemm-test.py"
+                        "--spec" "test/qd8-f16-qb4w-gemm-minmax.yaml"
+                        "--output-test" "test/qd8-f16-qb4w-gemm-minmax.cc")
+                (invoke "python3" "tools/generate-gemm-test.py"
+                        "--spec" "test/qd8-f32-qb4w-gemm-minmax.yaml"
+                        "--output-test" "test/qd8-f32-qb4w-gemm-minmax.cc"))))))
+      (inputs
+       (list clog
+             cpuinfo
+             pthreadpool
+             googletest
+             googlebenchmark
+             fxdiv
+             fp16
+             psimd))
+      (native-inputs (list python-pyyaml python-wrapper))
+      (synopsis "Optimized floating-point neural network inference operators")
+      (description
+       "XNNPACK is a highly optimized library of floating-point neural network
+inference operators for ARM, WebAssembly, and x86 platforms.  XNNPACK is not
+intended for direct use by deep learning practitioners and researchers;
+instead it provides low-level performance primitives for accelerating
+high-level machine learning frameworks, such as TensorFlow Lite,
+TensorFlow.js, PyTorch, and MediaPipe.")
+      (supported-systems
+       '("armhf-linux" "aarch64-linux" "riscv64-linux"
+         "i686-linux" "x86_64-linux"))
+      (license license:bsd-3))))
+
+(define-public xnnpack-for-r-torch
+  (let ((version "0.0")
+        (commit "51a987591a6fc9f0fc0707077f53d763ac132cbf")
+        (revision "2"))
+    (package
+      (inherit xnnpack)
+      (version (git-version version revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference (url (package-home-page xnnpack)) (commit commit)))
+         (file-name (git-file-name (package-name xnnpack) version))
+         (sha256
+          (base32
            "1rzby82xq8d0rl1d148yz88jh9cpsw5c8b2yw7yg39mi7qmr55rm"))
-         ;; Some tests fail to link as they use internal symbols, which are
-         ;; not included in the shared library.
-         ;; XXX: Additionally, these tests fail on i686 due to incorrect results:
-         ;; 171 - f32-vlrelu-test (Failed)
-         ;; 211 - qs8-gavgpool-minmax-fp32-test (Failed)
-         ;; 224 - qu8-avgpool-minmax-fp32-test (Failed)
-         ;; 228 - qu8-gavgpool-minmax-fp32-test (Failed)
-         ;; 263 - x32-packx-test (Failed)
-         (patches (search-patches "xnnpack-remove-broken-tests.patch"))
          (modules '((guix build utils)
                     (ice-9 ftw)
                     (ice-9 textual-ports)
@@ -4159,73 +4307,32 @@ on quantized 8-bit tensors.")
                        (delete-file path))))
                  (scandir dir (negate (cut member <> '("." ".."))))))
               '("test" "bench" "eval" "models" "src/enums" "src/xnnpack"))))))
-      (build-system cmake-build-system)
       (arguments
-       (list
-        #:build-type "Release" ;; Debugging symbols require a lot of disk space
-        #:configure-flags ''("-DXNNPACK_USE_SYSTEM_LIBS=YES"
-                             "-DBUILD_SHARED_LIBS=ON"
-                             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
-                             "-DXNNPACK_LIBRARY_TYPE=shared"
-                             "-DXNNPACK_BUILD_BENCHMARKS=FALSE")
-        #:modules '((ice-9 ftw)
-                    (guix build cmake-build-system)
-                    (guix build utils))
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'unpack 'fix-cmake
-              (lambda _
-                (substitute* "CMakeLists.txt"
-                  (("TARGET_INCLUDE_DIRECTORIES\\((pthreadpool|cpuinfo).*") "")
-                  ((".*IF\\(NOT TARGET gtest\\).*")
-                   "IF(FALSE)\n")
-                  (("SET\\(CMAKE_CXX_STANDARD 11\\)")
-                   "SET(CMAKE_CXX_STANDARD 14)")
-                  (("AMD64") "x86_64"))))
-            (add-after 'patch-source-shebangs 'generate-files
-              (lambda _
-                (for-each
-                 (lambda (name)
-                   (when (and (string-prefix? "generate" name)
-                              (string-suffix? ".sh" name)
-                              (not (equal? "generate-amalgamation.sh" name)))
-                     (display (string-append name "\n"))
-                     (invoke "bash" (string-append "scripts/" name))))
-                 (scandir "scripts"))
-                ;; These need to run after the above scripts
-                (display "Remaining files\n")
-                (invoke "python3" "tools/update-microkernels.py")
-                (substitute* "tools/amalgamate-microkernels.py"
-                  (("BUILD") "BUILD.bazel"))
-                (invoke "bash" "scripts/generate-amalgamation.sh"))))))
-      (inputs
-       (list clog
-             cpuinfo
-             pthreadpool
-             googletest
-             googlebenchmark
-             fxdiv
-             fp16
-             psimd))
-      (native-inputs (list python-pyyaml python-wrapper))
-      (synopsis "Optimized floating-point neural network inference operators")
-      (description
-       "XNNPACK is a highly optimized library of floating-point neural network
-inference operators for ARM, WebAssembly, and x86 platforms.  XNNPACK is not
-intended for direct use by deep learning practitioners and researchers;
-instead it provides low-level performance primitives for accelerating
-high-level machine learning frameworks, such as TensorFlow Lite,
-TensorFlow.js, PyTorch, and MediaPipe.")
-      (supported-systems
-       '("armhf-linux" "aarch64-linux" "riscv64-linux"
-         "i686-linux" "x86_64-linux"))
-      (license license:bsd-3))))
+       (substitute-keyword-arguments (package-arguments xnnpack)
+         ((#:phases phases)
+          #~(modify-phases #$phases
+              (replace 'generate-files
+                (lambda _
+                  (for-each
+                   (lambda (name)
+                     (when (and (string-prefix? "generate" name)
+                                (string-suffix? ".sh" name)
+                                (not (equal? "generate-amalgamation.sh" name)))
+                       (display (string-append name "\n"))
+                       (invoke "bash" (string-append "scripts/" name))))
+                   (scandir "scripts"))
+                  ;; These need to run after the above scripts
+                  (display "Remaining files\n")
+                  (invoke "python3" "tools/update-microkernels.py")
+                  (substitute* "tools/amalgamate-microkernels.py"
+                    (("BUILD") "BUILD.bazel"))
+                  (invoke "bash" "scripts/generate-amalgamation.sh"))))))))))
 
 ;; Warning: This package requires AVX2 or AVX-512 instructions.
 (define-public fbgemm
   (package
     (name "fbgemm")
-    (version "0.6.0")
+    (version "0.7.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4234,7 +4341,7 @@ TensorFlow.js, PyTorch, and MediaPipe.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0mw30v55aicqdbh3xwfj9p8f38nw70ks5cxiwpgwjsk0dylah9rf"))
+                "1dzw9w82ca0hss1lvshix6piwsd0k11lyq9pzm8yg8k7j56hmyig"))
               (patches (search-patches "fbgemm-use-system-libraries.patch"))
               (modules '((guix build utils)))
               (snippet
@@ -4359,7 +4466,7 @@ PyTorch.")
         (base32
          "0hdpkhcjry22fjx2zg2r48v7f4ljrclzj0li2pgk76kvyblfbyvm"))))))
 
-(define %python-pytorch-version "2.2.1")
+(define %python-pytorch-version "2.4.0")
 
 (define %python-pytorch-src
   (origin
@@ -4370,7 +4477,7 @@ PyTorch.")
     (file-name (git-file-name "python-pytorch" %python-pytorch-version))
     (sha256
      (base32
-      "03mm0pwwb5lxdsmmiw3cch9fijgjw81kmmc4ln9rlyazkm7l1r48"))
+      "18hdhzr12brj0b7ppyiscax0dbra30207qx0cckw78midfkcn7cn"))
     (patches (search-patches "python-pytorch-system-libraries.patch"
                              "python-pytorch-runpath.patch"
                              "python-pytorch-without-kineto.patch"
@@ -4398,14 +4505,6 @@ PyTorch.")
          delete-file
          '("aten/src/ATen/nnapi/nnapi_wrapper.cpp"
            "aten/src/ATen/nnapi/nnapi_wrapper.h"
-           "caffe2/mobile/contrib/ios/mpscnn/mpscnn_kernels.h"
-           "caffe2/proto/caffe2_legacy_pb2.pyi"
-           "caffe2/proto/caffe2_pb2.pyi"
-           "caffe2/proto/hsm_pb2.pyi"
-           "caffe2/proto/metanet_pb2.pyi"
-           "caffe2/proto/predictor_consts_pb2.pyi"
-           "caffe2/proto/prof_dag_pb2.pyi"
-           "caffe2/proto/torch_pb2.pyi"
            ;; These files contain just lists of floating point values and
            ;; might be as well hand-written.
            ;; "test/cpp/api/init_baseline.h"
@@ -4512,7 +4611,18 @@ PyTorch.")
                   #$(this-package-native-input "pocketfft-cpp") "/include"))
                 (("#FP16_INCLUDE_DIR")
                  (string-append
-                  #$(this-package-input "fp16") "/include")))))
+                  #$(this-package-input "fp16") "/include"))
+                ;; Disable opentelemetry
+                ((".*(add_library|target_include_directories).*opentelemetry.*")
+                 ""))
+              (substitute* "torch/CMakeLists.txt"
+                ((".*opentelemetry.*") ""))
+              ;; Fix Python install directory
+              (substitute* "caffe2/CMakeLists.txt"
+                (("\\$\\{Python_SITELIB\\}")
+                 (string-append #$output "/lib/python"
+                                #$(version-major+minor (package-version python))
+                                "/site-packages")))))
           (add-before 'build 'use-system-libraries
             (lambda _
               (substitute* '("caffe2/serialize/crc.cc"
@@ -4534,9 +4644,7 @@ PyTorch.")
                        name))
                     '("compat_bindings.cpp" "timer_callgrind_template.cpp")))
                 (("<callgrind.h>") "<valgrind/callgrind.h>"))
-              (setenv "USE_FFMPEG" "1")
               (setenv "USE_VULKAN" "1")
-              (setenv "USE_OPENCV" "1")
               ;; Tell 'setup.py' to let 'CMakeLists.txt' know that we
               ;; want to use "system libraries" instead of the bundled
               ;; ones.
@@ -4552,8 +4660,7 @@ PyTorch.")
                           (or (%current-target-system)
                               (%current-system))
                           (package-transitive-supported-systems qnnpack)))
-                  (setenv "USE_QNNPACK" "0")
-                  (setenv "USE_PYTORCH_QNNPACK" "0"))))
+                  (setenv "USE_QNNPACK" "0"))))
           ;; PyTorch is still built with AVX2 and AVX-512 support selected at
           ;; runtime, but these dependencies require it (nnpack only for
           ;; x86_64).
@@ -4666,15 +4773,15 @@ PyTorch.")
            python-pytest-xdist
            python-hypothesis
            python-types-dataclasses
-           python-typing-extensions-4.10
            shaderc
            valgrind))
     (inputs
      (append
       (list asmjit
+            brotli ; for cpp-httplib
             clog
+            cpp-httplib
             eigen
-            ffmpeg
             flatbuffers-next
             fmt
             foxi
@@ -4686,38 +4793,33 @@ PyTorch.")
             googlebenchmark
             libuv
             miniz-for-pytorch
+            oneapi-dnnl
             openblas
-            opencv
             openmpi
+            openssl ; for cpp-httplib
             pthreadpool
             protobuf
             pybind11
+            ;; qnnpack
+            qnnpack-pytorch
             sleef
             tensorpipe
             vulkan-headers
             vulkan-loader
             vulkan-memory-allocator
+            xnnpack
+            zlib ; for cpp-httplib
             zstd)
-      ;; TODO: fix build on 32 bit systems once Rust is available.
-      (filter
-       (lambda (pkg)
-         (member (or (%current-target-system)
-                     (%current-system))
-                 (package-transitive-supported-systems pkg)))
-       (list oneapi-dnnl
-             qnnpack
-             qnnpack-pytorch
-             xnnpack))
       ;; nnpack requires AVX2 for x86_64-linux
-      (filter
-       (lambda (pkg)
-         (member (or (%current-target-system)
-                     (%current-system))
-                 '("armhf-linux" "aarch64-linux")))
-       (list nnpack))))
+      (if (equal? (or (%current-target-system)
+                      (%current-system))
+                  '("aarch64-linux"))
+          (list nnpack)
+          '())))
     (propagated-inputs
      (append
-      (list onnx ;propagated for its Python modules
+      (list cpuinfo
+            onnx ;propagated for its Python modules
             onnx-optimizer
             python-astunparse
             python-click
@@ -4734,15 +4836,11 @@ PyTorch.")
             python-pyyaml
             python-requests
             python-sympy
-            python-typing-extensions)
-      (filter
-       (lambda (pkg)
-         (member (or (%current-target-system)
-                     (%current-system))
-                 (package-transitive-supported-systems pkg)))
-       (list cpuinfo))))
+            python-typing-extensions)))
     (home-page "https://pytorch.org/")
     (synopsis "Python library for tensor computation and deep neural networks")
+    ;; TODO: Support other 64-bit systems.
+    (supported-systems '("x86_64-linux" "aarch64-linux"))
     (description
      "PyTorch is a Python package that provides two high-level features:
 
@@ -4820,8 +4918,10 @@ Note: currently this package does not provide GPU support.")
        (replace "ideep-pytorch" ideep-pytorch-for-r-torch)))
     (inputs
      (modify-inputs (package-inputs python-pytorch)
+       (prepend qnnpack)
        (replace "qnnpack-pytorch" qnnpack-pytorch-for-r-torch)
-       (replace "oneapi-dnnl" oneapi-dnnl-for-r-torch)))
+       (replace "oneapi-dnnl" oneapi-dnnl-for-r-torch)
+       (replace "xnnpack" xnnpack-for-r-torch)))
     (propagated-inputs
      (modify-inputs (package-propagated-inputs python-pytorch)
        (append python-filelock
@@ -4940,14 +5040,14 @@ AI services.")
 (define-public python-lightning-utilities
   (package
     (name "python-lightning-utilities")
-    (version "0.8.0")
+    (version "0.11.6")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "lightning-utilities" version))
+              (uri (pypi-uri "lightning_utilities" version))
               (sha256
                (base32
-                "084pn8fizxrcn1699jb8x2jsg4wcx01l65bwxpgnq0kzqp3rapcf"))))
-    (build-system python-build-system)
+                "016zikn39apig3y6xyipw34w0w02c73z483radddbf68ivpjgz3r"))))
+    (build-system pyproject-build-system)
     (propagated-inputs (list python-importlib-metadata python-packaging
                              python-typing-extensions))
     (native-inputs (list python-coverage))
@@ -5057,141 +5157,160 @@ feedback.")
     (license license:expat)))
 
 (define-public python-pytorch-lightning
-  (package
-    (name "python-pytorch-lightning")
-    (version "2.0.2")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/Lightning-AI/lightning")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1w4lajiql4y5nnhqf6i5wii1mrwnhp5f4bzbwdzb5zz0d0lysb1i"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      '(list "-m" "not cloud and not tpu" "tests/tests_pytorch"
-             ;; we don't have onnxruntime
-             "--ignore=tests/tests_pytorch/models/test_onnx.py"
+  (let ((commit "2064887b12dd934a5f9a2bf45897f29e3bfc74d1")
+        (revision "0"))
+    (package
+      (name "python-pytorch-lightning")
+      (version (git-version "2.3.3" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/Lightning-AI/pytorch-lightning")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1pfmwgzh21i21i4ixank488615q7j8nkvlxd82kmmam97gsd6krg"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:test-flags
+        '(list "-m" "not cloud and not tpu" "tests/tests_pytorch"
+               ;; we don't have onnxruntime
+               "--ignore=tests/tests_pytorch/models/test_onnx.py"
 
-             ;; We don't have tensorboard, so we skip all those tests that
-             ;; require it for logging.
-             "--ignore=tests/tests_pytorch/checkpointing/test_model_checkpoint.py"
-             "--ignore=tests/tests_pytorch/loggers/test_all.py"
-             "--ignore=tests/tests_pytorch/loggers/test_logger.py"
-             "--ignore=tests/tests_pytorch/loggers/test_tensorboard.py"
-             "--ignore=tests/tests_pytorch/models/test_cpu.py"
-             "--ignore=tests/tests_pytorch/models/test_hparams.py"
-             "--ignore=tests/tests_pytorch/models/test_restore.py"
-             "--ignore=tests/tests_pytorch/profilers/test_profiler.py"
-             "--ignore=tests/tests_pytorch/trainer/flags/test_fast_dev_run.py"
-             "--ignore=tests/tests_pytorch/trainer/logging_/test_eval_loop_logging.py"
-             "--ignore=tests/tests_pytorch/trainer/logging_/test_train_loop_logging.py"
-             "--ignore=tests/tests_pytorch/trainer/properties/test_loggers.py"
-             "--ignore=tests/tests_pytorch/trainer/properties/test_log_dir.py"
-             "--ignore=tests/tests_pytorch/trainer/test_trainer.py"
+               ;; We don't have tensorboard, so we skip all those tests that
+               ;; require it for logging.
+               "--ignore=tests/tests_pytorch/checkpointing/test_model_checkpoint.py"
+               "--ignore=tests/tests_pytorch/loggers/test_all.py"
+               "--ignore=tests/tests_pytorch/loggers/test_logger.py"
+               "--ignore=tests/tests_pytorch/loggers/test_tensorboard.py"
+               "--ignore=tests/tests_pytorch/loggers/test_wandb.py"
+               "--ignore=tests/tests_pytorch/models/test_cpu.py"
+               "--ignore=tests/tests_pytorch/models/test_hparams.py"
+               "--ignore=tests/tests_pytorch/models/test_restore.py"
+               "--ignore=tests/tests_pytorch/profilers/test_profiler.py"
+               "--ignore=tests/tests_pytorch/test_cli.py"
+               "--ignore=tests/tests_pytorch/trainer/flags/test_fast_dev_run.py"
+               "--ignore=tests/tests_pytorch/trainer/logging_/test_eval_loop_logging.py"
+               "--ignore=tests/tests_pytorch/trainer/logging_/test_train_loop_logging.py"
+               "--ignore=tests/tests_pytorch/trainer/properties/test_loggers.py"
+               "--ignore=tests/tests_pytorch/trainer/properties/test_log_dir.py"
+               "--ignore=tests/tests_pytorch/trainer/test_trainer.py"
 
-             ;; This needs internet access
-             "--ignore=tests/tests_pytorch/helpers/test_models.py"
-             "--ignore=tests/tests_pytorch/helpers/test_datasets.py"
-             "--ignore=tests/tests_pytorch/helpers/datasets.py"
+               ;; This needs internet access
+               "--ignore=tests/tests_pytorch/helpers/test_models.py"
+               "--ignore=tests/tests_pytorch/helpers/test_datasets.py"
+               "--ignore=tests/tests_pytorch/helpers/datasets.py"
 
-             ;; We have no legacy checkpoints
-             "--ignore=tests/tests_pytorch/checkpointing/test_legacy_checkpoints.py"
+               ;; We have no legacy checkpoints
+               "--ignore=tests/tests_pytorch/checkpointing/test_legacy_checkpoints.py"
 
-             ;; TypeError: _FlakyPlugin._make_test_flaky() got an unexpected keyword argument 'reruns'
-             "--ignore=tests/tests_pytorch/models/test_amp.py"
-             "--ignore=tests/tests_pytorch/profilers/test_profiler.py"
+               ;; TypeError: _FlakyPlugin._make_test_flaky() got an unexpected
+               ;; keyword argument 'reruns'
+               "--ignore=tests/tests_pytorch/models/test_amp.py"
+               "--ignore=tests/tests_pytorch/utilities/test_all_gather_grad.py"
 
-             "--ignore=tests/tests_pytorch/graveyard/test_legacy_import_unpickler.py"
+               ;; Requires CUDA
+               "--ignore=tests/tests_pytorch/plugins/precision/test_bitsandbytes.py"
 
-             "-k"
-             (string-append
-              ;; We don't have tensorboard
-              "not test_property_logger"
-              " and not test_cli_logger_shorthand"
-              ;; Something wrong with Flaky
-              " and not test_servable_module_validator_with_trainer"))
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'patch-version-detection
-           (lambda _
-             ;; We do have pytorch 1.13.1, but the version comparison fails.
-             (substitute* "src/lightning/fabric/utilities/imports.py"
-               (("_TORCH_GREATER_EQUAL_1_13 =.*")
-                "_TORCH_GREATER_EQUAL_1_13 = True\n"))))
-         (add-before 'build 'pre-build
-           (lambda _ (setenv "PACKAGE_NAME" "lightning")))
-         (add-after 'install 'pre-build-pytorch
-           (lambda _
-             ;; pyproject-build-system only tolerates unicycles.
-             (for-each delete-file (find-files "dist" "\\.whl"))
-             (setenv "PACKAGE_NAME" "pytorch")))
-         (add-after 'pre-build-pytorch 'build-pytorch
-           (assoc-ref %standard-phases 'build))
-         (add-after 'build-pytorch 'install-pytorch
-           (assoc-ref %standard-phases 'install))
-         (add-before 'check 'pre-check
-           (lambda _
-             ;; We don't have Tensorboard
-             (substitute* "tests/tests_pytorch/test_cli.py"
-               ((" TensorBoardLogger\\(\".\"\\)") "")))))))
-    (propagated-inputs
-     (list python-arrow
-           python-beautifulsoup4
-           python-croniter
-           python-dateutils
-           python-deepdiff
-           python-fastapi-for-pytorch-lightning
-           python-fsspec
-           python-inquirer
-           python-jsonargparse
-           python-lightning-cloud
-           python-lightning-utilities
-           python-numpy
-           python-packaging
-           python-pytorch
-           python-pyyaml
-           python-starsessions-for-pytorch-lightning
-           python-torchmetrics
-           python-torchvision
-           python-tqdm
-           python-traitlets
-           python-typing-extensions))
-    (native-inputs
-     (list python-aiohttp
-           python-cloudpickle
-           python-coverage
-           python-flaky
-           python-pympler
-           python-pytest
-           python-psutil
-           python-requests-mock
-           python-scikit-learn))
-    (home-page "https://lightning.ai/")
-    (synopsis "Deep learning framework to train, deploy, and ship AI products")
-    (description
-     "PyTorch Lightning is just organized PyTorch; Lightning disentangles
+               "-k"
+               (string-append
+                ;; We don't have tensorboard
+                "not test_property_logger"
+                " and not test_cli_logger_shorthand"
+                ;; Wrong module appears in sys.modules
+                " and not test_patch_legacy_imports_unified"
+                ;; Missing log message
+                " and not test_should_stop_early_stopping_conditions_met"
+                " and not test_fit_loop_done_log_messages"
+                ;; Something wrong with Flaky
+                " and not test_servable_module_validator_with_trainer"))
+        #:phases
+        '(modify-phases %standard-phases
+           (add-after 'unpack 'patch-version-detection
+             (lambda _
+               ;; We do have pytorch 2.4.0, but the version comparison fails.
+               (substitute* "src/lightning/fabric/utilities/imports.py"
+                 (("_TORCH_GREATER_EQUAL_2_4 =.*")
+                  "_TORCH_GREATER_EQUAL_2_4 = True\n"))))
+           (add-before 'build 'pre-build
+             (lambda _ (setenv "PACKAGE_NAME" "lightning")))
+           (add-after 'install 'pre-build-pytorch
+             (lambda _
+               ;; pyproject-build-system only tolerates unicycles.
+               (for-each delete-file (find-files "dist" "\\.whl"))
+               (setenv "PACKAGE_NAME" "pytorch")))
+           (add-after 'pre-build-pytorch 'build-pytorch
+             (assoc-ref %standard-phases 'build))
+           (add-after 'build-pytorch 'install-pytorch
+             (assoc-ref %standard-phases 'install))
+           (add-before 'check 'pre-check
+             (lambda _
+               ;; We don't have Tensorboard
+               (substitute* "tests/tests_pytorch/test_cli.py"
+                 ((" TensorBoardLogger\\(\".\"\\)") "")))))))
+      (propagated-inputs
+       (list python-arrow
+             python-beautifulsoup4
+             python-croniter
+             python-dateutils
+             python-deepdiff
+             python-fastapi-for-pytorch-lightning
+             python-fsspec
+             python-inquirer
+             python-jsonargparse
+             python-lightning-cloud
+             python-lightning-utilities
+             python-numpy
+             python-packaging
+             python-pytorch
+             python-pyyaml
+             python-starsessions-for-pytorch-lightning
+             python-torchmetrics
+             python-torchvision
+             python-tqdm
+             python-traitlets
+             python-typing-extensions))
+      (native-inputs
+       (list python-aiohttp
+             python-cloudpickle
+             python-coverage
+             python-flaky
+             python-pympler
+             python-pytest
+             python-psutil
+             python-requests-mock
+             python-scikit-learn))
+      (home-page "https://lightning.ai/")
+      (synopsis "Deep learning framework to train, deploy, and ship AI products")
+      (description
+       "PyTorch Lightning is just organized PyTorch; Lightning disentangles
 PyTorch code to decouple the science from the engineering.")
-    (license license:asl2.0)))
+      (license license:asl2.0))))
 
 (define-public python-torchmetrics
   (package
     (name "python-torchmetrics")
-    (version "0.11.4")
+    (version "1.4.1")
     (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "torchmetrics" version))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/Lightning-AI/torchmetrics")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "150lcy6c20n42rwxl4d3m1b8s4js9ddds5wh3685vmjdnha5mr0z"))))
+                "0371kx2fpp46rlhzkafa7397kp1lirgykpzk9g12kxsqypb67v1l"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Tests require many additional dependencies
+      #:tests? #f))
     (propagated-inputs
      (list python-numpy python-packaging python-pytorch
-           python-typing-extensions))
+           python-typing-extensions
+           python-lightning-utilities))
     (native-inputs
      (list python-cloudpickle
            python-coverage
@@ -5211,7 +5330,7 @@ PyTorch code to decouple the science from the engineering.")
            python-scipy
            python-types-protobuf
            python-types-setuptools))
-    (home-page "https://github.com/Lightning-AI/metrics")
+    (home-page "https://github.com/Lightning-AI/torchmetrics")
     (synopsis "Machine learning metrics for PyTorch applications")
     (description "TorchMetrics is a collection of 100+ PyTorch metrics
 implementations and an easy-to-use API to create custom metrics.  It offers:
@@ -5230,7 +5349,7 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
 (define-public python-torchvision
   (package
     (name "python-torchvision")
-    (version "0.17.1")
+    (version "0.19.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5240,7 +5359,7 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "094jz0ryzh0yjxf687r61r482fdh3bax8ix2csghraps0z1sns1b"))
+                "15zyq2k4x9yapx7qfghhslznz1mwybhf086pirsr98c4l891sp1r"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -5248,10 +5367,21 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
                   (delete-file-recursively "ios")))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:tests? #false)) ;the test suite is expensive and there is no easy
-                             ;way to subset it.
+     (list
+      ;; The test suite is expensive and there is no easy way to subset it.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'setenv
+            (lambda _
+              (let ((jpegdir #$(this-package-input "libjpeg-turbo")))
+                (setenv "TORCHVISION_INCLUDE"
+                        (string-append jpegdir "/include/"))
+                (setenv "TORCHVISION_LIBRARY"
+                        (string-append jpegdir "/lib/"))))))))
     (inputs
-     (list libpng
+     (list ffmpeg
+           libpng
            libjpeg-turbo))
     (propagated-inputs
      (list python-numpy
@@ -5901,7 +6031,7 @@ Brian 2 simulator.")
 (define-public oneapi-dnnl
   (package
     (name "oneapi-dnnl")
-    (version "3.3.5")
+    (version "3.5.3")
     (source
      (origin
        (method git-fetch)
@@ -5910,7 +6040,7 @@ Brian 2 simulator.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "05ra5zziys2hvn29y6ysiqzsf4jr9bf2bci5sc3swvf3bs2y5ihf"))))
+        (base32 "1m2d7qlbfk86rmvmpvx2k3rc2k0l9hf9qpa54jl44670ls9n8i7w"))))
     (build-system cmake-build-system)
     (arguments (if (target-riscv64?)
                    (list #:configure-flags #~'("-DDNNL_CPU_RUNTIME=SEQ"))

@@ -456,6 +456,7 @@ asdf-build-system."
                       "gnu/packages/guile.scm"
                       "gnu/packages/ld-wrapper.in"
                       "gnu/packages/make-bootstrap.scm"
+                      "gnu/packages/multiprecision.scm"
                       "guix/build/gnu-build-system.scm"
                       "guix/build/utils.scm"
                       "guix/build-system/gnu.scm")))
@@ -598,7 +599,7 @@ GLib/GIO, GTK, GStreamer and Webkit."
 
 (define-member (person "Andreas Enge"
                        "andreas@enge.fr")
-  lxqt science tex)
+  bootstrap core-packages lxqt science tex)
 
 (define-member (person "Tanguy Le Carrour"
                        "tanguy@bioneland.org")

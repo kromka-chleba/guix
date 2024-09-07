@@ -275,7 +275,7 @@ protocols.")
 (define-public lcrq
   (package
     (name "lcrq")
-    (version "0.1.2")
+    (version "0.2.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -284,14 +284,25 @@ protocols.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1m29p4bsafzbchnkidyrnglfdf1c9pnq6akkmivi23qdv9kj51dg"))))
+                "0a6bvlib00na0rhz4lz80kc6v5kqfp8k26ydprwnf8h29nnza6y6"))))
     (build-system gnu-build-system)
     (arguments
      (list
       #:parallel-tests? #f
+      ;; Use recommended optimizations from lcrq README.md
+      #:configure-flags
+      #~(list (string-append "CFLAGS=-Wall -Wextra -pedantic -O3 -flto "
+                             "-funroll-loops -ffast-math -DNDEBUG"))
       #:make-flags
       #~(list (string-append "CC=" #$(cc-for-target))
               (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Leave some speed comparisons in the build log
+          (add-after 'check 'speedtest
+            (lambda _
+              (invoke "make" "-C" "test" "speedtest"
+                      (string-append "CC=" #$(cc-for-target))))))
       #:test-target "test"))
     (home-page "https://librecast.net/lcrq.html")
     (synopsis "Librecast RaptorQ library")
@@ -345,7 +356,7 @@ Unix Domain Sockets, SCTP for both IPv4 and IPv6.")
 (define-public lcsync
   (package
     (name "lcsync")
-    (version "0.3.0")
+    (version "0.3.1")
     (source
      (origin
        (method git-fetch)
@@ -354,7 +365,7 @@ Unix Domain Sockets, SCTP for both IPv4 and IPv6.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1rhk80ybd2zranay76z1ysifnnm786lg9kiiijcwv76qy95in9ks"))))
+        (base32 "15vfik9saqmvys2v10ci68n00s71d9k4kpqhrwz4ilv79fys7hn7"))))
     (build-system gnu-build-system)
     (arguments
      (list

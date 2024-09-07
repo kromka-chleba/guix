@@ -253,6 +253,13 @@
                          ;; AVIF support disabled
                          "ext/gd/tests/imagecreatefromstring_avif.phpt"
 
+                         ;; These tests fail due to issues in upstream gd
+                         ;; 2.3.3 around BICUBIC interpolation.  See
+                         ;; https://github.com/libgd/libgd/issues/847
+                         "ext/gd/tests/bug79676.phpt"
+                         "ext/gd/tests/imageinterpolation_basic.phpt"
+                         "ext/gd/tests/imagescale_preserve_ratio.phpt"
+
                          ;; XXX: These test failures appear legitimate, needs investigation.
                          ;; open_basedir() restriction failure.
                          "ext/curl/tests/curl_setopt_ssl.phpt"
@@ -306,6 +313,10 @@
        ("bzip2" ,bzip2)
        ("curl" ,curl)
        ("cyrus-sasl" ,cyrus-sasl)
+       ("freetype" ,freetype)
+       ("fontconfig" ,fontconfig)
+       ("libjpeg-turbo" ,libjpeg-turbo)
+       ("libpng" ,libpng)
        ("gd" ,gd)
        ("gdbm" ,gdbm)
        ("gmp" ,gmp)

@@ -160,7 +160,7 @@ easy to use API.")
       (license license:expat))))
 
 (define-public asmjit
-  (let ((commit "3ca5c186bf8922e5fe3018432e93651fd2fa4053")
+  (let ((commit "062e69ca81defa35eb0ee15f7412f49a0dad3cdb")
         (revision "1"))
     (package
       (name "asmjit")
@@ -174,7 +174,7 @@ easy to use API.")
            (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "10k1zc0w8m0vnh52id9qlm1sb99qmpvr6k0ha8ag2h223n0d591g"))))
+          (base32 "0lcwqzbv2628g3c7sflkwagyh49lp471px8bhg7lr77w9y94srqq"))))
       (build-system cmake-build-system)
       (arguments
        (list #:configure-flags #~(list "-DASMJIT_TEST=TRUE")))
@@ -1122,7 +1122,7 @@ tools:
   ;; header
   (package
     (name "cpp-httplib")
-    (version "0.12.5")
+    (version "0.16.0")
     (source
      (origin
        (method git-fetch)
@@ -1130,7 +1130,7 @@ tools:
              (url "https://github.com/yhirose/cpp-httplib")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1m1p6h1dsxg4kg5zziffb6xl8zgjbkw7gmgmmlnrhpl3bswam87n"))
+        (base32 "0n4ribq7c6lqj0hn50pdvy7wml62fqbgrgysb038fq1qc6xyw3np"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
@@ -3132,7 +3132,7 @@ std::variant (formerly boost::variant) for C++11/14.")
                 ((".*3rdparty/googletest.*\n") "")
                 ((".*config_compiler_and_linker.*\n") "")
                 (("gtest_main") "gtest gtest_main")))))))
-    (native-inputs (list googletest))
+    (native-inputs (list googletest gcc-12)) ; XXX: build fails with GCC 11
     (home-page "https://github.com/mpark/variant")
     (synopsis "Implementation of std::variant for C++11/14/17")
     (description
