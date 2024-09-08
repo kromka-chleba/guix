@@ -520,14 +520,14 @@ available, greatly increasing its breadth and scope.")
 (define-public r-boot
   (package
     (name "r-boot")
-    (version "1.3-30")
+    (version "1.3-31")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "boot" version))
        (sha256
         (base32
-         "15zysf5manfsap7x0zvjzgdvs9whv137iasjydp1php6sqmxc2am"))))
+         "1ln8079g7l6yxdh7bmcn2acjlln0hvrhhjbp5r0wl0xms662wm6q"))))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/boot")
     (synopsis "Bootstrap functions for R")
@@ -1334,26 +1334,21 @@ agnes cluster diagrams.")
 (define-public r-gdtools
   (package
     (name "r-gdtools")
-    (version "0.3.7")
+    (version "0.4.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "gdtools" version))
        (sha256
         (base32
-         "155ky9fdi023b5fjk1gh3607xlgm3hymq232fq03ip2aaywc74nj"))))
+         "0srg8034a6pc677njzn42abqh6r4lzvfm3xw0np579kvk6d6w4z1"))))
     (build-system r-build-system)
     (native-inputs
      (list pkg-config))
     (inputs
      (list cairo fontconfig freetype zlib))
     (propagated-inputs
-     (list r-curl
-           r-fontquiver
-           r-gfonts
-           r-htmltools
-           r-rcpp
-           r-systemfonts))
+     (list r-fontquiver r-htmltools r-rcpp r-systemfonts))
     (home-page "https://cran.r-project.org/web/packages/gdtools")
     (synopsis "Utilities for graphical rendering")
     (description
@@ -4481,13 +4476,13 @@ vignettes.")
 (define-public r-mvtnorm
   (package
     (name "r-mvtnorm")
-    (version "1.2-6")
+    (version "1.3-0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "mvtnorm" version))
               (sha256
                (base32
-                "0cfdd8l58yn48vc4zf4n5vfs3g02wdnvmkdf5zyybn3f54ydrpn4"))))
+                "0jflnzzpayd6g46mvs3x763smb9l8k9znbmvac4sffmf2n27rbd4"))))
     (build-system r-build-system)
     (native-inputs
      (list gfortran))

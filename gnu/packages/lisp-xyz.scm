@@ -3462,20 +3462,20 @@ defined in RFC 2616.")
   (sbcl-package->ecl-package sbcl-chunga))
 
 (define-public sbcl-ciel
-  (let ((commit "6cc1cef5e37e9f495c8163271a5de48de99f348a")
+  (let ((commit "0b26d64dcd91a3a2aa962842629a853261dd30fe")
         (revision "0"))
     (package
       (name "sbcl-ciel")
-      (version (git-version "0.1.0" revision commit))
+      (version (git-version "0.2.1" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/ciel-lang/CIEL")
                (commit commit)))
-         (file-name (git-file-name "ciel" version))
+         (file-name (git-file-name "cl-ciel" version))
          (sha256
-          (base32 "1bwafbbsppxqvijf43dii55mpzrklh6faj2m5dhajg2f2m8qckgi"))))
+          (base32 "0gm8slnz4jw98rkijnh2dp6x629xdnfk8z7j35g03j6ypr56v06h"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-fiveam))
@@ -3485,12 +3485,11 @@ defined in RFC 2616.")
              sbcl-arrow-macros
              sbcl-bordeaux-threads
              sbcl-cl-ansi-text
-             sbcl-cl-ansi-text
              sbcl-cl-cron
              sbcl-cl-csv
+             sbcl-cl-ftp
              sbcl-cl-json-pointer
              sbcl-cl-ppcre
-             sbcl-cl-punch
              sbcl-cl-reexport
              sbcl-cl-str
              sbcl-clesh
@@ -3499,12 +3498,11 @@ defined in RFC 2616.")
              sbcl-cmd
              sbcl-dbi
              sbcl-defstar
-             sbcl-deploy
              sbcl-dexador
              sbcl-dissect
              sbcl-easy-routes
+             sbcl-file-finder
              sbcl-file-notify
-             sbcl-fn
              sbcl-for
              sbcl-fset
              sbcl-generic-cl
@@ -3515,20 +3513,23 @@ defined in RFC 2616.")
              sbcl-lquery
              sbcl-metabang-bind
              sbcl-modf
+             sbcl-moira
              sbcl-named-readtables
-             sbcl-nodgui
              sbcl-parse-float
              sbcl-parse-number
              sbcl-printv
+             sbcl-progressons
              sbcl-pythonic-string-reader
              sbcl-quicksearch
              sbcl-quri
              sbcl-repl-utilities
+             sbcl-secret-values
              sbcl-serapeum
              sbcl-shasht
              sbcl-shlex
              sbcl-spinneret
              sbcl-sxql
+             sbcl-termp
              sbcl-trivia
              sbcl-trivial-arguments
              sbcl-trivial-do
@@ -3537,12 +3538,23 @@ defined in RFC 2616.")
              sbcl-trivial-types
              sbcl-vgplot
              sbcl-which))
+      (outputs '("out" "image"))
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'create-asdf-configuration 'build-image
+              (lambda* (#:key outputs #:allow-other-keys)
+                (build-image
+                 (string-append (assoc-ref outputs "image") "/bin/ciel")
+                 outputs
+                 #:dependencies '("ciel")))))))
       (home-page "http://ciel-lang.org/")
       (synopsis "CIEL Is an Extended Lisp")
       (description
        "CIEL is a ready-to-use collection of libraries providing: a binary, to
 run CIEL scripts; a simple full-featured REPL for the terminal; a Lisp library
-and a core image .")
+and a core image.")
       (license license:expat))))
 
 (define-public cl-ciel
@@ -3550,6 +3562,75 @@ and a core image .")
 
 (define-public ecl-ciel
   (sbcl-package->ecl-package sbcl-ciel))
+
+(define-public sbcl-ciel-repl
+  (let ((commit "0b26d64dcd91a3a2aa962842629a853261dd30fe")
+        (revision "0"))
+    (package
+      (name "sbcl-ciel-repl")
+      (version (git-version "0.2.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ciel-lang/CIEL")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0gm8slnz4jw98rkijnh2dp6x629xdnfk8z7j35g03j6ypr56v06h"))
+         (patches (search-patches "sbcl-ciel-repl.patch"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs
+       (list sbcl-ciel
+             sbcl-cl-readline
+             sbcl-lisp-critic
+             sbcl-magic-ed))
+      (arguments
+       (list
+        #:asd-systems ''("ciel/repl")
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; The built-in scripts require special care. They are
+            ;; read from src/scripts in the current directory.
+            ;; When the binary is built, the current directory is
+            ;; {out}/bin, so the scripts have to be copied there,
+            ;; but that copy must be deleted after the binary has been
+            ;; built, otherwise it would end up in the package.
+            (add-after 'create-asdf-configuration 'install-scripts
+              (lambda _
+                (let ((dir (string-append #$output "/bin/src/scripts")))
+                  (for-each (lambda (file)
+                              (install-file file dir))
+                            (find-files "src/scripts" "\\.lisp$")))))
+            (add-after 'install-scripts 'build-program
+              (lambda* (#:key outputs #:allow-other-keys)
+                (build-program
+                 (string-append #$output "/bin/ciel")
+                 outputs
+                 #:entry-program '((ciel::main))
+                 #:dependencies '("ciel/repl")
+                 #:compress? #t)))
+            (add-after 'build-program 'delete-scripts
+              (lambda _
+                (let ((dir (string-append #$output "/bin/src")))
+                  (delete-file-recursively dir))))
+            ;; Remove everything except the binary.
+            (add-after 'delete-scripts 'delete-lisp-files
+              (lambda _
+                (let ((dir (string-append #$output "/etc")))
+                  (delete-file-recursively dir))
+                (let ((dir (string-append #$output "/lib")))
+                  (delete-file-recursively dir))
+                (let ((dir (string-append #$output "/share")))
+                  (delete-file-recursively dir))
+                (let ((dir (string-append #$output "/.asd-files")))
+                  (delete-file-recursively dir)))))))
+      (home-page "http://ciel-lang.org/")
+      (synopsis "Terminal REPL for CIEL")
+      (description
+       "This package provides CIEL as a precompiled binary and a full-featured
+REPL for the terminal.")
+      (license license:expat))))
 
 (define-public sbcl-circular-streams
   (let ((commit "e770bade1919c5e8533dd2078c93c3d3bbeb38df")

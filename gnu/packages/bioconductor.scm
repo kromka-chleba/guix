@@ -12400,14 +12400,14 @@ of gene-level counts.")
 (define-public r-valr
   (package
     (name "r-valr")
-    (version "0.8.1")
+    (version "0.8.2")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "valr" version))
        (sha256
         (base32
-         "1pp8naglh26yi8c2p15arx8jkj3jyslzw7j3n5bnzngdpfprk3as"))))
+         "1mba0dbmpx7bnwfffiiwd7ipqfl74fmgsbcsgbfp74qd8k5gly2h"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-broom
@@ -16363,14 +16363,14 @@ attempts to assess their statistical significance.")
 (define-public r-clusterprofiler
   (package
     (name "r-clusterprofiler")
-    (version "4.12.5")
+    (version "4.12.6")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "clusterProfiler" version))
        (sha256
         (base32
-         "139qfvfqwb09k72srjn233hw9i6rh4bp8i9nqn215cn3qvvrw9zz"))))
+         "185g4pp3q78c5kxz8gqk3pl0f2xnp8fqffwi5rqsvs026cq06biq"))))
     (properties
      `((upstream-name . "clusterProfiler")))
     (build-system r-build-system)

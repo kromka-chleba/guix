@@ -172,6 +172,7 @@
   #:use-module (gnu packages libunwind)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages lisp-xyz)
+  #:use-module (gnu packages logging)
   #:use-module (gnu packages lsof)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages mail)
@@ -204,6 +205,7 @@
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages skribilo)
   #:use-module (gnu packages sphinx)
+  #:use-module (gnu packages telephony)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages textutils)
   #:use-module (gnu packages time)
@@ -2157,6 +2159,57 @@ protocols, and supports browsing and requesting pages while offline, indexing,
 modifying pages and incoming and outgoing headers, monitoring pages for
 changes, and much more.")
     (license license:gpl2+)))
+
+(define-public libjuice
+  (package
+    (name "libjuice")
+    (version "1.4.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/paullouisageneau/libjuice")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "035kqyp5bcawzkpqpjb1qjwqf0dp2gm9h2j9py5iiahcvfjwh70i"))))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #f))      ; requires internet access
+    (home-page "https://github.com/paullouisageneau/libjuice")
+    (synopsis "UDP Interactive Connectivity Establishment library")
+    (description "@code{libjuice} allows to open bidirectionnal User Datagram
+Protocol (UDP) streams with Network Address Translator (NAT) traversal.  It's a
+simplified implementation of the Interactive Connectivity Establishment (ICE)
+protocol, client-side and server-side, written in C without dependencies for
+POSIX platforms.")
+    (license license:mpl2.0)))
+
+(define-public libdatachannel
+  (package
+    (name "libdatachannel")
+    (version "0.21.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/paullouisageneau/libdatachannel")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "11icbyd71dw5ywjdviq580xvad24yfsjj3c5zpjqsxc883i40dxi"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f                  ; requires internet access
+           #:configure-flags
+           #~'("-DPREFER_SYSTEM_LIB=ON")))
+    (inputs (list libjuice libsrtp nlohmann-json openssl plog usrsctp))
+    (home-page "https://libdatachannel.org/")
+    (synopsis "WebRTC Data Channels and WebSockets library")
+    (description "@code{libdatachannel} is a standalone implementation of WebRTC
+Data Channels, WebRTC Media Transport, and WebSockets in C++17 with C bindings
+for POSIX platforms.  WebRTC is a W3C and IETF standard enabling real-time
+peer-to-peer data and media exchange between two devices.")
+    (license license:mpl2.0)))
 
 (define-public liboauth
   (package

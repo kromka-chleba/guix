@@ -67,7 +67,7 @@
 ;;; Copyright © 2023 Dominik Delgado Steuter <dds@disroot.org>
 ;;; Copyright © 2023 Saku Laesvuori <saku@laesvuori.fi>
 ;;; Copyright © 2023 Jaeme Sifat <jaeme@runbox.com>
-;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -111,6 +111,7 @@
   #:use-module (guix build-system waf)
   #:use-module (guix build-system trivial)
   #:use-module (gnu packages)
+  #:use-module (gnu packages aidc)
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages assembly)
   #:use-module (gnu packages audio)
@@ -1663,17 +1664,17 @@ These tools require a supported graphics chip, driver, and VA-API back end to
 operate properly.")
     (license license:expat)))
 
-(define-public ffmpeg
+(define-public ffmpeg-7
   (package
     (name "ffmpeg")
-    (version "6.1.1")
+    (version "7.0.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://ffmpeg.org/releases/ffmpeg-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0s7r2qv8gh2a3w568n9xxgcz0q8j5ww1jdsci1hm9f4l1yqg9146"))))
+                "12dkv17mrsdqrm70c30azjw7qi1lfxca7xisw81x6flacddm2il6"))))
     (outputs '("out" "debug"))
     (build-system gnu-build-system)
     (inputs
@@ -1881,6 +1882,18 @@ operate properly.")
 convert and stream audio and video.  It includes the libavcodec
 audio/video codec library.")
     (license license:gpl2+)))
+
+(define-public ffmpeg
+  (package
+    (inherit ffmpeg-7)
+    (version "6.1.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://ffmpeg.org/releases/ffmpeg-"
+                                  version ".tar.xz"))
+              (sha256
+               (base32
+                "0s7r2qv8gh2a3w568n9xxgcz0q8j5ww1jdsci1hm9f4l1yqg9146"))))))
 
 (define-public ffmpeg-5
   (package
@@ -3989,7 +4002,7 @@ be used for realtime video capture via Linux-specific APIs.")
 (define-public obs
   (package
     (name "obs")
-    (version "29.1.3")
+    (version "30.1.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3999,7 +4012,7 @@ be used for realtime video capture via Linux-specific APIs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "192p7m3g8ynbkq3s894w6a0w6gix3k237q5jwqrrr8idwfwwyh0g"))
+                "02pm6397h7l0xhdpscbh1kq8y98zx236z95wvw60kbhq38s0i0ik"))
               (patches
                (search-patches "obs-modules-location.patch"))))
     (build-system cmake-build-system)
@@ -4010,6 +4023,7 @@ be used for realtime video capture via Linux-specific APIs.")
               "-DENABLE_UNIT_TESTS=ON"
               "-DENABLE_NEW_MPEGTS_OUTPUT=OFF"
               "-DENABLE_AJA=OFF"
+              "-DENABLE_QSV11=OFF"
               ;; Browser plugin requires cef, but it is not packaged yet.
               ;; <https://bitbucket.org/chromiumembedded/cef/src/master/>
               "-DBUILD_BROWSER=OFF")
@@ -4022,6 +4036,9 @@ be used for realtime video capture via Linux-specific APIs.")
                    `("QT_PLUGIN_PATH" ":" prefix (,plugin-path))
                    `("LD_LIBRARY_PATH" ":" prefix
                      (,(string-append #$(this-package-input "vlc")
+                                      "/lib")
+                      ;; TODO: Remove this once our mesa has glvnd support.
+                      ,(string-append #$(this-package-input "mesa")
                                       "/lib"))))))))))
     (native-search-paths
      (list (search-path-specification
@@ -4041,12 +4058,13 @@ be used for realtime video capture via Linux-specific APIs.")
       bash-minimal
       curl
       eudev
-      ffmpeg-4
+      ffmpeg
       fontconfig
       freetype
       glib
       jack-1
       jansson
+      libdatachannel
       libglvnd
       libva
       libx264
@@ -4060,12 +4078,13 @@ be used for realtime video capture via Linux-specific APIs.")
       pipewire
       pulseaudio
       python
-      qtbase-5
-      qtsvg-5
-      qtx11extras
-      qtwayland-5
+      qrcodegen-cpp
+      qtbase
+      qtsvg
+      qtwayland
       speexdsp
       v4l-utils
+      vulkan-headers
       vlc
       wayland
       wayland-protocols
