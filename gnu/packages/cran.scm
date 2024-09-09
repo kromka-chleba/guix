@@ -141,13 +141,13 @@ characters, such that the strings remain unique (if they originally were).")
 (define-public r-aer
   (package
     (name "r-aer")
-    (version "1.2-12")
+    (version "1.2-13")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "AER" version))
               (sha256
                (base32
-                "11pas7lglcw1h5649bgab13g8xlnx109pc2aqphwc3fdgvqv1ism"))))
+                "03pa1rqlcn0r7hqijy8kjrkwg38rzyg5la9p71pbfyr5nr3p7jqd"))))
     (properties `((upstream-name . "AER")))
     (build-system r-build-system)
     (propagated-inputs
@@ -792,14 +792,14 @@ functions are included.")
 (define-public r-datawizard
   (package
     (name "r-datawizard")
-    (version "0.12.2")
+    (version "0.12.3")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "datawizard" version))
        (sha256
         (base32
-         "10g05f6jm7q59ihsb8wpg5fyy2an56gv33l7jiimjc818hh6bqzy"))))
+         "183z85zdh0jz0phy5nbw6h49mwfmalnxcfb3f32mldx4qzd7k9x3"))))
     (properties `((upstream-name . "datawizard")))
     (build-system r-build-system)
     (propagated-inputs
@@ -4246,13 +4246,13 @@ Chaitanya Swamy <doi:10.1145/2395116.2395117>.")
 (define-public r-tgp
   (package
     (name "r-tgp")
-    (version "2.4-22.1")
+    (version "2.4-23")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "tgp" version))
               (sha256
                (base32
-                "1jf4mr59qp169z00pxb4kc0484mg73hgcyajg9hisdxl02qs1m4r"))))
+                "074d2c88ydgmggz24hqkxb8sqvbcgf5d32dhcxwa79snv8br5aqd"))))
     (properties `((upstream-name . "tgp")))
     (build-system r-build-system)
     (propagated-inputs (list r-maptree))
@@ -9112,14 +9112,14 @@ and renewable energy.")
 (define-public r-suppdists
   (package
     (name "r-suppdists")
-    (version "1.1-9.7")
+    (version "1.1-9.8")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "SuppDists" version))
        (sha256
         (base32
-         "025b9nlxz62wk84295csyzbncpn80i3iby3sxdigf3swcgi2fmbb"))))
+         "07k8sdw7qmbzflpsr1zrn8bm42qp936sm3bwpi8q7mjb7h8y40k5"))))
     (properties `((upstream-name . "SuppDists")))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/SuppDists")
@@ -12300,6 +12300,17 @@ Fisher's method), and Sidak correction.")
         (base32
          "165vp2ygry8ibcpxjbyfvfrjbv98syln12kkyzci2ygp84r5sv1r"))))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'build-reproducibly
+           (lambda _
+             (substitute* "R/buildModel.R"
+               (("Sys.time\\(\\)")
+                "if (\"\" != Sys.getenv(\"SOURCE_DATE_EPOCH\")) {\
+ as.numeric(Sys.getenv(\"SOURCE_DATE_EPOCH\"))\
+} else { Sys.time() }\n")))))))
     (propagated-inputs
      (list r-curl r-jsonlite r-ttr r-xts r-zoo))
     (home-page "https://cran.r-project.org/web/packages/quantmod/")
@@ -14559,14 +14570,14 @@ always locate the files relative to your project root.")
 (define-public r-reticulate
   (package
     (name "r-reticulate")
-    (version "1.38.0")
+    (version "1.39.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "reticulate" version))
        (sha256
         (base32
-         "13favs31kzzff7ii0fxsdwvwb3iijasn2mg57ghcv8si4cz32byb"))))
+         "0361brhr23cw5h5jc3kl3qawmly3imbzxs1lv64xs2rg9m8xqdb6"))))
     (build-system r-build-system)
     (arguments
      (list
@@ -18362,14 +18373,14 @@ ROPE percentage and pd).")
 (define-public r-performance
   (package
     (name "r-performance")
-    (version "0.12.2")
+    (version "0.12.3")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "performance" version))
        (sha256
         (base32
-         "0a20xnky7h6hgd6sk9n5jb4a2s201kr0cibhbii8i3jvnhz6cpmm"))))
+         "0pqf0cgj3xdf5xc79518i85bv4mvh67ripkaw9yns81cmldrnjgz"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-bayestestr r-datawizard r-insight))
@@ -21323,14 +21334,14 @@ decomposition is shared between datasets.")
 (define-public r-strucchange
   (package
     (name "r-strucchange")
-    (version "1.5-3")
+    (version "1.5-4")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "strucchange" version))
        (sha256
         (base32
-         "11hgz64snlwhfqsmqajmkciflwkz1wficxr340wqvk38iw1b9ina"))))
+         "066pbldj1a0hdhrzszqp8ad71krj7w5dbqxmgp8kk5d76r6wd6vq"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-sandwich r-zoo))
@@ -23694,14 +23705,14 @@ graphs.")
 (define-public r-pbdzmq
   (package
     (name "r-pbdzmq")
-    (version "0.3-11")
+    (version "0.3-12")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "pbdZMQ" version))
        (sha256
         (base32
-         "0ns0fpfsbx28iyxmas691i29sh1gia0bspx0flgj0w3khm6j0zns"))))
+         "109sd1nli7drw935vdy96pi263gl26aysrm7xq6qsi9nw6kbfhxm"))))
     (properties `((upstream-name . "pbdZMQ")))
     (build-system r-build-system)
     (inputs
@@ -24341,13 +24352,13 @@ classes.")
 (define-public r-clarabel
   (package
     (name "r-clarabel")
-    (version "0.9.0")
+    (version "0.9.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "clarabel" version))
        (sha256
-        (base32 "1g66y8s4v7qzm92dhnsmng28sm4lf6wggb4kc6arvp75z0i315jh"))))
+        (base32 "1qfchpxd0hnw4vcs6vbkkrf0rqrrjr85j1hvpka466aqpdsl2qsa"))))
     (properties `((upstream-name . "clarabel")))
     (build-system r-build-system)
     (arguments
@@ -24400,14 +24411,14 @@ univariate class intervals for mapping or other graphics purposes.")
 (define-public r-spdata
   (package
     (name "r-spdata")
-    (version "2.3.1")
+    (version "2.3.3")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "spData" version))
        (sha256
         (base32
-         "0x80qzn12lrr8al5igj5nass3aqasg65drhdrb2p9cmp4chpydwc"))))
+         "1q1rkq03hn4hl03n7l7ravhsh6qp3q26hqpr9984v59iqvmvk4y0"))))
     (properties `((upstream-name . "spData")))
     (build-system r-build-system)
     (propagated-inputs
@@ -24476,14 +24487,14 @@ tessellation.")
 (define-public r-wk
   (package
     (name "r-wk")
-    (version "0.9.2")
+    (version "0.9.3")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "wk" version))
        (sha256
         (base32
-         "1y75hdg1p1h6pja3zxpllmbvzqlh67n5z9d3d6zhknxfkgfmwrrk"))))
+         "1f80d342gb1vb83qs4bd1fh5gcm7hxlhdrk1jdavz47zbrvjrjy6"))))
     (properties `((upstream-name . "wk")))
     (build-system r-build-system)
     (home-page "https://paleolimbot.github.io/wk/")
@@ -24541,14 +24552,14 @@ information about geometries.")
 (define-public r-sf
   (package
     (name "r-sf")
-    (version "1.0-16")
+    (version "1.0-17")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "sf" version))
        (sha256
         (base32
-         "11wrbaj5s0dqbnh1mfm03l7xi9flzx8grgbkqxrs1wnd2481jvp9"))))
+         "11mj31ykrv99n68kbsz629rjaf4j2q6ff1zzpvj44qcax79c5ir2"))))
     (build-system r-build-system)
     (inputs
      (list curl
@@ -28541,14 +28552,14 @@ in pipelines.")
 (define-public r-parameters
   (package
     (name "r-parameters")
-    (version "0.22.1")
+    (version "0.22.2")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "parameters" version))
        (sha256
         (base32
-         "0axyl6iwa0x6yk340g5943v1d1q023z63smxf0j6033mdikf3xm4"))))
+         "020mi9wz13d9bi0chx5s92il3c65qny7gwrm54hajlnrg25rzfry"))))
     (properties `((upstream-name . "parameters")))
     (build-system r-build-system)
     (propagated-inputs
@@ -29277,13 +29288,13 @@ such as Ghostscript is needed to use this package.")
 (define-public r-emoa
   (package
     (name "r-emoa")
-    (version "0.5-2")
+    (version "0.5-3")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "emoa" version))
               (sha256
                (base32
-                "1a71xd8gdy27cfy09a4avjhc7d7idrljzan79cxb8qwb0pq9pvz9"))))
+                "1w287k5gjhgqcyq27xz0ybvhzkf1kydcnpcn30iziliw3xx71g2d"))))
     (properties `((upstream-name . "emoa")))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/emoa/")
@@ -32756,14 +32767,14 @@ Norwegian, Portuguese, Romanian, Russian, Spanish, Swedish and Turkish.")
 (define-public r-quanteda
   (package
     (name "r-quanteda")
-    (version "4.0.2")
+    (version "4.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "quanteda" version))
        (sha256
         (base32
-         "1s046p3bnf36z2mqh5ijirq7jygqj5clal3r0l3f89gr0466a75j"))))
+         "01j10gy1svzsz3d2yqg4mbdq7mlgkf1ymzkzjprs6mn91qb0b0ng"))))
     (properties `((upstream-name . "quanteda")))
     (build-system r-build-system)
     (propagated-inputs
@@ -32773,7 +32784,6 @@ Norwegian, Portuguese, Romanian, Russian, Spanish, Swedish and Turkish.")
            r-magrittr
            r-matrix
            r-rcpp
-           r-rcpparmadillo
            r-snowballc
            r-stopwords
            r-stringi
@@ -35795,13 +35805,13 @@ Kolmogorov-Smirnov, ANOVA) are also supported.")
 (define-public r-spatstat-univar
   (package
     (name "r-spatstat-univar")
-    (version "3.0-0")
+    (version "3.0-1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "spatstat.univar" version))
        (sha256
-        (base32 "0wa7zys089sym8f16rg4dih81miv34rj8mph0w926cpckcfm1g00"))))
+        (base32 "063hmk0c5liyhg03d5afndynjrnp4yik3rgpmk51zq1npm3wjv6n"))))
     (properties `((upstream-name . "spatstat.univar")))
     (build-system r-build-system)
     (propagated-inputs (list r-spatstat-utils))
@@ -41529,14 +41539,14 @@ fully reproducible.")
 (define-public r-paws-common
   (package
     (name "r-paws-common")
-    (version "0.7.5")
+    (version "0.7.6")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "paws.common" version))
        (sha256
         (base32
-         "1dd0cms3l0my6fpxrpsq6b7sya9ajrhaaz12a3y5iix2yklciac5"))))
+         "1w7hwxjwzdb84ra5hfycca9rfaq007avpx8n92fvq2chn8z3ijbd"))))
     (properties `((upstream-name . "paws.common")))
     (build-system r-build-system)
     (propagated-inputs
@@ -42840,13 +42850,13 @@ API.")
 (define-public r-spacetime
   (package
     (name "r-spacetime")
-    (version "1.3-1")
+    (version "1.3-2")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "spacetime" version))
               (sha256
                (base32
-                "1kr12pbi6hqns30kqy4jv5pcm3lgfcfyc2gwaak1jbg894csahhr"))))
+                "01dvih9f7m7vmjv057d1lls5kyxq5h87mmxaby566r9b2svrx0fn"))))
     (properties `((upstream-name . "spacetime")))
     (build-system r-build-system)
     (propagated-inputs (list r-intervals r-lattice r-sp r-xts r-zoo))
@@ -42864,21 +42874,21 @@ matching or aggregation, retrieving coordinates, print, summary, etc.")
 (define-public r-gstat
   (package
     (name "r-gstat")
-    (version "2.1-1")
+    (version "2.1-2")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "gstat" version))
               (sha256
                (base32
-                "09ax28di93r4r334qwdp84i95809lkr6587w4xlgpvsma7k0bcj8"))))
+                "1zvfljlpgvydvjhdhyc9g8c39a3ba347l8hvc6nv27j0w7kyplr6"))))
     (properties `((upstream-name . "gstat")))
     (build-system r-build-system)
     (propagated-inputs
      (list r-fnn
            r-lattice
-           r-sp
            r-sf
            r-sftime
+           r-sp
            r-spacetime
            r-stars
            r-zoo))
@@ -42896,13 +42906,13 @@ supports @command{sf} and @command{stars}.")
 (define-public r-automap
   (package
     (name "r-automap")
-    (version "1.1-9")
+    (version "1.1-12")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "automap" version))
               (sha256
                (base32
-                "0hrsdynjxv0n5n1pbdk05rgrcwfd0g5p9pgdbicx4ljk73nhl1zk"))))
+                "1lz60na443pf6k9ndzqyylllw2fz8b658j6m3ykfpia0k6fbpx55"))))
     (properties `((upstream-name . "automap")))
     (build-system r-build-system)
     (propagated-inputs (list r-ggplot2

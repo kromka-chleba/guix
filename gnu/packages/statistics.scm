@@ -1667,13 +1667,13 @@ from knitr Rmarkdown.")
 (define-public r-microbenchmark
   (package
     (name "r-microbenchmark")
-    (version "1.4.10")
+    (version "1.5.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "microbenchmark" version))
               (sha256
                (base32
-                "10dlp4295jb5l7lhz80f4mkz3jccv02v277z666wx3bhfaz43k04"))))
+                "0pvn94zfv50imz5g39wyqbqaa7fkl0h5sy98ic9as4b842lr47ix"))))
     (build-system r-build-system)
     (home-page "https://cran.r-project.org/web/packages/microbenchmark/")
     (synopsis "Accurate timing functions for R")
@@ -3269,13 +3269,13 @@ vectors.")
 (define-public r-catools
   (package
     (name "r-catools")
-    (version "1.18.2")
+    (version "1.18.3")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "caTools" version))
               (sha256
                (base32
-                "14q2ry8gaszjl0m97qg62dxv5bpj6k02qwyi7q2lnxgcmwai3mkm"))))
+                "1n380hnddj29nrzsqf462a1h3xy55qk4q45i5287ffd2lx13j6z7"))))
     (properties `((upstream-name . "caTools")))
     (build-system r-build-system)
     (propagated-inputs
@@ -3628,14 +3628,14 @@ statements.")
 (define-public r-segmented
   (package
     (name "r-segmented")
-    (version "2.1-1")
+    (version "2.1-2")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "segmented" version))
        (sha256
         (base32
-         "1p83g6qj8y4xblggm12bhr9zpsqbrrc7lbbigxcafhhi9c8v08v7"))))
+         "1nq37pf22mnsvvpxcfisryypkbfx8xknn6rjzyb2wmpa57vsrgpb"))))
     (build-system r-build-system)
     (propagated-inputs (list r-mass r-nlme))
     (home-page "https://cran.r-project.org/web/packages/segmented")
@@ -4476,13 +4476,13 @@ vignettes.")
 (define-public r-mvtnorm
   (package
     (name "r-mvtnorm")
-    (version "1.3-0")
+    (version "1.3-1")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "mvtnorm" version))
               (sha256
                (base32
-                "0jflnzzpayd6g46mvs3x763smb9l8k9znbmvac4sffmf2n27rbd4"))))
+                "0hazs8vw04vp8jba70p642nrhrjf9m201sq9g7xwiyb7fx7h6vx2"))))
     (build-system r-build-system)
     (native-inputs
      (list gfortran))
@@ -4495,13 +4495,13 @@ t-probabilities, quantiles, random deviates and densities.")
 (define-public r-matrixstats
   (package
     (name "r-matrixstats")
-    (version "1.3.0")
+    (version "1.4.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "matrixStats" version))
               (sha256
                (base32
-                "0ni4jgw3jfbwakzrcz6jcjr1zsnaq924jz2a9d8kq92vv43ycgj1"))))
+                "04kxb3ibnip0c28vrsw61q5i0yjvsh6zpalii7bhjz3zvkb1b9im"))))
     (properties `((upstream-name . "matrixStats")))
     (build-system r-build-system)
     (arguments
@@ -4640,14 +4640,14 @@ and tidyr provides no margins or aggregation.")
 (define-public r-hexbin
   (package
     (name "r-hexbin")
-    (version "1.28.3")
+    (version "1.28.4")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "hexbin" version))
        (sha256
         (base32
-         "0pyy97bh9xf9hijg3iw1z4ri01571r1fx7xqm3fjkzx4q48kbcqf"))))
+         "18685z944j0xsd70xqxlf0sn87hbvr5ck8p7j436iqli1i6phmbm"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-lattice))
