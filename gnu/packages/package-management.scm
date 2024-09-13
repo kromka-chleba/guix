@@ -614,19 +614,6 @@ the Nix package manager.")
        ((#:phases phases '%standard-phases)
         `(modify-phases ,phases
            (delete 'set-font-path)
-           (add-after 'unpack 'change-default-guix
-             (lambda _
-               ;; We need to tell 'guix-daemon' which 'guix' command to use.
-               ;; Here we use a questionable hack where we hard-code root's
-               ;; current guix, which could be wrong (XXX).  Note that scripts
-               ;; like 'guix perform-download' do not run as root so we assume
-               ;; that they have access to /var/guix/profiles/per-user/root.
-               (substitute* "nix/libstore/globals.cc"
-                 (("guixProgram = (.*)nixBinDir + \"/guix\"" _ before)
-                  (string-append "guixProgram = " before
-                                 "/var/guix/profiles/per-user/root\
-/current-guix/bin/guix")))
-               #t))
            (replace 'build
              (lambda _
                (invoke "make" "nix/libstore/schema.sql.hh")
@@ -904,19 +891,19 @@ sub-directory.")
 (define-public stow
   (package
     (name "stow")
-    (version "2.4.0")
+    (version "2.4.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/stow/stow-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "07bn3n5n8spl2vabgyl8db5dyp690qn3x92ij4ynvayyck7ngvbg"))))
+                "02vqi0mwvs3z3bgyn2411bgnjxlw2qip56kax2zh6wr0zisiwrra"))))
     (build-system gnu-build-system)
     (inputs
      (list perl))
     (native-inputs
-     (list perl-test-simple perl-test-output perl-capture-tiny
+     (list perl perl-test-simple perl-test-output perl-capture-tiny
            perl-io-stringy))
     (home-page "https://www.gnu.org/software/stow/")
     (synopsis "Managing installed software packages")

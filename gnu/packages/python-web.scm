@@ -143,7 +143,7 @@
 (define-public python-huggingface-hub
   (package
     (name "python-huggingface-hub")
-    (version "0.20.3")
+    (version "0.23.2")
     (source
      (origin
        (method git-fetch)
@@ -152,7 +152,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00indl9labvqvm4m0y5jbzl68cgj8i60a6qy498gpnjj2pqk4l6v"))))
+        (base32 "0hygxqcixkc1d9sr47j2km6z0p17aj4k1dzm4cvpddrvhrgqayq5"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -175,6 +175,7 @@
              "--ignore=tests/test_inference_api.py"
              "--ignore=tests/test_inference_async_client.py"
              "--ignore=tests/test_inference_client.py"
+             "--ignore=tests/test_inference_text_generation.py"
              "--ignore=tests/test_login_utils.py"
              "--ignore=tests/test_offline_utils.py"
              "--ignore=tests/test_repocard.py"
@@ -184,7 +185,11 @@
              "--ignore=tests/test_utils_git_credentials.py"
              "--ignore=tests/test_utils_http.py"
              "--ignore=tests/test_utils_pagination.py"
-             "--ignore=tests/test_webhooks_server.py")
+             "--ignore=tests/test_webhooks_server.py"
+             "-k" (string-append
+                   "not test_push_to_hub"
+                   " and not test_from_pretrained_model_id_only"
+                   " and not test_from_pretrained_model_id_and_revision"))
       #:phases
       '(modify-phases %standard-phases
          (add-before 'check 'pre-check
@@ -9532,3 +9537,27 @@ hardware on Grid'5000 or via OpenStack, to Vagrant, Chameleon, and more.")
     (description "Python module to query and edit data stored in a
 @url{https://netbox.dev,NetBox} instance.")
     (license license:asl2.0)))
+
+(define-public python-waybackpack
+  (package
+    (name "python-waybackpack")
+    (version "0.6.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "waybackpack" version))
+       (sha256
+        (base32 "16lcr2hv7gmp199fh3psrnv68j20pfxria8v6gchrpl1jqx9f923"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; would require network (and SSL certificates)
+    (propagated-inputs (list python-requests))
+    (native-inputs (list python-pytest))
+    (home-page "https://github.com/jsvine/waybackpack")
+    (synopsis
+     "Command-line tool that lets you download the entire Wayback Machine
+archive for a given URL.")
+    (description
+     "This package provides a library and a command-line tool that lets
+you download the entire Wayback Machine archive for a given URL.")
+    (license license:expat)))

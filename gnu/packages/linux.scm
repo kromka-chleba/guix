@@ -513,7 +513,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.10-version "6.10.7")
+(define-public linux-libre-6.10-version "6.10.8")
 (define-public linux-libre-6.10-gnu-revision "gnu")
 (define deblob-scripts-6.10
   (linux-libre-deblob-scripts
@@ -523,7 +523,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1zmgsgzrcsjzjzhgb12drc0f42ag8xak6z7zzx324f0wrf4i67zf")))
 (define-public linux-libre-6.10-pristine-source
   (let ((version linux-libre-6.10-version)
-        (hash (base32 "1adkbn6dqbpzlr3x87a18mhnygphmvx3ffscwa67090qy1zmc3ch")))
+        (hash (base32 "15f5wdzd8k70vgaz9a8w1kjfk5pp27zbcwkzm2xhcilxfwsk54n0")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.10)))
@@ -532,7 +532,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.48")
+(define-public linux-libre-6.6-version "6.6.49")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -542,12 +542,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0kpkmdmrw9bnypdd0z489smh8bbwgg1ii301g1ynqfdkzd2ca1iq")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "0a90fx0r25nkcr5b16dn1j7vwyndnshaxn6ziyviccds59xxy5kb")))
+        (hash (base32 "1dyk5pr5g8s5ia7f1vnkid4jghi81pxvwlgn9rmw2n88nz1dlmic")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.107")
+(define-public linux-libre-6.1-version "6.1.108")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -557,12 +557,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "11jbnj0d3262grf9vkn0668kvfxifxw98ccvn81wkaykll01k5nx")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "1s5h51r41l0d3k1h9i4mya7nz53jd6i200s06w5gl49hsz8jjcpl")))
+        (hash (base32 "18lcd2b7ffwzqwqnmb948r7z95470bh7jiqps5nil8hfl24lwkiz")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.165")
+(define-public linux-libre-5.15-version "5.15.166")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
@@ -572,12 +572,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1l8dhfby3qx8vs8fq6yybixzrghbh03wflzwly4rq08wabcr87z8")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "1zn627gid0dik3r5k61r9ff4sz7md1jnbwiixpyllqzb5kld6vd3")))
+        (hash (base32 "1krri2sf0hvvgai0z9lp8h12gcmpigapb42qxs2pcnxqb7ialv75")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
 
-(define-public linux-libre-5.10-version "5.10.224")
+(define-public linux-libre-5.10-version "5.10.225")
 (define-public linux-libre-5.10-gnu-revision "gnu1")
 (define deblob-scripts-5.10
   (linux-libre-deblob-scripts
@@ -587,12 +587,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1isiih0laz4wbivsg0pcvlgrflq3lv10fakv9lvg2b4s0yd9ybdn")))
 (define-public linux-libre-5.10-pristine-source
   (let ((version linux-libre-5.10-version)
-        (hash (base32 "06nivms93yjbddv3gl88m7bdrr0676nm3p12iqvsdfr4fg39kc0r")))
+        (hash (base32 "0770757ildcc0cs6alnb5cspg6ysg2wqly9z5q1vjf3mh0xbzmw5")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.10)))
 
-(define-public linux-libre-5.4-version "5.4.282")
+(define-public linux-libre-5.4-version "5.4.283")
 (define-public linux-libre-5.4-gnu-revision "gnu1")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
@@ -602,12 +602,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0x0xg0fcykpd117x3q0gim8jilhx922ashhckjvafxv2gk2zzjhj")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "1q3xvl4c5dlql6jh0g8kn01aljgl946gmq4ljjzvffykfq4pg0jm")))
+        (hash (base32 "15zpw5vwi8c4yjap28lzrwdvj3yrynnbx6vw8aqiqamlk4qnl315")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
 
-(define-public linux-libre-4.19-version "4.19.320")
+(define-public linux-libre-4.19-version "4.19.321")
 (define-public linux-libre-4.19-gnu-revision "gnu1")
 (define deblob-scripts-4.19
   (linux-libre-deblob-scripts
@@ -617,7 +617,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0fgkp3v7qgqpn7l1987xcwwlrmwsbscqnxfv06p8nkavrhymrv3c")))
 (define-public linux-libre-4.19-pristine-source
   (let ((version linux-libre-4.19-version)
-        (hash (base32 "18a723djyq3y2jhjazwgiwqslh1yz954wb82cg7bf083n091lrwx")))
+        (hash (base32 "1n86dfv8qcm21z3inrz0n7gnwik7s51xfrabyq8ajy15b93a2fpi")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.19)))
@@ -1579,7 +1579,7 @@ and the notification, WiFi, and Bluetooth LED.")
 (define-public tuxedo-keyboard
   (package
     (name "tuxedo-keyboard")
-    (version "4.6.1")
+    (version "4.6.3")
     (source
      (origin
        (method git-fetch)
@@ -1588,7 +1588,7 @@ and the notification, WiFi, and Bluetooth LED.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0hbqk28qi3yxw0g3j8yarsplyigpd8kgliri7c48d3yhliiiz7l5"))))
+        (base32 "1958ls5jk8ilc5mn7z3770phrqwj09lnam2slyq54h15n68hf07c"))))
     (build-system linux-module-build-system)
     (arguments
      (list #:tests? #f))                ; no test suite

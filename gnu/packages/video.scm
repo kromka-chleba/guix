@@ -2871,7 +2871,7 @@ Jellyfin.  It has support for various media files without transcoding.")
 (define-public gallery-dl
   (package
     (name "gallery-dl")
-    (version "1.27.3")
+    (version "1.27.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/mikf/gallery-dl"
@@ -2879,7 +2879,7 @@ Jellyfin.  It has support for various media files without transcoding.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "08j9spy3vzqc8xq5a8cps073qxf46mn9jfsz750p09i2fipfgf90"))))
+                "13qq16fi6zq356qbnwb8a898m7gq20r67j2lmb4g37389yqvkk6v"))))
     (build-system python-build-system)
     (inputs (list python-requests ffmpeg))
     (home-page "https://github.com/mikf/gallery-dl")
@@ -3345,6 +3345,32 @@ at the best resolution (customizable) and with closed-captions (if available).
 Both command-line and GTK2 interface are available.")
     (home-page "https://github.com/trizen/youtube-viewer")
     (license license:perl-license)))
+
+(define-public ytcc
+  (package
+    (name "ytcc")
+    (version "2.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ytcc" version))
+       (sha256
+        (base32 "0laaj7m9mkn421hsljaqyhj2az641lg4y7ym6l8jl1xgs1vl9b4b"))))
+    (build-system pyproject-build-system)
+    (inputs (list python-click
+                  python-wcwidth
+                  python-websockets
+                  python-urllib3-next
+                  python-requests-next
+                  python-pycryptodomex
+                  python-mutagen
+                  python-brotli
+                  yt-dlp))
+    (home-page "https://github.com/woefe/ytcc")
+    (synopsis "Command line tool to keep track of your favorite playlists")
+    (description "ytcc is a command line tool to keep track of your favorite
+playlists.")
+    (license license:gpl3+)))
 
 (define-public libbluray
   (package

@@ -367,6 +367,64 @@ different strengths without committing the application to one datastore
 throughout its lifetime.")
     (license license:expat)))
 
+(define-public go-github-com-ipfs-go-ds-badger
+  (package
+    (name "go-github-com-ipfs-go-ds-badger")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-ds-badger")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06hn79airlqrgsbsppin98swbqwz58ji659fyrk1wivp4iz2na3h"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: Tests time out, figure out workaround.
+      #:tests? #f
+      #:import-path "github.com/ipfs/go-ds-badger"))
+    (propagated-inputs
+     (list go-github-com-dgraph-io-badger
+           go-github-com-ipfs-go-datastore
+           go-github-com-ipfs-go-log-v2
+           go-github-com-jbenet-goprocess))
+    (home-page "https://github.com/ipfs/go-ds-badger")
+    (synopsis "Datastore implementation using badger as backend")
+    (description
+     "This package provides a @acronym{DS, Data Store} implementation backed
+by @url{https://dgraph.io/docs/badger,Badger}.")
+    (license license:expat)))
+
+(define-public go-github-com-ipfs-go-ds-leveldb
+  (package
+    (name "go-github-com-ipfs-go-ds-leveldb")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ipfs/go-ds-leveldb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hi7vmjpzzh00zcf0638rvgiqj4j8difz5kzr0pilr0z6zcb7dq3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/ipfs/go-ds-leveldb"))
+    (propagated-inputs
+     (list go-github-com-ipfs-go-datastore go-github-com-syndtr-goleveldb))
+    (home-page "https://github.com/ipfs/go-ds-leveldb")
+    (synopsis "Implementation of go-datastore using leveldb")
+    (description
+     "This package implements the
+@url{https://github.com/ipfs/go-datastore,go-datastore} interface using a
+LevelDB backend.")
+    (license license:expat)))
+
 (define-public go-github-com-ipfs-go-detect-race
   (package
     (name "go-github-com-ipfs-go-detect-race")
@@ -791,6 +849,101 @@ their levels to be controlled individually.")
      "Metrics interface for IPFS (Kubo).")
     (license license:expat)))
 
+(define-public go-github-com-libp2p-go-libp2p
+  (package
+    (name "go-github-com-libp2p-go-libp2p")
+    (version "0.34.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libp2p/go-libp2p")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0423h149ziyka9cai1sdsl1bnycphs3h4xa3b3rc6108gfrzzil2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libp2p/go-libp2p"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-embed-go-libp2p-asn-util
+            (lambda _
+              (delete-file
+               "src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin")
+              (copy-file
+               (string-append
+                #$(this-package-input "go-github-com-libp2p-go-libp2p-asn-util")
+                "/src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin")
+               "src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin"))))))
+    (propagated-inputs
+     (list go-github-com-benbjohnson-clock
+           go-github-com-davidlazar-go-crypto
+           go-github-com-decred-dcrd-dcrec-secp256k1-v4
+           go-github-com-flynn-noise
+           go-github-com-google-gopacket
+           go-github-com-gorilla-websocket
+           go-github-com-hashicorp-golang-lru-arc-v2
+           go-github-com-hashicorp-golang-lru-v2
+           go-github-com-ipfs-go-cid
+           go-github-com-ipfs-go-datastore
+           go-github-com-ipfs-go-ds-badger
+           go-github-com-ipfs-go-ds-leveldb
+           go-github-com-ipfs-go-log-v2
+           go-github-com-jbenet-go-temp-err-catcher
+           go-github-com-klauspost-compress
+           go-github-com-libp2p-go-buffer-pool
+           go-github-com-libp2p-go-flow-metrics
+           go-github-com-libp2p-go-libp2p-asn-util
+           go-github-com-libp2p-go-msgio
+           go-github-com-libp2p-go-nat
+           go-github-com-libp2p-go-netroute
+           go-github-com-libp2p-go-reuseport
+           go-github-com-libp2p-go-yamux-v4
+           go-github-com-libp2p-zeroconf-v2
+           go-github-com-marten-seemann-tcp
+           go-github-com-mikioh-tcpinfo
+           go-github-com-mr-tron-base58
+           go-github-com-multiformats-go-base32
+           go-github-com-multiformats-go-multiaddr
+           go-github-com-multiformats-go-multiaddr-dns
+           go-github-com-multiformats-go-multiaddr-fmt
+           go-github-com-multiformats-go-multibase
+           go-github-com-multiformats-go-multicodec
+           go-github-com-multiformats-go-multihash
+           go-github-com-multiformats-go-multistream
+           go-github-com-multiformats-go-varint
+           go-github-com-pbnjay-memory
+           go-github-com-pion-datachannel
+           go-github-com-pion-ice-v2
+           go-github-com-pion-logging
+           go-github-com-pion-sctp
+           go-github-com-pion-stun
+           go-github-com-pion-webrtc-v3
+           go-github-com-prometheus-client-golang
+           go-github-com-prometheus-client-model
+           go-github-com-quic-go-quic-go
+           go-github-com-quic-go-webtransport-go
+           go-github-com-raulk-go-watchdog
+           go-github-com-stretchr-testify
+           go-go-uber-org-fx
+           go-go-uber-org-goleak
+           go-go-uber-org-mock
+           go-golang-org-x-crypto
+           go-golang-org-x-exp
+           go-golang-org-x-sync
+           go-golang-org-x-sys
+           go-golang-org-x-tools
+           go-google-golang-org-protobuf))
+    (home-page "https://github.com/libp2p/go-libp2p")
+    (synopsis "LIBP2P networking stack implementation in Golang")
+    (description
+     "This package provides a networking stack and library modularized out of
+@url{https://github.com/ipfs/ipfs,The IPFS Project} as specified in
+@url{https://github.com/libp2p/specs,libp2p}.")
+    (license license:expat)))
+
 (define-public go-github-com-whyrusleeping-cbor-gen
   (package
     (name "go-github-com-whyrusleeping-cbor-gen")
@@ -836,6 +989,7 @@ types.")
        (snippet '(for-each delete-file-recursively
                            ;; TODO: unbundle the rest as well
                            '("vendor/bazil.org"
+                             "vendor/github.com/AndreasBriese"
                              "vendor/github.com/alecthomas"
                              "vendor/github.com/benbjohnson"
                              "vendor/github.com/beorn7"
@@ -843,10 +997,15 @@ types.")
                              "vendor/github.com/cenkalti"
                              "vendor/github.com/cespare"
                              "vendor/github.com/cheggaaa"
+                             "vendor/github.com/containerd"
                              "vendor/github.com/coreos"
                              "vendor/github.com/davecgh"
+                             "vendor/github.com/davidlazar"
+                             "vendor/github.com/decred"
+                             "vendor/github.com/dgraph-io"
                              "vendor/github.com/docker"
                              "vendor/github.com/dustin"
+                             "vendor/github.com/elastic"
                              "vendor/github.com/elgris"
                              "vendor/github.com/facebookgo"
                              "vendor/github.com/felixge"
@@ -871,6 +1030,8 @@ types.")
                              "vendor/github.com/ipfs/go-cidutil"
                              "vendor/github.com/ipfs/go-datastore"
                              "vendor/github.com/ipfs/go-detect-race"
+                             "vendor/github.com/ipfs/go-ds-badger"
+                             "vendor/github.com/ipfs/go-ds-leveldb"
                              "vendor/github.com/ipfs/go-ipfs-delay"
                              "vendor/github.com/ipfs/go-ipfs-redirects-file"
                              "vendor/github.com/ipfs/go-ipfs-util"
@@ -892,6 +1053,7 @@ types.")
                              "vendor/github.com/libp2p/go-cidranger"
                              "vendor/github.com/libp2p/go-doh-resolver"
                              "vendor/github.com/libp2p/go-flow-metrics"
+                             "vendor/github.com/libp2p/go-libp2p"
                              "vendor/github.com/libp2p/go-libp2p-asn-util"
                              "vendor/github.com/libp2p/go-msgio"
                              "vendor/github.com/libp2p/go-nat"
@@ -900,14 +1062,17 @@ types.")
                              "vendor/github.com/libp2p/go-socket-activation"
                              "vendor/github.com/libp2p/go-yamux"
                              "vendor/github.com/libp2p/zeroconf"
+                             "vendor/github.com/marten-seemann"
                              "vendor/github.com/mattn"
                              "vendor/github.com/mgutz"
                              "vendor/github.com/miekg"
+                             "vendor/github.com/mikioh"
                              "vendor/github.com/minio"
                              "vendor/github.com/mitchellh"
                              "vendor/github.com/mr-tron"
                              "vendor/github.com/multiformats"
                              "vendor/github.com/onsi"
+                             "vendor/github.com/opencontainers"
                              "vendor/github.com/opentracing"
                              "vendor/github.com/pbnjay"
                              "vendor/github.com/pion"
@@ -916,6 +1081,7 @@ types.")
                              "vendor/github.com/polydawn"
                              "vendor/github.com/prometheus"
                              "vendor/github.com/quic-go"
+                             "vendor/github.com/raulk"
                              "vendor/github.com/rs"
                              "vendor/github.com/spaolacci"
                              "vendor/github.com/stretchr"
@@ -935,26 +1101,15 @@ types.")
       #:import-path "github.com/ipfs/kubo/cmd/ipfs"
       #:phases
       #~(modify-phases %standard-phases
-          ;; FIXME: src/github.com/libp2p/go-libp2p-asn-util/asn.go:12:12:
-          ;; pattern sorted-network-list.bin: cannot embed irregular file
-          ;; sorted-network-list.bin
-          ;;
-          ;; This happens due to Golang can't determine the valid directory of
-          ;; the module which is sourced during setup environment phase, but
-          ;; easy resolved after coping to expected directory "vendor" within
-          ;; the current package, see details in Golang source:
-          ;;
-          ;; - URL: <https://github.com/golang/go/blob/>
-          ;; - commit: 82c14346d89ec0eeca114f9ca0e88516b2cda454
-          ;; - file: src/cmd/go/internal/load/pkg.go#L2059
-          (add-before 'build 'copy-input-to-vendor-directory
-            (lambda* (#:key unpack-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" unpack-path)
-                (copy-recursively
-                 (string-append
-                  #$(this-package-input "go-github-com-libp2p-go-libp2p-asn-util")
-                  "/src/github.com")
-                 "vendor/github.com"))))
+          (add-after 'unpack 'fix-embed-go-libp2p-asn-util
+            (lambda _
+              (delete-file
+               "src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin")
+              (copy-file
+               (string-append
+                #$(this-package-input "go-github-com-libp2p-go-libp2p-asn-util")
+                "/src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin")
+               "src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin")))
           ;; https://github.com/ipfs/kubo/blob/master/docs/command-completion.md
           (add-after 'install 'install-bashcompletion
             (lambda _
@@ -993,9 +1148,9 @@ types.")
                   go-github-com-ipfs-go-cidutil
                   go-github-com-ipfs-go-datastore
                   go-github-com-ipfs-go-detect-race
-                  ;;go-github-com-ipfs-go-ds-badger
+                  go-github-com-ipfs-go-ds-badger
                   ;;go-github-com-ipfs-go-ds-flatfs
-                  ;;go-github-com-ipfs-go-ds-leveldb
+                  go-github-com-ipfs-go-ds-leveldb
                   ;;go-github-com-ipfs-go-ds-measure
                   ;;go-github-com-ipfs-go-fs-lock
                   ;;go-github-com-ipfs-go-ipfs-cmds
@@ -1019,7 +1174,7 @@ types.")
                   go-github-com-jbenet-goprocess
                   go-github-com-julienschmidt-httprouter
                   go-github-com-libp2p-go-doh-resolver
-                  ;;go-github-com-libp2p-go-libp2p
+                  go-github-com-libp2p-go-libp2p
                   ;;go-github-com-libp2p-go-libp2p-http
                   ;;go-github-com-libp2p-go-libp2p-kad-dht
                   ;;go-github-com-libp2p-go-libp2p-kbucket
@@ -1069,36 +1224,21 @@ types.")
                   ;;
                   go-github-com-alecthomas-units              ; github.com/ipfs/boxo
                   go-github-com-cespare-xxhash
-                  go-github-com-docker-go-units               ; github.com/containerd/cgroups
                   go-github-com-felixge-httpsnoop             ; go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
-                  go-github-com-flynn-noise                   ; github.com/libp2p/go-libp2p
                   go-github-com-gabriel-vasile-mimetype       ; github.com/ipfs/boxo
                   go-github-com-go-logr-stdr                  ; go.opentelemetry.io/otel
                   go-github-com-golang-groupcache             ; go.opencensus.io/trace
                   go-github-com-google-gopacket               ; github.com/libp2p/go-libp2p-kad-dht
                   go-github-com-gorilla-mux                   ; github.com/ipfs/boxo
-                  go-github-com-gorilla-websocket             ; github.com/libp2p/go-libp2p
                   go-github-com-hashicorp-golang-lru          ; github.com/libp2p/go-libp2p-kad-dht
                   go-github-com-hashicorp-golang-lru-v2       ; github.com/ipfs/boxo
                   go-github-com-ipfs-go-bitfield              ; github.com/ipfs/boxo
                   go-github-com-ipfs-go-ipfs-redirects-file   ; github.com/ipfs/boxo
                   go-github-com-ipfs-go-verifcid              ; github.com/ipfs/go-blockservice
-                  go-github-com-klauspost-compress            ; github.com/libp2p/go-libp2p
-                  go-github-com-libp2p-go-buffer-pool         ; github.com/libp2p/go-libp2p
                   go-github-com-libp2p-go-cidranger           ; github.com/libp2p/go-libp2p-kbucket
-                  go-github-com-libp2p-go-flow-metrics        ; github.com/libp2p/go-libp2p
                   go-github-com-libp2p-go-libp2p-asn-util     ; github.com/libp2p/go-libp2p-kbucket
                   go-github-com-libp2p-go-msgio               ; github.com/libp2p/go-libp2p-kad-dht
-                  go-github-com-libp2p-go-nat                 ; github.com/libp2p/go-libp2p
-                  go-github-com-libp2p-go-reuseport           ; github.com/libp2p/go-libp2p
-                  go-github-com-libp2p-go-yamux-v4            ; github.com/libp2p/go-libp2p
-                  go-github-com-libp2p-zeroconf-v2            ; github.com/libp2p/go-libp2p
-                  go-github-com-multiformats-go-multiaddr-fmt ; github.com/libp2p/go-libp2p
-                  go-github-com-multiformats-go-multistream   ; github.com/libp2p/go-libp2p
-                  go-github-com-pion-webrtc-v3                ; github.com/libp2p/go-libp2p
                   go-github-com-prometheus-statsd-exporter    ; contrib.go.opencensus.io/exporter/prometheus
-                  go-github-com-quic-go-quic-go               ; github.com/libp2p/go-libp2p
-                  go-github-com-quic-go-webtransport-go       ; github.com/libp2p/go-libp2p
                   go-github-com-rs-cors                       ; github.com/ipfs/go-ipfs-cmds
                   go-github-com-whyrusleeping-base32          ; github.com/ipfs/boxo
                   go-github-com-whyrusleeping-cbor            ; github.com/ipld/go-car

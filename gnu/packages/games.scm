@@ -83,6 +83,7 @@
 ;;; Copyright © 2024 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2024 Sébastien Lerique <sl@eauchat.org>
 ;;; Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
+;;; Copyright © 2024 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3960,29 +3961,6 @@ management, character animation, particle and other special effects, support
 for common mesh file formats, and collision detection.")
     (home-page "https://irrlicht.sourceforge.io/")
     (license license:zlib)))
-
-(define-public irrlicht-for-minetest
-  (package
-    (inherit irrlicht)
-    (name "irrlicht-for-minetest")
-    (version "1.9.0mt13")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/minetest/irrlicht")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "11pxg0yh50ym1hvh8va5jbbcjz5dsshj3xxvm3qhkgg96vpism06"))))
-    (build-system cmake-build-system)
-    (arguments
-     ;; No check target.
-     (list #:tests? #f))
-    (inputs
-     (modify-inputs (package-inputs irrlicht)
-       (prepend libxi)))))
 
 (define-public mars
   ;; The latest release on SourceForge relies on an unreleased version of SFML
@@ -11513,7 +11491,7 @@ play; it will look for them at @file{~/.local/share/fheroes2} folder.")
 (define-public vcmi
   (package
     (name "vcmi")
-    (version "1.5.1")
+    (version "1.5.7")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -11522,7 +11500,7 @@ play; it will look for them at @file{~/.local/share/fheroes2} folder.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1s3a23p9k081ccbkhvifx2rhg6rv82fkrsbjh6allmmsa1lhq6fd"))
+                "0jgxhq6rz43ild16lmpcf6xbzdhilxpbvknlxy92sxfazyarcg07"))
               (patches (search-patches "vcmi-disable-privacy-breach.patch"))))
     (build-system cmake-build-system)
     (arguments
@@ -11540,9 +11518,8 @@ play; it will look for them at @file{~/.local/share/fheroes2} folder.")
            minizip
            pkg-config
            python
-           ;; XXX: Build currently fails with qtbase-6 and qttools-6
-           qtbase-5
-           qttools-5
+           qtbase
+           qttools
            sdl2
            sdl2-mixer
            sdl2-image

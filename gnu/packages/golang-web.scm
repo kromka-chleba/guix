@@ -2556,6 +2556,54 @@ geared towards parsing MIME encoded emails.")
 transforms one JSON document into another through a JMESPath expression.")
     (license license:asl2.0)))
 
+(define-public go-github-com-jsimonetti-rtnetlink
+  (package
+    (name "go-github-com-jsimonetti-rtnetlink")
+    (version "1.4.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jsimonetti/rtnetlink")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19m8fcrcbw98gc191snfsi6qhb80jxnjhxzy8gppcwwg6732wmm1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/jsimonetti/rtnetlink"))
+    (native-inputs
+     (list go-github-com-google-go-cmp))
+    (propagated-inputs
+     (list go-github-com-mdlayher-netlink go-golang-org-x-sys))
+    (home-page "https://github.com/jsimonetti/rtnetlink")
+    (synopsis "Low-level access to the Linux rtnetlink API")
+    (description
+     "This package allows the kernel's routing tables to be read and
+altered. Network routes, IP addresses, Link parameters, Neighbor
+setups,Queueing disciplines, Traffic classes and Packet classifiers may all be
+controlled.  It is based on netlink messages.")
+    (license license:expat)))
+
+(define-public go-github-com-jsimonetti-rtnetlink-v2
+  (package
+    (inherit go-github-com-jsimonetti-rtnetlink)
+    (name "go-github-com-jsimonetti-rtnetlink-v2")
+    (version "2.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jsimonetti/rtnetlink")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lgx3kip6hiigahcnvjy7d1qqxbm2vnfh2m3zrpfkqkh03dl39x4"))))
+    (arguments
+     (list
+      #:import-path "github.com/jsimonetti/rtnetlink/v2"))))
+
 (define-public go-github-com-json-iterator-go
   (package
     (name "go-github-com-json-iterator-go")
@@ -3055,6 +3103,47 @@ clients that speak the Gemini protocol.")
 @@url{https://github.com/makeworld-the-better-one/go-gemini,go-gemini}.")
     (license license:expat)))
 
+(define-public go-github-com-marten-seemann-tcp
+  (package
+    (name "go-github-com-marten-seemann-tcp")
+    (version "0.0.0-20210406111302-dfbc87cc63fd")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/marten-seemann/tcp")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0l03l7vx5j641bsgqzlcdshmsi7m1x0yny8i81hx5c5fbg5c25zx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/marten-seemann/tcp"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "_test\\.go$")
+                  ;;  couldn't initialize from a wrapped conn: unknown
+                  ;;  connection type
+                  (("TestWrappedConn") "OffTestWrappedConn")
+                  ;; Get "https://golang.org/robots.txt": dial tcp: lookup
+                  ;; golang.org on [::1]:53: read udp [::1]:56806->[::1]:53:
+                  ;; read: connection refused
+                  (("TestInfo") "OffTestInfo"))))))))
+    (native-inputs
+     (list go-golang-org-x-net))
+    (propagated-inputs
+     (list go-github-com-mikioh-tcp))
+    (home-page "https://github.com/marten-seemann/tcp")
+    (synopsis "TCP-level socket options implementation in Golang")
+    (description
+     "This package provides a TCP-level socket options that allow manipulation
+of TCP connection facilities.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-mattbaird-jsonpatch
   (package
     (name "go-github-com-mattbaird-jsonpatch")
@@ -3086,6 +3175,75 @@ to a document, so you don't have to send the whole doc.  JSON Patch format is
 supported by HTTP PATCH method, allowing for standards based partial updates
 via REST APIs.")
     (license license:asl2.0)))
+
+(define-public go-github-com-mdlayher-netlink
+  (package
+    (name "go-github-com-mdlayher-netlink")
+    (version "1.7.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mdlayher/netlink")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pxd0qn73jr9n64gkp2kd8q8x7xgssm3v8a68vkh88al55g8jkma"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mdlayher/netlink"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "_test\\.go$")
+                  ;; failed to start command "ip": exec: "ip": executable file
+                  ;; not found in $PATH
+                  (("TestIntegrationConnSetBuffersSyscallConn")
+                   "OffTestIntegrationConnSetBuffersSyscallConn"))))))))
+    (propagated-inputs
+     (list go-github-com-google-go-cmp
+           go-github-com-josharian-native
+           go-github-com-mdlayher-socket
+           go-golang-org-x-net
+           go-golang-org-x-sys))
+    (home-page "https://github.com/mdlayher/netlink")
+    (synopsis "Low-level access to Linux netlink sockets")
+    (description
+     "This package provides a low-level access to Linux netlink
+sockets (AF_NETLINK).")
+    (license license:expat)))
+
+(define-public go-github-com-mdlayher-socket
+  (package
+    (name "go-github-com-mdlayher-socket")
+    (version "0.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mdlayher/socket")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bq6sphsffjqqk2v9wy8qkv5yf0r6d72pklapgy3znqlnpgvnqab"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mdlayher/socket"))
+    (native-inputs
+     (list go-github-com-google-go-cmp))
+    (propagated-inputs
+     (list go-golang-org-x-net go-golang-org-x-sync go-golang-org-x-sys))
+    (home-page "https://github.com/mdlayher/socket")
+    (synopsis "Low-level network connection type with async I/O and deadline support")
+    (description
+     "This package provides a low-level network connection type which
+integrates with Go's runtime network poller to provide asynchronous I/O and
+deadline support.")
+    (license license:expat)))
 
 (define-public go-github-com-microcosm-cc-bluemonday
   (package
@@ -3150,6 +3308,108 @@ The package allows complete control over what is sent out to the @acronym{DNS,
 Domain Name Service}.  The API follows the less-is-more principle, by
 presenting a small interface.")
     (license license:bsd-3)))
+
+(define-public go-github-com-mikioh-tcp
+  (package
+    (name "go-github-com-mikioh-tcp")
+    (version "0.0.0-20190314235350-803a9b46060c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mikioh/tcp")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mwldbqkl6j4lzxar5pnvi946w0iifmw43rmanbwzp7ngx27fz5a"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mikioh/tcp"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "_test\\.go$")
+                  ;;  Get "https://golang.org/robots.txt": dial tcp: lookup
+                  ;;  golang.org on [::1]:53: read udp [::1]:47181->[::1]:53:
+                  ;;  read: connection refused.
+                  (("TestInfo") "OffTestInfo"))))))))
+    (native-inputs
+     (list go-golang-org-x-net))
+    (propagated-inputs
+     (list go-github-com-mikioh-tcpinfo))
+    (home-page "https://github.com/mikioh/tcp")
+    (synopsis "TCP-level socket options implementation in Golang")
+    (description
+     "This package implements a TCP-level socket options that allow
+manipulation of TCP connection facilities.")
+    (license license:bsd-2)))
+
+(define-public go-github-com-mikioh-tcpinfo
+  (package
+    (name "go-github-com-mikioh-tcpinfo")
+    (version "0.0.0-20190314235526-30a79bb1804b")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mikioh/tcpinfo")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "053dwvlawhhm7ly2vhjziqdifnqp12dav6rsbxbcivjjzyzw987f"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mikioh/tcpinfo"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; It inroduce cycle with go-github-com-mikioh-tcp.
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file "example_test.go")))))))
+    (propagated-inputs
+     (list go-github-com-mikioh-tcpopt))
+    (home-page "https://github.com/mikioh/tcpinfo")
+    (synopsis "Encoding and decoding of TCP-level socket options")
+    (description
+     "This package implements an encoding and decoding of TCP-level socket
+options regarding connection information.")
+    (license license:bsd-2)))
+
+(define-public go-github-com-mikioh-tcpopt
+  (package
+    (name "go-github-com-mikioh-tcpopt")
+    (version "0.0.0-20190314235656-172688c1accc")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mikioh/tcpopt")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1qdr0vmriy0wf6zg7hpq75g3b4nvp2p4gsc6xqvqg298v42zbrqj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mikioh/tcpopt"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; It inroduce cycle with go-github-com-mikioh-tcp.
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file "example_test.go")))))))
+    (home-page "https://github.com/mikioh/tcpopt")
+    (synopsis "Encoding and decoding of TCP-level socket options in Golang")
+    (description
+     "This package implements an encoding and decoding of TCP-level socket
+options.")
+    (license license:bsd-2)))
 
 (define-public go-github-com-multiformats-go-multiaddr
   (package
@@ -4389,7 +4649,7 @@ the Go standard library}.")
 (define-public go-github-com-quic-go-quic-go
   (package
     (name "go-github-com-quic-go-quic-go")
-    (version "0.43.0")
+    (version "0.45.2")
     (source
      (origin
        (method git-fetch)
@@ -4398,7 +4658,7 @@ the Go standard library}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1vqc1mb60flbm5jqf48gzhzm8m0k06klf9szpx6mgw30957qv3fn"))))
+        (base32 "0skg771b6h9xlssf7prkryypz4j8hnkz7k3i76qhxdc4iz4rqyfz"))))
     (build-system go-build-system)
     (arguments
      (list

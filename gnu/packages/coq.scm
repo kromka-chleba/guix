@@ -10,6 +10,7 @@
 ;;; Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2022 Garek Dyszel <garekdyszel@disroot.org>
 ;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -56,7 +57,7 @@
 (define-public coq
   (package
     (name "coq")
-    (version "8.17.1")
+    (version "8.18.0")
     (source
      (origin
        (method git-fetch)
@@ -66,7 +67,7 @@
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0gg6hizq0i08lk741b579cbswhy6qvkh6inc3d3i5a2af98psq63"))))
+         "1qy71gdr4s2l6847b4nwns6akib2f7l725zb01m7zc26n6mrrh1m"))))
     (native-search-paths
      (list (search-path-specification
             (variable "COQPATH")
@@ -91,8 +92,10 @@
                      (libdir (string-append out "/lib/ocaml/site-lib")))
                 (invoke "dune" "install" "--prefix" out
                         "--libdir" libdir "coq" "coq-core" "coq-stdlib")))))))
+    (propagated-inputs
+     (list ocaml-zarith))
     (inputs
-     (list gmp ocaml-zarith))
+     (list gmp))
     (native-inputs
      (list ocaml-ounit2 which))
     (properties '((upstream-name . "coq"))) ; also for inherited packages
@@ -114,7 +117,7 @@ It is developed using Objective Caml and Camlp5.")
      `(#:tests? #f
        #:package "coqide-server"))
     (inputs
-     (list coq gmp ocaml-zarith))))
+     (list coq gmp))))
 
 (define-public coq-ide
   (package
@@ -319,7 +322,7 @@ inside Coq.")
            bison
            flex))
     (inputs
-     (list gmp mpfr ocaml-zarith boost))
+     (list gmp mpfr boost))
     (propagated-inputs
      (list coq-flocq))
     (arguments
@@ -443,31 +446,31 @@ theorems between the two libraries.")
 (define-public coq-bignums
   (package
     (name "coq-bignums")
-    (version "8.16.0")
+    (version "9.0.0+coq8.18")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                     (url "https://github.com/coq/bignums")
-                     (commit (string-append "V" version))))
+                    (url "https://github.com/coq/bignums")
+                    (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "07ndnm7pndmai3a2bkcmwjfjzfaqyq19c5an15hmhgmd0rdy4z8c"))))
+                "1vw1a498fhyrpm884rlm3r4lw4mg4l6b9xj8w4y875sacg88kdxw"))))
     (build-system gnu-build-system)
     (native-inputs
      (list ocaml coq))
     (inputs
-     (list camlp5 ocaml-zarith))
+     (list camlp5))
     (arguments
-     `(#:tests? #f ; No test target.
-       #:make-flags
-       (list (string-append "COQLIBINSTALL=" (assoc-ref %outputs "out")
-                            "/lib/coq/user-contrib")
-             (string-append "COQPLUGININSTALL=" (assoc-ref %outputs "out")
-                            "/lib/ocaml/site-lib/"))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))))
+     (list #:tests? #f ; No test target.
+           #:make-flags
+           #~(list (string-append "COQLIBINSTALL=" #$output
+                                  "/lib/coq/user-contrib")
+                   (string-append "COQPLUGININSTALL=" #$output
+                                  "/lib/ocaml/site-lib/"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure))))
     (home-page "https://github.com/coq/bignums")
     (synopsis "Coq library for arbitrary large numbers")
     (description "Bignums is a coq library of arbitrary large numbers.  It
@@ -495,8 +498,7 @@ provides BigN, BigZ, BigQ that used to be part of Coq standard library.")
      `(("flocq" ,coq-flocq)
        ("bignums" ,coq-bignums)
        ("coquelicot" ,coq-coquelicot)
-       ("mathcomp" ,coq-mathcomp)
-       ("ocaml-zarith" ,ocaml-zarith)))
+       ("mathcomp" ,coq-mathcomp)))
     (arguments
      `(#:configure-flags
        (list (string-append "COQUSERCONTRIB=" (assoc-ref %outputs "out")
@@ -566,7 +568,7 @@ uses Ltac to synthesize the substitution operation.")
 (define-public coq-equations
   (package
     (name "coq-equations")
-    (version "1.3-8.17")
+    (version "1.3-8.18")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -575,25 +577,23 @@ uses Ltac to synthesize the substitution operation.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0g68h4c1ijpphixvl9wkd7sibds38v4236dpvvh194j5ii42vnn8"))))
+                "1akxf2vafwyz6fi1djlc3g8mwxrjv0a99x4b08jwrbwxypv4xiph"))))
     (build-system gnu-build-system)
     (native-inputs
      (list ocaml coq camlp5))
-    (inputs
-     (list ocaml-zarith))
     (arguments
-     `(#:test-target "test-suite"
-       #:make-flags (list (string-append "COQLIBINSTALL="
-                                         (assoc-ref %outputs "out")
-                                         "/lib/coq/user-contrib")
-                          (string-append "COQPLUGININSTALL="
-                                         (assoc-ref %outputs "out")
-                                         "/lib/ocaml/site-lib/"))
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "sh" "./configure.sh"))))))
+     (list #:test-target "test-suite"
+           #:make-flags #~(list (string-append "COQLIBINSTALL="
+                                               #$output
+                                               "/lib/coq/user-contrib")
+                                (string-append "COQPLUGININSTALL="
+                                               #$output
+                                               "/lib/ocaml/site-lib/"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'configure
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (invoke "sh" "./configure.sh"))))))
     (home-page "https://mattam82.github.io/Coq-Equations/")
     (synopsis "Function definition plugin for Coq")
     (description "Equations provides a notation for writing programs

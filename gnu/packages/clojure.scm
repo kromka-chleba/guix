@@ -4,6 +4,7 @@
 ;;; Copyright © 2019 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019 Jesse Gibbons <jgibbons2357+guix@gmail.com>
 ;;; Copyright © 2020 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -318,6 +319,67 @@ defining and using monads and useful monadic functions.")
     (home-page "https://github.com/clojure/algo.monads")
     (license license:epl1.0)))
 
+(define-public clojure-core-async
+  (package
+    (name "clojure-core-async")
+    (version "1.6.681")
+    (home-page "https://github.com/clojure/core.async")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url home-page)
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1j9yz14hy2qs8g3flsqkn1sx9c0qlr5mmpy6ab1zml9yhbw5arzg"))))
+    (build-system clojure-build-system)
+    (arguments
+     '(#:source-dirs '("src/main/clojure")
+       #:test-dirs '("src/test/clojure")
+       #:doc-dirs '()
+       #:phases
+       (modify-phases %standard-phases
+         ;; Remove ClojureScript code, we are only supporting Clojure for now.
+         (add-after 'unpack 'delete-cljs
+           (lambda _
+             (delete-file-recursively "src/main/clojure/cljs")
+             (delete-file-recursively "src/test/cljs"))))))
+    (propagated-inputs (list clojure-tools-analyzer-jvm))
+    (synopsis "Facilities for async programming and communication in Clojure")
+    (description "The core.async library adds support for asynchronous
+programming using channels to Clojure.  It provides facilities for independent
+threads of activity, communicating via queue-like channels inspired by Hoare’s
+work on Communicating Sequential Processes (CSP).")
+    (license license:epl1.0)))
+
+(define-public clojure-core-cache
+  (package
+    (name "clojure-core-cache")
+    (version "1.1.234")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/clojure/core.cache")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0jiq022kd5jdpmxz884rvg5317xmx7g3gnidkpcfsamchyfh5qxq"))))
+    (build-system clojure-build-system)
+    (arguments
+     '(#:source-dirs '("src/main/clojure")
+       #:test-dirs '("src/test/clojure")
+       #:doc-dirs '("docs")))
+    (propagated-inputs (list clojure-data-priority-map))
+    (synopsis "Clojure caching library")
+    (description
+     "Caching library for Clojure implementing various cache strategies such
+as First-in-first-out, Least-recently-used, Least-used, Time-to-live, Naive
+cache and Naive cache backed with soft references.")
+    (home-page "https://github.com/clojure/core.cache")
+    (license license:epl1.0)))
+
 (define-public clojure-core-match
   (package
     (name "clojure-core-match")
@@ -341,6 +403,33 @@ defining and using monads and useful monadic functions.")
      "An optimized pattern matching library for Clojure.
 It supports Clojure 1.5.1 and later as well as ClojureScript.")
     (home-page "https://github.com/clojure/core.match")
+    (license license:epl1.0)))
+
+(define-public clojure-core-memoize
+  (package
+    (name "clojure-core-memoize")
+    (version "1.1.266")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/clojure/core.memoize")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0nys79zrvcnwgyxb91zlyl3nb4p6r6y4n5rbdvzqkvsxxazi9ji0"))))
+    (build-system clojure-build-system)
+    (arguments
+     '(#:source-dirs '("src/main/clojure")
+       #:test-dirs '("src/test/clojure")
+       #:doc-dirs '("docs")))
+    (propagated-inputs (list clojure-core-cache))
+    (synopsis "Memoization framework for Clojure")
+    (description
+     "A manipulable, pluggable, memoization framework for Clojure implementing
+some common memoization caching strategies, such as First-in-first-out,
+Least-recently-used, Least-used and Time-to-live.")
+    (home-page "https://github.com/clojure/core.memoize")
     (license license:epl1.0)))
 
 (define-public clojure-data-codec
@@ -395,6 +484,61 @@ is on par with Java implementations, e.g., Apache commons-codec.")
     (description "@code{data.csv} is a Clojure library for reading and writing
 CSV data.  @code{data.csv} follows the RFC4180 specification but is more
 relaxed.")
+    (license license:epl1.0)))
+
+(define-public clojure-data-json
+  (package
+    (name "clojure-data-json")
+    (version "2.5.0")
+    (home-page "https://github.com/clojure/data.json")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url home-page)
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "04k3fr9y1gp337h0d2zxam3aa3hl046r2g2qiizn7aq0rq6311p9"))))
+    (build-system clojure-build-system)
+    (arguments
+     '(#:source-dirs '("src/main/clojure")
+       #:test-dirs '("src/test/clojure")
+       #:doc-dirs '()))
+    (native-inputs (list clojure-test-check))
+    (synopsis "Clojure library for reading and writing JSON data")
+    (description "@code{data.json} is a Clojure library for reading and
+writing JSON data.  @code{data.xml} is compliant with the JSON spec and has no
+external dependencies")
+    (license license:epl1.0)))
+
+(define-public clojure-data-priority-map
+  (package
+    (name "clojure-data-priority-map")
+    (version "1.2.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/clojure/data.priority-map")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0aynzrdl0w08q89nd069lcx8s6msqmwrpqnya63jv1l2pn3w6ij4"))))
+    (build-system clojure-build-system)
+    (arguments
+     '(#:source-dirs '("src/main/clojure")
+       #:test-dirs '("src/test/clojure")
+       #:doc-dirs '()))
+    (synopsis "Priority map implementation in Clojure")
+    (description
+     "A priority map is very similar to a sorted map, but whereas a sorted map
+produces a sequence of the entries sorted by key, a priority map produces the
+entries sorted by value.  In addition to supporting all the functions a sorted
+map supports, a priority map can also be thought of as a queue of [item
+priority] pairs.  To support usage as a versatile priority queue, priority
+maps also support conj/peek/pop operations.")
+    (home-page "https://github.com/clojure/data.priority-map")
     (license license:epl1.0)))
 
 (define-public clojure-data-xml
@@ -523,6 +667,59 @@ inspired by QuickCheck.  The core idea of @code{test.check} is that instead of
 enumerating expected input and output for unit tests, you write properties
 about your function that should hold true for all inputs.  This lets you write
 concise, powerful tests.")
+    (license license:epl1.0)))
+
+(define-public clojure-tools-analyzer
+  (package
+    (name "clojure-tools-analyzer")
+    (version "1.2.0")
+    (home-page "https://github.com/clojure/tools.analyzer")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url home-page)
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "05v4i8qs5d51lh113phib0brkysphxa2d71khm840586432knyaa"))))
+    (build-system clojure-build-system)
+    (arguments
+     '(#:source-dirs '("src/main/clojure")
+       #:test-dirs '("src/test/clojure")
+       #:doc-dirs '()))
+    (synopsis "Analyzer for Clojure code")
+    (description "Analyzer for Clojure code, written in Clojure, which
+produces an abstract syntax tree in the EDN ( Extensible Data Notation)
+format.")
+    (license license:epl1.0)))
+
+(define-public clojure-tools-analyzer-jvm
+  (package
+    (name "clojure-tools-analyzer-jvm")
+    (version "1.3.0")
+    (home-page "https://github.com/clojure/tools.analyzer.jvm")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url home-page)
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "13nxzdp15772hzl3jmi5014jkwldkm1qccfycwkk2pn64hycmnxl"))))
+    (build-system clojure-build-system)
+    (arguments
+     '(#:source-dirs '("src/main/clojure")
+       #:test-dirs '("src/test/clojure")
+       #:doc-dirs '("docs")))
+    (propagated-inputs (list clojure-tools-analyzer
+                             clojure-tools-reader
+                             clojure-core-memoize
+                             java-asm))
+    (synopsis "Analyzer for Clojure code targeting the JVM")
+    (description "Analyzer for Clojure code, written on top of
+tools.analyzer, providing additional JVM-specific passes.")
     (license license:epl1.0)))
 
 (define-public clojure-tools-macro
@@ -726,3 +923,103 @@ dependency graph expansion and the creation of classpaths.")
 indicated by git SHAs.  This library provides this functionality and also
 keeps a cache of git directories and working trees that can be reused.")
     (license license:epl1.0)))
+
+(define-public clojure-tools-logging
+  (package
+    (name "clojure-tools-logging")
+    (version "1.3.0")
+    (home-page "https://github.com/clojure/tools.logging")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url home-page)
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "106n4cxsxzs0hvpsfi1h14b09xm6klrvj1g5fbd5nw8fj3mpkdac"))))
+    (build-system clojure-build-system)
+    (arguments
+     '(#:doc-dirs '()
+       #:source-dirs '("src/main/clojure")
+       #:test-dirs '("src/test/clojure")
+       #:phases
+       (modify-phases %standard-phases
+         ;; These tests should throw a ClassCastException, but they don't
+         ;; under AOT. Adjust them :/
+         (add-after 'unpack 'disable-failing-tests
+           (lambda _
+             (substitute* (string-append "src/test/clojure/clojure/tools"
+                                         "/logging/test_readable.clj")
+               (((string-append "\\(thrown\\? ClassCastException \\(logf "
+                                ":debug \\(Exception\\.\\)\\)\\)"))
+                "(nil? (logf :debug (Exception.)))"))
+             (substitute* "src/test/clojure/clojure/tools/test_logging.clj"
+               (((string-append "\\(thrown\\? ClassCastException \\(logf "
+                                ":debug \\(Exception\\.\\)\\)\\)"))
+                "(nil? (logf :debug (Exception.)))")))))))
+    (native-inputs
+     (list java-commons-logging-minimal
+           java-log4j-1.2-api
+           java-log4j-api
+           java-log4j-core
+           java-slf4j-api
+           java-slf4j-simple))
+    (synopsis "Clojure logging library")
+    (description "Logging macros which delegate to a specific logging
+implementation, selected at runtime when the clojure.tools.logging namespace
+is first loaded.")
+    (license license:epl1.0)))
+
+(define-public clojure-tools-reader
+  (package
+    (name "clojure-tools-reader")
+    (version "1.5.0")
+    (home-page "https://github.com/clojure/tools.reader")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url home-page)
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1jf05q4ym8z16qaxidx47g2gjv04qcf1wvkca3wqyiaszpvym4zz"))))
+    (build-system clojure-build-system)
+    (arguments
+     '(#:doc-dirs '()
+       #:source-dirs '("src/main/clojure")
+       #:test-dirs '("src/test/clojure")
+       #:test-exclude '(clojure.tools.common-tests))) ; Loaded by other tests.
+    (synopsis "Clojure reader written in Clojure")
+    (description "The clojure.tools.reader library offers all functionality
+provided by the Clojure Core reader and more.  It adds metadata such as column
+and line numbers not only to lists, but also to symbols, vectors and maps.")
+    (license license:epl1.0)))
+
+(define-public http-kit
+  (package
+    (name "http-kit")
+    (version "2.8.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/http-kit/http-kit")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1361bpb4sn3dbp215s7gf1bcrb45lgx3lk6lix7bndw9lahr5ank"))))
+    (build-system clojure-build-system)
+    (arguments
+     '(#:java-source-dirs '("src/java")
+       #:source-dirs '("src")
+       #:doc-dirs '()
+       #:tests? #f))                    ;XXX: too many unpackaged dependencies
+    (synopsis
+     "High-performance, event-driven HTTP client and server for Clojure")
+    (description "This package provides a minimalist, event-driven,
+high-performance Clojure HTTP client and server library with WebSocket and
+asynchronous support.")
+    (home-page "https://github.com/http-kit/http-kit")
+    (license license:asl2.0)))

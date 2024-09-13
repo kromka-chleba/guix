@@ -823,6 +823,33 @@ newlines until a non-newline.")
        "This library provides unit multipliers and functions for Go.")
       (license license:expat))))
 
+(define-public go-github-com-andreasbriese-bbloom
+  (package
+    (name "go-github-com-andreasbriese-bbloom")
+    (version "0.0.0-20190825152654-46b345b51c96")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/AndreasBriese/bbloom")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "021c0pl7r4pc9yslqhbjg9wr6dm03lnzf94a0b9c0hmg0bhhkln9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/AndreasBriese/bbloom"))
+    (home-page "https://github.com/AndreasBriese/bbloom")
+    (synopsis "Bitset Bloom filter for Golang")
+    (description
+     "This package implements a fast bloom filter with real @code{bitset} and
+JSONMarshal/JSONUnmarshal to store/reload the Bloom filter.")
+    ;; XXX: It may be included to guix licenses: CC0 1.0 UNIVERSAL
+    ;; <http://creativecommons.org/publicdomain/zero/1.0/>
+    ;; Dual licence: MIT (Expat) and CC0 1.0 UNIVERSAL.
+    (license license:expat)))
+
 (define-public go-github-com-anmitsu-go-shlex
   (package
     (name "go-github-com-anmitsu-go-shlex")
@@ -1496,6 +1523,60 @@ levels that works by wrapping the standard @code{log} library.")
      "Readline is a pure Go implementation of a GNU-Readline like library.")
     (license license:expat)))
 
+(define-public go-github-com-containerd-cgroups
+  (package
+    (name "go-github-com-containerd-cgroups")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containerd/cgroups")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14nf5nc65vsnijaairs5v96h98y8f0sy35bpxbpmxxn4dfnz9x0y"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodule(s) with their own go.mod files and packed as
+            ;; separated packages:
+            ;;
+            ;; - github.com/containerd/cgroups/cmd cgctl
+            (delete-file-recursively "cmd")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/containerd/cgroups"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "_test\\.go$")
+                  ;; expected error "controller is not supported" but received
+                  ;; "cgroups: cannot find cgroup mount destination"
+                  (("TestSystemd240") "OffTestSystemd240"))))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify
+           go-go-uber-org-goleak))
+    (propagated-inputs
+     (list go-github-com-coreos-go-systemd-v22
+           go-github-com-docker-go-units
+           go-github-com-godbus-dbus-v5
+           go-github-com-gogo-protobuf
+           go-github-com-opencontainers-runtime-spec
+           go-github-com-sirupsen-logrus
+           go-golang-org-x-sys))
+    (home-page "https://containerd.io/")
+    (synopsis "Cgroups for Golang")
+    (description
+     "This package implements a functinoality for creating, managing,
+inspecting, and destroying cgroups. The resources format for settings on the
+cgroup uses the OCI runtime-spec found
+@url{https://github.com/opencontainers/runtime-spec,here}.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-containerd-fifo
   (package
     (name "go-github-com-containerd-fifo")
@@ -1907,6 +1988,121 @@ more complicated parallel cases.")
 encoding/decoding.  It has no dependencies.")
     (license license:expat)))
 
+(define-public go-github-com-dgraph-io-badger
+  (package
+    (name "go-github-com-dgraph-io-badger")
+    (version "1.6.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dgraph-io/badger")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0y37di0da6jciv1mwj0d8kv2xf56sribmwbcmd6ma65c5h6mdch9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dgraph-io/badger"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-failing-tests
+            (lambda* (#:key unpack-path tests? #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" unpack-path)
+                (substitute* (find-files "." "histogram_test.go$")
+                  ;; conversion from int64 to string yields a string of one
+                  ;; rune, not a string of digits (did you mean
+                  ;; fmt.Sprint(x)?).
+                  ;; See: <https://github.com/dgraph-io/badger/issues/2103>.
+                  (("\"testing\"") (string-append "\"testing\"\n\"fmt\""))
+                  (("string") "fmt.Sprint")))))
+          (add-after 'patch-failing-tests 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "\\_test.go$")
+                  (("TestBuildKeyValueSizeHistogram")
+                   "OffTestBuildKeyValueSizeHistogram")))))
+          ;; XXX: Replace when go-build-system supports nested path.
+          (replace 'check
+            (lambda* (#:key import-path tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-andreasbriese-bbloom
+           go-github-com-dgraph-io-ristretto
+           go-github-com-dustin-go-humanize
+           go-github-com-golang-protobuf
+           go-github-com-pkg-errors
+           go-github-com-spf13-cobra
+           go-golang-org-x-net
+           go-golang-org-x-sys))
+    (home-page "https://dgraph.io/docs/badger")
+    (synopsis "Key-value database in Golang")
+    (description
+     "BadgerDB implements an embeddable, key-value (KV) database, written in
+pure Go.  It is designed to be highly performant for both reads and writes
+simultaneously.  It uses @acronym{Multi-Version Concurrency Control, MVCC},
+supports concurrent serializable transactions.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-dgraph-io-ristretto
+  (package
+    (name "go-github-com-dgraph-io-ristretto")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dgraph-io/ristretto")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mjni3zaxvjvw5c7nh4sij13sslg92x9xi3ykxzbv2s6g2ynigss"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; XXX: Tests fail on 32 bit architecure:
+      ;;
+      ;; cannot use 12 << 30 (untyped int constant 12884901888) as int value
+      ;; in assignment (overflows).
+      ;;
+      ;; cannot use 4340958203495 (untyped int constant) as int value in
+      ;; argument to z.KeyToHash (overflows)
+      #:tests? (target-64bit?)
+      #:import-path "github.com/dgraph-io/ristretto"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-benchmarks-and-contrib
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "benchmarks")
+                (delete-file-recursively "contrib"))))
+          ;; XXX: Replace when go-build-system supports nested path.
+          (replace 'check
+            (lambda* (#:key import-path tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-cespare-xxhash-v2
+           go-github-com-dgryski-go-farm
+           go-github-com-dustin-go-humanize
+           go-github-com-golang-glog
+           go-github-com-pkg-errors
+           go-golang-org-x-sys))
+    (home-page "https://github.com/dgraph-io/ristretto")
+    (synopsis "Memory-bound cache in Golang")
+    (description
+     "Ristretto is a concurrent, fixed size, in-memory cache with a dual focus
+on throughput and hit ratio performance.")
+    (license (list license:asl2.0 license:expat))))
+
 (define-public go-github-com-dimchansky-utfbom
   (package
     (name "go-github-com-dimchansky-utfbom")
@@ -2138,6 +2334,45 @@ file's size
 program's running, don't expect consistent results between platforms
 @end itemize")
     (license license:bsd-3)))
+
+(define-public go-github-com-elastic-gosigar
+  (package
+    (name "go-github-com-elastic-gosigar")
+    (version "0.14.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/elastic/gosigar")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0g7si935p23brvq29y7f6rasj2cbpdhrp7z0mk21q98hsa3qs60a"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/elastic/gosigar"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "_test\\.go$")
+                  ;; error: open /etc/mtab: no such file or directory.
+                  (("TestFileSystemList") "OffTestFileSystemList"))))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-pkg-errors go-golang-org-x-sys))
+    (home-page "https://github.com/elastic/gosigar")
+    (synopsis "Gathers system and per process statistics")
+    (description
+     "Go sigar is a golang implementation of the
+@url{https://github.com/hyperic/sigar,sigar API}.  The Go version of sigar
+has a very similar interface, but is being written from scratch in pure
+go/cgo, rather than cgo bindings for libsigar.  This package provides an
+alternative fork of @url{https://github.com/cloudfoundry/gosigar}.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-elliotchance-orderedmap
   (package
@@ -3630,6 +3865,29 @@ storing only one copy of each unique string in memory.  All functions may be
 called concurrently with themselves and each other.")
     (license license:expat)))
 
+(define-public go-github-com-josharian-native
+  (package
+    (name "go-github-com-josharian-native")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/josharian/native")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wa4yzc3r06qjklqjf4n30zx9v660w8hmxkmybzwk03fmlv2rcyj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/josharian/native"))
+    (home-page "https://github.com/josharian/native")
+    (synopsis "Native Golang @code{encoding/binary.ByteOrder} enchantment")
+    (description
+     "This package provides an easy access to native byte order.")
+    (license license:expat)))
+
 (define-public go-github-com-jpillora-backoff
   (let ((commit "fab01a9d9810a410d2d95a0a697f0afb604658f9")
         (revision "1"))
@@ -4477,32 +4735,29 @@ language, namely support for record length-delimited message streaming.")
     (license license:asl2.0)))
 
 (define-public go-github-com-mgutz-ansi
-  (let ((commit "9520e82c474b0a04dd04f8a40959027271bab992")
-        (revision "0"))
-    (package
-      (name "go-github-com-mgutz-ansi")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url
-                "https://github.com/mgutz/ansi")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "00bz22314j26736w1f0q4jy9d9dfaml17vn890n5zqy3cmvmww1j"))))
-      (build-system go-build-system)
-      (arguments
-       (list #:import-path "github.com/mgutz/ansi"))
-      (propagated-inputs
-       (list go-github-com-mattn-go-isatty go-github-com-mattn-go-colorable))
-      (home-page "https://github.com/mgutz/ansi")
-      (synopsis "Small, fast library to create ANSI colored strings and codes")
-      (description
-       "This package provides @code{ansi}, a Go module that can generate ANSI
+  (package
+    (name "go-github-com-mgutz-ansi")
+    (version "0.0.0-20200706080929-d51e80ef957d")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mgutz/ansi")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yfj9fj1m7wfvlmf328w8awyvqsvjmyv9yfsnv9r8al9i9wrv3j5"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:import-path "github.com/mgutz/ansi"))
+    (propagated-inputs
+     (list go-github-com-mattn-go-isatty go-github-com-mattn-go-colorable))
+    (home-page "https://github.com/mgutz/ansi")
+    (synopsis "Small, fast library to create ANSI colored strings and codes")
+    (description
+     "This package provides @code{ansi}, a Go module that can generate ANSI
 colored strings.")
-      (license license:expat))))
+    (license license:expat)))
 
 (define-public go-github-com-mitchellh-colorstring
   (package
@@ -5232,6 +5487,35 @@ syslog, file and memory.  Multiple backends can be utilized with different log
 levels per backend and logger.")
     (license license:bsd-3)))
 
+;; XXX: Find a way to source from specification-runtime-spec.
+(define-public go-github-com-opencontainers-runtime-spec
+  (package
+    (name "go-github-com-opencontainers-runtime-spec")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/opencontainers/runtime-spec")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "102smpg308dq984f6zkjzwq5jz8jbfswiwfwxcrp1hh197jydxf9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/opencontainers/runtime-spec"
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build)
+          (delete 'check))))
+    (home-page "https://github.com/opencontainers/runtime-spec")
+    (synopsis "OCI specs implementation in Golang")
+    (description
+     "This package provides a collection Golang implementation defined in
+specification-runtime-spec.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-openprinting-goipp
   (package
     (name "go-github-com-openprinting-goipp")
@@ -5504,6 +5788,38 @@ Pion}.")
 without configuration, but if desired, everything can be customized down to the
 smallest detail.")
     (license license:expat)))
+
+(define-public go-github-com-raulk-go-watchdog
+  (package
+    (name "go-github-com-raulk-go-watchdog")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/raulk/go-watchdog")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mpvphqihxmcnz66a3yisk18pm2yxpcg81pnkd80ax80fyvzwl0z"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/raulk/go-watchdog"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-benbjohnson-clock
+           go-github-com-containerd-cgroups
+           go-github-com-elastic-gosigar
+           go-github-com-opencontainers-runtime-spec))
+    (home-page "https://github.com/raulk/go-watchdog")
+    (synopsis "Go memory watchdog")
+    (description
+     "Package watchdog runs a singleton memory watchdog in the process, which
+watches memory utilization and forces Go GC in accordance with a user-defined
+policy.")
+    (license (list license:asl2.0 license:expat))))
 
 (define-public go-github-com-rcrowley-go-metrics
   (let ((commit "cac0b30c2563378d434b5af411844adff8e32960")

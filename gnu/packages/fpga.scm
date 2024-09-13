@@ -7,6 +7,7 @@
 ;;; Copyright © 2021 Andrew Miloradovsky <andrew@interpretmath.pw>
 ;;; Copyright © 2022 Christian Gelinek <cgelinek@radlogic.com.au>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
+;;; Copyright © 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -35,34 +36,37 @@
   #:use-module (guix build-system python)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
+  #:use-module (gnu packages algebra)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bison)
+  #:use-module (gnu packages boost)
+  #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages elf)
-  #:use-module (gnu packages pkg-config)
-  #:use-module (gnu packages tcl)
-  #:use-module (gnu packages readline)
-  #:use-module (gnu packages python)
-  #:use-module (gnu packages python-xyz)
-  #:use-module (gnu packages bison)
-  #:use-module (gnu packages check)
   #:use-module (gnu packages flex)
+  #:use-module (gnu packages gawk)
+  #:use-module (gnu packages gdb)
   #:use-module (gnu packages gettext)
-  #:use-module (gnu packages gtk)
-  #:use-module (gnu packages graphviz)
-  #:use-module (gnu packages libffi)
-  #:use-module (gnu packages linux)
-  #:use-module (gnu packages llvm)
-  #:use-module (gnu packages maths)
-  #:use-module (gnu packages perl)
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gperf)
-  #:use-module (gnu packages gawk)
-  #:use-module (gnu packages version-control)
-  #:use-module (gnu packages qt)
-  #:use-module (gnu packages boost)
-  #:use-module (gnu packages algebra)
+  #:use-module (gnu packages graphviz)
+  #:use-module (gnu packages gtk)
+  #:use-module (gnu packages libffi)
   #:use-module (gnu packages libftdi)
-  #:use-module (gnu packages libusb))
+  #:use-module (gnu packages libusb)
+  #:use-module (gnu packages linux)
+  #:use-module (gnu packages llvm)
+  #:use-module (gnu packages man)
+  #:use-module (gnu packages maths)
+  #:use-module (gnu packages perl)
+  #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages python)
+  #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages qt)
+  #:use-module (gnu packages readline)
+  #:use-module (gnu packages tcl)
+  #:use-module (gnu packages version-control))
 
 (define-public abc
  (let ((commit "70cb339f869e")
@@ -467,18 +471,19 @@ a hardware description and verification language.")
 (define-public systemc
   (package
     (name "systemc")
-    (version "2.3.3")
+    (version "3.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://accellera.org/images/downloads/standards/"
-             "systemc/systemc-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/accellera-official/systemc")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0gvv3xmhiwx1izmzy06yslzqzh6ygrgmw53xqfmyvbz5a6ivk0ap"))))
+        (base32 "1v5fg3h9ffdzq9f6zplvr9all00ssc1gpdvbg129xahkrbl53kvw"))))
     (native-inputs (list perl))
-    (build-system gnu-build-system)
-    (arguments '(#:configure-flags '("--enable-debug")))
+    (build-system cmake-build-system)
+    (arguments '(#:test-target "check"))
     (home-page "https://accellera.org/community/systemc")
     (synopsis "Library for event-driven simulation")
     (description
@@ -497,7 +502,7 @@ using different abstraction levels.")
 (define-public verilator
   (package
     (name "verilator")
-    (version "4.204")
+    (version "5.028")
     (source
      (origin
        (method git-fetch)
@@ -506,30 +511,37 @@ using different abstraction levels.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0cji5c8870h895l2vxnz8g6z7msv23dzbjaf98va7kva0qlfy2fz"))))
+        (base32 "1q9facgfdwwmf2ax65aznhqmk8qfisq9k5p8wrxrw6qqy38vl0k2"))))
     (native-inputs
-     `(("autoconf" ,autoconf)
-       ("automake" ,automake)
-       ("bison" ,bison)
-       ("flex" ,flex)
-       ("gettext" ,gettext-minimal)
-       ("python" ,python)))
+     (list autoconf
+           automake
+           bison
+           flex
+           gettext-minimal
+           python
+           ;; And a couple of extras for the test suite:
+           cmake-minimal
+           gdb/pinned
+           which))
     (inputs
-     (list perl systemc))
+     (list help2man perl python systemc))
     (build-system gnu-build-system)
     (arguments
-     '(#:configure-flags
-       (list (string-append "LDFLAGS=-L"
-                            (assoc-ref %build-inputs "systemc")
-                            "/lib-linux64"))
-       #:make-flags
-       (list (string-append "LDFLAGS=-L"
-                            (assoc-ref %build-inputs "systemc")
-                            "/lib-linux64"))
-       #:phases
+     '(#:phases
        (modify-phases %standard-phases
          (replace 'bootstrap
-           (lambda _ (invoke "autoconf"))))
+           (lambda _ (invoke "autoconf")))
+         (add-after 'unpack 'adjust-source
+           (lambda _
+             (substitute* "bin/verilator"
+               (("/bin/echo") "echo"))))
+         (add-before 'check 'disable-gdb-safe-path
+           (lambda _
+             (setenv "HOME" (getcwd))
+             (mkdir-p (string-append (getcwd) "/.config/gdb"))
+             (with-output-to-file (string-append (getcwd) "/.config/gdb/gdbinit")
+               (lambda ()
+                 (display "set auto-load safe-path /"))))))
        #:test-target "test"))
     ;; #error "Something failed during ./configure as config_build.h is incomplete.
     ;; Perhaps you used autoreconf, don't." -- so we won't. ^^

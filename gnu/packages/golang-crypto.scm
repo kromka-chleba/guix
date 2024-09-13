@@ -500,6 +500,187 @@ cryptographic algorithms targeting Post-Quantum (PQ) and Elliptic Curve
 Cryptography (ECC).")
     (license license:bsd-3)))
 
+(define-public go-github-com-davidlazar-go-crypto
+  (package
+    (name "go-github-com-davidlazar-go-crypto")
+    (version "0.0.0-20200604182044-b73af7476f6c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/davidlazar/go-crypto")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10lbh8ask8hswgz2bavi6gq00dqc3y7apvkha1dhnbicwj9jqf38"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/davidlazar/go-crypto"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Run all tests, workaround for go-build-system's lack of Go
+          ;; modules support.
+          (delete 'build)
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (propagated-inputs
+     (list go-golang-org-x-crypto))
+    (home-page "https://github.com/davidlazar/go-crypto")
+    (synopsis "Cryptographic packages for Golang")
+    (description
+     "This package produces a collection of cryptographic utilities,
+including the following:
+@itemize
+@item @code{drbg}: a cryptographically secure pseudorandom number generator as
+specified in
+@url{https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-90Ar1.pdf,NIST SP
+800-90A}
+@item @code{encoding/base32}: a compact base32 encoder
+@item @code{secretkey}: user-friendly secret keys that can be used with
+secretbox
+@item @code{salsa20}: a streaming interface (cipher.Stream) for the Salsa20
+stream cipher
+@item @code{poly1305}: a streaming interface (hash.Hash) for the Poly1305
+one-time authenticator as specified in
+@url{http://cr.yp.to/mac/poly1305-20050329.pdf, poly1305}
+@end itemize")
+    (license license:expat)))
+
+(define-public go-github-com-decred-dcrd-crypto-blake256
+  (package
+    (name "go-github-com-decred-dcrd-crypto-blake256")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/decred/dcrd")
+             (commit (go-version->git-ref
+                      ;; XXX: While waiting on consensus:
+                      ;; - https://issues.guix.gnu.org/52362
+                      ;; - https://issues.guix.gnu.org/63001
+                      ;; - https://issues.guix.gnu.org/63647
+                      ;; - https://issues.guix.gnu.org/69827
+                      (string-append "crypto/blake256/v" version)))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mjzlyz2a3516g46kv421nacjd7p4g9l8ih4i7xijvsi480s5pja"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packed as separated
+            ;; packages.
+            (for-each
+             delete-file-recursively
+             (list "addrmgr" "bech32" "blockchain/standalone" "certgen"
+                   "chaincfg/chainhash" "chaincfg" "connmgr" "container/lru"
+                   "crypto/blake256/internal/_asm" "crypto/rand"
+                   "crypto/ripemd160" "database" "dcrec/edwards" "dcrec" "dcrjson"
+                   "dcrutil" "gcs" "hdkeychain" "math/uint256" "mixing" "peer"
+                   "rpc/jsonrpc/types" "rpcclient" "txscript" "wire"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/decred/dcrd/crypto/blake256"
+      #:unpack-path "github.com/decred/dcrd"))
+    (home-page "https://github.com/decred/dcrd")
+    (synopsis "BLAKE-256/BLAKE-224 crypto hash functions implementation")
+    (description
+     "Package blake256 implements BLAKE-256 and BLAKE-224 with SSE2, SSE4.1,
+and AVX acceleration and zero allocations.")
+    (license license:isc)))
+
+(define-public go-github-com-decred-dcrd-dcrec-secp256k1-v4
+  (package
+    (name "go-github-com-decred-dcrd-dcrec-secp256k1-v4")
+    (version "4.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/decred/dcrd")
+             (commit (go-version->git-ref
+                      ;; XXX: While waiting on consensus:
+                      ;; - https://issues.guix.gnu.org/52362
+                      ;; - https://issues.guix.gnu.org/63001
+                      ;; - https://issues.guix.gnu.org/63647
+                      ;; - https://issues.guix.gnu.org/69827
+                      (string-append "dcrec/secp256k1/v" version)))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19yqrrspm6n1x7wa1chqj0j95bc5w02ygddr06ajzf6x7i7q09q5"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Submodules with their own go.mod files and packed as separated
+            ;; packages.  Delete any intersecting ones to prevent "Permission
+            ;; denied" when they are in use as inputs.
+            (for-each delete-file-recursively (list "crypto/blake256"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; It needs to be github.com/decred/dcrd/dcrec/secp256k1/v4
+      #:import-path "github.com/decred/dcrd/dcrec/secp256k1"
+      #:unpack-path "github.com/decred/dcrd"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'adjust-import-path
+            (lambda* (#:key import-path #:allow-other-keys)
+              (let* ((origin (string-append #$output "/src/" import-path) )
+                     (tmp (string-append #$output "/src/" "_tmp"))
+                     (import-path (string-append origin "/v4")))
+                (format #t "Adjusting paths: ~a~%~a~%~a~%" origin tmp import-path)
+                (mkdir tmp)
+                (copy-recursively origin tmp)
+                (delete-file-recursively origin)
+                (mkdir-p import-path)
+                (rename-file tmp import-path)))))))
+    (propagated-inputs
+     (list go-github-com-decred-dcrd-crypto-blake256))
+    (home-page "https://github.com/decred/dcrd")
+    (synopsis "Optimized secp256k1 elliptic curve operations")
+    (description
+     "This package provides an optimized pure Go implementation of elliptic
+curve cryptography operations over the secp256k1 curve as well as data
+structures and functions for working with public and private secp256k1 keys as
+cpecified in the @url{https://www.secg.org/sec2-v2.pdf} standard.
+
+In addition, sub packages are provided to produce, verify, parse, and
+serialize ECDSA signatures and EC-Schnorr-DCRv0 (a custom Schnorr-based
+signature scheme specific to Decred) signatures.  See the README.md files in
+the relevant sub packages for more details about those aspects.")
+    (license license:isc)))
+
+(define-public go-github-com-dgryski-go-farm
+  (package
+    (name "go-github-com-dgryski-go-farm")
+    (version "0.0.0-20200201041132-a6ae2369ad13")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dgryski/go-farm")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1qbz4a4fv3853ix974x02q1129kc4xxf0c92ib5sdpsq04zjbqv8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dgryski/go-farm"))
+    (home-page "https://github.com/dgryski/go-farm")
+    (synopsis "Farmhash implementation in Golang")
+    (description
+     "FarmHash provides hash functions for strings and other data.  The
+functions mix the input bits thoroughly but are not suitable for cryptography.
+It is implemented as a mechanical translation of the non-SSE4/non-AESNI hash
+functions from @url{https://github.com/google/farmhash,Google's FarmHash}.")
+    (license license:expat)))
+
 (define-public go-github-com-dvsekhvalnov-jose2go
   (package
     (name "go-github-com-dvsekhvalnov-jose2go")

@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2017, 2018, 2020–2022 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2017, 2018, 2020–2022, 2024 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2017 Gábor Boskovits <boskovits@gmail.com>
 ;;; Copyright © 2017, 2018, 2021, 2023 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2018 Leo Famulari <leo@famulari.name>
@@ -682,10 +682,11 @@ from a mounted file system.")
     (home-page "https://bcachefs.org/")
     (synopsis "Tools to create and manage bcachefs file systems")
     (description
-     "The bcachefs-tools are command-line utilities for creating, checking,
-and otherwise managing bcachefs file systems.
+     "This package provides the @command{bcachefs} command-line tool with many
+subcommands for creating, checking, and otherwise managing bcachefs file
+systems.  Traditional aliases like @command{mkfs.bcachefs} are also included.
 
-Bcachefs is a @acronym{CoW, copy-on-write} file system supporting native
+@dfn{Bcachefs} is a @acronym{CoW, copy-on-write} file system supporting native
 encryption, compression, snapshots, and (meta)data checksums.  It can use
 multiple block devices for replication and/or performance, similar to RAID.
 
@@ -715,36 +716,31 @@ performance and other characteristics.")
 (define-public bcachefs/static
   (package
     (name "bcachefs-static")
-    (version (package-version bcachefs-tools))
+    (version (package-version bcachefs-tools/static))
     (source #f)
     (build-system trivial-build-system)
     (arguments
      (list #:modules '((guix build utils))
            #:builder
            #~(begin
-               (use-modules (guix build utils)
-                            (ice-9 ftw)
-                            (srfi srfi-26))
-               (mkdir-p #$output)
-               (with-directory-excursion #$output
-                 (install-file (string-append #$(this-package-input
-                                                 "bcachefs-tools-static")
-                                              "/sbin/bcachefs")
-                               "sbin")
-                 (remove-store-references "sbin/bcachefs")
-                 (invoke "sbin/bcachefs" "version"))))) ; test suite
+               (use-modules (guix build utils))
+               (let ((target (string-append #$output "/sbin/bcachefs")))
+                 (install-file (search-input-file %build-inputs "sbin/bcachefs")
+                               (dirname target))
+                 (remove-store-references target)))))
     (inputs
      (list bcachefs-tools/static))
-    (home-page (package-home-page bcachefs-tools))
+    (home-page (package-home-page bcachefs-tools/static))
     (synopsis "Statically-linked bcachefs command from bcachefs-tools")
-    (description "This package provides the statically-linked @command{bcachefs}
-from the bcachefs-tools package.  It is meant to be used in initrds.")
-    (license (package-license bcachefs-tools))))
+    (description
+     "This package provides the statically-linked @command{bcachefs} from the
+bcachefs-tools package.  It is meant to be used in initrds.")
+    (license (package-license bcachefs-tools/static))))
 
 (define-public exfatprogs
   (package
     (name "exfatprogs")
-    (version "1.2.1")
+    (version "1.2.5")
     (source
      (origin
        (method git-fetch)
@@ -753,11 +749,25 @@ from the bcachefs-tools package.  It is meant to be used in initrds.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1g5aqhjz0l58kvmis1j5b5qkn58hjs582f36ygiqkgxvp4njkny4"))))
+        (base32 "0plj52kjvhy94hdk0bq8bc7ql6yh44x76kryxhn46vwbxayv790j"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags
-       (list "--disable-static")))
+     (list
+      #:configure-flags
+      #~(list "--disable-static")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "FSCK1" "../fsck/fsck.exfat")
+                ;; Upstream CI uses a second FSCK provided by its host operating
+                ;; system to verify the results of the newly-built one.  That
+                ;; makes no sense in Guix, but we can detect crashes, unexpected
+                ;; inconsistencies, and other badness by testing with only one.
+                (setenv "FSCK2" (getenv "FSCK1"))
+                (with-directory-excursion "tests"
+                  (invoke "./test_fsck.sh"))))))))
     (native-inputs
      (list autoconf automake libtool pkg-config))
     (home-page "https://github.com/exfatprogs/exfatprogs")
@@ -900,14 +910,14 @@ from the jfsutils package.  It is meant to be used in initrds.")
 (define-public nilfs-utils
   (package
     (name "nilfs-utils")
-    (version "2.2.9")
+    (version "2.2.11")
     (source
       (origin
         (method url-fetch)
         (uri (string-append "https://nilfs.sourceforge.io/download"
                             "/nilfs-utils-" version ".tar.bz2"))
         (sha256
-         (base32 "15vsayvzr8nc29n939sz9ddq46vpn53rp8h8qv484h88qac3kxjx"))))
+         (base32 "1k9l5kzhdph3jh04kxz4dn5yb210205iycbnpklrpi6jy1zqj0l6"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1445,7 +1455,7 @@ with the included @command{xfstests-check} helper.")
 (define-public zfs
   (package
     (name "zfs")
-    (version "2.2.5")
+    (version "2.2.6")
     (outputs '("out" "module" "src"))
     (source
       (origin
@@ -1454,7 +1464,7 @@ with the included @command{xfstests-check} helper.")
                               "/download/zfs-" version
                               "/zfs-" version ".tar.gz"))
           (sha256
-           (base32 "15w8s0f155kpylgdan56hgwc86fl1658br05dmyyhxfd55pwz213"))))
+           (base32 "19x2a8k25i3y6nr7nx5aaqrpnp55vjmrw86p06zpgpf578804bn9"))))
     (build-system linux-module-build-system)
     (arguments
      (list

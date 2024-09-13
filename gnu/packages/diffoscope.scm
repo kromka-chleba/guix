@@ -253,7 +253,7 @@ install.")
 (define-public reprotest
   (package
     (name "reprotest")
-    (version "0.7.27")
+    (version "0.7.28")
     (source
      (origin
        (method git-fetch)
@@ -262,46 +262,37 @@ install.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0z5i53dy4ax4gbidcqmwqq0686n1g397c79bsscfs94s2y35fsns"))))
+        (base32 "06jm82w05qsx3wskch3fm5mpkpj5jmq7r4yram4ixprxc5j8flg8"))))
     (inputs
      (list python-debian python-distro python-libarchive-c python-rstr))
     (native-inputs
-     `(("diffoscope" ,diffoscope)
-       ("help2man" ,help2man)
-       ("libfaketime" ,libfaketime)
-       ("python-coverage" ,python-coverage)
-       ("python-docutils" ,python-docutils)
-       ("python-magic " ,python-magic)
-       ("python-pytest " ,python-pytest)
-       ("python-tlsh" ,python-tlsh)
-       ("python-tox" ,python-tox)
-       ("unzip" ,unzip)
-       ("xxd" ,xxd)))
+     (list diffoscope
+           help2man
+           libfaketime
+           python-coverage
+           python-docutils
+           python-magic
+           python-pytest
+           python-tlsh
+           python-tox
+           unzip
+           xxd))
     (build-system python-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; Neither glibc-locales nor glibc-utf8-locales have the C.UTF-8
-         ;; locale or several other locales used in reprotest.
-         (add-after 'unpack 'adjust-locales
-           (lambda _
-             (substitute* "reprotest/build.py"
-               (("'C.UTF-8'") "'en_US.UTF-8'"))
-             (substitute* "reprotest/lib/adt_testbed.py"
-               (("export LANG=C.UTF-8") "export LANG=en_US.UTF-8"))
-             #t))
-         (add-after 'install 'install-doc
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((mandir1 (string-append
-                              (assoc-ref outputs "out") "/share/man/man1"))
-                    (docdir (string-append
-                             (assoc-ref outputs "out") "/share/doc/" ,name "-" ,version)))
-               (invoke "make" "-C" "doc")
-               (mkdir-p mandir1)
-               (install-file "doc/reprotest.1" mandir1)
-               (mkdir-p docdir)
-               (install-file "./README.rst" docdir)
-               (install-file "./README-dev.rst" docdir)))))))
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'install-doc
+                 (lambda _
+                   (let* ((mandir1 (string-append
+                                    #$output "/share/man/man1"))
+                          (docdir (string-append
+                                   #$output "/share/doc/" #$name "-" #$version)))
+                     (invoke "make" "-C" "doc")
+                     (mkdir-p mandir1)
+                     (install-file "doc/reprotest.1" mandir1)
+                     (mkdir-p docdir)
+                     (install-file "./README.rst" docdir)
+                     (install-file "./README-dev.rst" docdir)))))))
     (home-page "https://salsa.debian.org/reproducible-builds/reprotest")
     (synopsis "Build software and check it for reproducibility")
     (description "Reprotest builds the same source code twice in different
@@ -311,33 +302,33 @@ them in detail for later analysis.")
     (license (list license:gpl3+ license:gpl2+))))
 
 (define-public trydiffoscope
- (package
-   (name "trydiffoscope")
-   (version "67.0.6")
-   (source
-    (origin
-      (method git-fetch)
-      (uri (git-reference
-            (url "https://salsa.debian.org/reproducible-builds/trydiffoscope.git")
-            (commit version)))
-      (file-name (git-file-name name version))
-      (sha256
-       (base32
-        "0jzxgqraf727fvjcc9bgwz8zymjiix07x54xzqpvm52cv681nd9j"))))
+  (package
+    (name "trydiffoscope")
+    (version "67.0.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://salsa.debian.org/reproducible-builds/trydiffoscope.git")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0k698g4fws63rnav4pvfsf1hfds867xan59mmv5zw71r58lm6cxb"))))
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'install-doc
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((share (string-append (assoc-ref outputs "out") "/share/")))
-               (mkdir-p (string-append share "/man/man1/" ))
-               (invoke "rst2man.py"
-                       "trydiffoscope.1.rst"
-                       (string-append share "/man/man1/trydiffoscope.1"))
-               (mkdir-p (string-append share "/doc/" ,name "-" ,version))
-               (install-file "./README.rst"
-                          (string-append share "/doc/" ,name "-" ,version)))
-             #t)))))
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'install-doc
+                 (lambda _
+                   (let* ((share (string-append #$output "/share/")))
+                     (mkdir-p (string-append share "/man/man1/"))
+                     (invoke "rst2man.py" "trydiffoscope.1.rst"
+                             (string-append share "/man/man1/trydiffoscope.1"))
+                     (mkdir-p (string-append
+                               share "/doc/" #$name "-" #$version))
+                     (install-file
+                      "./README.rst"
+                      (string-append share "/doc/" #$name "-" #$version))))))))
     (propagated-inputs
      (list python-requests))
     (native-inputs

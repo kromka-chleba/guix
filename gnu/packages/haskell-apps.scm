@@ -11,7 +11,7 @@
 ;;; Copyright © 2015 Paul van der Walt <paul@denknerd.org>
 ;;; Copyright © 2019, 2020 Kyle Meyer <kyle@kyleam.com>
 ;;; Copyright © 2015 John Soo <jsoo1@asu.edu>
-;;; Copyright © 2019, 2020, 2022, 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2019, 2020, 2022-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2019, 2020 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2020 Alexandru-Sergiu Marton <brown121407@member.fsf.org>
 ;;; Copyright © 2020 Brian Leung <bkleung89@gmail.com>
@@ -297,7 +297,7 @@ to @code{cabal repl}).")
 (define-public git-annex
   (package
     (name "git-annex")
-    (version "10.20240227")
+    (version "10.20240831")
     (source
      (origin
        ;; hackage release doesn't include everything needed for extra bits.
@@ -307,7 +307,7 @@ to @code{cabal repl}).")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "023gk1v01ks367h4zz67ksn2xaw6pgcfhmniay6ipkncfqv8rsra"))))
+        (base32 "1g6paxjpdjmzr623p7cf6chh42g5azwlzlnxgljhyhdmz6bxj5fr"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "git-annex")))
     (arguments
@@ -374,7 +374,7 @@ to @code{cabal repl}).")
          (add-after 'install 'install-more
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
-                    (bash (string-append out "/etc/bash_completions.d"))
+                    (bash (string-append out "/etc/bash_completion.d"))
                     (fish (string-append out "/share/fish/vendor_completions.d"))
                     (zsh (string-append out "/share/zsh/site-functions")))
              (setenv "PREFIX" out)
@@ -398,6 +398,8 @@ to @code{cabal repl}).")
                     (bin (string-append out "/bin")))
                (symlink (string-append bin "/git-annex")
                         (string-append bin "/git-annex-shell"))
+               (symlink (string-append bin "/git-annex")
+                        (string-append bin "/git-remote-annex"))
                (symlink (string-append bin "/git-annex")
                         (string-append bin "/git-remote-tor-annex"))))))))
     (inputs
@@ -464,6 +466,7 @@ to @code{cabal repl}).")
            ghc-tagsoup
            ghc-torrent
            ghc-transformers
+           ghc-unbounded-delays
            ghc-unix-compat
            ghc-unliftio-core
            ghc-unordered-containers
