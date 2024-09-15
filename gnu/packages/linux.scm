@@ -513,7 +513,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.10-version "6.10.8")
+(define-public linux-libre-6.10-version "6.10.9")
 (define-public linux-libre-6.10-gnu-revision "gnu")
 (define deblob-scripts-6.10
   (linux-libre-deblob-scripts
@@ -523,7 +523,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1zmgsgzrcsjzjzhgb12drc0f42ag8xak6z7zzx324f0wrf4i67zf")))
 (define-public linux-libre-6.10-pristine-source
   (let ((version linux-libre-6.10-version)
-        (hash (base32 "15f5wdzd8k70vgaz9a8w1kjfk5pp27zbcwkzm2xhcilxfwsk54n0")))
+        (hash (base32 "0n385x7hc5pqxiiy26ampgzf56wqfvydg70va27xrhm7w1q9nj54")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.10)))
@@ -532,7 +532,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.49")
+(define-public linux-libre-6.6-version "6.6.50")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -542,12 +542,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0kpkmdmrw9bnypdd0z489smh8bbwgg1ii301g1ynqfdkzd2ca1iq")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1dyk5pr5g8s5ia7f1vnkid4jghi81pxvwlgn9rmw2n88nz1dlmic")))
+        (hash (base32 "0vp8sbm9fqj09vh7fib39rw18n5cj8zfydqsr5h00898mxny6rf0")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.108")
+(define-public linux-libre-6.1-version "6.1.109")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -557,7 +557,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "11jbnj0d3262grf9vkn0668kvfxifxw98ccvn81wkaykll01k5nx")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "18lcd2b7ffwzqwqnmb948r7z95470bh7jiqps5nil8hfl24lwkiz")))
+        (hash (base32 "1h8sq3p075wyfgs2vjg8y1dbj27dj16c4rbxpgfwahinqq5g8bvk")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
@@ -851,7 +851,7 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
             ("CONFIG_BPF_SYSCALL" . #t))
           '())
     ,@(if (version>=? version "5.13")
-          '(("BPF_UNPRIV_DEFAULT_OFF" . #t))
+          '(("CONFIG_BPF_UNPRIV_DEFAULT_OFF" . #t))
           '())
     ("CONFIG_NET_CLS_BPF" . m)         ;classify packets based on BPF filters
     ("CONFIG_NET_ACT_BPF" . m)         ;to execute BPF code on packets

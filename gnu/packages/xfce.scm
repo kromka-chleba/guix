@@ -512,7 +512,13 @@ matching them against regular expressions.")
     (native-inputs
      (list intltool pkg-config dbus-glib dbus))
     (inputs
-     (list exo libnotify libxfce4ui pulseaudio xfce4-panel))
+     (list exo
+           keybinder
+           libnotify
+           libxfce4ui
+           pavucontrol
+           pulseaudio
+           xfce4-panel))
     (home-page "https://git.xfce.org/panel-plugins/xfce4-pulseaudio-plugin/")
     (synopsis "PulseAudio panel plugin for Xfce")
     (description
@@ -1245,7 +1251,6 @@ for and start applications.")
            xfce4-battery-plugin
            xfce4-clipman-plugin
            xfce4-pulseaudio-plugin
-           xfce4-volumed-pulse
            xfce4-xkb-plugin))
     (propagated-inputs
      ;; Default font that applications such as IceCat require.

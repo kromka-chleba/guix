@@ -3,6 +3,7 @@
 ;;; Copyright © 2015 Sou Bunnbu <iyzsong@gmail.com>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2021 Brice Waegeneire <brice@waegenei.re>
+;;; Copyright © 2024 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -22,7 +23,7 @@
 (define-module (gnu services dbus)
   #:use-module (gnu services)
   #:use-module (gnu services shepherd)
-  #:use-module (gnu system setuid)
+  #:use-module (gnu system privilege)
   #:use-module (gnu system shadow)
   #:use-module (gnu system pam)
   #:use-module ((gnu packages glib) #:select (dbus))
@@ -166,13 +167,14 @@ includes the @code{etc/dbus-1/system.d} directories of each package listed in
          (home-directory "/run/dbus")
          (shell (file-append shadow "/sbin/nologin")))))
 
-(define dbus-setuid-programs
-  ;; Return a list of <setuid-program> for the program that we need.
+(define dbus-privileged-programs
+  ;; Return a list of <privileged-program> for the program that we need.
   (match-lambda
     (($ <dbus-configuration> dbus services)
-     (list (setuid-program
+     (list (privileged-program
             (program (file-append
-                      dbus "/libexec/dbus-daemon-launch-helper")))))))
+                      dbus "/libexec/dbus-daemon-launch-helper"))
+            (setuid? #t))))))
 
 (define (dbus-activation config)
   "Return an activation gexp for D-Bus using @var{config}."
@@ -255,8 +257,8 @@ includes the @code{etc/dbus-1/system.d} directories of each package listed in
                                           dbus-etc-files)
                        (service-extension account-service-type
                                           (const %dbus-accounts))
-                       (service-extension setuid-program-service-type
-                                          dbus-setuid-programs)))
+                       (service-extension privileged-program-service-type
+                                          dbus-privileged-programs)))
 
                 ;; Extensions consist of lists of packages (representing D-Bus
                 ;; services) that we just concatenate.
@@ -387,7 +389,7 @@ tuples, are all set as environment variables when the bus daemon launches it."
     (($ <polkit-configuration> polkit packages)
      `(("polkit-1" ,(polkit-directory (cons polkit packages)))))))
 
-(define polkit-setuid-programs
+(define polkit-privileged-programs
   (match-lambda
     (($ <polkit-configuration> polkit)
      (map file-like->setuid-program
@@ -407,8 +409,8 @@ tuples, are all set as environment variables when the bus daemon launches it."
                                            polkit-configuration-polkit))
                        (service-extension etc-service-type
                                           polkit-etc-files)
-                       (service-extension setuid-program-service-type
-                                          polkit-setuid-programs)))
+                       (service-extension privileged-program-service-type
+                                          polkit-privileged-programs)))
 
                 ;; Extensions are lists of packages that provide polkit rules
                 ;; or actions under share/polkit-1/{actions,rules.d}.

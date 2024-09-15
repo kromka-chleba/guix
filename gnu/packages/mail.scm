@@ -5051,7 +5051,7 @@ remote SMTP server.")
 (define-public aerc
   (package
     (name "aerc")
-    (version "0.18.1")
+    (version "0.18.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5060,7 +5060,7 @@ remote SMTP server.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1gj8m8xvqaf0lsnk4h1n9d0qhwi8d3mm0w9zhw16v888n7rll9fb"))))
+                "0y34cv2vcwhr0vbd1ax2hv9rmv79dp9i02y2xqyr23krfb5bp197"))))
     (build-system go-build-system)
     (arguments
      (list #:import-path "git.sr.ht/~rjarry/aerc"
@@ -5086,12 +5086,11 @@ remote SMTP server.")
                         (string-append
                          "\"" (search-input-file inputs "bin/sh")
                          "\"")))
-                     (when (assoc-ref inputs "zoxide")
-                       (substitute* "commands/z.go"
-                         (("\"zoxide\"")
-                          (string-append
-                           "\"" (search-input-file inputs "bin/zoxide")
-                           "\""))))
+                     (let ((zoxide (search-input-file inputs "bin/zoxide")))
+                       (when zoxide
+                         (substitute* "commands/z.go"
+                           (("\"zoxide\"")
+                            (string-append "\"" zoxide "\"")))))
                      (substitute* (list "lib/crypto/gpg/gpg.go"
                                         "lib/crypto/gpg/gpg_test.go"
                                         "lib/crypto/gpg/gpgbin/keys.go"

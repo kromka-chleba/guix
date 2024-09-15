@@ -147,6 +147,7 @@
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages haskell)
+  #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages image)
   #:use-module (gnu packages image-viewers)
@@ -2531,7 +2532,7 @@ perform creative live mixes with digital music files.")
 (define-public synthv1
   (package
     (name "synthv1")
-    (version "0.9.32")
+    (version "1.1.0")
     (source (origin
               (method url-fetch)
               (uri
@@ -2539,7 +2540,7 @@ perform creative live mixes with digital music files.")
                               "/synthv1-" version ".tar.gz"))
               (sha256
                (base32
-                "1i76d4w2anccyp70vylxxrmqgf1i3znl98ag82wz8lxb5sh34i4x"))))
+                "0szl3p9wgy7cdjb757yrkskr4sqs1gvqq2zk1cm7hvadc8r0pbp3"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -2563,7 +2564,7 @@ oscillators and stereo effects.")
 (define-public drumkv1
   (package
     (name "drumkv1")
-    (version "0.9.32")
+    (version "1.1.0")
     (source (origin
               (method url-fetch)
               (uri
@@ -2571,7 +2572,7 @@ oscillators and stereo effects.")
                               "/drumkv1-" version ".tar.gz"))
               (sha256
                (base32
-                "15csm09wjgzdkvy2wqq1jzq7b1m8zzchl5s8fb4ir5rg395jkxai"))))
+                "0z1j4218x69nzri0nbcp3sadlwk0ixs5m9fdi4w7zpwy528bgxiz"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -2596,7 +2597,7 @@ effects.")
 (define-public samplv1
   (package
     (name "samplv1")
-    (version "0.9.32")
+    (version "1.1.0")
     (source (origin
               (method url-fetch)
               (uri
@@ -2604,7 +2605,7 @@ effects.")
                               "/samplv1-" version ".tar.gz"))
               (sha256
                (base32
-                "17w5m5sk8fcnnph1njz9sz031kk0aid8mhs64myc2jvpvwm5snlb"))))
+                "1lfa9q8mkjz6m34w7fvqkd8p62f42wrrcniyv4k4d9f1a4582frd"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -2629,7 +2630,7 @@ effects.")
 (define-public padthv1
   (package
     (name "padthv1")
-    (version "0.9.32")
+    (version "1.1.0")
     (source (origin
               (method url-fetch)
               (uri
@@ -2637,7 +2638,7 @@ effects.")
                               "/padthv1-" version ".tar.gz"))
               (sha256
                (base32
-                "0qpdyczgqblf3sxjkvxn2g8qyx1hm0pmiqhncncrijbaalazsp7m"))))
+                "17jx61bfg9k24mz266icxqbax3x0qvvywxlby16ky6fjp2dqy7x8"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; there are no tests
@@ -2663,7 +2664,7 @@ special variant of additive synthesis.")
 (define-public amsynth
   (package
     (name "amsynth")
-    (version "1.12.4")
+    (version "1.13.4")
     (source
      (origin
        (method url-fetch)
@@ -2671,7 +2672,7 @@ special variant of additive synthesis.")
                            "download/release-" version
                            "/amsynth-" version ".tar.gz"))
        (sha256
-        (base32 "1fabxx4nv5rsi4kjqachzh2r6zb40lszbv09gcz41ql8qslrw842"))))
+        (base32 "1yryhwx05v1kzj44kxamgvwc65r65d7vlk4nbkaa6kjy7yy9lrwm"))))
     (build-system gnu-build-system)
     (arguments
      (list #:phases
@@ -2699,7 +2700,10 @@ special variant of additive synthesis.")
      ;;   'org.gnome.desktop.interface' is not installed
      (list gsettings-desktop-schemas))
     (native-inputs
-     (list intltool pkg-config))
+     (list intltool
+           pkg-config
+           ;; For generating the documentation.
+           pandoc))
     (home-page "https://amsynth.github.io")
     (synopsis "Analog modeling synthesizer")
     (description
@@ -3685,14 +3689,14 @@ from the command line.")
 (define-public qtractor
   (package
     (name "qtractor")
-    (version "0.9.35")
+    (version "1.1.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://downloads.sourceforge.net/qtractor/"
                                   "qtractor-" version ".tar.gz"))
               (sha256
                (base32
-                "1v3w8x9dfqldfa8gjxxszzclnhqlgyanpr7b4dhva68qyxmp4m7v"))))
+                "09kvv4anjpv3pk0ajn8685d24ya6h771sm6yh4kgviykzvl3vjyd"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; no "check" target

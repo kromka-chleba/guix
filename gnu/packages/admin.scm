@@ -2041,7 +2041,7 @@ system administrator.")
 (define-public sudo
   (package
     (name "sudo")
-    (version "1.9.14p3")
+    (version "1.9.16")
     (source (origin
               (method url-fetch)
               (uri
@@ -2051,7 +2051,7 @@ system administrator.")
                                     version ".tar.gz")))
               (sha256
                (base32
-                "0qibg30d30gy85g83fj6gsg59g1sj3i9mkfl0k0851dwqjqii0x0"))
+                "0gd0pyycc3jnbgq5f8056fyc4a1ix257j2rxazy35dq6gxwlvn60"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -2506,24 +2506,28 @@ module slots, and the list of I/O ports (e.g. serial, parallel, USB).")
 (define-public acpica
   (package
     (name "acpica")
-    (version "20230628")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://downloadmirror.intel.com/783536/acpica-unix2-"
-                    version ".tar.gz"))
-              (sha256
-               (base32
-                "1fmkng72zb0yqp4hfl8a6pqmylixqbpjd43xmi6k3p74x5qiq0h6"))))
+    (version "20240827")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/acpica/acpica")
+             (commit (string-append "version-" version))))
+       (sha256
+        (base32 "0dzrdhdgmmr6kqm95avvhr295kj8xi6iwm510lfwaylxzh34ln26"))))
     (build-system gnu-build-system)
     (native-inputs (list flex bison))
     (arguments
-     `(#:make-flags (list (string-append "PREFIX=" %output)
-                          (string-append "CC=" ,(cc-for-target))
-                          "HOST=_LINUX"
-                          "OPT_CFLAGS=-Wall -fno-strict-aliasing")
-       #:tests? #f                      ; no 'check' target
-       #:phases (modify-phases %standard-phases (delete 'configure))))
+     (list
+      #:make-flags
+      #~(list (string-append "PREFIX=" #$output)
+              (string-append "CC=" #$(cc-for-target))
+              "HOST=_LINUX"
+              "OPT_CFLAGS=-Wall -fno-strict-aliasing")
+      #:tests? #f                       ;no test suite
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure))))        ;no configure script
     (home-page "https://acpica.org/")
     (synopsis "Tools for the development and debugging of ACPI tables")
     (description
@@ -2536,7 +2540,7 @@ debugging ACPI tables.
 
 This package contains only the user-space tools needed for ACPI table
 development, not the kernel implementation of ACPI.")
-    (license license:gpl2)))            ; dual GPLv2/ACPICA Licence
+    (license license:gpl2)))            ;dual GPLv2/ACPICA Licence
 
 (define-public s-tui
   (package

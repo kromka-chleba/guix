@@ -5865,7 +5865,7 @@ correct URLs for Python according to RFCs 3986 and 3987.")
     (home-page "https://github.com/twisted/treq")
     (synopsis "Requests-like API built on top of twisted.web's Agent")
     (description "This package provides an HTTP library inspired by
-@code{requests}} but written on top of Twisted's @code{Agents}.  It offers a
+@code{requests} but written on top of Twisted's @code{Agents}.  It offers a
 high level API for making HTTP requests when using Twisted.")
     (license license:expat)))
 
@@ -7960,53 +7960,6 @@ Features:
 @end itemize")
     (license license:expat)))
 
-(define-public python-msrest
-  (package
-    (name "python-msrest")
-    (version "0.6.21")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "msrest" version))
-       (sha256
-        (base32 "1n389m3hcsyjskzimq4j71nyw9pjkrp0n5wg1q2c4bfwpv3inrkj"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest"
-                       "-k"
-                       ;; These attempt to connect to bing.com.
-                       (string-append
-                        "not test_basic_aiohttp"
-                        " and not test_basic_async_requests"
-                        " and not test_conf_async_requests"
-                        " and not test_conf_async_trio_requests"
-                        " and not test_basic_aiohttp"
-                        " and not test_basic_async_requests"
-                        " and not test_conf_async_requests"
-                        " and not test_conf_async_trio_requests"))))))))
-    (propagated-inputs
-     (list python-aiohttp
-           python-certifi
-           python-isodate
-           python-requests
-           python-requests-oauthlib))
-    (native-inputs
-     (list python-httpretty
-           python-pytest
-           python-pytest-aiohttp
-           python-pytest-asyncio
-           python-pytest-trio))
-    (home-page "https://github.com/Azure/msrest-for-python")
-    (synopsis "AutoRest swagger generator Python client runtime")
-    (description "This package provides the runtime library @code{msrest} for
-AutoRest-generated Python clients.")
-    (license license:expat)))
-
 (define-public python-azure-nspkg
   (package
     (name "python-azure-nspkg")
@@ -8069,59 +8022,45 @@ Python.")
 (define-public python-azure-core
   (package
     (name "python-azure-core")
-    (version "1.24.0")
+    (version "1.28.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "azure-core" version ".zip"))
        (sha256
-        (base32 "1r8bpn3zz02mj00qbaks5qq49wqd3mznkm90bchd1mxa3w21nnrl"))))
-    (build-system python-build-system)
+        (base32 "1g9nv5pcjkskv37vsjgsm7am81y629flwkghnvd5dphzzikgrvp9"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               ;; This fails because devtools_testutils doesn't exist.
-               (delete-file "tests/test_connection_string_parsing.py")
-               ;; Needs network.
-               (for-each delete-file
-                         '("tests/async_tests/test_streaming_async.py"
-                           "tests/test_streaming.py"))
-               (add-installed-pythonpath inputs outputs)
-               (setenv "PYTHONPATH"
-                       (string-append (getcwd) "/tests/testserver_tests/coretestserver:"
-                                      (getenv "GUIX_PYTHONPATH")))
-               (invoke "pytest"
-                       ;; Most of these need network access.
-                       "-m" "not asyncio and not live_test_only"
-                       "-k"
-                       ;; These need network access.
-                       (string-append
-                        "not test_example_raw_response_hook"
-                        " and not test_example_headers_policy"
-                        " and not test_example_request_id_policy"
-                        " and not test_example_user_agent_policy"
-                        " and not test_example_requests"
-                        " and not test_example_pipeline"
-                        " and not test_example_pipeline_client"
-                        " and not test_example_redirect_policy"
-                        " and not test_example_no_redirects"
-                        " and not test_example_retry_policy"
-                        " and not test_example_no_retries"
-                        " and not test_decompress_plain_no_header"
-                        " and not test_compress_plain_no_header"
-                        " and not test_decompress_compressed_no_header"))))))))
+     (list
+      #:test-flags
+      `(list ;; This fails because devtools_testutils doesn't exist.
+        "--ignore=tests/test_connection_string_parsing.py"
+        ;; These all need network access.
+        "--ignore=samples"
+        "--ignore=tests/async_tests/test_streaming_async.py"
+        "--ignore=tests/test_streaming.py"
+        "-m" "not asyncio and not live_test_only"
+        "-k" ,(string-append
+               "not test_decompress_plain_no_header"
+               " and not test_compress_plain_no_header"
+               " and not test_decompress_compressed_no_header"
+               " and not test_requests_socket_timeout"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'add-test-pythonpath
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "PYTHONPATH"
+                        (string-append
+                         (getcwd) "/tests/testserver_tests/coretestserver:"
+                         (getenv "GUIX_PYTHONPATH")))))))))
     (propagated-inputs
      (list python-aiohttp
            python-requests
            python-six
-           python-trio
            python-typing-extensions))
     (native-inputs
      (list python-flask
-           python-msrest
            python-pytest
            python-pytest-aiohttp
            python-pytest-asyncio
@@ -8136,17 +8075,19 @@ Python.")
 (define-public python-azure-storage-blob
   (package
     (name "python-azure-storage-blob")
-    (version "12.12.0")
+    (version "12.22.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "azure-storage-blob" version ".zip"))
+       (uri (pypi-uri "azure-storage-blob" version))
        (sha256
-        (base32 "1xv23ph822qywjxs81say9xi5dzmvxcii6sww6d1hvd83iyz1npn"))))
-    (build-system python-build-system)
+        (base32 "0vkkngiybx5372j9vc9p4wn6hakpv99l0ipsf4kw7ccazss4p05k"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
-     (list python-azure-core python-cryptography python-msrest))
-    (native-inputs (list unzip))
+     (list python-azure-core
+           python-cryptography
+           python-isodate
+           python-typing-extensions))
     (home-page "https://github.com/Azure/azure-sdk-for-python/")
     (synopsis "Microsoft Azure Blob Storage client library for Python")
     (description "This package provides the Microsoft Azure Blob Storage

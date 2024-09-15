@@ -317,7 +317,7 @@ is a list, it recursively searches it until it locates the last item of TREE."
   (let ((upower-package (compose list upower-configuration-upower)))
     (service-type (name 'upower)
                   (description
-                   "Run @command{upowerd}}, a system-wide monitor for power
+                   "Run @command{upowerd}, a system-wide monitor for power
 consumption and battery levels, with the given configuration settings.  It
 implements the @code{org.freedesktop.UPower} D-Bus interface, and is notably
 used by GNOME.")
@@ -1736,8 +1736,7 @@ need to create it beforehand."))))
   (match-record enlightenment-desktop-configuration
       <enlightenment-desktop-configuration>
     (enlightenment)
-    (map (lambda (program) (privileged-program (program program)
-                                               (setuid? #t)))
+    (map file-like->setuid-program
          (list (file-append enlightenment
                             "/lib/enlightenment/utils/enlightenment_sys")
                (file-append enlightenment
@@ -2052,11 +2051,8 @@ applications needing access to be root.")
 
          ;; Allow desktop users to also mount NTFS and NFS file systems
          ;; without root.
-         (simple-service 'mount-setuid-helpers setuid-program-service-type
-                         (map (lambda (program)
-                                (privileged-program
-                                 (program program)
-                                 (setuid? #t)))
+         (simple-service 'mount-setuid-helpers privileged-program-service-type
+                         (map file-like->setuid-program
                               (list (file-append nfs-utils "/sbin/mount.nfs")
                                (file-append ntfs-3g "/sbin/mount.ntfs-3g"))))
 

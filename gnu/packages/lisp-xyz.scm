@@ -37,7 +37,7 @@
 ;;; Copyright © 2022 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2022 Trevor Richards <trev@trevdev.ca>
 ;;; Copyright © 2022, 2023 Artyom Bologov <mail@aartaka.me>
-;;; Copyright © 2023 Roman Scherer <roman@burningswell.com>
+;;; Copyright © 2023, 2024 Roman Scherer <roman@burningswell.com>
 ;;; Copyright © 2023 ykonai <mail@ykonai.net>
 ;;; Copyright © 2023 Gabriel Hondet <gabriel.hondet@cominety.net>
 ;;; Copyright © 2023 Raven Hallsby <karl@hallsby.com>
@@ -1162,6 +1162,43 @@ computer known.")
 
 (define-public cl-antik
   (sbcl-package->cl-source-package sbcl-antik))
+
+(define-public sbcl-anypool
+  (let ((commit "5389ec945882e87f2fc1d3e852c91aaf176556e5")
+        (revision "1"))
+    (package
+      (name "sbcl-anypool")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/fukamachi/anypool")
+               (commit commit)))
+         (file-name (git-file-name "cl-anypool" version))
+         (sha256
+          (base32 "1ffssc5fzh7gj0z94xxfb3mk5cwja65lrhxyfgib15a6yxqf1kk1"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs
+       (list sbcl-rove))
+      (inputs
+       (list sbcl-bordeaux-threads
+             sbcl-cl-speedy-queue))
+      (arguments
+       '(#:asd-systems '("anypool"
+                         "anypool/middleware")))
+      (home-page "https://github.com/fukamachi/anypool")
+      (synopsis "General-purpose connection pooling library")
+      (description
+       "This package provides a general-purpose connection pooling library for
+Common Lisp.")
+      (license license:bsd-2))))
+
+(define-public cl-anypool
+  (sbcl-package->cl-source-package sbcl-anypool))
+
+(define-public ecl-anypool
+  (sbcl-package->ecl-package sbcl-anypool))
 
 (define-public sbcl-april
   (let ((commit "bdd74f168ec82f28fe4ab692f2c0af39441a5701")
@@ -10339,11 +10376,11 @@ similar to the standard hash-table interface.")
   (sbcl-package->ecl-package sbcl-clache))
 
 (define-public sbcl-clack
-  (let ((commit "6fd0279424f7ba5fd4f92d69a1970846b0b11222")
-        (revision "2"))
+  (let ((commit "4916ebb243d42d1b52f8030db146215033b1b71e")
+        (revision "1"))
     (package
       (name "sbcl-clack")
-      (version (git-version "2.0.0" revision commit))
+      (version (git-version "2.1.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -10352,29 +10389,30 @@ similar to the standard hash-table interface.")
                (commit commit)))
          (file-name (git-file-name "cl-clack" version))
          (sha256
-          (base32 "0sfmvqmsg9z13x0v77448rpdqgyprdq739nsbrjw9a28hv9jmkg9"))))
+          (base32 "0kgymwvv1ghzvl4jryl3fxf0kf44i6z19izcf1rf0k4cidx093a7"))))
       (build-system asdf-build-system/sbcl)
       (arguments
+       ;; Only the handler for hunchentoot is included. The other
+       ;; two Web servers supported by clack, toot and wookie,
+       ;; have not yet been packaged for Guix.
        '(#:asd-systems '("clack"
-                         "clack-handler-fcgi"
-                         "clack-socket"
-                         "clack-handler-hunchentoot")))
+                         "clack-handler-hunchentoot"
+                         "clack-socket")))
       (inputs
        (list sbcl-alexandria
              sbcl-bordeaux-threads
-             sbcl-cl-fastcgi
              sbcl-flexi-streams
              sbcl-hunchentoot
              sbcl-lack
-             sbcl-quri
              sbcl-split-sequence
+             sbcl-slime-swank
              sbcl-usocket))
       (home-page "https://github.com/fukamachi/clack")
       (synopsis "Web Application Environment for Common Lisp")
       (description
        "Clack is a web application environment for Common Lisp inspired by
 Python's WSGI and Ruby's Rack.")
-      (license license:llgpl))))
+      (license license:expat))))
 
 (define-public cl-clack
   (sbcl-package->cl-source-package sbcl-clack))
@@ -18478,41 +18516,61 @@ extensions developed by technical users.")
 ;;   (sbcl-package->ecl-package sbcl-kons-9))
 
 (define-public sbcl-lack
-  (let ((commit "abff8efeb0c3a848e6bb0022f2b8b7fa3a1bc88b")
+  (let ((commit "35d3a8e03cab9204eec88c7dfe4d5366fc2ea922")
         (revision "1"))
     (package
       (name "sbcl-lack")
-      (version (git-version "0.1.0" revision commit))
+      (version (git-version "0.3.0" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/fukamachi/lack")
                (commit commit)))
-         (file-name (git-file-name "lack" version))
+         (file-name (git-file-name "cl-lack" version))
          (sha256
-          (base32 "1avh4ygcj9xcx4m17nj0wnxxaisk26w4ljs2bibzxaln24x7pi85"))))
+          (base32 "1yrhhzn8ywdjxwpaxzlnsm2lslhy45r89brn8gh5n08mdyjlp4l2"))
+         (patches (search-patches "sbcl-lack-fix-tests.patch"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
-       (list sbcl-prove))
+       (list sbcl-cl-cookie
+             sbcl-dexador
+             sbcl-hunchentoot
+             sbcl-prove))
       (inputs
-       `(("circular-streams" ,sbcl-circular-streams)
-         ("http-body" ,sbcl-http-body)
-         ("ironclad" ,sbcl-ironclad)
-         ("local-time" ,sbcl-local-time)
-         ("quri" ,sbcl-quri)
-         ("trivial-mimes" ,sbcl-trivial-mimes)))
+       (list sbcl-alexandria
+             sbcl-anypool
+             sbcl-bordeaux-threads
+             sbcl-circular-streams
+             sbcl-cl-base64
+             sbcl-cl-isaac
+             sbcl-cl-redis
+             sbcl-dbi
+             sbcl-http-body
+             sbcl-ironclad
+             sbcl-local-time
+             sbcl-quri
+             sbcl-trivial-mimes
+             sbcl-trivial-rfc-1123))
       (arguments
        '(#:asd-systems '("lack"
+                         "lack-app-directory"
+                         "lack-app-file"
+                         "lack-component"
+                         "lack-middleware-accesslog"
+                         "lack-middleware-auth-basic"
+                         "lack-middleware-backtrace"
+                         "lack-middleware-csrf"
+                         "lack-middleware-dbpool"
+                         "lack-middleware-mount"
+                         "lack-middleware-session"
+                         "lack-middleware-static"
                          "lack-request"
                          "lack-response"
-                         "lack-component"
+                         "lack-session-store-dbi"
+                         "lack-session-store-redis"
                          "lack-util"
-                         "lack-util-writer-stream"
-                         "lack-middleware-backtrace"
-                         "lack-middleware-static")
-         ;; XXX: Component :CLACK not found
-         #:tests? #f))
+                         "lack-util-writer-stream")))
       (home-page "https://github.com/fukamachi/lack")
       (synopsis "Lack, the core of Clack")
       (description
@@ -18520,7 +18578,7 @@ extensions developed by technical users.")
 constructed of modular components.  It was originally a part of Clack, however
 it's going to be rewritten as an individual project since Clack v2 with
 performance and simplicity in mind.")
-      (license license:llgpl))))
+      (license license:expat))))
 
 (define-public cl-lack
   (sbcl-package->cl-source-package sbcl-lack))
@@ -23905,6 +23963,36 @@ corresponding OS system functions are called.")
 (define-public cl-ppath
   (sbcl-package->cl-source-package sbcl-ppath))
 
+(define-public sbcl-print-licenses
+  (let ((commit "3949663318fb736f4ee660e3aa810875187d531c")
+        (revision "0"))
+    (package
+      (name "sbcl-print-licenses")
+      (build-system asdf-build-system/sbcl)
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/vindarel/print-licenses")
+               (commit commit)))
+         (file-name (git-file-name "cl-print-licenses" version))
+         (sha256
+          (base32 "14i6r6mf16dlj1g4xk0alg2912y3wy0qbfpyvvgsgxkkar63cmi5"))))
+      (inputs (list sbcl-alexandria sbcl-iterate))
+      (home-page "https://github.com/vindarel/print-licenses/")
+      (synopsis "Print licenses used by a Common Lisp project")
+      (description
+       "This library can be used to print the licenses used by a Common Lisp
+project and its dependencies.")
+      (license license:expat))))
+
+(define-public ecl-print-licenses
+  (sbcl-package->ecl-package sbcl-print-licenses))
+
+(define-public cl-print-licenses
+  (sbcl-package->cl-source-package sbcl-print-licenses))
+
 (define-public sbcl-printv
   (let ((commit "e717a7fe076dae861a96117b2f9af29db8d2294d")
         (revision "2"))
@@ -25319,6 +25407,36 @@ Rucksack with some enhancements.")
 
 (define-public ecl-rutils
   (sbcl-package->ecl-package sbcl-rutils))
+
+(define-public sbcl-s-base64
+  (let ((commit "ed473e220133ca0e8b5b96618ea2972dec9de6cd")
+        (revision "0"))
+    (package
+      (name "sbcl-s-base64")
+      (version (git-version "2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/svenvc/s-base64")
+               (commit commit)))
+         (file-name (git-file-name "cl-s-base64" version))
+         (sha256
+          (base32 "0zrr8zhnkdy97c5g54605nhjlf7fly79ylr1yf6wwyssia04cagg"))))
+      (build-system asdf-build-system/sbcl)
+      (home-page "https://github.com/svenvc/s-base64")
+      (synopsis "Common Lisp package to encode and decode base64")
+      (description
+       "This package provides a Common Lisp implementation of Base64 encoding
+and decoding.  Base64 encoding is a technique to encode binary data in a
+portable, safe printable, 7-bit ASCII format.")
+      (license license:llgpl))))
+
+(define-public cl-s-base64
+  (sbcl-package->cl-source-package sbcl-s-base64))
+
+(define-public ecl-s-base64
+  (sbcl-package->ecl-package sbcl-s-base64))
 
 (define-public sbcl-s-sysdeps
   ;; No release since 2013.
