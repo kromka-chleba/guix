@@ -1478,6 +1478,7 @@ its mode line.")
          (uri (git-reference
                (url "https://github.com/fritzgrabo/project-tab-groups.git")
                (commit commit)))
+         (file-name (git-file-name name version))
          (sha256
           (base32 "1zg9kxyjz942ib9lii0in67hwqil2xlz78vjm1qqypw3zaivhh7p"))))
       (build-system emacs-build-system)
@@ -2998,6 +2999,7 @@ compile}.")
          (uri (git-reference
                (url "https://github.com/flymake/emacs-flymake-perlcritic")
                (commit commit)))
+         (file-name (git-file-name name version))
          (sha256
           (base32 "1n2682ly8pw8sjj7bix4qjjxc5x396m6sxbv0k6vs93z4i1gy2qm"))))
       (build-system emacs-build-system)
@@ -3433,6 +3435,7 @@ terminals.")
        (uri (git-reference
              (url "https://github.com/ybiquitous/rbs-mode")
              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "1ibn8246q0yqdnf3qdww9rvzac9gla7gzjj0n5j5x08brgj5ll2h"))))
     (build-system emacs-build-system)
@@ -9741,6 +9744,7 @@ correct movement and editing than you would otherwise have.")
               (uri (git-reference
                     (url "https://github.com/emacs-compat/compat")
                     (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
                 "0rw4j8caiyah7k6pml8bwxd9zs6q7mlqq3lvrm013vimw2js3d12"))))
@@ -13425,6 +13429,7 @@ line program.")
        (uri (git-reference
              (url "https://github.com/ruby/elisp-ruby-electric")
              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "1p0l0fsn0jcgb4raimyc4d1wpfksrfhn0rkwdazadvm6s8baydf7"))))
     (build-system emacs-build-system)
@@ -14402,6 +14407,7 @@ builtin JavaScript mode.")
          (uri (git-reference
                (url "https://github.com/emacsorphanage/qt-pro-mode")
                (commit commit)))
+         (file-name (git-file-name name version))
          (sha256
           (base32 "07054hzl7gd0wfibcqvij2wx9zji330gsryn53qad9gyalvlavpa"))))
       (build-system emacs-build-system)
@@ -18584,6 +18590,7 @@ Additionally it can display the number of unread emails in the mode line.")
        (uri (git-reference
              (url "https://github.com/Alexander-Miller/mu4e-column-faces.git")
              (commit "1bbb646ea07deb1bd2daa4c6eb36e0f65aac40b0")))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "12cb37lj8j1fd5kp3gbnzgknb57j5l8xgrnhb60ysff66m1mbrr7"))))
     (build-system emacs-build-system)
@@ -20057,6 +20064,7 @@ methods from a given list.")
        (uri (git-reference
              (url "https://github.com/liuyinz/mini-echo.el")
              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "0f9jwiy6syl8y0g0q11g9m6x1v4fmn8gahg0l3y2ygkz9kdwkpd3"))))
     (build-system emacs-build-system)

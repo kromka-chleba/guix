@@ -4251,6 +4251,40 @@ allocator.  This is primarily useful for long lived buffers that usually sit emp
 length-delimited slices.  It's helpful for building wire protocols.")
     (license license:expat)))
 
+(define-public go-github-com-liyue201-gostl
+  (package
+    (name "go-github-com-liyue201-gostl")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/liyue201/gostl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dxzh791agir21dp1jmfa1bvqc23byz93fx3jlm94brlgm9zdkd3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/liyue201/gostl"
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build)
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (home-page "https://github.com/liyue201/gostl")
+    (synopsis "Data structure and algorithm library for Go")
+    (description
+     "@code{gostl} is a data structure and algorithm library for Go, designed
+to provide functions similar to C++ STL.")
+    (license license:expat)))
+
 (define-public go-github-com-logrusorgru-aurora
   (package
     (name "go-github-com-logrusorgru-aurora")
@@ -6307,6 +6341,30 @@ slices, JSON and other data.")
     (description
      "This package provides a Go implementation of the LevelDB key/value
 storage system.")
+    (license license:bsd-2)))
+
+(define-public go-github-com-tannerryan-ring
+  (package
+    (name "go-github-com-tannerryan-ring")
+    (version "1.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tannerryan/ring")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07q5qcg2wv696nnw3rrgc49mqijapdwp3xsscaxb5867bz79s841"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tannerryan/ring"))
+    (home-page "https://github.com/tannerryan/ring")
+    (synopsis "High performance bloom filter")
+    (description
+     "@code{ring} provides a high performance and thread safe Go implementation of a
+@url{https://en.wikipedia.org/wiki/Bloom_filter, bloom filter}.")
     (license license:bsd-2)))
 
 (define-public go-github-com-teambition-rrule-go

@@ -2059,68 +2059,78 @@ system administrator.")
     (build-system gnu-build-system)
     (outputs (list "out"))
     (arguments
-     `(#:configure-flags
-       (list (string-append "--docdir=" (assoc-ref %outputs "out")
-                            "/share/doc/" ,name "-" ,version)
+     (list #:configure-flags
+           #~(list (string-append "--docdir=" #$output
+                                  "/share/doc/" #$name "-" #$version)
 
-             "--with-logpath=/var/log/sudo.log"
-             "--with-rundir=/var/run/sudo" ; must be cleaned up at boot time
-             "--with-vardir=/var/db/sudo"
-             "--with-iologdir=/var/log/sudo-io"
+                   "--with-logpath=/var/log/sudo.log"
+                   "--with-rundir=/var/run/sudo" ; must be cleaned up at boot time
+                   "--with-vardir=/var/db/sudo"
+                   "--with-iologdir=/var/log/sudo-io"
 
-             ;; 'visudo.c' expects _PATH_MV to be defined, but glibc doesn't
-             ;; provide it.
-             (string-append "CPPFLAGS=-D_PATH_MV=\\\""
-                            (assoc-ref %build-inputs "coreutils")
-                            "/bin/mv\\\""))
+                   ;; 'visudo.c' expects _PATH_MV to be defined, but glibc doesn't
+                   ;; provide it.
+                   (string-append "CPPFLAGS=-D_PATH_MV=\\\""
+                                  (search-input-file %build-inputs "/bin/mv")
+                                  "\\\"")
 
-       ;; Avoid non-determinism; see <http://bugs.gnu.org/21918>.
-       #:parallel-build? #f
+                   ;; When cross-compiling, assume we have a working 'snprintf' and
+                   ;; 'vsnprintf' (which we do, when using glibc).  The default
+                   ;; choice fails with undefined references to 'sudo_snprintf' &
+                   ;; co. when linking.
+                   #$@(if (%current-target-system)
+                          '("ac_cv_have_working_snprintf=yes"
+                            "ac_cv_have_working_vsnprintf=yes")
+                          '()))
 
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'pre-configure
-           (lambda _
-             (substitute* "src/sudo_usage.h.in"
-               ;; Do not capture 'configure' arguments since we would
-               ;; unduly retain references, and also because the
-               ;; CPPFLAGS above would close the string literal
-               ;; prematurely.
-               (("@CONFIGURE_ARGS@") "\"\""))
-             (substitute* (find-files "." "Makefile\\.in")
-               ;; Allow installation as non-root.
-               (("-o [[:graph:]]+ -g [[:graph:]]+")
-                "")
-               ;; Don't try to create /etc/sudoers.
-               (("^install: (.*)install-sudoers(.*)" _ before after)
-                (string-append "install: " before after "\n"))
-               ;; Don't try to create /run/sudo.
-               (("\\$\\(DESTDIR\\)\\$\\(rundir\\)")
-                "$(TMPDIR)/dummy")
-               ;; Install example sudo{,_logsrvd}.conf to the right place.
-               (("\\$\\(DESTDIR\\)\\$\\(sysconfdir\\)")
-                "$(DESTDIR)/$(docdir)/examples")
-               ;; Don't try to create /var/db/sudo.
-               (("\\$\\(DESTDIR\\)\\$\\(vardir\\)")
-                "$(TMPDIR)/dummy"))
+           ;; Avoid non-determinism; see <http://bugs.gnu.org/21918>.
+           #:parallel-build? #f
 
-             ;; ‘Checking existing [/etc/]sudoers file for syntax errors’ is
-             ;; not the task of the build system, and fails.
-             (substitute* "plugins/sudoers/Makefile.in"
-               (("^pre-install:" match)
-                (string-append match "\ndisabled-" match))))))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'pre-configure
+                 (lambda _
+                   (substitute* "src/sudo_usage.h.in"
+                     ;; Do not capture 'configure' arguments since we would
+                     ;; unduly retain references, and also because the
+                     ;; CPPFLAGS above would close the string literal
+                     ;; prematurely.
+                     (("@CONFIGURE_ARGS@")
+                      "\"\""))
+                   (substitute* (find-files "." "Makefile\\.in")
+                     ;; Allow installation as non-root.
+                     (("-o [[:graph:]]+ -g [[:graph:]]+")
+                      "")
+                     ;; Don't try to create /etc/sudoers.
+                     (("^install: (.*)install-sudoers(.*)" _ before
+                       after)
+                      (string-append "install: " before after "\n"))
+                     ;; Don't try to create /run/sudo.
+                     (("\\$\\(DESTDIR\\)\\$\\(rundir\\)")
+                      "$(TMPDIR)/dummy")
+                     ;; Install example sudo{,_logsrvd}.conf to the right place.
+                     (("\\$\\(DESTDIR\\)\\$\\(sysconfdir\\)")
+                      "$(DESTDIR)/$(docdir)/examples")
+                     ;; Don't try to create /var/db/sudo.
+                     (("\\$\\(DESTDIR\\)\\$\\(vardir\\)")
+                      "$(TMPDIR)/dummy"))
 
-       ;; XXX: The 'testsudoers' test series expects user 'root' to exist, but
-       ;; the chroot's /etc/passwd doesn't have it.  Turn off the tests.
-       #:tests? #f))
+                   ;; ‘Checking existing [/etc/]sudoers file for syntax errors’ is
+                   ;; not the task of the build system, and fails.
+                   (substitute* "plugins/sudoers/Makefile.in"
+                     (("^pre-install:" match)
+                      (string-append match "\ndisabled-" match))))))
+
+           ;; XXX: The 'testsudoers' test series expects user 'root' to exist, but
+           ;; the chroot's /etc/passwd doesn't have it.  Turn off the tests.
+           #:tests? #f))
     (native-inputs
      (list groff))
     (inputs
-     `(("coreutils" ,coreutils)
-       ,@(if (target-hurd?)
-           '()
-           `(("linux-pam" ,linux-pam)))
-       ("zlib" ,zlib)))
+     (append (list coreutils zlib)
+             (if (target-hurd?)
+                 '()
+                 (list linux-pam))))
     (home-page "https://www.sudo.ws/")
     (synopsis "Run commands as root")
     (description
@@ -2513,6 +2523,7 @@ module slots, and the list of I/O ports (e.g. serial, parallel, USB).")
        (uri (git-reference
              (url "https://github.com/acpica/acpica")
              (commit (string-append "version-" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "0dzrdhdgmmr6kqm95avvhr295kj8xi6iwm510lfwaylxzh34ln26"))))
     (build-system gnu-build-system)
@@ -2593,7 +2604,7 @@ system is under heavy load.")
 (define-public stress-ng
   (package
     (name "stress-ng")
-    (version "0.13.10")
+    (version "0.18.04")
     (source
      (origin
        (method git-fetch)
@@ -2602,12 +2613,12 @@ system is under heavy load.")
              (commit (string-append "V" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1z9vjn2131iv3pwrh04z6r5ygi1qgad5bi3jhghcvc3v1b4k5ran"))))
+        (base32 "100w4qkrzpg7jjl4dw0c376xi811qnjmlbffiy43i945f9vl3dc7"))))
     (build-system gnu-build-system)
     (arguments
      ;; XXX The test suite seems to cause instability on the VisionFive 2
      ;; build machines, maybe it's stressing them as intended but this is
-     ;; unhelpful
+     ;; unhelpful.
      (list #:tests? (not (target-riscv64?))
            #:make-flags
            #~(list (string-append "CC=" #$(cc-for-target))
@@ -2618,21 +2629,13 @@ system is under heavy load.")
                                   "/share/stress-ng/example-jobs")
                    (string-append "BASHDIR=" #$output
                                   "/share/bash-completion/completions"))
+           ;; There is also a fast-test-all that very briefly runs every single
+           ;; stressor, but its utility is questionable compared to its cost.
+           ;; See this package's git history for details & which tests to skip.
            #:test-target "lite-test"
            #:phases
            #~(modify-phases %standard-phases
-               (delete 'configure)      ; no configure script
-               (add-after 'check 'check-a-little-harder
-                 ;; XXX Guix supports only one #:test-target.  Run more tests.
-                 (lambda* (#:key tests? #:allow-other-keys #:rest args)
-                   (when tests?
-                     (substitute* "debian/tests/fast-test-all"
-                       (("EXCLUDE=\"" exclude=)
-                        (string-append exclude=
-                                       ;; Fails if host kernel denies ptracing.
-                                       "ptrace ")))
-                     (apply (assoc-ref %standard-phases 'check)
-                            `(,@args #:test-target "fast-test-all"))))))))
+               (delete 'configure))))   ;no configure script
     (inputs
      (list keyutils
            kmod
@@ -5737,7 +5740,7 @@ on a GUI toolkit.")
 (define-public libseat
   (package
     (name "libseat")
-    (version "0.7.0")
+    (version "0.8.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5746,7 +5749,7 @@ on a GUI toolkit.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "10f8387yy5as547xjjhl0cna6iywdgjmw0iq2nvcs8q6vlpnik4v"))))
+                "02wzrgp8di6hqmicnm2fim6jnvbn62wy248ikvdvrhiywrb7i931"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags '("-Dlibseat-logind=elogind"

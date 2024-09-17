@@ -488,15 +488,28 @@ Doom clone shooter game.")
 (define-public armagetronad
   (package
     (name "armagetronad")
-    (version "0.2.9.1.1")
+    (version "0.2.9.2.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/armagetronad/stable/"
                                   version "/armagetronad-" version ".tbz"))
               (sha256
                (base32
-                "0cpxvzbssyf45fmanp1d6l992wln8zkjx4z2flgx27fg1rqdw5zn"))))
+                "0a6rlp2lj5bp7pg1yf8brjyb3mw7nqp3amj19wvz3xni21bbc31k"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "--disable-games"      ;don't nest everything in ‘games/’
+                   "--disable-uninstall") ;pointless (and broken) in Guix
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'omit-broken-symlinks
+                 ;; v0.2.9.2.0 added relative_path() which I think broke
+                 ;; install_link().  It now creates a broken armagetronad-master
+                 ;; symlink that causes the 'validate-runpath phase to fail.
+                 (lambda _
+                   (substitute* "batch/sysinstall.in"
+                     (("^install_link .*BINDIR.*") "")))))))
     (native-inputs (list pkg-config))
     (inputs (list libxml2
                   (sdl-union (list sdl sdl-image sdl-mixer))
@@ -11531,7 +11544,7 @@ play; it will look for them at @file{~/.local/share/vcmi} folder.")
 (define-public apricots
   (package
     (name "apricots")
-    (version "0.2.7")
+    (version "0.2.8")
     (source
      (origin
        (method git-fetch)
@@ -11539,13 +11552,16 @@ play; it will look for them at @file{~/.local/share/vcmi} folder.")
              (url "https://github.com/moggers87/apricots")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0vis217hhnb9fbs9sf8mmcm71qp44kr3xqmffc1gdiixvi90c781"))
+        (base32 "01mqdybmn5rp8ifx619bx0pki9ryj5cvv2iwpsnn8ngggd6smh9x"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
-    (native-inputs (list autoconf  ; autom4te used in ./bootstrap
-                         automake  ; aclocal used in ./bootstrap
-                         cppcheck))
-    (inputs (list freealut openal sdl2))
+    (arguments
+     ;; The test suite doesn't test the built game, but merely runs cppcheck &
+     ;; clang-format.  Useful for the maintainers; not for distributions.
+     (list #:tests? #f))
+    (native-inputs (list autoconf       ;autom4te used in ./bootstrap
+                         automake))     ;aclocal used in ./bootstrap
+    (inputs (list alure openal sdl2))
     (home-page "https://github.com/moggers87/apricots")
     (synopsis "Arcade airplane game")
     (description "@code{apricots} is a game where you fly a little plane

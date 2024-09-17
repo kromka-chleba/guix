@@ -182,7 +182,7 @@ it.")
 (define-public trealla
   (package
     (name "trealla")
-    (version "2.55.35")
+    (version "2.55.40")
     (source
      (origin
        (method git-fetch)
@@ -191,7 +191,7 @@ it.")
          (url "https://github.com/trealla-prolog/trealla")
          (commit (string-append "v" version))))
        (sha256
-        (base32 "16gpsh8szy9kjnzny3apm6qgqjdmlf912dpbjqdhvx7qbsqclmha"))
+        (base32 "1q8ym05qwjvyl3rf7bvhxx88p1x6yjrgs3mx7mbq92a8bbsk6zi0"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs
@@ -212,6 +212,11 @@ it.")
       #~(modify-phases %standard-phases
           ;; Upstream does not use a configure script.
           (delete 'configure)
+          (add-before 'build 'patch-package-version
+            (lambda _
+              (substitute* "Makefile"
+                (("\\$\\(shell git describe --abbrev=4 --dirty --always --tags\\)")
+                 (string-append "v" #$version)))))
           (replace 'install
             ;; Upstream does not provide an install target.
             (lambda _

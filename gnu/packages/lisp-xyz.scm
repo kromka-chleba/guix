@@ -14728,6 +14728,40 @@ which standard exactly.")
 (define-public ecl-fare-csv
   (sbcl-package->ecl-package sbcl-fare-csv))
 
+(define-public sbcl-fare-memoization
+  (let ((commit "8b43ac6bcc0057d1a92052e39b6d34c05c2eb7e4")
+        (revision "0"))
+    (package
+      (name "sbcl-fare-memoization")
+      (version "1.2.0")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://gitlab.common-lisp.net/frideau/fare-memoization")
+               (commit commit)))
+         (sha256
+          (base32 "1blmrb4c9gsxj87scz74z1s8w9d1w2r48fyxj0y1sw3vr6bsbb8f"))
+         (file-name (git-file-name name commit))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs
+       (list sbcl-hu.dwim.stefil))
+      (inputs
+       (list sbcl-named-readtables))
+      (home-page "https://gitlab.common-lisp.net/frideau/fare-memoization")
+      (synopsis "Memoization library for Common Lisp")
+      (description
+       "This library builds on the venerable idea of dynamically memoizing functions.
+A memoized function remembers results from previous computations and returns cached
+results when called again with the same arguments rather than repeating the computation.")
+      (license license:expat))))
+
+(define-public cl-fare-memoization
+  (sbcl-package->cl-source-package sbcl-fare-memoization))
+
+(define-public ecl-fare-memoization
+  (sbcl-package->ecl-package sbcl-fare-memoization))
+
 (define-public sbcl-fare-mop
   (let ((commit "538aa94590a0354f382eddd9238934763434af30")
         (revision "1"))
@@ -29519,8 +29553,8 @@ spawning threads and being informed when one any of them crash and die.")
   (sbcl-package->ecl-package sbcl-trivial-monitored-thread))
 
 (define-public sbcl-trivial-octet-streams
-  (let ((commit "bc5d398b18549fd42e9c2a365df28ad865f1b85d")
-        (revision "0"))
+  (let ((commit "71b00632c569618863376dd0cb985f6868b523b0")
+        (revision "1"))
     (package
       (name "sbcl-trivial-octet-streams")
       (version (git-version "0.1" revision commit))
@@ -29532,7 +29566,7 @@ spawning threads and being informed when one any of them crash and die.")
                (commit commit)))
          (file-name (git-file-name "cl-trivial-octet-streams" version))
          (sha256
-          (base32 "0ysnsarlzynb7jf4b63b6kkxjancxc66jwmn0sb3vxyh87siiv6n"))))
+          (base32 "0zj7aijn10hflr87774hwi5k1jzq6j5bgh2hm70ixxhcmaq7lqk5"))))
       (build-system asdf-build-system/sbcl)
       (home-page "https://github.com/sharplispers/trivial-octet-streams")
       (synopsis "In-memory octet streams for Common Lisp")

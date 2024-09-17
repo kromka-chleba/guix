@@ -332,7 +332,7 @@ used to further tweak the behaviour of the different profiles.")
 (define-public bemenu
   (package
     (name "bemenu")
-    (version "0.6.21")
+    (version "0.6.23")
     (source
      (origin
        (method git-fetch)
@@ -341,7 +341,7 @@ used to further tweak the behaviour of the different profiles.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a97h711nbwi01a3vv2944m8gyzi04hgfpiizrzinx79n4vp1zhk"))))
+        (base32 "0a4ihg1v1yyfwi4qq2zybhy39vw3nikd5qjrd5x3nxgjd0knmynj"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1538,6 +1538,7 @@ Escape key when Left Control is pressed and released on its own.")
               (uri (git-reference
                     (url "https://github.com/linuxwacom/libwacom")
                     (commit (string-append "libwacom-" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
                 "1z8p8k19j4snl90rh1j9m53m1wq4vamsdny3hq9azwmzwf3xf6bp"))))
