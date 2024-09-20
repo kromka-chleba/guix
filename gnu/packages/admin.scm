@@ -277,7 +277,7 @@ usual file attributes can be checked for inconsistencies.")
 (define-public progress
   (package
     (name "progress")
-    (version "0.16")
+    (version "0.17")
     (source
      (origin
        (method git-fetch)
@@ -285,7 +285,7 @@ usual file attributes can be checked for inconsistencies.")
              (url "https://github.com/Xfennec/progress")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0gf10j9zd8spain94b5kigknwbdqajiy6fjsa5hhwsc1biz34hcj"))
+        (base32 "1cg1vdk2891sdcbn7yc9a6mzdxplm63qsk1kq0jr4j8ym28v09xf"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs
@@ -293,18 +293,14 @@ usual file attributes can be checked for inconsistencies.")
     (inputs
      (list ncurses))
     (arguments
-     `(#:tests? #f                      ; no test suite
-       #:make-flags
-       (let ((target ,(%current-target-system)))
-         (list ,(string-append "CC=" (cc-for-target))
-               (string-append "PKG_CONFIG="
-                              (if target
-                                  (string-append target "-pkg-config")
-                                  "pkg-config"))
-               (string-append "PREFIX=" (assoc-ref %outputs "out"))))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))))         ; no configure script
+     (list #:tests? #f                      ; no test suite
+           #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target))
+                   (string-append "PKG_CONFIG=" #$(pkg-config-for-target))
+                   (string-append "PREFIX=" #$output))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure))))         ; no configure script
     (home-page "https://github.com/Xfennec/progress")
     (synopsis "Program to view the progress of the coreutils commands")
     (description "A program that looks for coreutils basic commands (cp, mv,
@@ -2556,13 +2552,13 @@ development, not the kernel implementation of ACPI.")
 (define-public s-tui
   (package
     (name "s-tui")
-    (version "1.1.4")
+    (version "1.1.6")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "s-tui" version))
        (sha256
-        (base32 "1vf9gpfk9x6sqpz7n420ijkn3ykws8g9b77kmbmlrjsm76dnp1dj"))))
+        (base32 "0mvvqg0pr8k0cy0mbvi25yqm6zsf8mipdbq97xjqfvifryf6j9wx"))))
     (build-system python-build-system)
     (inputs
      (list python-psutil python-urwid))

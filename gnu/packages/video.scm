@@ -225,7 +225,7 @@
 (define-public ani-cli
   (package
     (name "ani-cli")
-    (version "4.8")
+    (version "4.9")
     (source
      (origin
        (method git-fetch)
@@ -234,7 +234,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1xfcn51yyzjc7gr2xzhz2i1i500ad1877dmdadipfdlfcs4l4yxy"))))
+        (base32 "0ihiiwxgimf9q6hd4g9xxmxps8ngrwl4vwvd8mymmb7dcjjrwfzg"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -5495,8 +5495,8 @@ programmers to access a standard API to open and decompress media files.")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                     "http://ftp.aegisub.org/pub/archives/releases/source/"
-                     name "-" version ".tar.xz"))
+                     "https://github.com/Aegisub/Aegisub/releases/download/v"
+                     version "/aegisub-" version ".tar.xz"))
               (sha256
                (base32
                 "11b83qazc8h0iidyj1rprnnjdivj1lpphvpa08y53n42bfa36pn5"))

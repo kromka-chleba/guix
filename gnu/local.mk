@@ -1071,6 +1071,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/clang-17.0-link-dsymutil-latomic.patch	\
   %D%/packages/patches/clang-18.0-libc-search-path.patch	\
   %D%/packages/patches/clang-cling-13-libc-search-path.patch	\
+  %D%/packages/patches/clang-cling-13-remove-crypt-interceptors.patch	\
+  %D%/packages/patches/clang-cling-runtime-13-glibc-2.36-compat.patch	\
   %D%/packages/patches/clang-runtime-asan-build-fixes.patch	\
   %D%/packages/patches/clang-runtime-esan-build-fixes.patch	\
   %D%/packages/patches/clang-runtime-13-glibc-2.36-compat.patch	\
@@ -1161,7 +1163,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/dvd+rw-tools-add-include.patch 		\
   %D%/packages/patches/dwarves-threading-reproducibility.patch	\
   %D%/packages/patches/dynaconf-unvendor-deps.patch		\
-  %D%/packages/patches/dyninst-fix-glibc-compatibility.patch	\
   %D%/packages/patches/efivar-211.patch			\
   %D%/packages/patches/eigen-fix-strict-aliasing-bug.patch	\
   %D%/packages/patches/einstein-build.patch			\
@@ -1206,6 +1207,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/esmtp-add-lesmtp.patch		\
   %D%/packages/patches/eudev-rules-directory.patch		\
   %D%/packages/patches/exercism-disable-self-update.patch	\
+  %D%/packages/patches/expat-CVE-2024-45490.patch	\
+  %D%/packages/patches/expat-CVE-2024-45491.patch	\
+  %D%/packages/patches/expat-CVE-2024-45492.patch	\
   %D%/packages/patches/extempore-unbundle-external-dependencies.patch	\
   %D%/packages/patches/extundelete-e2fsprogs-1.44.patch		\
   %D%/packages/patches/fail2ban-0.11.2_CVE-2021-32749.patch	\

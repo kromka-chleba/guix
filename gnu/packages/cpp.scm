@@ -3049,8 +3049,12 @@ queues, resource pools, strings, etc.
     (native-inputs (list googletest benchmark))
     (arguments
      (list #:configure-flags
-           #~(list "-DFTXUI_BUILD_TESTS:BOOL=ON"
-                   "-DFTXUI_BUILD_TESTS_FUZZER:BOOL=OFF")))
+           #~(list (string-append "-DFTXUI_BUILD_TESTS:BOOL="
+                                  #$(if (%current-target-system)
+                                        "OFF"
+                                        "ON"))
+                   "-DFTXUI_BUILD_TESTS_FUZZER:BOOL=OFF"
+                   "-DBUILD_SHARED_LIBS=ON")))
     (home-page "https://github.com/ArthurSonzogni/FTXUI")
     (synopsis "C++ Functional Terminal User Interface")
     (description

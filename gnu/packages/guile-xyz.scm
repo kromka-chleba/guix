@@ -50,6 +50,7 @@
 ;;; Copyright © 2024 Ilya Chernyshov <ichernyshovvv@gmail.com>
 ;;; Copyright © 2024 Artyom Bologov <mail@aartaka.me>
 ;;; Copyright © 2024 Felix Lechner <felix.lechner@lease-up.com>
+;;; Copyright © 2024 Alec Barreto <mrh57@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1026,6 +1027,30 @@ that augment Guile's support for handling files and their names.")
     (inherit guile-filesystem)
     (name "guile2.2-filesystem")
     (inputs (list guile-2.2))))
+
+(define-public guile-swayer
+  (package
+    (name "guile-swayer")
+    (version "0.3.0")
+    (home-page "https://github.com/ebeem/guile-swayer")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ebeem/guile-swayer")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (snippet '(delete-file "manifest.scm"))
+       (sha256
+        (base32 "16npa337rp0s9rg4fc749b1nq6kfxj77pdd1qfh9xdrb1n0w7awi"))))
+    (native-inputs (list guile-3.0))
+    (build-system guile-build-system)
+    (synopsis "Extensible Guile bindings for SwayWM")
+    (description
+     "This package provides extensible Guile bindings for the Sway window
+manager.  It can be used to query Sway, assign keybindings and listen to
+events in Guile.")
+    (license license:expat)))
 
 (define-public guile-syntax-highlight
   (package
@@ -6340,7 +6365,7 @@ This module implements this interface by use of Guile's dynamic FFI.")
 (define-public guile-goblins
   (package
     (name "guile-goblins")
-    (version "0.13.0")
+    (version "0.14.0")
     (source
      (origin
        (method url-fetch)
@@ -6349,7 +6374,7 @@ This module implements this interface by use of Guile's dynamic FFI.")
                            version ".tar.gz"))
        (sha256
         (base32
-         "1s1aahak0m2hygnwi09vb399w7idh2hmbbn0fi7mdky0scxb5ybr"))))
+         "1gqyx8mq54dcs8waxjidk6xk43b2dfnw3hrbs22z6pnd9rdaj7wd"))))
     (build-system gnu-build-system)
     (arguments
      (list #:make-flags

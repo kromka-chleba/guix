@@ -1966,6 +1966,40 @@ impossible to merge back upstream.")
 (define-public ecl-binpack
   (sbcl-package->ecl-package sbcl-binpack))
 
+(define-public sbcl-birch
+  (let ((commit "30cd24260675c6c4e276daaf28be8d02ac15dd8f")
+        (revision "0"))
+    (package
+      (name "sbcl-birch")
+      (version (git-version "1.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/jorams/birch")
+               (commit commit)))
+         (file-name (git-file-name "cl-birch" version))
+         (sha256
+          (base32 "1b24xng92ra7420s3zy44pybk4h7xg4kjwdk35arl46badgi28r1"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs (list sbcl-alexandria
+                    sbcl-cl+ssl
+                    sbcl-flexi-streams
+                    sbcl-split-sequence
+                    sbcl-usocket))
+      (native-inputs (list sbcl-prove))
+      (home-page "https://github.com/jorams/birch")
+      (synopsis "Common Lisp IRC client library")
+      (description "Birch is a simple Common Lisp IRC client library.  It
+makes use of CLOS for event handling.")
+      (license (list license:expat)))))
+
+(define-public cl-birch
+  (sbcl-package->cl-source-package sbcl-birch))
+
+(define-public ecl-birch
+  (sbcl-package->ecl-package sbcl-birch))
+
 (define-public sbcl-bit-smasher
   ;; No release.
   (let ((commit "c2dcb3b5ec0e485484be681fe17c4e81e58790d9"))
@@ -4226,6 +4260,35 @@ encoding table that uses only URI-compatible characters.")
 (define-public ecl-cl-base64
   (sbcl-package->ecl-package sbcl-cl-base64))
 
+(define-public sbcl-cl-bnf
+  (let ((commit "ce009e3d60697bc376116e988f29ec0cbb1e9c84")
+        (revision "0"))
+    (package
+      (name "sbcl-cl-bnf")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/diasbruno/cl-bnf")
+               (commit commit)))
+         (file-name (git-file-name "cl-bnf" version))
+         (sha256
+          (base32 "0aa7hnkj71f37lxzlhsppwcmk3yv42hclq08c4jrdnv8jmdb8r0l"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs (list sbcl-flexi-streams sbcl-utf8-input-stream))
+      (home-page "https://github.com/diasbruno/cl-bnf")
+      (synopsis "BNF parser in Common Lisp")
+      (description "This package provides a @acronym{BNF, Backus–Naur form}
+parser in Common Lisp.")
+      (license (list license:expat)))))
+
+(define-public cl-bnf
+  (sbcl-package->cl-source-package sbcl-cl-bnf))
+
+(define-public ecl-cl-bnf
+  (sbcl-package->ecl-package sbcl-cl-bnf))
+
 (define-public sbcl-cl-cairo2
   (let ((commit "41ae45aac86553c46f4bb460f80e1fb620930f5b")
         (revision "1"))
@@ -5237,6 +5300,37 @@ environment access API.")
 
 (define-public ecl-cl-environments
   (sbcl-package->ecl-package sbcl-cl-environments))
+
+(define-public sbcl-cl-ewkb
+  (let ((commit "e2c7976cdc2074d63038ecd7179025ccb8d8f0b7")
+        (revision "0"))
+    (package
+      (name "sbcl-cl-ewkb")
+      (version (git-version "0.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/filonenko-mikhail/cl-ewkb")
+               (commit commit)))
+         (file-name (git-file-name "cl-ewkb" version))
+         (sha256
+          (base32 "1n1zm4i11638vh1a4m71690p4lpikkk0rp42j2yfvs5d9wi67cr1"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs (list sbcl-ieee-floats sbcl-flexi-streams))
+      (home-page "https://github.com/filonenko-mikhail/cl-ewkb")
+      (synopsis "Common Lisp PostGIS EWKB library")
+      (description "This package is a geospatial library, based on cl-wkb,
+that implements the OGC Well-Known Binary geographic geometry data model with
+PostGIS 3d, 4d extensions, and provides WKB and EWKB encoding and decoding
+functionality.")
+      (license (list license:expat)))))
+
+(define-public cl-ewkb
+  (sbcl-package->cl-source-package sbcl-cl-ewkb))
+
+(define-public ecl-cl-ewkb
+  (sbcl-package->ecl-package sbcl-cl-ewkb))
 
 (define-public sbcl-cl-fad
   ;; No release since 2019
@@ -23814,32 +23908,32 @@ are provided.")
 (define-public sbcl-postmodern
   (package
     (name "sbcl-postmodern")
-    (version "1.32.9")
+    (version "1.33.12")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/marijnh/Postmodern")
              (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
+       (file-name (git-file-name "cl-postmodern" version))
        (sha256
-        (base32 "137jci4hn4vlxf48y39k0di27kc89kvxy3brmn3vl9xq56sy6mhz"))))
+        (base32 "14js3pz0jbvf11liqbrxhndb98vasib4bzkv7im87mysxzk8glqz"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs
-     (list sbcl-fiveam))
+     (list sbcl-fiveam sbcl-trivial-octet-streams))
     (inputs
-     `(("alexandria" ,sbcl-alexandria)
-       ("bordeaux-threads" ,sbcl-bordeaux-threads)
-       ("cl-base64" ,sbcl-cl-base64)
-       ("cl-unicode" ,sbcl-cl-unicode)
-       ("closer-mop" ,sbcl-closer-mop)
-       ("global-vars" ,sbcl-global-vars)
-       ("ironclad" ,sbcl-ironclad)
-       ("local-time" ,sbcl-local-time)
-       ("md5" ,sbcl-md5)
-       ("split-sequence" ,sbcl-split-sequence)
-       ("uax-15" ,sbcl-uax-15)
-       ("usocket" ,sbcl-usocket)))
+     (list sbcl-alexandria
+           sbcl-bordeaux-threads
+           sbcl-cl-base64
+           sbcl-cl-unicode
+           sbcl-closer-mop
+           sbcl-global-vars
+           sbcl-ironclad
+           sbcl-local-time
+           sbcl-md5
+           sbcl-split-sequence
+           sbcl-uax-15
+           sbcl-usocket))
     (arguments
      ;; TODO: (Sharlatan-20210114T171037+0000) tests still failing but on other
      ;; step, some functionality in `local-time' prevents passing tests.
@@ -23897,23 +23991,7 @@ things together into a convenient programming interface")
   (sbcl-package->cl-source-package sbcl-postmodern))
 
 (define-public ecl-postmodern
-  (package
-    (inherit (sbcl-package->ecl-package sbcl-postmodern))
-    (arguments
-     `(#:tests? #f
-       #:asd-systems '("cl-postgres"
-                       "s-sql"
-                       "postmodern"
-                       "simple-date"
-                       "simple-date/postgres-glue")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-build
-           (lambda _
-             (substitute* "cl-postgres.asd"
-               ((":or :sbcl :allegro :ccl :clisp" all)
-                (string-append all " :ecl")))
-             #t)))))))
+  (sbcl-package->ecl-package sbcl-postmodern))
 
 (define-public sbcl-pp-toml
   (let ((commit "54f7d08c939d18b24363342c98c19b6812d7afb9")
@@ -30214,25 +30292,23 @@ user.")
 (define-public sbcl-uax-15
   (package
     (name "sbcl-uax-15")
-    (version "0.1.1")
+    (version "0.1.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/sabracrolleton/uax-15")
              (commit (string-append "v" version))))
-       (file-name (git-file-name "uax-15" version))
+       (file-name (git-file-name "cl-uax-15" version))
        (sha256
-        (base32 "0p2ckw7mzxhwa9vbwj2q2dzayz9dl94d9yqd2ynp0pc5v8i0n2fr"))))
+        (base32 "0kkr3sw3hqsb8ciyn8dzb1cfz260fk1y39vydc98gsfrn6nqh3vw"))))
     (build-system asdf-build-system/sbcl)
     (arguments
-     `(#:asd-systems
-       '("uax-15")))
+     `(#:asd-systems '("uax-15")))
     (native-inputs
-     (list sbcl-fiveam))
+     (list sbcl-parachute))
     (inputs
-     `(("cl-ppcre" ,sbcl-cl-ppcre)
-       ("split-sequence" ,sbcl-split-sequence)))
+     (list sbcl-cl-ppcre sbcl-split-sequence))
     (home-page "https://github.com/sabracrolleton/uax-15")
     (synopsis "Common Lisp implementation of unicode normalization functions")
     (description
@@ -30466,6 +30542,36 @@ the abstraction and portability layer as thin as possible.")
 
 (define-public ecl-usocket
   (sbcl-package->ecl-package sbcl-usocket))
+
+(define-public sbcl-utf8-input-stream
+  (let ((commit "d33b57a4d439c2f0877e5513be45eb6940d92c68")
+        (revision "0"))
+    (package
+      (name "sbcl-utf8-input-stream")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/veer66/utf8-input-stream")
+               (commit commit)))
+         (file-name (git-file-name "cl-utf8-input-stream" version))
+         (sha256
+          (base32 "06fk8fsz9nngdfjymg93h1l5m4yhfg4w8as68zlaj698xf9ry3i5"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs (list sbcl-babel sbcl-trivial-gray-streams))
+      (home-page "https://github.com/veer66/utf8-input-stream")
+      (synopsis "UTF-8 string input stream over a binary stream for Common
+Lisp")
+      (description "This package provides a UTF-8 string input stream over a
+binary stream for Common Lisp.")
+      (license license:expat))))
+
+(define-public cl-utf8-input-stream
+  (sbcl-package->cl-source-package sbcl-utf8-input-stream))
+
+(define-public ecl-utf8-input-stream
+  (sbcl-package->ecl-package sbcl-utf8-input-stream))
 
 (define-public sbcl-utils-kt
   (let ((commit "4adfe2889036ab5ffdd3cc2182ca2cc692bf11ff"))

@@ -38,6 +38,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
+  #:use-module (gnu packages certs)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
@@ -693,7 +694,8 @@ model-fitting photometry or morphological analyses.")
         (base32 "18aizbsmhwz99flz8n101mi0n0lk3m3qqzfvmxrmjwqvydfypjml"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-httpretty))
+     (list nss-certs-for-test
+           python-httpretty))
     (propagated-inputs
      (list python-mock
            python-requests
@@ -2215,7 +2217,8 @@ objects.")
                 (with-directory-excursion "/tmp"
                   (apply invoke "pytest" "-v" test-flags))))))))
     (native-inputs
-     (list pkg-config
+     (list nss-certs-for-test
+           pkg-config
            python-colorlog
            python-coverage
            python-cython-3
@@ -2459,7 +2462,8 @@ constraints (i.e., altitude, airmass, moon separation/illumination, etc.)
            python-pyvo
            python-requests))
     (native-inputs
-     (list python-astropy-healpix
+     (list nss-certs-for-test
+           python-astropy-healpix
            python-matplotlib
            ;; python-mocpy : Not packed yet, optional
            python-pytest-astropy
@@ -5796,7 +5800,9 @@ pipelines.")
                 (with-directory-excursion "ci"
                   (apply invoke "python" test-flags))))))))
     (native-inputs
-     (list python-assay python-pandas))
+     (list nss-certs-for-test
+           python-assay
+           python-pandas))
     (propagated-inputs
      (list python-certifi
            python-jplephem

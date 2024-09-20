@@ -16,6 +16,7 @@
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2024 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -683,6 +684,7 @@ It also includes runtime support libraries for these languages.")
                (base32
                 "0l7d4m9jx124xsk6xardchgy2k5j5l2b15q322k31f0va4d8826k"))
               (patches (search-patches "gcc-8-strmov-store-file-names.patch"
+                                       "gcc-7-libsanitizer-fsconfig-command.patch"
                                        "gcc-5.0-libvtv-runpath.patch"
                                        "gcc-8-sort-libtool-find-output.patch"))
               (modules '((guix build utils)))
@@ -1063,6 +1065,7 @@ using compilers other than GCC."
     (name "libiberty")
     (arguments
      `(#:out-of-source? #t
+       #:make-flags '("CFLAGS=-O2 -g -fPIC")
        #:phases
        (modify-phases %standard-phases
          (add-before 'configure 'chdir
@@ -1074,6 +1077,7 @@ using compilers other than GCC."
                     (lib     (string-append out "/lib/"))
                     (include (string-append out "/include/")))
                (install-file "libiberty.a" lib)
+               (install-file "../include/demangle.h" include)
                (install-file "../include/libiberty.h" include)))))))
     (inputs '())
     (outputs '("out"))
@@ -1225,8 +1229,9 @@ misnomer.")))
 (define-public libgccjit-12 (make-libgccjit gcc-12))
 (define-public libgccjit-14 (make-libgccjit gcc-14))
 
-;; Use the 'gcc' variable from above to track the same version.
-(define-public libgccjit (make-libgccjit gcc))
+;; This must match the 'gcc' variable, but it must also be 'eq?' to one of the
+;; libgccjit-* packages above.
+(define-public libgccjit libgccjit-11)
 
 (define (make-gccgo gcc)
   "Return a gccgo package based on GCC."
