@@ -1368,6 +1368,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/gdm-pass-gdk-pixbuf-loader-env.patch	\
   %D%/packages/patches/gemmi-fix-pegtl-usage.patch		\
   %D%/packages/patches/gemmi-fix-sajson-types.patch		\
+  %D%/packages/patches/gemrb-add-path-suffixes-for-vlc-headers.patch \
   %D%/packages/patches/genimage-mke2fs-test.patch		\
   %D%/packages/patches/geoclue-config.patch			\
   %D%/packages/patches/gettext-libunicode-update.patch		\
@@ -1745,6 +1746,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/lua-5.4-liblua-so.patch			\
   %D%/packages/patches/lugaru-fix-sound.patch			\
   %D%/packages/patches/luit-posix.patch				\
+  %D%/packages/patches/lxc-no-static-bin.patch	\
   %D%/packages/patches/mactelnet-remove-init.patch		\
   %D%/packages/patches/mailutils-variable-lookup.patch		\
   %D%/packages/patches/make-impure-dirs.patch			\

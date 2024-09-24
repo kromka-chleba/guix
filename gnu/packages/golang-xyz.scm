@@ -45,6 +45,7 @@
 ;;; Copyright © 2024 Luis Higino <luishenriquegh2701@gmail.com>
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Spencer Peters <spencerpeters@protonmail.com>
+;;; Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -7346,6 +7347,159 @@ also provides V-style logging controlled by the @code{-v} and
 defined in @url{https://editorconfig.org/,https://editorconfig.org/}.")
     (license license:bsd-3)))
 
+(define-public go-zgo-at-jfmt
+  (package
+    (name "go-zgo-at-jfmt")
+    (version "0.0.0-20240531161922-a97493b8db3c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/arp242/jfmt")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0vm38kp46m1drxx16prbjwrc575vv7819ci16p96i0mksnnlfxj3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "zgo.at/jfmt"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Remove test data which failing during tests, see
+          ;; <https://github.com/arp242/jfmt/issues/1>.
+          (add-after 'unpack 'disable-failing-tests
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each
+                 (lambda (file) (delete-file file))
+                 '("testdata/escape.json"
+                   "testdata/toml-test-key-escapes.json"
+                   "testdata/toml-test-string-quoted-unicode.json"))))))))
+    (propagated-inputs
+     (list go-zgo-at-termtext
+           go-zgo-at-zli
+           go-zgo-at-zstd))
+    (home-page "https://github.com/arp242/jfmt")
+    (synopsis "JSON formatter written in Go")
+    (description
+     "@samp{jfmt} is a JSON formatter which tries to produce opinionated
+output with more lines squashed into single one where possible (e.g. list,
+brackets, ordering).")
+    (license license:expat)))
+
+(define-public go-zgo-at-runewidth
+  (package
+    (name "go-zgo-at-runewidth")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/arp242/runewidth")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17wbzwak831z04kj4xdvh2q78k3in3kay009n0yj8nlwn1p126ph"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "zgo.at/runewidth"))
+    (home-page "https://github.com/arp242/runewidth")
+    (synopsis "Get fixed width of the character or string")
+    (description
+     "@samp{runewidth} provides functions to get fixed width of the character
+or string.  It is a fork of https://github.com/mattn/go-runewidth, updated to
+the newest Unicode and having various helper functions removed, so all that
+remains is just the @code{runewidth.RuneWidth()} function.")
+    (license license:expat)))
+
+(define-public go-zgo-at-termtext
+  (package
+    (name "go-zgo-at-termtext")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/arp242/termtext")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0czhvcx6crmwfl6555l9hgl6gq21ykwr4bg2dqksc71qmv6b27hh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "zgo.at/termtext"))
+    (propagated-inputs
+     (list go-github-com-rivo-uniseg
+           go-zgo-at-runewidth))
+    (home-page "https://github.com/arp242/termtext")
+    (synopsis "Deal with monospace text as interpreted by terminals")
+    (description
+     "Package @samp{termtext} deals with monospace text as interpreted by
+terminals.")
+    (license license:expat)))
+
+(define-public go-zgo-at-zli
+  (package
+    (name "go-zgo-at-zli")
+    (version "0.0.0-20240922172047-d7bc84b1106f")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/arp242/zli")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "110kwhydj6bzwqk7amkm9xgr3apx2bq6frlqb5yxds8cj5y25jks"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "zgo.at/zli"))
+    (home-page "https://github.com/arp242/zli")
+    (synopsis "Go library for writing command line interface programs")
+    (description
+     "@samp{zli} is a Go library for writing command line interface
+programs.  It includes flag parsing, color escape codes, various
+helpful utility functions, and makes testing fairly easy.")
+    (license license:expat)))
+
+(define-public go-zgo-at-zstd
+  (package
+    (name "go-zgo-at-zstd")
+    (version "0.0.0-20240922235538-9a93b98b4725")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/arp242/zstd")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06nqiv1pkqnnqa3v6rlf0qfxgfd63vi4vv36acq54dxswxhcasaz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "zgo.at/zstd"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Replace when go-build-system supports nested path.
+          (replace 'check
+            (lambda* (#:key import-path tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v"
+                          "-skip" "TestExists"
+                          "./..."))))))))
+    (home-page "https://github.com/arp242/zstd")
+    (synopsis "Extensions to Go's standard library")
+    (description
+     "Package @samp{zstd} is a collection of extensions to Go's standard
+library.")
+    (license license:expat)))
+
 ;;;
 ;;; Executables:
 ;;;
@@ -7409,6 +7563,16 @@ tool."))
      "@code{hclogvet} is a @code{go vet} tool for checking that the
 Trace/Debug/Info/Warn/Error methods on @code{hclog.Logger} are used
 correctly.")))
+
+(define-public go-jfmt
+  (package/inherit go-zgo-at-jfmt
+    (name "go-jfmt")
+    (arguments (list #:install-source? #f
+                     #:import-path "zgo.at/jfmt/cmd/jfmt"
+                     #:unpack-path "zgo.at/jfmt"))
+    (description
+     (string-append (package-description go-zgo-at-jfmt)
+                    "  This package provides a command line interface (CLI) tool."))))
 
 (define-public go-msgio
   (package

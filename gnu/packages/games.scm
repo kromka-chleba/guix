@@ -84,6 +84,7 @@
 ;;; Copyright © 2024 Sébastien Lerique <sl@eauchat.org>
 ;;; Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
 ;;; Copyright © 2024 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
+;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -9843,6 +9844,30 @@ certainly not least as a fun, realistic, and challenging desktop flight
 simulator.")
     (license license:gpl2+)))
 
+(define-public evtest-qt
+  (package
+    (name "evtest-qt")
+    (version "0.2.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/Grumbel/evtest-qt")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1wfzkgq81764qzxgk0y5vvpxcrb3icvrr4dd4mj8njrqgbwmn0mw"))))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #f))      ;no test suite
+    (native-inputs (list tinycmmc))
+    (inputs (list qtbase-5))
+    (home-page "https://github.com/Grumbel/evtest-qt")
+    (synopsis "Evdev Joystick Tester")
+    (description "@command{evtest-qt} is a simple joystick tester for devices
+using the @code{evdev} generic input event interface.  It provides a list of
+attached joysticks and displays which buttons and axis are pressed.")
+    (license license:gpl3+)))
+
 (define-public jstest-gtk
   ;; There is no recent tagged release; use the latest commit.
   (let ((commit "60fe6ebdbc6719945be3f04988667dea569085be")
@@ -11405,6 +11430,45 @@ do so you need to explore the island, find food, build a shelter and try to
 get attention, so you get found.")
       (license license:cc-by4.0))))
 
+(define-public sdl-jstest
+  (package
+    (name "sdl-jstest")
+    (version "0.2.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/Grumbel/sdl-jstest")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "11qp4gkbb11n3wx74128fj56radgsvkj7nxhbh55rd3xad1hckh3"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      ;; The test suite uses appstream-utils to validate the appdata.xml file,
+      ;; fails with "url-not-found".
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'copy-gamecontroller-db
+            (lambda* (#:key native-inputs inputs #:allow-other-keys)
+              (copy-file
+               (search-input-file (or native-inputs inputs)
+                                  "share/sdl2/gamecontrollerdb.txt")
+               "external/sdl_gamecontrollerdb/gamecontrollerdb.txt"))))))
+    (native-inputs
+     (list pkg-config sdl2-gamecontrollerdb tinycmmc))
+    (inputs (list ncurses sdl sdl2))
+    (home-page "https://github.com/Grumbel/sdl-jstest")
+    (synopsis "SDL Joystick Tester")
+    (description "The @command{sdl-jstest} and @command{sdl2-jstest} commands
+can list the available joystick controllers as found by the SDL or SDL2
+libraries, respectively.  It can show the available axes, buttons, hats and
+balls of a chosen controller, and can display the controller actions in real
+time in a visual fashion.")
+    (license license:gpl3+)))
+
 (define-public sdlpop
   (package
     (name "sdlpop")
@@ -11804,6 +11868,45 @@ on the pitch of the voice and the rhythm of singing.")
        "This package provides a set of udev rules for game controllers and
 virtual reality devices.")
       (license license:expat))))
+
+(define-public gemrb
+  (package
+    (name "gemrb")
+    (version "0.9.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gemrb/gemrb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wfmq4z2in18k4znshd7h1i496zlskbci49yp5d54mfxvyp534m5"))
+       ;; Remove the patch in the next version, as commit d339c0d fixes this
+       (patches (search-patches
+                 "gemrb-add-path-suffixes-for-vlc-headers.patch"))))
+    (build-system cmake-build-system)
+    (arguments
+     `(#:configure-flags `("-DUSE_TESTS=ON" "-DOPENGL_BACKEND=OpenGL")))
+    (native-inputs (list python-3.10 glibc-locales googletest))
+    (inputs (list freetype
+                  libiconv
+                  libpng
+                  libvorbis
+                  openal
+                  sdl2
+                  sdl2-mixer
+                  vlc
+                  zlib))
+    (home-page "https://gemrb.org/")
+    (synopsis
+     "Portable open-source implementation of Bioware's Infinity Engine")
+    (description
+     "GemRB (Game Engine Made with preRendered Background) is a portable
+     open-source reimplementation of the Infinity Engine that underpinned
+     Baldur's Gate, Icewind Dale and Planescape: Torment.  It sports a
+     cleaner design, greater extensibility and several innovations.")
+    (license (list license:gpl2))))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances

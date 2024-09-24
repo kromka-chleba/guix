@@ -1299,29 +1299,35 @@ but it works for any C/C++ project.")
 (define-public actionlint
   (package
     (name "actionlint")
-    (version "1.7.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/rhysd/actionlint")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0h84gb2mfhsrv1vqb3s2ff9j43zhg0ga49af6h2wdssbrs7w3vcy"))))
+    (version "1.7.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rhysd/actionlint")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rgsxv4clgfyl4gr8bjk81p4b87c6hr34flxzw6011h0vjc54n7x"))))
     (build-system go-build-system)
     (arguments
-     '(#:import-path "github.com/rhysd/actionlint/cmd/actionlint"
-       #:unpack-path "github.com/rhysd/actionlint"
-       #:install-source? #f))
-    (inputs (list go-github-com-fatih-color
-                  go-github-com-mattn-go-colorable
-                  go-github-com-mattn-go-runewidth
-                  go-github-com-robfig-cron
-                  go-golang-org-x-sync
-                  go-golang-org-x-sync
-                  go-gopkg-in-yaml-v3))
-    (native-inputs (list go-github-com-google-go-cmp))
+     (list
+      #:install-source? #f
+      #:build-flags
+      #~(list (string-append
+               "-ldflags=-X github.com/rhysd/actionlint.version=" #$version))
+      #:import-path "github.com/rhysd/actionlint/cmd/actionlint"
+      #:unpack-path "github.com/rhysd/actionlint"))
+    ;; XXX: Install Man page, wrap with shellcheck and pyflakes.
+    (native-inputs
+     (list go-github-com-fatih-color
+           go-github-com-mattn-go-colorable
+           go-github-com-mattn-go-runewidth
+           go-github-com-robfig-cron
+           go-golang-org-x-sync
+           go-golang-org-x-sync
+           go-github-com-google-go-cmp
+           go-gopkg-in-yaml-v3))
     (home-page "https://rhysd.github.io/actionlint/")
     (synopsis "Static checker for GitHub Actions workflow files")
     (description
@@ -3623,6 +3629,42 @@ allowing you to declaratively define \"match\" rules.")
    (synopsis "Property-based testing for C")
    (description "Theft is a library for property-based testing.")
    (license license:isc)))
+
+(define-public toml-test
+  (package
+    ;; Upstream is informed to provide man/info for the project, see
+    ;; <https://github.com/toml-lang/toml-test/issues/163>.
+    (name "toml-test")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/toml-lang/toml-test")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "188xcsxgn20pjnddfn3mvx7wak030xdgkhxkhjiijfap37gbv6df"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "github.com/toml-lang/toml-test/cmd/toml-test"
+      #:unpack-path "github.com/toml-lang/toml-test"))
+    (native-inputs
+     (list go-zgo-at-zli
+           go-zgo-at-jfmt
+           go-github-com-burntsushi-toml))
+    (home-page "https://github.com/toml-lang/toml-test")
+    (synopsis "Language agnostic test suite for TOML parsers")
+    (description
+     "@samp{toml-test} is a language-agnostic test suite to verify the
+correctness of @url{https://toml.io,TOML} parsers and writers.  Tests are
+divided into two groups: @emph{invalid} and @emph{valid}.  Decoders or
+encoders that reject @emph{invalid} tests pass the tests, and decoders that
+accept @emph{valid} tests and output precisely what is expected pass the
+tests.  The output format is JSON.")
+    (license license:expat)))
 
 (define-public unittest-cpp
   (package

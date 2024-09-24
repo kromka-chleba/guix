@@ -3012,19 +3012,35 @@ files.")
 (define-public swayhide
   (package
     (name "swayhide")
-    (version "0.2.0")
+    (version "0.2.1")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "swayhide" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "0x172ffj0lfmbv5nix708l1mfsizxzy74gpxp5amvx0bbaq0p78s"))))
+        (base32 "0synzfd35494vlp2wnqmqbzgc0vg2ivn90hnxvk6qak0w65xhxcv"))))
     (build-system cargo-build-system)
     (arguments
-     `(#:cargo-inputs
+     `(#:install-source? #f
+       #:cargo-inputs
        (("rust-exitcode" ,rust-exitcode-1)
-        ("rust-swayipc" ,rust-swayipc-2))))
+        ("rust-swayipc" ,rust-swayipc-2))
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'install 'install-completions
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out  (assoc-ref outputs "out"))
+                    (bash (string-append out "/etc/bash_completion.d/"))
+                    (fish (string-append out "/share/fish/vendor_completions.d/"))
+                    (zsh  (string-append out "/share/zsh/site-functions/")))
+               (mkdir-p bash)
+               (mkdir-p zsh)
+               (copy-file "completions/swayhide.bash"
+                          (string-append bash "swayhide"))
+               (copy-file "completions/swayhide.zsh"
+                          (string-append zsh "_swayhide"))
+               (install-file "completions/swayhide.fish" fish)))))))
     (home-page "https://github.com/NomisIV/swayhide/")
     (synopsis "Swallow windows on swaywm")
     (description "swayhide hides the currently active terminal (by moving it

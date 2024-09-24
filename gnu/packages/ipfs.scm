@@ -852,7 +852,7 @@ their levels to be controlled individually.")
 (define-public go-github-com-libp2p-go-libp2p
   (package
     (name "go-github-com-libp2p-go-libp2p")
-    (version "0.34.1")
+    (version "0.36.3")
     (source
      (origin
        (method git-fetch)
@@ -861,7 +861,7 @@ their levels to be controlled individually.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0423h149ziyka9cai1sdsl1bnycphs3h4xa3b3rc6108gfrzzil2"))))
+        (base32 "1bpjqrb2zdp86va7ms36lpci1l6lgkx85rc3q13fmzks38mqqw8s"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -975,7 +975,7 @@ types.")
 (define-public kubo
   (package
     (name "kubo")
-    (version "0.29.0")
+    (version "0.30.0")
     (source
      (origin
        (method url-fetch/tarbomb)
@@ -983,7 +983,7 @@ types.")
              "https://dist.ipfs.io/kubo/v" version
              "/kubo-source.tar.gz"))
        (sha256
-        (base32 "121zm4k0wz2iqrl65c7bdg5d2bvz3hvj4pavk5178dyd1p49bl5r"))
+        (base32 "0kwbwbrlvgcb8lcg85gpab6czyrnq7r9139i5gp827231zfbcqzq"))
        (file-name (string-append name "-" version "-source"))
        (modules '((guix build utils)))
        (snippet '(for-each delete-file-recursively
@@ -1142,6 +1142,7 @@ types.")
                   go-github-com-fsnotify-fsnotify
                   go-github-com-google-uuid
                   go-github-com-hashicorp-go-multierror
+                  go-github-com-hashicorp-go-version
                   ;;go-github-com-ipfs-boxo
                   go-github-com-ipfs-go-block-format
                   go-github-com-ipfs-go-cid
