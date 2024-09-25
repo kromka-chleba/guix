@@ -118,6 +118,7 @@
   #:use-module (gnu packages rdf)
   #:use-module (gnu packages regex)
   #:use-module (gnu packages rpc)
+  #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages statistics)
@@ -6066,6 +6067,57 @@ performance library of basic building blocks for deep learning applications.")
        (file-name (git-file-name (package-name oneapi-dnnl) version))
        (sha256
         (base32 "1zyw5rd8x346bb7gac9a7x3saviw3zvp6aqz2z1l9sv163vmjfz6"))))))
+
+(define-public whisper-cpp
+  (package
+    (name "whisper-cpp")
+    (version "1.6.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ggerganov/whisper.cpp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01q4j602wkvsf9vw0nsazzgvjppf4fhpy90vqnm9affynyxhi0c4"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~'("-DWHISPER_STANDALONE=TRUE" "-DWHISPER_SDL2=TRUE")
+      ;; "-DWHISPER_FFMPEG=TRUE"  ; TODO
+      #:phases #~(modify-phases %standard-phases
+           #$@(if (not (target-64bit?))
+                  '((add-after 'unpack 'skip-failing-tests
+                     (lambda _
+                              ;; 32-bit system
+                              ;; large model does not fit in RAM in 32-bit system,
+                              ;; disable large model test
+                              (substitute* "tests/CMakeLists.txt"
+                                  (("LABELS \"large\"")
+                                   "DISABLED true")))))
+                  '()))))
+    (inputs (list sdl2)) ;ffmpeg openblas  ;TODO:
+    (native-inputs (list pkg-config))
+    (properties '((tunable? . #t))) ;use AVX512, FMA, etc. when available
+    (home-page "https://github.com/ggerganov/whisper.cpp")
+    (synopsis "OpenAI's Whisper model in C/C++")
+    (description
+     "This package is a high-performance inference of OpenAI's
+Whisper automatic speech recognition (ASR) model, implemented in plain C/C++
+without dependencies, with
+@itemize
+@item AVX intrinsics support for x86 architectures
+@item VSX intrinsics support for POWER architectures
+@item Mixed F16 / F32 precision
+@item 4-bit and 5-bit integer quantization support
+@item Zero memory allocations at runtime
+@item Support for CPU-only inference
+@item Efficient GPU support for NVIDIA
+@item OpenVINO Support
+@item C-style API
+@end itemize")
+    (license license:expat)))
 
 (define-public python-gguf
   (package
