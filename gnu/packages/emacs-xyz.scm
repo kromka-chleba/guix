@@ -7557,6 +7557,26 @@ detecting specific uses of Ruby, e.g. when using rails, and using a
 appropriate console.")
     (license license:gpl3+)))
 
+(define-public emacs-chruby-el
+  (let ((version "1.0")
+        (commit "42bc6d521f832eca8e2ba210f30d03ad5529788f")
+        (revision "0"))
+    (package
+      (name "emacs-chruby-el")
+      (version (git-version version revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/plexus/chruby.el")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256 (base32 "06pvjw40qk017py9km26vjrh90acycnkr5r04nxf664qqkjlg2mc"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/plexus/chruby.el")
+      (synopsis "Emacs support for the Chruby version switcher for Ruby")
+      (description "This packages lets you switch Ruby versions using chruby.")
+      (license license:gpl3+))))
+
 ;; Package has no release.  Version is extracted from "Version:" keyword in
 ;; main file.
 (define-public emacs-zeno-theme
@@ -23726,7 +23746,7 @@ match and total match information in the mode-line in various search modes.")
 (define-public emacs-pg
   (package
     (name "emacs-pg")
-    (version "0.41")
+    (version "0.42")
     (source (origin
               (method git-fetch)
               (uri (git-reference (url "https://github.com/emarsden/pg-el")
@@ -23734,7 +23754,7 @@ match and total match information in the mode-line in various search modes.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0vbg1fg82r4ka1i2awpnsxlyjihjhmy52pgbrkbkr3hzwc1xk48b"))))
+                "1afyjzrb1q207as2vc9j3cjvr6f3d3zgajzisl3x3mv0kb0bk3jy"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-peg))
     (home-page "https://github.com/emarsden/pg-el")
@@ -23746,6 +23766,27 @@ capable of automatic type coercions from a range of SQL types to the
 equivalent Emacs Lisp type.  This is a low level API, and won't be useful to
 end users.")
     (license license:gpl2+)))
+
+(define-public emacs-pgmacs
+  (package
+    (name "emacs-pgmacs")
+    (version "0.42")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/emarsden/pgmacs.git")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0pf8y64hka1fl47dphmh4xgxiwfsd0g4q2fazq5yc48zwr9nsf02"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list emacs-pg))
+    (synopsis "emacs PostgreSQL client")
+    (description "This package provides a PostgreSQL client in emacs.")
+    (home-page "https://github.com/emarsden/pgmacs")
+    (license license:gpl3+)))
 
 (define-public emacs-finalize
   (package
@@ -31659,6 +31700,26 @@ constant expressions.")
     (description "This package provides an Emacs interface for Docker.")
     (license license:gpl3+)))
 
+(define-public emacs-kubed
+  (package
+    (name "emacs-kubed")
+    (version "0.4.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/eshelyaron/kubed.git")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0m389r7qmiynrxm19v68k2fmn1g4qd3f7xibqccsfsayj1xzxgqp"))))
+    (build-system emacs-build-system)
+    (synopsis "Kubernetes control")
+    (description "This packages provides a Kubernetes control interface
+within emacs.")
+    (home-page "https://eshelyaron.com/man/kubed/")
+    (license license:gpl3+)))
+
 (define-public emacs-dockerfile-mode
   (package
     (name "emacs-dockerfile-mode")
@@ -38108,7 +38169,7 @@ personal wiki.")
 (define-public emacs-org-node
   (package
     (name "emacs-org-node")
-    (version "0.8.6")
+    (version "1.1.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -38117,14 +38178,14 @@ personal wiki.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1binkkx86byw56zlignddrw7n0y0civ09wlch4yvxk9asdazkc0c"))))
+                "0l6xk760sjj384fv06ihiv5shq08ly17ap1vla7d307d7nag9c1n"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-dash
+           emacs-llama
            emacs-org
            emacs-persist
-           emacs-transient
-           ))
+           emacs-transient))
     (home-page "https://github.com/meedstrom/org-node")
     (synopsis "Non-hierarchical note-taking with Org-mode, faster than
 org-roam")

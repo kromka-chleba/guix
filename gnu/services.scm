@@ -632,7 +632,7 @@ information is missing, return the empty list (for channels) and possibly
     #~(begin
         (use-modules (guix build utils))
 
-        ;; Clean out /tmp and /var/run.
+        ;; Clean out /tmp, /var/run, and /run.
         ;;
         ;; XXX This needs to happen before service activations, so it
         ;; has to be here, but this also implicitly assumes that /tmp
@@ -663,12 +663,16 @@ information is missing, return the empty list (for channels) and possibly
            (setlocale LC_CTYPE "en_US.utf8")
            (delete-file-recursively "/tmp")
            (delete-file-recursively "/var/run")
+           (delete-file-recursively "/run")
 
-           (mkdir "/tmp")
+           ;; Note: The second argument to 'mkdir' is and'ed with umask,
+           ;; hence the 'chmod' calls.
+           (mkdir "/tmp" #o1777)
            (chmod "/tmp" #o1777)
-           (mkdir "/var/run")
+           (mkdir "/var/run" #o755)
            (chmod "/var/run" #o755)
-           (delete-file-recursively "/run/udev/watch.old"))))))
+           (mkdir "/run" #o755)
+           (chmod "/var/run" #o755))))))
 
 (define cleanup-service-type
   ;; Service that cleans things up in /tmp and similar.
