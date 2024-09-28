@@ -2233,7 +2233,8 @@ compository, supporting the following featuers:
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bw6d3bf8rm4mgrbcprxxljfxbyabbj2lwabk2z19r8lhfz38myy"))))
+        (base32 "1bw6d3bf8rm4mgrbcprxxljfxbyabbj2lwabk2z19r8lhfz38myy"))
+       (patches (search-patches "waybar-0.11.0-fix-tray-icons.patch"))))
     (build-system meson-build-system)
     (arguments
      (list #:configure-flags #~(list "--wrap-mode=nodownload")))
@@ -2411,7 +2412,7 @@ wlr-output-management-unstable-v1 protocol.")
 (define-public stumpwm
   (package
     (name "stumpwm")
-    (version "22.11")
+    (version "23.11")
     (source
      (origin
        (method git-fetch)
@@ -2420,7 +2421,7 @@ wlr-output-management-unstable-v1 protocol.")
              (commit version)))
        (file-name (git-file-name "stumpwm" version))
        (sha256
-        (base32 "1wxgddmkgmpml44a3m6bd8y529b13jz14apxxipmij10wzpgay6d"))))
+        (base32 "0akrkxwmlk2596b0kl3q0nfi81ypfrpyyyf65vw7px5x17gsnq5i"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs
      (list sbcl-fiasco
@@ -2519,8 +2520,8 @@ productive, customizable lisp based systems.")
            (delete 'cleanup)))))))
 
 (define stumpwm-contrib
-  (let ((commit "4613a956add7a17986a3b26c341229466cd13f1d")
-        (revision "5"))
+  (let ((commit "042a9fcb053839f4b1527d2e6f4baf33e2d16434")
+        (revision "6"))
     (package
       (name "stumpwm-contrib")
       (version (git-version "0.0.1" revision commit)) ;no upstream release
@@ -2532,7 +2533,7 @@ productive, customizable lisp based systems.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1g8h2vd5qsmaiz6ixlx9ykrv6a08izmkf0js18fvljvznpyhsznz"))))
+          (base32 "1fdlb7zqgn24qpvmq4d56zn4f455vc2jcln609by4g0py87rvm49"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list stumpwm))

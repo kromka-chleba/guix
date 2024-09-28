@@ -27,7 +27,7 @@
 ;;; Copyright © 2021 Robby Zambito <contact@robbyzambito.me>
 ;;; Copyright © 2021, 2022, 2023 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2021, 2022 John Kehayias <john.kehayias@protonmail.com>
-;;; Copyright © 2021, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021-2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Daniel Meißner <daniel.meissner-i4k@ruhr-uni-bochum.de>
 ;;; Copyright © 2022 Wamm K. D. <jaft.r@outlook.com>
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
@@ -39,6 +39,7 @@
 ;;; Copyright © 2024 aurtzy <aurtzy@gmail.com>
 ;;; Copyright © 2024 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2024 Wilko Meyer <w@wmeyer.eu>
+;;; Copyright © 2024 dan <i@dan.games>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -136,6 +137,7 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages video)
+  #:use-module (gnu packages virtualization)
   #:use-module (gnu packages w3m)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xdisorg)
@@ -353,6 +355,30 @@ be used by any project which uses GLib and which wants to write internal unit
 tests.")
     (home-page "https://gitlab.gnome.org/pwithnall/libglib-testing")
     (license license:lgpl2.1+)))
+
+(define-public libliftoff
+  (package
+    (name "libliftoff")
+    (version "0.5.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.freedesktop.org/emersion/libliftoff")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "163g8ndsbma7acy2k9mrnvlpb7yi4431hgkx1gygkafgwpq1ii1x"))))
+    (build-system meson-build-system)
+    (native-inputs (list pkg-config))
+    (inputs (list libdrm))
+    (home-page "https://gitlab.freedesktop.org/emersion/libliftoff")
+    (synopsis "Lightweight KMS plane library for compositors")
+    (description "Libliftoff eases the use of
+@acronym{KMS, Kernel Mode Setting} planes from userspace.  Users create
+\"virtual planes\" called layers, set KMS properties on them, and libliftoff
+will pick hardware planes for these layers if possible.")
+    (license license:expat)))
 
 (define-public malcontent
   (package
@@ -3046,6 +3072,37 @@ path (@code{/org/freedesktop/portal/desktop}).
 The portal interfaces include APIs for file access, opening URIs, printing
 and others.")
     (license license:lgpl2.1+)))
+
+(define-public xdg-desktop-portal-next
+  (package
+    (inherit xdg-desktop-portal)
+    (version "1.18.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://github.com/flatpak/xdg-desktop-portal/releases/download/"
+             version "/xdg-desktop-portal-" version ".tar.xz"))
+       (sha256
+        (base32
+         "0r8y8qmzcfj7b7brqcxr9lg8pavfds815ffvj0kqc378fhgaln5q"))
+       ;; Disable portal tests since they try to use fuse.
+       (patches (search-patches "xdg-desktop-portal-disable-portal-tests.patch"))))
+    (build-system meson-build-system)
+    (arguments
+     (substitute-keyword-arguments (package-arguments xdg-desktop-portal)
+       ((#:configure-flags _ ''())
+        #~(list "-Dsystemd=disabled"))))
+    (native-inputs
+     (list pkg-config
+           `(,glib "bin")
+           gettext-minimal
+           python
+           python-dbusmock
+           python-pytest
+           python-pytest-xdist))
+    (inputs (modify-inputs (package-inputs xdg-desktop-portal)
+              (prepend bubblewrap)))))
 
 (define-public xdg-desktop-portal-gtk
   (package

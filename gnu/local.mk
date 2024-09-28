@@ -235,6 +235,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/debug.scm			\
   %D%/packages/dejagnu.scm			\
   %D%/packages/dezyne.scm			\
+  %D%/packages/decker.scm			\
   %D%/packages/dhall.scm			\
   %D%/packages/dico.scm				\
   %D%/packages/dictionaries.scm			\
@@ -1045,6 +1046,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/cdrkit-libre-cross-compile.patch	\
   %D%/packages/patches/cdrtools-3.01-mkisofs-isoinfo.patch 	\
   %D%/packages/patches/ceph-disable-cpu-optimizations.patch	\
+  %D%/packages/patches/ceph-fix-for-newer-boost.patch		\
   %D%/packages/patches/cf-tool-add-languages.patch		\
   %D%/packages/patches/chmlib-inttypes.patch			\
   %D%/packages/patches/cl-asdf-config-directories.patch		\
@@ -1289,6 +1291,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/fulcrum-1.9.1-unbundled-libraries.patch	\
   %D%/packages/patches/fuse-glibc-2.34.patch			\
   %D%/packages/patches/fuse-overlapping-headers.patch		\
+  %D%/packages/patches/fuzzel-fix-gcc-error.patch		\
   %D%/packages/patches/fuzzylite-relative-path-in-tests.patch	\
   %D%/packages/patches/fuzzylite-use-catch2.patch		\
   %D%/packages/patches/fuzzylite-soften-float-equality.patch	\
@@ -2199,6 +2202,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/texinfo-headings-single.patch		\
   %D%/packages/patches/texinfo-5-perl-compat.patch		\
   %D%/packages/patches/telegram-desktop-allow-disable-libtgvoip.patch   \
+  %D%/packages/patches/telegram-desktop-unbundle-cppgir.patch   \
+  %D%/packages/patches/telegram-desktop-unbundle-gsl.patch      \
   %D%/packages/patches/telegram-purple-adjust-test.patch	\
   %D%/packages/patches/teuchos-remove-duplicate-using.patch	\
   %D%/packages/patches/texi2html-document-encoding.patch	\
@@ -2290,6 +2295,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/wacomtablet-add-missing-includes.patch	\
   %D%/packages/patches/wacomtablet-qt5.15.patch			\
   %D%/packages/patches/warsow-qfusion-fix-bool-return-type.patch	\
+  %D%/packages/patches/waybar-0.11.0-fix-tray-icons.patch	\
   %D%/packages/patches/wcstools-extend-makefiles.patch	\
   %D%/packages/patches/wdl-link-libs-and-fix-jnetlib.patch	\
   %D%/packages/patches/webkitgtk-adjust-bubblewrap-paths.patch	\
@@ -2306,6 +2312,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/wordnet-CVE-2008-3908-pt2.patch			\
   %D%/packages/patches/wpa-supplicant-dbus-group-policy.patch		\
   %D%/packages/patches/x265-arm-flags.patch			\
+  %D%/packages/patches/xdg-desktop-portal-disable-portal-tests.patch\
   %D%/packages/patches/xdg-desktop-portal-wlr-harcoded-length.patch\
   %D%/packages/patches/xen-docs-use-predictable-ordering.patch	\
   %D%/packages/patches/xen-remove-config.gz-timestamp.patch	\

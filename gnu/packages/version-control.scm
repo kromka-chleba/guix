@@ -2996,7 +2996,7 @@ modification time.")
 (define-public fnc
   (package
     (name "fnc")
-    (version "0.16")
+    (version "0.18")
     (source (origin
               (method url-fetch)
               (uri
@@ -3004,12 +3004,18 @@ modification time.")
                               version ".tar.gz"))
               (sha256
                (base32
-                "1npnbdz5i4p61ri76vx6awggbc0q19y8b26l3sy4wxmaxkly7gwy"))))
+                "1067rr4nqngld1nqa8c7imp9n3w5fp7rpc7khh6l84q2w1klrya9"))))
     (build-system gnu-build-system)
     (arguments
      (list
       #:phases #~(modify-phases %standard-phases
-                   (delete 'configure))
+                   (delete 'configure)
+                   ;; fix cross-compiling.
+                   (add-after 'unpack 'don-t-use-install-s
+                     (lambda _
+                       (substitute* "fnc.bld.mk"
+                         (("install -s")
+                          "install")))))
       #:tests? #f                       ; no tests
       #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
                            (string-append "PREFIX=" #$output))))

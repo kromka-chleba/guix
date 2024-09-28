@@ -1645,7 +1645,7 @@ standard GNU style syntax for options.")
 (define-public folly
   (package
     (name "folly")
-    (version "2023.11.06.00")
+    (version "2024.09.09.00")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1654,18 +1654,20 @@ standard GNU style syntax for options.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0z0jhkma2qacc2kc27qsiwqwqkv07i9mwpc4vwcbawyzdajq6hd0"))))
+                "17fdigkaxivbrww5yhz9fh25d8pirqjp126zbv4kg4qsprywfww5"))))
     (build-system cmake-build-system)
     (arguments
-     '(;; Tests must be explicitly enabled
-       ;;#:configure-flags '("-DBUILD_TESTS=ON")))
-       ;; Leave tests disabled; see https://github.com/facebook/folly/issues/1456
-       #:tests? #f))
+     (list
+      ;; Tests must be explicitly enabled
+      ;;#:configure-flags #~(list "-DBUILD_TESTS=ON")
+      ;; Leave tests disabled; see https://github.com/facebook/folly/issues/2246
+      #:tests? #f))
     (propagated-inputs
      (list boost gflags glog liburing))
     (inputs
      (list bzip2
            double-conversion
+           fast-float
            fmt
            libaio
            libevent
@@ -1727,7 +1729,7 @@ to be useful for building network-based applications.")
     ;; Update only when updating aws-sdk-cpp, and when updating also update
     ;; versions of library dependencies linked from from
     ;; https://github.com/awslabs/aws-crt-cpp/tree/{aws-crt-cpp commit}/crt
-    (version "0.17.27")
+    (version "0.28.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1736,7 +1738,7 @@ to be useful for building network-based applications.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "14g8pn7yii1klby7phcw08qnld1qv11vwmbdz8cs3mlpqahxrh4i"))))
+                "1jnj5q6jcw1nh74yzdbi99x338lc3v2wjlgvjnzclla4p66pi712"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -1765,7 +1767,7 @@ aws-c-http, aws-c-io, aws-c-mqtt, aws-checksums, and s2n.")
     (name "aws-sdk-cpp")
     ; When updating also check for a tagged update to aws-crt-cpp from
     ; https://github.com/aws/aws-sdk-cpp/tree/main/crt
-    (version "1.9.306")
+    (version "1.11.402")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1774,7 +1776,7 @@ aws-c-http, aws-c-io, aws-c-mqtt, aws-checksums, and s2n.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0k3f4xq4vvlwrwgpp0vka4pwzbnkylvrkbbkjksx6wq6g1a2gc2g"))))
+                "016jzz01c8mf5v732rk8gglmvpa8lf5c5r7jndvbp6gn6nlvnplx"))))
     (build-system cmake-build-system)
     (arguments
      '(;; Tests are run during the build phase.
@@ -1952,7 +1954,7 @@ queues header library based on circular buffer with @code{std::atomic}.")
 (define-public magic-enum
   (package
     (name "magic-enum")
-    (version "0.9.5")
+    (version "0.9.6")
     (home-page "https://github.com/Neargye/magic_enum")
     (source (origin
               (method git-fetch)
@@ -1962,7 +1964,7 @@ queues header library based on circular buffer with @code{std::atomic}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "14ys5sn2v1mai8bclvi81cp65g6jblqpdsi94639hphca5v8gka3"))))
+                "15lxn4sjwygxyq4am3jbwl0m7lb0fw8w39fghgm7a8klcwavv4yn"))))
     (build-system cmake-build-system)
     (synopsis "C++17 header only library for compile time reflection of enums")
     (description "Magic Enum offers static reflection of enums, with
@@ -2395,7 +2397,7 @@ which can evaluate Jsonnet files and expressions.")))
 (define-public simdjson
   (package
     (name "simdjson")
-    (version "3.1.0")
+    (version "3.10.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2404,7 +2406,7 @@ which can evaluate Jsonnet files and expressions.")))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0q784bm8xbz3p782dw02cdds6m71wk3acy94vva8krc9g88142ws"))))
+                "1qv7lvls7x9aw6mlnwfgchbajsxh6qygp09wpkb2w6mjdbidmi0h"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f                      ; tests require downloading dependencies
@@ -2629,23 +2631,22 @@ CRC32C algorithm, which is specified in RFC 3720, section 12.1.")
     (license license:bsd-3)))
 
 (define fast-float-test-files
-  (let ((commit "97a0b2e638feb479387554cf253e346500541e7e"))
+  (let ((name "fast-float-test-files")
+        (version "1.0.0"))
    (origin
     (method git-fetch)
     (uri (git-reference
-          (url (string-append "https://github.com/fastfloat"
-                              "/supplemental_test_files.git"))
-          (commit "97a0b2e638feb479387554cf253e346500541e7e")))
-    (file-name (string-append "fast-float-test-files-"
-                              (string-take commit 8)))
+          (url "https://github.com/fastfloat/supplemental_test_files")
+          (commit version)))
+    (file-name (git-file-name name version))
     (sha256
      (base32
-      "0dxbiyzyh7i847i89ablfzypfc3ckhm7f74w98jsh73v1mppmxlf")))))
+      "0z0z7qy3pxv6bhg2apvs8gp3mnixbxk92a9f7vby01p26zq1lnwl")))))
 
 (define-public fast-float
   (package
     (name "fast-float")
-    (version "6.0.0")
+    (version "6.1.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2654,7 +2655,7 @@ CRC32C algorithm, which is specified in RFC 3720, section 12.1.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1xf4gbllha760cr0ri53zsja46dypj45lj070ijb5f78xavfd8f8"))))
+                "1y6mj2rw0dr89ddhk33gj1l76dfk4ai00kx9i22i6rjr0qylqhih"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2677,7 +2678,7 @@ CRC32C algorithm, which is specified in RFC 3720, section 12.1.")
     (description "@code{fast_float} is a header-only C++ library for parsing
 floating point numbers from strings.  It implements the C++ from_chars
 functions for the float and double types.")
-    (license (list license:asl2.0 license:expat)))) ; dual licensed
+    (license (list license:asl2.0 license:boost1.0 license:expat)))) ; triple licensed
 
 (define-public pocketfft-cpp
   (let ((commit "daa8bb18327bc5c7d22c69428c25cf5dc64167d3")
@@ -3284,3 +3285,60 @@ ordered erase operations.")
 the std::optional for C++11/14/17, with support for monadic operations added in
 C++23.")
     (license license:cc0)))
+
+(define-public cpp-ada-url-parser
+  (package
+    (name "cpp-ada-url-parser")
+    (version "2.9.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ada-url/ada")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xvvjlia627ajl966gdxzy2b1j0jiimx7zx8ypmffwx0k6x72qam"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DCPM_LOCAL_PACKAGES_ONLY=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-deps
+            (lambda _
+              (substitute* "CMakeLists.txt"
+                (("cmake/CPM.cmake")
+                 (string-append #$(this-package-native-input
+                                   "cpm-cmake")
+                                "/lib/cmake/CPM.cmake"))
+                ;; We force CPM to find system packages rather than using git
+                ;; to download them.
+                (("Git_FOUND") "TRUE")
+                (("(simdjson@)[0-9.]*" _ simdjson)
+                 (string-append simdjson
+                                #$(package-version (this-package-native-input
+                                                    "simdjson")))))
+              (substitute* "tools/cli/CMakeLists.txt"
+                (("(VERSION\\s)[0-9.]*" _ a)
+                 (string-append a
+                                #$(package-version (this-package-native-input
+                                                    "cxxopts")))))))
+          (add-after 'patch-deps 'python-zipfile-disable-strict-timestamps
+            (lambda _
+              (substitute* "singleheader/amalgamate.py"
+                (("zipfile.ZIP_DEFLATED")
+                 "zipfile.ZIP_DEFLATED, strict_timestamps=False")))))))
+    (native-inputs (list cpm-cmake
+                         cxxopts
+                         fmt-10
+                         googletest
+                         python
+                         simdjson))
+    (home-page "https://github.com/ada-url/ada")
+    (synopsis "URL parser")
+    (description
+     "Ada is a fast and spec-compliant URL parser written in C++.
+Specification for URL parser can be found from the WHATWG website.")
+    (license license:gpl3+)))

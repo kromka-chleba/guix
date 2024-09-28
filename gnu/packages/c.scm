@@ -977,7 +977,7 @@ C programming language.")
   (package
     (name "aws-c-common")
     ;; Update only when updating aws-crt-cpp.
-    (version "0.6.20")
+    (version "0.9.27")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -986,13 +986,15 @@ C programming language.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "089grcj58n4xs41kmnpaqpwsalcisjbqqb5yqahxxyfx2lf1j9c9"))))
+                "1wzlxvcwr4s31c4q8nyj66x3za9s01xzq47ap2jwvr61c93pxcam"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:configure-flags
+     '(#:parallel-tests? #f
+       #:configure-flags
        '("-DBUILD_SHARED_LIBS=ON")))
+    (supported-systems '("armhf-linux" "aarch64-linux"
+                         "i686-linux" "x86_64-linux"))
     (synopsis "Amazon Web Services core C library")
-    (supported-systems '("i686-linux" "x86_64-linux"))
     (description
      "This library provides common C99 primitives, configuration, data
  structures, and error handling for the @acronym{AWS,Amazon Web Services} SDK.")
@@ -1003,7 +1005,7 @@ C programming language.")
   (package
     (name "aws-checksums")
     ;; Update only when updating aws-crt-cpp.
-    (version "0.1.12")
+    (version "0.1.18")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1012,7 +1014,7 @@ C programming language.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "054f2hkmkxhw83q7zsz349k82xk6bkrvlsab088pf7kn9wd4hy4k"))))
+                "1lwbs5b89z4z8pswlfhj4fn73flwmr060byy3apqfay8rxmia4hj"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -1032,7 +1034,7 @@ with fallback to efficient C99 software implementations.")
   (package
     (name "aws-c-event-stream")
     ;; Update only when updating aws-crt-cpp.
-    (version "0.2.7")
+    (version "0.4.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1041,7 +1043,7 @@ with fallback to efficient C99 software implementations.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xwwr7gdgfrphk6j7vk12rgimfim6m4qnj6hg8hgg16cplhvsfzh"))))
+                "0pm6ggm2yv5rqfijvi0zd7xf4a0zq0m21c36vhgda5mh5wbhzf64"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -1064,7 +1066,7 @@ communication.")
   (package
     (name "aws-c-io")
     ;; Update only when updating aws-crt-cpp.
-    (version "0.10.20")
+    (version "0.14.18")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1073,7 +1075,7 @@ communication.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "07l5rfbm1irkigfv51sfygs992af8rxicmay97frbx6z21khdjnr"))))
+                "09m3n81jibn8fhg7z6dkhj7dc7sds9n3mbr3n7jgg64zpf0lx9kl"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -1093,7 +1095,7 @@ event-driven, asynchronous network application protocols.")
   (package
     (name "aws-c-cal")
     ;; Update only when updating aws-crt-cpp.
-    (version "0.5.17")
+    (version "0.7.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1102,7 +1104,7 @@ event-driven, asynchronous network application protocols.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0gd7xfzv509vcysifzfa8j2rykkc1prhiry7953snblkzm7airm5"))))
+                "01h3ypypn3lbqm9r252zkh26wg8g7acl1slddy4vd59nfwqlwp7m"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -1110,10 +1112,7 @@ event-driven, asynchronous network application protocols.")
              (string-append "-DCMAKE_PREFIX_PATH="
                             (assoc-ref %build-inputs "aws-c-common")))))
     (propagated-inputs
-     (list aws-c-common))
-    (inputs
-     `(("openssl" ,openssl)
-       ("openssl:static" ,openssl "static")))
+     (list aws-c-common s2n))
     (synopsis "Amazon Web Services Crypto Abstraction Layer")
     (description "This library provides a C99 wrapper for hash, HMAC, and ECC
 cryptographic primitives for the @acronym{AWS,Amazon Web Services} SDK.")
@@ -1124,7 +1123,7 @@ cryptographic primitives for the @acronym{AWS,Amazon Web Services} SDK.")
   (package
     (name "aws-c-sdkutils")
     ;; Update only when updating aws-crt-cpp.
-    (version "0.1.2")
+    (version "0.1.19")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1133,7 +1132,7 @@ cryptographic primitives for the @acronym{AWS,Amazon Web Services} SDK.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "14wpl3dxwjbbzas44v6m6m3ll89rgz34x9gb140qz624gwzs9v0v"))))
+                "12xpnx0qxnjc2gnbpxq0kx6dfyi650zlrl2ykfhn3z9h6gj0lz8s"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -1171,7 +1170,7 @@ low level functionality for coroutines.")
   (package
     (name "aws-c-http")
     ;; Update only when updating aws-crt-cpp.
-    (version "0.6.13")
+    (version "0.8.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1180,7 +1179,7 @@ low level functionality for coroutines.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "125glc9b3906r95519zqfbzzz6wj5ib4im2n45yxrigwkkpffbq9"))))
+                "0kap7r9mj564k7ncl2p6kyqp88vxkj80r277xkd6fry8d3plviac"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -1201,7 +1200,7 @@ specifications.")
   (package
     (name "aws-c-compression")
     ;; Update only when updating aws-crt-cpp.
-    (version "0.2.14")
+    (version "0.2.19")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1210,7 +1209,7 @@ specifications.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0fs3zhhzxsb9nfcjpvfbcq79hal7si2ia1c09scab9a8m264f4vd"))))
+                "17ka9fbv41njrkby8ac13djy65y54k85mxms3cjl6khsnvil5gb6"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -1230,7 +1229,7 @@ currently limited to Huffman encoding and decoding.")
   (package
     (name "aws-c-auth")
     ;; Update only when updating aws-crt-cpp.
-    (version "0.6.11")
+    (version "0.7.26")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1239,7 +1238,7 @@ currently limited to Huffman encoding and decoding.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0frfnbifkrib9l68mj92a3g1x8xc8hpdlzbga2a801zgf2flx4fy"))
+                "0im29xh80dpm4hlwq02dyv6il9whbcxhgwp1gw5nj68c33dp4ryk"))
               (patches
                (search-patches
                 "aws-c-auth-install-private-headers.patch"))))
@@ -1263,7 +1262,7 @@ authentication.")
   (package
     (name "aws-c-s3")
     ;; Update only when updating aws-crt-cpp.
-    (version "0.1.38")
+    (version "0.6.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1272,7 +1271,7 @@ authentication.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0n2y8hzb1bx3vnzlpb5hsav18dg33pwav0mpji6krz98y2l8msya"))))
+                "08kzdpjn48bzg4hvvr92yv6igvppja6xcrqr6hsliai6088nw4kl"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -1293,7 +1292,7 @@ Service (S3) protocol for object storage.")
   (package
     (name "aws-c-mqtt")
     ;; Update only when updating aws-crt-cpp.
-    (version "0.7.10")
+    (version "0.10.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1302,7 +1301,7 @@ Service (S3) protocol for object storage.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0qmzx8b4wcsq9s99q2zrhx1s3jdmfy8zs16qys9bqv45gspi3ybr"))))
+                "1sa5bxnva9qwx00a49l1pppz0gnkxbwam4g6r3gw7w6265kjrswb"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags

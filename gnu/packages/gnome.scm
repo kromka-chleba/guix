@@ -9695,7 +9695,7 @@ easy, safe, and automatic.")
                  (search-input-file inputs "bin/bash")))))
           (add-after 'unpack 'disable-failing-tests
             (lambda _
-              #$@(if (target-x86-32?)
+              #$@(if (not (target-64bit?))
                      ;; On 32-bit systems, the far away dates are incorrect,
                      ;; and the floats are not parsed exactly.
                      '((substitute*
@@ -13024,7 +13024,7 @@ It uses pandoc as back-end for parsing Markdown.")
 (define-public libratbag
   (package
     (name "libratbag")
-    (version "0.16")
+    (version "0.18")
     (source
      (origin
        (method git-fetch)
@@ -13033,7 +13033,7 @@ It uses pandoc as back-end for parsing Markdown.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0jjf6xc3a37icp5dvbxla3ai9is2ns31m0llbfq1bmb6dk8cd4n0"))))
+        (base32 "09rmzbvh3q996r5vcdiirr56xzzwi5njay26hp50nyk1bq68l1bl"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags
@@ -13097,14 +13097,14 @@ your operating-system definition:
 (define-public piper
   (package
     (name "piper")
-    (version "0.7")
+    (version "0.8")
     (source
      (origin (method git-fetch)
              (uri (git-reference
                    (url "https://github.com/libratbag/piper")
                    (commit version)))
              (sha256
-              (base32 "0jsvfy0ihdcgnqljfgs41lys1nlz18qvsa0a8ndx3pyr41f8w8wf"))
+              (base32 "1zkxrgvrg4bdqcj540lgdw35sj41n9cx8zrfhfd3f0y9m0piz7wg"))
              (file-name (git-file-name name version))))
     (build-system meson-build-system)
     (arguments
@@ -13118,7 +13118,8 @@ your operating-system definition:
          (add-after 'unpack 'dont-update-gtk-icon-cache
            (lambda _
              (substitute* "meson.build"
-               (("meson.add_install_script\\('meson_install.sh')") ""))))
+               (("gtk_update_icon_cache: true")
+                "gtk_update_icon_cache: false"))))
          (add-after 'unpack 'do-not-require-flake8
            (lambda _
              (substitute* "meson.build"
@@ -13134,6 +13135,7 @@ your operating-system definition:
                                       ,(python:site-packages inputs outputs)))))))))
     (native-inputs
      (list appstream
+           desktop-file-utils           ;for update-desktop-database
            gettext-minimal
            `(,glib "bin")
            gobject-introspection

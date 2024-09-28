@@ -25702,16 +25702,17 @@ design and layout.")
 (define-public python-pkginfo
   (package
     (name "python-pkginfo")
-    (version "1.9.6")
+    (version "1.10.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pkginfo" version))
        (sha256
-        (base32 "0inh57664sx2vlbd3913dsc9nz21ysb9vk591qpkg90qhxp8kmcg"))))
+        (base32
+          "15v2mycr7m4ld5wp1sl9flqjjv8zdgc5rkgfz1wxn44d74skixsx"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-wheel))
     (home-page "https://code.launchpad.net/~tseaver/pkginfo/trunk")
     (synopsis "Query metadatdata from sdists, bdists, and installed packages")
     (description
@@ -25725,25 +25726,37 @@ created by running @code{python setup.py develop}).")
 (define-public python-twine
   (package
     (name "python-twine")
-    (version "1.15.0")
+    (version "5.1.1")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "twine" version))
-        (sha256
-         (base32 "11rpd653zcgzkq3sgwkzs3mpxl3r5rij59745ni84ikv8smjmlm3"))))
-    (build-system python-build-system)
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "twine" version))
+       (sha256
+        (base32 "1nr24gd5gm22b0jzb5qmw4swh8bshixmqm0kv4s38ay0758q584s"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags  ;; Disable failing tests.
+           #~(list "-k" (string-append
+                         "not test_pkginfo_returns_no_metadata"
+                         " and not test_fails_rst_no_content"))))
+    (native-inputs
+     (list python-pretend
+           python-pytest
+           python-pytest-socket))
     (propagated-inputs
-     (list python-tqdm
-           python-packaging
+     (list python-importlib-metadata
+           python-keyring
            python-pkginfo
            python-readme-renderer
            python-requests
-           python-requests-toolbelt))
+           python-requests-toolbelt
+           python-rfc3986
+           python-rich
+           python-urllib3))
     (home-page "https://github.com/pypa/twine")
     (synopsis "Collection of utilities for interacting with PyPI")
     (description
-      "@code{twine} currently supports registering projects and uploading
+     "@code{twine} currently supports registering projects and uploading
 distributions.  It authenticates the user over HTTPS, allows them to pre-sign
 their files and supports any packaging format (including wheels).")
     (license license:asl2.0)))
@@ -27675,33 +27688,34 @@ Public Suffix List's private domains as well.")
 (define-public python-tldr
   (package
     (name "python-tldr")
-    (version "3.2.0")
+    (version "3.3.0")
     (source
      (origin
-       ;; There's no test in PyPI.
-       (method git-fetch)
+       (method git-fetch) ; there's no test in PyPI
        (uri (git-reference
              (url "https://github.com/tldr-pages/tldr-python-client")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0hkjsnz03p9pdfgk85wampha4pyr82bwmnj8hj6kigc784ddy2ag"))))
-    (build-system python-build-system)
+        (base32 "15mab6a7ph2rviy5f2ypid6qdbb583fvaf5zhd6q0nrggxx0kkcm"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'build 'build-doc
-                 (lambda _
-                   (invoke "make" "-C" "docs")))
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     ;; This test fails. It tries to open a network socket.
-                     (invoke "pytest" "-vv" "-k" "not test_error_message")))))))
+     (list
+      ;; This test fails. It tries to open a network socket.
+      #:test-flags #~(list "-k" "not test_error_message")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'build 'build-doc
+            (lambda _
+              (invoke "make" "-C" "docs"))))))
     (native-inputs
-     (list python-pytest python-pytest-runner python-sphinx-argparse))
-    (inputs
-     (list python-argcomplete python-colorama python-termcolor python-shtab))
+     (list python-pytest
+           python-pytest-runner
+           python-sphinx-argparse))
+    (propagated-inputs
+     (list python-colorama
+           python-termcolor
+           python-shtab))
     (home-page "https://github.com/tldr-pages/tldr-python-client")
     (synopsis "Python command-line client for tldr pages")
     (description "This package provides the @code{tldr} command allowing users
@@ -32014,38 +32028,36 @@ positioning, and keyboard input.")
 (define-public python-readme-renderer
   (package
     (name "python-readme-renderer")
-    (version "34.0")
+    (version "41.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "readme_renderer" version))
         (sha256
          (base32
-          "1c75h9znffc2lh4j56yg23l5ifj5l8fbdq3kfigi8vbh45zx3d6z"))))
-    (build-system python-build-system)
+            "1xvkf2i075rdqkwdrcrw4xglziqd7qs5lb2rbxr5snizi7ji2jsg"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'loosen-cmarkgfm-dependency
-                    (lambda _
-                      ;; Permit newer versions of cmarkgfm.
-                      (substitute* "setup.py"
-                        (("cmarkgfm>=0\\.5\\.0,<0\\.7\\.0")
-                         "cmarkgfm>=0.5.0"))))
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (when tests?
-                        ;; The GFM tests fail due to slight differences in the
-                        ;; generated vs expected HTML due to using a more
-                        ;; recent bleach version (see:
-                        ;; https://github.com/pypa/readme_renderer/issues/234).
-                        (invoke "pytest" "-vv" "-k" "not GFM")))))))
+     (list
+      #:test-flags
+      '(list "-k"
+             (string-append
+              ;; These tests fail due to slight differences in the generated
+              ;; vs expected HTML, e.g. because of difference in whitespace or
+              ;; line breaks. (See also
+              ;; https://github.com/pypa/readme_renderer/issues/234).
+              "not test_md_fixtures[test_CommonMark_008.md]"
+              " and not test_rst_fixtures[test_rst_008.rst]"
+              " and not GFM"))))
     (propagated-inputs
-     (list python-bleach python-docutils python-pygments
-
+     (list python-bleach
+           python-docutils
+           python-pygments
            ;; Optional dependencies.
            python-cmarkgfm))           ;required by postorius
     (native-inputs
-     (list python-mock python-pytest))
+     (list python-pytest
+           python-wheel))
     (home-page "https://github.com/pypa/readme_renderer")
     (synopsis "Render README files in Warehouse")
     (description

@@ -81,6 +81,7 @@
   #:use-module (guix build-system trivial)
   #:use-module (guix build-system emacs)
   #:use-module (gnu packages audio)
+  #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages c)
   #:use-module (gnu packages compression)
@@ -2523,6 +2524,37 @@ can contain any kind of values.")
 (define-public ecl-bst
   (sbcl-package->ecl-package sbcl-bst))
 
+(define-public sbcl-bt-semaphore
+  (let ((commit "46b4bf315590f510d2d4ec5ca8908efbe68007e9")
+        (revision "0"))
+    (package
+      (name "sbcl-bt-semaphore")
+      (version (git-version "0.6.3" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/r-moeritz/bt-semaphore")
+               (commit commit)))
+         (sha256
+          (base32 "0rl7yp36225z975hg069pywwlpchwn4086cgxwsi2db5mhghpr7l"))
+         (file-name (git-file-name "cl-bt-semaphore" version))))
+      (build-system asdf-build-system/sbcl)
+      (inputs (list sbcl-bordeaux-threads))
+      (native-inputs (list sbcl-clunit))
+      (synopsis "Semaphore implementation for @code{bordeaux-threads}")
+      (description
+       "@code{bt-semaphore} is a semaphore implementation for use with
+@code{bordeaux-threads}.")
+      (home-page "https://github.com/r-moeritz/bt-semaphore")
+      (license license:expat))))
+
+(define-public cl-bt-semaphore
+  (sbcl-package->cl-source-package sbcl-bt-semaphore))
+
+(define-public ecl-bt-semaphore
+  (sbcl-package->ecl-package sbcl-bt-semaphore))
+
 (define-public sbcl-bubble-operator-upwards
   (let ((commit "846275a318b960de81b62caecb1e31930f70aef6")
         (revision "0"))
@@ -4108,6 +4140,76 @@ to cl-async.")
 
 (define-public ecl-cl-async-future
   (sbcl-package->ecl-package sbcl-cl-async-future))
+
+(define libasyncprocess
+  (let ((commit "9690530fc92b59636d9f17d821afa7697e7c8ca4")
+        (revision "0"))
+    (package
+      (name "libasyncprocess")
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/lem-project/async-process")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1m2sfgfg6c0gqqy1pqsahsiw3j25y473mfw7sx0akkqbhwhm7mjb"))
+         (modules '((guix build utils)))
+         (snippet
+          ;; Delete precompiled artifacts.
+          `(begin
+             (for-each delete-file-recursively
+                       (list "static"
+                             "static_old0001-819cbf6"))))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'bootstrap
+              (lambda _
+                (invoke "libtoolize")
+                (invoke "aclocal")
+                (invoke "autoheader")
+                (invoke "automake" "-a")
+                (invoke "autoconf"))))))
+      (native-inputs (list autoconf automake libtool))
+      (home-page "https://github.com/lem-project/async-process")
+      (synopsis "C library component for @code{cl-async-process}")
+      (description
+       "This package provides the C library component for @code{cl-async-process}.")
+      (license license:expat))))
+
+(define-public sbcl-async-process
+  (package
+    (inherit libasyncprocess)
+    (name "sbcl-async-process")
+    (build-system asdf-build-system/sbcl)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "src/async-process.lisp"
+                (("libasyncprocess\\.so")
+                 (search-input-file inputs
+                                    "/lib/async-process/libasyncprocess.so"))))))))
+    (inputs
+     (modify-inputs (package-inputs libasyncprocess)
+       (prepend libasyncprocess sbcl-cffi)))
+    (home-page "https://github.com/lem-project/async-process")
+    (synopsis "Asynchronous process execution for Common Lisp")
+    (description "This library provides an asynchronous process
+execution mechanism for Common Lisp.")))
+
+(define-public cl-async-process
+  (sbcl-package->cl-source-package sbcl-async-process))
+
+(define-public ecl-async-process
+  (sbcl-package->ecl-package sbcl-async-process))
 
 (define-public sbcl-cl-autowrap
   (let ((revision "2")
@@ -6511,6 +6613,47 @@ Lisp.")
 
 (define-public ecl-cl-i18n
   (sbcl-package->ecl-package sbcl-cl-i18n))
+
+(define-public sbcl-cl-iconv
+  (let ((commit "54900c3f00e19da15a9c65451bddde839d0a7f75")
+        (revision "0"))
+    (package
+      (name "sbcl-cl-iconv")
+      (version (git-version "0.3" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/quek/cl-iconv")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1lpw95c02inifhdh9kkab9q92i5w9zd788dww1wly2p0a6kyx9wg"))))
+      (build-system asdf-build-system/sbcl)
+      ;; The project is called cl-iconv but the system is declared as iconv.
+      (arguments
+       '(#:asd-systems '("iconv")
+         #:phases
+         (modify-phases %standard-phases
+           (add-after 'unpack 'fix-paths
+             (lambda* (#:key inputs #:allow-other-keys)
+               (substitute* "iconv.lisp"
+                 (("libiconv.so")
+                  (search-input-file inputs "/lib/libiconv.so"))))))))
+      (native-inputs (list sbcl-ptester))
+      (inputs (list libiconv sbcl-cffi))
+      (home-page "https://github.com/quek/cl-iconv")
+      (synopsis "iconv library for Common Lisp")
+      (description
+       "This package provides CFFI bindings to convert between different
+character encodings using iconv.")
+      (license license:bsd-3))))
+
+(define-public cl-iconv
+  (sbcl-package->cl-source-package sbcl-cl-iconv))
+
+(define-public ecl-cl-iconv
+  (sbcl-package->ecl-package sbcl-cl-iconv))
 
 (define-public sbcl-cl-indentify
   (let ((commit "eb770f434defa4cd41d84bca822428dfd0dbac53"))
@@ -9026,6 +9169,37 @@ to serve as a building block for such an interface.")
 
 (define-public ecl-cl-rmath
   (sbcl-package->ecl-package sbcl-cl-rmath))
+
+(define-public sbcl-cl-setlocale
+  (let ((commit "f660d07dac72bc3e99caae1c6c8a789991e2694c")
+        (revision "0"))
+    (package
+      (name "sbcl-cl-setlocale")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/shamazmazum/cl-setlocale")
+               (commit commit)))
+         (file-name (git-file-name "cl-setlocale" version))
+         (sha256
+          (base32 "0g1b89yj6n42ayf2074krk3h9yvglqxn54a6i3sxgpsqww2ll2a1"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs (list sbcl-fiveam))
+      (inputs (list sbcl-cffi))
+      (home-page "https://github.com/shamazmazum/cl-setlocale")
+      (synopsis "Common Lisp wrapper around setlocale")
+      (description
+       "This library provides a tiny Common Lisp wrapper around setlocale(3)
+and can be used in conjunction with other FFI wrappers like cl-charms.")
+      (license license:bsd-2))))
+
+(define-public cl-setlocale
+  (sbcl-package->cl-source-package sbcl-cl-setlocale))
+
+(define-public ecl-cl-setlocale
+  (sbcl-package->ecl-package sbcl-cl-setlocale))
 
 (define-public sbcl-cl-slice
   (let ((commit "c531683f287216aebbb0affbe090611fa1b5d697")
@@ -17511,6 +17685,46 @@ bound to whatever value was in the same place in the URL (as a string).")
 (define-public ecl-hunchenissr-routes
   (sbcl-package->ecl-package sbcl-hunchenissr-routes))
 
+(define-public sbcl-hunchensocket
+  (let ((commit "faf2c08452f18763e541bc7f121760669ac0f41a")
+        (revision "0"))
+    (package
+      (name "sbcl-hunchensocket")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/joaotavora/hunchensocket/")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1vhd009lwl62l1czmhsalblxmyz4x9v3nspjflpajwm1db5rnd7h"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs (list sbcl-fiasco))
+      (inputs
+       (list
+        sbcl-hunchentoot
+        sbcl-alexandria
+        sbcl-cl-base64
+        sbcl-sha1
+        sbcl-flexi-streams
+        sbcl-chunga
+        sbcl-trivial-utf-8
+        sbcl-trivial-backtrace
+        sbcl-cl-fad))
+      (home-page "https://github.com/joaotavora/hunchensocket")
+      (synopsis "RFC6455 compliant WebSockets for Common Lisp")
+      (description
+       "This library provides a WebSockets extension for the Huchentoot web server.")
+      (license license:expat))))
+
+(define-public cl-hunchensocket
+  (sbcl-package->cl-source-package sbcl-hunchensocket))
+
+(define-public ecl-hunchensocket
+  (sbcl-package->ecl-package sbcl-hunchensocket))
+
 (define-public sbcl-hunchentoot
   ;; NOTE: (Sharlatan-20220520T213309+0100): The latest commit fixed tests,
   ;; switch to the version tag when release is ready.
@@ -17865,6 +18079,38 @@ transcribing mathematical formulas into Lisp.")
 
 (define-public ecl-inheriting-readers
   (sbcl-package->ecl-package sbcl-inheriting-readers))
+
+(define-public sbcl-inquisitor
+  (let ((commit "423fa9bdd4a68a6ae517b18406d81491409ccae8")
+        (revision "0"))
+    (package
+      (name "sbcl-inquisitor")
+      (version (git-version "0.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/t-sin/inquisitor/")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "08rkmqnwlq6v84wcz9yp31j5lxrsy33kv3dh7n3ccsg4kc54slzw"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs (list sbcl-prove sbcl-babel))
+      (inputs (list sbcl-flexi-streams sbcl-alexandria sbcl-anaphora))
+      (home-page "https://github.com/t-sin/inquisitor")
+      (synopsis
+       "Encoding/end-of-line detection and external-format abstraction for Common Lisp")
+      (description
+       "Inquisitor is a cross-implementation library provding
+encoding/end-of-line detection and external-format abstraction for Common Lisp.")
+      (license license:expat))))
+
+(define-public cl-inquisitor
+  (sbcl-package->cl-source-package sbcl-inquisitor))
+
+(define-public ecl-inquisitor
+  (sbcl-package->ecl-package sbcl-inquisitor))
 
 (define-public sbcl-interface
   (let ((commit "6d8bd74214053debcbc0b174d65ea73c271c1563")
@@ -18367,6 +18613,48 @@ building block for higher level libraries.")
 
 (define-public ecl-json-streams
   (sbcl-package->ecl-package sbcl-json-streams))
+
+(define-public sbcl-jsonrpc
+  (let ((commit "4abbd305bae7827ad39048f956887db11505ad50")
+        (revision "0"))
+    (package
+      (name "sbcl-jsonrpc")
+      (version (git-version "0.3.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/cxxxr/jsonrpc")
+               (commit commit)))
+         (file-name (git-file-name "jsonrpc" version))
+         (sha256
+          (base32 "08fz50wmbjic9m31av1fq4a3v5ahry58c8z2bmn3ib52k6nnjrk2"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs (list sbcl-rove))
+      (inputs (list sbcl-clack
+                    sbcl-http-body
+                    sbcl-lack
+                    sbcl-yason
+                    sbcl-bordeaux-threads
+                    sbcl-event-emitter
+                    sbcl-alexandria
+                    sbcl-dissect
+                    sbcl-trivial-timeout
+                    sbcl-chanl
+                    sbcl-vom
+                    sbcl-usocket
+                    sbcl-websocket-driver))
+      (home-page "https://github.com/cxxxr/jsonrpc")
+      (synopsis "JSON-RPC 2.0 server/client for Common Lisp")
+      (description
+       "This package provides a JSON-RPC 2.0 server/client for Common Lisp.")
+      (license license:bsd-2))))
+
+(define-public cl-jsonrpc
+  (sbcl-package->cl-source-package sbcl-jsonrpc))
+
+(define-public ecl-jsonrpc
+  (sbcl-package->ecl-package sbcl-jsonrpc))
 
 (define-public sbcl-jsown
   (let ((commit "744c4407bef58dfa876d9da0b5c0205d869e7977"))
@@ -18926,6 +19214,39 @@ needed.  The low-level command API is fully mapped however.")
 (define-public ecl-legit
   (sbcl-package->ecl-package sbcl-legit))
 
+(define-public sbcl-lem-mailbox
+  (let ((commit "12d629541da440fadf771b0225a051ae65fa342a")
+        (revision "0"))
+    (package
+      (name "sbcl-lem-mailbox")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/lem-project/lem-mailbox")
+               (commit commit)))
+         (sha256
+          (base32 "1qh9yq9ks0paplmbx0vj4nynx86igkv9kli396plpg9vc14qdgl5"))
+         (file-name (git-file-name "cl-lem-mailbox" version))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs (list sbcl-rove))
+      (inputs
+       (list sbcl-bordeaux-threads
+             sbcl-bt-semaphore
+             sbcl-queues))
+      (synopsis "ANSI CL adaptation of the SBCL mailbox utility")
+      (description
+       "This package provides an ANSI CL adaptation of the SBCL mailbox utilty.")
+      (home-page "https://github.com/lem-project/lem-mailbox")
+      (license license:expat))))
+
+(define-public cl-lem-mailbox
+  (sbcl-package->cl-source-package sbcl-lem-mailbox))
+
+(define-public ecl-lem-mailbox
+  (sbcl-package->ecl-package sbcl-lem-mailbox))
+
 (define-public sbcl-let-over-lambda
   (let ((commit "481b2e3ab4646186451dfdd2062113203287d520")
         (revision "1"))
@@ -19159,6 +19480,41 @@ BTCPay, Paypal, and Stripe.")
 
 (define-public ecl-lisp-pay
   (sbcl-package->ecl-package sbcl-lisp-pay))
+
+(define-public sbcl-lisp-preprocessor
+  (let ((commit "cbed5952f3d98c84448c52d12255df9580451383")
+        (revision "0"))
+    (package
+      (name "sbcl-lisp-preprocessor")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/cxxxr/lisp-preprocessor/")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0v0qhawcvgbxk06nfwyvcqwmqvzn2svq80l2rb12myr0znschhpi"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs (list sbcl-rove))
+      (inputs
+       (list
+        sbcl-alexandria
+        sbcl-trivial-gray-streams
+        sbcl-split-sequence
+        sbcl-trivia
+        sbcl-cl-ppcre))
+      (home-page "https://github.com/cxxxr/lisp-preprocessor")
+      (synopsis "Common Lisp embedded template engine")
+      (description "This package provices an embedded template engine for Common Lisp.")
+      (license license:expat))))
+
+(define-public cl-lisp-preprocessor
+  (sbcl-package->cl-source-package sbcl-lisp-preprocessor))
+
+(define-public ecl-lisp-preprocessor
+  (sbcl-package->ecl-package sbcl-lisp-preprocessor))
 
 (define-public sbcl-lisp-stat
   (let ((commit "357a0d2b5f68a5ff925776235c2b7455e12b78ba")
@@ -30013,6 +30369,45 @@ concept of a source-form to report where the error or warning is located.")
   ;; can be loaded on ECL.
   (sbcl-package->ecl-package sbcl-trivial-with-current-source-form))
 
+(define-public sbcl-trivial-ws
+  (let ((commit "ebf1ec0ea26bdac4007e98e89f3a621dbfb4390a")
+        (revision "0"))
+    (package
+      (name "sbcl-trivial-ws")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ceramic/trivial-ws/")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0qmsf0dhmyhjgqjzdgj2yb1nkrijwp4p1j411613i45xjc2zd6m7"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs
+       (list sbcl-prove
+             sbcl-find-port))
+      (inputs
+       (list sbcl-hunchensocket
+             sbcl-websocket-driver
+             sbcl-cl-async))
+      (home-page "https://github.com/ceramic/trivial-ws")
+      (synopsis "Common Lisp library for using WebSockets")
+      (description
+       "This package implements a simple interface for using WebSockets via Common Lisp.")
+      (license license:expat))))
+
+(define-public cl-trivial-ws
+  (sbcl-package->cl-source-package sbcl-trivial-ws))
+
+(define-public ecl-trivial-ws
+  (package
+    (inherit (sbcl-package->ecl-package sbcl-trivial-ws))
+    (arguments
+     ;; https://github.com/ceramic/trivial-ws/issues/7
+     (list #:tests? #f))))
+
 (define-public sbcl-trivialib-type-unify
   (let ((commit "62492ebf04db567dcf435ae84c50b7b8202ecf99")
         (revision "1"))
@@ -30982,8 +31377,8 @@ has a small codebase that's easy to understand and use.")
   (sbcl-package->ecl-package sbcl-vom))
 
 (define-public sbcl-websocket-driver
-  (let ((commit "df94496ecb525d086eeada4f5875975515b7212e")
-        (revision "0"))
+  (let ((commit "17ba5535fb1c4fe43e7e8ac786e8b61a174fcba3")
+        (revision "1"))
     (package
      (name "sbcl-websocket-driver")
      (version (git-version "0.2.0" revision commit))
@@ -30996,7 +31391,7 @@ has a small codebase that's easy to understand and use.")
              (commit commit)))
        (file-name (git-file-name "cl-websocket-driver" version))
        (sha256
-        (base32 "0y852sqdnxfma6kw833by4wkgbgbv4ppzawjk8pk3y1pmh6is83y"))))
+        (base32 "1lj6xarr62199ladkml7qpgi86w94j4djrp54v9ch0zakni3rhj2"))))
      (build-system asdf-build-system/sbcl)
      (inputs
       (list sbcl-babel

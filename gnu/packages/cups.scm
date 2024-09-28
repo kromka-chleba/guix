@@ -263,6 +263,7 @@ filters for the PDF-centric printing workflow introduced by OpenPrinting.")
   (package
     (name "cups-minimal")
     (version "2.4.9")
+    (replacement cups-minimal/fixed)
     (source
      (origin
        (method git-fetch)
@@ -351,6 +352,15 @@ supported through legacy PPD-based printer drivers called ``printer
 applications''.  These must be installed separately.")
     ;; CUPS is Apache 2.0 with exceptions, see the NOTICE file.
     (license license:asl2.0)))
+
+(define cups-minimal/fixed
+  (package
+    (inherit cups-minimal)
+    (source
+     (origin
+       (inherit (package-source cups-minimal))
+       (patches
+        (search-patches "cups-minimal-Address-PPD-injection-issues.patch"))))))
 
 (define-public cups
   (package/inherit cups-minimal
