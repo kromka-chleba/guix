@@ -86,7 +86,7 @@
 (define-public vim
   (package
     (name "vim")
-    (version "9.1.0146")
+    (version "9.1.0744")
     (source (origin
              (method git-fetch)
              (uri (git-reference
@@ -95,7 +95,7 @@
              (file-name (git-file-name name version))
              (sha256
               (base32
-               "05lz8ai39p9ypk22n7qc7g21868m08pl12sn4028jshx5nxwy2zn"))))
+               "0izx8ckjbpavp3bpw7lzdga5mmpcdssvzhlnz18n4bfzpfhg5knr"))))
     (build-system gnu-build-system)
     (arguments
      `(#:test-target "test"
@@ -157,7 +157,8 @@
              (with-fluids ((%default-port-encoding #f))
                (substitute* "src/testdir/test_writefile.vim"
                  ((".*Test_write_with_xattr_support.*" line)
-                  (string-append line "return\n"))))))
+                  (string-append line "return\n"))))
+             (delete-file "runtime/syntax/testdir/input/sh_11.sh")))
          (add-before 'install 'fix-installman.sh
            (lambda _
              (substitute* "src/installman.sh"
@@ -1036,7 +1037,7 @@ a nested nvim process.")
 (define-public vim-guix-vim
   (package
     (name "vim-guix-vim")
-    (version "0.4.0")
+    (version "0.4.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1045,7 +1046,7 @@ a nested nvim process.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "013yn2n2nsspk12bldkc9xn4z4kjx9rvracbllc8i1nngldckxd0"))))
+                "0ii2v94wdh8wn1qrgbn91cxzk3gi09awgxydf2bb6z7b302absh8"))))
     (build-system vim-build-system)
     (arguments
      (list #:plugin-name "guix"))

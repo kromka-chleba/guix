@@ -146,6 +146,10 @@ been performed at build time."
 
   (let* ((supported-locales #~(supported-locales->locales
                                #+(glibc-supported-locales)))
+
+         ;; Note: Use the latest version of 'iso-codes', including
+         ;; Guix-specific changes, so that all languages known to glibc and
+         ;; returned by 'glibc-supported-locales'.
          (iso-codes #~(string-append #$iso-codes "/share/iso-codes/json/"))
          (iso639-3 #~(string-append #$iso-codes "iso_639-3.json"))
          (iso639-5 #~(string-append #$iso-codes "iso_639-5.json"))

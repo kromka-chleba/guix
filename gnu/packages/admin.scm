@@ -763,7 +763,7 @@ console.")
 (define-public btop
   (package
     (name "btop")
-    (version "1.3.2")
+    (version "1.4.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -772,11 +772,12 @@ console.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "084n0nbv1029lvfv4na2k9fqyray7m77dff1537b8ffk08ib4d4j"))))
+                "0vgw6hwqh6zbzrvrn3i0xwi9ykm1qdvhqcyz3mjakd7w303lx603"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f ;no test suite
-           #:make-flags #~(list (string-append "PREFIX=" #$output))
+           #:make-flags #~(list (string-append "PREFIX=" #$output)
+                                (string-append "CC=" #$(cc-for-target)))
            #:phases #~(modify-phases %standard-phases
                         (delete 'configure))))
     (home-page "https://github.com/aristocratos/btop")
@@ -4311,14 +4312,14 @@ system distribution, akin to many similar tools.")
 (define-public nnn
   (package
     (name "nnn")
-    (version "4.9")
+    (version "5.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/jarun/nnn/releases/download/v"
                            version "/nnn-v" version ".tar.gz"))
        (sha256
-        (base32 "0d8apcichwbmsqgbs0kay3k63898x6xdxpb9hn1nvv5qwxxdq59b"))))
+        (base32 "084m08fcnpjd8gdfvvmgz558lmc29wj7dxg23m98fdmvhp3dd0ms"))))
     (build-system gnu-build-system)
     (inputs
      (list ncurses readline))

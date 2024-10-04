@@ -111,6 +111,7 @@
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (ice-9 match)
+  #:use-module (ice-9 format)
   #:use-module (srfi srfi-1))
 
 (define-public alfa
@@ -294,7 +295,7 @@ moment, supported SPICE files are:
 (define-public calcmysky
   (package
     (name "calcmysky")
-    (version "0.3.2")
+    (version "0.3.3")
     (source
      (origin
        (method git-fetch)
@@ -303,7 +304,7 @@ moment, supported SPICE files are:
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1kybjlddrm8x4x5y82qczi6z1d2riv6zcfjzrh7pzg2vwj89izh0"))))
+        (base32 "0njsapy3qlyg3y0p5a849xydzhnzk4p5s0s37zxw9k5nnaf4vinp"))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags
@@ -541,7 +542,7 @@ accurately in real time at any rate desired.")
 (define-public cfitsio
   (package
     (name "cfitsio")
-    (version "4.4.1")
+    (version "4.5.0")
     (source
      (origin
        (method url-fetch)
@@ -549,7 +550,7 @@ accurately in real time at any rate desired.")
              "https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/"
              "cfitsio-" version ".tar.gz"))
        (sha256
-        (base32 "098x1l8ijwsjp2ivp3v7pamrmpgwj5xmgb4yppm9w3w044zxr8b6"))))
+        (base32 "02ff4xsc4r6vam4m4nmp426bpl7klbx6nn5ajgj6452w6v1lz1g4"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -574,13 +575,32 @@ accurately in real time at any rate desired.")
     (inputs (list bzip2 curl zlib))
     (home-page "https://heasarc.gsfc.nasa.gov/fitsio/fitsio.html")
     (synopsis "Library for reading and writing FITS files")
-    (description "CFITSIO provides simple high-level routines for reading and
-writing @dfn{FITS} (Flexible Image Transport System) files that insulate the
-programmer from the internal complexities of the FITS format. CFITSIO also
+    (description
+     "CFITSIO provides simple high-level routines for reading and writing
+@acronym{Flexible Image Transport System,FITS} files that insulate the
+programmer from the internal complexities of the FITS format.  CFITSIO also
 provides many advanced features for manipulating and filtering the information
 in FITS files.")
+    (properties
+     '((release-monitoring-url .
+        "https://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html")))
     (license (license:non-copyleft "file://License.txt"
                                    "See License.txt in the distribution."))))
+
+;;; The version is required for gnuastro.  It fails on check phase with a
+;;; newer version.
+(define-public cfitsio-4.4
+  (package
+    (inherit cfitsio)
+    (version "4.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/"
+             "cfitsio-" version ".tar.gz"))
+       (sha256
+        (base32 "098x1l8ijwsjp2ivp3v7pamrmpgwj5xmgb4yppm9w3w044zxr8b6"))))))
 
 (define-public erfa
   (package
@@ -636,6 +656,636 @@ complex, wildly non-linear filters on astronomical images.  Typical
 applications of EyE include adaptive filtering, feature detection and cosmetic
 corrections.")
     (license license:cecill)))
+
+(define-public glnemo2
+  (package
+    (name "glnemo2")
+    (version "1.21.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.lam.fr/jclamber/glnemo2")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jmmxszh8d2jmfghig36nhykff345mqnpssfa64d0r7l9cnfp3cn"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f        ; No test target
+      #:configure-flags #~(list "CPPFLAGS=-fcommon")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-libraries-paths
+            (lambda _
+              (substitute* "CMakeLists.txt"
+                ;; There is some not straightforward logic on how to set
+                ;; the installation prefix for the project; inherit it
+                ;; from the build-system default flags.
+                (("CMAKE_INSTALL_PREFIX  \"/usr\"")
+                 "CMAKE_INSTALL_PREFIX")
+                (("/usr/include/CCfits")
+                 (string-append
+                  #$(this-package-input "ccfits") "/include/CCfits"))
+                (("/usr/include/tirpc")
+                 (string-append
+                  #$(this-package-input "libtirpc") "/include/tirpc"))
+                ;; It tries to detect library in two "predictable" paths,
+                ;; required during the link phase.
+                (("/usr/lib64/libtirpc.so")
+                 (string-append
+                  #$(this-package-input "libtirpc") "/lib/libtirpc.so"))))))))
+    (inputs
+     (list ccfits
+           cfitsio
+           glm
+           glu
+           hdf5
+           libtirpc
+           qtbase-5
+           zlib))
+    (home-page "https://projets.lam.fr/projects/glnemo2/wiki/Wiki")
+    (synopsis "3D interactive visualization program for n-body like particles")
+    (description
+     "GLNEMO2 is an interactive 3D visualization program which displays
+particles positions of the different components (gas, stars, disk, dark
+matter halo, bulge) of an N-body snapshot.  It is a tool for running
+N-body simulations from isolated galaxies to cosmological simulations.
+It has a graphical user interface (based on QT 5.X API), uses a fast
+3D engine (OPenGL and GLSL), and is generic with the possibility to load
+different kinds of input files.")
+    (license license:cecill)))
+
+(define-public gnuastro
+  (package
+    (name "gnuastro")
+    (version "0.22")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://gnu/gnuastro/gnuastro-"
+                           version ".tar.lz"))
+       (sha256
+        (base32
+         "15rljx1mx9dyvni17qpj7y9gv086cvmjf9f5j34m1pbiyn989fqz"))))
+    (build-system gnu-build-system)
+    (arguments
+     '(#:configure-flags '("--disable-static")))
+    (inputs
+     (list cfitsio-4.4
+           curl
+           gsl
+           libgit2
+           libjpeg-turbo
+           libtiff
+           wcslib
+           zlib))
+    (native-inputs
+     (list libtool lzip))
+    (home-page "https://www.gnu.org/software/gnuastro/")
+    (synopsis "Astronomy utilities")
+    (description "The GNU Astronomy Utilities (Gnuastro) is a suite of
+programs for the manipulation and analysis of astronomical data.")
+    (license license:gpl3+)))
+
+(define-public gpredict
+  ;; The latest tag, 2.3, has no major difference with 2.2.1 and is dated for
+  ;; 2018. Additionally, there is some activity on the master branch.
+  (package
+    (name "gpredict")
+    (version "2.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/csete/gpredict/releases"
+                           "/download/v" version
+                           "/gpredict-" version ".tar.bz2"))
+       (sha256
+        (base32 "0hwf97kng1zy8rxyglw04x89p0bg07zq30hgghm20yxiw2xc8ng7"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "CFLAGS=-O2 -g -fcommon")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-tests
+            (lambda _
+              ;; Remove reference to non-existent file.
+              (substitute* "po/POTFILES.in"
+                (("src/gtk-sat-tree\\.c") "")))))))
+    (native-inputs
+     (list gettext-minimal intltool pkg-config))
+    (inputs
+     (list curl glib goocanvas gtk+))
+    (home-page "https://oz9aec.dk/gpredict/")
+    (synopsis "Satellite tracking and orbit prediction application")
+    (description
+     "Gpredict is a real-time satellite tracking and orbit prediction
+application.  It can track a large number of satellites and display their
+position and other data in lists, tables, maps, and polar plots (radar view).
+Gpredict can also predict the time of future passes for a satellite, and
+provide you with detailed information about each pass.
+
+Some core features of Gpredict include:
+
+@itemize
+@item Tracking of a large number of satellites only limited by the physical
+memory and processing power of the computer
+@item Display the tracking data in lists, maps, polar plots and any
+combination of these
+@item Have many modules open at the same either in a notebook or in their own
+windows.  The modules can also run in full-screen mode
+@item You can use many ground stations
+@item Predict upcoming passes
+@item Gpredict can run in real-time, simulated real-time (fast forward and
+backward), and manual time control
+@item Detailed information both the real time and non-real time modes
+@item Doppler tuning of radios via Hamlib rigctld
+@item Antenna rotator control via Hamlib rotctld
+@end itemize")
+    (license license:gpl2+)))
+
+(define* (healpix-source #:key version sha256-base32-hash)
+    ;; The sources of HEALPix containing 6 independent packages (Fortran90,
+    ;; IDL, C, C++, java and python) and distributed togather libsharp.
+     (origin
+       (method url-fetch)
+       (uri
+        (let* ((name "Healpix")
+               (version-list (string-split version #\.))
+               (name+version (format #f "~a_~{~a.~a~a~}" name version-list)))
+          (string-append "mirror://sourceforge/healpix/"
+                         name+version "/" name+version "_" "2022Jul28.tar.gz")))
+       (sha256
+        (base32 sha256-base32-hash ))))
+
+(define-public healpix
+  (package
+    (name "healpix")
+    (version "3.8.2")
+    (source
+     (healpix-source
+      #:version version
+      #:sha256-base32-hash "09x1lafq01gzk16yvmz2pdhrxnqfjp3b2p9hlgy0dbrdg82ryqj7"))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f ; no tests
+      #:make-flags
+      #~(list "shared"
+              "AR=ar -rsv"
+              "OPT=-O2 -Wall"
+              "PIC=-fPIC"
+              (string-append "CC=" #$(cc-for-target))
+              (string-append "CFITSIO_INCDIR="
+                             #$(this-package-input "cfitsio") "/include")
+              (string-append "CFITSIO_LIBDIR="
+                             #$(this-package-input "cfitsio") "/lib")
+              (string-append "INCDIR=" #$output "/include")
+              (string-append "LIBDIR=" #$output "/lib"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure) ; no configure
+          (add-after 'unpack 'chdir-c
+            (lambda _
+              (chdir "src/C/subs")))
+          (add-before 'install 'set-output-directories
+            (lambda _
+              (mkdir-p (string-append #$output "/include"))
+              (mkdir-p (string-append #$output "/lib")))))))
+    (native-inputs
+     (list pkg-config autoconf automake))
+    (inputs
+     (list cfitsio))
+    (home-page "https://healpix.jpl.nasa.gov/")
+    (synopsis "Representation of spherical data")
+    (description
+     "@acronym{HEALPix, Hierarchical Equal Area isoLatitude Pixelation} of a
+sphere produces a subdivision of a spherical surface in which each pixel
+covers the same surface area as every other pixel.  This package provides the
+dynamic library for the C language implementation of HEALPix.")
+    (license license:gpl2+)))
+
+(define-public healpix-cxx
+  (package
+    (inherit healpix)
+    (name "healpix-cxx")
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir-cxx
+            (lambda _
+              (chdir "src/cxx")))
+          (add-after 'chdir-cxx 'adjust-unit-tests
+            (lambda _
+              (substitute* "configure.ac"
+                ;; Run unit tests using serial harness, taken from
+                ;; <https://salsa.debian.org/debian-astro-team/healpix-cxx/>.
+                (("foreign subdir-objects -Wall -Werror")
+                 "foreign serial-tests subdir-objects -Wall -Werror"))))
+           (replace 'bootstrap
+             (lambda _
+               (invoke "aclocal")
+               (invoke "automake" "--add-missing")
+               (invoke "autoconf"))))))
+    (inputs (modify-inputs (package-inputs healpix)
+              (prepend libsharp zlib)))
+    (description
+     (string-replace-substring (package-description healpix)
+                    "C language"
+                    "C++ language"))))
+
+(define-public imppg
+  (package
+    (name "imppg")
+    (version "0.6.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/GreatAttractor/imppg")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0a6wb1a9adwd01dmy0r03xxp8iz9y7mvh30088ajilhj4lf90vxa"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list ;; No test provided
+      #:tests? #f))
+    (native-inputs
+     (list boost pkg-config))
+    (inputs
+     (list cfitsio freeimage glew wxwidgets-3.0))
+    (home-page "https://github.com/GreatAttractor/imppg")
+    (synopsis "Astronomical Image Post-Proccessor (ImPPG)")
+    (description
+     "ImPPG performs Lucy-Richardson deconvolution, unsharp masking,
+brightness normalization and tone curve adjustment.  It can also apply
+previously specified processing settings to multiple images.  All operations
+are performed using 32-bit floating-point arithmetic.
+
+Supported input formats: FITS, BMP, JPEG, PNG, TIFF (most of bit depths and
+compression methods), TGA and more.  Images are processed in grayscale and can
+be saved as: BMP 8-bit; PNG 8-bit; TIFF 8-bit, 16-bit, 32-bit
+floating-point (no compression, LZW- or ZIP-compressed), FITS 8-bit, 16-bit,
+32-bit floating-point.")
+    (license license:gpl3+)))
+
+(define-public indi-2.0
+  (package
+    (name "indi")
+    (version "2.0.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/indilib/indi")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "08wmw7mrxx1zc89yka3c52djmpvlb8zimq8yzs95gh3p7r5jfpq9"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:parallel-tests? #f  ; Socket address collisions between tests
+      #:configure-flags
+      #~(list "-DINDI_BUILD_UNITTESTS=ON"
+              "-DINDI_BUILD_INTEGTESTS=ON"
+              "-DCMAKE_INSTALL_LIBDIR=lib"
+              (string-append "-DCMAKE_INSTALL_PREFIX=" #$output)
+              (string-append "-DUDEVRULES_INSTALL_DIR=" #$output "/lib/udev/rules.d"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-udev-rules
+            (lambda _
+              (substitute* (list "drivers/auxiliary/99-indi_auxiliary.rules"
+                                 "drivers/video/80-dbk21-camera.rules")
+                (("/bin/sh") (which "sh"))
+                (("/sbin/modprobe")
+                 (string-append #$(this-package-input "kmod") "/bin/modprobe")))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "integs"
+                  (invoke "ctest" "-V" "--output-on-failure"))
+                (with-directory-excursion "test"
+                  (invoke "ctest" "-V"))))))))
+    (native-inputs
+     (list googletest))
+    (inputs
+     (list cfitsio
+           curl
+           fftw
+           gsl
+           kmod
+           libev
+           libjpeg-turbo
+           libnova
+           libtiff
+           libusb
+           zlib))
+    (home-page "https://www.indilib.org")
+    (synopsis "Library for astronimical intrumentation control")
+    (description
+     "INDI (Instrument-Neutral Device Interface) is a distributed XML-based
+control protocol designed to operate astronomical instrumentation.  INDI is
+small, flexible, easy to parse, scalable, and stateless.  It supports common
+DCS functions such as remote control, data acquisition, monitoring, and a lot
+more.")
+    (license (list license:bsd-3
+                   license:gpl2+
+                   license:lgpl2.0+
+                   license:lgpl2.1+))))
+
+(define-public indi-1.9
+  (package
+    (inherit indi-2.0)
+    (version "1.9.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/indilib/indi")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "indi" version))
+       (sha256
+        (base32 "1vfcas59nlw8v7n6qhxhcm4isf5wk0crip5rmsallq3bsv3zznfr"))))))
+
+(define-public indi
+  ;; Default version of INDI..
+  indi-1.9)
+
+(define-public libnova
+  (package
+    (name "libnova")
+    (version "0.16")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.code.sf.net/p/libnova/libnova.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0icwylwkixihzni0kgl0j8dx3qhqvym6zv2hkw2dy6v9zvysrb1b"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-git-version
+            (lambda _
+              (substitute* "./git-version-gen"
+                (("/bin/sh") (which "sh"))))))))
+    (native-inputs
+     (list autoconf automake libtool))
+    (home-page "https://libnova.sourceforge.net/")
+    (synopsis "Celestial mechanics, astrometry and astrodynamics library")
+    (description
+     "Libnova is a general purpose, double precision, Celestial Mechanics,
+Astrometry and Astrodynamics library.")
+    (license (list license:lgpl2.0+
+                   license:gpl2+)))) ; examples/transforms.c & lntest/*.c
+
+(define-public libpasastro
+  (package
+    (name "libpasastro")
+    (version "1.4.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pchev/libpasastro")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1na3gyb3nzb5gdgccs1653j2gnz6w3v1mqzhyhkx3yqw8bs3q5x0"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f ; no tests provided
+      #:make-flags
+      #~(list
+         ;; Keep OS detection for the case when Hurd would be suitable to try.
+         #$@(if (target-linux?) '("OS_TARGET=linux") '())
+         ;; Enable buildtime CPU detection where supported,
+         ;; and set a suitable CPU target variable.
+         #$@(match (or (%current-target-system)
+                       (%current-system))
+              ("i686-linux"
+               '("CPU_TARGET=i386"))
+              ("x86_64-linux"
+               '("CPU_TARGET=x86_64"))
+              ;; There is no a case for RISCV in upstream, attempt to treat it
+              ;; as ARM.
+              ((or "armhf-linux" "aarch64-linux" "riscv64")
+               '("CPU_TARGET=armv7l"))
+              (_ '()))
+         (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure))))
+    (home-page "https://github.com/pchev/libpasastro")
+    (synopsis "Interface to astronomy library for use from Pascal program")
+    (description
+     "This package provides shared libraries to interface Pascal program with
+standard astronomy libraries:
+
+@itemize
+@item @code{libpasgetdss.so}: Interface with GetDSS to work with DSS images.
+@item @code{libpasplan404.so}: Interface with Plan404 to compute planets position.
+@item @code{libpaswcs.so}: Interface with libwcs to work with FITS WCS.
+@item @code{libpasspice.so}: To work with NAIF/SPICE kernel.
+@end itemize")
+      (license license:gpl2+)))
+
+(define-public libsep
+  (package
+    (name "libsep")
+    (version "1.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kbarbary/sep")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sag96am6r1ffh9860yq40js874362v3132ahlm6sq7padczkicf"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
+                           (string-append "PREFIX=" #$output))
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests?
+                         (chdir "../source")
+                         (invoke "make"
+                                 (string-append "CC=" #$(cc-for-target))
+                                 "test")))))))
+    (native-inputs
+     (list python-wrapper))
+    (home-page "https://github.com/kbarbary/sep")
+    (synopsis "Astronomical source extraction and photometry library")
+    (description
+     "SEP makes the core algorithms of
+@url{https://www.astromatic.net/software/sextractor/, sextractor} available as
+a library of stand-alone functions and classes.  These operate directly on
+in-memory arrays (no FITS files or configuration files).  The code is derived
+from the Source Extractor code base (written in C) and aims to produce results
+compatible with Source Extractor whenever possible.  SEP consists of a C
+library with no dependencies outside the standard library, and a Python module
+that wraps the C library in a Pythonic API.  The Python wrapper operates on
+NumPy arrays with NumPy as its only dependency.")
+    (license (list license:expat license:lgpl3+ license:bsd-3))))
+
+(define-public libsharp
+  (package
+    (name "libsharp")
+    (version "3.8.2")
+    (source
+     (healpix-source
+      #:version version
+      #:sha256-base32-hash "09x1lafq01gzk16yvmz2pdhrxnqfjp3b2p9hlgy0dbrdg82ryqj7"))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir-libsharp
+            (lambda _
+              (chdir "src/common_libraries/libsharp"))))))
+    (home-page "https://healpix.sourceforge.io/")
+    (synopsis "Efficient spherical harmonic transforms at arbitrary spins")
+    (description
+     "This package provides a librari for spherical harmonic
+transforms (SHTs), which evolved from the libpsht library, addressing several
+of its shortcomings, such as adding MPI support for distributed memory systems
+and SHTs of fields with arbitrary spin, but also supporting new developments
+in CPU instruction sets like the Advanced Vector Extensions (AVX) or fused
+multiply-accumulate (FMA) instructions.  The library is implemented in
+portable C99 and provides an interface that can be easily accessed from other
+programming languages such as C++, Fortran, Python etc.  Generally, libsharp's
+performance is at least on par with that of its predecessor; however,
+significant improvements were made to the algorithms for scalar SHTs, which
+are roughly twice as fast when using the same CPU capabilities.
+
+Supporting paper is availalbe at https://arxiv.org/abs/1303.4945")
+    (license license:gpl2+)))
+
+(define-public libskry
+  (package
+    (name "libskry")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/GreatAttractor/libskry")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14kwng0j8wqzlb0gqg3ayq36l15dpz7kvxc56fa47j55b376bwh6"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:make-flags
+       (list
+        (string-append
+         "LIBAV_INCLUDE_PATH=" (assoc-ref %build-inputs "ffmpeg") "/include"))
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure) ;; no configure provided
+         (delete 'check) ;; no tests provided
+         (replace 'install
+           ;; The Makefile lacks an ‘install’ target.
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let* ((out (assoc-ref outputs "out"))
+                    (lib (string-append out "/lib"))
+                    (include (string-append out "/include")))
+               (copy-recursively "bin" lib)
+               (copy-recursively "include" include))
+             #t)))))
+    (inputs
+     (list ffmpeg-4))
+    (home-page "https://github.com/GreatAttractor/libskry")
+    (synopsis "Astronimical lucky imaging library")
+    (description
+     "@code{libskry} implements the lucky imaging principle of astronomical
+imaging: creating a high-quality still image out of a series of many
+thousands) low quality ones")
+    (license license:gpl3+)))
+
+(define-public libxisf
+  (package
+    (name "libxisf")
+    (version "0.2.12")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitea.nouspiro.space/nou/libXISF")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bvf3x0xdipkg28c75j6jav3b2llbqvfa6lkwiacxxlzmj0226s2"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:configure-flags #~(list "-DUSE_BUNDLED_LIBS=OFF")))
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list lz4 pugixml zlib))
+    (home-page "https://nouspiro.space/?page_id=306")
+    (synopsis "Astronomical library to load and write XISF file format")
+    (description
+     "LibXISF is C++ library that can read and write @acronym{XISF,Extensible
+Image Serialization Format} files produced by @url{https://pixinsight.com/,
+PixInsight}.  It implements
+@url{https://pixinsight.com/doc/docs/XISF-1.0-spec/XISF-1.0-spec.html, XISF
+1.0 specification}.")
+    (license license:gpl3+)))
+
+(define-public missfits
+  (package
+    (name "missfits")
+    (version "2.8.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/astromatic/missfits")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12ndvrr3l5j7ph2i5f3qf0wqmv5ymsyjzxnnypqajsvliw72iprh"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list
+         ;; Address this link error:
+         ;; ld: ... multiple definition of ... first defined here
+         "CPPFLAGS=-fcommon")))
+    (home-page "https://www.astromatic.net/software/missfits")
+    (synopsis "FITS files Maintenance program")
+    (description
+     "MissFITS is a program that performs basic maintenance and packaging tasks
+on FITS files:
+
+@itemize
+@item add/edit FITS header keywords
+@item split/join @acronym{MEF, Multi-Extension-FITS} files
+@item unpack/pack FITS data-cubes
+@item create/check/update FITS checksums, using
+@uref{http://www.adass.org/adass/proceedings/adass94/seamanr.html,
+R. Seaman's protocol}
+@end itemize\n")
+    (license license:gpl3+)))
 
 (define-public psfex
   (package
@@ -1088,6 +1738,8 @@ Python.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; AssertionError: Not equal to tolerance rtol=1e-07, atol=0.0001
+      #:test-flags #~(list "-k" "not test_fwhm")
       #:phases
       #~(modify-phases %standard-phases
          (add-after 'unpack 'relax-requirements
@@ -1280,6 +1932,65 @@ across many files.")
     (synopsis "Multidimensional data visualization across files")
     (description "Multidimensional data visualization across files.")
     (license license:bsd-3)))
+
+(define-public python-healpy
+  (package
+    (name "python-healpy")
+    ;; The latest version depends on custom fork of HEALPix with changes not
+    ;; ported to upstream yet, see
+    ;; <https://github.com/healpy/healpy/issues/949>.
+    (version "1.16.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "healpy" version))
+       (sha256
+        (base32 "1w99cgszh2mzcn5x8p0gdzn3r96vyfdnvbwm20a1l9fdiy16xcha"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Disable tests requiring network access.
+      #~(list "-k" (string-append "not test_astropy_download_file"
+                                  " and not test_pixelweights_local_datapath"
+                                  " and not test_rotate_map_polarization_alms"))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: It's not compatible with pytest-8, enable when newer version
+          ;; is available.
+          (add-after 'unpack 'disable-doctest
+            (lambda _
+            (substitute* "pyproject.toml"
+              (("--doctest-plus") ""))))
+          (add-before 'check 'build-extensions
+            (lambda _
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (native-inputs
+     (list nss-certs-for-test
+           pkg-config
+           python-cython-3
+           python-pytest-8
+           python-pytest-astropy-header
+           python-pytest-cython
+           ;python-pytest-doctestplus
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-astropy
+           python-colorlog
+           python-matplotlib
+           python-numpy
+           python-scipy))
+    (inputs
+     (list cfitsio
+           healpix-cxx
+           libsharp))
+    (home-page "http://healpy.readthedocs.org/")
+    (synopsis "Healpix tools package for Python")
+    (description
+     "healpy is a Python package to handle pixelated data on the sphere.  It
+is based on the Hierarchical Equal Area isoLatitude Pixelization (HEALPix)
+scheme and builds with the HEALPix C++ library.")
+    (license license:gpl2+)))
 
 (define-public python-pvextractor
   (package
@@ -1610,159 +2321,6 @@ instruments.")
      "This package provides an image processing toolbox for Solar Physics.")
     (license license:bsd-2)))
 
-(define-public wcslib
-  (package
-    (name "wcslib")
-    (version "8.2.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://www.atnf.csiro.au/people/mcalabre/WCS/"
-                           "wcslib-" version ".tar.bz2"))
-       (sha256
-        (base32 "0cvqppjf7gk0f3rs9cc46h5fffv2l8ylrb234r9fbx0px0525632"))
-       (snippet
-        #~(begin (use-modules (guix build utils))
-                 (delete-file-recursively "C/flexed")))))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:configure-flags
-      #~(list (string-append "--with-cfitsiolib="
-                             #$(this-package-input "cfitsio") "/lib")
-              (string-append "--with-cfitsioinc="
-                             #$(this-package-input "cfitsio") "/include"))
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'install-license-files) ; installed by ‘make install’
-          (add-before 'configure 'patch-/bin/sh
-            (lambda _
-              (substitute* "makedefs.in"
-                (("/bin/sh") "sh")))))))
-    ;; TODO: Fix build with gfortran and pack missing optional pgplot.
-    ;; (inputs (list gfortran pgplot))
-    (inputs
-     (list cfitsio))
-    (native-inputs
-     (list flex))
-    (home-page "https://www.atnf.csiro.au/people/mcalabre/WCS")
-    (synopsis "Library which implements the FITS WCS standard")
-    (description "The FITS \"World Coordinate System\" (@dfn{WCS}) standard
-defines keywords and usage that provide for the description of astronomical
-coordinate systems in a @dfn{FITS} (Flexible Image Transport System) image
-header.")
-    (license license:lgpl3+)))
-
-;;; The version is required for julia-wcs-jll and julia-wcs.  They do not
-;;; support version higher than 7.x.
-(define-public wcslib-7.12
-  (package
-    (inherit wcslib)
-    (version "7.12")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://www.atnf.csiro.au/people/mcalabre/WCS/"
-                           "wcslib-" version ".tar.bz2"))
-       (sha256
-        (base32 "1m3bx6gh5w3c7vvsqcki0x20mg8lilg13m0i8nh7za89w58dxy4w"))
-       (snippet
-        #~(begin (use-modules (guix build utils))
-                 (delete-file-recursively "C/flexed")))))
-    (properties '((hidden? . #t)))))
-
-(define-public glnemo2
-  (package
-    (name "glnemo2")
-    (version "1.21.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://gitlab.lam.fr/jclamber/glnemo2")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1jmmxszh8d2jmfghig36nhykff345mqnpssfa64d0r7l9cnfp3cn"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:tests? #f        ; No test target
-      #:configure-flags #~(list "CPPFLAGS=-fcommon")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-libraries-paths
-            (lambda _
-              (substitute* "CMakeLists.txt"
-                ;; There is some not straightforward logic on how to set
-                ;; the installation prefix for the project; inherit it
-                ;; from the build-system default flags.
-                (("CMAKE_INSTALL_PREFIX  \"/usr\"")
-                 "CMAKE_INSTALL_PREFIX")
-                (("/usr/include/CCfits")
-                 (string-append
-                  #$(this-package-input "ccfits") "/include/CCfits"))
-                (("/usr/include/tirpc")
-                 (string-append
-                  #$(this-package-input "libtirpc") "/include/tirpc"))
-                ;; It tries to detect library in two "predictable" paths,
-                ;; required during the link phase.
-                (("/usr/lib64/libtirpc.so")
-                 (string-append
-                  #$(this-package-input "libtirpc") "/lib/libtirpc.so"))))))))
-    (inputs
-     (list ccfits
-           cfitsio
-           glm
-           glu
-           hdf5
-           libtirpc
-           qtbase-5
-           zlib))
-    (home-page "https://projets.lam.fr/projects/glnemo2/wiki/Wiki")
-    (synopsis "3D interactive visualization program for n-body like particles")
-    (description
-     "GLNEMO2 is an interactive 3D visualization program which displays
-particles positions of the different components (gas, stars, disk, dark
-matter halo, bulge) of an N-body snapshot.  It is a tool for running
-N-body simulations from isolated galaxies to cosmological simulations.
-It has a graphical user interface (based on QT 5.X API), uses a fast
-3D engine (OPenGL and GLSL), and is generic with the possibility to load
-different kinds of input files.")
-    (license license:cecill)))
-
-(define-public gnuastro
-  (package
-    (name "gnuastro")
-    (version "0.22")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://gnu/gnuastro/gnuastro-"
-                           version ".tar.lz"))
-       (sha256
-        (base32
-         "15rljx1mx9dyvni17qpj7y9gv086cvmjf9f5j34m1pbiyn989fqz"))))
-    (build-system gnu-build-system)
-    (arguments
-     '(#:configure-flags '("--disable-static")))
-    (inputs
-     (list cfitsio
-           curl
-           gsl
-           libgit2
-           libjpeg-turbo
-           libtiff
-           wcslib
-           zlib))
-    (native-inputs
-     (list libtool lzip))
-    (home-page "https://www.gnu.org/software/gnuastro/")
-    (synopsis "Astronomy utilities")
-    (description "The GNU Astronomy Utilities (Gnuastro) is a suite of
-programs for the manipulation and analysis of astronomical data.")
-    (license license:gpl3+)))
-
 (define-public phd2
   (package
     (name "phd2")
@@ -1878,7 +2436,7 @@ crowded star fields.")
 (define-public siril
   (package
     (name "siril")
-    (version "1.2.3")
+    (version "1.2.4")
     (source
      (origin
        (method git-fetch)
@@ -1886,7 +2444,7 @@ crowded star fields.")
              (url "https://gitlab.com/free-astro/siril")
              (commit version)))
        (sha256
-        (base32 "0gkd8w2bpwq4ibl3vawx008yrm5k6zlj77lp98fflffcf7cj8hr5"))
+        (base32 "1nh5zk7isf7a0akkxq56n0lw8i18f7w3r27pa16fpcivmbv6xcx2"))
        (file-name (git-file-name name version))))
     (build-system meson-build-system)
     (arguments
@@ -2152,13 +2710,13 @@ objects.")
 (define-public python-astropy
   (package
     (name "python-astropy")
-    (version "6.1.2")
+    (version "6.1.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "astropy" version))
        (sha256
-        (base32 "0fhx9zjsqp7z8z8phafpbwpb46idrbsamkfg42l8j0z94i73s452"))
+        (base32 "0w09fn7zy2nr5pvvqwmi3s3cm3y5pzxpn7wldz7bbxn1xp6k9j4s"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -2176,15 +2734,13 @@ objects.")
      (list
       #:test-flags
       #~(list "--pyargs" "astropy"
-              "-n" "auto"
+              "--numprocesses" "auto"
               "-k" (string-append
                     ;; Skip tests that need remote data.
                     "not remote_data"
                     ;; ValueError: The truth value of an array with more than
                     ;; one element is ambiguous. Use a.any() or a.all()
-                    " and not test_table_comp[t16-t26]"
-                    ;; E Unreliable test timings! <...>
-                    " and not test_datetime_timedelta_roundtrip"))
+                    " and not test_table_comp[t16-t26]"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'preparations
@@ -2301,13 +2857,13 @@ astronomy and astrophysics.")
     ;; In case of changing the source method git-fetch, consider to check the
     ;; tag as it's not following the PyPI version, see
     ;; <https://github.com/astropy/astropy-iers-data/issues/17>.
-    (version "0.2024.8.12.0.32.58")
+    (version "0.2024.9.16.0.32.21")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "astropy_iers_data" version))
        (sha256
-        (base32 "1xw4s6vyl29miccbs3ylyichj1rcmzmya3lmh27f173n7k2zb5g0"))))
+        (base32 "0i63yxw4xfgv1dwaq89xd34xlsnx0n5njcm4adln2gk2ia3gxxig"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2664,6 +3220,39 @@ attempting to maintain ISTP compliance
 @end itemize")
     (license license:expat)))
 
+(define-public python-ci-watson
+  (package
+    (name "python-ci-watson")
+    (version "0.7.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ci_watson" version))
+       (sha256
+        (base32 "1qb5iyb053k1711ic93rcm0z344dc6h8vg8fpkbqpg5z6q0v2b0y"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-pypojrect-toml
+            (lambda _
+              (substitute* "setup.cfg"
+                ;; ImportError: Error importing plugin " no:legacypath": No
+                ;; module named ' no:legacypath'
+                (("-p no:legacypath") "")))))))
+    (propagated-inputs
+     (list python-crds
+           python-pytest
+           python-requests))
+    (native-inputs
+     (list python-pytest-astropy-header))
+    (home-page "https://github.com/spacetelescope/ci_watson")
+    (synopsis "Helper functions for STScI software")
+    (description
+     "This package contains a helper functionality to test ROMAN and JWST.")
+    (license license:bsd-3)))
+
 (define-public python-cmyt
   (package
     (name "python-cmyt")
@@ -2692,13 +3281,13 @@ monochromatic sequential colormaps like @code{blue}, @code{green}, and
 (define-public python-crds
   (package
     (name "python-crds")
-    (version "11.18.1")
+    (version "11.18.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "crds" version))
        (sha256
-        (base32 "0k0q76mc9a18lrjqah8yb7v97dmhlwhsxyqr9r5rk0w4iqi6j7pp"))))
+        (base32 "1z6apmss8wym3lpp2mifqxz0i5vvi39g0i2agvw0lchcyzw3jvig"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2787,7 +3376,7 @@ used with local NetDRMS sites.")
 (define-public python-drizzle
   (package
     (name "python-drizzle")
-    (version "1.15.2")
+    (version "1.15.3")
     (source
      (origin
        (method git-fetch) ;PyPi doesn't have the test data sets
@@ -2796,7 +3385,7 @@ used with local NetDRMS sites.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1fp6gcvp6nz4a2mmy9vjn5wwywldhkg8bjjgb4ldn0vpv9k4nv8q"))))
+        (base32 "0zxhzvd01jgl4r6ivlxkccaf2shzb0c0ir7l06096iv9n6lff3wx"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3059,9 +3648,16 @@ Carlo.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; Break cycle: python-ndcube -> python-specutils -> python-ndcube, see
-      ;; <https://github.com/sunpy/ndcube/issues/733>.
-      #:test-flags #~(list "-k" "not test_rebin_specutils")
+      #:test-flags
+      #~(list "-k" (string-append
+                    ;; Break cycle: python-ndcube -> python-specutils ->
+                    ;; python-ndcube, see
+                    ;; <https://github.com/sunpy/ndcube/issues/733>.
+                    "not test_rebin_specutils"
+                    ;; Introduced with astropy 6.1.3, see
+                    ;; <https://github.com/sunpy/ndcube/issues/758>.
+                    " and not test_2d[celestial_2d_ape14_wcs]"
+                    " and not test_2d[celestial_2d_fitswcs]"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'break-cycle
@@ -3410,7 +4006,7 @@ setup(ext_modules=get_extensions())")))))
 (define-public python-regularizepsf
   (package
     (name "python-regularizepsf")
-    (version "0.3.4")
+    (version "0.4.0")
     (source
      (origin
        (method git-fetch) ; no tests data in the PyPI tarball
@@ -3419,7 +4015,7 @@ setup(ext_modules=get_extensions())")))))
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "078nklks6hjq0hgv6wpbh2x1m2yh6kmzyfgdzd9q82lxpjy1vq0i"))))
+        (base32 "0b16lscrzd1lribwis19y6dh6qrgddhcinlc2lbwkzzqqkjdnyzi"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3442,7 +4038,7 @@ setup(ext_modules=get_extensions())")))))
            python-numpy
            python-scikit-image
            python-scipy
-           python-sep))
+           python-sep-pjw))
     (native-inputs
      (list python-cython
            python-pytest
@@ -3561,27 +4157,20 @@ orbits described in TLE files.")
 (define-public python-sunpy
   (package
     (name "python-sunpy")
-    (version "6.0.1")
+    (version "6.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sunpy" version))
        (sha256
-        (base32 "1yp7x26fzxs66bfvzaim8ns5q6514l66mbz5gabhlxb9pp8i6i85"))))
+        (base32 "0mzmq2ncqgq61c1maxwynrmzcyiafnlil5mx4vhy2cvdyacm8yc9"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      #~(list
-         "--numprocesses" "auto"
-         "-k" (string-append
-               ;; XXX: Failed: DID NOT RAISE <class 'ModuleNotFoundError'>
-               ;; It struggles to find python-opencsv package info with
-               ;; 'importlib.metadata'
-               "not test_main_nonexisting_module"
-               " and not test_main_stdlib_module")
-         ;; Requries SpicePy not packed in Guix yet.
-         "--ignore=sunpy/coordinates/tests/test_spice.py")
+      #~(list "--numprocesses" "auto"
+              ;; Requries SpicePy not packed in Guix yet.
+              "--ignore=sunpy/coordinates/tests/test_spice.py")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'relax-requirements
@@ -4042,13 +4631,13 @@ processing functions: @code{xyxymatch}, @code{geomap}.")
 (define-public python-stcal
   (package
     (name "python-stcal")
-    (version "1.8.0")
+    (version "1.9.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "stcal" version))
        (sha256
-        (base32 "0vcq1462wdfi96qqsd5bidx38bbpnpcm18j6s761jz8ymi6vifap"))))
+        (base32 "1n843r19zyjm14iadfbi71ixpk0jrbhaj7h3szy1yhnhrfsrkwar"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4106,18 +4695,18 @@ processing functions: @code{xyxymatch}, @code{geomap}.")
 (define-public python-stdatamodels
   (package
     (name "python-stdatamodels")
-    (version "2.0.0")
+    (version "2.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "stdatamodels" version))
        (sha256
-        (base32 "0a47xf1zv71kv166z6rd9v75bw0jjmg70180af4yi4v4y7gnxvmm"))))
+        (base32 "0bgb0n1nqwnvd6bh0f1cnbk3j2yygch88l9834hmsns4rg1ak6j9"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      #~(list "-n" "auto"
+      #~(list "--numprocesses" "auto"
               ;; Disable tests requiring access to CRDS servers to download
               ;; ~500MiB of data.
               "-k" "not test_crds_selectors_vs_datamodel")
@@ -4222,298 +4811,6 @@ implementing calibration pipeline software.")
 PYSYNPHOT, utilizing Astropy covering instrument specific portions of the old
 packages for HST.")
     (license license:bsd-3)))
-
-(define-public libnova
-  (package
-    (name "libnova")
-    (version "0.16")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://git.code.sf.net/p/libnova/libnova.git")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0icwylwkixihzni0kgl0j8dx3qhqvym6zv2hkw2dy6v9zvysrb1b"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-git-version
-            (lambda _
-              (substitute* "./git-version-gen"
-                (("/bin/sh") (which "sh"))))))))
-    (native-inputs
-     (list autoconf automake libtool))
-    (synopsis "Celestial mechanics, astrometry and astrodynamics library")
-    (description "Libnova is a general purpose, double precision, Celestial
-Mechanics, Astrometry and Astrodynamics library.")
-    (home-page "https://libnova.sourceforge.net/")
-    (license (list license:lgpl2.0+
-                   license:gpl2+)))) ; examples/transforms.c & lntest/*.c
-
-(define-public libsep
-  (package
-    (name "libsep")
-    (version "1.2.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/kbarbary/sep")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0sag96am6r1ffh9860yq40js874362v3132ahlm6sq7padczkicf"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
-                           (string-append "PREFIX=" #$output))
-      #:phases #~(modify-phases %standard-phases
-                   (replace 'check
-                     (lambda* (#:key tests? #:allow-other-keys)
-                       (when tests?
-                         (chdir "../source")
-                         (invoke "make"
-                                 (string-append "CC=" #$(cc-for-target))
-                                 "test")))))))
-    (native-inputs
-     (list python-wrapper))
-    (home-page "https://github.com/kbarbary/sep")
-    (synopsis "Astronomical source extraction and photometry library")
-    (description
-     "SEP makes the core algorithms of
-@url{https://www.astromatic.net/software/sextractor/, sextractor} available as a
-library of stand-alone functions and classes.  These operate directly on
-in-memory arrays (no FITS files or configuration files).  The code is derived
-from the Source Extractor code base (written in C) and aims to produce results
-compatible with Source Extractor whenever possible.  SEP consists of a C library
-with no dependencies outside the standard library, and a Python module that
-wraps the C library in a Pythonic API.  The Python wrapper operates on NumPy
-arrays with NumPy as its only dependency.")
-    (license (list license:expat license:lgpl3+ license:bsd-3))))
-
-(define-public libskry
-  (package
-    (name "libskry")
-    (version "0.3.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/GreatAttractor/libskry")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "14kwng0j8wqzlb0gqg3ayq36l15dpz7kvxc56fa47j55b376bwh6"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:make-flags
-       (list
-        (string-append
-         "LIBAV_INCLUDE_PATH=" (assoc-ref %build-inputs "ffmpeg") "/include"))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure) ;; no configure provided
-         (delete 'check) ;; no tests provided
-         (replace 'install
-           ;; The Makefile lacks an ‘install’ target.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (lib (string-append out "/lib"))
-                    (include (string-append out "/include")))
-               (copy-recursively "bin" lib)
-               (copy-recursively "include" include))
-             #t)))))
-    (inputs
-     (list ffmpeg-4))
-    (home-page "https://github.com/GreatAttractor/libskry")
-    (synopsis "Astronimical lucky imaging library")
-    (description
-     "@code{libskry} implements the lucky imaging principle of astronomical
-imaging: creating a high-quality still image out of a series of many thousands)
-low quality ones")
-    (license license:gpl3+)))
-
-(define-public libpasastro
-  (package
-    (name "libpasastro")
-    (version "1.4.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/pchev/libpasastro")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1na3gyb3nzb5gdgccs1653j2gnz6w3v1mqzhyhkx3yqw8bs3q5x0"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:tests? #f ; no tests provided
-      #:make-flags
-      #~(list
-         ;; Keep OS detection for the case when Hurd would be suitable to try.
-         #$@(if (target-linux?) '("OS_TARGET=linux") '())
-         ;; Enable buildtime CPU detection where supported,
-         ;; and set a suitable CPU target variable.
-         #$@(match (or (%current-target-system)
-                       (%current-system))
-              ("i686-linux"
-               '("CPU_TARGET=i386"))
-              ("x86_64-linux"
-               '("CPU_TARGET=x86_64"))
-              ;; There is no a case for RISCV in upstream, attempt to treat it
-              ;; as ARM.
-              ((or "armhf-linux" "aarch64-linux" "riscv64")
-               '("CPU_TARGET=armv7l"))
-              (_ '()))
-         (string-append "PREFIX=" #$output))
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'configure))))
-    (home-page "https://github.com/pchev/libpasastro")
-    (synopsis "Interface to astronomy library for use from Pascal program")
-    (description
-     "This package provides shared libraries to interface Pascal program with
-standard astronomy libraries:
-
-@itemize
-@item @code{libpasgetdss.so}: Interface with GetDSS to work with DSS images.
-@item @code{libpasplan404.so}: Interface with Plan404 to compute planets position.
-@item @code{libpaswcs.so}: Interface with libwcs to work with FITS WCS.
-@item @code{libpasspice.so}: To work with NAIF/SPICE kernel.
-@end itemize")
-      (license license:gpl2+)))
-
-(define-public libxisf
-  (package
-    (name "libxisf")
-    (version "0.2.12")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://gitea.nouspiro.space/nou/libXISF")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1bvf3x0xdipkg28c75j6jav3b2llbqvfa6lkwiacxxlzmj0226s2"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list #:configure-flags #~(list "-DUSE_BUNDLED_LIBS=OFF")))
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list lz4 pugixml zlib))
-    (home-page "https://nouspiro.space/?page_id=306")
-    (synopsis "Astronomical library to load and write XISF file format")
-    (description
-     "LibXISF is C++ library that can read and write @acronym{XISF,Extensible
-Image Serialization Format} files produced by @url{https://pixinsight.com/,
-PixInsight}.  It implements
-@url{https://pixinsight.com/doc/docs/XISF-1.0-spec/XISF-1.0-spec.html, XISF
-1.0 specification}.")
-    (license license:gpl3+)))
-
-(define-public missfits
-  (package
-    (name "missfits")
-    (version "2.8.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/astromatic/missfits")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "12ndvrr3l5j7ph2i5f3qf0wqmv5ymsyjzxnnypqajsvliw72iprh"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:configure-flags
-      #~(list
-         ;; Address this link error:
-         ;; ld: ... multiple definition of ... first defined here
-         "CPPFLAGS=-fcommon")))
-    (home-page "https://www.astromatic.net/software/missfits")
-    (synopsis "FITS files Maintenance program")
-    (description
-     "MissFITS is a program that performs basic maintenance and packaging tasks
-on FITS files:
-
-@itemize
-@item add/edit FITS header keywords
-@item split/join @acronym{MEF, Multi-Extension-FITS} files
-@item unpack/pack FITS data-cubes
-@item create/check/update FITS checksums, using
-@uref{http://www.adass.org/adass/proceedings/adass94/seamanr.html,
-R. Seaman's protocol}
-@end itemize\n")
-    (license license:gpl3+)))
-
-(define-public gpredict
-  ;; The latest tag, 2.3, has no major difference with 2.2.1 and is dated for
-  ;; 2018. Additionally, there is some activity on the master branch.
-  (package
-    (name "gpredict")
-    (version "2.2.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/csete/gpredict/releases"
-                           "/download/v" version
-                           "/gpredict-" version ".tar.bz2"))
-       (sha256
-        (base32 "0hwf97kng1zy8rxyglw04x89p0bg07zq30hgghm20yxiw2xc8ng7"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:configure-flags #~(list "CFLAGS=-O2 -g -fcommon")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-tests
-            (lambda _
-              ;; Remove reference to non-existent file.
-              (substitute* "po/POTFILES.in"
-                (("src/gtk-sat-tree\\.c") "")))))))
-    (native-inputs
-     (list gettext-minimal intltool pkg-config))
-    (inputs
-     (list curl glib goocanvas gtk+))
-    (home-page "https://oz9aec.dk/gpredict/")
-    (synopsis "Satellite tracking and orbit prediction application")
-    (description
-     "Gpredict is a real-time satellite tracking and orbit prediction
-application.  It can track a large number of satellites and display their
-position and other data in lists, tables, maps, and polar plots (radar view).
-Gpredict can also predict the time of future passes for a satellite, and
-provide you with detailed information about each pass.
-
-Some core features of Gpredict include:
-
-@itemize
-@item Tracking of a large number of satellites only limited by the physical
-memory and processing power of the computer
-@item Display the tracking data in lists, maps, polar plots and any
-combination of these
-@item Have many modules open at the same either in a notebook or in their own
-windows.  The modules can also run in full-screen mode
-@item You can use many ground stations
-@item Predict upcoming passes
-@item Gpredict can run in real-time, simulated real-time (fast forward and
-backward), and manual time control
-@item Detailed information both the real time and non-real time modes
-@item Doppler tuning of radios via Hamlib rigctld
-@item Antenna rotator control via Hamlib rotctld
-@end itemize")
-    (license license:gpl2+)))
 
 (define-public scamp
   (package
@@ -4630,126 +4927,6 @@ convenient access to metadata from a regular web browser
 It can be used to calculate the trajectory of satellites.")
       (license license:asl2.0))))
 
-(define-public imppg
-  (package
-    (name "imppg")
-    (version "0.6.5")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/GreatAttractor/imppg")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0a6wb1a9adwd01dmy0r03xxp8iz9y7mvh30088ajilhj4lf90vxa"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list ;; No test provided
-      #:tests? #f))
-    (native-inputs
-     (list boost pkg-config))
-    (inputs
-     (list cfitsio freeimage glew wxwidgets-3.0))
-    (home-page "https://github.com/GreatAttractor/imppg")
-    (synopsis "Astronomical Image Post-Proccessor (ImPPG)")
-    (description
-     "ImPPG performs Lucy-Richardson deconvolution, unsharp masking,
-brightness normalization and tone curve adjustment.  It can also apply
-previously specified processing settings to multiple images.  All operations
-are performed using 32-bit floating-point arithmetic.
-
-Supported input formats: FITS, BMP, JPEG, PNG, TIFF (most of bit depths and
-compression methods), TGA and more.  Images are processed in grayscale and can
-be saved as: BMP 8-bit; PNG 8-bit; TIFF 8-bit, 16-bit, 32-bit
-floating-point (no compression, LZW- or ZIP-compressed), FITS 8-bit, 16-bit,
-32-bit floating-point.")
-    (license license:gpl3+)))
-
-(define-public indi-2.0
-  (package
-    (name "indi")
-    (version "2.0.9")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/indilib/indi")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "08wmw7mrxx1zc89yka3c52djmpvlb8zimq8yzs95gh3p7r5jfpq9"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:parallel-tests? #f  ; Socket address collisions between tests
-      #:configure-flags
-      #~(list "-DINDI_BUILD_UNITTESTS=ON"
-              "-DINDI_BUILD_INTEGTESTS=ON"
-              "-DCMAKE_INSTALL_LIBDIR=lib"
-              (string-append "-DCMAKE_INSTALL_PREFIX=" #$output)
-              (string-append "-DUDEVRULES_INSTALL_DIR=" #$output "/lib/udev/rules.d"))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-udev-rules
-            (lambda _
-              (substitute* (list "drivers/auxiliary/99-indi_auxiliary.rules"
-                                 "drivers/video/80-dbk21-camera.rules")
-                (("/bin/sh") (which "sh"))
-                (("/sbin/modprobe")
-                 (string-append #$(this-package-input "kmod") "/bin/modprobe")))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion "integs"
-                  (invoke "ctest" "-V" "--output-on-failure"))
-                (with-directory-excursion "test"
-                  (invoke "ctest" "-V"))))))))
-    (native-inputs
-     (list googletest))
-    (inputs
-     (list cfitsio
-           curl
-           fftw
-           gsl
-           kmod
-           libev
-           libjpeg-turbo
-           libnova
-           libtiff
-           libusb
-           zlib))
-    (home-page "https://www.indilib.org")
-    (synopsis "Library for astronimical intrumentation control")
-    (description
-     "INDI (Instrument-Neutral Device Interface) is a distributed XML-based
-control protocol designed to operate astronomical instrumentation.  INDI is
-small, flexible, easy to parse, scalable, and stateless.  It supports common
-DCS functions such as remote control, data acquisition, monitoring, and a lot
-more.")
-    (license (list license:bsd-3
-                   license:gpl2+
-                   license:lgpl2.0+
-                   license:lgpl2.1+))))
-
-(define-public indi-1.9
-  (package
-    (inherit indi-2.0)
-    (version "1.9.9")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/indilib/indi")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name "indi" version))
-       (sha256
-        (base32 "1vfcas59nlw8v7n6qhxhcm4isf5wk0crip5rmsallq3bsv3zznfr"))))))
-
-(define-public indi
-  ;; Default version of INDI..
-  indi-1.9)
-
 (define-public python-jplephem
   (package
     (name "python-jplephem")
@@ -4784,13 +4961,13 @@ milliarcsecond).")
 (define-public python-jwst
   (package
     (name "python-jwst")
-    (version "1.15.1")
+    (version "1.16.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "jwst" version))
               (sha256
                (base32
-                "1nl5fixakqvjhg9q5biivwaqpi6lzx9w4fq0n6imwccag2gv1va3"))
+                "06krkpfhwpc825bsdl0rffd9qlqw1rl928fwxa7cywds5dahpiyn"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -5077,18 +5254,18 @@ Features:
 (define-public python-pysiaf
   (package
     (name "python-pysiaf")
-    (version "0.22.0")
+    (version "0.23.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pysiaf" version))
        (sha256
-        (base32 "08wb98k9k4f04455da5ns9rif8pl9r3ih537w1yj393hkjjiyzfz"))))
+        (base32 "16qbg5n2bw2wr3i8a040i7z7az3w0pn508y6xggy05viwdli6br8"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      #~(list "-n" "auto"
+      #~(list "--numprocesses" "auto"
               ;; Disable 2 failing tests, see
               ;; <https://github.com/spacetelescope/pysiaf/issues/338>
               "-k" (string-append "not test_write_jwst_siaf_xlsx"
@@ -5098,12 +5275,13 @@ Features:
            python-lxml
            python-matplotlib
            python-numpy
-           python-numpydoc
            python-openpyxl
            python-requests
            python-scipy))
     (native-inputs
-     (list python-pytest python-pytest-xdist))
+     (list python-pytest
+           python-pytest-xdist
+           python-setuptools-scm))
     (home-page "https://pysiaf.readthedocs.io/")
     (synopsis "Handling SIAF for space telescopes")
     (description
@@ -5166,23 +5344,17 @@ spectra, and data.")
 (define-public python-sbpy
   (package
     (name "python-sbpy")
-    (version "0.4.0")
+    (version "0.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sbpy" version))
        (sha256
-        (base32 "18f3056fgzpvjj43m845wl9znl4dqxs8f8qv3gpay7kik4l8a1fc"))))
+        (base32 "1xqi29rrh7v05zmvyl8gffrkrw5rlcxig1w6xw1v8f7ikydb5plv"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags
-      ;; See <https://github.com/NASA-Planetary-Science/sbpy/issues/397>.
-      #~(list "--ignore=sbpy/spectroscopy/tests/test_specgrad.py"
-              ;; See <https://github.com/NASA-Planetary-Science/sbpy/issues/398>
-              "-k" (string-append "not test_from_fluxd"
-                                  " and not test_bandpass"
-                                  " and not test_spectral_density_vega_bp"))
+      #:test-flags #~(list "--numprocesses" "auto")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'check 'set-home-env
@@ -5197,6 +5369,7 @@ spectra, and data.")
            python-ginga
            python-numpy
            python-photutils
+           ;python-pyoorb ;not packed yet in Guix
            python-pyyaml
            python-scipy
            python-synphot))
@@ -5241,6 +5414,38 @@ well as ephemerides services
     (propagated-inputs
      (list  python-numpy))
     (synopsis "Python library for Source Extraction and Photometry")))
+
+(define-public python-sep-pjw
+  (package
+    (name "python-sep-pjw")
+    (version "1.3.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "sep_pjw" version))
+       (sha256
+        (base32 "15jf16zycs1gz6jfkhmj7b8wdcpp8d5ikz15pmfkwq32a8mfdv8m"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags #~(list "test.py")
+      #:phases
+      #~(modify-phases %standard-phases
+         (add-after 'unpack 'relax-requirements
+           (lambda _
+             (substitute* "pyproject.toml"
+               ;; numpy>=1.23.5
+               (("1.23.5") "1.23.2")))))))
+    (native-inputs
+     (list python-cython
+           python-pytest))
+    (propagated-inputs
+     (list python-numpy))
+    (home-page "https://github.com/PJ-Watson/sep-pjw")
+    (synopsis "Alternative fork of SEP library")
+    (description
+     "This package provides an alternative maintained fork of SEP python
+libary with bug fixtures.")
+    (license (list license:expat license:lgpl3+ license:bsd-3))))
 
 (define-public python-suntime
   (package
@@ -5881,6 +6086,67 @@ between image and reference catalogs. Currently only aligning images with
 @url{https://aeolus.services, Aeolus}")
     (license license:expat)))
 
+(define-public python-webbpsf
+  (package
+    (name "python-webbpsf")
+    (version "1.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "webbpsf" version))
+       (sha256
+        (base32 "1084vbk2q3kybxgvh8f2zbsi2w2z8zapsfjkgd6km4yhwqv1wl4a"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--numprocesses" "auto"
+              "-k" (string-append
+                    ;; Test requiring network access
+                    "not test_monthly_trending_plot_auto_opdtable"
+                    " and not test_monthly_trending_plot_opdtable_param"
+                    " and not test_delta_wfe_around_time"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-env
+            (lambda _
+              (setenv "HOME" "/tmp")
+              (setenv "WEBBPSF_PATH"
+                      (string-append #$(this-package-input "webbpsf-data")
+                                     "/share/webbpsf-data")))))))
+    (propagated-inputs
+     (list python-astropy
+           python-astroquery
+           python-matplotlib
+           python-numpy
+           python-photutils
+           python-poppy
+           python-pysiaf
+           python-scipy
+           python-synphot))
+    (native-inputs
+     (list nss-certs-for-test
+           python-pytest
+           python-pytest-astropy
+           python-pytest-xdist
+           python-setuptools-scm))
+    (inputs
+     (list
+      ;; Requried for installation, see
+      ;; <https://webbpsf.readthedocs.io/en/stable/installation.html>, no
+      ;; licence provided. "To run WebbPSF, you must download these files and
+      ;; tell WebbPSF where to find them using the WEBBPSF_PATH environment
+      ;; variable."
+      webbpsf-data))
+    (home-page "https://webbpsf.readthedocs.io/")
+    (synopsis "James Webb Space Telescope PSF simulation tool")
+    (description
+     "WebbPSF produces simulated PSFs for the James Webb Space Telescope,
+NASA's flagship infrared space telescope.  WebbPSF can simulate images for any
+of the four science instruments plus the fine guidance sensor, including both
+direct imaging, coronagraphic, and spectroscopic modes.")
+    (license license:bsd-3)))
+
 (define-public python-wiimatch
   (package
     (name "python-wiimatch")
@@ -6232,6 +6498,67 @@ an API for performing input and output operations on different kinds of
 n-body file formats (nemo, Gadget binaries 1 and 2, Gadget hdf5, Ramses).")
       (license license:cecill))))
 
+(define-public wcslib
+  (package
+    (name "wcslib")
+    (version "8.2.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.atnf.csiro.au/people/mcalabre/WCS/"
+                           "wcslib-" version ".tar.bz2"))
+       (sha256
+        (base32 "0cvqppjf7gk0f3rs9cc46h5fffv2l8ylrb234r9fbx0px0525632"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (delete-file-recursively "C/flexed")))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "--with-cfitsiolib="
+                             #$(this-package-input "cfitsio") "/lib")
+              (string-append "--with-cfitsioinc="
+                             #$(this-package-input "cfitsio") "/include"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'install-license-files) ; installed by ‘make install’
+          (add-before 'configure 'patch-/bin/sh
+            (lambda _
+              (substitute* "makedefs.in"
+                (("/bin/sh") "sh")))))))
+    ;; TODO: Fix build with gfortran and pack missing optional pgplot.
+    ;; (inputs (list gfortran pgplot))
+    (inputs
+     (list cfitsio))
+    (native-inputs
+     (list flex))
+    (home-page "https://www.atnf.csiro.au/people/mcalabre/WCS")
+    (synopsis "Library which implements the FITS WCS standard")
+    (description "The FITS \"World Coordinate System\" (@dfn{WCS}) standard
+defines keywords and usage that provide for the description of astronomical
+coordinate systems in a @dfn{FITS} (Flexible Image Transport System) image
+header.")
+    (license license:lgpl3+)))
+
+;;; The version is required for julia-wcs-jll and julia-wcs.  They do not
+;;; support version higher than 7.x.
+(define-public wcslib-7.12
+  (package
+    (inherit wcslib)
+    (version "7.12")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.atnf.csiro.au/people/mcalabre/WCS/"
+                           "wcslib-" version ".tar.bz2"))
+       (sha256
+        (base32 "1m3bx6gh5w3c7vvsqcki0x20mg8lilg13m0i8nh7za89w58dxy4w"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (delete-file-recursively "C/flexed")))))
+    (properties '((hidden? . #t)))))
+
 (define-public wcstools
   (package
     (name "wcstools")
@@ -6264,6 +6591,29 @@ using specific keywords in the image header which relate pixel position within
 the image to position on the sky.  Auxillary programs search star catalogs and
 manipulate images.")
     (license license:gpl2+)))
+
+(define-public webbpsf-data
+  (package
+    (name "webbpsf-data")
+    (version "1.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       ;; 70.1MiB archive
+       (uri "https://stsci.box.com/shared/static/qxpiaxsjwo15ml6m4pkhtk36c9jgj70k.gz")
+       (file-name (string-append "webbpsf-data-" version ".tar.gz"))
+       (sha256
+        (base32 "0b3qxp6mrm2dwsdnqnprf4yrp0zbncknildqmf28wgginwa5sch8"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan #~'(("." "share/webbpsf-data"))))
+    (home-page "https://webbpsf.readthedocs.io/en/stable/installation.html")
+    (synopsis "JWST pupil shape, instrument throughputs, and aperture positions data files")
+    (description
+     "This package contains FIT and CSV files requried for WebbPSF
+installation and distributed separatly from it.")
+    (license license:bsd-3)))
 
 (define-public weightwatcher
   (package

@@ -7,13 +7,14 @@
 # Kyrylo Husarov <husarovkyrylo@gmail.com>, 2022.
 # Illia Demianchuk <illialoo99@gmail.com>, 2022.
 # Florian Pelz <pelzflorian@pelzflorian.de>, 2023, 2024.
+# Dmytro Markevych <hotr1pak@gmail.com>, 2024.
 #: guix/diagnostics.scm:159
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU guix\n"
 "Report-Msgid-Bugs-To: bug-guix@gnu.org\n"
 "POT-Creation-Date: 2024-01-29 03:18+0000\n"
-"PO-Revision-Date: 2024-09-04 11:59+0000\n"
+"PO-Revision-Date: 2024-10-01 10:56+0000\n"
 "Last-Translator: Florian Pelz <pelzflorian@pelzflorian.de>\n"
 "Language-Team: Ukrainian <https://translate.fedoraproject.org/projects/guix/guix/uk/>\n"
 "Language: uk\n"
@@ -21,7 +22,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Weblate 5.7.1\n"
+"X-Generator: Weblate 5.7.2\n"
 
 #: gnu.scm:81
 #, scheme-format
@@ -110,12 +111,12 @@ msgstr "Це простий сервіс."
 #: gnu/services.scm:342
 #, scheme-format
 msgid "modify-services: service '~a' was deleted here: ~a"
-msgstr ""
+msgstr "modify-services: тут видалено сервіс '~a': ~a"
 
 #: gnu/services.scm:375
 #, scheme-format
 msgid "modify-services: service '~a' not found in service list"
-msgstr ""
+msgstr "modify-services: сервіс '~a' не знайдено у списку сервісів"
 
 #: gnu/services.scm:445
 msgid ""
@@ -263,7 +264,7 @@ msgstr "сервіс типу '~a' не знайдено"
 #: gnu/system.scm:216
 #, scheme-format
 msgid "the 'hosts-file' field is deprecated, please use 'hosts-service-type' instead~%"
-msgstr ""
+msgstr "поле 'hosts-file' застаріло, замість нього використовуйте 'hosts-service-type'~%"
 
 #: gnu/system.scm:396
 #, scheme-format
@@ -300,9 +301,9 @@ msgstr ""
 "@end example"
 
 #: gnu/system.scm:644
-#, fuzzy, scheme-format
+#, scheme-format
 msgid "mapped device '~a' may be ignored by bootloader~%"
-msgstr "підключений пристрій '~a' може ігноруватися завантажувачем~%"
+msgstr "відображений пристрій '~a' може бути проігнорований завантажувачем~%"
 
 #: gnu/system.scm:664
 #, scheme-format
@@ -322,7 +323,7 @@ msgstr "опис '~a' монадним значенням застаріло; в
 #: gnu/system.scm:1214
 #, scheme-format
 msgid "representing setuid programs with file-like objects is deprecated; use 'setuid-program' instead~%"
-msgstr "представлення програм setuid файловими об'єктами застаріло; замість цього використовуйте \"setuid-program\" ~%"
+msgstr "представлення програм setuid файловими об'єктами застаріло; замість цього використовуйте \"setuid-program\"~%"
 
 #: gnu/system.scm:1316
 msgid "missing root file system"
@@ -378,13 +379,11 @@ msgstr ""
 #: gnu/services/base.scm:717
 #, scheme-format
 msgid "host name '~a' contains invalid characters"
-msgstr ""
+msgstr "ім'я хосту '~a' містить неприпустимі символи"
 
 #: gnu/services/base.scm:767
-#, fuzzy
-#| msgid "Populate the @file{/etc} directory."
 msgid "Populate the @file{/etc/hosts} file."
-msgstr "Заповнює каталог @file{/etc}."
+msgstr "Заповніть файл @file{/etc/hosts}."
 
 #: gnu/services/base.scm:784
 msgid "Initialize the machine's host name."
@@ -392,7 +391,7 @@ msgstr "Ініціалізуйте ім'я хоста машини."
 
 #: gnu/services/base.scm:815
 msgid "Ensure the Linux virtual terminals run in UTF-8 mode."
-msgstr ""
+msgstr "Переконайтеся, що віртуальні термінали Linux працюють у режимі UTF-8."
 
 #: gnu/services/base.scm:874
 msgid ""
@@ -411,24 +410,44 @@ msgid ""
 "                 \"/share/consolefonts/ter-132n\"))) ; for HDPI\n"
 "@end example\n"
 msgstr ""
+"Встановіть задані шрифти на вказані ttys (шрифти наведено для\n"
+"віртуальної консолі у GNU/Linux).  Результатом цієї послуги є список\n"
+"пар tty/шрифт.  Шрифт може бути назвою шрифту, наданого пакунком @code{kbd}\n"
+"або будь-яким допустимим аргументом команди @command{setfont}, як у цьому прикладі:\n"
+"\n"
+"@example\n"
+"`((\"tty1\" . \"LatGrkCyr-8x16\")\n"
+"  (\"tty2\" . ,(file-append\n"
+"                 font-tamzen\n"
+"                 \"/share/kbd/consolefonts/TamzenForPowerline10x20.psf\"))\n"
+"  (\"tty3\" . ,(file-append\n"
+"                 font-terminus\n"
+"                 \"/share/consolefonts/ter-132n\"))) ; для HDPI\n"
+"@end example\n"
 
 #: gnu/services/base.scm:918
 msgid ""
 "Provide a console log-in service as specified by its\n"
 "configuration value, a @code{login-configuration} object."
 msgstr ""
+"Надавати послугу входу до консолі, як зазначено її\n"
+"значенням конфігурації, об'єктом @code{login-configuration}."
 
 #: gnu/services/base.scm:1201
 msgid ""
 "Provide console login using the @command{agetty}\n"
 "program."
 msgstr ""
+"Забезпечити вхід у консоль за допомогою @command{agetty}\n"
+"програми."
 
 #: gnu/services/base.scm:1267
 msgid ""
 "Provide console login using the @command{mingetty}\n"
 "program."
 msgstr ""
+"Забезпечити вхід у консоль за допомогою @command{mingetty}\n"
+"програми."
 
 #: gnu/services/base.scm:1498
 msgid ""
@@ -436,46 +455,55 @@ msgid ""
 "given configuration---an @code{<nscd-configuration>} object.  @xref{Name\n"
 "Service Switch}, for an example."
 msgstr ""
+"Запускає daemon кешу служби @dfn{ім'я служби} (nscd) у libc із\n"
+"заданою конфігурацією - об'єкт @code{<nscd-configuration>}.  Наприклад, @xref{Назва\n"
+"Перемикач служб}, наприклад."
 
 #: gnu/services/base.scm:1576
 msgid "Service syslog has been asked to reload its settings file."
-msgstr ""
+msgstr "Службі syslog було запропоновано перезавантажити файл налаштувань."
 
 #: gnu/services/base.scm:1578
 msgid "Service syslog is not running."
-msgstr ""
+msgstr "Службовий syslog не запущено."
 
 #: gnu/services/base.scm:1595
 msgid ""
 "Run the syslog daemon, @command{syslogd}, which is\n"
 "responsible for logging system messages."
 msgstr ""
+"Запустити daemon syslog, @command{syslogd}, який\n"
+"відповідає за реєстрацію системних повідомлень."
 
 #: gnu/services/base.scm:1633
 #, scheme-format
 msgid "Using file-like value for 'pam-limits-service-type' is deprecated~%"
-msgstr ""
+msgstr "Використання файлового значення для параметра 'pam-limits-service-type' застаріло~%"
 
 #: gnu/services/base.scm:1642
 #, scheme-format
 msgid "invalid input for 'pam-limits-service-type'~%"
-msgstr ""
+msgstr "невірне введення для 'pam-limits-service-type'~%"
 
 #: gnu/services/base.scm:1651
 msgid ""
 "Use the @code{pam_limits} authentication module to set the specified\n"
 "resource usage limits."
 msgstr ""
+"Використовуйте модуль автентифікації @code{pam_limits}, щоб встановити вказані\n"
+"ліміти використання ресурсів."
 
 #: gnu/services/base.scm:2068
 msgid "Run the build daemon of GNU@tie{}Guix, aka. @command{guix-daemon}."
-msgstr ""
+msgstr "Запустити daemon збірки GNU@tie{}Guix, він же. @command{guix-daemon}."
 
 #: gnu/services/base.scm:2230
 msgid ""
 "Add a Shepherd service running @command{guix publish}, a\n"
 "command that allows you to share pre-built binaries with others over HTTP."
 msgstr ""
+"Додайте службу Shepherd, яка виконує @command{guix publish}, команду\n"
+"яка дозволяє вам ділитися попередньо зібраними двійковими файлами з іншими через HTTP."
 
 #: gnu/services/base.scm:2434
 msgid ""
@@ -483,14 +511,17 @@ msgid ""
 "directory dynamically.  Get extra rules from the packages listed in the\n"
 "@code{rules} field of its value, @code{udev-configuration} object."
 msgstr ""
+"Запустити @command{udev}, який динамічно заповнює каталог @file{/dev}.  \n"
+"Отримати додаткові правила з пакунків, перелічених у полі\n"
+"@code{rules} його значення, об'єкта @code{udev-configuration}."
 
 #: gnu/services/base.scm:2463
 msgid "This service adds udev rules."
-msgstr ""
+msgstr "Цей сервіс додає правила udev."
 
 #: gnu/services/base.scm:2553
 msgid "Turn on the virtual memory swap area."
-msgstr ""
+msgstr "Увімкніть область підкачки віртуальної пам'яті."
 
 #: gnu/services/base.scm:2595
 msgid ""
@@ -499,54 +530,58 @@ msgid ""
 "notably to select, copy, and paste text.  The default options use the\n"
 "@code{ps2} protocol, which works for both USB and PS/2 mice."
 msgstr ""
+"Запустіть GPM, універсальний daemon миші, зі вказаними\n"
+"параметрами командного рядка.  GPM дозволяє користувачам використовувати мишу у консолі,\n"
+"зокрема для виділення, копіювання та вставки тексту.  Типовими параметрами є використання протоколу\n"
+"@code{ps2}, який працює з мишами USB і PS/2."
 
 #: gnu/services/base.scm:2676
 msgid ""
 "Start the @command{kmscon} virtual terminal emulator for the\n"
 "Linux @dfn{kernel mode setting} (KMS)."
 msgstr ""
+"Запустіть емулятор віртуального терміналу @command{kmscon} для\n"
+"Linux @dfn{kernel mode setting} (KMS)."
 
 #: gnu/services/base.scm:2693
 #, scheme-format
 msgid "address '~a' lacks a network mask"
-msgstr ""
+msgstr "адреса '~a' не має мережевої маски"
 
 #: gnu/services/base.scm:2699
 #, scheme-format
 msgid "Write, say, @samp{\"~a/24\"} for a 24-bit network mask."
-msgstr ""
+msgstr "Напишіть, наприклад, @samp{\"~a/24\"} для 24-бітної маски мережі."
 
 #: gnu/services/base.scm:2715
 #, scheme-format
 msgid "Value (~S) is not a valid mac address.~%"
-msgstr ""
+msgstr "Значення (~S) не є дійсною mac-адресою.~%"
 
 #: gnu/services/base.scm:2727
 #, scheme-format
 msgid "Value (~S) is not a symbol.~%"
-msgstr ""
+msgstr "Значення (~S) не є символом.~%"
 
 #: gnu/services/base.scm:2813
 #, scheme-format
 msgid "network links are currently ignored on GNU/Hurd~%"
-msgstr ""
+msgstr "мережеві посилання наразі ігноруються на GNU/Hurd~%"
 
 #: gnu/services/base.scm:2838
 #, scheme-format
 msgid "ignoring network route for '~a'~%"
-msgstr ""
+msgstr "ігнорування мережевого маршруту для '~a'~%"
 
 #: gnu/services/base.scm:2952
-#, fuzzy, scheme-format
-#| msgid "service of type '~a' not found"
+#, scheme-format
 msgid "Interface with name '~a' not found~%"
-msgstr "сервіс типу '~a' не знайдено"
+msgstr "Інтерфейс з іменем '~a' не знайдено~%"
 
 #: gnu/services/base.scm:2959
-#, fuzzy, scheme-format
-#| msgid "service of type '~a' not found"
+#, scheme-format
 msgid "Interface with mac-address '~a' not found~%"
-msgstr "сервіс типу '~a' не знайдено"
+msgstr "Інтерфейс з мак-адресою '~a' не знайдено~%"
 
 #: gnu/services/base.scm:3105
 msgid ""
@@ -555,6 +590,10 @@ msgid ""
 "services of this type is a list of @code{static-networking} objects, one per\n"
 "network interface."
 msgstr ""
+"Увімкніть вказані мережеві інтерфейси після запуску,\n"
+"зі вказаною IP-адресою, шлюзом, маскою мережі тощо.  Значенням для\n"
+"послуг цього типу є список об'єктів @code{static-networking}, по одному на\n"
+"мережевий інтерфейс."
 
 #: gnu/services/base.scm:3479
 msgid ""
@@ -563,11 +602,15 @@ msgid ""
 "mount/unmount /run/user/<uid> directory for user and @code{greetd}\n"
 "login manager daemon."
 msgstr ""
+"Надає необхідну інфраструктуру для входу в\n"
+"систему, включаючи @code{greetd} службу PAM, модуль @code{pam-mount} для\n"
+"монтування/демонтування каталогу /run/user/<uid> для користувача та @code{greetd}\n"
+"daemon менеджера логінів."
 
 #: gnu/services/certbot.scm:159
 #, scheme-format
 msgid "~a may need to be run~%"
-msgstr ""
+msgstr "~a may need to be run~% (можливо, потрібно буде запустити)"
 
 #: gnu/services/certbot.scm:213
 msgid ""
@@ -575,6 +618,9 @@ msgid ""
 "Encrypt} HTTPS certificates by adjusting the nginx web server configuration\n"
 "and periodically invoking @command{certbot}."
 msgstr ""
+"Автоматично оновлювати @url{https://letsencrypt.org, Let's\n"
+"Encrypt} HTTPS-сертифікати, налаштувавши конфігурацію веб сервера nginx\n"
+"і періодично викликаючи @command{certbot}."
 
 #: gnu/services/configuration.scm:108
 #, scheme-format
@@ -584,7 +630,7 @@ msgstr "недійсне значення ~s для поля '~a'"
 #: gnu/services/configuration.scm:246
 #, scheme-format
 msgid "specifying serializers after documentation is deprecated, use (serializer ~a) instead~%"
-msgstr ""
+msgstr "якщо ви вказуєте серіалізатори після того, як документація буде застарілою, використовуйте (серіалізатор ~a) замість~%"
 
 #: gnu/services/configuration.scm:496
 #, scheme-format
@@ -594,39 +640,41 @@ msgstr "ГРАМАТИКА має бути 'infix або 'suffix, але вка�
 #: gnu/services/file-sharing.scm:74
 #, scheme-format
 msgid "salt value must be a string of ~d characters"
-msgstr ""
+msgstr "значення salt має бути рядком з ~d символів"
 
 #: gnu/services/file-sharing.scm:670
 #, scheme-format
 msgid "Wait period expired; killing transmission-daemon (pid ~a).~%"
-msgstr ""
+msgstr "Вичерпано період очікування; завершення роботи transmission-daemon (pid ~a).~%"
 
 #: gnu/services/file-sharing.scm:673
 msgid ""
 "(If you see this message regularly, you may need to increase the value\n"
 "of 'stop-wait-period' in the service configuration.)\n"
 msgstr ""
+"(Якщо ви регулярно бачите це повідомлення, можливо, вам слід збільшити значення\n"
+"'stop-wait-period' у налаштуваннях служби.)\n"
 
 #: gnu/services/file-sharing.scm:687
 msgid "Service transmission-daemon has been asked to reload its settings file."
-msgstr ""
+msgstr "Службі передачі даних було запропоновано перезавантажити файл налаштувань."
 
 #: gnu/services/file-sharing.scm:689
 msgid "Service transmission-daemon is not running."
-msgstr ""
+msgstr "Daemon передачі послуг не запущено."
 
 #: gnu/services/file-sharing.scm:793
 msgid "Share files using the BitTorrent protocol."
-msgstr ""
+msgstr "Обмінюйтеся файлами за допомогою протоколу BitTorrent."
 
 #: gnu/services/networking.scm:302
 msgid "Add a list of known Facebook hosts to @file{/etc/hosts}"
-msgstr ""
+msgstr "Додайте список відомих хостів Facebook до @file{/etc/hosts}"
 
 #: gnu/services/networking.scm:371
 #, scheme-format
 msgid "'dhcp-client' service now expects a 'dhcp-client-configuration' record~%"
-msgstr ""
+msgstr "Служба 'dhcp-client' тепер очікує запис 'dhcp-client-configuration'~%"
 
 #: gnu/services/networking.scm:373
 msgid ""
@@ -634,18 +682,25 @@ msgid ""
 "@code{dhcp-client-service-type} must now be a @code{dhcp-client-configuration}\n"
 "record instead of a package.  Please adjust your configuration accordingly."
 msgstr ""
+"Значення, пов'язане з екземплярами\n"
+"@code{dhcp-client-service-type} тепер має бути записом @code{dhcp-client-configuration}\n"
+"замість пакунка.  Будь ласка, відкоригуйте вашу конфігурацію відповідним чином."
 
 #: gnu/services/networking.scm:386
 msgid ""
 "Run @command{dhcp}, a Dynamic Host Configuration\n"
 "Protocol (DHCP) client, on all the non-loopback network interfaces."
 msgstr ""
+"Запустіть @command{dhcp}, клієнт динамічної конфігурації хоста\n"
+"(DHCP) на всіх мережевих інтерфейсах без зворотного зв'язку."
 
 #: gnu/services/networking.scm:455
 msgid ""
 "Run a DHCP (Dynamic Host Configuration Protocol) daemon.  The\n"
 "daemon is responsible for allocating IP addresses to its client."
 msgstr ""
+"Запустіть daemon DHCP (Dynamic Host Configuration Protocol).  Daemon\n"
+"відповідає за виділення IP-адрес своїм клієнтам."
 
 #: gnu/services/networking.scm:603
 msgid ""
@@ -653,6 +708,9 @@ msgid ""
 "daemon of the @uref{http://www.ntp.org, Network Time Foundation}.  The daemon\n"
 "will keep the system clock synchronized with that of the given servers."
 msgstr ""
+"Запустіть @command{ntpd}, протокол мережевого часу (NTP)\n"
+"демона @uref{http://www.ntp.org, Network Time Foundation}.  Daemon\n"
+"буде синхронізувати системний годинник з годинником вказаних серверів."
 
 #: gnu/services/networking.scm:715
 msgid ""
@@ -660,6 +718,9 @@ msgid ""
 "daemon, as implemented by @uref{http://www.openntpd.org, OpenNTPD}.  The\n"
 "daemon will keep the system clock synchronized with that of the given servers."
 msgstr ""
+"Запустіть @command{ntpd}, daemon протоколу мережевого часу (NTP)\n"
+"daemon, реалізованого за допомогою @uref{http://www.openntpd.org, OpenNTPD}.  Daemon\n"
+"буде синхронізувати системний годинник з годинником вказаних серверів."
 
 #: gnu/services/networking.scm:803
 msgid ""
@@ -667,6 +728,9 @@ msgid ""
 "for listening on Internet sockets and spawning the corresponding services on\n"
 "demand."
 msgstr ""
+"Запустіть @command{inetd}, @dfn{суперсервер Інтернет}.  Він відповідає\n"
+"за прослуховування інтернет-сокетів і надання відповідних послуг на\n"
+"запит."
 
 #: gnu/services/networking.scm:925
 msgid ""
@@ -677,17 +741,25 @@ msgid ""
 "paramount.  OpenDHT was originally based on Kademlia and adapted for\n"
 "applications in communication.  It is used by Jami, for example."
 msgstr ""
+"Запустіть команду OpenDHT @command{dhtnode}, яка дозволяє\n"
+"долучитися до мережі OpenDHT на основі розподіленої хеш-таблиці.  Сервіс\n"
+"можна налаштувати на роботу в якості проксі-сервера розподіленої мережі, що\n"
+"може бути корисним для портативних пристроїв, де мінімізація споживання енергії\n"
+"є першочерговим завданням.  OpenDHT був спочатку заснований на Kademlia і адаптований для\n"
+"застосувань у сфері зв'язку.  Його використовує, наприклад, Jami."
 
 #: gnu/services/networking.scm:1127
 msgid ""
 "Run the @uref{https://torproject.org, Tor} anonymous\n"
 "networking daemon."
 msgstr ""
+"Запустіть @uref{https://torproject.org, Tor} anonymous\n"
+"мережевого демона."
 
 #: gnu/services/networking.scm:1176
 #, scheme-format
 msgid "the 'iwd?' field is deprecated, please use 'shepherd-requirement' field instead~%"
-msgstr ""
+msgstr "поле 'iwd?' застаріло, замість нього використовуйте поле 'shepherd-requirement'~%"
 
 #: gnu/services/networking.scm:1324
 msgid ""
@@ -695,12 +767,17 @@ msgid ""
 "NetworkManager}, a network management daemon that aims to simplify wired and\n"
 "wireless networking."
 msgstr ""
+"Запустіть @uref{https://wiki.gnome.org/Projects/NetworkManager,\n"
+"NetworkManager}, демон керування мережею, який має на меті спростити роботу з дротовими та\n"
+"бездротовими мережами."
 
 #: gnu/services/networking.scm:1653
 msgid ""
 "Run @url{https://01.org/connman,Connman},\n"
 "a network connection manager."
 msgstr ""
+"Запустіть @url{https://01.org/connman,Connman},\n"
+"менеджер мережевих підключень."
 
 #: gnu/services/networking.scm:1675
 msgid ""
@@ -708,6 +785,9 @@ msgid ""
 "ModemManager}, a modem management daemon that aims to simplify dialup\n"
 "networking."
 msgstr ""
+"Запустіть @uref{https://wiki.gnome.org/Projects/ModemManager,\n"
+"ModemManager}, демон керування модемом, який має на меті спростити діалогове\n"
+"підключення до мережі."
 
 #: gnu/services/networking.scm:1766
 msgid ""
@@ -719,22 +799,33 @@ msgid ""
 "Windows drivers would send to switch their mode from storage to modem (or\n"
 "whatever the thing is supposed to do)."
 msgstr ""
+"Запустіть @uref{http://www.draisberghof.de/usb_modeswitch/,\n"
+"USB_ModeSwitch}, інструмент перемикання режимів для керування USB-пристроями з\n"
+"декількома @dfn{modes}.  При першому підключенні багато USB-пристроїв (передусім швидкісні модеми WAN) поводяться як\n"
+"пристрої (передусім високошвидкісні модеми для бездротової мережі) поводяться як флеш-накопичувач, що містить\n"
+"інсталятори для драйверів Windows.  USB_ModeSwitch відтворює послідовність, яку\n"
+"драйвери Windows для перемикання режиму роботи пристрою зі сховища на модем (або\n"
+"або на модем (залежно від того, що ця річ має робити)."
 
 #: gnu/services/networking.scm:1836
 msgid ""
 "Run the WPA Supplicant daemon, a service that\n"
 "implements authentication, key negotiation and more for wireless networks."
 msgstr ""
+"Запуск демона WPA Supplicant, служби, яка\n"
+"реалізує автентифікацію, узгодження ключів тощо для бездротових мереж."
 
 #: gnu/services/networking.scm:1904
 msgid ""
 "Run the @uref{https://w1.fi/hostapd/, hostapd} daemon for Wi-Fi access\n"
 "points and authentication servers."
 msgstr ""
+"Запустіть демона @uref{https://w1.fi/hostapd/, hostapd} для доступу до точок доступу\n"
+"Wi-Fi та серверів автентифікації."
 
 #: gnu/services/networking.scm:1938
 msgid "Run hostapd to simulate WiFi connectivity."
-msgstr ""
+msgstr "Запустіть hostapd для імітації підключення до WiFi."
 
 #: gnu/services/networking.scm:1996
 msgid ""
@@ -742,38 +833,49 @@ msgid ""
 "switch designed to enable massive network automation through programmatic\n"
 "extension."
 msgstr ""
+"Запустіть @uref{http://www.openvswitch.org, Open vSwitch}, багаторівневий віртуальний\n"
+"комутатор, призначений для масової автоматизації мережі за допомогою програмного\n"
+"розширення."
 
 #: gnu/services/networking.scm:2042
 msgid "Run @command{iptables-restore}, setting up the specified rules."
-msgstr ""
+msgstr "Запустіть @command{iptables-restore}, встановивши вказані правила."
 
 #: gnu/services/networking.scm:2115
 msgid "Run @command{nft}, setting up the specified ruleset."
-msgstr ""
+msgstr "Запустіть @command{nft}, встановивши вказаний набір правил."
 
 #: gnu/services/networking.scm:2228
 msgid ""
 "Run @url{https://pagekite.net/,PageKite}, a tunneling solution to make\n"
 "local servers publicly accessible on the web, even behind NATs and firewalls."
 msgstr ""
+"Запустіть @url{https://pagekite.net/,PageKite}, рішення для тунелювання, щоб зробити\n"
+"локальні сервери загальнодоступними в Інтернеті, навіть за NAT і брандмауерами."
 
 #: gnu/services/networking.scm:2328
 msgid ""
 "Connect to the Yggdrasil mesh network.\n"
 "See @command{yggdrasil -genconf} for config options."
 msgstr ""
+"Підключіться до mesh-мережі Yggdrasil.\n"
+"Параметри конфігурації див. у @command{yggdrasil -genconf}."
 
 #: gnu/services/networking.scm:2472
 msgid ""
 "Run @command{ipfs daemon}, the reference implementation\n"
 "of the IPFS peer-to-peer storage network."
 msgstr ""
+"Запустіть @command{ipfs daemon}, еталонну реалізацію\n"
+"однорангової мережі зберігання даних IPFS."
 
 #: gnu/services/networking.scm:2516
 msgid ""
 "Run @uref{https://www.keepalived.org/, Keepalived}\n"
 "routing software."
 msgstr ""
+"Запустіть @uref{https://www.keepalived.org/, Keepalived}\n"
+"програму маршрутизації."
 
 #: gnu/services/shepherd.scm:150
 msgid ""
@@ -787,7 +889,7 @@ msgstr ""
 
 #: gnu/services/shepherd.scm:201
 msgid "'provision' must be a non-empty list of symbols"
-msgstr ""
+msgstr "'положення' має бути непорожнім списком символів"
 
 #: gnu/services/shepherd.scm:258
 #, scheme-format
@@ -811,7 +913,7 @@ msgstr ""
 "внаслідок чого прямо перед перезавантаженням/вимиканням коренева\n"
 "файлова система може бути знову монтована в режимі \"тільки для читання\".\n"
 "Процеси, що не припинилися за кілька секунд після подачі сигналу\n"
-"@code{SIGTERM}, зупиняють командою @code(SIGKILL)."
+"@code{SIGTERM}, зупиняють командою @code{SIGKILL}."
 
 #: gnu/services/samba.scm:161
 msgid ""
@@ -836,6 +938,8 @@ msgid ""
 "Expose Git repositories over the insecure @code{git://} TCP-based\n"
 "protocol."
 msgstr ""
+"Розкрийте Git-репозиторії через небезпечний @code{git://} на основі TCP\n"
+"протоколу."
 
 #: gnu/services/version-control.scm:416
 msgid ""
@@ -844,12 +948,18 @@ msgid ""
 "Additionally, Gitolite can integrate with with tools like gitweb or cgit to\n"
 "provide a web interface to view selected repositories."
 msgstr ""
+"Налаштуйте @command{gitolite}, інструмент Git-хостингу, що надає доступ через SSH.\n"
+"За замовчуванням використовується користувач @code{git}, але це можна налаштувати.\n"
+"Крім того, Gitolite може інтегруватися з такими інструментами, як gitweb або cgit, щоб\n"
+"надати веб-інтерфейс для перегляду вибраних сховищ."
 
 #: gnu/services/version-control.scm:522
 msgid ""
 "Run Gitile, a small Git forge.  Expose public repositories\n"
 "on the web."
 msgstr ""
+"Запустити Gitile, невелику ковальню Git'а.  Викладіть публічні репозиторії\n"
+"в Інтернеті."
 
 #: gnu/home/services.scm:153
 msgid ""
@@ -877,7 +987,7 @@ msgstr ""
 #: gnu/home/services.scm:260
 #, scheme-format
 msgid "duplicate definition for `~a' environment variable ~%"
-msgstr "повторюване визначення для змінної середовища `~a' ~%"
+msgstr "повторюване визначення для змінної середовища `~a'~%"
 
 #: gnu/home/services.scm:318
 msgid "Set the environment variables."
@@ -889,42 +999,32 @@ msgid "duplicate '~a' entry for files/"
 msgstr "дублікат запису '~a' для файлів/"
 
 #: gnu/home/services.scm:356
-#, fuzzy, scheme-format
-#| msgid ""
-#| "Files that will be put in\n"
-#| "@file{~~/.guix-home/files}, and further processed during activation."
+#, scheme-format
 msgid ""
 "Files that will be put in\n"
 "@file{~/.guix-home/files}, and further processed during activation."
 msgstr ""
-"Файли, які будуть вставлені у\n"
-"@file{~~/.guix-home/files} і далі оброблятися під час активації."
+"Файли, які будуть поміщені в\n"
+"@file{~/.guix-home/files}, і далі оброблятимуться під час активації."
 
 #: gnu/home/services.scm:377
-#, fuzzy, scheme-format
-#| msgid ""
-#| "Files that will be put in\n"
-#| "@file{~~/.guix-home/files/.config}, and further processed during activation."
+#, scheme-format
 msgid ""
 "Files that will be put in\n"
 "@file{~/.guix-home/files/.config}, and further processed during activation."
 msgstr ""
-"Файли, які будуть вставлені у\n"
-"@file{~~/.guix-home/files/.config} і далі оброблятися під час активації."
+"Файли, які будуть поміщені в\n"
+"@file{~/.guix-home/files/.config}, і далі оброблятимуться під час активації."
 
 #: gnu/home/services.scm:398
-#, fuzzy, scheme-format
-#| msgid ""
-#| "Files that will be put in\n"
-#| "@file{~~/.guix-home/files/.local/share}, and further processed during\n"
-#| "activation."
+#, scheme-format
 msgid ""
 "Files that will be put in\n"
 "@file{~/.guix-home/files/.local/share}, and further processed during\n"
 "activation."
 msgstr ""
-"Файли, які будуть вставлені у\n"
-"@file{~~/.guix-home/files/.local/share} і далі оброблятися під час \n"
+"Файли, які буде покладено до теки\n"
+"@file{~/.guix-home/files/.local/share}, і далі оброблятимуться під час\n"
 "активації."
 
 #. TRANSLATORS: 'on-first-login' is the name of a service and
@@ -936,12 +1036,18 @@ msgid ""
 "XDG_RUNTIME_DIR variable is set to appropriate value and manually execute the\n"
 "script by running '$HOME/.guix-home/on-first-login'"
 msgstr ""
+"XDG_RUNTIME_DIR не існує, скрипт при першому вході\n"
+"нічого не виконає.  Ви можете перевірити, чи існує каталог часу виконання xdg,\n"
+"встановити змінну XDG_RUNTIME_DIR у відповідне значення і вручну виконати скрипт\n"
+"виконавши '$HOME/.guix-home/on-first-login'"
 
 #: gnu/home/services.scm:465
 msgid ""
 "Run gexps on first user login.  Can be\n"
 "extended with one gexp."
 msgstr ""
+"Запустити gexps при першому вході користувача.  Можна\n"
+"розширити одним gexp."
 
 #: gnu/home/services.scm:530
 msgid ""
@@ -951,6 +1057,11 @@ msgid ""
 "reconfiguration or generation switching.  This service can be extended\n"
 "with one gexp, but many times, and all gexps must be idempotent."
 msgstr ""
+"Запустіть gexps, щоб активувати поточне\n"
+"покоління домашнього середовища і оновити стан домашнього\n"
+"каталогу.  Скрипт @command{activate} автоматично викликається під час\n"
+"реконфігурації або перемикання поколінь.  Цю послугу можна розширити\n"
+"за допомогою одного gexp, але багато разів, і всі gexp мають бути idempotent."
 
 #: gnu/home/services.scm:673
 #, scheme-format
@@ -973,12 +1084,16 @@ msgid ""
 "Evaluating on-change gexps.\n"
 "\n"
 msgstr ""
+"Оцінка швидкості при зміні.\n"
+"\n"
 
 #: gnu/home/services.scm:686
 msgid ""
 "On-change gexps evaluation finished.\n"
 "\n"
 msgstr ""
+"Оцінювання швидкості при зміні закінчено.\n"
+"\n"
 
 #: gnu/home/services.scm:700
 msgid ""
@@ -987,6 +1102,10 @@ msgid ""
 "first element is the pattern for file or directory that expected to be\n"
 "changed, and the second element is the G-expression to be evaluated."
 msgstr ""
+"G-вирази для виконання, якщо вказані файли змінилися з часу\n"
+"останньої генерації.  Розширення має бути списком, де\n"
+"першим елементом якого є шаблон файлу або каталогу, який, як очікується, буде змінено,\n"
+"а другий елемент - G-вираз, який потрібно обчислити."
 
 #: gnu/home/services.scm:720
 msgid ""
@@ -994,6 +1113,9 @@ msgid ""
 "environment itself: the channels used when building the home\n"
 "environment, and its configuration file, when available."
 msgstr ""
+"Зберігати інформацію про походження домашнього середовища в будинку\n"
+"середовище: канали, використані при створенні домашнього\n"
+"та його конфігураційний файл, якщо він доступний."
 
 #: gnu/home/services/desktop.scm:114
 msgid ""
@@ -1004,16 +1126,24 @@ msgid ""
 "during that time, the @code{x11-display} service is marked as failing to\n"
 "start."
 msgstr ""
+"Створіть @code{x11-display} Службу Shepherd, яка чекає на запуск сервера графічного відображення X\n"
+"Window (або ``X11'') сервер графічного відображення буде запущено, з\n"
+"конфігураційної затримки, і встановлює змінну оточення @code{DISPLAY} у\n"
+"@command{shepherd} відповідно.  Якщо протягом цього часу не буде знайдено жодного доступного X11-сервера\n"
+"протягом цього часу, служба @code{x11-display} буде позначена як така, що не змогла\n"
+"запуститись."
 
 #: gnu/home/services/desktop.scm:280
 msgid ""
 "Run Redshift, a program that adjusts the color temperature of display\n"
 "according to time of day."
 msgstr ""
+"Запустіть Redshift, програму, яка регулює колірну температуру дисплея\n"
+"відповідно до часу доби."
 
 #: gnu/home/services/desktop.scm:330
 msgid "Run the session-specific D-Bus inter-process message bus."
-msgstr ""
+msgstr "Запустіть міжпроцесну шину повідомлень D-Bus для конкретного сеансу."
 
 #: gnu/home/services/desktop.scm:373
 msgid ""
@@ -1021,30 +1151,33 @@ msgid ""
 "Xorg graphical display server, automatically hides the cursor after a\n"
 "user-defined timeout has expired."
 msgstr ""
+"Запустіть демона @code{unclutter}, який на системах, що використовують\n"
+"Xorg, автоматично приховує курсор після закінчення\n"
+"визначеного користувачем таймауту."
 
 #: gnu/home/services/desktop.scm:430
 msgid ""
 "Run the @code{xmodmap} utility to modify keymaps and pointer\n"
 "buttons under the Xorg display server via user-defined expressions."
 msgstr ""
+"Запустіть утиліту @code{xmodmap} для модифікації карт клавіш та вказівників\n"
+"у сервері відображення Xorg за допомогою визначених користувачем виразів."
 
 #: gnu/home/services/dotfiles.scm:116
-#, fuzzy
-#| msgid ""
-#| "Files that will be put in\n"
-#| "@file{~~/.guix-home/files/.config}, and further processed during activation."
 msgid ""
 "Files that will be put in the user's home directory\n"
 "following GNU Stow's algorithm, and further processed during activation."
 msgstr ""
-"Файли, які будуть вставлені у\n"
-"@file{~~/.guix-home/files/.config} і далі оброблятися під час активації."
+"Файли, які будуть розміщені у домашньому каталозі користувача\n"
+"за алгоритмом GNU Stow і далі оброблятимуться під час активації."
 
 #: gnu/home/services/fontutils.scm:89
 msgid ""
 "Provides configuration file for fontconfig and make\n"
 "fc-* utilities aware of font packages installed in Guix Home's profile."
 msgstr ""
+"Надає конфігураційний файл для утиліт fontconfig та make\n"
+"утиліти fc-* знання про пакунки шрифтів, встановлені у профілі Guix Home."
 
 #: gnu/home/services/gnupg.scm:157
 msgid ""
@@ -1053,30 +1186,38 @@ msgid ""
 "enabled, @command{gpg-agent} acts as a drop-in replacement for OpenSSH's\n"
 "@command{ssh-agent}."
 msgstr ""
+"Налаштуйте агента GnuPG, @command{gpg-agent}, який відповідає за\n"
+"керування закритими ключами OpenPGP і, за бажанням, SSH.  Якщо підтримку SSH\n"
+"увімкнено, @command{gpg-agent} діє як заміна агента OpenSSH\n"
+"@command{ssh-agent}."
 
 #: gnu/home/services/gnupg.scm:225
 msgid "Incrementally refresh GnuPG keyrings over Tor."
-msgstr ""
+msgstr "Поступово оновлюйте брелоки GnuPG через Tor."
 
 #: gnu/home/services/guix.scm:44
 msgid "Manages the per-user Guix channels specification."
-msgstr ""
+msgstr "Керує специфікацією каналів Guix для кожного користувача."
 
 #: gnu/home/services/media.scm:67
 msgid ""
 "Install and configure the Kodi media center so that it runs as a Shepherd\n"
 "service."
 msgstr ""
+"Встановіть і налаштуйте медіацентр Kodi так, щоб він працював як\n"
+"служба Shepherd."
 
 #: gnu/home/services/messaging.scm:65
 msgid ""
 "Install and configure @command{znc}, an @acronym{IRC, Internet Relay\n"
 "Chat} bouncer, as a Shepherd service."
 msgstr ""
+"Встановіть і налаштуйте @command{znc}, @acronym{IRC, Internet Relay\n"
+"Chat}, як службу Shepherd."
 
 #: gnu/home/services/pm.scm:145
 msgid "Run batsignal, a battery watching and notification daemon."
-msgstr ""
+msgstr "Запустіть batsignal, демон спостереження за батареєю та сповіщень."
 
 #: gnu/home/services/shells.scm:114
 #, scheme-format
@@ -1085,62 +1226,67 @@ msgid ""
 "for environment initialization of POSIX compliant login shells.  This\n"
 "service type can be extended with a list of file-like objects."
 msgstr ""
+"Створіть @file{~/.profile}, який використовується\n"
+"для ініціалізації оточення POSIX-сумісних оболонок для входу у систему.  Цей\n"
+"тип сервісу може бути розширено списком файлових об'єктів."
 
 #: gnu/home/services/shells.scm:303
 msgid "Install and configure Zsh."
-msgstr ""
+msgstr "Встановіть та налаштуйте Zsh."
 
 #: gnu/home/services/shells.scm:501
 msgid "Install and configure GNU Bash."
-msgstr ""
+msgstr "Встановіть та налаштуйте GNU Bash."
 
 #: gnu/home/services/shells.scm:633
 msgid "Install and configure Fish, the friendly interactive shell."
-msgstr ""
+msgstr "Встановіть та налаштуйте Fish, дружню інтерактивну оболонку."
 
 #: gnu/home/services/shells.scm:762
 msgid "Configure readline in @code{.inputrc}."
-msgstr ""
+msgstr "Налаштуйте рядок читання в @code{.inputrc}."
 
 #: gnu/home/services/shepherd.scm:165
 msgid "Configure and install userland Shepherd."
-msgstr ""
+msgstr "Налаштуйте та встановіть userland Shepherd."
 
 #: gnu/home/services/sound.scm:127
 msgid "Start essential PipeWire services."
-msgstr ""
+msgstr "Запустіть основні сервіси PipeWire."
 
 #: gnu/home/services/sound.scm:214
 msgid ""
 "Define a PulseAudio sink to broadcast audio output over RTP, which can\n"
 "then by played by another PulseAudio instance."
 msgstr ""
+"Визначте поглинач PulseAudio для трансляції аудіовиходу через RTP, який може\n"
+"потім бути відтворений іншим екземпляром PulseAudio."
 
 #: gnu/home/services/sound.scm:249
 msgid ""
 "Define a PulseAudio source to receive audio broadcasted over RTP by\n"
 "another PulseAudio instance."
 msgstr ""
+"Визначте джерело PulseAudio для отримання аудіо, що транслюється через RTP\n"
+"іншим екземпляром PulseAudio."
 
 #: gnu/home/services/ssh.scm:111
-#, fuzzy, scheme-format
-#| msgid "~a: invalid locale name"
+#, scheme-format
 msgid "~s: invalid address family value"
-msgstr "~a: неправильна назва локалі"
+msgstr "~s: невірне значення сімейства адрес"
 
 #: gnu/home/services/ssh.scm:292
 msgid "define either 'name' or 'match-criteria', not both"
-msgstr ""
+msgstr "визначати або 'ім'я', або 'критерії співпадіння', але не обидва"
 
 #: gnu/home/services/ssh.scm:298
 msgid "define either 'name' or 'match-criteria' once"
-msgstr ""
+msgstr "один раз визначити 'name' або 'match-criteria'"
 
 #: gnu/home/services/ssh.scm:339
-#, fuzzy, scheme-format
-#| msgid "~s: invalid package license~%"
+#, scheme-format
 msgid "~s: invalid 'add-keys-to-agent' value"
-msgstr "~a: незрозуміла ліцензія пакунку~%"
+msgstr "~s: невірне значення параметра 'add-keys-to-agent'"
 
 #: gnu/home/services/ssh.scm:411
 #, scheme-format
@@ -1149,10 +1295,13 @@ msgid ""
 "by providing a @file{~/.ssh/config} file, which is honored by the OpenSSH\n"
 "client,@command{ssh}, and by other tools such as @command{guix deploy}."
 msgstr ""
+"Налаштуйте клієнт OpenSSH @acronym{SSH, secure shell}\n"
+"надавши файл @file{~/.ssh/config}, який обробляється OpenSSH\n"
+"client,@command{ssh} та іншими інструментами, такими як @command{guix deploy}."
 
 #: gnu/home/services/ssh.scm:465
 msgid "Install and configure @command{ssh-agent} as a Shepherd service."
-msgstr ""
+msgstr "Встановіть і налаштуйте @command{ssh-agent} як службу Shepherd."
 
 #: gnu/home/services/symlink-manager.scm:106
 #, scheme-format
@@ -1201,12 +1350,12 @@ msgstr ""
 #: gnu/home/services/symlink-manager.scm:192
 #, scheme-format
 msgid "Symlinking ~a -> ~a..."
-msgstr ""
+msgstr "Об'єднання ~a -> ~a..."
 
 #: gnu/home/services/symlink-manager.scm:209
 #, scheme-format
 msgid "failed to create directory ~a: ~s~%"
-msgstr ""
+msgstr "не вдалося створити каталог ~a: ~s~%"
 
 #: gnu/home/services/symlink-manager.scm:232
 msgid ""
@@ -1214,6 +1363,9 @@ msgid ""
 "Finished updating symlinks.\n"
 "\n"
 msgstr ""
+" зроблено\n"
+"Закінчено оновлення симпосилань.\n"
+"\n"
 
 #: gnu/home/services/symlink-manager.scm:245
 msgid ""
@@ -1222,6 +1374,10 @@ msgid ""
 "on every activation.  If an existing file would be overwritten by a\n"
 "symlink, backs up that file first."
 msgstr ""
+"Надайте скрипт @code{update-symlinks}\n"
+"скрипт, який створює символи-посилання на конфігураційні файли і каталоги\n"
+"при кожній активації.  Якщо існуючий файл буде перезаписано\n"
+"симпосиланням, спочатку створіть резервну копію цього файлу."
 
 #: gnu/home/services/xdg.scm:181
 msgid ""
@@ -1230,69 +1386,76 @@ msgid ""
 "non-default value, extend the service-type (using @code{simple-service}\n"
 "for example)."
 msgstr ""
+"Налаштування базових каталогів XDG.  Сервіси\n"
+"цього типу створюються за замовчуванням, щоб надати\n"
+"значення не за замовчуванням, розширьте тип сервісу (за допомогою @code{simple-service},\n"
+"наприклад)."
 
 #: gnu/home/services/xdg.scm:271
 msgid ""
 "Configure XDG user directories.  To\n"
 "disable a directory, point it to the $HOME."
 msgstr ""
+"Налаштування каталогів користувачів XDG.  Щоб\n"
+"вимкнути каталог, вкажіть на нього у $HOME."
 
 #: gnu/home/services/xdg.scm:323
 #, scheme-format
 msgid "The value of an XDG MIME entry must be a list, string or symbol, was given ~a"
-msgstr ""
+msgstr "Значення MIME-запису XDG має бути списком, рядком або символом, було задано ~a"
 
 #: gnu/home/services/xdg.scm:374
 #, scheme-format
 msgid "XDG desktop type must be of of ~a, was given: ~a"
-msgstr ""
+msgstr "Тип робочого столу XDG повинен мати вигляд ~a, було задано: ~a"
 
 #: gnu/home/services/xdg.scm:525
 msgid "Configure XDG MIME applications, and XDG desktop entries."
-msgstr ""
+msgstr "Налаштуйте MIME-додатки XDG і записи на робочому столі XDG."
 
 #: gnu/system/file-systems.scm:138
 #, scheme-format
 msgid "invalid file system mount flag:~{ ~s~}~%"
 msgid_plural "invalid file system mount flags:~{ ~s~}~%"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "недійсний прапор монтування файлової системи:~{ ~s~}~%"
+msgstr[1] "недійсних прапори монтування файлової системи:~{ ~s~}~%"
+msgstr[2] "недійсних прапорів монтування файлової системи:~{ ~s~}~%"
 
 #: gnu/system/file-systems.scm:666
 msgid "The store is on a Btrfs subvolume, but the subvolume name is unknown."
-msgstr ""
+msgstr "Сховище знаходиться на підтомі Btrfs, але назва підтома невідома."
 
 #: gnu/system/file-systems.scm:670
 msgid "Use the @code{subvol} Btrfs file system option."
-msgstr ""
+msgstr "Використовуйте параметр @code{subvol} файлової системи Btrfs."
 
 #: gnu/system/image.scm:350
 msgid "image lacks a partition with the 'boot' flag"
-msgstr ""
+msgstr "в образі відсутній розділ з прапором 'boot'"
 
 #: gnu/system/image.scm:394
 #, scheme-format
 msgid "unsupported image type: ~a"
-msgstr ""
+msgstr "непідтримуваний тип зображення: ~a"
 
 #: gnu/system/image.scm:412 gnu/system/image.scm:434
 #, scheme-format
 msgid "unsupported partition type: ~a"
-msgstr ""
+msgstr "непідтримуваний тип розділу: ~a"
 
 #: gnu/system/image.scm:542
 msgid "EFI bootloader required with GPT partitioning"
-msgstr ""
+msgstr "Потрібен завантажувач EFI з розбиттям на розділи GPT"
 
 #: gnu/system/image.scm:1046
 #, scheme-format
 msgid "~a: unsupported image format"
-msgstr ""
+msgstr "~a: непідтримуваний формат зображення"
 
 #: gnu/system/image.scm:1076
 #, scheme-format
 msgid "~a: no such image type"
-msgstr ""
+msgstr "~a: немає такого типу зображення"
 
 #: gnu/system/linux-container.scm:85
 msgid ""
@@ -1300,12 +1463,17 @@ msgid ""
 "anything.  This service is used by guest systems running in containers, where\n"
 "networking support is provided by the host."
 msgstr ""
+"Забезпечуйте зворотний зв'язок і мережу, не роблячи при цьому\n"
+"нічого.  Ця послуга використовується гостьовими системами, що працюють у контейнерах, де\n"
+"де мережева підтримка надається хостом."
 
 #: gnu/system/linux-container.scm:227
 msgid ""
 "Usage: run-container [OPTION ...]\n"
 "Run the container with the given options."
 msgstr ""
+"Використання: run-container [OPTION ...]\n"
+"Запустити контейнер із заданими параметрами."
 
 #: gnu/system/linux-container.scm:230
 msgid ""
@@ -1313,6 +1481,9 @@ msgid ""
 "      --share=SPEC       share host file system with read/write access\n"
 "                         according to SPEC"
 msgstr ""
+"\n"
+"      --share=SPEC спільна файлова система хоста з доступом на читання/запис\n"
+"                         відповідно до SPEC"
 
 #: gnu/system/linux-container.scm:233
 msgid ""
@@ -1320,6 +1491,9 @@ msgid ""
 "      --expose=SPEC      expose host file system directory as read-only\n"
 "                         according to SPEC"
 msgstr ""
+"\n"
+"      --expose=SPEC відкрити каталог файлової системи хоста тільки для читання\n"
+"                         відповідно до SPEC"
 
 #: gnu/system/linux-container.scm:237 guix/scripts/build.scm:469
 #: guix/scripts/download.scm:201 guix/scripts/package.scm:496
@@ -1350,6 +1524,8 @@ msgid ""
 "\n"
 "  -h, --help             display this help and exit"
 msgstr ""
+"\n"
+"  -h, --help відобразити цю довідку і вийти"
 
 #: gnu/system/linux-container.scm:261 guix/scripts.scm:164
 #: guix/scripts/import/minetest.scm:92
@@ -1360,26 +1536,26 @@ msgstr "~A: нерозпізнана опція~%"
 #: gnu/system/linux-container.scm:272
 #, scheme-format
 msgid "system container is running as PID ~a~%"
-msgstr ""
+msgstr "системний контейнер працює як PID ~a~%"
 
 #: gnu/system/linux-container.scm:273
 #, scheme-format
 msgid "Run 'sudo guix container exec ~a /run/current-system/profile/bin/bash --login'\n"
-msgstr ""
+msgstr "Виконайте 'sudo guix container exec ~a /run/current-system/profile/bin/bash --login'\n"
 
 #: gnu/system/linux-container.scm:275
 #, scheme-format
 msgid "or run 'sudo nsenter -a -t ~a' to get a shell into it.~%"
-msgstr ""
+msgstr "або виконайте 'sudo nsenter -a -t ~a', щоб запустити оболонку.~%"
 
 #: gnu/system/mapped-devices.scm:136
 msgid "Map a device node using Linux's device mapper."
-msgstr ""
+msgstr "Зобразіть вузол пристрою за допомогою маппера пристроїв у Linux."
 
 #: gnu/system/mapped-devices.scm:165
 #, scheme-format
 msgid "you may need these modules in the initrd for ~a:~{ ~a~}"
-msgstr ""
+msgstr "вам можуть знадобитися ці модулі в initrd для ~a:~{ ~a~}"
 
 #: gnu/system/mapped-devices.scm:170
 #, scheme-format
@@ -1398,113 +1574,128 @@ msgid ""
 "If you think this diagnostic is inaccurate, use the @option{--skip-checks}\n"
 "option of @command{guix system}.\n"
 msgstr ""
+"Спробуйте додати їх до поля\n"
+"@code{initrd-modules} вашого оголошення @code{operating-system}, приблизно\n"
+"таким чином:\n"
+"\n"
+"@example\n"
+" (операційна система\n"
+"   ;; @dots{}\n"
+"   (initrd-modules (append (list~{ ~s~})\n"
+"                           %base-initrd-modules)))\n"
+"@end example\n"
+"\n"
+"Якщо ви вважаєте, що ця діагностика є неточною, скористайтеся опцією @option{--skip-checks}\n"
+"команди @command{guix system}.\n"
 
 #: gnu/system/mapped-devices.scm:271
 #, scheme-format
 msgid "no LUKS partition with UUID '~a'"
-msgstr ""
+msgstr "немає розділу LUKS з UUID '~a'"
 
 #: gnu/system/shadow.scm:342
 #, scheme-format
 msgid "the following accounts appear more than once:~{ ~a~}~%"
-msgstr ""
+msgstr "наступні облікові записи з'являються більше одного разу:~{ ~a~}~%"
 
 #: gnu/system/shadow.scm:350
 #, scheme-format
 msgid "the following groups appear more than once:~{ ~a~}~%"
-msgstr ""
+msgstr "наступні групи з'являються більше одного разу:~{ ~a~}~%"
 
 #: gnu/system/shadow.scm:361
 #, scheme-format
 msgid "supplementary group '~a' of user '~a' is undeclared"
-msgstr ""
+msgstr "не оголошено додаткову групу '~a' користувача '~a'"
 
 #: gnu/system/shadow.scm:371
 #, scheme-format
 msgid "primary group '~a' of user '~a' is undeclared"
-msgstr ""
+msgstr "не оголошено первинну групу '~a' користувача '~a'"
 
 #: gnu/system/shadow.scm:514
 msgid ""
 "Ensure the specified user accounts and groups exist, as well\n"
 "as each account home directory."
 msgstr ""
+"Переконайтеся, що вказані облікові записи і групи користувачів існують, а також\n"
+"домашній каталог кожного облікового запису."
 
 #: guix/import/egg.scm:348
 msgid "Updater for CHICKEN egg packages"
-msgstr ""
+msgstr "Оновлення для упаковок КУРЯЧИХ яєць"
 
 #: guix/import/cpan.scm:330 guix/import/elpa.scm:431
 #: guix/import/minetest.scm:498 guix/import/opam.scm:424
 #, scheme-format
 msgid "~a updater doesn't support updating to a specific version, sorry."
-msgstr ""
+msgstr "~a Програма оновлення не підтримує оновлення до певної версії, вибачте."
 
 #: guix/import/cpan.scm:349
 #, scheme-format
 msgid "input '~a' of ~a is in Perl core~%"
-msgstr ""
+msgstr "введення '~a' з ~a знаходиться в ядрі Perl~%"
 
 #: guix/import/cpan.scm:363
 msgid "Updater for CPAN packages"
-msgstr ""
+msgstr "Оновлювальник для пакунків CPAN"
 
 #: guix/import/cran.scm:219
 #, scheme-format
 msgid "failed to retrieve list of packages from ~a: ~a (~a)~%"
-msgstr ""
+msgstr "не вдалося отримати список пакунків з ~a: ~a (~a)~%"
 
 #: guix/import/cran.scm:254
 #, scheme-format
 msgid "~A: hg download failed~%"
-msgstr ""
+msgstr "~A: не вдалося завантажити hg~%"
 
 #: guix/import/cran.scm:298
 #, scheme-format
 msgid "failed to retrieve package information from ~a: ~a (~a)~%"
-msgstr ""
+msgstr "не вдалося отримати інформацію про пакунок з ~a: ~a (~a)~%"
 
 #: guix/import/cran.scm:904 guix/import/cran.scm:927
 #, scheme-format
 msgid "~a provides only the latest version of each package, sorry."
-msgstr ""
+msgstr "Вибачте, ~a надає лише останню версію кожного пакунка."
 
 #: guix/import/cran.scm:997
 msgid "Updater for CRAN packages"
-msgstr ""
+msgstr "Оновлювальник для пакунків CRAN"
 
 #: guix/import/cran.scm:1004
 msgid "Updater for Bioconductor packages"
-msgstr ""
+msgstr "Оновлювальник для пакетів Bioconductor"
 
 #: guix/import/elpa.scm:104
 #, scheme-format
 msgid "~A: currently not supported~%"
-msgstr ""
+msgstr "~A: на даний момент не підтримується~%"
 
 #: guix/import/elpa.scm:116
-#, scheme-format
+#, fuzzy, scheme-format
 msgid "~A: download failed~%"
-msgstr ""
+msgstr "~A: download failed~% (Помилка завантаження)"
 
 #: guix/import/elpa.scm:271
 #, scheme-format
 msgid "unsupported MELPA fetcher: ~a, falling back to unstable MELPA source~%"
-msgstr ""
+msgstr "непідтримуваний збирач MELPA: ~a, повернення до нестабільного джерела MELPA~%"
 
 #: guix/import/elpa.scm:479
 msgid "Updater for ELPA packages"
-msgstr ""
+msgstr "Оновлювальник для пакетів ELPA"
 
 #: guix/import/github.scm:159
 #, scheme-format
 msgid "GitHub HTTP response lacks 'X-RateLimit-Reset' header~%"
-msgstr ""
+msgstr "У HTTP-відповіді GitHub відсутній заголовок 'X-RateLimit-Reset'~%"
 
 #: guix/import/github.scm:204
 #, scheme-format
 msgid "~a is unreachable (~a)~%"
-msgstr ""
+msgstr "~a є недосяжним (~a)~%"
 
 #: guix/import/github.scm:219
 #, scheme-format
@@ -1520,6 +1711,12 @@ msgid ""
 "Alternatively, you can wait until your rate limit is reset, or use the\n"
 "@code{generic-git} updater instead."
 msgstr ""
+"Підняти ліміт швидкості можна\n"
+"встановивши змінну оточення @env{GUIX_GITHUB_TOKEN} у значення токена, отриманого\n"
+"з @url{https://github.com/settings/tokens} за допомогою вашого облікового запису GitHub.\n"
+"\n"
+"Крім того, ви можете почекати, поки ваш ліміт буде скинуто, або використовувати\n"
+"@code{generic-git} замість цього."
 
 #: guix/import/github.scm:341
 msgid "Updater for GitHub packages"
@@ -1586,124 +1783,124 @@ msgstr ""
 #: guix/import/minetest.scm:174
 #, scheme-format
 msgid "In ~a: author names must consist of at least a single character.~%"
-msgstr ""
+msgstr "У ~a: імена авторів повинні складатися принаймні з одного символу.~%"
 
 #: guix/import/minetest.scm:178
 #, scheme-format
 msgid "In ~a: mod names must consist of at least a single character.~%"
-msgstr ""
+msgstr "У ~a: назви модів мають складатися принаймні з одного символу.~%"
 
 #: guix/import/minetest.scm:183
 #, scheme-format
 msgid "In ~a: author names and mod names may not contain forward slashes.~%"
-msgstr ""
+msgstr "У ~a: імена авторів та назви модів не можуть містити прямих слешів.~%"
 
 #: guix/import/minetest.scm:187
 #, scheme-format
 msgid "mod names may not be empty.~%"
-msgstr ""
+msgstr "назви модів не можуть бути порожніми.~%"
 
 #: guix/import/minetest.scm:188
 #, scheme-format
 msgid "The name of the author is missing in ~a.~%"
-msgstr ""
+msgstr "Ім'я автора відсутнє в ~a.~%"
 
 #: guix/import/minetest.scm:209
 #, scheme-format
 msgid "~a is ambiguous, presuming ~a (other options include: ~a)~%"
-msgstr ""
+msgstr "~a є неоднозначним, припускає ~a (інші варіанти включають: ~a)~%"
 
 #: guix/import/minetest.scm:214
 #, scheme-format
 msgid "No mods with name ~a were found.~%"
-msgstr ""
+msgstr "Модів з іменем ~a не знайдено.~%"
 
 #: guix/import/minetest.scm:276
 #, scheme-format
 msgid "The package search API doesn't exist anymore.~%"
-msgstr ""
+msgstr "API пошуку пакунків більше не існує.~%"
 
 #: guix/import/minetest.scm:419
 #, scheme-format
 msgid "The dependency ~a of ~a has multiple different implementations ~a.~%"
-msgstr ""
+msgstr "Залежність ~a від ~a має декілька різних реалізацій ~a.~%"
 
 #: guix/import/minetest.scm:426
 #, scheme-format
 msgid "The implementation with the highest score will be chosen!~%"
-msgstr ""
+msgstr "Реалізація з найвищим балом буде обрана!~%"
 
 #: guix/import/minetest.scm:429
 #, scheme-format
 msgid "The implementation that has been downloaded the most will be chosen!~%"
-msgstr ""
+msgstr "Буде обрано реалізацію, яку завантажили найбільше!~%"
 
 #: guix/import/minetest.scm:433
 #, scheme-format
 msgid "The dependency ~a of ~a does not have any implementation.  It will be ignored!~%"
-msgstr ""
+msgstr "Залежність ~a від ~a не має жодної реалізації.  Вона буде проігнорована!~%"
 
 #: guix/import/minetest.scm:448
 #, scheme-format
 msgid "no package metadata for ~a on ContentDB~%"
-msgstr ""
+msgstr "немає метаданих пакунка для ~a на ContentDB~%"
 
 #: guix/import/minetest.scm:451
 #, scheme-format
 msgid "no dependency information for ~a on ContentDB~%"
-msgstr ""
+msgstr "немає інформації про залежності для ~a від ContentDB~%"
 
 #: guix/import/minetest.scm:454
 #, scheme-format
 msgid "no release of ~a on ContentDB~%"
-msgstr ""
+msgstr "не випускати ~a на ContentDB~%"
 
 #: guix/import/minetest.scm:517
 msgid "Updater for Minetest packages on ContentDB"
-msgstr ""
+msgstr "Оновлювальник для пакунків Minetest на ContentDB"
 
 #: guix/import/opam.scm:146
 #, scheme-format
 msgid "'~a' is not a valid URI~%"
-msgstr ""
+msgstr "'~a' не є допустимим URI~%"
 
 #: guix/import/opam.scm:323
-#, scheme-format
+#, fuzzy, scheme-format
 msgid "opam: package '~a' not found~%"
-msgstr ""
+msgstr "opam: package '~a' not found~% (пакет '~a' не знайдено)"
 
 #: guix/import/opam.scm:440
 msgid "Updater for OPAM packages"
-msgstr ""
+msgstr "Оновлювальник для пакунків OPAM"
 
 #: guix/import/pypi.scm:251
 msgid "Could not extract requirement name in spec:"
-msgstr ""
+msgstr "Не вдалося витягти назву вимоги в специфікації:"
 
 #: guix/import/pypi.scm:311
 #, scheme-format
 msgid "parse-requires.txt reached an unexpected condition on line ~a~%"
-msgstr ""
+msgstr "parse-requires.txt досягнув неочікуваної умови на рядку ~a~%"
 
 #: guix/import/pypi.scm:377
 #, scheme-format
 msgid "Failed to extract file: ~a from wheel.~%"
-msgstr ""
+msgstr "Не вдалося розпакувати файл: ~a from wheel.~%"
 
 #: guix/import/pypi.scm:406
 #, scheme-format
 msgid "Cannot guess requirements from source archive: no requires.txt file found.~%"
-msgstr ""
+msgstr "Не вдається зчитати вимоги з вихідного архіву: не знайдено файл requires.txt.~%"
 
 #: guix/import/pypi.scm:411
 #, scheme-format
 msgid "Unsupported archive format; cannot determine package dependencies from source archive: ~a~%"
-msgstr ""
+msgstr "Непідтримуваний формат архіву; не вдається визначити залежності пакунків від вихідного архіву: ~a~%"
 
 #: guix/import/pypi.scm:465
 #, scheme-format
 msgid "project name ~a does not appear verbatim in the PyPI URI~%"
-msgstr ""
+msgstr "назва проекту ~a не відображається дослівно в URI PyPI~%"
 
 #: guix/import/pypi.scm:468
 #, scheme-format
@@ -1712,11 +1909,14 @@ msgid ""
 "pypi-uri declaration in the generated package. You may need to replace ~s with\n"
 "a substring of the PyPI URI that identifies the package."
 msgstr ""
+"URI PyPI має вигляд: @url{~a}.  Вам слід переглянути оголошення\n"
+"pypi-uri у згенерованому пакунку. Можливо, вам доведеться замінити ~s на\n"
+"підрядком PyPI URI, який ідентифікує пакунок."
 
 #: guix/import/pypi.scm:568
 #, scheme-format
 msgid "no source release for pypi package ~a ~a~%"
-msgstr ""
+msgstr "не випущено вихідних текстів для пакунка pypi ~a ~a~%"
 
 #: guix/import/pypi.scm:576
 #, scheme-format
@@ -1726,87 +1926,91 @@ msgid ""
 "source.  To build it from source, refer to the upstream repository at\n"
 "@uref{~a}."
 msgstr ""
+"Це вказує на те, що\n"
+"пакунок доступний на PyPI, але лише у вигляді \"колеса\", яке містить двійкові файли, а не\n"
+"вихідний код.  Щоб зібрати пакунок з коду, зверніться до попереднього сховища за адресою\n"
+"@uref{~a}."
 
 #: guix/import/pypi.scm:623
 msgid "Updater for PyPI packages"
-msgstr ""
+msgstr "Оновлювальник для пакунків PyPI"
 
 #: gnu/installer.scm:223
 msgid "Locale"
-msgstr ""
+msgstr "Локація"
 
 #: gnu/installer.scm:241 gnu/installer/newt/timezone.scm:58
 msgid "Timezone"
-msgstr ""
+msgstr "Часовий пояс"
 
 #: gnu/installer.scm:258
 msgid "Keyboard mapping selection"
-msgstr ""
+msgstr "Вибір розкладки клавіатури"
 
 #: gnu/installer.scm:267 gnu/installer/newt/hostname.scm:26
 msgid "Hostname"
-msgstr ""
+msgstr "Ім'я хоста"
 
 #: gnu/installer.scm:276
 msgid "Network selection"
-msgstr ""
+msgstr "Вибір мережі"
 
 #: gnu/installer.scm:283 gnu/installer/newt/substitutes.scm:31
 msgid "Substitute server discovery"
-msgstr ""
+msgstr "Виявлення підмінного сервера"
 
 #: gnu/installer.scm:290 gnu/installer/newt/user.scm:70
 #: gnu/installer/newt/user.scm:217
 msgid "User creation"
-msgstr ""
+msgstr "Створення користувача"
 
 #: gnu/installer.scm:298
 msgid "Services"
-msgstr ""
+msgstr "Служби"
 
 #: gnu/installer.scm:309
 msgid "Partitioning"
-msgstr ""
+msgstr "Розбиття на розділи"
 
 #: gnu/installer.scm:316 gnu/installer/newt/final.scm:53
 msgid "Configuration file"
-msgstr ""
+msgstr "Файл конфігурації"
 
 #: gnu/installer.scm:330
 #, scheme-format
 msgid "cannot determine installer provenance~%"
-msgstr ""
+msgstr "неможливо визначити походження інсталятора~%"
 
 #: gnu/installer/connman.scm:196
 msgid "Could not determine the state of connman."
-msgstr ""
+msgstr "Визначити стан Конмана не вдалося."
 
 #: gnu/installer/connman.scm:322
 msgid "Unable to find expected regexp."
-msgstr ""
+msgstr "Не вдалося знайти очікуваний regexp."
 
 #. TRANSLATORS: The two placeholders are the manufacturer
 #. and name of a PCI device.
 #: gnu/installer/hardware.scm:88
 #, scheme-format
 msgid "~a ~a (networking device)"
-msgstr ""
+msgstr "~a ~a (мережевий пристрій)"
 
 #: gnu/installer/newt.scm:58
 msgid "Press <F1> for installation parameters."
-msgstr ""
+msgstr "Натисніть <F1> для параметрів встановлення."
 
 #: gnu/installer/newt.scm:71
 msgid "The installer has encountered an unexpected problem. The backtrace is displayed below. You may choose to exit or create a dump archive."
-msgstr ""
+msgstr "Програма встановлення зіткнулася з несподіваною проблемою. Нижче показано трасування виконання програми. Ви можете завершити роботу або створити архів дампа."
 
 #: gnu/installer/newt.scm:74
 msgid "Unexpected problem"
-msgstr ""
+msgstr "Несподівана проблема"
 
 #: gnu/installer/newt.scm:78
 msgid "Dump"
-msgstr ""
+msgstr "Дамп"
 
 #: gnu/installer/newt.scm:79 gnu/installer/newt/ethernet.scm:79
 #: gnu/installer/newt/keymap.scm:56 gnu/installer/newt/locale.scm:43
@@ -1821,162 +2025,162 @@ msgstr ""
 #: gnu/installer/newt/timezone.scm:63 gnu/installer/newt/user.scm:216
 #: gnu/installer/newt/wifi.scm:206
 msgid "Exit"
-msgstr ""
+msgstr "Вихід"
 
 #: gnu/installer/newt.scm:85
 #, scheme-format
 msgid "The dump archive was created as ~a.  Would you like to send this archive to the Guix servers?"
-msgstr ""
+msgstr "Архів дампа було створено у форматі ~a.  Ви хочете надіслати цей архів на сервери Guix?"
 
 #: gnu/installer/newt.scm:87
 msgid "Dump archive created"
-msgstr ""
+msgstr "Створено архів дампа"
 
 #: gnu/installer/newt.scm:91
 #, scheme-format
 msgid "The dump was uploaded as ~a.  Please report it by email to ~a."
-msgstr ""
+msgstr "Дамп було завантажено як ~a.  Будь ласка, повідомте про це електронною поштою на адресу ~a."
 
 #: gnu/installer/newt.scm:93
 msgid "The dump could not be uploaded."
-msgstr ""
+msgstr "Дамп не вдалося завантажити."
 
 #: gnu/installer/newt.scm:96
 msgid "Dump upload result"
-msgstr ""
+msgstr "Результат вивантаження дампа"
 
 #: gnu/installer/newt.scm:131
 #, scheme-format
 msgid "External command ~s exited with code ~a"
-msgstr ""
+msgstr "Зовнішня команда ~s виходить з кодом ~a"
 
 #: gnu/installer/newt.scm:134
 #, scheme-format
 msgid "External command ~s terminated by signal ~a"
-msgstr ""
+msgstr "Зовнішня команда ~s завершується сигналом ~a"
 
 #: gnu/installer/newt.scm:137
 #, scheme-format
 msgid "External command ~s stopped by signal ~a"
-msgstr ""
+msgstr "Зовнішня команда ~s зупинена сигналом ~a"
 
 #: gnu/installer/newt.scm:139
 msgid "External command error"
-msgstr ""
+msgstr "Помилка зовнішньої команди"
 
 #: gnu/installer/newt/ethernet.scm:66
 msgid "No ethernet service available, please try again."
-msgstr ""
+msgstr "Послуга Ethernet недоступна, спробуйте ще раз."
 
 #: gnu/installer/newt/ethernet.scm:67
 msgid "No service"
-msgstr ""
+msgstr "Немає сервісу"
 
 #: gnu/installer/newt/ethernet.scm:74
 msgid "Please select an ethernet network."
-msgstr ""
+msgstr "Будь ласка, виберіть мережу Ethernet."
 
 #: gnu/installer/newt/ethernet.scm:75
 msgid "Ethernet connection"
-msgstr ""
+msgstr "Підключення Ethernet"
 
 #: gnu/installer/newt/final.scm:46
 #, scheme-format
 msgid "We're now ready to proceed with the installation! A system configuration file has been generated, it is displayed below.  This file will be available as '~a' on the installed system.  The new system will be created from this file once you've pressed OK.  This will take a few minutes."
-msgstr ""
+msgstr "Тепер ми готові приступити до інсталяції! Було створено файл конфігурації системи, який показано нижче.  Цей файл буде доступний у встановленій системі як '~a'.  Нова система буде створена з цього файлу після того, як ви натиснете кнопку OK.  Це займе кілька хвилин."
 
 #: gnu/installer/newt/final.scm:68
 msgid "Installation complete"
-msgstr ""
+msgstr "Встановлення завершено"
 
 #: gnu/installer/newt/final.scm:69 gnu/installer/newt/parameters.scm:45
 #: gnu/installer/newt/welcome.scm:197
 msgid "Reboot"
-msgstr ""
+msgstr "Перезавантажити"
 
 #: gnu/installer/newt/final.scm:70
 msgid "Congratulations!  Installation is now complete.  You may remove the device containing the installation image and press the button to reboot."
-msgstr ""
+msgstr "Вітаємо!  Інсталяцію завершено.  Ви можете вийняти пристрій, що містить інсталяційний образ, і натиснути кнопку для перезавантаження."
 
 #: gnu/installer/newt/final.scm:84
 msgid "Installation failed"
-msgstr ""
+msgstr "Інсталяція не вдалася"
 
 #: gnu/installer/newt/final.scm:85
 msgid "Resume"
-msgstr ""
+msgstr "Відновити"
 
 #: gnu/installer/newt/final.scm:86
 msgid "Restart the installer"
-msgstr ""
+msgstr "Перезапустити інсталятор"
 
 #: gnu/installer/newt/final.scm:87 gnu/installer/newt/welcome.scm:165
 msgid "Report the failure"
-msgstr ""
+msgstr "Повідомити про збій"
 
 #: gnu/installer/newt/final.scm:88
 msgid "The final system installation step failed.  You can resume from a specific step, or restart the installer."
-msgstr ""
+msgstr "На останньому кроці встановлення системи сталася помилка.  Ви можете продовжити з певного кроку або перезапустити програму встановлення."
 
 #: gnu/installer/newt/parameters.scm:31
 msgid "Please enter the HTTP proxy URL. If you enter an empty string, proxy usage will be disabled."
-msgstr ""
+msgstr "Будь ласка, введіть URL-адресу HTTP-проксі. Якщо ви введете порожній рядок, використання проксі буде вимкнено."
 
 #: gnu/installer/newt/parameters.scm:33
 msgid "HTTP proxy configuration"
-msgstr ""
+msgstr "Налаштування HTTP проксі"
 
 #: gnu/installer/newt/parameters.scm:43
 msgid "Change keyboard layout"
-msgstr ""
+msgstr "Змінити розкладку клавіатури"
 
 #: gnu/installer/newt/parameters.scm:44
 msgid "Configure HTTP proxy"
-msgstr ""
+msgstr "Конфігурація HTTP проксі"
 
 #: gnu/installer/newt/parameters.scm:48
 msgid "Please choose one of the following parameters or press ‘Back’ to go back to the installation process."
-msgstr ""
+msgstr "Будь ласка, оберіть один з наступних параметрів або натисніть ‘Назад’, щоб повернутися до процесу встановлення."
 
 #: gnu/installer/newt/parameters.scm:50
 msgid "Installation parameters"
-msgstr ""
+msgstr "Параметри встановлення"
 
 #: gnu/installer/newt/parameters.scm:55 gnu/installer/newt/keymap.scm:72
 #: gnu/installer/newt/locale.scm:61 gnu/installer/newt/locale.scm:74
 #: gnu/installer/newt/locale.scm:88 gnu/installer/newt/partition.scm:608
 #: gnu/installer/newt/timezone.scm:64
 msgid "Back"
-msgstr ""
+msgstr "Назад"
 
 #: gnu/installer/newt/hostname.scm:25
 msgid "Please enter the system hostname."
-msgstr ""
+msgstr "Будь ласка, введіть ім'я хоста системи."
 
 #: gnu/installer/newt/keymap.scm:38
 msgid "Layout"
-msgstr ""
+msgstr "Розкладка"
 
 #: gnu/installer/newt/keymap.scm:43
 msgid "Please choose your keyboard layout. It will only be used during the installation process. Non-Latin layouts can be toggled with Alt+Shift."
-msgstr ""
+msgstr "Будь ласка, виберіть розкладку клавіатури. Вона буде використовуватися лише під час процесу встановлення. Нелатинську розкладку можна переключити за допомогою Alt+Shift."
 
 #: gnu/installer/newt/keymap.scm:46
 msgid "Please choose your keyboard layout. It will be used during the install process, and for the installed system. Non-Latin layouts can be toggled with Alt+Shift. You can switch to a different layout at any time from the parameters menu."
-msgstr ""
+msgstr "Будь ласка, виберіть розкладку клавіатури. Вона буде використовуватися під час інсталяції та для встановленої системи. Нелатинські розкладки можна перемикати за допомогою клавіш Alt+Shift. Ви можете будь-коли переключитися на іншу розкладку з меню параметрів."
 
 #: gnu/installer/newt/keymap.scm:55 gnu/installer/newt/network.scm:64
 #: gnu/installer/newt/page.scm:314 gnu/installer/newt/welcome.scm:164
 msgid "Continue"
-msgstr ""
+msgstr "Продовжити"
 
 #: gnu/installer/newt/keymap.scm:65
 msgid "Variant"
-msgstr ""
+msgstr "Варіант"
 
 #: gnu/installer/newt/keymap.scm:68
 msgid "Please choose a variant for your keyboard layout."
-msgstr ""
+msgstr "Будь ласка, виберіть варіант для вашої розкладки клавіатури."
 
 #: gnu/installer/newt/locale.scm:36
 msgid "Locale language"

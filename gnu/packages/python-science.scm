@@ -25,6 +25,7 @@
 ;;; Copyright © 2023, 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 Marco Baggio <marco.baggio@mdc-berlin.de>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3473,6 +3474,45 @@ Providers}.")
 Nearly Raw Raster Data} files (format designed to support scientific
 visualization and image processing involving N-dimensional raster data) into
 and from numpy arrays.")
+    (license license:expat)))
+
+(define-public python-pynsee
+  (package
+    (name "python-pynsee")
+    (version "0.1.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pynsee" version))
+       (sha256
+        (base32 "1w084ynwdd9f4wpcnakqc0nxcbj9gr8vppv4rd258i3dp1qq4sw5"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))  ; XXX: Tests require network access.
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-appdirs
+           python-openpyxl
+           python-pandas
+           python-platformdirs
+           python-pyarrow
+           python-requests
+           python-shapely
+           python-tqdm
+           python-unidecode
+           python-urllib3
+           python-xlrd))
+    (home-page "https://pynsee.readthedocs.io")
+    (synopsis
+     "Tools to Easily Search and Download French Data From INSEE and IGN APIs")
+    (description
+     "This package provides tools to easily search and download French data
+from INSEE and IGN APIs.  This data includes more than 150 000 macroeconomic
+series, a dozen datasets of local french data, numerous sources available on
+@url{insee.fr}, geographical limits of administrative areas taken from IGN as
+well as key metadata and SIRENE database containing data on all French
+compagnies.")
     (license license:expat)))
 
 (define-public python-libneuroml

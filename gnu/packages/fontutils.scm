@@ -2074,9 +2074,9 @@ can support most writing systems covered by Unicode.")
     (home-page "https://www.gnu.org/software/fontopia/")
     (synopsis "Text-based, console font editor")
     (description
-     "GNU fontopia is an easy-to-use, text-based, console font editor. You can
+     "GNU fontopia is an easy-to-use, text-based, console font editor.  You can
 edit the fonts that your GNU/Linux kernel is using to display your text on text-
-based (vs graphical) terminals. ")
+based (vs graphical) terminals.")
     (license license:gpl3+)))
 
 

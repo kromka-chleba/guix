@@ -3664,7 +3664,17 @@ and a core image.")
   (sbcl-package->cl-source-package sbcl-ciel))
 
 (define-public ecl-ciel
-  (sbcl-package->ecl-package sbcl-ciel))
+  ;; Remove the "image" output and the build phase "build-image"
+  ;; (which fails because ECL has no support for images).
+  (let ((pkg (sbcl-package->ecl-package sbcl-ciel)))
+    (package
+      (inherit pkg)
+      (outputs '("out"))
+      (arguments
+       (substitute-keyword-arguments (package-arguments pkg)
+         ((#:phases phases)
+          `(modify-phases ,phases
+             (delete 'build-image))))))))
 
 (define-public sbcl-ciel-repl
   (let ((commit "0b26d64dcd91a3a2aa962842629a853261dd30fe")
@@ -4142,8 +4152,8 @@ to cl-async.")
   (sbcl-package->ecl-package sbcl-cl-async-future))
 
 (define libasyncprocess
-  (let ((commit "9690530fc92b59636d9f17d821afa7697e7c8ca4")
-        (revision "0"))
+  (let ((commit "8067007e283745b94a36a51320b41b65ac296e24")
+        (revision "1"))
     (package
       (name "libasyncprocess")
       (version (git-version "0.0.1" revision commit))
@@ -4155,7 +4165,7 @@ to cl-async.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1m2sfgfg6c0gqqy1pqsahsiw3j25y473mfw7sx0akkqbhwhm7mjb"))
+          (base32 "0691z0vs5c65m24p1yi12iy27j59layzvzyy1yl19704x05442qh"))
          (modules '((guix build utils)))
          (snippet
           ;; Delete precompiled artifacts.
@@ -4247,6 +4257,50 @@ execution mechanism for Common Lisp.")))
 
 (define-public ecl-cl-autowrap
   (sbcl-package->ecl-package sbcl-cl-autowrap))
+
+(define-public sbcl-cl-base16
+  (let ((commit "ae4b7f416c0c91f6323e901be912c0f7378fe3da")
+        (revision "0"))
+    (package
+      (name "sbcl-cl-base16")
+      (version (git-version "0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tpine/cl-base16")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0m7ndmk4xhizn3q3ywjvw8sg4pfgp6lrd0wac5d1bf7wbw6afh5q"))))
+      (build-system asdf-build-system/sbcl)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-git-executable
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "builder.lisp"
+                  (("\"git")
+                   (string-append "\"" (search-input-file inputs
+                                                          "/bin/git")))))))))
+      (inputs
+       (list git
+             sbcl-cl-yaml
+             sbcl-cl-mustache
+             sbcl-cl-slug
+             sbcl-trivial-shell))
+      (synopsis "Common Lisp base 16 implementation")
+      (description
+       "This package provides an implementation of a base 16 builder for Common Lisp.")
+      (home-page "https://github.com/tpine/cl-base16")
+      (license license:gpl3+))))
+
+(define-public cl-base16
+  (sbcl-package->cl-source-package sbcl-cl-base16))
+
+(define-public ecl-cl-base16
+  (sbcl-package->ecl-package sbcl-cl-base16))
 
 (define-public sbcl-cl-base32
   (let ((commit "8cdee06fab397f7b0a19583b57e7f0c98405be85")
@@ -9548,7 +9602,7 @@ ability to store all Common Lisp data types into streams.")
 (define-public sbcl-cl-str
   (package
     (name "sbcl-cl-str")
-    (version "0.19")
+    (version "0.21")
     (home-page "https://github.com/vindarel/cl-str")
     (source (origin
               (method git-fetch)
@@ -9556,7 +9610,7 @@ ability to store all Common Lisp data types into streams.")
                     (url home-page)
                     (commit version)))
               (sha256
-               (base32 "1jyza2jhn7w6fl4w87pv0m87z5ia48m6dqw12k0mdh7l3mgjq839"))
+               (base32 "0r9niyvkj7jyc93rxys6pgqazzpl1ybfryjn8jig721xhjxrsblm"))
               (file-name (git-file-name name version))))
     (build-system asdf-build-system/sbcl)
     (inputs
@@ -18615,8 +18669,8 @@ building block for higher level libraries.")
   (sbcl-package->ecl-package sbcl-json-streams))
 
 (define-public sbcl-jsonrpc
-  (let ((commit "4abbd305bae7827ad39048f956887db11505ad50")
-        (revision "0"))
+  (let ((commit "a43dd933838bb9596a2bf40e821af0bafd3d5356")
+        (revision "1"))
     (package
       (name "sbcl-jsonrpc")
       (version (git-version "0.3.2" revision commit))
@@ -18628,7 +18682,7 @@ building block for higher level libraries.")
                (commit commit)))
          (file-name (git-file-name "jsonrpc" version))
          (sha256
-          (base32 "08fz50wmbjic9m31av1fq4a3v5ahry58c8z2bmn3ib52k6nnjrk2"))))
+          (base32 "1wsc6bv8xpzad0lgrlldzrpb9r4aksnw7ss2ifwa7ykbzfxcr8gi"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs (list sbcl-rove))
       (inputs (list sbcl-clack

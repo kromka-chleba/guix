@@ -13586,7 +13586,7 @@ hydras with one column per group of heads.")))
        (method url-fetch)
        (uri (string-append "https://elpa.gnu.org/packages/ivy-" version ".tar"))
        (sha256
-        (base32 "1zjksh0jvxyqhzgwmh9i26gaip6c04q400xckh730r2gjs287pjj"))))
+        (base32 "1h9gfkkcw9nfw85m0mh08qfmi2y0jkvdk54qx0iy5p04ysmhs6k1"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list))
@@ -19580,7 +19580,7 @@ to the home page or read the comments in the source file,
 (define-public emacs-htmlize
   (package
     (name "emacs-htmlize")
-    (version "1.56")
+    (version "1.58")
     (source
      (origin
        (method git-fetch)
@@ -19589,7 +19589,7 @@ to the home page or read the comments in the source file,
              (commit (string-append "release/" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14m8si49br62lgx7asdyp9jysq0v6midrfk32sxy521ydqmqr3c1"))))
+        (base32 "0xkp4sscrz6mpk96vhc59xp94ynfdyalq8npr1g8f6s32xavsga4"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/hniksic/emacs-htmlize")
     (synopsis "Convert buffer text and decorations to HTML")
@@ -38170,7 +38170,7 @@ personal wiki.")
 (define-public emacs-org-node
   (package
     (name "emacs-org-node")
-    (version "1.1.2")
+    (version "1.4.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -38179,7 +38179,7 @@ personal wiki.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0l6xk760sjj384fv06ihiv5shq08ly17ap1vla7d307d7nag9c1n"))))
+                "0gf8abfjm2hhp19g9zi38gbvr9lmx9li0jma838q8hj1f1k7ps1q"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-dash
