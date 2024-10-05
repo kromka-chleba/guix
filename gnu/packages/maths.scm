@@ -2303,44 +2303,45 @@ similar to MATLAB, GNU Octave or SciPy.")
     (native-inputs
      (list m4 doxygen graphviz))
     (inputs
-     `(("curl" ,curl)
-       ("hdf4" ,hdf4-alt)
-       ("hdf5" ,hdf5)
-       ("libjpeg" ,libjpeg-turbo)
-       ("libxml2" ,libxml2)
-       ("unzip" ,unzip)
-       ("zlib" ,zlib)))
+     (list curl
+           hdf4-alt
+           hdf5
+           libjpeg-turbo
+           libxml2
+           unzip
+           zlib))
     (arguments
-     `(#:configure-flags '("--enable-doxygen"
-                           "--enable-dot"
-                           "--enable-hdf4"
-                           "--disable-dap-remote-tests")
+     (list #:configure-flags
+           #~'("--enable-doxygen" "--enable-dot"
+               "--enable-hdf4" "--disable-dap-remote-tests")
 
-       #:phases (modify-phases %standard-phases
-         (add-before 'configure 'fix-source-date
-           (lambda _
-             ;; As we ${SOURCE_DATE_EPOCH} evaluates to "1" in the build
-             ;; environment, `date -u -d ${SOURCE_DATE_EPOCH}` will evaluate
-             ;; to '1st hour of the current day', and therefore makes the
-             ;; package not reproducible.
-             (substitute* "./configure"
-               (("date -u -d \"\\$\\{SOURCE_DATE_EPOCH\\}\"")
-                "date --date='@0'"))))
-         (add-after 'configure 'patch-settings
-           (lambda _
-             ;; libnetcdf.settings contains the full filename of the compilers
-             ;; used to build the library.  We truncate the hashes of those
-             ;; filenames to avoid unnecessary references to the corresponding
-             ;; store items.
-             (substitute* "libnetcdf.settings"
-               (("(/gnu/store/)([0-9A-Za-z]*)" all prefix hash)
-                (string-append prefix (string-take hash 10) "...")))))
-         (add-before 'check 'fix-test-rcmerge
-           (lambda _
-             ;; Set HOME, to fix the test-rcmerge test.
-             (setenv "HOME" "/tmp"))))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'fix-source-date
+                 (lambda _
+                   ;; As we ${SOURCE_DATE_EPOCH} evaluates to "1" in the build
+                   ;; environment, `date -u -d ${SOURCE_DATE_EPOCH}` will evaluate
+                   ;; to '1st hour of the current day', and therefore makes the
+                   ;; package not reproducible.
+                   (substitute* "./configure"
+                     (("date -u -d \"\\$\\{SOURCE_DATE_EPOCH\\}\"")
+                      "date --date='@0'"))))
+               (add-after 'configure 'patch-settings
+                 (lambda _
+                   ;; libnetcdf.settings contains the full filename of the compilers
+                   ;; used to build the library.  We truncate the hashes of those
+                   ;; filenames to avoid unnecessary references to the corresponding
+                   ;; store items.
+                   (substitute* "libnetcdf.settings"
+                     (("(/gnu/store/)([0-9A-Za-z]*)" all prefix hash)
+                      (string-append prefix
+                                     (string-take hash 10) "...")))))
+               (add-before 'check 'fix-test-rcmerge
+                 (lambda _
+                   ;; Set HOME, to fix the test-rcmerge test.
+                   (setenv "HOME" "/tmp"))))
 
-       #:parallel-tests? #f))           ;various race conditions
+           #:parallel-tests? #f))           ;various race conditions
     (home-page "https://www.unidata.ucar.edu/software/netcdf/")
     (synopsis "Library for scientific data")
     (description "NetCDF is an interface for scientific data access and a
@@ -2350,27 +2351,61 @@ Together, the interface, library, and format support the creation, access, and
 sharing of scientific data.")
     (license (license:x11-style "file://COPYRIGHT"))))
 
+(define-public pnetcdf
+  (package
+    (name "pnetcdf")
+    (version "1.13.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://parallel-netcdf.github.io/Release/pnetcdf-"
+             version ".tar.gz"))
+       (sha256
+        (base32
+         "14f4nbcnw80y59cl0kjpxqqfaxzzd62kixnhb6ihp6aigb3z385b"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "--enable-shared"
+                   (string-append "--with-mpi=" #$(this-package-input "openmpi")))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'build 'mpi-setup
+                 #$%openmpi-setup))))
+    (inputs (list openmpi))
+    (native-inputs (list m4))
+    (home-page "https://parallel-netcdf.github.io/")
+    (synopsis "Parallel I/O Library for NetCDF File Access")
+    (description "PnetCDF is a high-performance parallel I/O library for accessing
+Unidata's NetCDF, files in classic formats, specifically the formats of CDF-1, 2, and
+5.")
+    (license (license:x11-style "file://COPYRIGHT"))))
+
 (define-public netcdf-parallel-openmpi
-  (package (inherit netcdf)
+  (package/inherit netcdf
     (name "netcdf-parallel-openmpi")
-    (inputs
-     `(("mpi" ,openmpi)
-       ,@(alist-replace "hdf5" (list hdf5-parallel-openmpi)
-                        (package-inputs netcdf))))
+    (inputs (modify-inputs (package-inputs netcdf)
+              (append openmpi pnetcdf)
+              (replace "hdf5" hdf5-parallel-openmpi)))
     ;; TODO: Replace pkg-config references in nc-config with absolute references
     (arguments
      (substitute-keyword-arguments (package-arguments netcdf)
        ((#:configure-flags flags)
-        `(cons* "CC=mpicc" "CXX=mpicxx"
-                "--enable-parallel-tests"
-                ;; NetCDF supports both parallel and shared library building
-                ;; See https://docs.unidata.ucar.edu/nug/current/getting_and_building_netcdf.html#build_parallel
-                "--enable-shared" "--with-pic"
-                ,flags))
-       ((#:phases phases '%standard-phases)
-        `(modify-phases ,phases
-           (add-after 'build 'mpi-setup
-             ,%openmpi-setup)))))))
+        #~(cons* "CC=mpicc"
+                 "CXX=mpicxx"
+                 "--enable-parallel-tests"
+                 ;; Enable support of CDF-1, 2 and 5 formats.
+                 "--enable-pnetcdf"
+                 ;; NetCDF supports both parallel and shared library building
+                 ;; See https://docs.unidata.ucar.edu/nug/current/getting_and_building_netcdf.html#build_parallel
+                 "--enable-shared"
+                 "--with-pic"
+                 #$flags))
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (add-after 'build 'mpi-setup
+              #$%openmpi-setup)))))))
 
 (define-public netcdf-fortran
   (package
@@ -9856,7 +9891,7 @@ computation is supported via MPI.")
 (define-public scilab
   (package
     (name "scilab")
-    (version "2024.0.0")
+    (version "2024.1.0")
     (source
      (origin
        (method git-fetch)
@@ -9866,7 +9901,7 @@ computation is supported via MPI.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "08nyfli3x7gd396ffd1a8zn9fj3gm6a8yw0ggm547c09sp2rgvl7"))
+         "1qk0pf1cwcvdqjza9xqkynd90ywq0yh421bz59w5zjzbs40ijnrx"))
        (patches (search-patches "scilab-better-compiler-detection.patch"
                                 "scilab-tbx_build_help.patch"))
        (modules '((guix build utils)
@@ -9890,7 +9925,8 @@ computation is supported via MPI.")
                         "libs/GetWindowsVersion"
                         "Visual-Studio-settings"))
             (for-each delete-file
-                      (cons* "aclocal.m4"
+                      (append
+                       (list "aclocal.m4"
                              "configure"
                              "m4/ax_cxx_compile_stdcxx.m4"
                              "m4/lib-ld.m4"
@@ -9900,8 +9936,9 @@ computation is supported via MPI.")
                              "m4/ltversion.m4"
                              "m4/lt~obsolete.m4"
                              "m4/pkg.m4"
-                             "Scilab.sln"
-                             (find-files "." "^Makefile\\.in$")))
+                             "Scilab.sln")
+                       (find-files "." "^Makefile\\.in$")
+                       (find-files "." "\\.bat$")))
 
             ;; And finally some files in the modules directory:
             (for-each
@@ -9929,6 +9966,7 @@ computation is supported via MPI.")
            autoconf-archive
            automake
            bison
+           coreutils-minimal
            eigen
            flex
            gfortran
@@ -10036,6 +10074,10 @@ computation is supported via MPI.")
                     (("PROGNAME.*") "\n")))))
             (add-before 'build 'pre-build
               (lambda* (#:key inputs #:allow-other-keys)
+                ;; Fix scilab script.
+                (substitute* "bin/scilab"
+                  (("/bin/ls")
+                   (search-input-file inputs "bin/ls")))
                 ;; Fix core.start.
                 (substitute* "modules/core/etc/core.start"
                   (("'SCI/modules")
@@ -10071,7 +10113,12 @@ computation is supported via MPI.")
                     "\"${XDG_STATE_HOME:-$HOME/.local/state}/scilab/"
                     #$(package-version this-package) "\""))
                   (("export SCI=")
-                   "unset LANGUAGE\nexport SCI="))))))))
+                   "unset LANGUAGE\nexport SCI="))))
+            (add-after 'rewrap-scilab-cli 'sanity-check
+              (lambda _
+                (setenv "HOME" (getcwd))
+                (invoke (string-append #$output "/bin/scilab-cli")
+                        "-e" "\"quit;\"")))))))
     (home-page "https://www.scilab.org/")
     (synopsis "Software for engineers and scientists")
     (description "This package provides the non-graphical version of the Scilab

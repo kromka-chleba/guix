@@ -348,14 +348,14 @@ coverage.")
 (define-public lttng-modules
   (package
     (name "lttng-modules")
-    (version "2.13.10")
+    (version "2.13.14")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://lttng.org/files/lttng-modules/"
                                   "lttng-modules-" version ".tar.bz2"))
               (sha256
                (base32
-                "19xh8nm19vx6c2i1adqpa8q2xsvxn59qxa6z186iywbhr0dgpaqk"))))
+                "19jx1yz1hsbr4vwfp2nr6z52a5g50iimaak962k49diay5zryi66"))))
     (build-system linux-module-build-system)
     (arguments
      `(#:tests? #f ; no tests
@@ -372,14 +372,14 @@ many probes which instrument numerous interesting parts of Linux.")
 (define-public lttng-ust
   (package
     (name "lttng-ust")
-    (version "2.13.6")
+    (version "2.13.8")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://lttng.org/files/lttng-ust/"
                                   "lttng-ust-" version ".tar.bz2"))
               (sha256
                (base32
-                "1mffy0fmr8h8kfghjadxa7nhzfwxjh7h1k97kslpmb3kvnb4bq77"))))
+                "0dyr4j8f8y6fmfpxb3ajkc1ndwpl1baxzbyc4ksx8ym3p7d9ivyl"))))
     (build-system gnu-build-system)
     (inputs
      (list numactl))
@@ -398,14 +398,14 @@ to ring buffers shared with a consumer daemon.")
 (define-public lttng-tools
   (package
     (name "lttng-tools")
-    (version "2.13.9")
+    (version "2.13.14")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://lttng.org/files/lttng-tools/"
                                   "lttng-tools-" version ".tar.bz2"))
               (sha256
                (base32
-                "0dzk13d0hdzll8hk9qmj5lipmfa2h8zkl801dchp1kq8nsaxr54d"))))
+                "1jxdwm0a3z70jrx6yg57x5cswi7ycgyazng41rkgxnq7mp2gggak"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags '("--enable-python-bindings")

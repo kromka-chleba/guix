@@ -1,5 +1,5 @@
-Index: ddd/Makefile.am
-===================================================================
+Add missing '-I' flag.
+
 --- old/ddd/Makefile.am	(revision 7508)
 +++ new/ddd/Makefile.am	(working copy)
 @@ -655,7 +655,7 @@

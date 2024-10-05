@@ -22,6 +22,7 @@
 (define-module (gnu packages gpodder)
   #:use-module (guix download)
   #:use-module (guix git-download)
+  #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module ((guix licenses) #:prefix license:)
@@ -50,7 +51,7 @@
 (define-public gpodder
   (package
     (name "gpodder")
-    (version "3.11.1")
+    (version "3.11.4")
     (source
      (origin
        (method git-fetch)
@@ -58,7 +59,7 @@
              (url "https://github.com/gpodder/gpodder")
              (commit version)))
        (sha256
-        (base32 "121cb8qz4rp6602lpbi6m2vqx3ar1cw2s4z4r7nr5qaxb0q3gk9n"))
+        (base32 "1zmp7kkldb59fx1y6k4mkff8ngmyb9pflcd3yqb28m9wb9bp4j4h"))
        (file-name (git-file-name name version))
        (patches (search-patches "gpodder-disable-updater.patch"))))
     (build-system python-build-system)
@@ -81,47 +82,42 @@
            python-mutagen
            python-mygpoclient
            python-podcastparser
-           youtube-dl
+           yt-dlp
            xdg-utils))
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         ;; Avoid needing xdg-utils as a propagated input.
-         (add-after 'unpack 'patch-xdg-open
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((xdg-utils (assoc-ref inputs "xdg-utils")))
-               (substitute* "src/gpodder/util.py"
-                 (("xdg-open") (string-append xdg-utils "/bin/xdg-open")))
-               #t)))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "make" "unittest"))))
-         ;; 'msgmerge' introduces non-determinism by resetting the
-         ;; POT-Creation-Date in .po files.
-         (add-before 'install 'do-not-run-msgmerge
-           (lambda _
-             (substitute* "makefile"
-               (("msgmerge") "true"))
-             #t))
-         (add-before 'install 'make-po-files-writable
-           (lambda _
-             (for-each
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Avoid needing xdg-utils as a propagated input.
+          (add-after 'unpack 'patch-xdg-open
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "src/gpodder/util.py"
+                (("xdg-open") (search-input-file inputs "bin/xdg-open")))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "make" "unittest"))))
+          ;; 'msgmerge' introduces non-determinism by resetting the
+          ;; POT-Creation-Date in .po files.
+          (add-before 'install 'do-not-run-msgmerge
+            (lambda _
+              (substitute* "makefile"
+                (("msgmerge") "true"))))
+          (add-before 'install 'make-po-files-writable
+            (lambda _
+              (for-each
                (lambda (f)
                  (chmod f #o664))
-               (find-files "po"))
-             #t))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (setenv "PREFIX" (assoc-ref outputs "out"))
-             (invoke "make" "install")))
-         (add-after 'install 'wrap-gpodder
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out"))
-                   (gi-typelib-path (getenv "GI_TYPELIB_PATH")))
-               (wrap-program (string-append out "/bin/gpodder")
-                 `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path)))
-               #t))))))
+               (find-files "po"))))
+          (replace 'install
+            (lambda _
+              (setenv "PREFIX" #$output)
+              (invoke "make" "install")))
+          (add-after 'install 'wrap-gpodder
+            (lambda _
+              (let ((gi-typelib-path (getenv "GI_TYPELIB_PATH")))
+                (wrap-program (string-append #$output "/bin/gpodder")
+                  `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path)))))))))
     (home-page "https://gpodder.github.io")
     (synopsis "Simple podcast client")
     (description "gPodder is a podcatcher, i.e. an application that allows
@@ -147,9 +143,9 @@ locally for later listening.")
     (native-inputs
      (list pkg-config))
     (inputs
-     `(("qt" ,qtbase-5)))
+     (list qtbase-5))
     (arguments
-     `(#:configure-flags '("-DMYGPO_BUILD_TESTS=ON")
+     '(#:configure-flags '("-DMYGPO_BUILD_TESTS=ON")
        ;; TODO: Enable tests when https://github.com/gpodder/gpodder/issues/446
        ;; is fixed.
        #:tests? #f))
@@ -163,19 +159,19 @@ and track podcasts.")
 (define-public python-mygpoclient
   (package
     (name "python-mygpoclient")
-    (version "1.8")
+    (version "1.9")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mygpoclient" version))
        (sha256
         (base32
-         "1fi5x6k1mngr0iviw2s4n1f3y2x7pwqy5ivkcrjdprzvwr37f0mh"))))
+         "05hmjdb73m7vl6lzvh58bnliy4227pv8hprwfka0bg19cnvgpyf5"))))
     (build-system python-build-system)
     (native-inputs
-     (list python-coverage python-minimock python-nose))
+     (list python-coverage python-minimock python-nose python-pytest))
     (arguments
-     `(#:phases
+     '(#:phases
        (modify-phases %standard-phases
          (replace 'check
            (lambda _
@@ -191,13 +187,13 @@ downloading episode status changes.")
 (define-public python-podcastparser
   (package
     (name "python-podcastparser")
-    (version "0.6.6")
+    (version "0.6.10")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "podcastparser" version))
        (sha256
-        (base32 "0m24r2qhck0win44xfhxajbppkss4ha6am0042s0xyq3408883m3"))))
+        (base32 "1mqkkxz928y430xx3mgw9dj78ilkgv9hjdha1hizbks6mmhcp6ib"))))
     (native-inputs
      (list python-pytest))
     (arguments

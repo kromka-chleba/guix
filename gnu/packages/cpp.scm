@@ -2,7 +2,7 @@
 ;;; Copyright © 2017 Ethan R. Jones <doubleplusgood23@gmail.com>
 ;;; Copyright © 2018–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Fis Trivial <ybbs.daans@hotmail.com>
-;;; Copyright © 2018, 2021, 2023 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2018, 2021, 2023-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2019, 2020, 2022 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2019 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2019 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
@@ -34,7 +34,7 @@
 ;;; Copyright © 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Antero Mejr <antero@mailbox.org>
 ;;; Copyright © 2023 Sughosha <Sughosha@proton.me>
-;;; Copyright © 2023 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2023, 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2023 Liliana Marie Prikler <liliana.prikler@gmail.com>
 ;;; Copyright © 2023 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2023 Foundation Devices, Inc. <hello@foundationdevices.com>
@@ -1239,7 +1239,7 @@ and make @code{cpplint} usable in wider contexts.")
 (define-public reproc
   (package
     (name "reproc")
-    (version "14.2.4")
+    (version "14.2.5")
     (source
       (origin
         (method git-fetch)
@@ -1248,7 +1248,7 @@ and make @code{cpplint} usable in wider contexts.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "09xnf8hmld1fk8j33zwlz1qcxnjdx1ncbg62csic9va4m1wc2v1d"))))
+         (base32 "07h11rzhvplgmd420v650h8abyvwcbws4w1xlq8x18nxbp4nnqn1"))))
    (build-system cmake-build-system)
    (arguments
     (list #:tests? #f     ; No tests.
@@ -1367,6 +1367,11 @@ hierarchies and multiple types of execution resources.")
 
     ;; Code exhibits integer size mismatches when compiled on 32-bit systems.
     (supported-systems %64bit-supported-systems)
+
+    ;; This code can benefit from SIMD optimizations; tuning gives an effect
+    ;; equivalent to setting the 'KOKKOS_ARCH_NATIVE' CMake flag, except for
+    ;; the configuration metadata recorded in 'Kokkos_Core.cpp'.
+    (properties '((tunable? . #t)))
 
     (license license:asl2.0))) ; With LLVM exception
 
