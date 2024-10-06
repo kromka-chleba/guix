@@ -112,12 +112,14 @@
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages web)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
-  #:use-module (guix build-system qt))
+  #:use-module (guix build-system qt)
+  #:use-module (guix build-system trivial))
 
 (define-public vice
   (package
@@ -1475,19 +1477,16 @@ emulation community.  It provides highly accurate emulation.")
                 "0b0vg3iz342dpkffvf7frsnqh8inj8yzi8550bsx8vnbpq5r2ay5"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                    ; no tests
-       #:make-flags (list "-C" "platform/LibRetro"
-                          (string-append "CC=" ,(cc-for-target)))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)          ; no configure script
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (libretrodir (string-append out "/lib/libretro")))
-               (install-file "platform/LibRetro/lowresnx_libretro.so"
-                             libretrodir)
-               #t))))))
+     (list #:tests? #f                  ;no test suite
+           #:make-flags #~(list "-C" "platform/LibRetro"
+                                (string-append "CC=" #$(cc-for-target)))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)      ;no configure script
+               (replace 'install
+                 (lambda _
+                   (install-file "platform/LibRetro/lowresnx_libretro.so"
+                                 (string-append #$output "/lib/libretro")))))))
     (home-page "https://lowresnx.inutilis.com/")
     (synopsis "Libretro core for LowRES NX")
     (description "LowRES NX is a simulated retro game console, which can be
@@ -1496,99 +1495,1025 @@ core allowing the lowRES NX programs to be used with libretro frontends such
 as RetroArch.")
     (license license:zlib)))
 
-(define-public retroarch
+(define-public libretro-mupen64plus-nx
+  ;; There are no proper release; use the latest commit of the master branch
+  ;; (their stable branch).
+  (let ((commit "9d940bacb95c4d86733f42b67b57fc83046a6d39")
+        (revision "0"))
+    (package
+      (name "libretro-mupen64plus-nx")
+      (version (git-version "0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/libretro/mupen64plus-libretro-nx")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0s3l62mfkbzmv8g1y4r40iayfwdz68rq6l6khc0d8kw08qk7ggl9"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:tests? #f                     ;no test suite
+        #:make-flags
+        #~(list (string-append "CC=" #$(cc-for-target))
+                (string-append "CXX=" #$(cxx-for-target))
+                (string-append "GIT_VERSION=" #$version)
+                (string-append "PREFIX=" #$output)
+                "LLE=1"
+                "HAVE_THR_AL=1"         ;for the angrylion video plugin
+                "HAVE_PARALLEL_RDP=1"
+                "HAVE_PARALLEL_RSP=1"
+                "SYSTEM_MINIZIP=1"
+                "SYSTEM_LIBPNG=1"
+                "SYSTEM_XXHASH=1"
+                "SYSTEM_ZLIB=1")
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            (replace 'install
+              (lambda _
+                (install-file "mupen64plus_next_libretro.so"
+                              (string-append #$output "/lib/libretro/")))))))
+      (native-inputs (list nasm pkg-config))
+      (inputs (list mesa libpng minizip unzip xxhash zlib))
+      (home-page "https://github.com/libretro/mupen64plus-libretro-nx")
+      (synopsis "Improved Mupen64Plus libretro core")
+      (description "Mupen64Plus-Next is a N64 emulation library for the
+libretro API, based on Mupen64Plus.  It incorporates the following projects:
+@itemize
+@item @url{https://github.com/mupen64plus/mupen64plus-core, mupen64plus}
+@item @url{https://github.com/gonetz/GLideN64, GLideN64}
+@item @url{https://github.com/cxd4/rsp, cxd4}
+@item @url{https://github.com/Themaister/parallel-rsp, parallel-rsp}
+@item @url{https://github.com/ata4/angrylion-rdp-plus, angrylion-rdp-plus}
+@end itemize")
+      (license license:gpl2+))))
+
+(define-public retroarch-assets
   (package
-    (name "retroarch")
-    (version "1.19.1")
+    (name "retroarch-assets")
+    (version "1.19.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/libretro/retroarch-assets")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1i496x0lkqard5i9045yf438kivwd6f6za8p9fil8w1rfrhk2knz"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f                  ;no test suite
+           #:make-flags #~(list (string-append "PREFIX=" #$output))
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'build)))) ;no compilation required
+    (home-page "https://www.libretro.com/")
+    (synopsis "RetroArch menu assets")
+    (description "The RetroArch assets are the user interface elements used to
+generate the various User Experience (UX) environments.")
+    (license license:cc-by4.0)))
+
+(define-public retroarch-core-info
+  ;; Use the latest commit, to get recent additions such as bsnes-jg.
+  (let ((commit "c0e7b76d02504754de67a1318f93089f1e29f15f")
+        (revision "0"))
+    (package
+      (name "retroarch-core-info")
+      (version (git-version "1.19.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/libretro/libretro-core-info")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "11xpy3zhy2smp4a70fc0r1b76mvmjyabkaaipifsxm3j25drki5z"))))
+      (build-system copy-build-system)
+      (arguments
+       (list #:install-plan #~'(("." "lib/libretro/"
+                                 #:include-regexp ("\\.info$")))))
+      (home-page "https://github.com/libretro/libretro-core-info")
+      (synopsis "Libretro core info files")
+      (description "This is a versioned snapshot of the files containing
+metadata about each known libretro core.  The snapshot is taken from the
+@url{https://github.com/libretro/libretro-super, libretro-super} repository.")
+      (license license:expat))))
+
+(define-public retroarch-joypad-autoconfig
+  (package
+    (name "retroarch-joypad-autoconfig")
+    (version "1.19.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/libretro/RetroArch")
+             (url "https://github.com/libretro/retroarch-joypad-autoconfig")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "15nh4y4vpf4n1ryhiy4fwvzn5xz5idzfzn9fsi5v9hzp25vbjmrm"))))
+        (base32
+         "1gg4nc2wjqz72z40diqbanfkfalvb9hhb8scwn51v2w704rm634b"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (etc (string-append out "/etc"))
-                    (vulkan (assoc-ref inputs "vulkan-loader"))
-                    (wayland-protocols (assoc-ref inputs "wayland-protocols")))
-               ;; Hard-code some store file names.
-               (substitute* "gfx/common/vulkan_common.c"
-                 (("libvulkan.so") (string-append vulkan "/lib/libvulkan.so")))
-               (substitute* "gfx/common/wayland/generate_wayland_protos.sh"
-                 (("/usr/local/share/wayland-protocols")
-                 (string-append wayland-protocols "/share/wayland-protocols")))
+     (list #:tests? #f                  ;no meaningful test suite
+           #:make-flags #~(list (string-append "PREFIX=" #$output))
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'configure)))) ;no configure script
+    (home-page "https://github.com/libretro/retroarch-joypad-autoconfig")
+    (synopsis "RetroArch joypad autoconfig files")
+    (description "This package provides joypad autoconfig files for RetroArch,
+the reference frontend for the libretro API.  The autoconfig files are used to
+recognize input devices and automatically setup default mappings between the
+physical device and the RetroPad virtual controller.")
+    (license license:expat)))
 
-               ;; Without HLSL, we can still enable GLSLANG and Vulkan support.
-               (substitute* "qb/config.libs.sh"
-                 (("[$]HAVE_GLSLANG_HLSL") "notcare"))
+(define-public libretro-slang-shaders
+  ;; There are no releases; use the latest commit.
 
-               ;; The configure script does not yet accept the extra arguments
-               ;; (like ‘CONFIG_SHELL=’) passed by the default configure phase.
-               (invoke
+  ;; BEWARE: Any upgrade to this package must have the sources carefully
+  ;; audited for newly added items, with the snippet allow-list updated
+  ;; accordingly, due to various items lacking license information or being
+  ;; non-free (see: https://github.com/libretro/slang-shaders/issues/150).
+  (let ((commit "a8e35920c5a53448bf6ce78dfe4575485a20a41f")
+        (revision "0"))
+    (package
+      (name "libretro-slang-shaders")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/libretro/slang-shaders/")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (modules '((guix build utils)))
+         (snippet
+          '(begin
+             (use-modules (guix build utils)
+                          (ice-9 ftw)
+                          (srfi srfi-1)
+                          (srfi srfi-26))
+             (define (delete-all-but . preserve)
+               ;; Walk the file tree and delete everything except the paths
+               ;; listed in PRESERVE.  Directories listed PRESERVE will cause
+               ;; their whole contents to be preserved.
+               (let ((preserve (map (compose (cut string-trim-right <> #\/)
+                                             (cut string-append "./" <>))
+                                    preserve)))
+                 (file-system-fold
+                  (lambda (path stat result) ;enter
+                    (or (any (lambda (x)
+                               (or (string-prefix? path x)
+                                   (string-prefix? x path)))
+                             preserve)
+                        (begin
+                          (delete-file-recursively path)
+                          #f)))
+                  (lambda (path stat result) ;leaf (file)
+                    (unless (any (cut string-prefix? <> path) preserve)
+                      (delete-file path)))
+                  (const #t)                 ;down (directory)
+                  (const #t)                 ;up (directory)
+                  (lambda (path stat result) ;skip
+                    (when (file-exists? path)
+                      (error "could not enter unreadable directory" path)))
+                  (lambda (path stat errno result) ;error
+                    (error "error processing" path (strerror errno)))
+                  0
+                  ".")))
+
+             ;; This is an allow-list of the shaders explicitly licensed as
+             ;; free software.
+             (delete-all-but
+              "anamorphic/shaders/anamorphic.slang" ;expat
+              "anamorphic/anamorphic.slangp"
+              "annotated_passthru.slang" ;public license
+              "anti-aliasing/aa-shader-4.0-level2.slangp"
+              "anti-aliasing/aa-shader-4.0.slangp"
+              "anti-aliasing/shaders/aa-shader-4.0.slang"  ;gpl2+
+              "anti-aliasing/shaders/aa-shader-4.0-level2" ;gpl2+
+              "anti-aliasing/shaders/advanced-aa.slang" ;gpl2+
+              "anti-aliasing/advanced-aa.slangp"
+              "anti-aliasing/shaders/reverse-aa-post3x"    ;expat
+              "anti-aliasing/shaders/reverse-aa.slang"     ;bsd-2
+              "anti-aliasing/shaders/smaa/"                ;unlicense
+              ;; The following presets refder to stock.slang, which license is
+              ;; unknown.
+              ;; "anti-aliasing/smaa+linear.slangp"
+              ;; "anti-aliasing/smaa+sharpen.slangp"
+              ;; "anti-aliasing/smaa.slangp"
+              "auto-box/"               ;public domain
+              "bezel/koko-aio/"         ;gpl3+
+              ;; Mega_Bezel makes use of the include/compat_macros.inc file,
+              ;; which carries no license.
+              ;; "bezel/Mega_Bezel/" ;gpl3+
+              "bfi/"                       ;public domain
+              "blurs/shaders/dual_filter/" ;cc0
+              "blurs/shaders/gauss_4tap/"  ;cc0
+              "blurs/gauss_4tap.slangp"
+              "blurs/shaders/gaussian_blur_filtering" ;gpl2+
+              "blurs/gaussian_blur_2_pass-sharp.slangp"
+              "blurs/gaussian_blur-sharp.slangp"
+              "blurs/gaussian_blur_2_pass.slangp"
+              "blurs/gaussian_blur.slangp"
+              "blurs/shaders/gizmo-blur.slang" ;gpl2+
+              "blurs/gizmo-composite-blur.slangp"
+              "blurs/shaders/sharpsmoother.slang" ;gpl2+
+              "blurs/sharpsmoother.slangp"
+              "blurs/shaders/smart-blur.slang" ;expat
+              "blurs/smart-blur.slangp"        ;expat
+              ;; The .slang shaders of royale, itself Expat, all reference
+              ;; include/compat_macros.inc, which is not licensed thus not
+              ;; included.
+              ;;"blurs/shaders/royale"           ;expat
+              "border/shaders/bigblur.slang" ;public domain
+              "border/shaders/autocrop-koko" ;gpl3+
+              "border/autocrop-koko.slangp"
+              "border/autocrop-koko.txt"
+              "border/textures"                     ;data
+              "border/shaders/imgborder-gbp.slang"  ;<15 LOC
+              "border/shaders/imgborder.inc"        ;public domain
+              "border/shaders/imgborder-sgba.slang" ;<15 LOC
+              "border/shaders/imgborder-sgb.slang"  ;<15 LOC
+              "border/shaders/imgborder.slang"      ;<15 LOC
+              "border/gameboy-player/gameboy-player-crt-geom-1x.slangp"
+              ;;"border/gameboy-player/gameboy-player-crt-royale.slangp"
+              "border/gameboy-player/gameboy-player-gba-color.slangp"
+              "border/gameboy-player/gameboy-player.png" ;data
+              "border/gameboy-player/gameboy-player.slangp"
+              "border/gameboy-player/gameboy-player-tvout-gba-color+interlacing.slangp"
+              "border/gameboy-player/gameboy-player-tvout-gba-color.slangp"
+              "border/gameboy-player/gameboy-player-tvout+interlacing.slangp"
+              "border/gameboy-player/gameboy-player-tvout.slangp"
+              "border/gameboy-player/sample-borders/" ;data
+              "border/handheld-nebula/handheld-nebula-gba+crt-consumer.slangp"
+              "border/handheld-nebula/handheld-nebula-gba+dot.slangp"
+              "border/handheld-nebula/handheld-nebula-gba.png" ;data
+              "border/handheld-nebula/handheld-nebula-gba.slangp"
+              "border/handheld-nebula/handheld-nebula-gb+crt-consumer.slangp"
+              "border/handheld-nebula/handheld-nebula-gb+dot.slangp"
+              "border/handheld-nebula/handheld-nebula-gb.png" ;data
+              "border/handheld-nebula/handheld-nebula-gb.slangp"
+              "border/handheld-nebula/handheld-nebula-gg+crt-consumer.slangp"
+              "border/handheld-nebula/handheld-nebula-gg+dot.slangp"
+              "border/handheld-nebula/handheld-nebula-gg.png" ;data
+              "border/handheld-nebula/handheld-nebula-gg.slangp"
+              "border/handheld-nebula/handheld-nebula-template.png" ;data
+              "border/imgborder.slangp"
+              "cel/shaders/advcartoon.slang" ;gpl (unknown version)
+              "cel/advcartoon.slangp"
+              "crt/shaders/Advanced_CRT_shader_whkrmrgks0.slang" ;gpl3+
+              "crt/advanced_crt_whkrmrgks0.slangp"
+              "crt/shaders/cathode-retro" ;expat
+              ;;"crt/cathode-retro_no-signal.slangp"    ;uses stock.slang
+              "crt/shaders/crt-1tap.slang"     ;cc0
+              "crt/shaders/crt-aperture.slang" ;gpl (unknown version)
+              "crt/crt-aperture.slangp"
+              "crt/shaders/crt-blurPi.slang" ;expat
+              "crt/crt-blurPi-sharp.slangp"
+              "crt/crt-blurPi-soft.slangp"
+              "crt/shaders/crt-caligari.slang" ;gpl2+
+              "crt/crt-caligari.slangp"
+              "crt/shaders/crt-cgwg-fast.slang" ;gpl2+
+              "crt/crt-cgwg-fast.slangp"
+              "crt/shaders/crt-consumer.slang" ;gpl2+
+              "crt/shaders/crt-consumer"
+              "crt/crt-consumer.slangp"
+              "crt/shaders/crt-Cyclon.slang" ;gpl2+
+              "crt/crt-Cyclon.slangp"
+              "crt/shaders/crt-easymode.slang"    ;gpl3+ (latest assumed)
+              "crt/shaders/crt-easymode-halation" ;gpl3+ (latest assumed)
+              "crt/crt-easymode-halation.slangp"
+              "crt/crt-easymode.slangp"
+              "crt/shaders/crt-gdv-mini.slang"       ;gpl2+
+              "crt/shaders/crt-gdv-mini-ultra.slang" ;gpl2+
+              "crt/crt-gdv-mini.slangp"
+              "crt/crt-gdv-mini-ultra-trinitron.slangp"
+              "crt/shaders/crt-geom-mini.slang" ;gpl2+
+              "crt/shaders/crt-geom.slang"      ;gpl2+
+              "crt/crt-geom-deluxe.slangp"
+              "crt/crt-geom-mini.slangp"
+              "crt/crt-geom.slangp"
+              "crt/crt-geom-tate.slangp"
+              "crt/shaders/crt-interlaced-halation" ;gpl2+
+              "crt/shaders/crt-lottes-fast.slang"   ;unlicense
+              "crt/crt-lottes-fast.slangp"
+              "crt/shaders/crt-lottes-multipass" ;public domain
+              "crt/shaders/crt-lottes.slang"
+              "crt/ crt-lottes.slangp"
+              ;;"crt/shaders/crt-maximus-royale" ;gpl2+
+              "crt/shaders/crt-nobody.slang" ;expat
+              "crt/crt-nobody.slangp"
+              "crt/shaders/crt-pi.slang" ;gpl2+
+              "crt/crt-pi.slangp"
+              "crt/shaders/crt-pocket.slang" ;gpl2+
+              "crt/crt-pocket.slangp"
+              "crt/shaders/crt-potato"  ;gpl3+
+              "crt/crt-potato-BVM.slangp"
+              "crt/crt-potato-cool.slangp"
+              "crt/crt-potato-warm.slangp"
+              "crt/shaders/crt-resswitch-glitch-koko.slang" ;gpl3+
+              "crt/crt-resswitch-glitch-koko.slangp"
+              ;; crt-royale relies on royale, which pulls in the non-free
+              ;; include/compat_macros.h.
+              ;; "crt/shaders/crt-royale" ;gpl2+
+              ;; "crt/crt-royale-fake-bloom-intel.slangp"
+              ;; "crt/crt-royale-fake-bloom.slangp"
+              ;; "crt/crt-royale-fast.slangp" "crt/crt-royale-intel.slangp"
+              ;; "crt/crt-royale.slangp"
+              "crt/shaders/crtsim"      ;cc0
+              "crt/crtsim.slangp"
+              "crt/shaders/crt-simple.slang" ;gpl2+
+              "crt/crt-simple.slangp"
+              "crt/shaders/crt-super-xbr" ;expat
+              "crt/crt-super-xbr.slangp"
+              "crt/shaders/dotmask.slang"   ;gpl3+ (latest assumed)
+              "crt/shaders/geom-deluxe"     ;gpl2+
+              "crt/shaders/gizmo-crt.slang" ;gpl2+
+              "crt/gizmo-crt.slangp"
+              "crt/shaders/gizmo-slotmask-crt.slang" ;gpl2+
+              "crt/gizmo-slotmask-crt.slangp"
+              "crt/shaders/GritsScanlines" ;public domain
+              ;;"crt/GritsScanlines.slangp"    ;uses stock.slang
+              "crt/shaders/gtu-v050"    ;gpl3
+              "crt/gtu-v050.slangp"
+              "crt/shaders/guest"       ;gpl2+
+              "crt/crt-guest-advanced-fastest.slangp"
+              ;; The following crt-guest-advanced presets require
+              ;; 'stock.slang', which license is unknown.
+              ;; "crt/crt-guest-advanced-fast.slangp"
+              ;; "crt/crt-guest-advanced-hd.slangp"
+              ;; "crt/crt-guest-advanced-ntsc.slangp"
+              ;; "crt/crt-guest-advanced.slangp"
+              "crt/shaders/hyllian"     ;expat
+              "crt/crt-hyllian-3d.slangp"
+              "crt/crt-hyllian-fast.slangp"
+              "crt/crt-hyllian-fast.slangp"
+              "crt/shaders/mame_hlsl"   ;bsd-3
+              "crt/mame_hlsl.slangp"
+              "crt/shaders/moire-resolve.slang" ;public domain
+              "crt/shaders/newpixie"            ;mit or public domain
+              "crt/newpixie-crt.slangp"
+              "crt/shaders/newpixie-mini" ;mit or public domain
+              "crt/newpixie-mini.slangp"
+              "crt/shaders/phosphorlut/scanlines-interlace-linearize.slang" ;public domain
+              "crt/shaders/rt_curvature" ;cc0
+              "crt/ray_traced_curvature_append.slangp"
+              "crt/shaders/torridgristle/Brighten.slang"       ;public domain
+              "crt/shaders/torridgristle/Candy-Bloom.slang"    ;public domain
+              "crt/shaders/torridgristle/ScanlineSimple.slang" ;public domain
+              "crt/shaders/torridgristle/sunset-gaussian-horiz.slang" ;public domain
+              "crt/shaders/torridgristle/sunset-gaussian-vert.slang" ;public domain
+              "crt/shaders/tvout-tweaks.slang"                       ;gpl3
+              "crt/tvout-tweaks.slangp"
+              "crt/shaders/zfast_crt"   ;gpl2+
+              "crt/zfast-crt-composite.slangp"
+              "crt/zfast-crt-curvature.slangp"
+              "crt/zfast-crt-geo.slangp"
+              "crt/zfast-crt-hdmask.slangp"
+              "crt/zfast-crt.slangp"
+              "deblur/shaders/deblur-luma.slang" ;gpl2+
+              "deblur/deblur-luma.slangp"
+              "deblur/shaders/deblur.slang" ;gpl2+
+              "deblur/deblur.slangp"
+              "denoisers/shaders/bilateral-horizontal.slang" ;gpl2+
+              "denoisers/shaders/bilateral.slang"            ;gpl2+
+              "denoisers/bilateral.slangp"
+              "denoisers/shaders/bilateral-vertical.slang" ;gpl2+
+              "denoisers/bilateral-2p.slangp"
+              "denoisers/shaders/fast-bilateral.slang" ;expat
+              "denoisers/fast-bilateral.slangp"
+              "denoisers/crt-fast-bilateral-super-xbr.slangp"
+              "denoisers/shaders/median_3x3.slang" ;bsd-2
+              "denoisers/median_3x3.slangp"
+              "denoisers/shaders/median_5x5.slang" ;bsd-2
+              "denoisers/median_5x5.slangp"
+              "dithering/shaders/bayer_4x4.slang" ;gpl2+
+              "dithering/bayer_4x4.slangp"
+              "dithering/shaders/blue_noise.slang" ;gpl2+
+              "dithering/shaders/blue_noise"
+              "dithering/blue_noise.slangp"
+              "dithering/shaders/blue_noise_dynamic.slang" ;gpl2+
+              "dithering/blue_noise_dynamic_4Bit.slangp"
+              "dithering/blue_noise_dynamic_monochrome.slangp"
+              "dithering/shaders/cbod-v1-pass1.slang" ;bsd-2
+              "dithering/shaders/cbod-v1-pass2.slang" ;bsd-2
+              "dithering/cbod_v1.slangp"
+              "dithering/shaders/checkerboard-dedither-pass1.slang" ;expat
+              "dithering/shaders/checkerboard-dedither-pass2.slang" ;expat
+              "dithering/shaders/checkerboard-dedither-pass3.slang"
+              "dithering/shaders/gendither.slang" ;gpl2+
+              "dithering/gendither.slangp"
+              "dithering/shaders/g-sharp_resampler.slang" ;gpl2+
+              "dithering/g-sharp_resampler.slangp"
+              "dithering/shaders/jinc2-dedither.slang" ;gpl2+
+              "dithering/jinc2-dedither.slangp"
+              "dithering/shaders/sgenpt-mix/sgenpt-mix-pass1.slang" ;expat
+              "dithering/shaders/sgenpt-mix/sgenpt-mix-pass2.slang" ;expat
+              "dithering/shaders/sgenpt-mix/sgenpt-mix-pass3.slang" ;expat
+              "dithering/shaders/sgenpt-mix/sgenpt-mix-pass4.slang" ;expat
+              "dithering/shaders/sgenpt-mix/sgenpt-mix-pass5.slang" ;expat
+              "dithering/shaders/sgenpt-mix.slang"                  ;expat
+              "dithering/sgenpt-mix.slangp"
+              "downsample/shaders/drez-g-sharp_resampler.slang" ;gpl2+
+              "downsample/drez/"
+              "downsample/drez_1x.slangp"
+              "downsample/shaders/mixed-res/cheap-sharpen-tweaked.slang" ;expat
+              "downsample/shaders/mixed-res/hires-tagger.slang" ;expat
+              "edge-smoothing/ddt/shaders/cut.slang"            ;expat
+              "edge-smoothing/ddt//cut.slangp"
+              "edge-smoothing/ddt/shaders/ddt-extended.slang" ;expat
+              "edge-smoothing/ddt/ddt-extended.slangp"
+              "edge-smoothing/ddt/shaders/ddt-jinc.slang" ;gpl2+
+              "edge-smoothing/ddt/ddt-jinc.slangp"
+              "edge-smoothing/ddt/shaders/ddt.slang" ;expat
+              "edge-smoothing/ddt/ddt.slangp"
+              "edge-smoothing/ddt/shaders/ddt-waterpaint.slang" ;expat
+              "edge-smoothing/ddt/shaders/ddt-xbr-lv1.slang"    ;expat
+              "edge-smoothing/ddt/ddt-xbr-lv1.slangp"
+              "edge-smoothing/fsr/shaders" ;expat & unlicense
+              "edge-smoothing/fsr/fsr-easu.slangp"
+              "edge-smoothing/fsr/fsr.slangp"
+              ;; hqx presets require stock.slang which has unknown license.
+              ;; "edge-smoothing/hqx"           ;expat and lgpl2.1+
+              "edge-smoothing/hqx/resources" ;data
+              "edge-smoothing/hqx/shaders"   ;expat and lgpl2.1+
+              "edge-smoothing/nedi/"         ;gpl3+ and expat
+              "edge-smoothing/nnedi3/"       ;gpl3+ and gpl2+
+              "edge-smoothing/omniscale/"    ;expat
+              "edge-smoothing/sabr/"         ;gpl2+
+              "edge-smoothing/scalefx/"      ;expat
+              "edge-smoothing/scalehq/shaders/4xScaleHQ.slang" ;gpl2+
+              "edge-smoothing/scalenx/shaders/mmpx.slang"      ;expat
+              "edge-smoothing/scalenx/mmpx.slangp"
+              "edge-smoothing/scalenx/shaders/scale2xplus.slang" ;gpl3+ (latest assumed)
+              "edge-smoothing/scalenx/scale2xplus.slangp"
+              "edge-smoothing/scalenx/shaders/scale2x.slang" ;gpl3+ (latest assumed)
+              "edge-smoothing/scalenx/scale2x.slangp"
+              "edge-smoothing/scalenx/shaders/scale3x.slang" ;gpl3+ (latest assumed)
+              "edge-smoothing/scalenx/scale3x.slangp"
+              "edge-smoothing/xbr/shaders/super-xbr/"               ;expat
+              "edge-smoothing/xbr/shaders/xbr-lv1-standalone.slang" ;expat
+              "edge-smoothing/xbr/shaders/xbr-lv2-hd.slang"         ;expat
+              "edge-smoothing/xbr/shaders/xbr-lv2-hd.slang"         ;expat
+              "edge-smoothing/xbr/shaders/xbr-lv2-multipass/"       ;expat
+              "edge-smoothing/xbr/shaders/xbr-lv2-standalone.slang" ;expat
+              "edge-smoothing/xbr/shaders/xbr-lv3-multipass/"       ;expat
+              "edge-smoothing/xbr/shaders/xbr-lv3-standalone.slang" ;expat
+              "edge-smoothing/xbr/shaders/xbr-lv4-multipass/"       ;expat
+              "edge-smoothing/xbr/other presets/shaders/4xbr-hybrid-crt.slang" ;expat
+              "edge-smoothing/xbr/other presets/4xbr-hybrid-crt.slangp"
+              "edge-smoothing/xbr/other presets/shaders/super-xbr/"  ;expat
+              "edge-smoothing/xbr/other presets/shaders/xbr-hydrid/" ;gpl2+
+              "edge-smoothing/xbr/other presets/xbr-lv1-standalone.slangp"
+              "edge-smoothing/xbr/other presets/xbr-lv2-hd.slangp"
+              "edge-smoothing/xbr/other presets/xbr-lv2-standalone.slangp"
+              "edge-smoothing/xbr/other presets/xbr-lv3-9x-standalone.slangp"
+              "edge-smoothing/xbr/other presets/xbr-lv3-standalone.slangp"
+              "edge-smoothing/xbrz/shaders/" ;expat
+              "edge-smoothing/xbrz/2xbrz-linear.slangp"
+              "edge-smoothing/xbrz/xbrz-freescale.slangp"
+              "edge-smoothing/xsal/shaders/" ;gpl2+
+              "edge-smoothing/xsal/2xsal-level2-crt.slangp"
+              "edge-smoothing/xsal/2xsal.slangp"
+              "edge-smoothing/xsal/4xsal-level2-crt.slangp"
+              "edge-smoothing/xsoft/shaders/" ;gpl2+
+              "film/shaders/film-grain.slang" ;cc-by3.0
+              "film/film-grain.slangp"
+              "gpu/"                            ;gpl2+
+              "handheld/shaders/authentic_gbc/" ;cc0
+              "handheld/authentic_gbc.slangp"
+              "handheld/shaders/bevel.slang" ;gpl2+
+              "handheld/bevel.slangp"
+              "handheld/shaders/color/" ;public domain
+              "handheld/nds-color.slangp"
+              "handheld/NSO-gba-color.slangp"
+              "handheld/NSO-gbc-color.slangp"
+              "handheld/palm-color.slangp"
+              "handheld/psp-color.slangp"
+              "handheld/gba-color.slangp"
+              "handheld/gbc-color.slangp"
+              "handheld/gbc-dev.slangp"
+              "handheld/gbc-gambatte-color.slangp"
+              "handheld/SP101-color.slangp"
+              "handheld/SwitchOLED-color.slangp"
+              "handheld/vba-color.slangp"
+              "handheld/shaders/dot.slang" ;public domain
+              "handheld/dot.slangp"
+              "handheld/shaders/ds-hybrid-view.slang" ;public domain
+              "handheld/shaders/gameboy/"             ;gpl3+
+              "handheld/gameboy-advance-dot-matrix.slangp"
+              "handheld/gameboy-color-dot-matrix.slangp"
+              "handheld/gameboy-color-dot-matrix-white-bg.slangp"
+              "handheld/gameboy-dark-mode.slangp"
+              "handheld/gameboy-light-mode.slangp"
+              "handheld/gameboy-light.slangp"
+              "handheld/gameboy-pocket-high-contrast.slangp"
+              "handheld/gameboy-pocket.slangp"
+              "handheld/gameboy.slangp"
+              "handheld/shaders/gbc_pokemon_modernizer.slang" ;public domain
+              "handheld/shaders/lcd1x_nds.slang"              ;gpl2+
+              "handheld/lcd1x_nds.slangp"
+              "handheld/shaders/lcd1x_psp.slang" ;gpl2+
+              "handheld/lcd1x_psp.slangp"
+              "handheld/shaders/lcd1x.slang" ;gpl2+
+              "handheld/lcd1x.slangp"
+              "handheld/shaders/lcd3x.slang" ;public domain
+              "handheld/ lcd3x.slangp"
+              "handheld/shaders/lcd-shader/" ;gpl3+
+              "handheld/lcd-shader.slangp"
+              "handheld/shaders/mgba/"  ;mpl2.0
+              "handheld/agb001-gba-color-motionblur.slangp"
+              "handheld/ags001-gba-color-motionblur.slangp"
+              "handheld/ags001.slangp"
+              "handheld/shaders/retro-tiles.slang" ;expat
+              "handheld/retro-tiles.slangp"
+              "handheld/shaders/retro-v2.slang" ;gpl2+
+              "handheld/retro-v2-nds-color.slangp"
+              "handheld/retro-v2.slangp"
+              "handheld/shaders/retro-v3.slang" ;gpl2+
+              "handheld/retro-v3-nds-color.slangp"
+              "handheld/retro-v3.slangp"
+              "handheld/shaders/sameboy-lcd.slang" ;expat
+              "handheld/sameboy-lcd-gbc-color-motionblur.slangp"
+              "handheld/sameboy-lcd.slangp"
+              "handheld/shaders/simpletex_lcd/" ;gpl2+
+              "handheld/simpletex_lcd-4k.slangp"
+              "handheld/simpletex_lcd_720p+gba-color.slangp"
+              "handheld/simpletex_lcd_720p+gbc-color.slangp"
+              "handheld/simpletex_lcd_720p.slangp"
+              "handheld/simpletex_lcd+gba-color-4k.slangp"
+              "handheld/simpletex_lcd+gba-color.slangp"
+              "handheld/simpletex_lcd+gbc-color-4k.slangp"
+              "handheld/simpletex_lcd+gbc-color.slangp"
+              "handheld/simpletex_lcd.slangp"
+              "handheld/shaders/zfast_lcd.slang" ;gpl2+
+              "handheld/zfast-lcd.slangp"
+              "handheld/console-border/shader-files/gb-pass0.slang" ;gpl3+
+              "handheld/console-border/shader-files/gb-pass1.slang" ;gpl3+
+              "handheld/console-border/shader-files/gb-pass2.slang" ;gpl3+
+              "handheld/console-border/shader-files/gb-pass3.slang" ;gpl3+
+              "handheld/console-border/resources/" ;non-functional data
+              "handheld/console-border/dmg.slangp"
+              "hdr/shaders/crt-guest-advanced-ntsc-pass1a.slang" ;gpl2+
+              "include/blur-functions.h"                         ;expat
+              "include/cleanEdge.inc"                            ;expat
+              "include/colorspace-tools.h"                       ;gpl2+
+              "include/gamma-management.h"                       ;expat
+              "include/img/black_lvl_dogway.h"                   ;<15 LOC
+              "include/img/black_lvl.h"                          ;<15 LOC
+              "include/img/cgwg_warp.h"                          ;gpl2
+              "include/img/channel_mix.h"                        ;<15 LOC
+              "include/img/col_tools.h"                          ;<15 LOC
+              "include/img/curvature.h"             ;gpl2 and gpl3
+              "include/img/int_ar.h"                ;public domain
+              "include/img/subpx_masks.h"           ;<15 LOC
+              "include/quad-pixel-communication.h"  ;expat
+              "include/special-functions.h"         ;expat
+              "include/subpixel_masks.h"            ;public domain
+              "interpolation/shaders/bicubic.slang" ;gpl2+
+              "interpolation/bicubic.slangp"
+              "interpolation/shaders/bicubic-x.slang" ;expat
+              "interpolation/shaders/bicubic-y.slang" ;expat
+              "interpolation/bicubic-fast.slangp"
+              "interpolation/shaders/b-spline-4-taps.slang" ;expat
+              "interpolation/b-spline-4-taps.slangp"
+              "interpolation/shaders/b-spline-x.slang" ;expat
+              "interpolation/shaders/b-spline-y.slang" ;expat
+              "interpolation/b-spline-fast.slangp"
+              "interpolation/shaders/catmull-rom-x.slang" ;expat
+              "interpolation/shaders/catmull-rom-y.slang" ;expat
+              "interpolation/catmull-rom-fast.slangp"
+              "interpolation/shaders/jinc2.slang" ;gpl2+
+              "interpolation/jinc2-sharper.slangp"
+              "interpolation/jinc2-sharp.slangp"
+              "interpolation/jinc2.slangp"
+              "interpolation/shaders/lanczos16.slang" ;gpl2+
+              "interpolation/lanczos16.slangp"
+              "interpolation/shaders/lanczos3-x.slang" ;gpl2+
+              "interpolation/shaders/lanczos3-y.slang" ;gpl2+
+              "interpolation/lanczos3-fast.slangp"
+              "interpolation/shaders/spline16-x.slang" ;gpl2+
+              "interpolation/shaders/spline16-y.slang" ;gpl2+
+              "interpolation/spline16-fast.slangp"
+              "interpolation/shaders/spline36-x.slang" ;gpl2+
+              "interpolation/shaders/spline36-y.slang" ;gpl2+
+              "interpolation/spline36-fast.slangp"
+              "misc/shaders/anti-flicker.slang" ;public domain
+              "misc/anti-flicker.slangp"
+              "misc/shaders/bead.slang" ;public domain
+              "misc/bead.slangp"
+              "misc/shaders/bob-deinterlacing.slang" ;public domain
+              "misc/bob-deinterlacing.slangp"
+              "misc/shaders/chromaticity.slang" ;gpl3+
+              "misc/chromaticity.slangp"
+              "misc/shaders/coverage/coverage.inc" ;<15 LOC
+              "misc/shaders/deband.slang"          ;gpl2+
+              "misc/deband.slangp"
+              "misc/shaders/deinterlace.slang" ;gpl2
+              "misc/deinterlace.slangp"
+              "misc/shaders/deposterize" ;gpl2+
+              "misc/shaders/geom.slang"  ;gpl2+
+              "misc/geom-append.slangp"
+              "misc/shaders/glass.slang" ;public domain
+              "misc/glass.slangp"
+              "misc/shaders/grade-no-LUT.slang" ;gpl2+
+              "misc/grade-no-LUT.slangp"
+              "misc/shaders/grade.slang" ;gpl2+
+              "misc/grade.slangp"
+              "misc/shaders/image-adjustment.slang" ;public domain
+              "misc/image-adjustment.slangp"
+              "misc/shaders/img_mod.slang" ;public domain
+              "misc/img_mod.slangp"
+              "misc/shaders/input_transform" ;cc0
+              "misc/shaders/interlacing.slang"
+              "misc/interlacing.slangp"
+              "misc/shaders/print-resolution/print-resolution-generate-and-cache.slang" ;gpl3+
+              "misc/shaders/relief.slang" ;expat
+              "misc/relief.slangp"
+              "misc/shaders/ss-gamma-ramp.slang" ;gpl2
+              "misc/ss-gamma-ramp.slangp"
+              "motionblur/shaders/braid-rewind.slang" ;gpl2+
+              "motionblur/braid-rewind.slangp"
+              "motionblur/shaders/mix_frames.slang" ;gpl2+
+              "motionblur/mix_frames.slangp"
+              "motionblur/shaders/mix_framse_smart.slang" ;gpl2+
+              "motionblur/mix_frames_smart.slangp"
+              "motionblur/shaders/motionblur-simple.slang" ;gpl2+
+              "motionblur/motionblur-simple.slangp"
+              "motionblur/shaders/response-time.slang" ;gpl2+
+              "motionblur/response-time.slangp"
+              "nes_raw_palette/shaders/gtu-famicom/" ;gpl3
+              "nes_raw_palette/gtu-famicom.slangp"
+              "nes_raw_palette/pal-r57shell-raw.slangp"
+              "nes_raw_palette/patchy-mesen-raw-palette.slangp"
+              "ntsc/shaders/analog_overshoot.slang"          ;lgpl3
+              "ntsc/shaders/ntsc-simple/ntsc-simple-1.slang" ;gpl2+
+              "ntsc/shaders/ntsc-simple/ntsc-simple-2.slang" ;gpl2+
+              "ntsc/shaders/ntsc-xot.slang" ;cc-by-sa version unknown
+              "ntsc/shaderspatchy-ntsc/afterglow0-update/afterglow0-update-pass2.slang" ;gpl2+
+              "ntsc/shaderspatchy-ntsc/afterglow0-update/afterglow0-update-pass3.slang" ;gpl2+
+              "ntsc/shaders/patchy-ntsc/linear-to-srgb.slang"          ;gpl3
+              "ntsc/shaders/patchy-ntsc/P22_80s_D65.png"               ;data
+              "ntsc/shaders/patchy-ntsc/P22_90s_D65.png"               ;data
+              "ntsc/shaders/patchy-ntsc/P22_J_D65.png"                 ;data
+              "ntsc/shaders/patchy-ntsc/P22_J_D93.png"                 ;data
+              "ntsc/shaders/patchy-ntsc/patchy-color.slang"            ;gpl3
+              "ntsc/shaders/patchy-ntsc/patchy-ntsc-combine-y-c.slang" ;gpl3
+              "ntsc/shaders/patchy-ntsc/patchy-ntsc-decode-y-rmy-bmy.slang" ;gpl3
+              "ntsc/shaders/patchy-ntsc/patchy-ntsc-encode-y-c.slang"   ;gpl3
+              "ntsc/shaders/patchy-ntsc/patchy-ntsc-eotf.slang"         ;gpl3
+              "ntsc/shaders/patchy-ntsc/patchy-ntsc-inc-filters.inc"    ;gpl3
+              "ntsc/shaders/patchy-ntsc/patchy-ntsc-inc-params.inc"     ;gpl3
+              "ntsc/shaders/patchy-ntsc/patchy-ntsc-noise.slang"        ;gpl3
+              "ntsc/shaders/patchy-ntsc/patchy-ntsc-separate-y-c.slang" ;gpl3
+              "ntsc/shaders/patchy-ntsc/trilinearLUT-switchable.slang"  ;gpl2+
+              "ntsc/shaders/patchy-ntsc/TrinitronP22_D65.png"           ;data
+              "ntsc/shaders/patchy-ntsc/TrinitronP22_D93.png"           ;data
+              "ntsc/patchy-blastem.slangp"
+              "ntsc/patchy-genplusgx.slangp"
+              "ntsc/patchy-snes.slangp"
+              "pal/shaders/pal-r57shell.slang" ;public domain
+              "pal/pal-r57shell.slangp"
+              "pal/shaders/pal-singlepass.slang" ;bsd-2
+              "pal/pal-singlepass.slangp"
+              "pal/resources/"                       ;data
+              "pixel-art-scaling/shaders/aann.slang" ;expat
+              "pixel-art-scaling/aann.slangp"
+              "pixel-art-scaling/shaders/bandlimit-pixel.slang" ;expat
+              "pixel-art-scaling/shaders/box_filter_aa/"        ;cc0
+              "pixel-art-scaling/box_filter_aa_xform.slangp"
+              "pixel-art-scaling/shaders/pixel_aa" ;cc0
+              "pixel-art-scaling/pixel_aa.slangp"
+              "pixel-art-scaling/pixel_aa_xform.slangp"
+              "pixel-art-scaling/shaders/pixellate.slang" ;isc
+              "pixel-art-scaling/pixellate.slangp"
+              "pixel-art-scaling/shaders/sharp-bilinear-scanlines.slang" ;public domain
+              "pixel-art-scaling/sharp-bilinear-scanlines.slangp"
+              "pixel-art-scaling/shaders/sharp-bilinear-simple.slang" ;public domain
+              "pixel-art-scaling/sharp-bilinear-simple.slangp"
+              "pixel-art-scaling/shaders/sharp-bilinear.slang"
+              "pixel-art-scaling/sharp-bilinear.slangp"
+              "pixel-art-scaling/shaders/uniform-nearest.slang" ;gpl2+
+              "pixel-art-scaling/uniform-nearest.slangp"
+              ;; The following include stock.slang, which license is unknown.
+              ;; "presets/crt-hyllian-sinc-smartblur-sgenpt.slangp"
+              ;; "presets/crt-hyllian-smartblur-sgenpt.slangp"
+              ;; The following depend on royale, which pulls in the non-free
+              ;; include/compat_macros.h.
+              ;; "presets/crt-royale-fast/4k/crt-royale-fast-rgb-aperture.slangp"
+              ;; "presets/crt-royale-fast/4k/crt-royale-fast-rgb-slot.slangp"
+              ;; "presets/crt-royale-fast/4k/crt-royale-pvm-rgb-blend.slangp"
+              ;; "presets/crt-royale-fast/4k/crt-royale-pvm-rgb-shmup.slangp"
+              ;; "presets/crt-royale-fast/4k/crt-royale-pvm-rgb.slangp"
+              ;; "presets/crt-royale-fast/crt-royale-fast-rgb-aperture.slangp"
+              ;; "presets/crt-royale-fast/crt-royale-fast-rgb-slot.slangp"
+              ;; "presets/crt-royale-fast/crt-royale-pvm-rgb-blend.slangp"
+              ;; "presets/crt-royale-fast/crt-royale-pvm-rgb-shmup.slangp"
+              ;; "presets/crt-royale-fast/crt-royale-pvm-rgb.slangp"
+              ;; "presets/crt-royale-fast-ntsc-composite.slangp"
+              ;; "presets/crt-royale-kurozumi.slangp"
+              ;; "presets/crt-royale-ntsc-composite.slangp"
+              ;; "presets/crt-royale-ntsc-svideo.slangp"
+              ;; "presets/crt-royale-pal-r57shell.slangp"
+              ;; "presets/crt-royale-xm29plus.slangp"
+              "presets/crtsim-grungy.slangp"
+              "presets/gizmo-crt/"      ;slangp data files
+              ;; "presets/imgborder-royale-kurozumi.slangp"
+              "presets/my_old_tv.slangp"
+              "presets/nedi-powervr-sharpen.slangp"
+              "presets/retro-v2+gba-color.slangp"
+              "presets/retro-v2+gbc-color.slangp"
+              "presets/retro-v2+image-adjustment.slangp"
+              "presets/retro-v2+nds-color.slangp"
+              "presets/retro-v2+psp-color.slangp"
+              "presets/retro-v2+vba-color.slangp"
+              "presets/tvout/tvout-jinc-sharpen.slangp"
+              "presets/tvout/tvout.slangp"
+              "presets/tvout+interlacing/tvout+interlacing.slangp"
+              "presets/tvout+interlacing/tvout-jinc-sharpen+interlacing.slangp"
+              ;; The xbr-xsal presets require support/linearize.slang, whose
+              ;; license is unknown.
+              ;;"presets/xbr-xsal/"                          ;slangp data files
+              "procedural/iq-raymarching-primitives.slang" ;expat
+              "quad/shaders/biquad.slang"                  ;gpl2+
+              "quad/quad_interp.slang"                     ;public domain
+              "reshade/shaders/magicbloom/"                ;mit
+              "scanlines/shaders/res-independent-scanlines.slang" ;public domain
+              "scanlines/res-independent-scanlines.slangp"
+              "scanlines/shaders/scanline-fract.slang" ;public domain
+              "scanlines/scanline-fract.slangp"
+              "scanlines/shaders/scanlines-rere.slang" ;public domain
+              "scanlines/scanlines-rere.slangp"
+              "scanlines/shaders/scanlines-sine-abs.slang" ;public domain
+              "scanlines/scanlines-sine-abs.slangp"
+              "sharpen/shaders/adaptive-sharpen-pass1.slang" ;bsd-2
+              "sharpen/shaders/adaptive-sharpen-pass2.slang" ;bsd-2
+              "sharpen/adaptive-sharpen-multipass.slangp"
+              "sharpen/shaders/adaptive-sharpen.slang" ;bsd-2
+              "sharpen/adaptive-sharpen.slangp"
+              "sharpen/shaders/anime4k/anime4k-compute-gradient.slang" ;expat
+              "sharpen/shaders/anime4k/anime4k-pushgrad-weak.slang"    ;expat
+              "sharpen/shaders/anime4k/anime4k-push.slang"             ;expat
+              "sharpen/shaders/cheap-sharpen.slang"                    ;expat
+              "sharpen/cheap-sharpen.slangp"
+              "sharpen/shaders/diff.slang"         ;lgpl3+
+              "sharpen/shaders/fast-sharpen.slang" ;gpl2+
+              "sharpen/shaders/rcas.slang"         ;expat
+              "sharpen/rca_sharpen.slangp"
+              "sharpen/shaders/super-res-ex.slang"                     ;lgpl3+
+              "stereoscopic-3d/shaders/anaglyph-to-side-by-side.slang" ;public domain
+              "stereoscopic-3d/anaglyph-to-side-by-side.slangp"
+              "stereoscopic-3d/shaders/sbs-to-interlaced.slang" ;public domain
+              "stereoscopic-3d/side-by-side-to-interlaced.slangp"
+              "stereoscopic-3d/shaders/sbs-to-shutter.slang" ;public domain
+              "stereoscopic-3d/side-by-side-to-shutter.slangp"
+              "stereoscopic-3d/shaders/shutter-to-side-by-side.slang" ;public domain
+              "stereoscopic-3d/shutter-to-side-by-side.slangp"
+              "stereoscopic-3d/shaders/side-by-side-simple.slang" ;public domain
+              "stereoscopic-3d/side-by-side-simple.slangp"
+              "vhs/shaders/vhs_and_crt_godot.slang" ;cc0
+              "vhs/vhs_and_crt_godot.slangp"        ;cc0
+              "warp/shaders/dilation.slang"         ;expat
+              "warp/shaders/erosion.slang"          ;expat
+              "warp/dilation.slangp"
+
+              ;; Build/development supporting files not installed.
+              ".git/"
+              "configure"
+              "Makefile")
+
+             ;; The following are special cases, to be used sparringly.  These
+             ;; presets uses stock.slang, whose license is unclear.
+             (for-each
+              (lambda (x)
+                (if (file-exists? x)
+                    (delete-file x)
+                    (format (current-error-port)
+                            "warning: file ~s does not exist~%" x)))
+              '("bfi/120hz-smart-BFI.slangp"
+                "crt/shaders/cathode-retro/signal_test.slangp"
+                "blurs/shaders/dual_filter/naive_resample.slang"
+                "edge-smoothing/scalefx/scalefx+rAA.slangp"
+                "edge-smoothing/scalefx/scalefx-9x.slangp"
+                "edge-smoothing/scalefx/scalefx-hybrid.slangp"
+                "edge-smoothing/scalefx/scalefx.slangp"
+                "edge-smoothing/scalefx/shaders/old/scalefx-9x.slangp"
+                "edge-smoothing/scalefx/shaders/old/scalefx.slangp"))))
+         (sha256
+          (base32
+           "0r45p61nhi44f7ka5dvcabin7q2l25liyhgynm159pwlpwxz83nv"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list #:tests? #f                ;no test suite
+             #:make-flags #~(list (string-append "PREFIX=" #$output))))
+      (home-page "https://github.com/libretro/slang-shaders")
+      (synopsis "Vulkan GLSL shader collections for RetroArch")
+      (description "This package provides a collection of Vulkan
+GLSL (@file{.slang}) shaders for use with RetroArch.")
+      ;; Here's the current low-down on the licenses used in this aggregated
+      ;; collection; please keep it up to date!
+      (license (list license:expat
+                     license:cc0
+                     license:cc-by3.0
+                     license:public-domain
+                     license:gpl2
+                     license:gpl2+
+                     license:gpl3
+                     license:gpl3+
+                     license:isc
+                     license:lgpl2.1+
+                     license:lgpl3
+                     license:mpl2.0
+                     license:bsd-2
+                     license:bsd-3
+                     license:unlicense)))))
+
+(define-public retroarch-minimal
+  (let ((commit "48b71d5cf8a070e785e2302d8fe241a7c2180fdd")
+        (revision "1"))
+    (package
+      (name "retroarch-minimal")
+      (version "1.19.1")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/libretro/RetroArch")
+               (commit commit)))
+         (snippet
+          #~(begin
+              (use-modules (guix build utils)
+                           (ice-9 ftw)
+                           (srfi srfi-26))
+              ;; XXX: 'delete-all-but' is copied from the turbovnc package.
+              (define (delete-all-but directory . preserve)
+                (define (directory? x)
+                  (and=> (stat x #f)
+                         (compose (cut eq? 'directory <>) stat:type)))
+                (with-directory-excursion directory
+                  (let* ((pred
+                          (negate (cut member <> (append '("." "..") preserve))))
+                         (items (scandir "." pred)))
+                    (for-each (lambda (item)
+                                (if (directory? item)
+                                    (delete-file-recursively item)
+                                    (delete-file item)))
+                              items))))
+              ;; Remove as much bundled sources as possible, shaving off about
+              ;; 65 MiB.
+              (delete-all-but "deps"
+                              "feralgamemode" ;used in platform_unix.c
+                              "mbedtls"       ;further refined below
+                              "yxml")         ;used in rxml.c
+              ;; This is an old root certificate used in net_socket_ssl_mbed.c,
+              ;; not actually from mbedtls.
+              (delete-all-but "deps/mbedtls" "cacert.h")))
+         (patches (search-patches "retroarch-improved-search-paths.patch"
+                                  "retroarch-unbundle-spirv-cross.patch"))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "13hgg4pxkpwlcmmyp9npr9k9cb94waqiyjpy2jzs8m9rc7xl2ap9"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:tests? #f                     ; no tests
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'configure
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; Hard-code some store file names.
+                (substitute* "gfx/common/vulkan_common.c"
+                  (("libvulkan.so")
+                   (search-input-file inputs "lib/libvulkan.so")))
+                (substitute* "gfx/common/wayland/generate_wayland_protos.sh"
+                  (("/usr/local/share/wayland-protocols")
+                   (search-input-directory inputs "share/wayland-protocols")))
+
+                ;; Without HLSL, we can still enable GLSLANG and Vulkan support.
+                (substitute* "qb/config.libs.sh"
+                  (("[$]HAVE_GLSLANG_HLSL") "notcare"))
+
+                ;; The configure script does not yet accept the extra arguments
+                ;; (like ‘CONFIG_SHELL=’) passed by the default configure phase.
+                (invoke
                  "./configure"
-                 ,@(if (string-prefix? "armhf" (or (%current-target-system)
-                                                  (%current-system)))
-                       '("--enable-neon" "--enable-floathard")
-                       '())
-                 (string-append "--prefix=" out)
+                 #$@(if (string-prefix? "armhf" (or (%current-target-system)
+                                                    (%current-system)))
+                        '("--enable-neon" "--enable-floathard")
+                        '())
+                 (string-append "--prefix=" #$output)
                  ;; Non-free software are available through the core updater,
                  ;; disable it.  See <https://issues.guix.gnu.org/38360>.
                  "--disable-update_cores"
+                 "--disable-update_core_info"
+                 "--disable-online_updater"
+                 ;; The assets are provided via the `retroarch-assets' package.
+                 "--disable-update_assets"
                  "--disable-builtinmbedtls"
                  "--disable-builtinbearssl"
                  "--disable-builtinzlib"
                  "--disable-builtinflac"
-                 "--disable-builtinglslang")))))))
-    (inputs
-     (list alsa-lib
-           eudev
-           ffmpeg
-           flac
-           freetype
-           glslang
-           libxinerama
-           libxkbcommon
-           libxml2
-           libxrandr
-           libxv
-           mbedtls-lts
-           mesa
-           openal
-           openssl
-           pulseaudio
-           python
-           qtbase-5
-           sdl2
-           spirv-headers
-           spirv-tools
-           vulkan-loader
-           wayland
-           zlib))
-    (native-inputs
-     (list pkg-config wayland-protocols which))
-    (native-search-paths
-     (list (search-path-specification
-            (variable "LIBRETRO_DIRECTORY")
-            (separator #f)              ; single entry
-            (files '("lib/libretro")))))
-    (home-page "https://www.libretro.com/")
-    (synopsis "Reference frontend for the libretro API")
-    (description
-     "Libretro is a simple but powerful development interface that allows for
+                 "--disable-builtinglslang"
+                 "--disable-builtinspirv_cross"
+                 ;; These are disabled to avoid requiring the bundled
+                 ;; dependencies.
+                 "--disable-7zip"
+                 "--disable-cheevos"
+                 "--disable-crtswitchres"
+                 "--disable-discord"
+                 "--disable-dr_mp3"
+                 "--disable-ibxm"
+                 "--disable-stb_font"
+                 "--disable-stb_image"
+                 "--disable-stb_vorbis"
+                 "--disable-xdelta"))))))
+      (native-inputs
+       (list pkg-config
+             wayland-protocols
+             which))
+      (inputs
+       (list alsa-lib
+             eudev
+             ffmpeg
+             flac
+             fontconfig
+             freetype
+             glslang
+             libxinerama
+             libxkbcommon
+             libxml2
+             libxrandr
+             libxv
+             mbedtls-lts
+             mesa
+             openal
+             openssl
+             pulseaudio
+             python
+             qtbase-5
+             sdl2
+             spirv-cross
+             spirv-headers
+             spirv-tools
+             v4l-utils
+             vulkan-loader
+             wayland
+             zlib))
+      (native-search-paths
+       (list (search-path-specification
+              (variable "LIBRETRO_DIRECTORY")
+              (separator #f)            ;single entry
+              (files '("lib/libretro")))
+             (search-path-specification
+              (variable "LIBRETRO_ASSETS_DIRECTORY")
+              (separator #f)            ;single entry
+              (files '("share/libretro/assets")))
+             (search-path-specification
+              (variable "LIBRETRO_AUTOCONFIG_DIRECTORY")
+              (separator #f)            ;single entry
+              (files '("share/libretro/autoconfig")))
+             (search-path-specification
+              (variable "LIBRETRO_VIDEO_FILTER_DIRECTORY")
+              (separator #f)            ;single entry
+              (files '("share/libretro/filters/video")))
+             (search-path-specification
+              (variable "LIBRETRO_VIDEO_SHADER_DIRECTORY")
+              (separator #f)            ;single entry
+              (files '("share/libretro/shaders")))))
+      (home-page "https://www.libretro.com/")
+      (synopsis "Reference frontend for the libretro API")
+      (description
+       "Libretro is a simple but powerful development interface that allows for
 the easy creation of emulators, games and multimedia applications that can plug
 straight into any libretro-compatible frontend.  RetroArch is the official
 reference frontend for the libretro API, currently used by most as a modular
 multi-system game/emulator system.")
-    (license license:gpl3+)))
+      (license (list license:gpl3+      ;for RetroArch itself
+                     license:asl2.0     ;SPIRV-Cross
+                     license:expat      ;yxml
+                     license:bsd-3))))) ;feragamemode
+
+(define-public retroarch
+  (package
+    (inherit retroarch-minimal)
+    (name "retroarch")
+    (source #f)
+    (build-system trivial-build-system)
+    (arguments (list #:builder #~(mkdir #$output)))
+    (propagated-inputs
+     (list retroarch-minimal
+           ;; We cannot simply hard-code the resource paths, as they'd written
+           ;; to ~/.config/retroarch.cfg and never updated (going stale),
+           ;; which is problematic.  The environment variables overrides the
+           ;; configuration file values.
+           retroarch-assets
+           retroarch-core-info
+           retroarch-joypad-autoconfig))))
 
 (define-public wasm4
   (package
@@ -2230,36 +3155,308 @@ from various forks of Gens, and improved platform portability.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0j054x38fwai61vj36sc04r3zkzay5acq2cgd9zqv5hs51s36g5b"))))
+        (base32 "0j054x38fwai61vj36sc04r3zkzay5acq2cgd9zqv5hs51s36g5b"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags (list "-C" "bsnes"
-                          ;; Remove march=native
-                          "local=false"
-                          (string-append "prefix=" (assoc-ref %outputs "out")))
-       #:tests? #f                      ; No tests.
-       #:phases (modify-phases %standard-phases
-                  (delete 'configure))))
-    (native-inputs
-     (list pkg-config))
+     (list
+      #:make-flags #~(list "-C" "bsnes"
+                           ;; Remove march=native
+                           "local=false"
+                           (string-append "prefix=" #$output))
+      #:tests? #f                       ;No tests.
+      #:phases #~(modify-phases %standard-phases
+                   (delete 'configure))))
+    (native-inputs (list pkg-config))
     (inputs
-     `(("alsa-lib" ,alsa-lib)
-       ("ao" ,ao)
-       ("cairo" ,cairo)
-       ("eudev" ,eudev)
-       ("gtksourceview-2" ,gtksourceview-2)
-       ("libxrandr" ,libxrandr)
-       ("libxv" ,libxv)
-       ("openal" ,openal)
-       ("pulseaudio" ,pulseaudio)
-       ("sdl2" ,sdl2)))
-    (home-page "https://bsnes.dev/")
+     (list alsa-lib
+           ao
+           cairo
+           eudev
+           gtksourceview-2
+           libxrandr
+           libxv
+           openal
+           pulseaudio
+           sdl2))
+    (home-page "https://github.com/bsnes-emu/bsnes")
     (synopsis "Emulator for the Super Nintendo / Super Famicom systems")
     (description
      "bsnes is a Super Nintendo / Super Famicom emulator that focuses on
 performance, features, and ease of use.")
     (license license:gpl3)))
+
+(define-public jg-api
+  (package
+    (name "jg-api")
+    (version "1.0.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.com/jgemu/jg")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0117cvfvzhrm9fxnryhbnf9r0f8ij4ahhfqiqp5yv11bz2wcyhqh"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f                  ;no test suite
+           #:make-flags #~(list (string-append "PREFIX=" #$output))
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'configure)))) ;no configure phase
+    (home-page "https://gitlab.com/jgemu/jg")
+    (synopsis "Emulators Plugin API")
+    (description "This package provides the Jolly Good API C and C++ headers.
+The Jolly Good API is a shared object or plugin @acronym{API, Application
+Programming Interface} for emulators.")
+    (license license:zlib)))
+
+(define-public jgrf
+  (package
+    (name "jgrf")
+    (version "1.2.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.com/jgemu/jgrf")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (snippet '(begin
+                          ;; TODO: Package md5.h and md5.c from
+                          ;; http://openwall.info/wiki/people/solar/software
+                          ;; /public-domain-source-code/md5,
+                          ;; remove these bundled files and set the
+                          ;; USE_EXTERNAL_MD5 Make flag to 1.
+                          ;; (delete-file "deps/md5.h")
+                          ;; (delete-file "deps/md5.c")
+                          (use-modules (guix build utils))
+                          (delete-file-recursively "deps/miniz")))
+              (sha256
+               (base32
+                "1ivc8jj0majvgi0rj9nn429bmh7wp2nf87hq8xg05fjqwalfy3bl"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f                ;no test suite
+           #:make-flags
+           #~(list (string-append "AR=" #$(ar-for-target))
+                   (string-append "CC=" #$(cc-for-target))
+                   (string-append "CXX=" #$(cxx-for-target))
+                   (string-append "PREFIX=" #$output))
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'configure))))
+    (native-inputs (list jg-api pkg-config))
+    (inputs
+     (list flac
+           libepoxy
+           libsamplerate
+           lzo
+           miniz
+           sdl2
+           soxr
+           speexdsp
+           zlib
+           `(,zstd "lib")))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "JOLLYGOOD_CORE_DIRS")
+            (files '("lib/jollygood")))
+           (search-path-specification
+            (variable "JOLLYGOOD_ASSET_DIRS")
+            (files '("share/jollygood")))))
+    (home-page "https://gitlab.com/jgemu/jgrf")
+    (synopsis "Jolly Good Reference Frontend")
+    (description "The Jolly Good Reference Frontend (accessible via the
+@command{jollygood} command) aims to be the simplest possible frontend to The
+Jolly Good API.  It may be used to run emulators built as shared objects, or
+as a \"white-label\" frontend for statically linked standalone emulators.")
+    ;; The main license is BSD-3; the bundled source licenses are also listed
+    ;; below.
+    (license (list license:bsd-3 ;this software, gltext.h, lodepng.c, lodepng.h
+                   license:expat ;ezmenu.h source, musl_memmem.c,
+                                        ;parson.h, parson.c, tconfig.h, tconfig.c
+                   license:public-domain ;md5.h, md5.c, parg.h, parg.c
+                   license:cc0))))
+
+(define-public jg-bsnes
+  (package
+    (name "jg-bsnes")
+    (version "2.0.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.com/jgemu/bsnes")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              ;; XXX: Some source dependencies are bundled and are not easy to
+              ;; unbundle due to the build system building an object combining
+              ;; their sources directly (see:
+              ;; https://gitlab.com/jgemu/bsnes/-/issues/6).
+              ;; - byuuML (no build system)
+              ;; - gb (the 'Core' sources of SameBoy)
+              ;; - libco (no build system)
+              ;; - snes_spc (also modified by this project)
+              (snippet '(begin
+                          (use-modules (guix build utils))
+                          (delete-file-recursively "deps/libsamplerate")))
+              (sha256
+               (base32
+                "0z1ka4si8vcb0j6ih087cni18vpgfd3qnaw24awycxz23xc0jkdv"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f                  ;no test suite
+           #:make-flags
+           #~(list (string-append "AR=" #$(ar-for-target))
+                   (string-append "CC=" #$(cc-for-target))
+                   (string-append "CXX=" #$(cxx-for-target))
+                   (string-append "PREFIX=" #$output))
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'configure)))) ;no configure script
+    (native-inputs (list jg-api pkg-config))
+    (inputs (list libsamplerate))
+    (home-page "https://gitlab.com/jgemu/bsnes")
+    (synopsis "Jolly Good Fork of bsnes")
+    (description "@code{bsnes-jg} is a cycle accurate emulator for the Super
+Famicom/Super Nintendo Entertainment System, including support for the Super
+Game Boy, BS-X Satellaview, and Sufami Turbo.  @code{bsnes-jg} is a fork of
+@code{bsnes} v115, Many changes have been made post-fork:
+@itemize
+@item Higher quality resampler with settings
+@item Improved performance without loss of accuracy
+@item Portability improvements
+@item Removal of accuracy-reducing hacks and unnecessary code
+@item Significant increase in standards compliance
+@item Translation to the C++ Standard Library (ISO C++11)
+@end itemize
+
+In particular, it uses much less @acronym{CPU, Central Processing Unit}
+compared to the original @code{bsnes} (though not as little as @code{zsnes}).
+
+The supported file formats are:
+@itemize @file
+@item .sfc
+@item .smc
+@item .bs
+@item .st
+@item .fig
+@item .swc
+@end itemize
+
+This is intended to be used with the Jolly Good Reference Frontend
+@command{jollygood} command from the @code{jgrf} package.")
+    ;; The project license is GPL3+.  The bundled source licenses are also
+    ;; listed below.
+    (license (list license:gpl3+
+                   license:bsd-3        ;byuuML
+                   license:expat        ;gb
+                   license:isc          ;libco
+                   license:lgpl2.1+))))
+
+(define-public libretro-bsnes-jg
+  ;; There aren't any release yet; use the latest commit.
+  (let ((commit "0d42dea0cb20aba8bfec05b928e4aed2b295352a")
+        (revision "0"))
+    (package
+      (inherit jg-bsnes)
+      (name "libretro-bsnes-jg")
+      (version (git-version "0" revision commit))
+      (source (origin
+                (inherit (package-source jg-bsnes))
+                (uri (git-reference
+                      (url "https://git.libretro.com/libretro/bsnes-jg")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1dq2ypf4g4karayc9sgqn74bfnnsq2f4b3r615xyczchdaf2mi1n"))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments jg-bsnes)
+         ((#:make-flags flags)
+          #~(cons* #$(string-append "GIT_VERSION=" version)
+                   (string-append "prefix=" #$output)
+                   #$flags))
+         ((#:phases phases)
+          #~(modify-phases #$phases
+              (add-after 'unpack 'chdir
+                (lambda _
+                  (chdir "libretro")))
+              (add-after 'chdir 'unbundle-libsamplerate
+                (lambda _
+                  (substitute* "Makefile.common"
+                    (("LIBS \\+= -lm")
+                     "LIBS += -lm -lsamplerate")
+                    ((".*\\$\\(CORE_DIR)/deps/libsamplerate/.*")
+                     ""))))))))
+      (home-page "https://git.libretro.com/libretro/bsnes-jg")
+      (synopsis "libretro port of bsnes-jg"))))
+
+(define-public jg-nestopia
+  (package
+    (name "jg-nestopia")
+    (version "1.52.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.com/jgemu/nestopia")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "19qg9hgh25aaym7b81v5g7165v4fyymas6dmzc4z867mzaphbn6s"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f                  ;no test suite
+           #:make-flags
+           #~(list (string-append "AR=" #$(ar-for-target))
+                   (string-append "CC=" #$(cc-for-target))
+                   (string-append "CXX=" #$(cxx-for-target))
+                   (string-append "PREFIX=" #$output))
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'configure)))) ;no configure script
+    (native-inputs (list jg-api pkg-config))
+    (home-page "https://gitlab.com/jgemu/nestopia")
+    (synopsis "Jolly Good Fork of Nestopia")
+    (description "Nestopia JG is an emulator for the Nintendo Entertainment
+System/Famicom, including support for the Famicom Disk System and VS. System.
+Though originally a fork, Nestopia JG has become the de facto upstream branch
+of the Nestopia emulator.")
+    (license (list license:gpl2+        ;this project
+                   license:lgpl2.1+)))) ;nes_ntsc source files
+
+(define-public jg-cega
+  (package
+    (name "jg-cega")
+    (version "0.6.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.com/jgemu/cega")
+                    (commit version)))
+              (modules '((guix build utils)))
+              (snippet '(delete-file-recursively "deps/"))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "10qxfch08850zivxf4s1mhh0clx4h1cfn440acm6d7glb6wbv822"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f                  ;no test suite
+           #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target))
+                   (string-append "PREFIX=" #$output))
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'configure))))
+    (native-inputs (list jg-api pkg-config))
+    (inputs (list speexdsp))
+    (home-page "https://gitlab.com/jgemu/cega")
+    (synopsis "Jolly Good SG-1000, SMS, Game Gear, and Mega Drive/Genesis \
+emulator")
+    (description "Cega is a cycle accurate emulator for the Sega SG-1000,
+Master System, and Game Gear written specifically for The Jolly Good API.
+Mega Drive emulation is in an experimental state.")
+    (license (list license:mpl2.0
+                   license:expat        ;src/emu2413, src/m68k
+                   license:bsd-3        ;src/ymfm
+                   license:zlib))))     ;src/z80.h
 
 (define-public zsnes
   (package

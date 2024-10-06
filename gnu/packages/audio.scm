@@ -765,7 +765,7 @@ purposes developed at Queen Mary, University of London.")
 (define-public ardour
   (package
     (name "ardour")
-    (version "8.4")
+    (version "8.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -782,14 +782,13 @@ purposes developed at Queen Mary, University of London.")
 namespace ARDOUR { const char* revision = \"" version "\" ; const char* date = \"\"; }")))))
               (sha256
                (base32
-                "17gh1yaaby17zwx43h5v8dsrcznks9pn8jddc3wadq13b5x7zb7a"))
-              (file-name (string-append name "-" version))))
+                "1wam4vq9l4g626x8rdvr6c3dqv8fc6llyxriiq77zyqc9sba3pjb"))
+              (file-name (git-file-name name version))))
     (build-system waf-build-system)
     (arguments
      (list
       #:configure-flags
-      '(list "--cxx11"                  ;required by gtkmm
-             "--optimize"
+      '(list "--optimize"
              "--no-phone-home"          ;don't contact ardour.org
              "--no-ytk"                 ;don't use bundled GTK2
              "--freedesktop"            ;build .desktop file
@@ -5920,15 +5919,15 @@ edited, converted, compressed and saved.")
 (define-public lsp-dsp-lib
   (package
     (name "lsp-dsp-lib")
-    (version "0.5.14")
+    (version "1.0.26")
     (source
       (origin
         (method url-fetch)
-        (uri (string-append "https://github.com/sadko4u/lsp-dsp-lib/"
+        (uri (string-append "https://github.com/lsp-plugins/lsp-dsp-lib/"
                             "releases/download/" version
-                            "/lsp-dsp-lib-" version "-src.tar.gz"))
+                            "/lsp-dsp-lib-src-" version ".tar.gz"))
         (sha256
-         (base32 "1gcznkyybywbgdi2fhx27i8sckhy6ahvxax72b213g1lr5aaw7bq"))))
+         (base32 "07g02nglzrq9yp267m1aflrmr7i35pc3anlhasp35048i0xvy51i"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ; no tests
@@ -5945,7 +5944,7 @@ edited, converted, compressed and saved.")
                  (lambda _
                    (invoke "make" "config"
                            (string-append "PREFIX=" #$output)))))))
-    (home-page "https://github.com/sadko4u/lsp-dsp-lib")
+    (home-page "https://github.com/lsp-plugins/lsp-dsp-lib")
     (synopsis "Digital signal processing library")
     (description "The LSP DSP library provides a set of functions that perform
 SIMD-optimized computing on several hardware architectures.  All functions

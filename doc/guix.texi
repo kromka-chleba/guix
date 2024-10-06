@@ -49,7 +49,7 @@ Copyright @copyright{} 2017 humanitiesNerd@*
 Copyright @copyright{} 2017, 2021 Christine Lemmer-Webber@*
 Copyright @copyright{} 2017, 2018, 2019, 2020, 2021, 2022 Marius Bakke@*
 Copyright @copyright{} 2017, 2019, 2020, 2022 Hartmut Goebel@*
-Copyright @copyright{} 2017, 2019, 2020, 2021, 2022, 2023 Maxim Cournoyer@*
+Copyright @copyright{} 2017, 2019, 2020, 2021, 2022, 2023, 2024 Maxim Cournoyer@*
 Copyright @copyright{} 2017–2022 Tobias Geerinckx-Rice@*
 Copyright @copyright{} 2017 George Clemmer@*
 Copyright @copyright{} 2017 Andy Wingo@*
@@ -21085,6 +21085,11 @@ ISC DHCP client listens only on the specified interfaces.
 @item @code{config-file} (default: @code{#f})
 The configuration file for the ISC DHCP client.
 
+@item @code{version} (default: @code{"4"})
+The DHCP protocol version to use, as a string.  Accepted values are
+@code{"4"} or @code{"6"} for DHCPv4 or DHCPv6, respectively, as well as
+@code{"4o6"}, for DHCPv4 over DHCPv6 (as specified by RFC 7341).
+
 @item @code{shepherd-requirement} (default: @code{'()})
 @itemx @code{shepherd-provision} (default: @code{'(networking)})
 This option can be used to provide a list of symbols naming Shepherd services
@@ -39353,6 +39358,7 @@ like to serve.
 
 @subsubheading Joycond service
 @cindex joycond
+@cindex nintendo controllers
 The joycond service allows the pairing of Nintendo joycon game
 controllers over Bluetooth. (@pxref{Desktop Services} for setting up
 Bluetooth.)
@@ -39367,7 +39373,10 @@ The joycond package to use.
 @end deftp
 
 @defvar joycond-service-type
-Service type for the joycond service.
+Service type for the joycond service.  It also extends the
+@code{udev-service-type} with the @code{joycond} package (provided via
+the @code{joycond-configuration} configuration), so that joycond
+controllers can be detected and used by an unprivileged user.
 @end defvar
 
 @subsubheading The Battle for Wesnoth Service

@@ -22,6 +22,7 @@
 ;;; Copyright © 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2021 Christopher Howard <christopher@librehacker.com>
 ;;; Copyright © 2023 Herman Rimm <herman@rimm.ee>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -559,7 +560,7 @@ GUI.  It is based on PyQt6 and QtWebEngine.")
 (define-public vimb
   (package
     (name "vimb")
-    (version "3.6.0")
+    (version "3.7.0")
     (source
      (origin
        (method git-fetch)
@@ -567,17 +568,22 @@ GUI.  It is based on PyQt6 and QtWebEngine.")
              (url "https://github.com/fanglingsu/vimb/")
              (commit version)))
        (sha256
-        (base32 "0228khh3lqbal046k6akqah7s5igq9s0wjfjbdjam75kjj42pbhj"))
+        (base32 "1yazd0hm6vsz7sqp5qf3zzjmvqs3can6sbm2ijlfcj4v3kz42vrm"))
        (file-name (git-file-name name version))))
     (build-system glib-or-gtk-build-system)
     (arguments
-     '(#:tests? #f                      ; no tests
-       #:make-flags (list "CC=gcc"
-                          "DESTDIR="
-                          (string-append "PREFIX=" %output))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))))
+     (list #:tests? #f                      ; no tests
+           #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
+                                "DESTDIR="
+                                (string-append "PREFIX=" #$output))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)
+               (add-after 'unpack 'fix-config-mk
+                 (lambda* _
+                   (substitute* "config.mk"
+                     (("webkit2gtk-4\\.1")
+                      "webkit2gtk-4.0")))))))
     (inputs
      `(("glib-networking" ,glib-networking)
        ("gsettings-desktop-schemas" ,gsettings-desktop-schemas)

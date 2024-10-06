@@ -419,16 +419,10 @@ and will take advantage of multiple processor cores where possible.")
     (license (list l:public-domain      ; sha1.*, used to build without OpenSSL
                    l:gpl2+))))          ; with permission to link with OpenSSL
 
-(define %v2_empty_file.torrent
-  (origin (method url-fetch)
-          (uri "https://github.com/arvidn/libtorrent/raw/v2.0.9/test/test_torrents/v2_empty_file.torrent")
-          (sha256
-           (base32 "1hydgf0m9193hy9010wl0wrbz4k4cgrqg70jakx68pgi79jcqnrn"))))
-
 (define-public libtorrent-rasterbar
   (package
     (name "libtorrent-rasterbar")
-    (version "2.0.9")
+    (version "2.0.10")
     (source
      (origin
        (method url-fetch)
@@ -437,74 +431,60 @@ and will take advantage of multiple processor cores where possible.")
                        "releases/download/v" version "/"
                        "libtorrent-rasterbar-" version ".tar.gz"))
        (sha256
-        (base32 "13kry578ifzz4m2f291bbd7v5v9zsi8y3mf38146cnqw0sv95kch"))
-       ;; https://github.com/arvidn/libtorrent/issues/7566
-       ;; Remove when resolved.  I would hope this to be fixed in 2.0.10.
-       (modules '((guix build utils)))
-       (snippet
-        #~(substitute* "test/test_copy_file.cpp"
-            (("EXT4_SUPER_MAGIC, EXT3_SUPER_MAGIC, XFS_SUPER_MAGIC" all)
-             (string-append all ", TMPFS_MAGIC\n"))))))
+        (base32 "0pc8rbcp7njbx8m02z47pcbbwcp5cjggbgq4sfjc19dc3n65p4zw"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags '("-Dpython-bindings=ON"
-                           "-Dbuild_tests=ON")
-       ;; Tests do not reliably work when executed in parallel.
-       #:parallel-tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         ;; https://github.com/arvidn/libtorrent/issues/7567
-         ;; Remove when resolved.  I would hope this to be fixed in 2.0.10.
-         ;; Do not forget to remove the %v2_empty_file.torrent variable.
-         (add-before 'configure 'copy-v2_empty_file.torrent
-           (lambda* (#:key native-inputs inputs #:allow-other-keys)
-             (copy-file (assoc-ref (or native-inputs inputs)
-                                   "%v2_empty_file.torrent")
-                        "test/test_torrents/v2_empty_file.torrent")))
-         (replace 'check
-           (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
-             (let* ((disabled-tests
-                     '(
-                       ;; Requires a non-localhost IPv4 interface.
-                       "test_upnp"
-                       ;; test_ssl needs to be run separately.
-                       "test_ssl"))
-                    (exclude-regex (string-append "^("
-                                                  (string-join disabled-tests "|")
-                                                  ")$"))
-                    (timeout "600")
-                    (jobs (if parallel-tests?
-                              (number->string (parallel-job-count))
-                              "1")))
-               (when tests?
-                 (invoke "ctest"
-                         "-E" exclude-regex
-                         "-j" jobs
-                         "--timeout" timeout
-                         "--output-on-failure")
-                 ;; test_ssl relies on bundled TLS certificates with a fixed
-                 ;; expiry date.  To ensure succesful builds in the future,
-                 ;; fake the time to be roughly that of the release.
-                 ;;
-                 ;; At the same time, faketime happens to cause
-                 ;; test_fast_extension, test_privacy and test_resolve_links
-                 ;; to hang, even with FAKETIME_ONLY_CMDS.  Not sure why.  So
-                 ;; execute only test_ssl under faketime.
-                 ;;
-                 ;; Note: The test_ssl test times out in the ci.
-                 ;; Temporarily disable it until that is resolved.
-                 ;; (invoke "faketime" "2022-10-24"
-                 ;;         "ctest"
-                 ;;         "-R" "^test_ssl$"
-                 ;;         "-j" jobs
-                 ;;         "--timeout" timeout
-                 ;;         "--output-on-failure")
-                 )))))))
+     (list
+      #:configure-flags
+      #~(list "-Dpython-bindings=ON"
+              "-Dbuild_tests=ON")
+      ;; Tests do not reliably work when executed in parallel.
+      #:parallel-tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
+              (let* ((disabled-tests
+                      '(;; Requires a non-localhost IPv4 interface.
+                        "test_upnp"
+                        ;; test_ssl needs to be run separately.
+                        "test_ssl"))
+                     (exclude-regex (string-append "^("
+                                                   (string-join disabled-tests "|")
+                                                   ")$"))
+                     (timeout "600")
+                     (jobs (if parallel-tests?
+                               (number->string (parallel-job-count))
+                               "1")))
+                (when tests?
+                  (invoke "ctest"
+                          "-E" exclude-regex
+                          "-j" jobs
+                          "--timeout" timeout
+                          "--output-on-failure")
+                  ;; test_ssl relies on bundled TLS certificates with a fixed
+                  ;; expiry date.  To ensure succesful builds in the future,
+                  ;; fake the time to be roughly that of the release.
+                  ;;
+                  ;; At the same time, faketime happens to cause
+                  ;; test_fast_extension, test_privacy and test_resolve_links
+                  ;; to hang, even with FAKETIME_ONLY_CMDS.  Not sure why.  So
+                  ;; execute only test_ssl under faketime.
+                  ;;
+                  ;; Note: The test_ssl test times out in the ci.
+                  ;; Temporarily disable it until that is resolved.
+                  ;; (invoke "faketime" "2022-10-24"
+                  ;;         "ctest"
+                  ;;         "-R" "^test_ssl$"
+                  ;;         "-j" jobs
+                  ;;         "--timeout" timeout
+                  ;;         "--output-on-failure")
+                  )))))))
     (inputs (list boost openssl))
-    (native-inputs `(("libfaketime" ,libfaketime)
-                     ("python-wrapper" ,python-wrapper)
-                     ("pkg-config" ,pkg-config)
-                     ("%v2_empty_file.torrent" ,%v2_empty_file.torrent)))
+    (native-inputs
+     (list libfaketime
+           python-wrapper
+           pkg-config))
     (home-page "https://www.libtorrent.org/")
     (synopsis "Feature-complete BitTorrent implementation")
     (description

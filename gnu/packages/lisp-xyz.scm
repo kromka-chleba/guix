@@ -19721,6 +19721,40 @@ inspired by Haskell package @code{Data.List}.")
 (define-public ecl-listopia
   (sbcl-package->ecl-package sbcl-listopia))
 
+(define-public sbcl-literate-lisp
+  (let ((commit "76d4d2c16ab08296d58e0ef3c41861b615e697c0")
+        (revision "1"))
+    (package
+      (name "sbcl-literate-lisp")
+      (version (git-version "0.6" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/jingtaozf/literate-lisp")
+               (commit commit)))
+         (file-name (git-file-name "cl-literate-lisp" version))
+         (sha256
+          (base32 "0smxf0a62dnwcfxsbsdkx4n5nqx9dlxdz6c2vfivxpqld6d6ap02"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs
+       (list sbcl-cl-fad
+             sbcl-cl-ppcre
+             sbcl-iterate))
+      (native-inputs
+       (list sbcl-fiveam))
+      (home-page "https://github.com/jingtaozf/literate-lisp")
+      (synopsis "Load Common Lisp code blocks from Org-mode files")
+      (description "This package extends the Common Lisp reader
+syntax such that is accepts Org files as Lisp source code files.")
+      (license license:expat))))
+
+(define-public cl-literate-lisp
+  (sbcl-package->cl-source-package sbcl-literate-lisp))
+
+(define-public ecl-literate-lisp
+  (sbcl-package->ecl-package sbcl-literate-lisp))
+
 (define-public sbcl-livesupport
   (let ((commit "71e6e412df9f3759ad8378fabb203913d82e228a")
 	(revision "1"))
@@ -25959,6 +25993,38 @@ portable, safe printable, 7-bit ASCII format.")
 
 (define-public ecl-s-base64
   (sbcl-package->ecl-package sbcl-s-base64))
+
+(define-public sbcl-s-graphviz
+  (let ((commit "a06d9573f0d4e21751b0ae782515b63a40ad6eae")
+        (revision "1"))
+    (package
+      (name "sbcl-s-graphviz")
+      (version (git-version "2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/jingtaozf/s-graphviz")
+               (commit commit)))
+         (file-name (git-file-name "cl-s-graphviz" version))
+         (sha256
+          (base32 "1841xwci6y1gfhg15464wrlnw8xgsh1mwbg4yy2y7di02q4fbma2"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs
+       (list sbcl-iterate))
+      (native-inputs
+       (list sbcl-literate-lisp))
+      (home-page "https://github.com/jingtaozf/s-graphviz")
+      (synopsis "S-expression representation of the GraphViz DOT language")
+      (description "This package creates GraphViz DOT files from
+an equivalent s-expression representation.")
+      (license license:expat))))
+
+(define-public cl-s-graphviz
+  (sbcl-package->cl-source-package sbcl-s-graphviz))
+
+(define-public ecl-s-graphviz
+  (sbcl-package->ecl-package sbcl-s-graphviz))
 
 (define-public sbcl-s-sysdeps
   ;; No release since 2013.

@@ -2948,39 +2948,37 @@ includes a complete LAPACK implementation.")
       (license license:bsd-3))))
 
 (define-public scasp
-  (let ((commit "89a427aa04ec6346425a40111c99b310901ffe51")
-        (revision "1"))
-    (package
-      (name "scasp")
-      (version (git-version "0.21.11.26" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/SWI-Prolog/sCASP")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1ijqv9xr3imrdmz6nq7zqwsmmaxn638icig19m8900m7mjfpizs4"))))
-      (build-system copy-build-system)
-      (arguments
-       (list
-        #:install-plan #~`(("scasp" "bin/")
-                           ("prolog" "lib/swipl/library"))
-        #:modules `((guix build copy-build-system)
-                    ((guix build gnu-build-system) #:prefix gnu:)
-                    (guix build utils)
-                    (ice-9 regex))
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-before 'install 'build (assoc-ref gnu:%standard-phases 'build))
-            (add-after 'build 'check (assoc-ref gnu:%standard-phases 'check)))))
-      (native-inputs (list swi-prolog))
-      (home-page "https://github.com/SWI-Prolog/sCASP")
-      (synopsis "Interpreter for ASP programs with constraints")
-      (description "@code{s(CASP)} is a top-down interpreter for ASP programs
+  (package
+    (name "scasp")
+    (version "1.1.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/SWI-Prolog/sCASP")
+                    (commit (string-append "V" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1m4fs1ywich9cwj55miqp5zxs7c1fw9wvy7lcj5rkrgcanks5qk4"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan #~`(("scasp" "bin/")
+                         ("prolog" "lib/swipl/library"))
+      #:modules `((guix build copy-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils)
+                  (ice-9 regex))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'build (assoc-ref gnu:%standard-phases 'build))
+          (add-after 'build 'check (assoc-ref gnu:%standard-phases 'check)))))
+    (native-inputs (list swi-prolog))
+    (home-page "https://github.com/SWI-Prolog/sCASP")
+    (synopsis "Interpreter for ASP programs with constraints")
+    (description "@code{s(CASP)} is a top-down interpreter for ASP programs
 with constraints.")
-      (license license:asl2.0))))
+    (license license:asl2.0)))
 
 (define-public ceres
   (package
@@ -7704,7 +7702,7 @@ s-expression-based format.")
 (define-public z3
   (package
     (name "z3")
-    (version "4.8.17")
+    (version "4.13.0")
     (home-page "https://github.com/Z3Prover/z3")
     (source (origin
               (method git-fetch)
@@ -7713,7 +7711,7 @@ s-expression-based format.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1vvb09q7w7zd29qc4qjysrrhyylszm1wf6azkff004ixwn026b05"))))
+                "0j46lckf3zgx2xjay7z6nvlgh47gisbbl4s3m5zn280a13fwz1ih"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -9061,7 +9059,7 @@ researchers and developers alike to get started on SAT.")
 (define-public kissat
   (package
     (name "kissat")
-    (version "3.0.0")
+    (version "4.0.1")
     (source
      (origin
        (method git-fetch)
@@ -9071,7 +9069,7 @@ researchers and developers alike to get started on SAT.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "04x4w760srbdi4zci0s747qxk717x5d2x59ixraxh5104s9nyn8b"))))
+         "0acg61cfcjg13if2i375cyl4xvwmabhfhi9z8pnw971046am6bzv"))))
     (build-system gnu-build-system)
     (inputs (list xz gzip lzip bzip2 p7zip))
     (arguments
@@ -9096,7 +9094,7 @@ researchers and developers alike to get started on SAT.")
                  "bool found = true;"))
               (substitute* "test/testmain.c"
                 ;; SIGINT is ignored inside invoke.
-                (("^SIGNAL\\(SIGINT\\)") ""))))
+                (("^[ \t]*SIGNAL[ \t]*\\(SIGINT\\)") ""))))
           (replace 'configure
             (lambda* (#:key configure-flags #:allow-other-keys)
               ;; The configure script does not support standard GNU options.
@@ -9249,86 +9247,223 @@ symbolic reasoning engines that need to reason about polynomial constraints.")
    (license license:lgpl3+)))
 
 (define-public lingeling
-  (let ((commit "72d2b13eea5fbd95557a3d0d199cd98dfbdc76ee")
-        (revision "1"))
-    (package
-     (name "lingeling")
-     (version (git-version "sc2022" revision commit))
-     (source (origin
+  (package
+    (name "lingeling")
+    (version "1.0.0")
+    (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/arminbiere/lingeling")
-                    (commit commit)))
+                    (commit (string-append "rel-" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "16s30x8s2cw6icchwm65zj56ph4qwz6i07g3hwkknvajisvjq85c"))))
-     (build-system gnu-build-system)
-     (arguments
-      (list #:test-target "test"
-            #:modules `((ice-9 match)
-                        ,@%default-gnu-modules)
-            #:configure-flags #~(list "--aiger=.")
-            #:phases
-            #~(modify-phases %standard-phases
-                (add-after 'unpack 'unpack-aiger
-                  (lambda* (#:key inputs #:allow-other-keys)
-                    (invoke #$(ar-for-target) "x"
-                            (search-input-file inputs "lib/libaiger.a")
-                            "aiger.o")
-                    (copy-file
-                     (search-input-file inputs "include/aiger/aiger.h")
-                     "aiger.h")))
-                (add-after 'unpack 'hard-code-commit
-                  (lambda _
-                    (substitute* "mkconfig.sh"
-                      (("`\\./getgitid`") #$commit))))
-                (add-after 'unpack 'patch-source
-                  (lambda* (#:key inputs #:allow-other-keys)
-                    (substitute* (list "treengeling.c" "lgldimacs.c")
-                      (("\"(gunzip|xz|bzcat|7z)" all cmd)
-                       (string-append
-                        "\""
-                        (search-input-file inputs (string-append "bin/" cmd)))))))
-                (replace 'configure
-                  (lambda* (#:key configure-flags #:allow-other-keys)
-                    (apply invoke "./configure.sh" configure-flags)))
-                (replace 'install
-                  (lambda* (#:key outputs #:allow-other-keys)
-                    (let ((bin (string-append (assoc-ref outputs "out")
-                                              "/bin")))
-                      (mkdir-p bin)
-                      (for-each
-                       (lambda (file)
-                         (install-file file bin))
-                       '("blimc" "ilingeling" "lglddtrace" "lglmbt"
-                         "lgluntrace" "lingeling" "plingeling"
-                         "treengeling")))))
-                (add-after 'install 'wrap-path
-                  (lambda* (#:key outputs #:allow-other-keys)
-                    (with-directory-excursion (string-append
-                                               (assoc-ref outputs "out")
-                                               "/bin")
-                      (for-each
-                       (lambda (file)
-                         (wrap-program
-                          file
+                "0hszkhyni7jcw580f41rrrnwz42x56sqvd8zpcjdagvdiag76lc1"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:test-target "test"
+           #:modules `((ice-9 match)
+                       ,@%default-gnu-modules)
+           #:configure-flags #~(list "--aiger=.")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'unpack-aiger
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (invoke #$(ar-for-target) "x"
+                           (search-input-file inputs "lib/libaiger.a")
+                           "aiger.o")
+                   (copy-file
+                    (search-input-file inputs "include/aiger/aiger.h")
+                    "aiger.h")))
+               (add-after 'unpack 'hard-code-commit
+                 (lambda _
+                   (substitute* "mkconfig.sh"
+                     (("`\\./getgitid`") ""))))
+               (add-after 'unpack 'patch-source
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* (list "treengeling.c" "lgldimacs.c")
+                     (("\"(gunzip|xz|bzcat|7z)" all cmd)
+                      (string-append
+                       "\""
+                       (search-input-file inputs (string-append "bin/" cmd)))))))
+               (replace 'configure
+                 (lambda* (#:key configure-flags #:allow-other-keys)
+                   (apply invoke "./configure.sh" configure-flags)))
+               (replace 'install
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (let ((bin (string-append (assoc-ref outputs "out")
+                                             "/bin")))
+                     (mkdir-p bin)
+                     (for-each
+                      (lambda (file)
+                        (install-file file bin))
+                      '("blimc" "ilingeling" "lglddtrace" "lglmbt"
+                        "lgluntrace" "lingeling" "plingeling"
+                        "treengeling")))))
+               (add-after 'install 'wrap-path
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (with-directory-excursion (string-append
+                                              (assoc-ref outputs "out")
+                                              "/bin")
+                     (for-each
+                      (lambda (file)
+                        (wrap-program
+                            file
                           '("PATH" suffix
                             #$(map (lambda (input)
                                      (file-append (this-package-input input) "/bin"))
                                    '("gzip" "bzip2" "xz" "p7zip")))))
-                       ;; These programs use sprintf on buffers with magic
-                       ;; values to construct commands (yes, eww), so we
-                       ;; can't easily substitute* them.
-                       '("lglddtrace" "lgluntrace" "lingeling" "plingeling"))))))))
-     (inputs (list `(,aiger "static") bash-minimal gzip bzip2 xz p7zip))
-     (home-page "http://fmv.jku.at/lingeling")
-     (synopsis "SAT solver")
-     (description "This package provides a range of SAT solvers, including
+                      ;; These programs use sprintf on buffers with magic
+                      ;; values to construct commands (yes, eww), so we
+                      ;; can't easily substitute* them.
+                      '("lglddtrace" "lgluntrace" "lingeling" "plingeling"))))))))
+    (inputs (list `(,aiger "static") bash-minimal gzip bzip2 xz p7zip))
+    (home-page "http://fmv.jku.at/lingeling")
+    (synopsis "SAT solver")
+    (description "This package provides a range of SAT solvers, including
 the sequential @command{lingeling} and its parallel variants
 @command{plingeling} and @command{treengeling}.  A bounded model checker is
 also included.")
-     (license license:expat))))
+    (license license:expat)))
+
+(define-public cadical
+  (package
+    (name "cadical")
+    (version "2.0.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/arminbiere/cadical")
+                    (commit (string-append "rel-" version))))
+              (file-name (git-file-name name version))
+              (patches (search-patches "cadical-add-shared-library.patch"))
+              (sha256
+               (base32 "1dzjah3z34v89ka48hncwqkxrwl4xqn9947p0ipf39lxshrq91xa"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:test-target "test"
+           #:modules `(((guix build copy-build-system) #:prefix copy:)
+                       (guix build gnu-build-system)
+                       (guix build utils)
+                       (ice-9 regex))
+           #:imported-modules %copy-build-system-modules
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'configure
+                 (lambda* (#:key configure-flags #:allow-other-keys)
+                   (setenv "CXXFLAGS" "-DPIC -fPIC")
+                   (apply invoke "./configure" configure-flags)))
+               (replace 'check
+                 (lambda args
+                   ;; Tests are incorrectly linked upstream.
+                   ;; Since we don't install them, just work around this in the
+                   ;; check phase.
+                   (setenv "LD_LIBRARY_PATH" (string-append (getcwd) "/build"))
+                   (apply (assoc-ref %standard-phases 'check) args)
+                   (unsetenv "LD_LIBRARY_PATH")))
+               (replace 'install
+                 (lambda args
+                   (apply
+                    (assoc-ref copy:%standard-phases 'install)
+                    #:install-plan
+                    `(("build" "bin" #:include ("cadical" "mobical"))
+                      ("build" "lib" #:include-regexp ("libcadical\\.(a|so)$"))
+                      ("src" "include" #:include ("cadical.h"))
+                      ;; Internal headers used by cadiback.
+                      ("src" "include/cadical" #:include-regexp ("\\.hpp$")))
+                    args))))))
+    (home-page "https://github.com/arminbiere/cadical")
+    (synopsis "SAT solver")
+    (description "This package provides a SAT solver based on conflict-driven
+clause learning.")
+    (license license:expat)))
+
+(define-public cadiback
+  (let ((commit "789329d8fcda851085ed72f1b07d8c3f46243b8a")
+        (revision "1"))
+    (package
+      (name "cadiback")
+      ;; Note: version taken from VERSION file
+      (version (git-version "0.2.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/arminbiere/cadiback")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32 "137jxf9g7c1979pcgcqgfff1mqk5hs41a84780px8gpcrh469cks"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list #:test-target "test"
+             #:modules `(((guix build copy-build-system) #:prefix copy:)
+                         (guix build gnu-build-system)
+                         (guix build utils)
+                         (ice-9 regex))
+             #:imported-modules %copy-build-system-modules
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'patch-build-files
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "configure"
+                       (("\\$CADICAL/src") "$CADICAL/include/cadical")
+                       (("\\$CADICAL/build") "$CADICAL/lib"))
+                     (substitute* "generate"
+                       (("\\[ -d .git \\]" all) (string-append ": " all))
+                       (("GITID=.*") (string-append "GITID=\"" #$commit "\"")))
+                     (substitute* "makefile.in"
+                       (("\\.\\./cadical/build")
+                        (dirname
+                         (search-input-file inputs "lib/libcadical.a")))
+                       (("\\.\\./cadical/src")
+                        (search-input-directory inputs "include/cadical")))))
+                 (replace 'configure
+                   (lambda* (#:key configure-flags #:allow-other-keys)
+                     (setenv "CADICAL" #$(this-package-input "cadical"))
+                     (apply invoke "./configure" configure-flags)))
+                 (replace 'install
+                   (lambda args
+                     (apply
+                      (assoc-ref copy:%standard-phases 'install)
+                      #:install-plan
+                      `(("." "bin" #:include ("cadiback")))
+                      args))))))
+      (inputs (list cadical))
+      (home-page "https://github.com/arminbiere/cadiback")
+      (synopsis "Backbone extractor for cadical")
+      (description "This package provides a tool to determine the backbone of
+a satisfiable formula.  The backbone is the set of literals that are set to
+true in all models.")
+      (license license:expat))))
+
+(define cadiback-for-cryptominisat
+  (let ((commit "ea65a9442fc2604ee5f4ffd0f0fdd0bf481d5b42")
+        (revision "1"))
+    (package
+      (inherit cadiback)
+      (name "cadiback-for-cryptominisat")
+      (version (git-version "0.2.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/meelgroup/cadiback")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32 "1zznrlj4zp1mc7s4pfw11aq773q2lr9yl6pph630zg5mqijaim5g"))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments cadiback)
+         ((#:phases phases)
+          #~(modify-phases #$phases
+              (add-after 'patch-build-files 'fix-prefix
+                (lambda _
+                  (substitute* "makefile.in"
+                    (("/usr") #$output))))
+              (replace 'install
+                (lambda args
+                  (mkdir-p (string-append #$output "/include"))
+                  (mkdir-p (string-append #$output "/lib"))
+                  (apply (assoc-ref %standard-phases 'install) args))))))))))
 
 (define-public louvain-community
   (let ((commit "8cc5382d4844af127b1c1257373740d7e6b76f1e")
@@ -9364,7 +9499,7 @@ community detection algorithm.")
 (define-public cryptominisat
   (package
     (name "cryptominisat")
-    (version "5.11.4")
+    (version "5.11.22")
     (source
      (origin
        (method git-fetch)
@@ -9374,7 +9509,12 @@ community detection algorithm.")
       (file-name (git-file-name name version))
       (sha256
        (base32
-        "1izjn44phjp9670s7bxrdx4p0r59idqwv3bm6sr0qnlqlha5z4zc"))))
+        "1c85gfqvy90yhh9jwmiiz2bz4i86prgpfyx1gbzl42hn2ixkcjgm"))
+      (modules '((guix build utils)))
+      (snippet
+       #~(begin
+           (substitute* "src/backbone.cpp"
+             (("\"\\.\\./cadiback/cadiback\\.h\"") "<cadiback.h>"))))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -9398,7 +9538,15 @@ community detection algorithm.")
                  "find_package(GTest REQUIRED)")
                 (("add_subdirectory\\(\\$\\{PROJECT_SOURCE_DIR\\}/utils/.*\\)")
                  "")))))))
-    (inputs (list boost louvain-community python python-numpy sqlite zlib))
+    (inputs (list boost
+                  cadical
+                  cadiback-for-cryptominisat
+                  gmp
+                  louvain-community
+                  python
+                  python-numpy
+                  sqlite
+                  zlib))
     (native-inputs (list googletest lingeling python python-wrapper python-lit))
     (synopsis "Incremental SAT solver")
     (description

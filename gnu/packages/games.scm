@@ -8107,74 +8107,105 @@ You can save humanity and get programming skills!")
         (base32 "0i4hyg72z84fc6ca2ic9q82q5cbgrbd7bynl3kpkypxvyasq08wz"))
        (patches (search-patches "gzdoom-search-in-installed-share.patch"
                                 "gzdoom-find-system-libgme.patch"))
-       (modules '((guix build utils)))
+       (modules '((guix build utils)
+                  (ice-9 regex)))
        (snippet
         '(begin
+           ;; Remove files which mustn't be commercially redistributed.  See
+           ;; <https://zdoom.org/wiki/License#Commercial_use>, the ‘Contribution
+           ;; Guidelines’ at <https://github.com/ZDoom>, and Guix issue #73435.
+           (for-each
+            (lambda (directory)
+              (delete-file-recursively directory)
+              (substitute* "CMakeLists.txt"
+                (((string-append "add_subdirectory\\([[:blank:]]*"
+                                 directory
+                                 "[[:blank:]]*\\)"))
+                 "")))
+            '( ;; "wadsrc_extra"        ;game_support.pk3
+              "wadsrc_bm"))             ;brightmaps.pk3
+
+           ;; Removing game_support.pk3 entirely would break Freedoom & remove
+           ;; users' ability to play commercial games, despite owning (only) the
+           ;; non-functional data.  That can't be right.  Out of an abundance of
+           ;; caution, remove anything from the PK3 that could conceivably be
+           ;; derived from copyrightable data that's not freely redistributable.
+           (display "Keeping only the following game_support.pk3 files:\n")
+           (let* ((regexps (list "/font\\.inf$"
+                                 "/harmony/.*\\.(txt|zs)$"
+                                 "/(iwadinfo|mapinfo|sprofs)\\.txt$"
+                                 "\\.z$"))
+                  (regexp* (format #f "(~{~a~^|~})" regexps))
+                  (regexp  (make-regexp regexp* regexp/icase)))
+             (define (keep-file? file stat)
+               (let ((keep? (regexp-exec regexp file)))
+                 (when keep?
+                   (format #t "  ~a~%" file))
+                 keep?))
+
+             (for-each delete-file (find-files "wadsrc_extra/static"
+                                               (negate keep-file?))))
+
            ;; Remove some bundled libraries.  XXX There are more, but removing
            ;; them would require, at least, patching the build system.
            (with-directory-excursion "libraries"
              (delete-file-recursively "bzip2")
              (delete-file-recursively "game-music-emu")
              (delete-file-recursively "jpeg")
-             (delete-file-recursively "zlib"))
-           #t))))
+             (delete-file-recursively "zlib"))))))
     (arguments
-     '(#:tests? #f
-       #:configure-flags
-       (let ((out (assoc-ref %outputs "out")))
-         (list
-          (string-append
-           "-DCMAKE_CXX_FLAGS:="
-           "-DSHARE_DIR=\\\"" out "/share/\\\" "
-           "-DGUIX_OUT_PK3=\\\"" out "/share/games/doom\\\"")
+     (list
+      #:tests? #f
+      #:configure-flags
+      #~(list
+         (string-append
+          "-DCMAKE_CXX_FLAGS:="
+          "-DSHARE_DIR=\\\"" #$output "/share/\\\" "
+          "-DGUIX_OUT_PK3=\\\"" #$output "/share/games/doom\\\"")
 
-          ;; The build requires some extra convincing not to use the bundled
-          ;; libgme previously deleted in the soure snippet.
-          "-DFORCE_INTERNAL_GME=OFF"
+         ;; The build requires some extra convincing not to use the bundled
+         ;; libgme previously deleted in the soure snippet.
+         "-DFORCE_INTERNAL_GME=OFF"
 
-          ;; Link libraries at build time instead of loading them at run time.
-          "-DDYN_OPENAL=OFF"
-          "-DDYN_FLUIDSYNTH=OFF"
-          "-DDYN_GTK=OFF"
-          "-DDYN_MPG123=OFF"
-          "-DDYN_SNDFILE=OFF"))
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'fix-referenced-paths
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((fluid-3 (assoc-ref inputs "fluid-3"))
-                   (timidity++ (assoc-ref inputs "timidity++"))
-                   (out (assoc-ref outputs "out")))
-
-               (substitute*
-                   "src/CMakeLists.txt"
-                 (("COMMAND /bin/sh")
-                  (string-append "COMMAND " (which "sh"))))
-
-               (substitute*
-                   "libraries/zmusic/mididevices/music_fluidsynth_mididevice.cpp"
-                 (("/usr/share/sounds/sf2/FluidR3_GM.sf2")
-                  (string-append fluid-3 "/share/soundfonts/FluidR3Mono_GM.sf3")))
-
-               (substitute*
-                   "libraries/zmusic/mididevices/music_timiditypp_mididevice.cpp"
-                 (("exename = \"timidity\"")
-                  (string-append "exename = \"" timidity++ "/bin/timidity\"")))
-               #t))))))
+         ;; Link libraries at build time instead of loading them at run time.
+         "-DDYN_OPENAL=OFF"
+         "-DDYN_FLUIDSYNTH=OFF"
+         "-DDYN_GTK=OFF"
+         "-DDYN_MPG123=OFF"
+         "-DDYN_SNDFILE=OFF")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'fix-file-names
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "src/CMakeLists.txt"
+                (("COMMAND /bin/sh")
+                 (string-append "COMMAND " (which "sh"))))
+              (substitute*
+                  "libraries/zmusic/mididevices/music_fluidsynth_mididevice.cpp"
+                (("/usr/share/sounds/sf2/FluidR3_GM.sf2")
+                 (search-input-file inputs
+                                    "share/soundfonts/FluidR3Mono_GM.sf3")))
+              (substitute*
+                  "libraries/zmusic/mididevices/music_timiditypp_mididevice.cpp"
+                (("(exename = \")(timidity)(\".*)" _ prefix exe suffix)
+                 (string-append prefix
+                                (search-input-file inputs
+                                                   (string-append "bin/" exe))
+                                suffix))))))))
     (build-system cmake-build-system)
-    (inputs `(("bzip2" ,bzip2)
-              ("fluid-3" ,fluid-3)
-              ("fluidsynth" ,fluidsynth)
-              ("gtk+3" ,gtk+)
-              ("libgme" ,libgme)
-              ("libjpeg" ,libjpeg-turbo)
-              ("libsndfile" ,libsndfile)
-              ("mesa" ,mesa)
-              ("mpg123" ,mpg123)
-              ("openal" ,openal)
-              ("sdl2" ,sdl2)
-              ("timidity++" ,timidity++)
-              ("zlib" ,zlib)))
+    (inputs (list bzip2
+                  fluid-3
+                  fluidsynth
+                  gtk+
+                  libgme
+                  libjpeg-turbo
+                  libsndfile
+                  mesa
+                  mpg123
+                  openal
+                  sdl2
+                  timidity++
+                  zlib))
     (native-inputs (list pkg-config unzip))
     (synopsis "Modern Doom 2 source port")
     (description "GZdoom is a port of the Doom 2 game engine, with a modern
@@ -9930,11 +9961,12 @@ attached joysticks and displays which buttons and axis are pressed.")
       (native-inputs (list pkg-config))
       (inputs (list gtkmm-3 libsigc++-2))
       (home-page "https://github.com/Grumbel/jstest-gtk/")
-      (synopsis "Simple joystick tester GUI")
+      (synopsis "Joydev Joystick Tester")
       (description "@command{jstest-gtk} is a simple joystick tester based on
-GTK.  It provides a list of attached joysticks, a way to display which buttons
-and axis are pressed, a way to remap axis and buttons and a way to calibrate
-joysticks.")
+GTK, for testing devices using the older @code{joydev} Linux joystick
+@acronym{API, Application Programming Interface}.  It provides a list of
+attached joysticks, a way to display which buttons and axis are pressed, a way
+to remap axis and buttons and a way to calibrate joysticks.")
       (license license:gpl3+))))
 
 (define-public jumpnbump
@@ -11180,6 +11212,85 @@ O. Thorp, Ph.D. of UCLA.  A number of important statistics are maintained
 for display, and used by the program to implement Thorp's \"Complete Point
 System\" (high-low system).")
     (license (license:x11-style "" "See file headers."))))
+
+(define-public xevil
+  ;; This game is old.  Use a maintained fork that builds with modern toolchains
+  ;; on modern, 64-bit hardware.
+  (let ((commit "9ca85059d5195be0eb15e107de3bb9d1b49e5f99")
+        (revision "0"))
+    (package
+      (name "xevil")
+      (version (git-version "2.02" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/lvella/xevil")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "14hsmw9ll2asnp1s0zvniyp31kjw8ynm7vnycg74lpqf28h2rric"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:modules `(,@%default-gnu-imported-modules
+                    (srfi srfi-26))
+        #:make-flags
+        #~(list "SHELL=sh"
+                "DEBUG_OPT=-g -DNDEBUG")
+        #:tests? #f                     ;no test suite
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'rename-licence-file
+              (lambda _ (rename-file "gpl.txt" "COPYING")))
+            (add-after 'unpack 'redefine
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "cmn/game.cpp"
+                  (("(#define VERSION ).*" _ define)
+                   (string-append define "\"" #$version "\"\n")))
+                (substitute* "cmn/utils.cpp"
+                  (("[^\"]*/(bin/uname)" _ command)
+                   (search-input-file inputs command)))
+                (substitute* "x11/ui.cpp"
+                  ;; Neither DEFAULT_BIG_FONT_NAME nor BACKUP_FONT_NAME are
+                  ;; available from most Guix X11 servers, making the game
+                  ;; unplayable by default.  Substitute the closest match.
+                  (("9x15") "6x13")
+                  ;; ‘For fast machines’ need no longer default to False in C21.
+                  (("(smoothScroll = )False" _ assign)
+                   (string-append assign "True")))))
+            (delete 'configure)         ;no configure script
+            (replace 'install
+              (lambda _
+                (with-directory-excursion "x11/REDHAT_LINUX" ;yeah
+                  (for-each (cut install-file <>
+                                 (string-append #$output "/bin"))
+                            (list "xevil" "serverping")))
+                (let ((doc (string-append #$output "/share/doc/"
+                                          #$name "-" #$version)))
+                  (mkdir-p doc)
+                  (for-each (lambda (file)
+                              (copy-recursively file
+                                                (string-append
+                                                 doc "/" (basename file))))
+                            (list "instructions" "x11/app-defaults"))))))))
+      (inputs
+       (list coreutils-minimal          ;for uname
+             libx11 libxpm))
+      ;; The current home page has been ‘subtly’ vandalised with spam and is
+      ;; missing a lot of content from this older snapshot.
+      (home-page (string-append "https://web.archive.org/web/20060410005819/"
+                                "http://www.xevil.com/"))
+      (synopsis
+       "Third-person, side-scrolling, fast-action, kill-everything game")
+      (description
+       "XEvil is a violent third-person, side-scrolling, fast-action deathmatch.
+You run around a randomly generated two-dimensional map composed of walls,
+floors, ladders, doors, and horizontal and vertical elevators.  Your only object
+is to explore this world to find weapons and items, killing everything in sight
+before they kill you.  You can fight against either computer-controlled enemies
+or against other people.")
+      (license license:gpl2+))))
 
 (define-public azimuth
   (package

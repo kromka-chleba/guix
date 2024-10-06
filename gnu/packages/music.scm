@@ -4641,11 +4641,11 @@ simulation of an overdrive or distortion pedal for guitars.")
     (license license:gpl3+)))
 
 (define-public gx-vbass-preamp-lv2
-  (let ((commit "eb999b0ca0ef4da40a59e458a9ab6e7042b96c99")
-        (revision "2"))
+  (let ((commit "f6a01c22fea71b155a797853c23653137ac89c1c")
+        (revision "3"))
     (package (inherit gx-guvnor-lv2)
       (name "gx-vbass-preamp-lv2")
-      (version (string-append "0-" revision "." (string-take commit 9)))
+      (version (git-version "0" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -4653,10 +4653,24 @@ simulation of an overdrive or distortion pedal for guitars.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0firap073ldw4nrykkd7jvyyj0jbl1nslxyzjj4kswazp99x7d9h"))
-                (file-name (string-append name "-" version "-checkout"))))
+                  "1ssa2xkppn7cn8lfvglb6brm5qsd7kysmabfj34qrqbywf5hdisw"))
+                (file-name (git-file-name name version))))
+      (arguments
+       (list
+        ;; The check target is used only to output a warning.
+        #:tests? #false
+        #:make-flags
+        #~(list (string-append "DESTDIR=" #$output)
+                (string-append "CC=" #$(cc-for-target)))
+        #:phases
+        '(modify-phases %standard-phases
+           (replace 'configure
+             (lambda _
+               (substitute* "Makefile"
+                 (("INSTALL_DIR = .*") "INSTALL_DIR=/lib/lv2\n")
+                 (("install : all") "install :")))))))
       (inputs
-       (list lv2 gtk+-2))
+       (list lv2 gtk+))
       (native-inputs
        (list pkg-config))
       (home-page "https://github.com/brummer10/GxVBassPreAmp.lv2")
@@ -4745,11 +4759,11 @@ simulation of a push pull transistor fuzz effect with added high octave."))))
 pedal.")))
 
 (define-public gx-saturator-lv2
-  (let ((commit "605330f432c94b6eb3f8203cbe472befae959532")
-        (revision "3"))
+  (let ((commit "2142b14a86a4e6f2ab69446160d90f23b1ed3939")
+        (revision "4"))
     (package (inherit gx-vbass-preamp-lv2)
       (name "gx-saturator-lv2")
-      (version (string-append "0-" revision "." (string-take commit 9)))
+      (version (git-version "0" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -4757,8 +4771,8 @@ pedal.")))
                       (commit commit)))
                 (sha256
                  (base32
-                  "1w4nvh0rmxrv3s3hmh4fs74f3hc0jn31v00j769j7v68mqr7kawy"))
-                (file-name (string-append name "-" version "-checkout"))))
+                  "16mq0k50pachg61vw88hjmyla5zwy0drfhi4d3f9hviivcfigg03"))
+                (file-name (git-file-name name version))))
       (home-page "https://github.com/brummer10/GxSaturator.lv2")
       (synopsis "Saturation effect")
       (description "This package provides the LV2 plugin \"GxSaturator\", a

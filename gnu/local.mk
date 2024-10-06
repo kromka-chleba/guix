@@ -1027,6 +1027,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/breezy-fix-gio.patch			\
   %D%/packages/patches/byobu-writable-status.patch		\
   %D%/packages/patches/bubblewrap-fix-locale-in-tests.patch	\
+  %D%/packages/patches/cadical-add-shared-library.patch		\
   %D%/packages/patches/calibre-no-updates-dialog.patch		\
   %D%/packages/patches/calibre-remove-test-sqlite.patch		\
   %D%/packages/patches/calibre-remove-test-unrar.patch		\
@@ -1072,9 +1073,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/clang-17.0-libc-search-path.patch	\
   %D%/packages/patches/clang-17.0-link-dsymutil-latomic.patch	\
   %D%/packages/patches/clang-18.0-libc-search-path.patch	\
-  %D%/packages/patches/clang-cling-13-libc-search-path.patch	\
-  %D%/packages/patches/clang-cling-13-remove-crypt-interceptors.patch	\
-  %D%/packages/patches/clang-cling-runtime-13-glibc-2.36-compat.patch	\
   %D%/packages/patches/clang-runtime-asan-build-fixes.patch	\
   %D%/packages/patches/clang-runtime-esan-build-fixes.patch	\
   %D%/packages/patches/clang-runtime-12-remove-crypt-interceptors.patch \
@@ -1089,7 +1087,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/clasp-hide-event-ids.patch		\
   %D%/packages/patches/classpath-aarch64-support.patch		\
   %D%/packages/patches/classpath-miscompilation.patch		\
-  %D%/packages/patches/cling-use-shared-library.patch		\
   %D%/packages/patches/clitest-grep-compat.patch		\
   %D%/packages/patches/clog-fix-shared-build.patch		\
   %D%/packages/patches/clucene-pkgconfig.patch			\
@@ -2082,6 +2079,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/raptor2-heap-overflow.patch		\
   %D%/packages/patches/ratpoints-sturm_and_rp_private.patch	\
   %D%/packages/patches/ratpoison-shell.patch			\
+  %D%/packages/patches/retroarch-unbundle-spirv-cross.patch	\
   %D%/packages/patches/rct-add-missing-headers.patch		\
   %D%/packages/patches/readline-link-ncurses.patch		\
   %D%/packages/patches/readline-6.2-CVE-2014-2524.patch		\
@@ -2099,6 +2097,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/remake-impure-dirs.patch			\
   %D%/packages/patches/restartd-update-robust.patch             \
   %D%/packages/patches/restic-0.9.6-fix-tests-for-go1.15.patch	\
+  %D%/packages/patches/retroarch-improved-search-paths.patch	\
   %D%/packages/patches/rng-tools-revert-build-randstat.patch	\
   %D%/packages/patches/rocclr-5.6.0-enable-gfx800.patch		\
   %D%/packages/patches/rocm-bandwidth-test-5.5.0-fix-includes.patch	\
