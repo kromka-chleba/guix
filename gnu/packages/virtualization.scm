@@ -37,6 +37,7 @@
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
+;;; Copyright © 2024 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -60,6 +61,8 @@
   #:use-module (gnu packages apparmor)
   #:use-module (gnu packages assembly)
   #:use-module (gnu packages attr)
+  #:use-module (gnu packages apparmor)
+  #:use-module (gnu packages augeas)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages backup)
   #:use-module (gnu packages base)
@@ -67,22 +70,26 @@
   #:use-module (gnu packages bison)
   #:use-module (gnu packages bootloaders)
   #:use-module (gnu packages build-tools)
+  #:use-module (gnu packages cdrom)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cluster)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages containers)
+  #:use-module (gnu packages cpio)
   #:use-module (gnu packages cross-base)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages cyrus-sasl)
+  #:use-module (gnu packages dbm)
   #:use-module (gnu packages debian)
   #:use-module (gnu packages disk)
   #:use-module (gnu packages dns)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages figlet)
+  #:use-module (gnu packages file)
   #:use-module (gnu packages firmware)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fonts)
@@ -95,8 +102,10 @@
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang)
+  #:use-module (gnu packages gperf)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
+  #:use-module (gnu packages java)
   #:use-module (gnu packages haskell)
   #:use-module (gnu packages haskell-apps)
   #:use-module (gnu packages haskell-check)
@@ -107,6 +116,7 @@
   #:use-module (gnu packages libbsd)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages lua)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages man)
   #:use-module (gnu packages multiprecision)
@@ -114,6 +124,7 @@
   #:use-module (gnu packages nettle)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages ninja)
+  #:use-module (gnu packages ocaml)
   #:use-module (gnu packages onc-rpc)
   #:use-module (gnu packages package-management)
   #:use-module (gnu packages pciutils)
@@ -2900,3 +2911,320 @@ This package also contains the Berkeley Boot Loader, @command{bbl}, which is a
 supervisor execution environment for tethered RISC-V systems.  It is designed
 to host the RISC-V Linux port.")
     (license license:bsd-3)))
+
+(define-public hivex
+  (package
+    (name "hivex")
+    (version "1.3.24")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://libguestfs.org/download/"
+                                  name "/" name "-" version ".tar.gz"))
+              (sha256
+               (base32
+                "0g0rib62qg81fda8lxsaa7a1ykqy4rl5sq185pdqm9y9xifa8bx5"))))
+    (build-system gnu-build-system)
+    (native-inputs (list automake
+                         autoconf
+                         gettext-minimal
+                         libtool
+                         ocaml
+                         pkg-config
+                         perl-io-stringy
+                         python-wrapper
+                         ruby
+                         ruby-rake
+                         ruby-rdoc))
+    (inputs
+     (list bash-minimal
+           libxml2
+           perl
+           readline))
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "--disable-static" "--with-readline" "--disable-rpath"
+              (string-append "LDFLAGS=-Wl,-rpath=" #$output "/lib"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-makefiles
+            (lambda _
+              (let* ((current-system (or #$(%current-target-system)
+                                         #$(%current-system)))
+                     (ocamllib
+                      (string-append #$output "/lib/ocaml/"
+                                     #$(package-version
+                                        (this-package-native-input "ocaml")) "/site-lib"))
+                     (python-installdir
+                      (string-append #$output "/lib/python"
+                                     #$(version-major+minor
+                                        (package-version
+                                         (this-package-native-input
+                                          "python-wrapper")))
+                                     "/site-packages"))
+                     (ruby-version
+                      #$(package-version
+                         (this-package-native-input "ruby")))
+                     (ruby-libdir
+                      (string-append #$output
+                                     "/lib/ruby/site_ruby/"
+                                     ruby-version))
+                     (ruby-archdir
+                      (string-append ruby-libdir "/" current-system)))
+                (substitute* "lib/Makefile.am"
+                  (((string-append "\\$\\(VERSION_SCRIPT_FLAGS\\)"
+                                   "\\$\\(srcdir\\)/hivex\\.syms"))
+                   ""))
+                (substitute* "python/Makefile.am"
+                  (("\\$\\(PYTHON_INSTALLDIR\\)")
+                   python-installdir))
+                (substitute* "ocaml/Makefile.am"
+                  (("\\$\\(DESTDIR\\)\\$\\(OCAMLLIB\\)")
+                   ocamllib))
+                (substitute* "ruby/Makefile.am"
+                  (("\\$\\(DESTDIR\\)\\$\\(RUBY_ARCHDIR\\)")
+                   ruby-archdir)
+                  (("\\$\\(DESTDIR\\)\\$\\(RUBY_LIBDIR\\)")
+                   ruby-libdir))
+                ;; The ‘validate-runpath’ phase fails to find libhivex.so.0.
+                (substitute* "perl/Makefile.PL.in"
+                  (("CCFLAGS => \\$Config\\{ccflags\\} \\. ' @CFLAGS@',")
+                   (string-append "CCFLAGS => $Config{ccflags} . ' @CFLAGS@',
+    LDDLFLAGS => $Config{lddlflags} . ' -Wl,-rpath," #$output "/lib',")))
+                (substitute* "ruby/ext/hivex/extconf.rb"
+                  (("create_header")
+                   (string-append "
+$LDFLAGS += \" -Wl,-rpath=" #$output "/lib \"
+create_header"))))))
+          (add-after 'install 'wrap-binaries
+            (lambda _
+              (let ((hivexregedit
+                     (string-append #$output "/bin/hivexregedit"))
+                    (hivexml
+                     (string-append #$output "/bin/hivexml")))
+                (wrap-program hivexregedit
+                  `("PERL5LIB" ":" prefix
+                    (,(string-append #$output "/lib/perl5/site_perl")))
+                  `("PATH" ":" prefix
+                    (,(string-append #$output "/bin"))))
+                (wrap-program hivexml
+                  `("PATH" ":" prefix
+                    (,(string-append #$output "/bin"))))))))))
+    (home-page "https://github.com/libguestfs/hivex")
+    (synopsis "Windows registry hive extraction library")
+    (description
+     "This package provides a self-contained library for reading and writing
+Windows Registry \"hive\" binary files.  Unlike many other tools in this area,
+it doesn't use the textual @code{.REG} format for output, because parsing that
+is as much trouble as parsing the original binary format.  Instead it makes the
+file available through a C API, or through a separate program to export the
+hive as XML.")
+    (license license:lgpl2.1)))
+
+(define-public libguestfs-minimal
+  (package
+    (name "libguestfs-minimal")
+    (version "1.53.6")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://libguestfs.org/download/"
+                                  (version-major+minor version)
+                                  "-stable/libguestfs-" version ".tar.gz"))
+              (sha256
+               (base32
+                "0vssarc3n4kv26fyjmkrrcvh55v41fhycba43pij3rc2izl72s2y"))
+              (patches
+               (search-patches "libguestfs-syms.patch"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "--disable-appliance"
+                   "--disable-daemon"
+                   "--disable-static"
+                   "--disable-erlang"
+                   "--disable-golang"
+                   "--disable-haskell"
+                   "--disable-java"
+                   "--disable-lua"
+                   ;; FIXME: Perl bindings have wrong rpath and break the
+                   ;; validate-runpath phase.  Temporarily disable them until
+                   ;; a way is found to correctly patch perl/Build.PL.in.
+                   "--disable-perl"
+                   "--disable-php"
+                   "--with-distro=\"Guix System\""
+                   "--with-readline"
+                   (string-append "LDFLAGS=-Wl,-rpath," %output "/lib"))
+           #:make-flags #~`("REALLY_INSTALL=yes")
+           #:phases
+           #~(let* ((lib (string-append #$output "/lib"))
+                    (lib/ocaml (string-append lib "/ocaml")))
+               (modify-phases %standard-phases
+                 (add-after 'unpack 'patch-makefiles
+                   (lambda _
+                     (for-each patch-shebang
+                               (find-files "."))
+                     (substitute* "ocaml/Makefile.in"
+                       (("\\$\\(DESTDIR\\)\\$\\(OCAMLLIB\\)")
+                        lib/ocaml))
+                     ;; FIXME: Perl bindings have broken runpath,
+                     ;; this substitution doesn't seem to work.
+                     (substitute* "perl/Build.PL.in"
+                       (("extra_linker_flags => \\[")
+                        (string-append "extra_linker_flags => [
+        '-L" #$output "/lib',")))))
+                 (replace 'check
+                   (lambda* (#:key tests? make-flags #:allow-other-keys)
+                     (when tests?
+                       (apply invoke `("make" ,@make-flags "check-direct")))))
+                 (replace 'install
+                   (lambda* (#:key make-flags #:allow-other-keys)
+                     (mkdir-p "temp-build-dir")
+                     (apply invoke `("make" ,@make-flags "INSTALLDIRS=vendor"
+                                     "install"))))
+                 (add-after 'install 'wrap-binaries
+                   (lambda _
+                     (let ((bin (string-append #$output "/bin")))
+                       (for-each
+                        (lambda (binary)
+                          (use-modules (srfi srfi-1))
+                          (wrap-program binary
+                            `("PERL5LIB" ":" prefix
+                              (,(string-append #$output
+                                               "/lib/perl5/site_perl")))
+                            `("PATH" ":" prefix
+                              ,(search-path-as-list
+                                '("bin")
+                                (map second
+                                     '#$(package-inputs this-package))))))
+                        (find-files bin)))))
+                 (replace 'validate-documentation-location
+                   (lambda _
+                     (let ((man-dir
+                            (string-append #$output "/man"))
+                           (info-dir
+                            (string-append #$output "/info")))
+                       (for-each (lambda (d)
+                                   (invoke "rm" "-rf" d))
+                                 (list man-dir info-dir)))))))))
+    (native-inputs (list augeas
+                         bison
+                         cpio
+                         flex
+                         gettext-minimal
+                         gperf
+                         libtool
+                         ocaml
+                         ocaml-findlib
+                         ncurses
+                         perl
+                         perl-getopt-long
+                         perl-module-build
+                         pkg-config
+                         po4a
+                         xorriso
+                         xz
+                         zstd))
+    (inputs
+     (list file
+           fuse
+           jansson
+           hivex
+           libtirpc
+           pcre2
+           readline
+           qemu))
+    (home-page "https://libguestfs.org/")
+    (synopsis "Access and modify virtual machine disk images")
+    (description
+     "@code{libguestfs} is a set of tools for accessing and modifying virtual
+machine (VM) disk images.  You can use this for viewing and editing files inside
+guests, scripting changes to VMs, monitoring disk used/free statistics, creating
+guests, P2V, V2V, performing backups, cloning VMs, building VMs, formatting
+disks, resizing disks, and much more.")
+    (license (list license:gpl2+ license:lgpl2.1+))))
+
+(define-public libguestfs
+  (package/inherit libguestfs-minimal
+    (name "libguestfs")
+    (arguments
+     (substitute-keyword-arguments (package-arguments libguestfs-minimal)
+       ((#:configure-flags flags)
+        #~(append
+           (filter
+            (lambda (flag)
+              (not (string-prefix? "LDFLAGS" flag)))
+            #$flags)
+           (list
+            "--enable-vala=yes"
+            (string-append "--with-python-installdir="
+                           #$output "/lib/python"
+                           #$(version-major+minor
+                              (package-version python))
+                           "/site-packages")
+            (string-append "LDFLAGS=-Wl,-rpath," %output "/lib"))))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (add-after 'patch-makefiles 'patch-additional-makefiles
+              (lambda _
+                (let* ((current-system (or #$(%current-target-system)
+                                           #$(%current-system)))
+                       (lib (string-append #$output "/lib"))
+                       (share (string-append #$output "/share"))
+                       (completions
+                        (string-append share "/bash-completion/completions"))
+                       (lib/lua (string-append lib "/lua"))
+                       (lib/ocaml (string-append lib "/ocaml"))
+                       (ruby-version
+                        #$(package-version
+                           (this-package-native-input "ruby")))
+                       (ruby-libdir
+                        (string-append lib
+                                       "/ruby/site_ruby/"
+                                       ruby-version))
+                       (ruby-archdir
+                        (string-append ruby-libdir "/" current-system)))
+                  (substitute* "m4/guestfs-bash-completion.m4"
+                    (("`pkg-config --variable=completionsdir bash-completion`")
+                     completions))
+                  (substitute* "ocaml/Makefile.am"
+                    (("\\$\\(DESTDIR\\)\\$\\(OCAMLLIB\\)")
+                     lib/ocaml))
+                  (substitute* "lua/Makefile.am"
+                    (("\\$\\(DESTDIR\\)\\$\\(lualibdir\\)")
+                     lib/lua))
+                  (substitute* "ruby/Makefile.am"
+                    (("\\$\\(DESTDIR\\)\\$\\(RUBY_ARCHDIR\\)")
+                     ruby-archdir)
+                    (("\\$\\(DESTDIR\\)\\$\\(RUBY_LIBDIR\\)")
+                     ruby-libdir))
+                  ;; The ‘validate-runpath’ phase fails to find libguestfs.so.0.
+                  (substitute* "ruby/ext/guestfs/extconf.rb.in"
+                    (("create_header")
+                     (string-append "
+$LDFLAGS += \" -Wl,-rpath=" #$output "/lib \"
+create_header"))))))))))
+    (native-inputs
+     (modify-inputs (package-native-inputs libguestfs-minimal)
+       (prepend autoconf
+                automake
+                bash-completion
+                cdrtools
+                gobject-introspection
+                python
+                ruby
+                util-linux
+                vala)))
+    (inputs
+     (modify-inputs (package-inputs libguestfs-minimal)
+       (prepend acl
+                bdb
+                fuse
+                gmp
+                libapparmor
+                libcap
+                libcap-ng
+                libconfig
+                libvirt
+                libxcrypt
+                numactl
+                yajl)))))

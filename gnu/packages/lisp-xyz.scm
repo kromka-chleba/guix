@@ -15665,8 +15665,8 @@ port within a range.")
   (sbcl-package->ecl-package sbcl-find-port))
 
 (define-public sbcl-flamegraph
-  (let ((commit "1ed7a718eae88bd35e1649a1c716d46c59dc0a24")
-        (revision "0"))
+  (let ((commit "0b78cae83b1f5e71941c8804a6c1d945a11e4036")
+        (revision "1"))
     (package
       (name "sbcl-flamegraph")
       (version (git-version "0.0.0" revision commit))
@@ -15674,8 +15674,7 @@ port within a range.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               ;; This is a fork with fixes for latest SBCL.
-               (url "https://github.com/ruricolist/cl-flamegraph")
+               (url "https://github.com/40ants/cl-flamegraph")
                (commit commit)))
          (file-name (git-file-name "cl-flamegraph" version))
          (sha256
@@ -27483,8 +27482,8 @@ definition.")
   (sbcl-package->ecl-package sbcl-slot-extra-options))
 
 (define-public sbcl-micros
-  (let ((commit "9fc7f1e5b0dbf1b9218a3f0aca7ed46e90aa86fd")
-        (revision "0"))
+  (let ((commit "af94fe5d6688f67a092f604765fb706ebae44e99")
+        (revision "1"))
     (package
       (name "sbcl-micros")
       (version (git-version "0.0.0" revision commit))
@@ -27495,7 +27494,7 @@ definition.")
                (url "https://github.com/lem-project/micros")
                (commit commit)))
          (sha256
-          (base32 "1p0s7a723w56vcgrbc7hgmkhnmjcb8nmc59im2wx9inm1la6mcbc"))
+          (base32 "1xn85zif10qkwnw4a1s584whnyvmjwn5sik949v1pwxykhq96qjy"))
          (file-name (git-file-name "micros" version))))
       (build-system asdf-build-system/sbcl)
       (native-inputs (list sbcl-rove))

@@ -4832,6 +4832,26 @@ code@{emacs-wiki.el}, it facilitates using hyperlinks and doing full-text
 searches.  Unlike code@{emacs-wiki.el}, it can be combined with any format.")
     (license license:gpl1+)))
 
+(define-public emacs-mediawiki-el
+  (package
+    (name "emacs-mediawiki-el")
+    (version "2.3.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/hexmode/mediawiki-el.git")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1d05jw2sa19rgzskvavh21bfmbh07yza1drfbgypsvay3nkjfd2z"))))
+    (build-system emacs-build-system)
+    (synopsis "emacs mediawiki editor")
+    (description "This package provides a way to edit mediawiki sites from
+within emacs.")
+    (home-page "https://github.com/hexmode/mediawiki-el")
+    (license license:agpl3+)))
+
 (define-public emacs-bm
   (package
     (name "emacs-bm")
@@ -4909,6 +4929,32 @@ Some of its major features include:
 @item scanning of declarations and placing them in a menu.
 @end itemize")
     (license license:gpl2+)))
+
+(define-public emacs-campus
+  (let ((commit "0a475cd7704001d8dc8280acb91a317db797933b")
+        (revision "0"))
+    (package
+      (name "emacs-campus")
+      (version (git-version "0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri
+          (git-reference
+           (url "https://github.com/eshrh/campus-emacs")
+           (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "13vych4kk6adn15scl1s4znnbmfjvihfglxglrqqp2llzh0wsnlm"))))
+      (arguments (list #:tests? #f)) ; There are no tests.
+      (propagated-inputs (list emacs-dash emacs-s))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/eshrh/campus-emacs")
+      (synopsis "Simple and sane approach to repl programming")
+      (description
+       "Campus is a simple but effective improvement to the
+inferior-process repl development experience in Emacs.")
+      (license license:gpl3+))))
 
 (define-public emacs-caps-lock
   (package
@@ -7631,6 +7677,45 @@ Emacs, inspired by @code{Dracula} theme.")
        "This package provides syntax highlighting and automatic indentation
 for the Zig programming language in Emacs.")
       (license license:gpl3+))))
+
+(define-public emacs-zk
+  (package
+    (name "emacs-zk")
+    (version "0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/localauthor/zk/")
+         (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0449zsahyzvjlhv27lkj33ybnq86j47paww779zd0qhq550hdnjs"))))
+    (arguments
+     (list
+      #:tests? #f ; There are no tests.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'configure
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "zk.el"
+                (("\"grep")
+                 (string-append
+                  "\""
+                  (search-input-file inputs "/bin/grep")))
+                (("\"egrep")
+                 (string-append
+                  "\""
+                  (search-input-file inputs "/bin/egrep")))))))))
+    (propagated-inputs (list emacs-citar emacs-link-hint))
+    (inputs (list grep))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/localauthor/zk/")
+    (synopsis "Zettelkasten-style linked notes for Emacs")
+    (description
+     "Emacs packages for working with Zettelkasten-style linked notes.")
+    (license license:gpl3+)))
 
 (define-public emacs-znc
   (package

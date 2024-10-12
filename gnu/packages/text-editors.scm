@@ -148,8 +148,8 @@ extensions over the standard utility.")
     (license license:gpl3+)))
 
 (define-public lem
-  (let ((commit "3f2f0adb6db2dbed57b5cccca34f47ab9d5a2314")
-        (revision "0"))
+  (let ((commit "7b380ea04cea2696975da6c7d8c29e57ce2907a2")
+        (revision "2"))
     (package
       (name "lem")
       (version (git-version "2.2.0" revision commit))
@@ -160,7 +160,7 @@ extensions over the standard utility.")
                (url "https://github.com/lem-project/lem/")
                (commit commit)))
          (sha256
-          (base32 "00b4wn75ssywrhr4b7h4vk7hyd6dac2618339k56vg9vwni1bbxi"))
+          (base32 "1096vkpd3srs7c8mlirb6qfzmvp7hbkgrj9x6rniyvid9vl0ffmy"))
          (file-name (git-file-name name version))
          (snippet
           #~(begin
@@ -200,11 +200,14 @@ extensions over the standard utility.")
                        (shared-lib (string-append shared-lib-dir
                                                   "/terminal.so")))
                   (mkdir-p shared-lib-dir)
-                  (invoke "gcc" "extensions/terminal/terminal.c"
+                  (invoke #$(cc-for-target)
+                          "extensions/terminal/terminal.c"
                           "-L" lib-dir "-lvterm"
                           "-Wl,-Bdynamic"
                           "-o" shared-lib
-                          "-fPIC" "-shared")))))))
+                          "-shared"
+                          "-fPIC"
+                          "-lutil")))))))
       (native-inputs
        (list sbcl-cl-ansi-text
              sbcl-rove

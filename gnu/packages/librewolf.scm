@@ -212,20 +212,18 @@
 ;; Update this id with every update to its release date.
 ;; It's used for cache validation and therefore can lead to strange bugs.
 ;; ex: date '+%Y%m%d%H%M%S'
-(define %librewolf-build-id "20240922110507")
+(define %librewolf-build-id "20241010143544")
 
 (define-public librewolf
   (package
     (name "librewolf")
-    (version "130.0.1-1")
+    (version "131.0.2-1")
     (source
      (origin
       (inherit (make-librewolf-source
                 #:version version
-                #:firefox-hash "0w4z3fq5zhm63a0wmhvmqrj263bvy962dir25q3z0x5hx6hjawh2"
-                #:librewolf-hash "0f80pihn375bdjhjmmg2v1w96wpn76zb60ycy39wafwh1dnzybrd"))
-      (patches
-       (search-patches "librewolf-add-paths-to-rdd-allowlist.patch"))))
+                #:firefox-hash "05knnwfxqd3mb6a5y2yh73sn4g648dxnz9kpkmpj9madr55863h4"
+                #:librewolf-hash "1knx485kdjv8d0rn5ai1x1jp0403dvxz9m7lpim1y2d2ilyi26x7"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -324,9 +322,6 @@
                             libavcodec)))))
                    (add-after 'unpack 'neuter-genai
                      (lambda* _
-                       ;; Don't compile the code in.
-                       (substitute* "browser/components/moz.build"
-                         (("\"genai\",") ""))
                        ;; Lock the preferences so they can't be enabled.
                        (substitute* "lw/librewolf.cfg"
                          (("defaultPref\\(\"browser\\.ml\\.")
@@ -595,12 +590,26 @@
                                        ;; For U2F and WebAuthn
                                        "eudev")))
 
+                              ;; VA-API is run in the RDD (Remote Data Decoder) sandbox
+                              ;; and must be explicitly given access to files it needs.
+                              ;; Rather than adding the whole store (as Nix had
+                              ;; upstream do, see
+                              ;; <https://github.com/NixOS/nixpkgs/pull/165964> and
+                              ;; linked upstream patches), we can just follow the
+                              ;; runpaths of the needed libraries to add everything to
+                              ;; LD_LIBRARY_PATH.  These will then be accessible in the
+                              ;; RDD sandbox.
+                              (rdd-whitelist (map (cut string-append <> "/")
+                                                  (delete-duplicates (append-map
+                                                                      runpaths-of-input
+                                                                      '("mesa"
+                                                                        "ffmpeg")))))
                               (gtk-share (string-append (assoc-ref inputs
                                                                    "gtk+")
                                                         "/share")))
                          (wrap-program (car (find-files lib "^librewolf$"))
                            `("LD_LIBRARY_PATH" prefix
-                             ,libs)
+                             (,@libs ,@rdd-whitelist))
                            `("XDG_DATA_DIRS" prefix
                              (,gtk-share))
                            `("MOZ_LEGACY_PROFILES" =
@@ -610,31 +619,22 @@
                    (add-after 'wrap-program 'install-desktop-entry
                      (lambda* (#:key outputs #:allow-other-keys)
                        (let* ((desktop-file
-                               "taskcluster/docker/firefox-snap/firefox.desktop")
+                               "toolkit/mozapps/installer/linux/rpm/mozilla.desktop")
                               (applications (string-append #$output
                                              "/share/applications")))
                          (substitute* desktop-file
-                           (("^Exec=firefox")
+                           (("^Exec=@MOZ_APP_NAME@")
                             (string-append "Exec="
-                                           #$output "/bin/librewolf"))
-                           ;; "Firefox" -> "LibreWolf" everywhere
-                           (("Firefox")
+                                           #$output "/bin/librewolf %u"))
+                           (("@MOZ_APP_DISPLAYNAME@")
                             "LibreWolf")
-                           ;; Remove non-Latin translations.
-                           (("^Name\\[(ar|bn)\\].*$")
-                            "")
-                           (("^Icon=.*")
+                           (("@MOZ_APP_REMOTINGNAME@")
+                            "LibreWolf")
+                           (("^Icon=@MOZ_APP_NAME@")
                             (string-append "Icon="
                              #$output
-                             "/share/icons/hicolor/128x128/apps/librewolf.png
-"))
-                           ;; These commands were changed.
-                           (("-NewWindow")
-                            "-new-window")
-                           (("-NewPrivateWindow")
-                            "-new-private-window")
-                           (("StartupNotify=true")
-                            "StartupNotify=true\nStartupWMClass=LibreWolf"))
+                             "/share/icons/hicolor/128x128/apps/librewolf.png")))
+
                          (copy-file desktop-file "librewolf.desktop")
                          (install-file "librewolf.desktop" applications))))
                    (add-after 'install-desktop-entry 'install-icons

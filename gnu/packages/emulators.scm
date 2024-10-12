@@ -96,6 +96,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages sphinx)
@@ -3846,21 +3847,54 @@ and offers an intuitive architecture-neutral API for interacting with
 assembly for these architectures.")
     (license license:gpl2)))
 
+;; can be removed once Guix upgrades to Python 3.11.
+(define-public python-backports-strenum
+  (package
+    (name "python-backports-strenum")
+    (version "1.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "backports_strenum" version))
+       (sha256
+        (base32 "0514yj1391k6pbs2cch6i57hidwb3236wngh2ivlk6186h3j9ibp"))))
+    (native-inputs (list python-poetry-core))
+    (build-system pyproject-build-system)
+    ;; TODO: Running tests requires a new version of poetry in Guix.
+    (arguments
+     (list
+      #:tests? #f))
+    (home-page "https://github.com/clbarnes/backports.strenum")
+    (synopsis "Backport of additions to the 'strenum' module")
+    (description
+     "Provides a backport of Python's @code{StrEnum} class which was introduced in
+Python 3.11 for Python >=3.8.6.")
+    (license license:expat)))
+
 (define-public python-archinfo
   (package
     (name "python-archinfo")
     ;; Must be the same version as python-angr.
-    (version "9.2.46")
+    (version "9.2.112")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "archinfo" version))
        (sha256
-        (base32 "037xfq3wcf8ngayxz9623l4646m780v2102mfbygpzbkkjha1966"))))
+        (base32 "011n9vrrsbqbnw2i38ls7f0xkd85kxcnn14fm4lhxjpi91p7hshb"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-capstone python-keystone-engine))
+    (propagated-inputs
+      (list
+        python-backports-strenum
+        python-capstone
+        python-keystone-engine))
     (arguments
      `(#:phases (modify-phases %standard-phases
+                  (add-after 'unpack 'patch
+                    (lambda _
+                      (substitute* "setup.cfg"
+                        (("backports.strenum")
+                         "backports_strenum"))))
                   (replace 'check
                     (lambda* (#:key tests? #:allow-other-keys)
                       (when tests?

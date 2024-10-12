@@ -1528,6 +1528,37 @@ template")
 variables into the markdown template")
     (license license:expat)))
 
+(define-public python-docstring-to-markdown
+  (package
+    (name "python-docstring-to-markdown")
+    (version "0.15")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "docstring-to-markdown" version))
+       (sha256
+        (base32 "0gdpabnyl1kyy0cjrnph6xl4fyhgim50a1amsaqq3hahki6i2ip1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'reduce-test-coverage-since-failing
+            (lambda _
+              (substitute* "setup.cfg"
+                (("(^.*cov.*$|^.*flake8.*$)") "")))))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-pytest-flake8))
+    (home-page "https://github.com/python-lsp/docstring-to-markdown")
+    (synopsis "On the fly conversion of Python docstrings to markdown")
+    (description
+     "This module can convert Python docstrings to Markdown.  It can recognise
+reStructuredText inside docstrings and convert multiple of its features to
+Markdown.  It also includes initial support for Google-formatted docstrings.")
+    (license license:lgpl2.1+)))
+
 (define-public python-mysql-connector-python
   (package
     (name "python-mysql-connector-python")
@@ -18517,19 +18548,29 @@ minimal and fast API targeting the following uses:
 (define-public python-icalendar
   (package
     (name "python-icalendar")
-    (version "4.1.0")
+    (version "5.0.13")
     (source (origin
              (method url-fetch)
              (uri (pypi-uri "icalendar" version))
              (sha256
               (base32
-               "15dkq42rkqjdi17rpvmd1plnbwn4daby0nk1s1c3xi7w5v0bfj4p"))))
-    (build-system python-build-system)
+               "01lp0advx60z8wgng8aga1p1668ydn1r6d9qm3d622yfikg9yycj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "pytest" "-vv" "src/icalendar/tests")))))))
     (propagated-inputs
-     (list python-dateutil python-pytz))
-    (synopsis "Python library for parsing iCalendar files")
-    (description "The icalendar package is a parser/generator of iCalendar
-files for use with Python.")
+     (list python-dateutil python-pytz python-tzdata))
+    (native-inputs
+     (list python-pytest python-pytz))
+    (synopsis "Python library for parsing and generating iCalendar files")
+    (description
+     "@code{icalendar} is a Python library for parsing and generating iCalendar files.")
     (home-page "https://github.com/collective/icalendar")
     (license license:bsd-2)))
 
@@ -23858,6 +23899,27 @@ creating a tag.")
      Python.  It is based on Parsing Expression Grammars, PEG.  With pyPEG you can
      parse many formal languages.")
     (license license:gpl2)))
+
+(define-public python-pyformlang
+  (package
+    (name "python-pyformlang")
+    (version "1.0.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyformlang" version))
+       (sha256
+        (base32 "0szgy4pqfixmswjs37qgma4qa3bsadpp3l1xflrpfi10aa8hh2sp"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-networkx python-numpy python-pydot))
+    (home-page "https://github.com/Aunsiels/pyformlang")
+    (synopsis "Framework for interacting with formal grammars")
+    (description
+     "This package provides a framework for working with formal
+language grammars.  The library was originally developed for educational
+purposes and therefore implements many textbook algorithms regarding the
+manipulation and interaction with formal grammars.")
+    (license license:expat)))
 
 (define-public python-incremental
   (package
@@ -31012,6 +31074,36 @@ as JSON objects.  With JSON we can make our logs more readable by machines and
 we can stop writing custom parsers for syslog-type records.")
     (license license:bsd-3)))
 
+(define-public python-unique-log-filter
+  (package
+    (name "python-unique-log-filter")
+    (version "0.1.0")
+    (source
+     ;; The version on pypi does not include test files.
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/twizmwazin/unique_log_filter")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "036mh6nqskck2fa1q2inasqxb9wcz2p09qcpldnnffzcy1a6kzba"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases (modify-phases %standard-phases
+                  (replace 'check
+                    (lambda* (#:key tests? #:allow-other-keys)
+                      (when tests?
+                        (invoke "python" "test_unique_log_filter.py")))))))
+    (native-inputs (list python-flit-core))
+    (home-page "https://github.com/twizmwazin/unique_log_filter")
+    (synopsis "Log filter that removes duplicate log messages")
+    (description
+     "This library provides a filter for the @code{logging} module
+from the Python standard library which allows removing duplicate log
+messages.")
+    (license license:bsd-2)))
+
 (define-public python-daiquiri
   (package
     (name "python-daiquiri")
@@ -34057,17 +34149,47 @@ instructions up to AVX-512 and SHA (including 3dnow!+, XOP, FMA3, FMA4, TBM
 and BMI2).")
       (license license:bsd-2))))
 
+(define-public python-cart
+  (package
+    (name "python-cart")
+    (version "1.2.2")
+    (source
+     (origin
+       ;; No source releases available on pypi, hence fetching from GitHub.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/CybercentreCanada/cart")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zycv620iljrsval5rai1wsn0hr25ddx9xhjsyy6xxrgprfxvlfi"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases (modify-phases %standard-phases
+                  (replace 'check
+                    (lambda* (#:key tests? #:allow-other-keys)
+                      (when tests?
+                        (invoke "python" "-m" "unittest" "discover")))))))
+    (propagated-inputs (list python-pycryptodome))
+    (home-page "https://github.com/CybercentreCanada/cart")
+    (synopsis "Library for interacting with the CaRT file format")
+    (description
+     "This Python library implements the CaRT file format which is commonly
+used to store and transmit information about computer malware and associated
+metadata.")
+    (license license:bsd-2)))
+
 (define-public python-ailment
   (package
     (name "python-ailment")
     ;; Must be the same version as python-angr.
-    (version "9.2.46")
+    (version "9.2.112")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ailment" version))
        (sha256
-        (base32 "073fcssbjis1ckwv2w0dcz2dfl6715bj4d4qdhspajj911mvng2f"))))
+        (base32 "1rv8rwvdm7fc9mf8z5hqb54dsj0n7jlnwghd12ll0b2jmh2ix8mn"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -34089,19 +34211,19 @@ binary analysis platform.")
   (package
     (name "python-cle")
     ;; Must be the same version as python-angr.
-    (version "9.2.46")
+    (version "9.2.112")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cle" version))
        (sha256
-        (base32 "0mswv9gd2p2ws7zfsshqv5ybbj27wkdwakdcknq4vsrx9ry9k4yc"))))
+        (base32 "11jbvg12wqxz74iy83ax0q8k156xrw6iqv75dix5cpqgacds3gdj"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:tests? #f))
     (propagated-inputs (list python-pefile python-pyelftools python-pyvex
-                             python-sortedcontainers))
+                             python-sortedcontainers python-cart))
     (native-inputs (list python-cffi))
     (home-page "https://github.com/angr/cle")
     (synopsis "Python loader for binaries and their associated libraries")
@@ -34115,14 +34237,13 @@ it was loader by the operating system's loader.")
   (package
     (name "python-pyvex")
     ;; Must be the same version as python-angr.
-    (version "9.2.46")
+    (version "9.2.112")
     (source
      (origin
        (method url-fetch)
-       (patches (search-patches "python-pyvex-remove-angr-dependency.patch"))
        (uri (pypi-uri "pyvex" version))
        (sha256
-        (base32 "1v64rn7gxy6fg065bgsy38z6r494k5ri5r6sn4g08hjj32ihx1ka"))))
+        (base32 "0z1jiflp7h07mfc26am3v7v5z2n6mw9hkfylbs86qgpm93qcf6i3"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -34151,7 +34272,7 @@ to enable all kinds of binary analysis tasks.")
   (package
     (name "python-claripy")
     ;; Must be the same version as python-angr.
-    (version "9.2.46")
+    (version "9.2.112")
     (source
      (origin
        ;; Fetching from Git as pypi release doesn't include all test files.
@@ -34161,13 +34282,13 @@ to enable all kinds of binary analysis tasks.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0nmawpi1596d9plafrp2db36cjsidy2fagkzkja51jwlx2m1ngai"))
+        (base32 "0c6q6imxjwhxn87d9yz8zvyrszk94r25w8x0g1lr6mrpa9bx7wai"))
        (modules '((guix build utils)))
        (snippet '(begin
                    (substitute* "setup.cfg"
                      ;; Relax the z3 version constraint.
                      ;; See https://github.com/angr/claripy/commit/d1fe2df
-                     (("z3-solver==4.10.2.0")
+                     (("z3-solver==4.13.0.0")
                       ""))))))
     (build-system pyproject-build-system)
     (arguments
@@ -34339,19 +34460,18 @@ mangled symbols, which can be used for directly extracting type information.")
 (define-public python-angr
   (package
     (name "python-angr")
-    (version "9.2.46")
+    (version "9.2.112")
     (source
      (origin
        ;; Fetching from Git as pypi release doesn't include all test files.
        (method git-fetch)
-       (patches (search-patches "python-angr-addition-type-error.patch"
-                                "python-angr-check-exec-deps.patch"))
+       (patches (search-patches "python-angr-check-exec-deps.patch"))
        (uri (git-reference
              (url "https://github.com/angr/angr")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18y9wyf7va7gvp9zd6lhw82j9a2x2ajsvbawh96xnxzml0jwlwjm"))))
+        (base32 "1179926xbfh2930laz33p90vj532jk7g2qylzzpw1185yhlf9cis"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -34359,9 +34479,18 @@ mangled symbols, which can be used for directly extracting type information.")
                    (add-after 'unpack 'patch-tests
                      (lambda* (#:key inputs #:allow-other-keys)
                        (let ((coreutils (assoc-ref inputs "coreutils")))
-                         (substitute* "tests/test_vault.py"
-                           (("/bin/false")
-                            (which "false")))
+                         ;; The constraint exists because of a capstone bug for which
+                         ;; we backport a patch, hence we can relax the constraint.
+                         ;;
+                         ;; See https://github.com/angr/angr/issues/4656
+                         (substitute* "setup.cfg"
+                          (("capstone==5.0.0.post1")
+                           "capstone"))
+                         ;; Relax constraint on python-rich, the constraint is too strict,
+                         ;; angr work well with our packaged version of python-rich.
+                         (substitute* "setup.cfg"
+                           (("rich>=13.1.0")
+                            "rich"))
                          (substitute* "tests/common.py"
                            (("\\[\"cc\"\\]")
                             "[\"gcc\"]")))))
@@ -34400,11 +34529,13 @@ mangled symbols, which can be used for directly extracting type information.")
                              python-itanium-demangler
                              python-pycparser
                              python-pyvex
-                             python-progressbar2
+                             python-pyformlang
+                             python-rich
                              python-rpyc
                              python-sortedcontainers
                              python-sqlalchemy
                              python-sympy
+                             python-unique-log-filter
                              unicorn))
     (native-inputs `(("python-pytest" ,python-pytest)
                      ("python-pytest-xdist" ,python-pytest-xdist)
@@ -34422,7 +34553,7 @@ mangled symbols, which can be used for directly extracting type information.")
                                                                     version))))
                          (file-name (git-file-name "angr-binaries" version))
                          (sha256 (base32
-                                  "1f286b2239zavxzwg1184hj1zs380cr9qr549mvy3vywvm8bsmgr"))))))
+                                  "0bxzf6alkczv9r0151ksvcwyksnw8077acz1wd8drbxw0zl0qnmr"))))))
     (home-page "https://github.com/angr/angr")
     (synopsis "Multi-architecture binary analysis toolkit")
     (description

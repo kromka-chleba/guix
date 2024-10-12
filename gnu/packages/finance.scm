@@ -148,7 +148,7 @@
   ;; <https://bitcoincore.org/en/lifecycle/#schedule>.
   (package
     (name "bitcoin-core")
-    (version "27.1")
+    (version "28.0")
     (source (origin
               (method url-fetch)
               (uri
@@ -156,7 +156,7 @@
                               version "/bitcoin-" version ".tar.gz"))
               (sha256
                (base32
-                "1npk30c4s2xihm2vxmswl2x4baw5n23gsbaw5y8sx3qvjbym240c"))))
+                "0zzk5w88xzw07xcr18nwq2bbr4wqcvkacy97gyq2wq04wb8y42kh"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf
@@ -171,7 +171,6 @@
            boost
            libevent
            miniupnpc
-           openssl
            qtbase-5
            sqlite))
     (arguments
@@ -213,7 +212,7 @@
               "python3" "./test/functional/test_runner.py"
               (string-append "--jobs=" (number->string (parallel-job-count))))
              #t)))))
-    (home-page "https://bitcoin.org/")
+    (home-page "https://bitcoincore.org/")
     (synopsis "Bitcoin peer-to-peer client")
     (description
      "Bitcoin is a digital currency that enables instant payments to anyone
@@ -2374,7 +2373,7 @@ mining.")
 (define-public p2pool
   (package
     (name "p2pool")
-    (version "4.1")
+    (version "4.1.1")
     (source
      (origin
        (method git-fetch)
@@ -2383,7 +2382,7 @@ mining.")
              (commit (string-append "v" version))
              (recursive? #t)))
        (file-name (git-file-name name version))
-       (sha256 (base32 "1ijj3ci0kx87yjv29c6p9wqj15aij7r87sdbjwhzcmbdf46krj3q"))
+       (sha256 (base32 "1vcgzip0w4mdnaj49s539nlnkc8mnxw4idzy2935nx83p1p0l6xg"))
        (modules '((guix build utils)))
        (snippet
         #~(for-each delete-file-recursively
