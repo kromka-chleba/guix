@@ -114,6 +114,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/home/services/shepherd.scm		\
   %D%/home/services/sound.scm			\
   %D%/home/services/ssh.scm			\
+  %D%/home/services/sway.scm			\
   %D%/home/services/syncthing.scm		\
   %D%/home/services/mcron.scm			\
   %D%/home/services/utils.scm			\
@@ -940,7 +941,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/aegisub-make43.patch			\
   %D%/packages/patches/agda-categories-remove-incompatible-flags.patch	\
   %D%/packages/patches/agda-categories-use-find.patch	\
-  %D%/packages/patches/agda-categories-use-stdlib-1.7.3.patch	\
+  %D%/packages/patches/agda-categories-use-newer-stdlib.patch	\
   %D%/packages/patches/agda-libdirs-env-variable.patch	\
   %D%/packages/patches/agda-use-sphinx-5.patch	\
   %D%/packages/patches/agda-stdlib-use-runhaskell.patch	\
@@ -1502,6 +1503,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/guile-hurd-posix-spawn.patch		\
   %D%/packages/patches/guile-present-coding.patch		\
   %D%/packages/patches/guile-rsvg-pkgconfig.patch		\
+  %D%/packages/patches/guile-ssh-rename-bool.patch		\
   %D%/packages/patches/guile-emacs-fix-configure.patch		\
   %D%/packages/patches/gtk2-fix-builder-test.patch		\
   %D%/packages/patches/gtk2-harden-list-store.patch		\
@@ -1811,6 +1813,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/ngircd-handle-zombies.patch		\
   %D%/packages/patches/network-manager-plugin-path.patch	\
   %D%/packages/patches/network-manager-meson.patch		\
+  %D%/packages/patches/newlib-getentropy.patch			\
   %D%/packages/patches/nginx-socket-cloexec.patch		\
   %D%/packages/patches/nickle-man-release-date.patch		\
   %D%/packages/patches/nnpack-system-libraries.patch		\
@@ -1879,7 +1882,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/orangeduck-mpc-fix-pkg-config.patch	\
   %D%/packages/patches/orbit2-fix-array-allocation-32bit.patch \
   %D%/packages/patches/orpheus-cast-errors-and-includes.patch	\
-  %D%/packages/patches/osip-CVE-2017-7853.patch			\
   %D%/packages/patches/ots-no-include-missing-file.patch	\
   %D%/packages/patches/owncloud-disable-updatecheck.patch	\
   %D%/packages/patches/p7zip-CVE-2016-9296.patch		\
@@ -2158,6 +2160,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/shakespeare-spl-fix-grammar.patch		\
   %D%/packages/patches/shared-mime-info-xdgmime-path.patch	\
   %D%/packages/patches/sharutils-CVE-2018-1000097.patch		\
+  %D%/packages/patches/sipwitch-fix-build-with-exosip5.patch	\
   %D%/packages/patches/slim-config.patch			\
   %D%/packages/patches/slim-login.patch				\
   %D%/packages/patches/slim-display.patch			\
@@ -2315,8 +2318,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/x265-arm-flags.patch			\
   %D%/packages/patches/xdg-desktop-portal-disable-portal-tests.patch\
   %D%/packages/patches/xdg-desktop-portal-wlr-harcoded-length.patch\
-  %D%/packages/patches/xen-docs-use-predictable-ordering.patch	\
-  %D%/packages/patches/xen-remove-config.gz-timestamp.patch	\
   %D%/packages/patches/xf86-video-ark-remove-mibstore.patch	\
   %D%/packages/patches/xf86-video-nouveau-fixup-ABI.patch	\
   %D%/packages/patches/xf86-video-savage-xorg-compat.patch 	\

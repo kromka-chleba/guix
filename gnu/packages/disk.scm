@@ -22,6 +22,7 @@
 ;;; Copyright © 2021 Mathieu Othacehe <othacehe@gnu.org>
 ;;; Copyright © 2021 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2021 Justin Veilleux <terramorpha@cock.li>
+;;; Copyright © 2021 Sarah Morgensen <iskarian@mgsn.dev>
 ;;; Copyright © 2014, 2022 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Disseminate Dissent <disseminatedissent@protonmail.com>
@@ -29,6 +30,7 @@
 ;;; Copyright © 2023 Morgan Smith <Morgan.J.Smith@outlook.com>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -899,7 +901,7 @@ a card with a smaller capacity than stated.")
 (define-public duperemove
   (package
     (name "duperemove")
-    (version "0.11.3")
+    (version "0.14.1")
     (source
      (origin
        (method git-fetch)
@@ -907,7 +909,7 @@ a card with a smaller capacity than stated.")
              (url "https://github.com/markfasheh/duperemove")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0jwxmhadv2f1mx7gan4gk0xwrjr5g2xa71z1rp0knc1acbkhqdas"))
+        (base32 "0kl6bisbgf6x8a6gws6r097zrawhp9jxwh7m6nhq7dd48b8zrjw8"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs
@@ -1178,7 +1180,7 @@ to create devices with respective mappings for the ATARAID sets discovered.")
 (define-public libblockdev
   (package
     (name "libblockdev")
-    (version "2.28")
+    (version "3.1.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/storaged-project/"
@@ -1186,37 +1188,57 @@ to create devices with respective mappings for the ATARAID sets discovered.")
                                   version "-1/libblockdev-" version ".tar.gz"))
               (sha256
                (base32
-                "1x3xbgd2dyjhcqvyalpnrp727xidfxmaxgyyvv5gwx4aw90wijc2"))))
+                "1ny2glwmb5dcdv2x0giinbyma9fhk59z8117k1kr15pm7yjk7jx5"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-configuration-directory
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-configuration-directory
+            (lambda _
               (substitute* "src/lib/blockdev.c"
-               (("/etc/libblockdev/conf.d/" path) (string-append out path)))))))))
+                (("/etc/libblockdev/conf.d/" path)
+                 (string-append #$output path)))))
+          (add-after 'unpack 'patch-plugin-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* (find-files "src/plugins" "\\.c$")
+                (("(gchar \\*arg.+\\{\")([^\"]+)" all start program)
+                 (string-append
+                  start (or (false-if-exception
+                             (search-input-file inputs
+                                                (string-append "bin/" program)))
+                            (false-if-exception
+                             (search-input-file inputs
+                                                (string-append "sbin/" program)))
+                            program)))))))))
     (native-inputs
      (list gobject-introspection
            pkg-config
-           python-wrapper
-           util-linux))
+           python-wrapper))
     (inputs
      (append
       (cons cryptsetup (libcryptsetup-propagated-inputs))
-      (list btrfs-progs
+      (list bcache-tools
+            btrfs-progs
             dosfstools
             dmraid
+            e2fsprogs
             eudev
             glib
+            gptfdisk
+            keyutils
             kmod
             libbytesize
+            libnvme
             libyaml
             lvm2
             mdadm
+            multipath-tools
             ndctl
             nss
+            ntfs-3g
             parted
+            util-linux
             volume-key
             xfsprogs)))
     (home-page "https://github.com/storaged-project/libblockdev")

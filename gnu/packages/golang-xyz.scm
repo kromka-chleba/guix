@@ -4061,6 +4061,58 @@ very eas to use.")
      (list
       #:import-path "github.com/klauspost/cpuid/v2"))))
 
+(define-public go-github-com-kpango-glg
+  (package
+    (name "go-github-com-kpango-glg")
+    (version "1.6.15")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kpango/glg")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0k6y8nvj0q8mz362490cmcx15rhcpyx4sf4rv153dgh46acd1phh"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/kpango/glg"))
+    (propagated-inputs
+     (list go-github-com-goccy-go-json
+           go-github-com-kpango-fastime
+           go-github-com-sirupsen-logrus
+           go-go-uber-org-zap))
+    (home-page "https://github.com/kpango/glg")
+    (synopsis "Lock-free logging library for Go")
+    (description
+     "@code{glg} is simple lock-free logging library for Go.")
+    (license license:expat)))
+
+(define-public go-github-com-kpango-fastime
+  (package
+    (name "go-github-com-kpango-fastime")
+    (version "1.1.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kpango/fastime")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18f1p5wf0zf73ky0h2hqfa6b6zryf7pq7k2r02if673x7bjlbp9h"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/kpango/fastime"))
+    (home-page "https://github.com/kpango/fastime")
+    (synopsis "Fast time function library for Go")
+    (description
+     "@code{fastime} is a time function library for Go with zero memory
+allocation.  @code{fastime} is returning the approximate time.")
+    (license license:expat)))
+
 (define-public go-github-com-kr-pretty
   (package
     (name "go-github-com-kr-pretty")

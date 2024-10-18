@@ -1270,7 +1270,7 @@ radio receiver.")
 (define-public fldigi
   (package
     (name "fldigi")
-    (version "4.2.04")
+    (version "4.2.06")
     (source
      (origin
        (method git-fetch)
@@ -1279,7 +1279,7 @@ radio receiver.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1s1dr1bpfa70sq5f0bi4vaszyzsa7ykpswc3znhmg7156mr027kj"))))
+        (base32 "0l70skbs92pma8ypils4h1wygm7pc61zfqjbnf5kn28vvah3n8zn"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf-2.71 automake gettext-minimal pkg-config))
@@ -1810,14 +1810,14 @@ operators.")
 (define-public xnec2c
   (package
     (name "xnec2c")
-    (version "4.4.12")
+    (version "4.4.16")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.xnec2c.org/releases/xnec2c-v"
                            version ".tar.gz"))
        (sha256
-        (base32 "1ibj2bjzn4dp988w0yayjsiccv44icsm02gr0g6gk389p7lg32p9"))))
+        (base32 "0sdfmaaipcz23807xiaxjkxw0m0px4plgr73lp37hz76jzr649jy"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf
@@ -1973,7 +1973,7 @@ from devices on the 433 MHz, 868 MHz, 315 MHz, 345 MHz and 915 MHz ISM bands.")
 (define-public multimon-ng
   (package
     (name "multimon-ng")
-    (version "1.3.0")
+    (version "1.3.1")
     (source
      (origin
        (method git-fetch)
@@ -1982,7 +1982,7 @@ from devices on the 433 MHz, 868 MHz, 315 MHz, 345 MHz and 915 MHz ISM bands.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gd3kxb1w2fc6waa8g7af036yicjbg4a7hs0dgdci4d3aqwyz690"))))
+        (base32 "00v8ix51gn30mc6bhm7fi37cyksaf8vs27xsi1435kpix9askcla"))))
     (build-system cmake-build-system)
     (inputs
      (list libx11 pulseaudio))
@@ -2010,7 +2010,7 @@ modes:
 (define-public nanovna-saver
   (package
     (name "nanovna-saver")
-    (version "0.6.3")
+    (version "0.6.4")
     (source
      (origin
        (method git-fetch)
@@ -2019,7 +2019,7 @@ modes:
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "192lg3hmhr4r9b6an1k61d89fvar4kvqp3qjmpkb489c2zgaggll"))))
+        (base32 "07mih8jgpnnq101yqwv82sihbfjqi47dkvni34minbp19676q1bw"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-cython python-setuptools-scm))

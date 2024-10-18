@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2023 Pierre-Henry Fröhring <contact@phfrohring.com>
 ;;; Copyright © 2024 Igor Goryachev <igor@goryachev.org>
+;;; Copyright © 2024 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -38,6 +39,9 @@
 ;; execution.  It is a X.Y string where X and Y are respectively the major and
 ;; minor version number of the Elixir used in the build.
 (define %elixir-version (make-parameter "X.Y"))
+
+(define %git-version-rx
+  (make-regexp "^(.*)-[0-9]+(\\.[0-9]+)?(\\.[0-9]+)?-[0-9]+\\..+$"))
 
 (define* (elixir-libdir path #:optional (version (%elixir-version)))
   "Return the path where all libraries under PATH for a specified Elixir
@@ -92,7 +96,15 @@ See: https://hexdocs.pm/mix/1.15.7/Mix.html#module-environment-variables"
   (setenv "MIX_EXS" mix-exs)
   (setenv "MIX_HOME" (getcwd))
   (setenv "MIX_PATH" (or mix-path ""))
-  (setenv "MIX_REBAR3" (string-append (assoc-ref inputs "rebar3") "/bin/rebar3")))
+  (setenv "MIX_REBAR3" (string-append (assoc-ref inputs "rebar3") "/bin/rebar3"))
+  ;; Add Erlang dependencies in Elixir's load path.
+  (setenv "ERL_LIBS"
+          (string-join (search-path-as-list
+                        `("lib/erlang/lib")
+                        (map (match-lambda
+                               ((label . package) package))
+                             inputs))
+                       ":")))
 
 (define* (set-elixir-version #:key inputs #:allow-other-keys)
   "Store the version number of the Elixir input in a parameter."
@@ -124,10 +136,12 @@ We do not want to copy them to the installation directory."
 
 (define (package-name->elixir-name name+ver)
   "Convert the Guix package NAME-VER to the corresponding Elixir name-version
-format.  Example: elixir-a-pkg-1.2.3 -> a_pkg"
+format.  Example: elixir-a-pkg-1.2.3 -> a_pkg or elixir-a-pkg-0.0.0-0.e51e36e
+-> a_pkg"
+  (define git-version? (regexp-exec %git-version-rx name+ver))
   ((compose
     (cute string-join <> "_")
-    (cute drop-right <> 1)
+    (cute drop-right <> (if git-version? 2 1))
     (cute string-split <> #\-))
    (strip-prefix name+ver)))
 

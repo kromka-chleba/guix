@@ -130,6 +130,8 @@ Copyright @copyright{} 2024 Richard Sent@*
 Copyright @copyright{} 2024 Dariqq@*
 Copyright @copyright{} 2024 Denis 'GNUtoo' Carikli@*
 Copyright @copyright{} 2024 Fabio Natali@*
+Copyright @copyright{} 2024 Arnaud Daby-Seesaram@*
+Copyright @copyright{} 2024 Nigko Yerden@*
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -460,6 +462,7 @@ Home Services
 * Mail: Mail Home Services.     Services for managing mail.
 * Messaging: Messaging Home Services.  Services for managing messaging.
 * Media: Media Home Services.   Services for managing media.
+* Sway: Sway window manager.    Setting up the Sway configuration.
 * Networking: Networking Home Services.  Networking services.
 * Miscellaneous: Miscellaneous Home Services.  More services.
 
@@ -22055,6 +22058,12 @@ If @code{#t}, Tor will listen for control commands on the UNIX domain socket
 @file{/var/run/tor/control-sock}, which will be made writable by members of the
 @code{tor} group.
 
+@item @code{transport-plugins} (default: @code{'()})
+The list of @code{<tor-transport-plugin>} records to use.
+For any transport plugin you include in this list, appropriate
+configuration line to enable transport plugin will be automatically
+added to the default configuration file.
+
 @end table
 @end deftp
 
@@ -22081,6 +22090,68 @@ Association list of port to address mappings.  The following example:
 maps ports 22 and 80 of the Onion Service to the local ports 22 and 8080.
 
 @end table
+@end deftp
+
+@cindex pluggable transports, tor
+@deftp {Data Type} tor-transport-plugin
+Data type representing a Tor pluggable transport plugin in
+@code{tor-configuration}.  Plugguble transports are programs
+that disguise Tor traffic, which can be useful in case Tor is
+censored.  See the the Tor project's
+@url{https://tb-manual.torproject.org/circumvention/,
+documentation} and
+@url{https://spec.torproject.org/pt-spec/index.html,
+specification} for more information.
+
+Each transport plugin corresponds either to
+@code{ClientTransportPlugin ...} or to
+@code{ServerTransportPlugin ...} line in the default
+configuration file, see @command{man tor}.
+Available @code{tor-transport-plugin} fields are:
+
+@table @asis
+@item @code{role} (default: @code{'client})
+This must be either @code{'client} or @code{'server}.  Otherwise,
+an error is raised.  Set the @code{'server} value if you want to
+run a bridge to help censored users connect to the Tor network, see
+@url{https://community.torproject.org/relay/setup/bridge/,
+the Tor project's brige guide}.  Set the @code{'client} value
+if you want to connect to somebody else's bridge, see
+@url{https://bridges.torproject.org/, the Tor project's
+``Get Bridges'' page}.  In both cases the required
+additional configuration should be provided via
+@code{#:config-file} option of @code{tor-configuration}.
+@item @code{protocol} (default: @code{"obfs4"})
+A string that specifies a pluggable transport protocol.
+@item @code{program}
+This must be a ``file-like'' object or a string
+pointing to the pluggable transport plugin executable.
+This option allows the Tor daemon run inside the container
+to access the executable and all the references
+(e.g. package dependencies) attached to it.
+@end table
+
+Suppose you would like Tor daemon to use obfs4 type obfuscation and
+to connect to Tor network via obfs4 bridge (a nonpublic Tor relay with
+support for obfs4 type obfuscation). Then you may go to
+@url{https://bridges.torproject.org/, https://bridges.torproject.org/}
+and get there a couple of bridge lines (each starts with @code{obfs4 ...})
+and use these lines in tor-service-type configuration as follows:
+@lisp
+(service tor-service-type
+	 (tor-configuration
+	  (config-file (plain-file "torrc"
+				   "\
+UseBridges 1
+Bridge obfs4 ...
+Bridge obfs4 ..."))
+	  (transport-plugins
+	   (list (tor-transport-plugin
+		  (program
+		   (file-append
+		    go-gitlab-torproject-org-tpo-anti-censorship-pluggable-transports-lyrebird
+		    "/bin/lyrebird")))))))
+@end lisp
 @end deftp
 
 The @code{(gnu services rsync)} module provides the following services:
@@ -25913,7 +25984,7 @@ via @code{pulseaudio-configuration}, see below.
 
 @quotation Warning
 This service overrides per-user configuration files.  If you want
-PulseAudio to honor configuration files in @file{~/.config/pulse} you
+PulseAudio to honor configuration files in @file{~/.config/pulse}, you
 have to unset the environment variables @env{PULSE_CONFIG} and
 @env{PULSE_CLIENTCONFIG} in your @file{~/.bash_profile}.
 @end quotation
@@ -25984,7 +26055,7 @@ above example to modify the existing @code{pulseaudio-service-type} via
 
 @defvar ladspa-service-type
 This service sets the @var{LADSPA_PATH} variable, so that programs, which
-respect it, e.g. PulseAudio, can load LADSPA plugins.
+respect it, e.g.@: PulseAudio, can load LADSPA plugins.
 
 The following example will setup the service to enable modules from the
 @code{swh-plugins} package:
@@ -32999,15 +33070,15 @@ The example above represents the minimal tweaking necessary to get Agate
 up and running.  Specifying the path to the certificate and key directory is
 always necessary, as the Gemini protocol requires TLS by default.
 
-If specified @code{certificates} path is writable by Agate, and contains no
-valid pre-generated key and certificate, the Agate will try to generate
-them on the first start. In this case you should pass at least one
+If the specified @code{certificates} path is writable by Agate, and contains
+no valid pre-generated key and certificate, Agate will try to generate
+them on the first start.  In this case you should pass at least one
 hostname using the @code{hostnames} option.
-If specified directory is read-only - key and certificate should be
-pre-generated by user.
+If the specified directory is read-only, key and certificate should be
+pre-generated by the user.
 
-To obtain a certificate and a key in a DER format, you could, for example,
-use OpenSSL, running a commands similar to the following example:
+To obtain a certificate and a key in DER format, you could, for example,
+use OpenSSL, running commands similar to the following example:
 
 @example
 openssl genpkey -out key.der -outform DER -algorithm RSA \
@@ -40950,16 +41021,17 @@ processes as Shepherd Services.
              '("/var/lib/grafana:/var/lib/grafana")))))
 @end lisp
 
-In this example three different Shepherd services are going be added to the
+In this example three different Shepherd services are going to be added to the
 system.  Each @code{oci-container-configuration} record translates to a
 @code{docker run} invocation and its fields directly map to options.  You can
 refer to the
-@url{https://docs.docker.com/engine/reference/commandline/run,upstream},
-documentation for the semantics of each value.  If the images are not found they
-will be
+@url{https://docs.docker.com/engine/reference/commandline/run,upstream}
+documentation for the semantics of each value.  If the images are not found,
+they will be
 @url{https://docs.docker.com/engine/reference/commandline/pull/,pulled}.  The
-services with @code{(network "host")} are going to be attached to the host network
-and are supposed to behave like native processes with regard to networking.
+services with @code{(network "host")} are going to be attached to the
+host network and are supposed to behave like native processes with regard to
+networking.
 
 @end defvar
 
@@ -41031,7 +41103,7 @@ if it does not exist, otherwise it is appended to.
 
 @item @code{auto-start?} (default: @code{#t}) (type: boolean)
 Whether this service should be started automatically by the Shepherd.  If it
-is @code{#f} the service has to be started manually with @command{herd start}.
+is @code{#f}, the service has to be started manually with @command{herd start}.
 
 @item @code{respawn?} (default: @code{#f}) (type: boolean)
 Whether to have Shepherd restart the service when it stops, for instance when
@@ -41078,14 +41150,14 @@ Set the current user inside the spawned container.  You can refer to the
 documentation for semantics.
 
 @item @code{workdir} (default: @code{""}) (type: string)
-Set the current working for the spawned Shepherd service.
+Set the current working directory for the spawned Shepherd service.
 You can refer to the
 @url{https://docs.docker.com/engine/reference/run/#workdir,upstream}
 documentation for semantics.
 
 @item @code{extra-arguments} (default: @code{'()}) (type: list)
 A list of strings, gexps or file-like objects that will be directly
-passed to the @command{docker run} invokation.
+passed to the @command{docker run} invocation.
 
 @end table
 
@@ -41131,10 +41203,10 @@ If the @code{value} field is an @code{operating-system} record, this field's
 value will be ignored.
 
 @item @code{system} (default: @code{""}) (type: string)
-Attempt to build for a given system, e.g. "i686-linux"
+Attempt to build for a given system, e.g.@: "i686-linux"
 
 @item @code{target} (default: @code{""}) (type: string)
-Attempt to cross-build for a given triple, e.g. "aarch64-linux-gnu"
+Attempt to cross-build for a given triple, e.g.@: "aarch64-linux-gnu"
 
 @item @code{grafts?} (default: @code{#f}) (type: boolean)
 Whether to allow grafting or not in the pack build.
@@ -42959,7 +43031,7 @@ image.
 The @option{--no-graphic} option will instruct @command{guix system} to
 spawn a headless VM that will use the invoking tty for IO.  Among other
 things, this enables copy-pasting, and scrollback.  Use the @kbd{ctrl-a}
-prefix to issue QEMU commands; e.g. @kbd{ctrl-a h} prints a help,
+prefix to issue QEMU commands; e.g.@: @kbd{ctrl-a h} prints a help,
 @kbd{ctrl-a x} quits the VM, and @kbd{ctrl-a c} switches between the
 QEMU monitor and the VM.
 
@@ -44699,7 +44771,9 @@ available for the configuration record.
 @var{sub-documentation} is a @code{(@var{field-name}
 @var{configuration-name})} tuple.  @var{field-name} is the name of the
 field which takes another configuration record as its value, and
-@var{configuration-name} is the name of that configuration record.
+@var{configuration-name} is the name of that configuration record.  The
+same value may be used for multiple @var{field-name}s, in case a field
+accepts different types of configurations.
 
 @var{sub-documentation} is only needed if there are nested configuration
 records.  For example, the @code{getmail-configuration} record
@@ -45210,6 +45284,7 @@ services)}.
 * Mail: Mail Home Services.     Services for managing mail.
 * Messaging: Messaging Home Services.  Services for managing messaging.
 * Media: Media Home Services.   Services for managing media.
+* Sway: Sway window manager.    Setting up the Sway configuration.
 * Networking: Networking Home Services.  Networking services.
 * Miscellaneous: Miscellaneous Home Services.  More services.
 @end menu
@@ -46070,6 +46145,13 @@ The Shepherd package to use.
 
 @item auto-start? (default: @code{#t})
 Whether or not to start Shepherd on first login.
+
+@item daemonize? (default: @code{#t})
+Whether or not to run Shepherd in the background.
+
+@item silent? (default: @code{#t})
+When true, the @command{shepherd} process does not write
+anything to standard output when started automatically.
 
 @item services (default: @code{'()})
 A list of @code{<shepherd-service>} to start.
@@ -47124,6 +47206,409 @@ kodi} for more information.
 @end table
 @end deftp
 
+@node Sway window manager
+@subsection Sway window manager
+
+@cindex sway, Home Service
+@cindex sway, configuration
+The @code{(gnu home services sway)} module provides
+@code{home-sway-service-type}, a home service to configure the
+@uref{https://github.com/swaywm/sway,Sway window manager for Wayland} in
+a declarative way.
+
+Here is an example of a service and its configuration that you could add
+to the @code{services} field of your @code{home-environment}:
+
+@lisp
+(service home-sway-service-type
+         (sway-configuration
+          (gestures
+           '((swipe:3:down . "move to scratchpad")
+             (swipe:3:up   . "scratchpad show")))
+          (outputs
+           (list (sway-output
+                  (identifier '*)
+                  (background (file-append sway
+                                           "\
+/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png")))))))
+@end lisp
+
+The above example describes a Sway configuration in which
+@itemize
+@item
+all monitors use a particular wallpaper whose @file{.png} is provided by
+the @code{sway} package;
+@item
+swiping down (resp.@: up) with three fingers moves the active window to
+the scratchpad (resp.@: shows/hides the scratchpad).
+@end itemize
+
+@quotation Note
+This home service only sets up the configuration file and profile
+packages for Sway.  It does @emph{not} start Sway in any way.  If you
+want to do so, you might be interested in using
+@code{greetd-wlgreet-sway-session} instead.
+
+The procedure @code{sway-configuration->file} defined below can be used
+to provide the value for the @emph{optional} @code{sway-configuration}
+field of @code{greetd-wlgreet-sway-session}.
+@end quotation
+
+@deffn {Procedure} sway-configuration->file config
+This procedure takes one argument @code{config}, which must be a
+@code{sway-configuration} record (defined below), and returns a
+file-like object representing the serialized configuration.
+@end deffn
+
+@defvar home-sway-service-type
+This is a home service type to set up Sway.  It takes care of:
+@itemize
+@item
+providing a @file{~/.config/sway/config} file,
+@item
+adding Sway-related packages to your profile.
+@end itemize
+@end defvar
+
+@deftp {Data Type} sway-configuration
+This configuration record describes the Sway configuration
+(see@ @cite{sway(5)}).  Available fields are:
+
+@table @asis
+@item @code{variables} (default: @code{%sway-default-variables})
+The value of this field is an association list in which keys are symbols
+and values are either strings, G-expressions or file-like objects
+(@pxref{G-Expressions}).
+
+Example:
+@lisp
+(variables `((mod . "Mod4") ; string
+             (term ; file-append
+              . ,(file-append foot "/bin/foot"))
+             (Term ; G-expression
+              . ,#~(string-append #$foot "/bin/foot"))))
+@end lisp
+
+@quotation Note
+Default keybindings assume the existence of variables named @code{$mod},
+@code{$left}, @code{$right}, @code{$up} and @code{$down}.  If you choose
+not to define these variables, make sure to remove keybindings referring
+to them.
+@end quotation
+
+@item @code{keybindings} (default: @code{%sway-default-keybindings})
+This field describes keybindings for the @emph{default} mode.  The value
+is an association list: keys are symbols and values are either strings
+or G-expressions.
+
+The following snippet launches the terminal when pressing @kbd{$mod+t}
+and @kbd{$mod+Shift+t} (assuming that a variable @code{$term} is
+defined):
+@lisp
+`(($mod+t . ,#~(string-append "exec " #$foot "/bin/foot"))
+  ($mod+Shift+t . "exec $term"))
+@end lisp
+
+@item @code{gestures} (default: @code{%sway-default-gestures})
+Similar to the previous field, but for finger-gestures.
+
+The following snippet allows to navigate through workspaces by swiping
+right and left with three fingers:
+@lisp
+'((swipe:3:right . "workspace next_on_output")
+  (swipe:3:left  . "workspace prev_on_output"))
+@end lisp
+
+@item @code{packages} (default: @code{%sway-default-packages})
+This field describes a list of packages to add to the user profile.  At
+the moment, the default value only adds @code{sway} to the profile.
+
+@item @code{inputs} (default: @code{'()})
+List of @code{sway-input} configuration records (described below).
+
+@item @code{outputs} (default: @code{'()})
+List of @code{sway-output} configuration records (described below).
+
+@item @code{bar} (optional @code{sway-bar} record)
+Optional @code{sway-bar} record (described below) to configure a Sway
+bar.
+
+@item @code{modes} (default: @code{%sway-default-modes})
+List of @code{sway-mode} records (described below) to add modes to the
+Sway configuration.  The default value @code{%sway-default-modes} adds
+the ``resize'' mode of the default Sway configuration (as described
+below).
+
+@item @code{startup+reload-programs} (default: @code{'()})
+Programs to execute at startup time @emph{and} after every configuration
+reload.  The value of this field is a list of strings, G-expressions or
+file-like objects (@pxref{G-Expressions}).
+
+@item @code{startup-programs} (default: @code{%sway-default-execs})
+Programs to execute at startup time.  As above, values of this field are
+a list of strings, G-expressions or file-like objects.
+
+The default value, @code{%sway-default-execs}, executes @code{swayidle}
+in order to lock the screen after 5@ minutes of inactivity (displaying a
+background distributed with Sway) and turn the screen off after 10@
+minutes of inactivity.
+
+@item @code{extra-content} (default: @code{'()})
+Lines to add to the configuration file.  The value of this field is a
+list of strings or G-expressions.
+@end table
+@end deftp
+
+@deftp {Data Type} sway-input
+@code{sway-input} records describe input blocks (see@
+@cite{sway-input(5)}).  For example, the following snippet makes all
+keyboards use a French layout, in which @kbd{capslock} has been remapped
+to @kbd{ctrl}:
+@lisp
+(sway-input (identifier "type:keyboard")
+            (layout
+              (keyboard-layout "fr" #:options '("ctrl:nocaps"))))
+@end lisp
+
+Available fields for @code{sway-input} configuration records are:
+
+@table @asis
+@item @code{identifier} (default: @code{'*})
+Identifier of the input.  The field accepts symbols and strings.  If the
+@code{identifier} is a symbol, it is inserted as is; if it is a string,
+it will be quoted in the configuration file.
+
+@item @code{layout} (optional @code{<keyboard-layout>} record)
+Keyboard specific option.  Field specifying the layout to use for the
+input.  The value must be a @code{<keyboard-layout>} record
+(@pxref{Keyboard Layout}).
+
+@quotation Note
+@code{(gnu home services sway)} does not re-export the
+@code{keyboard-layout} procedure.
+@end quotation
+
+@item @code{disable-while-typing} (optional boolean)
+If @code{#t} (resp.@: @code{#f}) enables (resp.@: disables) the
+``disable while typing'' option for this input.
+
+@item @code{disable-while-trackpointing} (optional boolean)
+If @code{#t} (resp.@: @code{#f}), enables (resp.@: disables) the
+``disable while track-pointing'' option for this input.
+
+@item @code{tap} (optional boolean)
+Enables or disables the ``tap'' option, which allows clicking by tapping
+on a touchpad.
+
+@item @code{extra-content} (default: @code{'()})
+Lines to add to the input block.  The value of this field must a list
+whose elements are either strings or G-expressions.
+@end table
+@end deftp
+
+@deftp {Data Type} sway-output
+@code{sway-output} records describe Sway outputs (see@
+@cite{sway-output(5)}).  Available fields are:
+
+@table @asis
+@item @code{identifier} (default: @code{'*})
+Identifier of the monitor.  The field accepts symbols and strings.  If
+the @code{identifier} is a symbol, it is inserted as is; if it is a
+string, it will be quoted in the configuration file.
+
+@item @code{resolution} (optional string)
+This string defines the resolution of the monitor.
+
+@item @code{position} (optional)
+The (optional) value of this field must be a @code{point}.
+Example:
+@lisp
+(position
+ (point (x 1920)
+        (y 0)))
+@end lisp
+
+@item @code{background} (optional)
+The value of this field describes what wallpaper to use on this output.
+The field accepts the following types of values:
+@itemize
+@item
+a string,
+@item
+a G-expression,
+@item
+a file-like object,
+@item
+a pair.  The first argument of this pair must be a string, a
+G-expression or a file-like object.  The second element describes how
+the wallpaper will be displayed.  It must be a symbol among
+@code{stretch}, @code{fill}, @code{fit}, @code{center} and @code{tile}.
+
+If the second element is not specified (@i{i.e.}@: when the value is not
+a pair), the @code{fill} mode will be used.
+@end itemize
+
+@quotation Note
+In order to use an SVG file, you must have @code{librsvg} in your
+profile (@i{e.g.}@: by adding it in the @code{packages} field of
+@code{sway-configuration}).
+@end quotation
+
+@item @code{extra-content} (default: @code{'()})
+List defining additional lines to add to the output configuration block.
+Elements of the list must be either strings or G-expressions.
+@end table
+@end deftp
+
+@deftp {Data Type} sway-border-color
+@table @code
+@item border
+Color of the border.
+@item background
+Color of the background.
+@item text
+Color of the text.
+@end table
+@end deftp
+
+@deftp {Data Type} sway-color
+@table @asis
+@item @code{background} (optional string)
+Background color of the bar.
+
+@item @code{statusline} (optional string)
+Text color of the status line.
+
+@item @code{focused-background} (optional string)
+Background color of the bar on the currently focused monitor.
+
+@item @code{focused-statusline} (optional string)
+Text color of the statusline on the currently focused monitor.
+
+@item @code{focused-workspace} (optional @code{sway-border-color})
+Color scheme for focused workspaces.
+
+@item @code{active-workspace} (optional @code{sway-border-color})
+Color scheme for active workspaces.
+
+@item @code{inactive-workspace} (optional @code{sway-border-color})
+Color scheme for inactive workspaces.
+
+@item @code{urgent-workspace} (optional @code{sway-border-color})
+Color scheme for workspaces containing ``urgent windows''.
+
+@item @code{binding-mode} (optional @code{sway-border-color})
+Color scheme for the binding mode indicator.
+@end table
+@end deftp
+
+@deftp {Data Type} sway-bar
+Describes the Sway bar (see@ @cite{sway-bar(5)}).
+
+@table @asis
+@item @code{identifier} (default: @code{'bar0})
+Identifier of the bar.  The value must be a symbol.
+
+@item @code{position} (optional)
+Specify the position of the bar.  Accepted values are @code{'top} or
+@code{'bottom}.
+
+@item @code{hidden-state} (optional)
+Specify the apparence of the bar when it is hidden.  Accepted values are
+@code{'hide} or @code{'show}.
+
+@item @code{binding-mode-indicator} (optional)
+Boolean enabling or disabling the binding mode indicator.
+
+@item @code{colors} (optional)
+An optional @code{sway-color} configuration record.
+
+@item @code{status-command} (optional)
+This field accept strings, G-expressions and executable file-like
+values.  The default value is a command (string) that prints the date
+and time every second.
+
+Each line printed on @code{stdout} by this command (or script) will be
+displayed on the status area of the bar.
+
+Below are a few examples using:
+@itemize
+@item
+a string: @code{"while date +'%Y-%m-%d %X'; do sleep 1; done"},
+@item
+a G-exp:
+@lisp
+#~(string-append "while "
+                 #$coreutils "/bin/date"
+                 " +'%Y-%m-%d %X'; do sleep 1; done")
+@end lisp
+@item
+an executable file:
+@lisp
+(program-file
+ "sway-bar-status"
+ #~(begin
+     (use-modules (ice-9 format)
+                  (srfi srfi-19))
+     (let loop ()
+       (let* ((date (date->string
+                     (current-date)
+                     "~d/~m/~Y (~a) • ~H:~M:~S")))
+         (format #t "~a~%~!" date)
+         (sleep 1)
+         (loop)))))
+@end lisp
+@end itemize
+
+@item @code{mouse-bindings} (default: @code{'()})
+This field accepts an associative list.  Keys are integers describing
+mouse events.  Values can either be strings or G-expressions.
+
+The module @code{(gnu home services sway)} exports constants
+@code{%ev-code-mouse-left}, @code{%ev-code-mouse-right} and
+@code{%ev-code-mouse-scroll-click} whose values are integers
+corresponding to left, right and scroll click respectively.  For
+example, with @code{(mouse-bindings `((,%ev-code-mouse-left . "exec
+$term")))}, left clicks in the status bar open the terminal (assuming
+that the variable @code{$term} is bound to a terminal).
+@end table
+@end deftp
+
+@deftp {Data Type} sway-mode
+Describes a Sway mode (see@ @cite{sway(5)}).  For example, the following
+snippet defines the resize mode of the default Sway configuration:
+@example
+(sway-mode
+ (mode-name "resize")
+ (keybindings
+  '(($left  . "resize shrink width 10px")
+    ($right . "resize grow width 10px")
+    ($down  . "resize grow height 10px")
+    ($up    . "resize shrink height 10px")
+    (Left   . "resize shrink width 10px")
+    (Right  . "resize grow width 10px")
+    (Down   . "resize grow height 10px")
+    (Up     . "resize shrink height 10px")
+    (Return . "mode \"default\"")
+    (Escape . "mode \"default\""))))
+@end example
+
+@table @asis
+@item @code{mode-name} (default: @code{"default"})
+Name of the mode.  This field accepts strings.
+
+@item  @code{keybindings} (default: @code{'()})
+This field describes keybindings.  The value is an association list:
+keys are symbols and values are either strings or G-expressions, as
+above.
+
+@item @code{mouse-bindings} (default: @code{'()})
+Ditto, but keys are mouse events (integers).  Constants
+@code{%ev-code-mouse-*} described above can be used as helpers to define
+mouse bindings.
+@end table
+@end deftp
+
 @node Networking Home Services
 @subsection Networking Home Services
 
@@ -47924,7 +48409,7 @@ there is no offset applied.
 The partition file system as a string, defaulting to @code{"ext4"}.
 
 The supported values are @code{"vfat"}, @code{"fat16"}, @code{"fat32"},
-and @code{"ext4"}.
+@code{"btrfs"}, and @code{"ext4"}.
 
 @code{"vfat"}, @code{"fat16"}, and @code{"fat32"} partitions without the
 @code{'esp} flag are by default LBA compatible.
@@ -47932,7 +48417,8 @@ and @code{"ext4"}.
 @item @code{file-system-options} (default: @code{'()})
 The partition file system creation options that should be passed to the
 partition creation tool, as a list of strings.  This is only supported
-when creating @code{"ext4"} partitions.
+when creating @code{"vfat"}, @code{"fat16"}, @code{"fat32"} or
+@code{"ext4"} partitions.
 
 See the @code{"extended-options"} man page section of the
 @code{"mke2fs"} tool for a more complete reference.

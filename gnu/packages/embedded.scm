@@ -78,22 +78,27 @@
   #:export (make-gcc-arm-none-eabi-4.9
             make-gcc-arm-none-eabi-6
             make-gcc-arm-none-eabi-7-2018-q2-update
+            make-gcc-arm-none-eabi-12.3.rel1
 
             make-gcc-vc4
 
             make-newlib-arm-none-eabi
             make-newlib-arm-none-eabi-7-2018-q2-update
+            make-newlib-arm-none-eabi-12.3.rel1
 
             make-newlib-nano-arm-none-eabi
             make-newlib-nano-arm-none-eabi-7-2018-q2-update
+            make-newlib-nano-arm-none-eabi-12.3.rel1
 
             make-arm-none-eabi-toolchain-4.9
             make-arm-none-eabi-toolchain-6
             make-arm-none-eabi-toolchain-7-2018-q2-update
+            make-arm-none-eabi-toolchain-12.3.rel1
 
             make-arm-none-eabi-nano-toolchain-4.9
             make-arm-none-eabi-nano-toolchain-6
             make-arm-none-eabi-nano-toolchain-7-2018-q2-update
+            make-arm-none-eabi-nano-toolchain-12.3.rel1
 
             make-gdb-arm-none-eabi
 
@@ -201,9 +206,9 @@ embedded-4_9-branch/")
                 (files '("arm-none-eabi/include")))
                (search-path-specification
                 (variable "CROSS_CPLUS_INCLUDE_PATH")
-                (files '("arm-none-eabi/include"
-                         "arm-none-eabi/include/c++"
-                         "arm-none-eabi/include/c++/arm-none-eabi")))
+                (files '("arm-none-eabi/include/c++"
+                         "arm-none-eabi/include/c++/arm-none-eabi"
+                         "arm-none-eabi/include")))
                (search-path-specification
                 (variable "CROSS_LIBRARY_PATH")
                 (files '("arm-none-eabi/lib")))))))))
@@ -247,10 +252,7 @@ embedded-4_9-branch/")
          (modify-phases %standard-phases
            (add-after 'unpack 'fix-references-to-/bin/sh
              (lambda _
-               (substitute* '("libgloss/arm/cpu-init/Makefile.in"
-                              "libgloss/arm/Makefile.in"
-                              "libgloss/libnosys/Makefile.in"
-                              "libgloss/Makefile.in")
+               (substitute* (find-files "libgloss" "^Makefile\\.in$")
                  (("/bin/sh") (which "sh")))
                #t)))))
       (native-inputs
@@ -423,19 +425,18 @@ embedded-7-branch/")
                        (files '("arm-none-eabi/include")))
                       (search-path-specification
                        (variable "CROSS_CPLUS_INCLUDE_PATH")
-                       (files '("arm-none-eabi/include"
-                                "arm-none-eabi/include/c++"
-                                "arm-none-eabi/include/c++/arm-none-eabi")))
+                       (files '("arm-none-eabi/include/c++"
+                                "arm-none-eabi/include/c++/arm-none-eabi"
+                                "arm-none-eabi/include")))
                       (search-path-specification
                        (variable "CROSS_LIBRARY_PATH")
                        (files '("arm-none-eabi/lib")))))))))
 
-(define make-newlib-arm-none-eabi-7-2018-q2-update
+(define make-base-newlib-arm-none-eabi-7-2018-q2-update
   ;; This is the same commit as used for the 7-2018-q2-update release
   ;; according to the release.txt.
-  (mlambda ()
-    (let ((base (make-newlib-arm-none-eabi))
-          (commit "3ccfb407af410ba7e54ea0da11ae1e40b554a6f4")
+  (mlambda (base)
+    (let ((commit "3ccfb407af410ba7e54ea0da11ae1e40b554a6f4")
           (revision "0"))
       (package
         (inherit base)
@@ -464,27 +465,125 @@ embedded-7-branch/")
            ("xgcc" ,(make-gcc-arm-none-eabi-7-2018-q2-update))
            ("texinfo" ,texinfo)))))))
 
-(define-public make-newlib-nano-arm-none-eabi-7-2018-q2-update
+(define make-newlib-arm-none-eabi-7-2018-q2-update
   (mlambda ()
-    (let ((base (make-newlib-arm-none-eabi-7-2018-q2-update)))
+    (make-base-newlib-arm-none-eabi-7-2018-q2-update (make-newlib-arm-none-eabi))))
+
+(define make-newlib-nano-arm-none-eabi-7-2018-q2-update
+  (mlambda ()
+    (make-base-newlib-arm-none-eabi-7-2018-q2-update (make-newlib-nano-arm-none-eabi))))
+
+
+;;; The following definitions are for the "12.3.rel1" variant of the
+;;; ARM cross toolchain as offered on https://developer.arm.com
+(define-public make-gcc-arm-none-eabi-12.3.rel1
+  (mlambda ()
+    (let ((base (make-gcc-arm-none-eabi-7-2018-q2-update))
+          (xgcc-base (cross-gcc "arm-none-eabi"
+                                #:xgcc gcc-12
+                                #:xbinutils (cross-binutils "arm-none-eabi"))))
       (package
         (inherit base)
-        (name "newlib-nano")
+        (version "12.3.rel1")
+        (source
+         (origin
+           (inherit (package-source xgcc-base))
+           (method git-fetch)
+           (uri (git-reference
+                 (url "git://gcc.gnu.org/git/gcc.git")
+                 (commit "0f54a73b998b72f7c8452a63730ec3b16fc47854")))
+           (sha256
+            (base32 "0r6q0m3d8g3k3rkmnqjw8aw5fcnsrmywf4ispdkxmk1al3whk1vk"))))
         (arguments
-         (package-arguments base))
-        (synopsis "Newlib variant for small systems with limited memory")))))
+         (substitute-keyword-arguments (package-arguments base)
+           ((#:phases phases)
+            #~(modify-phases #$phases
+                (replace 'expand-version-string
+                  (lambda _
+                    (make-file-writable "gcc/DEV-PHASE")
+                    (with-output-to-file "gcc/DEV-PHASE"
+                      (lambda ()
+                        (display "12.3.rel1")))))))
+           ((#:configure-flags flags)
+            #~(cons* "--with-multilib-list=aprofile,rmprofile"
+                     "--with-headers=yes"
+                     "--enable-checking=release"
+                     "--with-gnu-as"
+                     "--with-gnu-ld"
+                     (filter
+                      (lambda (flag)
+                        (not (member flag
+                                     '("--with-multilib-list=rmprofile"
+                                       "--enable-plugins"
+                                       "--disable-libffi"))))
+                      #$flags)))))))))
+
+(define make-base-newlib-arm-none-eabi-12.3.rel1
+  (mlambda (original-base)
+    (let ((base (make-base-newlib-arm-none-eabi-7-2018-q2-update original-base))
+          (commit "4c7d0dfec5793cbf5cf3930b91f930479126d8ce")
+          (revision "0"))
+      (package
+        (inherit base)
+        (version (git-version "4.3.0" revision commit))
+        (source
+         (origin
+           (method git-fetch)
+           (uri (git-reference
+                 (url "http://sourceware.org/git/newlib-cygwin.git")
+                 (commit commit)))
+           (sha256
+            (base32
+             "0drs9v8avh4y2h5bs0ixjn9x662jzkkikx8z034wgl41dxmn6786"))))
+        (arguments (substitute-keyword-arguments (package-arguments base)
+                     ((#:configure-flags flags)
+                      #~(cons* "--enable-newlib-mb"
+                               "--enable-newlib-reent-check-verify"
+                               "--enable-newlib-register-fini"
+                               #$flags))))))))
+
+(define make-newlib-arm-none-eabi-12.3.rel1
+  (mlambda ()
+    (make-base-newlib-arm-none-eabi-12.3.rel1 (make-newlib-arm-none-eabi))))
+
+(define make-newlib-nano-arm-none-eabi-12.3.rel1
+  (mlambda ()
+    (make-base-newlib-arm-none-eabi-12.3.rel1 (make-newlib-nano-arm-none-eabi))))
 
 
 (define make-libstdc++-arm-none-eabi
   (mlambda (xgcc newlib)
-    (let ((libstdc++ (make-libstdc++ xgcc)))
+    (let* ((libstdc++ (make-libstdc++ xgcc))
+           (src (package-source libstdc++)))
       (package
         (inherit libstdc++)
+        (source
+         (origin
+           (inherit src)
+           (patches (append
+                     ; libstdc++ cannot be linked with since the configure phase
+                     ; cannot detect properly the presence of getentropy function.
+                     ; The function is inside of a header, but it's not present in the resulting
+                     ; newlib. configure will conclude getentropy is present,
+                     ; random will use getentropy, and any linking with random will fail.
+                     (if (version>=? (package-version xgcc) "12.0")
+                         (search-patches "newlib-getentropy.patch")
+                         '())
+                     (origin-patches src)))))
         (name "libstdc++-arm-none-eabi")
         (arguments
          (substitute-keyword-arguments (package-arguments libstdc++)
+           ((#:make-flags flags #f)
+            #~(cons* "CFLAGS=-g -O2 -fdata-sections -ffunction-sections"
+                     "CXXFLAGS=-g -O2 -fdata-sections -ffunction-sections"
+                     (or #$flags '())))
            ((#:configure-flags _)
-            ``("--target=arm-none-eabi"
+            ``(; This is more of a hack. This option doesn't really seem
+               ; to change what subdir is used eventually, but without it there is
+               ; error: Link tests are not allowed after GCC_NO_EXECUTABLES with
+               ; The 12.3 toolchain
+               "--with-target-subdir=\".\""
+               "--target=arm-none-eabi"
                "--host=arm-none-eabi"
                "--disable-libstdcxx-pch"
                "--enable-multilib"
@@ -493,29 +592,77 @@ embedded-7-branch/")
                "--disable-tls"
                "--disable-plugin"
                "--with-newlib"
+               ,(string-append "--libdir="
+                               (assoc-ref %outputs "out")
+                               "/arm-none-eabi/lib")
                ,(string-append "--with-gxx-include-dir="
                                (assoc-ref %outputs "out")
-                               "/arm-none-eabi/include/c++")))))
+                               "/arm-none-eabi/include/c++")))
+           ((#:strip-directories _ #f)
+            ''("arm-none-eabi/lib"))))
         (native-inputs
          `(("newlib" ,newlib)
            ("xgcc" ,xgcc)
            ,@(package-native-inputs libstdc++)))))))
 
+(define make-libstdc++-nano-arm-none-eabi
+  (mlambda (xgcc newlib-nano)
+    (let ((base (make-libstdc++-arm-none-eabi xgcc newlib-nano)))
+      (package
+        (inherit base)
+        (name "libstdc++-nano-arm-none-eabi")
+        (arguments (substitute-keyword-arguments (package-arguments base)
+                     ((#:make-flags flags)
+                      #~(map (lambda (flag)
+                               (if (or (string-prefix? "CFLAGS=" flag)
+                                       (string-prefix? "CXXFLAGS=" flag))
+                                   (string-append flag " -fno-exceptions")
+                                   flag))
+                             #$flags))
+                     ((#:phases phases)
+                      #~(modify-phases #$phases
+                          (add-after 'install 'hardlink-libstdc++
+                            ;; XXX: Most arm toolchains offer both *.a and *_nano.a as
+                            ;; newlib and newlib-nano respectively.  The headers are
+                            ;; usually arm-none-eabi/include/newlib.h for newlib and
+                            ;; arm-none-eabi/include/newlib-nano/newlib.h for newlib-nano.
+                            ;; We have two different toolchain packages for each which
+                            ;; works but is a little strange.
+                            (lambda* (#:key outputs #:allow-other-keys)
+                              (let ((out (assoc-ref outputs "out")))
+                                ;; The nano.specs file says that newlib-nano files should
+                                ;; end in "_nano.a" instead of just ".a".  Note that this
+                                ;; applies to all the multilib folders too.
+                                (for-each
+                                 (lambda (file)
+                                   (link file
+                                         (string-append
+                                          ;; Strip ".a" off the end
+                                          (substring file 0 (- (string-length file) 2))
+                                          ;; Add "_nano.a" onto the end
+                                          "_nano.a")))
+                                 (find-files
+                                  out "^(libstdc\\+\\+.a|libsupc\\+\\+.a)$")))))))))))))
+
 (define make-arm-none-eabi-toolchain
   (mlambda (xgcc newlib)
     "Produce a cross-compiler toolchain package with the compiler XGCC and the
 C library variant NEWLIB."
-    (let ((newlib-with-xgcc
-           (package
-             (inherit newlib)
-             (native-inputs
-              (alist-replace "xgcc" (list xgcc)
-                             (package-native-inputs newlib))))))
+    (let* ((nano? (string=? (package-name newlib)
+                            "newlib-nano"))
+           (newlib-with-xgcc
+            (package
+              (inherit newlib)
+              (native-inputs
+               (alist-replace "xgcc" (list xgcc)
+                              (package-native-inputs newlib)))))
+           (libstdc++
+            (if nano?
+                (make-libstdc++-nano-arm-none-eabi xgcc newlib-with-xgcc)
+                (make-libstdc++-arm-none-eabi xgcc newlib-with-xgcc))))
       (package
         (name (string-append "arm-none-eabi"
-                             (if (string=? (package-name newlib-with-xgcc)
-                                           "newlib-nano")
-                                 "-nano" "")
+                             (if nano? "-nano" "")
                              "-toolchain"))
         (version (package-version xgcc))
         (source #f)
@@ -532,7 +679,7 @@ C library variant NEWLIB."
                              directories))))))
         (propagated-inputs
          `(("binutils" ,(cross-binutils "arm-none-eabi"))
-           ("libstdc++" ,(make-libstdc++-arm-none-eabi xgcc newlib-with-xgcc))
+           ("libstdc++" ,libstdc++)
            ("gcc" ,xgcc)
            ("newlib" ,newlib-with-xgcc)))
         (synopsis "Complete GCC tool chain for ARM bare metal development")
@@ -574,6 +721,18 @@ languages are C and C++.")
     (make-arm-none-eabi-toolchain
      (make-gcc-arm-none-eabi-7-2018-q2-update)
      (make-newlib-nano-arm-none-eabi-7-2018-q2-update))))
+
+(define make-arm-none-eabi-toolchain-12.3.rel1
+  (mlambda ()
+    (make-arm-none-eabi-toolchain
+     (make-gcc-arm-none-eabi-12.3.rel1)
+     (make-newlib-arm-none-eabi-12.3.rel1))))
+
+(define make-arm-none-eabi-nano-toolchain-12.3.rel1
+  (mlambda ()
+    (make-arm-none-eabi-toolchain
+     (make-gcc-arm-none-eabi-12.3.rel1)
+     (make-newlib-nano-arm-none-eabi-12.3.rel1))))
 
 (define make-gdb-arm-none-eabi
   (mlambda ()

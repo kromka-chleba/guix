@@ -51,16 +51,16 @@
 (define-public chrony
   (package
     (name "chrony")
-    (version "4.5")
+    (version "4.6.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://gitlab.com/chrony/chrony")
+             (url "https://gitlab.com/chrony/chrony.git/")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0w6wgpgvwidsfc4mmi5zb73y9lydzwgwxpj0q5r1m47gd1qxa24n"))))
+        (base32 "14z53iia83s25g9hpdh79j4gqi9lbp37nx1jcvxi8av3zlgzrz2p"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -70,6 +70,7 @@
         (guix build gnu-build-system))
       #:configure-flags
       #~(list "--enable-scfilter"
+              "--with-ntp-era=0"
               "--with-sendmail=sendmail"
               "--with-user=chrony")
       #:phases
@@ -120,7 +121,7 @@ time-stamping or reference clock, sub-microsecond accuracy is possible.")
 (define-public ntp
   (package
    (name "ntp")
-   (version "4.2.8p17")
+   (version "4.2.8p18")
    (source
      (origin
        (method url-fetch)
@@ -133,7 +134,7 @@ time-stamping or reference clock, sub-microsecond accuracy is possible.")
                    (version-major+minor version)
                    "/ntp-" version ".tar.gz")))
        (sha256
-        (base32 "0rm8sf4qwcip49wgpgcp2dpwspsm0ad5xkkxy26mnv56wrrd4g8h"))
+        (base32 "1rb8yksqxjcsjvww9kwnw1242qzszwixh916jj254a8szgrwb16g"))
        (modules '((guix build utils)))
        (snippet
         '(begin

@@ -53,7 +53,7 @@
 ;;; Copyright © 2023 Steve George <steve@futurile.net>
 ;;; Copyright © 2023 Josselin Poiret <dev@jpoiret.xyz>
 ;;; Copyright © 2024 Hilton Chain <hako@ultrarare.space>
-;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Suhail Singh <suhail@bayesians.ca>
 ;;; Copyright © 2024 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2024 Javier Olaechea <pirata@gmail.com>
@@ -3191,7 +3191,7 @@ email header.")
 (define-public b4
   (package
     (name "b4")
-    (version "0.13.0")
+    (version "0.14.2")
     (source
      (origin
        (method git-fetch)
@@ -3201,7 +3201,7 @@ email header.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1dijszinn00r6d0lxii3jz36h2c23zavbgz1m8finp5v6kaiafcg"))))
+         "18pacf7brvkmvxwkrsjigq9ymrr289a82wg4f1f1n4xr3k7vyr9i"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:tests? (not (%current-target-system)) ;git path hardcoded.
@@ -3245,7 +3245,7 @@ Features include:
 (define-public git-annex-remote-rclone
   (package
     (name "git-annex-remote-rclone")
-    (version "0.6")
+    (version "0.8")
     (source
      (origin
        (method git-fetch)
@@ -3255,7 +3255,7 @@ Features include:
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0j0hlxji8d974fq7zd4xc02n0jpi31ylhxc7z4zp8iiwad5mkpxp"))))
+         "03m95620fp891ki6rsqw5nkydwx84nag5nhyvzfi3q64fpnpmb07"))))
     (build-system trivial-build-system)
     (arguments
      `(#:modules ((guix build utils))
@@ -3284,17 +3284,17 @@ by rclone usable with git-annex.")
 (define-public fossil
   (package
     (name "fossil")
-    (version "2.20")
+    (version "2.23")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
              "https://www.fossil-scm.org/home/tarball/"
-             "210e89a0597f225f49722b096cf5563bf193e920e02a9bd38503a906deacd416"
+             "47362306a7dd7c6fc3cab77cebe5d25469b0a9448479d9718eb5c49c8337b29"
              "/fossil-src-" version ".tar.gz"))
        ;; XXX: Currently the above hash must be manually updated.
        (sha256
-        (base32 "08g7img88n2nwcdkpzmg4aqbp2iy40nllgas53502dspm97ym4h8"))
+        (base32 "1r1kabvmlhc0qgyq8g9zhq8i0123x9dba9b71j4xc71k14kfqjm9"))
        (modules '((guix build utils)))
        (snippet
         '(delete-file-recursively "compat"))))
@@ -3304,7 +3304,8 @@ by rclone usable with git-annex.")
            which                        ;for tests only
            ed))                         ;ditto
     (inputs
-     (list openssl zlib sqlite))
+     ;; Need sqlite >= 3.43.0.
+     (list openssl zlib sqlite-next))
     (arguments
      `(#:configure-flags (list "--with-openssl=auto"
                                "--disable-internal-sqlite")

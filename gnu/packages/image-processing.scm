@@ -23,6 +23,7 @@
 ;;; Copyright © 2022 Tomasz Jeneralczyk <tj@schwi.pl>
 ;;; Copyright © 2022 Paul A. Patience <paul@apatience.com>
 ;;; Copyright © 2023 Cairn <cairn@pm.me>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -49,6 +50,7 @@
   #:use-module (guix build-system qt)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
   #:use-module (gnu packages)
@@ -776,16 +778,17 @@ the OpenCV-Python library.")
 (define-public vips
   (package
     (name "vips")
-    (version "8.13.1")
+    (version "8.15.3")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://github.com/libvips/libvips/releases/download/v"
-             version "/vips-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libvips/libvips")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "00kp3439jcqv9l2gcjg88xzvlq8clv54z1m3x66i3chvarz7ndxd"))))
-    (build-system gnu-build-system)
+        (base32 "0nxzhs4gwhpm4j9hlca8s97xh1b1p1cawnwdc69rmxkrf714hlgj"))))
+    (build-system meson-build-system)
     (native-inputs
      (list gobject-introspection pkg-config))
     (inputs
@@ -793,6 +796,7 @@ the OpenCV-Python library.")
            fftw
            giflib
            glib
+           (list glib "bin")
            hdf5
            imagemagick
            lcms

@@ -69,8 +69,9 @@
   #:use-module (gnu packages version-control))
 
 (define-public abc
- (let ((commit "70cb339f869e")
-       (revision "2"))
+
+ (let ((commit "707442e0915dd7fdbfc5742b04ef16429373075a")
+       (revision "3"))
   (package
     (name "abc")
     (version (git-version "0.0" revision commit))
@@ -82,7 +83,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1ngxg4jvz8vwm74sbidysgz3v5lrzjcabkqj4nhcksi6hnhyc9m8"))))
+                "04wi0917cp9j9vsbmi00sb7914qspkz2d1113mkgjmmql6mq9gch"))))
     (build-system gnu-build-system)
     (inputs
      (list readline))
@@ -350,7 +351,7 @@ FOSS FPGA place and route tool.")
 (define-public gtkwave
   (package
     (name "gtkwave")
-    (version "3.3.113")
+    (version "3.3.121")
     (source
      (origin
        (method url-fetch)
@@ -360,7 +361,7 @@ FOSS FPGA place and route tool.")
                   (string-append "https://gtkwave.sourceforge.net/"
                                  "gtkwave-" version ".tar.gz")))
        (sha256
-        (base32 "1zqkfchmns5x90qxa8kg39bfhax3vxf1mrdz3lhyb9fz1gp4difn"))))
+        (base32 "15w3x3zx5klqg1vjkakixw9zwfnkib7gf376knf5sryakd3bc1av"))))
     (build-system gnu-build-system)
     (native-inputs
      (list gperf pkg-config))
@@ -429,7 +430,7 @@ a hardware description and verification language.")
 (define-public nvc
   (package
     (name "nvc")
-    (version "1.11.3")
+    (version "1.14.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -438,7 +439,7 @@ a hardware description and verification language.")
               (file-name (string-append name "-" version "-checkout"))
               (sha256
                (base32
-                "0rh6xwzr1drgwa04gx6w4r968yxlvfkvzg92950akf7wyxf331k7"))))
+                "1b71j8bps9zirvxhycrc9fhbr3f89si6h064xnly7gq06ggnv8n5"))))
     (build-system gnu-build-system)
     (arguments
      `(#:out-of-source? #t

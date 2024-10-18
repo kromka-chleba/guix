@@ -359,14 +359,13 @@ GNU ccRTP stack and serves as library for other RTP stacks
 (define-public osip
   (package
    (name "osip")
-   (version "5.2.1")
+   (version "5.3.1")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/osip/libosip2-" version ".tar.gz"))
-            (patches (search-patches "osip-CVE-2017-7853.patch"))
             (sha256
              (base32
-              "1wibs2zs035ay7qvl5ai8drv6f0xw7iscb0frmpgax3pisy88dzf"))))
+              "0yfwd8g2nxf3i9d8gqh6a16ma350dlhih4awbb0nl9h82s2gx0py"))))
    (build-system gnu-build-system)
 
    (synopsis "Library implementing SIP (RFC-3261)")
@@ -378,17 +377,16 @@ to initiate and control SIP sessions.")
                  (upstream-name . "libosip2")))
    (home-page "https://www.gnu.org/software/osip/")))
 
-
 (define-public exosip
   (package
    (name "exosip")
-   (version "4.1.0")
+   (version "5.3.0")
    (source (origin
             (method url-fetch)
-            (uri (string-append "mirror://savannah/exosip/libeXosip2-"
+            (uri (string-append "mirror://savannah/exosip/libexosip2-"
                                 version ".tar.gz"))
             (sha256 (base32
-                     "17cna8kpc8nk1si419vgr6r42k2lda0rdk50vlxrw8rzg0xp2xrw"))))
+                     "1hn9xgy8ny04hjqd1rra7c4nz5nf9abdd5ghr7nmrsiicjc26y2v"))))
    (build-system gnu-build-system)
    (inputs (list osip))
    (synopsis "Sip abstraction library")
@@ -411,7 +409,9 @@ multiplayer games.")
             (uri (string-append "mirror://gnu/sipwitch/sipwitch-"
                    version ".tar.gz"))
             (sha256 (base32
-                     "10lli9c703d7qbarzc0lgmz963ppncvnrklwrnri0s1zcmmahyia"))))
+                     "10lli9c703d7qbarzc0lgmz963ppncvnrklwrnri0s1zcmmahyia"))
+            (patches
+             (search-patches "sipwitch-fix-build-with-exosip5.patch"))))
    (build-system gnu-build-system)
    ;; The configure.ac uses pkg-config but in a kludgy way which breaks when
    ;; cross-compiling.  Among other issues there the program name "pkg-config"

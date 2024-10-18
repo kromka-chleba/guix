@@ -44,7 +44,7 @@
 (define-public agda
   (package
     (name "agda")
-    (version "2.6.4")
+    (version "2.7.0.1")
     (source
      (origin
        (method git-fetch)
@@ -53,7 +53,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0n4avd58j45rdcmnwgrmz5s0ril0z4n2z711mwwbahl50f7359ky"))
+        (base32 "1dh9fi8lwjv9rk6zik2bwjgqln0f0d36m3hm9m3zmmk4fby4rsi2"))
        (patches (search-patches "agda-libdirs-env-variable.patch"
                                 "agda-use-sphinx-5.patch"))))
     (build-system haskell-build-system)
@@ -76,6 +76,7 @@
            ghc-murmur-hash
            ghc-parallel
            ghc-peano
+           ghc-pqueue
            ghc-regex-tdfa
            ghc-split
            ghc-strict
@@ -199,7 +200,7 @@ come from Agda's standard library.")
 (define-public agda-stdlib
   (package
     (name "agda-stdlib")
-    (version "1.7.3")
+    (version "2.1.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -208,11 +209,11 @@ come from Agda's standard library.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0y6rns64rrkh8hw7mamcf6797329pi4ravpak5zijpnkzdagmlmy"))))
+                "1n742qvlxaj4dprnknvzrr876af6yjfwa4ps1dr4v1h814sg0xz0"))))
     (build-system agda-build-system)
     (arguments
      (list
-      #:plan '(("^\\./README.agda$" "-i."))
+      #:plan '(("^\\./doc/README.agda$" "-idoc/"))
       #:gnu-and-haskell? #t
       #:phases
       #~(modify-phases %standard-phases
@@ -220,7 +221,8 @@ come from Agda's standard library.")
             (lambda* (#:key inputs native-inputs #:allow-other-keys)
               (invoke
                (search-input-file (or native-inputs inputs) "/bin/runhaskell")
-               "GenerateEverything.hs"))))))
+               "GenerateEverything.hs"
+               "--out-dir" "doc/"))))))
     (native-inputs (list ghc-filemanip))
     (synopsis "The Agda Standard Library")
     (description
@@ -235,7 +237,7 @@ try agda-prelude instead.")
 (define-public agda-categories
   (package
     (name "agda-categories")
-    (version "0.1.7.2")
+    (version "0.2.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -244,10 +246,10 @@ try agda-prelude instead.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xwgm2mfl2pxipsv31bin8p14y1yhd9n27lv3clvsxd4z9yc034m"))
+                "0a9mz9zyifkm03ss00iixa7b844m3gyvsx92al410hqj6v3r02qr"))
               (patches (search-patches "agda-categories-remove-incompatible-flags.patch"
                                        "agda-categories-use-find.patch"
-                                       "agda-categories-use-stdlib-1.7.3.patch"))))
+                                       "agda-categories-use-newer-stdlib.patch"))))
     (build-system agda-build-system)
     (arguments
      (list
@@ -267,7 +269,7 @@ try agda-prelude instead.")
 (define-public agda-cubical
   (package
     (name "agda-cubical")
-    (version "0.6")
+    (version "0.7")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -276,7 +278,7 @@ try agda-prelude instead.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0zq0z328zcjmm43mrv2ks27i1dnbylcf8mhzja2hd4gvz1kq1ays"))))
+                "1c6axx3xx9ga7pl5294xqwklgbw96irxj0n74a1bxafhcx2lmfm0"))))
     (build-system agda-build-system)
     (arguments
      (list
@@ -295,8 +297,8 @@ agda-stdlib but using cubical methods.")
 (define-public agda-1lab
   ;; Upstream doesn't do releases (yet).  Use a commit that builds with 2.6.4,
   ;; since they use Agda HEAD.
-  (let* ((revision "2")
-         (commit "549fdb1c948a975e90e70f871993a4a4239aa280"))
+  (let* ((revision "3")
+         (commit "afcf848d367f906d6d07d1612fbd41d7dd8c978e"))
     (package
       (name "agda-1lab")
       (version (git-version "0.0" revision commit))
@@ -309,7 +311,7 @@ agda-stdlib but using cubical methods.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "1k4zj8dibyplakpxaw4a8hpsaqhakynjb83dqxrva4h4ssj6gkqj"))))
+           "12ax3n9111dkzm7nm3kwnvgslzsybyh740vml7l089in89f979wn"))))
       (build-system agda-build-system)
       (arguments
        ;; Check files individually first, to avoid running out of heap :(

@@ -1750,7 +1750,7 @@ Analysis and Reporting Technology) functionality.")
 (define-public udisks
   (package
     (name "udisks")
-    (version "2.8.4")
+    (version "2.10.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1758,16 +1758,15 @@ Analysis and Reporting Technology) functionality.")
                     version "/udisks-" version ".tar.bz2"))
               (sha256
                (base32
-                "06cq52kp1nyy15qzylywy9s7hhhqc45k0s3y68crf0zsmjyng0yj"))))
+                "1klf5pcr9yg8g88mwwh3q2j0idfwd8hfr2q6nknhsm02yv638mxp"))))
     (build-system gnu-build-system)
     (native-inputs
      (list docbook-xml-4.3              ; to build the manpages
            docbook-xsl
+           gettext-minimal
            `(,glib "bin")               ; for glib-mkenums
-           gnome-common                 ; TODO: Why is this needed?
            gobject-introspection
            gtk-doc/stable
-           intltool
            pkg-config
            libxslt))
     (propagated-inputs
@@ -1805,21 +1804,7 @@ Analysis and Reporting Technology) functionality.")
                 (("girdir = .*")
                  "girdir = $(datadir)/gir-1.0\n")
                 (("typelibsdir = .*")
-                 "typelibsdir = $(libdir)/girepository-1.0\n"))))
-          (add-after 'install 'wrap-udisksd
-            (lambda _
-              ;; Tell 'udisksd' where to find the 'mount' command.
-              (let ((utils #$(this-package-input "util-linux"))
-                    (cryptsetup #$(this-package-input "cryptsetup"))
-                    (parted #$(this-package-input "parted")))
-                (wrap-program (string-append #$output "/libexec/udisks2/udisksd")
-                  `("PATH" ":" prefix
-                    (,(string-append utils "/bin") ;for 'mount'
-                     ;; cryptsetup is required for setting encrypted
-                     ;; partitions, e.g. in gnome-disks
-                     ,(string-append cryptsetup "/sbin")
-                     "/run/current-system/profile/bin"
-                     "/run/current-system/profile/sbin")))))))))
+                 "typelibsdir = $(libdir)/girepository-1.0\n")))))))
     (home-page "https://www.freedesktop.org/wiki/Software/udisks/")
     (synopsis "Disk manager service")
     (description

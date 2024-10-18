@@ -73,6 +73,23 @@ turn doesn't take any constant overhead into account, force a 1-MiB minimum."
   (max (ash 1 20)
        (* 1.25 (file-size root))))
 
+(define* (make-btrfs-image partition target root)
+  "Handle the creation of BTRFS partition images. See
+'make-partition-image'."
+  (let ((size (partition-size partition))
+        (fs-options (partition-file-system-options partition))
+        (label (partition-label partition))
+        (uuid (partition-uuid partition)))
+    (apply invoke
+           `("fakeroot" "mkfs.btrfs" "-r" ,root
+             "-L" ,label
+             ,@(if uuid
+                   `("-U" ,(uuid->string uuid))
+                   '())
+             "--shrink"
+             ,@fs-options
+             ,target))))
+
 (define* (make-ext-image partition target root
                          #:key
                          (owner-uid 0)
@@ -105,17 +122,21 @@ turn doesn't take any constant overhead into account, force a 1-MiB minimum."
   "Handle the creation of VFAT partition images.  See 'make-partition-image'."
   (let ((size (partition-size partition))
         (label (partition-label partition))
-        (flags (partition-flags partition)))
+        (flags (partition-flags partition))
+        (fs-options (partition-file-system-options partition)))
     (apply invoke "fakeroot" "mkdosfs" "-n" label "-C" target
-                          "-F" (number->string fs-bits)
-                          (size-in-kib
-                           (if (eq? size 'guess)
-                               (estimate-partition-size root)
-                               size))
-                    ;; u-boot in particular needs the formatted block
-                    ;; size and the physical block size to be equal.
-                    ;; TODO: What about 4k blocks?
-                    (if (member 'esp flags) (list "-S" "512") '()))
+           "-F" (number->string fs-bits)
+           (size-in-kib
+            (if (eq? size 'guess)
+                (estimate-partition-size root)
+                size))
+           ;; u-boot in particular needs the formatted block
+           ;; size and the physical block size to be equal.
+           ;; TODO: What about 4k blocks?
+           (if (and (member 'esp flags)
+                    (not (member "-S" fs-options)))
+               (append (list "-S" "512") fs-options)
+               fs-options))
     (for-each (lambda (file)
                 (unless (member file '("." ".."))
                   (invoke "mcopy" "-bsp" "-i" target
@@ -137,6 +158,8 @@ ROOT directory to populate the image."
   (let* ((partition (sexp->partition partition-sexp))
          (type (partition-file-system partition)))
     (cond
+     ((string=? "btrfs" type)
+      (make-btrfs-image partition target root))
      ((string-prefix? "ext" type)
       (make-ext-image partition target root))
      ((or (string=? type "vfat") (string=? type "fat16"))
