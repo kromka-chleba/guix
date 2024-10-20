@@ -119,6 +119,7 @@
                (base32
                 "0nwjm44nys1qz3wyg0mm15gdjpz641xpmsz00n6m8065xrw86q7i"))))
     (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
     (home-page "https://github.com/cyrealtype/Artifika")
     (synopsis "Upright italic font")
     (description "Artifika is an upright italic font for fashionable display
@@ -164,6 +165,7 @@ and space characters.")
          (sha256
           (base32 "0gdsnflnzwy8ajrk93dxwjashxisln58qcqa6dh4smnk7k0a34qs"))))
       (build-system font-build-system)
+      (outputs '("out" "ttf" "woff"))
       (home-page "https://fonts.google.com/specimen/Chivo")
       (synopsis "The Chivo family of fonts")
       (description "Google Chivo Fonts is a grotesque family of fonts, ideal for
@@ -175,7 +177,7 @@ glyphset has also been extended, supporting now a wider number of languages.")
 (define-public font-ibm-plex
   (package
     (name "font-ibm-plex")
-    (version "6.1.1")
+    (version "6.4.0")
     ;; We prefer git-fetch since it lets us get the opentype, truetype and web
     ;; fonts all in one download. The zip archive releases separate the
     ;; opentype, truetype and web fonts into three separate archives.
@@ -187,8 +189,9 @@ glyphset has also been extended, supporting now a wider number of languages.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1jxyd0zl7jssn7mwz8x5xvjmw59x4mn82s2kywf9583k1pg949k1"))))
+                "00zbwwcwmq8bv9lvsy5r2an8jf4x0cqzw03i7fgjcmbh0h8a48kl"))))
     (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
     (home-page "https://github.com/IBM/plex")
     (synopsis "IBM Plex typeface")
     (description "This package provides the Plex font family.  It comes in a
@@ -250,23 +253,6 @@ in print.  With attention to detail for high resolution rendering.")
                 "0w9isn8az1k3a3q4m2llwnryy79i5v30dx1hfaf90x0zkj98ky5h"))))
     (outputs '("out" "ttf" "woff"))
     (build-system font-build-system)
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'install 'split-outputs
-                 (lambda* (#:key outputs #:allow-other-keys)
-                   (let ((out-fonts (string-append (assoc-ref outputs "out")
-                                                   "/share/fonts"))
-                         (ttf-fonts (string-append (assoc-ref outputs "ttf")
-                                                   "/share/fonts"))
-                         (woff-fonts (string-append (assoc-ref outputs "woff")
-                                                    "/share/fonts")))
-                     (mkdir-p ttf-fonts)
-                     (mkdir-p woff-fonts)
-                     (rename-file (string-append out-fonts "/truetype")
-                                  (string-append ttf-fonts "/truetype"))
-                     (rename-file (string-append out-fonts "/web")
-                                  (string-append woff-fonts "/web"))))))))
     (home-page "https://github.com/intel/intel-one-mono")
     (synopsis "Expressive monospaced font family")
     (description
@@ -345,6 +331,7 @@ itself."))))
     (build-system font-build-system)
     (arguments
      '(#:license-file-regexp "^license.pdf$"))
+    (outputs '("out" "ttf"))
     (home-page "https://typodermicfonts.com/canada1500/")
     (synopsis "Canadian typeface that supports English, French and Aboriginal languages")
     (description "Canada1500 is a display typeface originally created for the
@@ -593,6 +580,7 @@ and Bitstream Vera Sans Mono).
                (base32
                 "0x7cz6hvhpil1rh03rax9zsfzm54bh7r4bbrq8rz673gl9h47v0v"))))
     (build-system font-build-system)
+    (outputs '("out" "ttf"))
     (arguments
      `(#:license-file-regexp "^(GPL|LICENCE|OFL-1\\.1)\\.txt$"
        #:phases
@@ -638,6 +626,7 @@ Biolinum is available in both Regular and Bold weights.")
        (sha256
         (base32 "1xkj993hwkr49q63dd2dnkvdkm9sckxm3zjwhdxsxn21fi80ikic"))))
     (build-system font-build-system)
+    (outputs '("out" "woff"))
     (home-page "https://github.com/alerque/libertinus")
     (synopsis "Font family based on Linux Libertine")
     (description
@@ -3268,6 +3257,7 @@ Overpass includes proportional and monospace variants.")
        (sha256
         (base32 "0fjp2xk4bjx8i6jamkyjq2fdr7324fh41pbn634iwnhdvvawvbav"))))
     (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
     (home-page "https://github.com/CatharsisFonts/Cormorant")
     (synopsis
      "Extravagant display serif typeface in the spirit of Garamond")
@@ -3637,52 +3627,6 @@ prevalent typefaces in Traditional Chinese regions.")))
     (build-system font-build-system)
     (outputs '("out" ;OTB
                "bdf" "otf" "pcf" "psf"))
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'install
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((otb (assoc-ref outputs "out"))
-                     (bdf (assoc-ref outputs "bdf"))
-                     (otf (assoc-ref outputs "otf"))
-                     (pcf (assoc-ref outputs "pcf"))
-                     (psf (assoc-ref outputs "psf"))
-                     (otb-font-dir (string-append (assoc-ref outputs
-                                                             "out")
-                                                  "/share/fonts/misc"))
-                     (bdf-font-dir (string-append (assoc-ref outputs
-                                                             "bdf")
-                                                  "/share/fonts/misc"))
-                     (otf-font-dir (string-append (assoc-ref outputs
-                                                             "otf")
-                                                  "/share/fonts/opentype"))
-                     (pcf-font-dir (string-append (assoc-ref outputs
-                                                             "pcf")
-                                                  "/share/fonts/misc"))
-                     (psf-font-dir (string-append (assoc-ref outputs
-                                                             "psf")
-                                                  "/share/consolefonts")))
-                (mkdir-p otb-font-dir)
-                (mkdir-p bdf-font-dir)
-                (mkdir-p otf-font-dir)
-                (mkdir-p pcf-font-dir)
-                (mkdir-p psf-font-dir)
-                (for-each (lambda (otb)
-                            (install-file otb otb-font-dir))
-                          (find-files "." "\\.otb$"))
-                (for-each (lambda (bdf)
-                            (install-file bdf bdf-font-dir))
-                          (find-files "." "\\.bdf$"))
-                (for-each (lambda (otf)
-                            (install-file otf otf-font-dir))
-                          (find-files "." "\\.otf$"))
-                (for-each (lambda (pcf)
-                            (install-file pcf pcf-font-dir))
-                          (find-files "." "\\.pcf$"))
-                (for-each (lambda (psf)
-                            (install-file psf psf-font-dir))
-                          (find-files "." "\\.psfu$"))) #t)))))
     (home-page "https://www.cambus.net/spleen-monospaced-bitmap-fonts/")
     (synopsis "Monospaced bitmap font for consoles and terminals")
     (description
@@ -3719,34 +3663,6 @@ Spleen also has support for Powerline symbols out of the box.")
     (build-system font-build-system)
     (outputs '("out" ;OTB
                "bdf" "ttf"))
-    (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (replace 'install
-                          (lambda* (#:key outputs #:allow-other-keys)
-                            (let* ((otb (assoc-ref outputs "out"))
-                                   (bdf (assoc-ref outputs "bdf"))
-                                   (ttf (assoc-ref outputs "ttf"))
-                                   (otb-font-dir (string-append (assoc-ref
-                                                                 outputs "out")
-                                                  "/share/fonts/misc"))
-                                   (ttf-font-dir (string-append (assoc-ref
-                                                                 outputs "ttf")
-                                                  "/share/fonts/truetype"))
-                                   (bdf-font-dir (string-append (assoc-ref
-                                                                 outputs "bdf")
-                                                  "/share/fonts/misc")))
-                              (mkdir-p otb-font-dir)
-                              (mkdir-p bdf-font-dir)
-                              (mkdir-p ttf-font-dir)
-                              (for-each (lambda (otb)
-                                          (install-file otb otb-font-dir))
-                                        (find-files "." "\\.otb$"))
-                              (for-each (lambda (bdf)
-                                          (install-file bdf bdf-font-dir))
-                                        (find-files "." "\\.bdf$"))
-                              (for-each (lambda (ttf)
-                                          (install-file ttf ttf-font-dir))
-                                        (find-files "." "\\.ttf$"))) #t)))))
     (home-page "https://github.com/nerdypepper/scientifica")
     (synopsis "Tall and condensed bitmap font for geeks")
     (description
@@ -3826,6 +3742,17 @@ characters to form contiguous lines.  It contains several fonts:
                (base32
                 "00ns6zwizp0wyxyrf7fxqmxm4gl7ygarxq1mj952h78q1rxdzjyb"))))
     (build-system font-build-system)
+    ;; Default to ttf, which has "Rec Mono" for code and variable font.
+    (outputs '("out" "otf" "woff"))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'remove-separate-statics
+            (lambda _
+              ;; Prefer otc/ttc collection over those seperate files.
+              (delete-file-recursively
+               "Recursive_Desktop/separate_statics/"))))))
     (home-page "https://www.recursive.design/")
     (synopsis "Variable font family for code & UI")
     (description "Recursive Sans & Mono is a variable type family built for
@@ -3874,6 +3801,7 @@ that it can be a reference implementation.")
           (base32
            "1c6jb7ayr07j1pbnzf3jxng9x9bbqp3zydf8mqdw9ifln1b4ycyf"))))
       (build-system font-build-system)
+      (outputs '("out" "ttf" "woff"))
       (home-page "https://github.com/theleagueof/orbitron")
       (synopsis "Futuristic geometric sans-serif")
       (description "Orbitron is a geometric sans-serif typeface intended

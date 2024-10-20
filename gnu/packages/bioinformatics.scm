@@ -3511,7 +3511,7 @@ compressed files.")
     (inputs
      (list bioparser biosoup))
     (native-inputs
-     (list cmake pkg-config googletest))
+     (list cmake-minimal pkg-config googletest))
     (home-page "https://github.com/Kevinzjy/circtools")
     (synopsis "Accelerating functions in CIRI toolkit")
     (description "This package provides accelerated functions for the CIRI
@@ -22623,7 +22623,7 @@ assembly (small or mammalian size) and single-cell assembly.")
         ("rust-num-cpus" ,rust-num-cpus-1)
         ("rust-rust-htslib" ,rust-rust-htslib-0.38))))
     (native-inputs
-     (list cmake pkg-config))
+     (list cmake-minimal pkg-config))
     (inputs
      (list zlib xz))
     (home-page "https://github.com/OceanGenomics/mudskipper")

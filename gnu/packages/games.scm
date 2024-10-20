@@ -111,6 +111,7 @@
   #:use-module (guix svn-download)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
+  #:use-module (gnu packages acl)
   #:use-module (gnu packages adns)
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages autotools)
@@ -1309,7 +1310,7 @@ more.  This package does @emph{not} provide the game assets.")
   ;; us today is a bunch of fixes that other distros shipped as patches.
   (package
     (name "cowsay")
-    (version "3.7.0")
+    (version "3.8.3")
     (source
      (origin
        (method git-fetch)
@@ -1318,7 +1319,7 @@ more.  This package does @emph{not} provide the game assets.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0yrgwwacrhsgpyp14c3imkd4bb9b4i68q4df9cq1i1fh4fc2nn5p"))))
+        (base32 "0xdrpqj0lf3x1aib4s1bqfq4p7dxxlw1560pp1kw6pk3mzyvxih5"))))
     (build-system gnu-build-system)
     (arguments
      (list #:make-flags
@@ -1762,8 +1763,8 @@ automata.  The following features are available:
     (license license:gpl2+)))
 
 (define-public joycond
-  (let ((commit "f9a66914622514c13997c2bf7ec20fa98e9dfc1d")
-        (revision "1"))
+  (let ((commit "9d1f5098b716681d087cca695ad714218a18d4e8")
+        (revision "2"))
     (package
       (name "joycond")
       (version (git-version "0.1.0" revision commit))
@@ -1775,32 +1776,33 @@ automata.  The following features are available:
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "07z86yp27vxc0b44jgvf1vpa69rh3wdvd1xbzcsrj3f32743pv5a"))))
+          (base32 "089qh20si3mwj945wjhg0nbain9cn49vwh2zqab6ws2cl0938gid"))))
       (build-system cmake-build-system)
       (arguments
-       `(#:tests? #f                    ;no test suite
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'fix-bin-location
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let ((out (assoc-ref outputs "out")))
-                 (substitute* "CMakeLists.txt"
-                   (("/lib/udev/rules.d")
-                    (string-append out "/lib/udev/rules.d"))
-                   (("/etc/systemd/system")
-                    (string-append out "/etc/systemd/system"))
-                   (("/etc/modules-load.d")
-                    (string-append out "/etc/modules-load.d"))
-                   (("/usr/bin")
-                    (string-append out "/bin")))))))))
+       (list #:tests? #f                ;no test suite
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-bin-location
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "CMakeLists.txt"
+                       (("/lib/udev/rules.d")
+                        (string-append #$output "/lib/udev/rules.d"))
+                       (("/etc/systemd/system")
+                        (string-append #$output "/etc/systemd/system"))
+                       (("/etc/modules-load.d")
+                        (string-append #$output "/etc/modules-load.d"))
+                       (("/usr/bin")
+                        (string-append #$output "/bin")))
+                     (substitute* "udev/89-joycond.rules"
+                       (("/bin/setfacl")
+                        (search-input-file inputs "bin/setfacl"))))))))
       (native-inputs (list pkg-config))
-      (inputs
-       (list eudev libevdev))
+      (inputs (list acl eudev libevdev))
       (home-page "https://github.com/DanielOgorchock/joycond")
       (synopsis "Joy-Con controller daemon")
       (description "This package provides a userspace daemon for the Nintendo
 Joy-Con controllers.")
-      (license license:gpl3))))
+      (license license:gpl3+))))
 
 (define-public julius
   (package

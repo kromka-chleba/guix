@@ -1301,6 +1301,34 @@ void replaceValidPath(const Path & storePath, const Path tmpPath)
 MakeError(NotDeterministic, BuildError)
 
 
+/* Recursively make the file permissions of a path safe for exposure to
+   arbitrary users, but without canonicalising its permissions, timestamp, and
+   user.  Throw an exception if a file type that isn't explicitly known to be
+   safe is found. */
+static void secureFilePerms(Path path)
+{
+  struct stat st;
+  if (lstat(path.c_str(), &st)) return;
+
+  switch(st.st_mode & S_IFMT) {
+  case S_IFLNK:
+    return;
+
+  case S_IFDIR:
+    for (auto & i : readDirectory(path)) {
+      secureFilePerms(path + "/" + i.name);
+    }
+    /* FALLTHROUGH */
+
+  case S_IFREG:
+    chmod(path.c_str(), (st.st_mode & ~S_IFMT) & ~(S_ISUID | S_ISGID | S_IWOTH));
+    break;
+
+  default:
+    throw Error(format("file `%1%' has an unsupported type") % path);
+  }
+}
+
 void DerivationGoal::buildDone()
 {
     trace("build done");
@@ -1372,8 +1400,14 @@ void DerivationGoal::buildDone()
                build failures. */
             if (useChroot && buildMode == bmNormal)
                 foreach (PathSet::iterator, i, missingPaths)
-                    if (pathExists(chrootRootDir + *i))
+                    if (pathExists(chrootRootDir + *i)) {
+                      try {
+                        secureFilePerms(chrootRootDir + *i);
                         rename((chrootRootDir + *i).c_str(), i->c_str());
+                      } catch(Error & e) {
+                        printMsg(lvlError, e.msg());
+                      }
+                    }
 
             if (diskFull)
                 printMsg(lvlError, "note: build failure may have been caused by lack of free disk space");
@@ -2335,15 +2369,6 @@ void DerivationGoal::registerOutputs()
         Path actualPath = path;
         if (useChroot) {
             actualPath = chrootRootDir + path;
-            if (pathExists(actualPath)) {
-                /* Move output paths from the chroot to the store. */
-                if (buildMode == bmRepair)
-                    replaceValidPath(path, actualPath);
-                else
-                    if (buildMode != bmCheck && rename(actualPath.c_str(), path.c_str()) == -1)
-                        throw SysError(format("moving build output `%1%' from the chroot to the store") % path);
-            }
-            if (buildMode != bmCheck) actualPath = path;
         } else {
             Path redirected = redirectedOutputs[path];
             if (buildMode == bmRepair
@@ -2428,6 +2453,20 @@ void DerivationGoal::registerOutputs()
            all files are owned by the build user, if applicable. */
         canonicalisePathMetaData(actualPath,
             buildUser.enabled() && !rewritten ? buildUser.getUID() : -1, inodesSeen);
+
+        if (useChroot) {
+          if (pathExists(actualPath)) {
+            /* Now that output paths have been canonicalized (in particular
+               there are no setuid files left), move them outside of the
+               chroot and to the store. */
+            if (buildMode == bmRepair)
+              replaceValidPath(path, actualPath);
+            else
+              if (buildMode != bmCheck && rename(actualPath.c_str(), path.c_str()) == -1)
+                throw SysError(format("moving build output `%1%' from the chroot to the store") % path);
+          }
+          if (buildMode != bmCheck) actualPath = path;
+        }
 
         /* For this output path, find the references to other paths
            contained in it.  Compute the SHA-256 NAR hash at the same

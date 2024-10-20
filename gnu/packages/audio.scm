@@ -765,7 +765,7 @@ purposes developed at Queen Mary, University of London.")
 (define-public ardour
   (package
     (name "ardour")
-    (version "8.8")
+    (version "8.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -782,7 +782,7 @@ purposes developed at Queen Mary, University of London.")
 namespace ARDOUR { const char* revision = \"" version "\" ; const char* date = \"\"; }")))))
               (sha256
                (base32
-                "1wam4vq9l4g626x8rdvr6c3dqv8fc6llyxriiq77zyqc9sba3pjb"))
+                "0yxw083kxx69z927jd9jivm6s8b847lkf5a1fyrrpkja83mv29c9"))
               (file-name (git-file-name name version))))
     (build-system waf-build-system)
     (arguments
@@ -862,7 +862,7 @@ namespace ARDOUR { const char* revision = \"" version "\" ; const char* date = \
            gtkmm-2
            hicolor-icon-theme
            hidapi
-           jack-1
+           jack-2
            libarchive
            libart-lgpl
            libgnomecanvasmm
@@ -874,7 +874,9 @@ namespace ARDOUR { const char* revision = \"" version "\" ; const char* date = \
            libusb
            libvorbis
            libwebsockets
+           libxinerama
            libxml2
+           libxrandr
            lilv
            lrdf
            lv2
@@ -1418,7 +1420,7 @@ time, using templates, instead of calling @code{malloc()} or @code{new}.")
 (define-public infamous-plugins
   (package
     (name "infamous-plugins")
-    (version "0.3.0")
+    (version "0.3.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1427,7 +1429,7 @@ time, using templates, instead of calling @code{malloc()} or @code{new}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1r72agk5nxf5k0mghcc2j90z43j5d9i7rqjmf49jfyqnd443isip"))))
+                "1ay66lly6bgqr3nzb0y4b29rgl5y1slk6wf73kr3xiw2p62bh582"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f                      ; there are no tests
@@ -1436,14 +1438,7 @@ time, using templates, instead of calling @code{malloc()} or @code{new}.")
          (add-after 'unpack 'remove-compiler-flags
            (lambda _
              (substitute* (find-files "." "CMakeLists.txt")
-               (("-msse2 -mfpmath=sse") ""))
-             #t))
-         (add-after 'unpack 'fix-build-with-newer-lv2
-           (lambda _
-             ;; https://github.com/ssj71/infamousPlugins/commit/4c7275b1fa8ea3296446421cbd29ec2df66588c0
-             (substitute* (find-files "src" ".*\\.cxx")
-               (("_LV2UI_Descriptor") "LV2UI_Descriptor"))
-             #t)))))
+               (("-msse2 -mfpmath=sse") "")))))))
     (inputs
      (list cairo fftwf lv2 ntk zita-resampler))
     (native-inputs
@@ -3787,22 +3782,23 @@ the Turtle syntax.")
 (define-public suil
   (package
     (name "suil")
-    (version "0.10.10")
+    (version "0.10.20")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.drobilla.net/suil-"
-                                  version ".tar.bz2"))
+                                  version ".tar.xz"))
               (sha256
                (base32
-                "1ysbazqlbyxlzyr9zk7dj2mgb6pn0amllj2cd5g1m56wnzk0h3vm"))))
-    (build-system waf-build-system)
+                "0klkxzzx77bg0jwv3a7sn1ar30333y0bjg8b83zifpixwz9kwjik"))))
+    (build-system meson-build-system)
     (arguments
      `(#:tests? #f))                    ;no check target
     (inputs
      (list lv2
            gtk+-2
            gtk+
-           qtbase-5))
+           qtbase-5
+           qtx11extras))
     (native-inputs
      (list pkg-config))
     (home-page "https://drobilla.net/software/suil/")
