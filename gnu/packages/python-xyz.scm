@@ -21786,7 +21786,7 @@ inspection of types defined in the Python standard typing module.")
                 "1lacaz292qxpgw6kxiirkx6sv9c5883nq4ssm3hs94cvb2153is7"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-numpy python-pytest))
+     (list python-numpy python-pytest python-setuptools))
     (propagated-inputs
      (list python-flit-core))
     (home-page "https://scientific-python.org/specs/spec-0001/")
@@ -37238,9 +37238,9 @@ and @code{bspatch4}.")
                    (setenv "PY_MPV_SKIP_TESTS"
                            "test_wait_for_property_event_overflow"))))))
     (native-inputs
-     ;; For tests.
      (list python-pytest
            python-pyvirtualdisplay
+           python-setuptools
            python-xvfbwrapper))
     (inputs (list mpv))
     (propagated-inputs (list python-pillow)) ;for raw screenshots

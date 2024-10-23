@@ -1763,7 +1763,11 @@ automata.  The following features are available:
     (license license:gpl2+)))
 
 (define-public joycond
-  (let ((commit "9d1f5098b716681d087cca695ad714218a18d4e8")
+  ;; Important: Do *not* update to a newer commit until an issue causing a
+  ;; 100% CPU usage in the next commit
+  ;; cdec32865c6093bd4761326ea461aaa2fcf7d1b4 is resolved (see:
+  ;; https://github.com/DanielOgorchock/joycond/issues/153).
+  (let ((commit "5b590ecc9bca181d8bc21377e752126bc9180319")
         (revision "2"))
     (package
       (name "joycond")
@@ -1776,7 +1780,7 @@ automata.  The following features are available:
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "089qh20si3mwj945wjhg0nbain9cn49vwh2zqab6ws2cl0938gid"))))
+          (base32 "18aig7x5n8hh8ffw0qk2hx2b93xrs4jp652vp8cxklw9xyy33f15"))))
       (build-system cmake-build-system)
       (arguments
        (list #:tests? #f                ;no test suite

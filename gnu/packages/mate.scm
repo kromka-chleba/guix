@@ -29,6 +29,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
+  #:use-module (guix gexp)
   #:use-module (guix utils)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system glib-or-gtk)
@@ -951,38 +952,39 @@ icons on the MATE desktop.  It works on local and remote file systems.")
            xmodmap
            gobject-introspection))
     (inputs
-     `(("at-spi2-core" ,at-spi2-core)
-       ("cairo" ,cairo)
-       ("caja" ,caja)
-       ("dconf" ,dconf)
-       ("dbus" ,dbus)
-       ("dbus-glib" ,dbus-glib)
-       ("elogind" ,elogind)
-       ("fontconfig" ,fontconfig)
-       ("freetype" ,freetype)
-       ("glib" ,glib)
-       ("gtk+" ,gtk+)
-       ("libappindicator" ,libappindicator)
-       ("libcanberra" ,libcanberra)
-       ("libgtop" ,libgtop)
-       ("libmatekbd" ,libmatekbd)
-       ("libx11" ,libx11)
-       ("libxcursor" ,libxcursor)
-       ("libxext" ,libxext)
-       ("libxi" ,libxi)
-       ("libxklavier" ,libxklavier)
-       ("libxml2" ,libxml2)
-       ("libxrandr" ,libxrandr)
-       ("libxrender" ,libxrender)
-       ("libxscrnsaver" ,libxscrnsaver)
-       ("marco" ,marco)
-       ("mate-desktop" ,mate-desktop)
-       ("mate-menus" ,mate-menus)
-       ("mate-settings-daemon" ,mate-settings-daemon)
-       ("pango" ,pango)
-       ("polkit" ,polkit)
-       ("startup-notification" ,startup-notification)
-       ("udisks" ,udisks)))
+     (list at-spi2-core
+           cairo
+           caja
+           dconf
+           dbus
+           dbus-glib
+           elogind
+           fontconfig
+           freetype
+           glib
+           gsettings-desktop-schemas
+           gtk+
+           libappindicator
+           libcanberra
+           libgtop
+           libmatekbd
+           libx11
+           libxcursor
+           libxext
+           libxi
+           libxklavier
+           libxml2
+           libxrandr
+           libxrender
+           libxscrnsaver
+           marco
+           mate-desktop
+           mate-menus
+           mate-settings-daemon
+           pango
+           polkit
+           startup-notification
+           udisks))
     (propagated-inputs
      (list (librsvg-for-system)))        ;mate-slab.pc
     (home-page "https://mate-desktop.org/")
@@ -1547,11 +1549,28 @@ used to bring up authentication dialogs.")
        (sha256
         (base32 "0929yk7g7103d18p400ysi19pqrxl3dyzg4l0mnw7a3azm7ri67y"))))
     (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:imported-modules `((guix build python-build-system)
+                           ,@%glib-or-gtk-build-system-modules)
+      #:modules '((guix build utils)
+                  (guix build glib-or-gtk-build-system)
+                  ((guix build python-build-system) #:prefix python:))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'glib-or-gtk-wrap 'python-and-gi-wrap
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (wrap-program (search-input-file outputs "bin/mozo")
+                `("GUIX_PYTHONPATH" = (,(getenv "GUIX_PYTHONPATH")
+                                       ,(python:site-packages inputs outputs)))
+                `("GI_TYPELIB_PATH" = (,(getenv "GI_TYPELIB_PATH")))))))))
     (native-inputs
      (list pkg-config))
     (inputs
      (list gettext-minimal
+           gtk+
            mate-menus
+           mate-panel
            python
            python-pygobject))
     (home-page "https://mate-desktop.org/")
