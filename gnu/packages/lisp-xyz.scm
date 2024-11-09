@@ -20,7 +20,7 @@
 ;;; Copyright © 2020 Dimakis Dimakakos <me@bendersteed.tech>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2020, 2021, 2022 Adam Kandur <rndd@tuta.io>
-;;; Copyright © 2020-2023 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2020-2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2021, 2022 Aurora <rind38@disroot.org>
 ;;; Copyright © 2021 Matthew James Kraai <kraai@ftbfs.org>
 ;;; Copyright © 2021-2024 André A. Gomes <andremegafone@gmail.com>
@@ -44,6 +44,7 @@
 ;;; Copyright © 2024 Michal Atlas <michal_atlas+git@posteo.net>
 ;;; Copyright © 2024 Carlo Zancanaro <carlo@zancanaro.id.au>
 ;;; Copyright © 2024 Nik Gaffney <nik@fo.am>
+;;; Copyright © 2024 Grigory Shepelev <shegeley@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2685,6 +2686,39 @@ invalidate based on expressions evaluating to different values.")
 
 (define-public ecl-cache-while
   (sbcl-package->ecl-package sbcl-cache-while))
+
+(define-public sbcl-cacle
+  (let ((commit "4cbe8cfe227d2e097eaced14766f4f37aa05e617")
+        (revision "1"))
+    (package
+      (name "sbcl-cacle")
+      (version (git-version "1.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/jlahd/cacle")
+               (commit commit)))
+         (file-name (git-file-name "cl-cacle" version))
+         (sha256
+          (base32 "0h0dk0sfkfl8g0sbrs76ydb9l4znssqhx8nc5k1sg7zxpni5a4qy"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs
+       (list sbcl-bordeaux-threads))
+      (home-page "https://github.com/jlahd/cacle")
+      (synopsis "Extensible cache services for Common Lisp")
+      (description "This package provides a generic cache management facility
+with configurable and extensible cache replacement policies.  The
+actual cached data can be stored anywhere, with cacle taking charge of
+keeping track of which entry is to be discarded next when more space
+is needed for a new entry.")
+      (license (list license:expat)))))
+
+(define-public cl-cacle
+  (sbcl-package->cl-source-package sbcl-cacle))
+
+(define-public ecl-cacle
+  (sbcl-package->ecl-package sbcl-cacle))
 
 (define-public sbcl-calispel
   (let ((commit "e9f2f9c1af97f4d7bb4c8ac25fb2a8f3e8fada7a"))
@@ -8352,6 +8386,58 @@ package locks across supported Common Lisp implementations.")
 (define-public ecl-cl-package-locks
   (sbcl-package->ecl-package sbcl-cl-package-locks))
 
+(define-public sbcl-cl-pango
+  (let ((commit "ee4904d19ce22d00eb2fe17a4fe42e5df8ac8701")
+        (revision "0"))
+    (package
+      (name "sbcl-cl-pango")
+      (version (git-version "0.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/BradWBeer/cl-pango")
+               (commit commit)))
+         (file-name (git-file-name "cl-pango" version))
+         (sha256
+          (base32 "0zkn4yn8nkkjr0x1vcy856cvbmnyhdidqz0in8xvd2i93jvw5w0i"))))
+      (build-system asdf-build-system/sbcl)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-paths
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "library.lisp"
+                  (("libpango-1.0.so")
+                   (search-input-file inputs "/lib/libpango-1.0.so"))
+                  (("libpangocairo-1.0.so")
+                   (search-input-file inputs "/lib/libpangocairo-1.0.so"))))))))
+      (inputs
+       (list pango
+             sbcl-cffi
+             sbcl-cl-cairo2
+             sbcl-xmls))
+      (home-page "https://github.com/BradWBeer/cl-pango")
+      (synopsis "Pango bindings for Common Lisp")
+      (description
+       "This package provides Common Lisp bindings to the pango text layout
+library.")
+      (license license:expat))))
+
+(define-public cl-pango
+  (sbcl-package->cl-source-package sbcl-cl-pango))
+
+(define-public ecl-cl-pango
+  (let ((pkg (sbcl-package->ecl-package sbcl-cl-pango)))
+    (package
+      (inherit pkg)
+      (inputs
+       (list pango
+             ecl-cffi
+             ecl-cl-cairo2
+             ecl-xmls)))))
+
 (define-public sbcl-cl-pass
   (let ((commit "e58e97c0c0588dc742c061208afb9bc31e4dbd34")
         (revision "1"))
@@ -10512,6 +10598,62 @@ as good or bad as the next one.")
 (define-public ecl-cl-who
   (sbcl-package->ecl-package sbcl-cl-who))
 
+(define-public sbcl-cl-xkb
+  (let ((commit "3807a264d04ac242ea65991b19b5fb3f894c6e46")
+        (revision "1"))
+    (package
+      (name "sbcl-cl-xkb")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/malcolmstill/cl-xkb")
+               (commit commit)))
+         (file-name (git-file-name "cl-xkb" version))
+         (sha256
+          (base32 "002bskv0dvq2hahz7dah2zwwkp2zrkf98w7lm96jmqfn8vyp4k75"))))
+      (build-system asdf-build-system/sbcl)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'add-xkbcommon
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "cl-xkb.lisp"
+                  (("/usr/lib64/libxkbcommon.so.0")
+                   (search-input-file inputs "/lib/libxkbcommon.so"))))))))
+      (native-inputs
+       (list pkg-config))
+      (inputs
+       (list libxkbcommon
+             sbcl-cffi))
+      (home-page "https://github.com/malcolmstill/cl-xkb")
+      (synopsis "Common Lisp wrapper for @code{libxkbcommon}")
+      (description
+       "@code{cl-xkb} is a Common Lisp wrapper for the libxkbcommon keyboard
+handling library.
+
+The library currently supports these xkb modules:
+
+@itemize
+@item Keysyms
+@item Library Context
+@item Include Paths
+@item Logging Handling
+@item Keymap Creation
+@item Keymap Components
+@item Keyboard State
+@item Compose and dead-keys support
+@end itemize")
+      (license license:bsd-3))))
+
+(define-public cl-xkb
+  (sbcl-package->cl-source-package sbcl-cl-xkb))
+
+(define-public ecl-cl-xkb
+  (sbcl-package->ecl-package sbcl-cl-xkb))
+
 (define-public sbcl-cl-xmlspam
   (let ((commit "ea06abcca2a73a9779bcfb09081e56665f94e22a"))
     (package
@@ -10857,8 +10999,8 @@ during initialization or reinitialization of its subcomponents.")
   (sbcl-package->ecl-package sbcl-class-options))
 
 (define-public sbcl-classimp
-  (let ((commit "d82a14c59bc733f89a1ea0b3447ebedddce5756e")
-        (revision "0"))
+  (let ((commit "6c74f3808e00781a2662f37ddc26ccbbf2687b6b")
+        (revision "1"))
     (package
       (name "sbcl-classimp")
       (version (git-version "0.0.0" revision commit))
@@ -10870,7 +11012,7 @@ during initialization or reinitialization of its subcomponents.")
                (commit commit)))
          (file-name (git-file-name "cl-classimp" version))
          (sha256
-          (base32 "0pbnz6cf1zb2ayk4kbw0gphjb8nflnjns2rwhv86jz0kf0z1hqha"))))
+          (base32 "1sq34s5yrljh7fffllsscay7xi11lg03alrkyrh6xfwa2w7cnqmx"))))
       (build-system asdf-build-system/sbcl)
       (arguments
        (list
@@ -10880,9 +11022,9 @@ during initialization or reinitialization of its subcomponents.")
               (lambda* (#:key inputs #:allow-other-keys)
                 (substitute* "library.lisp"
                   (("libassimp.so.5" _)
-                   (search-input-file inputs "/lib/libassimp.so.5.0.0"))))))))
+                   (search-input-file inputs "/lib/libassimp.so.5"))))))))
       (inputs
-       (list assimp-5.0
+       (list assimp
              sbcl-cffi
              sbcl-split-sequence))
       (home-page "https://github.com/3b/classimp")
@@ -10892,26 +11034,11 @@ during initialization or reinitialization of its subcomponents.")
 Import} library for Common Lisp.")
       (license license:expat))))
 
-;; FIXME: The cl and ecl packages get the latest version of assimp as
-;; dependency instead of the one specified in the sbcl package. Specifying
-;; the dependencies explicitly works around the issue.
 (define-public cl-classimp
-  (let ((pkg (sbcl-package->cl-source-package sbcl-classimp)))
-    (package
-      (inherit pkg)
-      (inputs
-       (list assimp-5.0
-             cl-cffi
-             cl-split-sequence)))))
+  (sbcl-package->cl-source-package sbcl-classimp))
 
 (define-public ecl-classimp
-  (let ((pkg (sbcl-package->ecl-package sbcl-classimp)))
-    (package
-      (inherit pkg)
-      (inputs
-       (list assimp-5.0
-             ecl-cffi
-             ecl-split-sequence)))))
+  (sbcl-package->ecl-package sbcl-classimp))
 
 (define-public sbcl-clavier
   (let ((commit "9b1424eaad131e114a45b400784079124b5e2321")
@@ -18133,6 +18260,38 @@ transcribing mathematical formulas into Lisp.")
 (define-public ecl-inheriting-readers
   (sbcl-package->ecl-package sbcl-inheriting-readers))
 
+(define-public sbcl-input-event-codes
+  (package
+    (name "sbcl-input-event-codes")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~shunter/input-event-codes")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "cl-input-event-codes" version))
+       (sha256
+        (base32 "0bygspj84jzyiy06z4q64z1nzsmvvrviqxw73wzqaq2wk2p56vs6"))))
+    (build-system asdf-build-system/sbcl)
+    (native-inputs
+     (list pkg-config
+           sbcl-parachute))
+    (inputs
+     (list sbcl-trivial-features))
+    (home-page "https://git.sr.ht/~shunter/input-event-codes")
+    (synopsis "Event codes for Common Lisp")
+    (description
+     "This library is a Common Lisp port of all the constants from the event
+codes header file found on Linux and FreeBSD.")
+    (license license:expat)))
+
+(define-public cl-input-event-codes
+  (sbcl-package->cl-source-package sbcl-input-event-codes))
+
+(define-public ecl-input-event-codes
+  (sbcl-package->ecl-package sbcl-input-event-codes))
+
 (define-public sbcl-inquisitor
   (let ((commit "423fa9bdd4a68a6ae517b18406d81491409ccae8")
         (revision "0"))
@@ -24347,6 +24506,72 @@ are provided.")
 
 (define-public ecl-cl-positional-lambda
   (sbcl-package->ecl-package sbcl-positional-lambda))
+
+(define-public sbcl-posix-shm
+  (package
+    (name "sbcl-posix-shm")
+    (version "0.0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~shunter/posix-shm")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "cl-posix-shm" version))
+       (sha256
+        (base32 "1lk8sach64zgj81988q3z8i153gi3dkda3fkb11cxgsmymawddk9"))))
+    (build-system asdf-build-system/sbcl)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "ffi/ffi.lisp"
+                (("libc.so.6")
+                 (search-input-file inputs "/lib/libc.so.6"))
+                (("librt.so.1")
+                 (search-input-file inputs "/lib/librt.so.1"))))))))
+    (native-inputs
+     (list sbcl-osicat
+           sbcl-parachute))
+    (inputs
+     (list sbcl-alexandria
+           sbcl-cffi
+           sbcl-trivial-features))
+    (home-page "https://git.sr.ht/~shunter/posix-shm")
+    (synopsis "Common Lisp bindings and wrapper for POSIX shared memory API")
+    (description
+     "This library provides two strata to access the POSIX shm API:
+
+@itemize
+@item the package @code{posix-shm/ffi}, a collection of slim bindings to the
+POSIX API
+
+@item the package @code{posix-shm}, a lispy wrapper around the FFI that
+integrates more closely to the features of Common Lisp, and provides a handful
+of utilities and macros
+@end itemize
+
+Features include:
+
+@itemize
+@item open, close, create, resize, change ownership of, change permissions of,
+and memory map to shared memory objects
+@item @code{open-shm} appears more like @code{open} from the standard library
+@item @code{open-shm*}, for creating anonymous shm objects
+@item @code{with-open-shm}, @code{with-mmap} and similar @code{with-} macros
+for safely accessing resources with dynamic extent
+@end itemize")
+    (license license:bsd-3)))
+
+(define-public cl-posix-shm
+  (sbcl-package->cl-source-package sbcl-posix-shm))
+
+;; XXX: An error occurred during initialization: Attempt to redefine
+;; function FTRUNCATE in locked package.
+;; (define-public ecl-posix-shm
+;;   (sbcl-package->ecl-package sbcl-posix-shm))
 
 (define-public sbcl-postmodern
   (package
@@ -31494,6 +31719,59 @@ has a small codebase that's easy to understand and use.")
 
 (define-public ecl-vom
   (sbcl-package->ecl-package sbcl-vom))
+
+(define-public sbcl-wayflan
+  (package
+    (name "sbcl-wayflan")
+    (version "0.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~shunter/wayflan")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name "cl-wayflan" version))
+       (sha256
+        (base32 "0y6hzskp1vgaigzj5b3i695sc6dn5mk7nlxs21nh5ybzmf4chhyy"))))
+    (build-system asdf-build-system/sbcl)
+    (native-inputs
+     (list sbcl-parachute))
+    (inputs
+     (list sbcl-alexandria
+           sbcl-babel
+           sbcl-cffi
+           sbcl-closer-mop
+           sbcl-plump))
+    (home-page "https://git.sr.ht/~shunter/wayflan")
+    (synopsis "Wayland communication library for Common Lisp")
+    (description
+     "Wayflan is a from-scratch Wayland communication library for Common Lisp.
+It makes a good-faith effort to mimic @code{libwayland} behavior not defined
+in the Wayland spec, to keep compatibility between the two libraries.
+
+Wayflan is not a compositor nor a GUI toolkit.  Its purpose is to parse Wayland
+protocol XML documents and exchange Wayland messages between other processes.
+
+Features:
+@itemize
+@item Client support
+@item All implementation done in Common Lisp from the socket up
+@item Enum values are translated into keywords
+@item Wayland protocol introspection
+@item ASDF component @code{:wayflan-client-impl} generates code from
+XML.  ASDF's extensible components make it possible to teach your program new
+protocols for Wayland without the need of a special build system.
+@end itemize")
+    (license license:bsd-3)))
+
+(define-public cl-wayflan
+  (sbcl-package->cl-source-package sbcl-wayflan))
+
+;; XXX: Error detected: The function CMSG-ALIGN is undefined.An error
+;; occurred during initialization: COMPILE-FILE-ERROR while compiling
+;; #<cl-source-file "wayflan/common" "wire">.
+;; (define-public ecl-wayflan
+;;   (sbcl-package->ecl-package sbcl-wayflan))
 
 (define-public sbcl-websocket-driver
   (let ((commit "17ba5535fb1c4fe43e7e8ac786e8b61a174fcba3")

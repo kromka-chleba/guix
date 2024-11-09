@@ -26,7 +26,7 @@
 ;;; Copyright © 2021 Sarah Morgensen <iskarian@mgsn.dev>
 ;;; Copyright © 2021 Robby Zambito <contact@robbyzambito.me>
 ;;; Copyright © 2021, 2022, 2023 Maxime Devos <maximedevos@telenet.be>
-;;; Copyright © 2021, 2022 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2021, 2022, 2024 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2021-2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Daniel Meißner <daniel.meissner-i4k@ruhr-uni-bochum.de>
 ;;; Copyright © 2022 Wamm K. D. <jaft.r@outlook.com>
@@ -705,7 +705,7 @@ freedesktop.org project.")
   ;; Updating this will rebuild over 700 packages through libinput-minimal.
   (package
     (name "libinput")
-    (version "1.24.0")
+    (version "1.26.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -714,7 +714,7 @@ freedesktop.org project.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xk0dljykjfmkks7kjxvbia6g3wadmy7lihfygm8icywkq8j0dw1"))))
+                "1zwwq7a0a6yznc6jxhp6gb50yw5vpfkvgbrabrpc5pwldpckfbrg"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags '("-Ddocumentation=false")
@@ -1342,7 +1342,7 @@ Python.")
 (define-public wayland
   (package
     (name "wayland")
-    (version "1.22.0")
+    (version "1.23.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://gitlab.freedesktop.org/" name
@@ -1350,7 +1350,7 @@ Python.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0hjq8b1cprxpxcv2klgir1hd63vy5hrqilp9v317394qlqgayh0m"))))
+                "1vg5h6d94hglh7724q6wx9dpg4y0afvxksankp1hwbcy76lb4kw6"))))
     (build-system meson-build-system)
     (outputs '("out" "doc"))
     (arguments
@@ -1393,7 +1393,7 @@ fullscreen) or other display servers.")
 (define-public wayland-protocols
   (package
     (name "wayland-protocols")
-    (version "1.32")
+    (version "1.37")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://gitlab.freedesktop.org/wayland/"
@@ -1401,7 +1401,7 @@ fullscreen) or other display servers.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "04dsn79409mryxs6maq9kfhca97gvl3pr1ggjnv9d0hc6jfpjnbl"))))
+                "09pk3qhpc29x1a6srpqqw9dcvalg33vfmp14d276is7j4klrn3m7"))))
     (build-system meson-build-system)
     (inputs
      (list wayland))
@@ -1422,17 +1422,18 @@ protocol either in Wayland core, or some other protocol in wayland-protocols.")
     (license license:expat)))
 
 (define-public wayland-protocols-next
-  (package (inherit wayland-protocols)
-           (name "wayland-protocols-next")
-           (version "1.36")
-           (source (origin
-                     (method url-fetch)
-                     (uri (string-append "https://gitlab.freedesktop.org/wayland/"
-                                         "wayland-protocols/-/releases/" version "/downloads/"
-                                         "wayland-protocols-" version ".tar.xz"))
-                     (sha256
-                      (base32
-                       "14kyxywpfkgpjpkrybs28q1s2prnz30k1b4zap5a3ybrbvh4vzbi"))))))
+  (package
+    (inherit wayland-protocols)
+    (name "wayland-protocols-next")
+    (version "1.38")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://gitlab.freedesktop.org/wayland/"
+                                  "wayland-protocols/-/releases/" version "/downloads/"
+                                  "wayland-protocols-" version ".tar.xz"))
+              (sha256
+               (base32
+                "1ghxb0w7rbq3kdv9lhm1iwcjh6p3sx1gxb3crqh2p78m0ln2j5zz"))))))
 
 (define-public wayland-utils
   (package

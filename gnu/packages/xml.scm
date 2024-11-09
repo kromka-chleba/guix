@@ -1278,12 +1278,14 @@ UTF-8 and UTF-16 encoding.")
          (delete 'configure)
          (add-after 'build 'build-shared-library
            (lambda _
-             (invoke "g++" "-Wall" "-O2" "-shared" "-fpic"
+             (invoke ,(cxx-for-target) "-Wall" "-O2" "-shared" "-fpic"
                      "tinyxml.cpp" "tinyxmlerror.cpp"
                      "tinyxmlparser.cpp" "tinystr.cpp"
                      "-o" "libtinyxml.so")))
          (replace 'check
-           (lambda _ (invoke "./xmltest")))
+           (lambda* (#:key tests? #:allow-other-keys)
+             (when tests?
+               (invoke "./xmltest"))))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -1456,12 +1458,13 @@ elements to their parents
      `(#:phases
        (modify-phases %standard-phases
          (replace 'check
-           (lambda _
+           (lambda* (#:key tests? #:allow-other-keys)
              (substitute* "test/run"
                ;; Run tests with `python' only.
                (("^(PYTHON_VERSIONS = ).*" all m)
                 (string-append m "['']")))
-             (invoke "test/run"))))))
+             (when tests?
+               (invoke "test/run")))))))
     (home-page "https://github.com/dilshod/xlsx2csv")
     (synopsis "XLSX to CSV converter")
     (description
@@ -1516,14 +1519,14 @@ files.  It is designed to be fast and to handle large input files.")
 (define-public xerces-c
   (package
     (name "xerces-c")
-    (version "3.2.3")
+    (version "3.2.5")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://apache/xerces/c/3/sources/"
                                   "xerces-c-" version ".tar.xz"))
               (sha256
                (base32
-                "0jf1khvlssg31vkxbc25dxjxcxm56xb8nywj1sypj6hxzjlrkz0j"))))
+                "0c42jhnhq63yzvj8whl5dpzf7p1lnd6h00kzpz4ipcj5aq1ycfb2"))))
     (build-system gnu-build-system)
     (arguments
      (let ((system (or (%current-target-system)
@@ -1545,7 +1548,7 @@ SAX2 APIs.")
 (define-public xlsxio
   (package
     (name "xlsxio")
-    (version "0.2.33")
+    (version "0.2.35")
     (source
      (origin
        (method git-fetch)
@@ -1554,7 +1557,7 @@ SAX2 APIs.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16i3yd168kb63za7jpycpb2by4831gz7wi90vzifdf85csc8c70s"))))
+        (base32 "140ap2l3qy27z1fhqpkq3a44aikhr3v5zlnm9m8vag42qiagiznx"))))
     (native-inputs
      (list expat gnu-make minizip which))
     (build-system gnu-build-system)

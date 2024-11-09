@@ -2201,7 +2201,7 @@ changes, and much more.")
     (arguments (list #:tests? #f))      ; requires internet access
     (home-page "https://github.com/paullouisageneau/libjuice")
     (synopsis "UDP Interactive Connectivity Establishment library")
-    (description "@code{libjuice} allows to open bidirectionnal User Datagram
+    (description "@code{libjuice} opens bidirectionnal User Datagram
 Protocol (UDP) streams with Network Address Translator (NAT) traversal.  It's a
 simplified implementation of the Interactive Connectivity Establishment (ICE)
 protocol, client-side and server-side, written in C without dependencies for
@@ -6417,7 +6417,7 @@ and similar services.")
 (define-public darkhttpd
   (package
     (name "darkhttpd")
-    (version "1.13")
+    (version "1.16")
     (source
      (origin
        (method git-fetch)
@@ -6426,20 +6426,19 @@ and similar services.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0w11xq160q9yyffv4mw9ncp1n0dl50d9plmwxb0yijaaxls9i4sk"))))
+        (base32 "15mmq1v8p50mm9wx5w6g4rlr40b7d044lw7rs1wyzdiw9lcnihvm"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags
-       (list (string-append "CC=" ,(cc-for-target)))
-       #:tests? #f ; No test suite
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)            ; no configure script
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (install-file "darkhttpd"
-                           (string-append (assoc-ref outputs "out")
-                                          "/bin")))))))
+     (list
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))
+      #:test-target "test"
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)            ; no configure script
+          (replace 'install
+            (lambda _
+              (install-file "darkhttpd" (string-append #$output "/bin")))))))
+    (native-inputs (list which python-minimal))
     (synopsis "Simple static web server")
     (description "darkhttpd is a simple static web server.  It is
 standalone and does not need inetd or ucspi-tcp.  It does not need any
@@ -6632,70 +6631,79 @@ deployments.")
   (package
     (name "varnish")
     (home-page "https://varnish-cache.org/")
-    (version "7.3.0")
+    (version "7.6.0")
     (source (origin
               (method url-fetch)
               (uri (string-append home-page "_downloads/varnish-" version ".tgz"))
               (sha256
                (base32
-                "1rsay4vrg0dvf8d7bpj8dvaax4v949p6x1l6qd3hdabhq87bpnz2"))))
+                "0p2xf4a8bk2w8j9q20fazrc93fwcfhw8zcvdd8ssbahvlg2q78mb"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags (list (string-append "LDFLAGS=-Wl,-rpath=" %output "/lib")
-                               (string-append "CC=" ,(cc-for-target))
-                               ;; Use absolute path of GCC so it's found at runtime.
-                               (string-append "PTHREAD_CC="
-                                              (search-input-file %build-inputs
-                                                                 "/bin/gcc"))
-                               "--localstatedir=/var")
-       ,@(if (target-x86-32?)
-             '(#:make-flags
-               (list "CFLAGS+=-fexcess-precision=standard"))
-             '())
+     (append
+      (if (target-x86-32?)
+          '(#:make-flags
+            (list "CFLAGS+=-fexcess-precision=standard"))
+          '())
+      (list
+       #:configure-flags
+       #~(list (string-append "LDFLAGS=-Wl,-rpath=" #$output "/lib")
+               (string-append "CC=" #$(cc-for-target))
+               ;; Use absolute path of GCC so it's found at runtime.
+               (string-append "PTHREAD_CC="
+                              (search-input-file %build-inputs
+                                                 "/bin/gcc"))
+               "--localstatedir=/var")
        #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'use-absolute-file-names
-           (lambda* (#:key native-inputs inputs #:allow-other-keys)
-             (let* ((inpts (or native-inputs inputs))
-                    (sh (search-input-file inpts "/bin/sh"))
-                    (rm (search-input-file inpts "/bin/rm")))
+       #~(modify-phases %standard-phases
+           (add-after 'unpack 'use-absolute-file-names
+             (lambda _
                (substitute* '("bin/varnishtest/vtc_varnish.c"
                               "bin/varnishtest/vtc_process.c"
                               "bin/varnishtest/vtc_haproxy.c"
                               "bin/varnishtest/tests/u00014.vtc"
                               "bin/varnishd/mgt/mgt_vcc.c")
-                 (("/bin/sh") sh))
-               (substitute* "bin/varnishd/mgt/mgt_shmem.c"
-                 (("rm -rf") (string-append rm " -rf")))
-               (substitute* "bin/varnishtest/vtc_main.c"
-                 (("/bin/rm") rm)))))
-         (add-before 'install 'patch-Makefile
-           (lambda _
-             (substitute* "Makefile"
-               ;; Do not create /var/varnish during install.
-               (("^install-data-am: install-data-local") "install-data-am: "))))
-         (add-after 'install 'wrap-varnishd
-           ;; Varnish uses GCC to compile VCL, so wrap it with required GCC
-           ;; environment variables to avoid propagating them to profiles.
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (varnishd (string-append out "/sbin/varnishd"))
-                    (PATH (string-append (assoc-ref inputs "binutils") "/bin"))
-                    (LIBRARY_PATH (string-append (assoc-ref inputs "libc") "/lib")))
-               (wrap-program varnishd
+                 (("/bin/sh") (which "bash")))
+               (let* ((rm (which "rm")))
+                 (substitute* "bin/varnishd/mgt/mgt_shmem.c"
+                   (("rm -rf") (string-append rm " -rf")))
+                 (substitute* "bin/varnishtest/vtc_main.c"
+                   (("/bin/rm") rm)))
+               (substitute* "bin/varnishtest/tests/u00000.vtc"
+                 (("/bin/echo") (which "echo")))))
+           (add-after 'unpack 'remove-failing-tests
+             (lambda _
+               ;; This test seems to fail because of
+               ;; Failed: Servname not supported for ai_socktype
+               (delete-file "bin/varnishtest/tests/b00085.vtc")))
+           (add-before 'install 'patch-Makefile
+             (lambda _
+               (substitute* "Makefile"
+                 ;; Do not create /var/varnish during install.
+                 (("^install-data-am: install-data-local")
+                  "install-data-am: "))))
+           (add-after 'install 'wrap-varnishd
+             ;; Varnish uses GCC to compile VCL, so wrap it with required GCC
+             ;; environment variables to avoid propagating them to profiles.
+             (lambda* (#:key inputs #:allow-other-keys)
+               (wrap-program (string-append #$output "/sbin/varnishd")
                  ;; Add binutils to PATH so gcc finds the 'as' executable.
-                 `("PATH" ":" prefix (,PATH))
+                 `("PATH" ":" prefix (,(dirname (which "as"))))
                  ;; Make sure 'crti.o' et.al is found.
-                 `("LIBRARY_PATH" ":" prefix (,LIBRARY_PATH)))))))))
+                 `("LIBRARY_PATH" ":" prefix
+                   (,(dirname
+                      (search-input-file inputs "lib/libc.so")))))))))))
     (native-inputs
-     (list pkg-config python-sphinx python-docutils))
+     (list pkg-config
+           python-sphinx
+           python-docutils))
     (inputs
      (list bash-minimal
-           coreutils
+           coreutils-minimal
            jemalloc
            ncurses
            pcre2
-           python
+           python-minimal
            readline))
     (synopsis "Web application accelerator")
     (description
@@ -6714,14 +6722,14 @@ configuration language.")
   (package
     (name "varnish-modules")
     (home-page "https://github.com/varnish/varnish-modules")
-    (version "0.22.0")
+    (version "0.25.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference (url home-page) (commit version)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1dxnla1k6kra0nkvm20iszgmq0czr5bgx002qlljwf9fl25vm1ks"))))
+                "1jan3lwynp14awh6jk4zc052lm8m02vqms8ryc7zmjnm5jifdzlv"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config

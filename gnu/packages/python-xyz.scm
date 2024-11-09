@@ -404,6 +404,30 @@ These aspects include CPU, network fabrics, etc.  In addition, it offers
 APIs to detect, query, and compare them.")
     (license license:expat)))
 
+(define-public python-asyncstdlib
+  (package
+    (name "python-asyncstdlib")
+    (version "3.13.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "asyncstdlib" version))
+       (sha256
+        (base32 "0cxms50gygrvp4n4rk5xxhnl6k7nsrhhixdyk6xk70hi9ysgz9pj"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-flit-core python-pytest))
+    (home-page "https://asyncstdlib.readthedocs.io")
+    (synopsis "Compatibility layer between the Python stdlib and @code{async}
+callables")
+    (description
+     "The @code{asyncstdlib} library re-implements functions and classes of
+the Python standard library to make them compatible with @code{async}
+callables, iterables and context managers.  It is fully agnostic to
+@code{async} event loops and seamlessly works with @code{asyncio}, third-party
+libraries such as @code{trio}, as well as any custom @code{async} event
+loop.")
+    (license license:expat)))
+
 (define-public python-awkward-cpp
   (package
     (name "python-awkward-cpp")
@@ -2255,7 +2279,7 @@ Python library and command line interface.")
 (define-public python-glymur
   (package
     (name "python-glymur")
-    (version "0.13.5")
+    (version "0.13.6")
     (source
      (origin
        (method git-fetch)   ; no tests data in PyPi package
@@ -2264,12 +2288,15 @@ Python library and command line interface.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1n2n7bj5w29w5y2gcl4hxhqf85n0j2crkln9i0mprq3xw8finxpx"))))
+        (base32 "06v6g0fwzmy2imhrvy0q4zrhrlrp24yhs098vi13r92ga63c72xl"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      #~(list "-n" "auto")
+      #~(list "--numprocesses" "auto"
+              ;; Failing test due to inability of ctypes.util.find_library()
+              ;; to determine library path, which is patched above.
+              "--ignore=tests/test_config.py")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-library-locations
@@ -2287,17 +2314,13 @@ Python library and command line interface.")
                   (search-input-file inputs "/lib/libtiff.so") "\"\n"
                   "    elif libname == \"c\":\n"
                   "        path = \""
-                  (search-input-file inputs "/lib/libc.so.6") "\"\n")))))
-          (add-before 'check 'disable-failing-tests
-            (lambda _
-              ;; Failing test due to inability of
-              ;; ctypes.util.find_library() to determine library path,
-              ;; which is patched above.
-              (delete-file "tests/test_config.py"))))))
+                  (search-input-file inputs "/lib/libc.so.6") "\"\n"))))))))
     (native-inputs
      (list python-pytest
            python-pytest-xdist
-           python-scikit-image))
+           python-scikit-image
+           python-setuptools
+           python-wheel))
     (inputs
      (list openjpeg  ; glymur/lib/openjp2.py
            libtiff)) ; glymur/lib/tiff.py
@@ -3645,6 +3668,29 @@ language.  It aims to be fast.")
 metaclass-based @code{NamedTuple} implementation and a @code{NamedConstant}
 class.")
     (license license:bsd-3)))
+
+(define-public python-calver
+  (package
+    (name "python-calver")
+    (version "2022.06.26")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/di/calver")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14l9kv9igcmp5k6d2ahnx6z4dn6zy5kykz95hkh0rkqswn8x79b1"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pretend python-pytest python-setuptools))
+    (home-page "https://github.com/di/calver")
+    (synopsis "Setuptools extension for CalVer package versions")
+    (description
+     "The calver package is a setuptools extension for automatically defining
+your Python package version as a calendar version.")
+    (license license:asl2.0)))
 
 (define-public python-can
   (package
@@ -6167,6 +6213,7 @@ visualisation and class tracker statistics.")
 environments and back.")
     (license license:bsd-3)))
 
+;; WARNING: This package is a dependency of mesa.
 (define-public python-pyyaml
   (package
     (name "python-pyyaml")
@@ -9879,6 +9926,39 @@ Python code against some of the style conventions in
 @url{http://www.python.org/dev/peps/pep-0008/,PEP 8}.")
     (license license:expat)))
 
+(define-public python-pycollada
+  (package
+    (name "python-pycollada")
+    (version "0.8")
+    (source
+     (origin
+       (method git-fetch)   ; no tests data in PyPi package
+       (uri (git-reference
+             (url "https://github.com/pycollada/pycollada")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0by8b46gji9npsgnx91cvzjrfcsm7r4d23gvn7h2h9ninaxlv7zw"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools))
+    (propagated-inputs
+     (list python-numpy
+           python-dateutil))
+    (home-page "https://pycollada.readthedocs.io")
+    (synopsis "Reading and writing collada documents library")
+    (description
+     "This package implements a functionality for creating, editing and
+loading @url{https://www.khronos.org/collada/,COLLADA},which is a
+COLLAborative Design Activity for establishing an interchange file format for
+interactive 3D applications.
+
+The library allows you to load a COLLADA file and interact with it as a python
+object.  In addition, it supports creating a collada python object from
+scratch, as well as in-place editing.")
+    (license license:bsd-3)))
+
 (define-public python-pyct
   (package
     (name "python-pyct")
@@ -10907,6 +10987,7 @@ data, and scientific formats.")
 a multithreaded image-processing system with low memory needs.")
     (license license:expat)))
 
+;; WARNING: This package is a dependency of mesa.
 (define-public python-pycparser
   (package
     (name "python-pycparser")
@@ -11464,6 +11545,26 @@ cluster without needing to write any wrapper code yourself.")
 consisting of several processes. honcho starts all listed processes.
 The output of all running processes is collected by honcho and
 displayed.")
+    (license license:expat)))
+
+(define-public python-hsluv
+  (package
+    (name "python-hsluv")
+    (version "5.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hsluv" version))
+       (sha256
+        (base32 "0bmpd7qxcvin8szblilxmw50v7mygf6a6i180h82123s893gk092"))))
+    (build-system pyproject-build-system)
+    (home-page "https://www.hsluv.org")
+    (synopsis "Human-friendly HSL colour space implemented in Python")
+    (description
+     "Human-friendly @acronym{Hue Saturation Lightness,HSL}.  HSLuv extends
+@url{http://en.wikipedia.org/wiki/CIELUV,CIELUV} with a new saturation
+component that allows you to span all the available chroma as a neat
+percentage.")
     (license license:expat)))
 
 (define-public python-pebble
@@ -18825,6 +18926,23 @@ text.")
        (sha256
         (base32 "189n8hpijy14jfan4ha9f5n06mnl33cxz7ay92wjqgkr639s0vg9"))))))
 
+(define-public python-monthdelta
+  (package
+    (name "python-monthdelta")
+    (version "0.9.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "MonthDelta" version))
+       (sha256
+        (base32 "0iwcsk7ryjw5h1wp10ykwd01f3am8gdlga6461q1v1njsk0rxh41"))))
+    (build-system pyproject-build-system)
+    (home-page "http://packages.python.org/MonthDelta")
+    (synopsis "Date computations with months")
+    (description
+     "MonthDelta provides functionality to do date computations with months.")
+    (license license:expat)))
+
 (define-public python-moto
   (package
     (name "python-moto")
@@ -21051,6 +21169,7 @@ Protocol) 0-9-1 protocol that tries to stay fairly independent of the underlying
 network support library.")
     (license license:bsd-3)))
 
+;; WARNING: This package is a dependency of mesa.
 (define-public python-ply
   (package
     (name "python-ply")
@@ -21617,6 +21736,43 @@ database, file, dict stores.  Cachy supports python versions 2.7+ and 3.2+.")
     (description "Poetry is a tool for dependency management and packaging
 in Python.  It allows you to declare the libraries your project depends on and
 it will manage (install/update) them for you.")
+    (license license:expat)))
+
+(define-public python-pyproject-api
+  (package
+    (name "python-pyproject-api")
+    (version "1.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyproject_api" version))
+       (sha256
+        (base32 "0f75rajzk72ay4x9ajw1835amm932q7cdn0yrbwiy3fwi80xq5qq"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; This test fails with AssertionError.
+      #~(list "-k" "not test_setuptools_prepare_metadata_for_build_wheel")
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'relax-packaging
+                     (lambda _
+                       (substitute* "pyproject.toml"
+                         ;; We have packaging 21.3.
+                         (("packaging>=23.1") "packaging>=21.3")))))))
+    (native-inputs
+     (list python-covdefaults
+           python-hatch-vcs
+           python-hatchling
+           python-pytest
+           python-pytest-mock))
+    (propagated-inputs
+     (list python-packaging python-tomli))
+    (home-page "https://pyproject-api.readthedocs.io/latest/")
+    (synopsis "API to interact with the Python pyproject.toml based projects")
+    (description
+     "@code{pyproject-api} aims to abstract away interaction with
+@code{pyproject.toml} style projects in a flexible way.")
     (license license:expat)))
 
 (define-public python-pyproject-hooks
@@ -22610,6 +22766,34 @@ multitouch applications.")
     (description
      "This package provides Kivy widgets that approximate Google's Material
 Design spec without sacrificing ease of use or application performance.")
+    (license license:expat)))
+
+(define-public python-async-lru
+  (package
+    (name "python-async-lru")
+    (version "2.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "async-lru" version))
+       (sha256
+        (base32 "09sn3bc3gc2flijm9k8kn4hmbnlkaddhqahb49izy188yrfrm9dq"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-pytest-asyncio
+           python-pytest-timeout
+           python-setuptools))
+    (propagated-inputs
+     (list python-typing-extensions))
+    (home-page "https://github.com/aio-libs/async-lru")
+    (synopsis "Simple LRU cache for asyncio")
+    (description
+     "This package is a port of Python's built-in @code{functools.lru_cache}
+function for @code{asyncio}.  To better handle async behaviour, it also
+ensures multiple concurrent calls will only result in 1 call to the wrapped
+function, with all awaits receiving the result of that call when it
+completes.")
     (license license:expat)))
 
 (define-public python-asyncinject
@@ -29899,36 +30083,45 @@ for YAML and JSON.")
 
 (define-public python-dbus-python
   (package
-  (name "python-dbus-python")
-  (version "1.3.2")
-  (source
-   (origin
-     (method url-fetch)
-     (uri (pypi-uri "dbus-python" version))
-     (sha256
-      (base32 "1y28h90v2ib8zqhs3r2yr7ycg8ccwvw3gqkvadlm12v1129q2rxd"))))
-  (build-system pyproject-build-system)
-  (arguments
-   (list #:phases #~(modify-phases %standard-phases
-                      (add-after 'unpack 'patch-requirements
-                        (lambda _
-                          (substitute* (list "pyproject.toml" "setup.py")
-                            (("'(ninja|patchelf)',?") ""))
-                          (substitute* "setup.cfg"
-                            (("(ninja|patchelf)") "")))))))
-  (inputs (list dbus glib))
-  (propagated-inputs (list python-pygobject))
-  (native-inputs (list pkg-config
-                       python-meson-python
-                       meson ninja patchelf
-                       python-sphinx python-sphinx-rtd-theme
-                       python-tappy
-                       python-wheel))
-  (home-page "https://dbus.freedesktop.org/doc/dbus-python/")
-  (synopsis "Python bindings for libdbus")
-  (description "This package provides Python bindings to libdbus, the
-reference implementation of the D-Bus protocol.")
-  (license license:expat)))
+    (name "python-dbus-python")
+    (version "1.3.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dbus-python" version))
+       (sha256
+        (base32 "1y28h90v2ib8zqhs3r2yr7ycg8ccwvw3gqkvadlm12v1129q2rxd"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-requirements
+            (lambda _
+              (substitute* (list "pyproject.toml" "setup.py")
+                (("'(ninja|patchelf)',?") ""))
+              (substitute* "setup.cfg"
+                (("(ninja|patchelf)") "")))))))
+    (native-inputs
+     (list pkg-config
+           python-meson-python
+           meson
+           ninja
+           patchelf
+           python-sphinx
+           python-sphinx-rtd-theme
+           python-tappy
+           python-wheel))
+    (inputs
+     (list dbus glib))
+    (propagated-inputs
+     (list python-pygobject))
+    (home-page "https://dbus.freedesktop.org/doc/dbus-python/")
+    (synopsis "Python bindings for libdbus")
+    (description
+     "This package provides Python bindings to libdbus, the reference
+implementation of the D-Bus protocol.")
+    (license license:expat)))
 
 (define-public python-dbusmock
   (package
@@ -36015,6 +36208,27 @@ async I/O support.")
     (description
      "This package adds ANSI colors and decorations to your strings.")
     (license license:isc)))
+
+(define-public python-types-dateutil
+  (package
+    (name "python-types-dateutil")
+    (version "2.9.0.20240316")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "types-python-dateutil" version))
+       (sha256
+        (base32 "00h2xi8p6ygdv9nhgwdyx86ky9m9dpdqgmsdji05x4461cj2wbsx"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f)) ; no tests
+    (native-inputs
+     (list python-pytest python-setuptools))
+    (home-page "https://github.com/python/typeshed")
+    (synopsis "Typing stubs for python-dateutil")
+    (description
+     "This is a PEP 561 type stub package for the @code{python-dateutil}
+package.")
+    (license license:asl2.0)))
 
 (define-public python-types-freezegun
   (package

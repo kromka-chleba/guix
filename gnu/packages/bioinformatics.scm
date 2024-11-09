@@ -1062,6 +1062,50 @@ simultaneously considered.")
 with DNA methylation micro-array data.")
       (license license:unlicense))))
 
+(define-public r-netid
+  (let ((commit "6ad1ffdd64a6584cc1d392524dad8e248d4590a8")
+        (revision "1"))
+    (package
+      (name "r-netid")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/WWXkenmo/NetID_package")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1blm5ljql91xmbyxxwm3vw8iz8d4ir9gm7wfnapqhfdbjvg4l21q"))))
+      (properties `((upstream-name . "NetID")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-doparallel
+                               r-dorng
+                               r-glmnet
+                               r-hmisc
+                               r-igraph
+                               r-irlba
+                               r-lmtest
+                               r-matrix
+                               r-mclust
+                               r-pracma
+                               r-raceid
+                               r-rarpack
+                               r-reticulate
+                               r-robustrankaggreg
+                               r-rsvd
+                               r-seurat))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/WWXkenmo/NetID_package")
+      (synopsis
+       "Scalable method to infer fate-specific networks from single-cell data")
+      (description
+       "This package provides a method to sample cells from single-cell data.
+It also generates an aggregate profile on a pruned K-Nearest Neighbor graph.
+This approach leads to an improved gene expression profile for quantifying
+gene regulations.")
+      (license license:expat))))
+
 (define-public r-numbat
   (let ((commit "4ab7752e7d267a3f443756675728521a9b0a7295")
         (revision "1"))
@@ -1183,6 +1227,33 @@ within this package are the 3000 bone marrow cells used for vignettes.")
 high-throughput sequence analysis.  The package is primarily useful to
 developers of other R packages who wish to make use of HTSlib.")
       (license license:lgpl2.0+))))
+
+(define-public r-scdesign2
+  (let ((commit "554f2c4b1a7ee6cc04969a287df9b3b77d7bb2fe")
+        (revision "1"))
+    (package
+      (name "r-scdesign2")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/JSB-UCLA/scDesign2")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "09zkz6qdcx54092ab6761ja3pclax9xzana8dk8qvxrdbjshb8p7"))))
+      (properties `((upstream-name . "scDesign2")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-mass r-pscl))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/JSB-UCLA/scDesign2")
+      (synopsis "Statistical simulator for scRNA-seq with gene correlation")
+      (description
+       "This package offers a flexible statistical simulator for scRNA-seq data.
+It can generate data that captures gene correlation.  Additionally, it allows
+for varying the number of cells and sequencing depth.")
+      (license license:expat))))
 
 (define-public r-scenic
   (let ((commit "cedf8490a634da550cea2c831544e5f7f14467d2")
@@ -2348,6 +2419,58 @@ from single-cell RNA-sequencing.")
     (description
      "Hclust2 is a handy tool for plotting heat-maps with several useful options
 to produce high quality figures that can be used in publications.")
+    (license license:expat)))
+
+(define-public python-hotspotsc
+  (package
+    (name "python-hotspotsc")
+    (version "1.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hotspotsc" version))
+       (sha256
+        (base32 "1phbd49nb0ivfcgfi6yxd2masgd0v6133mki9vd5pkrhx0a7wb5d"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #false                   ;there are none
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-poetry-core
+            (lambda _
+              ;; Patch to use the core poetry API.
+              (substitute* "pyproject.toml"
+                (("poetry.masonry.api")
+                 "poetry.core.masonry.api")
+                ;; Fix syntax error
+                (("sphinx>") "sphinx")))))))
+    (propagated-inputs (list python-anndata
+                             python-importlib-metadata
+                             python-ipython
+                             python-matplotlib
+                             python-nbsphinx
+                             python-numba
+                             python-numpy
+                             python-pandas
+                             python-pynndescent
+                             python-scanpy
+                             python-scikit-learn
+                             python-scipy
+                             python-seaborn
+                             python-statsmodels
+                             python-tqdm))
+    (native-inputs
+     (list python-poetry-core python-pytest python-sphinx))
+    (home-page "https://github.com/yoseflab/hotspot")
+    (synopsis
+     "Identifying informative genes in a single-cell dataset")
+    (description
+     "Hotspot is a tool for identifying informative genes (and gene modules)
+in a single-cell dataset.  Importantly, \"informative\" is decided based on
+how well a gene's variation agrees with some cell metric---some similarity
+mapping between cells.  Genes which are informative are those whose expression
+varies in similar way among cells which are nearby in the given metric.")
     (license license:expat)))
 
 (define-public python-htsget
@@ -12948,20 +13071,20 @@ includes software to
       (license license:cc0))))
 
 (define-public r-demultiplex2
-  (let ((commit "e42bc8310c0ea035af100e6ccea59b46ad6385f5")
-        (revision "1"))
+  (let ((commit "c1ce09e8b5784b485680cf96b90bbc12eed96907")
+        (revision "2"))
     (package
       (name "r-demultiplex2")
-      (version (git-version "1.0.0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/Gartner-Lab/deMULTIplex2")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "15f3kshsdvm97w24ql9b1wjlfbabimdsam0482hg7jivlvpl8j9w"))))
+      (version (git-version "1.0.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/Gartner-Lab/deMULTIplex2")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0fid5yh0hqg477h5xxq6c8yh8zs5jawjskzns05rndxhbzm51lpr"))))
       (properties `((upstream-name . "deMULTIplex2")))
       (build-system r-build-system)
       (propagated-inputs (list r-data-table
@@ -14315,6 +14438,72 @@ droplet sequencing.  It has been particularly tailored for Drop-seq.")
 communication networks from scRNA-seq data.")
       (license license:gpl3))))
 
+(define-public r-cellchat-2
+  (let ((commit "b05405af0f4f2cac99f2211e888d42de4c5a9d59")
+        (revision "1"))
+    (package
+      (name "r-cellchat")
+      (version (git-version "2.1.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/jinworks/CellChat")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "14s7bl70xi21ivqr1c3qx6kjf1ndlyxag880xldqkfsqpksvyvkc"))
+         (snippet '(for-each delete-file
+                             '("src/CellChat.so" "src/CellChat_Rcpp.o"
+                               "src/RcppExports.o")))))
+      (properties `((upstream-name . "CellChat")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-biocgenerics
+                               r-biocneighbors
+                               r-bslib
+                               r-circlize
+                               r-colorspace
+                               r-complexheatmap
+                               r-cowplot
+                               r-dplyr
+                               r-fnn
+                               r-future
+                               r-future-apply
+                               r-ggalluvial
+                               r-ggnetwork
+                               r-ggplot2
+                               r-ggpubr
+                               r-ggrepel
+                               r-igraph
+                               r-irlba
+                               r-magrittr
+                               r-matrix
+                               r-nmf
+                               r-patchwork
+                               r-pbapply
+                               r-plotly
+                               r-plyr
+                               r-rcolorbrewer
+                               r-rcpp
+                               r-rcppeigen
+                               r-reshape2
+                               r-reticulate
+                               r-rspectra
+                               r-scales
+                               r-shape
+                               r-shiny
+                               r-sna
+                               r-stringr
+                               r-svglite))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/jinworks/CellChat")
+      (synopsis
+       "Inference of cell-cell communication from single-cell and transcriptomics")
+      (description
+       "This R tool infers, visualizes, and analyzes cell-cell communication networks.
+It supports scRNA-seq and spatially resolved transcriptomics data.")
+      (license license:gpl3))))
+
 (define-public r-copykat
   (let ((commit                         ;no tag
          "256de33dfc1b80a1a0ac9e098c5557f95a4e0d53")
@@ -15227,7 +15416,7 @@ output of segemehl is a SAM or BAM formatted alignment file.")
 (define-public kallisto
   (package
     (name "kallisto")
-    (version "0.48.0")
+    (version "0.50.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -15236,31 +15425,15 @@ output of segemehl is a SAM or BAM formatted alignment file.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0wx1ndmhndsd60952piaa925lk8bjr59d2yr1m2hcsqcb6cdjwpn"))
-              (modules '((guix build utils)))
-              (snippet
-               '(delete-file-recursively "ext/htslib/"))))
+                "0zfs79mv75599cf9d7d3c5a3s8idgz9qvl4qfzhvhbd87y3dv7p0"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:tests? #f          ; no "check" target
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'do-not-use-bundled-htslib
-           (lambda _
-             (substitute* "CMakeLists.txt"
-               (("^ExternalProject_Add" m)
-                (string-append "if (NEVER)\n" m))
-               (("^\\)")
-                (string-append ")\nendif(NEVER)"))
-               (("include_directories\\(\\$\\{htslib_PREFIX.*" m)
-                (string-append "# " m)))
-             (substitute* "src/CMakeLists.txt"
-               (("target_link_libraries\\(kallisto kallisto_core pthread \
-\\$\\{CMAKE_CURRENT_SOURCE_DIR\\}/../ext/htslib/libhts.a\\)")
-                "target_link_libraries(kallisto kallisto_core pthread hts)")
-               (("include_directories\\(\\.\\./ext/htslib\\)") "")))))))
-    (inputs
-     (list hdf5 htslib-1.9 zlib))
+     (list
+      #:tests? #false          ;no "check" target
+      ;; The build system attempts to link libbifrost.a into the kallisto
+      ;; executable before the library has been built.
+      #:parallel-build? #false))
+    (inputs (list hdf5 zlib))
     (home-page "https://pachterlab.github.io/kallisto/")
     (synopsis "Near-optimal RNA-Seq quantification")
     (description
@@ -19704,7 +19877,7 @@ repeated areas between contigs.")
      (list poetry python-pytest))
     (home-page "https://github.com/vembrane/vembrane")
     (synopsis "Filter VCF/BCF files with Python expressions.")
-    (description "Vembrane allows to simultaneously filter variants based on
+    (description "Vembrane simultaneously filters variants based on
 any INFO or FORMAT field, CHROM, POS, ID, REF, ALT, QUAL, FILTER, and the
 annotation field ANN.  When filtering based on ANN, annotation entries are
 filtered first.  If no annotation entry remains, the entire variant is
@@ -20143,6 +20316,74 @@ allow the automation and multiplexing of plotting, 3D plotting, visualization
 of statistics & QC, interaction with the Seurat object.  Some functionalities
 require functions from CodeAndRoll and MarkdownReports libraries.")
       (license license:gpl3))))
+
+(define-public r-seuratextend
+  (let ((commit "5382e921f7b365c7b75b20d07cb455e4390fe36f")
+        (revision "1"))
+    (package
+      (name "r-seuratextend")
+      (version (git-version "1.0.7" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/huayc09/SeuratExtend")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1rlx20jyfdrymxn8b9dsf9n9jk9rwjjx1wy2f00layvd57g9ch2q"))))
+      (properties `((upstream-name . "SeuratExtend")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-biocmanager
+                               r-dplyr
+                               r-ggplot2
+                               r-ggpubr
+                               r-glue
+                               r-hdf5r
+                               r-magrittr
+                               r-mosaic
+                               r-purrr
+                               r-remotes
+                               r-reshape2
+                               r-reticulate
+                               r-rlist
+                               r-scales
+                               r-seurat
+                               r-seuratextenddata
+                               r-seuratobject
+                               r-tidyr))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/huayc09/SeuratExtend")
+      (synopsis "Enhanced toolkit for scRNA-seq analysis")
+      (description
+       "This package is designed to improve and simplify the analysis of
+scRNA-seq data.  It uses the Seurat object for this purpose.  It provides an
+array of enhanced visualization tools, an integrated functional and pathway
+analysis pipeline, seamless integration with popular Python tools, and a suite
+of utility functions to aid in data manipulation and presentation.")
+      (license license:gpl3+))))
+
+(define-public r-seuratextenddata
+  (let ((commit "e7f17d4bacca436705b06b2cd0c879f83add9271")
+        (revision "1"))
+    (package
+      (name "r-seuratextenddata")
+      (version (git-version "0.2.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/huayc09/SeuratExtendData")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1vl2wvpbv5q04mzc6z3f1jw2jc5i8pw5vm8y1rg5b1cihkwppvq5"))))
+      (properties `((upstream-name . "SeuratExtendData")))
+      (build-system r-build-system)
+      (home-page "https://github.com/huayc09/SeuratExtendData")
+      (synopsis "Data attached to SeuratExtend package")
+      (description "This package provides data for the SeuratExtend tool.")
+      (license license:gpl3+))))
 
 (define-public r-seuratwrappers
   ;; There are no releases or tags.
@@ -22719,6 +22960,51 @@ starting from Hi-C data.  Each hierarchical level is identified by a minimum
 value of physical insulation between neighboring domains.")
       (license license:gpl2+))))
 
+(define-public r-spacexr
+  (let ((commit "0a0861e3d1e16014a20e9b743d0e19d3b42231f3")
+        (revision "1"))
+    (package
+      (name "r-spacexr")
+      (version (git-version "2.2.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dmcable/spacexr")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0hqrllzq2hi6dsr8nykn1yp7s3rcbjrv3m624b61n4nxnzza458a"))))
+      (properties `((upstream-name . "spacexr")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-compquadform
+                               r-data-table
+                               r-doparallel
+                               r-dplyr
+                               r-fields
+                               r-foreach
+                               r-ggplot2
+                               r-knitr
+                               r-locfdr
+                               r-matrix
+                               r-metafor
+                               r-mgcv
+                               r-pals
+                               r-quadprog
+                               r-readr
+                               r-reshape2
+                               r-rfast
+                               r-rmarkdown
+                               r-tibble))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/dmcable/spacexr")
+      (synopsis
+       "Cell type identification and differential expression in spatial transcriptomics")
+      (description
+       "This package is used for cell type identification in spatial transcriptomics.
+It also handles cell type-specific differential expression.")
+      (license license:gpl3))))
+
 (define-public r-spectre
   (let ((commit "f6648ab3eb9499300d86502b5d60ec370ae9b61a")
         (revision "1"))
@@ -23014,6 +23300,9 @@ based on the pairwise alignment of hidden Markov models (HMMs).")
     (build-system cmake-build-system)
     (arguments
      (list
+      ;; Tests time out on riscv64-linux.
+      #:tests? (and (not (%current-target-system))
+                    (not (target-riscv64?)))
       #:configure-flags
       #~(list "-DWFA_PNG_AND_TSV=ON")
       #:phases

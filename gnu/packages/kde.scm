@@ -83,6 +83,8 @@
   #:use-module (gnu packages kde-frameworks)
   #:use-module (gnu packages kde-pim)
   #:use-module (gnu packages kde-plasma)
+  ;; Including this module breaks the build.
+  ;#:use-module ((gnu packages kde-systemtools) #:select (dolphin))
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
@@ -409,6 +411,48 @@ Non-linear video editing is much more powerful than beginner's (linear)
 editors, hence it requires a bit more organization before starting.  However,
 it is not reserved to specialists and can be used for small personal
 projects.")
+    (license license:gpl2+)))
+
+(define-public kapptemplate
+  (package
+    (name "kapptemplate")
+    (version "24.05.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kapptemplate-" version ".tar.xz"))
+       (sha256
+        (base32 "0mgpk6879dprhpxmbdgbb6sz3ik9ycav4sihh20qmsgj09h8qp3g"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase
+           #:configure-flags
+           #~(list "-DBUILD_TESTING=ON")))
+    (native-inputs
+     (list extra-cmake-modules kdoctools))
+    (inputs
+     (list karchive
+           kcompletion
+           kconfigwidgets
+           kcoreaddons
+           ki18n
+           kio))
+    (home-page "https://apps.kde.org/kapptemplate/")
+    (synopsis "Factory for easy creation of KDE/Qt components and programs")
+    (description "KAppTemplate is an application to start development quickly
+using existing templates providing basic repeatedly written code and a proper
+structure.  It features:
+
+@itemize
+@item Templates for C++, Ruby, Python and PHP
+@item Categories
+@item Templates for different build-systems and frameworks
+@item Templates especially for KDE-development (plugins for Plasma, QtQuick
+ KTextEditor, KRunner, Akonadi)
+@item New templates using space holders and a simple CMake-command
+@item Integration into KDevelop
+@end itemize")
     (license license:gpl2+)))
 
 (define-public kdevelop
@@ -1065,7 +1109,10 @@ cards.")
                 "09ahnizl5mqdrg583lxkwwnsq8ci95fk49wx9733ah4c39gync5c"))))
     (build-system qt-build-system)
     (arguments
-     (list #:phases
+     (list #:qtbase qtbase
+           #:configure-flags
+           #~(list "-DQT_MAJOR_VERSION=6")
+           #:phases
            #~(modify-phases %standard-phases
                (replace 'check
                  (lambda* (#:key tests? #:allow-other-keys)
@@ -1076,18 +1123,23 @@ cards.")
 branchestest|configtest|stashtest|filetest|overlaytest|remotetest|clonetest|\
 submoduletest)")))))))
     (native-inputs
-     (list extra-cmake-modules kdoctools-5 pkg-config))
+     (list extra-cmake-modules kdoctools pkg-config))
     (inputs
-     (list kconfigwidgets-5
-           kcoreaddons-5
-           kcrash-5
-           kdbusaddons-5
-           ki18n-5
-           kxmlgui-5
-           kio-5
-           ktextwidgets-5
-           ktexteditor-5
-           ksyntaxhighlighting-5
+     (list ;; module cyclic referencing
+            (module-ref
+             (resolve-interface
+              '(gnu packages kde-systemtools))
+             'dolphin)         ;for dolphin plugin
+           kconfigwidgets
+           kcoreaddons
+           kcrash
+           kdbusaddons
+           ki18n
+           kxmlgui
+           kio
+           ktextwidgets
+           ktexteditor
+           ksyntaxhighlighting
            libgit2-1.8))
     (home-page "https://apps.kde.org/kommit/")
     (synopsis "Git client for KDE")
@@ -1673,14 +1725,14 @@ creating routes by drag and drop and more.")
 (define-public okular
   (package
     (name "okular")
-    (version "24.08.0")
+    (version "24.08.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/" name "-" version ".tar.xz"))
        (sha256
-        (base32 "12ri5j9jsmh5ib7fp2vk0ir3vfknlq1h8xpi1lkn6f2b54k6xq9x"))))
+        (base32 "1yy86fnra7dhc79m3ka0lqarp47336iln3fs8nyys2p6bdywg2a0"))))
     (build-system qt-build-system)
     (arguments
      (list

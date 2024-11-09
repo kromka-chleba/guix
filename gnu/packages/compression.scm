@@ -240,7 +240,10 @@ the @code{zlib} source.")
             (sha256
              (base32
               "02cihzl77ia0dcz7z2cga2412vyhhs5pa2355q4wpwbyga2lrwjh"))
-            (patches (search-patches "libtar-CVE-2013-4420.patch"))))
+            (patches
+             (search-patches "libtar-CVE-2013-4420.patch"
+                             "libtar-CVE-2021-33643-CVE-2021-33644.patch"
+                             "libtar-CVE-2021-33645-CVE-2021-33646.patch"))))
    (build-system gnu-build-system)
    (arguments `(#:tests? #f)) ; no "check" target
    (native-inputs
@@ -1020,7 +1023,7 @@ time for compression ratio.")
 (define-public squashfs-tools
   (package
     (name "squashfs-tools")
-    (version "4.5")
+    (version "4.6.1")
     (source
      (origin
        (method git-fetch)
@@ -1029,34 +1032,34 @@ time for compression ratio.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18d4nwa22vgb8j2badngjngw63f0lj501cvlh3920wqy2mqxwav6"))))
+        (base32 "14nisidxx2d2qivyv7xfcg59qkj4fjiniir7nvymazdsng63gcr1"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no check target
-       #:make-flags
-       (list (string-append "CC=" ,(cc-for-target))
-             "XZ_SUPPORT=1"
-             "LZO_SUPPORT=1"
-             "LZ4_SUPPORT=1"
-             "ZSTD_SUPPORT=1"
-             (string-append "INSTALL_DIR=" (assoc-ref %outputs "out") "/bin"))
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda _
-             (chdir "squashfs-tools")))
-         (add-after 'install 'install-documentation
-           ;; Install what very little usage documentation is provided.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (doc (string-append out "/share/doc/" ,name)))
-               (install-file "../USAGE" doc)))))))
+     (list
+      #:tests? #f                      ; no check target
+      #:make-flags
+      #~(list
+         (string-append "CC=" #$(cc-for-target))
+         "XZ_SUPPORT=1"
+         "LZO_SUPPORT=1"
+         "LZ4_SUPPORT=1"
+         "ZSTD_SUPPORT=1"
+         (string-append "INSTALL_DIR=" #$output "/bin")
+         (string-append "INSTALL_MANPAGES_DIR=" #$output "/share/man/man1"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda _
+              (chdir "squashfs-tools")))
+          (add-after 'patch-source-shebangs 'patch-generated-source-shebangs
+            (lambda _
+              (substitute* (find-files "generate-manpages" "\\.sh")
+                (("print \"#!/bin/sh")
+                 (string-append "print \"#!" (which "sh")))))))))
+    (native-inputs
+     (list coreutils-minimal help2man which))
     (inputs
-     `(("lz4" ,lz4)
-       ("lzo" ,lzo)
-       ("xz" ,xz)
-       ("zlib" ,zlib)
-       ("zstd:lib" ,zstd "lib")))
+     (list lz4 lzo xz zlib `(,zstd "lib")))
     (home-page "https://github.com/plougher/squashfs-tools")
     (synopsis "Tools to create and extract squashfs file systems")
     (description
@@ -2435,15 +2438,14 @@ decompression is a little bit slower.")
 (define-public upx
   (package
     (name "upx")
-    (version "4.1.0")
+    (version "4.2.4")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/upx/upx/releases/download/v"
                            version "/upx-" version "-src.tar.xz"))
        (sha256
-        (base32
-         "1l273pwa573x9l3izw75cz8ysn2g8w8w3s56rahppa3ya65zg0h5"))))
+        (base32 "1i71p03861hlf5x1w217l67zm5inm449zhbg6kpv8zyj0wb5dmjy"))))
     (build-system cmake-build-system)
     (home-page "https://upx.github.io/")
     (synopsis "Compression tool for executables")
@@ -2452,6 +2454,8 @@ decompression is a little bit slower.")
 compressor.  UPX typically reduces the file size of programs and shared
 libraries by around 50%--70%, thus reducing disk space, network load times,
 download times, and other distribution and storage costs.")
+    ;; These CVEs have been fixed since 4.0.2 but are still linted.
+    (properties `((lint-hidden-cve . ("CVE-2023-23456" "CVE-2023-23457"))))
     (license license:gpl2+)))
 
 (define-public quazip-0

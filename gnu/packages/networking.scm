@@ -121,6 +121,7 @@
   #:use-module (gnu packages dns)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages elf)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gawk)
@@ -275,7 +276,7 @@ protocols.")
 (define-public lcrq
   (package
     (name "lcrq")
-    (version "0.2.1")
+    (version "0.2.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -284,7 +285,7 @@ protocols.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0a6bvlib00na0rhz4lz80kc6v5kqfp8k26ydprwnf8h29nnza6y6"))))
+                "13nnx8izfzcy2k6y5njc8p9b196hpn2v90pmiysbiwp8qwnzczih"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -544,7 +545,8 @@ GLib-based library, libnice, as well as GStreamer elements to use it.")
 (define-public librecast
   (package
     (name "librecast")
-    (version "0.8.0")
+    ;; Use commit fixing test suite hang in 0.9.1.
+    (version "0.9.1-1-g5ab5f63")
     (source
      (origin
        (method git-fetch)
@@ -553,7 +555,7 @@ GLib-based library, libnice, as well as GStreamer elements to use it.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01m0q4n2hy3csbzil8ivjyzb1mh4w9jlh9iiv6z53kasl7aas27i"))))
+        (base32 "1abiwgllm8l7jcx5hkgljbk2zddnn7y9mi7s4xmxi2k81a49zghb"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1805,14 +1807,16 @@ of the same name.")
 (define-public wireshark
   (package
     (name "wireshark")
-    (version "4.4.0")
+    (version "4.4.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://www.wireshark.org/download/src/wireshark-"
-                           version ".tar.xz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/wireshark/wireshark")
+             (commit (string-append "wireshark-" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0s8jqxcvq7ibfsq8v4scl8dq7y5hqgpivq4iw9y2x6jj136cvmga"))))
+        (base32 "0cc1dqmlc2jqgd6gg407qk0qkg3cjbiafzw8pf2pxhnh7n94fyki"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -1821,7 +1825,8 @@ of the same name.")
       ;; fail.
       #:qtbase qtbase
       #:configure-flags
-      #~(list (string-append "-DCMAKE_MODULE_LINKER_FLAGS=-Wl,-rpath=" #$output "/lib"))
+      #~(list (string-append "-DVCSVERSION_OVERRIDE=" #$version)
+              (string-append "-DCMAKE_MODULE_LINKER_FLAGS=-Wl,-rpath=" #$output "/lib"))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'check
@@ -2877,7 +2882,7 @@ procedure calls (RPCs).")
 (define-public openvswitch
   (package
     (name "openvswitch")
-    (version "3.2.0")
+    (version "3.4.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2885,7 +2890,7 @@ procedure calls (RPCs).")
                     version ".tar.gz"))
               (sha256
                (base32
-                "1i0lb40lwbakmmqklmfcgr01l1ymsawgdi7k9a1zzp8ariw7x4ff"))))
+                "10g84h6lis6fafyjhvmdrs8r539xcar04cc3rsk448gs6848hsqr"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags
@@ -2961,7 +2966,9 @@ massive network automation through programmatic extension, while still
 supporting standard management interfaces and protocols (e.g. NetFlow, sFlow,
 IPFIX, RSPAN, CLI, LACP, 802.1ag).")
     (properties
-     '((release-monitoring-url . "https://www.openvswitch.org/download/")))
+     '((release-monitoring-url . "https://www.openvswitch.org/download/")
+       ;; This CVE is fixed since 3.2.0.
+       (lint-hidden-cve . ("CVE-2023-5366"))))
     (license                            ; see debian/copyright for detail
      (list license:lgpl2.1              ; xenserver and utilities/bugtool
            license:gpl2                 ; datapath
@@ -3136,7 +3143,7 @@ does not use SSH and requires a pre-shared symmetric key.")
                         (delete-file "vtysh/extract.pl")))))
     (build-system gnu-build-system)
     (native-inputs (list gawk gcc-9 pkg-config perl dejagnu))
-    (inputs (list readline c-ares))
+    (inputs (list c-ares libxcrypt readline))
     (synopsis "Routing Software Suite")
     (description "Quagga is a routing software suite, providing implementations
 of OSPFv2, OSPFv3, RIP v1 and v2, RIPng and BGP-4 for Unix platforms.
@@ -3147,6 +3154,10 @@ Zserv API over a Unix or TCP stream to Quagga clients.  It is these Zserv
 clients which typically implement a routing protocol and communicate routing
 updates to the zebra daemon.")
     (home-page "https://www.nongnu.org/quagga/")
+    ;; This CVE concerns systemd services files that we currently don't use.
+    ;; If we were to use them, a fixing patch can be found here:
+    ;; https://build.opensuse.org/request/show/1035188
+    (properties '((lint-hidden-cve . ("CVE-2021-44038"))))
     (license license:gpl2+)))
 
 (define-public bgpq3
@@ -4089,20 +4100,25 @@ for interacting with an OpenDHT distributed network.")
 (define-public frrouting
   (package
     (name "frrouting")
-    (version "7.5.1")
+    (version "10.1.1")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/FRRouting/frr/releases/"
-                                  "download/frr-" version "/frr-" version
-                                  ".tar.xz"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/FRRouting/frr")
+                    (commit (string-append "frr-" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1r7gh5h27ii7d1d0z0x48wx7hs8vvympv3gqvy3cwzg05q5vk9xs"))))
+                "06gn2wgnd97fgzf7yd9v5fv8fanjw02cy0rx7kgq7x7gnzbg1yhn"))))
     (build-system gnu-build-system)
     (inputs
-     (list c-ares json-c libcap libxcrypt libyang readline))
+     (list c-ares json-c libcap libxcrypt libyang libelf protobuf-c readline))
     (native-inputs
-     (list perl pkg-config python-wrapper python-pytest))
+     (list autoconf automake
+           libtool perl pkg-config python-wrapper python-pytest
+           flex
+           bison))
+    (arguments (list #:configure-flags #~(list "--sysconfdir=/etc")))
     (home-page "https://frrouting.org/")
     (synopsis "IP routing protocol suite")
     (description "FRRouting (FRR) is an IP routing protocol suite which includes
@@ -4143,7 +4159,7 @@ powerful route filtering syntax and an easy-to-use configuration interface.")
 (define-public iwd
   (package
     (name "iwd")
-    (version "2.12")
+    (version "3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4152,7 +4168,7 @@ powerful route filtering syntax and an easy-to-use configuration interface.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "199pcs20054xhp5c0dnxf9ny5cf5cynkqpx68dpn46nq8ly76n2y"))))
+                "0lwsh56r8pq5drfhjm1wpkxsmaz516rj46mrr8wiilw5r6gxwjm6"))))
     (build-system gnu-build-system)
     (inputs
      (list dbus ell (package-source ell) openresolv readline))
@@ -4238,7 +4254,7 @@ and signal strength.")
 (define-public libyang
   (package
     (name "libyang")
-    (version "1.0.215")
+    (version "3.4.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4247,12 +4263,12 @@ and signal strength.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0mrs2ppmq77z8sbqgm2w0rl9bfgybd6bcxanakfww4chih6cy0dw"))))
+                "07skjr3r4na12kadca2dyk45clpcpnp4zkkwfaa8sqyslx7vhj56"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags
        (list "-DENABLE_BUILD_TESTS=ON" "-DENABLE_LYD_PRIV=ON")))
-    (propagated-inputs (list pcre))
+    (propagated-inputs (list pcre2))
     (native-inputs (list cmocka pkg-config))
     (home-page "https://github.com/CESNET/libyang")
     (synopsis "YANG data modelling language library")
@@ -4623,7 +4639,7 @@ network.")
 (define-public ngtcp2
   (package
     (name "ngtcp2")
-    (version "1.8.0")
+    (version "1.8.1")
     (source
      (origin
        (method url-fetch)
@@ -4631,7 +4647,7 @@ network.")
                            "releases/download/v" version "/"
                            "ngtcp2-" version ".tar.gz"))
        (sha256
-        (base32 "00rjxcwrz3vin68braqzc4kdznwvw83i6qm5vl224hqcn40ab77k"))))
+        (base32 "1vlc2xhvymnxgp4a12m4pja9z5ckzrqkv79z966bb3wva3949dbj"))))
     (build-system gnu-build-system)
     (arguments
      (list

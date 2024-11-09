@@ -362,6 +362,51 @@ This package provides seamless integration with coverage.py (and thus pytest,
 nosetests, etc...) in Python projects.")
     (license license:expat)))
 
+(define-public python-icontract
+  (package
+    (name "python-icontract")
+    (version "2.7.1")
+    (source
+     (origin
+       ;; There are no tests in the PyPI tarball.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Parquery/icontract")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fix7wx899kn8vp9aa5m6q71la48gx3qqx4qd74535m61pb50r7f"))))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-icontract-slow
+            (lambda _
+              ;; Setting ICONTRACT_SLOW, does not enable a slow test suite.
+              ;; It only causes a single test to run, that checks the value of
+              ;; icontract.SLOW is set correctly.
+              (setenv "ICONTRACT_SLOW" "1"))))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-astor
+           python-asyncstdlib
+           python-mypy
+           python-numpy
+           python-setuptools
+           python-typeguard-4))
+    (propagated-inputs
+     (list python-asttokens
+           python-typing-extensions))
+    (home-page "https://icontract.readthedocs.io")
+    (synopsis "Design-by-contract programming for Python")
+    (description
+     "@code{icontract} brings design-by-contract to Python with informative
+violation messages and inheritance.  @code{icontract} provides two function,
+@code{require} and @code{ensure} for preconditions and postconditions
+respectively.  Additionally, it provides a class decorator, @code{invariant},
+to establish class invariants.")
+    (license license:expat)))
+
 (define-public python-junit-xml
   ;; XXX: There are no tags or PyPI releases, so take the latest commit
   ;; and use the version defined in setup.py.
@@ -995,7 +1040,9 @@ framework and makes it easy to undo any monkey patching.  The fixtures are:
      (list
       #:test-flags #~(list "-m" "mpl_image_compare")))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs
      (list python-jinja2
            python-matplotlib
@@ -2955,4 +3002,51 @@ both your library and test suite you can find untested code.  Due to Python's
 dynamic nature, static code analyzers like Vulture are likely to miss some
 dead code.  Also, code that is only called implicitly may be reported as
 unused.")
+    (license license:expat)))
+
+(define-public python-green
+  (package
+    (name "python-green")
+    (version "4.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "green" version))
+       (sha256
+        (base32 "1cd62nbn5dvlpnsyplp6cb24wd230san8dpm6pnl99n2kwzpq1m4"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-black
+           python-django
+           python-mypy
+           python-testtools))
+    ;; The python-coverage dependency appears both in requirements.txt and
+    ;; requirements-dev.txt.
+    (propagated-inputs
+     (list python-colorama
+           python-coverage
+           python-lxml
+           python-unidecode))
+    (home-page "https://github.com/CleanCut/green")
+    (synopsis "Clean, colorful, fast Python test runner")
+    (description
+     "@code{green} is a Python test runner that describes itself as:
+@table @emph
+@item Clean
+Low redundancy in output.  Result statistics for each test is vertically aligned.
+@item Colorful
+Terminal output makes good use of color when the terminal supports it.
+@item Fast
+Tests run in independent processes (one per processor by default).
+@item Powerful
+Multi-target and auto-discovery support.
+@item Traditional
+It uses the normal @code{unittest} classes and methods.
+@item Descriptive
+Multiple verbosity levels, from just dots to full docstring output.
+@item Convenient
+Bash-completion and ZSH-completion of options and test targets.
+@item Thorough
+Built-in integration with @url{http://nedbatchelder.com/code/coverage/, coverage}.
+@end table")
     (license license:expat)))

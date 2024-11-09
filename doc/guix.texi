@@ -19822,6 +19822,18 @@ A directory path where the @command{guix-daemon} will perform builds.
 Environment variables to be set before starting the daemon, as a list of
 @code{key=value} strings.
 
+@item @code{socket-directory-permissions} (default: @code{#o755})
+Permissions to set for the directory @file{/var/guix/daemon-socket}.
+This, together with @code{socket-directory-group} and
+@code{socket-directory-user}, determines who can connect to the build
+daemon via its Unix socket.  TCP socket operation is unaffected by
+these.
+
+@item @code{socket-directory-user} (default: @code{#f})
+@itemx @code{socket-directory-group} (default: @code{#f})
+User and group owning the @file{/var/guix/daemon-socket} directory or
+@code{#f} to keep the user or group as root.
+
 @end table
 @end deftp
 
@@ -20788,30 +20800,33 @@ The file name of the processed log file.
 
 The following optional settings may be provided:
 
-@table @asis
-@item @code{skip-private?}
+@table @code
+@item debug?
+Print debug messages when @code{#true}.
+
+@item skip-private?
 When @code{#true} do not mask addresses in private ranges.
 
-@item @code{column}
+@item column
 A 1-based indexed column number.  Assume IP address is in the specified
 column (default is 1).
 
-@item @code{replacement}
+@item replacement
 Replacement string in case address parsing fails, e.g. @code{"0.0.0.0"}.
 
-@item @code{ipv4mask}
+@item ipv4mask
 Number of bits to mask in IPv4 addresses.
 
-@item @code{ipv6mask}
+@item ipv6mask
 Number of bits to mask in IPv6 addresses.
 
-@item @code{increment}
+@item increment
 Increment the IP address by the given number.  By default this is zero.
 
-@item @code{delimiter}
+@item delimiter
 Log delimiter string.
 
-@item @code{regex}
+@item regex
 Regular expression for detecting IP addresses.  Use this instead of @code{column}.
 @end table
 @end deftp
@@ -26192,7 +26207,7 @@ configuration.
 @lisp
 (service postgresql-service-type
          (postgresql-configuration
-          (postgresql postgresql-10)))
+          (postgresql postgresql)))
 @end lisp
 
 If the services fails to start, it may be due to an incompatible
@@ -26219,7 +26234,7 @@ Data type representing the configuration for the
 @code{postgresql-service-type}.
 
 @table @asis
-@item @code{postgresql} (default: @code{postgresql-10})
+@item @code{postgresql} (default: @code{postgresql})
 PostgreSQL package to use for the service.
 
 @item @code{port} (default: @code{5432})
@@ -26261,7 +26276,7 @@ configure the postgresql-service as in this example:
     (cons*
       (service postgresql-service-type
                (postgresql-configuration
-                (postgresql postgresql-10)
+                (postgresql postgresql)
                 (extension-packages (list postgis))))
       %base-services)))
 @end lisp
@@ -47615,7 +47630,7 @@ Specify the position of the bar.  Accepted values are @code{'top} or
 @code{'bottom}.
 
 @item @code{hidden-state} (optional)
-Specify the apparence of the bar when it is hidden.  Accepted values are
+Specify the appearance of the bar when it is hidden.  Accepted values are
 @code{'hide} or @code{'show}.
 
 @item @code{binding-mode-indicator} (optional)

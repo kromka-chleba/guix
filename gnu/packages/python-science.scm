@@ -69,8 +69,9 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
-  #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-check)
+  #:use-module (gnu packages python-crypto)
+  #:use-module (gnu packages python-graphics)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages rust-apps)
@@ -685,7 +686,10 @@ of regular expressions from text data and automatic test generation.")
 (define-public python-trimesh
   (package
     (name "python-trimesh")
-    (version "4.0.10")
+    ;; XXX: The latest version fails on sanity check, requiring newer
+    ;; setuptools which is not yet available on master. Update when
+    ;; python-team is merged.
+    (version "4.1.8")
     (source
      (origin
        (method git-fetch) ; no tests in PyPI
@@ -694,7 +698,7 @@ of regular expressions from text data and automatic test generation.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ry04qaw0pb3hkxv4gmna87jwk97aqangd21wbr2dr4xshmkbyyb"))))
+        (base32 "1vkp7znrlsqaiyg16py3jcqspi6yq4wh48lzng4sg248hqzhzspa"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -704,55 +708,67 @@ of regular expressions from text data and automatic test generation.")
                     ;; disabled tests once again.
                     ;;
                     ;; Disable tests requiring optional, not packed modules.
-                    "not test_material_round"
-                    " and not test_bezier_example"
+                    "not test_bezier_example"
                     " and not test_discrete"
                     " and not test_dxf"
-                    " and not test_layer"
-                    " and not test_multi_nodupe"
-                    " and not test_obj_roundtrip"
-                    " and not test_roundtrip"
-                    " and not test_scene"
+                    " and not test_ply_path_bezier"
+                    " and not test_ply_path_line"
+                    " and not test_ply_path_multi"
+                    " and not test_revolve"
+                    " and not test_screw"
+                    " and not test_simple_closed"
+                    " and not test_simple_extrude"
+                    " and not test_simple_open"
                     " and not test_slice_onplane"
-                    " and not test_svg"
+                    " and not test_spline_3D"
                     " and not test_svg"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-build
             (lambda _
+              ;; Reported upstream, see
+              ;; <https://github.com/mikedh/trimesh/pull/2314>.
               (substitute* "trimesh/resources/templates/blender_boolean.py.tmpl"
                 (("\\$MESH_PRE")
                  "'$MESH_PRE'")))))))
     (native-inputs
      (list python-coveralls
            python-pyinstrument
-           python-pytest
-           python-pytest-cov))
+           python-pytest))
     (propagated-inputs
-     (list python-chardet
+     (list ;; python-cascadio       ; not packed yet, optional
+           python-chardet
            python-colorlog
            python-httpx
            python-jsonschema
            python-lxml
+           ;; python-mapbox-earcut  ; not packed yet, optional
+           ;; python-manifold3d     ; not packed yet, optional
+           python-meshio
            python-networkx
            python-numpy
+           ;; python-openctm        ; not packed yet, optional
            python-pillow
-           ;; python-pycollada   ; not packed yet, optional
-           ;; python-pyglet      ; not packed yet, optional
+           python-psutil
+           python-pycollada
+           python-pyglet
            python-requests
            python-rtree
+           python-scikit-image
            python-scipy
            python-setuptools
            python-shapely
-           ;; python-svg-path   ; not packed yet, optional
+           ;; python-svg-path       ; not packed yet, optional
            python-sympy
+           ;; python-vhacdx         ; not packed yet, optional
+           ;; python-xatlas         ; not packed yet, optional
            python-xxhash))
     (home-page "https://github.com/mikedh/trimesh")
     (synopsis "Python library for loading and using triangular meshes")
     (description
      "Trimesh is a pure Python library for loading and using triangular meshes
-with an emphasis on watertight surfaces.  The goal of the library is to provide
-a full featured and well tested Trimesh object which allows for easy
+with an emphasis on watertight surfaces.  The goal of the library is to
+provide a full featured and well tested Trimesh object which allows for easy
 manipulation and analysis, in the style of the Polygon object in the Shapely
 library.")
     (license license:expat)))
@@ -1382,6 +1398,48 @@ package was a port of the R package by the same name and it is inspired by the
 ease-of-use and expressiveness of the @code{dplyr} package.")
     (license license:expat)))
 
+(define-public python-pymcubes
+  (package
+    (name "python-pymcubes")
+    (version "0.1.6")
+    (source
+     (origin
+       (method git-fetch) ; no tests in PyPI
+       (uri (git-reference
+             (url "https://github.com/pmneila/PyMCubes")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1v2qhc4pwanx6a8k843mbh45yk77n3w63sy5lzk5c3q4pkvfj1b9"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'prepare-test-environment
+            (lambda _
+              ;; FileNotFoundError: [Errno 2] No such file or directory:
+              ;; 'output/test.obj'
+              (mkdir "output")
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (native-inputs
+     (list python-cython
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-pycollada
+           python-numpy
+           python-scipy))
+    (home-page "https://github.com/pmneila/PyMCubes")
+    (synopsis "Marching cubes for Python")
+    (description
+     "@code{PyMCubes} is an implementation of the marching cubes algorithm to
+extract iso-surfaces from volumetric data.  The volumetric data can be given
+as a three-dimensional @code{NumPy} array or as a Python function @code{f(x,
+y, z)}.")
+    (license license:bsd-3)))
+
 (define-public python-pythran
   (package
     (name "python-pythran")
@@ -1975,12 +2033,15 @@ automated with the minimum of fuss and the least effort.")
        (sha256
         (base32 "06wd8m3ri0gaddl7qq6243g25zjlnh3da915b73jnrfh7sg1nqsj"))))
     (build-system pyproject-build-system)
-    (inputs (list meson-python openblas))
-    (propagated-inputs (list python-numpy python-scipy))
     (native-inputs
      (list pkg-config
-           python-meson-python
-           python-pytest))
+           python-pytest
+           meson-python))
+    (inputs
+     (list openblas))
+    (propagated-inputs
+     (list python-numpy
+           python-scipy))
     (home-page "https://github.com/bodono/scs-python")
     (synopsis "Splitting conic solver")
     (description "This package provides a Python interface for the

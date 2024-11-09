@@ -17,7 +17,7 @@
 # Copyright © 2017, 2020 Mathieu Othacehe <m.othacehe@gmail.com>
 # Copyright © 2017, 2018, 2019 Gábor Boskovits <boskovits@gmail.com>
 # Copyright © 2018 Amirouche Boubekki <amirouche@hypermove.net>
-# Copyright © 2018, 2019, 2020, 2021, 2022 Oleg Pykhalov <go.wigust@gmail.com>
+# Copyright © 2018, 2019, 2020, 2021, 2022, 2024 Oleg Pykhalov <go.wigust@gmail.com>
 # Copyright © 2018 Stefan Stefanović <stefanx2ovic@gmail.com>
 # Copyright © 2018, 2020, 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 # Copyright © 2019, 2020, 2021, 2022, 2024 Guillaume Le Vaillant <glv@posteo.net>
@@ -253,6 +253,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/docbook.scm			\
   %D%/packages/docker.scm			\
   %D%/packages/documentation.scm		\
+  %D%/packages/dpdk.scm        \
   %D%/packages/dvtm.scm				\
   %D%/packages/easyrpg.scm			\
   %D%/packages/ebook.scm			\
@@ -399,6 +400,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/kde-games.scm			\
   %D%/packages/kde-internet.scm			\
   %D%/packages/kde-multimedia.scm		\
+  %D%/packages/kde-office.scm			\
   %D%/packages/kde-pim.scm			\
   %D%/packages/kde-plasma.scm			\
   %D%/packages/kde-systemtools.scm		\
@@ -1017,6 +1019,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/bsd-games-number.c-and-test.patch	\
   %D%/packages/patches/bsd-games-prevent-name-collisions.patch	\
   %D%/packages/patches/bsd-games-stdio.h.patch			\
+  %D%/packages/patches/btop-fix-segfault-on-intel-gpus.patch	\
   %D%/packages/patches/beancount-disable-googleapis-fonts.patch	\
   %D%/packages/patches/beignet-correct-file-names.patch		\
   %D%/packages/patches/bidiv-update-fribidi.patch		\
@@ -1031,6 +1034,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/breezy-fix-gio.patch			\
   %D%/packages/patches/byobu-writable-status.patch		\
   %D%/packages/patches/bubblewrap-fix-locale-in-tests.patch	\
+  %D%/packages/patches/busybox-add-missing-sha-NI-guard.patch	\
   %D%/packages/patches/cadical-add-shared-library.patch		\
   %D%/packages/patches/calibre-no-updates-dialog.patch		\
   %D%/packages/patches/calibre-remove-test-sqlite.patch		\
@@ -1135,8 +1139,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/dbus-c++-threading-mutex.patch		\
   %D%/packages/patches/dbxfs-remove-sentry-sdk.patch		\
   %D%/packages/patches/ddd-build.patch				\
-  %D%/packages/patches/debops-constants-for-external-program-names.patch \
-  %D%/packages/patches/debops-debops-defaults-fall-back-to-less.patch \
+  %D%/packages/patches/debops-setup-py-avoid-git.patch	\
   %D%/packages/patches/dee-vapi.patch			\
   %D%/packages/patches/dfu-programmer-fix-libusb.patch		\
   %D%/packages/patches/directfb-davinci-glibc-228-compat.patch	\
@@ -1495,6 +1498,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/guile-3.0-linux-syscalls.patch		\
   %D%/packages/patches/guile-ac-d-bus-fix-tests.patch		\
   %D%/packages/patches/guile-lib-fix-tests-for-guile2.2.patch		\
+  %D%/packages/patches/guile-fibers-cross-build-fix.patch 	\
   %D%/packages/patches/guile-fibers-destroy-peer-schedulers.patch \
   %D%/packages/patches/guile-fibers-epoll-instance-is-dead.patch \
   %D%/packages/patches/guile-fibers-fd-finalizer-leak.patch	\
@@ -1559,6 +1563,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/idris-test-ffi008.patch			\
   %D%/packages/patches/igraph-fix-varargs-integer-size.patch	\
   %D%/packages/patches/ilmbase-fix-tests.patch			\
+  %D%/packages/patches/indent-CVE-2024-0911.patch	\
   %D%/packages/patches/instead-use-games-path.patch		\
   %D%/packages/patches/intltool-perl-compatibility.patch	\
   %D%/packages/patches/irrlicht-use-system-libs.patch		\
@@ -1633,6 +1638,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/kiwix-desktop-newer-libkiwix.patch	\
   %D%/packages/patches/kmod-module-directory.patch		\
   %D%/packages/patches/kmscon-runtime-keymap-switch.patch	\
+  %D%/packages/patches/knot-remove-runtime-deps.patch		\
   %D%/packages/patches/kobodeluxe-paths.patch			\
   %D%/packages/patches/kobodeluxe-enemies-pipe-decl.patch	\
   %D%/packages/patches/kobodeluxe-const-charp-conversion.patch	\
@@ -1642,6 +1648,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/kodi-set-libcurl-ssl-parameters.patch		\
   %D%/packages/patches/kodi-mesa-eglchromium.patch		\
   %D%/packages/patches/krita-bump-sip-abi-version-to-12.8.patch	\
+  %D%/packages/patches/kvmfr-linux-module-fix-build.patch	\
   %D%/packages/patches/kwin-unwrap-executable-name-for-dot-desktop-search.patch\
   %D%/packages/patches/laby-make-install.patch			\
   %D%/packages/patches/laby-use-tmpdir-from-runtime.patch	\
@@ -1665,7 +1672,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libcroco-CVE-2020-12825.patch		\
   %D%/packages/patches/libcyaml-libyaml-compat.patch		\
   %D%/packages/patches/libexpected-use-provided-catch2.patch	\
-  %D%/packages/patches/libgda-cve-2021-39359.patch		\
+  %D%/packages/patches/libgda-CVE-2021-39359.patch		\
   %D%/packages/patches/libgda-disable-data-proxy-test.patch     \
   %D%/packages/patches/libgda-fix-build.patch			\
   %D%/packages/patches/libgda-fix-missing-initialization.patch	\
@@ -1698,6 +1705,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/libquicktime-ffmpeg.patch 		\
   %D%/packages/patches/libsepol-versioned-docbook.patch		\
   %D%/packages/patches/libtar-CVE-2013-4420.patch 		\
+  %D%/packages/patches/libtar-CVE-2021-33643-CVE-2021-33644.patch	\
+  %D%/packages/patches/libtar-CVE-2021-33645-CVE-2021-33646.patch	\
   %D%/packages/patches/libtgvoip-disable-sse2.patch 		\
   %D%/packages/patches/libtgvoip-disable-webrtc.patch 		\
   %D%/packages/patches/libtheora-config-guess.patch		\
@@ -2077,6 +2086,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/qmk-firmware-fix-hacker-dvorak.patch 	\
   %D%/packages/patches/qtwayland-dont-recreate-callbacks.patch	\
   %D%/packages/patches/qtwayland-cleanup-callbacks.patch	\
+  %D%/packages/patches/qtwayland-6-update-wayland-xml.patch	\
+  %D%/packages/patches/qtwayland-update-wayland-xml.patch	\
   %D%/packages/patches/ragel-char-signedness.patch		\
   %D%/packages/patches/randomjungle-disable-static-build.patch	\
   %D%/packages/patches/rapidcheck-fix-libs.patch		\
@@ -2310,7 +2321,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/webrtc-audio-processing-x86-no-sse.patch	\
   %D%/packages/patches/webrtc-for-telegram-desktop-unbundle-libsrtp.patch \
   %D%/packages/patches/websocketpp-fix-for-cmake-3.15.patch	\
-  %D%/packages/patches/wlroots-hwdata-fallback.patch		\
   %D%/packages/patches/wmctrl-64-fix.patch			\
   %D%/packages/patches/wmfire-dont-inline-draw-fire.patch	\
   %D%/packages/patches/wmfire-update-for-new-gdk-versions.patch	\

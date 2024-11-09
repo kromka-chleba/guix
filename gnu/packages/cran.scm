@@ -1038,6 +1038,35 @@ work with FlowSOM and flow-cytometry use-cases.")
 Distance (EMD).")
     (license license:expat)))
 
+(define-public r-fateid
+  (package
+    (name "r-fateid")
+    (version "0.2.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "FateID" version))
+       (sha256
+        (base32 "0sgvaqhqkmmkcsl53bm1jlfpzrvzfb5cz8k513nizfsi638vydlm"))))
+    (properties `((upstream-name . "FateID")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-locfit
+                             r-matrixstats
+                             r-pheatmap
+                             r-princurve
+                             r-randomforest
+                             r-rcolorbrewer
+                             r-rtsne
+                             r-som
+                             r-umap))
+    (native-inputs (list r-knitr))
+    (home-page "https://cran.r-project.org/package=FateID")
+    (synopsis "Quantification of fate bias in multipotent progenitors")
+    (description
+     "This package computes cell fate bias for multi-lineage single-cell data.
+It also provides visualization tools for analyzing these biases.")
+    (license license:gpl3)))
+
 (define-public r-fuzzyjoin
   (package
     (name "r-fuzzyjoin")
@@ -1629,6 +1658,28 @@ matrix decomposition, sparse principal components analysis, and sparse
 canonical correlation analysis.")
     (license license:gpl2+)))
 
+(define-public r-robustrankaggreg
+  (package
+    (name "r-robustrankaggreg")
+    (version "1.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "RobustRankAggreg" version))
+       (sha256
+        (base32 "0p2nbgxv2132gcyx7zq2gzl6ipsxndx64i7y8v9nh5awcdy8v44p"))))
+    (properties `((upstream-name . "RobustRankAggreg")))
+    (build-system r-build-system)
+    (home-page "https://cran.r-project.org/package=RobustRankAggreg")
+    (synopsis "Methods for robust rank aggregation")
+    (description
+     "This tool provides methods for aggregating ranked lists, especially
+lists of genes.  It implements the Robust Rank Aggregation and other simple
+algorithms for the task.  RRA method uses a probabilistic model for
+aggregation that is robust to noise and also facilitates the calculation of
+significance probabilities for all the elements in the final ranking.")
+    (license license:gpl2)))
+
 (define-public r-rpresto
   (package
     (name "r-rpresto")
@@ -1666,6 +1717,29 @@ canonical correlation analysis.")
 interactive analytic queries against data sources of all sizes ranging from
 gigabytes to petabytes.")
     (license license:bsd-3)))
+
+(define-public r-runner
+  (package
+    (name "r-runner")
+    (version "0.4.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "runner" version))
+       (sha256
+        (base32 "0vhqjnwcx3z3i74p26divx6palx1rwvk4jpqn64jrqlzaw9qich4"))))
+    (properties `((upstream-name . "runner")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-rcpp))
+    (native-inputs (list r-knitr))
+    (home-page "https://cran.r-project.org/package=runner")
+    (synopsis "Running operations for vectors")
+    (description
+     "This package provides a library for rolling windows operations.
+The package enables full control over the window length, window lag, and time
+indices.  With a runner one can apply any R function on rolling windows.  The
+package eases work with equally and unequally spaced time series.")
+    (license license:gpl2+)))
 
 (define-public r-prettydoc
   (package
@@ -4595,6 +4669,27 @@ such as copy/paste from an R session.")
 for the dendrogram that preserves the hierarchical clustering result and at the
 same time tries to group instances from the same class together.")
    (license license:gpl3+)))
+
+(define-public r-caliberrfimpute
+  (package
+    (name "r-caliberrfimpute")
+    (version "1.0-7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "CALIBERrfimpute" version))
+       (sha256
+        (base32 "1fspn6wgr0kc7j4ixx24c706kzrgjhi1b1w28izpfxm4r89zk08s"))))
+    (properties `((upstream-name . "CALIBERrfimpute")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-mice r-mvtnorm r-randomforest))
+    (home-page "https://cran.r-project.org/package=CALIBERrfimpute")
+    (synopsis "Multiple imputation using MICE and random forest")
+    (description
+     "This package provides functions to impute using random forest.
+It operates under full conditional specifications (multivariate
+imputation by chained equations).")
+    (license license:gpl3)))
 
 (define-public r-callr
   (package
@@ -13031,6 +13126,53 @@ files.")
      "This package provides Ace editor bindings to enable a rich text editing
 environment within Shiny.")
     (license license:expat)))
+
+(define-public r-raceid
+  (package
+    (name "r-raceid")
+    (version "0.3.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "RaceID" version))
+       (sha256
+        (base32 "0zqas0dfsvcbjzv2b83zy13pxyzfhh81xrfbzxq8a7ykk0nyrx26"))))
+    (properties `((upstream-name . "RaceID")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-cluster
+                             r-coop
+                             r-fateid
+                             r-fnn
+                             r-fpc
+                             r-ggplot2
+                             r-harmony
+                             r-ica
+                             r-igraph
+                             r-irlba
+                             r-leiden
+                             r-locfit
+                             r-mass
+                             r-matrix
+                             r-matrixstats
+                             r-pheatmap
+                             r-princurve
+                             r-quadprog
+                             r-randomforest
+                             r-rcolorbrewer
+                             r-rcpp
+                             r-rtsne
+                             r-runner
+                             r-umap
+                             r-vegan))
+    (native-inputs (list r-knitr))
+    (home-page "https://cran.r-project.org/package=RaceID")
+    (synopsis
+     "Algorithm for inferring cell types from single-cell RNA-seq data")
+    (description
+     "This tool provides an algorithm to identify rare cell types in
+single-cell data.  It also identifies abundant cell types.  The method is
+based on transcript counts obtained with unique molecular identifies.")
+    (license license:gpl3)))
 
 (define-public r-rafalib
   (package
@@ -26442,6 +26584,26 @@ inline CSS directives, and it can be rendered both with and without word
 wrap.")
     (license license:expat)))
 
+(define-public r-gggenes
+  (package
+    (name "r-gggenes")
+    (version "0.5.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "gggenes" version))
+       (sha256
+        (base32 "08s0fhk2kz3ks64nfmdbd8p3swkn62cbw7dpbqgk9ydpmh5gpjbj"))))
+    (properties `((upstream-name . "gggenes")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-ggfittext r-ggplot2 r-rlang))
+    (native-inputs (list r-knitr))
+    (home-page "https://wilkox.org/gggenes/")
+    (synopsis "Draw gene arrow maps in ggplot2")
+    (description
+     "This package provides a ggplot2 extension for drawing gene arrow maps.")
+    (license license:gpl2)))
+
 (define-public r-ggghost
   (package
     (name "r-ggghost")
@@ -31843,6 +32005,42 @@ Mardia, K.V. (2016).  Statistical shape analysis, with Applications in R (2nd
 Edition), John Wiley and Sons.")
     (license license:gpl2)))
 
+(define-public r-shapviz
+  (package
+    (name "r-shapviz")
+    (version "0.9.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "shapviz" version))
+       (sha256
+        (base32 "01zq6kr5na40xgypif6sv2pjynhva9v0npx779k7fxck1db68z80"))))
+    (properties `((upstream-name . "shapviz")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-ggfittext
+                             r-gggenes
+                             r-ggplot2
+                             r-ggrepel
+                             r-patchwork
+                             r-rlang
+                             r-xgboost))
+    (native-inputs (list r-knitr))
+    (home-page "https://github.com/ModelOriented/shapviz")
+    (synopsis "SHAP visualizations")
+    (description
+     "This package provides visualizations for SHAP (SHapley Additive
+exPlanations) such as waterfall plots, force plots, various types of
+importance plots, dependence plots, and interaction plots.  These plots act on
+a @code{shapviz} object created from a matrix of SHAP values and a
+corresponding feature dataset.  Wrappers for the R packages @code{xgboost},
+@code{lightgbm}, @code{fastshap}, @code{shapr}, @code{h2o}, @code{treeshap},
+@code{DALEX}, and @code{kernelshap} are added for convenience.  By separating
+visualization and computation, it is possible to display factor variables in
+graphs, even if the SHAP values are calculated by a model that requires
+numerical features.  The plots are inspired by those provided by the
+@code{shap} package in Python, but there is no dependency on it.")
+    (license license:gpl2+)))
+
 (define-public r-animation
   (package
     (name "r-animation")
@@ -35641,7 +35839,7 @@ doi.org/10.1007/s10115-013-0679-x} for details.")
      "This package provides infrastructure for the management of survey data
 including value labels, definable missing values, recoding of variables,
 production of code books, and import of (subsets of) SPSS and Stata files is
-provided.  Further, the package allows to produce tables and data frames of
+provided.  Further, the package produces tables and data frames of
 arbitrary descriptive statistics and (almost) publication-ready tables of
 regression model estimates, which can be exported to LaTeX and HTML.")
     ;; Either of these two version.
@@ -40730,6 +40928,29 @@ importance.")
       "Various utilities for evaluating continued fractions.")
     (license license:gpl2)))
 
+(define-public r-coop
+  (package
+    (name "r-coop")
+    (version "0.6-3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "coop" version))
+       (sha256
+        (base32 "0ww99ssgawsgn6rqy838wbx6iirzdrzyxirvz084ih8j50blx420"))))
+    (properties `((upstream-name . "coop")))
+    (build-system r-build-system)
+    (home-page "https://github.com/wrathematics/coop")
+    (synopsis
+     "Fast covariance, correlation, and cosine similarity computations")
+    (description
+     "R-coop offers implementations of covariance, correlation and cosine
+similarity.  The implementations are fast and memory-efficient and their use
+is resolved automatically based on the input data, handled by R's S3 methods.
+Full descriptions of the algorithms and benchmarks are available in the
+package vignettes.")
+    (license license:bsd-2)))
+
 (define-public r-elliptic
   (package
     (name "r-elliptic")
@@ -42241,6 +42462,28 @@ sequential beginning with 1 and incrementing with each week to a maximum of 52
 or 53.  MMWR week #1 of an MMWR year is the first week of the year that has at
 least four days in the calendar year.  This package provides functionality to
 convert dates to MMWR day, week, and year and the reverse.")
+    (license license:gpl2+)))
+
+(define-public r-cca
+  (package
+    (name "r-cca")
+    (version "1.2.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "CCA" version))
+       (sha256
+        (base32 "0r1f7m64608hq6bpw36wsw6fr4s8bj26x4062brqgn5dbpqlgczk"))))
+    (properties `((upstream-name . "CCA")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-fda r-fields))
+    (home-page "https://cran.r-project.org/package=CCA")
+    (synopsis "Canonical correlation analysis")
+    (description
+     "This package contains a set of functions that extend the @code{cancor}
+function.  These functions provide new numerical and graphical outputs.  It
+also includes a regularized extension of the canonical correlation analysis to
+deal with datasets with more variables than observations.")
     (license license:gpl2+)))
 
 (define-public r-cccd

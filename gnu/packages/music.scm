@@ -27,7 +27,7 @@
 ;;; Copyright © 2019, 2020, 2021 Alexandros Theodotou <alex@zrythm.org>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020 Lars-Dominik Braun <lars@6xq.net>
-;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
+;;; Copyright © 2020, 2024 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2020, 2022, 2023 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2020, 2022 Marius Bakke <marius@gnu.org>
@@ -3461,7 +3461,9 @@ capabilities, custom envelopes, effects, etc.")
      (list
       #:tests? #f                       ; there are no tests
       #:configure-flags
-      #~(list (string-append "-DCMAKE_INSTALL_DATAROOTDIR="
+      #~(list (string-append "-DLV2_INSTALL_DIR="
+                             #$output "/lib/lv2")
+              (string-append "-DCMAKE_INSTALL_DATAROOTDIR="
                              #$output "/share"))
       #:phases
       #~(modify-phases %standard-phases
@@ -5307,7 +5309,7 @@ can receive input from a MIDI keyboard.")
            python-numpy
            python-psutil
            python-pymarshal
-           python-pyqt
+           python-pyqt-6
            python-pyyaml
            python-wavefile
            python-yq
@@ -5813,39 +5815,35 @@ mapping support, you can get looping just how you like!")
       (license license:gpl3+))))
 
 (define-public fabla
-  (let ((revision "1")
-        ;; The last release was in 2016.  Since then a number of commits have
-        ;; been added to fix build problems.
-        (commit "10acf03046d980f96ed192d5acb9deb812f5c639"))
-    (package
-      (name "fabla")
-      (version (git-version "1.3.2" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/openAVproductions/openAV-Fabla")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0ybbzb86j1n5dfhzc6aa3cibkwi6q3x0c18b1w3anyibanmr1wmc"))))
-      (build-system cmake-build-system)
-      (arguments '(#:tests? #f)) ;there are none
-      (inputs (list ntk cairomm libsndfile))
-      (native-inputs (list pkg-config lv2 mesa))
-      (home-page "http://openavproductions.com/fabla/")
-      (synopsis "Sampler LV2 plugin")
-      (description
-       "Fabla is an LV2 drum sampler plugin instrument.  It is ideal for loading up
+  (package
+    (name "fabla")
+    (version "1.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/openAVproductions/openAV-Fabla")
+                    (commit (string-append "release-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "13675ljfcbmxw9jdjrpn9wpvl69qxxc1hg2y9sfjkf4khajpapg9"))))
+    (build-system cmake-build-system)
+    (arguments '(#:tests? #f)) ;there are none
+    (inputs (list ntk cairomm libsndfile))
+    (native-inputs (list pkg-config lv2 mesa))
+    (home-page "http://openavproductions.com/fabla/")
+    (synopsis "Sampler LV2 plugin")
+    (description
+     "Fabla is an LV2 drum sampler plugin instrument.  It is ideal for loading up
 your favorite sampled sounds and bashing away on a MIDI controller.")
-      (license license:gpl2+))))
+    (license license:gpl2+)))
 
 (define-public sorcer
-  (let ((revision "1")
+  (let ((revision "2")
         ;; The last release was in 2016.  Since then a couple of commits have
         ;; been added to fix build problems, so we take this arbitrary recent
         ;; commit.
-        (commit "cc7f6f58af3188a8620b90fdad6e8ca5d026f543"))
+        (commit "94107b26e3e00e32504c8fb3fbf7572514d3b6bc"))
     (package
       (name "sorcer")
       (version (git-version "1.1.3" revision commit))
@@ -5857,7 +5855,7 @@ your favorite sampled sounds and bashing away on a MIDI controller.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0ryaglp2pzln2bm0pwc5p9lb2nk0x4wmrs4c4cp6d2m2hhk82yk7"))
+                  "0md3d9h63ngrlh53mj1fmwhmnlxr7bqzpfb3wk9427v5n0y6yn48"))
                 (snippet
                  '(delete-file "faust/main.cpp"))))
       (build-system cmake-build-system)
@@ -5865,18 +5863,14 @@ your favorite sampled sounds and bashing away on a MIDI controller.")
        `(#:tests? #f                    ;no tests included
          #:phases
          (modify-phases %standard-phases
-           (add-after 'unpack 'remove-architecture-specific-flags
-             (lambda _
-               (substitute* "CMakeLists.txt"
-                 (("-msse2 -mfpmath=sse") ""))))
            (add-after 'unpack 'build-faust-sources
              (lambda* (#:key inputs #:allow-other-keys)
                (with-directory-excursion "faust"
                  (invoke "faust" "-i"
-                         "-a" "lv2synth.cpp"
+                         "-a" "lv2.cpp"
                          "-o" "main.cpp" "main.dsp")))))))
       (inputs (list boost lv2 ntk))
-      (native-inputs (list faust-0.9.67 pkg-config))
+      (native-inputs (list faust-2 pkg-config which))
       (home-page "http://openavproductions.com/sorcer/")
       (synopsis "Wavetable LV2 plugin synth")
       (description "Sorcer is a wavetable LV2 plugin synthesizer, targeted at
@@ -6751,7 +6745,7 @@ It can also play and mix samples.")
 (define-public mamba
   (package
    (name "mamba")
-   (version "2.3")
+   (version "2.6")
    (source
     (origin
       (method git-fetch)
@@ -6763,7 +6757,7 @@ It can also play and mix samples.")
       (file-name (git-file-name name version))
       (sha256
        (base32
-        "12w85i86jbnihd7w81vhvg8hkn7r32hyk9m1pdh3bd44dcz34gqf"))))
+        "1dndyz3dza4k1a4abd53h9fr07ssmm5b7plbh4a74b3mf0dafpsb"))))
    (build-system gnu-build-system)
    (arguments
     (list #:tests? #f  ; no "check" target
@@ -6777,7 +6771,7 @@ It can also play and mix samples.")
     (list alsa-lib
           cairo
           fluidsynth
-          jack-1
+          jack-2
           liblo
           libsigc++-2
           libsmf

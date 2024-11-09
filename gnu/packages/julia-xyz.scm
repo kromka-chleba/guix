@@ -4369,10 +4369,46 @@ evaluated first but otherwise the order of evaluation of multiplications and
 additions is not changed.")
     (license license:expat)))
 
+(define-public julia-multivariatepolynomials
+  (package
+    (name "julia-multivariatepolynomials")
+    (version "0.5.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JuliaAlgebra/MultivariatePolynomials.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dz5ap8jg3sgk67diak9xxzgzgx98kv7b0yrc4yzsnlpkiknw64q"))))
+    (build-system julia-build-system)
+    (arguments
+     (list
+      #:tests? #f ; circular dependency with DynamicPolynomials
+      #:julia-package-name "MultivariatePolynomials"
+      #:julia-package-uuid "102ac46a-7ee4-5c85-9060-abc95bfdeaa3"
+      #:julia-package-dependencies
+      #~(list '("LinearAlgebra" . "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"))))
+    (propagated-inputs
+     (list julia-chainrulescore
+           julia-datastructures
+           julia-mutablearithmetics))
+    (home-page "https://github.com/JuliaAlgebra/MultivariatePolynomials.jl")
+    (synopsis "Package providing an interface for multivariate polynomials")
+    (description
+     "This package provides an interface for manipulating multivariate polynomials.
+Implementing algorithms on polynomials using this interface will allow the algorithm
+to work for all polynomials implenting this interface.  The interface contains
+functions for accessing the coefficients, monomials, defining arithmetic operations
+on them, rational functions, division with remainder, calculus and differentiation,
+and evaluation and substitution.")
+    (license license:expat)))
+
 (define-public julia-mutablearithmetics
   (package
     (name "julia-mutablearithmetics")
-    (version "0.2.20")
+    (version "1.4.6")
     (source
       (origin
         (method git-fetch)
@@ -4381,10 +4417,16 @@ additions is not changed.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-         (base32 "1isyj8h4nx96cr6892d154v8pw1nhr7mjyz5bd6ffr2mkzb2bq4f"))))
+         (base32 "0wh4pvvzzs0l1q5h01004kq9k45n411330pw84gj8akcn7njn2z4"))))
     (build-system julia-build-system)
     (arguments
      (list
+      #:julia-package-name "MutableArithmetics"
+      #:julia-package-uuid "d8a4904e-b15c-11e9-3269-09a3773c0cb0"
+      #:julia-package-dependencies
+      #~(list '("LinearAlgebra" . "37e2e46d-f89d-539d-b4ee-838fcccc9c8e")
+              '("SparseArrays" . "2f01184e-e22b-5df5-ae63-d93ebab69eaf")
+              '("Test" . "8dfed614-e22c-5e08-85e1-65c5234f0b40"))
       #:phases
       (if (target-x86-32?)
           #~(modify-phases %standard-phases
@@ -6053,6 +6095,37 @@ linear algebra operations.")
 primary types and functions in @code{StaticArrays.jl}.  This enables
 downstream packages to implement new methods on these types without
 depending on the entirety of @code{StaticArrays.jl}.")
+    (license license:expat)))
+
+(define-public julia-statisticaltraits
+  (package
+    (name "julia-statisticaltraits")
+    (version "3.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JuliaAI/StatisticalTraits.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1im2j3h8xlja8c4pz22xn4lgb2r7zx50284iwbl72sclhrmjzfkz"))))
+    (build-system julia-build-system)
+    (arguments
+     (list
+      #:julia-package-name "StatisticalTraits"
+      #:julia-package-uuid "64bff920-2084-43da-a3e6-9bb72801c0c9"
+      #:julia-package-dependencies
+      #~(list '("SparseArrays" . "2f01184e-e22b-5df5-ae63-d93ebab69eaf")
+              '("Test" . "8dfed614-e22c-5e08-85e1-65c5234f0b40"))))
+    (propagated-inputs (list julia-scientifictypesbase))
+    (home-page "https://github.com/JuliaAI/StatisticalTraits.jl")
+    (synopsis "Implementations of traits possessed by statistical objects")
+    (description
+     "This package provides fall-back implementations for a collection
+of traits possessed by statistical objects.  A @code{trait} is a function with a single
+arguments that is a Julia type, which might encode type metadata for inspection or
+for use in function dispatch.")
     (license license:expat)))
 
 (define-public julia-statsapi

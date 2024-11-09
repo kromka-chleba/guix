@@ -868,6 +868,8 @@ is commonly used to represent printed circuit board (PCB) layouts.  Gerbv lets
 you load several files on top of each other, do measurements on the displayed
 image, etc.  Besides viewing Gerbers, you may also view Excellon drill files
 as well as pick-place files.")
+    ;; This CVE has been fixed in version 2.10.0.
+    (properties '((lint-hidden-cve . ("CVE-2023-4508"))))
     (license license:gpl2+)))
 
 (define-public translate2geda
@@ -2092,8 +2094,10 @@ an embedded event driven algorithm.")
     (inherit libngspice)
     (name "ngspice")
     (arguments
-     (substitute-keyword-arguments (package-arguments libngspice)
-       ((#:tests? _ #f) #t)
+     (substitute-keyword-arguments
+       (strip-keyword-arguments
+         (list #:tests?)
+         (package-arguments libngspice))
        ((#:configure-flags flags)
         #~(cons "--with-readline=yes"
                 (delete "--with-ngshared"

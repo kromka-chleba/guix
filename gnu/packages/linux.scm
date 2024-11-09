@@ -509,9 +509,10 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
                         "linux-" version ".tar.xz"))
     (sha256 hash)))
 
-;; The current "mainline" kernel.
+;; The current "stable" kernels. That is, the most recently released major
+;; versions that are still supported upstream.
 
-(define-public linux-libre-6.11-version "6.11.4")
+(define-public linux-libre-6.11-version "6.11.6")
 (define-public linux-libre-6.11-gnu-revision "gnu")
 (define deblob-scripts-6.11
   (linux-libre-deblob-scripts
@@ -521,13 +522,10 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "184f3p911nyimz7s51h2n15j0zlpphrzslvz5yq1jzjs4y099dca")))
 (define-public linux-libre-6.11-pristine-source
   (let ((version linux-libre-6.11-version)
-        (hash (base32 "0mcg1rrw9b0lwj88jkaw6ic2mks8xh8i92v90sbr2x35ljhb0m5x")))
+        (hash (base32 "1kiky6viwrgm47slpv234lfq1wrwj29p5rx168gix3q0jw0zcm69")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.11)))
-
-;; The current "stable" kernels. That is, the most recently released major
-;; versions that are still supported upstream.
 
 (define-public linux-libre-6.10-version "6.10.14")
 (define-public linux-libre-6.10-gnu-revision "gnu")
@@ -548,62 +546,62 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.56")
+(define-public linux-libre-6.6-version "6.6.59")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
    linux-libre-6.6-version
    linux-libre-6.6-gnu-revision
    (base32 "1a28pdl645bj4d8gac71dmwmll6a2kgd3k7gkpfvi94yqkzd9r2z")
-   (base32 "1z4l5a1xhrffagby28rv8kxxvr4py87vrxil0lh0nf5lcdpx4vw1")))
+   (base32 "1x3455v7sfzakq99ydifh65yzvjzrw06p2lchwb6902yzqbnh786")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "158snxmb2silss8bndpzp8fmafp175v11jrlci0jr6c8ivvi4j7p")))
+        (hash (base32 "0vd76ccd4li4wsg04gc4nai9f4y1nknz967qby0i53y0v046hq93")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.112")
+(define-public linux-libre-6.1-version "6.1.115")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
    linux-libre-6.1-version
    linux-libre-6.1-gnu-revision
    (base32 "1sf80f2i4vf888xjcn84ymn4w5ynn30ib9033zwmv7f09yvfhapy")
-   (base32 "11jbnj0d3262grf9vkn0668kvfxifxw98ccvn81wkaykll01k5nx")))
+   (base32 "060pbbvk3c1r9v6fz1qm5f0hjb29wi67lg7an0nwl6bpjsk5ci52")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "094z3wfcxqx2rbi072i5frshpy6rdvk39aahwm9nc07vc8sxxn4b")))
+        (hash (base32 "0vxs6zj4p0ihcp11h3svqy3wa1yph0f1vzc8dlvqh60zgs1bmn0g")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.167")
+(define-public linux-libre-5.15-version "5.15.170")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
    linux-libre-5.15-version
    linux-libre-5.15-gnu-revision
    (base32 "18ac30kxg2mf2f6gk3p935hzhz2qs110jy4xwk21kblnnkskbxj8")
-   (base32 "1l8dhfby3qx8vs8fq6yybixzrghbh03wflzwly4rq08wabcr87z8")))
+   (base32 "1pbl08jzqh944z34bz25k2v7igsm3r89jbcg0hba3cvyybkkfc2g")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "0c6s6l5sz9ibws7bymb393ww0z9i3amsk1yx0bahipz3xhc1yxdi")))
+        (hash (base32 "1ag7fvixhdcyxv6rqfsvq2wh02g64r4rx8izvfb33nfnld2nangx")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
 
-(define-public linux-libre-5.10-version "5.10.226")
+(define-public linux-libre-5.10-version "5.10.228")
 (define-public linux-libre-5.10-gnu-revision "gnu1")
 (define deblob-scripts-5.10
   (linux-libre-deblob-scripts
    linux-libre-5.10-version
    linux-libre-5.10-gnu-revision
    (base32 "1b33rkn32b923025iiz4xzxiy8y5ii9j5qk4021mg575890rl4ch")
-   (base32 "1isiih0laz4wbivsg0pcvlgrflq3lv10fakv9lvg2b4s0yd9ybdn")))
+   (base32 "14jdl5rk3w7h97svl6j6ngbywj5qixmpv6ifhqkzjxpp07xngvs4")))
 (define-public linux-libre-5.10-pristine-source
   (let ((version linux-libre-5.10-version)
-        (hash (base32 "19hwwl5sbya65mch7fwmji2cli9b8796zjqbmkybjrarg1j9m8gn")))
+        (hash (base32 "0wkvn49sdy9ykyz6cqdqd9yplqfhc6b255w6wc17ky182mzqvk3n")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.10)))
@@ -847,7 +845,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; linux-libre-headers-latest points to the latest headers package
 ;; and should be used as a dependency for packages that depend on
 ;; the headers.
-(define-public linux-libre-headers-latest linux-libre-headers-6.10)
+(define-public linux-libre-headers-latest linux-libre-headers-6.11)
 
 
 ;;;
@@ -1176,12 +1174,6 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
 
-(define-public linux-libre-version         linux-libre-6.10-version)
-(define-public linux-libre-gnu-revision    linux-libre-6.10-gnu-revision)
-(define-public linux-libre-pristine-source linux-libre-6.10-pristine-source)
-(define-public linux-libre-source          linux-libre-6.10-source)
-(define-public linux-libre                 linux-libre-6.10)
-
 (define-public linux-libre-6.11
   (make-linux-libre* linux-libre-6.11-version
                      linux-libre-6.11-gnu-revision
@@ -1189,6 +1181,12 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      '("x86_64-linux" "i686-linux" "armhf-linux"
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
+
+(define-public linux-libre-version         linux-libre-6.11-version)
+(define-public linux-libre-gnu-revision    linux-libre-6.11-gnu-revision)
+(define-public linux-libre-pristine-source linux-libre-6.11-pristine-source)
+(define-public linux-libre-source          linux-libre-6.11-source)
+(define-public linux-libre                 linux-libre-6.11)
 
 (define-public linux-libre-6.6
   (make-linux-libre* linux-libre-6.6-version
@@ -4064,8 +4062,7 @@ user-space processes.")
     (native-inputs
      (list autoconf automake gettext-minimal libtool))
     (arguments
-     '(#:tests? #t
-       #:configure-flags (list (string-append "MOUNT_FUSE_PATH="
+     '(#:configure-flags (list (string-append "MOUNT_FUSE_PATH="
                                               (assoc-ref %outputs "out")
                                               "/sbin")
                                (string-append "INIT_D_PATH="
@@ -10049,7 +10046,7 @@ tools for managing PipeWire.")
 (define-public ell
   (package
     (name "ell")
-    (version "0.61")
+    (version "0.69")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -10058,7 +10055,7 @@ tools for managing PipeWire.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1lkjf24ap40wk747z1iv8ds8z40alc5x8rzsgczjj1707x2ik6mj"))))
+                "06gsij5fsf3jgwjx1ijn9l5lyvd09007mfn8dygqnv6xk6g1bq8l"))))
     (build-system gnu-build-system)
     (arguments
      ;; Tests launch dbus-daemon instances that all try to bind to
@@ -10343,7 +10340,7 @@ modification of BPF objects on the system.")
 (define-public bpftrace
   (package
     (name "bpftrace")
-    (version "0.21.0")
+    (version "0.21.2")
     (source
      (origin
        (method git-fetch)
@@ -10352,25 +10349,37 @@ modification of BPF objects on the system.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "06yg3w80kdq0i003w2gvn0czbh8z9d3rfgmglp37dkir7g3dc6iz"))))
+        (base32 "0icbhf1wk523a7lcmwqa67zc6hl6h02p5mfg26cizva447kbwsgz"))))
     (build-system cmake-build-system)
-    (arguments (list #:configure-flags #~(list "-DBUILD_TESTING=ON")
-                     ;; Only run the unit tests suite, as the other ones
-                     ;; (runtime_tests, tools-parsing-test) require to run as
-                     ;; 'root'.
-                     #:test-target "bpftrace_test"
-                     #:phases #~(modify-phases %standard-phases
-                                  (add-after 'unpack 'patch-paths
-                                    (lambda _
-                                      (with-directory-excursion "tests"
-                                        (substitute* (find-files ".")
-                                          (("/bin/sh")
-                                           (which "sh")))
-                                        (substitute* '("child.cpp"
-                                                       "runtime/call"
-                                                       "procmon.cpp")
-                                          (("/bin/ls")
-                                           (which "ls")))))))))
+    (arguments
+     (list
+      #:configure-flags #~(list "-DBUILD_TESTING=ON")
+      ;; Only run the unit tests suite, as the other ones
+      ;; (runtime_tests, tools-parsing-test) require to run as
+      ;; 'root'.
+      #:test-target "bpftrace_test"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; This patch also fixes broken compilation due to improper detection
+          ;; of bfd features. This is taken from following upstream PR:
+          ;; https://github.com/bpftrace/bpftrace/pull/3332
+          (add-after 'unpack 'patch-paths-and-bfd-defs
+            (lambda _
+              (substitute* '("cmake/FindLibBfd.cmake"
+                             "src/CMakeLists.txt")
+                (("LIBSFRAME_FOUND")
+                 "LIBSFRAME_LIBRARIES")
+                (("LIBZSTD_FOUND")
+                 "LIBZSTD_LIBRARIES"))
+              (with-directory-excursion "tests"
+                (substitute* (find-files ".")
+                  (("/bin/sh")
+                   (which "sh")))
+                (substitute* '("child.cpp"
+                               "runtime/call"
+                               "procmon.cpp")
+                  (("/bin/ls")
+                   (which "ls")))))))))
     (native-inputs (list bison dwarves flex googletest xxd))
     (inputs (list bcc clang-15 elfutils libbpf libiberty cereal))
     (home-page "https://github.com/bpftrace/bpftrace")

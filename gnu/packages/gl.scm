@@ -15,13 +15,14 @@
 ;;; Copyright © 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2020 Kei Kebreau <kkebreau@posteo.net>
 ;;; Copyright © 2021 Ivan Gankevich <i.gankevich@spbu.ru>
-;;; Copyright © 2021, 2022, 2023 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2021-2024 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2023 Kaelyn Takata <kaelyn.alexi@protonmail.com>
 ;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Liliana Marie Prikler <liliana.prikler@gmail.com>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Arnaud Lechevallier <arnaud.lechevallier@free.fr>
+;;; Copyright © 2024 aurtzy <aurtzy@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -42,6 +43,7 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages bison)
+  #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages documentation)
@@ -57,6 +59,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages rust)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages video)
   #:use-module (gnu packages vulkan)
@@ -76,7 +79,8 @@
   #:use-module (guix gexp)
   #:use-module (guix utils)
   #:use-module (ice-9 match)
-  #:use-module ((srfi srfi-1) #:hide (zip)))
+  #:use-module ((srfi srfi-1) #:hide (zip))
+  #:use-module (srfi srfi-26))
 
 (define-public glu
   (package
@@ -299,7 +303,7 @@ also known as DXTn or DXTC) for Mesa.")
 (define-public mesa
   (package
     (name "mesa")
-    (version "24.0.4")
+    (version "24.2.5")
     (source
      (origin
        (method url-fetch)
@@ -309,7 +313,7 @@ also known as DXTn or DXTC) for Mesa.")
                                  "mesa-" version ".tar.xz")))
        (sha256
         (base32
-         "1w25lwdrb0ffrx2fjk9izbvpcgf9ypfc7v32zybwvjwql0qbvzlh"))))
+         "0vyrkmy8j5bygddi2bsssj9g1rrcg4vfhvw0bjxsbmif4km0ngbk"))))
     (build-system meson-build-system)
     (propagated-inputs
      ;; The following are in the Requires.private field of gl.pc.
@@ -322,58 +326,70 @@ also known as DXTn or DXTC) for Mesa.")
            libxxf86vm
            xorgproto))
     (inputs
-     (append
-       (if (target-aarch64?)
-           (list clang-18
-                 llvm-18)
-           (list llvm-for-mesa))
-       (list elfutils                   ;libelf required for r600 when using llvm
-             expat
-             (force libva-without-mesa)
-             libxml2
-             libxrandr
-             libxvmc
-             vulkan-loader
-             wayland
-             wayland-protocols
-             `(,zstd "lib"))))
+     (list elfutils                   ;libelf required for r600 when using llvm
+           expat
+           (force libva-without-mesa)
+           libxml2
+           libxrandr
+           libxvmc
+           llvm-for-mesa
+           vulkan-loader
+           wayland
+           wayland-protocols
+           `(,zstd "lib")))
     (native-inputs
      (append
       (list bison
+            clang-18
             flex
             gettext-minimal
             glslang
+            libclc
             pkg-config
             python-libxml2              ;for OpenGL ES 1.1 and 2.0 support
             python-mako
+            python-ply
+            python-pyyaml
             python-wrapper
             (@ (gnu packages base) which))
-      (if (target-aarch64?)
-          (list libclc)
+      (if (target-arm?)
+          ;; Needed for etnaviv.
+          (list python-pycparser)
           '())
       (if (%current-target-system)
           (list cmake-minimal-cross
                 pkg-config-for-build
                 wayland
                 wayland-protocols)
+          '())
+      (if (target-x86-64?)
+          ;; NVK dependencies
+          (list rust
+                (module-ref (resolve-interface '(gnu packages rust-apps))
+                            'rust-bindgen-cli)
+                (module-ref (resolve-interface '(gnu packages rust-apps))
+                            'rust-cbindgen-0.26))
           '())))
     (outputs '("out" "bin"))
     (arguments
      (list
+      #:meson meson-1.5
       #:configure-flags
       #~(list
          #$@(cond
              ((target-aarch64?)
-              '("-Dgallium-drivers=asahi,etnaviv,freedreno,kmsro,lima,\
-nouveau,panfrost,r300,r600,svga,swrast,tegra,v3d,vc4,virgl,zink"))
+              ;; This includes more drivers than "auto": asahi, r300, r600
+              '("-Dgallium-drivers=asahi,etnaviv,freedreno,lima,nouveau,\
+panfrost,r300,r600,svga,softpipe,llvmpipe,tegra,v3d,vc4,virgl,zink"))
              ((target-arm32?)
-              '("-Dgallium-drivers=etnaviv,freedreno,kmsro,lima,nouveau,\
-panfrost,r300,r600,svga,swrast,tegra,v3d,vc4,virgl,zink"))
+              ;; This includes more drivers than "auto": r300, r600
+              '("-Dgallium-drivers=etnaviv,freedreno,lima,nouveau,\
+panfrost,r300,r600,svga,softpipe,llvmpipe,tegra,v3d,vc4,virgl,zink"))
              ((or (target-ppc64le?) (target-ppc32?) (target-riscv64?))
-              '("-Dgallium-drivers=nouveau,r300,r600,radeonsi,svga,swrast,virgl,zink"))
+              ;; This include more drivers than "auto": svga
+              '("-Dgallium-drivers=nouveau,r300,r600,radeonsi,svga,softpipe,llvmpipe,virgl,zink"))
              (else
-              '("-Dgallium-drivers=crocus,iris,nouveau,r300,r600,radeonsi,\
-svga,swrast,virgl,zink")))
+              '("-Dgallium-drivers=auto")))
          ;; Enable various optional features.  TODO: opencl requires libclc,
          ;; omx requires libomxil-bellagio
          "-Dplatforms=x11,wayland"
@@ -388,16 +404,15 @@ svga,swrast,virgl,zink")))
          "-Dgbm=enabled"
          "-Dshared-glapi=enabled"
 
-         ;; Explicitly enable Vulkan on some architectures.
          #$@(cond
-             ((or (target-x86-32?) (target-x86-64?))
+             ((target-x86-32?)
+              ;; This doesn't include nouveau (which is in "auto") as it needs
+              ;; rust.
+              ;; TODO: Enable nouveau/NVK.
               '("-Dvulkan-drivers=intel,intel_hasvk,amd,swrast"))
-             ((or (target-ppc64le?) (target-ppc32?))
-              '("-Dvulkan-drivers=amd,swrast"))
              ((target-aarch64?)
+              ;; This differs from "auto" which only includes swrast and intel
               '("-Dvulkan-drivers=freedreno,amd,broadcom,swrast"))
-             ((target-riscv64?)
-              '("-Dvulkan-drivers=amd,swrast"))
              (else
               '("-Dvulkan-drivers=auto")))
 
@@ -484,6 +499,53 @@ svga,swrast,virgl,zink")))
                       (("'lp_test_arit', ") ""))))
                  (_
                   '((display "No tests to disable on this architecture.\n"))))))
+         #$@(if (target-x86-64?)
+                #~((add-after 'unpack 'patch-subproject-sources
+                     (lambda _
+                       ;; Patch each relevant subproject source URL in wrapfiles to
+                       ;; use the store, which avoids an attempt to download them
+                       ;; mid-build.
+                       (for-each
+                        (match-lambda
+                          ((name source)
+                           (let ((wrap-file (string-append
+                                             "subprojects/" name ".wrap"))
+                                 (subproject-dest (string-append
+                                                   "subprojects/" name))
+                                 (overlay-dir (string-append
+                                               "subprojects/packagefiles/" name)))
+                             (copy-recursively source subproject-dest)
+                             ;; Normally when the patch_directory wrap file property
+                             ;; is specified, meson automatically copies from
+                             ;; packagefiles, but this is not the case here (only
+                             ;; happens when downloading source?) so we manually copy
+                             ;; overlay-dir to subproject-dest.
+                             (when (file-exists? overlay-dir)
+                               (copy-recursively overlay-dir subproject-dest))
+                             (call-with-output-file wrap-file
+                               (lambda (port)
+                                 (format port "[wrap-file]
+directory = ~a
+"
+                                         name))))))
+                        '#+(map (lambda (pkg)
+                                  (let ((name (package-upstream-name* pkg))
+                                        (version (package-version pkg)))
+                                    (list (package-upstream-name* pkg)
+                                          (file-append pkg
+                                                       "/share/cargo/src/"
+                                                       name "-" version))))
+                                (let ((from-crates-io
+                                       (cut module-ref
+                                            (resolve-interface
+                                             '(gnu packages crates-io))
+                                            <>)))
+                                  (list (from-crates-io 'rust-syn-2)
+                                        (from-crates-io 'rust-unicode-ident-1)
+                                        (from-crates-io 'rust-quote-1)
+                                        (from-crates-io 'rust-proc-macro2-1)
+                                        (from-crates-io 'rust-paste-1))))))))
+                #~())
          (add-before 'configure 'fix-dlopen-libnames
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((out #$output))
@@ -595,15 +657,7 @@ from software emulation to complete hardware acceleration for modern GPUs.")
     (arguments
      (substitute-keyword-arguments (package-arguments mesa)
        ((#:configure-flags flags)
-        #~(cons "-Dgallium-opencl=standalone" #$flags))))
-    (inputs
-     (modify-inputs (package-inputs mesa)
-       (prepend libclc)))
-    (native-inputs
-     (if (target-aarch64?)
-         (package-native-inputs mesa)
-         (modify-inputs (package-native-inputs mesa)
-           (prepend clang-15))))))
+        #~(cons "-Dgallium-opencl=standalone" #$flags))))))
 
 (define-public mesa-opencl-icd
   (package/inherit mesa-opencl

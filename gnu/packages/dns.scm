@@ -845,7 +845,7 @@ Extensions} (DNSSEC).")
 (define-public knot
   (package
     (name "knot")
-    (version "3.3.8")
+    (version "3.4.1")
     (source
      (origin
        (method git-fetch)
@@ -854,7 +854,9 @@ Extensions} (DNSSEC).")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0iaardlmvcp6f0vccs81f202bb53y7fkcw5n12ahgqymqzhafpmq"))
+        (base32 "0iqzqfjk60lxzbjgkjsf1l8vqnv6rgz1z0p1zyhdqnp037123d4j"))
+       (patches
+        (search-patches "knot-remove-runtime-deps.patch"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -1179,7 +1181,7 @@ known public suffixes.")
 (define-public maradns
   (package
     (name "maradns")
-    (version "3.5.0022")
+    (version "3.5.0036")
     (source
      (origin
        (method url-fetch)
@@ -1187,43 +1189,45 @@ known public suffixes.")
                            (version-major+minor version) "/"
                            version "/maradns-" version ".tar.xz"))
        (sha256
-        (base32 "1sw267jxxxngjcar8cj3jpxnpiz0szgkhlz5l46c67qs690w9kdi"))))
+        (base32 "185kl7zfvnwzfpyxbzpwck13m468av74kbqijp0s4v33iicfpnvc"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; need to be root to run tests
-       #:make-flags
-       (list
-        ,(string-append "CC=" (cc-for-target))
-        (string-append "PREFIX=" %output)
-        (string-append "RPM_BUILD_ROOT=" %output))
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key native-inputs target #:allow-other-keys)
-             ;; make_32bit_tables generates a header file that is used during
-             ;; compilation. Hence, during cross compilation, it should be
-             ;; built for the host system.
-             (when target
-               (substitute* "rng/Makefile"
-                 (("\\$\\(CC\\) -o make_32bit_tables")
-                  (string-append (assoc-ref native-inputs "gcc")
-                                 "/bin/gcc -o make_32bit_tables"))))
-             (invoke "./configure")))
-         (add-before 'install 'create-install-directories
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (for-each (lambda (dir)
-                           (mkdir-p (string-append out dir)))
-                         (list "/bin" "/sbin" "/etc"
-                               "/share/man/man1"
-                               "/share/man/man5"
-                               "/share/man/man8"))
-               #t))))))
+     (list
+      #:tests? #f                      ; need to be root to run tests
+      #:make-flags
+      #~(list
+         (string-append "CC=" #$(cc-for-target))
+         (string-append "PREFIX=" #$output)
+         (string-append "RPM_BUILD_ROOT=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda* (#:key native-inputs target #:allow-other-keys)
+              ;; make_32bit_tables generates a header file that is used during
+              ;; compilation. Hence, during cross compilation, it should be
+              ;; built for the host system.
+              (when target
+                (substitute* "rng/Makefile"
+                  (("\\$\\(CC\\) -o make_32bit_tables")
+                   (string-append (search-input-file native-inputs "/bin/gcc")
+                                  " -o make_32bit_tables"))))
+              ;; ./configure doesn't support default flags
+              (invoke "./configure")))
+          (add-before 'install 'create-install-directories
+            (lambda _
+              (for-each (lambda (dir)
+                          (mkdir-p (string-append #$output dir)))
+                        (list "/bin" "/sbin" "/etc"
+                              "/share/man/man1"
+                              "/share/man/man5"
+                              "/share/man/man8")))))))
     (home-page "https://maradns.samiam.org")
     (synopsis "Small lightweight DNS server")
     (description "MaraDNS is a small and lightweight DNS server.  MaraDNS
 consists of a UDP-only authoritative DNS server for hosting domains, and a UDP
 and TCP-capable recursive DNS server for finding domains on the internet.")
+    (properties '((release-monitoring-url
+                   . "https://maradns.samiam.org/download.html")))
     (license license:bsd-2)))
 
 (define-public openresolv

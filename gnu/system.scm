@@ -809,6 +809,11 @@ bookkeeping."
            %shepherd-root-service
 
            (pam-root-service (operating-system-pam-services os))
+           ;; Make sure that privileged-programs activation script
+           ;; runs after accounts are created
+           (service privileged-program-service-type
+                    (append (operating-system-privileged-programs os)
+                            (operating-system-setuid-programs os)))
            (account-service (append (operating-system-accounts os)
                                     (operating-system-groups os))
                             (operating-system-skeletons os))
@@ -826,9 +831,6 @@ bookkeeping."
             (operating-system-environment-variables os))
            (service host-name-service-type host-name)
            procs root-fs
-           (service privileged-program-service-type
-                    (append (operating-system-privileged-programs os)
-                            (operating-system-setuid-programs os)))
            (service profile-service-type
                     (operating-system-packages os))
            boot-fs non-boot-fs
@@ -850,6 +852,11 @@ bookkeeping."
           (service shepherd-root-service-type)
 
           (service user-processes-service-type)
+          ;; Make sure that privileged-programs activation script
+          ;; runs after accounts are created
+          (service privileged-program-service-type
+                   (append (operating-system-privileged-programs os)
+                           (operating-system-setuid-programs os)))
           (account-service (append (operating-system-accounts os)
                                    (operating-system-groups os))
                            (operating-system-skeletons os))
@@ -866,9 +873,6 @@ bookkeeping."
                               (list `("hosts" ,hosts-file)))
               (service hosts-service-type
                        (local-host-entries host-name)))
-          (service privileged-program-service-type
-                   (append (operating-system-privileged-programs os)
-                           (operating-system-setuid-programs os)))
           (service profile-service-type (operating-system-packages os)))))
 
 (define* (operating-system-services os)
@@ -1249,25 +1253,30 @@ use 'plain-file' instead~%")
 
 (define %default-privileged-programs
   (let ((shadow (@ (gnu packages admin) shadow)))
-    (map file-like->setuid-program
-         (list (file-append shadow "/bin/passwd")
-               (file-append shadow "/bin/chfn")
-               (file-append shadow "/bin/sg")
-               (file-append shadow "/bin/su")
-               (file-append shadow "/bin/newgrp")
-               (file-append shadow "/bin/newuidmap")
-               (file-append shadow "/bin/newgidmap")
-               (file-append inetutils "/bin/ping")
-               (file-append inetutils "/bin/ping6")
-               (file-append sudo "/bin/sudo")
-               (file-append sudo "/bin/sudoedit")
-               (file-append fuse-2 "/bin/fusermount")
-               (file-append fuse "/bin/fusermount3")
+    (cons*
+     (privileged-program
+      (program (file-append inetutils "/bin/ping"))
+      (capabilities "cap_net_raw=ep"))
+     (privileged-program
+      (program (file-append inetutils "/bin/ping6"))
+      (capabilities "cap_net_raw=ep"))
+     (map file-like->setuid-program
+          (list (file-append shadow "/bin/passwd")
+                (file-append shadow "/bin/chfn")
+                (file-append shadow "/bin/sg")
+                (file-append shadow "/bin/su")
+                (file-append shadow "/bin/newgrp")
+                (file-append shadow "/bin/newuidmap")
+                (file-append shadow "/bin/newgidmap")
+                (file-append sudo "/bin/sudo")
+                (file-append sudo "/bin/sudoedit")
+                (file-append fuse-2 "/bin/fusermount")
+                (file-append fuse "/bin/fusermount3")
 
-               ;; To allow mounts with the "user" option, "mount" and "umount" must
-               ;; be setuid-root.
-               (file-append util-linux "/bin/mount")
-               (file-append util-linux "/bin/umount")))))
+                ;; To allow mounts with the "user" option, "mount" and "umount" must
+                ;; be setuid-root.
+                (file-append util-linux "/bin/mount")
+                (file-append util-linux "/bin/umount"))))))
 
 (define %setuid-programs
   ;; Do not add to this list or use it in new code!  It's defined only to ease

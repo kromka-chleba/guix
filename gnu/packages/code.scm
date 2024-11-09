@@ -879,35 +879,12 @@ the C, C++, C++/CLI, Objective‑C, C#, and Java programming languages.")
             (uri (string-append "mirror://gnu/indent/indent-" version
                                 ".tar.gz"))
             (sha256
-             (base32 "15c0ayp9rib7hzvrcxm5ijs0mpagw5y8kf5w0jr9fryfqi7n6r4y"))))
+             (base32 "15c0ayp9rib7hzvrcxm5ijs0mpagw5y8kf5w0jr9fryfqi7n6r4y"))
+            ;; Remove patch when updating.
+            (patches (search-patches "indent-CVE-2024-0911.patch"))))
    (build-system gnu-build-system)
-   (arguments
-    `(#:phases
-      (modify-phases %standard-phases
-        (add-after 'unpack 'fix-docdir
-          (lambda _
-            ;; Although indent uses a modern autoconf in which docdir
-            ;; defaults to PREFIX/share/doc, the doc/Makefile.am
-            ;; overrides this to be in PREFIX/doc.  Fix this.
-            (substitute* "doc/Makefile.in"
-              (("^docdir = .*$") "docdir = @docdir@\n"))
-            #t))
-        (add-after 'unpack 'fix-configure
-          (lambda* (#:key inputs native-inputs #:allow-other-keys)
-            ;; Replace outdated config.sub and config.guess:
-            (with-directory-excursion "config"
-              (for-each (lambda (file)
-                          (install-file
-                           (string-append (assoc-ref
-                                           (or native-inputs inputs) "automake")
-                                          "/share/automake-"
-                                          ,(version-major+minor
-                                            (package-version automake))
-                                          "/" file) "."))
-                        '("config.sub" "config.guess")))
-            #t)))))
    (native-inputs
-    (list texinfo automake)) ; For up to date 'config.guess' and 'config.sub'.
+    (list texinfo))
    (synopsis "Code reformatter")
    (description
     "Indent is a program that makes source code easier to read by

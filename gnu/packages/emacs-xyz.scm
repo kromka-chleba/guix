@@ -146,6 +146,7 @@
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Spencer King <spencer.king@nursiapress.com>
+;;; Copyright © 2024 emma thompson <bigbookofbug@proton.me>
 
 ;;;
 ;;; This file is part of GNU Guix.
@@ -253,6 +254,7 @@
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages racket)
   #:use-module (gnu packages ruby)
+  #:use-module (gnu packages rust)
   #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages scheme)
   #:use-module (gnu packages serialization)
@@ -1304,6 +1306,29 @@ out of the box.")
 is based off of Slim mode.")
     (license license:gpl3+)))
 
+(define-public emacs-show-font
+  (package
+    (name "emacs-show-font")
+    (version "0.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/protesilaos/show-font")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kbkbvqhdqpsmci0756w2j7igxdj0qfzy823mvc5lb6yj8gwq9dl"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/protesilaos/show-font")
+    (synopsis "Show font features in a buffer")
+    (description
+     "Show Font lets you preview a font inside of Emacs.  It does so in three
+ways: prompt for a font on the system and display it in a buffer, list all
+known fonts in a buffer with a short preview for each, and provide a major
+mode to preview a font whose file is among the installed ones.")
+    (license license:gpl3+)))
+
 (define-public emacs-sed-mode
   (package
     (name "emacs-sed-mode")
@@ -2166,6 +2191,30 @@ then only the color of the mode line changes when a window becomes in-/active.")
       (description "Acme theme is an Emacs theme with an old-school vibe
 inspired by Plan 9 Acme and the Sam text editor.")
       (license license:gpl3+))))
+
+(define-public emacs-catppuccin-theme
+  (let ((commit "4441d5114fdcc2eb05186a974b4bbad7224e43b5")
+        (revision "1"))
+    (package
+      (name "emacs-catppuccin-theme")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+	       (url "https://github.com/catppuccin/emacs")
+	       (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1y2ads0w5l3mm0mxxbi2ppb6csq8hw2fd9cmak3myv13qzw92x3w"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/catppuccin/emacs")
+      (synopsis "Soothing pastel theme for Emacs")
+      (description
+       "Catppuccin is a soothing pastel theme for Emacs.  It provides
+different color palettes, such as @samp{frappe}, @samp{macchiato}, or
+@samp{latte}.")
+      (license license:expat))))
 
 (define-public emacs-theme-magic
   ;; No tagged release upstream, but the commit below correspond to the 0.2.3
@@ -7535,6 +7584,44 @@ generally filled correctly with no fuss.")
 column by drawing a thin line down the length of the editing window.")
     (license license:gpl3+)))
 
+(define-public emacs-greader
+  (let ((commit "d82a7405bb9720fff8f264b408303bc882db7839")
+        (revision "1"))
+    (package
+      (name "emacs-greader")
+      (version (git-version "0.11.18" revision commit))
+      (source
+       (origin
+         (uri (git-reference
+               (url "https://gitlab.com/michelangelo-rodriguez/greader")
+               (commit commit)))
+         (method git-fetch)
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0yv29ac1xczwbb90xznlay4p657a1ajj03l7k9f57fgq54y0raiy"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:phases #~(modify-phases %standard-phases
+                     (add-after 'unpack 'add-requires
+                       (lambda _
+                         (substitute* "greader-dict.el"
+                           ((";;; Code:")
+                            ";;; Code:\n(require 'greader)\n")))))))
+      (inputs (list espeak-ng))
+      (home-page "https://gitlab.com/michelangelo-rodriguez/greader")
+      (synopsis
+       "Gnamù Reader, or Greader, sends buffer contents to a speech engine")
+      (description
+       "Greader is a module that sends any Emacs buffer to a @acronym{TTS,
+Text To Speech} engine, such as Espeak-NG or Speech Dispatcher.
+
+The mode supports timer reading, automatic scrolling of buffers in modes like
+Info mode, and repeating reading of regions or the whole buffer. It also
+includes a feature to facilitate the compilation of Espeak-NG
+pronunciations.")
+      (license license:gpl3+))))
+
 (define-public emacs-grep-a-lot
   (package
     (name "emacs-grep-a-lot")
@@ -7680,7 +7767,7 @@ appropriate console.")
       (build-system emacs-build-system)
       (home-page "https://github.com/plexus/chruby.el")
       (synopsis "Emacs support for the Chruby version switcher for Ruby")
-      (description "This packages lets you switch Ruby versions using chruby.")
+      (description "This package lets you switch Ruby versions using chruby.")
       (license license:gpl3+))))
 
 ;; Package has no release.  Version is extracted from "Version:" keyword in
@@ -11190,6 +11277,66 @@ using @code{python-isort}.")
      "This package permits automated installation of tools written in Python.")
     (license license:gpl3+)))
 
+(define-public emacs-pythonic
+  (let ((commit "c1e5643e044f1faaf6ecfadc719b981c048aeb79")
+        (revision "0"))
+    (package
+      (name "emacs-pythonic")
+      (version (git-version "0.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/pythonic-emacs/pythonic")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1bl2ds73g59v8q90kmjpchvzqrjdli3hmigzw5gv2yl548p7yppb"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-f emacs-s emacs-tramp))
+      (home-page "https://github.com/pythonic-emacs/pythonic")
+      (synopsis "Utility functions for writing Pythonic in Emacs")
+      (description
+       "The Pythonic Emacs package provides function for convenient running
+Python on different platforms on local and remote hosts including Docker
+containers and Vagrant virtual machines.  To use Pythonic with Docker you need
+to install Docker Tramp Emacs package.")
+      (license license:gpl3+))))
+
+(define-public emacs-anaconda-mode
+  (let ((commit "f900bd7656a03aa24ef3295251f266736f7756eb")
+        (revision "0"))
+    (package
+      (name "emacs-anaconda-mode")
+      (version (git-version "0.1.16" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/pythonic-emacs/anaconda-mode")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1gricygbs9f210z7bnzdhcmqpwnpzs4mwbw8rvabfplcbiw7sg6r"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list #:include #~(cons "^anaconda-mode\\.py$" %default-include)))
+      (propagated-inputs (list emacs-dash
+                               emacs-f
+                               emacs-pythonic
+                               emacs-s
+                               emacs-tramp
+                               emacs-xref))
+      (home-page "https://github.com/pythonic-emacs/anaconda-mode")
+      (synopsis
+       "Python code navigation, documentation lookup and completion in Emacs")
+      (description
+       "This package provides Python code navigation, documentation lookup,
+and code completion for Emacs.  It uses a lightweight Python backend to offer
+features like jumping to definitions, finding references, and viewing
+documentation, enhancing the Python development experience within Emacs.")
+      (license license:gpl3+))))
+
 (define-public emacs-jedi
   (package
     (name "emacs-jedi")
@@ -12995,7 +13142,7 @@ library with Eglot instead of Yasnippet.")
       (description
        "This package provides the ability to include files used by other
 programs in the candidate lists of commands like @code{consult-recent-file}
-and @code{consult-buffer}.  This allows to use the same interface for file
+and @code{consult-buffer}.  This allows using the same interface for file
 opening.
 
 On systems that comply with the XDG specification, these files are listed in
@@ -18931,6 +19078,9 @@ the Emacs Tempo library.  You may also write your templates in Lisp.")
                  (base32
                   "0ifmzn5d9mpsjwvg2ir0sy3r4czxa7d6j97l8rrp8ai7jqvydadm"))))
       (build-system emacs-build-system)
+      (arguments
+       (list
+        #:include #~(cons "^templates\\/" %default-include)))
       (propagated-inputs (list emacs-tempel))
       (home-page "https://github.com/Crandel/tempel-collection")
       (synopsis "Collection of TempEl templates")
@@ -21848,7 +21998,7 @@ Event} protocol.")
 (define-public emacs-ement
   (package
     (name "emacs-ement")
-    (version "0.15.1")
+    (version "0.16")
     (source
      (origin
        (method git-fetch)
@@ -21857,7 +22007,7 @@ Event} protocol.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wj0gzbx3m4j1h093nh8m65xmmhz2wjmlg39smxai44x7va27xmv"))))
+        (base32 "1nskmygjhg01dz4jwvs8ixxk0dn3wa9sx7vym6dbs1i11pd761xn"))))
     (build-system emacs-build-system)
     (arguments
      (list #:emacs emacs))              ;need libxml support
@@ -24608,16 +24758,16 @@ according to a parsing expression grammar.")
 (define-public emacs-eldev
   (package
     (name "emacs-eldev")
-    (version "1.10.1")
+    (version "1.10.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/doublep/eldev")
+             (url "https://github.com/emacs-eldev/eldev")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qir0wagqb8yhmkb12zzadl146w952p3q92bpffd0hq0y6gcp2n5"))))
+        (base32 "0ha2ppxqp36m26nv6lyspq6m6xvvr03cf82rygq45w729gakdw9r"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -24650,7 +24800,7 @@ according to a parsing expression grammar.")
                    (string-append "export ELDEV_LOCAL=" site-lisp "\n" all)))))))))
     (native-inputs
      (list texinfo))                    ;for tests
-    (home-page "https://github.com/doublep/eldev/")
+    (home-page "https://github.com/emacs-eldev/eldev/")
     (synopsis "Emacs-based build tool for Elisp")
     (description "Eldev (Elisp Development Tool) is an Emacs-based build tool,
 targeted solely at Elisp projects.  It is an alternative to Cask.  Unlike
@@ -26329,11 +26479,11 @@ their meaning for the current Emacs major-mode.")
     (license license:gpl3+)))
 
 (define-public emacs-org-ref
-  (let ((commit "bb375f366f883e5b60e3bb625f2acd026811fb55")
+  (let ((commit "732a20bd236fd02db4a651da29f87f87f458a54a")
         (revision "0"))
     (package
       (name "emacs-org-ref")
-      (version (git-version "3.0" revision commit))
+      (version (git-version "3.1" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -26343,14 +26493,12 @@ their meaning for the current Emacs major-mode.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "01wxcyzdrx6ysv9rjd64fr7kkvm4fjr03ib4mmpchraxxm8g8z43"))))
+           "1kbjxz56fvln6drd2wqdxrpgwjshzpdbyaq7dz0gn285z93y1knk"))))
       (build-system emacs-build-system)
       (arguments
        (list
         #:include #~(cons* "org-ref.org" "org-ref.bib" %default-include)
         #:exclude #~(list
-                     ;; github.com/jkitchin/org-ref/issues/1085
-                     "openalex.el"
                      ;; author doesn't recommend using it
                      "org-ref-pdf.el")))
       (propagated-inputs
@@ -26358,13 +26506,12 @@ their meaning for the current Emacs major-mode.")
              emacs-citeproc-el
              emacs-dash
              emacs-f
-             emacs-helm
              emacs-helm-bibtex
              emacs-htmlize
              emacs-hydra
-             emacs-ivy
              emacs-ox-pandoc
              emacs-parsebib
+             emacs-request
              emacs-s))
       (home-page "https://github.com/jkitchin/org-ref")
       (synopsis "Citations, cross-references and bibliographies in Org mode")
@@ -29521,6 +29668,40 @@ In addition to its predecessor, it offers the following features:
     (license (list license:expat
                    license:asl2.0))))
 
+(define-public emacs-cargo-el
+  ;; No tags since 2017, use latest commit.
+  (let ((commit "7f8466063381eed05d4e222ce822b1dd44e3bf17")
+        (revision "0"))
+    (package
+      (name "emacs-cargo-el")
+      (version (git-version "0.4.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/kwrooijen/cargo.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1hvxdmyppvx04jyn07dnynlgbwyasv22k8dd4qa68mrj8i9mz484"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-paths
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "cargo-process.el"
+                       (("/usr/local/(bin/(cargo|rustc))" _ path)
+                        (search-input-file inputs path))))))))
+      (propagated-inputs (list emacs-markdown-mode))
+      (inputs (list rust `(,rust "cargo")))
+      (home-page "https://github.com/kwrooijen/cargo.el")
+      (synopsis "Emacs minor mode for Cargo, Rust's package manager")
+      (description
+       "This package defines @code{cargo-minor-mode}, which gives a set of key
+combinations to perform Cargo tasks within Rust projects.")
+      (license license:gpl3+))))
+
 (define-public emacs-ztree
   ;; Upstream provides no tag, but the commit below matches latest release.
   (let ((commit "c9ad9136d52ca5a81475693864e255d29448f43f"))
@@ -31885,7 +32066,7 @@ constant expressions.")
                 "1nfrdlz0n6kajlzb8vncnhj1z6lxnvpf01x95hjnxyvmps97hs0w"))))
     (build-system emacs-build-system)
     (synopsis "Kubernetes control")
-    (description "This packages provides a Kubernetes control interface
+    (description "This package provides a Kubernetes control interface
 within emacs.")
     (home-page "https://eshelyaron.com/man/kubed/")
     (license license:gpl3+)))
@@ -34976,7 +35157,7 @@ it forcibly
 (define-public emacs-elpher
   (package
     (name "emacs-elpher")
-    (version "3.6.0")
+    (version "3.6.4")
     (source
      (origin
        (method git-fetch)
@@ -34985,7 +35166,7 @@ it forcibly
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00z41vw63vm71i5szmvrxspvnzkpzflpip56jnmkjc94qfla2l8s"))))
+        (base32 "0pkgk7608w31kvdjid54xfrc5zrbrzwi98wrglwl07s429xlbai2"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -40517,7 +40698,7 @@ source blocks.")
       (license license:gpl3+)
       (home-page "https://github.com/rougier/org-margin")
       (synopsis "Outdent headlines in emacs org-mode")
-      (description "@code{org-margin} mode allows to outdent org headlines by
+      (description "@code{org-margin} mode outdents org headlines by
 moving leading stars into the margin and transform them into markers depending
 on the chosen style."))))
 

@@ -139,6 +139,7 @@
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tbb)
   #:use-module (gnu packages telephony)
+  #:use-module (gnu packages tex)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages version-control)
@@ -1384,6 +1385,89 @@ guitar amplification and a small range of classic effects, signal processors and
 generators of mostly elementary and occasionally exotic nature.")
     (license license:gpl3+)))
 
+(define-public chow-tape-model
+  (package
+    (name "chow-tape-model")
+    (version "2.11.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jatinchowdhury18/AnalogTapeModel")
+             (commit (string-append "v" version))
+             (recursive? #true)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0qrqhlfzc2m5iwrkfzb53x8hll2ndn1fygh1mwn11shqmy5qgf2s"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      (let ((libs "-lX11 -lXext -lXcursor -lXinerama -lXrandr"))
+        `(list "-DBUILD_HEADLESS=ON"
+               ,(string-append "-DCMAKE_SHARED_LINKER_FLAGS=" libs)
+               ,(string-append "-DCMAKE_EXE_LINKER_FLAGS=" libs)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'build-manual
+            (lambda _
+              (with-directory-excursion "Manual"
+                (invoke "make" "all"))))
+          (add-after 'build-manual 'install-manual
+            (lambda _
+              (with-directory-excursion "Manual"
+                (install-file "ChowTapeManual.pdf"
+                              (string-append #$output:doc "/share/doc/")))))
+          (add-after 'install-manual 'chdir
+            (lambda _ (chdir "Plugin")))
+          (replace 'check
+            (lambda* (#:key tests? build-type #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion
+                    (string-append "Source/Headless/ChowTapeModel_Headless_artefacts/" build-type)
+                  (invoke "./ChowTapeModel_Headless" "--unit-tests" "--all")))))
+          (replace 'install
+            (lambda* (#:key build-type #:allow-other-keys)
+              (with-directory-excursion
+                  (string-append "CHOWTapeModel_artefacts/" build-type)
+                (mkdir-p (string-append #$output:lv2 "/lib/lv2/"))
+                (mkdir-p (string-append #$output "/bin/"))
+                (install-file "Standalone/CHOWTapeModel"
+                              (string-append #$output "/bin/"))
+                (install-file "CLAP/CHOWTapeModel.clap"
+                              (string-append #$output:clap "/lib/clap/"))
+                (copy-recursively "LV2/CHOWTapeModel.lv2"
+                                  (string-append #$output:lv2
+                                                 "/lib/lv2/CHOWTapeModel.lv2"))
+                (copy-recursively "VST3/CHOWTapeModel.vst3"
+                                  (string-append #$output:vst3
+                                                 "/lib/vst3/CHOWTapeModel.vst3"))))))))
+    (outputs '("out" "doc" "clap" "lv2" "vst3"))
+    (inputs
+     (list alsa-lib
+           freeglut
+           freetype
+           jack-2
+           libxcursor
+           libxext
+           libxinerama
+           libxrandr
+           lv2))
+    (native-inputs
+     (list pkg-config
+           (texlive-updmap.cfg
+            (list texlive-geometry
+                  texlive-xetex
+                  texlive-collection-pictures))))
+    (home-page "https://chowdsp.com/products.html")
+    (synopsis "Physical modeling for analog tape machines")
+    (description
+     "CHOW Tape is an analog tape machine physical model, originally based on
+the Sony TC-260.  The current version can be used to emulate a wide variety of
+reel-to-reel tape machines.")
+    (license license:gpl3)))
+
 (define-public iir
   (package
     (name "iir")
@@ -1483,7 +1567,7 @@ synthesis.")
 (define-public snapcast
   (package
     (name "snapcast")
-    (version "0.27.0")
+    (version "0.29.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1492,7 +1576,7 @@ synthesis.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "10l5hvmaqr9ykipsnzl95wqg19ff36rhpa1q88axxcia0k2valkn"))))
+                "1960xp54vsndj9vvc03kx9kg9phdchdgrfghhvcp2b0nfq2qcqqm"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f))                    ; no included tests
@@ -2231,44 +2315,10 @@ also play midifiles using a Soundfont.")
      "Faust is a programming language for realtime audio signal processing.")
     (license license:gpl2+)))
 
-;; This version is needed to build older synths that require the lv2synth.cpp
-;; architecture file, such as sorcer.
-(define-public faust-0.9.67
-  (package
-    (inherit faust)
-    (name "faust")
-    (version "0.9.67")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/grame-cncm/faust")
-                    (commit (string-append "v"
-                                           (string-map (lambda (c)
-                                                         (if (char=? c #\.) #\- c))
-                                                       version)))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0856x666s6ymzk8v15f9gy402dbr8c9v2s40hyfadhraqljmqrm0"))
-              (snippet
-               ;; Remove prebuilt library
-               '(delete-file "architecture/android/libs/armeabi-v7a/libfaust_dsp.so"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:make-flags
-      #~(list (string-append "prefix=" #$output))
-      #:tests? #f
-      #:phases
-      '(modify-phases %standard-phases
-         ;; no "configure" script
-         (delete 'configure))))
-    (native-inputs (list unzip))))
-
 (define-public faust-2
   (package
     (inherit faust)
-    (version "2.41.1")
+    (version "2.75.7")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/grame-cncm/faust/"
@@ -2276,33 +2326,34 @@ also play midifiles using a Soundfont.")
                                   "/faust-" version ".tar.gz"))
               (sha256
                (base32
-                "0gk8ifxrbykq7ay0nvjns8fjryhp0wfhv5npgrl8xpgw9wfmw53j"))))
+                "11ww02zmj3vnva1w52hs9wkxvhwwf53agklyzm2c7gysw0jfvkw9"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:tests? #f ; no tests
-       #:phases
-       (modify-phases %standard-phases
-         ;; The upstream package uses make to run cmake during the build stage.
-         ;; Here we ignore the Makefile and call cmake directly.
-         (replace 'configure
-           (lambda _
-             (chdir "build")
-             (invoke "cmake" "-C" "backends/all.cmake"
-                     (string-append "-DCMAKE_INSTALL_PREFIX="
-                      (assoc-ref %outputs "out")))))
-         ;; The sound2faust tool would be built in the Makefile's "world" target
-         (add-after 'install 'sound2faust
-           (lambda _
-             (chdir "../tools/sound2faust")
-             (setenv "PREFIX" (assoc-ref %outputs "out"))
-             (invoke "make")
-             (invoke "make" "install"))))))
+     (list
+      ;; There are tests, but they are unit/regression tests scattered in 17
+      ;; different test directories, and little information indicating whether
+      ;; they are worth running for Guix.  Ignore tests for now.
+      #:tests? #f
+      #:configure-flags
+      #~(list "-C" "backends/all.cmake"
+              (string-append "-DCMAKE_INSTALL_PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; The upstream package uses make to run cmake during the build stage.
+          ;; Here we ignore the Makefile and call cmake directly.
+          (replace 'configure
+            (lambda* (#:key configure-flags #:allow-other-keys)
+              (chdir "build")
+              (apply invoke "cmake" configure-flags)))
+          ;; The sound2faust tool would be built in the Makefile's "world" target
+          (add-after 'install 'sound2faust
+            (lambda _
+              (chdir "../tools/sound2faust")
+              (setenv "PREFIX" #$output)
+              (invoke "make")
+              (invoke "make" "install"))))))
     (native-inputs
-     `(("llvm" ,llvm)
-       ("which" ,which)
-       ("xxd" ,xxd)
-       ("ctags" ,emacs-minimal)  ; for ctags
-       ("pkg-config" ,pkg-config)))
+     (list llvm-18 pkg-config which))
     (inputs
      (list libsndfile libmicrohttpd ncurses openssl zlib))))
 

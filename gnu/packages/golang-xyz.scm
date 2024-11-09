@@ -6,7 +6,7 @@
 ;;; Copyright © 2019 Brian Leung <bkleung89@gmail.com>
 ;;; Copyright © 2019, 2021 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2019-2021 Martin Becze <mjbecze@riseup.net>
-;;; Copyright © 2019-2022 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2019-2022, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2020 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2020 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2020 Jack Hill <jackhill@jackhill.us>
@@ -1394,6 +1394,30 @@ marshalling and unmarshalling library in Go.  It uses code generation and not
 reflection.")
     (license license:expat)))
 
+(define-public go-github-com-caarlos0-env
+  (package
+    (name "go-github-com-caarlos0-env")
+    (version "11.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/caarlos0/env")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "074bagdfvsq65i0cak5l7ipci0b1j2m0j8rd54g7rznhqmxwha97"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/caarlos0/env"))
+    (home-page "https://github.com/caarlos0/env")
+    (synopsis "Library to parse environment variables into structs")
+    (description
+     "@code{env} is a simple, zero-dependencies library to parse environment
+variables into structs.")
+    (license license:expat)))
+
 (define-public go-github-com-charlievieth-fastwalk
   (package
     (name "go-github-com-charlievieth-fastwalk")
@@ -1776,7 +1800,6 @@ submodules:
     (build-system go-build-system)
     (arguments
      (list
-      #:tests? #t ; Tests require network interface access
       #:import-path "github.com/cskr/pubsub"))
     (home-page "https://github.com/cskr/pubsub")
     (synopsis "Simple pubsub package for go")
@@ -2073,7 +2096,8 @@ supports concurrent serializable transactions.")
       ;;
       ;; cannot use 4340958203495 (untyped int constant) as int value in
       ;; argument to z.KeyToHash (overflows)
-      #:tests? (target-64bit?)
+      #:tests? (and (target-64bit?)
+                    (not (%current-target-system)))
       #:import-path "github.com/dgraph-io/ristretto"
       #:phases
       #~(modify-phases %standard-phases
@@ -2742,7 +2766,8 @@ quoting, commenting, and escaping.")
       ;; XXX: Check if the most of the tests may be enabled:
       ;; src/github.com/fxamacker/cbor/v2/decode_test.go:328:9: cannot convert
       ;; 1000000000000 (untyped int constant) to type uint
-      #:tests? (target-64bit?)
+      #:tests? (and (target-64bit?)
+                    (not (%current-target-system)))
       #:import-path "github.com/fxamacker/cbor/v2"))
     (propagated-inputs
      (list go-github-com-x448-float16))

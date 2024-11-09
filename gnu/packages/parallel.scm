@@ -49,6 +49,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages compression)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages freeipmi)
@@ -684,7 +685,7 @@ single-instruction multiple-data (SIMD) intrinsics.")
                   (substitute* "src/include/pmix_config.h"
                     (("#define PMIX_CONFIGURE_CLI .*")
                      "#define PMIX_CONFIGURE_CLI \"[scrubbed]\"\n")))))))
-   (inputs (list libevent `(,hwloc "lib")))
+   (inputs (list libevent `(,hwloc "lib") zlib))
    (native-inputs (list perl python))
    (synopsis "PMIx library")
    (description
@@ -711,9 +712,33 @@ commonly needed services in distributed and parallel computing systems.")
               "0wiy0vk37v4db1jgxza8bci0cczcvj34dalzsrlz05dk45zb7dl3"))))
    (build-system gnu-build-system)
    (arguments
-    (list #:configure-flags #~(list (string-append "--with-hwloc="
-                                                   (assoc-ref %build-inputs "hwloc"))
-                                    (string-append "--with-pmix=" #$(this-package-input "openpmix")))))
+    (list #:configure-flags
+          #~(list (string-append "--with-hwloc="
+                                 (assoc-ref %build-inputs "hwloc"))
+                  (string-append "--with-pmix="
+                                 #$(this-package-input "openpmix")))
+
+          #:phases
+          #~(modify-phases %standard-phases
+              (add-after 'unpack 'remove-absolute-references
+                (lambda _
+                  ;; Remove references to GCC, the shell, etc. (shown by
+                  ;; 'prte_info') to reduce the closure size.
+                  (substitute* "src/tools/prte_info/param.c"
+                    (("_ABSOLUTE")
+                     "")
+                    (("PRTE_CONFIGURE_CLI")
+                     "\"[elided to reduce closure]\""))))
+              (add-after 'unpack 'patch-prted-reference
+                (lambda _
+                  ;; Record the absolute file name of 'prted' instead of
+                  ;; assuming it will be found in $PATH at run time.
+                  (substitute* "src/runtime/prte_mca_params.c"
+                    (("prte_launch_agent =.*")
+                     (string-append "prte_launch_agent = \""
+                                    #$output "/bin/prted\";\n"))))))
+
+          #:disallowed-references (list (canonical-package gcc))))
    (inputs (list libevent
                  `(,hwloc "lib")
                  openpmix))

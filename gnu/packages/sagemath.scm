@@ -4,6 +4,7 @@
 ;;; Copyright © 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
 ;;; Copyright © 2021 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -23,6 +24,7 @@
 (define-module (gnu packages sagemath)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix download)
   #:use-module (guix git-download)
@@ -33,66 +35,76 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages bdw-gc)
   #:use-module (gnu packages boost)
+  #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages image)
+  #:use-module (gnu packages maths)
   #:use-module (gnu packages lisp)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages popt)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz))
 
 
-(define-public python-cypari2
+(define-public brial
   (package
-    (name "python-cypari2")
-    (version "2.1.2")
+    (name "brial")
+    (version "1.2.8")
     (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "cypari2" version))
-       (sha256
-        (base32
-         "0ymc4i9y60aazscc1blivirkr1rflzz6akkmvfzyn5l7mgnlbk83"))))
-    (build-system python-build-system)
+    (origin
+      (method git-fetch)
+      (uri (git-reference
+             (url "https://github.com/BRiAl/BRiAl/")
+             (commit version)))
+      (file-name (git-file-name name version))
+      (sha256
+       (base32 "0qhgckd4fvbs40jw14mvw89rccv94d3df27kipd27hxd4cx7y80y"))))
+    (build-system gnu-build-system)
     (native-inputs
-     (list python-cython))
-    (propagated-inputs
-     (list python-cysignals))
+     (list autoconf automake libtool pkg-config))
     (inputs
-     (list gmp pari-gp))
-    (home-page "https://cypari2.readthedocs.io/")
-    (synopsis
-     "Python interface to the number theory library libpari")
-    (description
-     "Cypari2 provides a Python interface to the number theory library
-PARI/GP.  It has been spun off from the SageMath mathematics software system,
-but it can be used independently.")
-    (license license:gpl2+)))
+     (list boost libpng m4ri))
+    (arguments
+    ;; We are missing the boost unit test framework.
+     `(#:tests? #f
+       #:configure-flags (list "--without-boost-unit-test-framework")))
+    (synopsis "Arithmetic of polynomials over boolean rings")
+    (description "BRiAl is the successor to  PolyBoRi maintained by the
+Sage community.  Its core is a C++ library, which provides high-level data
+types for Boolean polynomials and monomials, exponent vectors, as well as
+for the underlying polynomial rings and subsets of the powerset of the
+Boolean variables.  As a unique approach, binary decision diagrams are
+used as internal storage type for polynomial structures.")
+    (license license:gpl2+)
+    (home-page "https://github.com/BRiAl/BRiAl/")))
 
-(define-public python-gmpy2
+(define-public lcalc
   (package
-    (name "python-gmpy2")
-    (version "2.1.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "gmpy2" version))
-       (sha256
-        (base32
-         "1lc29g3s4z5f1qbsc2x9i9sf6wrpni9pwiwmb1wwx3hjr85i8xfs"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list unzip))
-    (inputs
-     (list gmp mpfr mpc))
-    (home-page "https://github.com/aleaxit/gmpy")
-    (synopsis
-     "GMP/MPIR, MPFR, and MPC interface to Python 2.6+ and 3.x")
+    (name "lcalc")
+    (version "2.0.5")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.com/sagemath/lcalc")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1rwyx292y3jbsp88wagn9nhl9z7wsnl2yrs5imxkbxq87pnrj5a7"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags '(list "--with-pari")))
+    (inputs (list pari-gp))
+    (native-inputs (list autoconf automake libtool pkg-config gengetopt))
+    (home-page "https://gitlab.com/sagemath/lcalc")
+    (synopsis "C++ library for computing with L-functions")
     (description
-     "This package provides a Python interface to the GNU multiprecision
-libraries GMO, MPFR and MPC.")
-    (license license:lgpl3+)))
+     "Lcalc computes L-functions, in particular the Riemann zeta function,
+Dirichlet L-functions and L-functions attached to elliptic curves and
+modular forms.")
+    (license license:gpl2+)))
 
 (define-public cliquer
   (package
@@ -170,6 +182,149 @@ represented as strings.")
     (license license:public-domain)
     (home-page "https://github.com/miguelmarco/libhomfly")))
 
+(define-public python-cypari2
+  (package
+    (name "python-cypari2")
+    (version "2.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "cypari2" version))
+       (sha256
+        (base32
+         "0ymc4i9y60aazscc1blivirkr1rflzz6akkmvfzyn5l7mgnlbk83"))))
+    (build-system python-build-system)
+    (native-inputs
+     (list python-cython))
+    (propagated-inputs
+     (list python-cysignals))
+    (inputs
+     (list gmp pari-gp))
+    (home-page "https://cypari2.readthedocs.io/")
+    (synopsis
+     "Python interface to the number theory library libpari")
+    (description
+     "Cypari2 provides a Python interface to the number theory library
+PARI/GP.  It has been spun off from the SageMath mathematics software system,
+but it can be used independently.")
+    (license license:gpl2+)))
+
+(define-public python-gmpy2
+  (package
+    (name "python-gmpy2")
+    (version "2.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "gmpy2" version))
+       (sha256
+        (base32
+         "1lc29g3s4z5f1qbsc2x9i9sf6wrpni9pwiwmb1wwx3hjr85i8xfs"))))
+    (build-system python-build-system)
+    (native-inputs
+     (list unzip))
+    (inputs
+     (list gmp mpfr mpc))
+    (home-page "https://github.com/aleaxit/gmpy")
+    (synopsis
+     "GMP/MPIR, MPFR, and MPC interface to Python 2.6+ and 3.x")
+    (description
+     "This package provides a Python interface to the GNU multiprecision
+libraries GMO, MPFR and MPC.")
+    (license license:lgpl3+)))
+
+(define-public python-memory-allocator
+  (package
+    (name "python-memory-allocator")
+    (version "0.1.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "memory_allocator" version))
+       (sha256
+        (base32 "1r7g175ddbpn5kjgs6f09s7mfachzw94p02snki6f6830dmj22fn"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-cython python-setuptools))
+    (home-page "https://github.com/sagemath/memory_allocator")
+    (synopsis "Extension class to allocate memory easily with Cython")
+    (description "This package provides a single extension class
+ @code{MemoryAllocator} with @{cdef} methods
+
+@itemize
+@item @code{malloc}
+@item @code{calloc}
+@item @code{allocarray}
+@item @code{realloc}
+@item @code{reallocarray}
+@item @code{aligned_malloc}
+@item @code{aligned_malloc}
+@item @code{aligned_calloc}
+@item @code{aligned_allocarray}")
+    (license license:gpl3+)))
+
+(define-public python-pplpy
+  (package
+    (name "python-pplpy")
+    (version "0.8.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pplpy" version))
+       (sha256
+        (base32 "1zggfj09zkfcabcsasq27vwbhdmkig4yn380gi6wykcih9n22anl"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-cython-3 python-pytest))
+    (inputs (list gmp mpc mpfr pari-gp ppl))
+    (propagated-inputs (list python-cysignals python-gmpy2))
+    (home-page "https://github.com/sagemath/pplpy")
+    (synopsis "Python PPL wrapper")
+    (description "This Python package provides a wrapper to the C++ Parma
+Polyhedra Library (PPL).")
+    (license license:gpl3+)))
+
+(define-public ratpoints
+  (package
+    (name "ratpoints")
+    (version "2.1.3")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "http://www.mathe2.uni-bayreuth.de/stoll/programs/"
+                    "ratpoints-" version ".tar.gz"))
+              (sha256
+               (base32
+                "0zhad84sfds7izyksbqjmwpfw4rvyqk63yzdjd3ysd32zss5bgf4"))
+              (patches
+               ;; Taken from
+               ;; <https://git.sagemath.org/sage.git/plain/build/pkgs/ratpoints/patches/>
+               (search-patches "ratpoints-sturm_and_rp_private.patch"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:test-target "test"
+       #:make-flags
+       (list (string-append "INSTALL_DIR=" (assoc-ref %outputs "out"))
+             "CCFLAGS=-fPIC")
+       #:phases
+       (modify-phases %standard-phases
+         (delete 'configure)            ;no configure script
+         (add-before 'install 'create-install-directories
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((out (assoc-ref outputs "out")))
+               (mkdir-p out)
+               (with-directory-excursion out
+                 (for-each (lambda (d) (mkdir-p d))
+                           '("bin" "include" "lib"))))
+             #t)))))
+    (inputs
+     (list gmp))
+    (home-page "http://www.mathe2.uni-bayreuth.de/stoll/programs/")
+    (synopsis "Find rational points on hyperelliptic curves")
+    (description "Ratpoints tries to find all rational points within
+a given height bound on a hyperelliptic curve in a very efficient way,
+by using an optimized quadratic sieve algorithm.")
+    (license license:gpl2+)))
+
 ;; Sage has become upstream of the following package.
 (define-public zn-poly
   (package
@@ -226,103 +381,3 @@ represented as strings.")
 coefficients of which are modular integers.")
     (license (list license:gpl2 license:gpl3)) ; dual licensed
     (home-page "https://gitlab.com/sagemath/zn_poly")))
-
-(define-public brial
-  (package
-    (name "brial")
-    (version "1.2.8")
-    (source
-    (origin
-      (method git-fetch)
-      (uri (git-reference
-             (url "https://github.com/BRiAl/BRiAl/")
-             (commit version)))
-      (file-name (git-file-name name version))
-      (sha256
-       (base32 "0qhgckd4fvbs40jw14mvw89rccv94d3df27kipd27hxd4cx7y80y"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list autoconf automake libtool pkg-config))
-    (inputs
-     (list boost libpng m4ri))
-    (arguments
-    ;; We are missing the boost unit test framework.
-     `(#:tests? #f
-       #:configure-flags (list "--without-boost-unit-test-framework")))
-    (synopsis "Arithmetic of polynomials over boolean rings")
-    (description "BRiAl is the successor to  PolyBoRi maintained by the
-Sage community.  Its core is a C++ library, which provides high-level data
-types for Boolean polynomials and monomials, exponent vectors, as well as
-for the underlying polynomial rings and subsets of the powerset of the
-Boolean variables.  As a unique approach, binary decision diagrams are
-used as internal storage type for polynomial structures.")
-    (license license:gpl2+)
-    (home-page "https://github.com/BRiAl/BRiAl/")))
-
-(define-public lcalc
-  (package
-    (name "lcalc")
-    (version "2.0.5")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://gitlab.com/sagemath/lcalc")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1rwyx292y3jbsp88wagn9nhl9z7wsnl2yrs5imxkbxq87pnrj5a7"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list #:configure-flags '(list "--with-pari")))
-    (inputs (list pari-gp))
-    (native-inputs (list autoconf automake libtool pkg-config gengetopt))
-    (home-page "https://gitlab.com/sagemath/lcalc")
-    (synopsis "C++ library for computing with L-functions")
-    (description
-     "Lcalc computes L-functions, in particular the Riemann zeta function,
-Dirichlet L-functions and L-functions attached to elliptic curves and
-modular forms.")
-    (license license:gpl2+)))
-
-(define-public ratpoints
-  (package
-    (name "ratpoints")
-    (version "2.1.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "http://www.mathe2.uni-bayreuth.de/stoll/programs/"
-                    "ratpoints-" version ".tar.gz"))
-              (sha256
-               (base32
-                "0zhad84sfds7izyksbqjmwpfw4rvyqk63yzdjd3ysd32zss5bgf4"))
-              (patches
-               ;; Taken from
-               ;; <https://git.sagemath.org/sage.git/plain/build/pkgs/ratpoints/patches/>
-               (search-patches "ratpoints-sturm_and_rp_private.patch"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:test-target "test"
-       #:make-flags
-       (list (string-append "INSTALL_DIR=" (assoc-ref %outputs "out"))
-             "CCFLAGS=-fPIC")
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)            ;no configure script
-         (add-before 'install 'create-install-directories
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (mkdir-p out)
-               (with-directory-excursion out
-                 (for-each (lambda (d) (mkdir-p d))
-                           '("bin" "include" "lib"))))
-             #t)))))
-    (inputs
-     (list gmp))
-    (home-page "http://www.mathe2.uni-bayreuth.de/stoll/programs/")
-    (synopsis "Find rational points on hyperelliptic curves")
-    (description "Ratpoints tries to find all rational points within
-a given height bound on a hyperelliptic curve in a very efficient way,
-by using an optimized quadratic sieve algorithm.")
-    (license license:gpl2+)))

@@ -9,7 +9,7 @@
 ;;; Copyright © 2016, 2017, 2020 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 Pjotr Prins <pjotr.guix@thebird.nl>
 ;;; Copyright © 2016, 2017, 2023 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2016-2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Peter Feigl <peter.feigl@nexoid.at>
 ;;; Copyright © 2016 John J. Foerch <jjfoerch@earthlink.net>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
@@ -68,6 +68,8 @@
 ;;; Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2024 Richard Sent <richard@freakingpenguin.com>
 ;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2024 nathan <nathan_mail@nborghese.com>
+;;; Copyright © 2024 Nikita Domnitskii <nikita@domnitskii.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -159,6 +161,7 @@
   #:use-module (gnu packages m4)
   #:use-module (gnu packages mail)
   #:use-module (gnu packages man)
+  #:use-module (gnu packages markup)
   #:use-module (gnu packages mcrypt)
   #:use-module (gnu packages mpi)
   #:use-module (gnu packages ncurses)
@@ -419,6 +422,46 @@ interface and is based on GNU Guile.")
     (name "guile2.2-shepherd")
     (native-inputs (list pkg-config guile-2.2))
     (inputs (list guile-2.2 guile2.2-fibers))))
+
+(define-public shepherd-run
+  (package
+    (name "shepherd-run")
+    (version "0.1.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://git.sr.ht/~efraim/shepherd-run")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "033l8ignsrr6p2wgwcyqlswpbf58kyl8cf7zwkz028gqfq4arkr8"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+       #:make-flags #~(list (string-append "PREFIX=" #$output))
+       #:phases
+       #~(modify-phases %standard-phases
+           (delete 'configure)          ; No configure script.
+           ;; First 'check checks the shell script which loads the gawk code.
+           ;; This 'check checks the installed gawk script.
+           (add-after 'patch-shebangs 'check-again
+             (lambda args
+               (apply (assoc-ref %standard-phases 'check)
+                      (append args
+                              (list #:make-flags
+                                    (list (string-append "BINARY=" %output
+                                                         "/bin/shepherd-run"))))))))))
+    (native-inputs (list diffutils help2man))
+    (inputs (list gawk))
+    (synopsis "Create GNU Shepherd services from the command line")
+    (description
+     "Shepherd-run is a script which assists in creating one-off shepherd
+services from the command line.  It is meant to partially fill the void left
+by @command{systemd-run}, since GNU Guix uses GNU Shepherd as its system service
+manager.")
+    (home-page "https://git.sr.ht/~efraim/shepherd-run")
+    (license license:gpl3+)))
 
 (define-public swineherd
   (package
@@ -772,8 +815,11 @@ console.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0vgw6hwqh6zbzrvrn3i0xwi9ykm1qdvhqcyz3mjakd7w303lx603"))))
+                "0vgw6hwqh6zbzrvrn3i0xwi9ykm1qdvhqcyz3mjakd7w303lx603"))
+              (patches
+               (search-patches "btop-fix-segfault-on-intel-gpus.patch"))))
     (build-system gnu-build-system)
+    (native-inputs (list lowdown))
     (arguments
      (list #:tests? #f ;no test suite
            #:make-flags #~(list (string-append "PREFIX=" #$output)
@@ -2616,7 +2662,8 @@ system is under heavy load.")
      ;; XXX The test suite seems to cause instability on the VisionFive 2
      ;; build machines, maybe it's stressing them as intended but this is
      ;; unhelpful.
-     (list #:tests? (not (target-riscv64?))
+     (list #:tests? (and (not (%current-target-system))
+                         (not (target-riscv64?)))
            #:make-flags
            #~(list (string-append "CC=" #$(cc-for-target))
                    (string-append "BINDIR=" #$output "/bin")
@@ -3043,12 +3090,15 @@ orchestration.  Ansible facilitates complex changes like zero-downtime rolling
 updates with load balancers.  This package provides a curated set of
 community-maintained Ansible collections, which contain playbooks, roles,
 modules and plugins that extend Ansible.")
+    ;; Those actually concern the Jenkins Ansible plugin, rather than the
+    ;; Ansible Jenkins plugin.
+    (properties `((lint-hidden-cve . ("CVE-2023-32982" "CVE-2023-32983"))))
     (license license:gpl3+)))
 
 (define-public debops
   (package
     (name "debops")
-    (version "1.1.0")
+    (version "3.2.2")
     (source
      (origin
        (method git-fetch)
@@ -3057,69 +3107,46 @@ modules and plugins that extend Ansible.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "052b2dykdn35pdpn9s4prawl6nl6yzih8nyf54hpvhpisvjrm1v5"))
+        (base32 "03d94bzljnw65f1ra7bxsl8q2l6g8gxcy8kqhm69ib08j50qa0h6"))
        (patches
-        (search-patches "debops-constants-for-external-program-names.patch"
-                        "debops-debops-defaults-fall-back-to-less.patch"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list git))
+        (search-patches "debops-setup-py-avoid-git.patch"))))
+    (build-system pyproject-build-system)
     (inputs
      (list ansible
            encfs
            fuse-2
            util-linux ;; for umount
            findutils
+           git
+           git-crypt
            gnupg
            which))
     (propagated-inputs
-     (list python-future python-distro))
+     (list python-distro
+           python-dotenv
+           python-future
+           python-gitpython
+           python-jinja2
+           python-pyyaml
+           python-pyxdg
+           python-toml))
     (arguments
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'nuke-debops-update
-           (lambda _
-             (chmod "bin/debops-update" #o755) ; FIXME work-around git-fetch issue
-             (with-output-to-file "bin/debops-update"
-               (lambda ()
-                 (format #t "#!/bin/sh
-echo 'debops is installed via guix. guix-update is useless in this case.
-Please use `guix package -u debops` instead.'")))
-             #t))
-         ;; patch shebangs only in actuall scripts, not in files included in
-         ;; roles (which are to be delivered to the targte systems)
-         (delete `patch-generated-file-shebangs)
-         (replace 'patch-source-shebangs
-           (lambda _
-             (for-each patch-shebang
-                       (find-files "bin"
-                                   (lambda (file stat)
-                                     ;; Filter out symlinks.
-                                     (eq? 'regular (stat:type stat)))
-                                   #:stat lstat))))
-         (add-after 'unpack 'fix-paths
-           (lambda _
-             (define (substitute-program-names file)
-               ;; e.g. ANSIBLE_PLAYBOOK = '/gnu/store/…/bin/ansible-playbook'
-               (for-each
-                (lambda (name)
-                  (let ((varname (string-upcase
-                                  (string-map
-                                   (lambda (c) (if (char=? c #\-) #\_ c))
-                                   name))))
-                    (substitute* file
-                      (((string-append "^(" varname " = )'.*'") line prefix)
-                       (string-append prefix "'" (which name) "'")))))
-                '("ansible-playbook" "encfs" "find" "fusermount"
-                  "umount" "gpg" "ansible" "which")))
-             (for-each substitute-program-names
-                       '("bin/debops"
-                         "bin/debops-padlock"
-                         "bin/debops-task"
-                         "debops/__init__.py"
-                         "debops/cmds/__init__.py"))
-             #t)))))
+     (list
+      #:modules '((guix build pyproject-build-system)
+                  (guix build utils)
+                  (srfi srfi-26))
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'sanity-check 'wrap-script
+                     (lambda* (#:key inputs #:allow-other-keys)
+                       (wrap-program (string-append #$output "/bin/debops")
+                         `("PATH" ":" prefix
+                           ,(map dirname
+                                 (map (cut search-input-file inputs <>)
+                                      (list "bin/ansible"
+                                            "bin/gpg"
+                                            "bin/git"
+                                            "bin/git-crypt"
+                                            "bin/umount"))))))))))
     (home-page "https://www.debops.org/")
     (synopsis "Collection of general-purpose Ansible roles")
     (description "The Ansible roles provided by that can be used to manage
@@ -4923,20 +4950,21 @@ tcpdump and snoop.")
 (define-public pam-mount
   (package
     (name "pam-mount")
-    (version "2.18")
+    (version "2.20")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "mirror://sourceforge/pam-mount/pam_mount/"
-                           "pam_mount-" version ".tar.xz"))
+       (uri (string-append "https://inai.de/files/pam_mount/pam_mount-"
+                           version ".tar.xz"))
        (sha256
-        (base32 "0832nh2qf9pisgwnbgx6hkylx5d7i416l19y3ly4ifv7k1p7mxqa"))))
+        (base32 "1vbc6fd826qgj5qq5g06hc64x6n372xhb92bfvhzi02n91x209jl"))))
     (build-system gnu-build-system)
     (arguments
      (list
       #:configure-flags
       #~(list (string-append "--with-slibdir=" #$output "/lib")
-              (string-append "--with-ssbindir=" #$output "/sbin"))
+              (string-append "--with-ssbindir=" #$output "/sbin")
+              "--with-cryptsetup")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-file-names
@@ -4965,15 +4993,15 @@ tcpdump and snoop.")
     (native-inputs
      (list perl pkg-config))
     (inputs
-     (list cryptsetup
-           libhx
-           libxml2
-           linux-pam
-           lvm2
-           openssl
-           pcre2
-           `(,util-linux "lib")
-           util-linux))
+     (append
+      (cons cryptsetup (libcryptsetup-propagated-inputs))
+      (list libhx
+            libxml2
+            linux-pam
+            openssl
+            pcre2
+            util-linux
+            eudev)))
     (home-page "https://inai.de/projects/pam_mount/")
     (synopsis "PAM module to mount volumes for a user session")
     (description

@@ -66,6 +66,7 @@
 ;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -418,47 +419,6 @@ triangulations.")
     (home-page "http://qhull.org")
     (license (license:non-copyleft "file://COPYING.txt"
                                    "See COPYING in the distribution."))))
-
-(define-public python-cvxopt
-  (package
-    (name "python-cvxopt")
-    (version "1.2.7")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/cvxopt/cvxopt")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "114z34wwx1bsv4q6xj9p5q99dffgnj9s4i4arx10g191xq9q8i5y"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'find-libraries
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "CVXOPT_BLAS_LIB" "openblas")
-             (setenv "CVXOPT_LAPACK_LIB" "openblas")
-             (setenv "CVXOPT_BUILD_FFTW" "1")
-             (setenv "CVXOPT_BUILD_GLPK" "1")
-             (setenv "CVXOPT_BUILD_GSL" "1")
-             #t)))))
-    (inputs
-     (list fftw
-           glpk
-           gsl
-           openblas
-           suitesparse))
-    (home-page "https://www.cvxopt.org")
-    (synopsis "Python library for convex optimization")
-    (description
-     "CVXOPT is a package for convex optimization based on the Python
-programming language.  Its main purpose is to make the development of software
-for convex optimization applications straightforward by building on Python’s
-extensive standard library and on the strengths of Python as a high-level
-programming language.")
-    (license license:gpl3+)))
 
 (define-public units
   (package
@@ -880,63 +840,6 @@ LP/MIP solver is included in the package.")
       (sha256
        (base32
         "040sfaa9jclg2nqdh83w71sv9rc1sznpnfiripjdyr48cady50a2"))))))
-
-(define-public python-libensemble
-  (package
-    (name "python-libensemble")
-    (version "1.4.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "libensemble" version))
-       (sha256
-        (base32 "0qxb0sn624jaxjxg2ayd65zaiq1p043w3kk55w8r6drkjiar70yj"))))
-    (build-system pyproject-build-system)
-    (native-inputs (list ncurses
-                         python-mock
-                         python-mpi4py
-                         python-pytest
-                         python-pytest-cov
-                         python-pytest-timeout))
-    (propagated-inputs (list python-mpmath
-                             python-numpy
-                             python-psutil
-                             python-pydantic-2
-                             python-pyyaml
-                             python-tomli))
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-psutil
-            (lambda _
-              (substitute* "setup.py"
-                (("psutil>=5.9.4") "psutil>=5.9.2"))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                ;; These files require MPI and call subprocesses.
-                (delete-file
-                 "libensemble/tests/unit_tests/test_executor.py")
-                (delete-file
-                 "libensemble/tests/unit_tests/test_executor_gpus.py")
-                ;; This file has one failing MPI test but since tests run from
-                ;; a shell script, they can't be disabled individually.
-                ;; Failing test: 'test_ensemble_prevent_comms_overwrite'
-                (delete-file "libensemble/tests/unit_tests/test_ensemble.py")
-                (setenv "TERM" "xterm")
-                ;; A very bad way to skip another MPI test.
-                (substitute* "libensemble/tests/run-tests.sh"
-                  (("export UNIT_TEST_MPI_SUBDIR=.*")
-                   "export UNIT_TEST_MPI_SUBDIR=''"))
-                ;; Run only unit tests, regression tests require MPI.
-                (invoke "bash" "libensemble/tests/run-tests.sh" "-u")))))))
-    (home-page "https://github.com/Libensemble/libensemble")
-    (synopsis "Toolkit for dynamic ensembles of calculations")
-    (description "@code{libensemble} is a complete toolkit for dynamic
-ensembles of calculations.  It connects @code{deciders} to experiments or
-simulations.")
-    (license license:bsd-3)))
 
 (define-public linasm
   (package
@@ -1465,33 +1368,6 @@ plotting engine by third-party applications like Octave.")
     (description "@code{hmat-oss} is hierarchical matrix library written in
 C++ with a C API.  It contains a LU and LLt solver, and a few other things.")
     (license license:gpl2+)))
-
-(define-public primesieve
-  (package
-    (name "primesieve")
-    (version "12.3")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/kimwalisch/primesieve")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1lxvs1jgch0zgpa5axx6zlvgab4rmm3lqpbah75072xpj8ndhhld"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list #:configure-flags #~(list "-DBUILD_STATIC_LIBS=off"
-                                     "-DBUILD_TESTS=ON")))
-    (home-page "https://github.com/kimwalisch/primesieve")
-    (synopsis "Prime number generator")
-    (description "@code{primesieve} is a command-line program and C/C++
- library for quickly generating prime numbers.  It is very cache efficient,
- it detects your CPU's L1 & L2 cache sizes and allocates its main data
- structures accordingly.  It is also multi-threaded by default, it uses all
- available CPU cores whenever possible i.e. if sequential ordering is not
- required. primesieve can generate primes and prime k-tuplets up to 264.")
-    (license license:bsd-2)))
 
 (define-public cminpack
   (package
@@ -2349,37 +2225,6 @@ software library that provides an implementation of the interface.  The netCDF
 library defines a machine-independent format for representing scientific data.
 Together, the interface, library, and format support the creation, access, and
 sharing of scientific data.")
-    (license (license:x11-style "file://COPYRIGHT"))))
-
-(define-public pnetcdf
-  (package
-    (name "pnetcdf")
-    (version "1.13.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://parallel-netcdf.github.io/Release/pnetcdf-"
-             version ".tar.gz"))
-       (sha256
-        (base32
-         "14f4nbcnw80y59cl0kjpxqqfaxzzd62kixnhb6ihp6aigb3z385b"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list #:configure-flags
-           #~(list "--enable-shared"
-                   (string-append "--with-mpi=" #$(this-package-input "openmpi")))
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'build 'mpi-setup
-                 #$%openmpi-setup))))
-    (inputs (list openmpi))
-    (native-inputs (list m4))
-    (home-page "https://parallel-netcdf.github.io/")
-    (synopsis "Parallel I/O Library for NetCDF File Access")
-    (description "PnetCDF is a high-performance parallel I/O library for accessing
-Unidata's NetCDF, files in classic formats, specifically the formats of CDF-1, 2, and
-5.")
     (license (license:x11-style "file://COPYRIGHT"))))
 
 (define-public netcdf-parallel-openmpi
@@ -3340,54 +3185,6 @@ This is the certified version of the Open Cascade Technology (OCCT) library.")
 supports the propositional fragment of PDDL2.2.")
     (license license:gpl3+)))
 
-(define-public popf
-  (package
-    (name "popf")
-    (version "0.0.15")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/fmrico/popf")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1i1am3h6japn8fgapi5s5mnyrm31a05jkjhzgk48cd2n42c5060v"))))
-    (build-system cmake-build-system)
-    (arguments
-     (list
-      #:tests? #f                       ; no tests
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-cmake
-            (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* (find-files "." "CMakeLists\\.txt")
-                (("/usr/local/opt/flex/include")
-                 (dirname (search-input-file inputs "include/FlexLexer.h"))))
-              (substitute* "CMakeLists.txt"
-                (("find_package\\(ament_cmake REQUIRED\\)") "")
-                (("ament_.*") "")
-                (("(RUNTIME DESTINATION) .*" all dst)
-                 (string-append dst " libexec/${PROJECT_NAME}")))))
-          (add-after 'install 'symlink
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let ((out (assoc-ref outputs "out")))
-                (mkdir-p (string-append out "/bin"))
-                (for-each (lambda (link)
-                            (symlink
-                             (string-append out "/libexec/popf/" (cdr link))
-                             (string-append out "/bin/" (car link))))
-                          '(("popf" . "popf") ("VAL" . "validate")))))))))
-    (inputs (list cbc flex))
-    (native-inputs (list flex bison perl))
-    (home-page "https://github.com/fmrico/popf")
-    (synopsis "Forward-chaining temporal planner")
-    (description "This package contains an implementation of the @acronym{POPF,
-Partial Order Planning Forwards} planner described in @cite{Forward-Chaining
-Partial Order Planning}, that has been updated to compile with newer C++
-compilers.")
-    (license license:gpl2+)))
-
 (define-public gmsh
   (package
     (name "gmsh")
@@ -3769,66 +3566,180 @@ scientific applications modeled by partial differential equations.")
               #$%openmpi-setup)))))
     (synopsis "Library to solve PDEs (with complex scalars and MPI support)")))
 
-(define-public python-petsc4py
+(define-public pnetcdf
   (package
-    (name "python-petsc4py")
-    (version "3.21.4")
+    (name "pnetcdf")
+    (version "1.13.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "petsc4py" version))
-        (sha256
-          (base32
-           "1kffxhcwkx6283n2p83ymanz6m8j2xmz5kpa5s8qc4f9iiah59sb"))))
-    (build-system python-build-system)
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://parallel-netcdf.github.io/Release/pnetcdf-"
+             version ".tar.gz"))
+       (sha256
+        (base32
+         "14f4nbcnw80y59cl0kjpxqqfaxzzd62kixnhb6ihp6aigb3z385b"))))
+    (build-system gnu-build-system)
     (arguments
-     (list #:phases
+     (list #:configure-flags
+           #~(list "--enable-shared"
+                   (string-append "--with-mpi=" #$(this-package-input "openmpi")))
+           #:phases
            #~(modify-phases %standard-phases
-               (add-before 'build 'set-PETSC_DIR
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   ;; Define path to PETSc installation.
-                   (setenv "PETSC_DIR"
-                           (assoc-ref inputs "petsc-openmpi"))))
-               (add-before 'check 'mpi-setup
-                 #$%openmpi-setup)
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "python" "test/runtests.py")))))))
-    (native-inputs (list python-cython-3))
-    (inputs (list petsc-openmpi python-numpy))
-    (home-page "https://bitbucket.org/petsc/petsc4py/")
-    (synopsis "Python bindings for PETSc")
-    (description "PETSc, the Portable, Extensible Toolkit for
-Scientific Computation, is a suite of data structures and routines for
-the scalable (parallel) solution of scientific applications modeled by
-partial differential equations.  It employs the MPI standard for all
-message-passing communication.  @code{petsc4py} provides Python
-bindings to almost all functions of PETSc.")
-    (license license:bsd-3)))
+               (add-after 'build 'mpi-setup
+                 #$%openmpi-setup))))
+    (inputs (list openmpi))
+    (native-inputs (list m4))
+    (home-page "https://parallel-netcdf.github.io/")
+    (synopsis "Parallel I/O Library for NetCDF File Access")
+    (description "PnetCDF is a high-performance parallel I/O library for accessing
+Unidata's NetCDF, files in classic formats, specifically the formats of CDF-1, 2, and
+5.")
+    (license (license:x11-style "file://COPYRIGHT"))))
 
-(define-public python-kiwisolver
+(define-public popf
   (package
-    (name "python-kiwisolver")
-    (version "1.4.5")
+    (name "popf")
+    (version "0.0.15")
     (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "kiwisolver" version))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/fmrico/popf")
+                    (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1v6nc0z9dg4am0bibji9pijci9f15z68mwrlv91a28pvawx5czp5"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-typing-extensions))
-    (native-inputs (list python-cppy python-pytest python-setuptools-scm))
-    (home-page "https://github.com/nucleic/kiwi")
-    (synopsis "Fast implementation of the Cassowary constraint solver")
+                "1i1am3h6japn8fgapi5s5mnyrm31a05jkjhzgk48cd2n42c5060v"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ; no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-cmake
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* (find-files "." "CMakeLists\\.txt")
+                (("/usr/local/opt/flex/include")
+                 (dirname (search-input-file inputs "include/FlexLexer.h"))))
+              (substitute* "CMakeLists.txt"
+                (("find_package\\(ament_cmake REQUIRED\\)") "")
+                (("ament_.*") "")
+                (("(RUNTIME DESTINATION) .*" all dst)
+                 (string-append dst " libexec/${PROJECT_NAME}")))))
+          (add-after 'install 'symlink
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((out (assoc-ref outputs "out")))
+                (mkdir-p (string-append out "/bin"))
+                (for-each (lambda (link)
+                            (symlink
+                             (string-append out "/libexec/popf/" (cdr link))
+                             (string-append out "/bin/" (car link))))
+                          '(("popf" . "popf") ("VAL" . "validate")))))))))
+    (inputs (list cbc flex))
+    (native-inputs (list flex bison perl))
+    (home-page "https://github.com/fmrico/popf")
+    (synopsis "Forward-chaining temporal planner")
+    (description "This package contains an implementation of the @acronym{POPF,
+Partial Order Planning Forwards} planner described in @cite{Forward-Chaining
+Partial Order Planning}, that has been updated to compile with newer C++
+compilers.")
+    (license license:gpl2+)))
+
+(define-public ppl
+  (package
+    (name "ppl")
+    (version "1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://www.bugseng.com/products/ppl/download/"
+                           "ftp/releases/" version
+                           "/ppl-" version ".tar.gz"))
+       (sha256
+        (base32
+         "1j5aji1g2vmdvc0gqz45n2ll2l2f6czca04wiyfl5g3sm3a6vhvb"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     (list m4))
+    (inputs
+     (list glpk gmp))
+    (home-page "https://www.bugseng.com/parma-polyhedra-library")
+    (synopsis
+     "Parma Polyhedra Library for computations with polyhedra")
     (description
-     "Kiwi is an efficient C++ implementation of the Cassowary constraint
-solving algorithm.  Kiwi has been designed from the ground up to be
-lightweight and fast.  Kiwi ranges from 10x to 500x faster than the original
-Cassowary solver with typical use cases gaining a 40x improvement.  Memory
-savings are consistently > 5x.")
-    (license license:bsd-3)))
+     "The Parma Polyhedra Library (PPL) provides numerical abstractions
+especially targeted at applications in the field of analysis and
+verification of complex systems.  These abstractions include convex
+polyhedra, defined as the intersection of a finite number of (open or
+closed) halfspaces, each described by a linear inequality (strict or
+non-strict) with rational coefficients; some special classes of polyhedra
+shapes that offer interesting complexity/precision tradeoffs; and grids
+which represent regularly spaced points that satisfy a set of linear
+congruence relations.  The library also supports finite powersets and
+products of (any kind of) polyhedra and grids, a mixed integer linear
+programming problem solver using an exact-arithmetic version of the simplex
+algorithm, a parametric integer programming solver, and primitives for
+termination analysis via the automatic synthesis of linear ranking
+functions.")
+    (license license:gpl3+)))
+
+(define-public primecount
+  (package
+    (name "primecount")
+    (version "7.14")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/kimwalisch/primecount")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "097p3wfq6ds56275cra678hzg8cp2vd1ccllsi8wczrf0qvq91rp"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:configure-flags #~(list "-DBUILD_LIBPRIMESIEVE=OFF"
+                                     "-DBUILD_MANPAGE=ON"
+                                     "-DBUILD_SHARED_LIBS=ON"
+                                     "-DBUILD_STATIC_LIBS=OFF"
+                                     "-DBUILD_TESTS=ON")))
+    (native-inputs
+     (list asciidoc))
+    (inputs
+     (list primesieve))
+    (home-page "https://github.com/kimwalisch/primecount")
+    (synopsis "Fast prime counting function implementations")
+    (description "@code{primecount} is a command-line program and C/C++
+library that counts the number of primes ≤ x (maximum 1031) using highly
+optimized implementations of the combinatorial prime counting algorithms.")
+    (license license:bsd-2)))
+
+(define-public primesieve
+  (package
+    (name "primesieve")
+    (version "12.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/kimwalisch/primesieve")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1lxvs1jgch0zgpa5axx6zlvgab4rmm3lqpbah75072xpj8ndhhld"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:configure-flags #~(list "-DBUILD_STATIC_LIBS=off"
+                                     "-DBUILD_TESTS=ON")))
+    (home-page "https://github.com/kimwalisch/primesieve")
+    (synopsis "Prime number generator")
+    (description "@code{primesieve} is a command-line program and C/C++
+ library for quickly generating prime numbers.  It is very cache efficient,
+ it detects your CPU's L1 & L2 cache sizes and allocates its main data
+ structures accordingly.  It is also multi-threaded by default, it uses all
+ available CPU cores whenever possible i.e. if sequential ordering is not
+ required. primesieve can generate primes and prime k-tuplets up to 264.")
+    (license license:bsd-2)))
 
 (define-public python-accupy
   (package
@@ -3870,6 +3781,168 @@ savings are consistently > 5x.")
 and (dot) products.  It implements Kahan summation, Shewchuck's
 algorithm and summation in K-fold precision.")
     (license license:gpl3+)))
+
+;; It is unfortunate that we cannot just link with the existing blis package.
+(define-public python-blis
+  (package
+    (name "python-blis")
+    (version "0.9.1")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "blis" version))
+              (sha256
+               (base32
+                "0vrnzk9jx7fcl56q6zpa4w4mxkr4iknxs42fngn9g78zh1kc9skw"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'build 'build-ext
+           (lambda _
+             (invoke "python" "setup.py" "build_ext" "--inplace"
+                     "-j" (number->string (parallel-job-count))))))))
+    (propagated-inputs (list python-numpy))
+    (native-inputs (list python-cython python-pytest))
+    (home-page "https://github.com/explosion/cython-blis")
+    (synopsis "Blis as a self-contained C-extension for Python")
+    (description
+     "This package provides the Blis BLAS-like linear algebra library, as a
+self-contained C-extension for Python.")
+    (license license:bsd-3)))
+
+(define-public python-blis-for-thinc
+  (package
+    (inherit python-blis)
+    (name "python-blis")
+    (version "0.7.8")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "blis" version))
+              (sha256
+               (base32
+                "0mvcif9g69424bk8xiflacxzpvz802ns791v2r8a6fij0sxl3mgp"))))))
+
+(define-public python-cvxopt
+  (package
+    (name "python-cvxopt")
+    (version "1.2.7")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/cvxopt/cvxopt")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "114z34wwx1bsv4q6xj9p5q99dffgnj9s4i4arx10g191xq9q8i5y"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'find-libraries
+           (lambda* (#:key inputs #:allow-other-keys)
+             (setenv "CVXOPT_BLAS_LIB" "openblas")
+             (setenv "CVXOPT_LAPACK_LIB" "openblas")
+             (setenv "CVXOPT_BUILD_FFTW" "1")
+             (setenv "CVXOPT_BUILD_GLPK" "1")
+             (setenv "CVXOPT_BUILD_GSL" "1")
+             #t)))))
+    (inputs
+     (list fftw
+           glpk
+           gsl
+           openblas
+           suitesparse))
+    (home-page "https://www.cvxopt.org")
+    (synopsis "Python library for convex optimization")
+    (description
+     "CVXOPT is a package for convex optimization based on the Python
+programming language.  Its main purpose is to make the development of software
+for convex optimization applications straightforward by building on Python’s
+extensive standard library and on the strengths of Python as a high-level
+programming language.")
+    (license license:gpl3+)))
+
+(define-public python-kiwisolver
+  (package
+    (name "python-kiwisolver")
+    (version "1.4.5")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "kiwisolver" version))
+              (sha256
+               (base32
+                "1v6nc0z9dg4am0bibji9pijci9f15z68mwrlv91a28pvawx5czp5"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-typing-extensions))
+    (native-inputs (list python-cppy python-pytest python-setuptools-scm))
+    (home-page "https://github.com/nucleic/kiwi")
+    (synopsis "Fast implementation of the Cassowary constraint solver")
+    (description
+     "Kiwi is an efficient C++ implementation of the Cassowary constraint
+solving algorithm.  Kiwi has been designed from the ground up to be
+lightweight and fast.  Kiwi ranges from 10x to 500x faster than the original
+Cassowary solver with typical use cases gaining a 40x improvement.  Memory
+savings are consistently > 5x.")
+    (license license:bsd-3)))
+
+(define-public python-libensemble
+  (package
+    (name "python-libensemble")
+    (version "1.4.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "libensemble" version))
+       (sha256
+        (base32 "0qxb0sn624jaxjxg2ayd65zaiq1p043w3kk55w8r6drkjiar70yj"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list ncurses
+                         python-mock
+                         python-mpi4py
+                         python-pytest
+                         python-pytest-cov
+                         python-pytest-timeout))
+    (propagated-inputs (list python-mpmath
+                             python-numpy
+                             python-psutil
+                             python-pydantic-2
+                             python-pyyaml
+                             python-tomli))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-psutil
+            (lambda _
+              (substitute* "setup.py"
+                (("psutil>=5.9.4") "psutil>=5.9.2"))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; These files require MPI and call subprocesses.
+                (delete-file
+                 "libensemble/tests/unit_tests/test_executor.py")
+                (delete-file
+                 "libensemble/tests/unit_tests/test_executor_gpus.py")
+                ;; This file has one failing MPI test but since tests run from
+                ;; a shell script, they can't be disabled individually.
+                ;; Failing test: 'test_ensemble_prevent_comms_overwrite'
+                (delete-file "libensemble/tests/unit_tests/test_ensemble.py")
+                (setenv "TERM" "xterm")
+                ;; A very bad way to skip another MPI test.
+                (substitute* "libensemble/tests/run-tests.sh"
+                  (("export UNIT_TEST_MPI_SUBDIR=.*")
+                   "export UNIT_TEST_MPI_SUBDIR=''"))
+                ;; Run only unit tests, regression tests require MPI.
+                (invoke "bash" "libensemble/tests/run-tests.sh" "-u")))))))
+    (home-page "https://github.com/Libensemble/libensemble")
+    (synopsis "Toolkit for dynamic ensembles of calculations")
+    (description "@code{libensemble} is a complete toolkit for dynamic
+ensembles of calculations.  It connects @code{deciders} to experiments or
+simulations.")
+    (license license:bsd-3)))
 
 (define-public python-ndim
   (package
@@ -3935,6 +4008,73 @@ and n-cubes.  All computations are done using numerically stable
 recurrence schemes.  Furthermore, all functions are fully vectorized and
 can return results in exact arithmetic.")
     (license license:gpl3+)))
+
+(define-public python-petsc4py
+  (package
+    (name "python-petsc4py")
+    (version "3.21.4")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "petsc4py" version))
+        (sha256
+          (base32
+           "1kffxhcwkx6283n2p83ymanz6m8j2xmz5kpa5s8qc4f9iiah59sb"))))
+    (build-system python-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'build 'set-PETSC_DIR
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   ;; Define path to PETSc installation.
+                   (setenv "PETSC_DIR"
+                           (assoc-ref inputs "petsc-openmpi"))))
+               (add-before 'check 'mpi-setup
+                 #$%openmpi-setup)
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "python" "test/runtests.py")))))))
+    (native-inputs (list python-cython-3))
+    (inputs (list petsc-openmpi python-numpy))
+    (home-page "https://bitbucket.org/petsc/petsc4py/")
+    (synopsis "Python bindings for PETSc")
+    (description "PETSc, the Portable, Extensible Toolkit for
+Scientific Computation, is a suite of data structures and routines for
+the scalable (parallel) solution of scientific applications modeled by
+partial differential equations.  It employs the MPI standard for all
+message-passing communication.  @code{petsc4py} provides Python
+bindings to almost all functions of PETSc.")
+    (license license:bsd-3)))
+
+(define-public python-primecountpy
+  (package
+    (name "python-primecountpy")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "primecountpy" version))
+       (sha256
+        (base32 "0xh6zx5zw5scy7jygqirks9y6z4zyfm0zjfp8nd6dw0m471przkq"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; there are no tests
+    (native-inputs
+     (list python-cysignals
+           python-cython
+           python-setuptools))
+    (inputs
+     (list pari-gp
+           primecount
+           primesieve))
+    (home-page "https://github.com/dimpase/primecountpy")
+    (synopsis "Cython interface for C++ primecount library")
+    (description "This package provides a Cython interface to the C++ library
+@code{primecount}.")
+    ;; pyproject.toml says gpl3 but file headers say gpl2+, see
+    ;; <https://github.com/dimpase/primecountpy/issues/16>.
+    (license license:gpl2+)))
 
 (define-public python-quadpy
   (package
@@ -5403,47 +5543,6 @@ access to BLIS implementations via traditional BLAS routine calls.")
     (license license:bsd-3)))
 
 (define ignorance blis)
-
-;; It is unfortunate that we cannot just link with the existing blis package.
-(define-public python-blis
-  (package
-    (name "python-blis")
-    (version "0.9.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "blis" version))
-              (sha256
-               (base32
-                "0vrnzk9jx7fcl56q6zpa4w4mxkr4iknxs42fngn9g78zh1kc9skw"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'build 'build-ext
-           (lambda _
-             (invoke "python" "setup.py" "build_ext" "--inplace"
-                     "-j" (number->string (parallel-job-count))))))))
-    (propagated-inputs (list python-numpy))
-    (native-inputs (list python-cython python-pytest))
-    (home-page "https://github.com/explosion/cython-blis")
-    (synopsis "Blis as a self-contained C-extension for Python")
-    (description
-     "This package provides the Blis BLAS-like linear algebra library, as a
-self-contained C-extension for Python.")
-    (license license:bsd-3)))
-
-(define-public python-blis-for-thinc
-  (package
-    (inherit python-blis)
-    (name "python-blis")
-    (version "0.7.8")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "blis" version))
-              (sha256
-               (base32
-                "0mvcif9g69424bk8xiflacxzpvz802ns791v2r8a6fij0sxl3mgp"))))))
 
 (define-public openlibm
   (package
@@ -7573,7 +7672,8 @@ find_package(louvain_communities)")
                   (substitute* (find-files "." "\\.c$")
                     (("\"btor2parser/btor2parser\\.h\"") "<btor2parser.h>")))))))
    (inputs (list btor2tools
-                 boost cryptominisat louvain-community sqlite))
+                 boost cryptominisat louvain-community sqlite
+                 gmp))
    (native-inputs (list googletest pkg-config python-wrapper))
    (home-page "https://boolector.github.io")
    (synopsis "Bitvector-based theory solver")
@@ -8946,44 +9046,6 @@ This package provides the static libraries required to run programs
 compiled against the nauty library.")
     (license license:asl2.0)))
 
-(define-public ppl
-  (package
-    (name "ppl")
-    (version "1.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://www.bugseng.com/products/ppl/download/"
-                           "ftp/releases/" version
-                           "/ppl-" version ".tar.gz"))
-       (sha256
-        (base32
-         "1j5aji1g2vmdvc0gqz45n2ll2l2f6czca04wiyfl5g3sm3a6vhvb"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list m4))
-    (inputs
-     (list glpk gmp))
-    (home-page "https://www.bugseng.com/parma-polyhedra-library")
-    (synopsis
-     "Parma Polyhedra Library for computations with polyhedra")
-    (description
-     "The Parma Polyhedra Library (PPL) provides numerical abstractions
-especially targeted at applications in the field of analysis and
-verification of complex systems.  These abstractions include convex
-polyhedra, defined as the intersection of a finite number of (open or
-closed) halfspaces, each described by a linear inequality (strict or
-non-strict) with rational coefficients; some special classes of polyhedra
-shapes that offer interesting complexity/precision tradeoffs; and grids
-which represent regularly spaced points that satisfy a set of linear
-congruence relations.  The library also supports finite powersets and
-products of (any kind of) polyhedra and grids, a mixed integer linear
-programming problem solver using an exact-arithmetic version of the simplex
-algorithm, a parametric integer programming solver, and primitives for
-termination analysis via the automatic synthesis of linear ranking
-functions.")
-    (license license:gpl3+)))
-
 (define-public speedcrunch
   (package
     (name "speedcrunch")
@@ -9488,12 +9550,17 @@ true in all models.")
                  (add-after 'unpack 'encode-git-hash
                    (lambda _
                      (substitute* "CMakeLists.txt"
-                       (("GIT-hash-notfound") #$commit)))))))
+                       (("GIT-hash-notfound") #$commit))))
+                 (add-after 'unpack 'no-tune-native
+                   (lambda _
+                     (substitute* "CMakeLists.txt"
+                       (("-mtune=native") "")))))))
       (native-inputs (list python))
-      (home-page "https://github.com/meelgroup/louvain-communities")
+      (home-page "https://github.com/meelgroup/louvain-community")
       (synopsis "Multi-criteria community detection")
       (description "This package provides a C++ implementation of the Louvain
 community detection algorithm.")
+      (properties '((tunable? . #t)))
       (license license:lgpl3+))))
 
 (define-public cryptominisat

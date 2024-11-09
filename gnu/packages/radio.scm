@@ -109,6 +109,7 @@
   #:use-module (gnu packages tex)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages toolkits)
   #:use-module (gnu packages video)
   #:use-module (gnu packages web)
   #:use-module (gnu packages wxwidgets)
@@ -2209,6 +2210,36 @@ intended for people who want to learn receiving and sending morse code.")
      "KochMorse is a simple morse-code tutor using the Koch method.")
     (license license:gpl2+)))
 
+(define-public ggmorse
+  (let ((commit "8fb433d6cd6a71940f51b5724663ec0c75bf0b62")
+        (revision "1"))
+    (package
+      (name "ggmorse")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ggerganov/ggmorse")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1lhsmyhljqa6apzbysqar56wpfcdvs3pq9ia1mshqd6d3hz74s78"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list #:configure-flags #~(list "-DGGMORSE_SUPPORT_SDL2=OFF")
+             #:phases #~(modify-phases %standard-phases
+                          (add-after 'unpack 'disable-imgui-build
+                            (lambda _
+                              (substitute* "examples/CMakeLists.txt"
+                                (("add_subdirectory\\(third-party\\)")
+                                 "")))))))
+      (synopsis "Morse code decoder")
+      (description "GGMorse is a library that decodes Morse code in real-time
+from raw audio.")
+      (home-page "https://ggmorse.ggerganov.com/")
+      (license license:expat))))
+
 (define-public gnuais
   (package
     (name "gnuais")
@@ -2633,7 +2664,7 @@ voice formats.")
 (define-public sdrangel
   (package
     (name "sdrangel")
-    (version "7.17.3")
+    (version "7.22.2")
     (source
      (origin
        (method git-fetch)
@@ -2642,7 +2673,7 @@ voice formats.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cvs9nqwx3cqsazxwk9jxlq2bys00zpljhrsbp0sdsnc64ya2din"))))
+        (base32 "02m9kqkk9alnib51b67zssm8126c6ljsy4zfy1sz3zz5z3w10l0w"))))
     (build-system qt-build-system)
     (native-inputs
      (list doxygen graphviz pkg-config))
@@ -2659,7 +2690,10 @@ voice formats.")
            faad2
            ffmpeg
            fftwf
+           flac
+           ggmorse
            hackrf
+           hamlib
            hidapi
            libdab
            libusb
@@ -2671,11 +2705,13 @@ voice formats.")
            qtcharts
            qtdeclarative-5
            qtgamepad
+           qtgraphicaleffects
            qtlocation-5
            qtmultimedia-5
            qtquickcontrols2-5
            qtserialport-5
            qtspeech-5
+           qtsvg-5
            qtwebchannel-5
            qtwebengine-5
            qtwebsockets-5
@@ -2711,6 +2747,9 @@ voice formats.")
          (add-after 'unpack 'fix-CPU-extension-detection
            ;; ‘Fix’ in the static sense.  TODO: Make this -tune'able.
            (lambda _
+             (substitute* "CMakeLists.txt"
+               (("set\\(ARCH_OPT \"native\"")
+                "set(ARCH_OPT \"\""))
              (let ((file "cmake/Modules/DetectArchitecture.cmake"))
                ;; Disable all build-time CPU extension detection…
                (substitute* file

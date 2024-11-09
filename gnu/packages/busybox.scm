@@ -3,6 +3,7 @@
 ;;; Copyright © 2016-2020, 2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018–2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022 LuHui <luhux76@gmail.com>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -36,7 +37,7 @@
 (define-public busybox
   (package
     (name "busybox")
-    (version "1.36.1")
+    (version "1.37.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -44,7 +45,9 @@
                     version ".tar.bz2"))
               (sha256
                (base32
-                "0573gpj51phcz04sg77iznvcxmf5jnbk9gn3g5r9x02daz4j9k5q"))))
+                "1923f21rnlbv1qjvk2qhgqnki5mkgr6z0p8dvzs9jr3l5vrxy49k"))
+              (patches
+               (search-patches "busybox-add-missing-sha-NI-guard.patch"))))
     (build-system gnu-build-system)
     (arguments
      (list #:phases

@@ -67,7 +67,7 @@
 (define-public crun
   (package
     (name "crun")
-    (version "1.17")
+    (version "1.18.2")
     (source
      (origin
        (method url-fetch)
@@ -77,21 +77,22 @@
              "/crun-" version ".tar.gz"))
        (sha256
         (base32
-         "0x78ljwz32bfss0v32rfmahivmqv0qdsydfjsb0a7c602jc60rmp"))))
+         "0hj4nb65pg4bv0ki04mrfirjac96d4bkv94pnp63cb73k2ik1mgx"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags '("--disable-systemd")
-       #:tests? #f ; XXX: needs /sys/fs/cgroup mounted
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-tests
-           (lambda _
-             (substitute* (find-files "tests" "\\.(c|py)")
-               (("/bin/true") (which "true"))
-               (("/bin/false") (which "false"))
-                                        ; relies on sd_notify which requires systemd?
-               (("\"sd-notify\" : test_sd_notify,") "")
-               (("\"sd-notify-file\" : test_sd_notify_file,") "")))))))
+     (list
+      #:configure-flags #~(list "--disable-systemd")
+      #:tests? #f ; XXX: needs /sys/fs/cgroup mounted
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-tests
+            (lambda _
+              (substitute* (find-files "tests" "\\.(c|py)")
+                (("/bin/true") (which "true"))
+                (("/bin/false") (which "false"))
+                ;; relies on sd_notify which requires systemd?
+                (("\"sd-notify\" : test_sd_notify,") "")
+                (("\"sd-notify-file\" : test_sd_notify_file,") "")))))))
     (inputs
      (list libcap
            libseccomp
@@ -338,7 +339,7 @@ Layer-4 sockets.")
 (define-public cni-plugins
   (package
     (name "cni-plugins")
-    (version "1.4.1")
+    (version "1.6.0")
     (source
      (origin
        (method git-fetch)
@@ -346,7 +347,7 @@ Layer-4 sockets.")
              (url "https://github.com/containernetworking/plugins")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0l6f4z762n8blak41wcxdmdhm92gqw2qcxcqd3s4wiql3d7273kj"))
+        (base32 "03x9ql50gg97cixq3cs5lr5anl283irhvc9q9f8aim3xzmrpqfgf"))
        (file-name (git-file-name name version))))
     (build-system go-build-system)
     (arguments
@@ -464,7 +465,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
 (define-public podman
   (package
     (name "podman")
-    (version "5.2.4")
+    (version "5.2.5")
     (source
      (origin
        (method git-fetch)
@@ -472,7 +473,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
              (url "https://github.com/containers/podman")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1kykahdg87hjy2kc29x8sai1k8aqj2ks9q7rw34vkaxd548k6gwr"))
+        (base32 "1s0zjfclayqaknc457wy8iqlb9g170a7v3b8rnv59v3fkhkbpa81"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -578,7 +579,7 @@ To get @code{podman machine} working, install @code{qemu-minimal}, and
 (define-public podman-compose
   (package
     (name "podman-compose")
-    (version "1.0.6")
+    (version "1.2.0")
     (source
      (origin
        (method git-fetch)
@@ -587,18 +588,17 @@ To get @code{podman machine} working, install @code{qemu-minimal}, and
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11dwpifkm20vyi6r3fgmiiqc01mpm4r8l0p5gfh0bawi2gklrhsf"))))
+        (base32 "06vm088q1x7j929n93ylq3bav716bqh6l79agj8sgzsqxjsmli73"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags #~(list "pytests")))
-    (native-inputs
-     (list python-pytest))
-    (propagated-inputs
-     (list python-dotenv python-pyyaml))
+    (native-inputs (list python-pytest python-parameterized))
+    (propagated-inputs (list python-dotenv python-pyyaml))
     (home-page "https://github.com/containers/podman-compose")
     (synopsis "Script to run docker-compose.yml using podman")
-    (description "This package provides an implementation of
+    (description
+     "This package provides an implementation of
 @url{https://compose-spec.io/, Compose Spec} for @code{podman} focused on
 being rootless and not requiring any daemon to be running.")
     (license license:gpl2)))
@@ -606,7 +606,7 @@ being rootless and not requiring any daemon to be running.")
 (define-public buildah
   (package
     (name "buildah")
-    (version "1.37.4")
+    (version "1.37.5")
     (source
      (origin
        (method git-fetch)
@@ -614,7 +614,7 @@ being rootless and not requiring any daemon to be running.")
              (url "https://github.com/containers/buildah")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1zh1qpwdq3zgb1vw3076v13nf7ipsc7v849z4amiaqv94par43dr"))
+        (base32 "0m15pizivwwq2cnmsyhsz5h8zblcvpy06lj82vypg358spq3y0l4"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

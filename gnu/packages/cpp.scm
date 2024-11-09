@@ -38,7 +38,7 @@
 ;;; Copyright © 2023 Liliana Marie Prikler <liliana.prikler@gmail.com>
 ;;; Copyright © 2023 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2023 Foundation Devices, Inc. <hello@foundationdevices.com>
-;;; Copyright © 2023 Paul A. Patience <paul@apatience.com>
+;;; Copyright © 2023-2024 Paul A. Patience <paul@apatience.com>
 ;;; Copyright © 2024 dan <i@dan.games>
 ;;; Copyright © 2024 Peepo Froggings <peepofroggings@tutanota.de>
 
@@ -575,6 +575,29 @@ unified access to TCP/UDP sockets, serial ports, console, and files streams.
 It also allows a server application to wait for any activity on any
 combination of these streams.")
     (license license:bsd-3)))
+
+(define-public debug-assert
+  (package
+    (name "debug-assert")
+    (version "1.3.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/foonathan/debug_assert")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0z9wfh9h83rv6khm6s6bym40vgv2igy4yh665ygsdxwamil254b9"))))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #f))    ; no tests
+    (home-page "https://github.com/foonathan/debug_assert")
+    (synopsis "Assertion macro for C++")
+    (description
+     "debug_assert is a C++11 header-only library which provides the
+@code{DEBUG_ASSERT()} macro, which among other features can be selectively
+enabled in different parts of your code.")
+      (license license:zlib)))
 
 (define-public xsimd
   (package
@@ -1921,7 +1944,7 @@ event loops it also provides lenses and cursors.")
 (define-public atomic-queue
   (package
     (name "atomic-queue")
-    (version "1.0")
+    (version "1.6.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1930,7 +1953,7 @@ event loops it also provides lenses and cursors.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ssff73wlvrsk2nma99dmvm0ijyzfr54jk37kxgpb694r7ajc90l"))))
+                "1qr9wi017pb62cfga91prxgqjsz4y2jr8fyp4dvfccwr2pynwrnh"))))
     (build-system meson-build-system)
     (arguments
      `(#:configure-flags '("-Dbenchmarks=false")
@@ -3298,6 +3321,66 @@ ordered erase operations.")
 the std::optional for C++11/14/17, with support for monadic operations added in
 C++23.")
     (license license:cc0)))
+
+(define-public type-safe
+  (package
+    (name "type-safe")
+    (version "0.2.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/foonathan/type_safe")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qb4g9x22m8w9d7n9793cbig5a06wlhzqwlr276yxvz5yyzsxjfg"))
+       (modules '((guix build utils)))
+       ;; Remove bundled debug_assert.
+       ;; Keep external/external.cmake because it enables
+       ;; TYPE_SAFE_HAS_IMPORTED_TARGETS, required for installing the CMake
+       ;; config files.
+       (snippet #~(delete-file-recursively "external/debug_assert"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "-DTYPE_SAFE_BUILD_TEST_EXAMPLE=ON"
+                   "-DTYPE_SAFE_BUILD_DOC=OFF") ; needs standardese
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'fix-dependencies
+                 (lambda _
+                   (substitute*
+                       (list "include/type_safe/detail/assert.hpp"
+                             "include/type_safe/detail/force_inline.hpp")
+                     (("#include <debug_assert.hpp>")
+                      (string-append "#include <"
+                                     #$(this-package-input "debug-assert")
+                                     "/include/debug_assert.hpp>")))
+                   (substitute* "test/CMakeLists.txt"
+                     (("^if\\(NOT EXISTS .*/catch\\.hpp\\)") "if(FALSE)")
+                     (("^(target_include_directories\\(type_safe_test) .*"
+                       all prefix)
+                      (string-append all prefix " PRIVATE \""
+                                     #$(this-package-native-input "catch2")
+                                     "/include/catch2\")\n")))))
+               (add-after 'install 'fix-cmake-config
+                 (lambda _
+                   (substitute* (string-append
+                                 #$output
+                                 "/lib/cmake/type_safe/type_safe-config.cmake")
+                     (("^(find_dependency\\(debug_assert)\\)" _ prefix)
+                      (string-append prefix " PATHS \""
+                                     #$(this-package-input "debug-assert")
+                                     "/lib/cmake/debug_assert\")"))))))))
+    (native-inputs (list catch2))
+    (inputs (list debug-assert))
+    (home-page "https://github.com/foonathan/type_safe")
+    (synopsis "C++ abstractions for preventing bugs via the type system")
+    (description "type_safe is a C++ header-only library which provides
+abstractions for defining more appropriate types, thus allowing C++'s type
+system to prevent more bugs.")
+    (license license:expat)))
 
 (define-public cpp-ada-url-parser
   (package

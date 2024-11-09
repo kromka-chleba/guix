@@ -140,7 +140,7 @@
 (define-public qcoro-qt5
   (package
     (name "qcoro-qt5")
-    (version "0.10.0")
+    (version "0.11.0")
     (source
      (origin
        (method git-fetch)
@@ -149,7 +149,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0inhjc9zknc64q6gajkljfpm2287arg1j0848ia3rhqcbc53k28b"))))
+        (base32 "0g9laaw1mkp5ynpp3c7aingndcmgncbacslq3p6bzwjisdd6xr5m"))))
     (build-system qt-build-system)
     (arguments
      (list #:configure-flags
@@ -1956,7 +1956,8 @@ set of plugins for interacting with pulseaudio and GStreamer.")
               (method url-fetch)
               (uri (qt-url name version))
               (patches (search-patches "qtwayland-dont-recreate-callbacks.patch"
-                                       "qtwayland-cleanup-callbacks.patch"))
+                                       "qtwayland-cleanup-callbacks.patch"
+                                       "qtwayland-update-wayland-xml.patch"))
               (sha256
                (base32
                 "1w9nclz1lfg5haq3m6ihils0kl2n1pqagdyh71ry1m281w8gvly8"))))
@@ -2011,6 +2012,8 @@ compositor libraries.")))
      (origin
        (method url-fetch)
        (uri (qt-url name version))
+       (patches (search-patches
+                 "qtwayland-6-update-wayland-xml.patch"))
        (sha256
         (base32 "0gamcqpl302wlznfnlcg9vlnnhfpxgjnz05prwc9wpy0xh7wqvm9"))))
     (build-system cmake-build-system)
@@ -2026,7 +2029,11 @@ compositor libraries.")))
                      (((string-append
                         "QVERIFY\\(!cursorSurface\\(\\)->"
                         "m_waitingFrameCallbacks\\.empty\\(\\)\\);")) "")
-                     (("QTRY_COMPARE\\(bufferSpy\\.size\\(\\), 1\\);") ""))))
+                     (("QTRY_COMPARE\\(bufferSpy\\.size\\(\\), 1\\);") ""))
+                   ;; known failing with wayland-1.23.0, so skip this.
+                   ;; See also: <https://bugreports.qt.io/browse/QTBUG-126379>
+                   (substitute* "tests/auto/client/CMakeLists.txt"
+                     (("add_subdirectory\\(scaling\\)") ""))))
                (add-before 'check 'set-test-environment
                  (lambda _
                    (setenv "XDG_RUNTIME_DIR" (getcwd))

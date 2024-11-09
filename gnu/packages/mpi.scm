@@ -147,7 +147,7 @@ bind processes, and much more.")
 (define-public hwloc-2
   (package
     (inherit hwloc-1)
-    (version "2.11.1")
+    (version "2.11.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.open-mpi.org/release/hwloc/v"
@@ -155,7 +155,7 @@ bind processes, and much more.")
                                   "/hwloc-" version ".tar.bz2"))
               (sha256
                (base32
-                "1ikhg35pll9zs628n2nii3ranz9j850hykqqcrgy2p12mpzzpk84"))))
+                "02c4zqifmfk91a8q5515c4azgx6hmmcbc5d9l7qh0w86mvn8zy7p"))))
 
     (native-inputs (modify-inputs (package-native-inputs hwloc-1)
                      (append bash)))              ;for completion tests
@@ -339,37 +339,46 @@ software vendors, application developers and computer science researchers.")
 
     (outputs '("out" "debug"))
     (arguments
-     (substitute-keyword-arguments (package-arguments openmpi)
-       ((#:configure-flags _)
-        #~(list "--enable-mpi-ext=affinity" ;cr doesn't work
-                "--with-sge"
+     (list #:configure-flags
+           #~(list "--enable-mpi-ext=affinity"         ;cr doesn't work
+                   "--with-sge"
 
-                #$@(if (package? (this-package-input "valgrind"))
-                       #~("--enable-memchecker"
-                          "--with-valgrind")
-                       #~("--without-valgrind"))
+                   #$@(if (package? (this-package-input "valgrind"))
+                          #~("--enable-memchecker"
+                             "--with-valgrind")
+                          #~("--without-valgrind"))
 
-                "--with-hwloc=external"
-                "--with-libevent"
+                   "--with-hwloc=external"
+                   "--with-libevent"
 
-                ;; This replaces --enable-mpirun-prefix-by-default wich is deprecated
-                ;; since 5.x.
-                "--enable-prte-prefix-by-default"
+                   ;; This replaces --enable-mpirun-prefix-by-default wich is deprecated
+                   ;; since 5.x.
+                   "--enable-prte-prefix-by-default"
 
-                ;; Enable support for the 'Process Management Interface for Exascale'
-                ;; (PMIx) used e.g. by Slurm for the management communication and
-                ;; coordination of MPI processes.
-                (string-append "--with-pmix=" #$(this-package-input "openpmix"))
-                (string-append "--with-prrte=" #$(this-package-input "prrte"))
+                   ;; Enable support for the 'Process Management Interface for Exascale'
+                   ;; (PMIx) used e.g. by Slurm for the management communication and
+                   ;; coordination of MPI processes.
+                   (string-append "--with-pmix=" #$(this-package-input "openpmix"))
+                   (string-append "--with-prrte=" #$(this-package-input "prrte"))
 
-                ;; Since 5.x, Infiniband support is provided by ucx.
-                ;; See https://docs.open-mpi.org/en/main/release-notes/networks.html#miscellaneous-network-notes
-                (string-append "--with-ucx=" #$(this-package-input "ucx"))))
+                   ;; Since 5.x, Infiniband support is provided by ucx.
+                   ;; See https://docs.open-mpi.org/en/main/release-notes/networks.html#miscellaneous-network-notes
+                   (string-append "--with-ucx=" #$(this-package-input "ucx")))
 
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            (delete 'remove-absolute)
-            (delete 'scrub-timestamps)))))))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'build 'remove-absolute
+                 (lambda _
+                   ;; Remove compiler absolute file names (OPAL_FC_ABSOLUTE
+                   ;; etc.) to reduce the closure size.  See
+                   ;; <https://lists.gnu.org/archive/html/guix-devel/2017-07/msg00388.html>
+                   ;; and
+                   ;; <https://www.mail-archive.com/users@lists.open-mpi.org//msg31397.html>.
+                   (substitute* '("oshmem/tools/oshmem_info/param.c"
+                                  "ompi/tools/ompi_info/param.c")
+                     (("_ABSOLUTE") "")))))
+
+           #:disallowed-references (list (canonical-package gcc))))))
 
 (define-public openmpi-c++
   (package/inherit openmpi
