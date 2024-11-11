@@ -8,6 +8,7 @@
 ;;; Copyright © 2021 Sarah Morgensen <iskarian@mgsn.dev>
 ;;; Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2024 Christina O'Donnell <cdo@mutix.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -39,7 +40,9 @@
   #:autoload   (htmlprag) (html->sxml)            ;from Guile-Lib
   #:autoload   (guix base32) (bytevector->nix-base32-string)
   #:autoload   (guix build utils) (mkdir-p)
+  #:autoload   (guix ui) (warning)
   #:autoload   (gcrypt hash) (hash-algorithm sha256)
+  #:autoload   (git structs) (git-error-message)
   #:use-module (ice-9 format)
   #:use-module (ice-9 match)
   #:use-module (ice-9 peg)
@@ -71,6 +74,10 @@
 ;;; Modules in Go are a "collection of related Go packages" which are "the
 ;;; unit of source code interchange and versioning".  Modules are generally
 ;;; hosted in a repository.
+;;;
+;;; Monorepo is a collection of modules within the same VCS source.  Each
+;;; module of monorepo may be released individually by assigning
+;;; "<subdir>/v<semver>" tag (see: https://go.dev/ref/mod#modules-overview).
 ;;;
 ;;; At this point it should handle correctly modules which have only Go
 ;;; dependencies and are accessible from proxy.golang.org (or configured via
@@ -122,15 +129,14 @@ https://godoc.org/golang.org/x/mod/module#hdr-Escaped_Paths)."
 (define (go.pkg.dev-info name)
   (http-fetch* (string-append "https://pkg.go.dev/" name)))
 
-(define* (go-module-version-string goproxy name #:key version)
-  "Fetch the version string of the latest version for NAME from the given
+(define* (go-module-version-info goproxy name #:key version)
+  "Fetch a JSON object encoding about the lastest version for NAME from the given
 GOPROXY server, or for VERSION when specified."
   (let ((file (if version
                   (string-append "@v/" version ".info")
                   "@latest")))
-    (assoc-ref (json-fetch* (format #f "~a/~a/~a"
-                                    goproxy (go-path-escape name) file))
-               "Version")))
+    (json-fetch* (format #f "~a/~a/~a"
+                         goproxy (go-path-escape name) file))))
 
 (define* (go-module-available-versions goproxy name)
   "Retrieve the available versions for a given module from the module proxy.
@@ -140,8 +146,17 @@ styles for the same package."
          (body (http-fetch* url))
          (versions (remove string-null? (string-split body #\newline))))
     (if (null? versions)
-        (list (go-module-version-string goproxy name)) ;latest version
-        versions)))
+        (begin
+          (warning (G_ "Empty list of versions on proxy ~a for package '~a'. Using latest.~%")
+                   goproxy name)
+          ;; If we haven't recieved any versions, look in the version-info json
+          ;; object and return a one-element list if found.
+          (or (and=> (assoc-ref (go-module-version-info goproxy name) "Version")
+                     list)
+              (raise (make-compound-condition
+                      (formatted-message (G_ "No versions available for '~a' on proxy ~a.")
+                                         name goproxy))))))
+        versions))
 
 (define (go-package-licenses name)
   "Retrieve the list of licenses that apply to NAME, a Go package or module
@@ -431,7 +446,7 @@ DIRECTIVE."
 (/[A-Za-z0-9_.\\-]+)*$"
     'git)))
 
-(define (module-path->repository-root module-path)
+(define (module-path->repository-root module-path version-info)
   "Infer the repository root from a module path.  Go modules can be
 defined at any level of a repository tree, but querying for the meta tag
 usually can only be done from the web page at the root of the repository,
@@ -452,8 +467,22 @@ hence the need to derive this information."
              (lambda (vcs)
                (match:substring (regexp-exec (vcs-root-regex vcs)
                                              module-path) 1)))
+      (and=> (assoc-ref version-info "Origin")
+             (lambda (origin)
+               (and=> (assoc-ref origin "Subdir")
+                      (lambda (subdir)
+                        ;; If version-info contains a 'subdir' and that is a suffix,
+                        ;; then the repo-root can be found by stripping off the
+                        ;; suffix.
+                        (if (string-suffix? (string-append "/" subdir) module-path)
+                            (string-drop-right module-path
+                                               (+ 1 (string-length subdir)))
+                            #f)))))
       (vcs-qualified-module-path->root-repo-url module-path)
-      module-path))
+      (begin
+        (warning (G_ "Unable to determine repository root of '~a'. Guessing '~a'.~%")
+                 module-path module-path)
+        module-path)))
 
 (define* (go-module->guix-package-name module-path #:optional version)
   "Converts a module's path to the canonical Guix format for Go packages.
@@ -498,14 +527,19 @@ build a package."
          (select (sxpath `(// (meta (@ (equal? (name "go-import"))))
                               // content))))
     (match (select (html->sxml meta-data #:strict? #t))
-      (() #f)                           ;nothing selected
+      (() (raise (make-compound-condition
+                  (formatted-message (G_ "no <meta/> element in result when accessing module path '~a' using go-get")
+                                     module-path))))
       ((('content content-text) ..1)
        (or
         (find (lambda (meta)
                 (string-prefix? (module-meta-import-prefix meta) module-path))
               (map go-import->module-meta content-text))
         ;; Fallback to the first meta if no import prefixes match.
-        (go-import->module-meta (first content-text)))))))
+        (go-import->module-meta (first content-text))
+        (raise (make-compound-condition
+                (formatted-message (G_ "unable to parse <meta/> when accessing module path '~a' using go-get")
+                                   module-path))))))))
 
 (define (module-meta-data-repo-url meta-data goproxy)
   "Return the URL where the fetcher which will be used can download the
@@ -534,13 +568,21 @@ tag."
                                           `(tag-or-commit . ,reference)))))
     (file-hash* checkout #:algorithm algorithm #:recursive? #true)))
 
-(define (vcs->origin vcs-type vcs-repo-url version)
+(define (vcs->origin vcs-type vcs-repo-url version subdir)
   "Generate the `origin' block of a package depending on what type of source
 control system is being used."
   (case vcs-type
     ((git)
-     (let ((plain-version? (string=? version (go-version->git-ref version)))
-           (v-prefixed?    (string-prefix? "v" version)))
+     (let* ((plain-version? (string=? version (go-version->git-ref version
+                                                                   #:subdir subdir)))
+            (v-prefixed?    (string-prefix? "v" version))
+            ;; This is done because the version field of the package,
+            ;; which the generated quoted expression refers to, has been
+            ;; stripped of any 'v' prefixed.
+            (version-expr   (if (and plain-version? v-prefixed?)
+                                '(string-append "v" version)
+                                `(go-version->git-ref version
+                                                      ,@(if subdir `(#:subdir ,subdir) '())))))
        `(origin
           (method git-fetch)
           (uri (git-reference
@@ -548,14 +590,13 @@ control system is being used."
                 ;; This is done because the version field of the package,
                 ;; which the generated quoted expression refers to, has been
                 ;; stripped of any 'v' prefixed.
-                (commit ,(if (and plain-version? v-prefixed?)
-                             '(string-append "v" version)
-                             '(go-version->git-ref version)))))
+                (commit ,version-expr)))
           (file-name (git-file-name name version))
           (sha256
            (base32
             ,(bytevector->nix-base32-string
-              (git-checkout-hash vcs-repo-url (go-version->git-ref version)
+              (git-checkout-hash vcs-repo-url (go-version->git-ref version
+                                                                   #:subdir subdir)
                                  (hash-algorithm sha256))))))))
     ((hg)
      `(origin
@@ -612,6 +653,12 @@ available versions:~{ ~a~}.")
                                   (map strip-v-prefix
                                        available-versions)))))))))
 
+(define (path-diff parent child)
+  (if (and (string-prefix? parent child) (not (string=? parent child)))
+      (let ((parent-len (string-length parent)))
+        (string-trim (substring child parent-len) (char-set #\/)))
+      #f))
+
 (define* (go-module->guix-package module-path #:key
                                   (goproxy "https://proxy.golang.org")
                                   version
@@ -623,9 +670,11 @@ When VERSION is unspecified, the latest version available is used."
   (let* ((available-versions (go-module-available-versions goproxy module-path))
          (version* (validate-version
                     (or (and version (ensure-v-prefix version))
-                        (go-module-version-string goproxy module-path)) ;latest
+                        (assoc-ref (go-module-version-info goproxy module-path)
+                                   "Version")) ;latest
                     available-versions
                     module-path))
+         (version-info (go-module-version-info goproxy module-path #:version version*))
          (content (fetch-go.mod goproxy module-path version*))
          (min-go-version (second (go.mod-go-version (parse-go.mod content))))
          (dependencies+versions (go.mod-requirements (parse-go.mod content)))
@@ -634,11 +683,13 @@ When VERSION is unspecified, the latest version available is used."
                            (map car dependencies+versions)))
          (module-path-sans-suffix
           (match:prefix (string-match "([\\./]v[0-9]+)?$" module-path)))
-         (guix-name (go-module->guix-package-name module-path))
-         (root-module-path (module-path->repository-root module-path))
+         (guix-name (go-module->guix-package-name module-path-sans-suffix ))
+         (root-module-path (module-path->repository-root module-path-sans-suffix
+                                                         version-info))
          ;; The VCS type and URL are not included in goproxy information. For
          ;; this we need to fetch it from the official module page.
          (meta-data (fetch-module-meta-data root-module-path))
+         (subdir (path-diff root-module-path module-path-sans-suffix))
          (vcs-type (module-meta-vcs meta-data))
          (vcs-repo-url (module-meta-data-repo-url meta-data goproxy))
          (synopsis (go-package-synopsis module-path))
@@ -649,14 +700,14 @@ When VERSION is unspecified, the latest version available is used."
         (name ,guix-name)
         (version ,(strip-v-prefix version*))
         (source
-         ,(vcs->origin vcs-type vcs-repo-url version*))
+         ,(vcs->origin vcs-type vcs-repo-url version* subdir))
         (build-system go-build-system)
         (arguments
          (list ,@(if (version>? min-go-version (package-version (go-package)))
                      `(#:go ,(string->number min-go-version))
                      '())
                #:import-path ,module-path
-               ,@(if (string=? module-path-sans-suffix root-module-path)
+               ,@(if (string=? module-path root-module-path)
                      '()
                      `(#:unpack-path ,root-module-path))))
         ,@(maybe-propagated-inputs
@@ -685,16 +736,35 @@ When VERSION is unspecified, the latest version available is used."
     ;; consistently.
     (setvbuf (current-error-port) 'none)
     (let ((package-name (match args ((name _ ...) name))))
-      (guard (c ((http-get-error? c)
-                 (warning (G_ "Failed to import package ~s.
+      (begin
+        (info (G_ "Importing package ~s...~%") package-name)
+        (guard (c ((http-get-error? c)
+                        (warning (G_ "Failed to import package ~s.
 reason: ~s could not be fetched: HTTP error ~a (~s).
 This package and its dependencies won't be imported.~%")
-                          package-name
-                          (uri->string (http-get-error-uri c))
-                          (http-get-error-code c)
-                          (http-get-error-reason c))
-                 (values #f '())))
-        (apply go-module->guix-package args)))))
+                                 package-name
+                                 (uri->string (http-get-error-uri c))
+                                 (http-get-error-code c)
+                                 (http-get-error-reason c))
+
+                        (values #f '()))
+                  ((formatted-message? c)
+                   (warning (G_ "Failed to import package ~s.
+reason: ~a
+This package and its dependencies won't be imported.~%")
+                            package-name
+                            (apply format #f
+                                   (formatted-message-string c)
+                                   (formatted-message-arguments c)))
+                   (values #f '()))
+                  ((eq? (exception-kind c) 'git-error)
+                   (warning (G_ "Failed to import package ~s.
+reason: ~a
+This package and its dependencies won't be imported.~%")
+                            package-name
+                            (git-error-message c))
+                   (values #f '())))
+               (apply go-module->guix-package args))))))
 
 (define* (go-module-recursive-import package-name
                                      #:key (goproxy "https://proxy.golang.org")

@@ -313,26 +313,44 @@ metrics.")
 (define-public go-github-com-prometheus-common-sigv4
   (package
     (name "go-github-com-prometheus-common-sigv4")
-    (version "0.55.0")
+    (version "0.1.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/prometheus/common")
-             (commit (string-append "v" version))))
+             (commit (go-version->git-ref version
+                                          #:subdir "sigv4"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0bsbxil7qz8rhckhv0844nmn38g7i7347cjv5m6na47hbdpi0rqh"))))
+        (base32 "08sdhxryl1jpy829qki8k2jy773xhrbr9wsk997pxhbbvl634gvb"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        #~(begin
+            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
+            ;; Consider to implement it as re-usable procedure in
+            ;; guix/build/utils or guix/build-system/go.
+            (define (delete-all-but directory . preserve)
+              (define (directory? x)
+                (and=> (stat x #f)
+                       (compose (cut eq? 'directory <>) stat:type)))
+              (with-directory-excursion directory
+                (let* ((pred
+                        (negate (cut member <> (append '("." "..") preserve))))
+                       (items (scandir "." pred)))
+                  (for-each (lambda (item)
+                              (if (directory? item)
+                                  (delete-file-recursively item)
+                                  (delete-file item)))
+                            items))))
+            (delete-all-but "." "sigv4")))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/prometheus/common/sigv4"
-      #:unpack-path "github.com/prometheus/common"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'unpack 'override-prometheus-common
-            (lambda _
-              (delete-file-recursively "src/github.com/prometheus/common"))))))
+      #:unpack-path "github.com/prometheus/common"))
     (native-inputs
      (list go-github-com-stretchr-testify))
     (propagated-inputs
@@ -347,6 +365,39 @@ metrics.")
 using Amazon's Signature Verification V4 signing procedure, using credentials
 from the default AWS credential chain.")
     (license license:asl2.0)))
+
+(define-public go-github-com-prometheus-community-pro-bing
+  (package
+    (name "go-github-com-prometheus-community-pro-bing")
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/prometheus-community/pro-bing")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1yz4cf1qrm1jrzw2yd5p08663hynk4ihlf5mi2fn6irnzh343a7b"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; Tests requiring network setup.
+      #:test-flags
+      #~(list "-skip" (string-append "TestNewPingerValid"
+                                     "|TestSetIPAddr"
+                                     "|TestSetResolveTimeout"))
+      #:import-path "github.com/prometheus-community/pro-bing"))
+    (propagated-inputs
+     (list go-github-com-google-uuid
+           go-golang-org-x-net
+           go-golang-org-x-sync))
+    (home-page "https://github.com/prometheus-community/pro-bing")
+    (synopsis "Continuous probers Golang library")
+    (description
+     "This package implements @acronym{Internet Control Message
+Protocol,ICMP} echo (ping) functionality.")
+    (license license:expat)))
 
 (define-public go-github-com-prometheus-exporter-toolkit
   (package
@@ -367,20 +418,17 @@ from the default AWS credential chain.")
       #:import-path "github.com/prometheus/exporter-toolkit"
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'disable-failing-tests
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                (substitute* (find-files "." "\\_test.go$")
-                  ;; Some tests require network set up.
-                  (("TestServerBehaviour") "OffTestServerBehaviour")
-                  (("TestConfigReloading") "OffTestConfigReloading")))))
           ;; XXX: Workaround for go-build-system's lack of Go modules support.
           (delete 'build)
           (replace 'check
             (lambda* (#:key tests? import-path #:allow-other-keys)
               (when tests?
                 (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go" "test" "-v" "./..."))))))))
+                  (invoke "go" "test" "-v"
+                          "-skip" "TestServerBehaviour|TestConfigReloading"
+                          "./..."))))))))
+    (native-inputs
+     (list go-google-golang-org-protobuf))
     (propagated-inputs
      (list go-github-com-alecthomas-kingpin-v2
            go-github-com-coreos-go-systemd-v22
@@ -463,32 +511,7 @@ kernel, and process metrics from the @file{/proc} pseudo file system.")
     (arguments
      (list
       #:import-path "github.com/prometheus/statsd_exporter"
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; FIXME: pattern landing_page.css: cannot embed irregular file
-          ;; landing_page.css
-          ;;
-          ;; This happens due to Golang can't determine the valid directory of
-          ;; the module which is sourced during setup environment phase, but
-          ;; easy resolved after coping to expected directory "vendor" within
-          ;; the current package, see details in Golang source:
-          ;;
-          ;; - URL: <https://github.com/golang/go/blob/>
-          ;; - commit: 82c14346d89ec0eeca114f9ca0e88516b2cda454
-          ;; - file: src/cmd/go/internal/load/pkg.go#L2059
-          (add-before 'build 'copy-input-to-vendor-directory
-            (lambda* (#:key import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                (mkdir "vendor")
-                (copy-recursively
-                 (string-append
-                  #$(this-package-input "go-github-com-prometheus-exporter-toolkit")
-                  "/src/github.com")
-                 "vendor/github.com"))))
-          (add-before 'install 'remove-vendor-directory
-            (lambda* (#:key import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                (delete-file-recursively "vendor")))))))
+      #:embed-files #~(list "landing_page.css" "landing_page.html")))
     (native-inputs
      (list go-github-com-stvp-go-udp-testing))
     (propagated-inputs

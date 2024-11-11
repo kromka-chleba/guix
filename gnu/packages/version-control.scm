@@ -3686,6 +3686,7 @@ will reconstruct the object along its delta-base chain and return it.")
     (build-system go-build-system)
     (arguments
      (list
+      #:embed-files #~(list "children" "nodes" "text")
       #:import-path "github.com/git-lfs/git-lfs"
       #:install-source? #f
       #:phases
@@ -3695,13 +3696,6 @@ will reconstruct the object along its delta-base chain and return it.")
               (substitute* "src/github.com/git-lfs/git-lfs/lfs/hook.go"
                 (("/bin/sh")
                  (search-input-file inputs "bin/sh")))))
-          (add-after 'unpack 'fix-embed-x-net
-            (lambda _
-              (delete-file-recursively "src/golang.org/x/net/publicsuffix/data")
-              (copy-recursively
-               #$(file-append (this-package-input "go-golang-org-x-net")
-                              "/src/golang.org/x/net/publicsuffix/data")
-               "src/golang.org/x/net/publicsuffix/data")))
           ;; Only build the man pages if ruby-asciidoctor is available.
           #$@(if (this-package-native-input "ruby-asciidoctor")
                #~((add-before 'build 'man-gen
@@ -3922,9 +3916,9 @@ of machine readable.  This helps improve code quality and helps you spot
 defects faster.")
     (license license:expat)))
 
-(define-public go-github-go-git
+(define-public go-github-com-go-git-go-git-v5
   (package
-    (name "go-github-go-git")
+    (name "go-github-com-go-git-go-git-v5")
     (version "5.1.0")
     (source (origin
               (method git-fetch)
@@ -3937,28 +3931,27 @@ defects faster.")
                 "1vkcmhh2qq8c38sjbnzf0wvg2rzr19wssaq177bsvrjwj1xz1qbs"))))
     (build-system go-build-system)
     (arguments
-     `(#:tests? #f ;requires network connection
-       #:import-path "github.com/go-git/go-git/v5"
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'setup
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let* ((git (assoc-ref inputs "git"))
-                    (git-bin (string-append (assoc-ref inputs "git") "/bin"))
-                    (git-exe (string-append git-bin "/git")))
-               (setenv "GIT_DIST_PATH=" git)
-               (setenv "GIT_EXEC_PATH=" git-bin)
-               (setenv "HOME" (getcwd))
-               (invoke git-exe "config" "--global" "user.email" "gha@example.com")
-               (invoke git-exe "config" "--global" "user.name" "GitHub Actions")
-               #t)
-             #t)))))
+     (list
+      #:tests? #f ;requires network connection
+      #:import-path "github.com/go-git/go-git/v5"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'setup
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((git #$(this-package-native-input "git"))
+                     (git-bin (string-append git "/bin"))
+                     (git-exe (string-append git-bin "/git")))
+                (setenv "GIT_DIST_PATH=" git)
+                (setenv "GIT_EXEC_PATH=" git-bin)
+                (setenv "HOME" (getcwd))
+                (invoke git-exe "config" "--global" "user.email" "gha@example.com")
+                (invoke git-exe "config" "--global" "user.name" "GitHub Actions")))))))
     (propagated-inputs
      (list go-github-com-alcortesm-tgz
            go-github-com-emirpasic-gods
            go-github-com-go-git-gcfg
-           go-github-com-go-git-go-billy
-           go-github-com-go-git-go-git-fixtures
+           go-github-com-go-git-go-billy-v5
+           go-github-com-go-git-go-git-fixtures-v4
            go-github-com-imdario-mergo
            go-github-com-jbenet-go-context
            go-github-com-kevinburke-ssh-config

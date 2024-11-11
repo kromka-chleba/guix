@@ -1689,17 +1689,20 @@ trezord as a regular user instead of needing to it run as root.")
        (file-name (git-file-name name version))))
     (build-system go-build-system)
     (arguments
-     `(#:go ,go-1.18
-       #:import-path "github.com/trezor/trezord-go"))
+     (list
+      #:go go-1.18
+      #:install-source? #f
+      #:import-path "github.com/trezor/trezord-go"))
     (native-inputs
      (list go-github-com-gorilla-csrf
            go-github-com-gorilla-handlers
            go-github-com-gorilla-mux
-           go-gopkg-in-natefinch-lumberjack.v2))
+           go-gopkg-in-natefinch-lumberjack-v2))
     (home-page "https://trezor.io")
     (synopsis "Trezor Communication Daemon aka Trezor Bridge (written in Go)")
-    (description "This allows a Trezor hardware wallet to communicate to the
-Trezor wallet.")
+    (description
+     "This allows a Trezor hardware wallet to communicate to the Trezor
+wallet.")
     (license license:lgpl3+)))
 
 (define-public libofx

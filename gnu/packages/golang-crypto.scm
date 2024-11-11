@@ -137,33 +137,10 @@ can be ignored.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "filippo.io/age"
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; FIXME: src/c2sp.org/CCTV/age/age.go:13:12: pattern testdata:
-          ;; cannot embed directory testdata: contains no embeddable files
-          ;;
-          ;; This happens due to Golang can't determine the valid directory of
-          ;; the module which is sourced during setup environment phase, but
-          ;; easy resolved after coping to expected directory "vendor" within
-          ;; the current package, see details in Golang source:
-          ;;
-          ;; - URL: <https://github.com/golang/go/blob/>
-          ;; - commit: 82c14346d89ec0eeca114f9ca0e88516b2cda454
-          ;; - file: src/cmd/go/internal/load/pkg.go#L2059
-          (add-before 'build 'copy-input-to-vendor-directory
-            (lambda* (#:key import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                (mkdir "vendor")
-                (copy-recursively
-                 (string-append
-                  #$(this-package-native-input "go-c2sp-org-cctv-age")
-                  "/src/c2sp.org")
-                 "vendor/c2sp.org"))))
-          (add-before 'install 'remove-vendor-directory
-            (lambda* (#:key import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                (delete-file-recursively "vendor")))))))
+      #:embed-files #~(list "armor.*" "header_crlf" "hmac_.*" "scrypt.*"
+                            "stanza_.*" "stream_.*" "version_unsupported"
+                            "x25519.*" "x25519_.*")
+      #:import-path "filippo.io/age"))
     (native-inputs
      (list go-c2sp-org-cctv-age
            go-github-com-rogpeppe-go-internal))
@@ -264,31 +241,59 @@ pcredential store, Pass, Secret Service, KDE Wallet, Encrypted File.")
     (license license:expat)))
 
 (define-public go-github-com-aead-chacha20
-  (let ((commit "8b13a72661dae6e9e5dea04f344f0dc95ea29547")
-        (revision "0"))
-    (package
-      (name "go-github-com-aead-chacha20")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/aead/chacha20")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0gbmgq5kbqmbyrsav57ql4jzbvqvp1q7yvcd5fl3wf5g94iyv56r"))))
-      (build-system go-build-system)
-      (arguments
-       `(#:import-path "github.com/aead/chacha20"))
-      (propagated-inputs
-       (list go-golang-org-x-sys))
-      (home-page "https://github.com/aead/chacha20")
-      (synopsis "ChaCha20 and XChaCha20 stream ciphers")
-      (description "ChaCha is a stream cipher family created by Daniel
-Bernstein.  The most common ChaCha variant is ChaCha20 (20 rounds).  ChaCha20
-is standardized in RFC 7539.")
-      (license license:expat))))
+  (package
+    (name "go-github-com-aead-chacha20")
+    (version "0.0.0-20180709150244-8b13a72661da")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aead/chacha20")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gbmgq5kbqmbyrsav57ql4jzbvqvp1q7yvcd5fl3wf5g94iyv56r"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/aead/chacha20"))
+    (propagated-inputs
+     (list go-golang-org-x-sys))
+    (home-page "https://github.com/aead/chacha20")
+    (synopsis "ChaCha20 and XChaCha20 stream ciphers")
+    (description
+     "ChaCha is a stream cipher family created by Daniel Bernstein.  The most
+common ChaCha variant is ChaCha20 (20 rounds).  ChaCha20 is standardized in
+RFC 7539.")
+    (license license:expat)))
+
+(define-public go-github-com-aead-ecdh
+  (package
+    (name "go-github-com-aead-ecdh")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aead/ecdh")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0b0ps5wzm0q0skzikp91l8slgaw5s9z42g4wnmc69am5gw7h4mpd"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/aead/ecdh"))
+    (propagated-inputs
+     (list go-golang-org-x-crypto))
+    (home-page "https://github.com/aead/ecdh")
+    (synopsis "Elliptic Cureves Deffie-Hellman key exchange implementation in Golang")
+    (description
+     "Package ecdh implements the Diffie-Hellman key exchange using elliptic
+curves (ECDH).  It directly provides ECDH implementations for the NIST curves
+P224, P256, P384, and Bernstein's Cruve25519.  The same logic is available in
+Go 1.20 @code{crypto/ecdh} standard package.")
+    (license license:expat)))
 
 (define-public go-github-com-aperturerobotics-jacobsa-crypto
   (let ((commit "b1eb679742a8deed015a4406384eea6bd985d08a")
@@ -560,13 +565,7 @@ one-time authenticator as specified in
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/decred/dcrd")
-             (commit (go-version->git-ref
-                      ;; XXX: While waiting on consensus:
-                      ;; - https://issues.guix.gnu.org/52362
-                      ;; - https://issues.guix.gnu.org/63001
-                      ;; - https://issues.guix.gnu.org/63647
-                      ;; - https://issues.guix.gnu.org/69827
-                      (string-append "crypto/blake256/v" version)))))
+             (commit (go-version->git-ref version #:subdir "crypto/blake256"))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1mjzlyz2a3516g46kv421nacjd7p4g9l8ih4i7xijvsi480s5pja"))
@@ -604,13 +603,7 @@ and AVX acceleration and zero allocations.")
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/decred/dcrd")
-             (commit (go-version->git-ref
-                      ;; XXX: While waiting on consensus:
-                      ;; - https://issues.guix.gnu.org/52362
-                      ;; - https://issues.guix.gnu.org/63001
-                      ;; - https://issues.guix.gnu.org/63647
-                      ;; - https://issues.guix.gnu.org/69827
-                      (string-append "dcrec/secp256k1/v" version)))))
+             (commit (go-version->git-ref version #:subdir "dcrec/secp256k1"))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "19yqrrspm6n1x7wa1chqj0j95bc5w02ygddr06ajzf6x7i7q09q5"))
@@ -1583,8 +1576,7 @@ wide-block encryption mode developed by Halevi and Rogaway.")
 (define-public go-github-com-shadowsocks-go-shadowsocks2
   (package
     (name "go-github-com-shadowsocks-go-shadowsocks2")
-    ;; Version > 0.1.3 requires go-toolchain v1.16.
-    (version "0.1.3")
+    (version "0.1.5")
     (source
      (origin
        (method git-fetch)
@@ -1593,16 +1585,23 @@ wide-block encryption mode developed by Halevi and Rogaway.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wzy3ml4ld83iawcl6p313bskzs6zjhz8vlg8kpwgn71cnbv4pvi"))))
+        (base32 "0n24h5ffgc3735y0mmp6dbhxdfm9fk13i26fqxxw7i75qnmvjvyg"))))
     (build-system go-build-system)
     (arguments
-     `(#:import-path "github.com/shadowsocks/go-shadowsocks2"))
+     (list
+      #:import-path "github.com/shadowsocks/go-shadowsocks2"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Workaround for go-build-system's lack of Go modules
+          ;; support.
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v" "./..."))))))))
     (propagated-inputs
      (list go-github-com-riobard-go-bloom
-           go-golang-org-x-crypto
-           go-golang-org-x-net
-           go-golang-org-x-sys
-           go-golang-org-x-text))
+           go-golang-org-x-crypto))
     (home-page "https://github.com/shadowsocks/go-shadowsocks2")
     (synopsis "Shadowsocks tunnel proxy")
     (description "Go-ShadowSocks is a Go implementation of the Shadowsocks

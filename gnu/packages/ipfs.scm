@@ -834,18 +834,8 @@ their levels to be controlled individually.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/libp2p/go-libp2p"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-embed-go-libp2p-asn-util
-            (lambda _
-              (delete-file
-               "src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin")
-              (copy-file
-               (string-append
-                #$(this-package-input "go-github-com-libp2p-go-libp2p-asn-util")
-                "/src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin")
-               "src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin"))))))
+      #:embed-files #~(list "sorted-network-list.bin")
+      #:import-path "github.com/libp2p/go-libp2p"))
     (propagated-inputs
      (list go-github-com-benbjohnson-clock
            go-github-com-davidlazar-go-crypto
@@ -1066,19 +1056,11 @@ types.")
     (build-system go-build-system)
     (arguments
      (list
+      #:embed-files #~(list "sorted-network-list.bin")
       #:unpack-path "github.com/ipfs/kubo"
       #:import-path "github.com/ipfs/kubo/cmd/ipfs"
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-embed-go-libp2p-asn-util
-            (lambda _
-              (delete-file
-               "src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin")
-              (copy-file
-               (string-append
-                #$(this-package-input "go-github-com-libp2p-go-libp2p-asn-util")
-                "/src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin")
-               "src/github.com/libp2p/go-libp2p-asn-util/sorted-network-list.bin")))
           ;; https://github.com/ipfs/kubo/blob/master/docs/command-completion.md
           (add-after 'install 'install-bashcompletion
             (lambda _

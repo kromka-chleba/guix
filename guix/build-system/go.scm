@@ -5,6 +5,9 @@
 ;;; Copyright © 2021-2022 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2021, 2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Sarah Morgensen <iskarian@mgsn.dev>
+;;; Copyright © 2024 Christina O'Donnell <cdo@mutix.org>
+;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
+;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -58,11 +61,13 @@
                 "([0-9A-Fa-f]{12})"            ;commit hash
                 "(\\+incompatible)?$")))       ;optional +incompatible tag
 
-(define (go-version->git-ref version)
+(define* (go-version->git-ref version #:key subdir)
   "Parse VERSION, a \"pseudo-version\" as defined at
 <https://golang.org/ref/mod#pseudo-versions>, and extract the commit hash from
 it, defaulting to full VERSION (stripped from the \"+incompatible\" suffix if
-present) if a pseudo-version pattern is not recognized."
+present) if a pseudo-version pattern is not recognized.  If SUBDIR is
+specified and this is not a pseudo-version, then this will prefix SUBDIR/ to
+the returned tag; when VERSION misses 'v' prefix use SUBDIR/v instead."
   ;; A module version like v1.2.3 is introduced by tagging a revision in the
   ;; underlying source repository.  Untagged revisions can be referred to
   ;; using a "pseudo-version" like v0.0.0-yyyymmddhhmmss-abcdefabcdef, where
@@ -80,7 +85,13 @@ present) if a pseudo-version pattern is not recognized."
          (match (regexp-exec %go-pseudo-version-rx version)))
     (if match
         (match:substring match 2)
-        version)))
+        (cond
+         ((and subdir (string-prefix? "v" version))
+          (string-append subdir "/" version))
+         ((and subdir (not (string-prefix? "v" version)))
+          (string-append subdir "/v" version))
+         (else
+          version)))))
 
 (define (go-pseudo-version? version)
   "True if VERSION is a Go pseudo-version, i.e., a version string made of a
@@ -188,10 +199,12 @@ commit hash and its date rather than a proper release tag."
                    (outputs '("out"))
                    (search-paths '())
                    (install-source? #t)
+                   (embed-files ''())
                    (import-path "")
                    (unpack-path "")
                    (build-flags ''())
                    (tests? #t)
+                   (test-flags ''())
                    (parallel-build? #t)
                    (parallel-tests? #t)
                    (allow-go-reference? #f)
@@ -216,6 +229,7 @@ commit hash and its date rather than a proper release tag."
                     #:substitutable? #$substitutable?
                     #:goarch #$goarch
                     #:goos #$goos
+                    #:embed-files #$embed-files
                     #:search-paths '#$(sexp->gexp
                                        (map search-path-specification->sexp
                                             search-paths))
@@ -224,6 +238,7 @@ commit hash and its date rather than a proper release tag."
                     #:unpack-path #$unpack-path
                     #:build-flags #$build-flags
                     #:tests? #$tests?
+                    #:test-flags #$test-flags
                     #:parallel-build? #$parallel-build?
                     #:parallel-tests? #$parallel-tests?
                     #:allow-go-reference? #$allow-go-reference?
@@ -248,10 +263,12 @@ commit hash and its date rather than a proper release tag."
                          (unpack-path "")
                          (build-flags ''())
                          (tests? #f)              ; nothing can be done
+                         (test-flags ''())
                          (allow-go-reference? #f)
                          (system (%current-system))
                          (goarch (first (go-target target)))
                          (goos (last (go-target target)))
+                         (embed-files ''())
                          (guile #f)
                          (imported-modules %go-build-system-modules)
                          (modules '((guix build go-build-system)
@@ -285,6 +302,7 @@ commit hash and its date rather than a proper release tag."
                     #:target #$target
                     #:goarch #$goarch
                     #:goos #$goos
+                    #:embed-files #$embed-files
                     #:inputs %build-target-inputs
                     #:native-inputs %build-host-inputs
                     #:search-paths '#$(map search-path-specification->sexp
@@ -297,6 +315,7 @@ commit hash and its date rather than a proper release tag."
                     #:unpack-path #$unpack-path
                     #:build-flags #$build-flags
                     #:tests? #$tests?
+                    #:test-flags #$test-flags
                     #:make-dynamic-linker-cache? #f ;cross-compiling
                     #:allow-go-reference? #$allow-go-reference?
                     #:inputs %build-inputs))))

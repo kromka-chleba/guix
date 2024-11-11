@@ -119,6 +119,30 @@ value and call @code{t.Fatal()} if the assertion fails.")
 @end itemize")
     (license license:expat)))
 
+(define-public go-github-com-caarlos0-testfs
+  (package
+    (name "go-github-com-caarlos0-testfs")
+    (version "0.4.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/caarlos0/testfs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0g7acw554f2d4y35qipdz5c627w83jxmq1z32d7nkpchzj0y7rf1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/caarlos0/testfs"))
+    (home-page "https://github.com/caarlos0/testfs")
+    (synopsis "Golang @code{fs.FS} implementation to be used inside tests")
+    (description
+     "Package testfs provides a simple @code{fs.FS} which is contained in a
+test (using testing.TB's @code{TempDir}) and with a few helper methods.")
+    (license license:expat)))
+
 (define-public go-github-com-cheekybits-is
   (let ((commit "68e9c0620927fb5427fda3708222d0edee89eae9")
         (revision "0"))
@@ -218,6 +242,31 @@ includes offsets, byte values in hex, and ASCII output (only when using Dump
 style).
 @end itemize")
     (license license:isc)))
+
+(define-public go-github-com-dgryski-go-ddmin
+  (package
+    (name "go-github-com-dgryski-go-ddmin")
+    (version "0.0.0-20210904190556-96a6d69f1034")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dgryski/go-ddmin")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rgv4km7nffsjlyc4jkzy68mzhy38l7fdv7h5szv36wri7cx7n77"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/dgryski/go-ddmin"))
+    (home-page "https://github.com/dgryski/go-ddmin")
+    (synopsis "Delta-minimization algorithm in Golang")
+    (description
+     "Package ddmin implements the
+@url{https://users.cs.utah.edu/~regehr/papers/mintest.pdf, delta-minimization}
+test minimization algorithm.")
+    (license license:bsd-2)))
 
 (define-public go-github-com-elgris-jsondiff
   (package
@@ -360,6 +409,46 @@ reflect.DeepEqual but returns a list of differences.  This is helpful
 when comparing complex types like structures and maps.")
     (license license:expat)))
 
+(define-public go-github-com-golang-mock
+  (package
+    (name "go-github-com-golang-mock")
+    (version "1.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/golang/mock")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1hara8j0x431njjhqxfrg1png7xa1gbrpwza6ya4mwlx76hppap4"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/golang/mock"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: Workaround for go-build-system's lack of Go modules
+          ;; support.
+          (delete 'build)
+          (replace 'check
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion (string-append "src/" import-path)
+                  (invoke "go" "test" "-v"
+                          ;; Network access required
+                          "-skip" "TestFileParser|TestImportsOfFile"
+                          "./..."))))))))
+    (propagated-inputs
+     (list go-golang-org-x-tools go-golang-org-x-mod))
+    (home-page "https://github.com/golang/mock")
+    (synopsis "Mocking framework for Golang")
+    (description
+     "gomock is a mocking framework for the @url{http://golang.org/,Go
+programming language}.  It integrates well with Go's built-in @code{testing}
+package, but can be used in other contexts too.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-golangplus-testing
   (package
     (name "go-github-com-golangplus-testing")
@@ -382,36 +471,6 @@ when comparing complex types like structures and maps.")
     (synopsis "Additions to Go's standard testing package")
     (description "This package provides additions to Go's stdlib testing.")
     (license license:bsd-3)))
-
-(define-public go-github-com-google-go-cmdtest
-  (let ((commit "55ab3332a786118933ddf71544aae14951ba9bc5")
-        (revision "0"))
-    (package
-      (name "go-github-com-google-go-cmdtest")
-      (version (git-version "0.4.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/google/go-cmdtest")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "10kswvbdwissjb5mr0ys4b3ppxkxlpklqg7cr2z7rv21g2vwczbl"))))
-      (build-system go-build-system)
-      (arguments
-       '(#:import-path "github.com/google/go-cmdtest"))
-      (propagated-inputs
-       (list go-github-com-google-renameio go-github-com-google-go-cmp))
-      (home-page "https://github.com/google/go-cmdtest")
-      (synopsis "Testing for your CLI")
-      (description
-       "The cmdtest package simplifies testing of command-line interfaces.  It
-provides a simple, cross-platform, shell-like language to express command
-execution.  It can compare actual output with the expected output, and can
-also update a file with new \"golden\" output that is deemed correct.")
-      (license license:asl2.0))))
 
 (define-public go-github-com-google-gofuzz
   (let ((commit "fd52762d25a41827db7ef64c43756fd4b9f7e382")
@@ -672,6 +731,30 @@ differently.")
 integrates with the default test runner, so you can use it with the standard
 @code{go test} tool.  Testza contains easy to use methods, like assertions,
 output capturing, mocking, and much more.")
+    (license license:expat)))
+
+(define-public go-github-com-matryer-is
+  (package
+    (name "go-github-com-matryer-is")
+    (version "1.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/matryer/is")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04wgh8j2n19a5a4p8jjnya6yl5dm07kbbcz8gq6gj980bd9fk1ir"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/matryer/is"))
+    (home-page "https://github.com/matryer/is")
+    (synopsis "Lightweight testing mini-framework for Golang")
+    (description
+     "Package is provides a lightweight extension to the standard library's
+testing capabilities.")
     (license license:expat)))
 
 (define-public go-github-com-onsi-ginkgo
@@ -1025,42 +1108,10 @@ such as readers and writers that fail after N consecutive reads/writes.")
 execution when a test fails.")
     (license license:expat)))
 
-(define-public go-github.com-smartystreets-assertions
+(define-public go-github-com-smartystreets-goconvey
   (package
-    (name "go-github.com-smartystreets-assertions")
-    (version "1.13.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/smartystreets/assertions")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256 (base32 "0flf3fb6fsw3bk1viva0fzrzw87djaj1mqvrx2gzg1ssn7xzfrzr"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/smartystreets/assertions"
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key inputs #:allow-other-keys #:rest args)
-              (unless
-                  ;; The tests fail when run with gccgo.
-                  (false-if-exception (search-input-file inputs "/bin/gccgo"))
-                (apply (assoc-ref %standard-phases 'check) args)))))))
-    (native-inputs
-     (list go-github.com-smartystreets-gunit))
-    (home-page "https://github.com/smartystreets/assertions")
-    (synopsis "Assertions for testing with Go")
-    (description "The @code{assertions} package provides convenient assertion
-functions for writing tests in Go.")
-    (license license:expat)))
-
-(define-public go-github.com-smartystreets-goconvey
-  (package
-    (name "go-github.com-smartystreets-goconvey")
-    (version "1.6.3")
+    (name "go-github-com-smartystreets-goconvey")
+    (version "v1.8.1")
     (source
      (origin
        (method git-fetch)
@@ -1069,12 +1120,14 @@ functions for writing tests in Go.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1ph18rkl3ns3fgin5i4j54w5a69grrmf3apcsmnpdn1wlrbs3dxh"))))
+        (base32 "0s9s7yd4jfwgirnz46kw1sfhgcgsdzfxlca6q16i6ixaqczfaap9"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "github.com/smartystreets/goconvey"))
     (propagated-inputs
-     (list go-github-com-jtolds-gls go-github.com-smartystreets-assertions))
+     (list go-github-com-jtolds-gls
+           go-github-com-smarty-assertions
+           go-golang-org-x-tools))
     (home-page "https://github.com/smartystreets/goconvey")
     (synopsis "Go testing tool with both a web and terminal user interface")
     (description "GoConvey is a testing tool for Go. It integrates with go
@@ -1082,33 +1135,56 @@ test, can show test coverage and has a web user interface that will refresh
 automatically.")
     (license license:expat)))
 
-(define-public go-github.com-smartystreets-gunit
+(define-public go-github-com-smarty-assertions
   (package
-    (name "go-github.com-smartystreets-gunit")
-    (version "1.0.0")
+    (name "go-github-com-smarty-assertions")
+    (version "1.16.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/smartystreets/gunit")
-             (commit version)))
+             (url "https://github.com/smarty/assertions")
+             (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00m4zg0kdj49mnpmf9klb44ba71p966xsk6zknrzqgfc8119f35z"))))
+        (base32 "1kbl6h76mjvqkgszx81allhjzy8j331dbsb090rx134swbqs0pxc"))))
     (build-system go-build-system)
     (arguments
-     '(;; TODO: This package depends on go-github.com-smartystreets-assertions
-       ;; for running the tests, but go-github.com-smartystreets-assertions
-       ;; depends on this package, so break this loop by not running the tests
-       ;; for this package.
-       #:tests? #f
-       #:import-path "github.com/smartystreets/gunit"))
-    (home-page "https://github.com/smartystreets/gunit")
-    (synopsis "Testing tool for Go, in the style of xUnit")
-    (description "@code{gunit} allows the test author to use a struct as the
-scope for a group of related test cases, in the style of xUnit fixtures.  This
-makes extraction of setup/teardown behavior (as well as invoking the system
-under test) much simpler.")
+     (list
+      #:import-path "github.com/smarty/assertions"))
+    (home-page "https://github.com/smarty/assertions")
+    (synopsis "Fluent assertion-style functions")
+    (description
+     "Package assertions contains the implementations for all assertions which
+are referenced in goconvey's
+@url{https://github.com/smartystreets/goconvey,@code{convey}} package and
+gunit @url{github.com/smarty/gunit,@code{gunit}} for use with the
+@code{So(...)}  method.  They can also be used in traditional Go test
+functions and even in applications.")
+    (license license:expat)))
+
+(define-public go-github-com-smarty-gunit
+  (package
+    (name "go-github-com-smarty-gunit")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/smarty/gunit")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "13bcb1aq8yshmi5inn7np5lyqhsyy5hksridi8bxbjq35xrknskr"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/smarty/gunit"))
+    (home-page "https://github.com/smarty/gunit")
+    (synopsis "Golang xUnit-style test fixture test adapter")
+    (description
+     "Package gunit provides @code{testing} package hooks and convenience
+functions for writing tests in an @code{xUnit} style.")
     (license license:expat)))
 
 (define-public go-go-etcd-io-gofail

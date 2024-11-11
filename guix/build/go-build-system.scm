@@ -4,10 +4,12 @@
 ;;; Copyright © 2019 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2020 Jack Hill <jackhill@jackhill.us>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
-;;; Copyright © 2020, 2021, 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2020, 2021, 2023, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Sarah Morgensen <iskarian@mgsn.dev>
 ;;; Copyright © 2024 Ekaitz Zarraga <ekaitz@elenq.tech>
 ;;; Copyright © 2024 Picnoir <picnoir@alternativebit.fr>
+;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
+;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -28,8 +30,9 @@
   #:use-module ((guix build gnu-build-system) #:prefix gnu:)
   #:use-module (guix build union)
   #:use-module (guix build utils)
-  #:use-module (ice-9 match)
+  #:use-module (ice-9 format)
   #:use-module (ice-9 ftw)
+  #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (rnrs io ports)
   #:use-module (rnrs bytevectors)
@@ -201,6 +204,30 @@ dependencies, so it should be self-contained."
     (delete-file-recursively tmpdir))
   #t)
 
+(define* (fix-embed-files #:key embed-files #:allow-other-keys)
+  "Golang cannot determine the valid directory of the module of an embed file
+which is symlinked during setup environment phase, but easily resolved after
+copying the file from the store to the build directory of the current package.
+Take a list of files or regexps matching files from EMBED-FILES parameter,
+fail over to 'editions_defaults.binpb' which is a part of
+<github.com/golang/protobuf>."
+  ;; For the details, consult the Golang source:
+  ;;
+  ;; - URL: <https://raw.githubusercontent.com/golang/go/>
+  ;; - commit: 82c14346d89ec0eeca114f9ca0e88516b2cda454
+  ;; - file: src/cmd/go/internal/load/pkg.go
+  ;; - line: 2059
+  (let ((embed-files (format #f "^(~{~a|~}~a)$"
+                             embed-files
+                             "editions_defaults.binpb")))
+    (for-each (lambda (file)
+                (when (eq? (stat:type (lstat file))
+                           'symlink)
+                  (let ((file-store-path (readlink file)))
+                    (delete-file file)
+                    (copy-recursively file-store-path file))))
+              (find-files "src" embed-files))))
+
 (define* (unpack #:key source import-path unpack-path #:allow-other-keys)
   "Relative to $GOPATH, unpack SOURCE in UNPACK-PATH, or IMPORT-PATH when
 UNPACK-PATH is unset.  If the SOURCE archive has a single top level directory,
@@ -278,14 +305,13 @@ unpacking."
                               "Here are the results of `go env`:\n"))
       (invoke "go" "env"))))
 
-;; Can this also install commands???
-(define* (check #:key tests? import-path (parallel-tests? #t)
+(define* (check #:key tests? import-path test-flags (parallel-tests? #t)
                 #:allow-other-keys)
   "Run the tests for the package named by IMPORT-PATH."
   (when tests?
     (let* ((njobs (if parallel-tests? (parallel-job-count) 1)))
       (setenv "GOMAXPROCS" (number->string njobs)))
-    (invoke "go" "test" import-path))
+    (apply invoke "go" "test" `(,import-path ,@test-flags)))
   #t)
 
 (define* (install #:key install-source? outputs import-path unpack-path #:allow-other-keys)
@@ -322,6 +348,7 @@ the standard install-license-files phase to first enter the correct directory."
     (delete 'patch-generated-file-shebangs)
     (add-before 'unpack 'setup-go-environment setup-go-environment)
     (replace 'unpack unpack)
+    (add-after 'unpack 'fix-embed-files fix-embed-files)
     (replace 'build build)
     (replace 'check check)
     (replace 'install install)
