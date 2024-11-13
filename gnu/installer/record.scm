@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2018, 2020 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2020 Florian Pelz <pelzflorian@pelzflorian.de>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -29,6 +30,7 @@
             installer-exit
             installer-exit-error
             installer-final-page
+            installer-kernel-page
             installer-keymap-page
             installer-locale-page
             installer-menu-page
@@ -37,7 +39,7 @@
             installer-timezone-page
             installer-hostname-page
             installer-user-page
-            installer-partition-page
+            installer-partitioning-page
             installer-services-page
             installer-welcome-page
             installer-parameters-menu
@@ -68,6 +70,8 @@
   (exit-error installer-exit-error)
   ;; procedure void -> void
   (final-page installer-final-page)
+  ;; procedure void -> void
+  (kernel-page installer-kernel-page)
   ;; procedure (layouts context) -> (list layout variant options)
   (keymap-page installer-keymap-page)
   ;; procedure: (#:key supported-locales iso639-languages iso3166-territories)
@@ -86,7 +90,7 @@
   ;; procedure void -> void
   (user-page installer-user-page)
   ;; procedure void -> void
-  (partition-page installer-partition-page)
+  (partitioning-page installer-partitioning-page)
   ;; procedure void -> void
   (services-page installer-services-page)
   ;; procedure (logo #:pci-database) -> void

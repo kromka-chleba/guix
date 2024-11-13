@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2018, 2020 Mathieu Othacehe <m.othacehe@gmail.com>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -24,6 +25,7 @@
   #:use-module (gnu installer newt final)
   #:use-module (gnu installer newt parameters)
   #:use-module (gnu installer newt hostname)
+  #:use-module (gnu installer newt kernel)
   #:use-module (gnu installer newt keymap)
   #:use-module (gnu installer newt locale)
   #:use-module (gnu installer newt menu)
@@ -157,17 +159,19 @@ report it by email to ~a.") uploaded-name %guix-bug-report-address)
                                       (term-signal term-sig)
                                       (stop-signal stop-sig)))))))))))
 
-(define (final-page result prev-steps)
-  (run-final-page result prev-steps))
+(define (final-page result prev-steps dry-run?)
+  (run-final-page result prev-steps dry-run?))
 
 (define* (locale-page #:key
                       supported-locales
                       iso639-languages
-                      iso3166-territories)
+                      iso3166-territories
+                      dry-run?)
   (run-locale-page
    #:supported-locales supported-locales
    #:iso639-languages iso639-languages
-   #:iso3166-territories iso3166-territories))
+   #:iso3166-territories iso3166-territories
+   #:dry-run? dry-run?))
 
 (define (timezone-page zonetab)
   (run-timezone-page zonetab))
@@ -178,8 +182,8 @@ report it by email to ~a.") uploaded-name %guix-bug-report-address)
 (define (menu-page steps)
   (run-menu-page steps))
 
-(define* (keymap-page layouts context)
-  (run-keymap-page layouts #:context context))
+(define (keymap-page layouts context dry-run?)
+  (run-keymap-page layouts #:context context #:dry-run? dry-run?))
 
 (define (network-page)
   (run-network-page))
@@ -190,10 +194,13 @@ report it by email to ~a.") uploaded-name %guix-bug-report-address)
 (define (hostname-page)
   (run-hostname-page))
 
+(define (kernel-page)
+  (run-kernel-page))
+
 (define (user-page)
   (run-user-page))
 
-(define (partition-page)
+(define (partitioning-page)
   (run-partitioning-page))
 
 (define (services-page)
@@ -213,6 +220,7 @@ report it by email to ~a.") uploaded-name %guix-bug-report-address)
    (exit-error exit-error)
    (final-page final-page)
    (keymap-page keymap-page)
+   (kernel-page kernel-page)
    (locale-page locale-page)
    (menu-page menu-page)
    (network-page network-page)
@@ -220,7 +228,7 @@ report it by email to ~a.") uploaded-name %guix-bug-report-address)
    (timezone-page timezone-page)
    (hostname-page hostname-page)
    (user-page user-page)
-   (partition-page partition-page)
+   (partitioning-page partitioning-page)
    (services-page services-page)
    (welcome-page welcome-page)
    (parameters-menu parameters-menu)

@@ -12338,6 +12338,32 @@ It is built on top of the custom theme support in Emacs 24 or later.")
 variants.")
     (license license:gpl3+)))
 
+(define-public emacs-color-theme-sanityinc-tomorrow
+  ;; Use the latest commit as there are no recent release/tag; the version
+  ;; metadata in the Elisp source file is also defined as '0'.
+  (let ((commit "d34e8db507ee0c7b465ff18a8f220c33ed77cd79")
+        (revision "0"))
+    (package
+      (name "emacs-color-theme-sanityinc-tomorrow")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url
+                "https://github.com/purcell/color-theme-sanityinc-tomorrow")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1mfildi7rav2j42avii7z4gp4ghl04cqv8wp1vyxzl8vkyj60nkb"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/purcell/color-theme-sanityinc-tomorrow")
+      (synopsis "Emacs color themes based on Chris Kempson's 'tomorrow' themes")
+      (description
+       "An Emacs version of Chris Kempson's \"Tomorrow\" themes, with much more
+extensive face definitions than the \"official\" Emacs variant.")
+      (license license:gpl3+))))
+
 (define-public emacs-solarized-theme
   (package
     (name "emacs-solarized-theme")
@@ -36577,11 +36603,11 @@ service, and connect it with Emacs via inter-process communication.")
       (license license:gpl3+))))
 
 (define-public emacs-telega
-  (let ((commit "58b4963b292ceb723d665df100b519eb5a99c676")
+  (let ((commit "0368bae5646193d421a04130ed5e046fe47946d3")
         (revision "0"))
     (package
       (name "emacs-telega")
-      (version (git-version "0.8.291" revision commit))
+      (version (git-version "0.8.391" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -36589,7 +36615,7 @@ service, and connect it with Emacs via inter-process communication.")
                (url "https://github.com/zevlg/telega.el")
                (commit commit)))
          (sha256
-          (base32 "1q3ydbm0jhrsyvvdn0mpmxvskq0l53jkh40a5hlx7i3qkinbhbry"))
+          (base32 "05q8nrbp9r6hkdck2d8zwl9dwww3sqjlfka1ifxwwgcrndni3nx8"))
          (file-name (git-file-name "emacs-telega" version))
          (patches
           (search-patches "emacs-telega-path-placeholder.patch"
@@ -38520,7 +38546,7 @@ personal wiki.")
 (define-public emacs-org-node
   (package
     (name "emacs-org-node")
-    (version "1.5.2")
+    (version "1.7.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -38529,7 +38555,7 @@ personal wiki.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ma5cn57dng5i1jmq9q7nh9a9sdnm5jlihyd4xgn465q4dqsch2p"))))
+                "1kb62ji2bgnpyvc5p1c0q3hhdvd0w482ijkbg6z1bg6jwgr5ymhx"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-dash

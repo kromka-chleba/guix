@@ -788,6 +788,101 @@ canyons and wait for the long I-shaped block to clear four rows at a time.")
 attacks you can use on opponents.")
     (license license:public-domain)))
 
+(define-public vdrift-data
+  ;; There are no tags or releases for the vdrift data; use the latest SVN
+  ;; revision available.
+  (let ((commit 1463)
+        (revision "0"))
+    ;; The package is hidden as the game data is *required* by the install
+    ;; target of vdrift itself, and there is no need for users to manually
+    ;; install it.
+    (hidden-package
+     (package
+       (name "vdrift-data")
+       ;; The date is the last modified time shown next to the 'vdrift-data'
+       ;; directory when visiting
+       ;; https://sourceforge.net/p/vdrift/code/HEAD/tree/.
+       (version (format #f "2024-10-23-~a.~a" revision commit))
+       (source (origin
+                 (method svn-fetch)
+                 (uri (svn-reference
+                       (url "https://svn.code.sf.net/p/vdrift/code/vdrift-data")
+                       (revision commit)))
+                 (file-name (string-append name "-" version "-checkout"))
+                 (sha256
+                  (base32
+                   "1zx08q4v3s4l5r0wxphd323h0rqp9pjb7kr08s3gb2qr85lw587h"))))
+       (build-system copy-build-system)
+       (arguments (list #:install-plan #~'(("." "share/games/vdrift/data"))))
+       (home-page "https://vdrift.net/")
+       (synopsis "Game data for Vdrift")
+       (description "This package contains the assets for the Vdrift racing
+game.")
+       (license license:gpl3+)))))      ;assumed same as Vdrift itself
+
+(define-public vdrift
+  ;; The latest release is from 2014, and lacks build system and other
+  ;; unreleased improvements; use the latest commit.
+  (let ((commit "120ae28d2a1b43a8589c5ce3c5e02d813890d090")
+        (revision "0"))
+    (package
+      (name "vdrift")
+      (version (git-version "2014-10-20" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/VDrift/vdrift")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "13id01rr6rjhmrh34p8n0ka3yfwzp62j6p8z6rc5aagnr5mn1qn0"))))
+      (build-system scons-build-system)
+      (arguments
+       (list
+        #:tests? #f                     ;no test suite
+        #:scons-flags #~(list (string-append "prefix=" #$output)
+                              "release=1"
+                              "verbose=1")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'setup-vdrift-data
+              (lambda _
+                ;; The locale data must be made writable, as gettext
+                ;; translation files are generated and written there as part
+                ;; of the installation script.
+                (copy-recursively (search-input-directory
+                                   %build-inputs
+                                   "share/games/vdrift/data")
+                                  "data")
+                (for-each make-file-writable (find-files "data/locale")))))))
+      (native-inputs (list gettext-minimal pkg-config vdrift-data))
+      (inputs (list bullet curl libvorbis mesa sdl2 zlib))
+      (home-page "https://vdrift.net/")
+      (synopsis "Racing simulator")
+      (description "VDrift aims to provide an accurate driving physics
+emulation, based on real world data of the actual vehicles, employing a full
+rigid body simulation and a complex tire model.  VDrift features:
+@itemize
+@item Over 45 tracks based on famous real-world tracks
+@item Over 45 cars based on real-world vehicles
+@item Very realistic, simulation-grade driving physics
+@item Mouse/joystick/gamepad/wheel/keyboard support
+@item Fully modeled tracks, scenery and terrain
+@item Several different camera modes
+@item Basic replay system with Skip Forward/Skip Backward
+@item Fully customizable controls
+@item Joystick, mouse and keyboard input filtering
+@item Brake and reverse lights
+@item Driver aids: automatic shifting, traction control, anti-lock braking
+@item Experimental force feedback
+@item Race against up to 3 AI with variable difficultly
+@item Engine and road sounds
+@end itemize
+The recommended input method is a steering wheel with pedals and force
+feedback support.")
+      (license license:gpl3+))))
+
 (define-public vitetris
   (package
     (name "vitetris")
@@ -7701,6 +7796,130 @@ classes in the lore-filled world of Eyal, exploring random dungeons, facing
 challenging battles, and developing characters with your own tailored mix of
 abilities and powers.")
     (license license:gpl3+)))
+
+(define-public torcs
+  (package
+    (name "torcs")
+    (version "1.3.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://sourceforge.net/projects/" name
+                           "/files/all-in-one/" version "/"
+                           name "-" version ".tar.bz2/download"))
+       (file-name (string-append name "-" version ".tar.bz2"))
+       (sha256
+        (base32
+         "0kdq0sc7dsfzlr0ggbxggcbkivc6yp30nqwjwcaxg9295s3b06wa"))
+       (patches (search-patches "torcs-isnan.patch"
+                                "torcs-nullptr.patch"
+                                "torcs-glibc-default-source.patch"))
+       (snippet
+        '(begin
+           (use-modules (guix build utils)
+                        (ice-9 ftw)
+                        (ice-9 regex)
+                        (srfi srfi-26))
+           ;; Delete Windows-specific sources and pre-built binaries.
+           (delete-file-recursively "src/windows")
+           ;; The license of the kw-* and pw-* car models includes a
+           ;; non-commercial clause, hence does not comply with the GNU FSDG.
+           (with-directory-excursion "data/cars/models"
+             (for-each delete-file-recursively
+                       (scandir "." (cut string-match "^(kc|pw)-" <>))))
+           ;; Delete extraneous CVS directories.
+           (for-each delete-file-recursively
+                     (find-files "." (lambda (file stat)
+                                       (and (eq? 'directory (stat:type stat))
+                                            (string=? "CVS" (basename file))))
+                                 #:directories? #t))))))
+    (build-system gnu-build-system)
+    (arguments
+     ;; Building in parallel fails due to a race where include files have not
+     ;; yet been generated, with errors such as "controlconfig.cpp:30:10:
+     ;; fatal error: tgfclient.h: No such file or directory".  The issue was
+     ;; reported to the 'torcs-devel' mailing list (see:
+     ;; https://sourceforge.net/p/torcs/mailman/message/58834764/).
+     (list #:modules `(,@%default-gnu-modules (srfi srfi-26))
+           #:parallel-build? #f
+           #:tests? #f                  ;no test suite
+           ;; Ensure the binaries find libraries provided by this very package
+           ;; (see: https://issues.guix.gnu.org/73979).
+           #:configure-flags
+           #~(list (string-append "LDFLAGS=-Wl,-rpath=" #$output
+                                  "/lib/torcs/lib"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-commands
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "src/linux/torcs.in"
+                     (("/bin/bash")
+                      (search-input-file inputs "bin/bash")))))
+               (add-after 'install 'install-data
+                 (lambda _
+                   (invoke "make" "datainstall")))
+               (add-after 'install-data 'install-doc
+                 (lambda _
+                   (let ((docdir (string-append #$output "/share/doc/torcs/"))
+                         (man6 (string-append #$output "/share/man/man6")))
+                     (for-each (cut install-file <> man6)
+                               (find-files "doc/man" "\\.6$"))
+                     (install-file "doc/userman/how_to_drive.html" docdir)
+                     (install-file "doc/faq/faq.html" docdir)
+                     (copy-recursively "doc/userman/images"
+                                       (string-append docdir "/images")))))
+               (add-after 'install 'install-freedesktop-entry
+                 (lambda _
+                   (let ((iconsdir (string-append #$output "/share/icons/hicolor/"
+                                                  "48x48/apps")))
+                     (mkdir-p iconsdir)
+                     (copy-file "Ticon.png" (string-append iconsdir "/torcs.png")))
+                   (install-file "torcs.desktop"
+                                 (string-append #$output
+                                                "/share/applications/"))))
+               (add-after 'install 'fix-permissions
+                 ;; XXX: Otherwise, the guix daemon reports: "suspicious
+                 ;; ownership or permission on /gnu/store/xxx-torcs-1.3.7',
+                 ;; rejecting this build output".
+                 (lambda _
+                   (chmod #$output #o744))))))
+    (inputs
+     (list bash-minimal
+           freealut
+           freeglut
+           libice
+           libpng
+           libsm
+           libvorbis
+           libxi
+           libxmu
+           libxrandr
+           libxrender
+           libxt
+           mesa
+           openal
+           plib
+           zlib))
+    (home-page "https://sourceforge.net/projects/torcs/")
+    (synopsis "Car racing simulator")
+    (description "TORCS stands for The Open Racing Car Simulator.  It can be
+used as an ordinary car racing game, as an artificial intelligence (AI) racing
+game, or as a research platform.  The game has features such as:
+@itemize
+@item Input support for a driving wheel, joystick, keyboard or mouse
+@item More than 30 car models
+@item 30 tracks
+@item 50 opponents to race against
+@item Lighting, smoke, skidmarks and glowing brake disks graphics
+@item Simple damage model and collisions
+@item Tire and wheel properties (springs, dampers, stiffness, etc.)
+@item Aerodynamics (ground effect, spoilers, etc.)
+@end itemize
+The difficulty level can be configured, impacting how much damage is caused by
+collisions and the level of traction the car has on the track, which makes the
+game fun for both novice and experts.")
+    (license (list license:gpl2+        ;source and most assets
+                   license:fdl1.2+))))  ;how_to_drive.html, faq.html
 
 (define-public quakespasm
   (package

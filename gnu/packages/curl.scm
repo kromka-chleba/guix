@@ -16,6 +16,7 @@
 ;;; Copyright © 2021 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -67,6 +68,7 @@
   (package
     (name "curl")
     (version "8.6.0")
+    (replacement curl/fixed)
     (source (origin
               (method url-fetch)
               (uri (string-append "https://curl.se/download/curl-"
@@ -172,9 +174,19 @@ curl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP
 form based upload, proxies, cookies, file transfer resume, user+password
 authentication (Basic, Digest, NTLM, Negotiate, kerberos...), proxy
 tunneling, and so on.")
+    (home-page "https://curl.se/")
     (license (license:non-copyleft "file://COPYING"
-                                   "See COPYING in the distribution."))
-    (home-page "https://curl.haxx.se/")))
+                                   "See COPYING in the distribution."))))
+
+(define-public curl/fixed
+  (hidden-package
+   (package
+     (inherit curl)
+     (replacement curl/fixed)
+     (source (origin
+               (inherit (package-source curl))
+               (patches (append (origin-patches (package-source curl))
+                                (search-patches "curl-CVE-2024-8096.patch"))))))))
 
 (define-public gnurl (deprecated-package "gnurl" curl))
 

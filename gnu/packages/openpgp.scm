@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2020 Justus Winter <justus@sequoia-pgp.org>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -22,6 +23,7 @@
   #:use-module (guix git-download)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
+  #:use-module (guix gexp)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages check)
@@ -97,10 +99,10 @@ environments.")
     (license license:gpl2+)))
 
 (define-public rnp
-  (let ((day-of-release "2022-09-22"))
+  (let ((day-of-release "2024-05-14"))
     (package
       (name "rnp")
-      (version "0.16.2")
+      (version "0.17.1")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -109,33 +111,39 @@ environments.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "13z5kxm48a72w4m2crwgdjdng4a4pwxsd72r2z3a4pcakfp2swi8"))))
+                  "052872b6a88vkcc58alxcm532y6dra5qqd997jga41v72h3pnj4d"))))
       (build-system cmake-build-system)
-      (arguments `(#:configure-flags
-                   '("-DBUILD_SHARED_LIBS=on"
-                     "-DBUILD_TESTING=on"
-                     "-DDOWNLOAD_GTEST=off"
-                     "-DDOWNLOAD_RUBYRNP=off")
-                   #:phases
-                   (modify-phases %standard-phases
-                     (add-after 'unpack 'patch-tests
-                       (lambda _
-                         (substitute* "src/tests/support.cpp"
-                           (("\"cp\"") (search-input-file inputs "/bin/cp")))))
-                     (replace 'check
-                       (lambda* (#:key tests? #:allow-other-keys)
-                         (when tests?
-                           ;; Some OpenPGP certificates used by the tests expire.
-                           ;; To work around that, set the time to roughly the
-                           ;; release date.
-                           (invoke "faketime" ,day-of-release "make" "test")))))))
+      (arguments
+       (list
+        #:configure-flags
+        #~(list "-DBUILD_SHARED_LIBS=on"
+                "-DSYSTEM_LIBSEXPP=on"
+                ;; Lower the minimum tuning ratio from 6 to 4, as suggested
+                ;; upstream to avoid the s2k_iteration_tuning failing.
+                "-DS2K_MINIMUM_TUNING_RATIO=4"
+                "-DBUILD_TESTING=on"
+                "-DDOWNLOAD_GTEST=off"
+                "-DDOWNLOAD_RUBYRNP=off")
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
+                (when tests?
+                  ;; Some OpenPGP certificates used by the tests expire.
+                  ;; To work around that, set the time to roughly the
+                  ;; release date.
+                  (setenv "CTEST_OUTPUT_ON_FAILURE" "1")
+                  (invoke "faketime" #$day-of-release "ctest"
+                          "-j" (if parallel-tests?
+                                   (number->string (parallel-job-count))
+                                   "1"))))))))
       (native-inputs
-       (list gnupg       ; for tests
-             googletest  ; for tests
-             libfaketime ; for tests
+       (list gnupg                      ;for tests
+             googletest                 ;for tests
+             libfaketime                ;for tests
              pkg-config
              python))
-      (inputs (list botan bzip2 json-c zlib))
+      (inputs (list botan bzip2 json-c sexpp zlib))
       (synopsis
        "RFC4880-compliant OpenPGP library written in C++")
       (description
@@ -157,3 +165,26 @@ of GnuPG.")
         license:asl2.0
         ;; Nominet UK's BSD 3-Clause License (netpgp).
         license:bsd-3)))))
+
+(define-public sexpp
+  (package
+    (name "sexpp")
+    (version "0.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rnpgp/sexpp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16y9f42w6ay3w0s23xmigqm0qi1swdfvc93g2xn3xkg1r4kpmnwq"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:configure-flags '(list "-DDOWNLOAD_GTEST=off")))
+    (native-inputs (list googletest pkg-config))
+    (home-page "https://github.com/rnpgp/sexpp")
+    (synopsis "C++ library for S-expressions")
+    (description
+     "This package provides a C++ library for working with S-Expressions.")
+    (license license:expat)))

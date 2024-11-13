@@ -1132,24 +1132,6 @@ etc.")
     (home-page "https://liballeg.org")
     (license license:bsd-3)))
 
-(define-public allegro-5.0
-  (package (inherit allegro)
-    (name "allegro")
-    (version "5.0.11")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/liballeg/allegro5/releases"
-                                  "/download/" version "/allegro-"
-                                  (if (equal? "0" (string-take-right version 1))
-                                    (string-drop-right version 2)
-                                    version)
-                                  ".tar.gz"))
-              (patches (search-patches
-                        "allegro-mesa-18.2.5-and-later.patch"))
-              (sha256
-               (base32
-                "0cd51qrh97jrr0xdmnivqgwljpmizg8pixsgvc4blqqlaz4i9zj9"))))))
-
 (define-public aseprite
   (package
     (name "aseprite")
@@ -2572,10 +2554,12 @@ joystick support.")))
               (patches (search-patches "plib-CVE-2011-4620.patch"
                                        "plib-CVE-2012-4552.patch"))))
     (build-system gnu-build-system)
-    (inputs
-     (list mesa libxi libxmu))
-    (native-inputs
-     (list pkg-config))
+    ;; plib exists only as a static library, per the author's choice (see:
+    ;; https://sourceforge.net/p/plib/mailman/message/10289018/).  Build it
+    ;; with PIC, so that shared programs can at least "link" to it.
+    (arguments (list #:configure-flags #~(list "CXXFLAGS=-fPIC")))
+    (native-inputs (list autoconf automake pkg-config))
+    (inputs (list mesa libxi libxmu))
     (home-page "https://plib.sourceforge.net/")
     (synopsis "Suite of portable game libraries")
     (description "PLIB is a set of libraries that will permit programmers to

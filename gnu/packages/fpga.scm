@@ -8,6 +8,7 @@
 ;;; Copyright © 2022 Christian Gelinek <cgelinek@radlogic.com.au>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -38,11 +39,13 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages elf)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages gawk)
@@ -121,12 +124,11 @@ formal verification.")
     (build-system gnu-build-system)
     (arguments
      (list
-      #:test-target "check"
-      #:make-flags #~(list (string-append "PREFIX="
-                                          #$output))
+      #:make-flags #~(list (string-append "PREFIX=" #$output))
       #:bootstrap-scripts #~(list "autoconf.sh")))
     (native-inputs (list autoconf bison flex gperf))
-    (home-page "https://steveicarus.github.io/iverilog")
+    (inputs (list zlib))
+    (home-page "https://steveicarus.github.io/iverilog/")
     (synopsis "FPGA Verilog simulation and synthesis tool")
     (description
      "Icarus Verilog is a Verilog simulation and synthesis tool.
@@ -148,48 +150,50 @@ For synthesis, the compiler generates netlists in the desired format.")
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.26")
+    (version "0.47")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/YosysHQ/yosys")
-                    (commit (string-append "yosys-" version))))
+                    (commit version)))
               (sha256
                (base32
-                "0s79ljgbcfkm7l9km7dcvlz4mnx38nbyxppscvh5il5lw07n45gx"))
+                "061sqb59vl61rshlwgv3n51x0fxd9x3lb6gfbdl7nzia8im7x0qm"))
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
      (list
       #:test-target "test"
-      #:make-flags #~(list "CC=gcc"
-                           "CXX=g++"
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
+                           (string-append "CXX=" #$(cxx-for-target))
                            (string-append "PREFIX=" #$output))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'configure 'fix-paths
             (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* "./backends/smt2/smtio.py"
+              (substitute* "backends/smt2/smtio.py"
                 (("\\['z3")
-                 (string-append "['" (search-input-file inputs "/bin/z3"))))
-              (substitute* "./kernel/fstdata.cc"
+                 (string-append "['" (search-input-file inputs "bin/z3"))))
+              (substitute* "kernel/fstdata.cc"
                 (("vcd2fst")
-                 (search-input-file inputs "/bin/vcd2fst")))
-              (substitute* '("./passes/cmds/show.cc"
-                             "./passes/cmds/viz.cc")
+                 (search-input-file inputs "bin/vcd2fst")))
+              (substitute* "kernel/driver.cc"
+                (("^#include \"libs/cxxopts/include/cxxopts.hpp\"")
+                 "#include <cxxopts.hpp>"))
+              (substitute* '("passes/cmds/show.cc"
+                             "passes/cmds/viz.cc")
                 (("exec xdot")
-                 (string-append "exec " (search-input-file inputs
-                                                           "/bin/xdot")))
+                 (string-append "exec " (search-input-file inputs "bin/xdot")))
                 (("dot -")
-                 (string-append (search-input-file inputs "/bin/dot") " -"))
+                 (string-append (search-input-file inputs "bin/dot") " -"))
                 (("fuser")
-                 (search-input-file inputs "/bin/fuser")))))
+                 (search-input-file inputs "bin/fuser")))))
           (replace 'configure
             (lambda* (#:key make-flags #:allow-other-keys)
               (apply invoke "make" "config-gcc" make-flags)))
           (add-after 'configure 'use-external-abc
             (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* '("./Makefile")
+              (substitute* '("Makefile")
                 (("ABCEXTERNAL \\?=")
                  (string-append "ABCEXTERNAL = "
                                 (search-input-file inputs "/bin/abc"))))))
@@ -207,25 +211,27 @@ For synthesis, the compiler generates netlists in the desired format.")
                 `("GUIX_PYTHONPATH" ":" prefix (,(getenv "GUIX_PYTHONPATH")))))))))
     (native-inputs
      (list bison
+           cxxopts                      ;header-only library
            flex
-           gawk ; for the tests and "make" progress pretty-printing
-           iverilog ; for the tests
+           gawk             ;for the tests and "make" progress pretty-printing
+           iverilog         ;for the tests
            pkg-config
            python
-           tcl)) ; tclsh for the tests
+           tcl))                        ;tclsh for the tests
     (inputs
      (list abc
+           bash-minimal
            graphviz
            gtkwave
            libffi
            psmisc
+           python
+           python-click
            readline
            tcl
            xdot
            z3
-           zlib
-           python
-           python-click))
+           zlib))
     (home-page "https://yosyshq.net/yosys/")
     (synopsis "FPGA Verilog RTL synthesizer")
     (description "Yosys synthesizes Verilog-2005.")
