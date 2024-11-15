@@ -410,8 +410,8 @@ sys_delete_store()
     _msg "${INF}removing /gnu"
     rm -rf /gnu
 
-    _msg "${INF}removing ${ROOT_HOME}/.config/guix"
-    rm -rf ${ROOT_HOME}/.config/guix
+    _msg "${INF}removing ~root/.config/guix"
+    rm -rf ~root/.config/guix
 }
 
 sys_create_build_user()
@@ -451,11 +451,15 @@ sys_create_build_user()
 sys_delete_build_user()
 {
     for i in $(seq -w 1 10); do
-        userdel -f guixbuilder${i}
+        if id -u "guixbuilder${i}" &>/dev/null; then
+            userdel -f guixbuilder${i}
+        fi
     done
 
     _msg "${INF}delete group guixbuild"
-    groupdel -f guixbuild
+    if getent group guixbuild &>/dev/null; then
+        groupdel -f guixbuild
+    fi
 }
 
 sys_enable_guix_daemon()
@@ -569,14 +573,16 @@ sys_delete_guix_daemon()
             ;;
 
         systemd)
-            _msg "${INF}disabling guix-daemon"
-            systemctl disable guix-daemon
-            _msg "${INF}stopping guix-daemon"
-            systemctl stop guix-daemon
-            _msg "${INF}removing guix-daemon"
-            rm -f /etc/systemd/system/guix-daemon.service
+            if [ -f /etc/systemd/system/guix-daemon.service ]; then
+                _msg "${INF}disabling guix-daemon"
+                systemctl disable guix-daemon
+                _msg "${INF}stopping guix-daemon"
+                systemctl stop guix-daemon
+                _msg "${INF}removing guix-daemon"
+                rm -f /etc/systemd/system/guix-daemon.service
+            fi
 
-            if [ -x /etc/systemd/system/gnu-store.mount ]; then
+            if [ -f /etc/systemd/system/gnu-store.mount ]; then
                 _msg "${INF}disabling gnu-store.mount"
                 systemctl disable gnu-store.mount
                 _msg "${INF}stopping gnu-store.mount"
@@ -594,7 +600,7 @@ sys_delete_guix_daemon()
             ;;
         NA|*)
             _msg "${ERR}unsupported init system; disable, stop and remove the daemon manually:"
-            echo "  ${ROOT_HOME}/.config/guix/current/bin/guix-daemon --build-users-group=guixbuild"
+            echo "  ~root/.config/guix/current/bin/guix-daemon --build-users-group=guixbuild"
             ;;
     esac
 
@@ -743,9 +749,9 @@ sys_delete_init_profile()
 
 sys_delete_user_profiles()
 {
-    _msg "${INF}removing ${ROOT_HOME}/.guix-profile"
-    rm -f ${ROOT_HOME}/.guix-profile
-    rm -rf ${ROOT_HOME}/.cache/guix
+    _msg "${INF}removing ~root/.guix-profile"
+    rm -f ~root/.guix-profile
+    rm -rf ~root/.cache/guix
 
     _msg "${INF}removing .guix-profile, .cache/guix and .config/guix of all /home users"
     for user in `ls -1 /home`; do

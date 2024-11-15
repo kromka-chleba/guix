@@ -1836,7 +1836,7 @@ OpenJDK.")
   (package
     (inherit openjdk17)
     (name "jbr")
-    (version "17.0.10b1207.6")
+    (version "17.0.11b1207.30")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1845,7 +1845,7 @@ OpenJDK.")
               (file-name (string-append name "-" version "-checkout"))
               (sha256
                (base32
-                "034c00dr5qmyxvw3xpnpbhlmz3w8pkp52zm7wypjprczd90ylfrc"))
+                "5bbf5z8faf9sdkig2fwkj06hb7hs9s3bpzzvbqn2i75lbwqk3bln"))
               (patches (search-patches "jbr-17-xcursor-no-dynamic.patch"))))
     (arguments
      (substitute-keyword-arguments (package-arguments openjdk17)
@@ -1870,7 +1870,7 @@ OpenJDK.")
   (package
     (inherit openjdk21)
     (name "jbr")
-    (version "21.0.2b397.7")
+    (version "21.0.3b509.11")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1879,7 +1879,7 @@ OpenJDK.")
               (file-name (string-append name "-" version "-checkout"))
               (sha256
                (base32
-                "0xwldx2k9cx0b6xdh8ic0v87cr89khwr8hxnnrpwdsia1i8gkpga"))
+                "03xkghbp0b1czc2ags9n8ilprf9sy4bhsma0wf8xfapqn6d2sfyd"))
               (patches (search-patches "openjdk-21-fix-rpath.patch"
                                        "jbr-17-xcursor-no-dynamic.patch"))))
     (inputs
