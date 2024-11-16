@@ -41,6 +41,8 @@ fi
 
 # Visiting a commit older than v0.16.0 must fail (this test is expensive
 # because it clones the whole repository).
-guix time-machine -q --commit=v0.15.0 $EXTRA_OPTIONS -- describe && false
+if [ "$WITH_SLOW_TESTS" = 1 ]; then
+    guix time-machine -q --commit=v0.15.0 $EXTRA_OPTIONS -- describe && false
+fi
 
 true

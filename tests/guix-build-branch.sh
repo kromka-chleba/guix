@@ -20,6 +20,9 @@
 # Test 'guix build --with-branch'.
 #
 
+# Slows the test suite by about half a minute.
+test "$WITH_SLOW_TESTS" != 1 && exit 77
+
 guix build --version
 
 # 'guix build --with-branch' requires access to the network to clone the

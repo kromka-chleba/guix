@@ -22,6 +22,11 @@
 # Test the 'guix home' using the external store, if any.
 #
 
+# This test is very expensive as guix-home appears to refer to the
+# current-guix package, which must be built the first time it runs (~20
+# minutes on a fast machine).
+test "$WITH_SLOW_TESTS" != 1 && exit 77
+
 set -e
 
 guix home --version

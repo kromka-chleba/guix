@@ -526,7 +526,9 @@
                 #:hash #vu8(1 2 3))
     #f))
 
-(unless (not builder-network-isolated?) (test-skip 1))
+(when (or builder-network-isolated?
+          (not with-slow-tests?))       ;takes about 2 minutes
+  (test-skip 1))
 (test-assert "fixed-output derivation, network access, localhost"
   ;; Test a fixed-output derivation connecting to "localhost".
   (let ((text (random-text)))

@@ -40,6 +40,7 @@
   #:use-module (web uri)
   #:export (open-connection-for-tests
             with-external-store
+            with-slow-tests?
             %seed
             random-text
             random-bytevector
@@ -72,6 +73,10 @@
 ;;; internal use only.
 ;;;
 ;;; Code:
+
+(define with-slow-tests?
+  (and=> (getenv "WITH_SLOW_TESTS")
+         (cut string=? "1" <>)))
 
 (define %tests-build-timeout
   ;; Timeout limit for guix unit tests (default: 5 minutes)

@@ -20,6 +20,9 @@
 # Test the `guix gc' command-line utility.
 #
 
+# Slows the test suite by about half a minute.
+test "$WITH_SLOW_TESTS" != 1 && exit 77
+
 guix gc --version
 
 trap "rm -f guix-gc-root" EXIT

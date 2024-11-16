@@ -22,6 +22,10 @@
 # Test 'guix system', mostly error reporting.
 #
 
+# This test is expensive as it builds the images of multiple operating
+# systems; it takes more than a minute to run on a fast machine.
+test "$WITH_SLOW_TESTS" != 1 && exit 77
+
 set -e
 
 guix system --version

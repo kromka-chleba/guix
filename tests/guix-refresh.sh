@@ -20,6 +20,9 @@
 # Test the 'guix refresh' command-line utility.
 #
 
+# Slows the test suite more than two minutes on a fast machine.
+test "$WITH_SLOW_TESTS" != 1 && exit 77
+
 guix refresh --version
 
 manifest="t-guix-refresh-manifest-$$.scm"

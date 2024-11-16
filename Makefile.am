@@ -14,7 +14,7 @@
 # Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 # Copyright © 2018 Alex Vong <alexvong1995@gmail.com>
 # Copyright © 2019, 2023 Efraim Flashner <efraim@flashner.co.il>
-# Copyright © 2020, 2021, 2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
+# Copyright © 2020, 2021, 2023-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 # Copyright © 2021 Chris Marusich <cmmarusich@gmail.com>
 # Copyright © 2021 Andrew Tropin <andrew@trop.in>
 # Copyright © 2023 Clément Lassieur <clement@lassieur.org>
@@ -726,6 +726,16 @@ check-local:
 	@exit 1
 
 endif !CAN_RUN_TESTS
+
+.PHONY: pre-check
+pre-check:
+	@echo
+	@if [ "$$WITH_SLOW_TESTS" != 1 ]; then \
+	   echo "Skipping slow tests; set WITH_SLOW_TESTS to 1 to run them"; \
+	fi
+	@echo
+
+check: pre-check
 
 check-system: $(GOBJECTS)
 	$(AM_V_at)$(top_builddir)/pre-inst-env			\

@@ -24,6 +24,11 @@
 # Test the `guix package' command-line utility.
 #
 
+# This test contains expensive operations such as 'guix package -A', which
+# cumulate into a total test time of multiple minutes (about 2 minutes on a
+# fast machine).
+test "$WITH_SLOW_TESTS" != 1 && exit 77
+
 guix package --version
 
 readlink_base ()

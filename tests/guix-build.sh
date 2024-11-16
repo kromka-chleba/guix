@@ -23,6 +23,9 @@
 # Test the `guix build' command-line utility.
 #
 
+# Slows the test suite by about half a minute.
+test "$WITH_SLOW_TESTS" != 1 && exit 77
+
 guix build --version
 
 # Should fail.
