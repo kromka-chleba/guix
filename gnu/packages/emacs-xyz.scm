@@ -11337,6 +11337,39 @@ features like jumping to definitions, finding references, and viewing
 documentation, enhancing the Python development experience within Emacs.")
       (license license:gpl3+))))
 
+(define-public emacs-jack
+  (let ((commit "3b4ea97fcc107d0ffd201ea695129af52f390113")
+        (revision "0"))
+    (package
+      (name "emacs-jack")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tonyaldon/jack")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1cizszj62ic41zc97glf2mdvm1kd95vdfg2dip3n2p2g0nlk2hjf"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #t
+        #:test-command #~(list "emacs"
+                               "--batch"
+                               "-l"
+                               "jack-tests.el"
+                               "-f"
+                               "ert-run-tests-batch-and-exit")))
+      (home-page "https://jack.tonyaldon.com")
+      (synopsis "HTML generator library")
+      (description
+       "@code{jack} provides the function @code{jack-html} that takes a data
+structure as input representing the HTML tree you want to generate and
+generates it as a string.  Please see the homepage for usage examples.")
+      (license license:gpl3+))))
+
 (define-public emacs-jedi
   (package
     (name "emacs-jedi")
@@ -16202,6 +16235,68 @@ wrapping lines at the window edge, which is the standard behaviour of
 window edge.")
     (license license:gpl3+)))
 
+(define-public emacs-visual-replace
+  (package
+    (name "emacs-visual-replace")
+    ;; XXX: when updating version, please ensure substitution in install-info
+    ;; phase is still accurate.
+    (version "1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/szermatt/visual-replace")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "085dg77wpa371i8lvsl9ckm09yfjvqwym6wrs8lxfvih5jd7mm1b"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:tests? #t
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'add-test-dir-to-emacs-load-path
+                     (lambda _
+                       (setenv "EMACSLOADPATH"
+                               (string-append (getcwd) "/test:"
+                                              (getenv "EMACSLOADPATH")))))
+                   (add-after 'install 'install-info
+                     (lambda* (#:key outputs #:allow-other-keys)
+                       (let* ((out (assoc-ref outputs "out"))
+                              (info-dir (string-append out "/share/info")))
+                         (invoke "eldev" "build" "--force"
+                                 "visual-replace.texi")
+                         (with-directory-excursion "docs/build/texinfo"
+                           (substitute* "visual-replace.texi"
+                             ;; XXX: Undo damage caused by sphinx-build
+                             (("visual-replace ([^,]+), Jan 01, 1970" _ ver)
+                              (string-append "visual-replace " ver))
+                             (("@copyright\\{\\} 2020-1970")
+                              "@copyright{} 2020-2024"))
+                           (invoke "make" "info")
+                           (install-file "./visual-replace.info" info-dir)
+                           (copy-recursively "./visual-replace-figures"
+                                             (string-append info-dir
+                                              "/visual-replace-figures")))))))
+      #:test-command #~(list "eldev" "--use-emacsloadpath" "-dtTC" "test")))
+    (native-inputs (list emacs-eldev python-sphinx texinfo))
+    (home-page "https://github.com/szermatt/visual-replace")
+    (synopsis
+     "Alternate interface for @code{replace-string} and @code{query-replace}")
+    (description
+     "@code{visual-replace} provides an alternate interface for search and
+replacement commands that supports previews.  The interface also allows one to
+edit both the query-text and its replacement in the same minibuffer prompt.
+The interface covers the following commands:
+
+@enumerate
+@item @code{replace-string}
+@item @code{replace-regexp}
+@item @code{query-replace}
+@item @code{query-replace-regexp}
+@end enumerate")
+    (license license:gpl3+)))
+
 (define-public emacs-writeroom
   (package
     (name "emacs-writeroom")
@@ -17889,7 +17984,7 @@ passive voice.")
 (define-public emacs-org
   (package
     (name "emacs-org")
-    (version "9.7.12")
+    (version "9.7.14")
     (source
      (origin
        (method git-fetch)
@@ -17898,7 +17993,7 @@ passive voice.")
              (commit (string-append "release_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11677y42m8jc24rmn3ddw1d3mn3klhaj1l3gk4dm2sh1qpkr17jz"))))
+        (base32 "0c6f4rjkld32hc2m8c5kc1jzip5k56bjzm4f12nc7ipsd3yywvwf"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -22186,44 +22281,31 @@ created by @code{git format-patch}, from @code{magit}, @code{dired} and
     (license license:gpl3+)))
 
 (define-public emacs-git-email
-  ;; Use latest commit since latest tagged release is missing important
-  ;; changes.
-  (let ((commit "b5ebade3a48dc0ce0c85699f25800808233c73be")
-        (revision "0"))
-    (package
-      (name "emacs-git-email")
-      (version (git-version "0.2.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://git.sr.ht/~yoctocell/git-email")
-               (commit commit)))
-         (patches
-          (search-patches "emacs-git-email-missing-parens.patch"))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1lk1yds7idgawnair8l3s72rgjmh80qmy4kl5wrnqvpmjrmdgvnx"))))
-      (build-system emacs-build-system)
-      (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           ;; piem is not yet packaged in Guix.
-           (add-after 'unpack 'remove-piem
-             (lambda _
-               (delete-file "git-email-piem.el")))
-           (add-before 'install 'makeinfo
-             (lambda _
-               (invoke "makeinfo" "doc/git-email.texi"))))))
-      (native-inputs
-       (list texinfo))
-      (propagated-inputs
-       (list mu emacs-magit emacs-notmuch))
-      (license license:gpl3+)
-      (home-page "https://sr.ht/~yoctocell/git-email")
-      (synopsis "Format and send Git patches in Emacs")
-      (description "This package provides utilities for formatting and
-sending Git patches via Email, without leaving Emacs."))))
+  (package
+    (name "emacs-git-email")
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/suhail/git-email")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cx6a4dxvdggnjn95a9fhcidd1140srpzw9lx9hi65kancnyjsci"))))
+    (build-system emacs-build-system)
+    (arguments
+     `(#:phases (modify-phases %standard-phases
+                  (add-before 'install 'makeinfo
+                    (lambda _
+                      (invoke "makeinfo" "doc/git-email.texi"))))))
+    (inputs (list mu emacs-magit emacs-notmuch emacs-piem))
+    (native-inputs (list texinfo))
+    (license license:gpl3+)
+    (home-page "https://suhail.codeberg.page/git-email")
+    (synopsis "Format and send Git patches in Emacs")
+    (description "This package provides utilities for formatting and
+sending Git patches via Email, without leaving Emacs.")))
 
 (define-public emacs-erc-hl-nicks
   (package

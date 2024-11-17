@@ -1188,7 +1188,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/emacs-disable-jit-compilation.patch			\
   %D%/packages/patches/emacs-exec-path.patch			\
   %D%/packages/patches/emacs-fix-scheme-indent-function.patch	\
-  %D%/packages/patches/emacs-git-email-missing-parens.patch	\
   %D%/packages/patches/emacs-helpful-fix-tests.patch	\
   %D%/packages/patches/emacs-highlight-stages-add-gexp.patch	\
   %D%/packages/patches/emacs-json-reformat-fix-tests.patch	\
@@ -1294,6 +1293,10 @@ dist_patch_DATA =						\
   %D%/packages/patches/freeimage-unbundle.patch		\
   %D%/packages/patches/freeimage-CVE-2020-21428.patch		\
   %D%/packages/patches/freeimage-CVE-2020-22524.patch		\
+  %D%/packages/patches/freesolid-automake.patch			\
+  %D%/packages/patches/freesolid-autotools.patch		\
+  %D%/packages/patches/freesolid-configure.patch		\
+  %D%/packages/patches/freesolid-pkgconfig.patch		\
   %D%/packages/patches/fulcrum-1.9.1-unbundled-libraries.patch	\
   %D%/packages/patches/fuse-glibc-2.34.patch			\
   %D%/packages/patches/fuse-overlapping-headers.patch		\

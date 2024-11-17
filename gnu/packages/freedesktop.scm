@@ -1901,23 +1901,30 @@ these interfaces, based on the useradd, usermod and userdel commands.")
 (define-public libmbim
   (package
     (name "libmbim")
-    (version "1.26.4")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://www.freedesktop.org/software/libmbim/"
-                    "libmbim-" version ".tar.xz"))
-              (sha256
-               (base32
-                "1ncaarl4lgc7i52rwz50yq701wk2rr478cjybxbifsjqqk2cx27n"))))
-    (build-system gnu-build-system)
+    (version "1.30.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.freedesktop.org/mobile-broadband/libmbim")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "00kbjvpka51zrfjigzd3rk6r4x8hkg1xfj7d9zl9lccysnxyjx5h"))))
+    (build-system meson-build-system)
     (native-inputs
-     (list `(,glib "bin") ; for glib-mkenums
-           pkg-config python-wrapper))
+     (list `(,glib "bin")               ;for glib-mkenums
+           gobject-introspection
+           help2man
+           pkg-config
+           python-minimal))
     (propagated-inputs
-     (list glib)) ; required by mbim-glib.pc
+     (list glib))                       ;required by mbim-glib.pc
     (inputs
-     (list libgudev))
+     (list
+      bash-completion
+      libgudev))
     (synopsis "Library to communicate with MBIM-powered modems")
     (home-page "https://www.freedesktop.org/wiki/Software/libmbim/")
     (description
@@ -1928,26 +1935,69 @@ which speak the Mobile Interface Broadband Model (MBIM) protocol.")
      ;; The mbimcli tool is released under the GPLv2+ license.
      (list license:lgpl2.0+ license:gpl2+))))
 
+(define-public libqrtr-glib
+  (package
+    (name "libqrtr-glib")
+    (version "1.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://gitlab.freedesktop.org/mobile-broadband/libqrtr-glib")
+         (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0bfn5kfscli0rrxvmzdl6ix5ikh0kxia7ad83rmh1hksfcwynwlh"))))
+    (build-system meson-build-system)
+    (inputs
+     (list libgudev libmbim))
+    (native-inputs
+     (list bash-completion
+           `(,glib "bin")
+           gtk-doc
+           gobject-introspection
+           pkg-config))
+    (propagated-inputs
+     (list glib))                       ;required by mm-glib.pc
+    (synopsis "Qualcomm IPC Router protocol helper library")
+    (description
+     "libqrtr-glib is a glib-based library to use and manage the QRTR (Qualcomm
+IPC Router) bus.")
+    (home-page "https://gitlab.freedesktop.org/mobile-broadband/libqrtr-glib")
+    (license license:lgpl2.1+)))
+
 (define-public libqmi
   (package
     (name "libqmi")
-    (version "1.30.8")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://www.freedesktop.org/software/libqmi/"
-                    "libqmi-" version ".tar.xz"))
-              (sha256
-               (base32
-                "140rmjw436rh6rqmnfw6yaflpffd27ilwcv4s9jvvl1skv784946"))))
-    (build-system gnu-build-system)
+    (version "1.34.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.freedesktop.org/mobile-broadband/libqmi")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1m5y2sf14qd2i9mvbb68wxqlfwvpiprgz8zmcx6wb2cnjgsszmwp"))))
+    (build-system meson-build-system)
     (inputs
-     (list libgudev))
+     (list
+      bash-completion
+      libgudev))
     (native-inputs
-     (list `(,glib "bin") ; for glib-mkenums
-           pkg-config python-wrapper))
+     (list `(,glib "bin")               ;for glib-mkenums
+           gobject-introspection
+           help2man
+           pkg-config
+           python-minimal))
+    ;; These are required by qmi-glib.pc.
     (propagated-inputs
-     (list glib)) ; required by qmi-glib.pc
+     (list glib
+           libmbim
+           libqrtr-glib))
     (synopsis "Library to communicate with QMI-powered modems")
     (home-page "https://www.freedesktop.org/wiki/Software/libqmi/")
     (description
@@ -1961,34 +2011,46 @@ which speak the Qualcomm MSM Interface (QMI) protocol.")
 (define-public modem-manager
   (package
     (name "modem-manager")
-    (version "1.18.12")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://www.freedesktop.org/software/ModemManager/"
-                    "ModemManager-" version ".tar.xz"))
-              (sha256
-               (base32
-                "0c74n5jl1qvq2qlbwzfkgxny8smjcgkid1nhdnl6qnlmbn9f8r5l"))))
-    (build-system gnu-build-system)
+    (version "1.22.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://gitlab.freedesktop.org/mobile-broadband/ModemManager")
+         (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0fj4ibjfsxal3xfk3hrj4l9vg7zbj42k9lj7151illl2n3d5ngzw"))))
+    (build-system meson-build-system)
     (arguments
      (list
       #:configure-flags
-      #~(list (string-append "--with-udev-base-dir=" #$output "/lib/udev"))))
+      #~(list (string-append "-Dudevdir=" #$output "/lib/udev")
+              "-Dsystemdsystemunitdir=no"
+              "-Dvapi=true")))
     (native-inputs
      (list dbus
            gettext-minimal
            gobject-introspection
            `(,glib "bin")               ;for glib-mkenums
+           libxslt                      ;for xsltproc
            pkg-config
-           python
-           python-dbus
-           python-pygobject
+           python-minimal
+           python-dbus                  ;for test
+           python-pygobject             ;for test
            vala))
     (propagated-inputs
      (list glib))                       ;required by mm-glib.pc
     (inputs
-     (list libgudev libmbim libqmi polkit))
+     (list bash-completion
+           elogind
+           libgudev
+           libmbim
+           libqmi
+           libqrtr-glib
+           polkit))
     (synopsis "Mobile broadband modems manager")
     (home-page "https://www.freedesktop.org/wiki/Software/ModemManager/")
     (description

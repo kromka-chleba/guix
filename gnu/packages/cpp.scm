@@ -2031,7 +2031,7 @@ standards.")
 (define-public cli11
   (package
     (name "cli11")
-    (version "2.3.2")
+    (version "2.4.2")
     (source
       (origin
         (method git-fetch)
@@ -2040,7 +2040,7 @@ standards.")
               (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-         (base32 "1iif7kzp3yyjqg4yfar89rqmz44xkbi603gf9kjdqbgraw3f8zy7"))))
+         (base32 "1kxggvgbdjx73rx9d91dm9imzcacf5jjfnjn2vaq6h6lvwlcdf04"))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags
@@ -2058,7 +2058,7 @@ feature set with a simple and intuitive interface.")
 (define-public caf
   (package
     (name "caf")
-    (version "0.18.6")
+    (version "1.0.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2067,11 +2067,11 @@ feature set with a simple and intuitive interface.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "055y82044djphpwbazaxsvmb66c2xfdi8vyny8pzdxkdgxfh0vq1"))))
+                "1za7yja76csa0jnvkyavg2hc5zcc00za46c4x2fq42skh1apqcnl"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:configure-flags
-       '("-DCAF_ENABLE_EXAMPLES=OFF")))
+     (list #:configure-flags
+           #~(list "-DCAF_ENABLE_EXAMPLES=OFF")))
     (inputs
      (list openssl))
     (synopsis "C++ implementation of the actor model")
