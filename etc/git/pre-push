@@ -27,8 +27,11 @@ z40=0000000000000000000000000000000000000000
 perform_checks() {
 	set -e
 	guix git authenticate
-	exec make check-channel-news
-	exit 127
+        # Unset GIT_DIR and GIT_WORK_TREE, which get set by git in push hooks,
+        # as they conflict with the sandboxed git operations done in the test
+        # suite (see: man page `githooks(5)').
+        env -u GIT_DIR -u GIT_WORK_TREE make check -j$(nproc)
+	make check-channel-news
 }
 
 main() {
