@@ -18,6 +18,8 @@
 ;;; Copyright © 2022 Jacob Hart <hartja1@yahoo.com>
 ;;; Copyright © 2022 Simon Streit <simon@netpanic.org>
 ;;; Copyright © 2023 Clément Lassieur <clement@lassieur.org>
+;;; Copyright © 2024 Noisytoot <ron@noisytoot.org>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -510,7 +512,7 @@ desktops.")
 (define-public qbittorrent
   (package
     (name "qbittorrent")
-    (version "4.6.6")
+    (version "5.0.2")
     (source
      (origin
        (method git-fetch)
@@ -519,19 +521,20 @@ desktops.")
              (commit (string-append "release-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0kv7dgnfy8m480kxc4na9v9cjq9f9m3il191w7yvj4i8lz6jcaq1"))))
+        (base32 "0dh3zn8r05s1jfixm7gxzhvvili8k92n6chz0g3qhd8m17613194"))))
     (build-system qt-build-system)
     (arguments
-     (list #:configure-flags #~(list "-DTESTING=ON")
+     (list #:qtbase qtbase
+           #:configure-flags #~(list "-DTESTING=ON")
            #:test-target "check"))
     (native-inputs
-     (list qttools-5))
+     (list qttools))
     (inputs
      (list boost
            libtorrent-rasterbar
            openssl
            python-wrapper
-           qtsvg-5
+           qtsvg
            zlib))
     (home-page "https://www.qbittorrent.org/")
     (synopsis "Graphical BitTorrent client")
@@ -564,7 +567,7 @@ features.")
   (package
     (inherit qbittorrent)
     (name "qbittorrent-enhanced")
-    (version "4.6.6.10")
+    (version "5.0.2.10")
     (source
      (origin
        (method git-fetch)
@@ -574,7 +577,7 @@ features.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "113lhxx8c7na94wckg18x5y7mbs5vwgaxdiafa03a59wwpakyqws"))))
+         "1fmb5xbhn6lgfnyks69wa1cl2n9lplpgn67xrjm0yn9kgpkqc47m"))))
     (home-page "https://github.com/c0re100/qBittorrent-Enhanced-Edition")
     (description
      "qBittorrent Enhanced is a bittorrent client based on qBittorrent with

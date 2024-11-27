@@ -147,6 +147,7 @@
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Spencer King <spencer.king@nursiapress.com>
 ;;; Copyright © 2024 emma thompson <bigbookofbug@proton.me>
+;;; Copyright © 2024 Liam Hupfer <liam@hpfr.net>
 
 ;;;
 ;;; This file is part of GNU Guix.
@@ -8176,6 +8177,27 @@ other markup language major modes.")
 configuration, cache, and other data.")
     (license license:gpl3+)))
 
+(define-public emacs-standard-themes
+  (package
+    (name "emacs-standard-themes")
+    (version "2.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/standard-themes-"
+                           version ".tar"))
+       (sha256
+        (base32 "0x7fphd36kwg4vfwix5rq7260xl6x6cjfwsq11rj4af30sm4hlfn"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/protesilaos/standard-themes")
+    (synopsis "Like the default Emacs theme but more consistent")
+    (description
+     "The standard-themes are a pair of light and dark themes for GNU Emacs.
+They emulate the out-of-the-box looks of Emacs (which technically do
+@emph{not} constitute a theme) while bringing to them thematic consistency,
+customizability, and extensibility.")
+    (license license:gpl3+)))
+
 (define-public emacs-string-inflection
   (package
     (name "emacs-string-inflection")
@@ -9785,13 +9807,19 @@ Tracker as well as bug identifiers prepared for @code{bug-reference-mode}.")
                  (lambda* (#:key inputs #:allow-other-keys)
                    (emacs-substitute-variables "piem-b4.el"
                      ("piem-b4-b4-executable"
-                      (search-input-file inputs "/bin/b4"))))))))
+                      (search-input-file inputs "/bin/b4")))))
+               (add-after 'install 'makeinfo
+                 (lambda _
+                   (invoke "makeinfo" "Documentation/piem.texi")
+                   (install-file "piem.info"
+                                 (string-append #$output "/share/info")))))))
+    (native-inputs (list texinfo))
     (inputs
      (list b4
            emacs-debbugs
            emacs-elfeed
            emacs-notmuch))
-    (home-page "https://docs.kyleam.com/piem")
+    (home-page "https://docs.kyleam.com/piem/")
     (synopsis "Glue for working with public-inbox archives")
     (description "This package provides a collection of Emacs libraries for
 working with public-inbox archives.  As much of the hard work here is already
@@ -18465,6 +18493,36 @@ that allows users to concentrate more on their own work.  Its features are:
 a visual interface, reduce overhead of completion by using statistic method,
 extensibility.")
     (license license:gpl3+)))
+
+(define-public emacs-auto-dark
+  (package
+    (name "emacs-auto-dark")
+    (version "0.13.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/LionyxML/auto-dark-emacs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0cp4hcac2kya3m8cc8xfrv01cg06vi70zgp4m6q39cw2i9dnlnch"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/LionyxML/auto-dark-emacs")
+    (synopsis "Dark/light automatic Emacs theme switcher")
+    (description "This package provides the @code{auto-dark-mode} minor mode,
+which enables automatic switching between two user-defined (customizable)
+themes.  This transition occurs seamlessly in response to dark mode being
+enabled or disabled in the desktop preferences (such as in GNOME).  It uses
+DBus to query the system configured value.  To enable it, put the following
+snippet to your Emacs configuration file:
+@lisp
+(require auto-dark)
+(auto-dark-mode t)
+@end lisp
+To customize the themes used, visit @samp{M-x customize-group auto-dark}.")
+    (license license:gpl2+)))
 
 (define-public emacs-autocrypt
   (let ((commit "dc0223f11daf526621fda206b38bf06c29759c94")) ;version bump

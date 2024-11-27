@@ -2121,7 +2121,7 @@ from multiple records.")
 (define-public java-jmapviewer
   (package
     (name "java-jmapviewer")
-    (version "2.20")
+    (version "2.22")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://josm.openstreetmap.de/osmsvn/"
@@ -2129,7 +2129,7 @@ from multiple records.")
                                   version "/JMapViewer-" version "-Source.zip"))
               (sha256
                (base32
-                "02cvmmvvlqpbwn022w3m60xkq4gh4jh9lajs6yjgvjf2hnwxll31"))))
+                "0lq82yyancaswjb9fammjl1jicvdbijjz86bz94dy2v9zm62zq5b"))))
     (build-system ant-build-system)
     (native-inputs
      (list unzip))
@@ -2200,7 +2200,7 @@ to the OSM opening hours specification.")
 (define-public josm
   (package
     (name "josm")
-    (version "19160")
+    (version "19253")
     (source (origin
               (method svn-fetch)
               (uri (svn-reference
@@ -2209,7 +2209,7 @@ to the OSM opening hours specification.")
                      (recursive? #f)))
               (sha256
                (base32
-                "06m6rg9czs7mhkh0byd3c8n8y1gbzqqw2iy7qyn4084al4mdrw2z"))
+                "1k5v591mkh0xkyfj66qmv1mamqsqw347nhax5hlwyg8hgfk7a6xr"))
               (file-name (string-append name "-" version "-checkout"))
               (modules '((guix build utils)))
             (snippet

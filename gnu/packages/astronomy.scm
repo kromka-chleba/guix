@@ -1509,7 +1509,9 @@ model-fitting photometry or morphological analyses.")
     (build-system pyproject-build-system)
     (native-inputs
      (list nss-certs-for-test
-           python-httpretty))
+           python-httpretty
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-mock
            python-requests
@@ -1651,7 +1653,7 @@ implementation of the ASDF Standard.")
     (arguments
      (list
       #:test-flags
-      #~(list "-n" "auto")
+      #~(list "--numprocesses" (number->string (parallel-job-count)))
       #:phases #~(modify-phases %standard-phases
                    (add-before 'check 'set-home-env
                      (lambda _ (setenv "HOME" "/tmp"))))))
@@ -1766,7 +1768,9 @@ astronomical images, especially when there is no WCS information available.")
                         #$(version-major+minor+point version)))))))
       (native-inputs
        (list python-pytest
-             python-setuptools-scm))
+             python-setuptools
+             python-setuptools-scm
+             python-wheel))
       (propagated-inputs
        (list python-astropy
              python-h5py
@@ -1860,6 +1864,9 @@ mining in astronomy.")
             (lambda* (#:key tests? test-flags #:allow-other-keys)
               (when tests?
                 (apply invoke "python" test-flags)))))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-astropy
            python-future
@@ -1894,9 +1901,16 @@ Herschel.")
             (lambda _
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
     (native-inputs
-     (list python-pytest python-pytest-cov python-pytest-openfiles))
+     (list python-pytest
+           python-pytest-cov
+           python-pytest-openfiles
+           python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list python-astropy python-click python-dask python-numpy))
+     (list python-astropy
+           python-click
+           python-dask
+           python-numpy))
     (home-page "https://casa-formats-io.readthedocs.io/")
     (synopsis "Dask-based reader for CASA data")
     (description
@@ -1961,10 +1975,16 @@ lens models possibly obtained from different modeling codes.")
        (sha256
         (base32 "0gsdffn5w7j1aridvmx4xh6axvmbmqjwawacc8fnshpcyh4md5pn"))))
     (build-system pyproject-build-system)
-    (propagated-inputs
-     (list python-attrs python-dateutil python-w3lib))
     (native-inputs
-     (list python-astropy python-pytest python-pytest-mypy))
+     (list python-astropy-minimal
+           python-pytest
+           python-pytest-mypy
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-attrs
+           python-dateutil
+           python-w3lib))
     (home-page "https://github.com/poliastro/czml3")
     (synopsis "Python library to write CZML")
     (description
@@ -2013,8 +2033,13 @@ of dates.")
     (arguments
      (list
       #:test-flags #~(list "test.py")))
-    (native-inputs (list python-cython python-pytest))
-    (propagated-inputs (list python-numpy))
+    (native-inputs
+     (list python-cython
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy))
     (home-page "http://github.com/kbarbary/extinction")
     (synopsis "Fast interstellar dust extinction laws")
     (description
@@ -2058,7 +2083,9 @@ exitinction laws found in the literature.")
             (lambda _
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (inputs
      (list curl cfitsio zlib))
     (propagated-inputs
@@ -2492,6 +2519,9 @@ position-frequency slice.")
     (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f)) ; no tests
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (home-page "https://siril.org/tutorials/pysiril/")
     (synopsis "Python interface to SiriL")
     (description
@@ -2571,7 +2601,9 @@ end products of specific X-ray observatories.")
     (arguments
      (list #:tests? #f)) ; no tests
     (native-inputs
-     (list nss-certs-for-test))
+     (list nss-certs-for-test
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-requests
            python-wxpython))
@@ -2692,6 +2724,11 @@ to make such analysis both as flexible and clear as possible.")
               ;; To address sanity check warning: UserWarning: unable to write
               ;; new config file.
               (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-cython
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs
      (list python-appdirs
            python-astropy
@@ -2702,9 +2739,6 @@ to make such analysis both as flexible and clear as possible.")
            python-regions
            python-scipy
            python-tqdm))
-    (native-inputs
-     (list python-cython
-           python-setuptools-scm))
     (home-page "https://hea-www.cfa.harvard.edu/soxs/")
     (synopsis "Simulated Observations of X-ray Sources")
     (description
@@ -3000,7 +3034,7 @@ deconvolution).  Such post-processing is not performed by Stackistry.")
      (list
       #:test-flags
       #~(list "--pyargs" "astropy"
-              "--numprocesses" "auto"
+              "--numprocesses" (number->string (parallel-job-count))
               "-k" (string-append
                     ;; Skip tests that need remote data.
                     "not remote_data"
@@ -3399,16 +3433,18 @@ bad pixel tracking throughout the reduction process.")
                (add-before 'check 'set-home-env
                  (lambda _
                    (setenv "HOME" (getcwd)))))))
-    (propagated-inputs
-     (list python-numpy))
     (native-inputs
      (list python-astropy
            python-hypothesis
            python-pytest
            python-pytest-cov
            python-pytest-remotedata
+           python-setuptools
            python-setuptools-scm
-           python-xarray))
+           python-xarray
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy))
     (home-page "https://github.com/MAVENSDC/cdflib")
     (synopsis "Python library to deal with NASA's CDF astronmical data format")
     (description "This package provides a Python @acronym{CDF, Computable
@@ -3469,9 +3505,14 @@ attempting to maintain ISTP compliance
         (base32 "1zabmckr1z637pfqqvlkj0asfqqvx2x92163dby8x0c8yiqgdvjb"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-colorspacious python-pytest python-pytest-mpl))
+     (list python-colorspacious
+           python-pytest
+           python-pytest-mpl
+           python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list python-matplotlib python-numpy))
+     (list python-matplotlib
+           python-numpy))
     (home-page "https://yt-project.org/")
     (synopsis "Matplotlib colormaps from the yt project")
     (description
@@ -3578,10 +3619,14 @@ used with local NetDRMS sites.")
             (lambda _
               ;; Cython extensions have to be built before running the tests.
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (propagated-inputs
-     (list python-astropy python-numpy))
     (native-inputs
-     (list python-pytest python-setuptools-scm))
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-astropy
+           python-numpy))
     (home-page "https://github.com/spacetelescope/drizzle")
     (synopsis
      "Astronomical tool for combining dithered images into a single image")
@@ -3630,10 +3675,15 @@ implemented using the astropy.modeling framework.")
     (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f)) ; Requires HTTP(S) access to api.beta.helioviewer.org
-    (propagated-inputs
-     (list python-pydantic-2 python-pydantic-settings python-requests))
     (native-inputs
-     (list python-pytest python-pytest-astropy))
+     (list python-pytest
+           python-pytest-astropy
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-pydantic-2
+           python-pydantic-settings
+           python-requests))
     (home-page "https://helioviewer.org/")
     (synopsis "Helioviewer Python API Wrapper")
     (description "@code{hvpy} is a Python API wrapper around the formal
@@ -3772,6 +3822,11 @@ the easy construction of interactive matplotlib widget based animations.")
        (sha256
         (base32 "1lng2prl2kzzpgrkj11hl53cvqdh0gpk8cdqkvcg08k3bivzk8q8"))))
     (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs
      (list python-astropy
            python-corner
@@ -3780,8 +3835,6 @@ the easy construction of interactive matplotlib widget based animations.")
            python-matplotlib
            python-pyyaml
            python-scipy))
-    (native-inputs
-     (list python-pytest python-setuptools-scm))
     (home-page "http://github.com/zblz/naima")
     (synopsis "Derivation of non-thermal particle distributions through MCMC spectral fitting")
     (description
@@ -3871,7 +3924,7 @@ can be described by @acronym{WCS, World Coordinate System} translations.")
     (arguments
      (list
       #:test-flags
-      #~(list "--numprocesses" "auto")
+      #~(list "--numprocesses" (number->string (parallel-job-count)))
       #:phases
       #~(modify-phases %standard-phases
          (add-after 'unpack 'relax-requirements
@@ -4032,7 +4085,7 @@ Low-Earth Orbit (LEO).")
     (arguments
      (list
       #:test-flags
-      #~(list "-n" "auto")))
+      #~(list "--numprocesses" (number->string (parallel-job-count)))))
     (propagated-inputs
      ;; XXX: With python-synphot (marked as optional) package added to the list
      ;; it tries to download from remote host during tests and fails. Overall
@@ -4079,10 +4132,15 @@ interest, and which require portability between platforms or ease of scripting."
        (sha256
         (base32 "0vgjqvddq4a5lnmg8msm7fwqs3r6fc748xzvnhyvc387h0z8pdxk"))))
     (build-system pyproject-build-system)
-    (propagated-inputs
-     (list python-astropy python-numpy))
     (native-inputs
-     (list python-pillow python-pytest python-setuptools-scm))
+     (list python-pillow
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-astropy
+           python-numpy))
     (home-page "https://astrofrog.github.io/pyavm/")
     (synopsis "Simple pure-python AVM meta-data handling")
     (description
@@ -4133,7 +4191,7 @@ Virtual observatory (VO) using Python.")
     (arguments
      (list
       #:test-flags
-      #~(list "--numprocesses" "auto")
+      #~(list "--numprocesses" (number->string (parallel-job-count)))
       #:phases
       #~(modify-phases %standard-phases
           ;; setup.py was removed in 84c80a280431adda00641cda5264c7de18b43b2f
@@ -4237,7 +4295,7 @@ PSF} describing how the optical system spreads light from sources.")
       #:test-flags
       #~(list "--arraydiff"
               "--arraydiff-default-format=fits"
-              "--numprocesses" "auto"
+              "--numprocesses" (number->string (parallel-job-count))
               "--pyargs" "reproject")
       #:phases
       #~(modify-phases %standard-phases
@@ -4306,6 +4364,9 @@ changing the pixel resolution, orientation, coordinate system.")
        (sha256
         (base32 "0aalbmldks6ykgkcxwkvnp04q0avhv903m5zwvg8i7zvl99xrbfq"))))
     (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-numpy))
     (home-page "https://github.com/brandon-rhodes/python-sgp4")
@@ -4338,7 +4399,7 @@ orbits described in TLE files.")
     (arguments
      (list
       #:test-flags
-      #~(list "--numprocesses" "auto"
+      #~(list "--numprocesses" (number->string (parallel-job-count))
               ;; Requries SpicePy not packed in Guix yet.
               "--ignore=sunpy/coordinates/tests/test_spice.py")
       #:phases
@@ -4528,7 +4589,7 @@ elevation, solar azimuth, rahukaalam, and the phases of the moon.")
       ;; See <https://github.com/radio-astro-tools/radio-beam/issues/129>.
       #:tests? #f
       #:test-flags
-      #~(list "-n" "auto")))
+      #~(list "--numprocesses" (number->string (parallel-job-count)))))
     (propagated-inputs
      (list python-astropy
            ;; XXX: Currently failing in upstream as it's optional silent
@@ -4667,7 +4728,9 @@ python_files = test_*.py"))))))))
     (native-inputs
      (list python-pytest
            python-pytest-astropy-header
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (inputs
      (list qd))
     (propagated-inputs
@@ -4753,8 +4816,14 @@ and CAS statistics), as well as fitting 2D Sérsic profiles.")
             (lambda _
               ;; Cython extensions have to be built before running the tests.
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (propagated-inputs (list python-numpy python-scipy))
-    (native-inputs (list python-pytest python-setuptools-scm))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy
+           python-scipy))
     (home-page "https://github.com/spacetelescope/stsci.image")
     (synopsis "Image array manipulation functions")
     (description
@@ -4912,7 +4981,7 @@ processing functions: @code{xyxymatch}, @code{geomap}.")
     (arguments
      (list
       #:test-flags
-      #~(list "--numprocesses" "auto"
+      #~(list "--numprocesses" (number->string (parallel-job-count))
               ;; Disable tests requiring access to CRDS servers to download
               ;; ~500MiB of data.
               "-k" "not test_crds_selectors_vs_datamodel")
@@ -5039,7 +5108,10 @@ packages for HST.")
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
                 (invoke "python" "-m" "unittest" "discover" "-s" "test")))))))
-    (inputs
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
      (list python-numpy))
     (home-page "https://github.com/brandon-rhodes/python-jplephem")
     (synopsis "Python version of NASA DE4xx ephemerides")
@@ -5203,7 +5275,11 @@ files.")
             (lambda _
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
     (native-inputs
-     (list python-pytest-doctestplus python-pytest python-setuptools-scm))
+     (list python-pytest-doctestplus
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (inputs
      (list erfa))
     (propagated-inputs
@@ -5290,7 +5366,9 @@ functions, so that they can be called with scalar or array inputs.")
     (native-inputs
      (list python-cython
            python-pandas
-           python-pytest))
+           python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-h5py
            python-matplotlib
@@ -5372,11 +5450,17 @@ Features:
     (arguments
      (list
       #:test-flags
-      #~(list "--numprocesses" "auto"
+      #~(list "--numprocesses" (number->string (parallel-job-count))
               ;; Disable 2 failing tests, see
               ;; <https://github.com/spacetelescope/pysiaf/issues/338>
               "-k" (string-append "not test_write_jwst_siaf_xlsx"
                                   " and not test_write_jwst_siaf_xml" ))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-xdist
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs
      (list python-astropy
            python-lxml
@@ -5385,10 +5469,6 @@ Features:
            python-openpyxl
            python-requests
            python-scipy))
-    (native-inputs
-     (list python-pytest
-           python-pytest-xdist
-           python-setuptools-scm))
     (home-page "https://pysiaf.readthedocs.io/")
     (synopsis "Handling SIAF for space telescopes")
     (description
@@ -5430,7 +5510,9 @@ comparison, and validation are provided.")
       (native-inputs
        (list python-pytest
              python-pytest-remotedata
-             python-setuptools-scm))
+             python-setuptools
+             python-setuptools-scm
+             python-wheel))
       (propagated-inputs
        (list python-astropy
              python-beautifulsoup4
@@ -5461,7 +5543,8 @@ spectra, and data.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags #~(list "--numprocesses" "auto")
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count)))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'check 'set-home-env
@@ -5687,13 +5770,17 @@ support for reading and writing various compression algorithms including:
               "--ignore=tests/test_integration.py"
               "--ignore=tests/test_manifests.py"
               "--ignore=tests/test_yaml_schema.py")))
-    (native-inputs (list python-astropy
-                         python-jsonschema
-                         python-pypa-build
-                         python-pytest
-                         python-packaging
-                         python-setuptools-scm))
-    (propagated-inputs (list python-importlib-resources))
+    (native-inputs
+     (list python-astropy
+           python-jsonschema
+           python-pypa-build
+           python-pytest
+           python-packaging
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-importlib-resources))
     (home-page "https://asdf-standard.readthedocs.io/")
     (synopsis "ASDF standard schemas")
     (description
@@ -5720,8 +5807,13 @@ up-front for extensibility.")
     (arguments
      ;; Dependency cycle with python-asdf
      (list #:tests? #f))
-    (native-inputs (list python-setuptools-scm))
-    (propagated-inputs (list python-asdf-standard python-importlib-resources))
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-asdf-standard
+           python-importlib-resources))
     (home-page "https://github.com/asdf-format/asdf-transform-schemas")
     (synopsis "ASDF schemas for transforms")
     (description
@@ -5744,7 +5836,7 @@ package such as asdf-astropy.")
     (arguments
      (list
       #:test-flags
-      #~(list "-n" "auto")))
+      #~(list "--numprocesses" (number->string (parallel-job-count)))))
     (native-inputs
      (list python-pytest
            python-pytest-xdist
@@ -6046,7 +6138,7 @@ solar physics.")
     (arguments
      (list
       #:test-flags
-      #~(list "--numprocesses" "auto")
+      #~(list "--numprocesses" (number->string (parallel-job-count)))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'set-env
@@ -6107,7 +6199,9 @@ pipelines.")
     (native-inputs
      (list nss-certs-for-test
            python-assay
-           python-pandas))
+           python-pandas
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-certifi
            python-jplephem
@@ -6202,7 +6296,7 @@ between image and reference catalogs. Currently only aligning images with
     (arguments
      (list
       #:test-flags
-      #~(list "--numprocesses" "auto"
+      #~(list "--numprocesses" (number->string (parallel-job-count))
               "-k" (string-append
                     ;; Test requiring network access
                     "not test_monthly_trending_plot_auto_opdtable"
@@ -6290,7 +6384,7 @@ using (multivariate) polynomials.")
      (list
       #:build-backend "setuptools.build_meta"
       #:test-flags
-      #~(list "-n" "auto")
+      #~(list "--numprocesses" (number->string (parallel-job-count)))
       #:phases
       #~(modify-phases %standard-phases
          (add-after 'unpack 'relax-requirements
@@ -6305,6 +6399,18 @@ using (multivariate) polynomials.")
             (lambda _
               (setenv "HOME" "/tmp")
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (native-inputs
+     (list python-cython-3
+           python-nose
+           python-nose-exclude
+           python-nose-timer
+           python-pyaml
+           python-pytest
+           python-pytest-mpl
+           python-pytest-xdist
+           python-setuptools
+           python-sympy
+           python-wheel))
     (propagated-inputs
      (list python-cmyt
            python-ewah-bool-utils
@@ -6317,17 +6423,6 @@ using (multivariate) polynomials.")
            python-tomli-w
            python-tqdm
            python-unyt))
-    (native-inputs
-     (list python-cython-3
-           python-nose
-           python-nose-exclude
-           python-nose-timer
-           python-pyaml
-           python-pytest
-           python-pytest-mpl
-           python-pytest-xdist
-           python-setuptools
-           python-sympy))
     (home-page "http://yt-project.org/")
     (synopsis "Analyzing and visualizing volumetric data framework")
     (description
@@ -6374,15 +6469,17 @@ using (multivariate) polynomials.")
           (add-before 'check 'build-extensions
             (lambda _
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (native-inputs
+     (list python-cython
+           python-nose
+           python-tomli
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-h5py
            python-numpy
            python-packaging
            python-yt))
-    (native-inputs
-     (list python-cython
-           python-nose
-           python-tomli))
     (home-page "https://github.com/yt-project/yt_astro_analysis")
     (synopsis "YT astrophysical analysis modules")
     (description
@@ -6734,7 +6831,7 @@ astronomical fields.  SkyMaker is part of the
            nlopt
            openssl
            qtbase-5
-           qtcharts
+           qtcharts-5
            qtlocation-5
            qtmultimedia-5
            qtpositioning

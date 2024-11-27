@@ -23,14 +23,15 @@
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
   #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (gnu packages readline)
   #:use-module (gnu packages acl)
-  #:use-module (gnu packages linux))
+  #:use-module (gnu packages file)
+  #:use-module (gnu packages linux)
+  #:use-module (gnu packages readline))
 
 (define-public clifm
   (package
     (name "clifm")
-    (version "1.21")
+    (version "1.22")
     (source
      (origin
        (method git-fetch)
@@ -39,7 +40,7 @@
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0r2w11v5nsz9d9wdi0zmymkwg0y9x4xg4dksd2qxlknwqnvivcy7"))))
+        (base32 "1iwlijdm4mr5bp5rilxr11f04q2q4ak49m8askzbw0shyi8i1sli"))))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags (list (string-append "CC="
@@ -49,8 +50,13 @@
        #:phases (modify-phases %standard-phases
                   (delete 'configure)
                   (delete 'build)
-                  (delete 'check))))
-    (inputs (list readline acl libcap))
+                  (delete 'check)
+                  (add-after 'unpack 'fix-bash-completion-directory
+                    (lambda _
+                      (substitute* "Makefile"
+                        (("\\$\\(DATADIR\\)/bash-completion/completions")
+                         "$(PREFIX)/etc/bash_completion.d")))))))
+    (inputs (list acl file libcap readline))
     (home-page "https://github.com/leo-arch/clifm")
     (synopsis "Command-line file manager")
     (description

@@ -150,6 +150,7 @@
   #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages image)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages libevent)
   #:use-module (gnu packages libunwind)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages llvm)
@@ -512,7 +513,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.11-version "6.11.7")
+(define-public linux-libre-6.11-version "6.11.10")
 (define-public linux-libre-6.11-gnu-revision "gnu")
 (define deblob-scripts-6.11
   (linux-libre-deblob-scripts
@@ -522,7 +523,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "076psrj9rx0fb7i76f7s6xyaq8dj3kyrfhc4q6g7q2ll3v4hxvc6")))
 (define-public linux-libre-6.11-pristine-source
   (let ((version linux-libre-6.11-version)
-        (hash (base32 "1cpbycx79nl517rz573mja52bgzm249mhqzp424r5mqp91jfrx8b")))
+        (hash (base32 "0xzynjyyr16my0wrla4ggpjbh4g7nsqixaimz5hrsqlhaa8q9hab")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.11)))
@@ -531,7 +532,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.60")
+(define-public linux-libre-6.6-version "6.6.63")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -541,12 +542,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1x3455v7sfzakq99ydifh65yzvjzrw06p2lchwb6902yzqbnh786")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1vsjb7ifmf6ic6zv16fbrxjvffqc1mkndza76hjr9aw2a0ny7yaj")))
+        (hash (base32 "0d8q0vwv3lcix3wiq2n53rir3h298flg2l0ghpify4rlh2s4l1fi")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.116")
+(define-public linux-libre-6.1-version "6.1.119")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -556,12 +557,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "060pbbvk3c1r9v6fz1qm5f0hjb29wi67lg7an0nwl6bpjsk5ci52")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "109vhc1hcfx6sacw4553xmwbj1gqx3zqjq5zg11z7a72dqrnisqp")))
+        (hash (base32 "0y1j8bz99d5vkxklzpwhns5r77lpz2prszf6whfahi58s0wszkdf")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.171")
+(define-public linux-libre-5.15-version "5.15.173")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
@@ -571,12 +572,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1pbl08jzqh944z34bz25k2v7igsm3r89jbcg0hba3cvyybkkfc2g")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "0fra5zwcixgl6fg9hgdzlfcqng6pg09h2j7xqhi4qg0jv1jf0lr9")))
+        (hash (base32 "1a3x3ld6g7ny0hdfqfvj5j2i5sx5l5p236pdnsr0icn9ri3jljwa")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
 
-(define-public linux-libre-5.10-version "5.10.229")
+(define-public linux-libre-5.10-version "5.10.230")
 (define-public linux-libre-5.10-gnu-revision "gnu1")
 (define deblob-scripts-5.10
   (linux-libre-deblob-scripts
@@ -586,12 +587,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "14jdl5rk3w7h97svl6j6ngbywj5qixmpv6ifhqkzjxpp07xngvs4")))
 (define-public linux-libre-5.10-pristine-source
   (let ((version linux-libre-5.10-version)
-        (hash (base32 "1q6di05rk4bsy91r03zw6vz14zzcpvv25dv7gw0yz1gzpgkbb9h8")))
+        (hash (base32 "0isbb0ixqg4yzlh3lmdvnax4m1ikf2q4wk0b9vgqc63p7gpm066d")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.10)))
 
-(define-public linux-libre-5.4-version "5.4.285")
+(define-public linux-libre-5.4-version "5.4.286")
 (define-public linux-libre-5.4-gnu-revision "gnu1")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
@@ -601,12 +602,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1q1wcslpwpwsnwzbddjdc0qv2h89492skyw2zsjyb4rpz41s66mg")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "1722sc365ajxmqyr4r49yp73mzdckay3rx5c2gx29xzny9zc6cmy")))
+        (hash (base32 "0z48n7vahg318bgkccy8xqgl87vfb8zmn995cqh7z38fvzrm81qq")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
 
-(define-public linux-libre-4.19-version "4.19.323")
+(define-public linux-libre-4.19-version "4.19.324")
 (define-public linux-libre-4.19-gnu-revision "gnu1")
 (define deblob-scripts-4.19
   (linux-libre-deblob-scripts
@@ -616,7 +617,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "048isws4h3lya8dwpwyhqglsjg9sckxk0gfsxdbqg336n5vi0gb1")))
 (define-public linux-libre-4.19-pristine-source
   (let ((version linux-libre-4.19-version)
-        (hash (base32 "073akfd30bnk0r8hw1lywv2d7svslhfl5lx9zlkdhjf6p9gj3jgf")))
+        (hash (base32 "1rpzhx6zx7kav638m78fcqhw3igzggdcyc2r7ns8inh75nnl1qch")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.19)))
@@ -4066,6 +4067,23 @@ user-space processes.")
              (substitute* "lib/Makefile"
                (("-DFUSERMOUNT_DIR=[[:graph:]]+")
                 "-DFUSERMOUNT_DIR=\\\"/var/empty\\\"")))))))))
+
+(define-public fuse-for-appimage
+  (package
+    (inherit fuse)
+    (name "fuse")
+    (version "3.16.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/libfuse/libfuse/releases/"
+                           "download/fuse-" version "/fuse-" version ".tar.gz"))
+       (sha256
+        (base32 "11yfl2w2a445hllyzlakq97n32g06972vxpmh7lpbclnj9fhb5zp"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments fuse)
+       ((#:configure-flags original-flags #~(list))
+        #~(append #$original-flags '("--default-library=static")))))))
 
 (define-public unionfs-fuse
   (package
@@ -8988,6 +9006,118 @@ comparing system environments.")
    (home-page "https://github.com/jamesodhunt/procenv/")
    (license license:gpl3+)))
 
+(define-public cassini-headers
+  (let ((commit "9a8a738a879f007849fbc69be8e3487a4abf0952")
+        (revision "0"))
+    (package
+      (name "cassini-headers")
+      (version (git-version "2.0.0"               ;per .spec file
+                            revision commit))
+      (home-page "https://github.com/HewlettPackard/shs-cassini-headers")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference (url home-page) (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0a54vwfr29n0i392wdap7rzmq0lb8mxa17d8yljdbm0kzrq48csz"))))
+      (build-system copy-build-system)
+      (arguments
+       (list #:install-plan
+             #~'(("include" "include")
+                 ("share/cassini-headers" "share/cassini-headers"))))
+      (synopsis "Cassini network hardware definitions and headers")
+      (description
+       "This package provides hardware definitions and C headers for use by
+the Linux driver and by user-space applications for the Cassini/Slingshot
+high-speed network interconnect made by HPE (formerly Cray).  User-land
+software uses @file{cxi_prov_hw.h} from this package.")
+      (license (list license:gpl2 license:bsd-2))))) ;dual-licensed
+
+(define-public cxi-driver
+  (let ((commit "5f0ec0ead6ef3f98542a2ef5e76b89d14dd22150")
+        (revision "0"))
+    (package
+      (name "cxi-driver")
+      (version (git-version "1.0.0"               ;per .spec file
+                            revision commit))
+      (home-page "https://github.com/HewlettPackard/shs-cxi-driver")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference (url home-page) (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "19cly014ihgdidrc1aki2xsbfhpc0g73v0vxcky8r27xza7rz5bg"))))
+      ;; TODO: Actually build the Linux driver.
+      (build-system copy-build-system)
+      (arguments
+       (list #:install-plan #~'(("include" "include"))))
+      (propagated-inputs (list cassini-headers))
+      (synopsis "Linux driver for the Cassini/Slingshot interconnect")
+      (description
+       "This is the Linux driver for the Cray/HPE Cassini 1 and 2 high-speed
+network interconnect (aka. Slingshot), and its Ethernet driver.  It includes
+the @file{uapi/misc/cxi.h} C header file for use by user-land software.
+
+Currently the Linux driver itself is missing from this package.")
+      (license license:gpl2+))))
+
+(define-public libcxi
+  (let ((commit "5b6f8b5d57017c7963debb379d5693c59aca63ed")
+        (revision "0"))
+    (package
+      (name "libcxi")
+      (version (git-version "1.0.1" revision commit))
+      (home-page "https://github.com/HewlettPackard/shs-libcxi")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference (url home-page) (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1h3dhird8p11q4ziaxzg1hr5gxcgwx1limzdcyildyaw50dy549g"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list #:configure-flags
+             #~(list "--disable-static"
+                     (string-append "--with-udevrulesdir="
+                                    #$output "/lib/udev/rules.d"))
+
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-before 'configure 'set-cassini-file-names
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "utils/cxi_dump_csrs.py"
+                       (("/usr/share/cassini-headers/csr_defs.json")
+                        (search-input-file
+                         inputs
+                         "/share/cassini-headers/csr_defs.json"))))))))
+      (native-inputs (list autoconf
+                           automake
+                           libtool
+                           pkg-config
+                           python-wrapper))
+      (inputs (list libconfig
+                    libuv
+                    fuse-2
+                    libyaml
+                    libnl
+                    numactl
+                    eudev
+                    (list lm-sensors "lib")))
+      (propagated-inputs (list cassini-headers cxi-driver))
+      (synopsis "Interface to the Cassini/Slingshot high-speed interconnect")
+      (description
+       "Libcxi provides applications with a low-level interface to the
+Cray/HPE Cassini high-speed @acronym{NIC, network interface controller}, also
+known as Slingshot.")
+
+      ;; License is spelled out in 'cray-libcxi.spec' and in source file
+      ;; headers.
+      (license (list license:lgpl2.1+ license:bsd-3))))) ;dual-licensed
+
 (define-public libfabric
   (package
     (name "libfabric")
@@ -9003,21 +9133,37 @@ comparing system environments.")
     (build-system gnu-build-system)
     (inputs
      (let ((if-supported                          ;XXX: copied from openmpi
-            (lambda (package)
+            (lambda (package . extra)
               (if (and (not (%current-target-system))
                        (member (%current-system)
                                (package-supported-systems package)))
-                  (list package)
+                  (cons package extra)
                   '()))))
        (append (list rdma-core libnl)
                (if-supported psm)
-               (if-supported psm2))))
+               (if-supported psm2)
+               (if-supported libcxi curl json-c))))
     (arguments
      (list #:configure-flags
            #~(append (if #$(target-64bit?)
                            (list "--enable-efa")
                            '())
-                     (list "--enable-verbs"))))
+                     (list #$@(if (this-package-input "libcxi")
+                                  #~("--enable-cxi")
+                                  #~())
+                           "--enable-verbs"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'remove-libtool-archive
+                 (lambda _
+                   ;; 'libfabric.la' has '-ljson-c' without a corresponding
+                   ;; '-L' in 'dependency_libs', which in turn causes users
+                   ;; such as Open MPI to fail at link time due to '-ljson-c'
+                   ;; not being found, even when building a shared library.
+                   ;; So, remove the .la file.
+                   (delete-file
+                    (string-append #$output
+                                   "/lib/libfabric.la")))))))
     (home-page "https://ofiwg.github.io/libfabric/")
     (synopsis "Open Fabric Interfaces")
     (description

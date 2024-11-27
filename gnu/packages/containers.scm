@@ -465,7 +465,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
 (define-public podman
   (package
     (name "podman")
-    (version "5.2.5")
+    (version "5.3.1")
     (source
      (origin
        (method git-fetch)
@@ -473,7 +473,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
              (url "https://github.com/containers/podman")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1s0zjfclayqaknc457wy8iqlb9g170a7v3b8rnv59v3fkhkbpa81"))
+        (base32 "1315rqsfiwq4i2vvdzb6nkwbvgwimsj7f71ma1svvqhp8kbly04h"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -554,7 +554,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
              (inputs (list pcre2)))     ; Drop once grep on master supports -P
            bats
            git
-           go-1.21
+           go-1.22
            go-github-com-go-md2man
            mandoc
            pkg-config
@@ -606,7 +606,7 @@ being rootless and not requiring any daemon to be running.")
 (define-public buildah
   (package
     (name "buildah")
-    (version "1.37.5")
+    (version "1.38.0")
     (source
      (origin
        (method git-fetch)
@@ -614,7 +614,7 @@ being rootless and not requiring any daemon to be running.")
              (url "https://github.com/containers/buildah")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0m15pizivwwq2cnmsyhsz5h8zblcvpy06lj82vypg358spq3y0l4"))
+        (base32 "1lnl5v8d5p4g0rm4d90rw4hdh066w7v8r9g1h0v1z533mbgxgry8"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -684,7 +684,7 @@ being rootless and not requiring any daemon to be running.")
                   lvm2))
     (native-inputs
      (list bats
-           go-1.21
+           go-1.22
            go-github-com-go-md2man
            pkg-config))
     (synopsis "Build @acronym{OCI, Open Container Initiative} images")

@@ -2953,6 +2953,50 @@ web applications.  Caveman2 has three design goals:
 (define-public ecl-caveman
   (sbcl-package->ecl-package sbcl-caveman))
 
+(define-public sbcl-cblas
+  (let ((commit "1eb97919ccf0ec3add7724e1a21872580bd0cdc6")
+        (revision "1"))
+    (package
+      (name "sbcl-cblas")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/digikar99/cl-cblas")
+               (commit commit)))
+         (file-name (git-file-name "cl-cblas" version))
+         (sha256
+          (base32 "1bd2w51r71pgm6sc6m2fms4j1bbnli023j4w3rbxw9cln0g7badp"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs
+       (list openblas
+             sbcl-cffi
+             sbcl-cl-autowrap))
+      (arguments
+       (list #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-paths
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "src/shared-object.lisp"
+                       (("/usr/.*/libopenblas\\.so")
+                        (search-input-file inputs "/lib/libopenblas.so"))
+                       (("\"libopenblas\\.so\"")
+                        (string-append "\""
+                                       (search-input-file inputs
+                                                          "/lib/libopenblas.so")
+                                       "\""))))))))
+      (synopsis "Common Lisp bindings for CBLAS")
+      (description
+       "This package provides Common Lisp bindings to access the linear
+algebra libraries using the CBLAS API.  Currently the OpenBLAS implementation
+is used.")
+      (home-page "https://github.com/digikar99/cl-cblas")
+      (license license:expat))))
+
+(define-public cl-cblas
+  (sbcl-package->cl-source-package sbcl-cblas))
+
 (define-public sbcl-cells
   (let ((commit "e8542b17fddd6340c1e237ce482a52327c8ead8e"))
     (package
@@ -3143,8 +3187,8 @@ continued fractions.")
   (sbcl-package->ecl-package sbcl-cf))
 
 (define-public sbcl-cffi
-  (let ((commit "33970351e71bb5f12ba56fc40270089e948ae112")
-        (revision "1"))
+  (let ((commit "32c90d4a9a01e809f591276c058e5b3c7f39b154")
+        (revision "2"))
     (package
       (name "sbcl-cffi")
       (version (git-version "0.24.1" revision commit))
@@ -3156,7 +3200,7 @@ continued fractions.")
                (commit commit)))
          (file-name (git-file-name "cl-cffi" version))
          (sha256
-          (base32 "1h7cw15f08gm6m4yz8hk7qkfwp7mwwnykjc5py6dhjakv0wh1g37"))))
+          (base32 "1b2j32rapgw8rn7m9sm2k8r8x9jds7vshkm90i5lw9v4xnp8x4m7"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list libffi
@@ -3168,7 +3212,11 @@ continued fractions.")
              sbcl-bordeaux-threads
              sbcl-rt))
       (arguments
-       (list #:phases
+       (list ;; Some tests will not work on riscv64 because a function of SBCL
+             ;; is not implemented yet for riscv.
+             ;; See <https://bugs.launchpad.net/sbcl/+bug/2069265>
+             #:tests? (not (target-riscv64?))
+             #:phases
              #~(modify-phases %standard-phases
                  (add-after 'unpack 'fix-paths
                    (lambda* (#:key inputs #:allow-other-keys)
@@ -4186,8 +4234,8 @@ to cl-async.")
   (sbcl-package->ecl-package sbcl-cl-async-future))
 
 (define libasyncprocess
-  (let ((commit "8067007e283745b94a36a51320b41b65ac296e24")
-        (revision "1"))
+  (let ((commit "3b16b91d417530dac03559980fb5703206e20c55")
+        (revision "2"))
     (package
       (name "libasyncprocess")
       (version (git-version "0.0.1" revision commit))
@@ -4199,7 +4247,7 @@ to cl-async.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0691z0vs5c65m24p1yi12iy27j59layzvzyy1yl19704x05442qh"))
+          (base32 "0ykbkmcf46rgiphsb8c03xf9l4l23xn1rppm51mviz7brs0zx7g4"))
          (modules '((guix build utils)))
          (snippet
           ;; Delete precompiled artifacts.
@@ -8983,14 +9031,31 @@ generation functions from the GSL library.")
        (list sbcl-alexandria
              sbcl-anaphora
              sbcl-array-operations
-             sbcl-cl-num-utils
              sbcl-cl-rmath
              sbcl-cl-slice
              sbcl-gsll
              sbcl-let-plus
-             sbcl-lla))
+             sbcl-lla
+             sbcl-numerical-utilities))
       (native-inputs
        (list sbcl-clunit))
+      (arguments
+       (list #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-build
+                   ;; Fixes to use numerical-utils instead of the deprecated
+                   ;; cl-num-utils.
+                   (lambda _
+                     (substitute* (list "cl-random.asd"
+                                        "src/package.lisp")
+                       (("cl-num-utils")
+                        "num-utils"))
+                     (substitute* (list "src/continuous-time.lisp"
+                                        "src/internals.lisp"
+                                        "src/random.lisp"
+                                        "src/univariate.lisp")
+                       (("clnu:")
+                        "nu:")))))))
       (home-page "https://github.com/tpapp/cl-random")
       (synopsis "Random variates for Common Lisp")
       (description
@@ -12578,7 +12643,7 @@ to support this, especially for reasoning on types, are also included.")
 (define-public sbcl-compiler-macro-notes
   (package
     (name "sbcl-compiler-macro-notes")
-    (version "0.2.0")
+    (version "0.3.1")
     (source
      (origin
        (method git-fetch)
@@ -12587,7 +12652,7 @@ to support this, especially for reasoning on types, are also included.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-compiler-macro-notes" version))
        (sha256
-        (base32 "1jv8snj2wvim3k9qhl1vsx82n56nzdmwa3ms9c4ml2d58fwpfjzs"))))
+        (base32 "0pchhvk14fx54p7qq92dnf0g4jnapqr6p2a4za6bhzd8im1d9gad"))))
     (build-system asdf-build-system/sbcl)
     (inputs
      (list sbcl-alexandria
@@ -15116,6 +15181,45 @@ sacrificing much in the way of power.")
 
 (define-public ecl-external-program
   (sbcl-package->ecl-package sbcl-external-program))
+
+(define-public sbcl-f2cl
+  (let ((commit "a3dabbe429ff2fe6039a60c2546d287b4157f546")
+        (revision "1"))
+    (package
+      (name "sbcl-f2cl")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/rtoy/f2cl")
+               (commit commit)))
+         (file-name (git-file-name "cl-f2cl" version))
+         (sha256
+          (base32 "1fc54n3g7kah93yj99dkvac4i765sysvcc6pwajhp2srr1np204s"))
+         (modules '((guix build utils)))
+         (snippet #~(delete-file-recursively "debian"))))
+      (build-system asdf-build-system/sbcl)
+      (arguments
+       (list #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-build
+                   (lambda _
+                     (substitute* "src/f2cl2.l"
+                       (("\\(optimize \\(speed 3\\) \\(safety 1\\)\\)\\)" all)
+                        (string-append all ")"))))))))
+      (synopsis "Fortran 77 to Common Lisp translator")
+      (description
+       "F2cl is a Common Lisp library that can convert Fortran 77 code into
+Common Lisp code.")
+      (home-page "https://github.com/rtoy/f2cl")
+      (license license:gpl2))))
+
+(define-public cl-f2cl
+  (sbcl-package->cl-source-package sbcl-f2cl))
+
+(define-public ecl-f2cl
+  (sbcl-package->ecl-package sbcl-f2cl))
 
 (define-public sbcl-fakenil
   (package
@@ -18099,11 +18203,11 @@ floating point values to IEEE 754 binary representation.")
   (sbcl-package->ecl-package sbcl-ieee-floats))
 
 (define-public sbcl-in-memory-streams
-  (let ((commit "bb4ce9c8c08479c9904f5d29f2b6187f264dc620")
+  (let ((commit "a0812140609d350e6d974711be6acd0566b360cc")
         (revision "1"))
     (package
       (name "sbcl-in-memory-streams")
-      (version (git-version "1.0" revision commit))
+      (version (git-version "2.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -18112,12 +18216,12 @@ floating point values to IEEE 754 binary representation.")
                (commit commit)))
          (file-name (git-file-name "cl-in-memory-streams" version))
          (sha256
-          (base32 "1fls1jnkf86wimip6f95y496sc4rxpsh2y65lgqsqpi0yda5xl2f"))))
+          (base32 "1mgdwgf98k5wsxrlvqjjkg6f8ass6gbhcbg1y489v17pwqjhbgaz"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-fiveam))
       (inputs
-       (list sbcl-trivial-gray-streams))
+       (list sbcl-bordeaux-threads sbcl-trivial-gray-streams))
       (synopsis "In-memory streams for any element type")
       (description
        "This Common Lisp library provides an implementation of in-memory input
@@ -19944,50 +20048,54 @@ carrys on from the end of the body.")
   (sbcl-package->ecl-package sbcl-livesupport))
 
 (define-public sbcl-lla
-  (let ((commit "ded805d1e9b1493e17b601116ba9bd8a3de3024f")
-        (revision "1"))
+  (let ((commit "4008d363a43647adc39579a48b549650a0742e61")
+        (revision "2"))
     (package
       (name "sbcl-lla")
-      (version (git-version "0.2" revision commit))
+      (version (git-version "0.4.0" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/tpapp/lla")
+               (url "https://github.com/Lisp-Stat/lla")
                (commit commit)))
          (file-name (git-file-name "cl-lla" version))
          (sha256
-          (base32 "0n9vc7dnyjbbsv1n7rd8sylwda5fsdf8f890g4nachanyx0xps9k"))))
+          (base32 "19j11z8m00ry2bfn3ahai155b6qz995qqg7ipzvjdr05sj4gfb58"))))
       (build-system asdf-build-system/sbcl)
-      (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'fix-paths
-             (lambda* (#:key inputs #:allow-other-keys)
-               (substitute* "src/configuration.lisp"
-                 (("\"libblas.so.3gf\"")
-                  (string-append "\"" (assoc-ref inputs "lapack")
-                                 "/lib/libopenblas.so\""))
-                 (("\"liblapack.so.3gf\"")
-                  (string-append "\"" (assoc-ref inputs "lapack")
-                                 "/lib/libopenblas.so\""))))))))
-      (inputs
-       `(("anaphora" ,sbcl-anaphora)
-         ("alexandria" ,sbcl-alexandria)
-         ("cffi" ,sbcl-cffi)
-         ("cl-num-utils" ,sbcl-cl-num-utils)
-         ("cl-slice" ,sbcl-cl-slice)
-         ("lapack" ,openblas)
-         ("let-plus" ,sbcl-let-plus)))
       (native-inputs
        (list sbcl-clunit))
-      (home-page "https://github.com/tpapp/lla")
+      (inputs
+       (list openblas
+             sbcl-anaphora
+             sbcl-alexandria
+             sbcl-cffi
+             sbcl-let-plus
+             sbcl-numerical-utilities
+             sbcl-select))
+      (arguments
+       (list #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-paths
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "src/configuration.lisp"
+                       (("\"libblas.so.3gf\"")
+                        (string-append "\""
+                                       (search-input-file inputs
+                                                          "/lib/libopenblas.so")
+                                       "\""))
+                       (("\"liblapack.so.3gf\"")
+                        (string-append "\""
+                                       (search-input-file inputs
+                                                          "/lib/libopenblas.so")
+                                       "\""))))))))
+      (home-page "https://lisp-stat.github.io/lla/")
       (synopsis "Linear algebra library for Common Lisp")
       (description
        "LLA is a high-level Common Lisp library built on BLAS and LAPACK, but
 providing a much more abstract interface with the purpose of freeing the user
 from low-level concerns and reducing the number of bugs in numerical code.")
-      (license license:boost1.0))))
+      (license license:ms-pl))))
 
 (define-public cl-lla
   (sbcl-package->cl-source-package sbcl-lla))
@@ -20557,7 +20665,7 @@ determination library using @emph{magic} numbers.")
 (define-public sbcl-magicl
   (package
     (name "sbcl-magicl")
-    (version "0.9.1")
+    (version "0.11.0")
     (source
      (origin
        (method git-fetch)
@@ -20566,13 +20674,13 @@ determination library using @emph{magic} numbers.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-magicl" version))
        (sha256
-        (base32 "0x9p55qin399jhr5md88nij8fv78b64xjhww7ys364pkjnx8ak9v"))))
+        (base32 "10scw5qhrgjhfrlia5iqn2yy2zj1d57m45g479vg56lw849whscw"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs (list gfortran sbcl-fiasco))
     (inputs
      (list lapack
-           sbcl-alexandria
            sbcl-abstract-classes
+           sbcl-alexandria
            sbcl-cffi
            sbcl-interface
            sbcl-policy-cond
@@ -20580,6 +20688,7 @@ determination library using @emph{magic} numbers.")
            sbcl-trivial-garbage))
     (arguments
      (list
+      #:asd-systems ''("magicl" "magicl/ext-expokit")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-paths
@@ -24317,7 +24426,7 @@ that should happen depending on compiler policy.")
 (define-public sbcl-polymorphic-functions
   (package
     (name "sbcl-polymorphic-functions")
-    (version "0.2.1")
+    (version "0.5.2")
     (source
      (origin
        (method git-fetch)
@@ -24326,20 +24435,29 @@ that should happen depending on compiler policy.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-polymorphic-functions" version))
        (sha256
-        (base32 "161ylp3avmkylgfddp7i1kscv3bqx734jk1i97xhsbl7x83nin0h"))))
+        (base32 "1bawhbj5rh1q6qrcjnx48n78841mgri5n63pmicxxyhif2il0zq3"))))
     (build-system asdf-build-system/sbcl)
     (inputs
      (list sbcl-alexandria
+           sbcl-cl-form-types
            sbcl-closer-mop
            sbcl-compiler-macro-notes
            sbcl-ctype
            sbcl-fiveam
-           sbcl-cl-form-types
            sbcl-introspect-environment
            sbcl-slime-swank))
     (arguments
      ;; Tests fail: https://github.com/digikar99/polymorphic-functions/issues/8
-     '(#:tests? #f))
+     (list #:tests? #f
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'fix-build
+                 (lambda _
+                   ;; SBCL 2.4.10 doesn't allow user code to
+                   ;; rebind *IN-COMPILATION-UNIT*.
+                   (substitute* "src/nonlite/dispatch.lisp"
+                     (("#\\+sbcl \\(sb-c::\\*in-compilation-unit\\* nil\\)")
+                      "")))))))
     (home-page "https://github.com/digikar99/polymorphic-functions/")
     (synopsis "Function type to dispatch on types instead of classes")
     (description

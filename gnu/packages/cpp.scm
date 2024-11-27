@@ -1532,7 +1532,7 @@ Google's C++ code base.")
     (package
       (inherit base)
       (name "abseil-cpp")
-      (version "20230802.1")
+      (version "20240722.0")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -1541,7 +1541,7 @@ Google's C++ code base.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1ydkkbanrpkp5i814arzsk973kyzhhjhagnp392rq6rrv16apldq"))
+                  "1pmrigimzic2k3ix3l81j2jpfgjgbajz0qbc5s57zljr2w7fjn77"))
                 (patches
                  (search-patches "abseil-cpp-20220623.1-no-kepsilon-i686.patch"))))
       (arguments
@@ -1556,7 +1556,7 @@ Google's C++ code base.")
               (add-before 'check 'set-env-vars
                 (lambda* (#:key inputs #:allow-other-keys)
                  ;; absl_time_test requires this environment variable.
-                 (setenv "TZDIR" (string-append #$(package-source base)
+                 (setenv "TZDIR" (string-append #$(package-source this-package)
                                                 "/absl/time/internal/cctz/testdata/zoneinfo"))))
               #$@(if (target-riscv64?)
                      #~((replace 'check
@@ -2471,11 +2471,11 @@ validation.")
                 "038i9nmk85vpxvs546w6cyci0ppdrrp5wnlv1kffxw29x71a3g5l"))))))
 
 (define-public bloomberg-bde-tools
-  (let ((commit "f63dfe9114cd7df29623bd01f644b9f654253972"))
+  (let ((commit "23217675939d434537ef74b91f71b63054e36572"))
     (package
       (name "bloomberg-bde-tools")
       ;; Recent releases are not tagged so commit must be used for checkout.
-      (version "3.118.0.0")
+      (version "4.13.0.0")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -2484,7 +2484,7 @@ validation.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1a5sw4xjwd222na3zkflm2gkmzhnfq17i8qapyaxszpiayf3hw6v"))
+                  "1x440fa8fghigipn6w8zdr60kkvxrkxs2n9a5hf3y33b8aygh8iv"))
                 (patches
                  (search-patches
                   "bloomberg-bde-tools-fix-install-path.patch"))))
@@ -2498,11 +2498,11 @@ validation.")
       (license license:asl2.0))))
 
 (define-public bloomberg-bde
-  (let ((commit "77a0f39d538c20ae28bece9a81cac99a9e1df95d"))
+  (let ((commit "445a8ac4223b90ee0a46749b87ffbbd21788e132"))
     (package
       (name "bloomberg-bde")
       ;; Recent releases are not tagged so commit must be used for checkout.
-      (version "3.118.0.1")
+      (version "4.14.0.0")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -2511,7 +2511,7 @@ validation.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0nw5clkc9yipd03kijh4c8lxi9zkxfxcjhszl1xzwvgz8xmpampf"))
+                  "1hf09d4fcn77s1vv6qrh0sa0rv9wijpk55km6p3zi2ymkb2cha3c"))
                 (patches
                  (search-patches
                   "bloomberg-bde-cmake-module-path.patch"))
@@ -2525,24 +2525,12 @@ validation.")
                     ;; Delete failing tests.
                     (for-each
                      delete-file
-                     (list "groups/bal/ball/ball_asyncfileobserver.t.cpp"
-                           "groups/bal/ball/ball_fileobserver2.t.cpp"
-                           "groups/bal/ball/ball_recordstringformatter.t.cpp"
-                           "groups/bal/balst/balst_stacktraceresolver_filehelper.t.cpp"
+                     (list "groups/bal/balcl/balcl_commandline.t.cpp"
+                           "groups/bal/balst/balst_resolver_filehelper.t.cpp"
+                           "groups/bal/balst/balst_stacktraceprintutil.t.cpp"
                            "groups/bal/balst/balst_stacktraceutil.t.cpp"
-                           "groups/bdl/bdlmt/bdlmt_eventscheduler.t.cpp"
-                           "groups/bdl/bdlmt/bdlmt_timereventscheduler.t.cpp"
-                           "groups/bdl/bdls/bdls_filesystemutil.t.cpp"
                            "groups/bsl/bslh/bslh_hash.t.cpp"
-                           "groups/bsl/bslh/bslh_hashpair.t.cpp"
-                           "groups/bsl/bsls/bsls_platform.t.cpp"
-                           "groups/bsl/bsls/bsls_stackaddressutil.t.cpp"
-                           "groups/bsl/bsls/bsls_stopwatch.t.cpp"
-                           "groups/bsl/bsls/bsls_timeutil.t.cpp"
-                           "groups/bsl/bslstl/bslstl_deque.1.t.cpp"
-                           "groups/bsl/bslstl/bslstl_deque.2.t.cpp"
-                           "groups/bsl/bslstl/bslstl_deque.3.t.cpp"
-                           "groups/bsl/bslstl/bslstl_function_invokerutil.t.cpp"))
+                           "groups/bsl/bsls/bsls_timeutil.t.cpp"))
                     #t))))
       (build-system cmake-build-system)
       (arguments

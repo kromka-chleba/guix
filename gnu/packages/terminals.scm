@@ -42,6 +42,7 @@
 ;;; Copyright © 2024 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
+;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1718,7 +1719,7 @@ terminal.  Note that you need support for OpenGL 3.2 or higher.")
 (define-public bootterm
   (package
     (name "bootterm")
-    (version "0.4")
+    (version "0.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1727,22 +1728,21 @@ terminal.  Note that you need support for OpenGL 3.2 or higher.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1k3jacld98za41dbpr10sjms77hrw91sb10m0cnwv3h7aifiwmrs"))))
+                "1xag6agcqkq2p7gp20qxjb95ah7p6lia65jmm5v51rqxfzclx2h1"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f ; no test suite
-       #:make-flags (list (string-append "CC=" ,(cc-for-target))
-                          (string-append "PREFIX=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         ;; No ./configure script
-         (delete 'configure)
-         (add-after 'install 'install-doc
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (doc (string-append out "/share/doc/" ,name "-" ,version)))
-               (install-file "README.md" doc)
-               #t))))))
+     (list #:tests? #f ; no test suite
+           #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
+                                (string-append "PREFIX=" #$output))
+           #:phases
+           #~(modify-phases %standard-phases
+               ;; No ./configure script
+               (delete 'configure)
+               (add-after 'install 'install-doc
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (let ((doc (format #f "~a/share/doc/~a-~a"
+                                      #$output #$name #$version)))
+                     (install-file "README.md" doc)))))))
     (home-page "https://github.com/wtarreau/bootterm")
     (synopsis "Serial terminal")
     (description "Bootterm is a terminal designed to ease connection to

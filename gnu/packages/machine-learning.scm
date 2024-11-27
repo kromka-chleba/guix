@@ -551,7 +551,7 @@ Performance is achieved by using the LLVM JIT compiler.")
   (deprecated-package "guile-aiscm-next" guile-aiscm))
 
 (define-public llama-cpp
-  (let ((tag "b3907"))
+  (let ((tag "b4137"))
     (package
       (name "llama-cpp")
       (version (string-append "0.0.0-" tag))
@@ -563,14 +563,14 @@ Performance is achieved by using the LLVM JIT compiler.")
                (commit tag)))
          (file-name (git-file-name name tag))
          (sha256
-          (base32 "0vpqng1lq1r09vi7s1mhqgqgkxn69spp19c2s68i6kk3zbcl7i9b"))))
+          (base32 "0agm0188f9y2pr15v83a2fm0k9b8wag96qb3ryq4l2g6nkysiqlj"))))
       (build-system cmake-build-system)
       (arguments
        (list
         #:configure-flags
         #~(list "-DBUILD_SHARED_LIBS=ON"
-                "-DLLAMA_BLAS=ON"
-                "-DLLAMA_BLAS_VENDOR=OpenBLAS"
+                "-DGGML_BLAS=ON"
+                "-DGGML_BLAS_VENDOR=OpenBLAS"
                 (string-append "-DBLAS_INCLUDE_DIRS="
                                #$(this-package-input "openblas")
                                "/include")
@@ -578,12 +578,12 @@ Performance is achieved by using the LLVM JIT compiler.")
                                #$(this-package-input "openblas")
                                "/lib/libopenblas.so")
 
-                "-DLLAMA_NATIVE=OFF" ;no '-march=native'
-                "-DLLAMA_FMA=OFF"    ;and no '-mfma', etc.
-                "-DLLAMA_AVX2=OFF"
-                "-DLLAMA_AVX512=OFF"
-                "-DLLAMA_AVX512_VBMI=OFF"
-                "-DLLAMA_AVX512_VNNI=OFF")
+                "-DGGML_NATIVE=OFF" ;no '-march=native'
+                "-DGGML_FMA=OFF"    ;and no '-mfma', etc.
+                "-DGGML_AVX2=OFF"
+                "-DGGML_AVX512=OFF"
+                "-DGGML_AVX512_VBMI=OFF"
+                "-DGGML_AVX512_VNNI=OFF")
 
         #:modules '((ice-9 textual-ports)
                     (guix build utils)

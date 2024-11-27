@@ -70,6 +70,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bioinformatics)
   #:use-module (gnu packages c)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
@@ -2224,6 +2225,25 @@ bioinformaticians to assemble complex plots for publication.")
      "This package provides a suite of custom R Markdown formats and templates
 for authoring journal articles and conference submissions.")
     (license license:gpl3)))
+
+(define-public r-rtk
+  (package
+    (name "r-rtk")
+    (version "0.2.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "rtk" version))
+       (sha256
+        (base32 "1xafmp5y5p8fnsh16wj8n08x69v2hawnsvsy7g4dcz1i5xkhyc0m"))))
+    (properties `((upstream-name . "rtk")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-rcpp zlib))
+    (home-page "https://cran.r-project.org/package=rtk")
+    (synopsis "Rarefaction tool kit")
+    (description "This package lets you rarefy data, calculate diversity and
+plot the results.")
+    (license license:gpl2+)))
 
 (define-public r-babelwhale
   (package
@@ -39737,6 +39757,28 @@ results of the R parser.  It supports rendering in HTML and LaTeX markup.  It
 includes a custom Sweave driver performing syntax highlighting of R code
 chunks.")
     (license license:gpl3+)))
+
+(define-public r-highs
+  (package
+    (name "r-highs")
+    (version "0.1-10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "highs" version))
+       (sha256
+        (base32 "1vjmzbfydlm434fa1mkwwfcdhmn6sq4ppib26nxfa9zakr7h7q2c"))))
+    (properties `((upstream-name . "highs")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-checkmate r-pkgconfig r-rcpp))
+    (native-inputs (list cmake-minimal gfortran which))
+    (home-page "https://gitlab.com/roigrp/solver/highs")
+    (synopsis "'HiGHS' Optimization Solver")
+    (description
+     "This package provides an R interface to @code{HiGHS}, an optimization
+solver.  It is designed for solving mixed-integer optimization problems with
+quadratic or linear objectives and linear constraints.")
+    (license license:gpl2+)))
 
 (define-public r-clustree
   (package

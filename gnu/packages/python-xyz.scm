@@ -3,7 +3,7 @@
 ;;; Copyright © 2013-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2013, 2014, 2015, 2016, 2019, 2023 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2014, 2015 Mark H Weaver <mhw@netris.org>
-;;; Copyright © 2014, 2017, 2021, 2022 Eric Bavier <bavier@posteo.net>
+;;; Copyright © 2014, 2017, 2021, 2022, 2024 Eric Bavier <bavier@posteo.net>
 ;;; Copyright © 2014, 2015 Federico Beffa <beffa@fbengineering.ch>
 ;;; Copyright © 2015 Omar Radwan <toxemicsquire4@gmail.com>
 ;;; Copyright © 2015 Pierre-Antoine Rault <par@rigelk.eu>
@@ -147,6 +147,7 @@
 ;;; Copyright © 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2023 Attila Lendvai <attila@lendvai.name>
 ;;; Copyright © 2023, 2024 Troy Figiel <troy@troyfigiel.com>
+;;; Copyright © 2023 Adam Faiz <adam.faiz@disroot.org>
 ;;; Copyright © 2024 Timothee Mathieu <timothee.mathieu@inria.fr>
 ;;; Copyright © 2024 Ian Eure <ian@retrospec.tv>
 ;;; Copyright © 2024 Adriel Dumas--Jondeau <leirda@disroot.org>
@@ -155,6 +156,8 @@
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2024 Rick Huijzer <ikbenrickhuyzer@gmail.com>
 ;;; Copyright © 2024 Peter Kannewitz <petre-vps@posteo.net>
+;;; Copyright © 2024 Aaron Covrig <aaron.covrig.us@ieee.org>
+;;; Copyright © 2024 Evgeny Pisemsky <mail@pisemsky.site>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2293,7 +2296,7 @@ Python library and command line interface.")
     (arguments
      (list
       #:test-flags
-      #~(list "--numprocesses" "auto"
+      #~(list "--numprocesses" (number->string (parallel-job-count))
               ;; Failing test due to inability of ctypes.util.find_library()
               ;; to determine library path, which is patched above.
               "--ignore=tests/test_config.py")
@@ -6879,13 +6882,13 @@ flexibility and power of the Python language.")
 (define-public kalamine
   (package
     (name "kalamine")
-    (version "0.36")
+    (version "0.38")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "kalamine" version))
        (sha256
-        (base32 "1xxncavq5a0dydhzpfjdxmqsddl77275d9k9giw1032bdyb9d5is"))))
+        (base32 "0dj0v4in6jngh7f5ypvxyadjsilbiwxj3rx6yxxmh5zab6dxzyhz"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -10430,7 +10433,7 @@ a general image processing tool.")
   (package
     (inherit python-pillow)
     (name "python-pillow-simd")
-    (version "9.2.0")
+    (version "9.3.0")
     ;; The PyPI tarball does not include test files.
     (source
      (origin
@@ -10440,7 +10443,19 @@ a general image processing tool.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "13wwq7slw2q9djh7n39qdmlrzd9k3x7hdr36wk8qbgp3b6bcgvj6"))))
+        (base32 "0qnvpwzlx4rfz17qmsipr5iwzmh8xgmzvc79spnrmqibk3s18vyi"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; This test fails because it cannot find the zlib version string
+      ;; "1.3.1".
+      #:test-flags '(list "-k not test_sanity")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'patch-ldconfig
+           (lambda _
+             (substitute* "setup.py"
+               (("\\['/sbin/ldconfig', '-p'\\]") "['true']")))))))
     (inputs
      (modify-inputs (package-inputs python-pillow)
        (prepend libraqm libimagequant)))
@@ -13523,6 +13538,31 @@ generate MPS or LP files and call GLPK, COIN CLP/CBC, CPLEX, and GUROBI to
 solve linear problems.")
     (license license:expat)))
 
+(define-public python-py-partiql-parser
+  (package
+    (name "python-py-partiql-parser")
+    (version "0.3.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "py-partiql-parser" version))
+       (sha256
+        (base32 "1cnbp1pk1ydgyrqdvdg5aa83qdd6ljrigz40r7kxpmdxqfnz2hak"))))
+    (build-system pyproject-build-system)
+    ;; There are no tests.
+    (arguments (list #:tests? #false))
+    (native-inputs
+     (list python-black
+           python-flake8
+           python-hatchling
+           python-mypy
+           python-pytest))
+    (home-page "https://pypi.org/project/py-partiql-parser/")
+    (synopsis "Pure Python PartiQL Parser")
+    (description "This package provides a tokenizer/parser/executor for the
+PartiQL language, in Python.")
+    (license license:expat)))
+
 (define-public python-py-tes
   (package
     (name "python-py-tes")
@@ -15336,6 +15376,24 @@ checksums.  It implement more than a hundred checksum routines.")
     (synopsis "Manage Python errors with ease")
     (description
      "Python library that makes exceptions handling and inspection easier.")
+    (license license:expat)))
+
+(define-public python-stdio-mgr
+  (package
+    (name "python-stdio-mgr")
+    (version "1.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "stdio-mgr" version))
+       (sha256
+        (base32 "11j1kxxrp76vm6l8wvfnw50fb6lmckxf25nkra70jpiacd8kn73q"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-attrs))
+    (home-page "https://github.com/bskinn/stdio-mgr")
+    (synopsis "Context manager for mocking/wrapping stdin/stdout/stderr")
+    (description "This package contains a context manager for mocking/wrapping
+stdin/stdout/stderr.")
     (license license:expat)))
 
 (define-public python-stdlib-list
@@ -18914,18 +18972,6 @@ text.")
    (home-page "https://pypi.org/project/colorama/")
    (license license:bsd-3)))
 
-;; awscli and botocore do not accept version 0.4.4
-(define-public python-colorama-for-awscli
-  (package
-    (inherit python-colorama)
-    (version "0.4.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "colorama" version))
-       (sha256
-        (base32 "189n8hpijy14jfan4ha9f5n06mnl33cxz7ay92wjqgkr639s0vg9"))))))
-
 (define-public python-monthdelta
   (package
     (name "python-monthdelta")
@@ -18946,43 +18992,64 @@ text.")
 (define-public python-moto
   (package
     (name "python-moto")
-    (version "3.1.4")
+    (version "4.2.4")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "moto" version))
               (sha256
-               (base32 "0dfnad1f9d5ybabs69dzc7x357z1r4jbhrhgw57gyic1qnmcw864"))))
-    (build-system python-build-system)
+               (base32 "12dkx35jm8qzyf5205wzkmd82yjxrbfdymdk2qlb3s47k6rcb8zf"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:test-flags
+      '(list "-m" "not network and not requires_docker"
+             "-k"
+             (string-append
+              ;; XXX: This test is timing sensitive and may
+              ;; fail non-deterministically.
+              "not test_cancel_pending_job"
+
+              ;; The error message is more detailed than expected.
+              " and not test_list_queue_tags_errors"
+
+              ;; Unknown failure: invalid length for parameter IpAdresses.
+              " and not test_route53resolver_bad_create_endpoint_subnets"
+              " and not test_route53resolver_invalid_create_endpoint_args"
+
+              ;; FIXME: Unknown failure.  Likely requires Docker.
+              " and not test_cancel_pending_job"
+
+              ;; These tests require Docker.
+              " and not test_terminate_job"
+              " and not test_invoke_function_from_sqs_exception"
+              " and not test_create_custom_lambda_resource__verify_cfnresponse_failed"
+              " and not test_lambda_function"
+              " and not test_invoke_local_lambda_layers"
+
+              ;; These tests also require the network.
+              " and not test_s3_server_post_cors_multiple_origins"
+              " and not test_put_record_batch_http_destination"
+              " and not test_put_record_http_destination"
+              " and not test_with_custom_request_header"
+              " and not test_dependencies"
+              " and not test_cancel_running_job"
+              " and not test_container_overrides"))
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'compatibility
+           (lambda _
+             ;; pyparsing 3.0.6 does not support the "min" argument for
+             ;; DelimitedList.
+             (substitute* "moto/glue/utils.py"
+               (("DelimitedList\\(literal, min=1\\)")
+                "DelimitedList(literal)"))))
          (add-after 'unpack 'patch-hardcoded-executable-names
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((bash-exec (search-input-file inputs "/bin/sh")))
                (substitute* "moto/batch/models.py"
                  (("/bin/sh") bash-exec))
                (substitute* (find-files "tests" "\\.py$")
-                 (("#!/bin/bash") (string-append "#!" bash-exec))))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "-vv" "-m" "not network" "-k"
-                       (string-append
-                        ;; XXX: This test is timing sensitive and may
-                        ;; fail non-deterministically.
-                        "not test_cancel_pending_job"
-                        ;; These tests require Docker.
-                        " and not test_terminate_job"
-                        " and not test_invoke_function_from_sqs_exception"
-                        " and not test_create_custom_lambda_resource__verify_cfnresponse_failed"
-                        " and not test_lambda_function"
-
-                        ;; These tests also require the network.
-                        " and not test_put_record_batch_http_destination"
-                        " and not test_put_record_http_destination"
-                        " and not test_dependencies"
-                        " and not test_cancel_running_job"
-                        " and not test_container_overrides"))))))))
+                 (("#!/bin/bash") (string-append "#!" bash-exec)))))))))
     (native-inputs
      (list python-flask
            python-flask-cors
@@ -19005,6 +19072,8 @@ text.")
            python-jose
            python-jsondiff
            python-markupsafe
+           python-openapi-spec-validator
+           python-py-partiql-parser
            python-pytz
            python-pyyaml
            python-requests
@@ -19332,86 +19401,76 @@ enhancements to optimization and data fitting problems.")
 browser from Python.")
     (license license:bsd-3)))
 
-(define-public python-boto
-  (package
-    (name "python-boto")
-    (version "2.49.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "boto" version))
-              (sha256
-               (base32
-                "0njy09c4wjx7ipxhwi6vv404nflyiasl78vwwxxpclnql903n3ga"))))
-    (build-system python-build-system)
-    (arguments
-     ;; XXX: This package is unmaintained and has problems with newer versions
-     ;; of Python 3 as well as test libraries.  'python-moto' still uses a
-     ;; subset of this library, so keep it around for now, but disable tests.
-     '(#:tests? #f))
-    (propagated-inputs
-     (list python-paramiko python-requests))
-    (home-page "https://github.com/boto/boto")
-    (synopsis "Python interfaces for Amazon Web Services")
-    (description
-     "This package provides various facilities for interacting with Amazon
-Web Services through Python.
-
-This software is unmaintained, and new projects should use @code{boto3} instead.")
-    (license license:expat)))
-
 (define-public python-botocore
   ;; Note: When updating botocore, also make sure that boto3 and awscli
   ;; are compatible.
   (package
     (name "python-botocore")
-    (version "1.24.35")
+    (version "1.35.59")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "botocore" version))
        (sha256
         (base32
-         "0rv8mvhq5s373zdjs2yb45hzvqcqdh2lp2rbb21jjc8ciwnl5d9n"))))
-    (build-system python-build-system)
+         "161wp1ribgkc23w6wcfs6zzig2j84ava7ylxhs3jrh6zzrayc36y"))))
+    (build-system pyproject-build-system)
     (arguments
-     ;; FIXME: Many tests are failing.
-     '(#:tests? #f))
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              ;; It strugles to find 'botocore'.
+              "--ignore" "tests/functional/leak/test_resource_leaks.py"
+              ;; Tests require networking.
+              "--ignore" "tests/integration")))
+    (native-inputs
+     (list python-jsonschema
+           python-pytest
+           python-pytest-xdist
+           python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list python-dateutil python-jmespath python-urllib3))
+     (list python-dateutil
+           python-jmespath
+           python-urllib3))
     (home-page "https://github.com/boto/botocore")
     (synopsis "Low-level interface to AWS")
-    (description "Botocore is a Python library that provides a low-level
-interface to the Amazon Web Services (AWS) API.")
+    (description
+     "Botocore is a Python library that provides a low-level interface to the
+Amazon Web Services (AWS) API.")
     (license license:asl2.0)))
 
 (define-public python-boto3
   (package
     (name "python-boto3")
-    (version "1.21.35")
-    (home-page "https://github.com/boto/boto3")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference (url home-page) (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1kdyf238rpfldnpzs0rdh3nhjn6hwfym4faskyhzlgzkf1smmbg1"))))
+    (version "1.35.59")
+    (source
+     (origin
+       (method git-fetch)               ; no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/boto/boto3")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10bdzdaw7qg2m5n5ivb2zzsdl7wgjmz05xyxajd4cmk629ick95m"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'delete-network-tests
-           ;; Deleting integration tests because they are trying to connect to AWS.
-           (lambda _
-             (delete-file-recursively "tests/integration")))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "-v")))))))
-    (build-system python-build-system)
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              ;; Integration tests are trying to connect to AWS.
+              "--ignore" "tests/integration")))
     (native-inputs
-     (list python-nose python-mock python-pytest))
+     (list python-mock
+           python-pytest
+           python-pytest-xdist
+           python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list python-botocore python-jmespath python-s3transfer))
+     (list python-botocore
+           python-jmespath
+           python-s3transfer))
+    (home-page "https://github.com/boto/boto3")
     (synopsis "AWS SDK for Python")
     (description
      "Boto3 is a Python library for writing programs that interact with
@@ -19744,15 +19803,17 @@ alternative when librabbitmq is not available.")
 (define-public python-benchmark-4dn
   (package
     (name "python-benchmark-4dn")
-    (version "0.5.23")
+    (version "0.5.24")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "Benchmark-4dn" version))
+              (uri (pypi-uri "benchmark_4dn" version))
               (sha256
                (base32
-                "0z3vxrkap59sk394ynvp0457mdvb201idcswlrpgjscnrp2h4ypi"))))
-    (properties '(("upstream-name" . "Benchmark-4dn")))
+                "1cjin99p8mrh4nkbr4hsdfks9c22dfw3gk5ad80b4rxngs8mwj0s"))))
+    (properties '(("upstream-name" . "benchmark_4dn")))
     (build-system pyproject-build-system)
+    ;; There are none.
+    (arguments (list #:tests? #false))
     (native-inputs
      (list python-poetry-core))
     (home-page "https://github.com/SooLee/Benchmark/")
@@ -28259,7 +28320,7 @@ codecs for use in data storage and communication applications.")
     (arguments
      (list
       #:test-flags
-      #~(list "-n" "auto"
+      #~(list "--numprocesses" (number->string (parallel-job-count))
               ;; This tests are flaky.  The pass several times on my laptop
               ;; but occasionally fail.  They fail pretty reliably on the
               ;; build farm.
@@ -28784,7 +28845,7 @@ decisions with any given backend.")
      (list
       ;; Avoid coverage
       #:test-flags
-      #~(list "-n" "auto"
+      #~(list "--numprocesses" (number->string (parallel-job-count))
               "-m" "not gpu and not slow and not network"
               ;; These all fail with different hashes.  Doesn't seem
               ;; problematic.
@@ -31195,6 +31256,42 @@ and directories in the file system.  They are stored as name:data pairs
 associated with file system objects (files, directories, symlinks, etc).")
     (license license:expat)))
 
+(define-public python-json-e
+  (package
+    (name "python-json-e")
+    (version "4.8.0")
+     (source
+      (origin
+        (method git-fetch)               ; no tests in PyPI release
+        (uri (git-reference
+              (url "https://github.com/json-e/json-e")
+              (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "1zsx17jjhvan1ziq5aaqwids3b9kzx3j8czf9qznqqqvb1n133g8"))))
+     (build-system pyproject-build-system)
+     (arguments
+      (list
+       #:phases
+       #~(modify-phases %standard-phases
+           ;; Git repository provides implementations for JavaScript, Golang,
+           ;;  Python and Rust, pick "py".
+           (add-before 'build 'chdir-to-py
+             (lambda _
+               (chdir "py"))))))
+     (native-inputs
+      (list python-freezegun
+            python-pytest
+            python-pyyaml
+            python-setuptools
+            python-wheel))
+     (home-page "https://json-e.js.org")
+     (synopsis "Data-structure parameterizer for embedding context in JSON objects")
+     (description
+      "This package provides a data-structure parameterization system written
+for embedding context in JSON objects.")
+     (license license:mpl2.0)))
+
 (define-public python-json-logger
   (package
     (name "python-json-logger")
@@ -32208,6 +32305,33 @@ For the most part it's transliterated from C, the major differences are:
      "Jinxed is an implementation of a subset of the Python curses library.")
     (license license:mpl2.0)))
 
+(define-public python-svgelements
+  (package
+    (name "python-svgelements")
+    (version "1.9.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "svgelements" version))
+       (sha256
+        (base32 "1xrp7yxg65dqdrmghriljf9hh2smq2zhzr2hzmqifgfd0ijas0kw"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-anyio
+           python-pytest
+           python-numpy
+           python-pillow
+           python-scipy
+           python-setuptools
+           python-wheel))
+    (home-page "https://github.com/meerk40t/svgelements")
+    (synopsis "SVG parsing for elements, paths, and other SVG objects")
+    (description
+     "This module does high fidelity SVG parsing and geometric rendering.
+The goal is to successfully and correctly process SVG for use with any scripts
+that may need or want to use SVG files as geometric data.")
+    (license license:expat)))
+
 (define-public python-svgutils
   (package
     (name "python-svgutils")
@@ -32638,33 +32762,34 @@ By default it uses the open Python vulnerability database Safety DB.")
 (define-public python-pypandoc
   (package
     (name "python-pypandoc")
-    (version "1.7.5")
+    (version "1.14")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pypandoc" version))
        (sha256
-        (base32
-         "0l6a8ngzpx363q2jskxxkx6psfhqrvc4js80dmn16r3vw6m2cb40"))))
+        (base32 "15x161bxr7hky7rvq0jlgf1kxg6vdf069487casmpyxry7slak3b"))))
     (build-system pyproject-build-system)
     (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'check 'disable-tests
-            (lambda _
-              ;; Disable test requiring network access
-              (substitute* "tests.py"
-                (("test_basic_conversion_from_http_url")
-                 "skip_test_basic_conversion_from_http_url")))))))
-    (native-inputs
-     (list python-poetry-core
-           (texlive-updmap.cfg
-            (list texlive-etoolbox texlive-lm texlive-xcolor))))
-    (inputs
-     (list pandoc python-pandocfilters))
-    (propagated-inputs
-     (list python-wheel))
+     `(#:phases (modify-phases %standard-phases
+                  (add-before 'check 'disable-tests
+                    (lambda _
+                      (substitute* "tests.py"
+                        ;; Disable test requiring network access
+                        (("test_basic_conversion_from_http_url")
+                         "skip_test_basic_conversion_from_http_url")
+                        ;; Disable tests with missing files
+                        (("test_basic_conversion_from_file_pattern")
+                         "skip_test_basic_conversion_from_file_pattern")
+                        (("test_conversion_with_data_files")
+                         "skip_test_conversion_with_data_files")) #t)))))
+    ;; Ideally, we would supersede texlive-xpatch with texlive-regexpatch once
+    ;; the missing etoolbox.sty file is added
+    (native-inputs (list python-poetry-core
+                         (texlive-updmap.cfg (list texlive-xpatch texlive-lm
+                                                   texlive-xcolor))))
+    (inputs (list pandoc python-pandocfilters))
+    (propagated-inputs (list python-wheel))
     (home-page "https://github.com/bebraw/pypandoc")
     (synopsis "Python wrapper for pandoc")
     (description "pypandoc is a thin Python wrapper around pandoc

@@ -68,6 +68,7 @@
 ;;; Copyright © 2024 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
+;;; Copyright © 2024 Attila Lendvai <attila@lendvai.name>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -100,6 +101,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages certs)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crates-web)
@@ -2018,22 +2020,28 @@ Amazon S3 compatible object storage server.")
     (version "7.45.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pycurl" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pycurl/pycurl")
+             (commit (string-append
+                      "REL_" (string-replace-substring version "." "_")))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1ji46b924caa4saxvjxs9h673yy0kif297nxpnjn84r7w05mjc2p"))))
+        (base32
+         "1dzdramcgf63m1zg8glhqa3ik9anzjy954mshk7s3z3gsi21n8fp"))))
     (build-system pyproject-build-system)
     (arguments
      '(#:test-flags
-       (list "-n" "auto"
-             "-k" (string-append
+       ;; The test suite is not thread safe:
+       ;; - some tests want to use the same port: address already in use
+       ;; - some tests use signal.Signal, i.e. main-thread only
+       (list "-k" (string-append
                    ;; Disable hanginging tests
                    "not test_multi_socket_select"
                    ;; E assert None is not None
                    ;; E+ where None =
                    ;; <tests.multi_callback_test.MultiCallbackTest
-                   ;; testMethod=test_easy_pause_unpause>.socket_result
-                   " and not test_easy_pause_unpause"
+                   ;; testMethod=test_multi_socket_action>.timer_result
                    " and not test_multi_socket_action"
                    ;; E pycurl.error: (1, '')
                    " and not test_http_version_3"
@@ -2046,9 +2054,8 @@ Amazon S3 compatible object storage server.")
                    ;; OSError: tests/fake-curl/libcurl/with_openssl.so: cannot
                    ;; open shared object file: No such file or directory
                    " and not test_libcurl_ssl_openssl"
-                   ;; pycurl.error: (56, 'Recv failure: Connection reset by
-                   ;; peer')
-                   " and not test_post_with_read_callback"))
+                   ;; Probably due to an expired CA
+                   " and not test_request_without_certinfo"))
        #:phases (modify-phases %standard-phases
                   (add-before 'build 'configure-tls-backend
                     (lambda _
@@ -2060,9 +2067,7 @@ Amazon S3 compatible object storage server.")
     (native-inputs
      (list python-bottle
            python-flaky
-           python-nose
-           python-pytest
-           python-pytest-xdist))
+           python-pytest))
     (inputs
      (list curl gnutls))
     (home-page "http://pycurl.io/")
@@ -4132,71 +4137,250 @@ can reuse the same socket connection for multiple requests, it can POST files,
 supports url redirection and retries, and also gzip and deflate decoding.")
     (license license:expat)))
 
+(define-public python-awscrt
+  (package
+    (name "python-awscrt")
+    (version "0.23.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "awscrt" version))
+       (sha256
+        (base32 "0a669xxfmgw3g6xpcnm64pbmlrbxw5wf3jcrivixscl2glapdxgx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-broken-tests
+            (lambda _
+              ;; Disable broken tests.  These tests fail because the
+              ;; certificate bundle at the default location does not exist.
+              (substitute* "test/test_auth.py"
+                (("def test_default_provider")
+                 "def _test_default_provider"))
+              (substitute* "test/test_http_client.py"
+                (("def test_h2_client")
+                 "def _test_h2_client"))
+              (substitute* "test/test_s3.py"
+                (("def test_sanity")
+                 "def _test_sanity")
+                (("def test_sanity_secure")
+                 "def _test_sanity_secure")
+                (("def test_wait_shutdown")
+                 "def _test_wait_shutdown"))))
+          (add-after 'unpack 'override-cert-bundle-location
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((bundle (search-input-file inputs
+                                               "/etc/ssl/certs/ca-certificates.crt")))
+                (setenv "SSL_CERT_FILE" bundle)
+                (substitute* "awscrt/io.py"
+                  (("( +)opt = TlsContextOptions\\(\\)" m indent)
+                   (string-append m "\n"
+                                  indent "import os\n"
+                                  indent "\
+opt.override_default_trust_store_from_path(None, os.getenv('SSL_CERT_FILE')) if os.getenv('SSL_CERT_FILE') else None\n")))
+                (substitute* "test/appexit_http.py"
+                  (("( +)tls_ctx_opt = awscrt.io.TlsContextOptions.*" m indent)
+                   (string-append m indent
+                                  "tls_ctx_opt.override_default_trust_store_from_path(None, '"
+                                  bundle "')\n")))
+                (substitute* "test/test_io.py"
+                  (("( +)opt = TlsContextOptions\\(\\).*" m indent)
+                   (string-append m indent
+                                  "opt.override_default_trust_store_from_path(None, '"
+                                  bundle "')\n"))))))
+          (add-after 'unpack 'use-system-libraries
+            (lambda _
+              (setenv "AWS_CRT_BUILD_USE_SYSTEM_LIBCRYPTO" "1")))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "python3" "-m" "unittest"
+                        "discover" "--verbose")))))))
+    (inputs (list openssl))
+    (native-inputs (list cmake-minimal
+                         ;; For tests only
+                         nss-certs-for-test
+                         python-boto3
+                         python-websockets))
+    (home-page "https://github.com/awslabs/aws-crt-python")
+    (synopsis "Common runtime for AWS Python projects")
+    (description
+     "This package provides a common runtime for AWS Python projects.")
+    (license license:asl2.0)))
+
+(define-public python-awscrt-for-awscli
+  (package
+    (inherit python-awscrt)
+    (version "0.22.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "awscrt" version))
+       (sha256
+        (base32 "0w6pw42jbznrxh92cd97p96dg2nz698mcbfy7md3zw18jfsb18jc"))))))
+
 (define-public awscli
   (package
     ;; Note: updating awscli typically requires updating botocore as well.
     (name "awscli")
-    (version "1.22.90")
+    (version "1.36.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri name version))
+       (method git-fetch)               ; no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/aws/aws-cli")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0ky4ax4xh7s8w1l0hwc7w9ii8afvh9nib3kz09qhiqdinxzrlv54"))))
-    (build-system python-build-system)
+        (base32 "1iwivc5kj2h5619rvbncrh4649lalxj7bxndzvrjw398vv7cixp5"))))
+    (build-system pyproject-build-system)
     (arguments
-     ;; FIXME: The 'pypi' release does not contain tests.
-     '(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'use-recent-pyyaml
-           (lambda _
-             (substitute* '("awscli.egg-info/requires.txt"
-                            "setup.cfg"
-                            "setup.py")
-               (("<5.5") "<=6"))))
-         (add-after 'unpack 'fix-reference-to-groff
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "awscli/help.py"
-               (("if not self._exists_on_path\\('groff'\\):") "")
-               (("raise ExecutableNotFoundError\\('groff'\\)") "")
-               (("cmdline = \\['groff'")
-                (string-append "cmdline = ['"
-                               (search-input-file inputs "bin/groff")
-                               "'"))))))))
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              ;; Tests require networking.
+              "--ignore" "tests/integration"
+              ;; It strugles to set PYTHONPATH.
+              ;;
+              ;; AssertionError: 'argument operation: Invalid choice, valid
+              ;; choices are:' not found in '
+              "-k" (string-append "not test_subscribe_to_shard_removed"
+                                  ;; Tests fail during mocking.
+                                  " and not test_expected_runtime_dependencies"
+                                  " and not test_expected_unbounded_runtime_dependencies"
+                                  " and not test_no_groff_or_mandoc_exists"
+                                  " and not test_start_conversation_removed"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-reference-to-groff
+            (lambda _
+              ;; XXX: Consider to use wrap-program instead, it tries to parse
+              ;; the PATH.
+              (substitute* "awscli/help.py"
+                (("if self._exists_on_path\\('groff'\\):") "if 'groff':")
+                (("raise ExecutableNotFoundError\\('groff'\\)") "")
+                (("cmdline = \\['groff'")
+                 (format #f "cmdline = ['~a/bin/groff'"
+                         #$(this-package-input "groff-minimal"))))))
+          (add-before 'check 'set-environment
+            (lambda _
+              ;; PermissionError: [Errno 13] Permission denied:
+              ;; '/homeless-shelter'
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-xdist
+           python-setuptools
+           python-wheel))
     (inputs
-     (list groff
-           python-colorama-for-awscli
+     (list groff-minimal
            python-botocore
-           python-s3transfer
+           python-colorama
            python-docutils-0.15
-           python-pyyaml-5
-           python-rsa))
+           python-pyyaml
+           python-rsa
+           python-s3transfer))
     (home-page "https://aws.amazon.com/cli/")
     (synopsis "Command line client for AWS")
-    (description "AWS CLI provides a unified command line interface to the
-Amazon Web Services (AWS) API.")
+    (description
+     "AWS CLI provides a unified command line interface to the Amazon Web
+Services (AWS) API.")
     (license license:asl2.0)))
 
 (define-public awscli-2
   (package
     (inherit awscli)
     (name "awscli")
-    (version "2.2.0")
+    (version "2.20.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aws/aws-cli")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0hyr9gmcfk7nzkgs0v6wgkh8k15dyhknqzfymbc9a9sa2dblc40q"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'ignore-deprecations
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("\"error::") "\"ignore::"))))
+          (add-after 'unpack 'remove-pep517
+            (lambda _
+              (rename-file "backends/pep517.py" "backends/dummypep517.py")
+              (substitute* "pyproject.toml"
+                (("pep517") "dummypep517"))
+              (setenv "PYTHONPATH"
+                      (string-append (getcwd) ":"
+                                     (getcwd) "/backends:"
+                                     (getenv "GUIX_PYTHONPATH")))))
+          (add-after 'unpack 'fix-reference-to-groff
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "awscli/help.py"
+                (("if self._exists_on_path\\('groff'\\):") "if True:")
+                (("cmdline = \\['groff'")
+                 (string-append "cmdline = ['"
+                                (search-input-file inputs "bin/groff")
+                                "'")))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (substitute* "scripts/ci/run-tests"
+                  (("--numprocesses=auto --dist=loadfile --maxprocesses=4") ""))
+                ;; For an unknown reason pytest receives SIGTERM and no tests
+                ;; are run..
+                #;
+                (invoke "python" "scripts/ci/run-tests")))))))
+    (inputs
+     (list groff
+           python-awscrt-for-awscli
+           python-colorama
+           python-botocore
+           python-cryptography
+           python-dateutil
+           python-docutils
+           python-jmespath
+           python-prompt-toolkit
+           python-ruamel.yaml-0.16
+           python-ruamel.yaml.clib
+           python-urllib3))
+    (native-inputs
+     (list python-distro
+           python-flit
+           python-pytest
+           python-wheel))))
+
+;; This is not an official release of awscli version 2, so it should not be
+;; named awscli.
+(define-public awscliv2
+  (package
+    (inherit awscli)
+    (name "awscliv2")
+    (version "2.3.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri (string-append name "v2") version))
+       (uri (pypi-uri name version))
        (sha256
         (base32
-         "0g1icsy2l4n540gnhliypy830dfp08hpfc3rk12dlxgc9v3ra4wl"))))
+         "1bpp6kmb75qdhgzsx69ki04345bfkzwnmg84y5x6nyfpph2g3fsz"))))
     (arguments
      ;; FIXME: The 'pypi' release does not contain tests.
      '(#:tests? #f))
     (inputs
      (list python-importlib-resources
-           python-executor))))
+           python-executor))
+    (native-inputs
+     (list python-poetry-core
+           python-pytest))))
 
 
 (define-public python-wsgiproxy2
@@ -4718,31 +4902,35 @@ Betamax that may possibly end up in the main package.")
 (define-public python-s3transfer
   (package
     (name "python-s3transfer")
-    (version "0.5.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "s3transfer" version))
-              (sha256
-               (base32
-                "0k6sc956yrrv9b4laa0r79jhxajpyxr21jcd1ka8m1n53lz85vah"))))
-    (build-system python-build-system)
+    (version "0.10.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "s3transfer" version))
+       (sha256
+        (base32 "032bjky1q8r5x80mvb0ah60g0zq4snwf0xa4c7779m44mdsfsl2g"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               ;; Some of the 'integration' tests require network access or
-               ;; login credentials.
-               (invoke "nosetests" "--exclude=integration")))))))
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              ;; Tests require networking.
+              "--ignore" "tests/integration")))
     (native-inputs
-     (list python-docutils python-mock python-nose))
+     (list python-docutils
+           python-mock
+           python-nose
+           python-pytest
+           python-pytest-xdist
+           python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list python-botocore python-urllib3))
-    (synopsis "Amazon S3 Transfer Manager")
-    (description "S3transfer is a Python library for managing Amazon S3
-transfers.")
+     (list python-botocore
+           python-urllib3))
     (home-page "https://github.com/boto/s3transfer")
+    (synopsis "Amazon S3 Transfer Manager")
+    (description
+     "S3transfer is a Python library for managing Amazon S3 transfers.")
     (license license:asl2.0)))
 
 (define-public python-flask-jwt
@@ -6331,7 +6519,7 @@ and fairly speedy.")
 (define-public python-uvicorn
   (package
     (name "python-uvicorn")
-    (version "0.23.2")
+    (version "0.32.0")
     (source
      (origin
        ;; PyPI tarball has no tests.
@@ -6341,17 +6529,19 @@ and fairly speedy.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qa4cwifss9cnasfr0ffn76rvh7wcfjkl6nw99yz43rjmdpj3h7p"))))
+        (base32 "0csl5drf58yhih6kyl5imkkb1hsv24c99fjkzhr3pmzas0jahf1d"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:test-flags
-           #~(list "-o" "asyncio_mode=auto"
-                   "-k"
-                   (string-join
-                    ;; These error or fail due to networking.
-                    '("not test_keepalive"
-                      "not test_bind_unix_socket_works_with_reload_or_workers")
-                    " and "))))
+     (list
+      #:test-flags
+      '(list "-o" "asyncio_mode=auto")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'patch-pyproject
+           (lambda _
+             ;; Hatchling doesn't like this.
+             (substitute* "pyproject.toml"
+               ((".*Programming Language :: Python :: 3.13.*") "")))))))
     (native-inputs
      (list python-a2wsgi
            python-hatchling
@@ -6845,7 +7035,7 @@ files.")
 (define-public python-websockets
   (package
     (name "python-websockets")
-    (version "12.0")
+    (version "13.0")
     (source
      (origin
        (method git-fetch)
@@ -6855,7 +7045,7 @@ files.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1a587a1knjsy9zmgab9v2yncx0803pg2hfcvf7kz6vs8ixaggqmh"))))
+         "1brnaf1c4r9377p2npxpkik9ggqzmymvnnazdhw6s2wzfhlln8vv"))))
     (build-system python-build-system)
     (arguments
      (list #:phases

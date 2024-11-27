@@ -4383,11 +4383,11 @@ this option is primarily useful when the daemon was running with
 @item --vacuum-database
 @cindex vacuum the store database
 @comment Avoid words like 'repair,' 'compress,' and 'optimize.'
-Guix uses an sqlite database to keep track of the items in (@pxref{The Store}).
-Over time it is possible that the database may grow to a large size and become
-fragmented.  As a result, one may wish to clear the freed space and join the
-partially used pages in the database left behind from removed packages or after
-running the garbage collector.  Running @command{sudo guix gc
+Guix uses an sqlite database to keep track of the items in the store
+(@pxref{The Store}).  Over time it is possible that the database may grow to a
+large size and become fragmented.  As a result, one may wish to clear the freed
+space and join the partially used pages in the database left behind from removed
+packages or after running the garbage collector.  Running @command{sudo guix gc
 --vacuum-database} will lock the database and @code{VACUUM} the store,
 defragmenting the database and purging freed pages, unlocking the database when
 it finishes.
@@ -5764,7 +5764,7 @@ named @code{keyring} (we recommend making it an @dfn{orphan branch}).
 @item
 Introduce an initial @file{.guix-authorizations} in the channel's
 repository.  Do that in a signed commit (@pxref{Commit Access}, for
-information on how to sign Git commits.)
+information on how to sign Git commits).
 
 @item
 Advertise the channel introduction, for instance on your channel's web
@@ -5932,6 +5932,10 @@ The general syntax is:
 @example
 guix shell [@var{options}] [@var{package}@dots{}]
 @end example
+
+Sometimes an interactive shell session is not desired.  An arbitrary
+command may be invoked by placing the @code{--} token to separate the
+command from the rest of the arguments.
 
 The following example creates an environment containing Python and NumPy,
 building or downloading any missing package, and runs the
@@ -6951,6 +6955,16 @@ directly be used as a file system container image with the
 environment}, using commands like @command{singularity shell} or
 @command{singularity exec}.
 
+@cindex AppImage, create an AppImage file with @command{guix pack}
+Another format internally based on SquashFS is
+@uref{https://appimage.org/, AppImage}. An AppImage file can be created
+and executed without any special privileges:
+
+@example
+file=$(guix pack -f appimage --entry-point=bin/guile guile)
+$file --help
+@end example
+
 Several command-line options allow you to customize your pack:
 
 @table @code
@@ -7067,6 +7081,48 @@ to install Guix-produced @samp{.rpm} packages on a system where
 installation or other, non-rpm packs.
 @end quotation
 
+@item appimage
+@cindex AppImage, create an AppImage file with @command{guix pack}
+This produces an @uref{https://appimage.org/, AppImage file} with the
+@samp{.AppImage} extension.  AppImage is a SquashFS volume prefixed with
+a runtime that mounts the SquashFS file system and executes the binary
+provided with @option{--entry-point}.  This results in a self-contained
+archive that bundles the software and all its requirements into a single
+file.  When the file is made executable it runs the packaged software.
+
+@example
+guix pack -f appimage --entry-point=bin/vlc vlc
+@end example
+
+The runtime used by AppImages invokes the @command{fusermount3} command
+to mount the image quickly.  If that command is unavailable, the
+AppImage fails to run, but it can still be started by passing the
+@option{--appimage-extract-and-run} flag.
+
+@quotation Warning
+When building an AppImage, always @emph{pass} the @option{--relocatable}
+option (or @option{-R}, or @option{-RR}) to make sure the image can be
+used on systems where Guix is not installed.  A warning is printed when
+this option is not used.
+@end quotation
+
+@example
+guix pack -f appimage --entry-point=bin/hello --relocatable hello
+@end example
+
+@quotation Note
+The resulting AppImage does not conform to the complete standard as it
+currently does not contain a @file{.DirIcon} file.  This does not impact
+functionality of the AppImage itself, but possibly that of software used
+to manage AppImages.
+@end quotation
+
+@quotation Note
+As the generated AppImage packages the complete dependency graph, it
+will be larger than comparable AppImage files found online, which depend
+on host system libraries.
+@end quotation
+
 @end table
 
 @cindex relocatable binaries
@@ -7156,10 +7212,10 @@ execution engines listed above by setting the
 
 @cindex entry point, for Docker and Singularity images
 @item --entry-point=@var{command}
-Use @var{command} as the @dfn{entry point} of the resulting pack, if the pack
-format supports it---currently @code{docker} and @code{squashfs} (Singularity)
-support it.  @var{command} must be relative to the profile contained in the
-pack.
+Use @var{command} as the @dfn{entry point} of the resulting pack, if the
+pack format supports it---currently @code{docker}, @code{appimage}, and
+@code{squashfs} (Singularity) support it.  @var{command} must be
+relative to the profile contained in the pack.
 
 The entry point specifies the command that tools like @code{docker run} or
 @code{singularity run} automatically start by default.  For example, you can
@@ -7303,7 +7359,7 @@ profile---by default @var{name} is @code{guix-profile}, which corresponds to
 @file{/var/guix} contains the store database (@pxref{The Store}) as well
 as garbage-collector roots (@pxref{Invoking guix gc}).  Providing it in
 the pack means that the store is ``complete'' and manageable by Guix;
-not providing it pack means that the store is ``dead'': items cannot be
+not providing it in the pack means that the store is ``dead'': items cannot be
 added to it or removed from it after extraction of the pack.
 
 One use case for this is the Guix self-contained binary tarball
@@ -8068,7 +8124,7 @@ The build tool chain is part of the @dfn{implicit inputs} of
 packages---it's usually not listed as part of the various ``inputs''
 fields and is instead pulled in by the build system.  Consequently, this
 procedure works by changing the build system of @var{package} so that it
-pulls in @var{toolchain} instead of the defaults.  @ref{Build Systems},
+pulls in @var{toolchain} instead of the defaults.  @xref{Build Systems},
 for more on build systems.
 @end deffn
 
@@ -8207,14 +8263,14 @@ Likewise, the @code{(guix git-download)} module defines the
 control repository, and the @code{git-reference} data type to describe
 the repository and revision to fetch.
 
-@deffn {Procedure} git-fetch ref hash-algo hash
+@deffn {Procedure} git-fetch ref hash-algo hash [name]
 Return a fixed-output derivation that fetches @var{ref}, a
 @code{<git-reference>} object.  The output is expected to have recursive
 hash @var{hash} of type @var{hash-algo} (a symbol).  Use @var{name} as
 the file name, or a generic name if @code{#f}.
 @end deffn
 
-@deffn {Procedure} git-fetch/lfs ref hash-algo hash
+@deffn {Procedure} git-fetch/lfs ref hash-algo hash [name]
 This is a variant of the @code{git-fetch} procedure that supports the
 Git @acronym{LFS, Large File Storage} extension.  This may be useful to
 pull some binary test data to run the test suite of a package, for
@@ -8302,7 +8358,7 @@ retrieve.
 The URL of the Subversion repository to clone.
 
 @item @code{revision}
-This string denotes revision to fetch specified as a number.
+This string denotes the revision to fetch specified as a number.
 
 @item @code{recursive?} (default: @code{#f})
 This Boolean indicates whether to recursively fetch Subversion
@@ -8741,8 +8797,8 @@ Options}).
 @quotation Note
 Manifests are @emph{symbolic}: they refer to packages of the channels
 @emph{currently in use} (@pxref{Channels}).  In the example above,
-@code{gcc-toolchain} might refer to version 11 today, but it might refer
-to version 13 two years from now.
+@code{gcc-toolchain} might refer to version 14 today, but it might refer
+to version 16 two years from now.
 
 If you want to ``pin'' your software environment to specific package
 versions and variants, you need an additional piece of information: the
@@ -14202,6 +14258,17 @@ The command below imports metadata for the Acme::Boolean Perl module:
 @example
 guix import cpan Acme::Boolean
 @end example
+
+Like many other importers, the @code{cpan} importer supports recursive
+imports:
+
+@table @code
+@item --recursive
+@itemx -r
+Traverse the dependency graph of the given upstream package recursively
+and generate package expressions for all those packages that are not yet
+in Guix.
+@end table
 
 @item cran
 @cindex CRAN
@@ -32338,7 +32405,16 @@ the default port is 80, and a different port can be specified
 explicitly.
 
 @item @code{extra-content}
-A string or list of strings to add to the upstream block.
+Additional content to be appended to the upstream block.  Can be a
+string or file-like object or list of thereof.  In case of list, each
+item is prefixed with indentation and suffixed with a new line.  Nested
+lists are flattened.
+
+@lisp
+(extra-content "include /etc/nginx/custom-config.conf;")
+(extra-content `("include /etc/nginx/custom-config.conf;"
+                 ("include " ,%custom-config.conf ";")))
+@end lisp
 
 @end table
 @end deftp
@@ -35786,6 +35862,32 @@ Ignore cpuid check for supported CPU models.
 
 @item @code{thermald} (default: @var{thermald})
 Package object of thermald.
+
+@cindex PowerTOP
+@cindex power consumption tuning with PowerTOP
+@subsubheading PowerTOP
+
+The @code{(gnu services pm)} module also provides a service definition
+for @uref{https://01.org/powertop/, PowerTOP}, a power consumption
+analysis and tuning tool.  When started, it tunes Linux kernel settings
+to reduce power consumption.
+
+@defvar powertop-service-type
+The service type for PowerTOP.  No configuration is necessary.  When the
+service starts, it executes @code{powertop --auto-tune}.
+
+@lisp
+(service powertop-service-type)
+@end lisp
+@end defvar
+
+Available @code{powertop-configuration} fields are:
+
+@deftypevr {@code{powertop-configuration} parameter} package powertop
+The PowerTOP package.  Defaults to @code{powertop} in the @code{(gnu
+packages linux)} module
+
+@end deftypevr
 
 @end table
 @end deftp

@@ -67,6 +67,7 @@
 # Copyright © 2024 David Elsing <david.elsing@posteo.net>
 # Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 # Copyright © 2024 Fabio Natali <me@fabionatali.com>
+# Copyright © 2024 Noé Lopez <noelopez@free.fr>
 #
 # This file is part of GNU Guix.
 #
@@ -139,6 +140,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/apl.scm				\
   %D%/packages/apple.scm			\
   %D%/packages/apparmor.scm			\
+  %D%/packages/appimage.scm			\
   %D%/packages/apr.scm				\
   %D%/packages/arcan.scm			\
   %D%/packages/aspell.scm			\
@@ -1048,8 +1050,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/ccextractor-add-missing-header.patch	\
   %D%/packages/patches/ccextractor-autoconf-tesseract.patch	\
   %D%/packages/patches/ccextractor-fix-ocr.patch		\
-  %D%/packages/patches/chez-scheme-backport-configure.patch	\
-  %D%/packages/patches/chez-scheme-backport-signal.patch	\
   %D%/packages/patches/chez-scheme-bin-sh.patch			\
   %D%/packages/patches/circos-remove-findbin.patch		\
   %D%/packages/patches/cdparanoia-fpic.patch			\
@@ -1167,8 +1167,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/dtc-meson-cell-overflow.patch		\
   %D%/packages/patches/duc-fix-test-sh.patch                    \
   %D%/packages/patches/dune-common-skip-failing-tests.patch	\
-  %D%/packages/patches/dune-grid-add-missing-include-cassert.patch	\
-  %D%/packages/patches/dune-istl-fix-solver-playground.patch	\
   %D%/packages/patches/durden-shadow-arcan.patch		\
   %D%/packages/patches/dvd+rw-tools-add-include.patch 		\
   %D%/packages/patches/dwarves-threading-reproducibility.patch	\
@@ -1286,7 +1284,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/fpc-reproducibility.patch		\
   %D%/packages/patches/fpc-glibc-2.34-compat.patch		\
   %D%/packages/patches/fpm-newer-clamp-fix.patch		\
-  %D%/packages/patches/freecad-vtk-9.3.patch		\
   %D%/packages/patches/freedink-engine-fix-sdl-hints.patch	\
   %D%/packages/patches/freeimage-libtiff-compat.patch		\
   %D%/packages/patches/freeimage-libraw-0.21-compat.patch	\
@@ -1727,8 +1724,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libutils-remove-damaging-includes.patch	\
   %D%/packages/patches/libvdpau-va-gl-unbundle.patch		\
   %D%/packages/patches/libvpx-CVE-2016-2818.patch		\
-  %D%/packages/patches/libvpx-CVE-2023-5217.patch		\
-  %D%/packages/patches/libvpx-CVE-2023-44488.patch		\
   %D%/packages/patches/libxml2-xpath0-Add-option-xpath0.patch	\
   %D%/packages/patches/libwpd-gcc-compat.patch			\
   %D%/packages/patches/libxslt-generated-ids.patch		\
@@ -1936,6 +1931,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-pypdf-annotate-tests-appropriately.patch	\
   %D%/packages/patches/python-sip-include-dirs.patch	\
   %D%/packages/patches/python-sgmllib3k-assertions.patch	\
+  %D%/packages/patches/python-sphobjinv-defer-ssl-import.patch	\
   %D%/packages/patches/python-sphinx-prompt-docutils-0.19.patch	\
   %D%/packages/patches/python-typeguard-python3.10.patch	\
   %D%/packages/patches/python-uqbar-python3.10.patch	        \
@@ -2255,6 +2251,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/twinkle-bcg729.patch			\
   %D%/packages/patches/u-boot-allow-disabling-openssl.patch	\
   %D%/packages/patches/u-boot-build-without-libcrypto.patch	\
+  %D%/packages/patches/u-boot-calloc-visibility.patch		\
   %D%/packages/patches/u-boot-nintendo-nes-serial.patch		\
   %D%/packages/patches/u-boot-rockchip-inno-usb.patch		\
   %D%/packages/patches/ucx-tcp-iface-ioctl.patch		\

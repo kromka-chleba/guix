@@ -641,6 +641,113 @@ Manager,NTLM}/Negotiate authentication over HTTP.")
      "This package provides SCSS compiler support for Go applications.")
     (license license:expat)))
 
+(define-public go-github-com-caddyserver-certmagic
+  (package
+    (name "go-github-com-caddyserver-certmagic")
+    (version "0.21.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/caddyserver/certmagic")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "061whx9p00lpxlfnywizqx5z9b020ggqg5vx5r5v2qhdrprg1gkz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-skip"
+              ;; Some tests require networking to run so skip them altogether.
+              (string-join
+               (list "TestLookupNameserversOK/physics.georgetown.edu."
+                     "TestFindZoneByFqdn/domain_is_a_CNAME"
+                     "TestFindZoneByFqdn/domain_is_a_non-existent_subdomain"
+                     "TestFindZoneByFqdn/domain_is_a_eTLD"
+                     "TestFindZoneByFqdn/domain_is_a_cross-zone_CNAME"
+                     "TestFindZoneByFqdn/NXDOMAIN"
+                     "TestFindZoneByFqdn/several_non_existent_nameservers")
+               "|"))
+      #:import-path "github.com/caddyserver/certmagic"))
+    (propagated-inputs
+     (list go-github-com-caddyserver-zerossl
+           go-github-com-klauspost-cpuid-v2
+           go-github-com-libdns-libdns
+           go-github-com-mholt-acmez
+           go-github-com-miekg-dns
+           go-github-com-zeebo-blake3
+           go-go-uber-org-zap
+           go-golang-org-x-crypto
+           go-golang-org-x-net))
+    (home-page "https://github.com/caddyserver/certmagic")
+    (synopsis "Automatic HTTPS for any Go program")
+    (description
+     "@code{certmagic} provides API for TLS Automation with full control over almost
+every aspect of the system.
+
+Main features:
+@itemize
+@item Fully automated certificate management including issuance and renewal, with
+support for certificate revocation.  Also works in conjunction with your own
+certificates.
+@item Wildcard certificates.
+@item One-line, fully managed HTTPS servers, with HTTP->HTTPS redirects.
+@item Multiple issuers supported: get certificates from multiple sources/CAs for
+redundancy and resiliency.
+@item Solves all 3 common ACME challenges: HTTP, TLS-ALPN, and DNS (and capable of
+others.)
+@item Robust error handling:
+@itemize
+@item Challenges are randomized to avoid accidental dependence and rotated to
+overcome certain network blockages.
+@item Robust retries for up to 30 days.
+@item Exponential backoff with carefully-tuned intervals.
+@item Retries with optional test/staging CA endpoint instead of production, to avoid
+rate limits.
+@end itemize
+@item All libdns DNS providers work out-of-the-box.
+@item Pluggable storage backends (default: file system) and key sources.
+@item Automatic OCSP stapling.
+@item Distributed solving of all challenges (works behind load balancers.)
+@item Supports @samp{on-demand} issuance of certificates.
+@item Optional event hooks for observation.
+@item One-time private keys by default (new key for each cert) to discourage pinning
+and reduce scope of key compromise.
+@item Works with any certificate authority (CA) compliant with the ACME specification
+@url{https://tools.ietf.org/html/rfc8555, RFC 8555}.
+@item Must-Staple (optional; not default.)
+@item Full support for draft-ietf-acme-ari (ACME Renewal Information; ARI) extension.
+@end itemize")
+    (license license:expat)))
+
+(define-public go-github-com-caddyserver-zerossl
+  (package
+    (name "go-github-com-caddyserver-zerossl")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/caddyserver/zerossl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hr2kdabhm35hz5krp7m3g6wxvyb9xlqgmy3krf4wwb3yabsqp1m"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/caddyserver/zerossl"))
+    (home-page "https://github.com/caddyserver/zerossl")
+    (synopsis "ZeroSSL REST API client implementation for Go")
+    (description
+     "@code{zerossl} implements the @url{https://zerossl.com/documentation/api/,
+ZeroSSL REST API}.
+
+The REST API is distinct from the @url{https://zerossl.com/documentation/acme/, ACME
+endpoint}, which is a standardized way of obtaining certificates.")
+    (license license:expat)))
+
 (define-public go-github-com-ccding-go-stun
   (package
     (name "go-github-com-ccding-go-stun")
@@ -3051,6 +3158,45 @@ router.")
 @acronym{Simple Service Discovery Protocol, SSDP}} library for Golang.")
     (license license:expat)))
 
+(define-public go-github-com-libdns-libdns
+  (package
+    (name "go-github-com-libdns-libdns")
+    (version "0.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libdns/libdns")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00zx6yij1ac8mhswhsks1nchzgmhbzrsm9hr0faqbmx0vkip78j5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/libdns/libdns"))
+    (native-inputs (list go-github-com-stretchr-testify))
+    (propagated-inputs (list go-golang-org-x-exp))
+    (home-page "https://github.com/libdns/libdns")
+    (synopsis "Universal DNS provider APIs for Go")
+    (description
+     "@code{libdns} is a collection of free-range DNS provider client
+implementations.  It defines the core interfaces that provider packages should
+implement.  They are small and idiomatic interfaces with well-defined semantics.
+
+The interfaces include:
+@itemize
+@item @url{https://pkg.go.dev/github.com/libdns/libdns#RecordGetter, RecordGetter} to
+list records.
+@item @url{https://pkg.go.dev/github.com/libdns/libdns#RecordAppender,
+RecordAppender} to append new records.
+@item @url{https://pkg.go.dev/github.com/libdns/libdns#RecordSetter, RecordSetter} to
+set (create or change existing) records.
+@item @url{https://pkg.go.dev/github.com/libdns/libdns#RecordDeleter, RecordDeleter}
+to delete records.
+@end itemize")
+    (license license:expat)))
+
 (define-public go-github-com-libp2p-go-cidranger
   (package
     (name "go-github-com-libp2p-go-cidranger")
@@ -3587,6 +3733,68 @@ sockets (AF_NETLINK).")
 integrates with Go's runtime network poller to provide asynchronous I/O and
 deadline support.")
     (license license:expat)))
+
+(define-public go-github-com-mholt-acmez
+  (package
+    (name "go-github-com-mholt-acmez")
+    (version "2.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mholt/acmez")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xfl6p8izgjs1d26iygfilmmagxld409qsgdy60r1chfsrcnraby"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mholt/acmez"))
+    (propagated-inputs
+     (list go-golang-org-x-crypto
+           go-golang-org-x-net
+           go-go-uber-org-zap))
+    (home-page "https://github.com/mholt/acmez")
+    (synopsis "ACME (RFC 8555) client library for Go")
+    (description
+     "@code{ACMEz} is a lightweight, fully-compliant
+@url{https://tools.ietf.org/html/rfc8555, RFC 8555} (ACME) implementation, that
+provides an API for getting certificates.  @code{ACMEz} is suitable for large-scale
+enterprise deployments.  It also supports common IETF-standardized ACME extensions.
+
+This module has two primary packages:
+@itemize
+@item @code{acmez} is a high-level wrapper for getting certificates.  It implements
+the ACME order flow described in RFC 8555 including challenge solving using pluggable
+solvers.
+@item @code{acme} is a low-level RFC 8555 implementation that provides the
+fundamental ACME operations, mainly useful if you have advanced or niche
+requirements.
+@end itemize
+
+Main features:
+@itemize
+@item Go API that thoroughly documented with spec citations.
+@item Structured error values (@samp{problems} as defined in
+@url{https://tools.ietf.org/html/rfc7807, RFC 7807}.)
+@item Smart retries (resilient against network and server hiccups.)
+@item Challenge plasticity (randomized challenges, and will retry others if one
+fails.)
+@item Context cancellation (suitable for high-frequency config changes or reloads.)
+@item Highly flexible and customizable.
+@item External Account Binding (EAB) support.
+@item Tested with numerous ACME CAs (more than just Let's Encrypt.)
+@item Implements niche aspects of RFC 8555 (such as alt cert chains and account key
+rollover.)
+@item Efficient solving of large SAN lists (e.g. for slow DNS record propagation.)
+@item Utility functions for solving challenges: device attestation
+challenges (draft-acme-device-attest-02), @url{https://tools.ietf.org/html/rfc8737,
+RFC 8737} (tls-alpn-01 challenge), @url{https://tools.ietf.org/html/rfc8823, RFC
+8823} (email-reply-00 challenge; S/MIME.)
+@item ACME Renewal Information (ARI) support (draft-ietf-acme-ari-03.)
+@end itemize")
+    (license license:asl2.0)))
 
 (define-public go-github-com-microcosm-cc-bluemonday
   (package

@@ -75,6 +75,8 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages crates-io)
+  #:use-module (gnu packages crates-web)
+  #:use-module (gnu packages crates-windows)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages datastructures)
@@ -147,8 +149,8 @@ extensions over the standard utility.")
     (license license:gpl3+)))
 
 (define-public lem
-  (let ((commit "7b380ea04cea2696975da6c7d8c29e57ce2907a2")
-        (revision "2"))
+  (let ((commit "534cb9f2e1e1b0ffbdf4552a39801deec21a76f8")
+        (revision "3"))
     (package
       (name "lem")
       (version (git-version "2.2.0" revision commit))
@@ -159,7 +161,7 @@ extensions over the standard utility.")
                (url "https://github.com/lem-project/lem/")
                (commit commit)))
          (sha256
-          (base32 "1096vkpd3srs7c8mlirb6qfzmvp7hbkgrj9x6rniyvid9vl0ffmy"))
+          (base32 "0dxn5hc8lfw1l5d7kn16psbdvxrn8m7nvn3qhicqq7m3mml40v2h"))
          (file-name (git-file-name name version))
          (snippet
           #~(begin
@@ -466,6 +468,49 @@ Rust.")
 parentheses and indentation.  This library can be called from other editors that
 can load dynamic libraries.")
     (license license:expat)))
+
+(define-public parinfer-rust-emacs
+  (package
+    (name "parinfer-rust-emacs")
+    (version "0.4.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/justinbarclay/parinfer-rust-emacs")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "1v5lcbs1x4f3b428sj9rkjbmfpzyxzny7i0pgdpnr8nyjvpkzns8"))
+       (file-name (git-file-name name version))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:cargo-inputs `(("rust-getopts" ,rust-getopts-0.2)
+                       ("rust-libc" ,rust-libc-0.2)
+                       ("rust-emacs" ,rust-emacs-0.19)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-serde-json" ,rust-serde-json-1)
+                       ("rust-serde-derive" ,rust-serde-derive-1)
+                       ("rust-stdweb" ,rust-stdweb-0.4)
+                       ("rust-unicode-segmentation" ,rust-unicode-segmentation-1)
+                       ("rust-unicode-width" ,rust-unicode-width-0.1)
+                       ("rust-winapi" ,rust-winapi-0.3))
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'install 'install-library
+                     (lambda _
+                       (let ((lib (string-append #$output "/lib")))
+                         (with-directory-excursion "target/release"
+                           (install-file "libparinfer_rust.so" lib))))))))
+    (inputs (list clang))
+    (home-page "https://github.com/justinbarclay/parinfer-rust-emacs")
+    (synopsis "Emacs-centric fork of parinfer-rust")
+    (description
+     "@command{parinfer-rust-emacs} is an Emacs-centric fork of parinfer-rust,
+itself an implementation of Shaun Lebron’s Parinfer.  This builds a shared
+library intended to be loaded by the @command{emacs-parinfer-rust-mode} Emacs
+plugin, though a standalone binary is built also.")
+    (license license:isc)))
 
 (define-public joe
   (package

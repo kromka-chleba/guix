@@ -29,7 +29,7 @@
 ;;; Copyright © 2020, 2021 Robert Karszniewicz <avoidr@posteo.de>
 ;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
-;;; Copyright © 2021, 2023 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
+;;; Copyright © 2021, 2023-2024 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2021, 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 jgart <jgart@dismail.de>
 ;;; Copyright © 2022 Aleksandr Vityazev <avityazev@posteo.org>
@@ -96,6 +96,9 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-compression)
+  #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages gperf)
@@ -1158,13 +1161,13 @@ simultaneously and therefore appear under the same nickname on IRC.")
 (define-public python-nbxmpp
   (package
     (name "python-nbxmpp")
-    (version "4.2.2")
+    (version "5.0.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "nbxmpp" version))
        (sha256
-         (base32 "095nyy6vjildhrqigxk6vsh49in6mx17bvb3z5zpjmzhv9b8ix46"))))
+         (base32 "1swzbdl1zr34jynhsm1f401h5hdn9p6vw9vxa7vx0gd3ifkmiz7w"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1174,7 +1177,6 @@ simultaneously and therefore appear under the same nickname on IRC.")
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests? (invoke "python" "-m" "unittest" "-v")))))))
-    (native-inputs (list `(,glib "bin")))
     (inputs
      (list glib
            glib-networking
@@ -1193,7 +1195,7 @@ of xmpppy.")
 (define-public gajim
   (package
     (name "gajim")
-    (version "1.7.3")
+    (version "1.9.3")
     (source
      (origin
        (method url-fetch)
@@ -1201,7 +1203,7 @@ of xmpppy.")
                            (version-major+minor version)
                            "/gajim-" version ".tar.gz"))
        (sha256
-         (base32 "066kvkjw3qcdanr3nczy0wgcwihk9jc9zhzfr5bwlqvcyxcv7k5p"))
+         (base32 "10rz8pd43a9308kj6csixsmvdc6ccnqkw83adc5cggh1798b45ag"))
        (patches
          (search-patches "gajim-honour-GAJIM_PLUGIN_PATH.patch"))))
     (build-system python-build-system)
@@ -1239,14 +1241,15 @@ of xmpppy.")
               (invoke "./pep517build/install_metadata.py" "dist/metadata"
                       (string-append "--prefix=" #$output))))
           (replace 'check
-            (lambda _
-              ;; Tests require a running X server.
-              (system "Xvfb :1 +extension GLX &")
-              (setenv "DISPLAY" ":1")
-              ;; For missing '/etc/machine-id'.
-              (setenv "DBUS_FATAL_WARNINGS" "0")
-              (invoke "dbus-launch" "python" "-m" "unittest"
-                      "discover" "-s" "test")))
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; Tests require a running X server.
+                (system "Xvfb :1 +extension GLX &")
+                (setenv "DISPLAY" ":1")
+                ;; For missing '/etc/machine-id'.
+                (setenv "DBUS_FATAL_WARNINGS" "0")
+                (invoke "dbus-launch" "python" "-m" "unittest"
+                        "discover" "-s" "test"))))
           (add-after 'install 'glib-or-gtk-compile-schemas
             (assoc-ref glib-or-gtk:%standard-phases
                        'glib-or-gtk-compile-schemas))
@@ -1286,9 +1289,7 @@ of xmpppy.")
           "/site-packages"))))))
     (native-inputs
      (list gettext-minimal
-           `(,glib "bin")
            gobject-introspection
-           `(,gtk+ "bin")
            python-distutils-extra
            python-pypa-build
            python-setuptools
@@ -1311,22 +1312,27 @@ of xmpppy.")
            gupnp-igd
            libappindicator
            libnice
+           libomemo
            libsecret
            libsoup
            libxscrnsaver
            network-manager
            python-css-parser
            python-dbus
+           python-emoji
            python-gssapi
            python-idna
            python-keyring
            python-nbxmpp
+           python-omemo-dr
            python-packaging
            python-pillow
            python-precis-i18n
            python-pycairo
            python-pygobject
-           python-pyopenssl))
+           python-pyopenssl
+           python-qrcode
+           python-sqlalchemy-2))
     (propagated-inputs
      (list dconf))
     (synopsis "Fully-featured XMPP client")
@@ -1337,45 +1343,12 @@ and OpenPGP) and available in 29 languages.")
     (license license:gpl3)))
 
 (define-public gajim-omemo
-  (package
-    (name "gajim-omemo")
-    (version "2.9.0")
-    (source
-     (origin
-       (method url-fetch/zipbomb)
-       (uri
-        (string-append
-         "https://ftp.gajim.org/plugins/master/omemo/omemo_"
-         version ".zip"))
-       (sha256
-        (base32 "0yy9r9fsrlgdywiln8bskhi8faj9hnz7b19jcap5nkhv8jn9cqq7"))))
-    (build-system trivial-build-system)
-    (arguments
-     `(#:modules ((guix build utils))
-       #:builder
-       (begin
-         (use-modules (guix build utils))
-         (let* ((out (assoc-ref %outputs "out"))
-                (share (in-vicinity out "share/gajim/plugins/omemo"))
-                (source (assoc-ref %build-inputs "source")))
-           (mkdir-p share)
-           (copy-recursively source share)
-           #t))))
-    (propagated-inputs
-     (list python-axolotl python-axolotl-curve25519 python-cryptography
-           python-qrcode))
-    (synopsis "Gajim OMEMO plugin")
-    (description "Gajim-OMEMO is a plugin that adds support for the OMEMO
-Encryption to Gajim.  OMEMO is an XMPP Extension Protocol (XEP) for secure
-multi-client end-to-end encryption.")
-    (home-page
-     "https://dev.gajim.org/gajim/gajim-plugins/-/wikis/OmemoGajimPlugin")
-    (license license:gpl3+)))
+  (deprecated-package "gajim-omemo" gajim))
 
 (define-public gajim-openpgp
   (package
     (name "gajim-openpgp")
-    (version "1.5.0")
+    (version "1.6.1")
     (source
      (origin
        (method url-fetch/zipbomb)
@@ -1384,7 +1357,7 @@ multi-client end-to-end encryption.")
          "https://ftp.gajim.org/plugins/master/openpgp/openpgp_"
          version ".zip"))
        (sha256
-        (base32 "193pbh9iri7bkamvjwp236i8g5zxxiqgsv64kll5sy76vx4q73c4"))))
+        (base32 "0m1g5wajpc3kfz5jv8y3i9xy1nqhq15ripv49lgsq7j1f0a3w3wh"))))
     (build-system trivial-build-system)
     (arguments
      `(#:modules ((guix build utils))
@@ -3296,19 +3269,143 @@ designed for experienced users.")
   (package
     (name "matterbridge")
     (version "1.26.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/42wim/matterbridge")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0939fiy7z53izznfhlr7c6vaskbmkbj3ncb09fzx5dmz9cjngy80"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/42wim/matterbridge")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (snippet '(for-each delete-file-recursively
+                  ;; TODO: unbundle the rest as well
+                  '("vendor/filippo.io"
+                    "vendor/github.com/blang"
+                    "vendor/github.com/d5"
+                    "vendor/github.com/davecgh"
+                    "vendor/github.com/dustin"
+                    "vendor/github.com/francoispqt"
+                    "vendor/github.com/fsnotify"
+                    "vendor/github.com/go-asn1-ber"
+                    "vendor/github.com/golang"
+                    "vendor/github.com/golang-jwt"
+                    "vendor/github.com/google/uuid"
+                    "vendor/github.com/gorilla/websocket"
+                    "vendor/github.com/hashicorp"
+                    "vendor/github.com/jpillora"
+                    "vendor/github.com/json-iterator"
+                    "vendor/github.com/kballard"
+                    "vendor/github.com/klauspost"
+                    "vendor/github.com/magiconair"
+                    "vendor/github.com/mattn/go-colorable"
+                    "vendor/github.com/mattn/go-isatty"
+                    "vendor/github.com/mattn/go-runewidth"
+                    "vendor/github.com/mgutz/ansi"
+                    "vendor/github.com/minio/sha256-simd"
+                    "vendor/github.com/mitchellh"
+                    "vendor/github.com/modern-go"
+                    "vendor/github.com/opentracing"
+                    "vendor/github.com/pelletier"
+                    "vendor/github.com/pkg"
+                    "vendor/github.com/pmezard"
+                    "vendor/github.com/rivo"
+                    "vendor/github.com/russross"
+                    "vendor/github.com/sirupsen"
+                    "vendor/github.com/skip2"
+                    "vendor/github.com/spf13"
+                    "vendor/github.com/stretchr"
+                    "vendor/github.com/subosito"
+                    "vendor/github.com/valyala/bytebufferpool"
+                    "vendor/github.com/vmihailenco/tagparser"
+                    "vendor/go.uber.org"
+                    "vendor/golang.org"
+                    "vendor/google.golang.org/protobuf/"
+                    "vendor/gopkg.in/ini.v1"
+                    "vendor/gopkg.in/natefinch"
+                    "vendor/gopkg.in/yaml.v2"
+                    "vendor/gopkg.in/yaml.v3")))
+       (sha256
+        (base32 "0939fiy7z53izznfhlr7c6vaskbmkbj3ncb09fzx5dmz9cjngy80"))))
     (build-system go-build-system)
     (arguments
      (list
+      ;; It helps to resolve <golang.org/x/net/publicsuffix/table.go:63:12>:
+      ;; pattern data/children: cannot embed irregular file data/children
+      #:embed-files #~(list "children" "nodes" "text")
       #:import-path "github.com/42wim/matterbridge"))
+    (inputs (list
+             ;; golang.org
+             go-golang-org-x-crypto
+             go-golang-org-x-image
+             go-golang-org-x-mod
+             go-golang-org-x-oauth2
+             go-golang-org-x-sys
+             go-golang-org-x-term
+             go-golang-org-x-text
+             go-golang-org-x-time
+             go-golang-org-x-tools
+             ;; google.golang.org
+             go-google-golang-org-protobuf
+             ;; gopkg.in
+             go-gopkg-in-ini-v1
+             go-gopkg-in-yaml-v2
+             go-gopkg-in-yaml-v3
+             go-gopkg-in-natefinch-lumberjack-v2
+             ;; filippo.io
+             go-filippo-io-edwards25519
+             ;; uber.org
+             go-go-uber-org-atomic
+             go-go-uber-org-multierr
+             go-go-uber-org-zap
+             ;; github.com
+             go-github-com-blang-semver
+             go-github-com-d5-tengo-v2
+             go-github-com-davecgh-go-spew
+             go-github-com-dustin-go-humanize
+             go-github-com-francoispqt-gojay
+             go-github-com-fsnotify-fsnotify
+             go-github-com-go-asn1-ber-asn1-ber
+             go-github-com-golang-jwt-jwt
+             go-github-com-golang-protobuf
+             go-github-com-google-uuid
+             go-github-com-gorilla-websocket
+             go-github-com-hashicorp-errwrap
+             go-github-com-hashicorp-go-multierror
+             go-github-com-hashicorp-golang-lru
+             go-github-com-hashicorp-hcl
+             go-github-com-jpillora-backoff
+             go-github-com-json-iterator-go
+             go-github-com-kballard-go-shellquote
+             go-github-com-klauspost-compress
+             go-github-com-klauspost-cpuid-v2
+             go-github-com-magiconair-properties
+             go-github-com-mattn-go-colorable
+             go-github-com-mattn-go-isatty
+             go-github-com-mattn-go-runewidth
+             go-github-com-mgutz-ansi
+             go-github-com-minio-sha256-simd
+             go-github-com-mitchellh-go-homedir
+             go-github-com-mitchellh-mapstructure
+             go-github-com-modern-go-concurrent
+             go-github-com-modern-go-reflect2
+             go-github-com-opentracing-opentracing-go
+             go-github-com-pelletier-go-toml
+             go-github-com-pelletier-go-toml-v2
+             go-github-com-pkg-errors
+             go-github-com-pmezard-go-difflib
+             go-github-com-rivo-uniseg
+             go-github-com-russross-blackfriday
+             go-github-com-sirupsen-logrus
+             go-github-com-skip2-go-qrcode
+             go-github-com-spf13-afero
+             go-github-com-spf13-cast
+             go-github-com-spf13-jwalterweatherman
+             go-github-com-spf13-pflag
+             go-github-com-spf13-viper
+             go-github-com-stretchr-testify
+             go-github-com-subosito-gotenv
+             go-github-com-valyala-bytebufferpool
+             go-github-com-vmihailenco-tagparser))
     (synopsis "Bridge together various messaging networks and protocols")
     (description
      "Relays messages between different channels from various
@@ -3595,7 +3692,7 @@ a text snippet), using @code{libphonenumber}.")
 (define-public senpai
   (package
     (name "senpai")
-    (version "0.2.0")
+    (version "0.3.0")
     (source
      (origin
        (method git-fetch)
@@ -3605,7 +3702,7 @@ a text snippet), using @code{libphonenumber}.")
          (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qw955i5f3jr42h4afr23v7wq616bcsyq68if75qdw8j1yibnpmb"))))
+        (base32 "0l43qfjr0ggpv1hkyyfxp3j6acrbbrl8n6qxlh91gyb2jan03683"))))
     (build-system go-build-system)
     (arguments
       (list #:import-path "git.sr.ht/~taiite/senpai/cmd/senpai"
@@ -3615,7 +3712,7 @@ a text snippet), using @code{libphonenumber}.")
             #~(modify-phases %standard-phases
                 (add-after 'build 'build-doc
                   (lambda* (#:key unpack-path #:allow-other-keys)
-                    (invoke "make" "doc/senpai.1" "doc/senpai.5"
+                    (invoke "make" "doc"
                             "-C" (string-append "src/" unpack-path))))
                 (add-after 'install 'install-doc
                   (lambda* (#:key unpack-path #:allow-other-keys)
@@ -3632,12 +3729,13 @@ a text snippet), using @code{libphonenumber}.")
     (native-inputs (list go-git-sr-ht-emersion-go-scfg
                          go-github-com-delthas-go-libnp
                          go-github-com-delthas-go-localeinfo
-                         go-github-com-gdamore-tcell-v2
+                         go-github-com-delthas-tcell-v2
                          go-github-com-mattn-go-runewidth
                          go-golang-org-x-net
                          go-golang-org-x-term
                          go-golang-org-x-time
                          go-mvdan-cc-xurls-v2
+                         which
                          scdoc))
     (home-page "https://sr.ht/~delthas/senpai")
     (synopsis "Modern terminal IRC client")

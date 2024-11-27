@@ -87,6 +87,7 @@
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages unicode)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages virtualization)
   #:use-module (gnu packages web)
@@ -3708,6 +3709,54 @@ and consumable.")
 (define-public ocaml-sedlex
   (package
     (name "ocaml-sedlex")
+    (version "3.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/ocaml-community/sedlex")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1vzsmp8mvx9vrgjr5chsk2p2s5ii08c9kizw9ilx78jj30nzamz5"))))
+    (build-system dune-build-system)
+    (arguments
+     (list #:package "sedlex"
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'build 'copy-resources
+                 ;; These three files are needed by src/generator/data/dune,
+                 ;; but would be downloaded using curl at build time.
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (with-directory-excursion "src/generator/data"
+                     ;; Newer versions of dune emit an error if files it wants to
+                     ;; build already exist. Delete the dune file so dune doesn't
+                     ;; complain.
+                     (delete-file "dune")
+                     (for-each
+                      (lambda (file)
+                        (copy-file (search-input-file inputs file)
+                                   (basename file)))
+                      '("share/ucd/extracted/DerivedGeneralCategory.txt"
+                        "share/ucd/DerivedCoreProperties.txt"
+                        "share/ucd/PropList.txt")))))
+               (add-before 'build 'chmod
+                 (lambda _
+                   (for-each (lambda (file) (chmod file #o644)) (find-files "." ".*")))))))
+    (native-inputs (list ocaml-ppx-expect))
+    (propagated-inputs
+     (list ocaml-gen ocaml-ppxlib ocaml-uchar))
+    (inputs
+     (list ucd))
+    (home-page "https://www.cduce.org/download.html#side")
+    (synopsis "Lexer generator for Unicode and OCaml")
+    (description "Lexer generator for Unicode and OCaml.")
+    (license license:expat)))
+
+(define-public ocaml-sedlex-2
+  (package
+    (inherit ocaml-sedlex)
+    (name "ocaml-sedlex")
     (version "2.6")
     (source (origin
               (method git-fetch)
@@ -3718,59 +3767,10 @@ and consumable.")
               (sha256
                (base32
                 "1z8mmk1idh9hjhh2b9rp5b1h8kmzcxhagqkw0pvxn6ykx1brskq1"))))
-    (build-system dune-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:package "sedlex"
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'copy-resources
-           (lambda* (#:key inputs #:allow-other-keys)
-             (with-directory-excursion "src/generator/data"
-               ;; Newer versions of dune emit an error if files it wants to
-               ;; build already exist. Delete the dune file so dune doesn't
-               ;; complain.
-               (delete-file "dune")
-               (for-each
-                (lambda (file)
-                  (copy-file (assoc-ref inputs file) file))
-                '("DerivedCoreProperties.txt" "DerivedGeneralCategory.txt"
-                  "PropList.txt")))
-             #t))
-         (add-before 'build 'chmod
-           (lambda _
-             (for-each (lambda (file) (chmod file #o644)) (find-files "." ".*"))
-             #t)))))
-    (propagated-inputs
-     (list ocaml-gen ocaml-ppxlib ocaml-uchar))
-    ;; These three files are needed by src/generator/data/dune, but would be
-    ;; downloaded using curl at build time.
-    (inputs
-     `(("DerivedCoreProperties.txt"
-        ,(origin
-           (method url-fetch)
-           (uri "https://www.unicode.org/Public/12.1.0/ucd/DerivedCoreProperties.txt")
-           (sha256
-            (base32
-             "0s6sn1yr9qmb2i6gf8dir2zpsbjv1frdfzy3i2yjylzvf637msx6"))))
-       ("DerivedGeneralCategory.txt"
-        ,(origin
-           (method url-fetch)
-           (uri "https://www.unicode.org/Public/12.1.0/ucd/extracted/DerivedGeneralCategory.txt")
-           (sha256
-            (base32
-             "1rifzq9ba6c58dn0lrmcb5l5k4ksx3zsdkira3m5p6h4i2wriy3q"))))
-       ("PropList.txt"
-        ,(origin
-           (method url-fetch)
-           (uri "https://www.unicode.org/Public/12.1.0/ucd/PropList.txt")
-           (sha256
-            (base32
-             "0gsb1jpj3mnqbjgbavi4l95gl6g4agq58j82km22fdfg63j3w3fk"))))))
-    (home-page "https://www.cduce.org/download.html#side")
-    (synopsis "Lexer generator for Unicode and OCaml")
-    (description "Lexer generator for Unicode and OCaml.")
-    (license license:expat)))
+     (substitute-keyword-arguments (package-arguments ocaml-sedlex)
+       ((#:tests? _ #t) #f)))               ; no tests
+    (native-inputs '())))
 
 (define-public ocaml-uchar
   (package
@@ -5174,7 +5174,7 @@ Format module of the OCaml standard library.")
      (list which))
     (propagated-inputs
      `(("ocaml-xmlm" ,ocaml-xmlm)
-       ("ocaml-sedlex" ,ocaml-sedlex)
+       ("ocaml-sedlex" ,ocaml-sedlex-2)
        ("ocaml-easy-format" ,ocaml-easy-format)
        ("ocaml-base64" ,ocaml-base64)))
     (home-page "https://piqi.org")

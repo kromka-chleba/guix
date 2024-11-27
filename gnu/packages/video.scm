@@ -2957,7 +2957,7 @@ To load this plugin, specify the following option when starting mpv:
 (define-public libvpx
   (package
     (name "libvpx")
-    (version "1.12.0")
+    (version "1.15.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2966,9 +2966,8 @@ To load this plugin, specify the following option when starting mpv:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1x12f2bd4jqd532rnixmwvcx8d29yxiacpcxqqh86qczc49la8gm"))
-              (patches (search-patches "libvpx-CVE-2016-2818.patch"
-                                       "libvpx-CVE-2023-5217.patch"))))
+                "1q2scpfiifhpilw6qqpqihk98plj57gwh0vyiqwsv991i7b322bv"))
+              (patches (search-patches "libvpx-CVE-2016-2818.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags (list "--enable-shared"
@@ -3169,7 +3168,7 @@ YouTube.com and many more sites.")
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2024.08.06")
+    (version "2024.11.18")
     (source
      (origin
        (method git-fetch)
@@ -3177,8 +3176,11 @@ YouTube.com and many more sites.")
              (url "https://github.com/yt-dlp/yt-dlp/")
              (commit version)))
        (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (snippet '(substitute* "pyproject.toml"
+                   (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "0k44p1a9nckj7m6gxz7zggci0iihflivxvkh9l8wwbnsfvqhyfrn"))))
+        (base32 "019wkjbjcdsf56sk5ihnkprp02a80vkja448iwps1illzb5jp52f"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:tests? ,(not (%current-target-system))

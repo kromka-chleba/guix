@@ -104,6 +104,7 @@
   #:use-module (gnu packages man)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mes)
+  #:use-module (gnu packages mp3)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages networking)
@@ -936,6 +937,13 @@ is not available for Guile 2.0.")
            guile-3.0            ;for 'guild compile
            ;; Gettext brings 'AC_LIB_LINKFLAGS_FROM_LIBS'
            gettext-minimal))
+    (arguments
+     (if (%current-target-system)
+         (substitute-keyword-arguments (package-arguments guile-fibers)
+           ((#:phases phases)
+            #~(modify-phases #$phases
+                (delete 'apply-cross-build-fix-patch))))
+         (package-arguments guile-fibers)))
     (inputs
      (list guile-3.0))                            ;for libguile-3.0.so
     (supported-systems
@@ -1061,6 +1069,41 @@ that augment Guile's support for handling files and their names.")
 manager.  It can be used to query Sway, assign keybindings and listen to
 events in Guile.")
     (license license:expat)))
+
+(define-public guile-taglib
+  (let ((commit "c056ac9eb375459c53284aa20f35b0778cfa3cea")
+        (version "0")
+        (revision "0"))
+    (package
+      (name "guile-taglib")
+      (version (git-version version revision commit))
+      (home-page "https://github.com/sbarbit/guile-taglib")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/sbarbit/guile-taglib")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "07z65hqxjm6rd9cdk2b9dcxj8hgz7c9dg4iprr19jrvj4ymzrbff"))))
+      (build-system guile-build-system)
+      (native-inputs (list guile-3.0))
+      (propagated-inputs (list taglib))
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-taglib-path
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "taglib.scm"
+                  (("libtag_c.so")
+                   (search-input-file inputs "/lib/libtag_c.so"))))))))
+      (synopsis "Guile bindings for the taglib library")
+      (description
+       "This package provides Guile bindings for the taglib C library.
+It can be used to access and modify metadata for audio files.")
+      (license license:gpl2+))))
 
 (define-public guile-syntax-highlight
   (package

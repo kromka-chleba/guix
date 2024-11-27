@@ -1726,7 +1726,14 @@ extremely large and complex data collections.")
                 ;; modifies the test reference.
                 (substitute* "test/test_check_version.sh.in"
                   (("TESTING\\(\\).*" all)
-                   (string-append all "\nSKIP; exit 0\n")))))))))))
+                   (string-append all "\nSKIP; exit 0\n")))))
+            (add-after 'patch-configure 'patch-configure-build-settings
+              (lambda _
+                (substitute* "src/H5build_settings.autotools.c.in"
+                  ;; Don't record the build-time kernel version to make the
+                  ;; library file reproducible.
+                  (("@UNAME_INFO@")
+                   "Linux"))))))))))
 
 (define-public hdf5
   ;; Default version of HDF5.
@@ -8376,7 +8383,7 @@ linear algebra primitives specifically targeting graph analytics.")
 (define-public dune-common
   (package
     (name "dune-common")
-    (version "2.9.0")
+    (version "2.10.0")
     (source
      (origin
        (method url-fetch)
@@ -8384,7 +8391,7 @@ linear algebra primitives specifically targeting graph analytics.")
                            version "/dune-common-" version ".tar.gz"))
        (sha256
         (base32
-         "04pzk8q0bibci8z5xlwndhh3y3vs63mw7kad62lbzfwrr5121hrd"))
+         "1pdgxlxb570fm7smk1zv9b3iq1wzjg6g0s4361xs2w5qrf6drh4l"))
        (patches (search-patches "dune-common-skip-failing-tests.patch"))))
     (build-system cmake-build-system)
     (arguments
@@ -8414,7 +8421,7 @@ Differences} (FD).")
 (define-public dune-geometry
   (package
     (name "dune-geometry")
-    (version "2.9.0")
+    (version "2.10.0")
     (source
      (origin
        (method url-fetch)
@@ -8422,7 +8429,7 @@ Differences} (FD).")
                            version "/dune-geometry-" version ".tar.gz"))
        (sha256
         (base32
-         "1bl1abipcf7zysmyyy2ikfx0nip55kasrb1bbkh11ghdilxrwwqy"))))
+         "00vkidb931zvpq3nmw8ikyg8pr3jqisfq2qxwj9hqzj7634qms98"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
@@ -8455,17 +8462,15 @@ This package contains the basic DUNE geometry classes.")
 (define-public dune-uggrid
   (package
     (name "dune-uggrid")
-    (version "2.9.0")
+    (version "2.10.0")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-         (url "https://gitlab.dune-project.org/staging/dune-uggrid.git")
-         (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (string-append "https://dune-project.org/download/"
+                           version "/dune-uggrid-" version ".tar.gz"))
        (sha256
         (base32
-         "1xwmiabb25nydi0yzhd64vq6fm3razix6k87afhq88q0ywzll65x"))))
+         "1wm1jy8ssfzpskhk7z34ahmw0q0iyna0dgph8kskv6j2i8v7skip"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
@@ -8495,7 +8500,7 @@ This package contains the DUNE UG grid classes.")
 (define-public dune-grid
   (package
     (name "dune-grid")
-    (version "2.9.0")
+    (version "2.10.0")
     (source
      (origin
        (method url-fetch)
@@ -8503,9 +8508,7 @@ This package contains the DUNE UG grid classes.")
                            version "/dune-grid-" version ".tar.gz"))
        (sha256
         (base32
-         "17l2vlr8q3rfifxv80r3jlzamx478xn0vfjkrl3ns1akk7miycq8"))
-       (patches (search-patches
-                  "dune-grid-add-missing-include-cassert.patch"))))
+         "0mh06g3sryx3s0d7zgzsz6j18vbzb0f46wq7aw6ahj2hswb7rsrg"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
@@ -8543,7 +8546,7 @@ This package contains the basic DUNE grid classes.")
 (define-public dune-istl
   (package
     (name "dune-istl")
-    (version "2.9.0")
+    (version "2.10.0")
     (source
      (origin
        (method url-fetch)
@@ -8551,8 +8554,7 @@ This package contains the basic DUNE grid classes.")
                            version "/dune-istl-" version ".tar.gz"))
        (sha256
         (base32
-         "0smghqr400xl84j0laabgwaj2p5jlj3n3s85bm7qp9m2vjz6rav6"))
-       (patches (search-patches "dune-istl-fix-solver-playground.patch"))))
+         "0rk95rkj87gpb3gn40jl532rybs2lxkhn7g6b30m9kbzz7yfjfbc"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
@@ -8605,7 +8607,7 @@ aggregation-based algebraic multigrid.")
 (define-public dune-localfunctions
   (package
     (name "dune-localfunctions")
-    (version "2.9.0")
+    (version "2.10.0")
     (source
      (origin
        (method url-fetch)
@@ -8613,7 +8615,7 @@ aggregation-based algebraic multigrid.")
                            version "/dune-localfunctions-" version ".tar.gz"))
        (sha256
         (base32
-         "02zl49q40ifmic221fxlhi8zj9pybdyjavzvgn1zwh636ysgjbsp"))))
+         "0a5hyd7fps18178dq41nxa21h0i9ah6sw7di8qkc4i1rh052rzc1"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
@@ -8663,7 +8665,7 @@ assemble global function spaces on finite-element grids.")
 (define-public dune-alugrid
   (package
     (name "dune-alugrid")
-    (version "2.9.0")
+    (version "2.10.0")
     (source
      (origin
        (method git-fetch)
@@ -8673,7 +8675,7 @@ assemble global function spaces on finite-element grids.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0s41jinsfpm56nx41vkmyv3y9n072ssw9hxjm7di64zcszgpjmzd"))))
+         "0289vqf9azhgqda04qa5prn201xnsd9i0r8gy6jn0g6wfy9bcpav"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
@@ -8715,12 +8717,12 @@ cubes.")
 
 (define-public dune-subgrid
   ; dune-subgrid does not tag its releases.
-  ; The following commit is a few commits past the releases/2.9 branch
-  ; to include some additional commits fixing compatibility with dune-uggrid.
-  (let ((commit "e83f3f919c2602425467ed767f279bc9c356c436"))
+  ; The following commit is the last commit on the releases/2.10 branch
+  ; as of 2024-11-14.
+  (let ((commit "e71cc9c2514356c7cd989f0c13661f10c37c58df"))
     (package
       (name "dune-subgrid")
-      (version (git-version "2.9.0" "1" commit))
+      (version (git-version "2.10.0" "1" commit))
       (source
        (origin
          (method git-fetch)
@@ -8730,7 +8732,7 @@ cubes.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-            "1dv4zg5j17bldpgg02ycg9fbfmnc1kffixgzbkkz86f2dmwgh2b6"))))
+            "1vahmj2r9r684n8rgnqqb8zhi3wibkxjsv1kql804azx71dslx0d"))))
       (build-system cmake-build-system)
       (arguments
        `(#:phases
@@ -8763,17 +8765,15 @@ provides the full grid interface including adaptive mesh refinement.")
 (define-public dune-typetree
   (package
     (name "dune-typetree")
-    (version "2.9.0")
+    (version "2.10.0")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://gitlab.dune-project.org/staging/dune-typetree.git")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (string-append "https://dune-project.org/download/"
+                           version "/dune-typetree-" version ".tar.gz"))
        (sha256
         (base32
-         "1qcnl8giivnn8zprszdwrqw4q29sv3c2pr8dlrz616j10i4r8p18"))))
+         "0k756c543r79jz51jfnvi6knnxv7y19xg69yb15b0hrv4gq015pf"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
@@ -8805,17 +8805,15 @@ operating on statically typed trees of objects.")
 (define-public dune-functions
   (package
     (name "dune-functions")
-    (version "2.9.0")
+    (version "2.10.0")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://gitlab.dune-project.org/staging/dune-functions.git")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (string-append "https://dune-project.org/download/"
+                           version "/dune-functions-" version ".tar.gz"))
        (sha256
         (base32
-         "0pmi9vk0pdq9qp3xvknsndg8l6f2xkjr1rwbfbzsl9aj0qv9rn2p"))))
+         "1v2yyiqacspa7fkz5pbhd9hcz8rk5bhyhlhwvr3jjgmniiy0x2hp"))))
     (build-system cmake-build-system)
     (arguments
      `(#:phases
