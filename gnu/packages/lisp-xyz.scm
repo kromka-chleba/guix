@@ -12522,20 +12522,20 @@ or cl-launch for portable processing of command-line arguments.")
   (sbcl-package->ecl-package sbcl-command-line-arguments))
 
 (define-public sbcl-common-lisp-jupyter
-  (let ((commit "ba9f0e746b9200d6fd6db647d7274448119ed01b")
-        (revision "3"))
+  (let ((commit "3555a009f6d8734751bda1feadc8a09e7b0099b6")
+        (revision "0"))
     (package
       (name "sbcl-common-lisp-jupyter")
-      (version (git-version "0.1.0" revision commit))
+      (version (git-version "1.0" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/yitzchak/common-lisp-jupyter")
                (commit commit)))
-         (file-name (git-file-name "common-lisp-jupyter" commit))
+         (file-name (git-file-name "cl-common-lisp-jupyter" commit))
          (sha256
-          (base32 "0si69xfzi769dprwfy7gp1x3bl7lxz6d4n98sa26w9r41wvay5ja"))))
+          (base32 "05nj171jad9819iq137i7vxgxyxz1sr3p4qxgr2k7z1ihq5kb0gw"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-alexandria
@@ -12547,15 +12547,13 @@ or cl-launch for portable processing of command-line arguments.")
              sbcl-dissect
              sbcl-eclector
              sbcl-ironclad
-             sbcl-iterate
              sbcl-multilang-documentation
+             sbcl-nontrivial-gray-streams
              sbcl-puri
              sbcl-pzmq
              sbcl-shasht
-             sbcl-static-vectors
              sbcl-trivial-do
-             sbcl-trivial-garbage
-             sbcl-trivial-gray-streams
+             sbcl-trivial-features
              sbcl-trivial-mimes))
       (home-page "https://yitzchak.github.io/common-lisp-jupyter/")
       (synopsis "Common Lisp kernel for Jupyter")
@@ -14631,11 +14629,11 @@ stream.")
   (sbcl-package->ecl-package sbcl-eazy-gnuplot))
 
 (define-public sbcl-eclector
-  (let ((commit "d499b09142c7e39b4ef52e821fa767d5a8d606a0")
+  (let ((commit "28d29445556a0c03178e3daff7a2d8b378fa4340")
         (revision "0"))
     (package
       (name "sbcl-eclector")
-      (version (git-version "0.9.0" revision commit))
+      (version (git-version "0.10.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -14644,7 +14642,7 @@ stream.")
                (commit commit)))
          (file-name (git-file-name "cl-eclector" version))
          (sha256
-          (base32 "1sg8wmdpm8pcjwk394way5vs2ya3r995lddmi51q9zfn9hmzb7gn"))))
+          (base32 "06qhll5k0hq652gdzvvhcv4amqg9z7qillnn3z9cm8z9sv1n912v"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-fiveam))
@@ -22906,6 +22904,39 @@ ones.")
 
 (define-public ecl-nodgui
   (sbcl-package->ecl-package sbcl-nodgui))
+
+(define-public sbcl-nontrivial-gray-streams
+  (let ((commit "7ed842fe98f6ebafd472a5768e28d0c35f82114e")
+        (revision "0"))
+    (package
+      (name "sbcl-nontrivial-gray-streams")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/yitzchak/nontrivial-gray-streams")
+               (commit commit)))
+         (file-name (git-file-name "cl-nontrivial-gray-streams" commit))
+         (sha256
+          (base32 "1x5b2fw3kr1227vr4hab08cls5f7rzz7kf31xinvafbl5hpd2ynf"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs
+       (list sbcl-alexandria
+             sbcl-parachute))
+      (home-page "https://github.com/yitzchak/nontrivial-gray-streams")
+      (synopsis "Compatibility layer for Gray streams, including extensions")
+      (description
+       "@code{nontrivial-gray-streams} is a compatibility system for Gray
+streams, which is an extension to Common Lisp that makes it possible to
+implement Common Lisp streams using generic functions.")
+      (license license:expat))))
+
+(define-public cl-nontrivial-gray-streams
+  (sbcl-package->cl-source-package sbcl-nontrivial-gray-streams))
+
+(define-public ecl-nontrivial-gray-streams
+  (sbcl-package->ecl-package sbcl-nontrivial-gray-streams))
 
 (define-public sbcl-nsymbols
   (package

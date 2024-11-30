@@ -1538,8 +1538,8 @@ environments.")
                   "0k9zkdyyzir3fvlbcfcqy17k28b51i20rpbjwlx2i1mwd2pw9cxc")))))))
 
 (define-public guix-build-coordinator
-  (let ((commit "492d4628887ea726cedc1c2b55743acfe32dfe0c")
-        (revision "110"))
+  (let ((commit "037eac0357baa448afe6aeeaf82d8f2e2665bbcb")
+        (revision "111"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1550,7 +1550,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0ssns2l4dl54igqrr874g6z32s9r9qdf7dzfrqar4mmjz343n8rp"))
+                  "0gvpbjjzig610i2rsdb0d6vjhaq8z507m481462y6vpxa55ri4yb"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1787,8 +1787,8 @@ in an isolated environment, in separate namespaces.")
     (license license:gpl3+)))
 
 (define-public nar-herder
-  (let ((commit "82f9371c714f14ca59efb8d67b20e9c85b5c86d1")
-        (revision "37"))
+  (let ((commit "59d2b8aa23d0119a3c95e9d3b90fd6b36d1bde6a")
+        (revision "38"))
     (package
       (name "nar-herder")
       (version (git-version "0" revision commit))
@@ -1799,7 +1799,7 @@ in an isolated environment, in separate namespaces.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0907hrb02qfa0xvkgzap7bwlx0w9ywfcfr6iw41w4rxarf7xkjlg"))
+                  "0rqa9ypdzp3j3ss1c5r0wyqhx61rmsb0s4hlqwnwga5iyimp91sy"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments

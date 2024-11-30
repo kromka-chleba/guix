@@ -168,7 +168,7 @@ of parts of the Windows API.")
 (define-public xrdp
   (package
     (name "xrdp")
-    (version "0.10.0")
+    (version "0.10.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -176,7 +176,7 @@ of parts of the Windows API.")
                     version "/xrdp-" version ".tar.gz"))
               (sha256
                (base32
-                "1nakn842p759xxd9713335ms3h8dmr33xbmylnbk2j03m4dhvlnx"))))
+                "10rgc9bfharwj7bq5k4qp4x00w214h6c6f861zi301h84125ylx2"))))
     (build-system gnu-build-system)
     (inputs (list check
                   fuse-2
@@ -230,15 +230,16 @@ variety of RDP clients:
 (define-public xorgxrdp
   (package
     (name "xorgxrdp")
-    (version "0.9.19")
+    (version "0.10.2")
     (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/neutrinolabs/xorgxrdp/releases/download/v"
-                    version "/xorgxrdp-" version ".tar.gz"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/neutrinolabs/xorgxrdp")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "0m8lvdnhfvwwqrr56difgy3mblplp23x6iy12kl4r8i87ic4rky1"))))
+                "1dcxn0v88426j4n7irhy6h3qb21202v5xs1vr7j8xvs3sxihc2f7"))))
     (build-system gnu-build-system)
     (inputs (list check
                   imlib2
@@ -254,8 +255,11 @@ variety of RDP clients:
                   xdpyinfo
                   xorg-server
                   xrdp))
-    (native-inputs (list nasm
+    (native-inputs (list autoconf
+                         automake
                          intltool
+                         libtool
+                         nasm
                          pkg-config
                          pixman))
     (arguments
