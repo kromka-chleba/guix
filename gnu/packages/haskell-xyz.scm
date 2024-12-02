@@ -16683,6 +16683,92 @@ serving them .  You can learn about the basics in the
 CHANGELOG>")
     (license license:bsd-3)))
 
+(define-public ghc-servant-client
+  (package
+    (name "ghc-servant-client")
+    (version "0.19")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "servant-client" version))
+       (sha256
+        (base32 "1bdapsr6il0f019ss8wsxndpc8cd5czj40xczay5qhl7fqnxg5pa"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "servant-client")))
+    (inputs (list ghc-servant
+                  ghc-servant-client-core
+                  ghc-base-compat
+                  ghc-http-client
+                  ghc-http-media
+                  ghc-http-types
+                  ghc-kan-extensions
+                  ghc-monad-control
+                  ghc-semigroupoids
+                  ghc-transformers-base
+                  ghc-transformers-compat))
+    (native-inputs (list ghc-aeson
+                         ghc-http-api-data
+                         ghc-sop-core
+                         ghc-wai
+                         ghc-warp
+                         ghc-entropy
+                         ghc-hspec
+                         ghc-hspec-discover
+                         ghc-hunit
+                         ghc-network
+                         ghc-quickcheck
+                         ghc-servant-server
+                         ghc-tdigest
+                         ghc-markdown-unlit))
+    (arguments
+     `(#:cabal-revision ("6"
+                         "0lakjnpvsiai08c5nddgzrnr0a139rr37cyq31hqcbwnsy553l1y")))
+    (home-page "http://docs.servant.dev/")
+    (synopsis "Automatic derivation of querying functions for servant")
+    (description
+     "This library lets you derive automatically Haskell functions that let you query
+each endpoint of a <http://hackage.haskell.org/package/servant servant>
+webservice. .  See <http://docs.servant.dev/en/stable/tutorial/Client.html the
+client section of the tutorial>. .
+<https://github.com/haskell-servant/servant/blob/master/servant-client/CHANGELOG.md
+CHANGELOG>.")
+    (license license:bsd-3)))
+
+(define-public ghc-servant-client-core
+  (package
+    (name "ghc-servant-client-core")
+    (version "0.19")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "servant-client-core" version))
+       (sha256
+        (base32 "0cisc5cyl367cwrch1gr812aspd36a21hkwi6mwj708rpspwvrmc"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "servant-client-core")))
+    (inputs (list ghc-constraints
+                  ghc-servant
+                  ghc-aeson
+                  ghc-base-compat
+                  ghc-base64-bytestring
+                  ghc-free
+                  ghc-http-media
+                  ghc-http-types
+                  ghc-network-uri
+                  ghc-safe
+                  ghc-sop-core))
+    (native-inputs (list ghc-hspec ghc-hspec-discover ghc-quickcheck))
+    (arguments
+     `(#:cabal-revision ("5"
+                         "147ws71hwp8zck7ph8kcyh18524s8g0b7qvxjsvsm1yvw77c60gh")))
+    (home-page "http://docs.servant.dev/")
+    (synopsis
+     "Core functionality and class for client function generation for servant APIs")
+    (description
+     "This library provides backend-agnostic generation of client functions.  For more
+information, see the README.")
+    (license license:bsd-3)))
+
 (define-public ghc-servant-server
   (package
     (name "ghc-servant-server")
@@ -17050,6 +17136,34 @@ such as ala'.")
     (description
      "Lighweight pure data validation based on Applicative and Selective functors.")
     (license license:mpl2.0)))
+
+(define-public ghc-tdigest
+  (package
+    (name "ghc-tdigest")
+    (version "0.2.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "tdigest" version))
+       (sha256
+        (base32 "1dvkf7cs8dcr13wza5iyq2qgvz75r33mzgfmhdihw62xzxsqb6d3"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "tdigest")))
+    (inputs (list ghc-base-compat ghc-reducers ghc-semigroupoids ghc-vector
+                  ghc-vector-algorithms))
+    (native-inputs (list ghc-semigroups ghc-tasty ghc-tasty-quickcheck))
+    (arguments
+     `(#:cabal-revision ("3"
+                         "0a39vwf37hkh06rn79blr3bw7ij05pgpxrkc9cldgdd5p4gvn1qn")))
+    (home-page "https://github.com/phadej/haskell-tdigest#readme")
+    (synopsis "On-line accumulation of rank-based statistics")
+    (description
+     "This package provides a new data structure for accurate on-line accumulation of
+rank-based statistics such as quantiles and trimmed means. .  See original
+paper: \"Computing extremely accurate quantiles using t-digest\" by Ted Dunning
+and Otmar Ertl for more details
+<https://github.com/tdunning/t-digest/blob/07b8f2ca2be8d0a9f04df2feadad5ddc1bb73c88/docs/t-digest-paper/histo.pdf>.")
+    (license license:bsd-3)))
 
 (define-public ghc-tomland
   (package

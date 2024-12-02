@@ -4722,6 +4722,16 @@ structure.  It can also produce a much more verbose, one-item-per-line
 representation suitable for computing diffs.")
     (license license:asl2.0)))
 
+;; TODO: Merge with go-github-com-kylelemons-godebug and provide both module;
+;; for go-team.
+(define-public go-github-com-kylelemons-godebug-pretty
+  (package
+    (inherit go-github-com-kylelemons-godebug)
+    (name "go-github-com-kylelemons-godebug-pretty")
+    (arguments
+     '(#:import-path "github.com/kylelemons/godebug/pretty"
+       #:unpack-path "github.com/kylelemons/godebug"))))
+
 (define-public go-github-com-kr-text
   (package
     (name "go-github-com-kr-text")
@@ -6523,31 +6533,6 @@ except that it adds convenience functions that use the fmt package to format
 error messages.")
     (license license:bsd-3)))
 
-(define-public go-github-com-arceliar-phony
-  (let ((commit "d0c68492aca0bd4b5c5c8e0452c9b4c8af923eaf")
-        (revision "0"))
-    (package
-      (name "go-github-com-arceliar-phony")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/Arceliar/phony")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "0876y0hlb1zh8hn0pxrb5zfdadvaqmqwlr66p19yl2a76galz992"))))
-      (arguments
-       '(#:import-path "github.com/Arceliar/phony"))
-      (build-system go-build-system)
-      (home-page "https://github.com/Arceliar/phony")
-      (synopsis "Very minimal actor model library")
-      (description "Phony is a very minimal actor model library for Go,
-inspired by the causal messaging system in the Pony programming language.")
-      (license license:expat))))
-
 (define-public go-github-com-gologme-log
   ;; this is the same as v1.2.0, only the LICENSE file changed
   (let ((commit "720ba0b3ccf0a91bc6018c9967a2479f93f56a55"))
@@ -7022,7 +7007,7 @@ parser.")
 (define-public go-github-com-charmbracelet-bubbletea
   (package
     (name "go-github-com-charmbracelet-bubbletea")
-    (version "0.13.2")
+    (version "1.2.3")
     (source
      (origin
        (method git-fetch)
@@ -7032,28 +7017,47 @@ parser.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1105cggi5fwqx69m0vrhgwx6kaw82w4ahn58sj0a81603c4yvrk0"))))
+         "0ggkl29qixgin5av1mbnwfbb31kmwpczh8pgpjsx9z277fs55mph"))))
     (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/charmbracelet/bubbletea"
-      #:phases #~(modify-phases %standard-phases
-                   (add-after 'unpack 'remove-examples
-                     (lambda* (#:key import-path #:allow-other-keys)
-                       (with-directory-excursion (string-append "src/" import-path)
-                         (for-each delete-file-recursively
-                                   '("examples" "tutorials"))))))))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each delete-file-recursively
+                          '("examples" "tutorials")))))
+          (add-before 'check 'fix-tests
+            (lambda _
+              ;; XXX: The package requires
+              ;; "go-github-com-charmbracelet-x-ansi" version 0.4.5; with the
+              ;; newer version of "ansi", some "bubbletea" screen tests fail
+              ;; as "ansi" 0.5.2 handles escape sequences a little bit
+              ;; differently.
+              (substitute* "src/github.com/charmbracelet/bubbletea/screen_test.go"
+                (("x1b\\[0K")
+                 "x1b[K")
+                (("x1b\\[2;0H")
+                 "x1b[2;H")))))))
     (propagated-inputs
-     (list go-github-com-mattn-go-isatty
-           go-github-com-muesli-termenv
-           go-github-com-mattn-go-runewidth
-           go-github-com-muesli-reflow
-           go-github-com-lucasb-eyer-go-colorful
+     (list go-github-com-charmbracelet-lipgloss
+           go-github-com-charmbracelet-x-ansi
+           go-github-com-charmbracelet-x-term
            go-github-com-containerd-console
+           go-github-com-lucasb-eyer-go-colorful
+           go-github-com-mattn-go-isatty
+           go-github-com-mattn-go-isatty
+           go-github-com-mattn-go-runewidth
+           go-github-com-muesli-ansi
+           go-github-com-muesli-cancelreader
+           go-github-com-muesli-reflow
+           go-github-com-muesli-termenv
            go-golang-org-x-crypto
+           go-golang-org-x-sync
            go-golang-org-x-sys
-           go-golang-org-x-term
-           go-github-com-mattn-go-isatty))
+           go-golang-org-x-term))
     (home-page "https://github.com/charmbracelet/bubbletea")
     (synopsis "Powerful little TUI framework")
     (description
@@ -7087,54 +7091,6 @@ full-window, or a mix of both.")
      "This is Golang package for dealing with consoles.  It has few
 dependencies and a simple API.")
     (license license:asl2.0)))
-
-(define-public go-github-com-arceliar-ironwood
-  (package
-    (name "go-github-com-arceliar-ironwood")
-    (version "v0.0.0-20241016082300-f6fb9da97a17")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/Arceliar/ironwood")
-             (commit (go-version->git-ref version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "020gdcx6s2cvmi3bs3zanif08vqbabbg5pwqmqcrhj3v7d8k6dx5"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/Arceliar/ironwood"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'remove-examples
-            (lambda* (#:key import-path #:allow-other-keys)
-              (delete-file-recursively
-               (string-append "src/" import-path "/cmd/ironwood-example"))))
-          ;; XXX: Replace when go-build-system supports nested path.
-          (delete 'build)
-          (replace 'check
-            (lambda* (#:key import-path tests? #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go" "test" "-v" "./..."))))))))
-    (propagated-inputs
-     (list go-github-com-arceliar-phony
-           go-github-com-bits-and-blooms-bitset
-           go-github-com-bits-and-blooms-bloom-v3
-           go-golang-org-x-crypto))
-    (home-page "https://github.com/Arceliar/ironwood")
-    (synopsis "Experimental network routing library")
-    (description
-     "Ironwood is a routing library with a @code{net.PacketConn}-compatible
-interface using @code{ed25519.PublicKey}s as addresses.  Basically, you use it
-when you want to communicate with some other nodes in a network, but you can't
-guarantee that you can directly connect to every node in that network.  It was
-written to test improvements to / replace the routing logic in
-@url{https://github.com/yggdrasil-network/yggdrasil-go,Yggdrasil}, but it may
-be useful for other network applications.")
-    (license license:mpl2.0)))
 
 (define-public go-github-com-mtibben-percent
   (package

@@ -3572,20 +3572,26 @@ e.g. microbiome samples, genomes, metagenomes.")
 (define-public python-pairtools
   (package
     (name "python-pairtools")
-    (version "1.0.2")
+    (version "1.1.0-fix")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/open2c/pairtools")
-                    (commit (string-append "v" version))))
+                    (commit (string-append "pairtools-v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xn4cg4jq3rfn42h8rfwg0k6xkvihjrv32gwldb9y0jp05lzw9cs"))))
-    (build-system python-build-system)
+                "0983vw4kb6frjncsnml4ahw3l7sixg1paz80s119iah2i086cw06"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'patch-setup.py
+           (lambda _
+             ;; __NUMPY_SETUP__ is undefined.
+             (substitute* "setup.py"
+               ((".*__builtins__.__NUMPY_SETUP.*") ""))))
          (add-after 'unpack 'fix-references
            (lambda _
              (substitute* '("pairtools/cli/header.py"
@@ -3598,7 +3604,11 @@ e.g. microbiome samples, genomes, metagenomes.")
                (with-directory-excursion "/tmp"
                  (invoke "pytest" "-v"))))))))
     (native-inputs
-     (list python-cython python-pytest))
+     (list python-cython
+           python-pytest
+           python-pytest-cov
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list htslib ; for bgzip, looked up in PATH
            samtools ; looked up in PATH
@@ -3950,7 +3960,9 @@ compressed files.")
          "0wg1s927g32k25j967kfr8l30nmr4c0p4zvy5igvy7cs6chd60lh"))))
     (build-system cargo-build-system)
     (arguments
-     `(#:phases
+     `(#:tests? #f
+       #:install-source? #f
+       #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'make-writable
            (lambda _
@@ -7927,9 +7939,11 @@ indexing scheme is called a @dfn{Hierarchical Graph FM index} (HGFM).")
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
-            (lambda _
+            (lambda* (#:key inputs #:allow-other-keys)
               (let ((share (string-append #$output "/share/homer")))
                 (mkdir-p share)
+                (copy-file (assoc-ref inputs "config.txt")
+                           (string-append share "/config.txt"))
                 (substitute* "configureHomer.pl"
                   (("my \\$homeDir = \\$1;")
                    (string-append "my $homeDir = \"" share "\";"))))))
@@ -7947,13 +7961,27 @@ indexing scheme is called a @dfn{Hierarchical Graph FM index} (HGFM).")
               (mkdir-p (string-append #$output "/bin"))
               (symlink (string-append #$output "/share/homer/bin/homer2")
                        (string-append #$output "/bin/homer2"))
+              (symlink (string-append #$output "/share/homer/bin/homer")
+                       (string-append #$output "/bin/homer"))
               (for-each patch-shebang
                         (find-files (string-append #$output "/share/homer/bin")
-                                    "\\.pl$")))))))
+                                    "\\.pl$"))
+              ;; Also load config file from user's home directory.
+              (substitute* (string-append #$output "/share/homer/bin/HomerConfig.pm")
+                (("#parseConfigFile") "parseConfigFile")))))))
     (inputs
      (list perl))
     (native-inputs
-     (list perl unzip))
+     `(("perl" ,perl)
+       ("unzip" ,unzip)
+       ("config.txt"
+        ,(origin
+           (method url-fetch)
+           (uri (string-append "https://web.archive.org/web/20200531014112id_/"
+                               "http://homer.ucsd.edu/homer/update.txt"))
+           (sha256
+            (base32
+             "1hf17pk8r6b297ysd27bvxzyn8pxdhxd8wj8g0lqlifbid9fw04h"))))))
     (home-page "http://homer.ucsd.edu/homer")
     (synopsis "Motif discovery and next generation sequencing analysis")
     (description
@@ -9182,6 +9210,51 @@ experiments.")
      (list python-cython python-numpy))
     (native-inputs
      (list python-pytest))
+    (home-page "https://github.com/macs3-project/MACS")
+    (synopsis "Model based analysis for ChIP-Seq data")
+    (description
+     "MACS is an implementation of a ChIP-Seq analysis algorithm for
+identifying transcript factor binding sites named Model-based Analysis of
+ChIP-Seq (MACS).  MACS captures the influence of genome complexity to evaluate
+the significance of enriched ChIP regions and it improves the spatial
+resolution of binding sites through combining the information of both
+sequencing tag position and orientation.")
+    (license license:bsd-3)))
+
+(define-public macs-3
+  (package
+    (name "macs")
+    (version "3.0.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/macs3-project/MACS")
+                    (commit (string-append "v" version))
+                    (recursive? #true)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0x5iz6iq694z3m9zx7zdw0js2l2l40lf1as9k3jy0q4mvz02a3aw"))))
+    (properties
+     '((updater-extra-inputs . ("zlib"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         ;; FIXME: our version of numpy is a little too old.
+         (add-after 'unpack 'relax-requirements
+           (lambda _
+             (substitute* '("pyproject.toml" "requirements.txt" "setup.py")
+               (("numpy.*=1.25") "numpy>=1.23")))))))
+    (propagated-inputs
+     (list python-cykhash
+           python-hmmlearn
+           python-numpy
+           python-scikit-learn
+           python-scipy))
+    (native-inputs
+     (list python-cython-3 python-pytest python-setuptools zlib))
     (home-page "https://github.com/macs3-project/MACS")
     (synopsis "Model based analysis for ChIP-Seq data")
     (description
@@ -17176,7 +17249,7 @@ in an easily configurable manner.")
 (define-public pigx-bsseq
   (package
     (name "pigx-bsseq")
-    (version "0.1.8")
+    (version "0.1.10")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/BIMSBbioinfo/pigx_bsseq/"
@@ -17184,14 +17257,15 @@ in an easily configurable manner.")
                                   "/pigx_bsseq-" version ".tar.gz"))
               (sha256
                (base32
-                "1s8zgrqxabrawrgkga5rmgb0gyzj7ck47p3rkicjkfv7r2yjy0d7"))))
+                "1vy3mhbrfdnjbhikwg3mgkfnwnzk96a1n27cxrr7gsffpmz9q6wa"))))
     (build-system gnu-build-system)
     (arguments
-     `(;; TODO: tests currently require 12+GB of RAM.  See
-       ;; https://github.com/BIMSBbioinfo/pigx_bsseq/issues/164
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
+     (list
+      ;; TODO: tests currently require 12+GB of RAM.  See
+      ;; https://github.com/BIMSBbioinfo/pigx_bsseq/issues/164
+      #:tests? #f
+      #:phases
+      '(modify-phases %standard-phases
          (add-before 'configure 'set-PYTHONPATH
            (lambda _
              (setenv "PYTHONPATH" (getenv "GUIX_PYTHONPATH"))))
@@ -17203,7 +17277,7 @@ in an easily configurable manner.")
                      (search-input-directory inputs
                                              "share/zoneinfo")))))))
     (native-inputs
-     (list tzdata))
+     (list tzdata-for-tests))
     (inputs
      (list coreutils
            sed
@@ -17247,7 +17321,7 @@ methylation and segmentation.")
 (define-public pigx-scrnaseq
   (package
     (name "pigx-scrnaseq")
-    (version "1.1.9")
+    (version "1.1.10")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/BIMSBbioinfo/pigx_scrnaseq/"
@@ -17255,11 +17329,12 @@ methylation and segmentation.")
                                   "/pigx_scrnaseq-" version ".tar.gz"))
               (sha256
                (base32
-                "0adx7877c3lhlrzfid76i8bc829wcmzvrm0jx47gyid8mxqb7vqs"))))
+                "082im1j6qpd2y8ax4msxw7mfc40zxpl29hx92skqdd55745f58z8"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:phases
+      '(modify-phases %standard-phases
          (add-before 'configure 'set-additional-environment-variables
            (lambda _
              ;; Needed because of loompy
@@ -21745,70 +21820,75 @@ patterns.")
       (license license:gpl3))))
 
 (define-public r-voltron
-  (let ((commit "5057b703479239a9aaba761f07e65d849f6111f8")
+  (let ((commit "9f9415c72e9347f578a166981842d33e43b0466d")
         (revision "1"))
     (package
       (name "r-voltron")
-      (version (git-version "1.0.0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/BIMSBbioinfo/VoltRon")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1nximl4708a7fdwn8ysxpni3mp6dx33cphavlay7hh1pa55pnzgn"))
-                (modules '((guix build utils)))
-                ;; The tripack package is not available under a free license,
-                ;; but interp provides free implementations of "tri.mesh" and
-                ;; "neighbours".
-                (snippet
-                 '(substitute* '("DESCRIPTION" "NAMESPACE" "R/spatial.R")
-                    (("tripack") "interp")))))
+      (version (git-version "0.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/BIMSBbioinfo/VoltRon")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0bvvpj96ix2ij6034dfrh7za1lvf73qxqsdvbs2wrpc931s18q32"))))
       (properties `((upstream-name . "VoltRon")))
       (build-system r-build-system)
-      (inputs (list opencv tbb zlib))
-      (propagated-inputs (list r-anndata
+      (inputs
+       (list opencv
+             ;; These Python inputs would be fetched by Basilisk via Conda.
+             ;; We add these inputs in anticipation of an upstream change to
+             ;; allow for a Conda-free use of the package.
+             python
+             python-numpy
+             python-pandas
+             python-anndata
+             python-h5py
+             python-natsort
+             python-numcodecs
+             python-packaging
+             python-scipy
+             python-tifffile
+             python-zarr
+             zlib))
+      (propagated-inputs (list r-basilisk
                                r-data-table
                                r-dplyr
                                r-ebimage
-                               r-fastdummies
-                               r-fnn
-                               r-ggforce
                                r-ggplot2
                                r-ggpubr
                                r-ggrepel
-                               r-hdf5r
-                               r-htmltools
+                               r-ids
                                r-igraph
-                               r-interp
                                r-irlba
                                r-magick
                                r-matrix
-                               r-morpho
-                               r-raster
+                               r-rann
+                               r-rcdt
                                r-rcpp
+                               r-rcppannoy
+                               r-rcpparmadillo
                                r-reshape2
+                               r-reticulate
                                r-rjson
                                r-rlang
-                               r-s4vectors
-                               r-scales
+                               r-s4arrays
                                r-shiny
                                r-shinyjs
+                               r-sp
                                r-stringr
-                               r-terra
-                               r-umap
-                               r-xml))
-      (native-inputs (list pkg-config))
+                               r-uwot))
+      (native-inputs (list pkg-config r-testthat))
       (home-page "https://github.com/BIMSBbioinfo/VoltRon")
-      (synopsis "VoltRon for Spatial Data Integration and Analysis")
+      (synopsis "VoltRon for spatial data integration and analysis")
       (description
-       "@code{VoltRon} is a toolbox for spatial data analysis, multi-omics
-integration using spatial image registration.  @code{VoltRon} is capable of
-analyzing multiple types and modalities of spatially-aware datasets.
-@code{VoltRon} visualizes and analyzes regions of interests (ROIs), spots,
-cells and even molecules.")
+       "@code{VoltRon} is a novel spatial omic analysis toolbox for
+multi-omics integration using spatial image registration.  @code{VoltRon} is
+capable of analyzing multiple types and modalities of spatially-aware
+datasets.  @code{VoltRon} visualizes and analyzes regions of interests (ROIs),
+spots, cells and even molecules.")
       (license license:expat))))
 
 (define-public methyldackel

@@ -775,7 +775,7 @@ variable defined below.  It requires guile-json to be installed."
       ;;  ,(search-patch "icecat-use-system-media-libs.patch"))
       rust
       `(,rust "cargo")
-      rust-cbindgen
+      rust-cbindgen-0.24
       llvm-17
       clang-17
       perl
@@ -815,7 +815,8 @@ variable defined below.  It requires guile-json to be installed."
          "--disable-debug"
          "--disable-debug-symbols"
 
-         "--enable-rust-simd"
+         ;; TODO: Re-enable after updating to the 128 ESR.
+         ;"--enable-rust-simd"
          "--enable-release"
          "--enable-optimize"
          "--enable-strip"
@@ -1161,8 +1162,8 @@ testing.")
     "ru" "sc" "sco" "si" "sk" "sl" "son" "sq" "sr" "sv-SE" "szl" "ta" "te" "tg"
     "th" "tl" "tr" "trs" "uk" "ur" "uz" "vi" "xh" "zh-CN" "zh-TW"))
 
-(define %icedove-build-id "20241017000000") ;must be of the form YYYYMMDDhhmmss
-(define %icedove-version "115.16.2")
+(define %icedove-build-id "20241119000000") ;must be of the form YYYYMMDDhhmmss
+(define %icedove-version "115.16.3")
 
 ;; Provides the "comm" folder which is inserted into the icecat source.
 ;; Avoids the duplication of Icecat's source tarball.
@@ -1171,11 +1172,11 @@ testing.")
     (method hg-fetch)
     (uri (hg-reference
           (url "https://hg.mozilla.org/releases/comm-esr115")
-          (changeset "2322e882f0b2a5c24135e5efabfe6f42d047eaff")))
+          (changeset "8ab43355c97d91f5adaae732fb8c9f5ca210fe8b")))
     (file-name (string-append "thunderbird-" %icedove-version "-checkout"))
     (sha256
      (base32
-      "05p6i70mpjacwxhvwwnjwbq7g92p3b96b6y6b1gsjbidx35ah73l"))))
+      "1fax5sdc087ly62fh2g4yvi7v80vrhn94hpzdr98a4m3psdgglh0"))))
 
 (define (comm-source->locales+changeset source)
   "Given SOURCE, a checkout of the Thunderbird 'comm' component, return the
@@ -1588,7 +1589,7 @@ ca495991b7852b855"))
            pkg-config
            python-wrapper
            rust
-           rust-cbindgen
+           rust-cbindgen-0.24
            which
            yasm))
     (home-page "https://www.thunderbird.net")

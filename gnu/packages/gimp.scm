@@ -176,7 +176,7 @@ of a larger interface.")
 (define-public babl
   (package
     (name "babl")
-    (version "0.1.108")
+    (version "0.1.110")
     (source (origin
               (method url-fetch)
               (uri (list (string-append "https://download.gimp.org/pub/babl/"
@@ -190,7 +190,7 @@ of a larger interface.")
                                         "/babl-" version ".tar.xz")))
               (sha256
                (base32
-                "0x8lxvnhfpssj84x47y3y06vsvhd5afb9jknw38c8ymbxafzxpi6"))))
+                "0hsp7xqsmij8njxd0hz22mikgxad0q1yycb4ys4m69yn81svwixz"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -224,7 +224,7 @@ provided, as well as a framework to add new color models and data types.")
 (define-public gegl
   (package
     (name "gegl")
-    (version "0.4.48")
+    (version "0.4.50")
     (source
      (origin
        (method url-fetch)
@@ -238,7 +238,7 @@ provided, as well as a framework to add new color models and data types.")
                                  (version-major+minor version)
                                  "/gegl-" version ".tar.xz")))
        (sha256
-        (base32 "0iw2wag3sls7va4c3dmczisbs9na4ml0rppnk1ymv0789gcjd321"))))
+        (base32 "1hchnzfsmv2jwky2qb52lvjh4gz14wzpfcr12iqwm1pf0sdrd130"))))
     (build-system meson-build-system)
     (arguments
      `(#:phases
@@ -424,7 +424,7 @@ that is extensible via a plugin system.")
   (package
     (inherit gimp)
     (name "gimp-next")
-    (version "2.99.18")
+    (version "3.0.0-RC1")
     (source
      (origin
        (method url-fetch)
@@ -432,7 +432,7 @@ that is extensible via a plugin system.")
                            (version-major+minor version)
                            "/gimp-" version ".tar.xz"))
        (sha256
-        (base32 "0vnvdl7x88njyyxkbgdbhz6jwz1qasrxh0fpwk6x1m609alvf6wc"))))
+        (base32 "0rpvbyfd6fyaz4bz9isr9h0l0ckz741p0hgkmagpi3p3qmjb5l5k"))))
     (build-system meson-build-system)
     (arguments
      (list #:modules `((ice-9 popen)
@@ -459,7 +459,7 @@ that is extensible via a plugin system.")
     (inputs (modify-inputs (package-inputs gimp)
               (replace "gtk+" gtk+)
               (prepend libxmu libxt)
-              (prepend python gjs)
+              (prepend python python-pygobject gjs)
               (prepend libxslt)))
     (native-inputs (modify-inputs (package-native-inputs gimp)
                      (prepend appstream-glib

@@ -1327,7 +1327,7 @@ into dataclasses.")
     (propagated-inputs
      (list python-numpy))
     (native-inputs
-     (list cmake
+     (list cmake-minimal
            meson-python
            pkg-config
            pybind11
@@ -8482,6 +8482,33 @@ Mallard using the @command{ducktype} tool.  The yelp-tools package
 provides additional functionality on the produced Mallard documents.")
     (license license:expat)))
 
+(define-public python-cykhash
+  (package
+    (name "python-cykhash")
+    (version "2.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "cykhash" version))
+       (sha256
+        (base32 "1xwpxff4whfvkwvcyhzhdcj5zzq89vvdjmnqy664s4a9yp4lnydl"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-cython
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/realead/cykhash")
+    (synopsis "Khash-sets and maps")
+    (description
+     "This package is a Cython wrapper for khash-sets/maps.  It brings
+functionality of
+@url{https://github.com/attractivechaos/klib/blob/master/khash.h, khash} to
+Python and Cython and can be used seamlessly in numpy or pandas.  Numpy's
+world is lacking the concept of a (hash-)set.  This shortcoming is fixed and
+efficient (memory- and speedwise compared to pandas) @code{unique} and
+@code{isin} are implemented.  Python-set/dict have a big memory-footprint.
+For some datatypes the overhead can be reduced by using khash by factor 4-8.")
+    (license license:expat)))
+
 (define-public python-cython
   (package
     (name "python-cython")
@@ -12825,6 +12852,29 @@ MEDLINE XML repository.")
     (synopsis "Python library to evaluate abstract syntax tree nodes")
     (description "The @code{pure_eval} Python library can safely evaluate
 abstract syntax tree (AST) nodes without side effects.")
+    (license license:expat)))
+
+(define-public python-puremagic
+  (package
+    (name "python-puremagic")
+    (version "1.28")
+    (source
+     (origin
+       (method git-fetch)               ;no tests in PyPI archive
+       (uri (git-reference
+             (url "https://github.com/cdgriffith/puremagic")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0sffrjjqh37ijwnggyvs2rfm4iwaz2m395wqg0x727wv8i0x3f3b"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest))
+    (home-page "https://github.com/cdgriffith/puremagic")
+    (synopsis "Pure Python implementation of magic file detection")
+    (description
+     "This package implements a functionality that will identify a file based
+off it's magic numbers.")
     (license license:expat)))
 
 (define-public python-ast-decompiler

@@ -318,7 +318,7 @@ software vendors, application developers and computer science researchers.")
 (define-public openmpi-5
   (package
     (inherit openmpi)
-    (version "5.0.3")
+    (version "5.0.6")
     (source
      (origin
        (method url-fetch)
@@ -326,13 +326,12 @@ software vendors, application developers and computer science researchers.")
                            (version-major+minor version)
                            "/downloads/openmpi-" version ".tar.bz2"))
        (sha256
-        (base32 "02x9xmpggw77mdpikjjx83j6i4v3gkqbncda73lk5axk0vr841cr"))))
+        (base32 "0mw1z4ppnlvxngwd58kl5q26qmvf3bgjkd4r8wjpqis3pky86hdx"))))
 
     (inputs (modify-inputs (package-inputs openmpi)
               ;; As of Open MPI 5.0.X, PMIx is used to communicate
               ;; with SLURM, so SLURM'S PMI is no longer needed.
               (delete "slurm")
-              (append ucx)              ;for Infiniband support
               (append openpmix)         ;for PMI support (launching via "srun")
               (append prrte)))          ;for PMI support (launching via "srun")
     (native-inputs (modify-inputs (package-native-inputs openmpi)
@@ -365,7 +364,9 @@ software vendors, application developers and computer science researchers.")
 
                    ;; Since 5.x, Infiniband support is provided by ucx.
                    ;; See https://docs.open-mpi.org/en/main/release-notes/networks.html#miscellaneous-network-notes
-                   (string-append "--with-ucx=" #$(this-package-input "ucx")))
+                   #$@(if (package? (this-package-input "ucx"))
+                          #~((string-append "--with-ucx=" #$(this-package-input "ucx")))
+                          #~()))
 
            #:phases
            #~(modify-phases %standard-phases

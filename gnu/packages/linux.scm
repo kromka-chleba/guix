@@ -7062,7 +7062,7 @@ from the ntfs-3g package.  It is meant to be used in initrds.")
 (define-public rdma-core
   (package
     (name "rdma-core")
-    (version "48.0")
+    (version "54.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/linux-rdma/rdma-core"
@@ -7070,7 +7070,7 @@ from the ntfs-3g package.  It is meant to be used in initrds.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0h281dw2yph8pzfsr1wblqy6pb8nd9yj1pdf5c62zwc1l9b2fa3q"))))
+                "0q1gd4wrn7sb1l6qj6mqqlf8k4pk865b96cfnbgfxbgfs9q4jjm5"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f                      ;no tests
@@ -9032,6 +9032,8 @@ comparing system environments.")
 the Linux driver and by user-space applications for the Cassini/Slingshot
 high-speed network interconnect made by HPE (formerly Cray).  User-land
 software uses @file{cxi_prov_hw.h} from this package.")
+      ;; As per include/cxi_prov_hw.h it is __aarch64__ or __x86_64__ only.
+      (supported-systems '("x86_64-linux" "aarch64-linux"))
       (license (list license:gpl2 license:bsd-2))))) ;dual-licensed
 
 (define-public cxi-driver
@@ -9132,11 +9134,11 @@ known as Slingshot.")
         (base32 "1znmw83rmippv0fwz0x7lgylfk17dr9ckll8lrm4z7kclspnqpj8"))))
     (build-system gnu-build-system)
     (inputs
-     (let ((if-supported                          ;XXX: copied from openmpi
+     (let ((if-supported                          ;XXX: modified from openmpi
             (lambda (package . extra)
               (if (and (not (%current-target-system))
                        (member (%current-system)
-                               (package-supported-systems package)))
+                               (package-transitive-supported-systems package)))
                   (cons package extra)
                   '()))))
        (append (list rdma-core libnl)

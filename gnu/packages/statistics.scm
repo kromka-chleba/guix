@@ -22,6 +22,7 @@
 ;;; Copyright © 2023 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -62,6 +63,7 @@
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cran)
   #:use-module (gnu packages curl)
@@ -2157,6 +2159,34 @@ and Vega-Lite examples.")
      "Vega-Altair is a declarative statistical visualization library for Python.")
     (license license:expat)))
 
+(define-public python-george
+  (package
+    (name "python-george")
+    (version "0.4.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "george" version))
+       (sha256
+        (base32 "1zvbdq50ds820aj06lr2nrzwg121bkd9bg0aq83gvk7lf8yqgp4v"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list cmake-minimal
+           pybind11
+           python-pytest
+           python-scikit-build-core
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-numpy
+           python-scipy))
+    (home-page "https://george.readthedocs.io")
+    (synopsis "Fast Gaussian Processes for regression")
+    (description
+     "George is a fast and flexible Python library for Gaussian Process (GP)
+Regression, focused on efficiently evaluating the marginalized likelihood of a
+dataset under a GP prior, even as this dataset gets Big.")
+    (license license:expat)))
+
 (define-public python-getdist
   (package
     (name "python-getdist")
@@ -2384,6 +2414,37 @@ building design matrices.")
     ;; patsy.compat contains code derived from the Python standard library,
     ;; and is covered by the PSFL.
     (license (list license:bsd-2 license:psfl))))
+
+(define-public python-kalepy
+  (package
+    (name "python-kalepy")
+    (version "1.4.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "kalepy" version))
+       (sha256
+        (base32 "1a1d98vjkjs8zwx4hdss3gv67jyf25mmsrdc5qi8hpxminkizb6w"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-matplotlib
+           python-numba
+           python-numpy
+           python-scipy
+           python-six))
+    (home-page "https://github.com/lzkelley/kalepy")
+    (synopsis "Kernel Density Estimation (KDE) and sampling")
+    (description
+     "This package performs KDE operations on multidimensional data to
+calculate estimated PDFs (probability distribution functions), and resample
+new data from those PDFs.")
+    ;; MIT   - setup.py
+    ;; GPL3+ - LICENSE
+    (license (list license:gpl3+ license:expat))))
 
 (define-public python-lifelines
   (package

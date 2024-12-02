@@ -190,6 +190,17 @@ test `guix build -d --sources=transitive foo \
       | grep -e 'foo\.tar\.gz' -e 'bar\.tar\.gz' -e 'bar\.dat' \
       | wc -l` -eq 3
 
+# Building the inputs.
+guix build -D hello -n
+test `guix build -D hello -d \
+      | grep -e 'glibc.*\.drv$' -e 'gcc.*\.drv$' -e 'binutils.*\.drv$' \
+      | wc -l` -ge 3
+
+# Building the dependents.
+test `guix build -P1 libgit2 -P1 libssh -d \
+      | grep -e 'guile-git.*\.drv$' -e 'guile-ssh.*\.drv$' \
+             -e 'libgit2.*\.drv$' -e 'libssh.*\.drv$' \
+      | wc -l` -eq 4
 
 # Unbound variable in thunked field.
 cat > "$module_dir/foo.scm" <<EOF

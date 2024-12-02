@@ -67,6 +67,7 @@
 ;;; Copyright © 2023 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2024 Tomas Volf <~@wolfsden.cz>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -5605,8 +5606,7 @@ JSON, XML, properties, CSV and TSV.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/itchyny/gojq/cmd/gojq"
-      #:unpack-path "github.com/itchyny/gojq"))
+      #:import-path "github.com/itchyny/gojq"))
     (inputs
      (list go-github-com-google-go-cmp
            go-github-com-itchyny-timefmt-go
@@ -5627,7 +5627,48 @@ processor.")
     (arguments
      (ensure-keyword-arguments
       (package-arguments go-github-com-itchyny-gojq)
-      (list #:install-source? #f)))))
+      (list #:import-path "github.com/itchyny/gojq/cmd/gojq"
+            #:unpack-path "github.com/itchyny/gojq"
+            #:install-source? #f)))))
+
+(define-public go-jqp
+  (package
+    (name "go-jqp")
+    (version "0.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/noahgorstein/jqp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11xqh4113gkzp32hd4dg4cvjp40q3hxfh3889wd4bw2snl0alvcb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.22
+      #:embed-files #~(list ".*.xml")
+      #:install-source? #f
+      #:import-path "github.com/noahgorstein/jqp"))
+    (inputs
+     (list go-github-com-spf13-viper
+           go-github-com-spf13-cobra
+           go-github-com-muesli-termenv
+           go-github-com-itchyny-gojq
+           go-github-com-itchyny-timefmt-go
+           go-github-com-charmbracelet-lipgloss
+           go-github-com-charmbracelet-bubbletea
+           go-github-com-charmbracelet-bubbles
+           go-github-com-atotto-clipboard
+           go-github-com-alecthomas-chroma-v2))
+    (home-page "https://github.com/noahgorstein/jqp")
+    (synopsis "TUI playground to experiment with jq")
+    (description
+     "This package provides an interactive TUI to explor the @code{jq} command
+line utility.  The command accepts an optional query argument which will be
+executed against the input JSON or newline-delimited JSON (NDJSON).")
+    (license license:expat)))
 
 (define-public pup
   (let ((revision "1")

@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2010-2023 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2010-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2012, 2013 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2022 Maxime Devos <maximedevos@telenet.be>
@@ -30,6 +30,7 @@
   #:use-module (srfi srfi-2)
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
+  #:use-module (srfi srfi-34)
   #:use-module (rnrs io ports)
   #:use-module ((guix http-client) #:hide (open-socket-for-uri))
   ;; not required in many cases, so autoloaded to reduce start-up costs.
@@ -38,6 +39,7 @@
   #:use-module (guix utils)
   #:use-module (guix diagnostics)
   #:use-module (guix i18n)
+  #:autoload   (guix combinators) (fold2)
   #:use-module (guix memoization)
   #:use-module (guix records)
   #:use-module (guix upstream)
@@ -468,10 +470,12 @@ hosted on ftp.gnu.org, or not under that name (this is the case for
 \"emacs-auctex\", for instance.)"
   (let-values (((server directory)
                 (ftp-server/directory package)))
-    (false-if-ftp-error (import-release (package-upstream-name package)
-                                        #:version version
-                                        #:server server
-                                        #:directory directory))))
+    (false-if-networking-error
+     (false-if-ftp-error
+      (import-release (package-upstream-name package)
+                      #:version version
+                      #:server server
+                      #:directory directory)))))
 
 
 ;;;
@@ -480,27 +484,46 @@ hosted on ftp.gnu.org, or not under that name (this is the case for
 
 (define (html-links sxml)
   "Return the list of links found in SXML, the SXML tree of an HTML page."
-  (let loop ((sxml sxml)
-             (links '()))
-    (match sxml
-      (('a ('@ attributes ...) body ...)
-       (match (assq 'href attributes)
-         (#f          (fold loop links body))
-         (('href url) (fold loop (cons url links) body))))
-      ((tag ('@ _ ...) body ...)
-       (fold loop links body))
-      ((tag body ...)
-       (fold loop links body))
-      (_
-       links))))
+  (define-values (links base)
+    (let loop ((sxml sxml)
+               (links '())
+               (base #f))
+      (match sxml
+        (('a ('@ attributes ...) body ...)
+         (match (assq 'href attributes)
+           (#f          (fold2 loop links base body))
+           (('href url) (fold2 loop (cons url links) base body))))
+        (('base ('@ ('href new-base)))
+         ;; The base against which relative URL paths must be resolved.
+         (values links new-base))
+        ((tag ('@ _ ...) body ...)
+         (fold2 loop links base body))
+        ((tag body ...)
+         (fold2 loop links base body))
+        (_
+         (values links base)))))
+
+  (if base
+      (map (lambda (link)
+             (let ((uri (string->uri link)))
+               (if (or uri (string-prefix? "/" link))
+                   link
+                   (in-vicinity base link))))
+           links)
+      links))
 
 (define (url->links url)
   "Return the unique links on the HTML page accessible at URL."
-  (let* ((uri   (string->uri url))
-         (port  (http-fetch/cached uri #:ttl 3600))
-         (sxml  (html->sxml port)))
-    (close-port port)
-    (delete-duplicates (html-links sxml))))
+  (guard (c ((http-get-error? c)
+             (warning (G_ "failed to download '~a': ~a (~a)~%")
+                      url (http-get-error-code c)
+                      (http-get-error-reason c))
+             '()))
+    (let* ((uri   (string->uri url))
+           (port  (http-fetch/cached uri #:ttl 3600))
+           (sxml  (html->sxml port)))
+      (close-port port)
+      (delete-duplicates (html-links sxml)))))
 
 (define (canonicalize-url url base-url)
   "Make relative URL absolute, by appending URL to BASE-URL as required.  If
@@ -907,13 +930,14 @@ to fetch a specific version."
   "Return the latest release of PACKAGE.  Optionally include a VERSION string
 to fetch a specific version."
   (let ((uri (string->uri (origin-uri (package-source package)))))
-    (false-if-ftp-error
-     (import-ftp-release
-      (package-name package)
-      #:version version
-      #:server "ftp.freedesktop.org"
-      #:directory
-      (string-append "/pub/xorg/" (dirname (uri-path uri)))))))
+    (false-if-networking-error
+     (false-if-ftp-error
+      (import-ftp-release
+       (package-name package)
+       #:version version
+       #:server "ftp.freedesktop.org"
+       #:directory
+       (string-append "/pub/xorg/" (dirname (uri-path uri))))))))
 
 (define* (import-kernel.org-release package #:key (version #f))
   "Return the latest release of PACKAGE, a Linux kernel package.
@@ -1016,15 +1040,19 @@ VERSION string to fetch a specific version."
            (false-if-networking-error (gnu-hosted? package))))
    (import import-gnu-release)))
 
+(define gnupg-hosted?
+  (url-prefix-predicate "mirror://gnupg/"))
+
 (define %gnu-ftp-updater
   ;; This is for GNU packages taken from alternate locations, such as
-  ;; alpha.gnu.org, ftp.gnupg.org, etc.  It is obsolescent.
+  ;; alpha.gnu.org (ftp.gnupg.org is no longer available).  It is obsolescent.
   (upstream-updater
    (name 'gnu-ftp)
    (description "Updater for GNU packages only available via FTP")
    (pred (lambda (package)
            (false-if-networking-error
             (and (not (gnu-hosted? package))
+                 (not (gnupg-hosted? package))
                  (pure-gnu-package? package)))))
    (import import-release*)))
 

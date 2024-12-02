@@ -85,7 +85,9 @@
   #:use-module (gnu packages golang-maths)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages linux)
-  #:use-module (gnu packages specifications))
+  #:use-module (gnu packages specifications)
+  #:use-module (gnu packages xdisorg)
+  #:use-module (gnu packages xorg))
 
 ;;; Commentary:
 ;;;
@@ -876,6 +878,29 @@ JSONMarshal/JSONUnmarshal to store/reload the Bloom filter.")
 commands.")
     (license license:expat)))
 
+(define-public go-github-com-arceliar-phony
+  (package
+    (name "go-github-com-arceliar-phony")
+    (version "v0.0.0-20220903101357-530938a4b13d")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Arceliar/phony")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1ww3issk2jg9nzijmz1xncdhd0mh553nixns34s3yjm4mb8c5s93"))))
+    (arguments
+     '(#:import-path "github.com/Arceliar/phony"))
+    (build-system go-build-system)
+    (home-page "https://github.com/Arceliar/phony")
+    (synopsis "Very minimal actor model library")
+    (description "Phony is a very minimal actor model library for Go,
+inspired by the causal messaging system in the Pony programming language.")
+    (license license:expat)))
+
 (define-public go-github-com-armon-go-radix
   (package
     (name "go-github-com-armon-go-radix")
@@ -957,6 +982,39 @@ for Go.")
 collections.  It was based on
 @url{https://github.com/chriso/validator.js,validator.js}.")
     (license license:expat)))
+
+(define-public go-github-com-atotto-clipboard
+  (package
+    (name "go-github-com-atotto-clipboard")
+    (version "0.1.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/atotto/clipboard")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ycd8zkgsq9iil9svhlwvhcqwcd7vik73nf8rnyfnn10gpjx97k5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/atotto/clipboard"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'start-xorg-server
+            (lambda* (#:key inputs #:allow-other-keys)
+              ;; The test suite requires a running X server.
+              (system "Xvfb :1 &")
+              (setenv "DISPLAY" ":1"))))))
+    (native-inputs
+     (list xorg-server-for-tests))
+    (propagated-inputs (list xclip))
+    (home-page "https://github.com/atotto/clipboard")
+    (synopsis "Clipboard for Golang")
+    (description
+     "@code{clipboard} provides copying and pasting to the clipboard for Go.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-audriusbutkevicius-recli
   (package
@@ -1099,6 +1157,34 @@ strategies, such as fixed delay, backoff delay, and random delay.")
     (description
      "OSC52 is a terminal escape sequence that allows copying text to the
 clipboard.")
+    (license license:expat)))
+
+(define-public go-github-com-aymanbagabas-go-udiff
+  (package
+    (name "go-github-com-aymanbagabas-go-udiff")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aymanbagabas/go-udiff")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09p17r8s5flhq6p69z08345q0y99dpb0yyashlwpgxn45xir7y6g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/aymanbagabas/go-udiff"))
+    (home-page "https://github.com/aymanbagabas/go-udiff")
+    (synopsis "Diffing library for Golang")
+    (description
+     "@code{udiff} (micro-diff, or µDiff) is a library that implements the
+@url{http://www.xmailserver.org/diff2.pdf, Myers' diffing algorithm}.  It aims to
+provide a minimal API to compute and apply diffs with zero dependencies.  It also
+supports generating diffs in the
+@url{https://www.gnu.org/software/diffutils/manual/html_node/Unified-Format.html,
+Unified Format}.")
     (license license:expat)))
 
 (define-public go-github-com-benbjohnson-clock
@@ -1495,6 +1581,177 @@ tools.")
     (propagated-inputs
      (modify-inputs (package-propagated-inputs go-github-com-cheggaaa-pb)
        (append go-github-com-vividcortex-ewma)))))
+
+(define-public go-github-com-charmbracelet-bubbles
+  (package
+    (name "go-github-com-charmbracelet-bubbles")
+    (version "0.20.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/bubbles")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1qdcln01bq9lk6r33b8p5d5x850wgd8ddq57n4bg3xn76z2fd657"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:import-path "github.com/charmbracelet/bubbles"))
+    (propagated-inputs
+     (list go-github-com-atotto-clipboard
+           go-github-com-charmbracelet-bubbletea
+           go-github-com-charmbracelet-harmonica
+           go-github-com-charmbracelet-lipgloss
+           go-github-com-charmbracelet-x-ansi
+           go-github-com-charmbracelet-x-exp-golden
+           go-github-com-dustin-go-humanize
+           go-github-com-lucasb-eyer-go-colorful
+           go-github-com-makenowjust-heredoc
+           go-github-com-mattn-go-runewidth
+           go-github-com-muesli-termenv
+           go-github-com-rivo-uniseg
+           go-github-com-sahilm-fuzzy))
+    (home-page "https://github.com/charmbracelet/bubbles")
+    (synopsis "TUI components for Bubble Tea library")
+    (description
+     "@code{bubbles} is a library that provide components for
+@@url{https://github.com/charmbracelet/bubbletea, Bubble Tea} applications.")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-lipgloss
+  (package
+    (name "go-github-com-charmbracelet-lipgloss")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/lipgloss")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0d1aqzsjy0mcliydbfbg223xxpf9646frbj35ac4fisdy3w3n142"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/lipgloss"))
+    (propagated-inputs
+     (list go-github-com-aymanbagabas-go-udiff
+           go-github-com-charmbracelet-x-ansi
+           go-github-com-charmbracelet-x-exp-golden
+           go-github-com-muesli-termenv
+           go-github-com-rivo-uniseg))
+    (home-page "https://github.com/charmbracelet/lipgloss")
+    (synopsis "Style definitions for nice terminal layouts")
+    (description
+     "Style definitions for nice terminal layouts.  Built with TUIs in mind.")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-x-ansi
+  (package
+    (name "go-github-com-charmbracelet-x-ansi")
+    (version "0.5.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (go-version->git-ref version
+                                          #:subdir "ansi"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "016s67690dr3w3an6m24q6f4vrmwpk0qd4akvvh1dzpfyf4khxd4"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/ansi"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (propagated-inputs
+     (list go-github-com-lucasb-eyer-go-colorful
+           go-github-com-rivo-uniseg))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "ANSI escape sequence parser and definitions")
+    (description
+     "@code{ansi} defines common ANSI escape sequences based on the
+@url{https://ecma-international.org/publications-and-standards/standards/ecma-48/,
+ECMA-48} specs.")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-x-term
+  (package
+    (name "go-github-com-charmbracelet-x-term")
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (go-version->git-ref version
+                                          #:subdir "term"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1shw55110fnn4xz80wmgr18czmiil6z1j064m90iw8c7j9llfzn5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/term"
+      #:unpack-path "github.com/charmbracelet/x"))
+    (propagated-inputs (list go-github-com-rivo-uniseg
+                             go-golang-org-x-sys))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "Terminal utilities and helpers")
+    (description
+     "@code{term} provides an API for working with terminals that includes:
+@itemize
+@item Switching a terminal to the raw mode.
+@item Getting, setting and restoring the state of a terminal.
+@item Getting size of a terminal.
+@item Reading passwords from a terminal without a local echo.
+@end itemize")
+    (license license:expat)))
+
+(define-public go-github-com-charmbracelet-x-exp-golden
+  (package
+    (name "go-github-com-charmbracelet-x-exp-golden")
+    (version "0.0.0-20241121171228-5bc00623ea2f")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/charmbracelet/x")
+             (commit (go-version->git-ref version
+                                          #:subdir "exp/golden"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "016s67690dr3w3an6m24q6f4vrmwpk0qd4akvvh1dzpfyf4khxd4"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/charmbracelet/x/exp/golden"
+      #:unpack-path "github.com/charmbracelet/x/"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda* (#:key import-path #:allow-other-keys)
+              ;; Tests need to write to that files.
+              (with-directory-excursion (string-append "src/" import-path)
+                (make-file-writable "testdata/TestRequireEqualUpdate.golden")
+                (make-file-writable "testdata/TestRequireEqualNoUpdate.golden"))))
+          (add-after 'check 'post-check
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                ;; Remove modified testdata just in case.
+                (delete-file-recursively "testdata")))))))
+    (propagated-inputs
+     (list go-github-com-aymanbagabas-go-udiff))
+    (home-page "https://github.com/charmbracelet/x")
+    (synopsis "Verify @code{.golden} file equality")
+    (description
+     "Golden files (@code{.golden}) contain the raw expected output of
+tests,which can contain control codes and escape sequences.  @code{golden}
+package provides an API for comparing Golden files.")
+    (license license:expat)))
 
 (define-public go-github-com-chzyer-logex
   (package
@@ -4830,6 +5087,30 @@ Printf/Sprintf etc.")
     (native-inputs
      (list go-github-com-stretchr-testify))))
 
+(define-public go-github-com-makenowjust-heredoc
+  (package
+    (name "go-github-com-makenowjust-heredoc")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/makenowjust/heredoc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18f21zm8n2wlnkz1ylw8rcxmqxyv2rlz8749yfqggm2m0m2884pj"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/MakeNowJust/heredoc"))
+    (home-page "https://github.com/MakeNowJust/heredoc")
+    (synopsis "Here-documents with indent")
+    (description
+     "This package implements a functionality of creating here-documents from
+raw strings.")
+    (license license:expat)))
+
 (define-public go-github-com-marcinbor85-gohex
   ;; No release, see <https://github.com/marcinbor85/gohex/issues/5>.
   (let ((commit "baab2527a9a2a4abb3dc06baabedfa5e0268b8d8")
@@ -5472,6 +5753,31 @@ Authentication Modules, PAM} application API.")
          (package-arguments go-github-com-msteinert-pam)
        ((#:import-path _ "github.com/msteinert/pam")
         "github.com/msteinert/pam/v2")))))
+
+(define-public go-github-com-muesli-ansi
+  (package
+    (name "go-github-com-muesli-ansi")
+    (version "0.0.0-20230316100256-276c6243b2f6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/muesli/ansi")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jr8kgn3vb72jmf4a8n52g876mfpbvk3310p8gsg7jkn338af4m9"))))
+    (build-system go-build-system)
+    (arguments
+     (list #:import-path "github.com/muesli/ansi"))
+    (propagated-inputs
+     (list go-github-com-mattn-go-runewidth
+           go-github-com-rivo-uniseg))
+    (home-page "https://github.com/muesli/ansi")
+    (synopsis "Raw ANSI sequence helpers")
+    (description
+     "ANSI sequence helpers for working with raw ANSI sequences.")
+    (license license:expat)))
 
 (define-public go-github-com-muesli-cancelreader
   (package
@@ -6577,6 +6883,32 @@ logging.")
     (synopsis "Column formatted output for golang")
     (description
      "This package implements column-formatted output for Golang.")
+    (license license:expat)))
+
+(define-public go-github-com-sahilm-fuzzy
+  (package
+    (name "go-github-com-sahilm-fuzzy")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sahilm/fuzzy")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15j95gm7hcmg09x1b39vc4il8bryv4v0yljvvyq5vyc6iq66qrbz"))))
+    (build-system go-build-system)
+    (native-inputs
+     (list go-github-com-kylelemons-godebug
+           go-github-com-kylelemons-godebug-pretty))
+    (arguments
+     (list #:import-path "github.com/sahilm/fuzzy"))
+    (home-page "https://github.com/sahilm/fuzzy")
+    (synopsis "Fuzzy string matching for Golang")
+    (description
+     "@code{fuzzy} provides fuzzy string matching optimized for filenames and code
+symbols in the style of Sublime Text, VSCode, @code{IntelliJ} IDEA et al.")
     (license license:expat)))
 
 (define-public go-github-com-schollz-progressbar-v3

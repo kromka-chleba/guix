@@ -31,7 +31,8 @@
   #:autoload   (guix download) (download-to-store)
   #:autoload   (guix git-download) (git-reference? git-reference-url)
   #:autoload   (guix git) (git-checkout git-checkout? git-checkout-url)
-  #:autoload   (guix upstream) (package-latest-release
+  #:autoload   (guix upstream) (upstream-source
+                                package-latest-release
                                 upstream-source-version
                                 upstream-source-signature-urls)
   #:autoload   (guix cpu) (current-cpu
@@ -60,6 +61,8 @@
 
             tunable-package?
             tuned-package
+
+            package-with-upstream-version
 
             show-transformation-options-help
             transformation-option-key?
@@ -846,10 +849,32 @@ additional patches."
         (rewrite obj)
         obj)))
 
-(define* (package-with-upstream-version p #:optional version)
+(define* (upstream-fetch source hash-algo hash
+                         #:optional name
+                         #:key (system (%current-system))
+                         (guile (default-guile))
+                         executable?)
+  "This origin method simply downloads SOURCE, an <upstream-source> record."
+  (lower-object source system))
+
+(define (upstream-source-without-signatures source)
+  "Return SOURCE with #f as its 'signature-urls' field."
+  (upstream-source (inherit source)
+                   (signature-urls #f)))
+
+(define* (package-with-upstream-version p #:optional version
+                                        #:key
+                                        (preserve-patches? #f)
+                                        (authenticate? #t))
   "Return package P changed to use the given upstream VERSION or, if VERSION
-is #f, the latest known upstream version."
-  (let ((source (package-latest-release p #:version version)))
+is #f, the latest known upstream version.  When PRESERVE-PATCHES? is true,
+preserve patches and snippets found in the source of P, provided it's an
+origin.  When AUTHENTICATE? is false, disable OpenPGP signature verification
+of upstream source code."
+  (let ((source (and=> (package-latest-release p #:version version)
+                       (if authenticate?
+                           identity
+                           upstream-source-without-signatures))))
     (cond ((not source)
            (if version
                (warning
@@ -883,7 +908,15 @@ version (~a)~%")
            (package
              (inherit p)
              (version (upstream-source-version source))
-             (source source))))))
+             (source (if (and preserve-patches?
+                              (origin? (package-source p)))
+                         ;; Inherit P's origin so snippets and patches are
+                         ;; applied as if we had run 'guix refresh -u'.
+                         (origin
+                           (inherit (package-source p))
+                           (method upstream-fetch)
+                           (uri source))
+                         source)))))))
 
 (define (transform-package-latest specs)
   "Return a procedure that rewrites package graphs such that those in SPECS

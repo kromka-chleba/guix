@@ -565,6 +565,26 @@ Shiny applications.")
     (license (list license:gpl3
                    license:isc)))) ;for bundled d3js
 
+(define-public r-colorsgen
+  (package
+    (name "r-colorsgen")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "colorsGen" version))
+       (sha256
+        (base32 "0w4qkl4fw7pjfcd2z3nhpkxh8kv3bbq19bi2cg0ivfr83kxa44fj"))))
+    (properties `((upstream-name . "colorsGen")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-colorspace))
+    (home-page "https://github.com/stla/colorsGen")
+    (synopsis "Generation of random colors")
+    (description
+     "This package lets you generate random colors, possibly with a given hue
+or a given luminosity.")
+    (license license:cc0)))
+
 (define-public r-consort
   (package
     (name "r-consort")
@@ -35041,6 +35061,36 @@ and as convex hull of set of points and rays.  Also does linear programming
 and redundant generator elimination.  All functions can use exact
 infinite-precision rational arithmetic.")
     (license license:gpl2)))
+
+(define-public r-rcdt
+  (package
+    (name "r-rcdt")
+    (version "1.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "RCDT" version))
+       (sha256
+        (base32 "1k27kydqzxqdhjbygq5a8mdhwlvbc32j1hg4vr223rwwc94864w6"))))
+    (properties `((upstream-name . "RCDT")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-bh
+                             r-colorsgen
+                             r-gplots
+                             r-polychrome
+                             r-rcpp
+                             r-rcpparmadillo
+                             r-rgl
+                             r-rvcg))
+    (native-inputs (list r-knitr))
+    (home-page "https://github.com/stla/RCDT")
+    (synopsis "Fast 2D constrained Delaunay triangulation")
+    (description
+     "This package performs 2D Delaunay triangulation, constrained or
+unconstrained, with the help of the C++ library CDT.  A function to plot the
+triangulation is provided.  The constrained Delaunay triangulation has
+applications in geographic information systems.")
+    (license license:gpl3)))
 
 (define-public r-rxnat
   (package
