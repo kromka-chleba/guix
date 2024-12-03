@@ -68,6 +68,7 @@
 # Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 # Copyright © 2024 Fabio Natali <me@fabionatali.com>
 # Copyright © 2024 Noé Lopez <noelopez@free.fr>
+# Copyright © 2024 Runciter <runciter@whispers-vpn.org>
 #
 # This file is part of GNU Guix.
 #
@@ -241,6 +242,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/decker.scm			\
   %D%/packages/dhall.scm			\
   %D%/packages/dico.scm				\
+  %D%/packages/dictd.scm			\
   %D%/packages/dictionaries.scm			\
   %D%/packages/diffoscope.scm			\
   %D%/packages/digest.scm			\
@@ -1284,6 +1286,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/fpc-reproducibility.patch		\
   %D%/packages/patches/fpc-glibc-2.34-compat.patch		\
   %D%/packages/patches/fpm-newer-clamp-fix.patch		\
+  %D%/packages/patches/freedict-tools-fix-determinism.patch	\
   %D%/packages/patches/freedink-engine-fix-sdl-hints.patch	\
   %D%/packages/patches/freeimage-libtiff-compat.patch		\
   %D%/packages/patches/freeimage-libraw-0.21-compat.patch	\
