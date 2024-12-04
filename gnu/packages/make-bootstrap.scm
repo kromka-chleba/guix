@@ -145,7 +145,10 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
                       target
                       #:xbinutils (cross-binutils target)
                       #:libc (cross-bootstrap-libc target))))
-          `(("cross-gcc" ,(package
+          `(,@(%final-inputs)
+            ;; As versions for gcc and cross-gcc can differ, make sure to have
+            ;; cross-gcc behind gcc in CPLUS_INCLUDE_PATH.
+            ("cross-gcc" ,(package
                             (inherit xgcc)
                             (search-paths
                              ;; Ensure the cross libc headers appears on the
@@ -154,8 +157,7 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
                                     (variable "CROSS_CPLUS_INCLUDE_PATH")
                                     (files '("include")))
                                    (package-search-paths gcc)))))
-            ("cross-binutils" ,(cross-binutils target))
-            ,@(%final-inputs)))
+            ("cross-binutils" ,(cross-binutils target))))
         `(("libc" ,(glibc-for-bootstrap glibc))
           ("libc:static" ,(glibc-for-bootstrap glibc) "static")
           ("gcc" ,(gcc-for-bootstrap glibc))
@@ -395,10 +397,15 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
                        ((#:configure-flags flags _ ...)
                         flags)))
            #:make-flags
-           (match (memq #:make-flags (package-arguments binutils))
-             ((#:make-flags flags _ ...)
-              flags)
-             (_ #~'()))
+           #~(append
+              #$(if (target-hurd64?)
+                    #~'("lt_cv_prog_compiler_static_works=yes"
+                        "lt_cv_prog_compiler_static_works_CXX=yes")
+                    #~'())
+              #$(match (memq #:make-flags (package-arguments binutils))
+                  ((#:make-flags flags _ ...)
+                   flags)
+                  (_ #~'())))
            #:strip-flags #~'("--strip-all")
            #:phases
            #~(modify-phases %standard-phases
@@ -481,11 +488,11 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
 (define %gcc-static
   ;; A statically-linked GCC, with stripped-down functionality.
   (package-with-relocatable-glibc
-   (package (inherit gcc)
+   (package (inherit gcc-14)
      (name "gcc-static")
      (outputs '("out"))                           ; all in one
      (arguments
-      (substitute-keyword-arguments (package-arguments gcc)
+      (substitute-keyword-arguments (package-arguments gcc-14)
         ((#:modules modules %default-gnu-modules)
          `((srfi srfi-1)
            (srfi srfi-26)
@@ -494,7 +501,7 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
         ((#:guile _) #f)
         ((#:implicit-inputs? _) #t)
         ((#:configure-flags flags)
-         `(append (list
+         #~(append (list
                    ;; We don't need a full bootstrap here.
                    "--disable-bootstrap"
 
@@ -519,9 +526,9 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
                    "--disable-libssp"
                    "--disable-libquadmath")
                   (remove (cut string-match "--(.*plugin|enable-languages)" <>)
-                          ,flags)))
+                          #$flags)))
         ((#:phases phases)
-         `(modify-phases ,phases
+         #~(modify-phases #$phases
             (add-after 'pre-configure 'remove-lgcc_s
               (lambda _
                 ;; Remove the '-lgcc_s' added to GNU_USER_TARGET_LIB_SPEC in
@@ -531,12 +538,12 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
                 (substitute* (cons "gcc/config/rs6000/sysv4.h"
                                    (find-files "gcc/config"
                                                "^gnu-user.*\\.h$"))
-                  ((" -lgcc_s}}") "}}"))
-                #t))))))
+                  ((" -lgcc_s}}") "}}"))))))))
      (inputs
       `(("zlib:static" ,zlib "static")
         ("isl:static" ,isl "static")
-        ,@(package-inputs gcc)))
+        ,@(fold alist-delete (package-inputs gcc-14)
+                '("libstdc++" "libstdc++-headers"))))
      (native-inputs
       (if (%current-target-system)
           `(;; When doing a Canadian cross, we need GMP/MPFR/MPC both
@@ -549,17 +556,19 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
             ("gmp-native" ,gmp)
             ("mpfr-native" ,mpfr)
             ("mpc-native" ,mpc)
-            ,@(package-native-inputs gcc))
-          (package-native-inputs gcc))))))
+            ,@(package-native-inputs gcc-14))
+          (package-native-inputs gcc-14))))))
 
 (define %gcc-stripped
   ;; The subset of GCC files needed for bootstrap.
   (package
-    (inherit gcc)
+    (inherit gcc-14)
     (name "gcc-stripped")
     (build-system trivial-build-system)
     (source #f)
     (outputs '("out"))                            ;only one output
+    (inputs '())
+    (native-inputs '())
     (arguments
      (list #:modules '((guix build utils))
            #:builder
@@ -625,6 +634,7 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
       (propagated-inputs
        (modify-inputs (package-propagated-inputs guile)
          (replace "libgc" libgc/static-libs)))
+
       (arguments
        (substitute-keyword-arguments (package-arguments guile)
          ((#:configure-flags flags #~'())
@@ -642,6 +652,9 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
 
                   #$@(if (target-hurd?)
                          #~("--disable-jit")
+                         #~())
+                  #$@(if (target-hurd64?)
+                         #~("lt_cv_prog_compiler_static_works=yes")
                          #~())))
          ((#:phases phases '%standard-phases)
           #~(modify-phases #$phases

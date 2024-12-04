@@ -3,23 +3,26 @@
 ;; This is an operating system configuration template
 ;; for a "bare bones" QEMU setup, with no X11 display server.
 
-;; To build a disk image for a virtual machine, do
+;; To build a disk image for a virtual machine, do:
 ;;
-;;     ./pre-inst-env guix system image --image-type=hurd-raw \
+;;     ./pre-inst-env guix system image --image-type=hurd-qcow2 \
 ;;         gnu/system/examples/bare-hurd.tmpl
 ;;
-;; You may run it like so
+;; You may run it like so:
 ;;
-;;     guix shell qemu -- qemu-system-i386 -enable-kvm -m 2048 \
-;;      -device rtl8139,netdev=net0 -netdev user,id=net0,hostfwd=tcp:127.0.0.1:10022-:2222 \
-;;      -snapshot -hda <the-image>
+;;     guix shell qemu -- qemu-system-i386 -m 2048                \
+;;       --enable-kvm                                             \
+;;       --device e1000,netdev=net0                               \
+;;       --netdev user,id=net0,hostfwd=tcp:127.0.0.1:10022-:2222  \
+;;       --snapshot
+;;       --hda /gnu/store/...-disk-image
 ;;
-;; and use it like
+;; and use it like:
 ;;
 ;;     ssh -p 10022 root@localhost
 ;;     guix build -e '(@@ (gnu packages commencement) gnu-make-boot0)'
 ;;
-;; or even (if you use --image-size=3G)
+;; or even, if you build the image with at least --image-size=3G:
 ;;
 ;;     guix build hello
 
@@ -34,7 +37,7 @@
                  (bootloader grub-minimal-bootloader)
                  (targets '("/dev/sdX"))))
     (file-systems (cons (file-system
-                          (device (file-system-label "my-root"))
+                          (device (file-system-label "hurd"))
                           (mount-point "/")
                           (type "ext2"))
                         %base-file-systems))

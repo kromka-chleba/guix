@@ -610,6 +610,15 @@ GLib/GIO, GTK, GStreamer and Webkit."
                       "guix/build/zig-build-system.scm"
                       "guix/build-system/zig.scm")))
 
+(define-team hurd
+  (team 'hurd
+        #:name "Team for the Hurd"
+        #:scope (list "gnu/system/hurd.scm"
+                      "gnu/system/images/hurd.scm"
+                      "gnu/build/hurd-boot.scm"
+                      "gnu/services/hurd.scm"
+                      "gnu/packages/hurd.scm")))
+
 
 (define-member (person "Eric Bavier"
                        "bavier@posteo.net")
@@ -779,6 +788,10 @@ GLib/GIO, GTK, GStreamer and Webkit."
 (define-member (person "André Batista"
                        "nandre@riseup.net")
   mozilla)
+
+(define-member (person "Janneke Nieuwenhuizen"
+                       "janneke@gnu.org")
+  bootstrap core-packages home hurd installer)
 
 
 (define (find-team name)

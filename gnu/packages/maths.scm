@@ -677,28 +677,18 @@ precision floating point numbers.")
 (define-public gsl
   (package
     (name "gsl")
-    (version "2.7.1")
+    (version "2.8")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/gsl/gsl-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0jxkxrnpys2j3rh8bzx0bmnh4w6xm28jd57rgxsjp0s863agpc6w"))))
-    (outputs '("out" "static"))
+                "141i8ag2qazyqqk17bfr2l7mr1asxm1da7avi5a66b332pnyx6ba"))))
+    (outputs '("out" "static" "debug"))
     (build-system gnu-build-system)
     (arguments
-     (list ;; FIXME: Setting CFLAGS=-fPIC is not only unnecessary, it's also
-           ;; harmful because it removes the default '-O2 -g', meaning that the
-           ;; library ends up being compiled as -O0.  Consequently, some
-           ;; numerical tests fail, notably on i686-linux.  TODO: Remove
-           ;; 'CFLAGS=-fPIC' for all systems and revisit or remove
-           ;; 'disable-failing-tests' phases accordingly.
-           #:make-flags (if (and (not (%current-target-system))
-                                 (string=? (%current-system) "i686-linux"))
-                            #~'()
-                            #~(list "CFLAGS=-fPIC"))
-           #:phases
+     (list #:phases
            #~(modify-phases %standard-phases
                #$@(cond
                    ((and (target-riscv64?)

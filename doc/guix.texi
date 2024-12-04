@@ -36,7 +36,7 @@ Copyright @copyright{} 2016, 2017, 2018, 2021 Chris Marusich@*
 Copyright @copyright{} 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023 Efraim Flashner@*
 Copyright @copyright{} 2016 John Darrington@*
 Copyright @copyright{} 2016, 2017 Nikita Gillmann@*
-Copyright @copyright{} 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023 Jan Nieuwenhuizen@*
+Copyright @copyright{} 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024 Janneke Nieuwenhuizen@*
 Copyright @copyright{} 2016, 2017, 2018, 2019, 2020, 2021 Julien Lepiller@*
 Copyright @copyright{} 2016 Alex ter Weele@*
 Copyright @copyright{} 2016, 2017, 2018, 2019, 2020, 2021 Christopher Baines@*
@@ -638,6 +638,13 @@ way for you to give it a try is by setting up an instance of
 @code{hurd-vm-service-type} on your GNU/Linux machine
 (@pxref{transparent-emulation-qemu, @code{hurd-vm-service-type}}).
 @xref{Contributing}, on how to help!
+
+@item x86_64-gnu
+@uref{https://hurd.gnu.org, GNU/Hurd} on the @code{x86_64} Intel/AMD
+64-bit architecture.
+
+This configuration is even more experimental and under heavy upstream
+development.
 
 @item mips64el-linux (unsupported)
 little-endian 64-bit MIPS processors, specifically the Loongson series,
@@ -43257,6 +43264,23 @@ needed for the system to operate correctly---e.g., the @file{/etc},
 This command also installs bootloader on the targets specified in
 @file{my-os-config}, unless the @option{--no-bootloader} option was
 passed.
+
+@item installer
+Run the installer.  Usually the installer is built as an @file{iso}
+image, copied to a USB Stick or DVD, and booted from (@ref{USB Stick and
+DVD Installation}).  If your machine already runs Guix and you still
+want to run the installer, e.g., for testing purposes, you can skip the
+step of creating an @file{iso} and run for instance:
+
+@example
+guix system installer --dry-run
+@end example
+
+@quotation Note
+If you do not use @option{--dry-run} then you need to run as root.  Be
+@emph{very careful} when running the installer as root, it can cause
+data loss or render your system unbootable!
+@end quotation
 
 @item vm
 @cindex virtual machine

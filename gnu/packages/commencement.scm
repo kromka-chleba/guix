@@ -2273,9 +2273,9 @@ exec " gcc "/bin/" program
       (inputs (%boot0-inputs))
       (native-inputs '()))))
 
-(define libstdc++-boot0-gcc7
+(define (make-libstdc++-boot0 gcc)
   ;; GCC >= 7 is needed by architectures which use C++-14 features.
-  (let ((lib (make-libstdc++ gcc-7)))
+  (let ((lib (make-libstdc++ gcc)))
     (package
       (inherit lib)
       (source (bootstrap-origin (package-source lib)))
@@ -2288,6 +2288,14 @@ exec " gcc "/bin/" program
          #:validate-runpath? #f
 
          ,@(substitute-keyword-arguments (package-arguments lib)
+             ((#:configure-flags flags)
+              (if (target-hurd64?)
+                  #~(cons* "--disable-shared"
+                           "--disable-libstdcxx-dual-abi"
+                           "--disable-libstdcxx-threads"
+                           "--disable-libstdcxx-pch"
+                           #$flags)
+                  flags))
              ((#:phases phases)
               #~(modify-phases #$phases
                   (add-after 'unpack 'unpack-gmp&co
@@ -2383,13 +2391,21 @@ exec " gcc "/bin/" program
          `(let* ((libc        (assoc-ref %build-inputs "libc"))
                  (libc-native (or (assoc-ref %build-inputs "libc-native")
                                   libc)))
-            `(,(string-append "LDFLAGS="
-                              "-Wl,-rpath=" libc-native "/lib "
-                              "-Wl,-dynamic-linker "
-                              "-Wl," libc-native ,(glibc-dynamic-linker
-                                                   (match (%current-system)
-                                                     ("x86_64-linux" "i686-linux")
-                                                     (_ (%current-system))))))))
+            `(,,@(append
+                  `((string-append "LDFLAGS="
+                                   "-Wl,-rpath=" libc-native "/lib "
+                                   "-Wl,-dynamic-linker "
+                                   "-Wl," libc-native
+                                   ,(glibc-dynamic-linker
+                                     (match (%current-system)
+                                       ("x86_64-linux" "i686-linux")
+                                       (_ (%current-system))))))
+                  (if (target-hurd64?)
+                      ;;Convince gmp's configure that gcc works
+                      (list (string-append
+                             "CC_FOR_BUILD=gcc"
+                             " -Wno-implicit-function-declaration"))
+                      '())))))
         ((#:phases phases)
          #~(modify-phases #$phases
              (add-after 'unpack 'unpack-gmp&co
@@ -2413,6 +2429,20 @@ exec " gcc "/bin/" program
                                            char-set:letter)
                                         #$(package-name lib)))
                            (list gmp-6.0 mpfr mpc)))))
+             #$@(if (target-hurd64?)
+                    #~((add-after 'unpack 'patch-libcc1-static
+                         (lambda _
+                           ;;Attempting to build libcc1 shared gives:
+                           ;;  install: cannot stat '.libs/libcc1.so.0.0.0':
+                           ;;  No such file or directory
+                           ;;convince gcc harder to not build a shared libcc1
+                           (substitute* "Makefile.def"
+                             (("module= libcc1; [^;]*;") "module= libcc1;"))
+                           (substitute* "Makefile.in"
+                             (("(--target=[$][{]target_alias[}]) --enable-shared \\\\"
+                               all target)
+                              (string-append target " \\"))))))
+                    #~())
              #$(match (%current-system)
                  ((or "i686-linux" "x86_64-linux")
                   #~(add-before 'configure 'fix-libcc1
@@ -2446,7 +2476,8 @@ exec " gcc "/bin/" program
 
               ;; The libstdc++ that libcc1 links against.
               ("libstdc++" ,(match (%current-system)
-                                   ("riscv64-linux" libstdc++-boot0-gcc7)
+                                   ("riscv64-linux" (make-libstdc++-boot0 gcc-7))
+                                   ("x86_64-gnu" (make-libstdc++-boot0 gcc-14))
                                    (_ libstdc++-boot0)))
 
               ;; Call it differently so that the builder can check whether
@@ -2635,10 +2666,11 @@ memoized as a function of '%current-system'."
    (package
      (inherit gnumach-headers)
      (name "gnumach-headers-boot0")
-     (version "1.8+git20230410")
+     (version "1.8+git20240714")
      (source
       (origin
         (inherit (package-source gnumach-headers))
+        (patches '())
         (method
          (git-fetch-from-tarball
           (origin
@@ -2648,7 +2680,7 @@ memoized as a function of '%current-system'."
                   "gnumach-" version ".tar.gz"))
             (sha256
              (base32
-              "1s09256g2ny46idrn8frzs7r51la9ni45bmglmswlsmz9ii7dpi4")))))))
+              "1bnw5vdbq91zjxklx23qvim40fb0yw1qdxhn9n37jdfypm6q3xir")))))))
      (native-inputs (list autoconf-boot0 automake-boot0 texinfo-boot0))
      (arguments
       (substitute-keyword-arguments (package-arguments gnumach-headers)
@@ -2669,7 +2701,7 @@ memoized as a function of '%current-system'."
    (package
      (inherit mig)
      (name "mig-boot0")
-     (version "1.8+git20230520")
+     (version "1.8+git20231217")
      (source
       (origin
         (inherit (package-source mig))
@@ -2682,7 +2714,7 @@ memoized as a function of '%current-system'."
                   "mig-" version ".tar.gz"))
             (sha256
              (base32
-              "1l1vfm4wap5yxylv91wssgpy7fnq22wp3akgd5nv995kychfa9jy")))))))
+              "18vz3ifrhhlvrdmlv70h63wl0kh5w8jcpsjx9yscsw9yazm1lzs7")))))))
      (native-inputs (list autoconf-boot0 automake-boot0 bison-boot0 flex-boot0
                           gnumach-headers-boot0))
      (inputs (list flex-boot0 gnumach-headers-boot0))
@@ -2698,7 +2730,7 @@ memoized as a function of '%current-system'."
    (package
      (inherit hurd-headers)
      (name "hurd-headers-boot0")
-     (version "0.9.git20230520")
+     (version "0.9.git20240714")
      (source
       (origin
         (inherit (package-source hurd-headers))
@@ -2711,7 +2743,7 @@ memoized as a function of '%current-system'."
                   "hurd-v" version ".tar.gz"))
             (sha256
              (base32
-              "0ybmx7bhy21zv1if2hfdspn13zn68vki1na72sw2jj87gj8przna")))))))
+              "0wcihffclwijjamx4cjbr8i92yg780538ipg2z208ahg96jjrmgq")))))))
      (native-inputs
       (list autoconf-boot0 automake-boot0 mig-boot0))
      (inputs '()))))
@@ -2740,7 +2772,7 @@ memoized as a function of '%current-system'."
 
 (define* (kernel-headers-boot0 #:optional (system (%current-system)))
   (match system
-    ("i586-gnu" hurd-core-headers-boot0)
+    ((? target-hurd?) hurd-core-headers-boot0)
     (_ linux-libre-headers-boot0)))
 
 (define texinfo-boot0
@@ -3223,13 +3255,32 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
          ;; Since $LIBRARY_PATH is not honored, add the relevant flags.
          #~(let ((zlib (assoc-ref %build-inputs "zlib")))
              (map (lambda (flag)
-                    (if (string-prefix? "LDFLAGS=" flag)
+                    (if #$(if (target-hurd64?)
+                              #~(and (string? flag)
+                                     (string-prefix? "LDFLAGS=" flag))
+                              #~(string-prefix? "LDFLAGS=" flag))
                         (string-append flag " -L"
                                        (assoc-ref %build-inputs "libstdc++")
                                        "/lib -L" zlib "/lib -Wl,-rpath="
                                        zlib "/lib")
                         flag))
-                  #$flags)))
+                  #$(if (target-hurd64?)
+                        `(cons
+                          (string-append
+                           ;;Convince gmp's configure that gcc works
+                           "STAGE_CC_WRAPPER=" (getcwd) "/build/gcc.sh")
+                          ,flags)
+                        flags))))
+        ((#:configure-flags flags)
+         (if (target-hurd64?)
+             #~(append
+                #$flags
+                (list #$(string-append
+                         ;;Convince gmp's configure that gcc works
+                         "CC=gcc"
+                         " -Wno-implicit-function-declaration")
+                      "--disable-plugin"))
+             flags))
         ;; Build again GMP & co. within GCC's build process, because it's hard
         ;; to do outside (because GCC-BOOT0 is a cross-compiler, and thus
         ;; doesn't honor $LIBRARY_PATH, which breaks `gnu-build-system'.)
@@ -3274,7 +3325,19 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
                                                (getenv "CPLUS_INCLUDE_PATH")
                                                #\:))
                                       ":")
-                                     "\nAM_CXXFLAGS = ")))))))))))
+                                     "\nAM_CXXFLAGS = "))))))
+             #$@(if (target-hurd64?)
+                    #~((add-after 'configure 'create-stage-wrapper
+                         (lambda _
+                           (with-output-to-file "gcc.sh"
+                             (lambda _
+                               (format #t "#! ~a/bin/bash
+exec \"$@\" \
+    -Wno-error \
+    -Wno-implicit-function-declaration"
+                                       #$static-bash-for-glibc)))
+                           (chmod "gcc.sh" #o555))))
+                    #~()))))))
 
     ;; This time we want Texinfo, so we get the manual.  Add
     ;; STATIC-BASH-FOR-GLIBC so that it's used in the final shebangs of
@@ -3640,7 +3703,9 @@ is the GNU Compiler Collection.")
 
 ;; The default GCC
 (define-public gcc-toolchain
-  gcc-toolchain-11)
+  (if (host-hurd64?)
+      gcc-toolchain-14
+      gcc-toolchain-11))
 
 (define-public gcc-toolchain-aka-gcc
   ;; It's natural for users to try "guix install gcc".  This package

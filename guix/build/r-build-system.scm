@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015, 2017, 2018 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015, 2017, 2018, 2024 Ricardo Wurmus <rekado@elephly.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -20,10 +20,12 @@
   #:use-module ((guix build gnu-build-system) #:prefix gnu:)
   #:use-module (guix build utils)
   #:use-module (ice-9 match)
+  #:use-module (ice-9 format)
   #:use-module (ice-9 ftw)
   #:use-module (ice-9 popen)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
+  #:use-module (srfi srfi-34)
   #:use-module (srfi srfi-35)
   #:export (%standard-phases
             r-build))
@@ -40,14 +42,15 @@
 (define (pipe-to-r command params)
   (let ((port (apply open-pipe* OPEN_WRITE "R" params)))
     (display command port)
-    (let ((code (status:exit-val (close-pipe port))))
+    (let* ((closed (close-pipe port))
+           (code (status:exit-val closed)))
       (unless (zero? code)
         (raise (condition ((@@ (guix build utils) &invoke-error)
                            (program "R")
                            (arguments (cons command params))
-                           (exit-status (status:exit-val code))
-                           (term-signal (status:term-sig code))
-                           (stop-signal (status:stop-sig code)))))))))
+                           (exit-status code)
+                           (term-signal (status:term-sig closed))
+                           (stop-signal (status:stop-sig closed)))))))))
 
 (define (generate-site-path inputs)
   (string-join (map (match-lambda
@@ -60,7 +63,7 @@
                             inputs))
                ":"))
 
-(define* (check #:key test-target inputs outputs tests? #:allow-other-keys)
+(define* (check #:key test-target test-types inputs outputs tests? #:allow-other-keys)
   "Run the test suite of a given R package."
   (let* ((libdir    (string-append (assoc-ref outputs "out") "/site-library/"))
 
@@ -77,11 +80,25 @@
          (testdir   (string-append libdir pkg-name "/" test-target))
          (site-path (string-append libdir ":" (generate-site-path inputs))))
     (when (and tests? (file-exists? testdir))
+      ;; Skip tests that should be skipped on CI systems.
+      (setenv "CI" "1")
+      (setenv "NOT_CRAN" "skip")
+      (setenv "IS_BIOC_BUILD_MACHINE" "true")
       (setenv "R_LIBS_SITE" site-path)
-      (pipe-to-r (string-append "tools::testInstalledPackage(\"" pkg-name "\", "
-                                "lib.loc = \"" libdir "\")")
-                 '("--no-save" "--slave")))
-    #t))
+      (guard (c ((invoke-error? c)
+                 ;; Dump the test suite log to facilitate debugging.
+                 (display "\nTests failed, dumping logs.\n"
+                          (current-error-port))
+                 (gnu:dump-file-contents "." ".*\\.Rout\\.fail$")
+                 (raise c)))
+        (pipe-to-r (string-append "quit(status=tools::testInstalledPackage(\"" pkg-name "\", "
+                                  "lib.loc = \"" libdir "\", "
+                                  "errorsAreFatal=TRUE, "
+                                  (if test-types
+                                      (format #false "types=c(~{\"~a\"~^,~})" test-types)
+                                      "types=c(\"tests\", \"vignettes\")")
+                                  "))")
+                   '("--no-save" "--slave"))))))
 
 (define* (install #:key outputs inputs (configure-flags '())
                   #:allow-other-keys)

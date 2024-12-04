@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2014, 2015, 2016, 2017 Manolis Fragkiskos Ragkousis <manolis837@gmail.com>
-;;; Copyright © 2018, 2020-2023 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2018, 2020-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2020 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2020, 2022, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
@@ -57,21 +57,20 @@
                  version ".tar.gz"))
 
 (define-public gnumach-headers
-  (let ((revision "0")
-        (commit "2556fdece900d67529d5eda01f1bdaae4ffe96b0"))
+  (let ((commit "v1.8+git20240714"))
     (package
       (name "gnumach-headers")
-      (version (git-version "1.8" revision commit))
+      (version (string-drop commit 1))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://git.savannah.gnu.org/git/hurd/gnumach.git")
                (commit commit)))
+         (patches (search-patches "gnumach-version.patch"))
          (file-name (git-file-name "gnumach" version))
          (sha256
-          (base32
-           "1lzsbix0l4jhab38pvwnmk7ip1lsn7m5smhnrciqajsqnadsnlzs"))))
+          (base32 "0ykav1kx0bgxcxw04bpcsh5s4531fzdkahjgrlsfs2h3w3vfkga0"))))
       (build-system gnu-build-system)
       (arguments
        `(#:phases
@@ -93,7 +92,7 @@
 (define-public mig
   (package
     (name "mig")
-    (version "1.8+git20230520")
+    (version "1.8+git20231217")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -102,7 +101,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "10r0fdjqjzqsy6ajb21rifvhw0wpjvrw6a1zdyliqlzqny5k0qlz"))))
+                "1mx7w5vzw5ws0zplm1y6s679jb1g2hjkiwl3dlk5lxys0dxs5g4g"))))
     (build-system gnu-build-system)
     ;; Flex is needed both at build and run time.
     (inputs (list gnumach-headers flex))
@@ -133,7 +132,7 @@ communication.")
 
 (define-public hurd-headers
   (let ((revision "3")
-        (commit "v0.9.git20231217"))
+        (commit "v0.9.git20240714"))
     (package
       (name "hurd-headers")
       (version (string-drop commit 1))
@@ -144,7 +143,7 @@ communication.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1d138kzhil6s5gf9di8grpz1iziakyfv037wkc8s7qyd61imm31d"))
+                  "0wvzil3llmrjg7ymwqs86d11bm5fl771jwncv7kk679lsvqca0ll"))
                 (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (native-inputs
@@ -295,7 +294,7 @@ Hurd-minimal package which are needed for both glibc and GCC.")
 
 (define dde-sources
   ;; This is the current tip of the dde branch
-  (let ((commit "066797b576ebf8364ad157f50bef2a655597deeb"))
+  (let ((commit "b6c8526c703f3ba76294d9002f195c63897ec661"))
     (origin
       (method git-fetch)
       (uri (git-reference
@@ -303,7 +302,7 @@ Hurd-minimal package which are needed for both glibc and GCC.")
             (commit commit)))
       (sha256
        (base32
-        "19f2awlfnar5gyhi0w5zawla5brzck2s88iv0f20022pd1l5v9hl"))
+        "0k1ilj8ghli8x43xaksbc4y419pqh0w16k374914c07svq419bbr"))
       (file-name (git-file-name "dde" (string-take commit 7))))))
 
 (define %import-from-dde
@@ -317,8 +316,10 @@ Hurd-minimal package which are needed for both glibc and GCC.")
     (name "hurd")
     (source (origin
               (inherit (package-source hurd-headers))
-              (patches (search-patches "hurd-rumpdisk-no-hd.patch"
-                                       "hurd-startup.patch"))))
+              (patches (search-patches "hurd-refcounts-assert.patch"
+                                       "hurd-rumpdisk-no-hd.patch"
+                                       "hurd-startup.patch"
+                                       "hurd-64bit.patch"))))
     (version (package-version hurd-headers))
     (arguments
      `(#:tests? #f                      ;no "check" target
@@ -337,7 +338,7 @@ Hurd-minimal package which are needed for both glibc and GCC.")
              ;; Makefile. libdde_linux26 is built later in its own phase.
              (substitute* "Makefile"
                (("libbpf ")
-                "libbpf libmachdevdde libddekit rumpdisk"))))
+                "libbpf libmachdevdde libddekit "))))
          (add-after 'unpack 'find-tirpc
            (lambda* (#:key inputs #:allow-other-keys)
              (for-each (lambda (var)
@@ -363,6 +364,12 @@ Hurd-minimal package which are needed for both glibc and GCC.")
                (("#include <rpc/pmap_prot.h>" m)
                 (string-append "#include <rpc/types.h>\n#include <rpc/xdr.h>\n" m)))
              #t))
+         ,@(if (%current-target-system)
+               '((add-after 'configure 'fixup-cross-configure
+                   (lambda _
+                     (substitute* "config.make"
+                       (("HAVE_LIBRUMP = no") "HAVE_LIBRUMP = yes")))))
+               '())
          (add-before 'build 'pre-build
            (lambda _
              ;; Don't change the ownership of any file at this time.
@@ -462,48 +469,92 @@ exec ${system}/rc \"$@\"
                          (find-files (string-append out "/libexec")))
                #t)))
          (add-after 'build 'build-libdde-linux
-           (lambda* (#:key inputs native-inputs #:allow-other-keys)
-             (invoke (string-append (assoc-ref (or native-inputs inputs) "make")
-                                    "/bin/make")
-                     ;; XXX There can be a race condition because subdirs
-                     ;; aren't interdependent targets in the Makefile.
-                     "-j1" "-C" "libdde_linux26"
-                     (string-append "SHELL="
-                                    (assoc-ref (or native-inputs inputs) "bash")
-                                    "/bin/bash")
-                     (string-append "CC="
-                                    ,(cc-for-target))
-                     "ARCH=x86")))
+          (lambda* (#:key inputs native-inputs #:allow-other-keys)
+            (let ((arch ,(match (or (%current-target-system)
+                                    (%current-system))
+                           ((? target-x86-32?)
+                            "x86")
+                           ((? target-x86-64?)
+                            "amd64")
+                           (_
+                            ;; XXX: Cross-compiling this package to an
+                            ;; unsupported system.
+                            "UNSUPPORTED_SYSTEM"))))
+              (when ,(target-hurd64?)
+                (let ((dir "libdde_linux26/build/include"))
+                  (mkdir-p (string-append dir "/x86"))
+                  (format #t "symlink ~a -> ~a\n"
+                          (string-append dir "/x86/amd64") "x86")
+                  (symlink "x86" (string-append dir "/amd64"))
+                  (format #t "symlink ~a -> ~a\n"
+                          (string-append dir "/amd64/asm-x86_64") "asm-x86")
+                  (symlink "asm-x86" (string-append dir "/amd64/asm-x86_64"))))
+              (invoke (string-append (assoc-ref (or native-inputs inputs) "make")
+                                     "/bin/make")
+                      ;; XXX There can be a race condition because subdirs
+                      ;; aren't interdependent targets in the Makefile.
+                      "-j1" "-C" "libdde_linux26"
+                      (string-append "SHELL="
+                                     (assoc-ref (or native-inputs inputs) "bash")
+                                     "/bin/bash")
+                      (string-append "CC="
+                                     ,(cc-for-target))
+                      (string-append "WARNINGS="
+                                     " -Wno-declaration-missing-parameter-type"
+                                     " -Wno-implicit-function-declaration"
+                                     " -Wno-implicit-int"
+                                     " -Wno-int-conversion"
+                                     " -Wno-strict-prototypes")
+                      (string-append "ARCH=" arch)))))
          (add-after 'install 'install-goodies
-           (lambda* (#:key inputs native-inputs outputs #:allow-other-keys)
-             ;; Install additional goodies.
-             ;; TODO: Build & install *.msgids for rpctrace.
-             (let* ((out (assoc-ref outputs "out"))
-                    (datadir (string-append out "/share/hurd")))
-               ;; Install libdde_linux26.
-               (invoke (string-append (assoc-ref (or native-inputs inputs) "make")
-                                      "/bin/make")
-                       "-C" "libdde_linux26" "install"
-                       (string-append "SHELL="
-                                      (assoc-ref (or native-inputs inputs) "bash")
-                                      "/bin/bash")
-                       (string-append "INSTALLDIR="
-                                      out
-                                      "/share/libdde_linux26/build/include")
-                       "ARCH=x86")
-               ;; Install the fancy UTF-8 motd.
-               (mkdir-p (string-append out "/etc"))
-               (copy-file "console/motd.UTF8"
-                          (string-append out "/etc/motd"))
+          (lambda* (#:key inputs native-inputs outputs #:allow-other-keys)
+            ;; Install additional goodies.
+            ;; TODO: Build & install *.msgids for rpctrace.
+            (let* ((out (assoc-ref outputs "out"))
+                   (datadir (string-append out "/share/hurd"))
+                   (arch ,(match (or (%current-target-system)
+                                     (%current-system))
+                            ((? target-x86-32?)
+                             "x86")
+                            ((? target-x86-64?)
+                             "amd64")
+                            (_
+                             ;; XXX: Cross-compiling this package to an
+                             ;; unsupported system.
+                             "UNSUPPORTED_SYSTEM")))
+                   (dir (string-append out "/share/libdde_linux26/build/include")))
+              (mkdir-p dir)
+              (when ,(target-hurd64?)
+                (mkdir-p (string-append dir "/amd64"))
+                (format #t "symlink ~a -> ~a\n"
+                        (string-append dir "/amd64/asm-x86_64")
+                        "x86")
+                (symlink "x86" (string-append dir "/amd46")))
+              (invoke (string-append (assoc-ref (or native-inputs inputs) "make")
+                                     "/bin/make")
+                      "-C" "libdde_linux26" "install"
+                      (string-append "SHELL="
+                                     (assoc-ref (or native-inputs inputs) "bash")
+                                     "/bin/bash")
+                      (string-append "INSTALLDIR=" dir)
+                      (string-append "ARCH=" arch))
+              (when ,(target-hurd64?)
+                (format #t "symlink ~a -> ~a\n"
+                        (string-append dir "/amd64/asm-x86_64")
+                        "asm-x86")
+                (symlink "asm-x86" (string-append dir "/amd64/asm-x86_64")))
+              ;; Install the fancy UTF-8 motd.
+              (mkdir-p (string-append out "/etc"))
+              (copy-file "console/motd.UTF8"
+                         (string-append out "/etc/motd"))
 
-               ;; Install the BDF font for use by the console client.
-               (copy-file (assoc-ref inputs "unifont")
-                          "unifont.gz")
-               (invoke "gunzip" "unifont.gz")
-               (mkdir-p datadir)
-               (copy-file "unifont"
-                          (string-append datadir "/vga-system.bdf"))
-               #t))))
+              ;; Install the BDF font for use by the console client.
+              (copy-file (assoc-ref inputs "unifont")
+                         "unifont.gz")
+              (invoke "gunzip" "unifont.gz")
+              (mkdir-p datadir)
+              (copy-file "unifont"
+                         (string-append datadir "/vga-system.bdf"))))))
        #:configure-flags
        ,#~(list (string-append "LDFLAGS=-Wl,-rpath="
                                #$output "/lib")
@@ -556,8 +607,8 @@ implementing them.")
     (license gpl2+)))
 
 (define-public netdde
-  (let ((commit "e67c284ac113d939b10b4578334f27dab29d5b08")
-        (revision "2"))
+  (let ((commit "c0ef248dc7c5ccc1273e2a796f3ece30c5b645df")
+        (revision "3"))
     (package
       (name "netdde")
       ;; The version prefix corresponds to the version of Linux from which the
@@ -568,10 +619,11 @@ implementing them.")
                 (uri (git-reference
                       (url "https://git.savannah.gnu.org/git/hurd/incubator.git")
                       (commit commit)))
-                (patches (list (search-patch "netdde-build-fix.patch")))
+                (patches (search-patches "netdde-build-fix.patch"
+                                         "netdde-csum.patch"))
                 (sha256
                  (base32
-                  "0vnkls7sr7srzib5mnw6gybzl5qa8c5a4zf3h08w6gdr7zqbndh0"))
+                  "070fpmd4nvn3mp8dj9w4if63iwz7j2m0h6ywq888znw70wlrc6sh"))
                 (file-name (git-file-name name commit))))
       (build-system gnu-build-system)
       (arguments
@@ -581,7 +633,23 @@ implementing them.")
                               (search-input-file %build-inputs "/bin/bash"))
                "PKGDIR=libdde_linux26"
                (string-append "CC=" ,(cc-for-target))
-               "ARCH=x86")
+               (string-append "WARNINGS="
+                              " -Wno-declaration-missing-parameter-type"
+                              " -Wno-implicit-function-declaration"
+                              " -Wno-implicit-int"
+                              " -Wno-int-conversion"
+                              " -Wno-strict-prototypes")
+               (let ((arch ,(match (or (%current-target-system)
+                                       (%current-system))
+                              ((? target-x86-32?)
+                               "x86")
+                              ((? target-x86-64?)
+                               "amd64")
+                              (_
+                               ;; XXX: Cross-compiling this package to an
+                               ;; unsupported system.
+                               "UNSUPPORTED_SYSTEM"))))
+                 (string-append "ARCH=" arch)))
          #:configure-flags
          ,#~(list (string-append "LDFLAGS=-Wl,-rpath=" #$output "/lib"))
          #:phases
@@ -599,6 +667,15 @@ implementing them.")
                  (("/bin/bash") (which "bash")))))
            (add-after 'patch-generated-file-shebangs 'build-libdde-linux26
              (lambda* (#:key make-flags #:allow-other-keys)
+               (when ,(target-hurd64?)
+                 (let ((dir "libdde_linux26/build/include"))
+                   (mkdir-p (string-append dir "/x86"))
+                   (format #t "symlink ~a -> ~a\n"
+                           (string-append dir "/x86/amd64") "x86")
+                   (symlink "x86" (string-append dir "/amd64"))
+                   (format #t "symlink ~a -> ~a\n"
+                           (string-append dir "/amd64/asm-x86_64") "asm-x86")
+                   (symlink "asm-x86" (string-append dir "/amd64/asm-x86_64"))))
                (with-directory-excursion "libdde_linux26"
                  (apply invoke "make"
                         (delete "PKGDIR=libdde_linux26" make-flags)))))
@@ -642,8 +719,8 @@ in userland processes thanks to the DDE layer.")
       (license gpl2))))
 
 (define-public rumpkernel
-  (let ((commit "81043d42fabda9baed7ac9ca36e3f3f5ed11ba81")
-        (revision "3"))
+  (let ((commit "f1ffd6405f225336e595a0f99f01095ed7438337")
+        (revision "0"))
     (package
       (name "rumpkernel")
       (version (git-version "0-20211031" revision commit))
@@ -657,7 +734,7 @@ in userland processes thanks to the DDE layer.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0fv0k52qqcg3nq9012hibgsamvsd7mnvn2ikdasmzjhsp8qh5q3r"))
+                  "1ygn3ysji06ik3k44sf906fjpdmabznkspw70llldbk2zkrcdw7i"))
                 (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (arguments
@@ -758,6 +835,9 @@ in userland processes thanks to the DDE layer.")
                      "-V" "MKBINUTILS=no"
                      "-V" "MKGDB=no"
                      "-V" "MKGROFF=no"
+                     "-V" "MKDTRACE=no"
+                     "-V" "MKZFS=no"
+
                      "-V" (string-append "TOPRUMP=" toprump)
                      "-V" "BUILDRUMP_CPPFLAGS=-Wno-error=stringop-overread"
                      "-V" "RUMPUSER_EXTERNAL_DPLIBS=pthread"
@@ -768,7 +848,8 @@ in userland processes thanks to the DDE layer.")
                            " -DRUMP_REGISTER_T=int"
                            " -DRUMPUSER_CONFIG=yes"
                            " -DNO_PCI_MSI_MSIX=yes"
-                           " -DNUSB_DMA=1")
+                           " -DNUSB_DMA=1"
+                           " -DPAE")
                      "-V" (string-append
                            "CWARNFLAGS="
                            " -Wno-error=maybe-uninitialized"
@@ -777,7 +858,8 @@ in userland processes thanks to the DDE layer.")
                            " -Wno-error=stack-protector"
                            " -Wno-error=array-parameter"
                            " -Wno-error=array-bounds"
-                           " -Wno-error=stringop-overflow")
+                           " -Wno-error=stringop-overflow"
+                           " -Wno-error=sign-compare")
                      "-V" "LIBCRTBEGIN="
                      "-V" "LIBCRTEND="
                      "-V" "LIBCRT0="

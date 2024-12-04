@@ -8,6 +8,7 @@
 ;;; Copyright © 2020 Zhu Zihao <all_but_last@163.com>
 ;;; Copyright © 2021 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2024 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -174,6 +175,20 @@ number/base32-hash tuples, directly usable in the 'patch-series' form."
 
         #:phases
         (modify-phases %standard-phases
+          ,@(if (and (target-hurd?) (not (system-hurd?)))
+                `((add-after 'configure 'create-pipesize.h
+                    ;; The Bash Makefile mentions how PIPESIZE calculation is
+                    ;; "technically wrong" when cross-compiling, and offers no
+                    ;; way to override it.  On the 64bit Hurd, it can make
+                    ;; bash hang.
+                    (lambda _
+                      (with-directory-excursion "builtins"
+                        (with-output-to-file "psize.aux"
+                          (lambda _ (display "dummy to pacify make\n")))
+                        (with-output-to-file "pipesize.h"
+                          (lambda _ (display "#define PIPESIZE 16384\n")))))))
+                '())
+
           (add-after 'install 'install-sh-symlink
             (lambda* (#:key outputs #:allow-other-keys)
               ;; Add a `sh' -> `bash' link.
@@ -250,6 +265,13 @@ without modification.")
                ;; Pretend 'dlopen' is missing so we don't build loadable
                ;; modules and related code.
                "ac_cv_func_dlopen=no"
+
+               ,@(if (or (target-hurd64?) (%current-target-system))
+                     ;; gcc-14 implictly uses -Wimplicit-function-declaration
+                     ;; which together with -Werror causes:
+                     ;; ./enable.def:492:11: error: implicit declaration of function ‘dlclose’;
+                     '("CFLAGS=-g -O2 -Wno-implicit-function-declaration")
+                     '())
 
                ,@(if (%current-target-system)
                      '("bash_cv_job_control_missing=no"

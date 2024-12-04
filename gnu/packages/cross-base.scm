@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013-2018, 2020, 2023-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014, 2015, 2018 Mark H Weaver <mhw@netris.org>
-;;; Copyright © 2016, 2019, 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016, 2019, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2016 Manolis Fragkiskos Ragkousis <manolis837@gmail.com>
 ;;; Copyright © 2018 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019, 2020, 2021 Marius Bakke <marius@gnu.org>
@@ -61,7 +61,7 @@
   ;;
   ;; Note: This is a macro so that we do not refer to 'gcc' from the top
   ;; level, which would lead to circular-dependency issues.
-  (identifier-syntax gcc))
+  (identifier-syntax gcc-14))
 
 (define %gcc-include-paths
   ;; Environment variables for header search paths.
@@ -641,9 +641,9 @@ the base compiler.  Use XBINUTILS as the associated cross-Binutils."
                 ("hurd-headers" ,xhurd-headers)
                 ("hurd-minimal" ,xhurd-minimal)))))
 
-  (match target
-    ((or "i586-pc-gnu" "i586-gnu") xhurd-core-headers)
-    (_ xlinux-headers)))
+  (if (target-hurd? target)
+      xhurd-core-headers
+      xlinux-headers))
 
 (define* (cross-libc . args)
   (if (or (= (length args) 1) (contains-keyword? args))
@@ -738,7 +738,7 @@ returned."
                (delete 'install-utf8-c-locale)
 
                ,@(if (target-hurd? target)
-                     '((add-after 'install 'augment-libc.so
+                     `((add-after 'install 'augment-libc.so
                          (lambda* (#:key outputs #:allow-other-keys)
                            (let ((out (assoc-ref outputs "out")))
                              (substitute* (string-append out "/lib/libc.so")
@@ -748,7 +748,11 @@ returned."
                        (add-after 'install 'create-machine-symlink
                          (lambda* (#:key outputs #:allow-other-keys)
                            (let* ((out (assoc-ref outputs "out"))
-                                  (cpu "i386")
+                                  (cpu ,(match target
+                                          ((? target-x86-32?)
+                                           "i386")
+                                          ((? target-x86-64?)
+                                           "x86_64")))
                                   (machine (string-append
                                             out "/include/mach/machine")))
                              (unless (file-exists? machine)

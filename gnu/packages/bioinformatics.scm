@@ -743,7 +743,12 @@ and utilities for PacBio C++ applications.")
       (properties `((upstream-name . "anndataR")))
       (build-system r-build-system)
       (propagated-inputs (list r-matrix r-r6))
-      (native-inputs (list r-knitr))
+      (native-inputs
+       (list r-knitr
+             r-rhdf5
+             r-seuratobject
+             r-singlecellexperiment
+             r-testthat))
       (home-page "https://github.com/scverse/anndataR")
       (synopsis "AnnData interoperability in R")
       (description
@@ -792,7 +797,7 @@ directly access various slots (e.g. X, obs, var), or convert the data into
                                r-stringr
                                r-tibble
                                r-tidyselect))
-      (native-inputs (list r-knitr))
+      (native-inputs (list r-knitr r-testthat))
       (home-page "https://github.com/biobakery/anpan")
       (synopsis "Quantifying microbial strain-host associations")
       (description
@@ -819,6 +824,8 @@ association testing, and pathway-level random effects models.")
                   "08l04iqf54b5995gc7rvqqd7w327fwqs7qjyhc9y5cqfj8yv4c48"))))
       (properties `((upstream-name . "bedtorch")))
       (build-system r-build-system)
+      ;; Some of the tests attempt to download files off the internet.
+      (arguments (list #:tests? #false))
       (propagated-inputs
        (list r-assertthat
              r-curl
@@ -835,6 +842,7 @@ association testing, and pathway-level random effects models.")
              r-s4vectors
              r-stringr
              r-tidyr))
+      (native-inputs (list r-testthat))
       (home-page "https://github.com/haizi-zh/bedtorch/")
       (synopsis "R package for fast BED-file manipulation")
       (description
@@ -912,6 +920,8 @@ storage savings and increased read speeds.")
                   "0bca593dnxz6xdywpdi0ipli0paln2b3bfxxj0csnmj55ryrz428"))))
       (properties `((upstream-name . "btools")))
       (build-system r-build-system)
+      ;; There are no tests.
+      (arguments (list #:tests? #false))
       (propagated-inputs
        (list r-biomformat
              r-coin
@@ -1053,7 +1063,13 @@ simultaneously considered.")
              r-illuminaio
              r-mblm
              r-quadprog))
-      (native-inputs (list r-knitr))
+      (native-inputs
+       (list r-enmix
+             r-illuminahumanmethylationepicanno-ilm10b4-hg19
+             r-knitr
+             r-minfi
+             r-stringi
+             r-testthat))
       (home-page "https://github.com/hhhh5/ewastools/")
       (synopsis
        "Quality control toolset for the Illumina Infinium DNA methylation")
@@ -1245,7 +1261,9 @@ with DNA methylation micro-array data.")
                (file-name (string-append "js-headroom-jquery-" version ".js"))
                (sha256
                 (base32
-                 "1jz1ampd9k8p32m6bid4yrr66bkngd8blj2q0774hl91rszhjqrv")))))))
+                 "1jz1ampd9k8p32m6bid4yrr66bkngd8blj2q0774hl91rszhjqrv")))))
+         ("r-devtools" ,r-devtools)
+         ("r-testthat" ,r-testthat)))
       (home-page "https://github.com/smorabit/hdWGCNA")
       (synopsis "Weighted gene co-expression network analysis")
       (description
@@ -1296,78 +1314,6 @@ RNA-seq or spatial transcriptomics.")
 It also generates an aggregate profile on a pruned K-Nearest Neighbor graph.
 This approach leads to an improved gene expression profile for quantifying
 gene regulations.")
-      (license license:expat))))
-
-(define-public r-numbat
-  (let ((commit "4ab7752e7d267a3f443756675728521a9b0a7295")
-        (revision "1"))
-    (package
-      (name "r-numbat")
-      (version (git-version "1.3.2-1" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/kharchenkolab/numbat")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0wa2cz5iy570r2a57bd74jramxayvfhmxznb0vq4vyk1ia8l5jd1"))))
-      (properties `((upstream-name . "numbat")))
-      (build-system r-build-system)
-      (propagated-inputs
-       (list r-ape
-             r-catools
-             r-data-table
-             r-dendextend
-             r-dplyr
-             r-genomicranges
-             r-ggplot2
-             r-ggraph
-             r-ggtree
-             r-glue
-             r-igraph
-             r-iranges
-             r-logger
-             r-magrittr
-             r-matrix
-             r-optparse
-             r-paralleldist
-             r-patchwork
-             r-pryr
-             r-purrr
-             r-r-utils
-             r-rcpp
-             r-rcpparmadillo
-             r-rhpcblasctl
-             r-roptim
-             r-scales
-             r-scistreer
-             r-stringr
-             r-tibble
-             r-tidygraph
-             r-tidyr
-             r-vcfr
-             r-zoo))
-      (home-page "https://github.com/kharchenkolab/numbat")
-      (synopsis "Haplotype-Aware CNV Analysis from scRNA-Seq")
-      (description
-       "This package provides a computational method that infers copy number
-variations (CNVs) in cancer scRNA-seq data and reconstructs the tumor
-phylogeny.  numbat integrates signals from gene expression, allelic ratio, and
-population haplotype structures to accurately infer allele-specific CNVs in
-single cells and reconstruct their lineage relationship.  numbat can be used
-to:
-
-@enumerate
-@item detect allele-specific copy number variations from single-cells;
-@item differentiate tumor versus normal cells in the tumor microenvironment;
-@item infer the clonal architecture and evolutionary history of profiled
-tumors.
-@end enumerate
-
-numbat does not require tumor/normal-paired DNA or genotype data, but operates
-solely on the donor scRNA-data data (for example, 10x Cell Ranger output).")
       (license license:expat))))
 
 (define-public r-p2data
@@ -1606,7 +1552,7 @@ tests in large cohorts and biobanks (SAIGE-GENE+).")
                                r-reshape2
                                r-scuttle
                                r-seurat))
-      (native-inputs (list r-knitr))
+      (native-inputs (list r-knitr r-testthat))
       (home-page "https://github.com/zdebruine/singlet")
       (synopsis "Non-negative Matrix Factorization for single-cell analysis")
       (description
@@ -1727,7 +1673,7 @@ conveniently.")
              r-magrittr
              r-tidyr
              r-xts))
-      (native-inputs (list r-knitr))
+      (native-inputs (list r-knitr r-testthat))
       (home-page "https://github.com/hrbrmstr/streamgraph")
       (synopsis "Htmlwidget for building streamgraph visualizations")
       (description
@@ -6826,6 +6772,7 @@ data and settings.")
     (native-inputs
      (list (texlive-updmap.cfg
             (list texlive-doi
+                  texlive-etoolbox
                   texlive-examplep
                   texlive-forloop
                   texlive-listofitems
@@ -11985,6 +11932,7 @@ discovered with your analysis script.")
                                r-purrr
                                r-stringr
                                r-tidyr))
+      (native-inputs (list r-testthat))
       (home-page "https://github.com/davidsjoberg/ggsankey")
       (synopsis "Sankey, Alluvial and Sankey bump plots")
       (description
@@ -12018,6 +11966,7 @@ sankey, alluvial and sankey bump plots in @code{ggplot2}.")
              r-matrix
              r-s4vectors
              r-stringr))
+      (native-inputs (list r-testthat))
       (home-page "https://github.com/mskilab/gUtils")
       (synopsis "Additional capabilities and speed for GenomicRanges operations")
       (description
@@ -12026,8 +11975,8 @@ sankey, alluvial and sankey bump plots in @code{ggplot2}.")
       (license license:gpl2))))
 
 (define-public r-bamutils
-  (let ((commit "639dba901f16944fa1b7a8d7048701ba86a2cdb8")
-        (revision "1"))
+  (let ((commit "0a7d2d90cc720aac3fe44f964abf294f1b827f32")
+        (revision "2"))
     (package
       (name "r-bamutils")
       (version (git-version "0.0.0.9000" revision commit))
@@ -12039,9 +11988,11 @@ sankey, alluvial and sankey bump plots in @code{ggplot2}.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0qwby2v5rydnipvf1iv1wz9nf02yq98k0xbc4inf9mqc54jwacs0"))))
+                  "1r3y8775y2j9w92pdp42iaif7nbh260xljrhaswkz6lp71phf1yw"))))
       (properties `((upstream-name . "bamUtils")))
       (build-system r-build-system)
+      ;; See https://github.com/mskilab-org/bamUtils/issues/12
+      (arguments (list #:tests? #false))
       (propagated-inputs
        (list r-abind
              r-biocgenerics
@@ -12051,6 +12002,7 @@ sankey, alluvial and sankey bump plots in @code{ggplot2}.")
              r-gutils
              r-rsamtools
              r-variantannotation))
+      (native-inputs (list r-testthat samtools))
       (home-page "https://github.com/mskilab/bamutils/")
       (synopsis "Utility functions for manipulating BAMs")
       (description "This package provides utility functions for manipulating
@@ -12087,6 +12039,7 @@ BAM files.")
              r-rcurl
              r-rtracklayer
              r-s4vectors))
+      (native-inputs (list r-testthat))
       (home-page "https://github.com/mskilab/gTrack/")
       (synopsis "Plot tracks of complex genomic data across multiple genomic windows")
       (description
@@ -12111,6 +12064,26 @@ file formats, and ffTrack objects in multi-track panels.")
                   "105wgi5w2fhwq1grsvj6zjigwg0sny3z7zr577q8ki3qffjwdkj0"))))
       (properties `((upstream-name . "gChain")))
       (build-system r-build-system)
+      (arguments
+       (list
+        #:phases
+        '(modify-phases %standard-phases
+           (add-after 'unpack 'skip-bad-tests
+             (lambda _
+               (substitute* "tests/testthat/test_gChain.R"
+                 ;; C stack usage  7973568 is too close to the limit
+                 ((".*'testing lift\\(\\) works'.*" m)
+                  (string-append m "skip('guix')"))
+                 ;; C stack usage  7973568 is too close to the limit
+                 ((".*'testing \"\\*\" works'.*" m)
+                  (string-append m "skip('guix')"))
+                 ;; Accuracy problem
+                 ((".*'testing cgChain\\(\\) works'.*" m)
+                  (string-append m "skip('guix')"))
+                 ;; unable to find an inherited method for function ‘strand<-’
+                 ;; for signature ‘x = "GRangesList", value = "character"’
+                 ((".*'testing permute\\(\\) works'.*" m)
+                  (string-append m "skip('guix')"))))))))
       (propagated-inputs
        (list r-bamutils
              r-biostrings
@@ -12121,6 +12094,7 @@ file formats, and ffTrack objects in multi-track panels.")
              r-gutils
              r-matrix
              r-rtracklayer))
+      (native-inputs (list r-pwalign r-testthat))
       (home-page "https://github.com/mskilab/gChain/")
       (synopsis "Additional capabilities and speed for GenomicRanges operations")
       (description
@@ -12167,6 +12141,7 @@ GenomicRanges operations.")
              r-s4vectors
              r-stringr
              r-variantannotation))
+      (native-inputs (list r-bsgenome-hsapiens-ucsc-hg19))
       (home-page "https://github.com/mskilab/skitools/")
       (synopsis "Various mskilab R utilities")
       (description
@@ -12208,6 +12183,7 @@ tasks.")
              r-plyr
              r-r6
              r-zoo))
+      (native-inputs (list r-testthat))
       (home-page "https://github.com/mskilab/chromunity")
       (synopsis "Discovery of communities in Pore-C concatemers")
       (description "This is a package for the discovery of communities in
@@ -12239,7 +12215,7 @@ Pore-C concatemers.")
                                r-r6
                                r-rlang
                                r-withr))
-      (native-inputs (list r-knitr))
+      (native-inputs (list r-knitr r-testthat))
       (home-page "https://github.com/stan-dev/cmdstanr")
       (synopsis "R interface to 'CmdStan'")
       (description
@@ -12311,6 +12287,8 @@ on Illumina DNAm arrays.")
                   "02cvibyc2nwc4037ramm5cskjwyrb9ib9hkrfhmvhbslkn5ixz1v"))))
       (properties `((upstream-name . "DoubletCollection")))
       (build-system r-build-system)
+      ;; There are no tests.
+      (arguments (list #:tests? #false))
       (propagated-inputs (list r-biocgenerics
                                r-doubletfinder
                                r-gam
@@ -12330,6 +12308,7 @@ on Illumina DNAm arrays.")
                                python
                                python-scrublet
                                python-doubletdetection))
+      (native-inputs (list r-testthat))
       (home-page "https://github.com/xnnba1984/DoubletCollection")
       (synopsis "Tool for finding doublets in scRNA-seq data")
       (description
@@ -12411,7 +12390,7 @@ of microbiome data that existing correction methods have ignored so far.")
              r-stringr
              r-summarizedexperiment
              r-topgo))
-      (native-inputs (list r-knitr))
+      (native-inputs (list r-knitr r-testthat))
       (home-page "https://github.com/wmacnair/psupertime")
       (synopsis
        "Psupertime is supervised pseudotime for single cell RNAseq data")
@@ -12441,6 +12420,8 @@ differently labelled data.")
     (build-system r-build-system)
     (arguments
      (list
+      ;; The test file data/test_seurat.rds is not included.
+      #:tests? #false
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'loosen-requirements
@@ -12470,7 +12451,12 @@ differently labelled data.")
            r-tidygraph
            r-tidyverse
            r-uwot))
-    (native-inputs (list r-knitr))
+    (native-inputs
+     (list r-bsgenome-hsapiens-ucsc-hg38
+           r-devtools
+           r-doparallel
+           r-ensdb-hsapiens-v86
+           r-knitr))
     (home-page "https://github.com/quadbiolab/Pando")
     (synopsis "Infer regulomes from multi-modal single-cell genomics data")
     (description
@@ -12609,6 +12595,7 @@ states in the the context of known, reference states.")
              r-reshape2
              r-rlang
              r-tidyr))
+      (native-inputs (list r-testthat))
       (home-page "https://github.com/immunogenomics/presto")
       (synopsis "Fast Functions for Differential Expression using Wilcox and AUC")
       (description "This package performs a fast Wilcoxon rank sum test and
@@ -12852,6 +12839,8 @@ function.")
         (base32 "09xgc7r6iisjkk0c0wn0q56zy0aph386kphwixfzq4422y7vlqci"))))
     (properties `((upstream-name . "sleuth")))
     (build-system r-build-system)
+    ;; FIXME: there are 10 unknown failures.
+    (arguments (list #:tests? #false))
     (propagated-inputs (list r-aggregation
                              r-data-table
                              r-dplyr
@@ -12863,7 +12852,7 @@ function.")
                              r-rhdf5
                              r-shiny
                              r-tidyr))
-    (native-inputs (list r-knitr))
+    (native-inputs (list r-knitr r-testthat))
     (home-page "https://github.com/pachterlab/sleuth")
     (synopsis "Tools for investigating RNA-Seq")
     (description
@@ -13287,6 +13276,7 @@ colors to give chromosomes, and what points to label.")
            r-rsamtools
            r-rtracklayer
            r-tidyr))
+    (native-inputs (list r-testthat))
     (home-page "https://github.com/yuifu/millefy")
     (synopsis "Make millefy plot with single-cell RNA-seq data")
     (description "@code{Millefy} is a tool for visualizing read coverage of
@@ -13359,14 +13349,12 @@ analyze genomic data resulting from various experiments.")
              r-doparallel
              r-dplyr
              r-foreach
-             ;;r-grid ;; listed in DESCRIPTION
              r-gridextra
              r-ggplot2
              r-gtable
              r-htmlwidgets
              r-igraph
              r-matrix
-             ;;r-methods ;; listed in DESCRIPTION
              r-org-hs-eg-db
              r-psych
              r-rcolorbrewer
@@ -13544,7 +13532,7 @@ read counts derived from the physical mechanism of tag cross-contamination.")
       (properties `((upstream-name . "demuxmix")))
       (build-system r-build-system)
       (propagated-inputs (list r-ggplot2 r-gridextra r-mass r-matrix))
-      (native-inputs (list r-knitr))
+      (native-inputs (list r-knitr r-testthat))
       (home-page "https://github.com/huklein/demuxmix")
       (synopsis
        "Demultiplexing oligo-barcoded scRNA-seq data using regression mixture models")
@@ -14310,6 +14298,7 @@ factors bound at the specific regions.")
                                r-sf
                                r-spatialexperiment
                                r-summarizedexperiment))
+      (native-inputs (list r-testthat))
       (home-page "https://github.com/JEFworks-Lab/SEraster")
       (synopsis
        "Rasterization framework for scalable spatial omics data analysis")
@@ -14717,7 +14706,7 @@ trait.")
                                r-seqinr
                                r-tidyverse
                                r-topdom))
-      (native-inputs (list r-knitr))
+      (native-inputs (list r-knitr r-testthat))
       (home-page "https://github.com/cran/rnaCrosslinkOO")
       (synopsis "Analysis of RNA crosslinking data")
       (description
@@ -14778,8 +14767,11 @@ of DTU.")
           (base32
            "0sbzma49aiiyw8b0jpr7fnhzys9nsqmp4hy4hdz1gzyg1lhnca26"))))
       (build-system r-build-system)
+      ;; Tests make invalid assumption about test files and their locations.
+      (arguments (list #:tests? #false))
       (propagated-inputs
        (list r-ggplot2 r-rcolorbrewer r-gridextra r-gplots r-plyr))
+      (native-inputs (list r-data-table))
       (home-page "https://github.com/rajewsky-lab/dropbead")
       (synopsis "Basic exploration and analysis of Drop-seq data")
       (description "This package offers a quick and straight-forward way to
@@ -18057,7 +18049,7 @@ Mixtures.")
              r-withr
              r-xml2
              r-yaml))
-      (native-inputs (list r-knitr))
+      (native-inputs (list r-knitr r-testthat))
       (home-page "https://github.com/saezlab/omnipathr")
       (synopsis "OmniPath web service client and more")
       (description
@@ -18119,7 +18111,7 @@ activity prediction from transcriptomics data, and its R implementation
              r-tibble
              r-tidyr
              r-tidyselect))
-      (native-inputs (list r-knitr))
+      (native-inputs (list r-knitr r-testthat))
       (home-page "https://github.com/saezlab/liana/")
       (synopsis "LIANA: a LIgand-receptor ANalysis frAmework")
       (description
@@ -18162,7 +18154,7 @@ interaction inference from scRNA-seq data.")
            r-stringr
            r-summarizedexperiment))
     (native-inputs
-     (list r-knitr))
+     (list r-knitr r-testthat))
     (home-page "https://github.com/BIMSBbioinfo/ciRcus")
     (synopsis "Annotation, analysis and visualization of circRNA data")
     (description "Circus is an R package for annotation, analysis and
@@ -18296,6 +18288,31 @@ is then merged.")
        (list
         #:phases
         '(modify-phases %standard-phases
+           (add-after 'unpack 'skip-bad-tests
+             (lambda _
+               ;; These tests fail.  Some fail because of unimportant
+               ;; differences in printed messages.
+               (with-directory-excursion "tests/testthat/"
+                 (substitute* "test-cyto_channels-helpers.R"
+                   (("^test_that.*cyto_channels_restrict.*" m)
+                    (string-append m "skip('guix')")))
+                 (substitute* "test-cyto_gate_helpers.R"
+                   (("^test_that.*cyto_gate_rename.*" m)
+                    (string-append m "skip('guix')"))
+                   (("^test_that.*cyto_gate_remove.*" m)
+                    (string-append m "skip('guix')")))
+                 (substitute* "test-cyto_helpers.R"
+                   (("^test_that.*cyto_compensate.*" m)
+                    (string-append m "skip('guix')"))
+                   (("^test_that.*cyto_empty.*" m)
+                    (string-append m "skip('guix')"))
+                   (("^test_that.*cyto_group_by.*" m)
+                    (string-append m "skip('guix')")))
+                 (substitute* "test-cyto_spillover_spread_compute.R"
+                   (("^test_that.*cyto_spillover_spread_compute internal reference.*" m)
+                    (string-append m "skip('guix')"))
+                   (("^test_that.*cyto_spillover_spread_compute universal reference.*" m)
+                    (string-append m "skip('guix')"))))))
            (add-after 'unpack 'process-javascript
              (lambda* (#:key inputs #:allow-other-keys)
                (with-directory-excursion "docs/articles/CytoExploreR_files/"
@@ -18328,19 +18345,21 @@ is then merged.")
              r-umap
              r-visnetwork))
       (native-inputs
-       `(("esbuild" ,esbuild)
-         ("r-knitr" ,r-knitr)
-         ("js-vis"
-          ,(let ((version "4.20.1"))
-             (origin
-               (method git-fetch)
-               (uri (git-reference
-                     (url "https://github.com/almende/vis")
-                     (commit (string-append "v" version))))
-               (file-name (git-file-name "js-vis" version))
-               (sha256
-                (base32
-                 "09ldcqzzki5c0jlwas5992qjffqxnx6j5sl703qccfw7rg1hn469")))))))
+       (list esbuild
+             r-cytoexplorerdata
+             r-knitr
+             r-mockery
+             r-testthat
+             (let ((version "4.20.1"))
+               (origin
+                 (method git-fetch)
+                 (uri (git-reference
+                       (url "https://github.com/almende/vis")
+                       (commit (string-append "v" version))))
+                 (file-name (git-file-name "js-vis" version))
+                 (sha256
+                  (base32
+                   "09ldcqzzki5c0jlwas5992qjffqxnx6j5sl703qccfw7rg1hn469"))))))
       (home-page "https://github.com/DillonHammill/CytoExploreR")
       (synopsis "Interactive analysis of cytometry data")
       (description
@@ -18348,6 +18367,31 @@ is then merged.")
 conventional and cutting edge cytometry analysis tools under a unified
 framework.  It aims to represent an intuitive and interactive approach to
 analysing cytometry data in R.")
+      (license license:gpl2))))
+
+(define-public r-cytoexplorerdata
+  (let ((commit "488edf083092247ad547172906efe6f8c2aa8700")
+        (revision "1"))
+    (package
+      (name "r-cytoexplorerdata")
+      (version (git-version "1.0.3" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/DillonHammill/CytoExploreRData")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0mp3d8cv57psz5zjp7a1f07fxw9dw0w0x9fv32k46a566k1073p3"))))
+      (properties `((upstream-name . "CytoExploreRData")))
+      (build-system r-build-system)
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/DillonHammill/CytoExploreRData")
+      (synopsis "Flow Cytometry Data for CytoExploreR")
+      (description
+       "This package contains @code{gatingTemplates}, example fcs files and compensation
+controls for use in @code{CytoExploreR}.")
       (license license:gpl2))))
 
 (define-public r-giotto
@@ -20580,6 +20624,7 @@ might be caused by ATAC-seq library prep or sequencing.  The main program,
            r-readr
            r-magrittr
            r-ggplot2))
+    (native-inputs (list r-testthat))
     (home-page "https://github.com/kcha/psiplot")
     (synopsis "Plot percent spliced-in values of alternatively-spliced exons")
     (description
@@ -22697,6 +22742,7 @@ translates between different variant encodings.")
              r-tidyr
              r-tidyselect
              r-vctrs))
+      (native-inputs (list r-testthat))
       (home-page "https://github.com/timoast/signac/")
       (synopsis "Analysis of single-cell chromatin data")
       (description
@@ -23445,6 +23491,9 @@ It also handles cell type-specific differential expression.")
            "0g38grrhbqqa4bmcilvdyawbkcnax6k4vffx2giywp18mbirmj0x"))))
       (properties `((upstream-name . "Spectre")))
       (build-system r-build-system)
+      ;; Tests attempt to install Spectre from Github, from the add_fitsne
+      ;; branch.
+      (arguments (list #:tests? #false))
       (propagated-inputs
        (list r-biobase
              r-biocmanager

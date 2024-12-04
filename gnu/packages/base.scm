@@ -154,6 +154,13 @@ command-line arguments, multiple languages, and so on.")
                                        (string-append bin "/fgrep"))
                       (("^exec grep")
                        (string-append "exec " bin "/grep"))))))
+              #$@(if (target-hurd64?)
+                     #~((add-after 'unpack 'patch-sigsegv
+                          (lambda _
+                            ;; Stack overflow recovery does not compile
+                            (substitute* "lib/sigsegv.in.h"
+                              (("__GNU__") "__XGNU__")))))
+                     #~())
               #$@(if (system-hurd?)
                      #~((add-before 'check 'skip-test
                           (lambda _
@@ -161,6 +168,13 @@ command-line arguments, multiple languages, and so on.")
                                 '("tests/hash-collision-perf"
                                   ;; This test fails
                                   "tests/file")
+                              (("^#!.*" all)
+                               (string-append all "exit 77;\n"))))))
+                     #~())
+              #$@(if (system-hurd64?)
+                     #~((add-before 'check 'skip-test
+                          (lambda _
+                            (substitute* "tests/stack-overflow" ;This test hangs
                               (("^#!.*" all)
                                (string-append all "exit 77;\n"))))))
                      #~()))))
@@ -332,27 +346,34 @@ differences.")
                   "1bk38169c0xh01b0q0zmnrjqz8k9byz3arp4q7q66sn6xwf94nvz"))
                 (patches (search-patches "patch-hurd-path-max.patch"))))
       (arguments
-       (substitute-keyword-arguments (package-arguments base)
-         ((#:phases phases '%standard-phases)
-          #~(modify-phases #$phases
-              (add-after 'unpack 'copy-gnulib-sources
-                (lambda _
-                  ;; XXX: We copy the source instead of using 'gnulib' as a
-                  ;; native input to avoid introducing a dependency cycle.
-                  (copy-recursively #+gnulib "gnulib")
-                  (setenv "GNULIB_SRCDIR"
-                          (string-append (getcwd) "/gnulib/src/gnulib"))))
-              (add-after 'copy-gnulib-sources 'update-bootstrap-script
-                (lambda _
-                  (copy-file "gnulib/src/gnulib/build-aux/bootstrap"
-                             "bootstrap")))
-              (add-after 'unpack 'patch-configure.ac
-                (lambda _
-                  (substitute* "configure.ac"
-                    ;; The gnulib-provided git-version-gen script has a plain
-                    ;; shebang of #!/bin/sh; avoid using it.
-                    (("build-aux/git-version-gen" all)
-                     (string-append "sh " all)))))))))
+       (let ((arguments
+         (substitute-keyword-arguments (package-arguments base)
+           ((#:phases phases '%standard-phases)
+            #~(modify-phases #$phases
+                (add-after 'unpack 'copy-gnulib-sources
+                  (lambda _
+                    ;; XXX: We copy the source instead of using 'gnulib' as a
+                    ;; native input to avoid introducing a dependency cycle.
+                    (copy-recursively #+gnulib "gnulib")
+                    (setenv "GNULIB_SRCDIR"
+                            (string-append (getcwd) "/gnulib/src/gnulib"))))
+                (add-after 'copy-gnulib-sources 'update-bootstrap-script
+                  (lambda _
+                    (copy-file "gnulib/src/gnulib/build-aux/bootstrap"
+                               "bootstrap")))
+                (add-after 'unpack 'patch-configure.ac
+                  (lambda _
+                    (substitute* "configure.ac"
+                      ;; The gnulib-provided git-version-gen script has a plain
+                      ;; shebang of #!/bin/sh; avoid using it.
+                      (("build-aux/git-version-gen" all)
+                       (string-append "sh " all))))))))))
+         (if (target-hurd64?)
+             (substitute-keyword-arguments arguments
+               ((#:configure-flags flags '())
+                #~(list "--disable-threads"
+                        "gl_cv_func_working_mktime=yes")))
+             arguments)))
       (native-inputs (list autoconf automake bison ed))
       (properties '()))))
 
@@ -384,7 +405,15 @@ differences.")
                         (lambda _
                           (substitute* "tests/large-subopt"
                             (("^#!.*" all)
-                             (string-append all "exit 77;\n"))))))
+                             (string-append all "exit 77;\n")))
+                          #$@(if (system-hurd64?)
+                                 #~((substitute*
+                                        ;; These tests hang.
+                                        '("gnulib-tests/test-c-stack.sh"
+                                          "gnulib-tests/test-c-stack2.sh")
+                                      (("^#!.*" all)
+                                       (string-append all "exit 77;\n"))))
+                                 #~()))))
                   #~%standard-phases)))
    (native-inputs (list perl))
    (synopsis "Comparing and merging files")
@@ -534,6 +563,22 @@ used to apply commands with arbitrarily long arguments.")
                                ;; there might be some environmental factor
                                ;; here
                                ((" test-tls\\$\\(EXEEXT\\) ") " ")))
+                           '())
+                     ,@(if (system-hurd64?)
+                           '((substitute*
+                                 ;; These tests fail
+                                 '("tests/misc/sort-NaN-infloop.sh"
+                                   "tests/misc/wc-parallel.sh")
+                               (("^#!.*" all)
+                                (string-append all "exit 77;\n")))
+                             (substitute* '("gnulib-tests/test-fdutimensat.c"
+                                            "gnulib-tests/test-futimens.c"
+                                            "gnulib-tests/test-linkat.c"
+                                            "gnulib-tests/test-renameat.c"
+                                            "gnulib-tests/test-renameatu.c"
+                                            "gnulib-tests/test-utimensat.c")
+                               (("(^| )main *\\(.*" all)
+                                (string-append all "{\n  exit (77);//"))))
                            '())
                      (substitute* "Makefile.in"
                        ;; fails on filesystems where inotify cannot be used,
@@ -1079,7 +1124,7 @@ the store.")
                                (string-append locale "/C.UTF-8")))))
 
                  ,@(if (target-hurd?)
-                       '((add-after 'install 'augment-libc.so
+                       `((add-after 'install 'augment-libc.so
                            (lambda* (#:key outputs #:allow-other-keys)
                              (let ((out (assoc-ref outputs "out")))
                                (substitute* (string-append out "/lib/libc.so")
@@ -1089,7 +1134,12 @@ the store.")
                          (add-after 'install 'create-machine-symlink
                            (lambda* (#:key outputs #:allow-other-keys)
                              (let* ((out (assoc-ref outputs "out"))
-                                    (cpu "i386")
+                                    (cpu ,(match (or (%current-target-system)
+                                                     (%current-system))
+                                            ((? target-x86-32?)
+                                             "i386")
+                                            ((? target-x86-64?)
+                                             "x86_64")))
                                     (machine (string-append
                                               out "/include/mach/machine")))
                                (unless (file-exists? machine)
@@ -1569,7 +1619,18 @@ variety of options.  It is an alternative to the shell \"type\" built-in
 command.")
     (license gpl3+))) ; some files are under GPLv2+
 
-(define-public glibc/hurd glibc)
+(define-public glibc/hurd
+  (package/inherit glibc
+    (source
+     (origin
+       (inherit (package-source glibc))
+       (patches
+        (append (origin-patches (package-source glibc))
+                (search-patches "glibc-hurd-pthread_setcancelstate.patch"
+                                "glibc-hurd64-fault.patch"
+                                "glibc-hurd64-intr-msg-clobber.patch"
+                                "glibc-hurd64-sgms-context.patch"
+                                "glibc-hurd64-gcc-14.2-tls-bug.patch")))))))
 
 (define-public glibc/hurd-headers
   (package/inherit glibc/hurd

@@ -23,6 +23,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix import cran)
+  #:use-module (ice-9 ftw)
   #:use-module (ice-9 match)
   #:use-module (ice-9 regex)
   #:use-module (ice-9 popen)
@@ -198,9 +199,9 @@ package definition."
 (define %cran-canonical-url "https://cran.r-project.org/package=")
 (define %bioconductor-url "https://bioconductor.org/packages/")
 
-;; The latest Bioconductor release is 3.19.  Bioconductor packages should be
+;; The latest Bioconductor release is 3.20.  Bioconductor packages should be
 ;; updated together.
-(define %bioconductor-version "3.19")
+(define %bioconductor-version "3.20")
 
 (define* (bioconductor-packages-list-url #:optional type)
   (string-append "https://bioconductor.org/packages/"
@@ -328,7 +329,7 @@ from ~a: ~a (~a)~%")
                           (and (latest-bioconductor-package-version name 'experiment) 'experiment)))
                 ;; TODO: Honor VERSION.
                 (version (latest-bioconductor-package-version name type))
-                (url     (car (bioconductor-uri name version type)))
+                (url     (bioconductor-uri name version type))
                 (meta    (fetch-description-from-tarball
                           url #:download (or replacement-download
                                              download))))
@@ -551,6 +552,106 @@ referenced in build system files."
     (set)
     (find-files dir "(Makevars(.in.*)?|configure.*)"))))
 
+;; A pattern matching package imports.  It detects uses of "library" or
+;; "require", capturing the first argument; it also detects direct access of
+;; namespaces via "::" or ":::", capturing the namespace.
+(define import-pattern
+  (make-regexp
+   (string-append
+    ;; Ignore leading spaces, but don't capture commented expressions.
+    "(^ *"
+    ;; Quiet imports
+    "(suppressPackageStartupMessages\\()?"
+    ;; the actual import statement.
+    "(require|library)\\(\"?([^, \")]+)"
+    ;; Or perhaps...
+    "|"
+    ;; ...direct namespace access.
+    " *([A-Za-z0-9]+):::?"
+    ")")))
+
+(define (needed-test-inputs-in-directory dir)
+  "Return a set of R package names that are found in library import
+statements in files in the directory DIR."
+  (if (getenv "GUIX_CRAN_IGNORE_TEST_INPUTS")
+      (set)
+      (match (scandir dir (negate (cute member <> '("." ".."))))
+        ((package-directory-name . rest)
+         (let* ((test-directories
+                 (filter file-exists?
+                         (list (string-append dir "/" package-directory-name "/tests")
+                               (string-append dir "/" package-directory-name "/Tests")
+                               (string-append dir "/" package-directory-name "/inst/unitTests")
+                               (string-append dir "/" package-directory-name "/inst/UnitTests"))))
+                (imported-packages
+                 (fold (lambda (file packages)
+                         (call-with-input-file file
+                           (lambda (port)
+                             (let loop ((packages packages))
+                               (let ((line (read-line port)))
+                                 (cond
+                                  ((eof-object? line) packages)
+                                  (else
+                                   (loop
+                                    (fold (lambda (match acc)
+                                            (let ((imported (or (match:substring match 4)
+                                                                (match:substring match 5))))
+                                              (if (or (not imported)
+                                                      (string=? imported package-directory-name)
+                                                      (member imported default-r-packages))
+                                                  acc
+                                                  (set-insert imported acc))))
+                                          packages
+                                          (list-matches import-pattern line))))))))))
+                       (set)
+                       (append-map (lambda (directory)
+                                     (find-files directory "\\.(R|Rmd)"))
+                                   test-directories))))
+
+           ;; Special case for BiocGenerics + RUnit.
+           (if (any (lambda (directory)
+                      (files-match-pattern? directory "BiocGenerics:::testPackage"
+                                            "\\.R"))
+                    test-directories)
+               (set-insert "RUnit"
+                           (set-insert "BiocGenerics" imported-packages))
+               imported-packages)))
+        (_ (set)))))
+
+(define (needed-vignettes-inputs-in-directory dir)
+  "Return a set of R package names that are found in library import statements
+in vignette files in the directory DIR."
+  (if (getenv "GUIX_CRAN_IGNORE_VIGNETTE_INPUTS")
+      (set)
+      (match (scandir dir (negate (cute member <> '("." ".."))))
+        ((package-directory-name . rest)
+         (let ((vignettes-directories
+                (filter file-exists?
+                        (list (string-append dir "/" package-directory-name "/vignettes")))))
+           (fold (lambda (file packages)
+                   (call-with-input-file file
+                     (lambda (port)
+                       (let loop ((packages packages))
+                         (let ((line (read-line port)))
+                           (cond
+                            ((eof-object? line) packages)
+                            (else
+                             (loop
+                              (fold (lambda (match acc)
+                                      (let ((imported (match:substring match 4)))
+                                        (if (or (not imported)
+                                                (string=? imported package-directory-name)
+                                                (member imported default-r-packages))
+                                            acc
+                                            (set-insert imported acc))))
+                                    packages
+                                    (list-matches import-pattern line))))))))))
+                 (set)
+                 (append-map (lambda (directory)
+                               (find-files directory "\\.Rnw"))
+                             vignettes-directories))))
+        (_ (set)))))
+
 (define (directory-needs-pkg-config? dir)
   "Return #T if any of the Makevars files in the src directory DIR reference
 the pkg-config tool."
@@ -572,6 +673,14 @@ in DIR."
                   (name name)
                   (downstream-name name)))
                (needed-libraries-in-directory dir))
+          (map (lambda (name)
+                 (upstream-input
+                  (name name)
+                  (downstream-name (cran-guix-name name))
+                  (type 'native)))
+               (set->list
+                (set-union (needed-test-inputs-in-directory dir)
+                           (needed-vignettes-inputs-in-directory dir))))
           (if (directory-needs-esbuild? dir)
               (list (native "esbuild"))
               '())
@@ -647,31 +756,46 @@ META."
 of META, a package in REPOSITORY."
   (let* ((url    (cran-package-source-url meta repository))
          (name   (assoc-ref meta "Package"))
-         (source (download-source url
-                                  #:method
-                                  (cond ((assoc-ref meta 'git) 'git)
-                                        ((assoc-ref meta 'hg) 'hg)
-                                        (else #f))))
+         (source (apply download-source url
+                        (cond
+                         ((assoc-ref meta 'git) '(#:method git))
+                         ((assoc-ref meta 'hg) '(#:method hg))
+                         (else '()))))
          (tarball? (not (or (assoc-ref meta 'git)
-                            (assoc-ref meta 'hg)))))
+                            (assoc-ref meta 'hg))))
+         (compare-upstream-inputs
+          (lambda (input1 input2)
+            (string<? (upstream-input-downstream-name input1)
+                      (upstream-input-downstream-name input2))))
+         (upstream-inputs-equal?
+          (lambda (input1 input2)
+            (string=? (upstream-input-downstream-name input1)
+                      (upstream-input-downstream-name input2))))
+         (r-inputs
+          (append (cran-package-propagated-inputs meta)
+                  (vignette-builders meta)))
+         (source-derived-inputs
+          ;; Only keep new inputs
+          (lset-difference upstream-inputs-equal?
+                           (source->dependencies source tarball?)
+                           r-inputs))
+         (system-inputs
+          (filter-map (lambda (name)
+                        (and (not (member name invalid-packages))
+                             (upstream-input
+                              (name name)
+                              (downstream-name
+                               (transform-sysname name)))))
+                      (map string-downcase
+                           (listify meta "SystemRequirements")))))
     (sort (filter
            ;; Prevent tight cycles.
            (lambda (input)
              ((negate string=?) name (upstream-input-name input)))
-           (append (source->dependencies source tarball?)
-                   (filter-map (lambda (name)
-                                 (and (not (member name invalid-packages))
-                                      (upstream-input
-                                       (name name)
-                                       (downstream-name
-                                        (transform-sysname name)))))
-                               (map string-downcase
-                                    (listify meta "SystemRequirements")))
-                   (cran-package-propagated-inputs meta)
-                   (vignette-builders meta)))
-          (lambda (input1 input2)
-            (string<? (upstream-input-downstream-name input1)
-                      (upstream-input-downstream-name input2))))))
+           (append source-derived-inputs
+                   system-inputs
+                   r-inputs))
+          compare-upstream-inputs)))
 
 (define (phases-for-inputs input-names)
   "Generate a list of build phases based on the provided INPUT-NAMES, a list
@@ -679,7 +803,11 @@ of package names for all input packages."
   (let ((rules
          (list (lambda ()
                  (and (any (lambda (name)
-                             (member name '("styler" "ExperimentHub")))
+                             (member name
+                                     '("styler"
+                                       "ExperimentHub"
+                                       "R.cache"
+                                       "R.rsp")))
                            input-names)
                       '(add-after 'unpack 'set-HOME
                          (lambda _ (setenv "HOME" "/tmp")))))
@@ -749,10 +877,11 @@ from the alist META, which was derived from the R package's DESCRIPTION file."
          (source-url (cran-package-source-url meta repository))
          (git?       (if (assoc-ref meta 'git) #true #false))
          (hg?        (if (assoc-ref meta 'hg) #true #false))
-         (source     (download-source source-url #:method (cond
-                                                           (git? 'git)
-                                                           (hg? 'hg)
-                                                           (else #f))))
+         (source     (apply download-source source-url
+                            (cond
+                             (git? '(#:method git))
+                             (hg? '(#:method hg))
+                             (else '()))))
          (uri-helper (uri-helper repository))
          (inputs     (cran-package-inputs meta repository
                                           #:download-source download-source))
@@ -832,7 +961,8 @@ from the alist META, which was derived from the R package's DESCRIPTION file."
           ,package))
       (else package))
      (filter-map (lambda (input)
-                   (and (eq? 'propagated (upstream-input-type input))
+                   (and (string-prefix? "r-"
+                                        (upstream-input-downstream-name input))
                         (upstream-input-name input)))
                  inputs))))
 
