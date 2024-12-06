@@ -340,10 +340,9 @@ or false to signal an error."
      ;; here just so we can keep going.
      ((string=? system "arm-eabi") "no-ld.so")
      ((string=? system "avr") "no-ld.so")
-     ((string=? system "i686-mingw") "no-ld.so")
      ((string=? system "or1k-elf") "no-ld.so")
-     ((string=? system "x86_64-mingw") "no-ld.so")
      ((string-suffix? "-elf" system) "no-ld.so")
+     ((string-suffix? "-mingw" system) "no-ld.so")
 
      (else (error "dynamic linker name not known for this system"
                   system)))))
@@ -775,11 +774,14 @@ $out/bin/guile --version~%"
               (chmod "lib" #o755)
 
               ;; Patch linker scripts so they refer to the right file-names.
-              (substitute* ,(if (target-hurd64?)
-                                ''("lib/libc.so" "lib/libm.so")
-                                "lib/libc.so")
-                (("/[^ ]+/lib/(libc|libm|libh|ld)" _ prefix)
-                 (string-append out "/lib/" prefix)))))))))
+              ,@(if (target-hurd64?)
+                    '((substitute* '("lib/libc.so" "lib/libm.so")
+                        (("/[^ ]+/lib/(libc|libm|libh|ld)" _ prefix)
+                         (string-append out "/lib/" prefix))))
+                    '((substitute* "lib/libc.so"
+                        (("/[^ ]+/lib/(libc|ld)" _ prefix)
+                         (string-append out "/lib/" prefix)))
+                      #t))))))))
     (inputs
      `(("tar" ,(bootstrap-executable "tar" (%current-system)))
        ("xz"  ,(bootstrap-executable "xz" (%current-system)))
@@ -871,20 +873,22 @@ $out/bin/guile --version~%"
            (let ((builddir (getcwd))
                  (bindir   (string-append out "/bin")))
 
-             (define (wrap-program program)
-               (let ((wrapped (format #f ".~a-wrapped" program)))
-                 (rename-file program wrapped)
-                 (call-with-output-file program
-                   (lambda (p)
-                     (format p "#!~a
+             ,@(if (target-hurd64?)
+                   `((define (wrap-program program)
+                       (let ((wrapped (format #f ".~a-wrapped" program)))
+                         (rename-file program wrapped)
+                         (call-with-output-file program
+                           (lambda (p)
+                             (format p "#!~a
 exec ~a/bin/~a -B~a/lib \
      -Wl,-rpath -Wl,~a/lib \
      -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
-                             bash
-                             out wrapped
-                             libc libc libc
-                             ,(glibc-dynamic-linker)))))
-               (chmod program #o555))
+                                     bash
+                                     out wrapped
+                                     libc libc libc
+                                     ,(glibc-dynamic-linker)))))
+                       (chmod program #o555)))
+                   '())
 
              (with-directory-excursion out
                (invoke tar "xvf"
@@ -892,10 +896,21 @@ exec ~a/bin/~a -B~a/lib \
 
              (with-directory-excursion bindir
                (chmod "." #o755)
-               (for-each wrap-program
-                         ,(if (target-hurd64?)
-                              ''("gcc" "g++")
-                              ''("gcc")))))))))
+               ,@(if (target-hurd64?)
+                     `((for-each wrap-program '("gcc" "g++")))
+                     `((rename-file "gcc" ".gcc-wrapped")
+                       (call-with-output-file "gcc"
+                         (lambda (p)
+                           (format p "#!~a
+exec ~a/bin/.gcc-wrapped -B~a/lib \
+     -Wl,-rpath -Wl,~a/lib \
+     -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
+                                   bash
+                                   out libc libc libc
+                                   ,(glibc-dynamic-linker))))
+
+                       (chmod "gcc" #o555)
+                       #t))))))))
     (inputs
      `(("tar" ,(bootstrap-executable "tar" (%current-system)))
        ("xz"  ,(bootstrap-executable "xz" (%current-system)))
