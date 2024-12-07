@@ -3158,11 +3158,11 @@ definition objects.")
   (sbcl-package->ecl-package sbcl-cesdi))
 
 (define-public sbcl-cf
-  (let ((commit "2bf64feadf63569149b7ee6e9dc25572704d8939")
-        (revision "6"))
+  (let ((commit "0aa0dd67f59f88e0dbd50ebe25690fcdaafee4c5")
+        (revision "0"))
     (package
       (name "sbcl-cf")
-      (version (git-version "1.0" revision commit))
+      (version (git-version "1.1" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -3171,7 +3171,7 @@ definition objects.")
                (commit commit)))
          (file-name (git-file-name "cl-cf" version))
          (sha256
-          (base32 "0zp9699wvf2ylk6s5j9k9mcds1g1yxb2wnlm27rvnb5m6nfrxbzv"))))
+          (base32 "0bacgspfqvkdr430yax9dk61pavcajz9kv9lb12rg5qcrqd1vpmb"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs (list sbcl-fiveam))
       (synopsis "Continued fractions library")
@@ -27440,11 +27440,11 @@ running into parallelism problems when having to change directory.")
   (sbcl-package->ecl-package sbcl-simple-inferiors))
 
 (define-public sbcl-simple-matrix
-  (let ((commit "9b549c3b2729270327a6fd5e2da30abbff789621")
-        (revision "1"))
+  (let ((commit "c94956802caa52e38e2e63c77ba3adc8bff68df2")
+        (revision "0"))
     (package
       (name "sbcl-simple-matrix")
-      (version (git-version "1.0" revision commit))
+      (version (git-version "1.1" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -27453,7 +27453,7 @@ running into parallelism problems when having to change directory.")
                (commit commit)))
          (file-name (git-file-name "cl-simple-matrix" version))
          (sha256
-          (base32 "0m6fxb2jg9n2r1mcknad85n328n12c30id7bw6ym4s7pmprc8hq8"))))
+          (base32 "09hf9qc7hvmkg9yzy1hrqp8hpr7j8r2841azipn9wkl57jzsrmn7"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs (list sbcl-fiveam))
       (synopsis "Matrix library for Common Lisp")
@@ -27472,30 +27472,27 @@ functions to work with matrices.")
 (define-public sbcl-simple-neural-network
   (package
     (name "sbcl-simple-neural-network")
-    (version "3.1")
+    (version "3.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://codeberg.org/glv/simple-neural-network")
              (commit (string-append "v" version))))
-       (file-name (git-file-name "simple-neural-network" version))
+       (file-name (git-file-name "cl-simple-neural-network" version))
        (sha256
-        (base32 "1jj1c90fr5clwka0jv32hv6xp1bkdlpa6x5jh19an13rhx8ll4zr"))))
+        (base32 "15c4851qm1zv76hqa4081z0ni7dnf23130x1rxgsiysjpvz2slyf"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs
-     `(("chipz" ,sbcl-chipz)
-       ("fiveam" ,sbcl-fiveam)))
+     (list sbcl-chipz sbcl-fiveam))
     (inputs
-     `(("cl-store" ,sbcl-cl-store)
-       ("lparallel" ,sbcl-lparallel)))
+     (list sbcl-cl-store sbcl-lparallel))
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'check 'remove-test-data
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (for-each delete-file (find-files out "\\.gz$"))))))))
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'check 'remove-test-data
+                 (lambda _
+                   (for-each delete-file (find-files #$output "\\.gz$")))))))
     (synopsis "Simple neural network in Common Lisp")
     (description
      "@code{simple-neural-network} is a Common Lisp library for creating,
