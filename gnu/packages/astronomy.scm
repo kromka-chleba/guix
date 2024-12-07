@@ -1725,6 +1725,67 @@ format for chunked, compressed, N-dimensional arrays based on an open-source
 specification.")
     (license license:bsd-3)))
 
+(define-public python-astral
+  (package
+    (name "python-astral")
+    (version "3.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "astral" version))
+       (sha256
+        (base32 "121xag65rmv6pszbi3d206yz3jfwmpkf0jxjrxrd2scy5r0knz4v"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; XXX: Disable tests which require newer version of python-pytz.
+      ;; No time zone found with key Pacific/Auckland
+      #~(list "-k" (string-append
+                    "not test_TimezoneLookup"
+                    " and not test_Sun"
+                    " and not test_Dawn"
+                    " and not test_Sunrise"
+                    " and not test_SolarNoon"
+                    " and not test_Dusk"
+                    " and not test_Sunset"
+                    " and not test_SolarElevation"
+                    " and not test_SolarAzimuth"
+                    " and not test_TimeAtAltitude"
+                    " and not test_MoonNoDate"
+                    " and not test_lookup"
+                    " and not test_tzinfo"
+                    " and not test_australia"
+                    " and not test_adak"
+                    " and not test_australia"
+                    " and not test_Elevation_NonNaive"
+                    " and not test_Wellington"
+                    " and not test_Sun_Local_tzinfo"
+                    " and not test_Sun_Local_str"
+                    " and not test_SolarZenith_London"
+                    " and not test_SolarZenith_Riyadh"
+                    " and not test_moonrise_utc"
+                    " and not test_moonrise_wellington"
+                    " and not test_moonset_wellington"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'prepare-test-environment
+            (lambda _
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-freezegun
+           python-poetry-core
+           python-pytest
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-dataclasses python-pytest python-pytz))
+    (home-page "https://github.com/sffjunkie/astral")
+    (synopsis "Calculations for the position of the sun and moon")
+    (description "Astral is a Python module that calculates times for various
+positions of the sun: dawn, sunrise, solar noon, sunset, dusk, solar
+elevation, solar azimuth, rahukaalam, and the phases of the moon.")
+    (license license:asl2.0)))
+
 (define-public python-astroalign
   (package
     (name "python-astroalign")
@@ -1922,6 +1983,34 @@ Applications} formats (such as @file{.image} datasets).  This implementation
 is independent of and does not use @code{casacore}.")
     (license license:lgpl2.0)))
 
+(define-public python-ccdproc
+  (package
+    (name "python-ccdproc")
+    (version "2.4.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ccdproc" version))
+       (sha256
+        (base32 "14faivm9nihpdwzg0jx1c9zr7jk22gjfjw78raq6h63ypl10i6yx"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-memory-profiler
+           python-pytest-astropy))
+    (propagated-inputs
+     (list python-astropy
+           python-astroscrappy
+           python-numpy
+           python-reproject
+           python-scikit-image
+           python-scipy))
+    (home-page "http://ccdproc.readthedocs.io/")
+    (synopsis "Basic data reductions of CCD images")
+    (description "The ccdproc package provides many of the necessary tools for
+processing of CCD images built on a framework to provide error propagation and
+bad pixel tracking throughout the reduction process.")
+    (license license:bsd-3)))
+
 (define-public python-coolest
   (package
     (name "python-coolest")
@@ -2022,6 +2111,52 @@ cosmological parameters e.g. redshift or luminosity-distance.")
 a time-dynamic graphical scene, primarily for display in a web browser running
 Cesium.")
     (license license:expat)))
+
+(define-public python-drizzle
+  (package
+    (name "python-drizzle")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch) ;PyPi doesn't have the test data sets
+       (uri (git-reference
+             (url "https://github.com/spacetelescope/drizzle")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1psa98n81wphin15j7k0392rh94dkhnwrjp32lr40gb9ldp52mcm"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-env-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)))
+          (add-before 'check 'build-extensions
+            (lambda _
+              ;; Cython extensions have to be built before running the tests.
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-astropy
+           python-numpy))
+    (home-page "https://github.com/spacetelescope/drizzle")
+    (synopsis
+     "Astronomical tool for combining dithered images into a single image")
+    (description
+     "The drizzle library is a Python package for combining dithered images
+into a single image.  This library is derived from code used in DrizzlePac.
+Like DrizzlePac, most of the code is implemented in the C language.  The
+biggest change from DrizzlePac is that this code passes an array that maps the
+input to output image into the C code, while the DrizzlePac code computes the
+mapping by using a Python callback.  Switching to using an array allowed the
+code to be greatly simplified.")
+    (license license:bsd-3)))
 
 (define-public python-ephem
   (package
@@ -2381,6 +2516,43 @@ across many files.")
     (home-page "http://glueviz.org")
     (synopsis "Multidimensional data visualization across files")
     (description "Multidimensional data visualization across files.")
+    (license license:bsd-3)))
+
+(define-public python-gwcs
+  (package
+    (name "python-gwcs")
+    (version "0.21.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "gwcs" version))
+       (sha256
+        (base32 "1fn5l4v236bl7xqi1is40c2q57dji8by98iwqcndfnmjwqf7zllc"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-jsonschema
+           python-jmespath
+           python-pytest
+           python-pytest-doctestplus
+           python-pyyaml
+           python-setuptools-scm))
+    (propagated-inputs
+     (list python-asdf
+           python-asdf-astropy
+           python-asdf-wcs-schemas
+           python-astropy
+           python-numpy
+           python-scipy))
+    (home-page "https://gwcs.readthedocs.io/en/latest/")
+    (synopsis "Generalized World Coordinate System")
+    (description "Generalized World Coordinate System (GWCS) is an Astropy
+affiliated package providing tools for managing the World Coordinate System of
+astronomical data.
+
+GWCS takes a general approach to the problem of expressing transformations
+between pixel and world coordinates.  It supports a data model which includes
+the entire transformation pipeline from input coordinates (detector by
+default) to world coordinates.")
     (license license:bsd-3)))
 
 (define-public python-halotools
@@ -3025,50 +3197,6 @@ large scale galaxy-survey data, it can perform reasonably well on moderately
 crowded star fields.")
     (license license:gpl3+)))
 
-(define-public splash
-  (package
-    (name "splash")
-    (version "3.10.3")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/danieljprice/splash")
-                    (commit (string-append "v" version))))
-              (sha256
-               (base32
-                "077s9if7fmccvhsbp0dhvyqcil46vpbgdm1y6qn6h34r8lfqj9z6"))
-              (file-name (git-file-name name version))))
-    (build-system gnu-build-system)
-    (arguments
-     ;; FIXME: Tests failed
-     ;; Issue submited upstream https://github.com/danieljprice/splash/issues/67
-     ;;
-     ;; make: *** No rule to make target 'test_interpolate3D.o', needed by 'test1'.  Stop.
-     ;;
-     (list #:tests? #f
-           #:parallel-build? #f ;parallel build fails
-           #:make-flags #~(list "SYSTEM=gfortran" "PREFIX="
-                                (string-append "GIZA_DIR="
-                                               #$(this-package-input "giza"))
-                                (string-append "DESTDIR="
-                                               #$output))
-           #:phases #~(modify-phases %standard-phases
-                        (delete 'configure)
-                        (add-before 'install 'create-install-dirrectories
-                          (lambda _
-                            (mkdir-p (string-append #$output "/bin")))))))
-    (native-inputs (list gfortran pkg-config perl python-wrapper))
-    (inputs (list cairo cfitsio giza))
-    (home-page "https://users.monash.edu.au/~dprice/splash/")
-    (synopsis
-     "Astrophysical visualisation tool for smoothed particle hydrodynamics")
-    (description
-     "SPLASH is visualisation tool for Smoothed Particle Hydrodynamics (SPH)
-simulations in one, two and three dimensions, developed mainly for
-astrophysics.  It uses a command-line menu but data can be manipulated
-interactively in the plotting window.")
-    (license license:gpl2+)))
-
 (define-public stackistry
   (package
     (name "stackistry")
@@ -3508,34 +3636,6 @@ be as fast as possible so some of the readability has been sacrificed,
 specifically in the C code.")
     (license license:bsd-3)))
 
-(define-public python-ccdproc
-  (package
-    (name "python-ccdproc")
-    (version "2.4.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "ccdproc" version))
-       (sha256
-        (base32 "14faivm9nihpdwzg0jx1c9zr7jk22gjfjw78raq6h63ypl10i6yx"))))
-    (build-system pyproject-build-system)
-    (native-inputs
-     (list python-memory-profiler
-           python-pytest-astropy))
-    (propagated-inputs
-     (list python-astropy
-           python-astroscrappy
-           python-numpy
-           python-reproject
-           python-scikit-image
-           python-scipy))
-    (home-page "http://ccdproc.readthedocs.io/")
-    (synopsis "Basic data reductions of CCD images")
-    (description "The ccdproc package provides many of the necessary tools for
-processing of CCD images built on a framework to provide error propagation and
-bad pixel tracking throughout the reduction process.")
-    (license license:bsd-3)))
-
 (define-public python-cdflib
   (package
     (name "python-cdflib")
@@ -3721,52 +3821,6 @@ JSOC (@url{http://jsoc.stanford.edu/}) DRMS server by default, but can also be
 used with local NetDRMS sites.")
     (license license:bsd-2)))
 
-(define-public python-drizzle
-  (package
-    (name "python-drizzle")
-    (version "2.0.0")
-    (source
-     (origin
-       (method git-fetch) ;PyPi doesn't have the test data sets
-       (uri (git-reference
-             (url "https://github.com/spacetelescope/drizzle")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1psa98n81wphin15j7k0392rh94dkhnwrjp32lr40gb9ldp52mcm"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'build 'set-env-version
-            (lambda _
-              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)))
-          (add-before 'check 'build-extensions
-            (lambda _
-              ;; Cython extensions have to be built before running the tests.
-              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (native-inputs
-     (list python-pytest
-           python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    (propagated-inputs
-     (list python-astropy
-           python-numpy))
-    (home-page "https://github.com/spacetelescope/drizzle")
-    (synopsis
-     "Astronomical tool for combining dithered images into a single image")
-    (description
-     "The drizzle library is a Python package for combining dithered images
-into a single image.  This library is derived from code used in DrizzlePac.
-Like DrizzlePac, most of the code is implemented in the C language.  The
-biggest change from DrizzlePac is that this code passes an array that maps the
-input to output image into the C code, while the DrizzlePac code computes the
-mapping by using a Python callback.  Switching to using an array allowed the
-code to be greatly simplified.")
-    (license license:bsd-3)))
-
 (define-public python-dust-extinction
   (package
     (name "python-dust-extinction")
@@ -3816,6 +3870,163 @@ implemented using the astropy.modeling framework.")
     (description "@code{hvpy} is a Python API wrapper around the formal
 @url{Helioviewer API, https://api.helioviewer.org/docs/v2/}.")
     (license license:bsd-2)))
+
+(define-public python-jplephem
+  (package
+    (name "python-jplephem")
+    (version "2.22")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jplephem" version))
+       (sha256
+        (base32 "0b2rgb7pvwnl72pqjryf9c812mmdxr69fwiym7mnz05l2xrcr6hd"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "python" "-m" "unittest" "discover" "-s" "test")))))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy))
+    (home-page "https://github.com/brandon-rhodes/python-jplephem")
+    (synopsis "Python version of NASA DE4xx ephemerides")
+    (description
+     "@code{skyfield} computes positions for the stars, planets, and
+satellites in orbit around the Earth.  Its results should agree with the
+positions generated by the United States Naval Observatory and their
+Astronomical Almanac to within 0.0005 arcseconds (half a @emph{mas} or
+milliarcsecond).")
+    (license license:expat)))
+
+(define-public python-jwst
+  (package
+    (name "python-jwst")
+    (version "1.16.1")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "jwst" version))
+              (sha256
+               (base32
+                "1bqfgqp4gdm1ky5dvzhzpgygwr710h4mbykp5sb9aw3cw9jg1bk7"))
+              (modules '((guix build utils)))
+              (snippet
+               '(begin
+                  ;; Replace reference to external configobj.
+                  (substitute* (find-files "." "\\.py$")
+                    (("from astropy.extern import configobj") "import configobj")
+                    (("from astropy.extern.configobj import validate") "import validate")
+                    (("from astropy.extern.configobj.configobj import ") "from configobj import ")
+                    (("from astropy.extern.configobj.validate import ") "from validate import "))))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: Tests require access to https://jwst-crds-pub.stsci.edu server for
+      ;; getting data sets.
+      #:tests? #f
+      #:phases #~(modify-phases %standard-phases
+                   ;; NOTE: (Sharlatan-20230529T113448+0100): opencv-python's
+                   ;; version can't be detected, it could the way it's packed in
+                   ;; Guix. Review failing sanity check with more efforts,
+                   ;; disable for now to make package buildable.
+                   (delete 'sanity-check))))
+    ;; opencv provides OpenCV-Python which is Listed as install requirement.
+    (propagated-inputs (list opencv
+                             python-asdf
+                             python-asdf-astropy
+                             python-astropy
+                             python-bayesicfitting
+                             python-crds
+                             python-drizzle
+                             python-gwcs
+                             python-importlib-metadata
+                             python-jplephem
+                             python-jsonschema
+                             python-numpy
+                             python-packaging
+                             python-photutils
+                             python-poppy
+                             python-psutil
+                             python-pyparsing
+                             python-pysiaf
+                             python-requests
+                             python-scikit-image
+                             python-scipy
+                             python-spherical-geometry
+                             python-stcal
+                             python-stdatamodels
+                             python-stpipe
+                             python-stsci-image
+                             python-stsci-imagestats
+                             python-synphot
+                             python-tweakwcs
+                             python-wiimatch))
+    (native-inputs (list python-colorama
+                         python-pytest
+                         python-pytest-cov
+                         python-pytest-doctestplus
+                         python-pytest-openfiles
+                         python-requests-mock
+                         ;; python-ruff ; not packed yet in Guix
+                         python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
+    (home-page "https://jwst-pipeline.readthedocs.io/en/latest/")
+    (synopsis
+     "Python library for science observations from the James Webb Space Telescope")
+    (description
+     "This package provides an access to the JWST Science Calibration Pipeline
+processes data from all JWST instruments and observing modes by applying various
+science corrections sequentially, producing both fully-calibrated individual
+exposures and high-level data products (mosaics, extracted spectra, etc.).")
+    (license license:bsd-3)))
+
+(define-public python-jwst-reffiles
+  (package
+    (name "python-jwst-reffiles")
+    (version "1.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jwst_reffiles" version))
+       (sha256
+        (base32 "1dlw955cw49qczdmimglmlcbal8vd3wbv5j48ckllvjgd59pwr3s"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; FIXME: Invistigate why it failes on python-jwst side where the
+      ;; python-tweakwcs is built just fine:
+      ;;
+      ;; <...>/tweakwcs/matchutils.py:18: in <module>
+      ;; from stsci.stimage import xyxymatch
+      ;; E   ModuleNotFoundError: No module named 'stsci.stimage'
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'sanity-check))))
+    (propagated-inputs
+     (list python-astropy
+           python-jwst
+           python-matplotlib
+           python-numpy
+           python-scipy))
+    (native-inputs
+     (list python-pytest
+           python-stsci-stimage))
+    (home-page "https://github.com/spacetelescope/jwst_reffiles")
+    (synopsis "Tool for JWST's CRDS-formatted reference files creation")
+    (description
+     "This package provides a tool to create @acronym{Calibration References
+Data System,CRDS}-formatted reference files for @acronym{James Webb Space
+Telescope,JWST} from a set of input dark current files and a set of flat field
+files.")
+    (license license:bsd-3)))
 
 (define-public python-kanon
   (package
@@ -4626,67 +4837,6 @@ SolarSoft data analysis environment.")
 @acronym{Solar Orbiter Archive, SOAR}.")
     (license license:bsd-2)))
 
-(define-public python-astral
-  (package
-    (name "python-astral")
-    (version "3.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "astral" version))
-       (sha256
-        (base32 "121xag65rmv6pszbi3d206yz3jfwmpkf0jxjrxrd2scy5r0knz4v"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      ;; XXX: Disable tests which require newer version of python-pytz.
-      ;; No time zone found with key Pacific/Auckland
-      #~(list "-k" (string-append
-                    "not test_TimezoneLookup"
-                    " and not test_Sun"
-                    " and not test_Dawn"
-                    " and not test_Sunrise"
-                    " and not test_SolarNoon"
-                    " and not test_Dusk"
-                    " and not test_Sunset"
-                    " and not test_SolarElevation"
-                    " and not test_SolarAzimuth"
-                    " and not test_TimeAtAltitude"
-                    " and not test_MoonNoDate"
-                    " and not test_lookup"
-                    " and not test_tzinfo"
-                    " and not test_australia"
-                    " and not test_adak"
-                    " and not test_australia"
-                    " and not test_Elevation_NonNaive"
-                    " and not test_Wellington"
-                    " and not test_Sun_Local_tzinfo"
-                    " and not test_Sun_Local_str"
-                    " and not test_SolarZenith_London"
-                    " and not test_SolarZenith_Riyadh"
-                    " and not test_moonrise_utc"
-                    " and not test_moonrise_wellington"
-                    " and not test_moonset_wellington"))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'check 'prepare-test-environment
-            (lambda _
-              (setenv "HOME" "/tmp"))))))
-    (native-inputs
-     (list python-freezegun
-           python-poetry-core
-           python-pytest
-           python-setuptools-scm))
-    (propagated-inputs
-     (list python-dataclasses python-pytest python-pytz))
-    (home-page "https://github.com/sffjunkie/astral")
-    (synopsis "Calculations for the position of the sun and moon")
-    (description "Astral is a Python module that calculates times for various
-positions of the sun: dawn, sunrise, solar noon, sunset, dusk, solar
-elevation, solar azimuth, rahukaalam, and the phases of the moon.")
-    (license license:asl2.0)))
-
 (define-public python-spectral-cube
   (package
     (name "python-spectral-cube")
@@ -5252,163 +5402,6 @@ implementing calibration pipeline software.")
      "This package provides a replacement for IRAF STSDAS SYNPHOT and ASTROLIB
 PYSYNPHOT, utilizing Astropy covering instrument specific portions of the old
 packages for HST.")
-    (license license:bsd-3)))
-
-(define-public python-jplephem
-  (package
-    (name "python-jplephem")
-    (version "2.22")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "jplephem" version))
-       (sha256
-        (base32 "0b2rgb7pvwnl72pqjryf9c812mmdxr69fwiym7mnz05l2xrcr6hd"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "python" "-m" "unittest" "discover" "-s" "test")))))))
-    (native-inputs
-     (list python-setuptools
-           python-wheel))
-    (propagated-inputs
-     (list python-numpy))
-    (home-page "https://github.com/brandon-rhodes/python-jplephem")
-    (synopsis "Python version of NASA DE4xx ephemerides")
-    (description
-     "@code{skyfield} computes positions for the stars, planets, and
-satellites in orbit around the Earth.  Its results should agree with the
-positions generated by the United States Naval Observatory and their
-Astronomical Almanac to within 0.0005 arcseconds (half a @emph{mas} or
-milliarcsecond).")
-    (license license:expat)))
-
-(define-public python-jwst
-  (package
-    (name "python-jwst")
-    (version "1.16.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "jwst" version))
-              (sha256
-               (base32
-                "1bqfgqp4gdm1ky5dvzhzpgygwr710h4mbykp5sb9aw3cw9jg1bk7"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  ;; Replace reference to external configobj.
-                  (substitute* (find-files "." "\\.py$")
-                    (("from astropy.extern import configobj") "import configobj")
-                    (("from astropy.extern.configobj import validate") "import validate")
-                    (("from astropy.extern.configobj.configobj import ") "from configobj import ")
-                    (("from astropy.extern.configobj.validate import ") "from validate import "))))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      ;; XXX: Tests require access to https://jwst-crds-pub.stsci.edu server for
-      ;; getting data sets.
-      #:tests? #f
-      #:phases #~(modify-phases %standard-phases
-                   ;; NOTE: (Sharlatan-20230529T113448+0100): opencv-python's
-                   ;; version can't be detected, it could the way it's packed in
-                   ;; Guix. Review failing sanity check with more efforts,
-                   ;; disable for now to make package buildable.
-                   (delete 'sanity-check))))
-    ;; opencv provides OpenCV-Python which is Listed as install requirement.
-    (propagated-inputs (list opencv
-                             python-asdf
-                             python-asdf-astropy
-                             python-astropy
-                             python-bayesicfitting
-                             python-crds
-                             python-drizzle
-                             python-gwcs
-                             python-importlib-metadata
-                             python-jplephem
-                             python-jsonschema
-                             python-numpy
-                             python-packaging
-                             python-photutils
-                             python-poppy
-                             python-psutil
-                             python-pyparsing
-                             python-pysiaf
-                             python-requests
-                             python-scikit-image
-                             python-scipy
-                             python-spherical-geometry
-                             python-stcal
-                             python-stdatamodels
-                             python-stpipe
-                             python-stsci-image
-                             python-stsci-imagestats
-                             python-synphot
-                             python-tweakwcs
-                             python-wiimatch))
-    (native-inputs (list python-colorama
-                         python-pytest
-                         python-pytest-cov
-                         python-pytest-doctestplus
-                         python-pytest-openfiles
-                         python-requests-mock
-                         ;; python-ruff ; not packed yet in Guix
-                         python-setuptools
-                         python-setuptools-scm
-                         python-wheel))
-    (home-page "https://jwst-pipeline.readthedocs.io/en/latest/")
-    (synopsis
-     "Python library for science observations from the James Webb Space Telescope")
-    (description
-     "This package provides an access to the JWST Science Calibration Pipeline
-processes data from all JWST instruments and observing modes by applying various
-science corrections sequentially, producing both fully-calibrated individual
-exposures and high-level data products (mosaics, extracted spectra, etc.).")
-    (license license:bsd-3)))
-
-(define-public python-jwst-reffiles
-  (package
-    (name "python-jwst-reffiles")
-    (version "1.0.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "jwst_reffiles" version))
-       (sha256
-        (base32 "1dlw955cw49qczdmimglmlcbal8vd3wbv5j48ckllvjgd59pwr3s"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      ;; FIXME: Invistigate why it failes on python-jwst side where the
-      ;; python-tweakwcs is built just fine:
-      ;;
-      ;; <...>/tweakwcs/matchutils.py:18: in <module>
-      ;; from stsci.stimage import xyxymatch
-      ;; E   ModuleNotFoundError: No module named 'stsci.stimage'
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'sanity-check))))
-    (propagated-inputs
-     (list python-astropy
-           python-jwst
-           python-matplotlib
-           python-numpy
-           python-scipy))
-    (native-inputs
-     (list python-pytest
-           python-stsci-stimage))
-    (home-page "https://github.com/spacetelescope/jwst_reffiles")
-    (synopsis "Tool for JWST's CRDS-formatted reference files creation")
-    (description
-     "This package provides a tool to create @acronym{Calibration References
-Data System,CRDS}-formatted reference files for @acronym{James Webb Space
-Telescope,JWST} from a set of input dark current files and a set of flat field
-files.")
     (license license:bsd-3)))
 
 (define-public python-pyerfa
@@ -6133,43 +6126,6 @@ install an implementation package such as asdf-astropy.")
      "This package provides ASDF schemas for validating World Coordinate
 System (WCS) tags.  Users should not need to install this directly; instead,
 install an implementation package such as gwcs.")
-    (license license:bsd-3)))
-
-(define-public python-gwcs
-  (package
-    (name "python-gwcs")
-    (version "0.21.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "gwcs" version))
-       (sha256
-        (base32 "1fn5l4v236bl7xqi1is40c2q57dji8by98iwqcndfnmjwqf7zllc"))))
-    (build-system pyproject-build-system)
-    (native-inputs
-     (list python-jsonschema
-           python-jmespath
-           python-pytest
-           python-pytest-doctestplus
-           python-pyyaml
-           python-setuptools-scm))
-    (propagated-inputs
-     (list python-asdf
-           python-asdf-astropy
-           python-asdf-wcs-schemas
-           python-astropy
-           python-numpy
-           python-scipy))
-    (home-page "https://gwcs.readthedocs.io/en/latest/")
-    (synopsis "Generalized World Coordinate System")
-    (description "Generalized World Coordinate System (GWCS) is an Astropy
-affiliated package providing tools for managing the World Coordinate System of
-astronomical data.
-
-GWCS takes a general approach to the problem of expressing transformations
-between pixel and world coordinates.  It supports a data model which includes
-the entire transformation pipeline from input coordinates (detector by
-default) to world coordinates.")
     (license license:bsd-3)))
 
 (define-public python-rad
@@ -6982,6 +6938,50 @@ object lists in ASCII generated by the Stuff program to produce realistic
 astronomical fields.  SkyMaker is part of the
 @uref{https://www.astromatic.net/projects/efigi, EFIGI} development project.")
     (license license:gpl3+)))
+
+(define-public splash
+  (package
+    (name "splash")
+    (version "3.10.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/danieljprice/splash")
+                    (commit (string-append "v" version))))
+              (sha256
+               (base32
+                "077s9if7fmccvhsbp0dhvyqcil46vpbgdm1y6qn6h34r8lfqj9z6"))
+              (file-name (git-file-name name version))))
+    (build-system gnu-build-system)
+    (arguments
+     ;; FIXME: Tests failed
+     ;; Issue submited upstream https://github.com/danieljprice/splash/issues/67
+     ;;
+     ;; make: *** No rule to make target 'test_interpolate3D.o', needed by 'test1'.  Stop.
+     ;;
+     (list #:tests? #f
+           #:parallel-build? #f ;parallel build fails
+           #:make-flags #~(list "SYSTEM=gfortran" "PREFIX="
+                                (string-append "GIZA_DIR="
+                                               #$(this-package-input "giza"))
+                                (string-append "DESTDIR="
+                                               #$output))
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'configure)
+                        (add-before 'install 'create-install-dirrectories
+                          (lambda _
+                            (mkdir-p (string-append #$output "/bin")))))))
+    (native-inputs (list gfortran pkg-config perl python-wrapper))
+    (inputs (list cairo cfitsio giza))
+    (home-page "https://users.monash.edu.au/~dprice/splash/")
+    (synopsis
+     "Astrophysical visualisation tool for smoothed particle hydrodynamics")
+    (description
+     "SPLASH is visualisation tool for Smoothed Particle Hydrodynamics (SPH)
+simulations in one, two and three dimensions, developed mainly for
+astrophysics.  It uses a command-line menu but data can be manipulated
+interactively in the plotting window.")
+    (license license:gpl2+)))
 
 (define-public stellarium
   (package

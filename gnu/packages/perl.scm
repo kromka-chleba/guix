@@ -692,6 +692,25 @@ signal running perl code from another thread, asynchronously, and
 sometimes even without using a single syscall.")
     (license (package-license perl))))
 
+(define-public perl-sys-sigaction
+  (package
+    (name "perl-sys-sigaction")
+    (version "0.23")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/L/LB/LBAXTER/Sys-SigAction-" version
+             ".tar.gz"))
+       (sha256
+        (base32 "0lykjlq5dsf7z927lpllzixd953izi3w7bg2pgy32h2k8n9nrvy4"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/Sys-SigAction")
+    (synopsis "Consistent signal handling")
+    (description "This package provides a way for perl programs to handle
+signals.")
+    (license (package-license perl))))
+
 (define-public perl-attribute-util
   (package
     (name "perl-attribute-util")
@@ -1133,6 +1152,25 @@ easy to use abstraction of the file system or shared memory.")
 written in C for performance.  It uses fcntl locking to ensure multiple
 processes can safely access the cache at the same time.  It uses a basic LRU
 algorithm to keep the most used entries in the cache.")
+    (license (package-license perl))))
+
+(define-public perl-file-map
+  (package
+    (name "perl-file-map")
+    (version "0.71")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/L/LE/LEONT/File-Map-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "0na78rf31cn4pp9zrywq1iv3r2xchrw3nqljp950v1sfh0rnkqn8"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build perl-test-fatal perl-test-warnings))
+    (propagated-inputs (list perl-sub-exporter-progressive))
+    (home-page "https://metacpan.org/release/File-Map")
+    (synopsis "Method for memory mapping a file")
+    (description "This package provides a way to memory map a file.")
     (license (package-license perl))))
 
 (define-public perl-capture-tiny
@@ -4188,6 +4226,24 @@ SHA-1 message digest algorithm for use by Perl programs.")
 modules separately and deal with them after the module is done installing.")
     (license (package-license perl))))
 
+(define-public perl-sort-versions
+  (package
+    (name "perl-sort-versions")
+    (version "1.62")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/N/NE/NEILB/Sort-Versions-" version
+             ".tar.gz"))
+       (sha256
+        (base32 "1aifzm79ky03gi2lwxyx4mk6yky8x215j0kz4f0jbgkf803k6pxz"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/Sort-Versions")
+    (synopsis "Sort revision-like numbers")
+    (description "This package provides a way to sort revision-like numbers.")
+    (license (package-license perl))))
+
 (define-public perl-dynaloader-functions
   (package
     (name "perl-dynaloader-functions")
@@ -4808,6 +4864,26 @@ submodules of ExtUtils::Typemaps.")
     (synopsis "XS for C++")
     (description "This module implements the Perl foreign function
 interface XS for C++; it is a thin layer over plain XS.")
+    (license (package-license perl))))
+
+(define-public perl-extutils-f77
+  (package
+    (name "perl-extutils-f77")
+    (version "1.26")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/E/ET/ETJ/ExtUtils-F77-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "1mlxifj6lzvm4f8smr07ds03qbl6may40aqmbypgr92cxhz1vpdb"))))
+    (build-system perl-build-system)
+    (native-inputs (list gfortran))
+    (propagated-inputs (list perl-file-which))
+    (home-page "https://metacpan.org/release/ExtUtils-F77")
+    (synopsis "Build helper for linking Fortran libraries")
+    (description "This package provides some compilation helpers so you can
+link Fortran libraries into C libraries.")
     (license (package-license perl))))
 
 (define-public perl-file-changenotify
@@ -5915,6 +5991,24 @@ filehandles; in particular, IO::Scalar, IO::ScalarArray, and IO::Lines.")
     (description
      "This package provides the @code{IO::Pty} and @code{IO::Tty} Perl
 interfaces to pseudo ttys.")
+    (license (package-license perl))))
+
+(define-public perl-termreadkey
+  (package
+    (name "perl-termreadkey")
+    (version "2.38")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/J/JS/JSTOWE/TermReadKey-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "143jlibah1g14bym7sj3gphvqkpj1w4vn7sqc4vc62jpviw5hr2s"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/TermReadKey")
+    (synopsis "Change terminal modes, and perform non-blocking reads.")
+    (description "This package provides a package to change terminal modes
+and perform non-blocking reads.")
     (license (package-license perl))))
 
 (define-public perl-ipc-cmd

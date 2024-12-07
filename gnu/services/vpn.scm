@@ -12,6 +12,7 @@
 ;;; Copyright © 2022 Cameron V Chaparro <cameron@cameronchaparro.com>
 ;;; Copyright © 2022 Timo Wilken <guix@twilken.net>
 ;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2024 Richard Sent <richard@freakingpenguin.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -80,6 +81,7 @@
             wireguard-configuration-monitor-ips?
             wireguard-configuration-monitor-ips-interval
             wireguard-configuration-private-key
+            wireguard-configuration-bootstrap-private-key?
             wireguard-configuration-peers
             wireguard-configuration-pre-up
             wireguard-configuration-post-up
@@ -733,34 +735,36 @@ strongSwan.")))
 (define-record-type* <wireguard-configuration>
   wireguard-configuration make-wireguard-configuration
   wireguard-configuration?
-  (wireguard          wireguard-configuration-wireguard ;file-like
-                      (default wireguard-tools))
-  (interface          wireguard-configuration-interface ;string
-                      (default "wg0"))
-  (addresses          wireguard-configuration-addresses ;string
-                      (default '("10.0.0.1/32")))
-  (port               wireguard-configuration-port ;integer
-                      (default 51820))
-  (private-key        wireguard-configuration-private-key ;string
-                      (default "/etc/wireguard/private.key"))
-  (peers              wireguard-configuration-peers ;list of <wiregard-peer>
-                      (default '()))
-  (dns                wireguard-configuration-dns ;list of strings
-                      (default '()))
-  (monitor-ips?       wireguard-configuration-monitor-ips? ;boolean
-                      (default #f))
-  (monitor-ips-interval wireguard-configuration-monitor-ips-interval
-                        (default '(next-minute (range 0 60 5)))) ;string | list
-  (pre-up             wireguard-configuration-pre-up ;list of strings
-                      (default '()))
-  (post-up            wireguard-configuration-post-up ;list of strings
-                      (default '()))
-  (pre-down           wireguard-configuration-pre-down ;list of strings
-                      (default '()))
-  (post-down          wireguard-configuration-post-down ;list of strings
-                      (default '()))
-  (table              wireguard-configuration-table ;string
-                      (default "auto")))
+  (wireguard              wireguard-configuration-wireguard ;file-like
+                          (default wireguard-tools))
+  (interface              wireguard-configuration-interface ;string
+                          (default "wg0"))
+  (addresses              wireguard-configuration-addresses ;string
+                          (default '("10.0.0.1/32")))
+  (port                   wireguard-configuration-port ;integer
+                          (default 51820))
+  (private-key            wireguard-configuration-private-key ;maybe-string
+                          (default "/etc/wireguard/private.key"))
+  (bootstrap-private-key? wireguard-configuration-bootstrap-private-key? ;boolean
+                          (default #t))
+  (peers                  wireguard-configuration-peers ;list of <wiregard-peer>
+                          (default '()))
+  (dns                    wireguard-configuration-dns ;list of strings
+                          (default '()))
+  (monitor-ips?           wireguard-configuration-monitor-ips? ;boolean
+                          (default #f))
+  (monitor-ips-interval   wireguard-configuration-monitor-ips-interval
+                          (default '(next-minute (range 0 60 5)))) ;string | list
+  (pre-up                 wireguard-configuration-pre-up ;list of strings
+                          (default '()))
+  (post-up                wireguard-configuration-post-up ;list of strings
+                          (default '()))
+  (pre-down               wireguard-configuration-pre-down ;list of strings
+                          (default '()))
+  (post-down              wireguard-configuration-post-down ;list of strings
+                          (default '()))
+  (table                  wireguard-configuration-table ;string
+                          (default "auto")))
 
 (define (wireguard-configuration-file config)
   (define (peer->config peer)
@@ -797,30 +801,33 @@ strongSwan.")))
                  (define lines
                    (list
                     "[Interface]"
-                    #$@(if (null? addresses)
-                           '()
-                           (list (format #f "Address = ~{~a~^, ~}"
-                                         addresses)))
+                    (if (null? '#$addresses)
+                        ""
+                        (format #f "Address = ~{~a~^, ~}"
+                                (list #$@addresses)))
                     (format #f "~@[Table = ~a~]" #$table)
-                    #$@(if (null? pre-up)
-                           '()
-                           (list (format #f "~{PreUp = ~a~%~}" pre-up)))
-                    (format #f "PostUp = ~a set %i private-key ~a\
-~{ peer ~a preshared-key ~a~}" #$(file-append wireguard "/bin/wg")
-#$private-key '#$peer-keys)
-                    #$@(if (null? post-up)
-                           '()
-                           (list (format #f "~{PostUp = ~a~%~}" post-up)))
-                    #$@(if (null? pre-down)
-                           '()
-                           (list (format #f "~{PreDown = ~a~%~}" pre-down)))
-                    #$@(if (null? post-down)
-                           '()
-                           (list (format #f "~{PostDown = ~a~%~}" post-down)))
+                    (if (null? '#$pre-up)
+                        ""
+                        (format #f "~{PreUp = ~a~%~}" (list #$@pre-up)))
+                    (if #$private-key
+                        (format #f "PostUp = ~a set %i private-key ~a\
+~{ peer ~a preshared-key ~a~}"
+                                #$(file-append wireguard "/bin/wg")
+                                #$private-key (list #$@peer-keys))
+                        "")
+                    (if (null? '#$post-up)
+                        ""
+                        (format #f "~{PostUp = ~a~%~}" (list #$@post-up)))
+                    (if (null? '#$pre-down)
+                        ""
+                        (format #f "~{PreDown = ~a~%~}" (list #$@pre-down)))
+                    (if (null? '#$post-down)
+                        ""
+                        (format #f "~{PostDown = ~a~%~}" (list #$@post-down)))
                     (format #f "~@[ListenPort = ~a~]" #$port)
-                    #$@(if (null? dns)
-                           '()
-                           (list (format #f "DNS = ~{~a~^, ~}" dns)))))
+                    (if (null? '#$dns)
+                        ""
+                        (format #f "DNS = ~{~a~^, ~}" (list #$@dns)))))
 
                  (mkdir #$output)
                  (chdir #$output)
@@ -833,23 +840,25 @@ strongSwan.")))
 
 (define (wireguard-activation config)
   (match-record config <wireguard-configuration>
-    (private-key wireguard)
+    (private-key bootstrap-private-key? wireguard)
     #~(begin
         (use-modules (guix build utils)
                      (ice-9 popen)
                      (ice-9 rdelim))
-        (mkdir-p (dirname #$private-key))
-        (unless (file-exists? #$private-key)
-          (let* ((pipe
-                  (open-input-pipe (string-append
-                                    #$(file-append wireguard "/bin/wg")
-                                    " genkey")))
-                 (key (read-line pipe)))
-            (call-with-output-file #$private-key
-              (lambda (port)
-                (display key port)))
-            (chmod #$private-key #o400)
-            (close-pipe pipe))))))
+        (when (and #$private-key
+                   #$bootstrap-private-key?)
+          (mkdir-p (dirname #$private-key))
+          (unless (file-exists? #$private-key)
+            (let* ((pipe
+                    (open-input-pipe (string-append
+                                      #$(file-append wireguard "/bin/wg")
+                                      " genkey")))
+                   (key (read-line pipe)))
+              (call-with-output-file #$private-key
+                (lambda (port)
+                  (display key port)))
+              (chmod #$private-key #o400)
+              (close-pipe pipe)))))))
 
 ;;; XXX: Copied from (guix scripts pack), changing define to define*.
 (define-syntax-rule (define-with-source (variable args ...) body body* ...)
