@@ -10453,3 +10453,97 @@ architecture.")
 +and canonical forms of graphs.  It has both a command line user interface as
 +well as C++ and C programming language APIs.")
     (license license:lgpl3)))
+
+(define-public python-mathics-scanner
+  (package
+    (name "python-mathics-scanner")
+    (version "1.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Mathics3/mathics-scanner.git")
+             (commit "1.3.1")))
+       (sha256
+        (base32
+         "1i632v3f64q3v1i0p0x850mjhgad49fl24dl6r20r4wa1mhalmp0"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-chardet python-click python-pyyaml))
+    (native-inputs (list python-pytest))
+    (home-page "https://mathics.org/")
+    (synopsis
+     "Character tables and tokenizer for Mathics and the Wolfram language")
+    (description
+     "This package provides character tables and a tokenizer for Mathics and
+the Wolfram language.")
+    (license license:gpl3+)))
+
+(define-public python-mathics-pygments
+  (package
+    (name "python-mathics-pygments")
+    (version "1.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "mathics_pygments" version))
+       (sha256
+        (base32 "1q54c8mb9pgw8ncbs9hln183nxvvxq0d8495c8zakccsfswvznx2"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-mathics-scanner python-pygments))
+    (home-page "http://github.com/Mathics3/mathics-pygments/")
+    (synopsis "Wolfram language lexer for Pygments")
+    (description "This package provides a Wolfram language lexer for Pygments.")
+    (license license:expat)))
+
+(define-public python-mathics-core
+  (package
+    (name "python-mathics-core")
+    (version "7.0.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/Mathics3/mathics-core.git")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0hhk2qq6swnprf9hliazwi3858sv3b3015g0mnm4ycdk5fsc7y57"))))
+    (arguments
+     `(;; <https://github.com/pytest-dev/pytest/pull/10173> is missing .closed
+       #:test-flags '("-s")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'patch-bugs
+           (lambda _
+             (substitute* "pyproject.toml"
+              (("\"autoload/\\*.m\",")
+               ;; They forgot to install autoload/rules/*.m
+               "\"autoload/*.m\", \"autoload/rules/*.m\","))
+             ;; Prevent internet access by tests.
+             (substitute* "mathics/builtin/files_io/files.py"
+              (("https://raw.githubusercontent.com/Mathics3/mathics-core/master/README.rst")
+               (string-append (getcwd) "/README.rst")))))
+         (add-before 'check 'prepare-locales
+           (lambda _
+             ;; Otherwise 210 tests fail because the real output would use
+             ;; unicode arrow characters.  With this, only 18 (symbolic) tests fail.
+             (setenv "MATHICS_CHARACTER_ENCODING" "ASCII"))))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest))
+    (inputs (list llvm))
+    (propagated-inputs (list python-mpmath
+                             python-pint
+                             python-palettable
+                             python-sympy
+                             python-numpy
+                             python-mathics-scanner
+                             python-pillow
+                             python-dateutil
+                             python-requests
+                             python-llvmlite
+                             python-scipy))
+    (synopsis "Computer algebra system")
+    (description "This package provides a computer algebra system--an alternative
+to Wolfram.")
+    (home-page "https://mathics.org/")
+    (license license:gpl3+)))

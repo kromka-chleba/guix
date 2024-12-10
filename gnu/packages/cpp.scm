@@ -113,6 +113,7 @@
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages web)
+  #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
   ;; Using autoload to avoid a cycle.
@@ -663,6 +664,52 @@ operating on batches.")
 library for SIMD (Single Instruction, Multiple Data) with runtime dispatch.")
     (license license:asl2.0)))
 
+(define-public hyprlang
+  (package
+    (name "hyprlang")
+    (version "0.5.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/hyprwm/hyprlang")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0yvfrz3hdyxzhngzhr0bgc5279ra5fv01hbfi6pdj84pz0lpaw02"))))
+    (build-system cmake-build-system)
+    (native-inputs (list gcc-13 pkg-config))
+    (inputs (list hyprutils))
+    (home-page "https://wiki.hyprland.org/Hypr-Ecosystem/hyprlang/")
+    (synopsis "Official implementation library for hypr config language")
+    (description
+     "This package provides the official implementation for hypr configuration
+language used in Hyprland.")
+    (license license:lgpl3)))
+
+(define-public hyprutils
+  (package
+    (name "hyprutils")
+    (version "0.2.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/hyprwm/hyprutils")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "01dh24rf62gb6xm32f7mfv6wx0dxprr1q9y73hvv7xanrjyia2zn"))))
+    (build-system cmake-build-system)
+    (native-inputs (list gcc-13 pkg-config))
+    (inputs (list pixman))
+    (home-page "https://github.com/hyprwm/hyprutils")
+    (synopsis "C++ library for utilities used across Hyprland ecosystem")
+    (description
+     "This package provides a C++ library for utilities used across Hyprland
+ecosystem.")
+    (license license:bsd-3)))
+
 (define-public xsimd-benchmark
   (package
     (inherit xsimd)
@@ -987,7 +1034,7 @@ tools (containers, algorithms) used by other QuantStack packages.")
 (define-public ccls
   (package
     (name "ccls")
-    (version "0.20220729")
+    (version "0.20241108")
     (source
      (origin
        (method git-fetch)
@@ -995,7 +1042,7 @@ tools (containers, algorithms) used by other QuantStack packages.")
              (url "https://github.com/MaskRay/ccls")
              (commit version)))
        (sha256
-        (base32 "0cp534n7afl0rrr778cc0bnd8w091qmyqdpp5k1jh4wxla9s09br"))
+        (base32 "0474ldkkw1m46lkasdk8mn6z3q51vs4g1fbwml0sd70wgdb7h5nj"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments

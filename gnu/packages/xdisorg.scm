@@ -105,6 +105,7 @@
   #:use-module (gnu packages bison)
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages crypto)
@@ -115,6 +116,7 @@
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gawk)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages gl)
@@ -137,6 +139,7 @@
   #:use-module (gnu packages man)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages pciutils)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages polkit)
@@ -230,6 +233,47 @@ A limited number of keyboard layouts are available, as is dictionary completion.
 You can also use xvkbd to send a series of predetermined keystrokes from the
 command line, without displaying a keyboard at all.")
     (license license:gpl2+)))
+
+(define-public aquamarine
+  (package
+    (name "aquamarine")
+    (version "0.4.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/hyprwm/aquamarine")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0x1zz1ywchs0awkjkvdgskgqnp6pz5lqwmgr8g0zc0i7inhyg1p3"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:cmake cmake-3.30
+           ;; TODO: Figure out what's expected in the test environment.
+           #:tests? #f))
+    (native-inputs
+     (list gcc-13 hyprwayland-scanner pkg-config))
+    (inputs
+     (list eudev
+           hwdata
+           hyprutils
+           libdisplay-info
+           libglvnd
+           libinput-minimal
+           libseat
+           mesa
+           pixman
+           wayland
+           wayland-protocols))
+    (home-page "https://github.com/hyprwm/aquamarine")
+    (synopsis "Linux rendering backend library")
+    (description
+     "Aquamarine is a C++-only Linux rendering backend library.  It provides
+basic abstractions for an application to render on a Wayland session (in a
+window) or a native DRM session.  It is agnostic of the rendering API (Vulkan
+/ OpenGL).")
+    (license license:bsd-3)))
 
 (define-public arandr
   (package
@@ -3637,6 +3681,69 @@ and execute @file{.desktop} files of the Application type.")
      "The @command{hsetroot} command composes wallpapers for X.
 This package is the fork of hsetroot by Hyriand.")
     (license license:gpl2+)))
+
+(define-public hyprcursor
+  (package
+    (name "hyprcursor")
+    (version "0.1.10")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/hyprwm/hyprcursor")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1rdn03ln7pqcwp8h4nmi7nc489q8y25dd3v4paq8ykvwzhvs3a1n"))))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #f))      ;TODO: No themes currently packaged.
+    (native-inputs (list gcc-13 pkg-config))
+    (inputs (list cairo hyprlang (librsvg-for-system) libzip tomlplusplus))
+    (home-page "https://standards.hyprland.org/hyprcursor/")
+    (synopsis "Cursor theme format")
+    (description
+     "This package provides Hyprland cursor format, library and utilities.")
+    (license license:bsd-3)))
+
+(define-public hyprpicker
+  (package
+    (name "hyprpicker")
+    (version "0.4.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/hyprwm/hyprpicker")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "11r06c62dqj81r27qhf36f3smnjyk3vz8naa655m8khv4qqvmvc2"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f                  ;No tests.
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'fix-path
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "src/clipboard/Clipboard.cpp"
+                     (("wl-copy" cmd)
+                      (search-input-file
+                       inputs (string-append "bin/" cmd)))))))))
+    (native-inputs (list gcc-13 hyprwayland-scanner pkg-config))
+    (inputs
+     (list cairo
+           hyprutils
+           libjpeg-turbo
+           libxkbcommon
+           pango
+           wayland
+           wayland-protocols
+           wl-clipboard))
+    (home-page "https://github.com/hyprwm/hyprpicker")
+    (synopsis "Wayland color picker compatible with @code{wlroots}")
+    (description
+     "This package provides a @code{wlroots}-compatible Wayland color picker.")
+    (license license:bsd-3)))
 
 (define-public jumpapp
   (package

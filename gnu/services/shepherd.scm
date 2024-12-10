@@ -95,7 +95,7 @@
   shepherd-configuration make-shepherd-configuration
   shepherd-configuration?
   (shepherd shepherd-configuration-shepherd
-            (default shepherd-0.10)) ; file-like
+            (default shepherd-1.0))               ;file-like
   (services shepherd-configuration-services
             (default '()))) ; list of <shepherd-service>
 
@@ -406,20 +406,6 @@ as shepherd package."
             (let ((m (make-fresh-user-module)))
               (module-use! m (resolve-interface '(shepherd service)))
               m))
-
-          ;; There's code run from shepherd that uses 'call-with-input-file' &
-          ;; co.--e.g., the 'urandom-seed' service.  Starting from Shepherd
-          ;; 0.9.2, users need to make sure not to leak non-close-on-exec file
-          ;; descriptors to child processes.  To address that, replace the
-          ;; standard bindings with O_CLOEXEC variants.
-          (set! call-with-input-file
-                (lambda (file proc)
-                  (call-with-port (open file (logior O_RDONLY O_CLOEXEC))
-                    proc)))
-          (set! call-with-output-file
-                (lambda (file proc)
-                  (call-with-port (open file (logior O_WRONLY O_CREAT O_CLOEXEC))
-                    proc)))
 
           ;; Specify the default environment visible to all the services.
           ;; Without this statement, all the environment variables of PID 1

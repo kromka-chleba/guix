@@ -2,7 +2,7 @@
 ;;; Copyright © 2012-2023 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2013, 2014 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2014, 2015, 2016 Mark H Weaver <mhw@netris.org>
-;;; Copyright © 2015, 2016, 2018, 2019, 2020, 2021, 2022 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015, 2016, 2018-2022, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2019 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016, 2021, 2023 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2016 Christine Lemmer-Webber <cwebber@dustycloud.org>
@@ -20,6 +20,7 @@
 ;;; Copyright © 2023 Simon Streit <simon@netpanic.org>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -77,6 +78,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix gexp)
@@ -157,7 +159,8 @@ file names.
     (outputs '("out" "debug"))
     (arguments
      `(#:configure-flags '("-DWITH_GCRYPT=ON"
-                           ,@(if (and (%current-target-system) (target-x86-32?))
+                           ,@(if (and (%current-target-system)
+                                      (not (target-64bit?)))
                                  (list (string-append
                                         "-DCMAKE_C_FLAGS=-g -O2"
                                         " -Wno-incompatible-pointer-types"))
@@ -332,7 +335,7 @@ Additionally, various channel-specific options can be negotiated.")
 (define-public guile-ssh
   (package
     (name "guile-ssh")
-    (version "0.17.0")
+    (version "0.18.0")
     (home-page "https://github.com/artyom-poptsov/guile-ssh")
     (source (origin
               (method git-fetch)
@@ -340,10 +343,9 @@ Additionally, various channel-specific options can be negotiated.")
                     (url home-page)
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
-              (patches (search-patches "guile-ssh-rename-bool.patch"))
               (sha256
                (base32
-                "1lkhpgbzvh6i1sc4nmdc9rx9yzrdyjxxjb8x6nvq2zif8xy9y9vg"))))
+                "0zh1spkjl5q778y4rd6ml68fvz1r62xmk03khi4kp74z2rxgzcxb"))))
     (build-system gnu-build-system)
     (outputs '("out" "debug"))
     (arguments
@@ -806,38 +808,54 @@ shell services and remote host selection.")
 (define-public python-asyncssh
   (package
     (name "python-asyncssh")
-    (version "2.13.1")
+    (version "2.18.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "asyncssh" version))
        (sha256
-        (base32
-         "11zq9ywzgyljzihdygawzad0ydly0l32zvz11liwyi8bbk087fzb"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-cryptography python-pyopenssl python-gssapi
-           python-bcrypt python-typing-extensions))
-    (native-inputs
-     (list openssh openssl python-fido2 python-aiofiles netcat
-           python-pytest))
+        (base32 "08viv0k32l6f40sbraq4bqzizrkivf09zwy8kmqvjq0zq1hj2chs"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'disable-tests
-           (lambda* _
-             (substitute* "tests/test_connection.py"
-               ;; nc is always available.
-               (("which nc") "true"))
-             (substitute* "tests/test_agent.py"
-               ;; TODO Test fails for unknown reason
-               (("(.+)async def test_confirm" all indent)
-                (string-append indent "@unittest.skip('disabled by guix')\n"
-                               indent "async def test_confirm")))))
-         (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "-vv")))))))
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    (list
+                     ;; TODO Test fails for unknown reason
+                     "not test_confirm"
+                     #$@(if (target-aarch64?)
+                            (list
+                             ;; Tests fail with: asyncssh.misc.ConnectionLost:
+                             ;; Connection lost
+                             "test_connect_non_tcp_sock"
+                             "test_connect_reverse_proxy"
+                             "test_get_server_auth_methods_no_sockn"
+                             "test_get_server_auth_methods_no_sockname"
+                             "test_get_server_host_key_proxy")
+                            '()))
+                    " and not " ))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda* _
+              (substitute* "tests/test_connection.py"
+                ;; nc is always available.
+                (("which nc") "true")))))))
+    (native-inputs
+     (list netcat
+           openssh
+           openssl
+           python-aiofiles
+           python-fido2
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-cryptography
+           python-pyopenssl
+           python-gssapi
+           python-bcrypt
+           python-typing-extensions))
     (home-page "https://asyncssh.readthedocs.io/")
     (synopsis "Asynchronous SSHv2 client and server library for Python")
     (description
@@ -849,7 +867,7 @@ framework.")
 (define-public clustershell
   (package
     (name "clustershell")
-    (version "1.8.4")
+    (version "1.9.2")
     (source
      (origin
        (method git-fetch)
@@ -858,19 +876,36 @@ framework.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11b87vyamcw4rvgxz74jxwkr9ly0h9ldp2wqsi5wc19p0r06la5j"))))
-    (build-system python-build-system)
-    (inputs (list openssh))
-    (propagated-inputs (list python-pyyaml))
+        (base32 "1zk3syrdck2gi27b9njaq98fnnjf14831yvkma2n4ydsf2mxnkaw"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-before 'build 'record-openssh-file-name
-                    (lambda* (#:key inputs #:allow-other-keys)
-                      (let ((ssh (assoc-ref inputs "openssh")))
-                        (substitute* "lib/ClusterShell/Worker/Ssh.py"
-                          (("info\\(\"ssh_path\"\\) or \"ssh\"")
-                           (string-append "info(\"ssh_path\") or \""
-                                          ssh "/bin/ssh\"")))))))))
+     (list
+      #:tests? #f ; tests require python-nose, and most of them fail
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'fix-pathes
+            (lambda _
+              (let ((ssh #$(this-package-input "openssh")))
+                (substitute* (list "lib/ClusterShell/Worker/Ssh.py"
+                                   "lib/ClusterShell/Worker/fastsubprocess.py")
+                  (("\"/bin/sh\"") (format #f "'~a'" (which "sh")))
+                  (("\"ssh\"")     (format #f "'~a/bin/ssh'" ssh))
+                  (("\"scp\"")     (format #f "'~a/bin/scp'" ssh)))
+                (substitute* (find-files "./tests" "\\.py$")
+                  (("\"/bin/hostname\"") (format #f "'~a'" (which "hostname")))
+                  (("/bin/sleep")        "sleep")
+                  (("/bin/echo")         "echo")
+                  (("/bin/uname")        "uname")
+                  (("/bin/false")        "false")
+                  (("/bin/true")         "true")
+                  (("/usr/bin/printf")   "printf"))))))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (inputs
+     (list openssh))
+    (propagated-inputs
+     (list python-pyyaml))
     (home-page "https://cea-hpc.github.io/clustershell/")
     (synopsis "Scalable event-driven Python framework for cluster administration")
     (description
@@ -921,23 +956,28 @@ clients at a time.")
 (define-public webssh
   (package
     (name "webssh")
-    (version "1.5.3")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/huashengdun/webssh")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1bcy9flrzbvams5p77swwiygv54ac58ia7hpic1bvg30b3wpvv7b"))))
-    (build-system python-build-system)
+    (version "1.6.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/huashengdun/webssh")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0v0dxnqac9xdj06lhljv6bhi8hd16rn6h0qr7fkm640nvr55a8i1"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list python-paramiko python-tornado))
+     (list python-paramiko
+           python-tornado))
     (home-page "https://webssh.huashengdun.org/")
     (synopsis "Web application to be used as an SSH client")
-    (description "This package provides a web application to be used as an SSH
-client.
+    (description
+     "This package provides a web application to be used as an SSH client.
 
 Features:
 @itemize @bullet

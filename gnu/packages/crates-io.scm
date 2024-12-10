@@ -45,6 +45,7 @@
 ;;; Copyright © 2024 Aaron Covrig <aaron.covrig.us@ieee.org>
 ;;; Copyright © 2024 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;; Copyright © 2024 Jordan Moore <lockbox@struct.foo>
+;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -12607,6 +12608,55 @@ types that works on stable Rust.")
      "This package provides a build-time dependency for Cargo build scripts to
 assist in invoking the native C compiler to compile native C code into a static
 archive to be linked into Rustcode.")
+    (license (list license:asl2.0
+                   license:expat))))
+
+(define-public rust-cdshealpix-0.7
+  (package
+    (name "rust-cdshealpix")
+    (version "0.7.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "cdshealpix" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0rxg2wsrnzfhm8pid1sv22zn1cly54zdbg2ffajx0i0dvyfpm1cc"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-test-flags
+       (list "--release" "--"
+             ;; Tests can't find FITS files:
+             ;; - test/resources/skymap/skymap.fits
+             ;; - test/resources/skymap/skymap.2mass.depth6.fits
+             "--skip=tests::test_skymap_to_mom_basic"
+             "--skip=tests::test_skymap_to_mom_chi2"
+             "--skip=tests::test_mom_diff_spec"
+             "--skip=tests::test_skymap_spec")
+     #:cargo-inputs
+       (("rust-base64" ,rust-base64-0.21)
+        ("rust-byteorder" ,rust-byteorder-1)
+        ("rust-colorous" ,rust-colorous-1)
+        ("rust-flate2" ,rust-flate2-1)
+        ("rust-itertools" ,rust-itertools-0.13)
+        ("rust-katex-doc" ,rust-katex-doc-0.1)
+        ("rust-log" ,rust-log-0.4)
+        ("rust-mapproj" ,rust-mapproj-0.3)
+        ("rust-num" ,rust-num-0.4)
+        ("rust-num-traits" ,rust-num-traits-0.2)
+        ("rust-png" ,rust-png-0.17)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-thiserror" ,rust-thiserror-1))
+       #:cargo-development-inputs
+       (("rust-criterion" ,rust-criterion-0.4)
+        ("rust-rand" ,rust-rand-0.8))))
+    (home-page "https://github.com/cds-astro/cds-healpix-rust/")
+    (synopsis "HEALPix tesselation")
+    (description
+     "This library is an implementation in Rust of the HEALPix tesselation.
+This implementation has been made by the Strasbourg astronomical Data
+Centre (Centre de Données astronomique de Strasbourg,
+@url{http://cdsweb.u-strasbg.fr/,CDS}).")
     (license (list license:asl2.0
                    license:expat))))
 
@@ -34257,6 +34307,24 @@ Directory traversal is already pretty fast.  If you don't need this crate's
 speed then walkdir provides a smaller and more tested single threaded implementation.")
     (license license:expat)))
 
+(define-public rust-katex-doc-0.1
+  (package
+    (name "rust-katex-doc")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "katex-doc" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1fa0fi3bv9qdab0cb49q8971vszf0nzmvnvm70lns5xrpyyq0nqy"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/CAD97/katex-doc")
+    (synopsis "XaaS for KaTeX on docs.rs")
+    (description
+     "This package provides a XSS as a Service for KaTeX on docs.rs")
+    (license (list license:unlicense license:expat))))
+
 (define-public rust-koibumi-base32-0.0.2
   (package
     (name "rust-koibumi-base32")
@@ -43468,6 +43536,25 @@ algorithms.  It supports CBC block cipher mode, PKCS5 padding and 64, 128,
 @code{HashMap}, @code{HashSet}, @code{BTreeMap}, and @code{BTreeSet.}")
     (license (list license:asl2.0
                    license:expat))))
+
+(define-public rust-mapproj-0.3
+  (package
+    (name "rust-mapproj")
+    (version "0.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "mapproj" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "08wjp6vj1w2qbz769k057pdk2w8351i26xj40p8xbxjj3wli7iz3"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/cds-astro/cds-mapproj-rust/")
+    (synopsis "Map projections defined in the FITS World Coordinate System")
+    (description
+     "This package provides Implementation of (a part of) map projections
+defined in the FITS World Coordinate System (WCS).")
+    (license (list license:asl2.0 license:expat))))
 
 (define-public rust-markup-proc-macro-0.13
   (package
@@ -77927,6 +78014,30 @@ instrumenting global allocators.")
      "This package provides a straight translation of the font loading code
 in @code{stb_truetype.h} from C to Rust.")
     (license (list license:expat license:asl2.0))))
+
+(define-public rust-stc-s-0.1
+  (package
+    (name "rust-stc-s")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "stc-s" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0mcvhd50qqysqvd5jqd5ydjyqs3rp2x6irk518lrqn7xlx3cz04p"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-nom" ,rust-nom-7)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1))))
+    (home-page "https://github.com/cds-astro/cds-stc-rust/")
+    (synopsis "STC-S serializer/deserializer with JSON support")
+    (description
+     "This package provides Rust implementation of a @acronym{Space-Time
+Coordinate,STC-S} serializer/deserializer with JSON support.")
+    (license (list license:asl2.0 license:expat))))
 
 (define-public rust-std-prelude-0.2
   (package

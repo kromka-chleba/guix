@@ -83,6 +83,7 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages cups)
@@ -95,6 +96,7 @@
   #:use-module (gnu packages file)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages gawk)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gl)
@@ -140,6 +142,7 @@
   #:use-module (gnu packages virtualization)
   #:use-module (gnu packages w3m)
   #:use-module (gnu packages web)
+  #:use-module (gnu packages wm)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
@@ -1338,6 +1341,50 @@ For information about libevdev, see:
      "PyXDG is a collection of implementations of freedesktop.org standards in
 Python.")
     (license license:lgpl2.0)))
+
+(define-public hyprland-protocols
+  (package
+    (name "hyprland-protocols")
+    (version "0.4.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/hyprwm/hyprland-protocols")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0x86w7z3415qvixfhk9a8v5fnbnxdydzx366qz0mpmfg5h86qyha"))))
+    (build-system meson-build-system)
+    (home-page "https://github.com/hyprwm/hyprland-protocols")
+    (synopsis "Wayland protocol extensions for Hyprland")
+    (description
+     "This package provides Wayland protocol extensions for Hyprland.")
+    (license license:bsd-3)))
+
+(define-public hyprwayland-scanner
+  (package
+    (name "hyprwayland-scanner")
+    (version "0.4.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/hyprwm/hyprwayland-scanner")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0r7ay4zjkfyr0xd73wz99qhnqjq7nma98gm51wm9lmai4igw90qw"))))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #f))      ;No tests.
+    (inputs (list pugixml))
+    (native-inputs (list gcc-13 pkg-config))
+    (home-page "https://github.com/hyprwm/hyprwayland-scanner")
+    (synopsis "Hyprland implementation of @code{wayland-scanner}")
+    (description
+     "This package provides a Hyprland implementation of @code{wayland-scanner},
+in and for C++.")
+    (license license:bsd-3)))
 
 (define-public wayland
   (package
@@ -3209,6 +3256,56 @@ which uses GTK+ and various pieces of GNOME infrastructure, such as the
 @code{org.gnome.Shell.Screenshot} or @code{org.gnome.SessionManager} D-Bus
 interfaces.")
     (license license:lgpl2.1+)))
+
+(define-public xdg-desktop-portal-hyprland
+  (package
+    (name "xdg-desktop-portal-hyprland")
+    (version "1.3.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hyprwm/xdg-desktop-portal-hyprland")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17ba9jkccyp8gv79ds70khgm5wm6x8zs5m9nkilq4n2j7fsa8cfl"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:tests? #f                  ;No tests.
+           #:qtbase qtbase
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'fix-path
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* (find-files "." "\\.cp?*$")
+                     (("/bin/sh") "sh")
+                     (("\\<(sh|grim|hyprctl|slurp)\\>" _ cmd)
+                      (search-input-file inputs (string-append "bin/" cmd))))
+                   (substitute* "src/shared/ScreencopyShared.cpp"
+                     (("\\<(hyprland-share-picker)\\>" _ cmd)
+                      (string-append #$output "/bin/" cmd))))))))
+    (native-inputs
+     (list gcc-13 hyprwayland-scanner pkg-config))
+    (inputs
+     (list bash-minimal
+           grim
+           hyprland
+           hyprland-protocols
+           hyprlang
+           hyprutils
+           mesa
+           pipewire
+           qtwayland
+           sdbus-c++
+           slurp
+           wayland
+           wayland-protocols))
+    (home-page "https://github.com/hyprwm/xdg-desktop-portal-hyprland")
+    (synopsis "Hyprland implementation of @code{xdg-desktop-portal} backend")
+    (description
+     "This package provides an @code{xdg-desktop-portal} backend for Hyprland.")
+    (license license:bsd-3)))
 
 (define-public xdg-desktop-portal-kde
   (package

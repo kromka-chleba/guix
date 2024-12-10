@@ -690,7 +690,7 @@ as logic programs.")
 (define-public python-clinguin
   (package
    (name "python-clinguin")
-   (version "1.0.0-beta")
+   (version "2.1.1")
    (source (origin
             (method git-fetch)
             (uri (git-reference
@@ -699,7 +699,7 @@ as logic programs.")
             (file-name (git-file-name name version))
             (sha256
              (base32
-              "032fnzxv6wl01sdq7n2k0ikajpmkg8ihjh5mck1mwjvmis8z16d4"))
+              "0wfgrs8h5i5mmd5sbzca2xw57f3d3ni75775wjkaq6sg0zm9sqjs"))
             (modules '((guix build utils)))
             (snippet
              #~(begin
@@ -708,11 +708,14 @@ as logic programs.")
                    ;; some typo squatter hosted
                    ;; a package named tk
                    (("tk") "")
-                   (("typing") "typing;python_version<\"3.5\""))))))
+                   ;; XXX: python-clingo-dl installs clingodl instead…
+                   (("clingo-dl") "clingodl"))))))
    (build-system pyproject-build-system)
    (propagated-inputs
     (list python-clingo
+          python-clingo-dl
           python-clorm
+          python-clingexplaid
           python-clingraph
           python-fastapi
           python-httpx
@@ -726,7 +729,7 @@ as logic programs.")
           python-sphinx-rtd-theme
           python-traitlets
           python-uvicorn))
-   (home-page "https://github.com/potassco/clingraph")
+   (home-page "https://github.com/potassco/clinguin")
    (synopsis "Clingo-based interactive UI")
    (description "Clinguin is a graphical user interface toolkit for clingo,
 which allows user interfaces to be specified entirely as a logic program.")
@@ -755,4 +758,37 @@ It provides various components to assemble the most commonly used tests quickly,
 but also works fine along custom-built test.  Clintest monitors the test
 outcome while solving to abort the search for solutions once the outcome is
 certain.")
+    (license license:expat)))
+
+(define-public python-clingexplaid
+  (package
+    (name "python-clingexplaid")
+    (version "1.1.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/potassco/clingo-explaid")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "1s80cs3clvz26r7cvjprlk6zip7yqswwhzzwmmrv5mf5p89ymrgm"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags #~(list "-k" "not test_main")
+           #:phases #~(modify-phases %standard-phases
+                        (add-after 'unpack 'fix-pyproject-toml
+                          (lambda _
+                            (substitute* "pyproject.toml"
+                              (("dynamic = .*" all)
+                               (string-append "version = \""
+                                              #$version
+                                              "\"\n"))
+                              (("\"autoflake\",") "")))))))
+    (propagated-inputs (list python-clingo))
+    (native-inputs (list python-pytest))
+    (home-page "https://github.com/potassco/clingo-explaid")
+    (synopsis "Develop explanation systems with Clingo")
+    (description "This package provides tools to develop explanation systems
+with clingo.  It allows extracting minimal unsatisfiable subsets and
+unsatisfiable constraints.")
     (license license:expat)))

@@ -2341,13 +2341,13 @@ allows one to read and write JPEG 2000 files")
 (define-public python-gphoto2
   (package
     (name "python-gphoto2")
-    (version "2.2.1")
+    (version "2.5.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "gphoto2" version))
               (sha256
                (base32
-                "118zm25c8mlajfl0pzssnwz4b8lamj9dgymla9rn4nla7l244a0r"))))
+                "104yb4g427rqjkaw3i0w30x3sssvmpna802nabjclzq688y7ml4p"))))
     (build-system python-build-system)
     (native-inputs
      (list pkg-config))
@@ -2358,7 +2358,7 @@ allows one to read and write JPEG 2000 files")
     (description "@code{python-gphoto2} is a comprehensive Python interface
 (or binding) to @code{libgphoto2}.  It is built using @code{SWIG} to
 automatically generate the interface code.")
-    (license license:gpl3+)))
+    (license license:lgpl3+)))
 
 (define-public python-colour
   (package
@@ -21386,6 +21386,24 @@ wide-character codes.  It is useful for those implementing a terminal emulator,
 or programs that carefully produce output to be interpreted by one.  It is a
 Python implementation of the @code{wcwidth} and @code{wcswidth} C functions
 specified in POSIX.1-2001 and POSIX.1-2008.")
+    (license license:expat)))
+
+(define-public python-columnize
+  (package
+    (name "python-columnize")
+    (version "0.3.11")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "columnize" version))
+       (sha256
+        (base32 "1clb3lfw694crq8m767q0yjaazkplcrbzdr9fr2w39hhndivhcd6"))))
+    (build-system pyproject-build-system)
+    (home-page "https://github.com/rocky/pycolumnize")
+    (synopsis "Format a simple (i.e. not nested) list into aligned columns.")
+    (description
+     "This package provides a way to format a simple (i.e. not nested) list
+into aligned columns.")
     (license license:expat)))
 
 (define-public python-chai

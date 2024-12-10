@@ -119,17 +119,21 @@
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages calendar)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crates-graphics)
   #:use-module (gnu packages datastructures)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages engineering)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages fribidi)
   #:use-module (gnu packages gawk)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
@@ -314,6 +318,81 @@ or musca).
 @end itemize")
     (home-page "https://herbstluftwm.org")
     (license license:bsd-2)))
+
+(define-public hyprland
+  (package
+    (name "hyprland")
+    (version "0.45.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/hyprwm/Hyprland"
+                                  "/releases/download/v" version
+                                  "/source-v" version ".tar.gz"))
+              (modules '((guix build utils)))
+              (snippet
+               '(begin
+                  ;; Remove bundled sources and hyprpm utility.
+                  (substitute* "CMakeLists.txt"
+                    (("^add_subdirectory\\(hyprpm\\).*") ""))
+                  (for-each delete-file-recursively
+                            '("hyprpm"
+                              "subprojects"))))
+              (sha256
+               (base32
+                "1jqnly8h72v20fsz1075ib7gl7272g5svqw7qpqhx6243w1320np"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:cmake cmake-3.30
+           #:tests? #f                  ;No tests.
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'fix-path
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "src/xwayland/Server.cpp"
+                     (("Xwayland( \\{\\})" _ suffix)
+                      (string-append
+                       (search-input-file inputs "bin/Xwayland")
+                       suffix)))
+                   (substitute* (find-files "src" "\\.cpp$")
+                     (("/usr/local(/bin/Hyprland)" _ path)
+                      (string-append #$output path))
+                     (("/usr") #$output)
+                     (("\\<(addr2line|cat|lspci|nm)\\>" cmd)
+                      (search-input-file
+                       inputs (string-append "bin/" cmd)))))))))
+    (native-inputs
+     (list gcc-14
+           hyprwayland-scanner
+           (module-ref (resolve-interface
+                  '(gnu packages commencement))
+                 'ld-wrapper)
+           pkg-config))
+    (inputs
+     (list aquamarine
+           binutils
+           cairo
+           hyprcursor
+           hyprland-protocols
+           hyprlang
+           hyprutils
+           libinput-minimal
+           libxcursor
+           libxkbcommon
+           mesa
+           pango
+           pciutils
+           udis86
+           wayland
+           wayland-protocols
+           xcb-util-errors
+           xcb-util-wm
+           xorg-server-xwayland))
+    (home-page "https://hyprland.org/")
+    (synopsis "Dynamic tiling Wayland compositor")
+    (description
+     "Hyprland is a dynamic tiling Wayland compositor that doesn't sacrifice on
+its looks.")
+    (license license:bsd-3)))
 
 (define-public i3status
   (package
@@ -3687,6 +3766,66 @@ Type=Application~%"
      "Avizo is a simple notification daemon for Sway, mainly intended to be
 used for multimedia keys.")
     (license license:gpl3+)))
+
+(define-public grimblast
+  (let ((commit "9d67858b437d4a1299be496d371b66fc0d3e01f6")
+        (revision "1"))
+    (package
+      (name "grimblast")
+      (version (git-version "0.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/hyprwm/contrib")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1v0v5j7ingx80b5zpyz8ilfhz0kh9dcssnx6iwwl45zzgp915cpv"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list #:tests? #f                ;No tests.
+             #:make-flags
+             #~(list (string-append "PREFIX=" #$output))
+             #:phases
+             #~(modify-phases %standard-phases
+                 (delete 'configure)
+                 (add-after 'unpack 'chdir
+                   (lambda _
+                     (chdir "grimblast")))
+                 (add-after 'chdir 'fix-paths
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "grimblast"
+                       (((string-append "\\<(" (string-join
+                                                '("date"
+                                                  "grim"
+                                                  "slurp"
+                                                  "hyprctl"
+                                                  "hyprpicker"
+                                                  "wl-copy"
+                                                  "jq"
+                                                  "notify-send")
+                                                "|")
+                                        ")\\>")
+                         cmd)
+                        (search-input-file
+                         inputs (string-append "bin/" cmd)))))))))
+      (native-inputs (list scdoc))
+      (inputs
+       (list coreutils-minimal
+             grim
+             jq
+             libnotify
+             slurp
+             hyprland
+             hyprpicker
+             wl-clipboard))
+      (home-page "https://github.com/hyprwm/contrib")
+      (synopsis "Screenshot utility for Hyprland")
+      (description
+       "This package provides a Hyprland version of @code{grimshot} for
+screenshoting.")
+      (license license:expat))))
 
 (define-public grimshot
   (package
