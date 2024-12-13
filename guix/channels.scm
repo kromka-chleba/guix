@@ -328,10 +328,23 @@ doesn't exist."
           (channel-metadata "/" '() #f %default-keyring-reference #f)
           (apply throw args)))))
 
+(define (channel-instance-string-checkout instance)
+  "Same as channel-instance-checkout, but instantiate it if file-like."
+  (match (channel-instance-checkout instance)
+    ((? string? str)
+     str)
+    ((? file-like? file-like)
+     (with-store store
+       (run-with-store store
+         (mlet* %store-monad ((source (lower-object file-like))
+                              (_ (built-derivations (list source))))
+           (return (derivation->output-path source))))))))
+
 (define (channel-instance-metadata instance)
   "Return a channel-metadata record read from the channel INSTANCE's
 description file or its default value."
-  (read-channel-metadata-from-source (channel-instance-checkout instance)))
+  (read-channel-metadata-from-source
+   (channel-instance-string-checkout instance)))
 
 (define (channel-instance-dependencies instance)
   "Return the list of channels that are declared as dependencies for the given
@@ -727,7 +740,7 @@ during this process."
     (symbol->string
      (channel-name (channel-instance-channel instance))))
   (define source
-    (channel-instance-checkout instance))
+    (channel-instance-string-checkout instance))
   (define commit
     (channel-instance-commit instance))
 
