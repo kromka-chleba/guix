@@ -346,7 +346,7 @@ and its related documentation.")
 (define-public miniflux
   (package
     (name "miniflux")
-    (version "2.2.1")
+    (version "2.2.3")
     (source
      (origin
        (method git-fetch)
@@ -355,7 +355,7 @@ and its related documentation.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "08z8z1a1mfvk1q7jbi6kpgq5463hmi92s51anb1ppyr54h02b2vg"))))
+        (base32 "0bllgjv7cdqrk3dm98dmp7mx0wmcbh410jcdcvid7z5qkr0fiy07"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -8890,7 +8890,7 @@ bookmarks directly.  It can also present them in a web interface with
                       (string-append #$output path))))))))
     (inputs (list buku rofi))
     (home-page "https://github.com/carnager/buku_run")
-    (synopsis "rofi frontend for buku bookmarks manager")
+    (synopsis "@command{rofi} frontend for buku bookmarks manager")
     (description
      "This package provides a rofi frontend for the buku bookmark manager.")
     (license license:gpl3+)))

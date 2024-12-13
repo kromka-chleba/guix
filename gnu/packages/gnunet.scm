@@ -192,7 +192,7 @@ authentication and support for SSL3 and TLS.")
 (define-public gnunet
   (package
     (name "gnunet")
-    (version "0.21.2")
+    (version "0.23.0")
     (source
      (origin
        (method url-fetch)
@@ -200,7 +200,7 @@ authentication and support for SSL3 and TLS.")
                            ".tar.gz"))
        (sha256
         (base32
-         "18czv9yxxmaf7y061ngzwcc9rxwrwdy372wb52ns52wviqk528wc"))))
+         "0ypnsn81fp3iqi8rgsbcvfnz9iwmaxd1h71mphak8ska2kabdim4"))))
     (build-system gnu-build-system)
     (inputs
      (list bluez
@@ -240,6 +240,11 @@ authentication and support for SSL3 and TLS.")
       #~(modify-phases %standard-phases
           (add-after 'unpack 'disable-problematic-tests
             (lambda _
+              ;; The file 'test_arm_probnat.sh' doesn't seem to exist,
+              ;; or have a creation method specified anywhere in the source.
+              (substitute* "src/service/arm/Makefile.in"
+                (("check_SCRIPTS = \\\\")
+                 "DISABLED_check_SCRIPTS = \\"))
               ;; The 'test_communicator_bidirect-tcp' fails
               ;; non-deterministically (see:
               ;; https://bugs.gnunet.org/view.php?id=8689).
@@ -372,14 +377,14 @@ The following services are supported:
 (define-public gnunet-gtk
   (package (inherit gnunet)
     (name "gnunet-gtk")
-    (version "0.21.0")
+    (version "0.23.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/gnunet/gnunet-gtk-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "1b7xfypa0s7zlijgvya8p3rvljnn65w5cjkaw6x83v9ra8l6s0dx"))))
+                "131z47px0kqnmn2b3sb84qmf90kynhl6mrx4rxrqh9chhy5pcr3h"))))
     (arguments
      (list #:configure-flags
            #~(list "--with-libunique"

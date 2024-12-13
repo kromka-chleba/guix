@@ -125,6 +125,7 @@
   #:use-module (gnu packages datamash)
   #:use-module (gnu packages dbm)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages django)
   #:use-module (gnu packages elf)
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages file)
@@ -1116,7 +1117,8 @@ large scale eigenvalue problems.")
      "LAPACK is a Fortran 90 library for solving the most commonly occurring
 problems in numerical linear algebra.")
     (license (license:non-copyleft "file://LICENSE"
-                                "See LICENSE in the distribution."))))
+                                "See LICENSE in the distribution."))
+    (properties '((tunable? . #t)))))
 
 (define-public clapack
   (package
@@ -1298,6 +1300,33 @@ in the terminal or with an external viewer.")
     (description
      "Giza is a lightweight scientific plotting library built on top of
 @code{cairo} that provides uniform output to multiple devices.")
+    (license license:gpl2+)))
+
+(define-public perl-pgplot
+  (package
+    (name "perl-pgplot")
+    (version "2.34")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/E/ET/ETJ/PGPLOT-" version
+                           ".tar.gz"))
+       (sha256
+        (base32 "1j0hjnhi0rkihviab2s6ninwfm71s73zh89pds1mpg9kf3c1w97z"))))
+    (build-system perl-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+        (add-after 'unpack 'setenv
+         (lambda* (#:key inputs #:allow-other-keys)
+           (setenv "PGPLOT_DIR" (string-append (assoc-ref inputs "giza") "/lib")))))))
+    (inputs (list giza libx11))
+    (native-inputs (list perl-devel-checklib perl-extutils-f77 gfortran))
+    (home-page "https://metacpan.org/release/PGPLOT")
+    (synopsis "Scientific plotting library (using giza)")
+    (description "This package provides PGPLOT bindings for Perl.  It uses
+giza instead of PGPLOT for the implementation, though.")
+    ;; Since giza is GPL2+, so is this.
     (license license:gpl2+)))
 
 (define-public gnuplot
@@ -5399,7 +5428,8 @@ parts of it.")
     (home-page "https://www.openblas.net/")
     (synopsis "Optimized BLAS library based on GotoBLAS")
     (description
-     "OpenBLAS is a BLAS library forked from the GotoBLAS2-1.13 BSD version.")
+     "OpenBLAS is a Basic Linear Algebra Subprograms (BLAS) library forked
+from the GotoBLAS2-1.13 BSD version.")
     (license license:bsd-3)))
 
 (define-public openblas-ilp64
@@ -10546,4 +10576,70 @@ the Wolfram language.")
     (description "This package provides a computer algebra system--an alternative
 to Wolfram.")
     (home-page "https://mathics.org/")
-    (license license:gpl3+)))
+    (license license:gpl3)))
+
+(define-public python-mathicsscript
+  (package
+    (name "python-mathicsscript")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "mathicsscript" version))
+       (sha256
+        (base32 "15ppg8sj03j63664npdqiv1lfk2mqnrqjb5817zjyy04z9s0kp7l"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-before 'check 'setenv
+           (lambda _
+             (setenv "HOME" "/tmp"))))))
+    (propagated-inputs (list python-click
+                             python-colorama
+                             python-columnize
+                             python-mathics-pygments
+                             python-mathics-scanner
+                             python-mathics-core
+                             python-networkx
+                             python-prompt-toolkit
+                             python-pygments
+                             python-term-background))
+    (native-inputs (list python-pytest))
+    (home-page "https://mathics.org/")
+    (synopsis "Command-line interface to Mathics3")
+    (description "This package provides a command-line interface to
+Mathics3.")
+    (license license:gpl3)))
+
+(define-public python-mathics-django
+  (package
+    (name "python-mathics-django")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "Mathics-Django" version))
+       (sha256
+        (base32 "02ccq0kx9i9b339p48j6xixr5wqj58dp8rhcik07b7vrfvznnxdi"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (delete 'check)
+         (add-after 'build 'check
+           (lambda _
+             (setenv "PYTHONPATH" (getcwd))
+             (setenv "DJANGO_SETTINGS_MODULE" "mathics_django.settings")
+             (invoke "django-admin" "test"))))))
+    (native-inputs (list python-pytest))
+    (propagated-inputs (list python-django-4.2
+                             python-mathics-scanner
+                             python-mathics-core
+                             python-networkx-next
+                             python-pygments
+                             python-requests))
+    (home-page "https://mathics.org/")
+    (synopsis "A Django front end for Mathics3.")
+    (description "This package provides a Django front end for Mathics3.")
+    (license license:gpl3)))

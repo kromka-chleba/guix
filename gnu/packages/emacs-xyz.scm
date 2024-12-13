@@ -314,7 +314,7 @@
       (build-system emacs-build-system)
       (home-page "https://git.sr.ht/~willvaughn/emacs-0x0")
       (synopsis
-       "Integration with @url{https://0x0.st, 0x0.st} and self-hosted services
+       "Integration with @url{https://0x0.st} and self-hosted services
 from Emacs")
       (description
        "Emacs 0x0 is a pastebin integration tool.  It can upload the current
@@ -550,7 +550,7 @@ e.g. emacs-geiser-guile for Guile.")
 (define-public emacs-gptel
   (package
     (name "emacs-gptel")
-    (version "0.9.5")
+    (version "0.9.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -559,7 +559,7 @@ e.g. emacs-geiser-guile for Guile.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1ihcdxpwqawvrb1l8l8lnj20gn8m5z47q2fmpvzwdqbjd0nl2xnp"))))
+                "0cb5wxlc598fs1cmjvkbc76x098ljmik3s39hjfjzn6537yps4da"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -1744,7 +1744,7 @@ syntax for short lambda.")
 (define-public emacs-llm
   (package
     (name "emacs-llm")
-    (version "0.17.4")
+    (version "0.19.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1753,9 +1753,11 @@ syntax for short lambda.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0vq7209wi20jw28m4v0fsca2i9k6vqn844fqkpyc8c95ranm0c1l"))))
+                "0k7fr8r05x72xpcw7bl0bih4cz9p3vmgasfxv06a49v81jna10ip"))))
     (build-system emacs-build-system)
-    (propagated-inputs (list emacs-plz))
+    (propagated-inputs (list emacs-plz
+                             emacs-plz-event-source
+                             emacs-plz-media-type))
     (home-page "https://github.com/ahyatt/llm")
     (synopsis "Emacs library abstracting Large Language Model capabilities")
     (description
@@ -2426,7 +2428,7 @@ you will die.  The game builds the list of words from the active buffer.")
                  (string-append all " (skip-unless nil)"))))))))
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/dakra/speed-type")
-    (synopsis "Practice touch/speed typing in GNU Emacs.")
+    (synopsis "Practice touch/speed typing in GNU Emacs")
     (description
      "Speed Type allows you to practice your touch typing skills.  You can
 test yourself by typing snippets from online books or use any piece of text or
@@ -4281,7 +4283,7 @@ mode, Rmail, Gnus, MH-E, and VM).  BBDB is fully customizable.")
       (propagated-inputs (list emacs-bbdb))
       (home-page "https://github.com/tohojo/bbdb-vcard")
       (synopsis
-       "vCard Import and Export for The Insidious Big Brother Database (BBDB)")
+       "The Insidious Big Brother Database (BBDB) vCard Import and Export")
       (description
        "@code{bbdb-vcard.el} imports and exports vCards (version 3.0) as
 defined in RFC 2425 and RFC 2426 to/from The Insidious Big Brother Database
@@ -4928,7 +4930,7 @@ searches.  Unlike code@{emacs-wiki.el}, it can be combined with any format.")
                (base32
                 "1d05jw2sa19rgzskvavh21bfmbh07yza1drfbgypsvay3nkjfd2z"))))
     (build-system emacs-build-system)
-    (synopsis "emacs mediawiki editor")
+    (synopsis "Mediawiki editor for Emacs")
     (description "This package provides a way to edit mediawiki sites from
 within emacs.")
     (home-page "https://github.com/hexmode/mediawiki-el")
@@ -5340,7 +5342,7 @@ provided by Cape can also be used by Company.")
                (base32
                 "18cwiv227m8y1xqvsnjrzgd6f6kvvih742h8y38pphljssl109fk"))))
     (build-system emacs-build-system)
-    (synopsis "eshell completion suggestions for Emacs")
+    (synopsis "@code{eshell} completion suggestions for Emacs")
     (description "This package provides comint autosuggestions for Emacs
 eshell.")
     (home-page "https://repo.or.cz/emacs-capf-autosuggest")
@@ -8426,8 +8428,8 @@ have a comment with a tag, for example listing them right next to each other.")
         (base32 "0cajgkfcwqgqdqyqf01hxji28n27jmj9nf0w3rbyw6l5dffgch0n"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/unhammer/org-rich-yank")
-    (synopsis "Automatically surround source code pasted into Org with
-@code{#+BEGIN_SRC} blocks")
+    (synopsis "Surround source code pasted into Org with @code{#+BEGIN_SRC}
+blocks")
     (description
      "This package provides a utility function for Org buffers that makes a
 @code{_SRC} block with the appropriate language annotation for code that has
@@ -14657,7 +14659,7 @@ you'd find in Clojure mode and CIDER.")
           (base32 "1fzsqd150gpmrj8kz3zy9cd78x9vank7ra720mljhyf04z0h1mj6"))))
       (build-system emacs-build-system)
       (home-page "https://github.com/didibus/anakondo")
-      (synopsis "clj-kondo based Clojure[Script] editing facilities")
+      (synopsis "Clojure[Script] editing facilities based on clj-kondo")
       (description
        "This package makes use of clj-kondo's analysis data to provide code
 editing facilities related to Clojure, ClojureScript and cljc source.")
@@ -18012,7 +18014,7 @@ passive voice.")
 (define-public emacs-org
   (package
     (name "emacs-org")
-    (version "9.7.14")
+    (version "9.7.17")
     (source
      (origin
        (method git-fetch)
@@ -18021,7 +18023,7 @@ passive voice.")
              (commit (string-append "release_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0c6f4rjkld32hc2m8c5kc1jzip5k56bjzm4f12nc7ipsd3yywvwf"))))
+        (base32 "0zr5md07f252wxmvp3mna8sslzlqmnc2lmnnnx6zmp695r4227za"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -18896,7 +18898,7 @@ are common in Chromium-derived projects.")
         (base32 "1y9f5ms7aivwjfc951m68jfmwncfq5f4h876xvivxhfph4xnc76y"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-compat emacs-emacsql))
-    (home-page "https://thanosapollo.org/projects/gnosis/")
+    (home-page "https://thanosapollo.org/projects/gnosis")
     (synopsis "Spaced repetition system for GNU Emacs")
     (description
      "Gnosis is a spaced repetition system for note-taking and self-testing
@@ -21936,7 +21938,7 @@ fetches weather information based on your location or on a given location from
         (base32 "0xgifa7s9n882f9ymyyz9gc11xfbj3vfpnxiq1fqfm5hmwx9pwbc"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/Fuco1/free-keys")
-    (synopsis "Show free keybindings for modkeys or prefixes in Emacs.")
+    (synopsis "Show free keybindings for modkeys or prefixes in Emacs")
     (description
      "Free-keys shows available key bindings in the current Emacs buffer.")
     (license license:gpl3+)))
@@ -22341,7 +22343,7 @@ created by @code{git format-patch}, from @code{magit}, @code{dired} and
 (define-public emacs-git-email
   (package
     (name "emacs-git-email")
-    (version "0.6.0")
+    (version "0.6.2")
     (source
      (origin
        (method git-fetch)
@@ -22350,7 +22352,7 @@ created by @code{git format-patch}, from @code{magit}, @code{dired} and
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cx6a4dxvdggnjn95a9fhcidd1140srpzw9lx9hi65kancnyjsci"))))
+        (base32 "1miyz67dk1vi1gs6kgfrmihid90qb9ks79hskhsa2w2a62772jif"))))
     (build-system emacs-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -24269,7 +24271,7 @@ end users.")
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-pg))
-    (synopsis "emacs PostgreSQL client")
+    (synopsis "PostgreSQL client in Emacs")
     (description "This package provides a PostgreSQL client in emacs.")
     (home-page "https://github.com/emarsden/pgmacs")
     (license license:gpl3+)))
@@ -32989,7 +32991,7 @@ as Emacs Lisp.")
 (define-public emacs-transient
   (package
     (name "emacs-transient")
-    (version "0.7.7")
+    (version "0.8.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -32998,7 +33000,7 @@ as Emacs Lisp.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0rdhjb2fcxwxpbr7lrjqqqdnag2zqs8l6g4yw59bkp4g7kxpmmar"))))
+                "1r6rkgkly3s5rqarlhwqrqm37h139p9bdb9q7grp3zq1gnng7vlx"))))
     (build-system emacs-build-system)
     (arguments
      `(#:tests? #f                      ;no test suite
@@ -33266,7 +33268,7 @@ JavaScript.")
              emacs-s
              tree-sitter-javascript))
       (home-page "https://github.com/isamert/jsdoc.el")
-      (synopsis "Inserts JSDoc function comments/typedefs easily.")
+      (synopsis "Inserts JSDoc function comments/typedefs easily")
       (description "This package provides an easy way to insert JSDoc function
 comments and typedefs using Emacs' builtin tree-sitter.")
       (license license:gpl3+))))
@@ -35589,7 +35591,7 @@ files to numerous other formats via Pandoc.")
       (propagated-inputs
        (list emacs-org))
       (home-page "https://github.com/hexmode/ox-reveal")
-      (synopsis "reveal.js Presentation Back-End for Org export engine")
+      (synopsis "Org export engine reveal.js Presentation Back-End")
       (description
        "Org Reveal exports your Org documents to @code{reveal.js} presentations.
 With org-reveal, you can create beautiful presentations with 3D effects from
@@ -37460,7 +37462,7 @@ services inside Emacs.")
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-debase))
       (home-page "https://codeberg.org/emacs-weirdware/discomfort")
-      (synopsis "User interface to mount & unmount disks in Emacs.")
+      (synopsis "User interface to mount and unmount disks in Emacs")
       (description "Discomfort is an interface to mount and unmount disks in Emacs, using UDisks2.")
       (license (list license:gpl3+)))))
 

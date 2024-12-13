@@ -16502,7 +16502,7 @@ API services.")
     (native-inputs
      (list python-pytest))
     (home-page "https://github.com/caleblareau/mgatk")
-    (synopsis "Mitochondrial genome analysis toolkit.")
+    (synopsis "Mitochondrial genome analysis toolkit")
     (description "This package is a Python-based command line interface for
 processing .bam files with mitochondrial reads and generating high-quality
 heteroplasmy estimation from sequencing data.  The mgatk package places a
@@ -20373,7 +20373,7 @@ repeated areas between contigs.")
     (native-inputs
      (list poetry python-pytest))
     (home-page "https://github.com/vembrane/vembrane")
-    (synopsis "Filter VCF/BCF files with Python expressions.")
+    (synopsis "Filter VCF/BCF files with Python expressions")
     (description "Vembrane simultaneously filters variants based on
 any INFO or FORMAT field, CHROM, POS, ID, REF, ALT, QUAL, FILTER, and the
 annotation field ANN.  When filtering based on ANN, annotation entries are

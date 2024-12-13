@@ -11,6 +11,7 @@
 ;;; Copyright © 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
 ;;; Copyright © 2021, 2023 Maxime Devos <maximedevos@telenet.be>
+;;; Copyright © 2024 Gabriel Wicki <gabriel@erlikon.ch>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -120,6 +121,11 @@
                              (description "bad description."))))
      (check-description-style pkg))))
 
+(test-equal "description: may start with texinfo markup"
+  '()
+  (check-description-style
+   (dummy-package "x" (description "@emph{Maxwell Equations of Software}"))))
+
 (test-equal "description: may start with a digit"
   '()
   (let ((pkg (dummy-package "x"
@@ -130,6 +136,30 @@
   '()
   (let ((pkg (dummy-package "x"
                             (description "x is a dummy package."))))
+    (check-description-style pkg)))
+
+(test-equal "description: may start with beginning of package name"
+  '()
+  (let ((pkg (dummy-package "xyz-0.1"
+                            (description "xyz is a dummy package."))))
+    (check-description-style pkg)))
+
+(test-equal "description: may start with end of package name"
+  '()
+  (let ((pkg (dummy-package "foobar-xyz"
+                            (description "xyz is a dummy package."))))
+    (check-description-style pkg)))
+
+(test-equal "description: may start with non-hyphenated package name"
+  '()
+  (let ((pkg (dummy-package "foobar-xyz-minimal"
+                            (description "foobar_xyz is a dummy package."))))
+    (check-description-style pkg)))
+
+(test-equal "description: may start with end of package name"
+  '()
+  (let ((pkg (dummy-package "foo-bar"
+                            (description "bar is some thing in foo."))))
     (check-description-style pkg)))
 
 (test-equal "description: two spaces after end of sentence"
@@ -143,7 +173,7 @@
   '()
   (let ((pkg (dummy-package "x"
                             (description
-                             "E.g. Foo, i.e. Bar resp. Baz (a.k.a. DVD)."))))
+                             "O. Person e.g. Foo, i.e. Bar resp. Baz (a.k.a. DVD).  Name et al. cf. some paper."))))
     (check-description-style pkg)))
 
 (test-equal "description: may not contain trademark signs: ™"
@@ -171,14 +201,14 @@
   "description contains leading whitespace"
   (single-lint-warning-message
    (let ((pkg (dummy-package "x"
-                              (description " Whitespace."))))
+                             (description " Whitespace."))))
      (check-description-style pkg))))
 
 (test-equal "description: trailing whitespace"
   "description contains trailing whitespace"
   (single-lint-warning-message
    (let ((pkg (dummy-package "x"
-                              (description "Whitespace. "))))
+                             (description "Whitespace. "))))
      (check-description-style pkg))))
 
 (test-equal "description: pluralized 'This package'"
@@ -189,11 +219,17 @@
      (check-description-style pkg))))
 
 (test-equal "description: grammar 'allows to'"
-  "description contains typo 'allows to'"
+  "description contains typo 'allows to '"
   (single-lint-warning-message
    (let ((pkg (dummy-package "x"
                              (description "This package allows to do stuff."))))
      (check-description-style pkg))))
+
+(test-equal "description: grammar 'allows to' 2"
+  '()
+  (let ((pkg (dummy-package "x"
+                            (description "This package allows tokenization."))))
+    (check-description-style pkg)))
 
 (test-equal "synopsis: not a string"
   "invalid synopsis: #f"
@@ -277,6 +313,12 @@
       (check-synopsis-style pkg)))
    string<?))
 
+(test-equal "synopsis: starts with texinfo markup"
+  '()
+  (let ((pkg (dummy-package "x"
+                            (synopsis "@code{help}"))))
+    (check-synopsis-style pkg)))
+
 (test-equal "synopsis: too long"
   "synopsis should be less than 80 characters long"
   (single-lint-warning-message
@@ -359,18 +401,18 @@
   '()
   (check-compiler-for-target
    (dummy-package "x"
-		  (arguments
-		   (list #:make-flags
-			 #~(list (string-append "CC=" (cc-for-target))))))))
+                  (arguments
+                   (list #:make-flags
+                         #~(list (string-append "CC=" (cc-for-target))))))))
 
 (test-equal "compiler-for-target: CC=gcc is acceptable when target=#false"
   '()
   (check-compiler-for-target
    ;; This (dummy) package consists purely of architecture-independent data.
    (dummy-package "tzdata"
-		  (arguments
-		   (list #:target #false
-			 #:make-flags #~(list "CC=gcc"))))))
+                  (arguments
+                   (list #:target #false
+                         #:make-flags #~(list "CC=gcc"))))))
 
 ;; The emacs-build-system sets #:tests? #f by default.
 (test-equal "tests-true: #:tests? #t acceptable for emacs packages"

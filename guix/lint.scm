@@ -14,6 +14,7 @@
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
 ;;; Copyright © 2021-2023 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2021 Brice Waegeneire <brice@waegenei.re>
+;;; Copyright © 2024 Gabriel Wicki <gabriel@erlikon.ch>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -369,6 +370,12 @@ superfluous when building natively and incorrect when cross-compiling."
 (define (properly-starts-sentence? s)
   (string-match "^[(\"'`[:upper:][:digit:]]" s))
 
+(define %starts-with-texinfo-markup-rx
+  (make-regexp "^@(acronym|dfn|code|command|emph|file|quotation|samp|uref|url)\\{.*?\\}"))
+
+(define (starts-with-texinfo-markup? s)
+  (regexp-exec %starts-with-texinfo-markup-rx s))
+
 (define (starts-with-abbreviation? s)
   "Return #t if S starts with what looks like an abbreviation or acronym."
   (string-match "^[A-Z][A-Z0-9]+\\>" s))
@@ -437,15 +444,24 @@ trademark sign '~a' at ~d")
         '()))
 
   (define (check-proper-start description)
-    (if (or (string-null? description)
-            (properly-starts-sentence? description)
-            (string-prefix-ci? (package-name package) description))
-        '()
-        (list
-         (make-warning
-          package
-          (G_ "description should start with an upper-case letter or digit")
-          #:field 'description))))
+    (let* ((initial
+            (string-take description
+                         (or (string-index description #\space)
+                             0)))
+           (first-word
+            (regexp-substitute/global #f "_" initial
+                                      'pre "-" 'post)))
+      (if (or (string-null? description)
+              (properly-starts-sentence? description)
+              (starts-with-texinfo-markup? description)
+              (string-prefix-ci? first-word (package-name package))
+              (string-suffix-ci? first-word (package-name package)))
+          '()
+          (list
+           (make-warning
+            package
+            (G_ "description should start with an upper-case letter or digit")
+            #:field 'description)))))
 
   (define (check-end-of-sentence-space description)
     "Check that an end-of-sentence period is followed by two spaces."
@@ -453,11 +469,16 @@ trademark sign '~a' at ~d")
            (reverse (fold-matches
                      "\\. [A-Z]" description '()
                      (lambda (m r)
-                       ;; Filter out matches of common abbreviations.
-                       (if (find (lambda (s)
-                                   (string-suffix-ci? s (match:prefix m)))
-                                 '("i.e" "e.g" "a.k.a" "resp"))
-                           r (cons (match:start m) r)))))))
+                       ;; Filter out matches of common abbreviations and
+                       ;; initials.
+                       (let ((pre (match:prefix m)))
+                         (if (or
+                              (string-match "[A-Z]$" pre) ;; Initial found
+                              (find (lambda (s)
+                                      (string-suffix-ci? s pre))
+                                    '("i.e" "e.g" "a.k.a" "resp" "cf" "al")))
+                             r
+                             (cons (match:start m) r))))))))
       (if (null? infractions)
           '()
           (list
@@ -494,8 +515,8 @@ by two spaces; possible infraction~p at ~{~a~^, ~}")
          (check-trademarks description)
          (check-description-typo description '(("This packages" . "This package")
                                                ("This modules" . "This module")
-                                               ("allows to" . #f)
-                                               ("permits to" . #f)))
+                                               ("allows to " . #f)
+                                               ("permits to " . #f)))
          ;; Use raw description for this because Texinfo rendering
          ;; automatically fixes end of sentence space.
          (check-end-of-sentence-space description)
@@ -504,7 +525,9 @@ by two spaces; possible infraction~p at ~{~a~^, ~}")
          (match (check-texinfo-markup description)
            ((and warning (? lint-warning?)) (list warning))
            (plain-description
-            (check-proper-start plain-description))))
+            (if (string-prefix? "@" description)
+                '()
+                (check-proper-start plain-description)))))
         (list
          (make-warning package
                        (G_ "invalid description: ~s")
@@ -728,7 +751,8 @@ the synopsis")
         '()))
 
   (define (check-proper-start synopsis)
-    (if (properly-starts-sentence? synopsis)
+    (if (or (properly-starts-sentence? synopsis)
+            (starts-with-texinfo-markup? synopsis))
         '()
         (list
          (make-warning package
@@ -737,7 +761,7 @@ the synopsis")
 
   (define (check-start-with-package-name synopsis)
     (if (and (regexp-exec (package-name-regexp package) synopsis)
-               (not (starts-with-abbreviation? synopsis)))
+             (not (starts-with-abbreviation? synopsis)))
         (list
          (make-warning package
                        (G_ "synopsis should not start with the package name")

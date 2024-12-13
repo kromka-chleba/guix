@@ -2249,6 +2249,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/teuchos-remove-duplicate-using.patch	\
   %D%/packages/patches/texi2html-document-encoding.patch	\
   %D%/packages/patches/texi2html-i18n.patch			\
+  %D%/packages/patches/texmacs-wayland-hidpi.patch	\
   %D%/packages/patches/thefuck-test-environ.patch		\
   %D%/packages/patches/tidy-CVE-2015-5522+5523.patch		\
   %D%/packages/patches/timewarrior-time-sensitive-tests.patch	\
@@ -2260,6 +2261,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/torcs-glibc-default-source.patch		\
   %D%/packages/patches/torcs-isnan.patch			\
   %D%/packages/patches/torcs-nullptr.patch			\
+  %D%/packages/patches/torbrowser-compare-paths.patch           \
   %D%/packages/patches/tpetra-remove-duplicate-using.patch	\
   %D%/packages/patches/transcode-ffmpeg.patch	\
   %D%/packages/patches/transmission-4.0.6-fix-build.patch	\

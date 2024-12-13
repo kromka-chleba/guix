@@ -513,17 +513,17 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.11-version "6.11.10")
+(define-public linux-libre-6.11-version "6.11.11")
 (define-public linux-libre-6.11-gnu-revision "gnu")
 (define deblob-scripts-6.11
   (linux-libre-deblob-scripts
    linux-libre-6.11-version
    linux-libre-6.11-gnu-revision
    (base32 "0igjsnlnvzl9q2cb5ypavbfirldqw86v7krmxljivshh765xzykd")
-   (base32 "076psrj9rx0fb7i76f7s6xyaq8dj3kyrfhc4q6g7q2ll3v4hxvc6")))
+   (base32 "0y5s6yr50vilmi095argqikq1inng9rsaf5r8b3j2zz3brk8d17j")))
 (define-public linux-libre-6.11-pristine-source
   (let ((version linux-libre-6.11-version)
-        (hash (base32 "0xzynjyyr16my0wrla4ggpjbh4g7nsqixaimz5hrsqlhaa8q9hab")))
+        (hash (base32 "1z2913y38clnlmhvwj49h7p4pic24s4d8np7nmd4lk7m2xz8w532")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.11)))
@@ -532,7 +532,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.63")
+(define-public linux-libre-6.6-version "6.6.64")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -542,7 +542,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1x3455v7sfzakq99ydifh65yzvjzrw06p2lchwb6902yzqbnh786")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "0d8q0vwv3lcix3wiq2n53rir3h298flg2l0ghpify4rlh2s4l1fi")))
+        (hash (base32 "1cbag4wzv5fpjdcl0rpp158ch1q17rfz2qxm1xjjyhnblqzxjpq6")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
@@ -607,7 +607,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
 
-(define-public linux-libre-4.19-version "4.19.324")
+(define-public linux-libre-4.19-version "4.19.325")
 (define-public linux-libre-4.19-gnu-revision "gnu1")
 (define deblob-scripts-4.19
   (linux-libre-deblob-scripts
@@ -617,7 +617,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "048isws4h3lya8dwpwyhqglsjg9sckxk0gfsxdbqg336n5vi0gb1")))
 (define-public linux-libre-4.19-pristine-source
   (let ((version linux-libre-4.19-version)
-        (hash (base32 "1rpzhx6zx7kav638m78fcqhw3igzggdcyc2r7ns8inh75nnl1qch")))
+        (hash (base32 "1qcd1rrv96p9iz9a9qpx3b9rm2jyps6sgj7l7m21m8ydwmyysyv0")))
     (make-linux-libre-source version
                              (%upstream-linux-source version hash)
                              deblob-scripts-4.19)))
@@ -769,7 +769,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
                    (format p "~a-default~%" ,version)))))))
        #:allowed-references ()
        #:tests? #f))
-    (supported-systems (delete "i586-gnu" %supported-systems))
+    (supported-systems (remove target-hurd? %supported-systems))
     (properties %linux-libre-timeout-properties)
     (home-page "https://www.gnu.org/software/linux-libre/")
     (synopsis "GNU Linux-Libre kernel headers")
@@ -3585,7 +3585,7 @@ inadequately in modern network environments, and both should be deprecated.")
                               (string-append "mandir=/share/man")))))
       (native-inputs `(("gettext" ,gettext-minimal)
                        ("unzip" ,unzip)))
-      (supported-systems (delete "i586-gnu" %supported-systems))
+      (supported-systems (remove target-hurd? %supported-systems))
       (synopsis "Tools for controlling the network subsystem in Linux")
       (description
        "This package includes the important tools for controlling the network
@@ -3626,7 +3626,7 @@ configuration (iptunnel, ipmaddr).")
                             "BUILD_CC=gcc")
                           '()))))
     (native-inputs (list perl))
-    (supported-systems (delete "i586-gnu" %supported-systems))
+    (supported-systems (remove target-hurd? %supported-systems))
     (home-page "https://sites.google.com/site/fullycapable/")
     (synopsis "Library for working with POSIX capabilities")
     (description
@@ -3998,7 +3998,7 @@ or kill them altogether.")
                   (setenv "UDEV_RULES_PATH"
                           (string-append #$output
                                          "/lib/udev/rules.d"))))))))
-    (supported-systems (delete "i586-gnu" %supported-systems))
+    (supported-systems (remove target-hurd? %supported-systems))
     (home-page "https://github.com/libfuse/libfuse")
     (synopsis "Support file systems implemented in user space")
     (description
@@ -4468,7 +4468,7 @@ to use Linux' inotify mechanism, which allows file accesses to be monitored.")
                                "modinfo" "depmod")))))))
     (native-inputs (list pkg-config zstd)) ;zstd needed for tests
     (inputs (list xz zlib `(,zstd "lib")))
-    (supported-systems (delete "i586-gnu" %supported-systems))
+    (supported-systems (remove target-hurd? %supported-systems))
     (home-page "https://www.kernel.org/")
     (synopsis "Kernel module tools")
     (description "Kmod is a set of tools to handle common tasks with Linux
@@ -4828,7 +4828,7 @@ one to send arbitrary keycodes when a given key is tapped or held.")
 
        ;; The tests use 'mknod', which requires root access.
        #:tests? #f))
-    (supported-systems (delete "i586-gnu" %supported-systems))
+    (supported-systems (remove target-hurd? %supported-systems))
     (home-page "https://sourceware.org/lvm2/")
     (synopsis "Logical volume management for Linux")
     (description
@@ -5940,7 +5940,7 @@ MPEG-2 and audio over Linux IEEE 1394.")
            #:tests? #f))
     (inputs
      (list eudev))
-    (supported-systems (delete "i586-gnu" %supported-systems))
+    (supported-systems (remove target-hurd? %supported-systems))
     (home-page "http://neil.brown.name/blog/mdadm")
     (synopsis "Tool for managing Linux Software RAID arrays")
     (description
@@ -7545,7 +7545,7 @@ graphically visualizing a @file{perf.data} file.")
            util-linux
            which))
     (home-page "https://ecryptfs.org/")
-    (synopsis "eCryptfs cryptographic file system utilities")
+    (synopsis "Cryptographic file system utilities")
     (description
      "eCryptfs is a POSIX-compliant stacked cryptographic file system for Linux.
 Each file's cryptographic meta-data is stored inside the file itself, along
@@ -8793,7 +8793,7 @@ Text-based output formats: CSV, XML, Netfilter's LOG, Netfilter's conntrack
     ;; Many architectures are not supported (see:
     ;; https://github.com/proot-me/proot/blob/master/src/arch.h#L51).
     (supported-systems '("x86_64-linux" "i686-linux"
-                         "armhf-linux" "aarch64-linux" "i586-gnu"))
+                         "armhf-linux" "aarch64-linux" "i586-gnu" "x86_64-gnu"))
     (arguments
      ;; Disable the test suite on armhf-linux, as there are too many
      ;; failures to keep track of (see for example:
@@ -10001,7 +10001,7 @@ set as @code{LD_PRELOAD} to override the C library file system functions.")
            re2
            tbb))
     (home-page "https://github.com/falcosecurity/libs/")
-    (synopsis "libscap and lisbinsp Falco security libraries")
+    (synopsis "Falco security libraries")
     (description "The Falco security libraries include @code{libsinsp} and
 @code{libscap}.  @code{libscap} manages the data capture process, while
 @code{libsinsp} is a system inspection library that enriches events from

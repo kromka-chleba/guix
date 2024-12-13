@@ -98,6 +98,7 @@
   #:use-module (gnu packages lisp-xyz)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages lua)
+  #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages perl)
@@ -1082,8 +1083,10 @@ editors.")
        (uri (string-append "https://www.texmacs.org/Download/ftp/tmftp/"
                            "source/TeXmacs-" version "-src.tar.gz"))
        (sha256
-        (base32 "11l1q5lmsj9g7yil1dn7n1cgsr8iikx59kg9riahpb6xw0p959l7"))))
-    (build-system cmake-build-system)
+        (base32 "11l1q5lmsj9g7yil1dn7n1cgsr8iikx59kg9riahpb6xw0p959l7"))
+       (patches
+        (search-patches "texmacs-wayland-hidpi.patch"))))
+    (build-system qt-build-system)
     (native-inputs
      (list pkg-config xdg-utils))       ;for xdg-icon-resource
     (inputs
@@ -1095,6 +1098,7 @@ editors.")
            python-wrapper
            qtbase-5
            qtsvg-5
+           qtwayland-5
            sqlite))
     (arguments
      (list
@@ -1120,6 +1124,34 @@ Octave.  TeXmacs is completely extensible via Guile.")
     (license license:gpl3+)
     (home-page "https://www.texmacs.org/tmweb/home/welcome.en.html")))
 
+(define-public texmacs-guile3
+  (package
+    (inherit texmacs)
+    (name "texmacs-guile3")
+    (version "2.1.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/texmacs/texmacs.git")
+             (commit "guile3_branch_2.1")))
+       (sha256
+        (base32 "0f7l1sfbii25gawqsg27m31myvixb3xdxnsg5njlrnmp8xh1rs3v"))
+       (patches
+        (search-patches "texmacs-wayland-hidpi.patch"))))
+    (inputs
+     (list freetype
+           guile-3.0
+           gmp
+           libjpeg-turbo
+           libxcrypt
+           perl
+           python-wrapper
+           qtbase-5
+           qtsvg-5
+           qtwayland-5
+           sqlite))))
+
 (define-public mogan
   (package
     (inherit texmacs)
@@ -1133,7 +1165,9 @@ Octave.  TeXmacs is completely extensible via Guile.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04wz6xmimjv2l6baxgzm8vyq5grg102m3l4wq8i6bglv529yp4ff"))))
+        (base32 "04wz6xmimjv2l6baxgzm8vyq5grg102m3l4wq8i6bglv529yp4ff"))
+       (patches
+        (search-patches "texmacs-wayland-hidpi.patch"))))
     (build-system qt-build-system)
     (inputs
      (modify-inputs (package-inputs texmacs)
@@ -1676,7 +1710,7 @@ highlighting for dozens of languages.  Jed is very small and fast.")
                    (replace 'build
                      (lambda* (#:key make-flags #:allow-other-keys)
                        (apply invoke "make" "linux" make-flags))))))
-    (inputs (list motif pcre))
+    (inputs (list motif))
     (native-inputs (list pkg-config))
     (home-page "https://sourceforge.net/projects/xnedit/")
     (synopsis "Fast and classic X11 text editor")

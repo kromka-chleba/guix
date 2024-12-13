@@ -577,7 +577,7 @@ server and embedded PowerPC, and S390 guests.")
 
     ;; Several tests fail on MIPS; see <http://hydra.gnu.org/build/117914>.
     (supported-systems (fold delete %supported-systems
-                             '("mips64el-linux" "i586-gnu")))))
+                             '("mips64el-linux" "i586-gnu" "x86_64-gnu")))))
 
 ;; QEMU >= 8.1.0's riscv64 binfmt service is unreliable.
 (define-public qemu-7.2.4
@@ -2769,7 +2769,7 @@ DOS or Microsoft Windows.")
        (cross-libc "i686-linux-gnu") ; header files
        `(,(cross-libc "i686-linux-gnu") "static")))
     (home-page "https://xenproject.org/")
-    (synopsis "Xen Virtual Machine Monitor")
+    (synopsis "Hypervisor")
     (description "This package provides the Xen Virtual Machine Monitor
 which is a hypervisor.")
     ;; TODO: Some files are licensed differently.  List those.

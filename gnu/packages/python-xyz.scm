@@ -5353,7 +5353,7 @@ server.")
                              python-six))
     (native-inputs (list python-matplotlib))
     (home-page "https://github.com/craffel/mir_eval")
-    (synopsis "Common metrics for common audio/music processing tasks.")
+    (synopsis "Common metrics for common audio/music processing tasks")
     (description "This is a Python library for computing common heuristic
 accuracy scores for various music/audio information retrieval/signal
 processing tasks.")
@@ -7128,7 +7128,7 @@ Microsoft Word (.docx) documents.")
     (native-inputs
      (list python-nose))
     (home-page "https://github.com/twolfson/restructuredtext-lint")
-    (synopsis "reStructuredText linter")
+    (synopsis "Linter")
     (description "This package provides a linter for the reStructuredText
 format.")
     (license license:unlicense)))
@@ -10504,7 +10504,7 @@ parallelism.")))
     (build-system python-build-system)
     (native-inputs (list python-pillow))
     (home-page "https://github.com/whtsky/pixelmatch-py")
-    (synopsis "A pixel-level image comparison library")
+    (synopsis "Pixel-level image comparison library")
     (description "This package provides a pixel-level image comparison library
 for Python, originally created to compare screenshots in tests.  Its features
 include accurate anti-aliased pixels detection and perceptual color difference
@@ -13520,6 +13520,18 @@ interfaces in an easy and portable manner.")
 of the structure, dynamics, and functions of complex networks.")
     (license license:bsd-3)))
 
+(define-public python-networkx-next
+  (package
+    (inherit python-networkx)
+    (name "python-networkx")
+    (version "3.4.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "networkx" version))
+       (sha256
+        (base32 "1qaks3c3h5qlw25z949q3plw8iwgm9h152kwnam64lwc89lkcz1h"))))
+    (build-system pyproject-build-system)))
 
 (define-public python-datrie
   (package
@@ -15770,7 +15782,7 @@ should be stored on various operating systems.")
     (build-system pyproject-build-system)
     (propagated-inputs (list python-six))
     (home-page "https://github.com/google/pasta")
-    (synopsis "pasta is an AST-based Python refactoring library")
+    (synopsis "AST-based Python refactoring library")
     (description "This package provides \"pasta\", an AST-based Python
 refactoring library.")
     (license license:asl2.0)))
@@ -17106,6 +17118,30 @@ a hash value.")
      "This package makes it easy to draw tables in terminal/console
 applications from a list of lists of strings.  It supports multi-line rows.")
     (license license:expat)))
+
+(define-public python-term-background
+  (package
+    (name "python-term-background")
+    (version "1.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "term_background" version))
+       (sha256
+        (base32 "0p674silrwc3jncncmdnj1lr6pl2q5qbx0xi3mzjq9sgcs5vmp4n"))))
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'fix-build
+           (lambda _
+             (delete-file "setup.py"))))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wrapper python-setuptools-scm python-pkginfo python-pytest)) ; TODO: Remove python-pkginfo
+    (home-page "http://github.com/rocky/shell-term-background")
+    (synopsis "Determine if shell has a light or dark background")
+    (description "This package determines if shell has a light or dark
+background.")
+    (license license:gpl2+)))
 
 (define-public python-libarchive-c
   (package
@@ -38268,7 +38304,7 @@ write text fast, and for various text generation, statistics, and modeling tasks
     (propagated-inputs (list python-pytz))
     (native-inputs (list python-pytest))
     (home-page "https://github.com/python-xmp-toolkit/python-xmp-toolkit")
-    (synopsis "Python XMP Toolkit for working with metadata.")
+    (synopsis "Python XMP Toolkit for working with metadata")
     (description "Python XMP Toolkit is a library for working with XMP
 metadata, as well as reading/writing XMP metadata stored in many different
 file formats.

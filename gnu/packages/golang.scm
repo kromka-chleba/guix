@@ -47,6 +47,7 @@
 ;;; Copyright © 2024 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2024 Brennan Vincent <brennan@umanwizard.com>
 ;;; Copyright © 2024 André Batista <nandre@riseup.net>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -472,7 +473,7 @@ in the style of communicating sequential processes (@dfn{CSP}).")
        ("go-fix-script-tests.patch" ,(search-patch "go-fix-script-tests.patch"))
        ,@(package-native-inputs go-1.4)))
     (supported-systems (fold delete %supported-systems
-                             (list "powerpc-linux" "i586-gnu")))))
+                             (list "powerpc-linux" "i586-gnu" "x86_64-gnu")))))
 
 ;; https://github.com/golang/go/wiki/MinimumRequirements#microarchitecture-support
 (define %go-1.17-arm-micro-architectures
@@ -2055,7 +2056,7 @@ parsing and encoding support for STUN and TURN protocols.")
     (arguments
      '(#:import-path "github.com/flopp/go-findfont"))
     (home-page "https://github.com/flopp/go-findfont")
-    (synopsis "go-findfont")
+    (synopsis "Go font finder library")
     (description
      "This package provides a platform-agnostic Go library to locate
 TrueType font files in your system's user and system font directories.")
