@@ -34,6 +34,7 @@
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
@@ -57,6 +58,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages python-web)
@@ -167,7 +169,7 @@ cards.")
 (define-public giara
   (package
     (name "giara")
-    (version "1.0.1")
+    (version "1.1.0")
     (source
      (origin
        (method git-fetch)
@@ -176,7 +178,7 @@ cards.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00vmfghp9g8yzn2d1xjawz5a8bdwn1jl1k24mjaf4vlvdy4sg9l4"))))
+        (base32 "1s2lr7s2sqzvphl84zcf68l6lzhp5faycz75yp36ak18aw9b8g0m"))))
     (build-system meson-build-system)
     (arguments
      `(#:glib-or-gtk? #t
@@ -186,6 +188,11 @@ cards.")
            (lambda _
              (substitute* "meson_post_install.py"
                (("gtk-update-icon-cache") "true"))))
+         (add-after 'unpack 'skip-validate-metainfo-file-test
+           (lambda _
+             (substitute* "data/meson.build"
+               (("if ascli_exe\\.found\\(\\)")
+                "if false"))))
          (add-after 'glib-or-gtk-wrap 'wrap-paths
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))
@@ -213,7 +220,7 @@ cards.")
            python
            python-beautifulsoup4
            python-dateutil
-           python-mistune-next
+           python-mistune
            python-pillow
            python-praw
            python-pygobject
@@ -509,16 +516,13 @@ a simple interface that makes it easy to organize and browse feeds.")
         (sha256
          (base32
           "06xb030ibphbrz4nsxm8mh3g60ld8xfp6kc3j6vi1k4ls5s4h79i"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (delete 'sanity-check)         ; Tries to read environment variables.
-         (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (add-installed-pythonpath inputs outputs)
-             (when tests?
-               (invoke "pytest")))))))
+     (list #:test-flags
+           '(list "-k" "not test_content_humanize_timestamp")
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'sanity-check))))  ; Reads environment variables.
     (inputs
      (list python-beautifulsoup4 python-decorator python-kitchen
            python-requests python-six))
@@ -528,7 +532,9 @@ a simple interface that makes it easy to organize and browse feeds.")
            python-mock
            python-pylint
            python-pytest
-           python-vcrpy))
+           python-setuptools
+           python-vcrpy
+           python-wheel))
     (home-page "https://gitlab.com/ajak/tuir")
     (synopsis "Terminal viewer for Reddit (Terminal UI for Reddit)")
     (description

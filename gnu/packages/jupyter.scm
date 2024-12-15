@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2019, 2022 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2021, 2022, 2023 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2021-2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2021 Hugo Lecomte <hugo.lecomte@inria.fr>
 ;;; Copyright © 2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
@@ -52,6 +52,81 @@
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages version-control))
+
+(define-public python-nbclassic
+  (package
+    (name "python-nbclassic")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "nbclassic" version))
+       (sha256
+        (base32 "1qrhzazq10dz64y9mawr3ns595fsdhrj1wvbb42xhmcl66r1xq8a"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-argon2-cffi
+                             python-ipykernel
+                             python-ipython-genutils
+                             python-jinja2
+                             python-jupyter-client
+                             python-jupyter-core
+                             python-jupyter-server
+                             python-nbconvert
+                             python-nbformat
+                             python-nest-asyncio
+                             python-notebook-shim
+                             python-prometheus-client
+                             python-pyzmq
+                             python-send2trash
+                             python-terminado
+                             python-tornado-6
+                             python-traitlets))
+    (native-inputs (list python-coverage
+                         python-nbval
+                         python-jupyter-packaging
+                         python-pytest
+                         python-pytest-cov
+                         python-pytest-jupyter
+                         python-pytest-tornasync
+                         python-requests
+                         python-requests-unixsocket
+                         python-testpath))
+    (home-page "https://github.com/jupyter/nbclassic")
+    (synopsis "Jupyter Notebook as a Jupyter Server extension")
+    (description "NbClassic provides a backwards compatible Jupyter Notebook
+interface that you can install side-by-side with the latest versions: That
+way, you can fearlessly upgrade without worrying about your classic extensions
+and customizations breaking.  Because NbClassic provides the classic interface
+on top of the new Jupyter Server backend, it can coexist with other frontends
+like JupyterLab and Notebook 7 in the same installation.  NbClassic preserves
+the custom classic notebook experience under a new set of URL endpoints, under
+the namespace @code{/nbclassic/}.")
+    (license license:bsd-3)))
+
+(define-public python-notebook-shim
+  (package
+    (name "python-notebook-shim")
+    (version "0.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "notebook_shim" version))
+       (sha256
+        (base32 "1jrqqrm5xjwsx13plyyh7wybb1g71yrzaqa3l9y3162xnshwzcml"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-jupyter-server))
+    (native-inputs
+     (list python-hatchling
+           python-pytest
+           python-pytest-console-scripts
+           python-pytest-jupyter
+           python-pytest-tornasync))
+    (home-page "https://pypi.org/project/notebook-shim/")
+    (synopsis "Shim layer for notebook traits and config")
+    (description
+     "This project provides a way for JupyterLab and other frontends to switch
+to Jupyter Server for their Python Web application backend.")
+    (license license:bsd-3)))
 
 (define-public python-jupyter-protocol
   (package
@@ -110,7 +185,7 @@ protocol} to be used by both clients and kernels.")
            python-jupyter-core
            python-jupyter-protocol
            python-pyzmq
-           python-tornado
+           python-tornado-6
            python-traitlets))
     (native-inputs
      (list python-async-generator
@@ -168,6 +243,52 @@ tests kernels for successful code execution and conformance with the
 @uref{https://jupyter-client.readthedocs.io/en/latest/messaging.html, Jupyter
 Messaging Protocol}.")
     (license license:bsd-3)))
+
+(define-public python-pytest-jupyter
+  (package
+    (name "python-pytest-jupyter")
+    (version "0.10.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest_jupyter" version))
+       (sha256
+        (base32 "114y9py29j6p2iymhc3vj55x65gg1ncbhwal5mads0g2z7p59pq0"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; This requires python-jupyter-server, which itself requires this
+      ;; package.
+      '(list "--ignore=tests/test_jupyter_server.py")
+      #:phases
+      '(modify-phases %standard-phases
+         ;; The jupyter_server tests requires python-jupyter-server, which
+         ;; itself requires this package.
+         (add-after 'unpack 'disable-tests
+           (lambda _
+             (substitute* "tests/conftest.py"
+               (("\"pytest_jupyter.jupyter_server\",") ""))))
+         ;; Some tests require a writable HOME
+         (add-before 'check 'set-HOME
+           (lambda _ (setenv "HOME" "/tmp")))
+         (add-after 'unpack 'ignore-deprecation-warnings
+           (lambda _
+             (substitute* "pyproject.toml"
+               (("  \"module:datetime.*" m)
+                (string-append m "\n\"ignore:zmq.eventloop.ioloop is deprecated:DeprecationWarning\","))))))))
+    (propagated-inputs (list python-jupyter-core python-nbformat))
+    (native-inputs (list python-hatchling
+                         python-ipykernel
+                         python-pytest
+                         python-pytest-timeout
+                         python-tornado-6))
+    (home-page "https://jupyter.org")
+    (synopsis "Pytest plugin for testing Jupyter libraries and extensions.")
+    (description
+     "This package provides a pytest plugin for testing Jupyter libraries and
+extensions.")
+    (license license:bsd-4)))
 
 (define-public xeus
   (package
@@ -240,28 +361,35 @@ the JupyterLab CSS variables.")
 (define-public python-jupyterlab-server
   (package
     (name "python-jupyterlab-server")
-    (version "2.12.0")
+    (version "2.27.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "jupyterlab_server" version))
        (sha256
-        (base32 "1gxbfa5s0v4z0v8kagkm2bz8hlli5pwhr89y68w5kxcrqfsg9q00"))))
-    (build-system python-build-system)
+        (base32 "07b3m34akrf79xpaim9cymhsac0ry5ry7if998lcfxmn173mlyq9"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      ;; XXX: These tests appear to fail due to the lack of
+      ;; locales.
+      '(list "-k" "not locale and not language")
       #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv" "-c" "/dev/null" "tests"
-                        ;; XXX: These tests appear to fail due to the lack of
-                        ;; locales.
-                        "-k" "not locale and not language")))))))
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'ignore-deprecation-warnings
+           (lambda _
+             (substitute* "pyproject.toml"
+               (("  \"module:datetime.*" m)
+                (string-append
+                 m
+                 "\n\"ignore:zmq.eventloop.ioloop is deprecated:DeprecationWarning\","
+                 "\n\"ignore:There is no current event loop:DeprecationWarning\","
+                 "\n\"ignore:Spec is deprecated. Use SchemaPath from jsonschema-path package.:DeprecationWarning\"," )))))
+         (add-before 'check 'set-HOME
+           (lambda _ (setenv "HOME" "/tmp"))))))
     (propagated-inputs
      (list python-babel
-           python-entrypoints
            python-importlib-metadata    ;TODO: remove after Python >= 3.10
            python-jinja2
            python-json5
@@ -270,21 +398,63 @@ the JupyterLab CSS variables.")
            python-packaging
            python-requests))
     (native-inputs
-     (list python-ipykernel
-           python-jupyter-server
+     (list python-hatchling
+           python-ipykernel
            python-openapi-core
            python-openapi-spec-validator
            python-pytest
            python-pytest-console-scripts
-           python-pytest-tornasync
+           python-pytest-cov
+           python-pytest-jupyter
+           python-pytest-timeout
+           python-requests-mock
            python-ruamel.yaml
-           python-strict-rfc3339))
+           python-strict-rfc3339
+           python-werkzeug
+           python-wheel))
     (home-page "https://jupyter.org")
     (synopsis "Server components for JupyterLab applications")
     (description "JupyterLab Server sits between JupyterLab and Jupyter
 Server, and provides a set of REST API handlers and utilities that are used by
 JupyterLab.  It is a separate project in order to accommodate creating
 JupyterLab-like applications from a more limited scope.")
+    (license license:bsd-3)))
+
+(define-public python-jupyter-events
+  (package
+    (name "python-jupyter-events")
+    (version "0.10.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jupyter_events" version))
+       (sha256
+        (base32 "08jyhj16drl3hg594gr677bc5q991lpd4khlhb3jx26csclq42v7"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; This passes the whole command line to shutil.which, instead of just
+     ;; the executable.
+     (list #:test-flags '(list "--ignore=tests/test_cli.py")))
+    (propagated-inputs (list python-jsonschema
+                             python-json-logger
+                             python-pyyaml
+                             python-referencing
+                             python-rich
+                             python-rfc3339-validator
+                             python-rfc3986-validator
+                             python-traitlets))
+    (native-inputs (list python-click
+                         python-hatchling
+                         python-pytest
+                         python-pytest-asyncio
+                         python-pytest-console-scripts))
+    (home-page "https://pypi.org/project/jupyter-events/")
+    (synopsis "Jupyter Event System library")
+    (description "Jupyter Events enables Jupyter Python
+Applications (e.g. Jupyter Server, JupyterLab Server, JupyterHub, etc.) to
+emit events—structured data describing things happening inside the
+application.  Other software (e.g. client applications like JupyterLab) can
+listen and respond to these events.")
     (license license:bsd-3)))
 
 (define-public python-jupyter-packaging
@@ -326,48 +496,83 @@ Jupyter Python packages that require a pre-build step that may include
 JavaScript build steps.")
     (license license:bsd-3)))
 
+(define-public python-hatch-jupyter-builder
+  (package
+    (name "python-hatch-jupyter-builder")
+    (version "0.9.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hatch_jupyter_builder" version))
+       (sha256
+        (base32 "1baqk80c5ddhksh73l48mb59vvaaa2ldrs65k6vldii4s6c829vr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; Don't attempt to build anything, because we don't have network access
+     ;; anyway.
+     (list #:test-flags '(list "-k" "not test_hatch_build")))
+    (propagated-inputs (list python-hatchling))
+    (native-inputs (list python-pytest
+                         python-pytest-cov
+                         python-pytest-mock
+                         python-tomli
+                         python-twine))
+    (home-page "https://github.com/jupyterlab/hatch-jupyter-builder")
+    (synopsis "Hatch plugin to help build Jupyter packages")
+    (description
+     "This package provides a hatch plugin to help build Jupyter packages.")
+    (license license:bsd-3)))
+
 (define-public python-jupyter-server
   (package
     (name "python-jupyter-server")
-    (version "1.16.0")
+    (version "2.14.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "jupyter_server" version))
        (sha256
         (base32
-         "0fj6l34m6vk3yic87isz9bzgg4qsbr285x1faamf512bsrxghmn7"))))
-    (build-system python-build-system)
+         "0xz69anflhib514lgpdrs0ppmbwp13zbg4vwzls3820jlp7594b5"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (let ((home (string-append (getcwd) "/guix-home")))
-                 (setenv "HOME" home))
-               ;; Add jupyter-server executable to PATH.
-               (setenv "PATH"
-                       (string-append (assoc-ref outputs "out") "/bin:"
-                                      (getenv "PATH")))
-               (with-directory-excursion "jupyter_server"
-                 ;; The pytest fixtures are only loaded when the file is
-                 ;; called conftest.py.
-                 (rename-file "pytest_plugin.py" "conftest.py")
-                 (invoke "pytest" "-vv"
-                         ;; Fails with internal server error
-                         "-k" "not test_list_formats"
-                         ;; Integration tests require a server.
-                         "-m" "not integration_test"))))))))
+     (list
+      #:test-flags
+      ;; Integration tests require a server.
+      '(list "-m" "not integration_test"
+             ;; This test fails just like the shutil test in
+             ;; python-jupyter-events fails.  Odd, that.
+             "-k" "not test_server_extension_list")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'ignore-deprecation-warnings
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("  \"ignore:datetime.*" m)
+                 (string-append m "\n\"ignore:zmq.eventloop.ioloop is deprecated:DeprecationWarning\","
+                                "\n\"ignore:There is no current event loop:DeprecationWarning\","
+                                "\n\"ignore:unclosed event loop:ResourceWarning\","
+                                ;; From tornado
+                                "\n\"ignore:unclosed <socket.socket:ResourceWarning\",")))))
+          (add-before 'check 'pre-check
+            (lambda _
+              (let ((home (string-append (getcwd) "/guix-home")))
+                (setenv "HOME" home))
+              ;; Add jupyter-server executable to PATH.
+              (setenv "PATH"
+                      (string-append #$output "/bin:" (getenv "PATH"))))))))
     (propagated-inputs
      (list python-anyio
            python-argon2-cffi
            python-jinja2
            python-jupyter-client
            python-jupyter-core
+           python-jupyter-events
+           python-jupyter-server-terminals
            python-nbconvert
            python-nbformat
+           python-overrides
+           python-packaging
            python-prometheus-client
            python-pyzmq
            python-send2trash
@@ -376,13 +581,14 @@ JavaScript build steps.")
            python-traitlets
            python-websocket-client))
     (native-inputs
-     (list python-coverage
+     (list python-flaky
+           python-hatchling
+           python-hatch-jupyter-builder
            python-ipykernel
            python-pytest
            python-pytest-console-scripts
-           python-pytest-cov
-           python-pytest-mock
-           python-pytest-tornasync
+           python-pytest-jupyter
+           python-pytest-timeout
            python-requests))
     (home-page "https://jupyter.org")
     (synopsis "Core services, APIs, and REST endpoints for Jupyter web applications")
@@ -391,20 +597,43 @@ JavaScript build steps.")
 endpoints—to Jupyter web applications.")
     (license license:expat)))
 
+(define-public python-jupyter-server-terminals
+  (package
+    (name "python-jupyter-server-terminals")
+    (version "0.5.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jupyter_server_terminals" version))
+       (sha256
+        (base32 "0sajiadhwncrr0inzzkrs7l1xc6jmw9b5zfw1v79l3i2cx8jkq2s"))))
+    (build-system pyproject-build-system)
+    ;; The tests require python-jupyter-server, but python-jupyter-server
+    ;; needs this package.
+    (arguments (list #:tests? #false))
+    (propagated-inputs (list python-terminado))
+    (native-inputs
+     (list python-hatchling))
+    (home-page "https://pypi.org/project/jupyter-server-terminals/")
+    (synopsis "Jupyter Server extension providing terminals")
+    (description
+     "This package provides a Jupyter Server extension providing terminals.")
+    (license license:bsd-3)))
+
 (define-public python-jupyterlab-widgets
   (package
     (name "python-jupyterlab-widgets")
-    (version "1.1.4")
+    (version "3.0.10")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "jupyterlab_widgets" version))
        (sha256
         (base32
-         "0kdib439i9pbv90cscq5c7w4nvv8214k9ik4dnbd152yf897cvpa"))))
+         "1h04kln8hp56svdjjk2hbsb0z1mby71cv4gss3wy89v7jw2arwh4"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-jupyter-packaging python-setuptools))
+     (list python-jupyter-packaging))
     (home-page "https://github.com/jupyter-widgets/ipywidgets")
     (synopsis "Interactive widgets for Jupyter Notebooks")
     (description "ipywidgets, also known as jupyter-widgets or simply widgets,
@@ -462,30 +691,23 @@ for authoring custom addons.")
 (define-public python-jupyter-server-mathjax
   (package
     (name "python-jupyter-server-mathjax")
-    (version "0.2.5")
+    (version "0.2.6")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "jupyter_server_mathjax" version))
        (sha256
-        (base32 "1cz7grhj9jih9mgw4xk7a4bqy1fwlb1jsawh6ykxnvpydn76rnb4"))))
-    (build-system python-build-system)
+        (base32 "0hrrl969r7ir6q683hlr7a4lid9x2s35hax2hviiyv38q1nnn7mv"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion "/tmp"
-                  (invoke "pytest" "-vv"
-                          "--pyargs" "jupyter_server_mathjax"))))))))
+      #:test-flags
+      '(list "--pyargs" "jupyter_server_mathjax")))
     (propagated-inputs (list python-jupyter-server))
     (native-inputs
-     (list python-jupyter-server
-           python-jupyter-packaging
-           python-pytest
-           python-pytest-tornasync))
+     (list python-jupyter-packaging
+           python-pytest python-pytest-jupyter
+           python-setuptools python-wheel))
     (home-page "https://jupyter.org")
     (synopsis "Jupyter Server extension for serving Mathjax")
     (description "This package provides a Jupyter Server extension for serving
@@ -521,20 +743,28 @@ and a default CommManager that can be used.")
 (define-public python-nbclient
   (package
     (name "python-nbclient")
-    (version "0.6.6")
+    (version "0.10.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "nbclient" version))
        (sha256
         (base32
-         "09whkb8ll1nfdn4h3k0shncgkfak4lglmiwn8wdni6nrc5wnmxqd"))))
+         "02dvb9ffpd237apyj4fw97a9371kv99lzny49624j7jkp9yingsb"))))
     (build-system pyproject-build-system)
     ;; Tests require tools from nbconvert, which would introduces a cycle.
     (arguments '(#:tests? #false))
     (propagated-inputs
      (list python-jupyter-client python-jupyter-core python-nbformat
            python-traitlets))
+    (native-inputs
+     (list python-hatchling
+           python-flaky
+           python-pytest
+           python-pytest-asyncio
+           python-pytest-cov
+           python-testpath
+           python-xmltodict))
     (home-page "https://jupyter.org")
     (synopsis "Client library for executing notebooks")
     (description
@@ -605,27 +835,27 @@ nbshow present a single notebook in a terminal-friendly way
               (sha256
                (base32
                 "1n57nvxsc94gz9w8ymi83bjkfhfwkpmx4y14m6gjrmlqd49m1aw6"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'delete-bad-tests
-           (lambda _
-             ;; These tests use git and hg, and they are sensitive to the
-             ;; exact printed output.
-             (for-each delete-file (list "tests/test-git.t"
-                                         "tests/test-hg.t"
-                                         "tests/test-status.t"
-                                         "tests/test-uninstall.t"))))
-         (add-before 'check 'set-CRAMSHELL
-           (lambda _
-             (setenv "CRAMSHELL" (which "bash")))))))
+     (list
+      ;; These tests use git and hg, and they are sensitive to the
+      ;; exact printed output.
+      #:test-flags '(map (lambda (test)
+                           (string-append "--ignore=tests/test-" test ".t"))
+                         '("git" "hg" "status" "uninstall"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-CRAMSHELL
+            (lambda _
+              (setenv "CRAMSHELL" (which "bash")))))))
     (propagated-inputs (list python-nbformat))
     (native-inputs
      (list python-pytest
            python-pytest-cram
            python-pytest-flake8
-           python-pytest-runner))
+           python-pytest-runner
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/kynan/nbstripout")
     (synopsis "Strips outputs from Jupyter and IPython notebooks")
     (description
@@ -636,7 +866,7 @@ version to the original file.")
 (define-public repo2docker
   (package
     (name "repo2docker")
-    (version "2021.08.0")
+    (version "2024.03.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -645,38 +875,38 @@ version to the original file.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "111irpghzys0s5ixs8paskz7465cls1sm9d5bg45a15jklcw84a9"))))
+                "1bcnl91j6p3315lk2mmn02jq6mjsn68m9rcw5rkln4c9fx1160rx"))))
     (outputs '("out" "doc"))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-after 'patch-shebangs 'fix-install-miniforge
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let* ((out (assoc-ref outputs "out")))
-                        (substitute* (find-files
-                                      out "^(install-miniforge|install-nix|\
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'patch-shebangs 'fix-install-miniforge
+            (lambda _
+              (substitute* (find-files
+                            #$output "^(install-miniforge|install-nix|\
 nix-shell-wrapper|repo2docker-entrypoint)")
-                          (("^#!(.*)/bin/bash")
-                           "#!/bin/bash"))
-                        (substitute* (find-files out "^freeze\\.py$")
-                          (("^#!(.*)/bin/python3")
-                           "#!/bin/python3\n")))))
-                  (add-after 'install 'make-doc
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let* ((out (assoc-ref outputs "doc"))
-                             (doc (string-append out "/share/doc/"
-                                                 ,(package-name this-package))))
-                        (setenv "PYTHONPATH"
-                                (string-append (getcwd) ":"
-                                               (getenv "GUIX_PYTHONPATH")))
-                        ;; Don't treat warnings as errors.
-                        (substitute* "docs/Makefile"
-                          (("(SPHINXOPTS[[:blank:]]+= )-W" _ group)
-                           group))
-                        (with-directory-excursion "docs"
-                          (invoke  "make" "html")
-                          (copy-recursively "build/html"
-                                            (string-append doc "/html")))))))))
+                (("^#!(.*)/bin/bash")
+                 "#!/bin/bash"))
+                (substitute* (find-files #$output "^freeze\\.py$")
+                  (("^#!(.*)/bin/python3")
+                   "#!/bin/python3\n"))))
+          (add-after 'install 'make-doc
+            (lambda _
+              (let ((doc (string-append #$output:out "/share/doc/"
+                                        #$(package-name this-package))))
+                (setenv "PYTHONPATH"
+                        (string-append (getcwd) ":"
+                                       (getenv "GUIX_PYTHONPATH")))
+                ;; Don't treat warnings as errors.
+                (substitute* "docs/Makefile"
+                  (("(SPHINXOPTS[[:blank:]]+= )-W" _ group)
+                   group))
+                (with-directory-excursion "docs"
+                  (invoke  "make" "html")
+                  (copy-recursively "build/html"
+                                    (string-append doc "/html")))))))))
     (inputs
      (list python-traitlets
            python-toml
@@ -690,8 +920,18 @@ nix-shell-wrapper|repo2docker-entrypoint)")
            python-docker
            python-chardet))
     (native-inputs
-     (list python-sphinx python-entrypoints python-recommonmark
-           python-sphinxcontrib-autoprogram python-pydata-sphinx-theme))
+     (list python-entrypoints
+           python-myst-parser
+           python-pydata-sphinx-theme
+           python-recommonmark
+           python-setuptools
+           python-sphinx
+           python-sphinx-autobuild
+           python-sphinx-copybutton
+           python-sphinxcontrib-autoprogram
+           python-sphinxext-opengraph
+           python-sphinxext-rediraffe
+           python-wheel))
     (home-page "https://repo2docker.readthedocs.io/en/latest/index.html#")
     (synopsis "Generate docker images from repositories")
     (description
@@ -762,6 +1002,7 @@ Docker registry.")
           (add-after 'unpack 'no-custom-css
             (lambda _
               (substitute* "sparqlkernel/install.py"
+                (("notebook.DEFAULT_STATIC_FILES_PATH") "\"/does-not-matter\"")
                 (("install_custom_css\\( destd, PKGNAME \\)") ""))))
           (add-after 'add-install-to-pythonpath 'install-kernelspec
             (lambda _

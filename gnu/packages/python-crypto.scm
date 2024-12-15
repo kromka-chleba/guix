@@ -89,22 +89,19 @@
        (method url-fetch)
        (uri (pypi-uri "base58" version))
        (sha256
-        (base32
-         "1317ly0db7nnjg5k58f6nqa0svfcvn446xd5bpiyi0bfbczwpl65"))))
+        (base32 "1317ly0db7nnjg5k58f6nqa0svfcvn446xd5bpiyi0bfbczwpl65"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests? (invoke "pytest" "-vv")))))))
     (native-inputs
-     (list python-pyhamcrest python-pytest python-pytest-benchmark))
+     (list python-pyhamcrest
+           python-pytest
+           python-pytest-benchmark
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/keis/base58")
     (synopsis "Base58 and Base58Check implementation")
-    (description "Base58 and Base58Check implementation compatible
-with what is used by the Bitcoin network.")
+    (description
+     "Base58 and Base58Check implementation compatible with what is used by
+the Bitcoin network.")
     (license license:expat)))
 
 (define-public python-bcrypt
@@ -192,19 +189,27 @@ This package provides a Python interface for BLAKE2.")
 (define-public python-paramiko
   (package
     (name "python-paramiko")
-    (version "2.7.2")
+    (version "3.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "paramiko" version))
        (sha256
-        (base32 "0dahwq623jnna7gsr9j0mkwr9k2n1pvkapjryhcx508d5jxg8dkz"))))
-    (build-system python-build-system)
-    (arguments
-     `(;; FIXME: Tests require many unpackaged libraries, see dev-requirements.txt.
-       #:tests? #f))
+        (base32 "0941n85xi32kvrh2mxppga527a0jz2iz2c99lpfwwmagv90fa4dd"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-icecream
+           python-pytest-relaxed
+           python-pytest-xdist
+           python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list python-bcrypt python-pyasn1 python-pynacl python-cryptography))
+     (list python-cryptography
+           python-bcrypt
+           python-invoke
+           python-pyasn1
+           python-pynacl))
     (home-page "https://www.paramiko.org/")
     (synopsis "SSHv2 protocol library")
     (description "Paramiko is a python implementation of the SSHv2 protocol,
@@ -216,32 +221,25 @@ Python interface around SSH networking concepts.")
 (define-public python-ecdsa
   (package
     (name "python-ecdsa")
-    (version "0.17.0")
+    (version "0.19.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ecdsa" version))
        (sha256
-        (base32 "1ak8xa2r660d85abrlffp0bqvwdadg9ga4066g856hcy8fxh1xdr"))))
-    (build-system python-build-system)
+        (base32 "1y3bmx6aw5klx143jas3czwbsfvr5d3fs8gm1bfh16b5k48svsk0"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _ (invoke
-                      "pytest"
-                      "-vv"
-                      "-k"
-                      (string-append
-                       "not test_multithreading_with_interrupts "
-                       ;; The following test fails and will be fixed in the
-                       ;; next release after v0.18.  See
-                       ;; <https://github.com/tlsfuzzer/python-ecdsa/issues/307>.
-                       "and not test_add_different_scale_points")))))))
+     (list
+      ;; Test failes with error: AssertionError: KeyboardInterrupt not raised.
+      #:test-flags #~(list "-k" "not test_multithreading_with_interrupts")))
+    (native-inputs
+     (list openssl
+           python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-six))
-    (native-inputs
-     (list openssl python-pytest))
     (home-page "https://github.com/warner/python-ecdsa")
     (synopsis "ECDSA cryptographic signature library (pure python)")
     (description
@@ -302,7 +300,9 @@ do what is needed for client/server Kerberos authentication based on
     (native-inputs
      (list python-toml
            python-pytest
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs
      (list python-importlib-metadata
            python-jaraco-classes
@@ -444,7 +444,7 @@ blake3, a cryptographic hash function.")
        (sha256
         (base32
          "1yxqfb5131wahjyw9pxz03bq476rcfx62s6k53xx4cqbzzgdaqkq"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
@@ -530,11 +530,13 @@ is used by the Requests library to verify HTTPS requests.")
     (build-system pyproject-build-system)
     (arguments (list #:tests? #f))  ; No tests included.
     (native-inputs
-     (list python-flit-core))
+     (list python-flit-core
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/pyca/cryptography")
     (synopsis "Test vectors for the cryptography package")
     (description
-      "This package contains test vectors for the cryptography package.")
+     "This package contains test vectors for the cryptography package.")
     ;; Distributed under either BSD-3 or ASL2.0
     (license (list license:bsd-3 license:asl2.0))))
 
@@ -574,7 +576,10 @@ is used by the Requests library to verify HTTPS requests.")
            python-iso8601
            python-pretend
            python-pytest                ;for subtests
-           python-pytest-benchmark))
+           python-pytest-benchmark
+           python-pytest-subtests
+           python-setuptools
+           python-wheel))
     (inputs (list python-cryptography-rust))
     (propagated-inputs (list python-cffi))
     (home-page "https://github.com/pyca/cryptography")
@@ -846,7 +851,7 @@ PKCS#12, PKCS#5, X.509 and TSP.")
            (lambda _
              (setenv "SODIUM_INSTALL" "system"))))))
     (native-inputs
-     (list python-hypothesis python-pytest))
+     (list python-hypothesis python-pytest python-setuptools python-wheel))
     (propagated-inputs
      (list python-cffi python-six libsodium))
     (home-page "https://github.com/pyca/pynacl/")
@@ -1093,7 +1098,7 @@ provides drop-in compatibility with PyCrypto.")))
        ;; certificates.
        #:tests? #f))
     (inputs (list openssl))
-    (native-inputs (list swig))
+    (native-inputs (list swig python-setuptools python-wheel))
     (home-page "https://gitlab.com/m2crypto/m2crypto")
     (synopsis "Python crypto and TLS toolkit")
     (description "@code{M2Crypto} is a complete Python wrapper for OpenSSL
@@ -1272,25 +1277,33 @@ derivation function.")
 (define-public python-service-identity
   (package
     (name "python-service-identity")
-    (version "21.1.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "service-identity" version))
-              (sha256
-               (base32
-                "0d4x84crbz0a17d8gi90z6zlxwm9pslc65rx0cdw2797ra360v3f"))))
+    (version "24.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "service_identity" version))
+       (sha256
+        (base32 "02cfpry5alap6mf3ffq1gdq6s7a2cmgjqpb2bp6wcf8d7yhkns5q"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-idna python-pytest))
-    (propagated-inputs (list python-attrs python-cryptography python-pyasn1
-                             python-pyasn1-modules python-six))
+    (native-inputs
+     (list python-hatch-fancy-pypi-readme
+           python-hatch-vcs
+           python-hatchling
+           python-idna
+           python-pytest))
+    (propagated-inputs
+     (list python-attrs
+           python-cryptography
+           python-pyasn1
+           python-pyasn1-modules
+           python-six))
     (home-page "https://service-identity.readthedocs.io/")
     (synopsis "Service identity verification for PyOpenSSL")
     (description
-     "@code{service_identity} aspires to give you all the tools you need
-for verifying whether a certificate is valid for the intended purposes.
-In the simplest case, this means host name verification.  However,
-service_identity implements RFC 6125 fully and plans to add other
-relevant RFCs too.")
+     "@code{service_identity} aspires to give you all the tools you need for
+verifying whether a certificate is valid for the intended purposes.  In the
+simplest case, this means host name verification.  However, service_identity
+implements RFC 6125 fully and plans to add other relevant RFCs too.")
     (license license:expat)))
 
 (define-public python-hkdf
@@ -1511,6 +1524,8 @@ items and collections, editing items, locking and unlocking collections
            python-pytest
            python-pytest-cov
            python-service-identity
+           python-setuptools
+           python-wheel
            python-zipp))
     (propagated-inputs
      (list python-cryptography
@@ -1579,36 +1594,39 @@ I/O-free core, and integration modules for different event loops.")
 (define-public python-argon2-cffi
   (package
     (name "python-argon2-cffi")
-    (version "20.1.0")
+    (version "21.1.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "argon2-cffi" version))
         (sha256
          (base32
-          "0zgr4mnnm0p4i99023safb0qb8cgvl202nly1rvylk2b7qnrn0nq"))
+          "0w5q5cdwmzpjgw3bl9f6b9a5xai87qvx3jryra9gd8fi0c8vc47p"))
         (modules '((guix build utils)))
-        (snippet '(begin (delete-file-recursively "extras") #t))))
+        (snippet '(delete-file-recursively "extras"))))
+    ;; TODO: with pyproject-build-system the install phase fails.
     (build-system python-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:phases
+      '(modify-phases %standard-phases
          (replace 'build
            (lambda _
              (setenv "ARGON2_CFFI_USE_SYSTEM" "1")
              (invoke "python" "setup.py" "build")))
          (replace 'check
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (add-installed-pythonpath inputs outputs)
-             (invoke "pytest")
-             (invoke "python" "-m" "argon2" "--help")
-             ;; see tox.ini
-             (invoke "python" "-m" "argon2" "-n" "1" "-t" "1" "-m" "8" "-p" "1"))))))
+           (lambda* (#:key tests? #:allow-other-keys)
+             (when tests?
+               (invoke "pytest")
+               (invoke "python" "-m" "argon2" "--help")
+               ;; see tox.ini
+               (invoke "python" "-m" "argon2" "-n" "1" "-t" "1" "-m" "8" "-p" "1")))))))
     (propagated-inputs
-     (list python-cffi python-six))
+     (list python-cffi python-typing-extensions))
     (inputs (list argon2))
     (native-inputs
-     (list python-hypothesis python-pytest))
+     (list python-hypothesis
+           python-pytest))
     (home-page "https://argon2-cffi.readthedocs.io/")
     (synopsis "Secure Password Hashes for Python")
     (description

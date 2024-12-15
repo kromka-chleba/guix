@@ -115,6 +115,7 @@
   #:use-module (gnu packages popt)
   #:use-module (gnu packages protobuf)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
@@ -255,8 +256,8 @@ managers.")
                    (substitute* "tests/pty_test.py"
                      (("python3") (search-input-file inputs "/bin/python3"))))))))
     (native-inputs
-     ;; For tests.
-     (list python-pytest))
+     (list python-pytest ; For tests.
+           python-setuptools python-wheel))
     (home-page "https://asciinema.org")
     (synopsis "Terminal session recorder")
     (description
@@ -1165,30 +1166,28 @@ than a terminal.")
 (define-public python-curtsies
   (package
     (name "python-curtsies")
-    (version "0.4.1")
+    (version "0.4.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "curtsies" version))
        (sha256
-        (base32 "1c122vgfsvksxkd41g2vij6hjsz97ikg59snclq4af2mkhs0zlb2"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "nosetests" "-v"))))))
-    (propagated-inputs
-     (list python-blessed python-cwcwidth))
+        (base32 "03kn093lr84qg8fmqrn1jb0zak6a1ir9q106lm8jijfpbchk7gkf"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-pyte python-nose))
+     (list python-pyte
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-blessed
+           python-cwcwidth))
     (home-page "https://github.com/bpython/curtsies")
-    (synopsis "Library for curses-like terminal interaction with colored
-strings")
-    (description "Curtsies is a Python library for interacting with the
-terminal.  It features string-like objects which carry formatting information,
-per-line fullscreen terminal rendering, and keyboard input event reporting.")
+    (synopsis "Library for curses-like terminal interaction with colored strings")
+    (description
+     "Curtsies is a Python library for interacting with the terminal.  It
+features string-like objects which carry formatting information, per-line
+fullscreen terminal rendering, and keyboard input event reporting.")
     (license license:expat)))
 
 (define-public python-halo
@@ -1204,8 +1203,14 @@ per-line fullscreen terminal rendering, and keyboard input event reporting.")
     (build-system pyproject-build-system)
     (propagated-inputs (list python-colorama python-log-symbols python-six
                              python-spinners python-termcolor))
-    (native-inputs (list python-coverage python-nose python-pylint python-tox
-                         python-twine))
+    (native-inputs
+     (list python-coverage
+           python-nose
+           python-pylint
+           python-setuptools
+           python-tox
+           python-twine
+           python-wheel))
     (home-page "https://github.com/manrajgrover/halo")
     (synopsis "Python library to display graphical spinners in the terminal")
     (description "Halo is a Python library to display graphical spinners in
@@ -1231,8 +1236,14 @@ the terminal.  It also supports IPython/Jupyter.")
                    (substitute* "requirements-dev.txt"
                      (("(.*)==(.*)$" _ dep ver)
                       (string-append dep ">=" ver))))))))
+    (native-inputs
+     (list python-coverage
+           python-nose
+           python-pylint
+           python-setuptools
+           python-tox
+           python-wheel))
     (propagated-inputs (list python-colorama))
-    (native-inputs (list python-coverage python-nose python-pylint python-tox))
     (home-page "https://github.com/manrajgrover/py-log-symbols")
     (synopsis "Python library with graphical symbols for logging on the terminal")
     (description "This package provides a Python library with graphical symbols
@@ -1259,7 +1270,13 @@ purposes.")
                    (substitute* "requirements-dev.txt"
                      (("(.*)==(.*)$" _ dep ver)
                       (string-append dep ">=" ver))))))))
-    (native-inputs (list python-coverage python-nose python-pylint python-tox))
+    (native-inputs
+     (list python-coverage
+           python-nose
+           python-pylint
+           python-setuptools
+           python-tox
+           python-wheel))
     (home-page "https://github.com/manrajgrover/py-spinners")
     (synopsis "Python library with graphical spinners for the terminal")
     (description "Spinners is a Python library that contains graphical spinners

@@ -335,47 +335,34 @@ resembles Python.")
 (define-public meson-python
   (package
     (name "meson-python")
-    (version "0.15.0")
+    (version "0.17.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "meson_python" version))
               (sha256
                (base32
-                "0vyjhjabvm41hqijifk33idbdl62i76kfyf884f9rs29rpp77nzx"))))
+                "10szxcqgki4zwkrwmsirdg68h03k9qmfswd4r5xyz7p1y9lizfgg"))))
     (build-system pyproject-build-system)
     (arguments
-     ;; The project is configured to use itself to build ('mesonpy') and fails;
-     ;; use another PEP 517 build system.
-     (list #:build-backend "setuptools.build_meta"
-           #:test-flags #~(list "tests"
+     (list #:test-flags #~(list "tests"
                                 ;; The test_pep518 tries to install
                                 ;; dependencies from the network using pip.
-                                "-k" "not test_pep518")
-           #:phases
-           '(modify-phases %standard-phases
-              ;; This additional top directory confuses setuptools.  We could
-              ;; work around this by overriding the detection of the project
-              ;; directory, but deleting this directory is easier.
-              (add-after 'unpack 'delete-directory
-                (lambda _ (delete-file-recursively "LICENSES"))))))
+                                "-k" "not test_pep518")))
     (propagated-inputs
      (list meson
            ninja
            python-colorama
-           python-cython
+           python-cython-3
            python-pyproject-metadata
            python-tomli
            python-typing-extensions
            python-wheel))
     (native-inputs
-     (list python-pypa-build
-           python-wheel
-
-           ;; For tests.
+     (list ;; For tests.
            git-minimal/pinned
            patchelf
            pkg-config
-           python-cython
+           python-cython-3
            python-gitpython
            python-pytest
            python-pytest-cov

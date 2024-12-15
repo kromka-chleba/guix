@@ -46,13 +46,19 @@
   ;; Build-side modules imported by default.
   `((guix build pyproject-build-system)
     (guix build json)
+    (guix build toml)
     ,@%python-build-system-modules))
 
 (define (default-python)
   "Return the default Python package."
   ;; Lazily resolve the binding to avoid a circular dependency.
   (let ((python (resolve-interface '(gnu packages python))))
-    (module-ref python 'python-toolchain)))
+    ;; We are using python-sans-pip-wrapper, because it does not contain
+    ;; setuptools. This allows us to skip the dependency on setuptools for
+    ;; packages which don’t need it. And it allows us to more easily swap
+    ;; out setuptools if a different version is required.
+    ;; Using python-toolchain here might cause dependency cycles.
+    (module-ref python 'python-sans-pip-wrapper)))
 
 (define sanity-check.py
   (search-auxiliary-file "python/sanity-check.py"))
@@ -87,7 +93,8 @@
 (define* (pyproject-build name inputs
                           #:key source
                           (tests? #t)
-                          (configure-flags ''())
+                          (configure-flags ''(@))
+                          (backend-path #f)
                           (build-backend #f)
                           (test-backend #f)
                           (test-flags ''())
@@ -113,6 +120,7 @@
                  #:source #+source
                  #:configure-flags #$configure-flags
                  #:system #$system
+                 #:backend-path #$backend-path
                  #:build-backend #$build-backend
                  #:test-backend #$test-backend
                  #:test-flags #$test-flags

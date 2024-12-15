@@ -116,8 +116,10 @@
            python-numpy
            python-pillow
            python-pyyaml
+           python-setuptools
            ;; optional for tests: python-selenium
-           python-tblib))
+           python-tblib
+           python-wheel))
     (propagated-inputs
      (list python-asgiref
            python-sqlparse
@@ -191,7 +193,7 @@ to the @dfn{don't repeat yourself} (DRY) principle.")
                 "0dpx2wmcclmd3jkprdljz3makq12vd0sjv3xnvlj5vk1lg7glb7g"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-django))
+     (list python-django python-setuptools python-wheel))
     (home-page "https://github.com/epicserve/django-cache-url")
     (synopsis "Configure Django cache settings from URLs")
     (description
@@ -229,7 +231,9 @@ with a @var{CACHE_URL} environment variable.")
            python-dj-email-url
            python-dj-search-url
            python-django-cache-url
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (home-page "https://django-configurations.readthedocs.io/")
     (synopsis "Helper module for organizing Django settings")
     (description
@@ -286,20 +290,19 @@ commands, additional database fields and admin extensions.")
        (uri (pypi-uri "django-localflavor" version))
        (sha256
         (base32 "0i1s0ijfd9rv2cp5x174jcyjpwn7fyg7s1wpbvlwm96bpdvs6bxc"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (setenv "PYTHONPATH"
-                       (string-append ".:"
-                                      (getenv "GUIX_PYTHONPATH")))
-               (invoke "invoke" "test")))))))
+     (list
+      #:test-flags '(list "--settings=tests.settings" "tests")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (if tests?
+                  (apply invoke "python" "-m" "django" "test" test-flags)
+                  (format #t "test suite not run~%")))))))
     (native-inputs
-     (list python-coverage python-invoke python-pytest-django which))
+     (list python-setuptools python-wheel))
     (propagated-inputs
      (list python-django python-stdnum))
     (home-page "https://django-localflavor.readthedocs.io/en/latest/")
@@ -755,6 +758,7 @@ conn_max_age argument to easily enable Django’s connection pool.")
                (base32
                 "16k91rvd9889xxrrf84a3zb0jpinizhfqdmafn54zxa8kqrf7zsm"))))
     (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/migonzalvar/dj-email-url")
     (synopsis "Configure email settings from URLs")
     (description
@@ -775,6 +779,7 @@ settings from URLs.")
                (base32
                 "0h7vshhglym6af2pplkyivk6y0g0ncq0xpdzi88kq2sha9c1lka2"))))
     (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/dstufft/dj-search-url")
     (synopsis "Configure Haystack search from URLs")
     (description

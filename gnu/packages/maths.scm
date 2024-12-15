@@ -3795,19 +3795,25 @@ optimized implementations of the combinatorial prime counting algorithms.")
                 (("include_dirs=\\[\"\\/usr\\/include\\/eigen3\\/\"\\]," _)
                  (string-append "include_dirs=[\""
                                 #$(file-append (this-package-input "eigen")
-                                             "/include/eigen3/")
+                                               "/include/eigen3/")
                                 "\"],"))))))))
-    (propagated-inputs (list eigen python-mpmath python-pyfma))
-    (native-inputs (list pybind11
-                         python-matplotx
-                         python-perfplot
-                         python-pytest))
+    (native-inputs
+     (list pybind11
+           python-matplotx
+           python-perfplot
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list eigen
+           python-mpmath
+           python-pyfma))
     (home-page "https://github.com/diego-hayashi/accupy")
     (synopsis "Accurate calculation of sums and dot products")
     (description
-      "@code{accupy} is a Python library for accurately computing sums
-and (dot) products.  It implements Kahan summation, Shewchuck's
-algorithm and summation in K-fold precision.")
+     "@code{accupy} is a Python library for accurately computing sums
+and (dot) products.  It implements Kahan summation, Shewchuck's algorithm and
+summation in K-fold precision.")
     (license license:gpl3+)))
 
 ;; It is unfortunate that we cannot just link with the existing blis package.
@@ -3830,8 +3836,13 @@ algorithm and summation in K-fold precision.")
            (lambda _
              (invoke "python" "setup.py" "build_ext" "--inplace"
                      "-j" (number->string (parallel-job-count))))))))
-    (propagated-inputs (list python-numpy))
-    (native-inputs (list python-cython python-pytest))
+    (propagated-inputs
+     (list python-numpy))
+    (native-inputs
+     (list python-cython
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/explosion/cython-blis")
     (synopsis "Blis as a self-contained C-extension for Python")
     (description
@@ -3895,16 +3906,22 @@ programming language.")
 (define-public python-kiwisolver
   (package
     (name "python-kiwisolver")
-    (version "1.4.5")
+    (version "1.4.6")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "kiwisolver" version))
               (sha256
                (base32
-                "1v6nc0z9dg4am0bibji9pijci9f15z68mwrlv91a28pvawx5czp5"))))
+                "1q77r6cl9m4vh8lsvmsm1ijh3r9aijdhmnc03yhnlpj407b2kniw"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-typing-extensions))
-    (native-inputs (list python-cppy python-pytest python-setuptools-scm))
+    (native-inputs
+     (list python-cppy
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-typing-extensions))
     (home-page "https://github.com/nucleic/kiwi")
     (synopsis "Fast implementation of the Cassowary constraint solver")
     (description
@@ -4010,17 +4027,6 @@ recurrence relations.")
        (sha256
         (base32 "00s2rwjdlq38zkf7wl1gvm2aw057r30266lkzfxkrfzr4i705xnq"))))
     (build-system pyproject-build-system)
-    (propagated-inputs
-      (list python-importlib-metadata
-            python-ndim
-            python-numpy
-            python-sympy))
-    (native-inputs (list ;python-cplot  ;only used in deselected tests
-                         python-matplotx
-                         python-meshio
-                         python-meshzoo
-                         python-pytest
-                         python-scipy))
     (arguments
      (list
       #:test-flags
@@ -4028,6 +4034,19 @@ recurrence relations.")
       ;; in calls to cplot.
       #~(list "--deselect" "tests/test_u3.py::test_write_single"
               "--deselect" "tests/test_u3.py::test_write_tree")))
+    (native-inputs
+     (list python-matplotx
+           python-meshio
+           python-meshzoo
+           python-pytest
+           python-scipy
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-importlib-metadata
+           python-ndim
+           python-numpy
+           python-sympy))
     (home-page "https://github.com/diego-hayashi/orthopy")
     (synopsis "Tools for orthogonal polynomials, Gaussian quadrature")
     (description "@code{orthopy} provides various orthogonal polynomial
@@ -4121,13 +4140,19 @@ bindings to almost all functions of PETSc.")
           (base32
             "1f989dipv7lqxvalfrvvlmhlxyl67a87lavyyqrr1mh88glhl592"))))
     (build-system pyproject-build-system)
+    (native-inputs
+     (list python-accupy
+           python-pytest
+           python-setuptools
+           python-wheel
+           unzip
+           vtk))
     (propagated-inputs
       (list python-importlib-metadata
             python-numpy
             python-orthopy
             python-scipy
             python-sympy))
-    (native-inputs (list python-accupy python-pytest unzip vtk))
     (home-page "https://github.com/diego-hayashi/quadpy")
     (synopsis "Numerical integration, quadrature for various domains")
     (description

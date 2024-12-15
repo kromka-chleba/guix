@@ -250,8 +250,12 @@ more.")
                       var (format #f "[~s]~%"
                                   (string-append igraph "/lib")))))))))))
       (inputs (list igraph))
-      (propagated-inputs (list python-texttable))
-      (native-inputs (list python-pytest))
+      (propagated-inputs
+       (list python-texttable))
+      (native-inputs
+       (list python-pytest
+             python-setuptools
+             python-wheel))
       (home-page "https://igraph.org/python/")
       (synopsis "Python bindings for the igraph network analysis library"))))
 
@@ -419,11 +423,12 @@ algorithm for community detection in large networks.")
                (("self.use_pkgconfig = False")
                 "self.use_pkgconfig = True")))))))
     (inputs (list igraph))
-    (propagated-inputs (list python-igraph))
+    (propagated-inputs (list python-igraph python-setuptools))
     (native-inputs
      (list pkg-config
            python-ddt
-           python-setuptools-scm))
+           python-setuptools-scm
+           python-wheel))
     (home-page "https://github.com/vtraag/louvain")
     (synopsis "Community detection in large networks")
     (description
@@ -521,7 +526,9 @@ graphs in Python.")
     (inputs (list igraph))
     (native-inputs
      (list python-ddt
+           python-setuptools
            python-setuptools-scm
+           python-wheel
            pkg-config))
     (home-page "https://github.com/vtraag/louvain-igraph")
     (synopsis "Implementation of the Louvain algorithm")

@@ -2669,9 +2669,14 @@ specification can be downloaded at @url{http://3mf.io/specification/}.")
                             (substitute* "pyvisa/shell.py"
                               (("from .thirdparty import prettytable")
                                "import prettytable")))))))
-    (native-inputs (list python-pytest))
-    (propagated-inputs (list python-dataclasses python-prettytable
-                             python-typing-extensions))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-dataclasses
+           python-prettytable
+           python-typing-extensions))
     (home-page "https://pyvisa.readthedocs.io/en/latest/")
     (synopsis "Python binding for the VISA library")
     (description "PyVISA is a Python package for support of the
@@ -2752,6 +2757,12 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
                 "0idr730zdwlxdqyvh3s24720pxrjhwixih24gbqzipgp8nh0713i"))
               (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags '(list ;; Missing docscrape dependency.
+                          "--ignore=doc/sphinxext/tests/test_docscrape.py"
+                          ;; these test require network
+                          "--ignore=skrf/tests/test_network.py")))
     (propagated-inputs (list python-matplotlib
                              python-networkx
                              python-numpy
@@ -4781,11 +4792,18 @@ more.")
                 "0bazk3k2dyzlrh7yxs4pc76m5ysm7riia3ncg7as3xr4y9dy29bx"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest-asyncio python-pytest-runner python-asynctest
-           python-pytest-mock))
+     (list python-asynctest
+           python-pytest-asyncio
+           python-pytest-mock
+           python-pytest-runner
+           python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list python-aiofiles python-aiosqlite python-cryptography
-           python-importlib-metadata python-dateutil python-pytz
+     (list python-aiofiles
+           python-aiosqlite
+           python-cryptography
+           python-dateutil python-pytz
+           python-importlib-metadata
            python-sortedcontainers))
     (synopsis "OPC UA / IEC 62541 client and server library")
     (description "This package provides an OPC UA / IEC 62541 client and
@@ -4796,16 +4814,17 @@ server for Python and pypy3.")
 (define-public cadabra2
   (package
     (name "cadabra2")
-    (version "2.4.5.6")
+    (version "2.5.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/kpeeters/cadabra2")
-                    (commit version)))
+                    (commit version)
+                    (recursive? #t)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1c0832q156kl83dz1wpjw4wf2f68fg7421wxwzahnr2r7xxvgrvl"))))
+                "0pcijvvv75x6408r6slkwljhqb4l4csnk6dhf5333dv9j9cm76ck"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -4820,20 +4839,13 @@ server for Python and pypy3.")
                         (assoc-ref %outputs "out")))
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-dependencies
-            (lambda _
-              (substitute* "cmake/modules/FindGLIBMM.cmake"
-                (("glibmm-2[.]4") "glibmm-2.68"))
-              (substitute* "client_server/ComputeThread.cc"
-                (("sigc::slot<void>[(][)]") "{}")
-                (("Glib::SPAWN_") "Glib::SpawnFlags::"))))
           (add-before 'check 'prepare-checks
             (lambda _
               (setenv "HOME" "/tmp"))))))
     (native-inputs
      (list pkg-config))
     (inputs
-     (list glibmm gmp python boost gtkmm-3 sqlite python-gmpy2 python-sympy
+     (list glibmm-2.66 gmp python boost gtkmm-3 sqlite python-gmpy2 python-sympy
            python-mpmath python-matplotlib texlive-dvipng
            `(,util-linux "lib")))
     (synopsis "Computer algebra system geared towards field theory")

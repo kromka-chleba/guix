@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2015, 2020, 2023 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015, 2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015, 2020, 2023, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2020, 2023 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
@@ -12,6 +12,7 @@
 ;;; Copyright © 2022 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024 Antero Mejr <mail@antr.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -71,25 +72,6 @@ matching of file paths.")
 
 (define-public python-pluggy
   (package
-   (name "python-pluggy")
-   (version "1.0.0")
-   (source
-    (origin
-     (method url-fetch)
-     (uri (pypi-uri "pluggy" version))
-     (sha256
-      (base32
-       "0n8iadlas2z1b4h0fc73b043c7iwfvx9rgvqm1azjmffmhxkf922"))))
-   (build-system python-build-system)
-   (native-inputs (list python-setuptools-scm))
-   (synopsis "Plugin and hook calling mechanism for Python")
-   (description "Pluggy is an extraction of the plugin manager as used by
-Pytest but stripped of Pytest specific details.")
-   (home-page "https://pypi.org/project/pluggy/")
-   (license license:expat)))
-
-(define-public python-pluggy-next
-  (package/inherit python-pluggy
     (name "python-pluggy")
     (version "1.5.0")
     (source
@@ -98,7 +80,17 @@ Pytest but stripped of Pytest specific details.")
        (uri (pypi-uri "pluggy" version))
        (sha256
         (base32 "1w8c3mpliqm9biqw75ci8cfj1x5pb6g5zwblqp27ijgxjj7aizrc"))))
-    (build-system pyproject-build-system)))
+    (build-system python-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (home-page "https://pypi.org/project/pluggy/")
+    (synopsis "Plugin and hook calling mechanism for Python")
+    (description
+     "Pluggy is an extraction of the plugin manager as used by Pytest but
+stripped of Pytest specific details.")
+    (license license:expat)))
 
 (define-public python-toml
   (package
@@ -182,22 +174,16 @@ Python file, so it can be easily copied into your project.")
 (define-public python-tomli
   (package
     (name "python-tomli")
-    (version "2.0.1")
+    (version "2.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "tomli" version))
        (sha256
-        (base32 "0kwazq3i18rphcr8gak4fgzdcj5w5bbn4k4j2l6ma32gj496qlny"))))
+        (base32 "1f4a9nvy8g82bl0k1wdxz9y1j843ai4l4glp0iyy357c5ap6qr1z"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f                      ;disabled to avoid extra dependencies
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'add-self-to-path
-           (lambda _
-             ;; The build system of tomli requires... tomli.
-             (setenv "PYTHONPATH" "src"))))))
+     `(#:tests? #f))                      ;disabled to avoid extra dependencies
     (native-inputs (list python-flit-core-bootstrap python-six-bootstrap))
     (home-page "https://github.com/hukkin/tomli")
     (synopsis "Small and fast TOML parser")
@@ -209,17 +195,17 @@ Python file, so it can be easily copied into your project.")
 (define-public python-trove-classifiers
   (package
     (name "python-trove-classifiers")
-    (version "2023.3.9")
+    (version "2024.10.21.16")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "trove-classifiers" version))
+              (uri (pypi-uri "trove_classifiers" version))
               (sha256
                (base32
-                "00xvldq94dy0zxz40idbbx40smrkfvq75r26ywszxg6lq7wg4hpf"))))
+                "1wzmij9b84pixms7nk2fawhvryj355rsi4rjwsfrspkxsrax1jqp"))))
     (build-system pyproject-build-system)
     (arguments (list #:build-backend "setuptools.build_meta"
                      #:tests? #f))      ;keep dependencies to a minimum
-    (native-inputs (list python-wheel))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/pypa/trove-classifiers")
     (synopsis "Canonical source for classifiers on PyPI")
     (description "This package is the canonical source for classifiers use on
@@ -229,13 +215,13 @@ PyPI (pypi.org).")
 (define-public python-typing-extensions
   (package
     (name "python-typing-extensions")
-    (version "4.9.0")
+    (version "4.10.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "typing_extensions" version))
               (sha256
                (base32
-                "10spkx7xjbxwcsgkqv483c5kn53s042wkrmfr1mdf9vzqf48yir3"))))
+                "1jxkj4pni8pdyrn79sq441lsp40xzw363n0qvfc6zfcgkv4dgaxh"))))
     (build-system pyproject-build-system)
     ;; Disable the test suite to keep the dependencies to a minimum.  Also,
     ;; the test suite requires Python's test module, not available in Guix.
@@ -478,18 +464,20 @@ that client code uses to construct the grammar directly in Python code.")
 (define-public python-packaging-bootstrap
   (package
     (name "python-packaging-bootstrap")
-    (version "21.3")
+    (version "24.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "packaging" version))
        (sha256
         (base32
-         "1sygirdrqgv4f1ckh9nhpcw1yfidrh3qjl86wq8vk6nq4wlw8iyx"))))
-    (build-system python-build-system)
+         "0zxrq3nn0lmmqp3p2d92v0yqbs29kl87k4vkqmmk8bckbvfaca62"))))
+    (build-system pyproject-build-system)
     (arguments `(#:tests? #f))         ;disabled to avoid extra dependencies
     (propagated-inputs
      (list python-pyparsing python-six-bootstrap))
+    (native-inputs
+     (list python-flit-core))
     (home-page "https://github.com/pypa/packaging")
     (synopsis "Core utilities for Python packages")
     (description "Packaging is a Python module for dealing with Python packages.
@@ -535,45 +523,43 @@ any dependency management.  It aims to keep dependencies to a minimum, in
 order to make bootstrapping easier.")
     (license license:expat)))
 
-(define-public python-poetry-core-1.0
+;; There are quite a few amount of Python installers in the wild we need the
+;; one from PyPa team.
+(define-public python-pypa-installer
   (package
-    (name "python-poetry-core")
-    (version "1.0.7")
+    (name "python-pypa-installer")
+    (version "0.7.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "poetry-core" version))
+       (uri (pypi-uri "installer" version))
        (sha256
-        (base32 "01n2rbsvks7snrq3m1d08r3xz9q2715ajb62fdb6rvqnb9sirhcq"))))
-    (build-system python-build-system)
-    (home-page "https://github.com/python-poetry/poetry-core")
-    (synopsis "Poetry PEP 517 build back-end")
+        (base32 "0cdnqh3a3amw8k4s1pzfjh0hpvzw4pczgl702s1b16r82qqkwvd2"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f)) ; Depends on pytest, which we cannot import into this module.
+    (native-inputs
+     (list python-flit-core))
+    (home-page "https://installer.readthedocs.io/")
+    (synopsis "low-level library for installing from a Python wheel distribution")
     (description
-     "The @code{poetry-core} module provides a PEP 517 build back-end
-implementation developed for Poetry.  This project is intended to be
-a light weight, fully compliant, self-contained package allowing PEP 517
-compatible build front-ends to build Poetry managed projects.")
+     "This package provides a library for installing Python wheels.")
     (license license:expat)))
 
 (define-public python-poetry-core
   (package
     (name "python-poetry-core")
-    (version "1.5.2")
+    (version "1.9.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "poetry_core" version))
        (sha256
-        (base32 "053c8dw632p7jkhjb51k0wcx6hdw4r3lk97mds76df653qxnqmf6"))))
+        (base32 "1f31gwhnfyrdymlm0ym6k6c6r0x98zcr2s4xz4blz2zm9chljbbs"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f                      ;disabled to avoid extra dependencies
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'add-self-to-path
-           (lambda _
-             ;; The build system requires itself.
-             (setenv "PYTHONPATH" "src"))))))
+     `(#:tests? #f))                      ;disabled to avoid extra dependencies
     (home-page "https://github.com/python-poetry/poetry-core")
     (synopsis "Poetry PEP 517 build back-end")
     (description
@@ -650,6 +636,7 @@ specified by PEP 517, @code{flit_core.buildapi}.")
                      ;; builder instead.
                      #:build-backend "setuptools.build_meta"))
     (propagated-inputs (list python-flit-core python-setuptools-scm python-tomli))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://gitlab.com/WillDaSilva/flit_scm")
     (synopsis "PEP 518 build backend combining flit_core and setuptools_scm")
     (description "This package provides a PEP 518 build backend that uses
@@ -707,12 +694,12 @@ them as the version argument or in a SCM managed file.")
                                  (getcwd) "/src:"
                                  (getenv "GUIX_PYTHONPATH"))))))
                 #:tests? #f))    ;avoid extra dependencies such as pytest
-    (native-inputs (list python-setuptools))))
+    (native-inputs (list python-setuptools python-wheel))))
 
 (define-public python-editables
   (package
     (name "python-editables")
-    (version "0.3")
+    (version "0.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -721,8 +708,11 @@ them as the version argument or in a SCM managed file.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1gbfkgzmrmbd4ycshm09fr2wd4f1n9gq7s567jgkavhfkn7s2pn1"))))
-    (build-system python-build-system)
+                "1bp959fz987jvrnkilhyr41fw4g00g9jfyiwmfvy96hv1yl68w8b"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))    ;avoid extra dependencies such as pytest
+    (native-inputs
+     (list python-flit-core))
     (home-page "https://github.com/pfmoore/editables")
     (synopsis "Editable installations")
     (description "This library supports the building of wheels which, when
@@ -731,24 +721,63 @@ installed, will expose packages in a local directory on @code{sys.path} in
 reflected in the package visible to Python, without needing a reinstall.")
     (license license:expat)))
 
+;; This package may be removed when we have Python 3.11 on board.
+(define-public python-exceptiongroup
+  (package
+    (name "python-exceptiongroup")
+    (version "1.1.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/agronholm/exceptiongroup")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0wcvzwgjs0xmggs6dh92jxdqi988gafzh10hrzvw10kasy0xakfj"))))
+    (build-system python-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;TODO: Circular dependency on pytest
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: PEP 517 manual build/install procedures copied from
+          ;; python-isort.
+          (replace 'build
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)
+              ;; ZIP does not support timestamps before 1980.
+              (setenv "SOURCE_DATE_EPOCH" "315532800")
+              (invoke "python" "-m" "build" "--wheel" "--no-isolation" ".")))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((whl (car (find-files "dist" "\\.whl$"))))
+                (invoke "pip" "--no-cache-dir" "--no-input"
+                        "install" "--no-deps" "--prefix" #$output whl))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "pytest" "-vv" "tests")))))))
+    (native-inputs (list python-flit-scm python-pypa-build))
+    (home-page "https://github.com/agronholm/exceptiongroup")
+    (synopsis "PEP 654 backport from Python 3.11")
+    (description "This is a backport of the @code{BaseExceptionGroup} and
+@code{ExceptionGroup} classes from Python 3.11.")
+    (license license:expat)))
+
 (define-public python-hatchling
   (package
     (name "python-hatchling")
-    (version "1.14.0")
+    (version "1.26.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "hatchling" version))
               (sha256
                (base32
-                "1nn5cyc9fgrbawz38drfkl2s588k2gn3yqdm2cldbx9zy0fsjbj6"))))
+                "1s9lq2x5g5f24j34r7q3zp39wyqwjixfkq8vb4gxzmf5ws96b5cd"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:tests? #f                  ;to keep dependencies to a minimum
-           #:phases #~(modify-phases %standard-phases
-                        (add-before 'build 'add-src-to-path
-                          ;; Hatchling uses itself to build itself.
-                          (lambda _
-                            (setenv "PYTHONPATH" "src"))))))
+     (list #:tests? #f))                  ;to keep dependencies to a minimum
     (propagated-inputs (list python-editables
                              python-packaging-bootstrap
                              python-pathspec
@@ -809,6 +838,28 @@ parts of files defined using cut-off points or regular expressions.")
 version control system (like Git) to determine project versions.")
     (license license:expat)))
 
+(define-public python-installer
+  (package
+    (name "python-installer")
+    (version "0.7.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "installer" version))
+       (sha256
+        (base32 "0cdnqh3a3amw8k4s1pzfjh0hpvzw4pczgl702s1b16r82qqkwvd2"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;avoid extra test dependencies
+    (native-inputs
+     (list python-flit-core))
+    (home-page "https://installer.rtfd.io/")
+    (synopsis "Installer library for Python wheels")
+    (description
+     "This package provides a low-level library for installing a Python
+package from a wheel distribution.  It provides basic functionality and
+abstractions for handling wheels and installing packages from wheels.")
+    (license license:expat)))
+
 (define-public python-pdm-backend
   (package
     (name "python-pdm-backend")
@@ -822,12 +873,7 @@ version control system (like Git) to determine project versions.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:tests? #f ; Depends on pytest, which we cannot import into this module.
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'set-pythonpath
-            (lambda _
-              (setenv "PYTHONPATH" (string-append (getcwd) "/src")))))))
+      #:tests? #f)) ; Depends on pytest, which we cannot import into this module.
     (home-page "https://pdm-backend.fming.dev/")
     (synopsis
      "PEP 517 build backend for PDM")

@@ -31,6 +31,7 @@
 ;;; Copyright © 2022, 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2023 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
+;;; Copyright © 2024 Josep Bigorra <jjbigorra@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -266,6 +267,43 @@ of C++20 coroutines in connection with certain asynchronous Qt actions.")
 settings (such as icons, themes, and fonts) in desktop environments or
 window managers, that don't provide Qt integration by themselves.")
     (home-page "https://qt5ct.sourceforge.io/")
+    (license license:bsd-2)))
+
+(define-public qt6ct
+  (package
+    (name "qt6ct")
+    (version "0.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/trialuser02/qt6ct")
+             (commit version)))
+       (sha256
+        (base32 "0dknk4qqzqc5wa763nclb1k6jkmvjh8kzz8kfp4iggy9jy0vnzgb"))))
+    (build-system qt-build-system)
+    (arguments
+     (list
+      #:qtbase qtbase
+      #:tests? #f                      ; No target
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch
+            (lambda _
+              (substitute* '("src/qt6ct-qtplugin/CMakeLists.txt"
+                             "src/qt6ct-style/CMakeLists.txt")
+                (("\\$\\{PLUGINDIR\\}")
+                 (string-append #$output "/lib/qt6/plugins"))))))))
+    (native-inputs
+     (list qttools))
+    (inputs
+     (list qtsvg
+           libxkbcommon))
+    (synopsis "Qt6 Configuration Tool")
+    (description "Qt6CT is a program that allows users to configure Qt6
+settings (such as icons, themes, and fonts) in desktop environments or
+window managers, that don't provide Qt integration by themselves.")
+    (home-page "https://github.com/trialuser02/qt6ct")
     (license license:bsd-2)))
 
 (define-public kddockwidgets
@@ -3998,13 +4036,15 @@ Python.")
          "0ykxq0607f2sdwbl5cxbp0y8pl14bsgzc9nhifpxbibfivj5kjbz"))
        (patches (search-patches "python-sip-include-dirs.patch"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ; No test system found.
     (native-inputs
      (list python-wrapper python-setuptools python-setuptools-scm-next))
     (propagated-inputs
      (list python-tomli
-           python-packaging))
-    ;; no test.
-    (arguments (list #:tests? #f))
+           python-packaging
+           python-setuptools
+           python-wheel))
     (home-page "https://www.riverbankcomputing.com/software/sip/intro")
     (synopsis "Python binding creator for C and C++ libraries")
     (description

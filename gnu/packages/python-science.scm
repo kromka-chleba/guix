@@ -370,9 +370,12 @@ routines such as routines for numerical integration and optimization.")
              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
     (propagated-inputs
      (list python-dask
-           python-numpy))
+           python-numpy
+           python-click))
     (native-inputs
      (list python-cython
+           python-setuptools
+           python-wheel
            ;; The following are all needed for the tests
            htslib
            python-h5py
@@ -438,23 +441,35 @@ CMake.")
 (define-public python-scikit-fem
   (package
     (name "python-scikit-fem")
-    (version "9.0.1")
-    (source (origin
-              (method git-fetch)        ; no tests in PyPI
-              (uri (git-reference
-                    (url "https://github.com/kinnala/scikit-fem")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1r1c88rbaa7vjfnljbzx8paf36yzpy33bragl99ykn6i2srmjrd4"))))
+    (version "10.0.2")
+    (source
+     (origin
+       (method git-fetch)        ; no tests in PyPI
+       (uri (git-reference
+             (url "https://github.com/kinnala/scikit-fem")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10kvzm4fmazsrddd83m0903wan67fkj13vdp6w1iw6wm6a0b5h28"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-meshio python-numpy python-scipy))
+    (arguments
+     (list
+      #:test-flags #~(list
+                      ;; Tests require Jax.
+                      "--ignore=tests/test_autodiff.py"
+                      "--ignore=tests/test_examples.py")))
     (native-inputs
      (list python-autograd
            python-pyamg
+           ;; python-jax ; not packed yet
            python-pytest
-           python-shapely))
+           python-shapely
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-meshio
+           python-numpy
+           python-scipy))
     (home-page "https://scikit-fem.readthedocs.io/en/latest/")
     (synopsis "Library for performing finite element assembly")
     (description
@@ -591,7 +606,7 @@ swarm algorithm.")
            python-scikit-learn
            python-scipy))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://scikit-optimize.github.io/")
     (synopsis "Sequential model-based optimization toolbox")
     (description "Scikit-Optimize, or @code{skopt}, is a simple and efficient
@@ -722,7 +737,11 @@ cross-validation.")
                     (lambda* (#:key tests? #:allow-other-keys)
                       (when tests?
                         (invoke "tdda" "test")))))))
-    (native-inputs (list python-numpy python-pandas))
+    (native-inputs
+     (list python-numpy
+           python-pandas
+           python-setuptools
+           python-wheel))
     (home-page "https://www.stochasticsolutions.com")
     (synopsis "Test-driven data analysis library for Python")
     (description
@@ -930,7 +949,9 @@ density maps, both for interactive and non-interactive use.")
            python-cppheaderparser
            python-pytest
            python-pyyaml
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs (list python-numpy python-scipy))
     (home-page "https://github.com/pyamg/pyamg")
     (synopsis "Algebraic Multigrid Solvers in Python")
@@ -1077,6 +1098,8 @@ tissue-specificity metrics for gene expression.")
            python-pytest
            python-pytest-mock
            python-pytest-xdist
+           python-setuptools
+           python-wheel
            ;; Needed to test clipboard support.
            xorg-server-for-tests))
     (home-page "https://pandas.pydata.org")
@@ -1092,7 +1115,7 @@ doing practical, real world data analysis in Python.")
 (define-public python-pandas-2
   (package
     (name "python-pandas")
-    (version "2.1.1")
+    (version "2.2.3")
     (source
      (origin
        (method git-fetch)
@@ -1101,33 +1124,48 @@ doing practical, real world data analysis in Python.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1v9j38bvw739csdfl98ga6fqjdm61q3p5a2l7h364kg925nbc9r1"))))
+        (base32 "00f6jnplwg7iffnxdm4hpfls0ncbarc23933xq1rm5nk5g8dcldx"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
       #~(list "--pyargs" "pandas"
               ;; "--exitfirst"
-              ;; FIXME "-n" (number->string (parallel-job-count))
+              "--numprocesses" (number->string (parallel-job-count))
               "-m" "not slow and not network and not db"
-              "-k" (string-append
-                    "not test_git_version"
-                    " and not test_show_versions_console"
-                    ;; Not testing ~ expansion.
-                    " and not test_expand_user"
-                    " and not test_get_handle_with_path"
-                    ;; These test access the internet (see:
-                    ;; https://github.com/pandas-dev/pandas/issues/45085).:
-                    ;; pandas/tests/io/xml/test_xml.py::test_wrong_url[lxml]
-                    ;; pandas/tests/io/xml/test_xml.py::test_wrong_url[etree]
-                    " and not test_wrong_url"
-                    ;; TODO: Missing input
-                    " and not TestS3"
-                    " and not s3"
-                    ;; This test fails when run with pytest-xdist
-                    ;; (see: https://github.com/pandas-dev/pandas/issues/39096).
-                    " and not test_memory_usage"
-                    " and not test_parsing_tzlocal_deprecated"))
+              ;; All tests errored.
+              "--ignore=pandas/tests/io/test_clipboard.py"
+              "-k" (string-join
+                    (list
+                     "not test_git_version"
+                     "test_show_versions_console"
+                     ;; Not testing ~ expansion.
+                     "test_expand_user"
+                     "test_get_handle_with_path"
+                     ;; These test access the internet (see:
+                     ;; https://github.com/pandas-dev/pandas/issues/45085).:
+                     ;; pandas/tests/io/xml/test_xml.py::test_wrong_url[lxml]
+                     ;; pandas/tests/io/xml/test_xml.py::test_wrong_url[etree]
+                     "test_wrong_url"
+                     ;; TODO: Missing input
+                     "TestS3"
+                     "s3"
+                     ;; This test fails when run with pytest-xdist
+                     ;; (see: https://github.com/pandas-dev/pandas/issues/39096).
+                     "test_memory_usage"
+                     "test_parsing_tzlocal_deprecated"
+                     ;; PyArrow is optional.
+                     "test_style_bar_with_pyarrow_NA_values"
+                     "test_very_negative_exponent"
+                     "test_usecols_no_header_pyarrow"
+                     "test_scientific_no_exponent[pyarrow-None]"
+                     "test_inspect_getmembers"
+                     ;; SciPy introduces cycle, optional.
+                     "test_savefig"
+                     ;; It requires a fresh python-tzdata, including new
+                     ;; timezones.
+                     "test_repr")
+                    " and not "))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'version-set-by-guix
@@ -1177,13 +1215,13 @@ doing practical, real world data analysis in Python.")
     (native-inputs
      (list meson-python
            python-beautifulsoup4
-           python-cython-0.29.35
+           python-cython-3
            python-html5lib
            python-lxml
            python-matplotlib
            python-openpyxl
            python-pytest-asyncio
-           python-pytest-next
+           python-pytest
            python-pytest-localserver
            python-pytest-mock
            python-pytest-xdist
@@ -1315,7 +1353,9 @@ a convention of suggesting best recommended practices for using
            python-numpy
            python-pytest
            python-pytest-cov
-           python-pytest-xdist))
+           python-pytest-xdist
+           python-setuptools
+           python-wheel))
     (home-page "https://nalepae.github.io/pandarallel/")
     (synopsis "Tool to parallelize Pandas operations across CPUs")
     (description
@@ -1370,7 +1410,7 @@ idea of the remaining amount of computation to be done.")
                              python-pandas-stubs ;mypy extra
                              python-pydantic
                              python-scipy ;hypotheses extra
-                             python-typeguard-4
+                             python-typeguard
                              python-typing-inspect
                              python-wrapt))
     (native-inputs (list python-dask ;dask extra
@@ -1379,8 +1419,10 @@ idea of the remaining amount of computation to be done.")
                          python-pyarrow ;needed to run fastapi tests
                          python-pytest
                          python-pytest-asyncio
+                         python-setuptools
                          python-sphinx
-                         python-uvicorn)) ;needed to run fastapi tests
+                         python-uvicorn ;needed to run fastapi tests
+                         python-wheel))
     (home-page "https://github.com/unionai-oss/pandera")
     (synopsis "Perform data validation on dataframe-like objects")
     (description
@@ -1462,6 +1504,8 @@ production-critical data pipelines or reproducible research settings.  With
                          ;; Optional imports. We do not propagate them due to
                          ;; their size.
                          python-numba ;speedup of joins
+                         python-setuptools
+                         python-wheel
                          rdkit)) ;chemistry submodule
     (home-page "https://github.com/pyjanitor-devs/pyjanitor")
     (synopsis "Tools for cleaning and transforming pandas DataFrames")
@@ -1588,7 +1632,8 @@ Python module with the same interface, but (hopefully) faster.")
            python-scikit-learn
            python-scipy))
     (native-inputs
-     (list python-pytest python-pytest-cov))
+     (list python-pytest python-pytest-cov python-setuptools
+           python-wheel))
     (home-page "https://github.com/johannfaouzi/pyts")
     (synopsis "Python package for time series classification")
     (description
@@ -1639,7 +1684,8 @@ written in C.")
                 "01g21v91f4d66xd0bvap0n6d6485w2fnq1636gx6h2s42550rlbd"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-importlib-metadata python-numpy))
-    (native-inputs (list python-pytest python-sympy))
+    (native-inputs (list python-pytest python-setuptools python-sympy
+                         python-wheel))
     (home-page "https://numpoly.readthedocs.io/en/master/")
     (synopsis "Polynomials as a numpy datatype")
     (description "Numpoly is a generic library for creating, manipulating and
@@ -1717,11 +1763,14 @@ higher scores.")
           (add-before 'check 'build-extensions
             (lambda _
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (propagated-inputs (list python-numpy))
     (native-inputs
      (list python-hypothesis
            python-pytest
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy))
     (home-page "https://github.com/astrofrog/fast-histogram")
     (synopsis "Fast simple 1D and 2D histograms")
     (description
@@ -1852,7 +1901,7 @@ multiple deep learning frameworks.")
              (string-append "not test_datetime_conversion_warning"
                             " and not test_timedelta_conversion_warning"))))
     (native-inputs
-     (list python-setuptools-scm python-pytest))
+     (list python-setuptools python-setuptools-scm python-pytest python-wheel))
     (propagated-inputs
      (list python-numpy python-packaging python-pandas))
     (home-page "https://github.com/pydata/xarray")
@@ -2019,7 +2068,9 @@ parentdir_prefix = pytensor-
     (native-inputs (list python-cython
                          python-pytest
                          python-pytest-mock
-                         python-versioneer))
+                         python-versioneer
+                         python-setuptools
+                         python-wheel))
     (propagated-inputs (list python-cons
                              python-etuples
                              python-filelock
@@ -2157,14 +2208,20 @@ annotations on an existing boxplots and barplots generated by seaborn.")
        (sha256
         (base32 "00900bw24rxgcgwgxp9xlx0l5im96r1n5hn0r3mxvbdgc3lyyq48"))))
     (build-system pyproject-build-system)
+    ;; Pint is optional, but we do not propagate it due to its size.
+    (native-inputs
+     (list python-pint
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     ;; Astropy is an optional import, but we do not include it as it creates a
     ;; module cycle: astronomy->python-science->astronomy.
-    (propagated-inputs (list python-h5py        ; optional import
-                             python-matplotlib  ; optional import
-                             python-numpy
-                             python-sympy))
-    ;; Pint is optional, but we do not propagate it due to its size.
-    (native-inputs (list python-pint python-pytest python-setuptools-scm))
+    (propagated-inputs
+     (list python-h5py        ; optional import
+           python-matplotlib  ; optional import
+           python-numpy
+           python-sympy))
     (home-page "https://unyt.readthedocs.io")
     (synopsis "Library for working with data that has physical units")
     (description
@@ -2444,7 +2501,9 @@ parentdir_prefix = dask_expr-
      ;; package without creating a mutually recursive dependency.
      (list python-dask/bootstrap
            python-pytest
-           python-versioneer))
+           python-setuptools
+           python-versioneer
+           python-wheel))
     (home-page "https://github.com/dask/dask-expr")
     (synopsis "Dask DataFrames with query optimization")
     (description "This is a rewrite of Dask DataFrame that includes query
@@ -2689,7 +2748,8 @@ parentdir_prefix = distributed-
            python-importlib-metadata
            python-pytest
            python-pytest-timeout
-           python-versioneer))
+           python-versioneer
+           python-wheel))
     (home-page "https://distributed.dask.org")
     (synopsis "Distributed scheduler for Dask")
     (description "Dask.distributed is a lightweight library for distributed
@@ -2882,7 +2942,9 @@ aggregated sum and more.")
                          python-pandas
                          python-pytest
                          python-pytest-cov
+                         python-setuptools
                          python-setuptools-scm
+                         python-wheel
                          tzdata-for-tests))
     (home-page "https://github.com/has2k1/plotnine")
     (synopsis "Grammar of Graphics for Python")
@@ -2986,7 +3048,9 @@ to do spectral analysis in Python.")
            python-pandas
            python-nose
            python-pytest
-           python-xarray))
+           python-setuptools
+           python-xarray
+           python-wheel))
     (home-page "https://github.com/jupyter-widgets/traittypes")
     (synopsis "Trait types for NumPy, SciPy and friends")
     (description "The goal of this package is to provide a reference
@@ -3260,7 +3324,7 @@ science including tools for accessing data sets in Python.")
                 "12i68jj9n1qj9phjnj6f0kmfhlsd3fqjlk9p6d4gs008azw5m8yn"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-numpy))
-    (native-inputs (list pybind11 python-pytest))
+    (native-inputs (list pybind11 python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/nschloe/pyfma")
     (synopsis "Fused multiply-add for Python")
     (description "@code{pyfma} provides an implementation of fused
@@ -3304,7 +3368,7 @@ functions, convolutions, artificial neural networks etc.")
                     " and not TestDatasetOverlayArray"
                     " and not TestReader"
                     " and not test_filewriter.py"))))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-flit-core))
     (inputs (list gdcm libjpeg-turbo))
     (propagated-inputs (list python-numpy python-pillow))
     (home-page "https://github.com/pydicom/pydicom")
@@ -3350,7 +3414,7 @@ data.")
 import six
 ")))))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pandas))
+    (native-inputs (list python-pandas python-setuptools python-wheel))
     (propagated-inputs (list python-numpy python-scipy python-six
                              python-tables))
     (home-page "https://github.com/uchicago-cs/deepdish")
@@ -3576,7 +3640,8 @@ NeuroML2 models.")
                     " and not test_pr_level_patient"
                     " and not test_pr_level_series"
                     " and not test_scp_cancelled"))))
-    (native-inputs (list python-pyfakefs python-pytest))
+    (native-inputs (list python-pyfakefs python-pytest python-setuptools
+                         python-wheel))
     (propagated-inputs (list python-pydicom python-sqlalchemy))
     (home-page "https://github.com/pydicom/pynetdicom")
     (synopsis "Python implementation of the DICOM networking protocol")
@@ -3666,7 +3731,12 @@ compagnies.")
                 "0mrm4rd6x1sm6hkvhk20mkqp9q53sl3lbvq6hqzyymkw1iqq6bhy"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-lxml python-six))
-    (native-inputs (list python-pytest python-numpy python-tables))
+    (native-inputs
+     (list python-pytest
+           python-numpy
+           python-setuptools
+           python-tables
+           python-wheel))
     (home-page "https://libneuroml.readthedocs.org/en/latest/")
     (synopsis
      "Python library for working with NeuroML descriptions of neuronal models")

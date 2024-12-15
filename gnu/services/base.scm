@@ -187,6 +187,13 @@
             mingetty-configuration-login-pause?
             mingetty-configuration-clear-on-logout?
             mingetty-configuration-mingetty
+            mingetty-configuration-delay
+            mingetty-configuration-print-issue
+            mingetty-configuration-print-hostname
+            mingetty-configuration-nice
+            mingetty-configuration-working-directory
+            mingetty-configuration-root-directory
+            mingetty-configuration-shepherd-requirement
             mingetty-configuration?
             mingetty-service  ; deprecated
             mingetty-service-type
@@ -1240,31 +1247,49 @@ the tty to run, among other things."
 (define-record-type* <mingetty-configuration>
   mingetty-configuration make-mingetty-configuration
   mingetty-configuration?
-  (mingetty         mingetty-configuration-mingetty ;file-like
-                    (default mingetty))
-  (tty              mingetty-configuration-tty)     ;string
-  (auto-login       mingetty-auto-login             ;string | #f
-                    (default #f))
-  (login-program    mingetty-login-program          ;gexp
-                    (default #f))
-  (login-pause?     mingetty-login-pause?           ;Boolean
-                    (default #f))
-  (clear-on-logout? mingetty-clear-on-logout?       ;Boolean
-                    (default #t)))
+  (mingetty             mingetty-configuration-mingetty ;file-like
+                        (default mingetty))
+  (tty                  mingetty-configuration-tty)       ;string
+  (auto-login           mingetty-configuration-auto-login ;string | #f
+                        (default #f))
+  (login-program        mingetty-configuration-login-program ;gexp
+                        (default #f))
+  (login-pause?         mingetty-configuration-login-pause? ;boolean
+                        (default #f))
+  (clear-on-logout?     mingetty-configuration-clear-on-logout? ;boolean
+                        (default #t))
+  (delay                mingetty-configuration-delay ;integer | #f
+                        (default #f))
+  (print-issue          mingetty-configuration-print-issue ;boolean | Symbol
+                        (default #t))
+  (print-hostname       mingetty-configuration-print-hostname ;boolean | Symbol
+                        (default #t))
+  (nice                 mingetty-configuration-nice ;integer | #f
+                        (default #f))
+  (working-directory    mingetty-configuration-working-directory ;string | #f
+                        (default #f))
+  (root-directory       mingetty-configuration-root-directory ;string | #f
+                        (default #f))
+  (shepherd-requirement mingetty-configuration-shepherd-requirement
+                        ;; Since the login prompt shows the host name, wait
+                        ;; for the 'host-name' service to be done.  Also wait
+                        ;; for udev essentially so that the tty text is not
+                        ;; lost in the middle of kernel messages (XXX).
+                        (default '(user-processes host-name udev
+                                                  virtual-terminal))))
 
 (define (mingetty-shepherd-service config)
   (match-record config <mingetty-configuration>
-    (mingetty tty auto-login login-program
-              login-pause? clear-on-logout?)
+                ( mingetty tty auto-login login-program
+                  login-pause? clear-on-logout? delay
+                  print-issue print-hostname nice
+                  working-directory root-directory shepherd-requirement)
     (list
      (shepherd-service
       (documentation "Run mingetty on an tty.")
       (provision (list (symbol-append 'term- (string->symbol tty))))
 
-      ;; Since the login prompt shows the host name, wait for the 'host-name'
-      ;; service to be done.  Also wait for udev essentially so that the tty
-      ;; text is not lost in the middle of kernel messages (XXX).
-      (requirement '(user-processes host-name udev virtual-terminal))
+      (requirement shepherd-requirement)
 
       (start  #~(make-forkexec-constructor
                  (list #$(file-append mingetty "/sbin/mingetty")
@@ -1286,6 +1311,32 @@ the tty to run, among other things."
                               #~())
                        #$@(if login-pause?
                               #~("--loginpause")
+                              #~())
+                       #$@(if delay
+                              #~("--delay" #$(number->string delay))
+                              #~())
+                       #$@(match print-issue
+                            (#t
+                             #~())
+                            ('no-nl
+                             #~("--nonewline"))
+                            (#f
+                             #~("--noissue")))
+                       #$@(match print-hostname
+                            (#t
+                             #~())
+                            ('long
+                             #~("--long-hostname"))
+                            (#f
+                             #~("--nohostname")))
+                       #$@(if nice
+                              #~("--nice" #$(number->string nice))
+                              #~())
+                       #$@(if working-directory
+                              #~("--chdir" #$working-directory)
+                              #~())
+                       #$@(if root-directory
+                              #~("--chroot" #$root-directory)
                               #~()))))
       (stop   #~(make-kill-destructor))))))
 

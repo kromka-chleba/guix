@@ -39,6 +39,7 @@
 ;;; Copyright © 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2023, 2024 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2023, 2024 Kaelyn Takata <kaelyn.alexi@protonmail.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -63,9 +64,11 @@
   #:use-module (guix git-download)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system haskell)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system perl)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages aidc)
@@ -89,11 +92,15 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages gtk)
+  #:use-module (gnu packages haskell)
+  #:use-module (gnu packages haskell-apps)
+  #:use-module (gnu packages haskell-check)
   #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages inkscape)
   #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages libedit)
+  #:use-module (gnu packages libffi)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages m4)
@@ -104,6 +111,7 @@
   #:use-module (gnu packages perl-check)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-compression)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-xyz)
@@ -972,6 +980,26 @@ rendering commands to the X server.")
     (license license:x11)
     (properties `((superseded . ,xorgproto)))))
 
+(define-public ghc-xcb-types
+  (package
+    (name "ghc-xcb-types")
+    (version "0.13.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (hackage-uri "xcb-types" version))
+       (sha256
+        (base32 "0qdfj4d83b1fjmlysqncgi65ldf3qnrsj4lync95mgbaq2kzxj2r"))))
+    (build-system haskell-build-system)
+    (properties '((upstream-name . "xcb-types")))
+    (inputs (list ghc-xml))
+    (home-page "http://community.haskell.org/~aslatter/code/xcb-types")
+    (synopsis "Parse XML files used by the XCB project")
+    (description
+     "This package provides types which mirror the structures used in the XCB code
+generation XML files and parses these XML files into Haskell data structures.")
+    (license license:bsd-3)))
+
 (define-public iceauth
   (package
     (name "iceauth")
@@ -1692,6 +1720,83 @@ mechanism than copying the contents of the source pixmap.")
      "Print Extension defines a protocol for a portable,
 network-transparent printing system.")
     (license license:x11)))
+
+(define xcffibgen
+  (package
+    (name "xcffibgen")
+    (version "1.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tych0/xcffib")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wz6zlaqsmpw7ahaadpd7m5n5c5b2ya30xwsana4j5ljygdvzqp9"))))
+    (build-system haskell-build-system)
+    (native-inputs
+     (list ghc-hunit ghc-test-framework ghc-test-framework-hunit))
+    (inputs
+     (list libxcb
+           ghc
+           ghc-filemanip
+           ghc-split
+           ghc-language-python
+           ghc-attoparsec
+           ghc-either
+           ghc-optparse-applicative
+           ghc-xcb-types))
+    (home-page "https://github.com/tych0/xcffib")
+    (synopsis "Build tool for python-xcbffib bindings")
+    (description
+     "This is an internal package that provides a build tool to
+generate code for the @code{python-xcbffib} package.")
+    (license license:expat)))
+
+(define-public python-xcffib
+  (package
+    (name "python-xcffib")
+    (version "1.5.0")
+    (source (package-source xcffibgen))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list pkg-config
+           python-setuptools
+           python-wheel
+           which
+           xcb-proto
+           xcffibgen))
+    (inputs
+     (list libxcb))
+    (propagated-inputs
+     (list python-cffi ; used at run time
+           python-six))
+    (arguments
+     (list
+      ;; Tests seem to require version 3.12 of Python.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'generate-bindings
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "Makefile"
+                (("^GEN=.*")
+                 (format #f "GEN=~a~%"
+                         (search-input-file inputs "/bin/xcffibgen"))))
+              (invoke "make" "xcffib")))
+          (add-before 'build 'fix-libxcb-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "xcffib/__init__.py"
+                (("ctypes\\.util\\.find_library\\(\"xcb\"\\)")
+                 (format #f "~s"
+                         (search-input-file inputs "/lib/libxcb.so.1")))))))))
+    (home-page "https://github.com/tych0/xcffib")
+    (synopsis "XCB Python bindings")
+    (description
+     "Xcffib is a replacement for xpyb, an XCB Python bindings.  It adds
+support for Python 3 and PyPy.  It is based on cffi.")
+    (license license:expat)))
 
 (define-public randrproto
   (package

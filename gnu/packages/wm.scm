@@ -64,7 +64,7 @@
 ;;; Copyright © 2023 Gabriel Wicki <gabriel@erlikon.ch>
 ;;; Copyright © 2023 Jonathan Brielamier <jonathan.brielmaier@web.de>
 ;;; Copyright © 2023 Vessel Wave <vesselwave@disroot.org>
-;;; Copyright © 2023 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2023, 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2023, 2024 Jaeme Sifat <jaeme@runbox.com>
 ;;; Copyright © 2023 Josselin Poiret <dev@jpoiret.xyz>
 ;;; Copyright © 2024 Timotej Lazar <timotej.lazar@araneo.si>
@@ -107,6 +107,7 @@
   #:use-module (guix build-system haskell)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system perl)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system trivial)
   #:use-module (guix utils)
@@ -680,58 +681,72 @@ subscribe to events.")
 (define-public qtile
   (package
     (name "qtile")
-    (version "0.18.1")
+    (version "0.23.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "qtile" version))
-        (sha256
-          (base32 "14hb26xkza7brvkd4276j60mxd3zsas72ih6y0cq3j060izm1865"))))
-    (build-system python-build-system)
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "qtile" version))
+       (sha256
+        (base32 "1v8rxm2xg2igxv6gwa78wrkxzgfxmxfgflbjdp4fm7cxjdx3zrpa"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f ; Tests require Xvfb and writable temp/cache space
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-paths
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "libqtile/pangocffi.py"
-               (("^gobject = ffi.dlopen.*")
-                 (string-append "gobject = ffi.dlopen(\""
-                  (assoc-ref inputs "glib") "/lib/libgobject-2.0.so.0\")\n"))
-                (("^pango = ffi.dlopen.*")
-                 (string-append "pango = ffi.dlopen(\""
-                  (assoc-ref inputs "pango") "/lib/libpango-1.0.so.0\")\n"))
-                (("^pangocairo = ffi.dlopen.*")
-                 (string-append "pangocairo = ffi.dlopen(\""
-                  (assoc-ref inputs "pango") "/lib/libpangocairo-1.0.so.0\")\n")))))
-       (add-after 'install 'install-xsession
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (xsessions (string-append out "/share/xsessions"))
-                    (qtile (string-append out "/bin/qtile start")))
-               (mkdir-p xsessions)
-               (copy-file "resources/qtile.desktop" (string-append xsessions "/qtile.desktop"))
-               (substitute* (string-append xsessions "/qtile.desktop")
-                 (("qtile start") qtile))))))))
+     (list
+      ;; A lot of tests fail despite Xvfb and writable temp/cache space.
+      #:tests? #f
+      #:test-flags '("--ignore=test/widgets/test_widget_init_configure.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "libqtile/pangocffi.py"
+                (("^(gobject = ffi.dlopen).*" all def)
+                 (format #f "~a(~s)~%" def
+                         (search-input-file inputs "/lib/libgobject-2.0.so.0")))
+                (("^(pango = ffi.dlopen).*" all def)
+                 (format #f "~a(~s)~%" def
+                         (search-input-file inputs "/lib/libpango-1.0.so.0")))
+                (("^(pangocairo = ffi.dlopen).*" all def)
+                 (format #f "~a(~s)~%" def
+                         (search-input-file
+                          inputs "/lib/libpangocairo-1.0.so.0"))))))
+          (add-after 'install 'install-xsessions
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (xsessions (string-append out "/share/xsessions"))
+                     (qtile (string-append out "/bin/qtile start")))
+                (mkdir-p xsessions)
+                (copy-file "resources/qtile.desktop"
+                           (string-append xsessions "/qtile.desktop"))
+                (substitute* (string-append xsessions "/qtile.desktop")
+                  (("qtile start") qtile)))))
+          (add-before 'check 'pre-check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "HOME" "/tmp")
+                (system "Xvfb :1 &")
+                (setenv "DISPLAY" ":1")
+                (setenv "XDG_CACHE_HOME" "/tmp")))))))
     (inputs
-      (list glib pango pulseaudio))
+     (list glib pango pulseaudio))
     (propagated-inputs
-      (list python-cairocffi
-            python-cffi
-            python-dateutil
-            python-dbus-next
-            python-iwlib
-            python-keyring
-            python-mpd2
-            python-pyxdg
-            python-xcffib))
+     (list python-cairocffi
+           python-cffi
+           python-dateutil
+           python-dbus-next
+           python-iwlib
+           python-keyring
+           python-mpd2
+           python-pyxdg
+           python-xcffib))
     (native-inputs
       (list pkg-config
             python-flake8
             python-pep8-naming
-            python-psutil
+            python-pytest
             python-pytest-cov
-            python-setuptools-scm))
+            python-psutil
+            python-setuptools-scm
+            xorg-server-for-tests))
     (home-page "http://qtile.org")
     (synopsis "Hackable tiling window manager written and configured in Python")
     (description "Qtile is simple, small, and extensible.  It's easy to write
@@ -3652,7 +3667,7 @@ which do not support it.")
 (define-public wlogout
   (package
     (name "wlogout")
-    (version "1.1.1")
+    (version "1.2.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3661,7 +3676,7 @@ which do not support it.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1swhzkqkzli59c89pvrakfvicd00x7ga860c3x2pbb4y3xziqfvi"))))
+                "0pzgpfnfzpkc6y14x4g5wv5ldm67vshcp893i4rszfx4kv5ikmpy"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config scdoc))

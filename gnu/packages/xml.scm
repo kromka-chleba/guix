@@ -34,6 +34,7 @@
 ;;; Copyright © 2021 David Larsson <david.larsson@selfhosted.xyz>
 ;;; Copyright © 2021 Matthew James Kraai <kraai@ftbfs.org>
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -69,6 +70,7 @@
   #:use-module (gnu packages nss)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages perl-check)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages web)
@@ -83,6 +85,7 @@
   #:use-module (guix build-system meson)
   #:use-module (guix build-system perl)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix deprecation)
   #:use-module (guix utils)
   #:use-module (guix search-paths)
@@ -1476,16 +1479,18 @@ files.  It is designed to be fast and to handle large input files.")
 (define-public python-defusedxml
   (package
     (name "python-defusedxml")
-    (version "0.6.0")
+    (version "0.7.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "defusedxml" version))
        (sha256
-        (base32
-         "1xbp8fivl3wlbyg2jrvs4lalaqv1xp9a9f29p75wdx2s2d6h717n"))))
-    (build-system python-build-system)
-    (home-page "https://bitbucket.org/tiran/defusedxml")
+        (base32 "0s9ym98jrd819v4arv9gmcr6mgljhxd9q866sxi5p4c5n4nh7cqv"))))
+    (build-system pyproject-build-system)
+    (home-page "https://github.com/tiran/defusedxml")
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (synopsis "XML bomb protection for Python stdlib modules")
     (description
      "Defusedxml provides XML bomb protection for Python stdlib modules.")
@@ -1972,9 +1977,9 @@ XML data to JSON and other formats.")
        (sha256
         (base32
          "08cadlb9vsb4pmzc99lz3a2lx6qcfazyvgk10pcqijvyxlwcdn2h"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-coverage python-nose))
+     (list python-coverage python-nose python-setuptools python-wheel))
     (home-page "https://github.com/martinblech/xmltodict")
     (synopsis "Work with XML like you are working with JSON")
     (description "This package provides a Python library to convert XML to

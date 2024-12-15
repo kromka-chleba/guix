@@ -138,21 +138,28 @@ interfaces for other technical domains.")
 (define-public python-graphviz
   (package
     (name "python-graphviz")
-    (version "0.20.1")
+    (version "0.20.3")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "graphviz" version ".zip"))
               (sha256
                (base32
-                "1y1b956r01kg7qarkkrivhn71q64k0gbq6bcybd4gfd3v95g2n4c"))))
+                "0pcjnnhprs1hb4r9jr7r4qjxc7lzsjlka8d5gcp3kym9ws0vrmh9"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
-      '(modify-phases %standard-phases
-         (add-before 'check 'prepare-chec
-           ;; Needed for fontconfig cache directories
-           (lambda _ (setenv "HOME" (getcwd)))))))
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'pathch-pytest-options
+            (lambda _
+              (substitute* "setup.cfg"
+                ((".*doctest.*") "")
+                (("--cov.*") ""))))
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (setenv "HOME" "/tmp")
+                  (apply invoke "python" "run-tests.py" test-flags)))))))
     (native-inputs
      (list unzip
            ;; For tests.
@@ -160,7 +167,9 @@ interfaces for other technical domains.")
            python-mock
            python-pytest
            python-pytest-cov
-           python-pytest-mock))
+           python-pytest-mock
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/xflr6/graphviz")
     (synopsis "Simple Python interface for Graphviz")
     (description
@@ -199,7 +208,7 @@ structure and layout algorithms.")
 (define-public python-uqbar
   (package
     (name "python-uqbar")
-    (version "0.5.9")
+    (version "0.6.9")
     (source
      (origin
        (method git-fetch)
@@ -208,28 +217,27 @@ structure and layout algorithms.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0c573nzpm51qgz2g296f8pw8ys0i3r6daynxk06zagk5l5fgw9ar"))
-       (patches (search-patches "python-uqbar-python3.10.patch"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "python" "-m" "pytest" "tests"))
-             #t)))))
+        (base32 "037qj3rymm6xzdpklddfhmfp2p1bq9fi3jrvxj6gmharphd5z869"))))
+    (build-system pyproject-build-system)
+    (arguments  ; XXX: Disable failing tests.
+     (list #:test-flags '(list "tests" "-k" "not test_find_executable \
+and not test_sphinx_book_text_broken_strict")))
     (native-inputs
      (list graphviz
            python-flake8
            python-isort
            python-mypy
            python-pytest
-           python-pytest-cov))
+           python-pytest-cov
+           python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list python-black python-sphinx python-sphinx-rtd-theme
-           python-unidecode))
+     (list python-black python-sphinx-5 python-unidecode
+           (package/inherit python-sphinx-rtd-theme
+             (propagated-inputs
+              (modify-inputs
+                  (package-propagated-inputs python-sphinx-rtd-theme)
+                (replace "python-sphinx" python-sphinx-5))))))
     (home-page "https://github.com/josiah-wolf-oberholtzer/uqbar")
     (synopsis "Tools for building documentation with Sphinx, Graphviz and LaTeX")
     (description

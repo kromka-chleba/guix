@@ -359,7 +359,9 @@ subdivisions.")
            python-numpy
            python-pytest
            python-scikit-build
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (inputs (list h3))
     (home-page "https://uber.github.io/h3-py")
     (synopsis "Python bindings for H3")
@@ -1012,7 +1014,7 @@ pyproj, Rtree, and Shapely.")
       (list python-fiona python-packaging python-pandas python-pyproj
             python-shapely))
     (native-inputs
-      (list python-pytest))
+      (list python-pytest python-setuptools python-wheel))
     (home-page "https://geopandas.org")
     (synopsis "Geographic pandas extensions")
     (description "The goal of GeoPandas is to make working with
@@ -1088,6 +1090,8 @@ for the @code{OpenStreetMap} Overpass API.")
            diffutils
            libxml2
            python-cram
+           python-setuptools
+           python-wheel
            which))
     (propagated-inputs
      (list python-lxml
@@ -1141,7 +1145,7 @@ during conversion.")
                              python-pandas
                              python-requests
                              python-shapely))
-    (native-inputs (list python-hatchling python-pytest))
+    (native-inputs (list python-hatchling python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/gboeing/osmnx")
     (synopsis
      "Retrieve, model, analyze, and visualize OpenStreetMap street networks")
@@ -1443,7 +1447,10 @@ utilities for data translation and processing.")
       ;; This test requires internet access.
       '(list "--deselect" "test_shapefile.py::test_reader_url")))
     (native-inputs
-     (list python-pytest python-pytest-runner))
+     (list python-pytest
+           python-pytest-runner
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/GeospatialPython/pyshp")
     (synopsis "Read/write support for ESRI Shapefile format")
     (description
@@ -1549,7 +1556,9 @@ surface (i.e., gridding) with a hint of machine learning.")
            python-pytest
            python-pytest-cov
            python-pytest-mpl
-           python-pytest-xdist))
+           python-pytest-xdist
+           python-setuptools
+           python-wheel))
     (home-page "https://scitools.org.uk/cartopy/docs/latest/")
     (synopsis "Cartographic library for visualisation")
     (description
@@ -2109,7 +2118,7 @@ from multiple records.")
                   (string-append  "\"" libspatialindex
                                   "/lib/libspatialindex_c.so\"")))))))))
     (native-inputs
-     (list python-numpy python-pytest python-wheel))
+     (list python-numpy python-pytest python-setuptools python-wheel))
     (inputs
      (list libspatialindex))
     (home-page "https://github.com/Toblerity/rtree")
@@ -3365,6 +3374,7 @@ path loss.")
     ;; The tests are speed tests or development tests to compare results with
     ;; a different library.
     (arguments (list #:tests? #false))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/rabuchaim/geoip2fast")
     (synopsis
      "Fast GeoIP2 country/city/asn lookup library")
@@ -3421,7 +3431,11 @@ using third-party geocoders and other data sources.")
                (base32
                 "0inxyj5n4jzgg5xiadqx9sk83gdx5ff989l9s04smdzbd3b8c0c8"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pytest python-numpy))
+    (native-inputs
+     (list python-pytest
+           python-numpy
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/mapado/haversine")
     (synopsis "Calculate the distance between 2 points on Earth")
     (description "This package provides functions to calculate the

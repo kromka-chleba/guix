@@ -682,6 +682,7 @@ memory usage.")
      (list python-numpy python-pysam))
     (inputs
      (list r-minimal))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://wlcb.oit.uci.edu/cpat/")
     (synopsis "Alignment-free distinction between coding and noncoding RNA")
     (description
@@ -2023,8 +2024,13 @@ intended to behave exactly the same as the original BWK awk.")
                (base32
                 "1pm1szyxabhn8jismrj9cjhf88ajgcmm39f0cgf36iagw5qakprl"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-biopython python-six))
-    (native-inputs (list python-pytest))
+    (native-inputs
+     (list python-pytest))
+    (propagated-inputs
+     (list python-biopython
+           python-setuptools
+           python-six
+           python-wheel))
     (home-page "https://github.com/chapmanb/bcbb/tree/master/gff")
     (synopsis "Read and write GFF files with Biopython integration")
     (description
@@ -2079,7 +2085,7 @@ Format (GFF) with Biopython integration.")
            python-scikit-learn
            python-scipy))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/simonvh/fluff/")
     (synopsis "Analysis and visualization of high-throughput sequencing data")
     (description
@@ -2148,7 +2154,7 @@ from bokeh.util.dataclasses import entries\n"))
                                python-tornado-6
                                python-tqdm
                                python-umap-learn))
-      (native-inputs (list python-pytest))
+      (native-inputs (list python-pytest python-setuptools python-wheel))
       (home-page "https://github.com/LooseLab/bulkVis")
       (synopsis "Interactive visualization of bulk RNA-seq data")
       (description
@@ -2479,7 +2485,11 @@ biological activities from omics data within a unified framework.")
            python-scikit-learn
            python-scipy
            python-seaborn))
-    (native-inputs (list python-cython python-setuptools-scm))
+    (native-inputs
+     (list python-cython
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (home-page "https://github.com/lilab-bcb/demuxEM")
     (synopsis "Analyze cell-hashing/nucleus-hashing data")
     (description
@@ -2578,6 +2588,7 @@ datasets with fuzzy k-means and locally linear adjustments.")
            python-numpy
            python-pandas
            python-scipy))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/SegataLab/hclust2/")
     (synopsis "Plotting heat-maps for publications")
     (description
@@ -2649,7 +2660,7 @@ varies in similar way among cells which are nearby in the given metric.")
               "111q4pzkav26aa3hkgh948wqlyrq7dq6sjml9z63n3blw8s6b0c4"))))
    (build-system pyproject-build-system)
    (native-inputs
-    (list python-setuptools-scm))
+    (list python-setuptools-scm python-setuptools python-wheel))
    (propagated-inputs
     (list python-humanize python-requests python-six))
    (home-page "https://pypi.org/project/htsget/")
@@ -2749,6 +2760,7 @@ framework enables the use of any LR method with any resources.")
     (build-system pyproject-build-system)
     (propagated-inputs
      (list python-matplotlib python-numpy python-pandas))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://logomaker.readthedocs.io")
     (synopsis "Package for making Sequence Logos")
     (description "Logomaker is a Python package for generating
@@ -2883,6 +2895,7 @@ cells).")
            (("'argparse',") "")))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-numpy python-pysam))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/cancerit/parabam")
     (synopsis "Parallel BAM File Analysis")
     (description "Parabam is a tool for processing sequencing files in
@@ -2951,6 +2964,7 @@ encountered in PDB files prior to simulation tasks.")
            python-tqdm
            python-typing-extensions
            python-zipp))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/haessar/peaks2utr")
     (synopsis "Python CLI for annotating three prime UTR")
     (description
@@ -2983,7 +2997,8 @@ three prime UTR.")
            python-pillow
            python-scipy
            python-zarr))
-    (native-inputs (list python-cython python-setuptools-scm))
+    (native-inputs (list python-cython python-setuptools-scm
+                         python-setuptools python-wheel))
     (home-page "https://github.com/lilab-bcb/pegasusio")
     (synopsis "Read or write single-cell genomics data")
     (description
@@ -3042,7 +3057,7 @@ weight.astype(\"str\") + '\\n')")))))))
            python-scikit-learn
            python-scipy))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/dpeerlab/PhenoGraph.git")
     (synopsis "Graph-based clustering for high-dimensional single-cell data")
     (description
@@ -3073,6 +3088,7 @@ similarities between cells and then identifying communities in this graph.")
            python-numpy
            python-pandas
            python-seaborn))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/biobakery/phylophlan")
     (synopsis
      "Phylogenetic analysis of microbial isolates and genomes from metagenomes")
@@ -3152,6 +3168,8 @@ phylogenetic markers, and can also scale to very large phylogenies comprising
            python-cython
            kentutils ; for bedGraphToBigWig
            python-six
+           python-setuptools
+           python-wheel
            ;; For the test suite.
            python-pytest
            python-psutil))
@@ -3267,8 +3285,14 @@ the managed genomes, STAR indexing and mapping and more.")
                (("==") ">=")))))))
     (propagated-inputs (list python-htsget python-psutil python-requests
                              python-tqdm python-urllib3))
-    (native-inputs (list python-coverage python-pytest python-pyfakefs
-                         python-responses python-mock))
+    (native-inputs
+     (list python-coverage
+           python-mock
+           python-pyfakefs
+           python-pytest
+           python-responses
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/EGA-archive/ega-download-client")
     (synopsis "EGA download client")
     (description "PyEGA3 is a tool for viewing and downloading files from
@@ -3310,7 +3334,8 @@ features:
                              python-pandas
                              python-pysam
                              python-tqdm))
-    (native-inputs (list python-cython python-pytest))
+    (native-inputs (list python-cython python-pytest python-setuptools
+                         python-wheel))
     (home-page "https://github.com/KindLab/scDamAndTools")
     (synopsis "Functions for processing raw scDam&T-seq data")
     (description
@@ -3343,6 +3368,7 @@ counts.")
            python-numpy
            python-pybedtools
            python-pysam))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/r3fang/SnapTools")
     (synopsis "Tools for processing snap files" )
     (description
@@ -3372,6 +3398,7 @@ operations:
     (arguments (list #:tests? #false)) ;there are none
     (propagated-inputs (list python-click python-numpy python-pandas
                              python-parabam python-pysam))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/cancerit/telomerecat")
     (synopsis "Telomere computational analysis tool")
     (description "Telomerecat is a tool for estimating the average telomere
@@ -3597,6 +3624,7 @@ alignments and perform the following operations:
     (build-system pyproject-build-system)
     (arguments (list #:tests? #false))  ;there are none
     (propagated-inputs (list python-pandas))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/alexomics/read-paf")
     (synopsis "Minimap2 PAF file reader")
     (description
@@ -3778,6 +3806,7 @@ sequencing.")
            (lambda _ (setenv "HOME" "/tmp"))))))
     (propagated-inputs
      (list python-numpy))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://biopython.org/")
     (synopsis "Tools for biological computation in Python")
     (description
@@ -4839,7 +4868,8 @@ off-target reads for a capture method that targets CpG-rich region.")
     (inputs
      (list zlib))
     (native-inputs
-     (list python-cython python-lzo python-pytest))
+     (list python-cython python-lzo python-pytest python-setuptools
+           python-wheel))
     (home-page "https://github.com/bxlab/bx-python")
     (synopsis "Tools for manipulating biological data")
     (description
@@ -5065,6 +5095,8 @@ subgroups.")
     (native-inputs
      (list python-cython
            python-pytest
+           python-setuptools
+           python-wheel
            ;; Dependencies below are are for tests only.
            samtools
            bcftools))
@@ -5158,6 +5190,8 @@ UCSC genome browser.")
     (native-inputs
      `(("python-cython" ,python-cython)
        ("python-pytest" ,python-pytest)
+       ("python-setuptools" ,python-setuptools)
+       ("python-wheel" ,python-wheel)
        ("test-data"
         ,(origin
            (method url-fetch)
@@ -5485,7 +5519,8 @@ file formats including SAM/BAM, Wiggle/BigWig, BED, GFF/GTF, VCF.")
     (arguments
      (list #:tests? #false)) ;there are none
     (native-inputs
-     (list python-cython python-pytest python-setuptools-scm))
+     (list python-cython python-pytest python-setuptools-scm
+           python-setuptools python-wheel))
     (propagated-inputs
      (list python-xopen))
     (home-page "https://github.com/marcelm/dnaio/")
@@ -5607,7 +5642,9 @@ annotations of the genome.")
            python-pytest
            python-pytest-mock
            python-pytest-timeout
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (home-page "https://cutadapt.readthedocs.io/en/stable/")
     (synopsis "Remove adapter sequences from nucleotide sequencing reads")
     (description
@@ -5837,6 +5874,7 @@ gkm-SVM.")
      (list python-numpy))
     (inputs
      (list libbigwig zlib curl))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/dpryan79/pyBigWig")
     (synopsis "Access bigWig files in Python using libBigWig")
     (description
@@ -5901,7 +5939,7 @@ accessing bigWig files.")
                  (("tests/data/" m)
                   (string-append (getcwd) "/" m))))))))
       (propagated-inputs (list python-numpy))
-      (native-inputs (list python-nose))
+      (native-inputs (list python-nose python-setuptools python-wheel))
       (home-page "https://github.com/brentp/pyfasta/")
       (synopsis "Pythonic access to fasta sequence files")
       (description
@@ -5958,13 +5996,16 @@ Note that this package has been deprecated in favor of @code{pyfaidx}.")
     (propagated-inputs
      (list python-cachecontrol
            python-importlib-resources
-           python-mistune-next
+           python-mistune
            python-mypy-extensions
            python-rdflib
            python-requests
-           python-ruamel.yaml))
+           python-ruamel.yaml
+           python-setuptools ; For pkg_resources.
+           python-typing-extensions))
     (native-inputs
-     (list python-black python-pytest python-pytest-runner python-pytest-xdist))
+     (list python-black python-pytest python-pytest-runner
+           python-wheel))
     (home-page "https://github.com/common-workflow-language/schema_salad")
     (synopsis "Schema Annotations for Linked Avro Data (SALAD)")
     (description
@@ -6048,6 +6089,7 @@ resources for bioinformatics.")
            python-scikit-learn
            python-scipy
            python-umap-learn))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/swolock/scrublet")
     (synopsis "Tool to indentify and remove doublets in single-cell data")
     (description "This package provides a tool for identifying and removing
@@ -6213,6 +6255,7 @@ documents.")
            python-requests
            python-ruamel.yaml
            python-schema-salad
+           python-setuptools ; For pkg_resources.
            python-shellescape
            python-spython
            python-typing-extensions
@@ -6226,7 +6269,7 @@ documents.")
            python-pytest-cov
            python-pytest-mock
            python-pytest-runner
-           python-pytest-xdist))
+           python-wheel))
     (home-page
      "https://github.com/common-workflow-language/common-workflow-language")
     (synopsis "Common Workflow Language reference implementation")
@@ -6280,7 +6323,8 @@ CWL descriptions.")
               (substitute* "tests/test_datamodel_taxon.py"
                 (("collections.Iterable")
                  "collections.abc.Iterable")))))))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-wheel))
+    (propagated-inputs (list python-setuptools))
     (home-page "https://dendropy.org/")
     (synopsis "Library for phylogenetics and phylogenetic computing")
     (description
@@ -7100,7 +7144,8 @@ multiple DJU methods.")
                (base32
                 "0cjpzyqz6r4lmiwry2gcxdczwpkhl3lyyjg4s8addln17691ysxk"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-pytest))
+    (propagated-inputs (list python-pytest python-setuptools))
+    (native-inputs (list python-wheel))
     (home-page "https://github.com/betteridiot/bamnostic/")
     (synopsis "Tool for binary alignment map, random access and parsing")
     (description
@@ -7198,7 +7243,7 @@ analysis tool Scanpy (Genome Biology, 2018).")
            python-pyqt
            python-scipy))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "http://etetoolkit.org")
     (synopsis "Python environment for phylogenetic tree exploration")
     (description
@@ -7219,6 +7264,7 @@ exploration.")
     (build-system pyproject-build-system)
     (arguments (list #:tests? #false))  ;there are none
     (propagated-inputs (list python-matplotlib python-numpy python-levenshtein))
+    (native-inputs (list python-setuptools python-wheel python-pip))
     (home-page "https://github.com/meren/illumina-utils")
     (synopsis "Library and scripts to work with Illumina paired-end data")
     (description
@@ -7242,6 +7288,7 @@ Illumina paired-end data (for CASAVA 1.8+).")
     (propagated-inputs
      (list python-biopython python-matplotlib python-pandas
            python-scipy python-seaborn))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://widdowquinn.github.io/pyani/")
     (synopsis "Calculate genome-scale average nucleotide identity")
     (description
@@ -8035,9 +8082,7 @@ high-throughput sequencing (HTS) assays")
                              python-click
                              python-colorama
                              python-diskcache
-                             ;; We cannot use an older filelock, because the
-                             ;; @lock annotation is used here.
-                             python-filelock-3.5
+                             python-filelock
                              python-loguru
                              python-mygene
                              python-mysql-connector-python
@@ -9156,7 +9201,7 @@ experiments.")
     (propagated-inputs
      (list python-cython python-numpy))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/macs3-project/MACS")
     (synopsis "Model based analysis for ChIP-Seq data")
     (description
@@ -10974,7 +11019,9 @@ complexity samples.")
     (build-system pyproject-build-system)
     (native-inputs
      (list python-pytest-cov
-           python-pytest-runner))
+           python-pytest-runner
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/dib-lab/screed/")
     (synopsis "Short read sequence database utilities")
     (description "Screed parses FASTA and FASTQ files and generates databases.
@@ -11316,7 +11363,7 @@ bioinformatics file formats, sequence alignment, and more.")
     (inputs
      (list python-biopython python-pygtrie))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/fhcrc/seqmagick")
     (synopsis "Tools for converting and modifying sequence files")
     (description
@@ -14553,10 +14600,12 @@ replacement for strverscmp.")
            python-requests
            python-rich
            python-rich-click
+           python-setuptools ; For pkg_resources.
            python-simplejson
            python-spectra))
     (native-inputs
      `(("python-pytest" ,python-pytest)
+       ("python-wheel" ,python-wheel)
        ("tests"
         ,(let ((commit "c3e7400affe3f3ca996973805797af61b93070ba"))
            (origin
@@ -16341,6 +16390,7 @@ mapped paired-end sequencing reads.")
            python-cython
            python-msgpack
            python-pysam))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://pypi.org/project/genomic-regions/")
     (synopsis "Consistently handle genomic regions")
     (description "This package aims to simplify working with genomic region /
@@ -16380,9 +16430,10 @@ using the same syntax.")
                              python-pydot
                              python-requests
                              python-scipy
+                             python-setuptools
                              python-statsmodels
                              python-xlsxwriter))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-wheel))
     (home-page "https://github.com/tanghaibao/goatools")
     (synopsis "Python scripts to find enrichment of GO terms")
     (description "Python scripts to find enrichment of GO terms.  In addition,
@@ -16498,9 +16549,10 @@ API services.")
            python-pysam
            python-regex
            python-ruamel.yaml
+           python-setuptools
            snakemake))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-wheel))
     (home-page "https://github.com/caleblareau/mgatk")
     (synopsis "Mitochondrial genome analysis toolkit")
     (description "This package is a Python-based command line interface for
@@ -18795,6 +18847,7 @@ implementation differs in these ways:
            python-patsy
            python-scikit-learn
            python-scipy
+           python-setuptools ; For pkg_resources.
            python-seaborn
            python-session-info
            python-sinfo
@@ -19188,7 +19241,9 @@ bgzipped text file that contains a pair of genomic coordinates per line.")
            python-mock
            python-numpy
            python-pytest
-           python-pytest-cov))
+           python-pytest-cov
+           python-wheel))
+    (propagated-inputs (list python-setuptools))
     (home-page "http://mattshirley.com")
     (synopsis "Random access to fasta subsequences")
     (description
@@ -19310,7 +19365,7 @@ includes operations like compartment, insulation or peak calling.")
            python-scipy
            python-tables))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/deeptools/HiCMatrix/")
     (synopsis "HiCMatrix class for HiCExplorer and pyGenomeTracks")
     (description
@@ -20173,6 +20228,7 @@ polymorphisms) and indels with respect to a reference genome and more.")
            ;; R packages
            r-dnacopy))
     (inputs (list r-minimal)) ;for tests
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://cnvkit.readthedocs.org/")
     (synopsis "Copy number variant detection from targeted DNA sequencing")
     (description
@@ -20956,7 +21012,9 @@ updated much more frequently.")
            python-tqdm))
     (native-inputs
      (list python-pytest
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (home-page "https://github.com/aertslab/ctxcore")
     (synopsis "Core functions for pycisTarget and the SCENIC tool suite")
     (description
@@ -22474,7 +22532,9 @@ coordinates between different assemblies.")
      (list python-pytest
            lsof
            inetutils
-           openssl))
+           openssl
+           python-setuptools
+           python-wheel))
     (inputs (list time))
     (propagated-inputs
      (list python-apsw
@@ -22979,6 +23039,7 @@ feature is fast retrieval of range queries into numpy arrays.")
      (list python-biopython
            python-matplotlib
            python-packaging))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page
      "https://github.com/Edinburgh-Genome-Foundry/DnaFeaturesViewer")
     (synopsis "Plot features from DNA sequences")

@@ -1946,15 +1946,13 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-matplotlib-fix-legend-loc-best-test.patch	\
   %D%/packages/patches/python-random2-getrandbits-test.patch		\
   %D%/packages/patches/python-pillow-use-zlib-1.3.patch	\
+  %D%/packages/patches/python-pydocstyle-add-support-for-pep701.patch	\
   %D%/packages/patches/python-pyreadstat-link-libiconv.patch	\
   %D%/packages/patches/python-pyls-black-41.patch		\
-  %D%/packages/patches/python-pypdf-annotate-tests-appropriately.patch	\
   %D%/packages/patches/python-sip-include-dirs.patch	\
   %D%/packages/patches/python-sgmllib3k-assertions.patch	\
   %D%/packages/patches/python-sphobjinv-defer-ssl-import.patch	\
   %D%/packages/patches/python-sphinx-prompt-docutils-0.19.patch	\
-  %D%/packages/patches/python-typeguard-python3.10.patch	\
-  %D%/packages/patches/python-uqbar-python3.10.patch	        \
   %D%/packages/patches/python-wxwidgets-type-errors.patch	\
   %D%/packages/patches/qtdeclarative-5-disable-qmlcache.patch	\
   %D%/packages/patches/qtdeclarative-disable-qmlcache.patch	\
@@ -2027,7 +2025,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/pybugz-encode-error.patch		\
   %D%/packages/patches/pybugz-stty.patch			\
   %D%/packages/patches/pyqt-configure.patch			\
-  %D%/packages/patches/pytest-fix-unstrable-exception-test.patch	\
   %D%/packages/patches/python-2-deterministic-build-info.patch	\
   %D%/packages/patches/python-2.7-adjust-tests.patch		\
   %D%/packages/patches/python-2.7-expat-compat.patch		\
@@ -2043,8 +2040,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-3-hurd-configure.patch		\
   %D%/packages/patches/python-angr-check-exec-deps.patch	\
   %D%/packages/patches/python-3-reproducible-build.patch	\
-  %D%/packages/patches/python-aionotify-0.2.0-py3.8.patch	\
-  %D%/packages/patches/python-argcomplete-1.11.1-fish31.patch	\
   %D%/packages/patches/python-cross-compile.patch		\
   %D%/packages/patches/python-configobj-setuptools.patch	\
   %D%/packages/patches/python-dateutil-pytest-compat.patch	\
@@ -2064,7 +2059,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-libxml2-utf8.patch		\
   %D%/packages/patches/python-memcached-syntax-warnings.patch	\
   %D%/packages/patches/python-mox3-python3.6-compat.patch	\
-  %D%/packages/patches/python-parso-unit-tests-in-3.10.patch    \
   %D%/packages/patches/python-packaging-test-arch.patch		\
   %D%/packages/patches/python-paste-remove-timing-test.patch	\
   %D%/packages/patches/python-pyan3-fix-absolute-path-bug.patch \

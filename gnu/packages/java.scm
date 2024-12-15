@@ -11036,33 +11036,35 @@ those in Perl and JavaScript.")
                 "0y6vq30i5g276kw0v2bhbvci22ijg7ax49ap2611yqlhbs4d6dqv"))))
     (build-system ant-build-system)
     (arguments
-     `(#:jdk ,icedtea-8; java.util.function
-       #:jar-name "java-testng.jar"
-       #:source-dir "src/main/java"
-       #:phases
-       (modify-phases %standard-phases
-         ;; FIXME: I don't know why these tests fail
+     (list
+      #:jdk icedtea-8; java.util.function
+      #:jar-name "java-testng.jar"
+      #:source-dir "src/main/java"
+      #:phases
+      '(modify-phases %standard-phases
          (add-after 'unpack 'delete-failing-tests
            (lambda _
+             ;; FIXME: I don't know why these tests fail
              (substitute* "src/test/resources/testng.xml"
+               ;; expected:<[0]> but was:<[3]>
                (("<class name=\"test.configuration.github1625.TestRunnerIssue1625\"/>") "")
-               (("<class name=\"test.serviceloader.ServiceLoaderTest\" />") ""))
-             #t))
+               ;; expected [3] but found [2]
+               (("<class name=\"test.serviceloader.ServiceLoaderTest\" />") "")
+               ;; This is a parallel test and we've observed that it fails
+               ;; sometimes.
+               (("<class name=\"test.dataprovider.DataProviderTest\"/>") ""))))
          ;; We don't have groovy
          (add-after 'unpack 'delete-groovy-tests
            (lambda _
              (delete-file-recursively "src/test/java/test/dependent/issue1648/")
              (substitute* "src/test/resources/testng.xml"
-               (("<class name=\"test.dependent.issue1648.TestRunner\"/>") ""))
-             #t))
+               (("<class name=\"test.dependent.issue1648.TestRunner\"/>") ""))))
          (add-before 'build 'copy-resources
            (lambda _
-             (copy-recursively "src/main/resources" "build/classes")
-             #t))
+             (copy-recursively "src/main/resources" "build/classes")))
          (add-before 'check 'copy-test-resources
            (lambda _
-             (copy-recursively "src/test/resources" "build/test-classes")
-             #t))
+             (copy-recursively "src/test/resources" "build/test-classes")))
          (replace 'check
            (lambda _
              (invoke "ant" "compile-tests")
@@ -11075,20 +11077,20 @@ those in Perl and JavaScript.")
                      "-Dtest.resources.dir=src/test/resources"
                      "org.testng.TestNG" "src/test/resources/testng.xml"))))))
     (propagated-inputs
-     `(("junit" ,java-junit)
-       ("java-jsr305" ,java-jsr305)
-       ("java-bsh" ,java-bsh)
-       ("java-jcommander" ,java-jcommander)
-       ("java-guice" ,java-guice)
-       ("snakeyaml" ,java-snakeyaml)))
+     (list java-junit
+           java-jsr305
+           java-bsh
+           java-jcommander
+           java-guice
+           java-snakeyaml))
     (native-inputs
-     `(("guava" ,java-guava)
-       ("java-javax-inject" ,java-javax-inject)
-       ("java-hamcrest" ,java-hamcrest-all)
-       ("java-assertj" ,java-assertj)
-       ("java-mockito" ,java-mockito-1)
-       ("cglib" ,java-cglib)
-       ("aopalliance" ,java-aopalliance)))
+     (list java-guava
+           java-javax-inject
+           java-hamcrest-all
+           java-assertj
+           java-mockito-1
+           java-cglib
+           java-aopalliance))
     (home-page "https://testng.org")
     (synopsis "Testing framework")
     (description "TestNG is a testing framework inspired from JUnit and NUnit

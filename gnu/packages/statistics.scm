@@ -2191,7 +2191,7 @@ and fast file reading.")
                  ;; Remove dataset with unclear license.
                  (lambda _
                    (delete-file "vega_datasets/_data/la-riots.csv"))))))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (propagated-inputs (list python-pandas))
     (home-page "https://github.com/altair-viz/vega_datasets")
     (synopsis "Example datasets used by Vega-related projects")
@@ -2236,12 +2236,12 @@ and Vega-Lite examples.")
                              python-jsonschema
                              python-numpy
                              python-pandas
+                             python-setuptools
                              python-toolz
                              python-typing-extensions))
     (native-inputs (list python-black
                          python-hatchling
                          python-ipython
-                         python-m2r
                          python-pytest
                          python-vega-datasets))
     (home-page "https://altair-viz.github.io/")
@@ -2323,7 +2323,8 @@ correlated samples from Markov Chain Monte Carlo (MCMC).")
            (lambda _
              ;; Cython extensions have to be built before running the tests.
              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (propagated-inputs (list python-cython python-numpy))
+    (propagated-inputs (list python-cython python-numpy python-setuptools
+                             python-wheel))
     (native-inputs (list python-nose))
     (home-page "http://github.com/daleroberts/hdmedians")
     (synopsis "High-dimensional medians")
@@ -2374,7 +2375,9 @@ machine learning, computer vision, and high-dimensional statistics.")
                              python-scipy
                              python-typing-extensions
                              python-xarray
-                             python-xarray-einstats))
+                             python-xarray-einstats
+                             python-setuptools
+                             python-wheel))
     (home-page "https://github.com/arviz-devs/arviz")
     (synopsis "Exploratory analysis of Bayesian models")
     (description
@@ -2465,7 +2468,8 @@ inference (VI) algorithms.")
                 (("\"error::DeprecationWarning\",") "")))))))
     (propagated-inputs (list python-importlib-metadata python-numpoly
                              python-numpy python-scipy))
-    (native-inputs (list python-pytest python-scikit-learn))
+    (native-inputs (list python-pytest python-scikit-learn python-setuptools
+                         python-wheel))
     (home-page "https://chaospy.readthedocs.io/en/master/")
     (synopsis "Numerical tool for performing uncertainty quantification")
     (description "Chaospy is a numerical toolbox for performing uncertainty
@@ -2589,7 +2593,8 @@ Meier, Nelson Aalen and regression.")
       #:test-flags
       '(list "-k" (string-append "not test_correct_results"
                                  " and not test_correct_results_binary"))))
-    (native-inputs (list python-pandas python-pytest))
+    (native-inputs (list python-pandas python-pytest python-setuptools
+                         python-wheel))
     (propagated-inputs (list python-numpy python-scikit-learn))
     (home-page "https://github.com/scikit-learn-contrib/MAPIE")
     (synopsis "Module for estimating prediction intervals")
@@ -2617,7 +2622,9 @@ conformal prediction methods intervals.")
     (native-inputs (list python-coverage
                          python-pytest
                          python-pytest-cov
-                         python-setuptools-scm))
+                         python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
     (home-page "https://emcee.readthedocs.io/en/stable/")
     (synopsis "Ensemble sampling toolkit for MCMC")
     (description
@@ -2670,7 +2677,9 @@ sampler for Markov chain Monte Carlo (MCMC).")
            python-pytest
            python-pytest-randomly
            python-pytest-xdist
-           python-setuptools-scm))
+           python-setuptools-scm
+           python-setuptools
+           python-wheel))
     (home-page
      (string-append "https://www.statsmodels.org/v" version "/"))
     (synopsis "Statistical modeling and econometrics in Python")

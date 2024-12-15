@@ -159,7 +159,11 @@ expressions.")
                    (call-with-output-file "src/tzdata/zoneinfo/__init__.py"
                      (const #t)))))))
     (inputs (list tzdata))
-    (native-inputs (list python-pytest python-pytest-subtests))
+    (native-inputs
+     (list python-pytest
+           python-pytest-subtests
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/python/tzdata")
     (synopsis "Python wrapper of IANA time zone data")
     (description "This package provides a thin Python wrapper around tzdata.")
@@ -243,24 +247,21 @@ Pendulum instances.")
        (uri (pypi-uri "python-dateutil" version))
        (patches (search-patches "python-dateutil-pytest-compat.patch"))
        (sha256
-        (base32
-         "11iy7m4bp2lgfkcl0r6xzf34bvk7ppjmsyn2ygfikbi72v6cl8q1"))))
-    (build-system python-build-system)
+        (base32 "11iy7m4bp2lgfkcl0r6xzf34bvk7ppjmsyn2ygfikbi72v6cl8q1"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      ;; Delete tests that depend on "freezegun" to avoid a
-                      ;; circular dependency.
-                      (delete-file "dateutil/test/test_utils.py")
-                      (delete-file "dateutil/test/test_rrule.py")
-
-                      ;; XXX: Fails to get timezone from /etc/localtime.
-                      (delete-file "dateutil/test/test_tz.py")
-
-                      (invoke "pytest" "-vv"))))))
+     (list
+      #:test-flags '(list  ; avoid freezegun dependency
+                     "--ignore=dateutil/test/test_utils.py"
+                     "--ignore=dateutil/test/test_rrule.py"
+                     ;; XXX: Fails to get timezone from /etc/localtime.
+                     "--ignore=dateutil/test/test_tz.py")))
     (native-inputs
-     (list python-pytest python-pytest-cov python-setuptools-scm))
+     (list python-pytest
+           python-pytest-cov
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs
      (list python-six))
     (home-page "https://dateutil.readthedocs.io/en/stable/")
@@ -285,6 +286,7 @@ datetime module, available in Python 2.3+.")
                 "1wg3f3imjq3snvjccv64h5498pqv9xz664xhni7bsh8mnay91p83"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-dateutil python-pytz))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/jmcantrell/python-dateutils")
     (synopsis "Various utilities for working with date and datetime objects")
     (description
@@ -368,7 +370,7 @@ Python datetime objects.")
       ;; It's optional, remove this constrain where python-pytz is updated.
       #:test-flags #~(list "-k" "not test_with_pytz")))
     (native-inputs
-     (list python-poetry-core python-pytest))
+     (list python-poetry-core python-pytest python-setuptools))
     (propagated-inputs
      (list python-cffi python-h3-3 python-numba python-numpy python-pytz))
     (home-page "https://timezonefinder.michelfe.it/gui")
@@ -507,25 +509,22 @@ timestamps.")
               (sha256
                (base32
                 "189knrgxb3x21lzvqac6qlpd32308hcmpccxdlvr5wmrl46b6d1r"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "-vv" "tests"
-                       ;; python-dateutil doesn't recognize America/Nuuk.
-                       ;; Remove when python-dateutil > 2.8.1.
-                       "-k" "not test_parse_tz_name_zzz")))))))
+     (list
+      #:test-flags '(list "tests"
+                          ;; python-dateutil doesn't recognize America/Nuuk.
+                          ;; Remove when python-dateutil > 2.8.1.
+                          "-k" "not test_parse_tz_name_zzz")))
     (native-inputs
-     (list ;; For testing
-           python-chai
+     (list python-chai
            python-pytest
            python-pytest-cov
            python-pytest-mock
            python-pytz
-           python-simplejson))
+           python-setuptools
+           python-simplejson
+           python-wheel))
     (propagated-inputs
      (list python-dateutil))
     (home-page "https://github.com/arrow-py/arrow")
