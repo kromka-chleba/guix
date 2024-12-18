@@ -438,15 +438,16 @@ The binary is called @command{gvproxy}.")
 (define-public catatonit
   (package
     (name "catatonit")
-    (version "0.2.0")
+    (version "0.2.1")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append
-             "https://github.com/openSUSE/catatonit/releases/download/v"
-             version "/catatonit.tar.xz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/openSUSE/catatonit/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "141b5lypgqib546zmldi4kqzpqfd6vvqddqqkfaz3w11fjsc4hwq"))))
+        (base32 "14vh0xpg6lzmh7r52vi9w1qfc14r7cfhfrbca7q5fg62d3hx7kxi"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake libtool))

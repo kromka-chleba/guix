@@ -2,7 +2,7 @@
 ;;; Copyright © 2019, 2021-2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019, 2020, 2021 Efraim Flashner <efraim@flashner.co.il>
-;;; Copyright © 2019, 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019, 2020, 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2019, 2021 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2020, 2022 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2020, 2022 Marius Bakke <marius@gnu.org>
@@ -51,6 +51,7 @@
   #:use-module (gnu packages openstack)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
@@ -405,7 +406,8 @@ nosetests, etc...) in Python projects.")
            python-mypy
            python-numpy
            python-setuptools
-           python-typeguard))
+           python-typeguard
+           python-wheel))
     (propagated-inputs
      (list python-asttokens
            python-typing-extensions))
@@ -1971,12 +1973,8 @@ plain (undecoratored) native coroutine tests.")
             (lambda _
               (with-directory-excursion "tests/example-project"
                 (invoke "python" "setup.py" "build_ext" "--inplace")))))))
-    (native-inputs
-     (list python-nox
-           python-cython-3
-           python-setuptools))
-    (propagated-inputs
-     (list python-pytest))
+    (native-inputs (list python-cython-3 python-setuptools python-wheel))
+    (propagated-inputs (list python-pytest))
     (home-page "https://github.com/lgpage/pytest-cython")
     (synopsis "Cython extension modules testing plugin")
     (description
@@ -2301,7 +2299,7 @@ them using any Python VM with basically no runtime overhead.")
 (define-public python-nptyping
   (package
     (name "python-nptyping")
-    (version "2.0.0")
+    (version "2.5.0")
     (source (origin
               (method git-fetch)        ;pypi only contains a binary wheel
               (uri (git-reference
@@ -2310,23 +2308,43 @@ them using any Python VM with basically no runtime overhead.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0839mcrv5jljq9k9124ssnl1hc1inbxwlwjk72imabsbqssjy9rb"))))
-    (build-system python-build-system)
+                "0m6iq98qi9pl5hcc5k99bvy5w293vrlsdnimxl020i60rfnihgl7"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'set-source-date-epoch
-           (lambda _
-             ;; Otherwise the wheel building test would fail with "ZIP does
-             ;; not support timestamps before 1980".
-             (setenv "SOURCE_DATE_EPOCH" "315532800"))))))
+     (list
+      #:test-flags
+      #~(list
+         ;; Multiple failures due to undefined names (typing package must be
+         ;; too outdated, or perhaps they use a newer pandas).
+         "--ignore=tests/test_mypy.py"
+         "--ignore=tests/pandas_/test_mypy_dataframe.py"
+         "--ignore=tests/pandas_/test_fork_sync.py" ;requires connectivity
+         ;; This test requires 'python-pyright', not packaged.
+         "--ignore=tests/test_pyright.py"
+         ;; This one fails with "Unexpected argument of type <class 'tuple'>".
+         "--ignore=tests/test_typeguard.py"
+         ;; This one runs pip and fails.
+         "--ignore=tests/test_wheel.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-source-date-epoch
+            (lambda _
+              ;; Otherwise the wheel building test would fail with "ZIP does
+              ;; not support timestamps before 1980".
+              (setenv "SOURCE_DATE_EPOCH" "315532800"))))))
     (native-inputs
      (list python-beartype
+           python-feedparser
            python-mypy
+           python-pandas
+           python-pytest
            python-setuptools
            python-typeguard
            python-wheel))
-    (propagated-inputs (list python-numpy python-typing-extensions))
+    (propagated-inputs
+     (list python-numpy
+           python-typing-extensions
+           python-pandas-stubs))
     (home-page "https://github.com/ramonhagenaars/nptyping")
     (synopsis "Type hints for Numpy")
     (description "This package provides extensive dynamic type checks for
@@ -2907,67 +2925,38 @@ Python file for configuration.")
 (define-public python-tox
   (package
     (name "python-tox")
-    (version "3.20.0")
+    (version "4.8.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "tox" version))
        (sha256
         (base32
-         "0nk0nyzhzamcrvn0qqzzy54isxxqwdi28swml7a2ym78c3f9sqpb"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv" "-k"
-                        (string-join
-                         (map (lambda (test)
-                                (string-append "not test_" test))
-                              '("invocation_error"
-                                "create_KeyboadInterrupt"
-                                "exit_code"
-                                "tox_get_python_executable"
-                                "find_alias_on_path"
-                                "get_executable"
-                                "get_executable_no_exist"
-                                "get_sitepackagesdir_error"
-                                "spinner_stdout_not_unicode"
-                                "provision_non_canonical_dep"
-                                "package_setuptools"
-                                "package_poetry"
-                                "parallel_interrupt"
-                                "provision_missing"
-                                "provision_from_pyvenv"
-                                "provision_interrupt_child"
-                                "create"
-                                "run_custom_install_command"
-                                "toxuone_env"
-                                "different_config_cwd"
-                                "test_usedevelop"
-                                "build_backend_without_submodule"
-                                "parallel"
-                                "parallel_live"
-                                "tox_env_var_flags_inserted_isolated"))
-                         " and "))))))))
+         "0yq3d2wif88d2iih8c2dwjx7rz8axkc7b6gskl5z3k0jbd1wznia"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))      ;require python-devpi-process
     (propagated-inputs
-     (list python-filelock
+     (list python-cachetools
+           python-chardet
+           python-colorama
+           python-filelock
            python-packaging
+           python-platformdirs
            python-pluggy
-           python-py
-           python-six
-           python-toml
+           python-pyproject-api
+           python-tomli
            python-virtualenv))
     (native-inputs
-     (list python-flaky
-           python-pathlib2
-           python-pytest                ; >= 2.3.5
-           python-pytest-freezegun
-           python-pytest-timeout
-           python-setuptools-scm))
+     (list python-distlib
+           ;;python-devpi-process  ;FIXME: package me
+           python-flaky
+           python-hatchling
+           python-hatch-vcs
+           python-psutil
+           python-pytest
+           python-pytest-mock
+           python-pytest-xdist
+           python-re-assert))
     (home-page "https://tox.readthedocs.io")
     (synopsis "Virtualenv-based automation of test activities")
     (description "Tox is a generic virtualenv management and test command line

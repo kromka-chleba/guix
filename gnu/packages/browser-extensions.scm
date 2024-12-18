@@ -32,6 +32,35 @@
   #:use-module (gnu packages password-utils)
   #:use-module (gnu packages python))
 
+(define adaptive-tab-bar-colour
+  (package
+    (name "adaptive-tab-bar-colour")
+    (version "2.1.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/easonwong-de/Adaptive-Tab-Bar-Colour")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "03w06qrfg3bra6z7bmksj7mj27xnznn0ddm8gsr8z8b32hiifg4r"))))
+    (build-system copy-build-system)
+    (arguments
+     (list #:install-plan
+           #~'(("." #$(assq-ref (package-properties this-package) 'addon-id)))))
+    (home-page "https://github.com/easonwong-de/Adaptive-Tab-Bar-Colour")
+    (synopsis "Adaptive tab bar colour")
+    (description
+     "This package provides a browser extension for changing tab bar colour to
+match website theme.")
+    (license license:expat)
+    (properties '((addon-id . "ATBC@EasonWong")))))
+
+(define-public adaptive-tab-bar-colour/icecat
+  (make-icecat-extension adaptive-tab-bar-colour))
+
 (define play-to-kodi
   (package
     (name "play-to-kodi")
@@ -253,6 +282,33 @@ with the @uref{https://keepassxc.org, KeePassXC} password manager.")
 (define-public keepassxc-browser/icecat
   (make-icecat-extension keepassxc-browser))
 
+(define livemarks
+  (package
+    (name "livemarks")
+    (version "3.5")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/nt1m/livemarks")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "02p2080lgnb2xy4n781ydjdywkg7g7hmz6cpnbh6icldbjy5xa5i"))))
+    (build-system copy-build-system)
+    (arguments
+     (list #:install-plan
+           #~'(("." #$(assq-ref (package-properties this-package) 'addon-id)))))
+    (home-page "https://github.com/nt1m/livemarks")
+    (synopsis "RSS feed bookmark folders")
+    (description
+     "This browser extension provides auto-updated RSS feed bookmark folders.")
+    (license license:expat)
+    (properties '((addon-id . "{c5867acc-54c9-4074-9574-04d8818d53e8}")))))
+
+(define-public livemarks/icecat
+  (make-icecat-extension livemarks))
+
 (define noscript
   (package
     (name "noscript")
@@ -277,3 +333,35 @@ protection for web browsers.")
 
 (define-public noscript/icecat
   (make-icecat-extension noscript))
+
+(define privacy-redirect
+  (package
+    (name "privacy-redirect")
+    (version "1.1.49")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/SimonBrazell/privacy-redirect")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "13j5i6vh4lq9hcqmqbmn8fnymnplwra5rm696h6magbjxnj3nkyz"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan
+      #~'(("src" #$(assq-ref (package-properties this-package) 'addon-id)))))
+    (home-page "https://github.com/SimonBrazell/privacy-redirect")
+    (synopsis "Redirect to privacy friendly alternative frontends")
+    (description
+     "This package provides a browser extension that redirects sites to their
+privacy friendly alternative frontends.  It's possible to toggle all redirects
+on and off and the extension will default to using random instances if none are
+selected.")
+    (license license:gpl3)
+    (properties '((addon-id . "{b7f9d2cd-d772-4302-8c3f-eb941af36f76}")))))
+
+(define-public privacy-redirect/icecat
+  (make-icecat-extension privacy-redirect))

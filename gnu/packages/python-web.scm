@@ -943,28 +943,55 @@ routes using HTTP Digest Authentication.")
 (define-public python-aws-sam-translator
   (package
     (name "python-aws-sam-translator")
-    (version "1.51.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "aws-sam-translator" version))
-              (sha256
-               (base32
-                "1ywzchc3nk13xh593j7b14qp3y0fdx7cfbdhnm34p39av66xffac"))))
-    (build-system python-build-system)
+    (version "1.94.0")
+    (source
+     (origin
+       (method git-fetch)               ; no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/aws/serverless-application-model")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rrmp2a2lr1bb909x34j7dqkdynx48hfwxg9m488s0mws68f78m3"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(;; XXX: Tests are not distributed with the PyPI archive, and would
-       ;; introduce a circular dependency on python-cfn-lint.
-       #:tests? #f
-       #:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'loosen-requirements
-                    (lambda _
-                      ;; The package needlessly specifies exact versions
-                      ;; of dependencies, when it works fine with others.
-                      (substitute* "requirements/base.txt"
-                        (("(.*)(~=[0-9\\.]+)" all package version)
-                         package)))))))
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              "--ignore=tests/bin/test_public_interface.py"
+              "-k"
+              (string-join
+               ;; AttributeError: module 'pydantic.v1' has no attribute
+               ;; 'error_wrappers'
+               (list "not test_connector_with_empty_properties"
+                     "test_connector_with_invalid_permission"
+                     "test_connector_with_invalid_permission_type"
+                     "test_connector_without_source"
+                     "test_transform_invalid_document")
+               " and not ")
+              "tests")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              ;; Drop test coverage requirements.
+              (substitute* "pytest.ini"
+                ((".*addopts.*") ""))))
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "AWS_DEFAULT_REGION" "eu-west-3"))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-pytest-xdist
+           python-parameterized
+           python-pyyaml
+           python-wheel))
     (propagated-inputs
-     (list python-boto3 python-jsonschema python-six))
+     (list python-boto3
+           python-jsonschema
+           python-pydantic
+           python-typing-extensions))
     (home-page "https://github.com/aws/serverless-application-model")
     (synopsis "Transform AWS SAM templates into AWS CloudFormation templates")
     (description
@@ -1111,54 +1138,50 @@ decode and default on encode.
 (define-public python-cfn-lint
   (package
     (name "python-cfn-lint")
-    (version "0.65.0")
-    (home-page "https://github.com/aws-cloudformation/cfn-lint")
+    (version "1.22.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url home-page)
+                    (url "https://github.com/aws-cloudformation/cfn-lint")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1rfacp39jssrbchrzb49vwrqyzhx5v7jfcgngqnb9r7qfs4bwi3w"))))
-    (build-system python-build-system)
+                "1zz121r9yv1irwdbk07s7958fh43h3r3q39qcj0gv4kpgb0vdf32"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'skip-network-test
-           (lambda _
-             ;; This test requires networking.
-             (substitute* "test/unit/module/formatters/test_formatters.py"
-               (("def test_sarif_formatter") "def _test_sarif_formatter"))))
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               (let ((out (assoc-ref outputs "out")))
-                 ;; Remove test for the documentation update scripts
-                 ;; to avoid a dependency on 'git'.
-                 (delete-file
-                  "test/unit/module/maintenance/test_update_documentation.py")
-                 (delete-file
-                  "test/unit/module/maintenance/test_update_resource_specs.py")
-                 (add-installed-pythonpath inputs outputs)
-                 (setenv "PATH" (string-append out "/bin:"
-                                               (getenv "PATH")))
-                 (invoke "python" "-m" "unittest" "discover"
-                         "-s" "test"))))))))
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    (list
+                     ;; Skip documentation tests.
+                     "not test_update_docs"
+                     ;; Tests fail with error: AssertinError ...
+                     "test_parameter_for_autopublish_code_sha256"
+                     "test_sam_with_language_extension"
+                     ;; Test fails with error: diff error while comparing
+                     ;; graphs.
+                     "test_build_graph")
+                    " and not "))))
     (native-inputs
-     (list python-pydot python-mock))
+     (list python-defusedxml
+           python-pydot
+           python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-aws-sam-translator
            python-importlib-resources
            python-jschema-to-python
            python-jsonpatch
-           python-jsonschema
            python-junit-xml
            python-networkx
            python-pyyaml
+           python-regex
            python-sarif-om
-           python-six))
+           python-sympy
+           python-typing-extensions))
+    (home-page "https://github.com/aws-cloudformation/cfn-lint")
     (synopsis "Validate CloudFormation templates")
     (description
      "This package lets you validate CloudFormation YAML/JSON templates against
@@ -2084,7 +2107,7 @@ Amazon S3 compatible object storage server.")
 (define-public python-pycurl
   (package
     (name "python-pycurl")
-    (version "7.45.3")
+    (version "7.45.4")
     (source
      (origin
        (method git-fetch)
@@ -2094,7 +2117,7 @@ Amazon S3 compatible object storage server.")
                       "REL_" (string-replace-substring version "." "_")))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0sqxz14p8qvhdb9pvlbrfdldn8s27l6hpv252s77kbbrj2pp294c"))))
+        (base32 "00cd1l0lsml0708hpv5k4qyhqfv0qphb0p317j9aci2wdspn1mpl"))))
     (build-system pyproject-build-system)
     (arguments
      '(#:test-flags
@@ -2133,6 +2156,7 @@ Amazon S3 compatible object storage server.")
     (native-inputs
      (list python-bottle
            python-flaky
+           python-flask
            python-pytest
            python-setuptools
            python-wheel))
@@ -3611,6 +3635,7 @@ sanitizer Rust crate.")
         (base32 "0ifnj0mpbqsfqba9n12vf5yzxj4qf2gxql3ry43qyshgnrqsi4mh"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-cryptography))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/plizonczyk/noiseprotocol")
     (synopsis "Implementation of Noise Protocol Framework")
     (description
@@ -4301,6 +4326,8 @@ opt.override_default_trust_store_from_path(None, os.getenv('SSL_CERT_FILE')) if 
                         "discover" "--verbose")))))))
     (inputs (list openssl))
     (native-inputs (list cmake-minimal
+                         python-setuptools
+                         python-wheel
                          ;; For tests only
                          nss-certs-for-test
                          python-boto3
@@ -5109,16 +5136,25 @@ applications.")
 (define-public python-flask-sqlalchemy
   (package
     (name "python-flask-sqlalchemy")
-    (version "2.5.1")
+    (version "3.1.1")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "Flask-SQLAlchemy" version))
+              (uri (pypi-uri "flask_sqlalchemy" version))
               (sha256
                (base32
-                "04jrx4sjrz1b20j38qk4qin975xwz30krzq59rfv3b3w7ss49nib"))))
-    (build-system python-build-system)
+                "04l3dfivznlpvk9p9f20zdbyxl869k42z2w7glddlbc0h6w8pdp4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-append "not test_explicit_table[db2]"
+                                  " and not test_explicit_table[db4]"))))
+    (native-inputs
+     (list python-flit-core
+           python-pytest))
     (propagated-inputs
-     (list python-flask python-sqlalchemy))
+     (list python-flask
+           python-sqlalchemy-2))
     (home-page "https://github.com/mitsuhiko/flask-sqlalchemy")
     (synopsis "Module adding SQLAlchemy support to your Flask application")
     (description

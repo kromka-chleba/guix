@@ -52,7 +52,7 @@
 ;;; Copyright © 2018-2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2018, 2019, 2021, 2023 Clément Lassieur <clement@lassieur.org>
-;;; Copyright © 2018, 2019, 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2018-2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2018 Luther Thompson <lutheroto@gmail.com>
 ;;; Copyright © 2018 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2015, 2018 Pjotr Prins <pjotr.guix@thebird.nl>
@@ -158,6 +158,7 @@
 ;;; Copyright © 2024 Peter Kannewitz <petre-vps@posteo.net>
 ;;; Copyright © 2024 Aaron Covrig <aaron.covrig.us@ieee.org>
 ;;; Copyright © 2024 Evgeny Pisemsky <mail@pisemsky.site>
+;;; Copyright © 2024 Markku Korkeala <markku.korkeala@iki.fi>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -323,7 +324,7 @@
     (arguments
      (list
       #:test-flags
-      #~(list "--numprocesses" "auto"
+      #~(list "--numprocesses" (number->string (parallel-job-count))
               "--ignore=test/test_plugin_macosx.py"
               "-k" (string-append "not test_plugin_mqtt_tls_connect_success"
                                   " and not test_plugin_mqtt_tls_no_verify_success"))))
@@ -481,6 +482,77 @@ including arbitrary-length lists, records, mixed types, and missing data,
 using NumPy-like idioms.")
     (license license:bsd-3)))
 
+(define-public python-distance
+  (package
+    (name "python-distance")
+    (version "0.1.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "Distance" version))
+       (sha256
+        (base32 "0la51nzzqrkisshwbk2wpviisqqzylwkz9qsa9f3y05nyn27b030"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (home-page "https://github.com/doukremt/distance")
+    (synopsis "Utilities for comparing sequences")
+    (description
+     "This package provides helpers for computing similarities between
+arbitrary sequences. Included metrics are Levenshtein, Hamming, Jaccard, and
+Sorensen distance, plus some bonuses.  All distance computations are
+implemented in pure Python, and most of them are also implemented in C.")
+    (license license:gpl2+)))
+
+(define-public python-jsonpath-ng
+  (package
+    (name "python-jsonpath-ng")
+    (version "1.7.0" )
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jsonpath-ng" version))
+       (sha256
+        (base32 "0g5bpq02pl9mv7mbqixvnagq8f9v0jab6wqmbxw9rxsz9vyzgxgn"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-ply))
+    (home-page "https://github.com/h2non/jsonpath-ng")
+    (synopsis "JSONPath Next-Generation")
+    (description
+     "This package provides a final implementation of @code{JSONPath} for
+Python that aims to be standard compliant, including arithmetic and binary
+comparison operators, as defined in the original
+@url{http://goessner.net/articles/JsonPath/, JSONPath} proposal.")
+    (license license:asl2.0)))
+
+(define-public python-pyxdameraulevenshtein
+  (package
+    (name "python-pyxdameraulevenshtein")
+    (version "1.8.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyxdameraulevenshtein" version))
+       (sha256
+        (base32 "07nhds44ry9mchqjqjdnq2asp13y9pqc8003pkydvb3dah7wrvhv"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-cython
+           python-setuptools
+           python-wheel))
+    (home-page "https://github.com/lanl/pyxDamerauLevenshtein")
+    (synopsis "Damerau-Levenshtein edit distance algorithm")
+    (description
+     "@code{pyxDamerauLevenshtein} implements the Damerau-Levenshtein (DL)
+edit distance algorithm for Python in Cython for high performance.")
+    (license license:bsd-3)))
+
 (define-public python-xmldiff
   (package
     (name "python-xmldiff")
@@ -567,6 +639,7 @@ design}.")
            python-ipython-genutils
            python-jupyter-server
            python-pyaml
+           python-toml
            python-pytest
            python-setuptools
            python-wheel))
@@ -1289,6 +1362,7 @@ as functions or string constants to form colored terminal output.")
        (sha256
         (base32 "08bjsmmkihyksms2vgndslln02rvw56lkxz28d39qrnxbg4v1707"))))
     (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (propagated-inputs (list python-pillow))
     (home-page "https://github.com/fengsp/color-thief-py")
     (synopsis "Grab the color palette of an image")
@@ -3795,7 +3869,10 @@ class.")
         (base32 "14l9kv9igcmp5k6d2ahnx6z4dn6zy5kykz95hkh0rkqswn8x79b1"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pretend python-pytest python-setuptools))
+     (list python-pretend
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/di/calver")
     (synopsis "Setuptools extension for CalVer package versions")
     (description
@@ -4836,7 +4913,7 @@ variables.")
      ;; "CovReportWarning: Failed to generate report: No data to report."
      (list #:tests? #f))
     (native-inputs
-     (list python-pytest python-pytest-cov))
+     (list python-pytest python-pytest-cov python-setuptools python-wheel))
     (propagated-inputs (list python-bson python-pyyaml))
     (home-page "https://gitlab.com/d3v-t00lz/pymarshal")
     (synopsis "Pythonic implementation of Golang struct (un)marshalling")
@@ -5342,7 +5419,8 @@ and is not compatible with JSON.")
            python-setuptools-scm
            python-tomli
            python-setuptools
-           python-wheel))
+           python-wheel
+           python-pip))
     (home-page "https://extension-helpers.readthedocs.io")
     (synopsis "Astropy ecosystem utilities for building and installing packages")
     (description
@@ -5386,6 +5464,7 @@ any Python package.")
     (build-system pyproject-build-system)
     (propagated-inputs (list python-appdirs python-argcomplete python-colorama
                              python-halo python-spinners))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/clueboard/milc")
     (synopsis "Python library for command line interface programs")
     (description "MILC is a Python library for developing command line
@@ -6442,8 +6521,18 @@ provides Python-specific tags that represent an arbitrary Python object.")
        (sha256
         (base32 "1q31krwxdvwawdn1kfqmpplix31d4jhs0qng26908hawsf0yjqlb"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; AttributeError: 'test_barrier' object has no attribute 'ps'.
+      #~(list "-k" (string-join
+                    (list "not test_evaluate"
+                          "test_reverse"
+                          "test_cancel"
+                          "test_throw")
+                    " and not "))))
     (native-inputs
-     (list python-pytest python-case python-setuptools python-wheel))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/celery/vine")
     (synopsis "Promises for Python")
     (description
@@ -7404,6 +7493,7 @@ text styles of documentation.")
        (sha256
         (base32 "1c0z4snkjiyl1iq4m1k6liwg0b4pdv2as4bfyvcm0mpjzki6na3s"))))
     (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/cs01/pygdbmi")
     (synopsis "Parse gdb machine interface output with Python")
     (description "This package provides a parse gdb machine interface output
@@ -8519,22 +8609,26 @@ Server (PLS).")
 (define-public python-lsp-server
   (package
     (name "python-lsp-server")
-    (version "1.11.0")
+    (version "1.12.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "python-lsp-server" version))
+       (uri (pypi-uri "python_lsp_server" version))
        (sha256
         (base32
-         "11lf7c9dpf8jzz5y7dllz8l1lka887m9a79xbazy8lkq7zxxdvc9"))))
+         "0fq5vkwkvn29rwf5l19iicmj913franc6q8ymjdvs0ys53qkd8xn"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      '(list "-k" "not test_pyqt_completion"
-             ;; This could be a real issue due to our old version of
-             ;; pydocstyle.
-             "--ignore=test/plugins/test_pydocstyle_lint.py")
+      '(list "-c" "/dev/null"           ;avoid coverage
+             "-k"
+             (string-append
+              "not test_pyqt_completion " ;avoid pyqt5
+              ;; This test fails with "AssertionError: assert 'isabs(s)' ==
+              ;; 'commonprefix(m)'" (see:
+              ;; https://github.com/python-lsp/python-lsp-server/issues/602).
+              "and not test_jedi_completion_with_fuzzy_enabled"))
       #:phases
       '(modify-phases %standard-phases
          (add-before 'check 'set-HOME
@@ -8553,21 +8647,20 @@ Server (PLS).")
     (native-inputs
      (list python-autopep8
            python-flake8
-           python-coverage
            python-flaky
            python-matplotlib
            python-numpy
            python-pandas
            python-pylint
            python-pytest
-           python-pytest-cov
            python-rope
            python-setuptools
+           python-setuptools-scm
            python-wheel))
     (home-page "https://github.com/python-lsp/python-lsp-server")
     (synopsis "Python implementation of the Language Server Protocol")
     (description
-"The Python Language Server @command{pylsp} is an implementation of the
+     "The Python Language Server @command{pylsp} is an implementation of the
 Python 3 language specification for the Language Server Protocol (LSP).
 This tool is used in text editing environments to provide a complete
 and integrated feature-set for programming Python effectively.")
@@ -13205,7 +13298,7 @@ abstract syntax tree (AST) nodes without side effects.")
         (base32 "0sffrjjqh37ijwnggyvs2rfm4iwaz2m395wqg0x727wv8i0x3f3b"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/cdgriffith/puremagic")
     (synopsis "Pure Python implementation of magic file detection")
     (description
@@ -13591,34 +13684,35 @@ supports @code{readline} shortcuts.")
 (define-public python-textdistance
   (package
     (name "python-textdistance")
-    (version "4.2.1")
+    (version "4.6.3")
     (source
      (origin
        ;; There are no tests in the PyPI tarball.
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/life4/textdistance")
-             (commit (string-append "v." version))))
+             (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1g17i356fnny4k6hjr2ayy9k77jbvd6zzmngws2kbrnvhss1wgwf"))))
-    (build-system python-build-system)
+        (base32 "1qaplikab46p38jqr93bxd26vvxcnvib15fjxmmp4cbsiy5196sg"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:test-target "pytest"
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'delete-external-test
-           (lambda _
-             ;; All tests in this file require external libraries.
-             (delete-file "tests/test_external.py")
-             #t)))))
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count)))))
     (native-inputs
-     (list python-hypothesis
-           python-isort
-           python-numpy
+     (list python-numpy
            python-pytest
-           python-pytest-runner
-           python-tabulate))
+           python-pytest-xdist
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-jellyfish
+           python-distance
+           python-levenshtein
+           python-pylev
+           python-pyxdameraulevenshtein
+           python-rapidfuzz))
     (home-page "https://github.com/life4/textdistance")
     (synopsis "Compute distance between the two texts")
     (description "@code{textdistance} is a pure Python library for comparing
@@ -14178,7 +14272,9 @@ approach.")
            python-wrapper
            python-pytest
            python-pandas
-           python-requests-mock))
+           python-requests-mock
+           python-setuptools
+           python-wheel))
     (home-page "https://snakemake.readthedocs.io")
     (synopsis "Python-based execution environment for make-like workflows")
     (description
@@ -14899,7 +14995,11 @@ replacement for dictionaries where immutability is desired.")
        (sha256
         (base32 "1svk94pad8gcvjwd329zmfrw09wakwh6qjvnhf6sa6k92y44i82a"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pytest python-typing-extensions))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-typing-extensions
+           python-wheel))
     (home-page "https://github.com/carpedm20/emoji/")
     (synopsis "Emoji terminal output for Python")
     (description
@@ -15005,6 +15105,14 @@ you do not want to store entirely on disk or on memory.")
     (arguments
      `(#:phases
        (modify-phases %standard-phases
+         (add-before 'check 'fix-test
+           ;; See https://github.com/getsentry/sentry-python/pull/2712
+           (lambda _
+             (substitute* "tests/__init__.py"
+               (("import pytest")
+                "import warnings")
+               (("pytest.warns\\(None\\)")
+                "warnings.catch_warnings(record=True)"))))
          (replace 'check
            (lambda* (#:key inputs outputs tests? #:allow-other-keys)
              (when tests?
@@ -15059,7 +15167,12 @@ you do not want to store entirely on disk or on memory.")
                         " and not test_finds_transaction_when_descendent_span_is_on_scope"
                         " and not test_finds_orphan_span_on_scope"
                         " and not test_finds_non_orphan_span_on_scope"
-                        " and not test_circular_references"))))))))
+                        " and not test_circular_references"
+
+                        ;; AttributeError: module 'py' has no attribute 'process'
+                        ;; See <https://github.com/pytest-dev/pytest-forked/issues/88>.
+                        " and not test_threading"
+                        " and not test_transport"))))))))
     (native-inputs
      (list python-django
            python-executing
@@ -16725,76 +16838,46 @@ tasks, sockets, files, locks, and queues.")
 (define-public python-tables
   (package
     (name "python-tables")
-    (version "3.7.0")
+    (version "3.10.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "tables" version))
        (sha256
         (base32
-         "1zp1qmas4pgcag9sn0gwd40c6ibn9bg056d6ckjq7agjsrx8hap9"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; Remove pre-compiled .pyc files from source.
-           (for-each delete-file-recursively
-                     (find-files "." "__pycache__" #:directories? #t))
-           (for-each delete-file (find-files "." "\\.pyc$"))
-           (for-each delete-file
-                     (list "tables/_comp_bzip2.c"
-                           "tables/_comp_lzo.c"
-                           "tables/hdf5extension.c"
-                           "tables/indexesextension.c"
-                           "tables/linkextension.c"
-                           "tables/lrucacheextension.c"
-                           "tables/tableextension.c"
-                           "tables/utilsextension.c"))))))
+         "1kr6y4qivqy462gva4bqym3x4alhxijfqjplxax3gh5r6k3pm82a"))
+       (snippet '(begin
+                   (use-modules (guix build utils))
+                   (delete-file-recursively "c-blosc")))))
     (build-system python-build-system)
     (arguments
      (list
       #:phases
-      ;; FIXME: python-build-system does not pass configure-flags to "build"
-      ;; or "check", so we must override the build and check phases.
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'use-gcc
-            (lambda _
-              (substitute* "setup.py"
-                (("lib_dirs = \\[\\]")
-                 (string-append "lib_dirs = ["
-                                "'" #$(this-package-input "hdf5") "/lib',"
-                                "'" #$(this-package-input "bzip2") "/lib',"
-                                "'" #$(this-package-input "c-blosc") "/lib',"
-                                "]"))
-                (("^( +)compiler = new_compiler\\(\\)" line indent)
-                 (string-append line
-                                "\n"
-                                indent
-                                "compiler.set_executables(compiler='gcc',"
-                                "compiler_so='gcc',"
-                                "linker_exe='gcc',"
-                                "linker_so='gcc -shared')")))))
           (add-after 'unpack 'disable-tuning
             (lambda _
               (substitute* "setup.py"
                 (("cpu_flags = .*")
                  "cpu_flags = ['sse2']\n"))))
-          (replace 'build
-            (lambda* (#:key inputs #:allow-other-keys)
-              (invoke "python" "setup.py" "build"
-                      (string-append "--hdf5="
-                                     (assoc-ref inputs "hdf5")))))
+          (add-before 'build 'set-LD_LIBRARY_PATH
+            (lambda _
+              ;; The setup.py build system makes use of ctypes.CDLL, which
+              ;; uses dlopen, which looks up library names from standard
+              ;; locations or LD_LIBRARY_PATH.
+              (setenv "LD_LIBRARY_PATH" (getenv "LIBRARY_PATH"))))
           (replace 'check
-            (lambda* (#:key inputs #:allow-other-keys)
-              (invoke "python" "setup.py" "check"
-                      (string-append "--hdf5="
-                                     (assoc-ref inputs "hdf5"))))))))
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "python" "setup.py" "check")))))))
     (propagated-inputs
-     (list python-numexpr python-numpy python-packaging
-           python-py-cpuinfo))
-    (native-inputs
-     (list python-cython pkg-config))
-    (inputs
-     (list c-blosc hdf5-1.10 bzip2 lzo zlib))
+     (list python-blosc2
+           python-numpy
+           python-numexpr
+           python-packaging
+           python-py-cpuinfo
+           python-typing-extensions))
+    (native-inputs (list pkg-config python-cython))
+    (inputs (list c-blosc c-blosc2 hdf5-1.10 bzip2 lzo zlib))
     (home-page "https://www.pytables.org/")
     (synopsis "Hierarchical datasets for Python")
     (description "PyTables is a package for managing hierarchical datasets and
@@ -17566,7 +17649,10 @@ a hash value.")
         (base32
          "0fv1vq14rpqwgazxg4981904lfyp84mnammw7y046491cv76jv8x"))))
     ;; There are no tests
-    (arguments (list #:tests? #false))))
+    (arguments (list #:tests? #false))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))))
 
 (define-public python-terminaltables
   (package
@@ -21431,7 +21517,8 @@ respectively.")
     (propagated-inputs
      (list python-pytoolconfig))
     (native-inputs
-     (list python-pre-commit
+     (list python-pip
+           python-pre-commit
            python-pytest
            python-pytest-cov
            python-pytest-timeout
@@ -22330,6 +22417,32 @@ strings require only one extra byte in addition to the strings themselves.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              ;; Skip all benchmark tests.
+              "--ignore=bench/test_attrs_collections.py"
+              "--ignore=bench/test_attrs_nested.py"
+              "--ignore=bench/test_attrs_primitives.py"
+              "--ignore=bench/test_primitives.py"
+              "-k"
+              (string-join
+               ;; XXX: Tests fail with error: AssertionError: assert ...,
+               ;; check why.
+               (list "not test_310_optional_field_roundtrip"
+                     "test_310_union_field_roundtrip"
+                     "test_nested_roundtrip"
+                     "test_nested_roundtrip_tuple"
+                     "test_omit_default_roundtrip"
+                     "test_optional_field_roundtrip"
+                     "test_simple_roundtrip"
+                     "test_simple_roundtrip_defaults"
+                     "test_simple_roundtrip_defaults_tuple"
+                     "test_simple_roundtrip_tuple"
+                     "test_simple_roundtrip_with_extra_keys_forbidden"
+                     "test_structure_simple_from_dict_default"
+                     "test_union_field_roundtrip"
+                     "test_unmodified_generated_structuring")
+               " and not "))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-pyproject
@@ -22346,7 +22459,6 @@ strings require only one extra byte in addition to the strings themselves.")
            python-hypothesis
            python-immutables
            python-msgpack
-           python-poetry-core
            python-pymongo               ;for the bson module
            python-pytest
            python-pytest-benchmark
@@ -24884,7 +24996,14 @@ cases.")
        (sha256
         (base32 "0szgy4pqfixmswjs37qgma4qa3bsadpp3l1xflrpfi10aa8hh2sp"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-networkx python-numpy python-pydot))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-networkx
+           python-numpy
+           python-pydot))
     (home-page "https://github.com/Aunsiels/pyformlang")
     (synopsis "Framework for interacting with formal grammars")
     (description
@@ -27305,17 +27424,17 @@ such as lines length, trailing spaces, indentation, etc.")
 (define-public python-yapf
   (package
     (name "python-yapf")
-    (version "0.32.0")
+    (version "0.43.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "yapf" version))
        (sha256
         (base32
-         "06vxqski7qss2h2iy4fd04czym0cwjrzkaab9h03wzpg6xfhixd3"))))
+         "13i1sn0jfm7snfdzbyrawxl457bdmgsxkmg0n8h99zzdpwjamlq0"))))
     (build-system pyproject-build-system)
     (propagated-inputs
-     (list python-importlib-metadata python-platformdirs python-tomli))
+     (list python-platformdirs python-tomli))
     (native-inputs
      (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/google/yapf")
@@ -28065,6 +28184,7 @@ python-mpv, but it uses the JSON IPC protocol instead of the C API.")
        (sha256
         (base32 "0r67cp9nizvn3cbslgi30zpd3mw4a6zal0ygik3jv5lni1xdkk5w"))))
     (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (propagated-inputs (list python-certifi python-requests python-urllib3
                              python-websocket-client))
     (home-page "https://github.com/jellyfin/jellyfin-apiclient-python")
@@ -28937,58 +29057,61 @@ validation testing and application logic.")
 (define-public python-numba
   (package
     (name "python-numba")
-    (version "0.56.4")
+    (version "0.59.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "numba" version))
        (sha256
         (base32
-         "1vlnmirhay8gl36cxa94nvlgs41k9p7vdkp0xzbq65682bsgxn9j"))))
-    (build-system python-build-system)
+         "02rp5x59kw3qw6x821d4k4r4x8r8qpl1a16j9rvx4a30p4r93xkn"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:phases
+      `(modify-phases %standard-phases
          (add-after 'unpack 'disable-proprietary-features
            (lambda _
              (setenv "NUMBA_DISABLE_HSA" "1")
              (setenv "NUMBA_DISABLE_CUDA" "1")))
          (add-after 'unpack 'disable-failing-tests
            (lambda _
+             ;; This expects to be able to run pip.
+             (delete-file "numba/tests/test_sysinfo.py")
              ;; This one test fails because a deprecation warning is printed.
              (substitute* "numba/tests/test_import.py"
                (("def test_no_accidental_warnings")
                 "def disabled_test_no_accidental_warnings"))
              ;; Some tests timeout or crash on some architectures.
              ,@(cond
-                 ((target-aarch64?)
-                  `((substitute* "numba/tests/test_sets.py"
-                      (("def test_add_discard")
-                       "def disabled_test_add_discard")
-                      (("def test_isdisjoint")
-                       "def disabled_test_isdisjoint")
-                      (("def test_issubset")
-                       "def disabled_test_issubset")
-                      (("def test_issuperset")
-                       "def disabled_test_issuperset")
-                      (("def test_remove_error")
-                       "def disabled_test_remove_error"))))
-                 ((target-ppc64le?)
-                  `((substitute* "numba/tests/test_mathlib.py"
-                      (("def test_ldexp")
-                       "def disabled_test_ldexp"))))
-                 ((target-arm32?)
-                  ;; Armhf emulation on aarch64 using armv8 machines returns
-                  ;; 'armv8l' from platform.machine() and won't skip some tests.
-                  ;; Fix borrowed from an upstream bug report:
-                  ;; https://github.com/numba/numba/issues/6345#issuecomment-764993001
-                  `((substitute* '("numba/tests/support.py"
-                                   "numba/tests/test_dispatcher.py")
-                      (("platform\\.machine\\(\\) == 'armv7l'")
-                       (string-append
-                         "platform.machine().startswith('armv') and "
-                         "int(platform.machine()[len('armv'):-1]) >= 7")))))
-                 (#t '()))))
+                ((target-aarch64?)
+                 `((substitute* "numba/tests/test_sets.py"
+                     (("def test_add_discard")
+                      "def disabled_test_add_discard")
+                     (("def test_isdisjoint")
+                      "def disabled_test_isdisjoint")
+                     (("def test_issubset")
+                      "def disabled_test_issubset")
+                     (("def test_issuperset")
+                      "def disabled_test_issuperset")
+                     (("def test_remove_error")
+                      "def disabled_test_remove_error"))))
+                ((target-ppc64le?)
+                 `((substitute* "numba/tests/test_mathlib.py"
+                     (("def test_ldexp")
+                      "def disabled_test_ldexp"))))
+                ((target-arm32?)
+                 ;; Armhf emulation on aarch64 using armv8 machines returns
+                 ;; 'armv8l' from platform.machine() and won't skip some tests.
+                 ;; Fix borrowed from an upstream bug report:
+                 ;; https://github.com/numba/numba/issues/6345#issuecomment-764993001
+                 `((substitute* '("numba/tests/support.py"
+                                  "numba/tests/test_dispatcher.py")
+                     (("platform\\.machine\\(\\) == 'armv7l'")
+                      (string-append
+                       "platform.machine().startswith('armv') and "
+                       "int(platform.machine()[len('armv'):-1]) >= 7")))))
+                (#t '()))))
          (replace 'check
            (lambda* (#:key tests? inputs outputs #:allow-other-keys)
              (when tests?
@@ -28999,10 +29122,8 @@ validation testing and application logic.")
                (with-directory-excursion "/tmp"
                  (setenv "HOME" (getcwd))
                  (invoke "python3" "-m" "numba.runtests" "-v" "-m"))))))))
-    (propagated-inputs
-     (list python-llvmlite python-numpy python-singledispatch))
-    (native-inputs                      ;for tests
-     (list python-jinja2 python-pygments))
+    (propagated-inputs (list python-llvmlite python-numpy))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://numba.pydata.org")
     (synopsis "Compile Python code using LLVM")
     (description "Numba gives you the power to speed up your applications with
@@ -29019,6 +29140,7 @@ tool).")
 (define-public python-numcodecs
   (package
     (name "python-numcodecs")
+    ;; XXX: Starting from 0.11.0 numcodecs requires NumPy 1.7 or higher.
     (version "0.10.2")
     (source
      (origin
@@ -29047,6 +29169,12 @@ tool).")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      ;; Tests fail with error: ValueError: setting an array element with a
+      ;; sequence. The requested array has an inhomogeneous shape after 1
+      ;; dimensions. The detected shape was (3,) + inhomogeneous part.
+      #~(list "--deselect=numcodecs/tests/test_json.py::test_non_numpy_inputs"
+              "--deselect=numcodecs/tests/test_msgpacks.py::test_non_numpy_inputs")
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'disable-avx2
@@ -31543,7 +31671,7 @@ Notation (CSON).")
 (define-public python-aionotify
   (package
     (name "python-aionotify")
-    (version "0.3.0")
+    (version "0.3.1")
     (source
      (origin
        ;; Source tarball on PyPi lacks tests
@@ -31553,8 +31681,12 @@ Notation (CSON).")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0qkzwccv8k6mx1yvc0hmsgnzgb4vh8h97kq7i64ic6xzxkd57vkz"))))
+        (base32 "1p08g0h4bjlra25cwysag7gifsrm35d5vkjfv845w1rig8b57q9s"))))
     (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/rbarrois/aionotify")
     (synopsis "inotify library for Python")
     (description
@@ -37763,6 +37895,7 @@ parsing rules in a single place.")
        (sha256
         (base32 "0g4cn522n4dv6ly8pwf97dc62rr4f7my38v0bh6vmac7jmrip7pv"))))
     (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/pR0Ps/iterable-io")
     (synopsis "Adapt generators and other iterables to a file-like interface")
     (description
@@ -38297,7 +38430,7 @@ colors.")
                ;; TODO: After updating python-packaging, fix this.
                (delete 'sanity-check))))
     (propagated-inputs (list python-importlib-metadata python-packaging))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://mido.readthedocs.io/en/stable/")
     (synopsis "MIDI Objects for Python")
     (description "This library is for working with MIDI 1.0 ports, messages and
@@ -38961,13 +39094,13 @@ interfaces.")
 (define-public python-islenska
   (package
     (name "python-islenska")
-    (version "1.0.0")
+    (version "1.0.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "islenska" version))
        (sha256
-        (base32 "0fdp90mzy0sd4kyw8kd8kybd1ni765fvqn8hz2wx5sqbjjkm4d5k"))))
+        (base32 "1fhpyqn8z8g4hrsxndspxqm6973c7cwy0cms2ql87xcmh5a86ky7"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-cffi python-typing-extensions))
     (native-inputs (list python-setuptools python-wheel))

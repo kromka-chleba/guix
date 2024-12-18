@@ -533,7 +533,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.64")
+(define-public linux-libre-6.6-version "6.6.65")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -543,7 +543,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1x3455v7sfzakq99ydifh65yzvjzrw06p2lchwb6902yzqbnh786")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1cbag4wzv5fpjdcl0rpp158ch1q17rfz2qxm1xjjyhnblqzxjpq6")))
+        (hash (base32 "1q53xiwnszchl9c4g4yfxyzk4nffzgb4a7aq9rsyg1jcidp4gqbs")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
@@ -1646,7 +1646,7 @@ and the notification, WiFi, and Bluetooth LED.")
 (define-public tuxedo-keyboard
   (package
     (name "tuxedo-keyboard")
-    (version "4.6.3")
+    (version "4.11.7")
     (source
      (origin
        (method git-fetch)
@@ -1655,7 +1655,7 @@ and the notification, WiFi, and Bluetooth LED.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1958ls5jk8ilc5mn7z3770phrqwj09lnam2slyq54h15n68hf07c"))))
+        (base32 "0r5ik5jzdk7jghzhx3ahzwddzpd1vx55qrsrz265qlxxfk8zhr35"))))
     (build-system linux-module-build-system)
     (arguments
      (list #:tests? #f))                ; no test suite

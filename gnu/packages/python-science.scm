@@ -1012,6 +1012,30 @@ Evapotranspiration using various standard methods.")
 tissue-specificity metrics for gene expression.")
     (license license:gpl3+)))
 
+(define-public python-ndindex
+  (package
+    (name "python-ndindex")
+    (version "1.7")                     ;newer versions require a newer numpy
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ndindex" version))
+       (sha256
+        (base32 "1lpgsagmgxzsas7g8yiv6wmyss8q57w92h70fn11rnpadsvx16xz"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-flags #~(list "-c" "/dev/null"))) ;avoid coverage
+    (native-inputs
+     (list python-cython
+           python-numpy
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (home-page "https://quansight-labs.github.io/ndindex/")
+    (synopsis "Python library for manipulating indices of ndarrays")
+    (description "This package provides a Python library for manipulating
+indices of @code{ndarrays}.")
+    (license license:expat)))
+
 (define-public python-pandas-1
   (package
     (name "python-pandas")
@@ -1245,7 +1269,7 @@ doing practical, real world data analysis in Python.")
     (name "python-pandas-stubs")
     ;; The versioning follows that of Pandas and uses the date of the
     ;; python-pandas-stubs release.
-    (version "2.1.1.230928")
+    (version "2.2.3.241126")
     (source
      (origin
        ;; No tests in the PyPI tarball.
@@ -1255,11 +1279,12 @@ doing practical, real world data analysis in Python.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "13b6wcwf9ybxf492w1l8qqf2bcgch21xds5r88pfkmrvqhxwfpyr"))))
+        (base32 "0xbvin2l7h8vq9g24n4n2l49pdxbi15qghq7zkhh567p3pbmvsyb"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags #~(list "-k"
+      #:test-flags #~(list "--ignore=tests/test_io.py" ;requires python-calamine
+                           "-k"
                            (string-append
                             ;; The python-pyarrow package in Guix is built
                             ;; with ORC integration, but these tests fail with
@@ -1306,7 +1331,7 @@ doing practical, real world data analysis in Python.")
                          python-pyreadstat
                          python-pytest
                          python-scipy
-                         python-sqlalchemy
+                         python-sqlalchemy-2
                          python-tables
                          python-tabulate
                          python-xarray
@@ -1899,7 +1924,11 @@ multiple deep learning frameworks.")
              ;; These are known to fail with Pandas 2
              "-k"
              (string-append "not test_datetime_conversion_warning"
-                            " and not test_timedelta_conversion_warning"))))
+                            " and not test_timedelta_conversion_warning"
+                            ;; These expect deprecation warnings that are not
+                            ;; emitted in our case.
+                            " and not test_drop_index_labels"
+                            " and not test_rename_multiindex"))))
     (native-inputs
      (list python-setuptools python-setuptools-scm python-pytest python-wheel))
     (propagated-inputs

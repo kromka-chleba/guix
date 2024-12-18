@@ -135,16 +135,16 @@
 (define-public bullet
   (package
     (name "bullet")
-    (version "3.17")
+    (version "3.25")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                     (url "https://github.com/bulletphysics/bullet3/")
-                     (commit version)))
+                    (url "https://github.com/bulletphysics/bullet3/")
+                    (commit version)))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0x1ghxbkvqr910sp01sjf4hlfy4sdgn2jx2qf0dsi697bzq1f3mr"))
+                "08xq225zw6z4ic0whaf8xn697vv5lkrdzfkmjvm32biidbjg8qq0"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -158,41 +158,38 @@
                   ;; Tests fail on linking, cannot find -lBussIK.
                   (substitute* "test/CMakeLists.txt"
                     ((" InverseDynamics")
-                     "../examples/ThirdPartyLibs/BussIK InverseDynamics"))
-                  ;  (("SharedMemory") ""))
-                  #t))))
+                     "../examples/ThirdPartyLibs/BussIK InverseDynamics"))))))
     (build-system cmake-build-system)
     (arguments
-     '(#:configure-flags (list "-DBUILD_SHARED_LIBS=ON"
-                               "-DBUILD_CPU_DEMOS=OFF"
-                               "-DBUILD_OPENGL3_DEMOS=OFF"
-                               "-DBUILD_BULLET2_DEMOS=OFF"
-                               ;; openmw 0.47.0 requires bullet to be built with
-                               ;; double precision.
-                               ;; See <https://issues.guix.gnu.org/52953> for
-                               ;; more information.
-                               "-DUSE_DOUBLE_PRECISION=ON"
-                               ;; Extras/BulletRoboticsGUI needs files from
-                               ;; ThirdPartyLibs
-                               "-DBUILD_BULLET_ROBOTICS_GUI_EXTRA=OFF"
-                               ;; Extras/BulletRobotics needs files from
-                               ;; ThirdPartyLibs
-                               "-DBUILD_BULLET_ROBOTICS_EXTRA=OFF"
-                               (string-append  "-DCMAKE_CXX_FLAGS=-fPIC "
-                                               (or (getenv "CXXFLAGS") "")))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'remove-failing-tests
-           ;; These tests fail specifically after removing 3rd party code.
-           (lambda _
-             (substitute* "test/SharedMemory/CMakeLists.txt"
-               (("ADD_TEST") "# ADD_TEST"))
-             (substitute* "test/InverseDynamics/CMakeLists.txt"
-               (("ADD_TEST\\(Test_BulletInverseForward")
-                "# ADD_TEST(Test_BulletInverseForward"))
-             #t)))))
-    (inputs
-     (list glu libx11 mesa))
+     (list #:configure-flags
+           #~(list "-DBUILD_SHARED_LIBS=ON"
+                   "-DBUILD_CPU_DEMOS=OFF"
+                   "-DBUILD_OPENGL3_DEMOS=OFF"
+                   "-DBUILD_BULLET2_DEMOS=OFF"
+                   ;; openmw 0.47.0 requires bullet to be built with
+                   ;; double precision.
+                   ;; See <https://issues.guix.gnu.org/52953> for
+                   ;; more information.
+                   "-DUSE_DOUBLE_PRECISION=ON"
+                   ;; Extras/BulletRoboticsGUI needs files from
+                   ;; ThirdPartyLibs
+                   "-DBUILD_BULLET_ROBOTICS_GUI_EXTRA=OFF"
+                   ;; Extras/BulletRobotics needs files from
+                   ;; ThirdPartyLibs
+                   "-DBUILD_BULLET_ROBOTICS_EXTRA=OFF"
+                   (string-append  "-DCMAKE_CXX_FLAGS=-fPIC "
+                                   (or (getenv "CXXFLAGS") "")))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'remove-failing-tests
+                 ;; These tests fail specifically after removing 3rd party code.
+                 (lambda _
+                   (substitute* "test/SharedMemory/CMakeLists.txt"
+                     (("ADD_TEST") "# ADD_TEST"))
+                   (substitute* "test/InverseDynamics/CMakeLists.txt"
+                     (("ADD_TEST\\(Test_BulletInverseForward")
+                      "# ADD_TEST(Test_BulletInverseForward")))))))
+    (inputs (list glu libx11 mesa))
     (home-page "https://pybullet.org/wordpress/")
     (synopsis "3D physics engine library")
     (description
@@ -1808,7 +1805,7 @@ robust and compatible with many systems and operating systems.")
 (define-public mygui
   (package
     (name "mygui")
-    (version "3.4.2")
+    (version "3.4.3")
     (source
      (origin
        (method git-fetch)
@@ -1817,21 +1814,21 @@ robust and compatible with many systems and operating systems.")
              (commit (string-append "MyGUI" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gkfahz118gpqa2906cjb3d4w8g13rv8v3ma7s0ml9l5cci785f8"))))
+        (base32 "0nayw5shm5nly9bjp0g372kg5ia64dvn6mrmi1c6mdg0n6vgs9xa"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:tests? #f                      ; No test target
-       #:configure-flags
-       (list "-DMYGUI_INSTALL_DOCS=TRUE"
-             (string-append "-DOGRE_INCLUDE_DIR="
-                            (assoc-ref %build-inputs "ogre")
-                            "/include/OGRE")
-             ;; Demos and tools are Windows-specific:
-             ;; https://github.com/MyGUI/mygui/issues/24.
-             "-DMYGUI_BUILD_DEMOS=FALSE"
-             "-DMYGUI_BUILD_TOOLS=FALSE")))
+     (list
+      #:tests? #f                       ;no test target
+      #:configure-flags
+      #~(list "-DMYGUI_INSTALL_DOCS=TRUE"
+              ;; Demos and tools are Windows-specific:
+              ;; https://github.com/MyGUI/mygui/issues/24.
+              "-DMYGUI_BUILD_DEMOS=FALSE"
+              "-DMYGUI_BUILD_TOOLS=FALSE")))
     (native-inputs
-     (list boost doxygen pkg-config))
+     (list boost
+           doxygen
+           pkg-config))
     (inputs
      (list font-dejavu
            freetype
@@ -1842,7 +1839,7 @@ robust and compatible with many systems and operating systems.")
     (synopsis "Fast, flexible and simple GUI")
     (description
      "MyGUI is a library for creating Graphical User Interfaces (GUIs) for games
-and 3D applications.  The main goals of mygui are: speed, flexibility and ease
+and 3D applications.  The main goals of MyGUI are: speed, flexibility and ease
 of use.")
     (home-page "http://mygui.info/")
     (license license:expat)))

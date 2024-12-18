@@ -4,7 +4,7 @@
 ;;; Copyright © 2015-2017, 2019-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2017 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2018, 2023 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2019 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
 ;;; Copyright © 2020 Lars-Dominik Braun <ldb@leibniz-psychology.org>
 ;;; Copyright © 2020 Arun Isaac <arunisaac@systemreboot.net>
@@ -57,6 +57,7 @@
   #:use-module (guix import utils)
   #:use-module (guix import json)
   #:use-module (json)
+  #:use-module (guix build toml)
   #:use-module (guix packages)
   #:use-module (guix upstream)
   #:use-module ((guix licenses) #:prefix license:)
@@ -282,12 +283,7 @@ satisfy."
         (let ((line (read-line port)))
           (cond
            ((eof-object? line)
-            ;; Duplicates can occur, since the same requirement can be
-            ;; listed multiple times with different conditional markers, e.g.
-            ;; pytest >= 3 ; python_version >= "3.3"
-            ;; pytest < 3 ; python_version < "3.3"
-            (map (compose reverse delete-duplicates)
-                 (list required-deps test-deps)))
+            (list required-deps test-deps))
            ((or (string-null? line) (comment? line))
             (loop required-deps test-deps inside-test-section? optional?))
            ((section-header? line)
@@ -341,8 +337,7 @@ returned value."
         (let ((line (read-line port)))
           (cond
            ((eof-object? line)
-            (map (compose reverse delete-duplicates)
-                 (list required-deps test-deps)))
+            (list required-deps test-deps))
            ((and (requires-dist-header? line) (not (extra? line)))
             (loop (cons (specification->requirement-name
                          (requires-dist-value line))
@@ -386,7 +381,42 @@ be extracted in a temporary directory."
        (if wheel-url
            (and (url-fetch wheel-url temp)
                 (read-wheel-metadata temp))
-           #f))))
+           (list '() '())))))
+
+  (define (guess-requirements-from-pyproject.toml dir)
+    (let* ((pyproject.toml-files (find-files dir (lambda (abs-file-name _)
+                                          (string-match "/pyproject.toml$"
+                                          abs-file-name))))
+          (pyproject.toml (match pyproject.toml-files
+                            (()
+                              (warning (G_ "Cannot guess requirements from \
+pyproject.toml file, because it does not exist.~%"))
+                              '())
+                            (else (parse-toml-file (first pyproject.toml-files)))))
+          (pyproject-build-requirements
+           (or (recursive-assoc-ref pyproject.toml '("build-system" "requires")) '()))
+          (pyproject-dependencies
+           (or (recursive-assoc-ref pyproject.toml '("project" "dependencies")) '()))
+          ;; This is more of a convention, since optional-dependencies is a table of arbitrary values.
+          (pyproject-test-dependencies
+           (or (recursive-assoc-ref pyproject.toml '("project" "optional-dependencies" "test")) '())))
+      (if (null? pyproject.toml)
+        #f
+        (list (map specification->requirement-name pyproject-dependencies)
+              (map specification->requirement-name
+                   (append pyproject-build-requirements
+                           pyproject-test-dependencies))))))
+
+  (define (guess-requirements-from-requires.txt dir)
+    (let ((requires.txt-files (find-files dir (lambda (abs-file-name _)
+		                                          (string-match "\\.egg-info/requires.txt$"
+                                                  abs-file-name)))))
+     (match requires.txt-files
+       (()
+        (warning (G_ "Cannot guess requirements from source archive: \
+no requires.txt file found.~%"))
+        #f)
+       (else (parse-requires.txt (first requires.txt-files))))))
 
   (define (guess-requirements-from-source)
     ;; Return the package's requirements by guessing them from the source.
@@ -398,27 +428,35 @@ be extracted in a temporary directory."
              (if (string=? "zip" (file-extension source-url))
                  (invoke "unzip" archive "-d" dir)
                  (invoke "tar" "xf" archive "-C" dir)))
-           (let ((requires.txt-files
-                  (find-files dir (lambda (abs-file-name _)
-		                    (string-match "\\.egg-info/requires.txt$"
-                                                  abs-file-name)))))
-             (match requires.txt-files
-               (()
-                (warning (G_ "Cannot guess requirements from source archive:\
- no requires.txt file found.~%"))
-                (list '() '()))
-               (else (parse-requires.txt (first requires.txt-files)))))))
+               (list (guess-requirements-from-pyproject.toml dir)
+                     (guess-requirements-from-requires.txt dir))))
         (begin
           (warning (G_ "Unsupported archive format; \
 cannot determine package dependencies from source archive: ~a~%")
                    (basename source-url))
-          (list '() '()))))
+          (list #f #f))))
 
-  ;; First, try to compute the requirements using the wheel, else, fallback to
-  ;; reading the "requires.txt" from the egg-info directory from the source
-  ;; archive.
-  (or (guess-requirements-from-wheel)
-      (guess-requirements-from-source)))
+  (define (merge a b)
+    "Given lists A and B with two iteams each, combine A1 and B1, as well as A2 and B2."
+    (match (list a b)
+      (((first-propagated first-native) (second-propagated second-native))
+       (list (append first-propagated second-propagated) (append first-native second-native)))))
+
+  (define default-pyproject.toml-dependencies
+    ;; If there is no pyproject.toml, we assume it’s an old-style setuptools-based project.
+    '(() ("setuptools")))
+
+  ;; requires.txt and the metadata of a wheel contain redundant information,
+  ;; so fetch only one of them, preferring requires.txt from the source
+  ;; distribution, which we always fetch, since the source tarball also
+  ;; contains pyproject.toml.
+  (match (guess-requirements-from-source)
+    ((from-pyproject.toml #f)
+      (merge (or from-pyproject.toml default-pyproject.toml-dependencies)
+             (or (guess-requirements-from-wheel) '(() ()))))
+    ((from-pyproject.toml from-requires.txt)
+      (merge (or from-pyproject.toml default-pyproject.toml-dependencies)
+             from-requires.txt))))
 
 (define (compute-inputs source-url wheel-url archive)
   "Given the SOURCE-URL and WHEEL-URL of an already downloaded ARCHIVE, return
@@ -432,12 +470,20 @@ the corresponding list of <upstream-input> records."
                          (type type))))
                 (sort deps string-ci<?)))
 
+  (define (add-missing-native-inputs inputs)
+    ;; setuptools cannot build wheels without the python-wheel.
+    (if (member "setuptools" inputs)
+      (cons "wheel" inputs)
+      inputs))
+
   ;; TODO: Record version number ranges in <upstream-input>.
   (let ((dependencies (guess-requirements source-url wheel-url archive)))
     (match dependencies
       ((propagated native)
-       (append (requirements->upstream-inputs propagated 'propagated)
-               (requirements->upstream-inputs native 'native))))))
+       (append (requirements->upstream-inputs (delete-duplicates propagated)
+                                              'propagated)
+               (requirements->upstream-inputs (delete-duplicates (add-missing-native-inputs native))
+                                              'native))))))
 
 (define* (pypi-package-inputs pypi-package #:optional version)
   "Return the list of <upstream-input> for PYPI-PACKAGE.  This procedure
@@ -457,10 +503,13 @@ downloads the source and possibly the wheel of PYPI-PACKAGE."
   "Try different project name substitution until the result is found in
 pypi-uri.  Downcase is required for \"uWSGI\", and
 underscores are required for flake8-array-spacing."
+  ;; XXX: Each tool producing wheels and sdists appear to have their own,
+  ;; distinct, naming scheme.
   (or (find (cut string-contains pypi-url <>)
             (list name
                   (string-downcase name)
-                  (string-replace-substring name "-" "_")))
+                  (string-replace-substring name "-" "_")
+                  (string-replace-substring name "." "_")))
       (begin
         (warning
          (G_ "project name ~a does not appear verbatim in the PyPI URI~%")

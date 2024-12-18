@@ -3,6 +3,7 @@
 ;;; Copyright © 2024 normally_js <normally_js@posteo.net>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 TakeV <takev@disroot.org>
+;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -27,6 +28,7 @@
   #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-compression)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-web)
@@ -45,7 +47,10 @@
          "1yw8i8jv5iv1kkz1aqimskw7fpichjn6ww0fq0czbalwj290bw8s"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-mock python-pytest))
+     (list python-mock
+           python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-attrs
            python-autobahn
@@ -87,7 +92,10 @@ connection, or through a transit-relay.")
                             (install-file file docs))
                           (find-files "docs/"))))))))
     (native-inputs
-     (list python-mock python-pytest))
+     (list python-mock
+           python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-twisted))
     (home-page "https://github.com/magic-wormhole/magic-wormhole-transit-relay")
@@ -103,14 +111,14 @@ together, allowing them to pretend they have a direct connection.")
 (define-public magic-wormhole
   (package
     (name "magic-wormhole")
-    (version "0.14.0")
+    (version "0.16.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "magic-wormhole" version))
        (sha256
         (base32
-         "105hsv7ck83bs29929zpb29aygr69q00mxpgq9xw7xxzi2gj6v80"))))
+         "1jcldlyj6bdd9bb39r77cd9ra6cllqijc9lhs6kaggcdi53c3rhl"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -125,10 +133,13 @@ together, allowing them to pretend they have a direct connection.")
     (native-inputs
      (list python-mock
            python-pytest
+           python-setuptools
+           python-wheel
            magic-wormhole-mailbox-server
            magic-wormhole-transit-relay))
     (propagated-inputs
-     (list python-autobahn
+     (list python-attrs
+           python-autobahn
            python-click
            python-hkdf
            python-humanize

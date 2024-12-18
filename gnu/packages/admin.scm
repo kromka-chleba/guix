@@ -581,12 +581,21 @@ inspired by @command{vi}.")
                    ,(map dirname
                          (map (cut search-input-file inputs <>)
                               (list "bin/readlink"
-                                    "sbin/sfdisk")))))))))))
+                                    "sbin/sfdisk"
+                                    "bin/sed"
+                                    "bin/grep"
+                                    "bin/awk"
+                                    "bin/udevadm"
+                                    "bin/flock")))))))))))
     (inputs
      (list bash-minimal                 ;for wrap-program
-           coreutils                    ;for readlink
+           coreutils                    ;for readlink and cat
+           sed                          ;growpart
+           grep                         ;growpart
+           gawk                         ;awk for growpart
+           eudev                        ;udevadm for growpart
            python
-           util-linux))                 ;sfdisk for growpart
+           util-linux))                 ;sfdisk, flock, partx, blkid for growpart
     (home-page "https://launchpad.net/cloud-utils")
     (synopsis "Set of utilities for cloud computing environments")
     (description
@@ -1573,7 +1582,7 @@ connection alive.")
                      (lambda _
                        (substitute* "configure"
                          (("--host=\\$host")
-                          "--host=$host_alias"))
+                          "--host=$host_alias --build=$build_alias"))
                        ;; BIND needs a native compiler because the DHCP
                        ;; build system uses the built 'gen' executable.
                        (setenv "BUILD_CC" "gcc")

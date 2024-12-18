@@ -1174,7 +1174,7 @@ write native speed custom Git applications in any language with bindings.")
 (define-public libgit2-1.8
   (package
     (inherit libgit2-1.7)
-    (version "1.8.3")
+    (version "1.8.4")
     (source (origin
               (inherit (package-source libgit2-1.7))
               (uri (git-reference
@@ -1183,7 +1183,7 @@ write native speed custom Git applications in any language with bindings.")
               (file-name (git-file-name "libgit2" version))
               (sha256
                (base32
-                "11jyxy6ckl19ayqpq5s3nlbcd0s1q4sdy8884m4pjrbzgxg6y1ds"))
+                "0jydckwn0bbrp2kbcr1ih1bz4sc6yhx7lrl22lqcgnf2v6ml6n01"))
               (patches
                (search-patches "libgit2-uninitialized-proxy-settings.patch"))
 	      (snippet
@@ -1373,7 +1373,7 @@ collaboration using typical untrusted file hosts or services.")
               (lambda* (#:key inputs #:allow-other-keys)
                 ;; Unpack the source of git into the 'git' directory.
                 (invoke "tar" "--strip-components=1" "-C" "git" "-xf"
-                        (assoc-ref inputs "git-source"))))
+                        #$(this-package-input "git-source.tar.xz"))))
             (add-after 'unpack 'patch-absolute-file-names
               (lambda* (#:key inputs outputs #:allow-other-keys)
                 (define (quoted-file-name input path)
@@ -1428,29 +1428,30 @@ collaboration using typical untrusted file hosts or services.")
        ;; For building manpage.
        (list asciidoc))
       (inputs
-       `( ;; Building cgit requires a Git source tree.
-         ("git-source"
-          ,(origin
-             (method url-fetch)
-             ;; cgit is tightly bound to git.  Use GIT_VER from the Makefile,
-             ;; which may not match the current (package-version git).
-             (uri "mirror://kernel.org/software/scm/git/git-2.46.2.tar.xz")
-             (sha256
-              (base32 "18rcmvximgyg3v1a9papi9djfamiak0ys5cmgx7ll29nhp3a3s2y"))))
-         ("bash-minimal" ,bash-minimal)
-         ("openssl" ,openssl)
-         ("python" ,python)
-         ("python-docutils" ,python-docutils)
-         ("python-markdown" ,python-markdown)
-         ("python-pygments" ,python-pygments)
-         ("zlib" ,zlib)
-         ;; bzip2, groff, gzip and xz are inputs (not native inputs)
-         ;; since they are actually substituted into cgit source and
-         ;; referenced by the built package output.
-         ("bzip2" ,bzip2)
-         ("groff" ,groff)
-         ("gzip" ,gzip)
-         ("xz" ,xz)))
+       (list (origin
+               (method url-fetch)
+               ;; Building cgit requires a Git source tree.
+               ;; cgit is tightly bound to git.  Use GIT_VER from the Makefile,
+               ;; which may not match the current (package-version git).
+               (uri "mirror://kernel.org/software/scm/git/git-2.46.2.tar.xz")
+               (sha256
+                (base32
+                 "18rcmvximgyg3v1a9papi9djfamiak0ys5cmgx7ll29nhp3a3s2y"))
+               (file-name "git-source.tar.xz"))
+             bash-minimal
+             openssl
+             python
+             python-docutils
+             python-markdown
+             python-pygments
+             zlib
+             ;; bzip2, groff, gzip and xz are inputs (not native inputs)
+             ;; since they are actually substituted into cgit source and
+             ;; referenced by the built package output.
+             bzip2
+             groff
+             gzip
+             xz))
       (home-page "https://git.zx2c4.com/cgit/")
       (synopsis "Web frontend for git repositories")
       (description
