@@ -25186,8 +25186,7 @@ In its most basic form, it can be used simply as:
 (service lightdm-service-type)
 @end lisp
 
-A more elaborate example making use of the VNC capabilities and enabling
-more features and verbose logs could look like:
+Two more elaborate examples look like below:
 
 @lisp
 (service lightdm-service-type
@@ -25203,6 +25202,38 @@ more features and verbose logs could look like:
                   (name "*")
                   (user-session "ratpoison"))))))
 @end lisp
+
+@lisp
+(service lightdm-service-type
+         (lightdm-configuration
+          (greeters
+           (list (lightdm-greeter-general-configuration
+                  (greeter-package lightdm-mini-greeter)
+                  (greeter-session-name "lightdm-mini-greeter")
+                  (greeter-config-name "lightdm-mini-greeter.conf")
+                  (config (list "[greeter]"
+                                "user = guest")))
+                 (lightdm-gtk-greeter-configuration
+                  (extra-config
+                   (list "font-name = San 10"
+                         "xft-dpi = 140"
+                         "clock-format = %Y-%m-%d %H:%M"
+                         ;; We need to use "~~" to generate a tilde, for
+                         ;; extra-config sting will be handle as
+                         ;; control-string of format function.
+                         "indicators = ~~host;~~spacer;~~session;~~a11y;~~clock;~~power")))))
+          (seats
+           (list (lightdm-seat-configuration
+                  (name "*")
+                  (greeter-session 'lightdm-mini-greeter))))
+          (xorg-configuration
+           (xorg-configuration
+            (server-arguments
+             (append %default-xorg-server-arguments
+                     '("-dpi" "140")))))))
+@end lisp
+
+
 @end defvar
 
 @c The LightDM service documentation can be auto-generated via the
@@ -25287,8 +25318,21 @@ Extra configuration values to append to the LightDM configuration file.
 Available @code{lightdm-gtk-greeter-configuration} fields are:
 
 @table @asis
+@item @code{local-eval-environment} (default: @code{(the-environment)}) (type: local-eval-environment)
+Recode the environment where lightdm-gtk-greeter-configuration is defined.
+
 @item @code{lightdm-gtk-greeter} (default: @code{lightdm-gtk-greeter}) (type: file-like)
-The lightdm-gtk-greeter package to use.
+The lightdm-gtk-greeter package to use, this option is keeped for
+compatibility, use greeter-package instead.
+
+@item @code{greeter-package} (default: @code{lightdm-gtk-greeter}) (type: file-like)
+The greeter package to use.
+
+@item @code{greeter-session-name} (default: @code{lightdm-gtk-greeter}) (type: string)
+The session name used in lightdm.conf.
+
+@item @code{greeter-config-name} (default: @code{lightdm-gtk-greeter.conf}) (type: string)
+The greeter config file name in /etc/lightdm directory.
 
 @item @code{assets} (default: @code{(adwaita-icon-theme gnome-themes-extra hicolor-icon-theme)}) (type: list-of-file-likes)
 The list of packages complementing the greeter, such as package
@@ -25325,6 +25369,50 @@ The command to use to launch a screen reader.
 @item @code{extra-config} (default: @code{'()}) (type: list-of-strings)
 Extra configuration values to append to the LightDM GTK Greeter
 configuration file.
+
+@end table
+@end deftp
+
+@c %end of fragment
+@c %start of fragment
+
+@deftp {Data Type} lightdm-greeter-general-configuration
+
+@code{lightdm-greeter-general-configuration} support all text config
+greeters which have no build-in configuration type like
+@code{lightdm-gtk-greeter-configuration}, such as lightdm-mini-greeter,
+for example:
+
+@lisp
+(lightdm-greeter-general-configuration
+ (greeter-package lightdm-mini-greeter)
+ (greeter-session-name "lightdm-mini-greeter")
+ (greeter-config-name "lightdm-mini-greeter.conf")
+ (config (list "[greeter]"
+               "user = guest")))
+@end lisp
+
+Available @code{lightdm-greeter-general-configuration} fields are:
+
+@table @asis
+@item @code{local-eval-environment} (default: @code{(the-environment)}) (type: local-eval-environment)
+Recode the environment where lightdm-greeter-general-configuration is defined.
+
+@item @code{greeter-package} (type: maybe-file-like)
+The greeter package to use.
+
+@item @code{greeter-session-name} (type: maybe-string)
+The session name used in lightdm.conf.
+
+@item @code{greeter-config-name} (type: maybe-string)
+The greeter config file name in /etc/lightdm directory.
+
+@item @code{assets} (default: @code{(adwaita-icon-theme gnome-themes-extra hicolor-icon-theme)}) (type: list-of-file-likes)
+The list of packages complementing the greeter, such as package
+providing icon themes.
+
+@item @code{config} (default: @code{'()}) (type: list-of-strings)
+Configuration values of the LightDM Greeter configuration file.
 
 @end table
 @end deftp
