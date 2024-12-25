@@ -39,6 +39,7 @@
   #:use-module (guix i18n)
   #:use-module (guix records)
   #:use-module (ice-9 format)
+  #:use-module (ice-9 local-eval)
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
@@ -56,7 +57,10 @@
             lightdm-gtk-greeter-configuration
             lightdm-gtk-greeter-configuration?
             lightdm-gtk-greeter-configuration-lightdm-gtk-greeter
+            lightdm-gtk-greeter-configuration-greeter-package
             lightdm-gtk-greeter-configuration-assets
+            lightdm-gtk-greeter-configuration-greeter-config-name
+            lightdm-gtk-greeter-configuration-greeter-session-name
             lightdm-gtk-greeter-configuration-theme-name
             lightdm-gtk-greeter-configuration-icon-theme-name
             lightdm-gtk-greeter-configuration-cursor-theme-name
@@ -65,6 +69,14 @@
             lightdm-gtk-greeter-configuration-a11y-states
             lightdm-gtk-greeter-configuration-reader
             lightdm-gtk-greeter-configuration-extra-config
+
+            lightdm-greeter-general-configuration
+            lightdm-greeter-general-configuration?
+            lightdm-greeter-general-configuration-greeter-package
+            lightdm-greeter-general-configuration-assets
+            lightdm-greeter-general-configuration-greeter-config-name
+            lightdm-greeter-general-configuration-greeter-session-name
+            lightdm-greeter-general-configuration-config
 
             lightdm-configuration
             lightdm-configuration?
@@ -86,6 +98,9 @@
 ;;;
 ;;; Greeters.
 ;;;
+
+(define (local-eval-environment? value)
+  #t)
 
 (define list-of-file-likes?
   (list-of file-like?))
@@ -117,6 +132,8 @@
 (define (serialize-list-of-a11y-states name value)
   (format #f "~a=~a~%" name (string-join (map symbol->string value) ";")))
 
+(define-maybe string)
+
 (define (serialize-string name value)
   (format #f "~a=~a~%" name value))
 
@@ -127,9 +144,21 @@
   (string-join value "\n"))
 
 (define-configuration lightdm-gtk-greeter-configuration
+  (local-eval-environment
+   (local-eval-environment (the-environment))
+   "Recode the environment where lightdm-gtk-greeter-configuration is defined."
+   empty-serializer)
+  (greeter-session-name
+   (string "lightdm-gtk-greeter")
+   "Session name used in lightdm.conf"
+   empty-serializer)
   (lightdm-gtk-greeter
+   maybe-file-like
+   "Keep it for compatibility, use greeter-package field instead."
+   empty-serializer)
+  (greeter-package
    (file-like lightdm-gtk-greeter)
-   "The lightdm-gtk-greeter package to use."
+   "The greeter package to use."
    empty-serializer)
   (assets
    (list-of-file-likes (list adwaita-icon-theme
@@ -139,6 +168,10 @@
                              hicolor-icon-theme))
    "The list of packages complementing the greeter, such as package providing
 icon themes."
+   empty-serializer)
+  (greeter-config-name
+   (string "lightdm-gtk-greeter.conf")
+   "Greeter config file name in /etc/lightdm directory."
    empty-serializer)
   (theme-name
    (string "Adwaita")
@@ -176,34 +209,81 @@ Provider Interface (AT-SPI).")
    "Extra configuration values to append to the LightDM GTK Greeter
 configuration file."))
 
+(define-configuration lightdm-greeter-general-configuration
+  (local-eval-environment
+   (local-eval-environment (the-environment))
+   "Recode the environment where lightdm-greeter-general-configuration is defined."
+   empty-serializer)
+  (greeter-package
+   maybe-file-like
+   "The greeter package to use."
+   empty-serializer)
+  (assets
+   (list-of-file-likes (list adwaita-icon-theme
+                             gnome-themes-extra
+                             ;; FIXME: hicolor-icon-theme should be in the
+                             ;; packages of the desktop templates.
+                             hicolor-icon-theme))
+   "The list of packages complementing the greeter, such as package providing
+icon themes."
+   empty-serializer)
+  (greeter-config-name
+   maybe-string
+   "Greeter config file name in /etc/lightdm directory."
+   empty-serializer)
+  (greeter-session-name
+   maybe-string
+   "Session name used in lightdm.conf"
+   empty-serializer)
+  (config
+   (list-of-strings '())
+   "Configuration values of the LightDM Greeter configuration file."))
+
 (define (strip-record-type-name-brackets name)
   "Remove the '<' and '>' brackets from NAME, a symbol."
   (let ((name (symbol->string name)))
     (if (and (string-prefix? "<" name)
              (string-suffix? ">" name))
-        (string->symbol (string-drop (string-drop-right name 1) 1))
+        (string-drop (string-drop-right name 1) 1)
         (error "unexpected record type name" name))))
 
-(define (config->name config)
-  "Return the constructor name (a symbol) from CONFIG."
+(define (config->type-name config)
+  "Return the type name of CONFIG."
   (strip-record-type-name-brackets
    (record-type-name (struct-vtable config))))
 
+(define (greeter-configuration-field config field)
+  "Return field value of config."
+  (let ((rtd (struct-vtable config)))
+    ((record-accessor rtd field) config)))
+
+(define (greeter-configuration->session-name config)
+  "Return the session name of CONFIG, a greeter configuration."
+  (greeter-configuration-field config 'greeter-session-name))
+
 (define (greeter-configuration->greeter-fields config)
   "Return the fields of CONFIG, a greeter configuration."
-  (match config
-    ;; Note: register any new greeter configuration here.
-    ((? lightdm-gtk-greeter-configuration?)
-     lightdm-gtk-greeter-configuration-fields)))
+  (let* ((type-name (config->type-name config))
+         (variable (string->symbol (string-append type-name "-fields")))
+         (eval-env (greeter-configuration-field config 'local-eval-environment)))
+    (local-eval variable eval-env)))
 
 (define (greeter-configuration->packages config)
   "Return the list of greeter packages, including assets, used by CONFIG, a
 greeter configuration."
-  (match config
-    ;; Note: register any new greeter configuration here.
-    ((? lightdm-gtk-greeter-configuration?)
-     (cons (lightdm-gtk-greeter-configuration-lightdm-gtk-greeter config)
-           (lightdm-gtk-greeter-configuration-assets config)))))
+  (filter file-like?
+          (cons (greeter-configuration->greeter-package config)
+                (greeter-configuration-field config 'assets))))
+
+(define (greeter-configuration->greeter-package config)
+  "Return greeter package used by CONFIG, a greeter configuration."
+  (let ((type-name (config->type-name config))
+        (pkg1 (greeter-configuration-field config 'greeter-package)))
+    (if (eq? type-name "lightdm-gtk-greeter-configuration")
+        ;; Handle lightdm-gtk-greeter field for keeping it for compatibility.
+        (let ((pkg2 (greeter-configuration-field config 'lightdm-gtk-greeter)))
+          (if (file-like? pkg2) pkg2 pkg1))
+        pkg1)))
 
 ;;; TODO: Implement directly in (gnu services configuration), perhaps by
 ;;; making the FIELDS argument optional.
@@ -215,11 +295,19 @@ argument."
 
 (define (greeter-configuration->conf-name config)
   "Return the file name of CONFIG, a greeter configuration."
-  (format #f "~a.conf" (greeter-configuration->greeter-session config)))
+  (greeter-configuration-field config 'greeter-config-name))
 
 (define (greeter-configuration->file config)
   "Serialize CONFIG into a file under the output directory, so that it can be
 easily added to XDG_CONF_DIRS."
+  (let* ((type-name (config->type-name config))
+         (func-name (string->symbol
+                     (string-append
+                      "greeter-configuration->file/" type-name)))
+         (eval-env (greeter-configuration-field config 'local-eval-environment)))
+    (local-eval `(,func-name ,config) eval-env)))
+
+(define (greeter-configuration->file/lightdm-gtk-greeter-configuration config)
   (computed-file
    (greeter-configuration->conf-name config)
    #~(begin
@@ -228,6 +316,23 @@ easily added to XDG_CONF_DIRS."
            (format port (string-append
                          "[greeter]\n"
                          #$(serialize-configuration* config))))))))
+
+(define (greeter-configuration->file/lightdm-greeter-general-configuration config)
+  (computed-file
+   (greeter-configuration->conf-name config)
+   #~(begin
+       (call-with-output-file #$output
+         (lambda (port)
+           (format port #$(serialize-configuration* config)))))))
+
+(define (greeter-configuration-valid? config)
+  "Check greeter-configuration CONFIG valid or not."
+  (let ((conf-name (greeter-configuration->conf-name config))
+        (session-name (greeter-configuration->session-name config)))
+    (and (string? conf-name)
+         (string? session-name)
+         (> (string-length conf-name) 0)
+         (> (string-length session-name) 0))))
 
 
 ;;;
@@ -248,14 +353,13 @@ easily added to XDG_CONF_DIRS."
 (define-maybe seat-type)
 
 (define (greeter-session? value)
-  (memq value '(lightdm-gtk-greeter)))
+  (and (or (symbol? value) (string? value))
+       (string-contains (format #f "~a" value) "greeter")))
 
 (define (serialize-greeter-session name value)
   (format #f "~a=~a~%" name value))
 
 (define-maybe greeter-session)
-
-(define-maybe string)
 
 ;;; Note: all the fields except for the seat name should be 'maybe's, since
 ;;; the real default value is set by the %lightdm-seat-default define later,
@@ -291,22 +395,6 @@ lowercase string, such as @code{\"gnome\"}, @code{\"ratpoison\"}, etc.")
    (list-of-strings '())
    "Extra configuration values to append to the seat configuration section."))
 
-(define (greeter-session->greater-configuration-pred identifier)
-  "Return the predicate to check if a configuration is of the type specifying
-a greeter identified by IDENTIFIER."
-  (match identifier
-    ;; Note: register any new greeter identifier here.
-    ('lightdm-gtk-greeter
-     lightdm-gtk-greeter-configuration?)))
-
-(define (greeter-configuration->greeter-session config)
-  "Given CONFIG, a greeter configuration object, return its identifier,
-a symbol."
-  (let ((suffix "-configuration")
-        (greeter-conf-name (config->name config)))
-    (string->symbol (string-drop-right (symbol->string greeter-conf-name)
-                                       (string-length suffix)))))
-
 (define list-of-seat-configurations?
   (list-of lightdm-seat-configuration?))
 
@@ -316,20 +404,17 @@ a symbol."
 ;;;
 
 (define (greeter-configuration? config)
-  (or (lightdm-gtk-greeter-configuration? config)
-      ;; Note: register any new greeter configuration here.
-      ))
+  ((record-predicate (struct-vtable config)) config))
 
 (define (list-of-greeter-configurations? greeter-configs)
   (and ((list-of greeter-configuration?) greeter-configs)
        ;; Greeter configurations must also not be provided more than once.
-       (let* ((types (map (compose record-type-name struct-vtable)
-                          greeter-configs))
-              (dupes (filter (lambda (type)
-                               (< 1 (count (cut eq? type <>) types)))
-                             types)))
+       (let* ((conf-names (map greeter-configuration->conf-name greeter-configs))
+              (dupes (filter (lambda (conf-name)
+                               (< 1 (count (cut eq? conf-name <>) conf-names)))
+                             conf-names)))
          (unless (null? dupes)
-           (leave (G_ "duplicate greeter configurations: ~a~%") dupes)))))
+           (leave (G_ "Duplicate greeter configurations: ~a~%") dupes)))))
 
 (define-configuration/no-serialization lightdm-configuration
   (lightdm
@@ -347,7 +432,9 @@ a symbol."
 start script.  It can be refined per seat via the @code{xserver-command} of
 the @code{<lightdm-seat-configuration>} record, if desired.")
   (greeters
-   (list-of-greeter-configurations (list (lightdm-gtk-greeter-configuration)))
+   (list-of-greeter-configurations
+    (list (lightdm-gtk-greeter-configuration)
+          (lightdm-greeter-general-configuration)))
    "The LightDM greeter configurations specifying the greeters to use.")
   (seats
    (list-of-seat-configurations (list (lightdm-seat-configuration
@@ -417,8 +504,11 @@ When unspecified, listen for any hosts/IP addresses.")
          (missing-greeters
           (filter-map
            (lambda (id)
-             (define pred (greeter-session->greater-configuration-pred id))
-             (if (find pred greeter-configurations)
+             (if (find (lambda (greeter-config)
+                         (let* ((id (format #f "~a" id))
+                                (name (greeter-configuration->session-name greeter-config)))
+                           (equal? id name)))
+                       greeter-configurations)
                  #f                     ;happy path
                  id))
            greeter-sessions)))
@@ -428,10 +518,11 @@ When unspecified, listen for any hosts/IP addresses.")
 
 (define (lightdm-configuration-file config)
   (match-record config <lightdm-configuration>
-    (xorg-configuration seats
-     xdmcp? xdmcp-listen-address
-     vnc-server? vnc-server-command vnc-server-listen-address vnc-server-port
-     extra-config)
+                (xorg-configuration
+                 seats xdmcp? xdmcp-listen-address
+                 vnc-server? vnc-server-command
+                 vnc-server-listen-address vnc-server-port
+                 extra-config)
     (apply
      mixed-text-file
      "lightdm.conf" "
@@ -470,22 +561,22 @@ port=" (number->string vnc-server-port) "\n"
 # Seat configuration.
 #
 "
-     (map (lambda (seat)
-            ;; This complication exists to propagate a default value for
-            ;; the 'xserver-command' field of the seats.  Having a
-            ;; 'xorg-configuration' field at the root of the
-            ;; lightdm-configuration enables the use of
-            ;; 'set-xorg-configuration' and can be more convenient.
-            (let ((seat* (if (maybe-value-set?
-                              (lightdm-seat-configuration-xserver-command seat))
-                             seat
-                             (lightdm-seat-configuration
-                              (inherit seat)
-                              (xserver-command (xorg-start-command
-                                                xorg-configuration))))))
-              (serialize-configuration seat*
-                                       lightdm-seat-configuration-fields)))
-          seats))))
+    (map (lambda (seat)
+           ;; This complication exists to propagate a default value for
+           ;; the 'xserver-command' field of the seats.  Having a
+           ;; 'xorg-configuration' field at the root of the
+           ;; lightdm-configuration enables the use of
+           ;; 'set-xorg-configuration' and can be more convenient.
+           (let ((seat* (if (maybe-value-set?
+                             (lightdm-seat-configuration-xserver-command seat))
+                            seat
+                            (lightdm-seat-configuration
+                             (inherit seat)
+                             (xserver-command (xorg-start-command
+                                               xorg-configuration))))))
+             (serialize-configuration seat*
+                                      lightdm-seat-configuration-fields)))
+         seats))))
 
 (define (lightdm-configuration-directory config)
   "Return a directory containing the serialized lightdm configuration
@@ -495,7 +586,8 @@ and all the serialized greeter configurations from CONFIG."
                     (map (lambda (g)
                            `(,(greeter-configuration->conf-name g)
                              ,(greeter-configuration->file g)))
-                         (lightdm-configuration-greeters config)))))
+                         (filter greeter-configuration-valid?
+                                 (lightdm-configuration-greeters config))))))
 
 (define %lightdm-accounts
   (list (user-group (name "lightdm") (system? #t))
@@ -676,4 +768,5 @@ and all the serialized greeter configurations from CONFIG."
 (define (generate-doc)
   (configuration->documentation 'lightdm-configuration)
   (configuration->documentation 'lightdm-gtk-greeter-configuration)
+  (configuration->documentation 'lightdm-greeter-general-configuration)
   (configuration->documentation 'lightdm-seat-configuration))
