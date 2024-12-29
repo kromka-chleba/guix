@@ -24363,7 +24363,9 @@ the pipeline, featuring the support for running @code{emacsclient}.")
              emacs-markdown-mode        ;optional
              emacs-simple-httpd
              emacs-websocket
-             emacs-zmq))
+             emacs-zmq
+             ;; necessary for out-of-the-box available `jupyter-executable'
+             python-jupyter-core))
       (home-page "https://github.com/nnicandro/emacs-jupyter")
       (synopsis "Emacs interface to communicate with Jupyter kernels")
       (description "This package provides an Emacs interface to communicate with
