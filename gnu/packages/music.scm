@@ -999,7 +999,7 @@ settings (aliasing, linear interpolation and cubic interpolation).")
 (define-public hydrogen
   (package
     (name "hydrogen")
-    (version "1.2.3")
+    (version "1.2.4")
     (source
      (origin
        (method git-fetch)
@@ -1008,7 +1008,7 @@ settings (aliasing, linear interpolation and cubic interpolation).")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0qb16yn3igs95silvngwy5mjwlzsyz5axwbd3lz6pjhwbf81rn7d"))))
+        (base32 "1i5gz5zck8s0kskjgnx9c75gh7zx0kbjsqzl2765f99p9svprirq"))))
     (build-system cmake-build-system)
     (arguments
      `(#:test-target "tests"
@@ -1766,14 +1766,14 @@ scores.")
 (define-public music21
   (package
     (name "music21")
-    (version "7.1.0")
+    (version "9.3.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "music21" version))
-        (sha256
-          (base32 "17v2id8qm99xqymqsdczq173fmbdha4w109ahh8j1d9l5a7mqc86"))))
-    (build-system python-build-system)
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "music21" version))
+       (sha256
+        (base32 "0jjgyyzw527h026zr2pphj7ba1pda46mi03j0djc2bh6l9ywdx0c"))))
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -1783,9 +1783,16 @@ scores.")
                (add-installed-pythonpath inputs outputs)
                ;; See: https://github.com/cuthbertLab/music21/issues/1164
                (invoke "python" "-m" "music21.stream.tests")))))))
+    (native-inputs (list python-hatchling))
     (propagated-inputs
-      (list python-chardet python-joblib python-more-itertools
-            python-webcolors))
+     (list python-chardet
+           python-joblib
+           python-jsonpickle
+           python-matplotlib
+           python-more-itertools
+           python-numpy
+           python-requests
+           python-webcolors))
     (home-page "https://web.mit.edu/music21/")
     (synopsis "Toolkit for Computational Musicology")
     (description
@@ -1876,59 +1883,6 @@ and manipulating rhythms such as accelerandi, taleas, and more.")
     (description
      "@code{abjad-ext-nauert} provides classes for dealing with composer and
 music theorist Paul Nauert's quantization grids or Q-Grids, for short.")
-    (license license:expat)))
-
-(define-public abjad-ext-ipython
-  (package
-    (name "abjad-ext-ipython")
-    (version "3.3")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-         (url "https://github.com/Abjad/abjad-ext-ipython")
-         (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1vv0alpiz0gf5lgjfvlh4km72dvrxfqkwzxl3k4amzci3i0jzbs2"))))
-    (build-system python-build-system)
-    (arguments
-     ;; UnboundLocalError: local variable 'output_path' referenced before assignment
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'loosen-requirements
-           (lambda _
-             (substitute* "setup.py"
-               ;; Don't require a specific version of abjad.
-               (("abjad==")
-                "abjad>="))))
-         (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (when tests?
-               (setenv "HOME" (getcwd))
-               (add-installed-pythonpath inputs outputs)
-               ;; From 'make jupyter-test'
-               (invoke "jupyter" "nbconvert" "--to=html"
-               "--ExecutePreprocessor.enabled=True" "tests/test.ipynb")))))))
-    (native-inputs
-     (list lilypond
-           python-black
-           python-flake8
-           python-iniconfig
-           python-isort
-           python-mypy
-           python-pytest
-           python-pytest-cov
-           python-pytest-helpers-namespace))
-    (propagated-inputs
-     (list abjad jupyter python-sphinx-autodoc-typehints))
-    (home-page "https://abjad.github.io")
-    (synopsis "Abjad IPython Extension")
-    (description
-     "@code{abjad-ext-ipython} makes it possible to embed music notation in
-@code{jupyter} notebooks.")
     (license license:expat)))
 
 (define-public non-sequencer
@@ -2446,7 +2400,7 @@ a JACK session.")
 (define-public mixxx
   (package
     (name "mixxx")
-    (version "2.4.1")
+    (version "2.4.2")
     (source
      (origin
        (method git-fetch)
@@ -2455,7 +2409,7 @@ a JACK session.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0cfdgrxfhck6cg4j9mb2rdp06n57kca1403qw92c3pmk1y05grq4"))
+        (base32 "1xvmha9q2f1gclb5js09l511v3b5zbp3gnbrz11q681cp924byk1"))
        (modules '((guix build utils)))
        (snippet
         ;; Delete libraries that we already have or don't need.
@@ -5657,7 +5611,7 @@ specification and header.")
 (define-public rosegarden
   (package
     (name "rosegarden")
-    (version "24.06")
+    (version "24.12")
     (source
      (origin
        (method url-fetch)
@@ -5665,7 +5619,7 @@ specification and header.")
                            (version-major+minor version) "/"
                            "rosegarden-" version ".tar.xz"))
        (sha256
-        (base32 "09www13ndba14krzycwm44qgcy7j11wa6a6xiqh6i2hjghlx8v46"))))
+        (base32 "1k0mpxpakcywss7pi50nzn54ak90svjavr4qk6yi9bq9dc9ncgvz"))))
     (build-system cmake-build-system)
     (arguments
      (list

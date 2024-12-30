@@ -2299,7 +2299,9 @@ CFITSIO library.  Among other things, it can
             (lambda _ (setenv "HOME" "/tmp"))))))
     (native-inputs
      (list python-pytest
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs
      (list python-astroml
            python-numpy
@@ -4077,7 +4079,7 @@ files.")
             (lambda _
               (setenv "HOME" "/tmp"))))))
     (native-inputs
-     (list git-minimal
+     (list git-minimal/pinned
            python-poetry-core
            python-poetry-dynamic-versioning
            python-pytest-astropy

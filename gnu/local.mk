@@ -177,6 +177,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/busybox.scm			\
   %D%/packages/bqn.scm				\
   %D%/packages/c.scm				\
+  %D%/packages/c2rust.scm			\
   %D%/packages/calcurse.scm			\
   %D%/packages/ccache.scm			\
   %D%/packages/cdrom.scm			\
@@ -243,6 +244,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/dhall.scm			\
   %D%/packages/dico.scm				\
   %D%/packages/dictd.scm			\
+  %D%/packages/dotnet.scm			\
   %D%/packages/dictionaries.scm			\
   %D%/packages/diffoscope.scm			\
   %D%/packages/digest.scm			\
@@ -719,6 +721,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/services/cgit.scm			\
   %D%/services/ci.scm				\
   %D%/services/configuration.scm		\
+  %D%/services/containers.scm   		\
   %D%/services/cuirass.scm			\
   %D%/services/cups.scm				\
   %D%/services/databases.scm			\
@@ -825,6 +828,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/tests/base.scm				\
   %D%/tests/cachefilesd.scm			\
   %D%/tests/ci.scm				\
+  %D%/tests/containers.scm			\
   %D%/tests/cups.scm				\
   %D%/tests/databases.scm			\
   %D%/tests/desktop.scm				\
@@ -851,6 +855,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/tests/samba.scm				\
   %D%/tests/security.scm			\
   %D%/tests/security-token.scm			\
+  %D%/tests/shadow.scm  			\
   %D%/tests/singularity.scm			\
   %D%/tests/ssh.scm				\
   %D%/tests/telephony.scm		        \
@@ -931,6 +936,8 @@ MODULES_NOT_COMPILED +=				\
 
 patchdir = $(guilemoduledir)/%D%/packages/patches
 dist_patch_DATA =						\
+  %D%/packages/patches/8mq-enable-imx_hab_handler.patch		\
+  %D%/packages/patches/8mq-move-stack-to-ocram_s.patch		\
   %D%/packages/patches/abcl-fix-build-xml.patch	\
   %D%/packages/patches/ableton-link-system-libraries-debian.patch	\
   %D%/packages/patches/abiword-explictly-cast-bools.patch	\
@@ -1040,6 +1047,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/byobu-writable-status.patch		\
   %D%/packages/patches/bubblewrap-fix-locale-in-tests.patch	\
   %D%/packages/patches/busybox-add-missing-sha-NI-guard.patch	\
+  %D%/packages/patches/c2rust-ast-exporter-local-search.patch	\
   %D%/packages/patches/cadical-add-shared-library.patch		\
   %D%/packages/patches/calibre-no-updates-dialog.patch		\
   %D%/packages/patches/calibre-remove-test-sqlite.patch		\
@@ -1113,6 +1121,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/converseen-hide-non-free-pointers.patch	\
   %D%/packages/patches/cool-retro-term-wctype.patch		\
   %D%/packages/patches/coq-autosubst-1.8-remove-deprecated-files.patch		\
+  %D%/packages/patches/corefx-mono-5.4.0-patches.patch		\
+  %D%/packages/patches/corefx-mono-pre-5.8.0-patches.patch	\
   %D%/packages/patches/coreutils-gnulib-tests.patch		\
   %D%/packages/patches/cppcheck-disable-char-signedness-test.patch	\
   %D%/packages/patches/cppdap-add-CPPDAP_USE_EXTERNAL_GTEST_PACKAGE.patch\
@@ -1121,6 +1131,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/crc32c-unbundle-googletest.patch		\
   %D%/packages/patches/crda-optional-gcrypt.patch		\
   %D%/packages/patches/clucene-contribs-lib.patch               \
+  %D%/packages/patches/csvkit-set-locale-for-tests.patch			\
   %D%/packages/patches/cube-nocheck.patch			\
   %D%/packages/patches/cups-minimal-Address-PPD-injection-issues.patch	\
   %D%/packages/patches/curl-CVE-2024-8096.patch			\
@@ -1177,6 +1188,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/eigen-fix-strict-aliasing-bug.patch	\
   %D%/packages/patches/einstein-build.patch			\
   %D%/packages/patches/elfutils-tests-ptrace.patch		\
+  %D%/packages/patches/elfutils-libdwfl-string-overflow.patch	\
   %D%/packages/patches/elixir-path-length.patch			\
   %D%/packages/patches/elm-ghc9.2.patch	\
   %D%/packages/patches/elm-offline-package-registry.patch	\
@@ -1556,6 +1568,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/htslib-for-stringtie.patch		\
   %D%/packages/patches/hubbub-sort-entities.patch		\
   %D%/packages/patches/hueplusplus-mbedtls.patch		\
+  %D%/packages/patches/hugs-fix-build.patch			\
   %D%/packages/patches/hurd-64bit.patch				\
   %D%/packages/patches/hurd-refcounts-assert.patch		\
   %D%/packages/patches/hurd-rumpdisk-no-hd.patch		\
@@ -1817,8 +1830,23 @@ dist_patch_DATA =						\
   %D%/packages/patches/mpc123-initialize-ao.patch		\
   %D%/packages/patches/mpg321-CVE-2019-14247.patch		\
   %D%/packages/patches/mpg321-gcc-10.patch			\
+  %D%/packages/patches/modglue-fix-build.patch		\
   %D%/packages/patches/module-init-tools-moduledir.patch	\
   %D%/packages/patches/monero-use-system-miniupnpc.patch			\
+  %D%/packages/patches/mono-1.2.6-bootstrap.patch		\
+  %D%/packages/patches/mono-1.9.1-add-MONO_CREATE_IMAGE_VERSION.patch		\
+  %D%/packages/patches/mono-1.9.1-fixes.patch			\
+  %D%/packages/patches/mono-2.4.2.3-fixes.patch			\
+  %D%/packages/patches/mono-2.6.4-fixes.patch			\
+  %D%/packages/patches/mono-2.11.4-fixes.patch			\
+  %D%/packages/patches/mono-4.9.0-fix-runtimemetadataversion.patch		\
+  %D%/packages/patches/mono-5.4.0-patches.patch		\
+  %D%/packages/patches/mono-5.8.0-patches.patch		\
+  %D%/packages/patches/mono-5.10.0-later-mcs-changes.patch	\
+  %D%/packages/patches/mono-6.12.0-add-runpath.patch		\
+  %D%/packages/patches/mono-6.12.0-fix-AssemblyResolver.patch	\
+  %D%/packages/patches/mono-6.12.0-fix-ConditionParser.patch	\
+  %D%/packages/patches/mono-mcs-patches-from-5.10.0.patch	\
   %D%/packages/patches/mosaicatcher-unbundle-htslib.patch	\
   %D%/packages/patches/mrrescue-support-love-11.patch		\
   %D%/packages/patches/mtools-mformat-uninitialized.patch	\
@@ -1919,6 +1947,10 @@ dist_patch_DATA =						\
   %D%/packages/patches/owncloud-disable-updatecheck.patch	\
   %D%/packages/patches/p7zip-CVE-2016-9296.patch		\
   %D%/packages/patches/p7zip-CVE-2017-17969.patch		\
+  %D%/packages/patches/pnet-fix-line-number-info.patch		\
+  %D%/packages/patches/pnet-fix-off-by-one.patch		\
+  %D%/packages/patches/pnet-newer-libgc-fix.patch		\
+  %D%/packages/patches/pnet-newer-texinfo-fix.patch		\
   %D%/packages/patches/p7zip-fix-build-with-gcc-11.patch	\
   %D%/packages/patches/p7zip-remove-unused-code.patch		\
   %D%/packages/patches/pam-krb5-CVE-2020-10595.patch		\
@@ -2271,8 +2303,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/tuxpaint-stamps-path.patch		\
   %D%/packages/patches/twinkle-bcg729.patch			\
   %D%/packages/patches/u-boot-allow-disabling-openssl.patch	\
-  %D%/packages/patches/u-boot-build-without-libcrypto.patch	\
-  %D%/packages/patches/u-boot-calloc-visibility.patch		\
   %D%/packages/patches/u-boot-nintendo-nes-serial.patch		\
   %D%/packages/patches/u-boot-rockchip-inno-usb.patch		\
   %D%/packages/patches/ucx-tcp-iface-ioctl.patch		\
@@ -2365,7 +2395,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/xfig-Enable-error-message-for-missing-libraries.patch		\
   %D%/packages/patches/xfig-Fix-double-free-when-requesting-MediaBox.patch		\
   %D%/packages/patches/xfig-Use-pkg-config-to-set-fontconfig-CFLAGS-and-LIBS.patch	\
-  %D%/packages/patches/xfce4-panel-plugins.patch		\
   %D%/packages/patches/xfce4-settings-defaults.patch		\
   %D%/packages/patches/xgboost-use-system-dmlc-core.patch       \
   %D%/packages/patches/xmonad-dynamic-linking.patch		\

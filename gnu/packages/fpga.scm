@@ -7,6 +7,7 @@
 ;;; Copyright © 2021 Andrew Miloradovsky <andrew@interpretmath.pw>
 ;;; Copyright © 2022 Christian Gelinek <cgelinek@radlogic.com.au>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
+;;; Copyright © 2023 Simon South <simon@simonsouth.net>
 ;;; Copyright © 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;;
@@ -69,6 +70,7 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages tcl)
+  #:use-module (gnu packages toolkits)
   #:use-module (gnu packages version-control))
 
 (define-public abc
@@ -150,15 +152,15 @@ For synthesis, the compiler generates netlists in the desired format.")
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.47")
+    (version "0.48")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/YosysHQ/yosys")
-                    (commit version)))
+                    (commit (string-append "v" version))))
               (sha256
                (base32
-                "061sqb59vl61rshlwgv3n51x0fxd9x3lb6gfbdl7nzia8im7x0qm"))
+                "1y5yrmw8b5l2s70451rcy83h0kavdjrsavwvxff3nrgqi3q4r1sc"))
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -283,38 +285,98 @@ Includes the actual FTDI connector.")
     (license license:isc))))
 
 (define-public nextpnr-ice40
-  (let [(commit "fbe486df459909065d6852a7495a212dfd2accef")
-        (revision "1")]
+  (let* ((version "0.7")
+         (tag (string-append "nextpnr-" version)))
     (package
       (name "nextpnr-ice40")
-      (version (git-version "0.0.0" revision commit))
+      (version version)
       (source
-        (origin
-          (method git-fetch)
-          (uri (git-reference
-                 (url "git://github.com/YosysHQ/nextpnr")
-                 (commit commit)))
-          (file-name (git-file-name name version))
-          (sha256
-           (base32
-            "1fmxsywgs45g88ra7ips5s2niiiwrkyxdcy742ws18dfk2y4vi9c"))))
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/YosysHQ/nextpnr")
+               (commit tag)
+               (recursive? #t)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "0sbhqscgmlk4q2207rsqsw99qx4fyrxx1hsd669lrk42gmk3s9lm"))
+         (modules '((guix build utils)))
+         (snippet
+          #~(begin
+              ;; Remove bundled source code for which Guix has packages.
+              ;; Note the bundled copies of json11 and python-console contain
+              ;; modifications, while QtPropertyBrowser appears to be
+              ;; abandoned and without an official source.
+              ;; fpga-interchange-schema is used only by the
+              ;; "fpga_interchange" architecture target, which this package
+              ;; doesn't build.
+              (with-directory-excursion "3rdparty"
+                (for-each delete-file-recursively
+                          '("googletest" "imgui" "pybind11" "qtimgui"
+                            "sanitizers-cmake")))
+
+              ;; Remove references to unbundled code and link against external
+              ;; libraries instead.
+              (substitute* "CMakeLists.txt"
+                (("^\\s+add_subdirectory\\(3rdparty/googletest.*") "")
+                (("^(\\s+target_link_libraries.*)( gtest_main\\))"
+                  _ prefix suffix)
+                 (string-append prefix " gtest" suffix)))
+              (substitute* "gui/CMakeLists.txt"
+                (("^\\s+../3rdparty/(qt)?imgui.*") "")
+                (("^(target_link_libraries.*)\\)" _ prefix)
+                 (string-append prefix " imgui qt_imgui_widgets)")))))))
+      (native-inputs
+       (list googletest sanitizers-cmake))
       (inputs
        (list boost
              eigen
              icestorm
+             imgui-1.86
+             pybind11
              python
              qtbase-5
+             qtimgui
              yosys))
       (build-system cmake-build-system)
       (arguments
-       `(#:configure-flags `("-DARCH=ice40"
-                             ,(string-append "-DICEBOX_ROOT="
-                                             (assoc-ref %build-inputs "icestorm")
-                                             "/share/icebox"))
-         #:tests? #f))
+       (list
+        #:configure-flags
+        #~(list "-DARCH=ice40"
+                "-DBUILD_GUI=ON"
+                "-DBUILD_TESTS=ON"
+                (string-append "-DCURRENT_GIT_VERSION=" #$tag)
+                (string-append "-DICESTORM_INSTALL_PREFIX="
+                               #$(this-package-input "icestorm"))
+                "-DUSE_IPO=OFF")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-source
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "CMakeLists.txt"
+                  ;; Use the system sanitizers-cmake module.
+                  (("\\$\\{CMAKE_SOURCE_DIR\\}/3rdparty/sanitizers-cmake/cmake")
+                   (string-append
+                    #$(this-package-native-input "sanitizers-cmake")
+                    "/share/sanitizers-cmake/cmake")))
+                (substitute* "gui/CMakeLists.txt"
+                  ;; Compile with system imgui and qtimgui headers.
+                  (("^(target_include_directories.*)../3rdparty/imgui(.*)$"
+                    _ prefix suffix)
+                   (string-append prefix
+                                  (search-input-directory inputs
+                                                          "include/imgui")
+                                  suffix))
+                  (("^(target_include_directories.*)../3rdparty/qtimgui/(.*)$"
+                    _ prefix suffix)
+                   (string-append prefix
+                                  (search-input-directory inputs
+                                                          "include/qtimgui")
+                                  suffix))))))))
       (synopsis "Place-and-Route tool for FPGAs")
-      (description "Nextpnr aims to be a vendor neutral, timing driven,
-FOSS FPGA place and route tool.")
+      (description "Nextpnr aims to be a vendor neutral, timing driven, FOSS
+FPGA place and route tool.")
       (home-page "https://github.com/YosysHQ/nextpnr")
       (license license:expat))))
 

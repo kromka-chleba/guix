@@ -1402,14 +1402,14 @@ other HTTP libraries.")
 (define-public python-cheroot
   (package
     (name "python-cheroot")
-    (version "10.0.0")
+    (version "10.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cheroot" version))
        (sha256
         (base32
-         "1w0ind0dza9j1py56y23344piqkpyfmcm060qfrnk6gggy3s3i2r"))))
+         "0h0p3fnpa4dxi589s7ljlzb6p3mhqdivb3pc2f36pljqfrwjzf70"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1419,8 +1419,13 @@ other HTTP libraries.")
               ;; "--numprocesses=auto"
               "--doctest-modules"
               "--showlocals"
-              ;; Disable test requiring networking.
-              "-k" "not test_tls_client_auth")
+              "-k" (string-append
+                    ;; Disable test requiring networking.
+                    "not test_tls_client_auth"
+                    ;; TypeError: HTTPConnection.request() got an unexpected keyword
+                    ;; argument 'chunked'
+                    " and not test_peercreds_unix_sock"
+                    " and not test_peercreds_unix_sock_with_lookup"))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'check
@@ -1430,25 +1435,21 @@ other HTTP libraries.")
                   (apply invoke "pytest" "-v"
                          (append test-flags (list #$output))))))))))
     (propagated-inputs
-     (list python-jaraco-functools
-           python-more-itertools
-           python-six))
+     (list python-jaraco-functools python-more-itertools))
     (native-inputs
-     (list python-cryptography
-           python-jaraco-text
+     (list python-jaraco-text
            python-portend
            python-pyopenssl
            python-pypytools
-           python-pytest
            python-pytest-cov
            python-pytest-mock
-           python-pytest-xdist
            python-requests
            python-requests-toolbelt
            python-requests-unixsocket
+           python-setuptools
            python-setuptools-scm
-           python-setuptools-scm-git-archive
-           python-trustme))
+           python-trustme
+           python-wheel))
     (home-page "https://cheroot.cherrypy.dev")
     (synopsis "Highly-optimized, pure-python HTTP server")
     (description
@@ -5695,7 +5696,8 @@ addon modules.")
     (propagated-inputs
      (list python-requests))
     (native-inputs
-     (list python-pytest python-pytest-timeout))))
+     (list python-pytest python-pytest-timeout python-setuptools
+           python-wheel))))
 
 (define-public python-bottle
   (package
@@ -6411,7 +6413,7 @@ in various CSS modules.")
     (propagated-inputs
      (list python-tinycss2))
     (native-inputs
-     (list python-pytest-cov python-pytest-runner))
+     (list python-flit python-pytest-cov python-pytest-runner))
     (home-page "https://cssselect2.readthedocs.io/")
     (synopsis "CSS selectors for Python ElementTree")
     (description "@code{cssselect2} is a straightforward implementation of
@@ -7479,7 +7481,7 @@ requests.")
 (define-public python-flask-restx
   (package
     (name "python-flask-restx")
-    (version "0.5.1")
+    (version "1.3.0")
     (source
      ;; We fetch from the Git repo because there are no tests in the PyPI
      ;; archive.
@@ -7490,7 +7492,7 @@ requests.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18vrmknyxw6adn62pz3kr9kvazfgjgl4pgimdf8527fyyiwcqy15"))))
+        (base32 "1qmm3i1cdv0bvzsc1gn4ql2dsf1fbx85fk69vcmzpsdxzczmw508"))))
     (build-system python-build-system)
     (propagated-inputs
      (list python-aniso8601 python-flask python-jsonschema python-pytz))
@@ -7509,9 +7511,12 @@ requests.")
              (invoke "pytest" "--benchmark-skip" "-k"
                      ;; Those tests need internet access
                      (string-join
-                      '("not test_check and not test_valid_value_check \
-and not test_override_app_level"
-                        "not test_redirect") " and ")))))))
+                      '("not test_check"
+                        "not test_valid_value_check"
+                        "not test_override_app_level"
+                        "not test_redirect"
+                        "not test_swagger")
+                      " and ")))))))
     (home-page "https://github.com/python-restx/flask-restx")
     (synopsis
      "Framework for fast, easy and documented API development with Flask")
@@ -7894,7 +7899,9 @@ Encoding for HTTP.")
            python-pytest
            python-pytest-cov
            python-pytest-mock
-           python-passlib))
+           python-passlib
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/canonical/cloud-init")
     (synopsis "Cloud instance initialization tools")
     (description
@@ -7950,7 +7957,7 @@ bare-metal installations.")
                (invoke "pytest" "-vv"
                        "-k" "not test_getCookieString_challenge_js_challenge1_16_05_2020")))))))
     (inputs
-     (list node))
+     (list node-lts))
     (propagated-inputs
      (list python-js2py
            python-polling2
@@ -8769,6 +8776,38 @@ formats is supported.
 @end itemize
 Only the RGB colorspace is supported.  Conversion to/from the HSL colorspace
 can be handled by the @code{colorsys} module in the Python standard library.")
+    (license license:bsd-3)))
+
+(define-public python-webcolors-24
+  (package
+    (inherit python-webcolors)
+    (name "python-webcolors")
+    (version "24.11.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "webcolors" version))
+       (sha256
+        (base32 "1xl0vn4xa03vjwx6fj19q9kgb94g65gvdf3p0ivsy0i2ydldgczc"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'fix-build-error
+           (lambda _
+             ;; pdm wants optional-dependencies instead of dependency-groups.
+             ;; See <https://pdm-project.org/en/latest/usage/dependency/>.
+             (substitute* "pyproject.toml"
+              (("\\[dependency-groups\\]")
+               "[project.optional-dependencies]"))))
+         (replace 'check
+           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
+             (when tests?
+               (add-installed-pythonpath inputs outputs)
+               ;; Our python-nox version is incompatible,
+               ;; so use pytest instead.
+               (invoke "pytest")))))))
+    (native-inputs (list python-pdm-backend python-pytest))
     (license license:bsd-3)))
 
 (define-public python-woob

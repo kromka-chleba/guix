@@ -7290,7 +7290,7 @@ fish.  The whole game is accompanied by quiet, comforting music.")
 (define-public crawl
   (package
     (name "crawl")
-    (version "0.31.0")
+    (version "0.32.1")
     (source
      (origin
        (method git-fetch)
@@ -7299,7 +7299,7 @@ fish.  The whole game is accompanied by quiet, comforting music.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0igrl0a9qd2g27q3wr86xjkpqcqs4y7bh3na1saqvpd4vc8mbayk"))
+        (base32 "1bdy1gdp0hx9ypj61jvd19wrfn0ilbs682nck0ld9nc0rw5wa64f"))
        (patches (search-patches "crawl-upgrade-saves.patch"))))
     (build-system gnu-build-system)
     (inputs
@@ -7627,7 +7627,7 @@ at their peak of economic growth and military prowess.
 (define-public open-adventure
   (package
     (name "open-adventure")
-    (version "1.19")
+    (version "1.20")
     (source
      (origin
        (method git-fetch)
@@ -7636,7 +7636,7 @@ at their peak of economic growth and military prowess.
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "19nspsvkzh3xw70mwlvralfr2ia7a8knd9s7x7abmjvk8p5rx468"))))
+        (base32 "0lbggjmh9g4zvnzzqz0qspmc24yg25bjalm06dlvhd22vz7hrfy5"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -8891,7 +8891,7 @@ ncurses for text display.")
 (define-public naev
   (package
     (name "naev")
-    (version "0.11.5")
+    (version "0.12.0")
     (source
      (origin
        (method git-fetch)
@@ -8901,7 +8901,7 @@ ncurses for text display.")
              (recursive? #t))) ; for game data
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wwgnlljcr3zhmxpb21lp9zgyyd198g6bisgykdj868b500f9lxx"))))
+        (base32 "14rvwacvc2gqyh193w8ymaznqrrymbznndfp6f5fjcs90iqnc4p5"))))
     (build-system meson-build-system)
     (arguments
      ;; XXX: Do not add debugging symbols, which cause the build to fail.

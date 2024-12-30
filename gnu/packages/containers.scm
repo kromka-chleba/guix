@@ -46,6 +46,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gcc)
+  #:use-module (gnu packages gettext)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages guile)
@@ -68,7 +69,7 @@
 (define-public crun
   (package
     (name "crun")
-    (version "1.19")
+    (version "1.19.1")
     (source
      (origin
        (method url-fetch)
@@ -78,7 +79,7 @@
              "/crun-" version ".tar.gz"))
        (sha256
         (base32
-         "1c42wvgrriy79agpfdid1zw7mk1vx03q60jh3pivv91jd29y8ypk"))))
+         "1hf8ggkw9wiznlp7xarjjrmhgpdmqxzaq0a41wd18h360s1z5a9j"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -101,7 +102,7 @@
     (native-inputs
      (list automake
            autoconf
-           git
+           git-minimal/pinned
            libtool
            pkg-config
            python-3))
@@ -300,14 +301,14 @@ network namespaces.")
 (define-public passt
   (package
     (name "passt")
-    (version "2024_05_10.7288448")
+    (version "2024_12_11.09478d5")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://passt.top/passt/snapshot/passt-" version
                            ".tar.gz"))
        (sha256
-        (base32 "12lg216d0r8zb0rpxmnzzfyz4v5gc7ahdvypp811px0ip0qkzj25"))))
+        (base32 "1arkir4784chw9x37174rc12cp353501m43p6iwvk5mqrlq02k90"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -468,6 +469,9 @@ Its main purpose is to support the key usage by @code{docker-init}:
   (package
     (name "podman")
     (version "5.3.1")
+    (outputs '("out" "docker"))
+    (properties
+      `((output-synopsis "docker" "docker alias for podman")))
     (source
      (origin
        (method git-fetch)
@@ -540,6 +544,19 @@ Its main purpose is to support the key usage by @code{docker-init}:
                    ,(string-append #$passt          "/bin")
                    ,(string-append #$procps         "/bin") ; ps
                    "/run/privileged/bin")))))
+          (add-after 'install 'install-docker
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((docker (assoc-ref outputs "docker")))
+                ;; So it picks podman of the other output.
+                (let ((bin-dir (string-append (assoc-ref outputs "out")
+                                              "/bin")))
+                  (substitute* "docker/docker.in"
+                   (("[$][{]BINDIR[}]") bin-dir)
+                   (("[$][{]ETCDIR[}]") "/etc")))
+                (invoke "make" "install.docker"
+                        (string-append "PREFIX=" (assoc-ref outputs "docker"))
+                        (string-append "ETCDIR=" (string-append (assoc-ref outputs "docker")
+                                                                "/etc"))))))
           (add-after 'install 'install-completions
             (lambda _
               (invoke "make" "install.completions"
@@ -555,9 +572,10 @@ Its main purpose is to support the key usage by @code{docker-init}:
      (list (package/inherit grep
              (inputs (list pcre2)))     ; Drop once grep on master supports -P
            bats
-           git
+           git-minimal/pinned
            go-1.22
            go-github-com-go-md2man
+           gnu-gettext ; for envsubst
            mandoc
            pkg-config
            python))

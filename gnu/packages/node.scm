@@ -48,6 +48,7 @@
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages networking)
   #:use-module (gnu packages node-xyz)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
@@ -55,9 +56,12 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages web)
   #:use-module (ice-9 match)
+  #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26))
 
-(define-public node
+;; This should be the latest version of node that still builds without
+;; depending on llhttp.
+(define-public node-bootstrap
   (package
     (name "node")
     (version "10.24.1")
@@ -154,6 +158,11 @@
                          "test/parallel/test-cluster-master-kill.js"
                          ;; See also <https://github.com/nodejs/node/issues/25903>.
                          "test/sequential/test-performance.js"))
+
+             ;; These tests fail on recent versions of nghttp2
+             (for-each delete-file
+                       '("test/parallel/test-http2-methods.js"
+                         "test/parallel/test-http2-multiplex.js"))
 
              ;; This requires a DNS resolver.
              (delete-file "test/parallel/test-dns.js")
@@ -297,7 +306,7 @@
            http-parser
            icu4c
            libuv-for-node
-           `(,nghttp2-for-node "lib")
+           `(,nghttp2 "lib")
            openssl-1.1
            zlib
            ;; Regular build-time dependencies.
@@ -317,7 +326,7 @@
            http-parser
            icu4c
            libuv-for-node
-           `(,nghttp2-for-node "lib")
+           `(,nghttp2 "lib")
            openssl
            python-wrapper               ;for node-gyp (supports python3)
            zlib))
@@ -332,12 +341,8 @@ devices.")
     (license license:expat)
     (properties '((max-silent-time . 7200)   ;2h, needed on ARM
                   (timeout . 21600)          ;6h
-                  (cpe-name . "node.js")))))
-
-;; This should be the latest version of node that still builds without
-;; depending on llhttp.
-(define-public node-bootstrap
-  (hidden-package node))
+                  (cpe-name . "node.js")
+                  (hidden? . #t)))))
 
 ;; Duplicate of node-semver
 (define-public node-semver-bootstrap
@@ -674,7 +679,7 @@ parser definition into a C output.")
 (define-public llhttp-bootstrap
   (package
     (name "llhttp")
-    (version "6.0.11")
+    (version "8.1.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -683,7 +688,7 @@ parser definition into a C output.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "16gaylka6nx9bsff9xga3s8xihxm3k7svrb88lr4dj2s4pzlfga9"))
+                "1808y8mpdcmsi8rxndilngg4nn2fbqfgb29f47kk9mmdpqg5s17r"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -709,6 +714,7 @@ parser definition into a C output.")
                                                "/bin/esbuild")))
                (invoke esbuild
                        "--platform=node"
+                       "--target=node10"
                        "--outfile=bin/generate.js"
                        "--bundle" "bin/generate.ts"))))
          (add-before 'install 'create-install-directories
@@ -742,15 +748,15 @@ source files.")
 
 (define-public node-lts
   (package
-    (inherit node)
-    (version "18.19.0")
+    (inherit node-bootstrap)
+    (version "20.18.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nodejs.org/dist/v" version
                                   "/node-v" version ".tar.gz"))
               (sha256
                (base32
-                "05qc1dgmrms73073n4l36jrcxf6ygqj959d3cngy5qclrg0isk6x"))
+                "1f180vgr6lrg4gs48q5c414j5sdwaqqp1vnswwr3pvryhznqrbav"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -761,16 +767,19 @@ source files.")
                                           (not (string-contains file "nodejs-openssl.cnf")))))
                   ;; Remove bundled software, where possible
                   (for-each delete-file-recursively
-                            '("deps/cares"
+                            '("deps/brotli"
+                              "deps/cares"
                               "deps/icu-small"
                               "deps/nghttp2"
+                              "deps/ngtcp2"
+                              "deps/uv"
                               "deps/zlib"))
                   (substitute* "Makefile"
                     ;; Remove references to bundled software.
                     (("deps/uv/uv.gyp") "")
                     (("deps/zlib/zlib.gyp") ""))))))
     (arguments
-     (substitute-keyword-arguments (package-arguments node)
+     (substitute-keyword-arguments (package-arguments node-bootstrap)
        ((#:configure-flags configure-flags)
         ''("--shared-cares"
            "--shared-libuv"
@@ -779,6 +788,8 @@ source files.")
            "--shared-zlib"
            "--shared-brotli"
            "--with-intl=system-icu"
+           "--shared-ngtcp2"
+           "--shared-nghttp3"
            ;;Needed for correct snapshot checksums
            "--v8-enable-snapshot-compression"))
        ((#:phases phases)
@@ -861,13 +872,27 @@ source files.")
                                    "test/parallel/test-zlib-write-after-flush.js")))
                      '())
 
+               ;; https://github.com/nodejs/node/issues/45906
+               ;; This test depends on 64-bit time_t so skipping on 32-bit systems.
+               ,@(if (not (target-64bit?))
+                     '((delete-file "test/parallel/test-fs-utimes-y2K38.js"))
+                     '())
+
                ;; These tests have an expiry date: they depend on the validity of
                ;; TLS certificates that are bundled with the source.  We want this
                ;; package to be reproducible forever, so remove those.
                ;; TODO: Regenerate certs instead.
                (for-each delete-file
                          '("test/parallel/test-tls-passphrase.js"
-                           "test/parallel/test-tls-server-verify.js"))))
+                           "test/parallel/test-tls-server-verify.js"))
+
+               ;; These tests fail when linking to upstream libuv.
+               ;; https://github.com/nodejs/node/commit/3f6addd590
+               (for-each delete-file
+                         '("test/parallel/test-process-euid-egid.js"
+                           "test/parallel/test-process-initgroups.js"
+                           "test/parallel/test-process-setgroups.js"
+                           "test/parallel/test-process-uid-gid.js"))))
            (add-after 'delete-problematic-tests 'replace-llhttp-sources
              (lambda* (#:key inputs #:allow-other-keys)
                ;; Replace pre-generated llhttp sources
@@ -930,13 +955,14 @@ fi"
                  (chmod file #o555))))))))
     (native-inputs
      (list ;; Runtime dependencies for binaries used as a bootstrap.
-           c-ares-for-node
+           c-ares
            brotli
            icu4c
-           libuv
+           libuv-for-node-lts
            `(,nghttp2 "lib")
            openssl
            zlib
+           ; ngtcp2? nghttp3?
            ;; Regular build-time dependencies.
            perl
            pkg-config
@@ -946,14 +972,19 @@ fi"
     (inputs
      (list bash-minimal
            coreutils
-           c-ares-for-node
+           c-ares
            icu4c
-           libuv
+           libuv-for-node-lts
            llhttp-bootstrap
            brotli
+           ngtcp2
+           nghttp3
            `(,nghttp2 "lib")
            openssl
-           zlib))))
+           zlib))
+    (properties (alist-delete 'hidden? (package-properties node-bootstrap)))))
+
+(define-public node node-lts)
 
 (define-public libnode
   (package/inherit node-lts

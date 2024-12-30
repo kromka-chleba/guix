@@ -221,7 +221,6 @@ Browser.")
            tor-client
            alsa-lib
            bash-minimal                 ;for wrap-program
-           bzip2
            cups
            dbus-glib
            gdk-pixbuf
@@ -239,6 +238,7 @@ Browser.")
            ;; UNBUNDLE-ME! libogg
            ;; UNBUNDLE-ME! libtheora ; wants theora-1.2, not yet released
            ;; UNBUNDLE-ME! libvorbis
+           libwebp
            libxft
            libevent
            libxinerama
@@ -246,7 +246,7 @@ Browser.")
            libxcomposite
            libxt
            libffi
-           ffmpeg
+           ffmpeg-7
            libvpx
            icu4c-73
            pixman
@@ -257,7 +257,7 @@ Browser.")
            hunspell
            libnotify
            nspr
-           ;; UNBUNDLE-ME! nss  (pending upgrade of 'nss' to 3.90 or later)
+           nss-rapid  ; requires v. 3.101, so nss won't cut it for now.
            shared-mime-info
            sqlite
            eudev
@@ -321,9 +321,7 @@ Browser.")
          "--disable-debug"
          "--disable-debug-symbols"
 
-         ;; TODO: Re-enable after updating to the 128 ESR.
-         ;"--enable-rust-simd"
-         "--disable-rust-simd"
+         "--enable-rust-simd"
          "--enable-release"
          "--enable-optimize"
          "--enable-strip"
@@ -349,16 +347,16 @@ Browser.")
          ;; Avoid bundled libraries.
          "--with-system-jpeg"           ;must be libjpeg-turbo
          "--with-system-png"            ;must be libpng-apng
+         "--with-system-webp"
          "--with-system-zlib"
-         ;; UNBUNDLE-ME! "--with-system-bz2"
-         ;; UNBUNDLE-ME! "--with-system-libevent"
+         "--with-system-libevent"
          ;; UNBUNDLE-ME! "--with-system-ogg"
          ;; UNBUNDLE-ME! "--with-system-vorbis"
          ;; UNBUNDLE-ME! "--with-system-theora" ; wants theora-1.2, not yet released
-         ;; UNBUNDLE-ME! "--with-system-libvpx"
+         "--with-system-libvpx"
          "--with-system-icu"
          "--with-system-nspr"
-         ;; UNBUNDLE-ME! "--with-system-nss" ; pending upgrade of 'nss' to 3.90
+         "--with-system-nss"
 
          ;; UNBUNDLE-ME! "--with-system-harfbuzz"
          ;; UNBUNDLE-ME! "--with-system-graphite2"
@@ -405,7 +403,7 @@ Browser.")
                           ;;"nsprpub"
                           ;;
                           ;; FIXME: Some of the bundled NSS sources are used
-                          ;; to build third_party/prio.
+                          ;; to build netwerk/socket/neqo_glue.
                           ;;"security/nss"
                           ;;
                           ;; TODO: Use more system media libraries.  See:
@@ -422,13 +420,14 @@ Browser.")
                           ;;
                           "modules/freetype2"
                           ;; "media/libjpeg"  ; needed for now, because media/libjpeg/moz.build is referenced from config/external/moz.build
-                          ;; UNBUNDLE-ME! "modules/zlib"
-                          ;; UNBUNDLE-ME! "ipc/chromium/src/third_party/libevent"
-                          ;; UNBUNDLE-ME! "media/libvpx"
+                          "modules/zlib"
+                          "ipc/chromium/src/third_party/libevent"
+                          "media/libvpx"
                           ;; UNBUNDLE-ME! "media/libogg"
                           ;; UNBUNDLE-ME! "media/libvorbis"
                           ;; UNBUNDLE-ME! "media/libtheora" ; wants theora-1.2, not yet released
                           ;; UNBUNDLE-ME! "media/libtremor"
+                          "media/libwebp"
                           ;; UNBUNDLE-ME! "gfx/harfbuzz"
                           ;; UNBUNDLE-ME! "gfx/graphite2"
                           "js/src/ctypes/libffi"

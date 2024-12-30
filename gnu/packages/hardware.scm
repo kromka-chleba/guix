@@ -18,6 +18,7 @@
 ;;; Copyright © 2023 Spencer Skylar Chan <schan12@umd.edu>
 ;;; Copyright © 2023 Foundation Devices, Inc. <hello@foundationdevices.com>
 ;;; Copyright © 2024 Giacomo Leidi <goodoldpaul@autistici.org>
+;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -544,28 +545,23 @@ RGB animations.")
 (define-public ddcutil
   (package
     (name "ddcutil")
-    (version "1.4.5")
+    (version "2.1.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://www.ddcutil.com/tarballs/"
-                           "ddcutil-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rockowitz/ddcutil")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "17zrqdz5mzwyccvc5m166yjlbbg9k2m9cwyg0y30h3184p1b2wlq"))))
+        (base32 "0wk82cdg7vddk6pbnn6qq3p71j4bppq13is2ck40glig08ax1bg5"))))
     (build-system gnu-build-system)
-    (arguments
-     (list
-       #:phases
-       #~(modify-phases %standard-phases
-           (add-after 'install 'install-missing-pkgconfig-file
-             (lambda _
-               (install-file "ddcutil.pc"
-                             (string-append #$output "/lib/pkgconfig")))))))
     (native-inputs
-     (list pkg-config))
+     (list autoconf automake libtool pkg-config))
     (inputs
      (list eudev
            glib
+           jansson
            kmod
            i2c-tools
            libdrm                       ;enhanced diagnostics
@@ -600,7 +596,7 @@ read/write access to i2c devices to users in the @samp{i2c} group.")
 (define-public ddcui
   (package
     (name "ddcui")
-    (version "0.3.0")
+    (version "0.5.4")
     (source
      (origin
        (method git-fetch)
@@ -609,7 +605,7 @@ read/write access to i2c devices to users in the @samp{i2c} group.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gypfmwxhjmgyfwk29k8hfbgr0698kbcq2yj4izxv1i59zm63irz"))))
+        (base32 "1hq19gdy9ybraclkqvv1nlf46irql5b6wrc1y6wi0ihkqly20vgz"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f))                    ; No test suite

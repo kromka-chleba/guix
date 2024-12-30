@@ -649,6 +649,50 @@ of foundation language models.  It requires models parameters to be downloaded
 independently to be able to run a LLaMA model.")
       (license license:expat))))
 
+(define-public whisper-cpp
+  (package
+    (name "whisper-cpp")
+    (version "1.7.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/ggerganov/whisper.cpp")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0rrkgrx8akw91b77kl36i03i39a79r0p69glhhidm28qfw02icjx"))))
+    (build-system cmake-build-system)
+    (arguments
+      (list
+        #:tests? #false ; uhh. They have it commented out in CMakeLists.txt
+        #:configure-flags
+        #~(list "-DBUILD_SHARED_LIBS=ON"
+                "-DGGML_BLAS=ON"
+                "-DGGML_BLAS_VENDOR=OpenBLAS"
+                (string-append "-DBLAS_INCLUDE_DIRS="
+                               #$(this-package-input "openblas")
+                               "/include")
+                (string-append "-DBLAS_LIBRARIES="
+                               #$(this-package-input "openblas")
+                               "/lib/libopenblas.so")
+
+                "-DGGML_NATIVE=OFF" ;no '-march=native'
+                "-DGGML_FMA=OFF"    ;and no '-mfma', etc.
+                "-DGGML_AVX2=OFF"
+                "-DGGML_AVX512=OFF"
+                "-DGGML_AVX512_VBMI=OFF"
+                "-DGGML_AVX512_VNNI=OFF")))
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list openblas))
+    (synopsis "Speech recognition")
+    (description "This package provides speech recognition.")
+    (properties '((tunable? . #true))) ;use AVX512, FMA, etc. when available
+    (home-page "https://github.com/ggerganov/whisper.cpp")
+    (license license:expat)))
+
 (define-public mcl
   (package
     (name "mcl")
@@ -2213,13 +2257,13 @@ data by providing clean labels during training.")
 (define-public python-cma
   (package
     (name "python-cma")
-    (version "3.4.0")
+    (version "4.0.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "cma" version))
               (sha256
                (base32
-                "0v0gs46n4ividm9viml09sllxw2cymxlp8nm2lvvwwcqp5lxksx1"))))
+                "198kdy2lxslml0g0s1sgc2zq1fsf2dh9s60lwshgrwivk1bcwa7x"))))
     (build-system python-build-system)
     (arguments
      (list #:phases #~(modify-phases %standard-phases
@@ -2434,13 +2478,13 @@ discrete, and conditional dimensions.")
 (define-public python-deepxde
   (package
     (name "python-deepxde")
-    (version "1.12.1")
+    (version "1.12.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "deepxde" version))
               (sha256
                (base32
-                "1i7ibj968hxgqhv1jzkk5sph1608bkz147jmz0v943m9rqvscw10"))))
+                "07v3b7k4k4a27yb00fj5xjvflfpzs815sd9bw8zgvdkvp2fsaxsr"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f                  ; there are no tests
@@ -6199,7 +6243,7 @@ without dependencies, with
     (propagated-inputs (list python-cloudpickle python-farama-notifications
                              python-importlib-metadata python-numpy
                              python-typing-extensions))
-    (native-inputs (list python-pytest python-scipy))
+    (native-inputs (list python-pytest python-scipy python-setuptools))
     (arguments
      (list
       #:phases

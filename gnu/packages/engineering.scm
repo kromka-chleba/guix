@@ -2361,7 +2361,7 @@ parallel computing platforms.  It also supports serial execution.")
 (define-public librepcb
   (package
     (name "librepcb")
-    (version "1.0.0")
+    (version "1.2.0")
     (source
      (origin
        (method url-fetch)
@@ -2372,7 +2372,7 @@ parallel computing platforms.  It also supports serial execution.")
         ;; Delete libraries that we already have or don't need.
         ;; TODO: try to unbundle more (see lib/).
         `(begin
-           (let ((third-parties '("fontobene-qt5"
+           (let ((third-parties '("fontobene-qt"
                                   "googletest"
                                   "hoedown"
                                   "muparser"
@@ -2383,12 +2383,12 @@ parallel computing platforms.  It also supports serial execution.")
                       (delete-file-recursively third-party))
                     third-parties)))))
        (sha256
-        (base32 "02qfwyhdq1pklb5gkwn3rbsdhwvcgiksd21swaphz3kw6s4p9i8v"))))
+        (base32 "0ag8k2ni9x175s77gmg29adap82rjfgf87j8hqjdm3wzmdss7sgn"))))
     (build-system cmake-build-system)
     (inputs
      (list clipper
            fontconfig
-           fontobene-qt5
+           fontobene-qt
            glu
            hoedown
            muparser
@@ -2406,7 +2406,7 @@ parallel computing platforms.  It also supports serial execution.")
            unzip))
     (arguments
      `(#:configure-flags (list
-                          "-DUNBUNDLE_FONTOBENE_QT5=ON"
+                          "-DUNBUNDLE_FONTOBENE_QT=ON"
                           "-DUNBUNDLE_GTEST=ON"
                           "-DUNBUNDLE_HOEDOWN=ON"
                           "-DUNBUNDLE_MUPARSER=ON"
@@ -2419,6 +2419,7 @@ parallel computing platforms.  It also supports serial execution.")
                         (let ((test-include (list "*"))
                               (test-exclude
                                (list
+                                "ApplicationTest.testGetCacheDir"
                                 ;; These tests all fail when run by the build
                                 ;; process even though they pass when manually
                                 ;; run as a normal user.
@@ -2721,13 +2722,13 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
 (define-public python-pandapipes
   (package
     (name "python-pandapipes")
-    (version "0.10.0")
+    (version "0.11.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "pandapipes" version ".zip"))
+       (uri (pypi-uri "pandapipes" version))
        (sha256
-        (base32 "06yqqd25hxa6q49qcbpy0njwxkqzfhbff4frrrxd84391njgvdhq"))))
+        (base32 "0rvbfpb42hd2hh2321vwj758yda2zrpj62hmdr7qrhfnzjhcr9z3"))))
     (build-system pyproject-build-system)
     (native-inputs (list python-nbmake
                          python-pytest
@@ -3134,13 +3135,13 @@ interpolation toolkit.")
 (define-public python-motulator
   (package
     (name "python-motulator")
-    (version "0.3.0")
+    (version "0.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "motulator" version))
        (sha256
-        (base32 "01qv4d4rgkwk653vz1qz1nmakniv86572j5ikrxwd63rwv5ckggf"))))
+        (base32 "1kh13zfa4w73q04pny2w2zgym47fp8xy7glwfx82fdx4fihk7dv7"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f)) ; there are no tests
@@ -4811,6 +4812,88 @@ server for Python and pypy3.")
     (home-page "https://freeopcua.github.io/")
     (license license:lgpl3+)))
 
+(define-public modglue
+  (package
+    (name "modglue")
+    (version "1.20")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/kpeeters/modglue.git")
+                     (commit "89d65f5be9c737123b7beb721bd96c4eed650d9a")))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0cfrp2wyyfb6c71s5skg2g7gdg7bpvv77x6rvw7r9dqvamxsgmih"))
+              (patches
+               (search-patches "modglue-fix-build.patch"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:parallel-build? #f
+       #:make-flags
+       (list "TIMESTAMP=-DDATETIME=\\\"\\\" -DHOSTNAME=\\\"\\\"")
+       #:phases
+       (modify-phases %standard-phases
+         (replace 'check
+           (lambda _
+             (invoke "make" "-C" "src" "tests"))))))
+    (native-inputs
+     (list pkg-config libtool))
+    (inputs
+     (list libsigc++-2))
+    (synopsis "C++ library for handling of multiple co-processes")
+    (description "This package provides a C++ library for handling of
+multiple co-processes in cadabra.")
+    (home-page "https://cadabra.science/")
+    (license license:gpl2+)))
+
+(define-public cadabra
+  (package
+    (name "cadabra")
+    (version "1.46")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/kpeeters/cadabra.git")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0kks3qv1rka9ynw386kspjwq0g7xmwjycwlr3bbmxjmnk9zvnn9h"))))
+    (build-system gnu-build-system)
+    (arguments
+     `(#:configure-flags '("--disable-gui")
+       #:make-flags
+       (list (string-append "TIMESTAMP=-DRELEASE=\"\\\""
+                            ,version
+                            "\\\"\" -DDATETIME=\"\\\""
+                            "Thu Jan 1 01:02:00 AM CET 1970"
+                            "\\\"\" -DHOSTNAME=\"\\\""
+                            "dummy"
+                            "\\\"\""))
+       #:test-target "test"
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'fix
+           (lambda _
+             (substitute* "tests/Makefile.in"
+              (("TIMER=/usr/bin/time ")
+               "TIMER=time "))
+             ;; Upstream bug. spino is a pointer.
+             (substitute* "src/exchange.cc"
+              (("ngr.spino==false")
+               "!ngr.spino")))))))
+    (native-inputs
+     (list pkg-config time))
+    (inputs
+     (list lie pcre gmp libsigc++-2 modglue))
+    (synopsis "Computer algebra system geared towards field theory")
+    (description "This package provides a computer algebra system geared
+towards field theory.  This package is mostly meant to be used by texmacs
+and mogan.")
+    (home-page "https://cadabra.science/")
+    (license license:gpl3+)))
+
 (define-public cadabra2
   (package
     (name "cadabra2")
@@ -4839,6 +4922,18 @@ server for Python and pypy3.")
                         (assoc-ref %outputs "out")))
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda* (#:key outputs #:allow-other-keys)
+              (substitute* "client_server/ComputeThread.cc"
+               (("[(]\"cadabra-server\"[)]")
+                (string-append "(\"" (assoc-ref outputs "out")
+                               "/bin/cadabra-server\")")))
+              (substitute* "client_server/Server.cc"
+               (("'\" [+] python_path [+]")
+                (string-append "'\" + std::string(\""
+                               (assoc-ref outputs "out")
+                               "/lib/python3.10/site-packages"
+                               "\") +")))))
           (add-before 'check 'prepare-checks
             (lambda _
               (setenv "HOME" "/tmp"))))))

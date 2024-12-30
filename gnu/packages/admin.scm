@@ -2558,14 +2558,14 @@ network, which causes enabled computers to power on.")
 (define-public dmidecode
   (package
     (name "dmidecode")
-    (version "3.5")
+    (version "3.6")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://savannah/dmidecode/dmidecode-"
                            version ".tar.xz"))
        (sha256
-        (base32 "0wy0khw02sr59f43fdahh6as1xc3jv7n8abj59p1j9cfxqsngmvr"))))
+        (base32 "1blbvmsxba71fmjxckh0cn7x68kim7qlx6ilv0df7brxxkrna374"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ; no 'check' target
@@ -3784,6 +3784,35 @@ the status of your battery in the system tray.")
 shortcut syntax and completion options.")
       (home-page "https://github.com/TrilbyWhite/interrobang")
       (license license:gpl3+))))
+
+(define-public pam-hooks
+  (package
+    (name "pam-hooks")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://upsilon.cc/~zack/hacking/software/"
+                           name "/" name "_" version ".tar.gz"))
+       (sha256
+        (base32 "102azxhvs53akkhgg2dkqg8m0jd6804fx8v7gq7pp03qm3m7bhqi"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:make-flags #~`("CC=gcc"
+                            ,(string-append "DESTDIR=" #$output))
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'configure))
+           ;; There is a test directory, but it's unclear how to run them.
+           #:tests? #f))
+    (inputs (list linux-pam))
+    (home-page "https://upsilon.cc/~zack/hacking/software/pam-hooks/")
+    (synopsis "Linux-PAM module for login/logout hooks")
+    (description "@code{pam-hooks} is a tiny PAM module enabling the
+execution of hook scripts when a PAM session is opened or closed.  The
+typical use case is the need of doing some per-user set-up when a user
+logs via a PAM-aware login mechanism and/or the need of doing some
+per-user clean-up when the user logs out.")
+    (license license:gpl3+)))
 
 (define-public pam-krb5
   (package
@@ -5071,7 +5100,7 @@ elogind's uaccess feature.")
 (define-public jc
   (package
     (name "jc")
-    (version "1.25.3")
+    (version "1.25.4")
     (source
      (origin
        ;; The PyPI tarball lacks the test suite.
@@ -5081,7 +5110,7 @@ elogind's uaccess feature.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ay5wh00fzblibvvcz3jh83n8mpkfsfqmix93fz9za5kf3gpk7na"))))
+        (base32 "0lb7608h3vaw5gqlaf1ryd84m2mirfl7gdnhzadrjlh6h8b3lkgp"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases

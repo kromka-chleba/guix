@@ -7771,6 +7771,37 @@ bindings to C and C++ libraries.")
                        ("rust-syn" ,rust-syn-2)
                        ("rust-which" ,rust-which-4))))))
 
+(define-public rust-bindgen-0.65
+  (package
+    (inherit rust-bindgen-0.69)
+    (name "rust-bindgen")
+    (version "0.65.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "bindgen" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1i9wci1h3xnk8hi7cf06capgifnmpk9dd59zqznh6jcsdx37ppyg"))))
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-annotate-snippets" ,rust-annotate-snippets-0.9)
+                       ("rust-bitflags" ,rust-bitflags-1)
+                       ("rust-cexpr" ,rust-cexpr-0.6)
+                       ("rust-clang-sys" ,rust-clang-sys-1)
+                       ("rust-lazy-static" ,rust-lazy-static-1)
+                       ("rust-lazycell" ,rust-lazycell-1)
+                       ("rust-log" ,rust-log-0.4)
+                       ("rust-peeking-take-while" ,rust-peeking-take-while-0.1)
+                       ("rust-prettyplease" ,rust-prettyplease-0.2)
+                       ("rust-proc-macro2" ,rust-proc-macro2-1)
+                       ("rust-quote" ,rust-quote-1)
+                       ("rust-regex" ,rust-regex-1)
+                       ("rust-rustc-hash" ,rust-rustc-hash-1)
+                       ("rust-shlex" ,rust-shlex-1)
+                       ("rust-syn" ,rust-syn-2)
+                       ("rust-which" ,rust-which-4))))))
+
 (define-public rust-bindgen-0.64
   (package
     (inherit rust-bindgen-0.66)
@@ -13565,6 +13596,28 @@ interoperation between crates in Rust.")
        (("rust-glob" ,rust-glob-0.3)
         ("rust-libc" ,rust-libc-0.2)
         ("rust-libloading" ,rust-libloading-0.6))))
+    (home-page "https://github.com/KyleMayes/clang-sys")
+    (synopsis "Rust bindings for libclang")
+    (description "This package provides Rust bindings for libclang.")
+    (license license:asl2.0)))
+
+(define-public rust-clang-sys-1.8
+  (package
+    (name "rust-clang-sys")
+    (version "1.8.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "clang-sys" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1x1r9yqss76z8xwpdanw313ss6fniwc1r7dzb5ycjn0ph53kj0hb"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-glob" ,rust-glob-0.3)
+                       ("rust-libc" ,rust-libc-0.2)
+                       ("rust-libloading" ,rust-libloading-0.8))))
     (home-page "https://github.com/KyleMayes/clang-sys")
     (synopsis "Rust bindings for libclang")
     (description "This package provides Rust bindings for libclang.")
@@ -23786,6 +23839,27 @@ Rust.")
     (description "Graphics state blocks for gfx-rs.")
     (license license:asl2.0)))
 
+(define-public rust-dtoa-1
+  (package
+    (name "rust-dtoa")
+    (version "1.0.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "dtoa" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0lv6zzgrd3hfh83n9jqhzz8645729hv1wclag8zw4dbmx3w2pfyw"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-no-panic" ,rust-no-panic-0.1))))
+    (home-page "https://github.com/dtolnay/dtoa")
+    (synopsis "Fast floating point primitive to string conversion")
+    (description
+     "This package provides Fast floating point primitive to string conversion.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public rust-dtoa-0.4
   (package
     (name "rust-dtoa")
@@ -25344,6 +25418,30 @@ compact sets of enums.")
      "This package provides a logging implementation for @code{log} which
 is configured via an environment variable.")
     (license (list license:expat license:asl2.0))))
+
+(define-public rust-log-reroute-0.1
+  (package
+    (name "rust-log-reroute")
+    (version "0.1.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "log-reroute" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "00mw91qd2ibaawl7x1pxc1kryki0ixyirnlx64qx78d9g6k3n6kl"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-arc-swap" ,rust-arc-swap-1)
+                       ("rust-log" ,rust-log-0.4)
+                       ("rust-once-cell" ,rust-once-cell-1))))
+    (home-page "https://github.com/vorner/log-reroute")
+    (synopsis "Support to change logging target for the log crate")
+    (description
+     "This package provides Support to change logging target for the log crate.")
+    ;; This means asl2.0 OR expat.
+    (license (list license:asl2.0 license:expat))))
 
 (define-public rust-env-logger-0.10
   (package
@@ -73640,6 +73738,28 @@ Rust's serde.")
        (("rust-anyhow" ,rust-anyhow-1)
         ("rust-indoc" ,rust-indoc-1)
         ("rust-serde-derive" ,rust-serde-derive-1))))))
+
+(define-public rust-serde-bencode-0.2
+  (package
+    (name "rust-serde-bencode")
+    (version "0.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "serde_bencode" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0gj17p1w5hyi69fngv55dai4nb4fmdij76gqwyb9if9qfixzq3d7"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-serde" ,rust-serde-1)
+                       ("rust-serde-bytes" ,rust-serde-bytes-0.11))))
+    (home-page "https://github.com/toby/serde-bencode")
+    (synopsis "Serde backed Bencode encoding/decoding library for Rust.")
+    (description
+     "This package provides a Serde backed Bencode encoding/decoding library for Rust.")
+    (license license:expat)))
 
 (define-public rust-serde-wasm-bindgen-0.3
   (package

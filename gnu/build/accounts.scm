@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2019, 2021, 2023 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2024 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -24,8 +25,11 @@
   #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-26)
+  #:use-module (srfi srfi-34)
+  #:use-module (srfi srfi-35)
   #:use-module (ice-9 match)
   #:use-module (ice-9 vlist)
+  #:use-module (ice-9 receive)
   #:use-module (ice-9 rdelim)
   #:export (password-entry
             password-entry?
@@ -51,28 +55,58 @@
             group-entry-gid
             group-entry-members
 
+            subid-entry
+            subid-entry?
+            subid-entry-name
+            subid-entry-start
+            subid-entry-count
+
             %password-lock-file
             write-group
             write-passwd
             write-shadow
+            write-subgid
+            write-subuid
             read-group
             read-passwd
             read-shadow
+            read-subgid
+            read-subuid
 
             %id-min
             %id-max
             %system-id-min
             %system-id-max
+            %subordinate-id-min
+            %subordinate-id-max
+            %subordinate-id-count
 
-            user+group-databases))
+            &subordinate-id-error
+            subordinate-id-error?
+            &subordinate-id-overflow-error
+            subordinate-id-overflow-error?
+            subordinate-id-overflow-error-range
+            &invalid-subid-range-error
+            invalid-subid-range-error?
+            invalid-subid-range-error-range
+            &specific-subid-range-expected-error
+            specific-subid-range-expected-error?
+            specific-subid-range-expected-error-range
+            &generic-subid-range-expected-error
+            generic-subid-range-expected-error?
+            generic-subid-range-expected-error-range
+
+            user+group-databases
+            subuid+subgid-databases))
 
 ;;; Commentary:
 ;;;
-;;; This modules provides functionality equivalent to the C library's
+;;; This module provides functionality equivalent to the C library's
 ;;; <shadow.h>, <pwd.h>, and <grp.h> routines, as well as a subset of the
 ;;; functionality of the Shadow command-line tools.  It can parse and write
-;;; /etc/passwd, /etc/shadow, and /etc/group.  It can also take care of UID
-;;; and GID allocation in a way similar to what 'useradd' does.
+;;; /etc/passwd, /etc/shadow, /etc/group, /etc/subuid and /etc/subgid.  It can
+;;; also take care of UID and GID allocation in a way similar to what 'useradd'
+;;; does.  The same goes for sub UID and sub GID allocation.
 ;;;
 ;;; The benefit is twofold: less code is involved, and the ID allocation
 ;;; strategy and state preservation is made explicit.
@@ -225,6 +259,17 @@ each field."
                    (serialization list->comma-separated comma-separated->list)
                    (default '())))
 
+(define-database-entry <subid-entry>              ;<subid.h>
+  subid-entry make-subid-entry
+  subid-entry?
+  (serialization #\: subid-entry->string string->subid-entry)
+
+  (name            subid-entry-name)
+  (start           subid-entry-start
+                   (serialization number->string string->number))
+  (count           subid-entry-count
+                   (serialization number->string string->number)))
+
 (define %password-lock-file
   ;; The password database lock file used by libc's 'lckpwdf'.  Users should
   ;; grab this lock with 'with-file-lock' when they access the databases.
@@ -265,6 +310,10 @@ to it atomically and set the appropriate permissions."
   (database-writer "/etc/shadow" #o600 shadow-entry->string))
 (define write-group
   (database-writer "/etc/group" #o644 group-entry->string))
+(define write-subuid
+  (database-writer "/etc/subuid" #o644 subid-entry->string))
+(define write-subgid
+  (database-writer "/etc/subgid" #o644 subid-entry->string))
 
 (define (database-reader file string->entry)
   (lambda* (#:optional (file-or-port file))
@@ -287,6 +336,10 @@ to it atomically and set the appropriate permissions."
   (database-reader "/etc/shadow" string->shadow-entry))
 (define read-group
   (database-reader "/etc/group" string->group-entry))
+(define read-subuid
+  (database-reader "/etc/subuid" string->subid-entry))
+(define read-subgid
+  (database-reader "/etc/subgid" string->subid-entry))
 
 
 ;;;
@@ -300,6 +353,18 @@ to it atomically and set the appropriate permissions."
   (next-id        allocation-next-id (default %id-min))
   (next-system-id allocation-next-system-id (default %system-id-max)))
 
+(define-record-type* <unused-subid-range>
+  unused-subid-range make-unused-subid-range
+  unused-subid-range?
+  (left    unused-subid-range-left   ;previous unused subuid range or #f
+           (default #f))
+  (min     unused-subid-range-min    ;lower bound of this unused subuid range
+           (default %subordinate-id-min))
+  (max     unused-subid-range-max    ;upper bound
+           (default %subordinate-id-max))
+  (right   unused-subid-range-right  ;next unused subuid range or #f
+           (default #f)))
+
 ;; Trick to avoid name clashes...
 (define-syntax %allocation (identifier-syntax allocation))
 
@@ -311,6 +376,27 @@ to it atomically and set the appropriate permissions."
 (define %system-id-min 100)
 (define %system-id-max 999)
 
+;; According to Shadow's libmisc/find_new_sub_uids.c and
+;; libmisc/find_new_sub_gids.c.
+(define %subordinate-id-min 100000)
+(define %subordinate-id-max 600100000)
+(define %subordinate-id-count 65536)
+
+(define-condition-type &subordinate-id-error &error
+  subordinate-id-error?)
+(define-condition-type &subordinate-id-overflow-error &subordinate-id-error
+  subordinate-id-overflow-error?
+  (range subordinate-id-overflow-error))
+(define-condition-type &invalid-subid-range-error &subordinate-id-error
+  invalid-subid-range-error?
+  (range invalid-subid-range-error-range))
+(define-condition-type &specific-subid-range-expected-error &subordinate-id-error
+  specific-subid-range-expected-error?
+  (range specific-subid-range-expected-error-range))
+(define-condition-type &generic-subid-range-expected-error &subordinate-id-error
+  generic-subid-range-expected-error?
+  (range generic-subid-range-expected-error-range))
+
 (define (system-id? id)
   (and (> id %system-id-min)
        (<= id %system-id-max)))
@@ -318,6 +404,10 @@ to it atomically and set the appropriate permissions."
 (define (user-id? id)
   (and (>= id %id-min)
        (< id %id-max)))
+
+(define (subordinate-id? id)
+  (and (>= id %subordinate-id-min)
+       (< id %subordinate-id-max)))
 
 (define* (allocate-id assignment #:key system?)
   "Return two values: a newly allocated ID, and an updated <allocation> record
@@ -373,6 +463,194 @@ a system ID allocation) number among IDS."
    (ids (fold (cut vhash-consv <> #t <>)
               (allocation-ids allocation)
               ids))))
+
+(define (within-interval? allocation range)
+  "Returns #t when RANGE is included in the ALLOCATION.
+Both ends of the ALLOCATION are included in the comparison."
+  (define allocation-start
+    (unused-subid-range-min allocation))
+  (define allocation-end
+    (unused-subid-range-max allocation))
+  (unless (subid-range-has-start? range)
+    (raise
+     (condition
+      (&specific-subid-range-expected-error
+       (range range)))))
+  (and (<= allocation-start
+           (subid-range-start range))
+       (<= (subid-range-end range)
+           allocation-end)))
+
+(define (allocate-unused-range allocation actual-range)
+  "Allocates RANGE inside ALLOCATION.  RANGE is assumed to be
+@code{within-interval?} of ALLOCATION, a new @code{unused-subid-range} record is
+returned with all the subids contained in RANGE marked as used."
+  (define allocation-start
+    (unused-subid-range-min allocation))
+  (define allocation-end
+    (unused-subid-range-max allocation))
+  (define allocation-left
+    (unused-subid-range-left allocation))
+  (define allocation-right
+    (unused-subid-range-left allocation))
+  (define range-start
+    (subid-range-start actual-range))
+  (define range-end
+    (subid-range-end actual-range))
+  (define new-start
+    (+ 1 range-end))
+  (define new-end
+    (- range-start 1))
+  (if (or (= allocation-start range-start)
+          (= allocation-end range-end))
+      (unused-subid-range
+       (inherit allocation)
+       (min (if (= allocation-start range-start)
+                new-start
+                allocation-start))
+       (max (if (= allocation-end range-end)
+                new-end
+                allocation-end)))
+      (let* ((left-child?
+              (<= (- range-start allocation-start)
+                  (- allocation-end range-end)))
+             (child
+              (unused-subid-range
+               (min allocation-start)
+               (max new-end)
+               (left
+                (and left-child?
+                     allocation-left))
+               (right
+                (and (not left-child?)
+                     allocation-right)))))
+        (unused-subid-range
+         (inherit allocation)
+         (min new-start)
+         (max allocation-end)
+         (left
+          (if left-child?
+              child
+              allocation-left))
+         (right
+          (if left-child?
+              allocation-right
+              child))))))
+
+(define (allocate-generic-range allocation range)
+  "Allocates a range of subids in ALLOCATION, based on RANGE.  RANGE is expected
+to be a generic range i.e. to not have an explicit start subordinate id.  All
+nodes in ALLOCATION are visited and the first where RANGE is
+@code{within-interval?} will be selected, the subordinate ids contained in RANGE
+will be marked as used in it."
+  (when (subid-range-has-start? range)
+    (raise
+     (condition
+      (&generic-subid-range-expected-error
+       (ranges range)))))
+  (define left (unused-subid-range-left allocation))
+  (define right (unused-subid-range-right allocation))
+  (define allocation-start
+    (unused-subid-range-min allocation))
+  (define actual-range
+    (subid-range
+     (inherit range)
+     (start allocation-start)))
+
+  (if (within-interval? allocation actual-range)
+      (values
+       (allocate-unused-range allocation actual-range)
+       actual-range)
+      (if left
+          (let-values (((new-left new-range)
+                        (allocate-generic-range left range)))
+            (values (unused-subid-range
+                     (inherit allocation)
+                     (left new-left))
+                    new-range))
+          (if right
+              (let-values (((new-right new-range)
+                            (allocate-generic-range right range)))
+                (values (unused-subid-range
+                         (inherit allocation)
+                         (left new-right))
+                        new-range))
+              (raise
+               (condition
+                (&subordinate-id-overflow-error
+                 (range range))))))))
+
+(define (allocate-specific-range allocation range)
+  "Allocates a range of subids in ALLOCATION, based on RANGE.  RANGE is expected
+to be a specific range i.e. to have an explicit start subordinate id.  ALLOCATION
+is visited to find the best unused range that can hold RANGE."
+  (unless (subid-range-has-start? range)
+    (raise
+     (condition
+      (&specific-subid-range-expected-error
+       (range range)))))
+  (define allocation-left
+    (unused-subid-range-left allocation))
+  (define allocation-right
+    (unused-subid-range-right allocation))
+  (define allocation-start
+    (unused-subid-range-min allocation))
+  (define allocation-end
+    (unused-subid-range-max allocation))
+
+  (define range-start
+    (subid-range-start range))
+  (define range-end
+    (subid-range-end range))
+
+  (unless (and (subordinate-id? range-start)
+               (subordinate-id? range-end))
+    (raise
+     (condition
+      (&invalid-subid-range-error
+       (range range)))))
+
+  (define less?
+    (< range-end allocation-start))
+  (define more?
+    (> range-start allocation-end))
+
+  (cond ((within-interval? allocation range)
+         (values (allocate-unused-range allocation range)
+                 range))
+        ((and allocation-left less?)
+         (let-values (((new-left _)
+                       (allocate-specific-range allocation-left range)))
+           (values (unused-subid-range
+                    (inherit allocation)
+                    (left new-left))
+                   range)))
+        ((and allocation-right more?)
+         (let-values (((new-right _)
+                       (allocate-specific-range allocation-right range)))
+           (values (unused-subid-range
+                    (inherit allocation)
+                    (right new-right))
+                   range)))
+        (else
+         (raise
+          (condition
+           (&subordinate-id-overflow-error
+            (range range)))))))
+
+(define* (reserve-subids allocation ranges)
+  "Mark the subid ranges listed in RANGES as reserved in ALLOCATION."
+  (fold (lambda (range state)
+          (define-values (new-allocation actual-range)
+            ((if (subid-range-has-start? range)
+                 allocate-specific-range
+                 allocate-generic-range)
+             (first state)
+             range))
+          (list new-allocation
+                (cons actual-range
+                      (second state))))
+        (list allocation '()) ranges))
 
 (define (allocated? allocation id)
   "Return true if ID is already allocated as part of ALLOCATION."
@@ -509,6 +787,48 @@ new UIDs."
           uids
           users)))
 
+(define (range->entry range)
+  (subid-entry
+   (name (subid-range-name range))
+   (start (subid-range-start range))
+   (count (subid-range-count range))))
+
+(define (entry->range entry)
+  (subid-range
+   (name (subid-entry-name entry))
+   (start (subid-entry-start entry))
+   (count (subid-entry-count entry))))
+
+(define* (allocate-subids ranges #:optional (current-ranges '()))
+  "Return a list of subids entries for RANGES, a list of <subid-range>.  IDs
+found in CURRENT-RANGES, a list of subid entries, are reused."
+  (let ((generic (any (compose not subid-range-has-start?) current-ranges)))
+    (when generic
+      (raise
+       (condition
+        (&specific-subid-range-expected-error
+         (range generic))))))
+  (define sorted-ranges
+    (stable-sort ranges
+                 subid-range-less))
+  (define current-allocation+subids
+    (reserve-subids (unused-subid-range)
+                    current-ranges))
+  (define subids
+    ;; Reserve first specific subid-ranges
+    ;; and later generic ones.
+    (second
+     (reserve-subids (first
+                      current-allocation+subids)
+                     sorted-ranges)))
+
+  (map range->entry
+       ;; Produce deterministic subid collections.
+       (stable-sort
+        (append (second current-allocation+subids)
+                subids)
+        subid-range-less)))
+
 (define* (days-since-epoch #:optional (current-time current-time))
   "Return the number of days elapsed since the 1st of January, 1970."
   (let* ((now   (current-time time-utc))
@@ -584,3 +904,29 @@ CURRENT-SHADOW: UIDs, GIDs, passwords, user shells, etc."
                     #:current-time current-time))
 
   (values group-entries passwd-entries shadow-entries))
+
+(define* (subuid+subgid-databases subuids subgids
+                                  #:key
+                                  (current-subuids
+                                   (map entry->range
+                                        (empty-if-not-found read-subuid)))
+                                  (current-subgids
+                                   (map entry->range
+                                        (empty-if-not-found read-subgid))))
+  "Return two values: the list of subgid entries, and the list of subuid entries
+corresponding to SUBUIDS and SUBGIDS.
+Preserve stateful bits from CURRENT-SUBUIDS and CURRENT-SUBGIDS."
+
+  (define (range-eqv? a b)
+    (string=? (subid-range-name a)
+              (subid-range-name b)))
+
+  (define subuid-entries
+    (allocate-subids
+     (lset-difference range-eqv? subuids current-subuids) current-subuids))
+
+  (define subgid-entries
+    (allocate-subids
+     (lset-difference range-eqv? subgids current-subgids) current-subgids))
+
+  (values subuid-entries subgid-entries))

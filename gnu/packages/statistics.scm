@@ -2338,7 +2338,7 @@ machine learning, computer vision, and high-dimensional statistics.")
 (define-public python-arviz
   (package
     (name "python-arviz")
-    (version "0.19.0")
+    (version "0.20.0")
     (source (origin
               (method git-fetch)        ; PyPI misses some test files
               (uri (git-reference
@@ -2347,7 +2347,7 @@ machine learning, computer vision, and high-dimensional statistics.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0wj1yxr6as368vkr4mk9fz4584nyy12gq2v20l7542lnaabw403z"))))
+                "1dk25jmsljan6pfcq0s06vgk7gg20qqhk0zqnpd8dw94dhw2mnpa"))))
     (build-system pyproject-build-system)
     (arguments
      ;; FIXME: matplotlib tests fail because of the "--save" test flag.
@@ -2587,20 +2587,14 @@ Meier, Nelson Aalen and regression.")
 (define-public python-mapie
   (package
     (name "python-mapie")
-    (version "0.8.6")
+    (version "0.9.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "MAPIE" version))
               (sha256
                (base32
-                "013ljcjjl3k9yb3166fnvr6nsb9ph4rhidpdjjks78qw0w1j7faa"))))
+                "1lyqszfgmqfsyvfaxplzz84iqm7s49rdscjjhnxlymrasrizfp26"))))
     (build-system pyproject-build-system)
-    ;; See https://github.com/scikit-learn-contrib/MAPIE/issues/432
-    (arguments
-     (list
-      #:test-flags
-      '(list "-k" (string-append "not test_correct_results"
-                                 " and not test_correct_results_binary"))))
     (native-inputs (list python-pandas python-pytest python-setuptools
                          python-wheel))
     (propagated-inputs (list python-numpy python-scikit-learn))
@@ -7108,14 +7102,14 @@ completion.")
 (define-public python-rpy2
   (package
     (name "python-rpy2")
-    (version "3.5.15")
+    (version "3.5.17")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "rpy2" version))
         (sha256
          (base32
-          "0asvybb7kmr48pfkibp1qi3h3vlq2fl0mazaf0xj6zywhi5awks4"))))
+          "10nmydlbmi0vyim7sx71isx3z2mnnfjmhf3248cicy9x1z1hizyv"))))
     (build-system pyproject-build-system)
     (propagated-inputs
      (list python-cffi
@@ -7145,7 +7139,9 @@ completion.")
            python-numpy
            python-pandas
            python-pytest
-           python-pytest-cov))
+           python-pytest-cov
+           python-setuptools
+           python-wheel))
     (home-page "https://rpy2.github.io")
     (synopsis "Python interface to the R language")
     (description "rpy2 is a redesign and rewrite of rpy.  It is providing a

@@ -347,7 +347,7 @@ and its related documentation.")
 (define-public miniflux
   (package
     (name "miniflux")
-    (version "2.2.3")
+    (version "2.2.4")
     (source
      (origin
        (method git-fetch)
@@ -356,7 +356,7 @@ and its related documentation.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0bllgjv7cdqrk3dm98dmp7mx0wmcbh410jcdcvid7z5qkr0fiy07"))))
+        (base32 "15h9ip7a9n64n9fn6ylpriyz79rilbzw2swb6zjr1fwqyrjcx5l7"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -397,6 +397,7 @@ and its related documentation.")
            go-github-com-tdewolff-minify-v2
            go-github-com-yuin-goldmark
            go-golang-org-x-crypto
+           go-golang-org-x-image
            go-golang-org-x-net
            go-golang-org-x-oauth2
            go-golang-org-x-term
@@ -528,14 +529,14 @@ the same, being completely separated from the Internet.")
     ;; Track the ‘mainline’ branch.  Upstream considers it more reliable than
     ;; ’stable’ and recommends that “in general you deploy the NGINX mainline
     ;; branch at all times” (https://www.nginx.com/blog/nginx-1-6-1-7-released/)
-    (version "1.27.1")
+    (version "1.27.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nginx.org/download/nginx-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "1z5x0i0k1hmnxm7mb3dfn6qrz9am96my5ivinxl3gsp1dj5acyxx"))))
+                "1yi53dd6babjg3xx1jl19d0y0xkdi2yjg9pw790w38mkl31wy7m9"))))
     (build-system gnu-build-system)
     (inputs (list libxcrypt libxml2 libxslt openssl pcre zlib))
     (arguments
@@ -626,9 +627,9 @@ and as a proxy to reduce the load on back-end HTTP or mail servers.")
 
 (define-public nginx-documentation
   ;; This documentation should be relevant for the current nginx package.
-  (let ((version "1.27.1")
-        (revision 3114)
-        (changeset "051789a80bcb"))
+  (let ((version "1.27.2")
+        (revision 3130)
+        (changeset "cee30b2e0ae2"))
     (package
       (name "nginx-documentation")
       (version (simple-format #f "~A-~A-~A" version revision changeset))
@@ -640,7 +641,7 @@ and as a proxy to reduce the load on back-end HTTP or mail servers.")
                (file-name (string-append name "-" version))
                (sha256
                 (base32
-                 "0p198cjnhypssmj4mrj6wx2lbrfgw84i2fa4ydzdbjgkdzp803mv"))))
+                 "1d8rkhry7y2mm6gfq8xzqwyivy2zyl1d96wcx4q5r58mhj8pk2c6"))))
       (build-system gnu-build-system)
       (arguments
        '(#:tests? #f                    ; no test suite
@@ -2128,12 +2129,6 @@ directions.")
           (add-after 'build 'build-platform
             (lambda* (#:key unpack-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" unpack-path)
-                ;; We're using Node 10, which doesn't have this method.
-                (substitute* "scripts/esbuild.js"
-                  (("exports.buildNativeLib" m)
-                   (string-append
-                    "Object.fromEntries = entries => entries.reduce((result, entry) => (result[entry[0]] = entry[1], result), {});\n"
-                    m)))
                 ;; Must be writable.
                 (for-each make-file-writable (find-files "." "."))
                 (invoke "node" "scripts/esbuild.js"
@@ -2156,7 +2151,7 @@ directions.")
                   (invoke "make" "test-go"))))))))
     (native-inputs
      (modify-inputs (package-native-inputs esbuild)
-       (append node)))))
+       (append node-lts)))))
 
 (define-public wwwoffle
   (package
@@ -5290,8 +5285,8 @@ Cloud.")
     (license license:expat)))
 
 (define-public guix-data-service
-  (let ((commit "62d6b5901331ad5f78ac65a8a9cb5410b60942cb")
-        (revision "56"))
+  (let ((commit "d3c87fb1dc2c3f72786904845edcedd921bbb24c")
+        (revision "57"))
     (package
       (name "guix-data-service")
       (version (string-append "0.0.1-" revision "." (string-take commit 7)))
@@ -5303,7 +5298,7 @@ Cloud.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0nfh13sgp9f66bpm476866lpwgfzhxg0k04rxbxnxq2qqij3s9g4"))))
+                  "1scb4cpvk0yh4281n88rz6cz93hx2166b10d3ikmipldrgwhh7l9"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -6499,14 +6494,14 @@ config files---you only have to specify the www root.")
 (define-public goaccess
   (package
     (name "goaccess")
-    (version "1.7.2")
+    (version "1.9.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "http://tar.goaccess.io/goaccess-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0sqjkla4fjw5h49x675qibp860bk0haajc3i31m1q782kjiap6hf"))
+                "0dvqxk9rbsp24fp1r5xdz7rcnvvl0q26p07nfmgmzaf4wd4yxw29"))
               (modules '((guix build utils)))
               (snippet '(substitute* '("src/error.h"
                                        "src/parser.c")
@@ -8619,39 +8614,10 @@ compressed JSON header blocks.
 @end itemize\n")
     (license license:expat)))
 
-;; Older variant for Node versions < 17 (upstream commit 43291b98edaa682
-;; add support for newer nghttp2, but is difficult to backport).
-(define-public nghttp2-for-node
-  (hidden-package
-   (package
-     (inherit nghttp2)
-     (version "1.44.0")
-     (source (origin
-               (method url-fetch)
-               (uri (string-append "https://github.com/nghttp2/nghttp2/"
-                                   "releases/download/v" version "/"
-                                   "nghttp2-" version ".tar.xz"))
-               (sha256
-                (base32
-                 "0p9wvva4g8hwj55x19rbyvnq2dbsnf65rphhxnpqs7ll54xlg6an"))))
-     (arguments
-      (substitute-keyword-arguments (package-arguments nghttp2)
-        ((#:phases phases #~%standard-phases)
-         #~(modify-phases #$phases
-             (add-after 'unpack 'workaround-broken-python-version-check
-               (lambda _
-                 (substitute* "configure"
-                   ;; The configure script uses a string comparison to
-                   ;; determine whether the Python interpreter is recent
-                   ;; enough, which fails when comparing 3.8 to 3.10.
-                   ;; Convert to tuples for a more reliable check.
-                   (("print \\(ver >= '3\\.8'\\)")
-                    "print (tuple(map(int, ver.split('.'))) >= (3,8))")))))))))))
-
 (define-public nghttp3
   (package
     (name "nghttp3")
-    (version "1.6.0")
+    (version "1.7.0")
     (source
      (origin
        (method url-fetch)
@@ -8660,7 +8626,7 @@ compressed JSON header blocks.
                            "nghttp3-" version ".tar.gz"))
        (sha256
         (base32
-         "186bjczm7hqs3icp5ss66pi78dinpsbyn15h2hhcmyhh7h8jzyd1"))))
+         "09iv9n47kr7nfc4wmbv2nadv19sixf0f3z7w5pr6cfr64gn4d9br"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config))
@@ -9613,7 +9579,7 @@ the Fediring.")
     (build-system python-build-system)
     (propagated-inputs
      (list curl
-           node))
+           node-lts))
     (inputs
      (list python
            youtube-dl

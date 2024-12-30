@@ -1295,7 +1295,9 @@ git integration, command-line support, and a curses-based TUI.")
                          python-packaging
                          python-pytest
                          python-pytest-cov
-                         python-pytest-mpl))
+                         python-pytest-mpl
+                         python-setuptools
+                         python-wheel))
     (home-page "https://colorcet.holoviz.org/")
     (synopsis "Collection of perceptually uniform colormaps")
     (description "Colorcet is a collection of perceptually accurate 256-color
@@ -5190,13 +5192,12 @@ syntax.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; XXX: Check why these 3 tests fail.
-      #:test-flags #~(list "-k"
-                           (string-append "not test_sending_empty_netstring"
-                            " and not test_sending_one_netstring"
-                            " and not test_sending_two_netstrings"))))
-    (native-inputs (list python-pytest python-twisted python-setuptools
-                         python-wheel))
+      #:test-flags #~(list "ometa/test" "terml/test")))
+    (native-inputs
+     (list python-pytest
+           python-twisted
+           python-setuptools
+           python-wheel))
     (home-page "https://launchpad.net/parsley")
     (synopsis "Parsing and pattern matching Python library")
     (description
@@ -5695,7 +5696,7 @@ code introspection, and logging.")
     (arguments
      `(#:tests? #f)) ;; Most tests seem to use the Internet.
     (propagated-inputs
-      (list git)) ;; pbr actually uses the "git" binary.
+      (list git-minimal/pinned)) ;; pbr actually uses the "git" binary.
     (native-inputs
       `(("python-fixtures" ,python-fixtures-bootstrap)
         ;; discover, coverage, hacking, subunit
@@ -10446,7 +10447,7 @@ scratch, as well as in-place editing.")
                    " and not test_fetch_data_using_test_data_with_no_file_in_data_copies_from_stubs"
                    " and not test_fetch_data_using_test_data_and_force_with_file_in_data_over_writes"))))
     (propagated-inputs (list python-param python-pyyaml))
-    (native-inputs (list python-flake8 python-pytest))
+    (native-inputs (list python-flake8 python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/holoviz-dev/pyct")
     (synopsis "Common packaging tasks")
     (description
@@ -10733,7 +10734,8 @@ the OleFileIO module from PIL, the Python Image Library.")
      (list
       ;; AssertionError.
       #:test-flags #~(list "-k" "not test_threads_ttl_expiry")))
-    (native-inputs (list python-freezegun python-pytest unzip))
+    (native-inputs (list python-freezegun python-pytest unzip
+                         python-setuptools python-wheel))
     (home-page "https://github.com/althonos/property-cached/")
     (synopsis "Decorator for caching properties in classes")
     (description "This package provides a decorator for caching properties in
@@ -14995,10 +14997,10 @@ replacement for dictionaries where immutability is desired.")
        (sha256
         (base32 "1svk94pad8gcvjwd329zmfrw09wakwh6qjvnhf6sa6k92y44i82a"))))
     (build-system pyproject-build-system)
+    (propagated-inputs (list python-typing-extensions))
     (native-inputs
      (list python-pytest
            python-setuptools
-           python-typing-extensions
            python-wheel))
     (home-page "https://github.com/carpedm20/emoji/")
     (synopsis "Emoji terminal output for Python")
@@ -16983,6 +16985,7 @@ Python code formatter \"black\".")
        (sha256
         (base32 "1b5df7skx3906046j12yjv8gdbcy17q9y3lbqbpmi83yf90gm9sq"))))
     (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/jazzband/geojson")
     (synopsis "Python bindings and utilities for GeoJSON")
     (description
@@ -19485,7 +19488,7 @@ with a new public API, and RPython support.")
 (define-public python-hy
   (package
     (name "python-hy")
-    (version "0.29.0")
+    (version "1.0.0")
     (source
      (origin
        (method git-fetch) ;no tests in PyPI release
@@ -19494,7 +19497,7 @@ with a new public API, and RPython support.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fp5x94hyckjfap2pb1rj551a3q70vrljxark7hj9kdhr7prbggi"))))
+        (base32 "1msv3027krv223a4dhx6kzp7r7l4q2qg8kq25j4dcf8k5xs73ax3"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -19858,13 +19861,13 @@ document.")
 (define-public python-symengine
   (package
     (name "python-symengine")
-    (version "0.11.0")
+    (version "0.13.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "symengine" version))
        (sha256
-        (base32 "0n54rdpmz3bmxrbjqflmlrgc27rvik1jkv6x3cjvgsq4p0lhvlqd"))))
+        (base32 "0k61j333kpxf23c92hnc0svjywylffx72arcf1wjbwgbjy4a10xb"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -20479,8 +20482,8 @@ and provides a uniform API regardless of which JSON implementation is used.")
     (build-system pyproject-build-system)
     (arguments
      (list  ; Integration tests require network connectivity.
-      #:test-flags '(list "--ignore=t/integration")))
-    (native-inputs (list python-pytest))
+      #:test-flags '(list "--ignore=t/integration/test_rmq.py")))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (propagated-inputs (list python-vine))
     (home-page "https://github.com/celery/py-amqp")
     (synopsis "Low-level AMQP client for Python (fork of amqplib)")
@@ -23633,8 +23636,10 @@ Design spec without sacrificing ease of use or application performance.")
     (native-inputs
      (list python-pytest
            python-pytest-asyncio
+           python-pytest-cov
            python-pytest-timeout
-           python-setuptools))
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-typing-extensions))
     (home-page "https://github.com/aio-libs/async-lru")
@@ -28886,7 +28891,9 @@ Public Suffix List's private domains as well.")
     (native-inputs
      (list python-pytest
            python-pytest-runner
-           python-sphinx-argparse))
+           python-setuptools
+           python-sphinx-argparse
+           python-wheel))
     (propagated-inputs
      (list python-colorama
            python-termcolor
@@ -30180,45 +30187,50 @@ class in a @acronym{DRY, Don't Repeat Yourself} way.")
     (license license:expat)))
 
 (define-public python-construct
-  (package
-    (name "python-construct")
-    (version "2.10.68")
-    (source
-     (origin
-       ;; There are no tests in the PyPI tarball.
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/construct/construct")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1b59kq8scxhn9afqgmksk45n53gawylqm8gw3k0vmljg274xi7vf"))))
-    (build-system python-build-system)
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "pytest" "-v" "tests/")))))))
-    (native-inputs
-     (list python-pytest python-pytest-benchmark))
-    (propagated-inputs
-     (list python-arrow
-           python-cloudpickle
-           python-lz4
-           python-numpy
-           python-ruamel.yaml))
-    (home-page "https://construct.readthedocs.io")
-    (synopsis "Declarative and symmetrical parser and builder for binary data")
-    (description
-     "This package provides both simple, atomic constructs (such as
+  ;; Fixes not in a release yet.
+  (let ((commit "c1171b16bda1d213ba4858f3e0e4d4003e4aae90")
+        (revision "1"))
+    (package
+      (name "python-construct")
+      (version (git-version "2.10.70" revision commit))
+      (source
+       (origin
+         ;; There are no tests in the PyPI tarball.
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/construct/construct")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "03f6nvyzrq50nhqqwmmws983wwjg78yd9j09pl94vkmyjph33da5"))))
+      (build-system python-build-system)
+      (arguments
+       (list #:phases
+             #~(modify-phases %standard-phases
+                 (replace 'check
+                   (lambda* (#:key tests? #:allow-other-keys)
+                     (when tests?
+                       (invoke "pytest" "-v" "tests/")))))))
+      (native-inputs
+       (list python-pytest
+             python-pytest-benchmark))
+      (propagated-inputs
+       (list python-arrow
+             python-cloudpickle
+             python-cryptography
+             python-lz4
+             python-numpy
+             python-ruamel.yaml))
+      (home-page "https://construct.readthedocs.io")
+      (synopsis "Declarative and symmetrical parser and builder for binary data")
+      (description
+       "This package provides both simple, atomic constructs (such as
 integers of various sizes), as well as composite ones which allow you
 form hierarchical and sequential structures of increasing complexity.
 It features bit and byte granularity, easy debugging and testing, an
 easy-to-extend subclass system, and lots of primitive constructs to
 make your work easier.")
-    (license license:expat)))
+      (license license:expat))))
 
 (define-public python-outcome
   (package
@@ -32415,7 +32427,7 @@ dumping of JSON5 data structures.")
            (lambda* (#:key tests? #:allow-other-keys)
              (when tests?
                (invoke "python3" "tests/ci-test.py")))))))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/Farama-Foundation/Farama-Notifications")
     (synopsis "Notifications for all Farama Foundation maintained libraries")
     (description
@@ -32996,7 +33008,7 @@ accessor layer.")
 (define-public pyzo
   (package
     (name "pyzo")
-    (version "4.16.0")
+    (version "4.18.0")
     (source
      (origin
        (method git-fetch)
@@ -33006,7 +33018,7 @@ accessor layer.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "18775dhd5z7l505khrh1vsv5w1x1icshv34av8bbhfj8dz8nvgx5"))))
+         "0agq171cz7y10cknjypwrvsvikja3w9d28hlr3kw5k2sdvfqnpam"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -33704,26 +33716,32 @@ By default it uses the open Python vulnerability database Safety DB.")
         (base32 "15x161bxr7hky7rvq0jlgf1kxg6vdf069487casmpyxry7slak3b"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-before 'check 'disable-tests
-                    (lambda _
-                      (substitute* "tests.py"
-                        ;; Disable test requiring network access
-                        (("test_basic_conversion_from_http_url")
-                         "skip_test_basic_conversion_from_http_url")
-                        ;; Disable tests with missing files
-                        (("test_basic_conversion_from_file_pattern")
-                         "skip_test_basic_conversion_from_file_pattern")
-                        (("test_conversion_with_data_files")
-                         "skip_test_conversion_with_data_files")) #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'disable-tests
+            (lambda _
+              (substitute* "tests.py"
+                ;; Disable test requiring network access
+                (("test_basic_conversion_from_http_url")
+                 "skip_test_basic_conversion_from_http_url")
+                ;; Disable tests with missing files
+                (("test_basic_conversion_from_file_pattern")
+                 "skip_test_basic_conversion_from_file_pattern")
+                (("test_conversion_with_data_files")
+                 "skip_test_conversion_with_data_files")))))))
     ;; Ideally, we would supersede texlive-xpatch with texlive-regexpatch once
     ;; the missing etoolbox.sty file is added
-    (native-inputs (list python-poetry-core
-                         (texlive-updmap.cfg (list texlive-xpatch texlive-lm
-                                                   texlive-xcolor))))
+    (native-inputs
+     (list (texlive-updmap.cfg
+            (list texlive-xpatch texlive-lm
+                  texlive-xcolor))
+           python-pip
+           python-poetry-core
+           python-setuptools))
     (inputs (list pandoc python-pandocfilters))
     (propagated-inputs (list python-wheel))
-    (home-page "https://github.com/bebraw/pypandoc")
+    (home-page "https://github.com/JessicaTegner/pypandoc")
     (synopsis "Python wrapper for pandoc")
     (description "pypandoc is a thin Python wrapper around pandoc
 and pandoc-citeproc.")
@@ -34227,14 +34245,14 @@ process.")
 (define-public python-gamera
   (package
     (name "python-gamera")
-    (version "4.0.0")
+    (version "4.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://gamera.informatik.hsnr.de/download/"
                            "gamera-" version ".tar.gz"))
        (sha256
-        (base32 "0fhlwbvpm3k54n4aa1y6qd348jqrb54ak9p0ic16drx7f07dsq05"))
+        (base32 "1apgjqdlsm0kx05jlpaw4398b6i2317yrw3jd8wp83w3pqmg34ps"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -34258,8 +34276,6 @@ process.")
                ;; Some tests require a writable HOME directory and test
                ;; directory.
                (setenv "HOME" "/tmp")
-               (mkdir "tests/tmp")     ;the code assumes this directory exists
-               ;; (for-each make-file-writable (find-files "tests"))
                (with-directory-excursion "tests"
                  (invoke "pytest" "-vv"
                          ;; This test causes gamera/gendoc.py to be loaded,

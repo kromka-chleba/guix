@@ -2782,7 +2782,7 @@ that block port 22.")
 (define-public iperf
   (package
     (name "iperf")
-    (version "3.17.1")
+    (version "3.18")
     (source
      (origin
        (method git-fetch)
@@ -2791,7 +2791,7 @@ that block port 22.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14pspy3348114r7rm2gj8h4qjhq8r8q7khrfqg8ln4vi1p9dq2x5"))))
+        (base32 "147ggkc53mviwg7q83hpfn144clqa1g3kdfbqb5jcgn15n4nr9gk"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -4643,7 +4643,7 @@ network.")
 (define-public ngtcp2
   (package
     (name "ngtcp2")
-    (version "1.9.1")
+    (version "1.10.0")
     (source
      (origin
        (method url-fetch)
@@ -4651,7 +4651,7 @@ network.")
                            "releases/download/v" version "/"
                            "ngtcp2-" version ".tar.gz"))
        (sha256
-        (base32 "1hw2wmkp3z0p64gv4zgcrjkspb9wrdqyjymc93c4992skn9br3hd"))))
+        (base32 "1g4mic08g7qjqlxjm1bvpmd7nj5pjfpwafj4r8rgj8h2cnc9gir4"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -4670,7 +4670,7 @@ QUIC protocol.")
 (define-public yggdrasil
   (package
     (name "yggdrasil")
-    (version "0.5.10")
+    (version "0.5.12")
     (source
      (origin
        (method git-fetch)
@@ -4681,7 +4681,7 @@ QUIC protocol.")
          (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0dd5181p07xshbd7q6p0hf3cvq1ahq6q36qjij0vzdil8dka6fmx"))
+        (base32 "072r52b6bkpc7bhn0v1z6dm6q5g9qf4k1xlqwrvzmzwai6fm0lrn"))
       (patches (search-patches "yggdrasil-extra-config.patch"))))
     (build-system go-build-system)
     (arguments
@@ -4729,7 +4729,8 @@ QUIC protocol.")
            go-golang-org-x-net
            go-golang-org-x-sys
            go-golang-org-x-text
-           go-golang-zx2c4-com-wireguard))
+           go-golang-zx2c4-com-wireguard
+           go-suah-dev-protect))
     (home-page "https://yggdrasil-network.github.io/blog.html")
     (synopsis
      "Experiment in scalable routing as an encrypted IPv6 overlay network")

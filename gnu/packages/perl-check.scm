@@ -48,6 +48,29 @@
 ;;;
 
 
+(define-public perl-fennec-lite
+  (package
+    (name "perl-fennec-lite")
+    (version "0.004")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/E/EX/EXODIST/Fennec-Lite-" version
+                    ".tar.gz"))
+              (sha256
+               (base32
+                "1aywy5vswrl9mv669cdp3kl9is06bi090bd55bwjyb3n68wqxqnw"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build))
+    (home-page "https://metacpan.org/release/Fennec-Lite")
+    (synopsis "Set of testing-related modules")
+    (description
+     "Fennec ties together several testing related modules and enhances their
+functionality in ways you don't get loading them individually.
+@code{Fennec::Lite} takes a minimalist approach to do for Fennec what Mouse
+does for Moose.")
+    (license perl-license)))
+
 (define-public perl-mock-config
   (package
     (name "perl-mock-config")
@@ -614,6 +637,33 @@ attributes.")
 files.")
     (license perl-license)))
 
+(define-public perl-test-file-sharedir
+  (package
+    (name "perl-test-file-sharedir")
+    (version "1.001002")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/K/KE/KENTNL/Test-File-ShareDir-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1bbs6cx69wcinq77gif4i4pmrj8a7lwb92sgvvxzrwmjnk5lfdmk"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-test-fatal))
+    (propagated-inputs (list perl-class-tiny
+                             perl-file-copy-recursive
+                             perl-file-sharedir
+                             perl-path-tiny
+                             perl-scope-guard))
+    (home-page "https://metacpan.org/release/Test-File-ShareDir")
+    (synopsis "Create a Fake ShareDir for your modules for testing.")
+    (description
+     "@code{Test::File::ShareDir} is some low level plumbing to enable a
+distribution to perform tests while consuming its own share directories in a
+manner similar to how they will be once installed.")
+    (license perl-license)))
+
 (define-public perl-test-file-sharedir-dist
   (package
     (name "perl-test-file-sharedir-dist")
@@ -684,6 +734,29 @@ separators automatically.")
     (description "This library provides functions to enable testing of files
 and directories.  For instance, the @code{file_ok} helper can test whether the
 contents of a file is equal to a particular string.")
+    (license perl-license)))
+
+(define-public perl-test-fork
+  (package
+    (name "perl-test-fork")
+    (version "0.02")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/M/MS/MSCHWERN/Test-Fork-" version
+                    ".tar.gz"))
+              (sha256
+               (base32
+                "0gnh8m81fdrwmzy1fix12grfq7sf7nn0gbf24zlap1gq4kxzpzpw"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build))
+    (home-page "https://metacpan.org/release/Test-Fork")
+    (synopsis "Test code which forks")
+    (description
+     "Testing code which forks is problematic because each test has a number
+associated with it.  Coordinating the test number amongst the parent and child
+processes is complicated. @code{Test::Fork} provides a function to smooth over
+the complications.")
     (license perl-license)))
 
 (define-public perl-test-harness
@@ -889,6 +962,33 @@ you @code{unmock()} the subroutine.")
 to particular interfaces with very little code.  You don't have to reimplement
 the behavior, just the input and the output.")
     (license perl-license)))
+
+(define-public perl-test-mockrandom
+  (package
+    (name "perl-test-mockrandom")
+    (version "1.01")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/D/DA/DAGOLDEN/Test-MockRandom-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1q6c474ya9najgj4wzgj0waj56ykrj3fxhgvkb1ylpgwhh6r6516"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/Test-MockRandom")
+    (synopsis
+     "Replaces random number generation with non-random number generation")
+    (description
+     "This module can test routines that manipulate random numbers by
+providing a known output from @code{rand}.  Given a list of seeds with
+@code{srand}, it will return each in turn.  After seeded random numbers are
+exhausted, it will always return 0.  Seed numbers must be of a form that
+meets the expected output from @code{rand} as called with no arguments: they
+must be between 0 (inclusive) and 1 (exclusive).  In order to facilitate
+generating and testing a nearly-one number, this module exports the function
+@code{oneish}, which returns a number just fractionally less than one.")
+    (license asl2.0)))
 
 (define-public perl-test-mocktime
   (package

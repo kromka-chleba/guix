@@ -2028,6 +2028,7 @@ about.")
      `(#:package "ordering"
        ;; Tests have a cyclic dependency on stdune
        #:tests? #f))
+    (properties '())
     (synopsis "Dune element ordering")
     (description "This library represents element ordering in OCaml.")))
 
@@ -5061,7 +5062,7 @@ writing to these structures, and they are accessed via the Bigarray module.")
     (build-system dune-build-system)
     (arguments
      `(#:package "ezjsonm"))
-    (native-inputs (list ocaml-alcotest js-of-ocaml node))
+    (native-inputs (list ocaml-alcotest js-of-ocaml node-lts))
     (propagated-inputs (list ocaml-jsonm ocaml-uutf ocaml-sexplib0 ocaml-hex))
     (home-page "https://github.com/mirage/ezjsonm/")
     (synopsis "Read and write JSON data")
@@ -6045,10 +6046,33 @@ yojson package.  The program @code{atdgen} can be used to derive OCaml-JSON
 serializers and deserializers from type definitions.")
     (license license:bsd-3)))
 
+(define-public ocaml-ppx-yojson-conv-lib
+  (package
+    (name "ocaml-ppx-yojson-conv-lib")
+    (version "0.16.0")
+    (home-page "https://github.com/janestreet/ppx_yojson_conv_lib")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+          (url home-page)
+          (commit (string-append "v" version))))
+        (sha256
+         (base32
+          "1npc1dbrcl3izi2rpf3rqz98jvsxrgzqn2vb95nf8wxgmh6gmrsc"))))
+    (build-system dune-build-system)
+    (propagated-inputs (list ocaml-yojson))
+    (properties `((upstream-name . "ppx_yojson_conv_lib")))
+    (synopsis "Runtime library used by ocaml PPX yojson convertor")
+    (description "Ppx_yojson_conv_lib is the runtime library used by
+ppx_yojson_conv, a ppx rewriter that can be used to convert ocaml types
+to a Yojson.Safe value.")
+    (license license:expat)))
+
 (define-public ocaml-merlin-lib
   (package
     (name "ocaml-merlin-lib")
-    (version "4.7-414")
+    (version "4.14-414")
     (source
      (origin
        (method git-fetch)
@@ -6058,7 +6082,7 @@ serializers and deserializers from type definitions.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1bd4j2zq0lyszbkibgky1z9swv4scb7ljww3fv1kqy0cya743b5l"))))
+         "1d9q6yl5i08j9lkmbywh5q1yfjxin5n9yp9bqwi7a9lanhwg8psi"))))
     (build-system dune-build-system)
     (arguments '(#:package "merlin-lib"
                  #:tests? #f))          ; no tests
@@ -6075,7 +6099,7 @@ interfaces and the standard higher-level merlin protocol.")
   (package
     (inherit ocaml-merlin-lib)
     (name "ocaml-merlin-lib")
-    (version "4.7.1-500")
+    (version "4.14-500")
     (source
      (origin
        (method git-fetch)
@@ -6085,7 +6109,7 @@ interfaces and the standard higher-level merlin protocol.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "05a87i2dkzv800nwb6y7b2j45avg8gs3gzb5a98wrj1i5zjqwh01"))))
+         "0rx0h8a7m435jmfvpxjf4682dxgb2f74ar1k1m3c3hls6yxgw0a9"))))
     (properties '())))
 
 (define-public ocaml5.0-merlin-lib
@@ -6166,6 +6190,48 @@ features for OCaml.  Emacs and Vim support is provided out-of-the-box.
 External contributors added support for Visual Studio Code, Sublime Text and
 Atom.")
      (license license:expat))))
+
+(define-public ocaml-lsp-server
+  (package
+    (name "ocaml-lsp-server")
+    (version "1.17.0")
+    (home-page "https://github.com/ocaml/ocaml-lsp")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                (url home-page)
+                (commit version)))
+              (sha256
+               (base32
+                "1w1m2mi7va3wcwgvgzqd3af6hrhx5zzyr3hqa228pcimp44w6f0h"))))
+    (build-system dune-build-system)
+    (arguments '(#:tests? #f)) ; tests are failing for v1.17
+    (propagated-inputs (list
+                             ocaml-re
+                             ocaml-ppx-yojson-conv-lib
+                             dune-rpc
+                             ocaml-chrome-trace
+                             dune-dyn
+                             dune-stdune
+                             ocaml-fiber
+                             ocaml-xdg
+                             dune-ordering
+                             ocaml-dune-build-info
+                             ocaml-spawn
+                             ocamlc-loc
+                             ocaml-uutf
+                             ocaml-pp
+                             ocaml-csexp
+                             ocamlformat-rpc-lib
+                             ocaml-odoc
+                             ocaml-merlin-lib))
+    (native-inputs (list ocaml-ppx-expect ocamlformat))
+    (properties `((upstream-name . "ocaml-lsp-server")))
+    (synopsis "LSP Server for OCaml")
+    (description "This package implements an Ocaml language server implementation.")
+    (license license:isc)))
+
+(define-public ocaml5.0-lsp-server (package-with-ocaml5.0 ocaml-lsp-server))
 
 (define-public ocaml-gsl
   (package
@@ -8692,7 +8758,7 @@ that involve memoization and recursion.")
 
 (define-public ocaml-dune-build-info
   (package
-    (inherit dune)
+    (inherit dune-ordering)
     (name "ocaml-dune-build-info")
     (build-system dune-build-system)
     (arguments
@@ -8707,6 +8773,97 @@ executable was built, such as the version of the project at which it was built
 or the list of statically linked libraries with their versions.  It supports
 reporting the version from the version control system during development to
 get an precise reference of when the executable was built.")))
+
+(define-public ocaml-xdg
+  (package
+    (inherit dune-ordering)
+    (name "ocaml-xdg")
+    (build-system dune-build-system)
+    (arguments
+     '(#:package "xdg"
+       ;; Tests have a cyclic dependency on stdune
+       #:tests? #f))
+    (propagated-inputs (list ocaml-odoc))
+    (synopsis "XDG Base Directory Specification library for ocaml")
+    (description
+     "This ocaml library returns user XDG directories such as XDG_CONFIG_HOME,
+     XDG_STATE_HOME.")))
+
+(define-public dune-rpc
+  (package
+    (inherit dune-ordering)
+    (name "dune-rpc")
+    (build-system dune-build-system)
+    (arguments
+     '(#:package "dune-rpc"
+       ;; Tests have a cyclic dependency on stdune
+       #:tests? #f))
+    (propagated-inputs (list ocaml-csexp
+                             dune-ordering
+                             dune-dyn
+                             ocaml-xdg
+                             dune-stdune
+                             ocaml-pp
+                             ocaml-odoc))
+    (synopsis "Communicate with ocaml dune using rpc")
+    (description "Library to connect and control a running dune instance.")))
+
+(define-public ocamlc-loc
+  (package
+    (inherit dune-ordering)
+    (name "ocamlc-loc")
+    (build-system dune-build-system)
+    (arguments
+     '(#:package "ocamlc-loc"
+       ;; Tests have a cyclic dependency on stdune
+       #:tests? #f))
+    (propagated-inputs (list dune-dyn ocaml-odoc))
+    (synopsis "Parse ocaml compiler output into structured form")
+    (description
+     "This library parses ocaml complier output and returns it as ocaml values.
+This library offers no backwards compatibility guarantees.")))
+
+(define-public ocaml-chrome-trace
+  (package
+    (inherit dune-ordering)
+    (name "ocaml-chrome-trace")
+    (build-system dune-build-system)
+    (arguments
+     '(#:package "chrome-trace"
+       ;; Tests have a cyclic dependency on stdune
+       #:tests? #f))
+    (propagated-inputs (list ocaml-odoc))
+    (synopsis "Chrome trace event generation library for ocaml")
+    (description
+     "Output trace data to a file in Chrome's trace_event format. This format is
+    compatible with chrome trace viewer chrome://tracing.
+    This library offers no backwards compatibility guarantees.")
+    (license license:expat)))
+
+(define-public ocaml-fiber
+  (package
+    (name "ocaml-fiber")
+    (home-page "https://github.com/ocaml-dune/fiber")
+    (version "3.7.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url home-page)
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "085v1dfxrb4wnkgysghj5q4vr4nx3nxr84rqmy874dr3pk30740n"))))
+    (build-system dune-build-system)
+    (arguments
+     '(#:package "fiber"))
+    (propagated-inputs (list dune-stdune dune-dyn))
+    (native-inputs (list ocaml-odoc ocaml-ppx-expect))
+    (synopsis "Structured concurrency library")
+    (description
+     "This library implements structured concurrency for ocaml.
+     It offers no backwards compatibility guarantees.")
+    (license license:expat)))
 
 (define-public ocaml-either
   (package
@@ -8782,6 +8939,18 @@ defined in OCaml 4.12.0.")
     (description "OCamlFormat is a tool to automatically format OCaml code in
 a uniform style.")
     (license license:expat)))
+
+(define-public ocamlformat-rpc-lib
+  (package
+    (inherit ocamlformat)
+    (name "ocamlformat-rpc-lib")
+    (arguments
+     '(#:package "ocamlformat-rpc-lib"))
+    (propagated-inputs (list ocaml-csexp ocaml-odoc))
+    (synopsis "Auto-formatter for OCaml code in RPC mode")
+    (description
+     "OCamlFormat is a tool to automatically format OCaml code in a uniform style.
+This package defines a RPC interface to OCamlFormat.")))
 
 (define-public ocaml-bigstringaf
   (package
@@ -9081,7 +9250,7 @@ libraries.")
            ocaml-yojson))
     (native-inputs
      ;; for tests
-     (list node ocaml-ppx-expect ocaml-num))
+     (list node-lts ocaml-ppx-expect ocaml-num))
     (properties `((upstream-name . "js_of_ocaml")))
     (home-page "https://ocsigen.org/js_of_ocaml/")
     (synopsis "Compiler from OCaml bytecode to Javascript")

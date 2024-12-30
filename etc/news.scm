@@ -34,6 +34,42 @@
 
 (channel-news
  (version 0)
+
+ (entry (commit "1305f78d05f4e0027162c1b7e783fc127a49fb8e")
+        (title
+         (en "@command{guix system reconfigure} now supports kexec")
+         (de "@command{guix system reconfigure} unterstützt jetzt kexec"))
+        (body
+         (en "If you are using Guix System, you'll be delighted to know that
+@command{guix system reconfigure} now loads the new system for fast reboot
+@i{via} Linux's kexec mechanism---unless given the @option{--no-kexec} option.
+The same goes for @command{guix deploy}.
+
+Kexec allows Linux to reboot straight into a new kernel (and operating
+system), bypassing the BIOS and the bootloader.  The @command{reboot} command,
+starting from Shepherd 1.0.0, has a new @option{--kexec} (or @option{-k})
+option that lets you reboot into a previously-loaded system; use
+@command{reboot --kexec} to take advantage of this new @command{guix system
+reconfigure} feature.
+
+Run @command{info \"(guix) Invoking guix system\"}, for more info.")
+         (de "Wenn bei Ihnen Guix System läuft, wird Sie die Nachricht
+erfreuen, dass @command{guix system reconfigure} von nun an das neue System für
+ein schnelles Neustarten des Rechners mit Linux’ kexec-Mechanismus
+vorbereitet – außer wenn Sie die Option @option{--no-kexec} angeben.  Genauso
+gilt das für @command{guix deploy}.
+
+Mit kexec kann Linux sofort einen neuen Kernel (und Betriebssystem) starten,
+ohne nochmal das BIOS und den Bootloader zu durchlaufen.  Seit
+Shepherd 1.0.0 kann der Befehl @command{reboot} eine neue Option
+@option{--kexec} (oder @option{-k}) entgegennehmen, womit Sie direkt in ein
+vorher geladenes System neu starten können.  Rufen Sie dazu @command{reboot
+--kexec} auf, um sich die neue Funktion von @command{guix system reconfigure}
+zunutze zu machen.
+
+Führen Sie @command{info \"(guix.de) Aufruf von guix system\"} aus für mehr
+Informationen.")))
+
  (entry (commit "ccf72d5074b0c5ba793e686cbb1d6eaad39824bf")
         (title
          (de "Neues Format @samp{appimage} für den Befehl @command{guix pack}")

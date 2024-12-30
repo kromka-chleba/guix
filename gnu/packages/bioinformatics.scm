@@ -6113,6 +6113,7 @@ doublets in single-cell RNA-seq data.")
         (base32
          "0agkz2w86k91rc9m5vx5hsqi5nm6fcmzkng6j99hjapz0r9233ql"))))
     (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (propagated-inputs
      (list python-importlib-resources
            python-ruamel.yaml))
@@ -6169,7 +6170,7 @@ and v1.1 to v1.2.")
                              " and not test_remote_packing_github_soft_links"
                              " and not test_value_from_two_concatenated_expressions"))))
     (inputs
-     (list node))
+     (list node-lts))
     (native-inputs
      (list python-mypy-extensions
            python-pytest
@@ -6260,7 +6261,7 @@ documents.")
            python-spython
            python-typing-extensions
            ;; Not listed as needed but still necessary:
-           node))
+           node-lts))
     (native-inputs
      (list python-arcp
            python-humanfriendly
@@ -7310,7 +7311,8 @@ average nucleotide identity.")
        (sha256
         (base32 "1fsnivwcw56q7lwz41c5kbfvxv0v17mmkx43i2a293l49fxj08j8"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pytest python-twine python-wheel))
+    (native-inputs (list python-pytest python-twine python-setuptools
+                         python-wheel))
     (home-page "https://github.com/WojciechMula/pyahocorasick")
     (synopsis "Library for finding multiple key strings in text")
     (description

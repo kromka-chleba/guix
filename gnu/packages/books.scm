@@ -42,7 +42,7 @@
 (define-public book-sparc
   (package
     (name "book-sparc")
-    (version "2.2.0")
+    (version "2.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -50,7 +50,7 @@
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "08aswb6cb02c0yqpkyj4vmfjvdjsffxqcqabivgv2gcgn8mhi4wm"))
+                "1kvspfp3z4z5laghrjr7my6nr8877myjiafbra2jrg3f42c5a4fl"))
               (file-name (git-file-name name version))
               (modules '((guix build utils)))))
     (build-system gnu-build-system)
@@ -124,7 +124,7 @@
     (synopsis "Book on combining art and technology")
     (description
      "Science, Programming, Art and Radioelectronics Club (SPARC) is a book that
-explains how to combine the topics mentined in the title to build projects.  The
+explains how to combine the topics mentioned in the title to build projects.  The
 book can be used to teach programming classes in colleges and to organize
 workshops in hackerspaces or other community-driven spaces.  Currently the book
 is available only in Russian.")

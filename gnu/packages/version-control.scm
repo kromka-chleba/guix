@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2013 Cyril Roelandt <tipecaml@gmail.com>
-;;; Copyright © 2013-2022 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013-2022, 2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2013, 2014 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2015, 2016 Mathieu Lirzin <mthl@gnu.org>
 ;;; Copyright © 2014, 2015, 2016 Mark H Weaver <mhw@netris.org>
@@ -258,14 +258,14 @@ Python 3.3 and later, rather than on Python 2.")
 (define-public git-minimal
   (package
     (name "git-minimal")
-    (version "2.46.0")
+    (version "2.47.1")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://kernel.org/software/scm/git/git-"
                                  version ".tar.xz"))
              (sha256
               (base32
-               "15bzq9m6c033qiz5q5gw1nqw4m452vvqax30wbms6z4bl9i384kz"))))
+               "046kdr5dhg31hjcg6wpfqnwwbaqdjyax7n8wx5s26fdf4fxzkn7k"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -714,7 +714,7 @@ everything from small to very large projects with speed and efficiency.")
                                ".tar.xz"))
                          (sha256
                           (base32
-                           "1lvvhzypllbyd8j6m0p9qgd3gqg10gch9s7lqif8vr9n80fqn4fw"))))))))))))
+                           "04zfxwdhja82mm24isk2jxhp30q6l3nnnzv6gdrc0mmhi5d01hpz"))))))))))))
     (native-inputs
      (modify-inputs (package-native-inputs git-minimal)
        ;; For subtree documentation.
@@ -1345,8 +1345,9 @@ collaboration using typical untrusted file hosts or services.")
    (license license:gpl3+)))
 
 (define-public cgit
-  (let ((commit "2a13177f3dce660954b1ce78bc83338fe64f6b33")
-        (rev "6"))
+  ;; Use the latest commit, as the latest tagged release is 5 years old.
+  (let ((commit "751a5b527de07dde30a69709c2d6fc6f05fafd06")
+        (rev "7"))
     (package
       (name "cgit")
       ;; Update the ‘git-source’ input as well.
@@ -1358,7 +1359,7 @@ collaboration using typical untrusted file hosts or services.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0g02rghwx6gda15ip1pd3rli6smis1mrcb904zlxfqmm6dlc7lca"))
+                  "0rfflh7fnfhchd7pdspn2r416c5kaya37cad918f7ldidzwvmp37"))
                 (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (arguments
@@ -1433,10 +1434,10 @@ collaboration using typical untrusted file hosts or services.")
                ;; Building cgit requires a Git source tree.
                ;; cgit is tightly bound to git.  Use GIT_VER from the Makefile,
                ;; which may not match the current (package-version git).
-               (uri "mirror://kernel.org/software/scm/git/git-2.46.2.tar.xz")
+               (uri "mirror://kernel.org/software/scm/git/git-2.47.1.tar.xz")
                (sha256
                 (base32
-                 "18rcmvximgyg3v1a9papi9djfamiak0ys5cmgx7ll29nhp3a3s2y"))
+                 "046kdr5dhg31hjcg6wpfqnwwbaqdjyax7n8wx5s26fdf4fxzkn7k"))
                (file-name "git-source.tar.xz"))
              bash-minimal
              openssl
@@ -1624,7 +1625,7 @@ default) of the repository.")
     (propagated-inputs
      (list python-smmap))
     (native-inputs
-     (list git python-nose))
+     (list git-minimal/pinned python-nose))
     (home-page "https://github.com/gitpython-developers/gitdb")
     (synopsis "Python implementation of the Git object database")
     (description
@@ -1646,17 +1647,18 @@ allowing to handle large objects with a small memory footprint.")
                 "1rarp97cpjnhi106k2yhb7kygdyflmlgq0icxv3ggzl4wvszv0yz"))))
     (build-system python-build-system)
     (arguments
-     `(#:tests? #f ;XXX: Tests can only be run within the GitPython repository.
-       #:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'embed-git-reference
-                    (lambda* (#:key inputs #:allow-other-keys)
-                      (substitute* "git/cmd.py"
-                        (("git_exec_name = \"git\"")
-                         (string-append "git_exec_name = \""
-                                        (assoc-ref inputs "git")
-                                        "/bin/git\""))))))))
+     (list #:tests? #f ;XXX: tests can only be run within the GitPython repository
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'embed-git-reference
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "git/cmd.py"
+                     (("git_exec_name = \"git\"")
+                      (string-append "git_exec_name = \""
+                                     (search-input-file inputs "/bin/git")
+                                     "\""))))))))
     (inputs
-     (list git))
+     (list git-minimal/pinned))
     (propagated-inputs
      (list python-gitdb python-typing-extensions))
     (native-inputs
@@ -2296,7 +2298,7 @@ visualize your public Git repositories on a web interface.")
               (invoke "git" "config" "--global" "user.name" "Your Name")
               (invoke "git" "config" "--global" "user.email" "you@example.com"))))))
     (native-inputs
-     (list git-minimal
+     (list git-minimal/pinned
            python-covdefaults
            python-coverage
            python-distlib
@@ -4462,7 +4464,12 @@ comes as a command line app and also an Emacs interface.")
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'fix-paths
-           (lambda* (#:key outputs #:allow-other-keys)
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (substitute* '("src/github.com/github/git-sizer/git/git.go")
+               (("gitBin, err := findGitBin\\(\\)")
+                (string-append "gitBin := \""
+                               (search-input-file inputs "bin/git")
+                               "\"\n\tvar err error")))
              (substitute* '("src/github.com/github/git-sizer/git_sizer_test.go")
                (("bin/git-sizer")
                 (string-append (assoc-ref outputs "out")
@@ -4476,7 +4483,7 @@ comes as a command line app and also an Emacs interface.")
                          ;; Git repository.
                          '("TestBomb" "TestFromSubdir" "TestRefgroups"
                            "TestRefSelections" "TestTaggedTags"))))))))
-    (native-inputs (list git))
+    (inputs (list git-minimal/pinned))
     (propagated-inputs
      (list go-github-com-cli-safeexec
            go-github-com-davecgh-go-spew

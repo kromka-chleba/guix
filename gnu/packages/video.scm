@@ -2375,13 +2375,13 @@ It is usually a complement to @code{ffmpeg-normalize}.")
 (define-public ffmpeg-normalize
   (package
     (name "ffmpeg-normalize")
-    (version "1.28.3")
+    (version "1.31.0")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "ffmpeg-normalize" version))
+              (uri (pypi-uri "ffmpeg_normalize" version))
               (sha256
                (base32
-                "19j1pi0gcm9yzllszaji06c1i0r9kl586ada5d2hliahajwly0zk"))))
+                "0f8m0ikn4jw975fy66zli6z7zck5ng717dk3hravxzpj1kf1s6vx"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases
@@ -2878,7 +2878,7 @@ Jellyfin.  It has support for various media files without transcoding.")
 (define-public gallery-dl
   (package
     (name "gallery-dl")
-    (version "1.27.4")
+    (version "1.28.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/mikf/gallery-dl"
@@ -2886,7 +2886,7 @@ Jellyfin.  It has support for various media files without transcoding.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "13qq16fi6zq356qbnwb8a898m7gq20r67j2lmb4g37389yqvkk6v"))))
+                "0j4hxp1lbcxgg34ilzhcpxvswgnvvrlk66pn3w9ksv5g8jdz7rpi"))))
     (build-system python-build-system)
     (inputs (list python-requests ffmpeg))
     (home-page "https://github.com/mikf/gallery-dl")
@@ -3167,7 +3167,7 @@ YouTube.com and many more sites.")
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2024.11.18")
+    (version "2024.12.23")
     (source
      (origin
        (method git-fetch)
@@ -3179,7 +3179,7 @@ YouTube.com and many more sites.")
        (snippet '(substitute* "pyproject.toml"
                    (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "019wkjbjcdsf56sk5ihnkprp02a80vkja448iwps1illzb5jp52f"))))
+        (base32 "19w4lgnr3n3lrcf81285ic3qpsjyi8vhp3mfq762minllqvgcfzb"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:tests? ,(not (%current-target-system))
@@ -3889,7 +3889,7 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
 (define-public mlt
   (package
     (name "mlt")
-    (version "7.24.0")
+    (version "7.28.0")
     (source
      (origin
        (method git-fetch)
@@ -3898,7 +3898,7 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "08fgcf20v4q52lfdwzvscbbppa6m582f551q6fzxz2vs5936w3wx"))))
+        (base32 "074rb3d3k9i6vmc2201qa7yfnnz8xs3kkvbnfwngjzyrzk6r14xr"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -6070,7 +6070,7 @@ transitions, and effects and then export your film to many common formats.")
 (define-public shotcut
   (package
     (name "shotcut")
-    (version "23.09.29")
+    (version "24.11.17")
     (source
      (origin
        (method git-fetch)
@@ -6079,7 +6079,7 @@ transitions, and effects and then export your film to many common formats.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1r380lpa79i6821r3v84dm47vqxk4smx2k1wvf9afylw95v3i8zv"))))
+        (base32 "15p48l5qphhlx2yrxvnya585ws5aq6k9m4w26qbpf60i0qnldq5h"))))
     (build-system qt-build-system)
     (arguments
      `(#:tests? #f                      ;there are no tests
@@ -6125,6 +6125,7 @@ transitions, and effects and then export your film to many common formats.")
            mlt
            pulseaudio
            qtbase
+           qtcharts
            qtdeclarative
            qtmultimedia
            sdl2))

@@ -4,6 +4,7 @@
 ;;; Copyright © 2022, 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 Benjamin <benjamin@uvy.fr>
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
+;;; Copyright © 2024 Jordan Moore <lockbox@struct.foo>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -70,7 +71,7 @@
 (define-public haproxy
   (package
     (name "haproxy")
-    (version "3.0.3")
+    (version "3.1.1")
     (source
      (origin
        (method url-fetch)
@@ -78,7 +79,7 @@
                            (version-major+minor version)
                            "/src/haproxy-" version ".tar.gz"))
        (sha256
-        (base32 "1pqrgndf5ciyq3l4ywrjj3q917dms59cmzxk5ihd400bg8c3r9rr"))))
+        (base32 "0wyjyzazlwpi3hm4ri699lhyzbb703i5fp240bk7icm4kd1ms6wc"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -143,7 +144,7 @@ applications.")
 (define-public kronosnet
   (package
     (name "kronosnet")
-    (version "1.29")
+    (version "1.30")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -152,7 +153,7 @@ applications.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0dgj8wj0s8x6z7ahgp03fvrx4xv2v7lv8d0j7qbr9jw3ssj0rdc3"))))
+                "1vpar3q49fb0s7g76kq39g4gzql38pcji6w71yf7c6n9k8vllcc9"))))
     (build-system gnu-build-system)
     (arguments
      ;; XXX: Multiple tests failed. Tests
@@ -203,7 +204,7 @@ applications.")
 (define-public nats-server
   (package
     (name "nats-server")
-    (version "2.10.16")
+    (version "2.10.24")
     (source
      (origin
        (method git-fetch)
@@ -212,7 +213,7 @@ applications.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1l5132swcxxk1d0xdwh1aqrlkcmcss9m9y6hky2yk6b33l1w681v"))))
+        (base32 "0r1d0l3mmb90956wl97vqlb3cdhax7jkqa95hvx9b380g93a08py"))))
     (build-system go-build-system)
     (inputs
      (list go-github-com-klauspost-compress
@@ -328,7 +329,7 @@ instrumentation
 (define-public corosync
   (package
     (name "corosync")
-    (version "3.1.8")
+    (version "3.1.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -337,7 +338,7 @@ instrumentation
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "02imkif6lzhr8mwbwphdp4m6w987pqnrhai8zx06vpygiasx6cyp"))))
+                "1l6vgn61q3qv439lrdb9nnbkx5yvda6hy9da0jf3bggjdwqq9g3a"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags #~'("--disable-static")
@@ -377,7 +378,7 @@ lost.
 (define-public pacemaker
   (package
     (name "pacemaker")
-    (version "2.1.7")
+    (version "2.1.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -386,7 +387,7 @@ lost.
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0vhimylbkwabi0hksgs66awn9iq3ik02k1n4xghxh81nhz7kjmdz"))))
+                "154wnh7yrblq3jlcyqy19yvncjcy5sh73nphakhm0kq8qq64m208"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags #~(list "--with-corosync" "--disable-static"

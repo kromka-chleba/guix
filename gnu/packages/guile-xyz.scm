@@ -2520,7 +2520,7 @@ capabilities.")
 (define-public guile-g-golf
   (package
     (name "guile-g-golf")
-    (version "0.8.0-a.1")
+    (version "0.8.0-rc9")
     (source
      (origin
        (method git-fetch)
@@ -2529,7 +2529,7 @@ capabilities.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1lszlssa6k8dhhya5px271gfzas7fyy1iwjqmlxibz5vdirzi565"))))
+        (base32 "1x340xr2ki1y3w1cg37fhjsfw27268vlsyc8hby9lmv13l349l8b"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -6262,8 +6262,8 @@ is an attempt to combine both into something useful.")
       (license license:asl2.0))))
 
 (define-public guile-knots
-  (let ((commit "2f39c58d6ca72cd869ba69e03d639f36d497e9a8")
-        (revision "1"))
+  (let ((commit "6119ece5cba6cbdc638ccfb19aba52ea246dfe50")
+        (revision "3"))
     (package
     (name "guile-knots")
     (version (git-version "0" revision commit))
@@ -6274,7 +6274,7 @@ is an attempt to combine both into something useful.")
                     (commit commit)))
               (sha256
                (base32
-                "1kv2sw4pif2hjcfghjlzdv0plkdqkv4mpq2a18mj38jhwsjxr1q2"))
+                "1dn9mrla0inhmfcyl725jh6dfwrg6xd56jp7c3n3plmjz3knyfmj"))
               (file-name (string-append name "-" version "-checkout"))))
     (build-system gnu-build-system)
     (native-inputs
@@ -6282,6 +6282,7 @@ is an attempt to combine both into something useful.")
            autoconf
            automake
            guile-3.0
+           guile-lib
            guile-fibers))
     (inputs
      (list guile-3.0))
@@ -6321,6 +6322,27 @@ features a parser to parse and serialize GraphQL documents, a type system to
 create GraphQL schemas, an execution engine to execute GraphQL queries, and a
 HTTP handler to implement a HTTP GraphQL endpoint.")
     (license license:agpl3+)))
+
+(define-public guile-libnotify
+  (package
+    (name "guile-libnotify")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ekaitz-zarraga/guile-libnotify")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "055d3xjx819yr1mhph3lvciqn17hxmqrh3vp8cjz4905yr0bf7r2"))))
+    (build-system gnu-build-system)
+    (native-inputs (list autoconf automake pkg-config texinfo))
+    (inputs (list guile-3.0 libnotify))
+    (synopsis "Guile bindings for libnotify")
+    (description "Provides bindings for GNOME's libnotify C library to Guile")
+    (home-page "https://github.com/ekaitz-zarraga/guile-libnotify")
+    (license license:gpl3+)))
 
 (define-public lokke
   (let ((commit "92d36370dc6d218ff3bf315e56ebef93808c1b79")

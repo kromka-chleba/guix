@@ -40,7 +40,7 @@
 (define-public node-acorn
   (package
     (name "node-acorn")
-    (version "8.4.1")
+    (version "8.7.1")
     (source
      (origin
        (method git-fetch)
@@ -49,7 +49,7 @@
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "068h5gysz8bbslq31dva8f223rdf8l7w6nxcxjnv4zdprwkzkhaa"))))
+        (base32  "10lpqbq4wvndx13mh7yjqgpcp3ac81b9zmrn4qb1qpzgy462fa92"))))
     (build-system node-build-system)
     (arguments
      '(#:tests? #f
@@ -114,7 +114,7 @@ architecture supporting plugins.")
 (define-public node-addon-api
   (package
     (name "node-addon-api")
-    (version "4.2.0")
+    (version "8.3.0")
     (source
      (origin
        (method git-fetch)
@@ -123,7 +123,7 @@ architecture supporting plugins.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bhvfi2m9nxfz418s619914vmidcnrzbjv6l9nid476c3zlpazch"))))
+        (base32 "1swvhdss2w636l24bnssnwb1rqh7i6lhpkk4knbrvpspqf80kagc"))))
     (inputs
      (list python node-safe-buffer))
     (build-system node-build-system)
@@ -148,8 +148,10 @@ architecture supporting plugins.")
                 "eslint-plugin-node"
                 "eslint-plugin-promise"
                 "fs-extra"
+                "neostandard"
                 "path"
-                "pre-commit"))))
+                "pre-commit"
+                "semver"))))
          (add-after 'unpack 'skip-js-tests
            ;; We can't run the js-based tests,
            ;; but we can still do the C++ parts
@@ -705,7 +707,7 @@ a string consisting of a number and a time unit is converted to milliseconds.")
 (define-public node-nan
   (package
     (name "node-nan")
-    (version "2.15.0")
+    (version "2.22.0")
     (source
      (origin
        (method git-fetch)
@@ -714,7 +716,7 @@ a string consisting of a number and a time unit is converted to milliseconds.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18xslh9va5ld872scrp5y4251ax9s3c6qh0lnl1200lpzbsxy7yd"))))
+        (base32 "02gqm23x26glffvyxrnk610hy3hg0kwh2v58dhnb032l0jhjzqvp"))))
     (build-system node-build-system)
     (arguments
      `(#:phases

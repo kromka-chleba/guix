@@ -16,6 +16,7 @@
 ;;; Copyright © 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Christian Miller <christian.miller@dadoes.de>
+;;; Copyright © 2024 Ricardo Wurmus <rekado@elephly.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -97,6 +98,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages prometheus)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-crypto)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages regex)
@@ -372,7 +374,7 @@ Conferencing} and @acronym{ICB, Internet Citizen's Band}.")
 (define-public weechat
   (package
     (name "weechat")
-    (version "4.5.0")
+    (version "4.5.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -381,7 +383,7 @@ Conferencing} and @acronym{ICB, Internet Citizen's Band}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0i1qh3bsvcxcf0gddn3lk9p6v6hhbglpdxcaav4zzajpiq944h69"))))
+                "1q1d3lwrl4jnxn496cx7rbzwfvq8wa2fbk3p8n6yyvrahyhiz628"))))
     (build-system cmake-build-system)
     (outputs '("out" "doc"))
     (native-inputs
@@ -810,6 +812,62 @@ interface for those who are accustomed to the ircII way of doing things.")
                    ;; distribute binaries.
                    (license:non-copyleft "http://epicsol.org/copyright")))))
 
+(define-public python-girc
+  (package
+    (name "python-girc")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "girc" version))
+       (sha256
+        (base32 "0gbx64j8782m1x2w9dkiynvshj43m0y4i0xnsiz0gsmyfl0jk8jl"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (substitute* '("girc/utils.py"
+                                "girc/imapping.py")
+                   (("collections.MutableSequence")
+                    "collections.abc.MutableSequence")
+                   (("collections.MutableMapping")
+                    "collections.abc.MutableMapping")
+                   (("collections.Mapping")
+                    "collections.abc.Mapping"))))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'delete-some-tests
+           ;; This file depends on python-irc-parser-tests, which depends on
+           ;; this package.
+           (lambda _ (delete-file "tests/test_parse.py"))))))
+    (propagated-inputs (list python-docopt))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/DanielOaks/girc")
+    (synopsis "IRC library for Python")
+    (description
+     "This package provides an IRC library for Python, based on asyncio.")
+    (license license:isc)))
+
+(define-public python-ircmatch
+  (package
+    (name "python-ircmatch")
+    (version "1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ircmatch" version))
+       (sha256
+        (base32 "1bn92bnk958c097jhwkas24i4a07h905hifix7bg111npc48536l"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://pypi.org/project/ircmatch/")
+    (synopsis "Library for matching IRC masks based on atheme")
+    (description "This is a python extension which provides string comparison
+and matching functions from Atheme.  They are hand-optimized for high
+performance when matching IRC hostmasks.")
+    (license license:isc)))
+
 (define-public python-irc-parser-tests
   (package
     (name "python-irc-parser-tests")
@@ -824,11 +882,10 @@ interface for those who are accustomed to the ircII way of doing things.")
        (sha256
         (base32 "0x0psq31f43d88b8jhaqwd9f1ykiqm4j13i8nxgcgkgp992cw002"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      ;; Tests require python-girc which fails to build on Python 3.10.
-      #:tests? #f))
     (propagated-inputs (list python-pyyaml))
+    (native-inputs
+     (list python-girc python-ircmatch
+           python-setuptools python-wheel))
     (home-page "https://github.com/ircdocs/parser-tests")
     (synopsis "Tests for various IRC protocol parsers")
     (description

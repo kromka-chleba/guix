@@ -103,6 +103,7 @@
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gawk)
   #:use-module (gnu packages gcc)
+  #:use-module (gnu packages gd)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
@@ -2280,6 +2281,155 @@ DBIx::Class::Schema by scanning database table definitions and setting up the
 columns, primary keys, unique constraints and relationships.")
     (license license:perl-license)))
 
+(define-public perl-dbix-class-deploymenthandler
+  (package
+    (name "perl-dbix-class-deploymenthandler")
+    (version "0.002233")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/M/MM/MMCCLIMON/DBIx-Class-DeploymentHandler-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1bikp1q3pm1xphfdr8kmsqvzzpk06an3112mhb6gl8vlpg81ch4m"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-aliased
+                         perl-dbd-sqlite
+                         perl-dbix-class-schema-loader
+                         perl-test-fatal
+                         perl-test-most
+                         perl-test-requires))
+    (propagated-inputs (list perl-carp-clan
+                             perl-context-preserve
+                             perl-dbix-class
+                             perl-log-contextual
+                             perl-module-runtime
+                             perl-moose
+                             perl-moosex-role-parameterized
+                             perl-namespace-autoclean
+                             perl-path-class
+                             perl-sql-splitstatement
+                             perl-sql-translator
+                             perl-sub-exporter-progressive
+                             perl-sub-quote
+                             perl-text-brew
+                             perl-try-tiny
+                             perl-yaml))
+    (home-page "https://metacpan.org/release/DBIx-Class-DeploymentHandler")
+    (synopsis "Extensible DBIx::Class deployment")
+    (description
+     "@code{DBIx::Class::DeploymentHandler} is a tool for deploying and
+upgrading databases with @code{DBIx::Class}.  It is designed to be much more
+flexible than @code{DBIx::Class::Schema::Versioned}, hence the use of Moose
+and lots of roles.")
+    (license license:perl-license)))
+
+(define-public perl-dbix-simple
+  (package
+    (name "perl-dbix-simple")
+    (version "1.37")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/J/JU/JUERD/DBIx-Simple-" version
+                    ".tar.gz"))
+              (sha256
+               (base32
+                "1qyaj01zb6xplzcp7pj0b9609fvd89c9c4an3i00g2g05jm13ls6"))))
+    (build-system perl-build-system)
+    (propagated-inputs (list perl-dbi))
+    (home-page "https://metacpan.org/release/DBIx-Simple")
+    (synopsis "Object-oriented interface to DBI")
+    (description
+     "DBIx::Simple provides a simplified interface to DBI, Perl's powerful
+database module.  This module is aimed at rapid development and easy
+maintenance.  Query preparation and execution are combined in a single method,
+the result object (which is a wrapper around the statement handle) provides
+easy row-by-row and slurping methods.")
+    ;; The POD info says: "Pick your favorite OSI-approved license"
+    ;; Use unlicense because it has the least restrictions.
+    (license license:unlicense)))
+
+(define-public perl-dbicx-testdatabase
+  (package
+    (name "perl-dbicx-testdatabase")
+    (version "0.05")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/J/JR/JROCKWAY/DBICx-TestDatabase-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1kqaiygxiarrqkgqbq1s3xilx77msbdsqrdaqf4628811d9w4fwf"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-dbix-class perl-module-install))
+    (propagated-inputs (list perl-dbd-sqlite
+                             perl-sql-translator))
+    (home-page "https://metacpan.org/release/DBICx-TestDatabase")
+    (synopsis "Create a temporary database from a DBIx::Class::Schema")
+    (description
+     "This module creates a temporary SQLite database, deploys a DBIC schema,
+and then connects to it. This lets you easily test DBIC schema. Since you have
+a fresh database for every test, you don't have to worry about cleaning up
+after your tests, ordering of tests affecting failure, etc.")
+    (license license:perl-license)))
+
+(define-public perl-dbix-class-dynamicdefault
+  (package
+    (name "perl-dbix-class-dynamicdefault")
+    (version "0.04")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/M/MS/MSTROUT/DBIx-Class-DynamicDefault-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1yssda00988hn9v96jl95apbzib74vgbcgf69m5mhhj64amm33r2"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-dbicx-testdatabase perl-module-install))
+    (propagated-inputs (list perl-dbix-class))
+    (home-page "https://metacpan.org/release/DBIx-Class-DynamicDefault")
+    (synopsis "Automatically set and update fields")
+    (description
+     "Automatically set and update fields with values calculated at runtime.
+Ipdate or create actions will set the specified columns to the value returned
+by the callback you specified as a method name or code reference.")
+    (license license:perl-license)))
+
+(define-public perl-dbix-class-timestamp
+  (package
+    (name "perl-dbix-class-timestamp")
+    (version "0.14")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/R/RI/RIBASUSHI/DBIx-Class-TimeStamp-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1zhr4r5ffihqsh2imap7zmps2y0h71piqqhg2nqhcwkjhvlxb958"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-class-accessor-grouped
+                         perl-datetime-format-mysql
+                         perl-datetime-format-sqlite
+                         perl-dbd-sqlite
+                         perl-module-install
+                         perl-test-pod
+                         perl-time-warp))
+    (propagated-inputs (list perl-datetime
+                             perl-dbix-class
+                             perl-dbix-class-dynamicdefault))
+    (home-page "https://metacpan.org/release/DBIx-Class-TimeStamp")
+    (synopsis
+     "DBIx::Class extension to update and create date and time based fields")
+    (description
+     "This package works in conjunction with @code{InflateColumn::DateTime} to
+automatically set update and create date and time based fields in a table.")
+    (license license:perl-license)))
+
 (define-public perl-dbd-pg
   (package
     (name "perl-dbd-pg")
@@ -2489,6 +2639,90 @@ non-standard extensions, into the atomic statements it is composed of.")
 claim to be a parser or query verifier.  It just creates sane tokens from a
 valid SQL query.")
     (license license:perl-license)))
+
+(define-public perl-sql-translator
+  (package
+    (name "perl-sql-translator")
+    (version "1.63")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/V/VE/VEESH/SQL-Translator-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "0cric118ms3dcnb3m2a1jdhdxmai8wwp5jbx34mf72s9jd6b11aq"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-file-sharedir-install
+                         perl-json-maybexs
+                         perl-test-differences
+                         perl-test-exception
+                         perl-test-most
+                         perl-xml-writer
+                         perl-yaml))
+    (propagated-inputs (list perl-carp-clan
+                             perl-dbi
+                             perl-file-sharedir
+                             perl-gd
+                             perl-graph
+                             perl-graphviz
+                             perl-moo
+                             perl-package-variant
+                             perl-parse-recdescent
+                             perl-spreadsheet-parseexcel
+                             perl-strictures-2
+                             perl-sub-quote
+                             perl-template-toolkit
+                             perl-text-recordparser
+                             perl-try-tiny
+                             perl-xml-libxml))
+    (home-page "https://metacpan.org/release/SQL-Translator")
+    (synopsis "Manipulate structured data definitions (SQL and more)")
+    (description
+     "@code{SQL::Translator} is a group of Perl modules that converts
+vendor-specific SQL table definitions into other formats, such as other
+vendor-specific SQL, ER diagrams, documentation (POD and HTML), XML, and
+@code{Class::DBI} classes. The main focus is SQL, but parsers exist for other
+structured data formats, including Excel spreadsheets and arbitrarily
+delimited text files. Through the separation of the code into parsers and
+producers with an object model in between, it's possible to combine any parser
+with any producer, to plug in custom parsers or producers, or to manipulate
+the parsed data via the built-in object model. Presently only the definition
+parts of SQL are handled (CREATE, ALTER), not the manipulation of
+data (INSERT, UPDATE, DELETE).")
+    (license license:perl-license)))
+
+(define-public perl-test-postgresql
+  (package
+    (name "perl-test-postgresql")
+    (version "1.29")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/T/TJ/TJC/Test-PostgreSQL-" version
+                    ".tar.gz"))
+              (sha256
+               (base32
+                "17jgiqdyprb8q4855anica2kr0lxdi9rnq27vsfclk6ai7jzgb0q"))))
+    (build-system perl-build-system)
+    (arguments
+     (list #:tests? #f)) ;2/41 fail, require running Postgres server
+    (native-inputs (list perl-module-build-tiny
+                         perl-test-sharedfork))
+    (propagated-inputs (list perl-dbd-pg
+                             perl-dbi
+                             perl-file-which
+                             perl-function-parameters
+                             perl-moo
+                             perl-tie-hash-method
+                             perl-try-tiny
+                             perl-type-tiny))
+    (home-page "https://metacpan.org/release/Test-PostgreSQL")
+    (synopsis "PostgreSQL runner for tests")
+    (description
+     "@code{Test::PostgreSQL} automatically setups a PostgreSQL instance in a
+temporary directory, and destroys it when the perl script exits.")
+    (license license:artistic2.0)))
 
 (define-public unixodbc
   (package

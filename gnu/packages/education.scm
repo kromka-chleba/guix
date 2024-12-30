@@ -501,7 +501,7 @@ specialized device.")
 (define-public openboard
   (package
     (name "openboard")
-    (version "1.7.1")
+    (version "1.7.3")
     (source
      (origin
        (method git-fetch)
@@ -510,7 +510,7 @@ specialized device.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1lxwf50n0bfjjnpq5z82f3apsv9mn834js7f2spw1k1f06a72z41"))))
+        (base32 "1098pys5p82sx97xrhw54vlkn6jly0rhq8b09grmmx2h4mcpj2i2"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -616,7 +616,7 @@ a pen-tablet display and a beamer.")
 (define-public fet
   (package
     (name "fet")
-    (version "6.22.2")
+    (version "6.28.4")
     (source
      (origin
        (method url-fetch)
@@ -625,7 +625,7 @@ a pen-tablet display and a beamer.")
               (list (string-append directory base)
                     (string-append directory "old/" base))))
        (sha256
-        (base32 "1h0yhqcpw6nhzj30fjmwwj63i1nsvrmggm56yqs4v14mli0c08y0"))))
+        (base32 "11mcbgi8lima4fng78lqdkd5km212drkk5l4bkzz1pz1k7wcykfn"))))
     (build-system gnu-build-system)
     (arguments
      (list

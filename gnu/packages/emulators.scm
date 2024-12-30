@@ -746,7 +746,7 @@ The following systems are supported:
 (define-public mgba
   (package
     (name "mgba")
-    (version "0.10.3")
+    (version "0.10.4")
     (source
      (origin
        (method git-fetch)
@@ -756,7 +756,7 @@ The following systems are supported:
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1h4wsx76kylsn4f4418swbp6zjp1x94dfn751iks1i6i529pfay1"))
+         "0lfn5jhgqb06f1i1b8w8fvbi4fy4k8dvialblwg8h49qjqmf610q"))
        (modules '((guix build utils)))
        (snippet
         ;; Make sure we don't use the bundled software.
@@ -2574,14 +2574,14 @@ that compiles to WebAssembly.")
 (define-public scummvm
   (package
     (name "scummvm")
-    (version "2.8.1")
+    (version "2.9.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://downloads.scummvm.org/frs/scummvm/" version
                            "/scummvm-" version ".tar.xz"))
        (sha256
-        (base32 "1dr70z1dkfw2gp43jq0qp7g73glr36a7qdcv1jvp1m927nhz95vy"))))
+        (base32 "0lllm5fsmb5gdrxnpfryyl85i4sb1dkrqw97j7q4glkhplr3bcym"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -3355,6 +3355,39 @@ This is intended to be used with the Jolly Good Reference Frontend
                    license:expat        ;gb
                    license:isc          ;libco
                    license:lgpl2.1+))))
+
+(define-public libretro-beetle-gba
+  ;; There are no releases.  Use the latest commit.
+  (let ((commit "6cee80685f735ea6c2373db2622a1f1ee9f39d39")
+        (revision "0"))
+    (package
+      (name "libretro-beetle-gba")
+      ;; Use Mednafen core version as base.  Defined in libretro.cpp:73.
+      (version (git-version "0.9.36" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/libretro/beetle-gba-libretro")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "14fm2g3hrsvvd57d6m9apzc30ypa4m0m5hk2viq422fm2l9y0xbb"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list #:make-flags #~(list (string-append "CC=" #$(cc-for-target))
+                                  (string-append "GIT_VERSION=" #$commit)
+                                  (string-append "prefix=" #$output))
+             #:tests? #f                ;no tests
+             #:phases #~(modify-phases %standard-phases
+                          (delete 'configure))))
+      (home-page "https://github.com/libretro/beetle-gba-libretro")
+      (synopsis "Standalone port of Mednafen GBA to libretro")
+      (description
+       "A standalone port of Mednafen’s GameBoy Advance emulator called Beetle
+GBA to libretro.  Beetle GBA is based on VBA-M, itself a fork of Visual Boy
+Advance.")
+      (license license:gpl2+))))
 
 (define-public libretro-bsnes-jg
   ;; There aren't any release yet; use the latest commit.

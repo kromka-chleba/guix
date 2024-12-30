@@ -53,6 +53,7 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages chemistry)
   #:use-module (gnu packages cmake)
+  #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crypto)
@@ -78,6 +79,7 @@
   #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages simulation)
   #:use-module (gnu packages sphinx)
+  #:use-module (gnu packages ssh)
   #:use-module (gnu packages statistics)
   #:use-module (gnu packages time)
   #:use-module (gnu packages xdisorg)
@@ -89,8 +91,88 @@
   #:use-module (guix git-download)
   #:use-module (guix utils)
   #:use-module (guix build-system cargo)
+  #:use-module (guix build-system cmake)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject))
+
+(define-public pyre
+  (package
+    (name "pyre")
+    (version "1.12.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pyre/pyre")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0crmssga481q2ggwcmj40nj5n9975wri14p609jdr9hwg4vdyvj2"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:imported-modules (append %cmake-build-system-modules
+                                 %python-build-system-modules)
+      #:modules '((guix build cmake-build-system)
+                  ((guix build python-build-system) #:prefix python:)
+                  (guix build utils))
+      #:configure-flags
+      #~(list (string-append "-DPYRE_VERSION=" #$version)
+              (string-append "-DPYRE_DEST_PACKAGES="
+                             (python:site-packages %build-inputs %outputs)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'enable-bytecode-determinism
+            (assoc-ref python:%standard-phases 'enable-bytecode-determinism))
+          ;; Move the check phase after the Python 'pyre' module
+          ;; is installed and made available.
+          (delete 'check)
+          (add-after 'install 'add-to-pythonpath
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (python:add-installed-pythonpath inputs outputs)))
+          (add-after 'add-to-pythonpath 'wrap
+            (assoc-ref python:%standard-phases 'wrap))
+          (add-after 'add-to-pythonpath 'check
+            (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
+              (when tests?
+                (setenv "CTEST_OUTPUT_ON_FAILURE" "1")
+                (let ((ignored-tests
+                       (list
+                        ;; The MPI tests are failing for unknown reasons (see:
+                        ;; https://github.com/pyre/pyre/issues/126).
+                        "tests.mpi"
+                        ;; These tests have a cleanup phase that fails
+                        ;; non-deterministically (see:
+                        ;; https://github.com/pyre/pyre/issues/125).
+                        "tests.pyre.lib.viz.flow"
+                        ;; This test expects a TCP port 22 to be listening.
+                        "tests.pyre.pkg.ipc.tcp.py"
+                        ;; These postgres tests require a running postgresql
+                        ;; daemon; they are also skipped in upstream CI.
+                        "tests.postgres.ext"
+                        ;; This test fails due to pre-1980 timestamps, not
+                        ;; supported by ZIP.
+                        "tests.pyre.pkg.filesystem.zip_open.py"
+                        ;; This one trips on the patched python3 shebang.
+                        "tests.pyre.pkg.filesystem.local_open.py")))
+                  (invoke "ctest"
+                          "-j" (if parallel-tests?
+                                   (number->string (parallel-job-count))
+                                   "1")
+                          "-E" (string-join ignored-tests "|")))))))))
+    (native-inputs (list openssh-sans-x python python-numpy pybind11 zip))
+    (inputs (list gsl hdf5 openmpi postgresql))
+    (propagated-inputs (list python-pyyaml)) ;for the Python bindings
+    (home-page "http://pyre.orthologue.com/")
+    (synopsis "Framework for building Scientific applications")
+    (description
+     "This package provides a framework for building scientific applications.
+It aims to bring state of the art software design practices to scientific
+computing, with the goal of providing a strong skeleton on which to build
+scientific codes by steering the implementation towards usability and
+maintainability.")
+    (license license:bsd-3)))
 
 (define-public python-cvxpy
   (package
@@ -754,10 +836,7 @@ of regular expressions from text data and automatic test generation.")
 (define-public python-trimesh
   (package
     (name "python-trimesh")
-    ;; XXX: The latest version fails on sanity check, requiring newer
-    ;; setuptools which is not yet available on master. Update when
-    ;; python-team is merged.
-    (version "4.1.8")
+    (version "4.5.3")
     (source
      (origin
        (method git-fetch) ; no tests in PyPI
@@ -766,39 +845,36 @@ of regular expressions from text data and automatic test generation.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1vkp7znrlsqaiyg16py3jcqspi6yq4wh48lzng4sg248hqzhzspa"))))
+        (base32 "17fyapp8nffnnf95bmcvllvg41fjlpvlv6qndbm048hnyayixxld"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      #~(list "-k" (string-append
-                    ;; XXX: When more optional modules are available review
-                    ;; disabled tests once again.
-                    ;;
-                    ;; Disable tests requiring optional, not packed modules.
-                    "not test_bezier_example"
-                    " and not test_discrete"
-                    " and not test_dxf"
-                    " and not test_ply_path_bezier"
-                    " and not test_ply_path_line"
-                    " and not test_ply_path_multi"
-                    " and not test_revolve"
-                    " and not test_screw"
-                    " and not test_simple_closed"
-                    " and not test_simple_extrude"
-                    " and not test_simple_open"
-                    " and not test_slice_onplane"
-                    " and not test_spline_3D"
-                    " and not test_svg"))
+      ;; XXX: When more optional modules are available review
+      ;; disabled tests once again.
+      ;;
+      ;; Disable tests requiring optional, not packed modules.
+      #~(list "-k" (string-join
+                    (list "not test_bezier_example"
+                          "test_discrete"
+                          "test_dxf"
+                          "test_ply_path_bezier"
+                          "test_ply_path_line"
+                          "test_ply_path_multi"
+                          "test_revolve"
+                          "test_screw"
+                          "test_simple_closed"
+                          "test_simple_extrude"
+                          "test_simple_open"
+                          "test_slice_onplane"
+                          "test_spline_3D"
+                          "test_svg")
+                    " and not "))
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-build
-            (lambda _
-              ;; Reported upstream, see
-              ;; <https://github.com/mikedh/trimesh/pull/2314>.
-              (substitute* "trimesh/resources/templates/blender_boolean.py.tmpl"
-                (("\\$MESH_PRE")
-                 "'$MESH_PRE'")))))))
+          ;; XXX: It struggles to load and fails with error: AttributeError:
+          ;; module 'trimesh' has no attribute '__main__'.
+          (delete 'sanity-check))))
     (native-inputs
      (list python-coveralls
            python-pyinstrument
@@ -881,15 +957,17 @@ spheres, cubes, etc.")
      (list
       ;; See <https://github.com/astrofrog/mpl-scatter-density/issues/42>.
       #:test-flags #~(list "-k" "not test_default_dpi")))
-    (propagated-inputs
-     (list python-fast-histogram
-           python-matplotlib
-           python-numpy))
     (native-inputs
      (list python-pytest
            python-pytest-cov
            python-pytest-mpl
-           python-setuptools-scm))
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-fast-histogram
+           python-matplotlib
+           python-numpy))
     (home-page "https://github.com/astrofrog/mpl-scatter-density")
     (synopsis "Matplotlib helpers to make density scatter plots")
     (description
@@ -3494,8 +3572,13 @@ proportional-integral-derivative} controller.")
        (sha256
         (base32 "1lkj8l2mpki6x2pxcwlrplx63lhi8h9v2rzxgjfb0cppsfr8m1wp"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-numpy))
-    (native-inputs (list python-scipy))
+    (native-inputs
+     (list python-pytest
+           python-scipy
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy))
     (home-page "http://github.com/jakevdp/supersmoother")
     (synopsis "Python implementation of Friedman's Supersmoother")
     (description

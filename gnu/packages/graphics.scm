@@ -527,14 +527,14 @@ typically encountered in feature film production.")
 (define-public blender
   (package
     (name "blender")
-    (version "3.6.13")                   ;3.6.x is the current LTS version
+    (version "3.6.19")                   ;4.2.x+ requires Python >= 3.12
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.blender.org/source/"
                                   "blender-" version ".tar.xz"))
               (sha256
                (base32
-                "1sx2yz1y37h8g2p6k8cjf2935p3nlvn9nvjc9yfzp79bg4ypfpbz"))))
+                "0mx5q3kb3bgx8ni4qpy02gc4kx3cc1zqc5p5vkrdggis3rk3k76h"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2977,7 +2977,7 @@ desired local properties.")
 (define-public f3d
   (package
     (name "f3d")
-    (version "2.5.0")
+    (version "2.5.1")
     (source
      (origin
        (method git-fetch)
@@ -2986,7 +2986,7 @@ desired local properties.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0r5rddnh58hgakh7nkjiz530mcxyc6kzxfsjxkncpw7w7dxjpys3"))
+        (base32 "0hpj9fjkhqsz2ksnywrr24w0ngj3qkzqv5bmi9kyapywizsd2f47"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
