@@ -37,6 +37,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix utils)
   #:use-module (guix packages)
+  #:use-module (guix deprecation)
   #:use-module (guix discovery)
   #:use-module (guix build-system)
   #:use-module ((guix i18n) #:select (G_))
@@ -612,13 +613,7 @@ separated by PRED."
             (reverse res)
             (loop (cdr after) res))))))
 
-(define (guix-name prefix name)
-  "Return a Guix package name for a given package name."
-  (string-append prefix (string-map (match-lambda
-                                      (#\_ #\-)
-                                      (#\. #\-)
-                                      (chr (char-downcase chr)))
-                                    name)))
+(define-deprecated/alias guix-name downstream-package-name)
 
 (define (topological-sort nodes
                           node-dependencies

@@ -4779,7 +4779,7 @@ falling, themeable graphics and sounds, and replays.")
 (define-public wesnoth
   (package
     (name "wesnoth")
-    (version "1.18.0")
+    (version "1.18.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4788,7 +4788,7 @@ falling, themeable graphics and sounds, and replays.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ar0zkyl4rzqgambmdqhklscx478liql1k458ax64bp4xw441kfc"))))
+                "0habv0whb0y0r52sjln7yin1nfm3vjjxqlavm7jarcrg2s3v743k"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f                  ;no test target
@@ -9222,7 +9222,7 @@ your score gets higher, you level up and the blocks fall faster.")
 (define-public endless-sky
   (package
     (name "endless-sky")
-    (version "0.10.6")
+    (version "0.10.10")
     (source
      (origin
        (method git-fetch)
@@ -9231,7 +9231,7 @@ your score gets higher, you level up and the blocks fall faster.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1iaiyv9fqgg269wjcyfn1akhh0wfrf64gh5jg3wzxwn24pm77flw"))))
+        (base32 "1nwim56ii3z6f9gxvmf9q4i5chlsgk3kjisz8li6ivr595wq5502"))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags #~(list "-DES_USE_VCPKG=0"
@@ -9249,7 +9249,8 @@ your score gets higher, you level up and the blocks fall faster.")
                    (substitute* "CMakeLists.txt"
                      (("games\\)") "bin)")))))))
     (inputs
-     (list glew
+     (list catch2-3
+           glew
            libjpeg-turbo
            libmad
            libpng

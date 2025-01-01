@@ -44,6 +44,7 @@
   #:use-module (guix git)
   #:use-module (guix hash)
   #:use-module (guix store)
+  #:use-module ((guix utils) #:select (downstream-package-name))
   #:use-module (guix base32)
   #:use-module (guix upstream)
   #:use-module (guix packages)
@@ -481,7 +482,7 @@ type '<elpa-package>'."
    (pred package-from-elpa-repository?)
    (import latest-release)))
 
-(define elpa-guix-name (cut guix-name "emacs-" <>))
+(define elpa-guix-name (cut downstream-package-name "emacs-" <>))
 
 (define* (elpa-recursive-import package-name #:optional (repo 'gnu))
   (recursive-import package-name

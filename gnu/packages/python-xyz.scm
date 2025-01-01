@@ -121,7 +121,7 @@
 ;;; Copyright © 2022 Peter Polidoro <peter@polidoro.io>
 ;;; Copyright © 2022, 2023 Wamm K. D. <jaft.r@outlook.com>
 ;;; Copyright © 2022 Jai Vetrivelan <jaivetrivelan@gmail.com>
-;;; Copyright © 2022-2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2022-2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2022 Paul A. Patience <paul@apatience.com>
 ;;; Copyright © 2022 Jean-Pierre De Jesus DIAZ <me@jeandudey.tech>
 ;;; Copyright © 2022 Philip McGrath <philip@philipmcgrath.com>
@@ -22499,8 +22499,13 @@ classes can also be supported by manually registering converters.")
      '(#:phases
        (modify-phases %standard-phases
          (replace 'check
-           (lambda _ (invoke "pifpaf" "run" "memcached" "--port" "11211" "--"
-                             "pytest"))))))
+           (lambda _
+             ;; Make it compatible with python-flexmock 0.12.
+             (substitute* (find-files "tests" "\\.py$")
+              (("from flexmock import flexmock, flexmock_teardown")
+               "from flexmock import flexmock; from flexmock._api import flexmock_teardown"))
+             (invoke "pifpaf" "run" "memcached" "--port" "11211" "--"
+                     "pytest"))))))
     (native-inputs
      (list memcached python-fakeredis python-flexmock python-pifpaf
            python-pytest))
@@ -36548,7 +36553,7 @@ into a human readable HTML table representation.")
        (uri (pypi-uri "face" version))
        (sha256
         (base32 "0gpd9f0rmbv3rd2szi2na37l29fabkwazikjrxc6wca1lddwlnbx"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      '(#:phases
        (modify-phases %standard-phases
@@ -36559,7 +36564,9 @@ into a human readable HTML table representation.")
                (add-installed-pythonpath inputs outputs)
                (invoke "pytest" "-v")))))))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-boltons))
     (home-page "https://github.com/mahmoud/face")
@@ -36693,24 +36700,15 @@ simple mock/record and a complete capture/replay framework.")
        (uri (pypi-uri "ijson" version))
        (sha256
         (base32 "1sp463ywj4jv5cp6hsv2qwiima30d09xsabxb2dyq5b17jp0640x"))))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; the tests run by the default setup.py require yajl 1.x,
-         ;; but we have 2.x.  yajl 1.x support is going to be removed
-         ;; anyway, so use pytest to avoid running the yajl1-related
-         ;; tests. See: https://github.com/ICRAR/ijson/issues/55
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "-vv")))))))
     (inputs
      ;; yajl is optional, but compiling with it makes faster
      ;; backends available to ijson:
      (list yajl))
     (native-inputs
-     (list python-pytest))
-    (build-system python-build-system)
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (build-system pyproject-build-system)
     (home-page "https://github.com/ICRAR/ijson")
     (synopsis "Iterative JSON parser with Python iterator interfaces")
     (description

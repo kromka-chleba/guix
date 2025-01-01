@@ -1265,6 +1265,29 @@ they are points in a normed vector space.")
 focusing mostly (as of now) on enumerative combinatorics and permutations.")
     (license license:expat)))
 
+(define-public julia-commonsolve
+  (package
+    (name "julia-commonsolve")
+    (version "0.2.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/SciML/CommonSolve.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1w05fp02g5cmqzqp96hcpriwjpqx61sl481rj92gf4y4xpinmdf5"))))
+    (build-system julia-build-system)
+    (home-page "https://docs.sciml.ai/CommonSolve/stable")
+    (synopsis "Common solve function for scientific machine learning")
+    (description
+     "CommonSolve.jl provides @code{solve}, @code{init}, @code{solve!}, and
+@code{step!} commands.  By using the same definition, solver libraries from
+other completely different ecosystems can extend the functions and thus not
+clash with SciML if both ecosystems export the solve command.")
+    (license license:expat)))
+
 (define-public julia-commonsubexpressions
   (package
     (name "julia-commonsubexpressions")
@@ -1545,7 +1568,7 @@ as comma-delimited (csv), tab-delimited (tsv), or otherwise.")
 (define-public julia-dataapi
   (package
     (name "julia-dataapi")
-    (version "1.13.0")
+    (version "1.16.0")
     (source
       (origin
         (method git-fetch)
@@ -1554,7 +1577,7 @@ as comma-delimited (csv), tab-delimited (tsv), or otherwise.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-         (base32 "1x5pdpjlbk29766ark7rmzjbl0rhxmsb1cp04lc891aknh30rn3i"))))
+         (base32 "1n3i5ajm7a955nggba8k15m9i0ybiq42v6drn5dqb57lj6sylbbz"))))
     (build-system julia-build-system)
     (home-page "https://github.com/JuliaData/DataAPI.jl")
     (synopsis "Data-focused namespace for packages to share functions")
@@ -2252,6 +2275,29 @@ metaprogramming on Julia Expr, the meta programming standard library for
     (description "@code{ExprTools} provides tooling for working with Julia
 expressions during metaprogramming.  This package aims to provide light-weight
 performant tooling without requiring additional package dependencies.")
+    (license license:expat)))
+
+(define-public julia-extents
+  (package
+    (name "julia-extents")
+    (version "0.1.4")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/rafaqz/Extents.jl")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "0l3f7fv13npd71rhjwb49j2f2aq3az6lyls85bbxxfh3pw51yr78"))))
+    (build-system julia-build-system)
+    (home-page "https://github.com/rafaqz/Extents.jl")
+    (synopsis "Shared Extent object for Julia spatial data")
+    (description
+     "Extents.jl is a small package that defines an @code{Extent} object that
+can be used by the different Julia spatial data packages.  @code{Extent} is a
+wrapper for a NamedTuple of tuples holding the lower and upper bounds for each
+dimension of a object.")
     (license license:expat)))
 
 (define-public julia-ffmpeg
@@ -3488,6 +3534,31 @@ benefit from being stack friendly by avoiding allocations/heap tracking in the
 GC.  When used in an array, the elements are able to be stored inline since
 each one has a fixed size.  Currently support inline strings from 1 byte up to
 255 bytes.")
+    (license license:expat)))
+
+(define-public julia-interfaces
+  (package
+    (name "julia-interfaces")
+    (version "0.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rafaqz/Interfaces.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1g765wzqc16pxrr3kqcbq0b2n1w51mwaxffrv4yjn1mvr607y6xf"))))
+    (build-system julia-build-system)
+    (native-inputs
+     (list julia-aqua))
+    (propagated-inputs
+     (list julia-documenter))
+    (home-page "https://github.com/rafaqz/Interfaces.jl")
+    (synopsis "Macros to define and implement interfaces")
+    (description
+     "This package provides macros for defining the required behaviours of
+Julia interfaces, and stating that an object implements them.")
     (license license:expat)))
 
 (define-public julia-interpolations
@@ -5138,7 +5209,7 @@ end users in their personal workflows.")
 (define-public julia-preferences
   (package
     (name "julia-preferences")
-    (version "1.2.2")
+    (version "1.4.3")
     (source
       (origin
         (method git-fetch)
@@ -5147,7 +5218,7 @@ end users in their personal workflows.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-         (base32 "1cail43iqzbi6m9v6981rhz47zf2lcvhs5ds5gdqvc9nx5frghxq"))))
+         (base32 "09q5d223ad37qp6vqjm46la9vf8skj30z1ri3qmadq6vdycav7xm"))))
     (build-system julia-build-system)
     (arguments
      (list #:tests? #f))        ; Tests try to mkdir /.julia
