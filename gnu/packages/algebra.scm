@@ -59,6 +59,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages ruby)
@@ -72,6 +73,7 @@
   #:use-module (guix build-system ant)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system r)
   #:use-module (guix download)
@@ -227,6 +229,16 @@ the real span of the lattice.")
     (description "fpylll is a Python wrapper for fplll.")
     (license license:gpl2+)))
 
+(define pari-galdata
+  ;; version from 2008-04-12
+  (origin
+    (method url-fetch)
+    ;; no versioning, old files seem to be moved to `old/...' on update
+    (uri "https://pari.math.u-bordeaux.fr/pub/pari/packages/galdata.tgz")
+    (sha256
+     (base32
+      "1pch6bk76f1i6cwwgm7hhxi5h71m52lqayp4mnyj0jmjk406bhdp"))))
+
 (define-public pari-gp
   (package
     (name "pari-gp")
@@ -243,16 +255,21 @@ the real span of the lattice.")
     (native-inputs (list (texlive-updmap.cfg)))
     (inputs (list gmp libx11 perl readline))
     (arguments
-     '(#:make-flags '("all")
-       #:test-target "dobench"
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "./Configure"
-                     "--mt=pthread"
-                     (string-append "--prefix="
-                                    (assoc-ref outputs "out"))))))))
+     (list
+      #:test-target "dobench"
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda _
+              (invoke "./Configure"
+                      "--mt=pthread"
+                      (string-append "--prefix=" #$output))))
+          (add-after 'install 'install-galdata
+            (lambda _
+              (invoke "tar" "-xvf" #$pari-galdata)
+              (copy-recursively "data/" (string-append
+                                         #$output
+                                         "/share/pari")))))))
     (synopsis "PARI/GP, a computer algebra system for number theory")
     (description
      "PARI/GP is a widely used computer algebra system designed for fast
@@ -1623,6 +1640,28 @@ structure constants of Schubert polynomials.")
     (license license:gpl2+)
     (home-page "https://sites.math.rutgers.edu/~asbuch/lrcalc/")))
 
+(define-public python-lrcalc
+  (package
+    (name "python-lrcalc")
+    (version "2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "lrcalc" version))
+       (sha256
+        (base32 "1adassfjalsdsngy01c37835qsx3gj0jx9cinc9b91x4xnd51873"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; there are no tests
+    (native-inputs (list python-cython python-setuptools python-wheel))
+    (inputs (list lrcalc))
+    (home-page "https://math.rutgers.edu/~asbuch/lrcalc")
+    (synopsis "Python bindings for the Littlewood-Richardson Calculator")
+    (description
+     "This package provides Python bindings for the Littlewood-Richardson
+Calculator.")
+    (license license:gpl3+)))
+
 (define-public iml
   (package
     (name "iml")
@@ -1638,8 +1677,8 @@ structure constants of Schubert polynomials.")
     (build-system gnu-build-system)
     (inputs
      `(("gmp" ,gmp)
-       ("cblas" ,openblas))) ; or any other BLAS library; the documentation
-                             ; mentions ATLAS in particular
+       ("cblas" ,openblas)))    ; or any other BLAS library; the documentation
+                                        ; mentions ATLAS in particular
     (arguments
      `(#:configure-flags
        (list

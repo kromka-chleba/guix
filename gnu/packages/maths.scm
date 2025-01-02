@@ -158,6 +158,7 @@
   #:use-module (gnu packages gl)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages m4)
+  #:use-module (gnu packages man)
   #:use-module (gnu packages mpi)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
@@ -870,6 +871,43 @@ extremely fast @dfn{abstract data types} (ADT) such as hash tables b-trees,
 and much more.")
     (license license:lgpl3+)))
 
+(define-public gfan
+  (package
+    (name "gfan")
+    (version "0.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://users-math.au.dk/jensen/software"
+                           "/gfan/gfan" version ".tar.gz"))
+       (sha256
+        (base32 "17lqripnsdb5hn7nnhgn4siajgh1jh9nkaplca3akm74w5bkg0xb"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:make-flags #~(list (string-append "PREFIX=" #$output)
+                           (string-append "CC=" #$(cc-for-target))
+                           (string-append "CXX=" #$(cxx-for-target)))
+      #:phases #~(modify-phases %standard-phases
+                   (delete 'configure)
+                   ;; cddlib is distributed with the 'cddlib' header name,
+                   ;; but gfan expects it to be named 'cdd'.  Substitute
+                   ;; the include headers to make gfan find it.
+                   (add-after 'unpack 'fix-cdd-reference
+                     (lambda _
+                       (substitute* '("src/lp_cdd.cpp"
+                                      "src/gfanlib_zcone.cpp"
+                                      "src/app_librarytest.cpp")
+                         (("#include \"cdd") "#include \"cddlib")))))))
+    (inputs (list cddlib gmp))
+    (home-page "https://users-math.au.dk/jensen/software/gfan/gfan.html")
+    (synopsis "Compute Gröbner fans and tropical varieties")
+    (description "Gfan is a software package for computing Gröbner fans and
+tropical varieties.")
+    ;; homepage/gfan.html: "Gfan is distributed under the terms of the GPL
+    ;; license version 2 or 3 as desired"
+    (license license:gpl2)))
+
 (define-public 4ti2
   (package
     (name "4ti2")
@@ -897,6 +935,45 @@ combinatorial problems on linear spaces.  Among others, it solves systems
 of linear equations, computes extreme rays of polyhedral cones, solves
 integer programming problems and computes Markov bases for statistics.")
     (license license:gpl2+)))
+
+(define-public sympow
+  (package
+    (name "sympow")
+    (version "2.023.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+         (url "https://gitlab.com/rezozer/forks/sympow")
+         (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0ilnxygkj4g5arjiyd16k00cvnjlqs0cpc8hk64kbqhl877mm5i9"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f ; no tests
+           #:phases #~(modify-phases %standard-phases
+                        (replace 'configure
+                          (lambda* (#:key inputs #:allow-other-keys)
+                            (substitute* "Configure"
+                              (("/bin/sh") (search-input-file inputs "/bin/bash")))
+                            (setenv "PREFIX" #$output)
+                            (setenv "VARPREFIX" #$output)
+                            (invoke "bash" "./Configure"))))))
+    (native-inputs (list bash-minimal coreutils help2man pari-gp which))
+    (home-page "https://gitlab.com/rezozer/forks/sympow")
+    (synopsis "Symmetric power elliptic curve L-functions")
+    (description "SYMPOW is a mathematical program to compute special values
+of symmetric power elliptic curve L-functions; it can compute up to about 64
+digits of precision.")
+    ;; bsd-2 with extra stipulation that users be informed of sympow's
+    ;; "less restrictive license" if it's included in a program with a more
+    ;; restrictive license.  However, since sympow includes fpu.c which is
+    ;; gpl2+ the whole package can only be distributed via GPL anyway.
+    ;; See also <https://gitlab.com/rezozer/forks/sympow/-/issues/7>.
+    (license (license:non-copyleft "file:///COPYING"
+                                   "See COPYING in the distribution."))))
 
 (define-public cddlib
   (package
@@ -5502,6 +5579,37 @@ from the GotoBLAS2-1.13 BSD version.")
      "This package uses PLT trampolines to provide a BLAS and LAPACK demuxing
 library.")
     (license license:expat)))
+
+(define-public palp
+  (package
+    (name "palp")
+    (version "2.21")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "http://hep.itp.tuwien.ac.at/~kreuzer/CY/palp/palp-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1myxjv0jxgr9acchwnjh9g5l61wxwiva3q6c1d6892lr37r7njky"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))
+           #:tests? #f ; no tests
+           #:phases #~(modify-phases %standard-phases
+                        (delete 'configure)
+                        (replace 'install
+                          (lambda _
+                            (for-each
+                             (lambda (name)
+                               (install-file name (string-append #$output "/bin")))
+                             '("class.x" "cws.x" "mori.x" "nef.x" "poly.x")))))))
+    (home-page "http://hep.itp.tuwien.ac.at/~kreuzer/CY/CYpalp.html")
+    (synopsis "Package for Analyzing Lattice Polytopes")
+    (description
+     "PALP is a set of programs for calculations with lattice polytopes and
+applications to toric geometry.")
+    (license license:gpl3)))
 
 (define-public blis
   (package

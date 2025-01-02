@@ -23,6 +23,7 @@
 
 (define-module (gnu packages sagemath)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
@@ -381,3 +382,97 @@ by using an optimized quadratic sieve algorithm.")
 coefficients of which are modular integers.")
     (license (list license:gpl2 license:gpl3)) ; dual licensed
     (home-page "https://gitlab.com/sagemath/zn_poly")))
+
+(define-public sagemath-data-conway-polynomials
+  (package
+    (name "sagemath-data-conway-polynomials")
+    (version "0.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "conway_polynomials" version))
+       (sha256
+        (base32 "1wz03a08kwlswx1pcr5d99ppmhpfzs2a5i969rnb2ghsz1j9yqag"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/sagemath/conway-polynomials")
+    (synopsis "Python interface to Frank Lübeck's Conway polynomial database")
+    (description "This package provides a Python interface to Frank Lübeck's
+Conway polynomial database.  These are used in several computer algebra
+systems such as GAP and SageMath to provide quick access to those Conway
+polynomials.  The aim of this package is to make them available through a
+generic Python interface.")
+    (license license:gpl3+)))
+
+(define-public sagemath-data-polytopes-db
+  (package
+    (name "sagemath-data-polytopes-db")
+    (version "20170220")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "https://mirrors.mit.edu/sage/spkg/upstream/polytopes_db"
+                    "/polytopes_db-" version ".tar.bz2"))
+              (sha256
+               (base32
+                "1q0cd811ilhax4dsj9y5p7z8prlalqr7k9mzq178c03frbgqny6b"))))
+    (build-system copy-build-system)
+    (arguments '(#:install-plan '(("." "share/reflexive_polytopes"))))
+    (home-page "https://doc.sagemath.org/html/en/reference/spkg/polytopes_db.html")
+    (synopsis "Lists of 2- and 3-dimensional reflexive polytopes")
+    (description
+     "This package contains data for 2- and 3-dimensional reflexive polytopes
+to be used by SageMath.")
+    ;; Debian says GPLv2+.
+    (license license:gpl2+)))
+
+(define-public sagemath-data-graphs
+  (package
+    (name "sagemath-data-graphs")
+    (version "20210214")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "https://mirrors.mit.edu/sage/spkg/upstream/"
+                    "graphs/graphs-" version ".tar.bz2"))
+              (sha256
+               (base32
+                "0h9p5wrxips51x6vpfiiaqzp9j004nwppzc9qc2iaqakk06pq8q7"))))
+    (build-system copy-build-system)
+    (arguments
+     '(#:install-plan '(("." "share/graphs"))))
+    (home-page "https://www.sagemath.org")
+    (synopsis "Database of graphs")
+    (description
+     "This package contains databases of graphs.  It also includes the
+@acronym{ISGCI, Information System on Graph Classes and their Inclusions}
+database.")
+    ;; Debian says GPLv2+.
+    (license license:gpl2+)))
+
+(define-public sagemath-data-combinatorial-designs
+  (package
+    (name "sagemath-data-combinatorial-designs")
+    (version "20140630")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "https://mirrors.mit.edu/sage/spkg/upstream/"
+                    "combinatorial_designs/combinatorial_designs-"
+                    version ".tar.bz2"))
+              (sha256
+               (base32
+                "0bj8ngiq59hipa6izi6g5ph5akmy4cbk0vlsb0wa67f7grnnqj69"))))
+    (build-system copy-build-system)
+    (arguments
+     '(#:install-plan '(("." "share/combinatorial_designs/"))))
+    (home-page "https://www.sagemath.org")
+    (synopsis "Data for Combinatorial Designs")
+    (description
+     "This package data for combinatorial designs.  It currently contains:
+
+@itemize
+@item The table of @acronym{MOLS, Mutually orthogonal Latin squares} from the
+Handbook of Combinatorial Designs, 2ed.
+@end itemize")
+    (license license:public-domain)))

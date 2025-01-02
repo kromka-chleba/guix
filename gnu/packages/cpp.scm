@@ -41,6 +41,7 @@
 ;;; Copyright © 2023-2024 Paul A. Patience <paul@apatience.com>
 ;;; Copyright © 2024 dan <i@dan.games>
 ;;; Copyright © 2024 Peepo Froggings <peepofroggings@tutanota.de>
+;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 
 ;;; This file is part of GNU Guix.
 ;;;
@@ -95,6 +96,7 @@
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gtk)
+  #:use-module (gnu packages image)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages libunwind)
@@ -665,6 +667,37 @@ operating on batches.")
 library for SIMD (Single Instruction, Multiple Data) with runtime dispatch.")
     (license license:asl2.0)))
 
+(define-public hyprgraphics
+  (package
+    (name "hyprgraphics")
+    (version "0.1.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/hyprwm/hyprgraphics")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (modules '((guix build utils)))
+              (snippet #~(substitute* "CMakeLists.txt" (("libjxl_cms") "")))
+              (sha256
+               (base32
+                "19vk1c1hli5921ai3ik6pbyixih7fhn1010injxi8dpjak6cjlhl"))))
+    (build-system cmake-build-system)
+    (native-inputs (list gcc-14 pkg-config))
+    (arguments (list #:cmake cmake-3.30))
+    (inputs (list cairo
+                  hyprutils
+                  libjpeg-turbo
+                  libjxl
+                  libwebp
+                  pixman))
+    (home-page "https://wiki.hyprland.org/Hypr-Ecosystem/hyprgraphics/")
+    (synopsis "Hyprland graphics/resource utilities")
+    (description
+     "Hyprgraphics is a small C++ library with graphics/resource related
+utilities used across the hypr* ecosystem.")
+    (license license:bsd-3)))
+
 (define-public hyprlang
   (package
     (name "hyprlang")
@@ -702,7 +735,7 @@ language used in Hyprland.")
 (define-public hyprutils
   (package
     (name "hyprutils")
-    (version "0.2.3")
+    (version "0.2.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -711,7 +744,7 @@ language used in Hyprland.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "01dh24rf62gb6xm32f7mfv6wx0dxprr1q9y73hvv7xanrjyia2zn"))))
+                "0scrfky9hkzhbyj5aji6qvi4b6ydf4g7sk0cknkpd7dg0zv8x5zq"))))
     (build-system cmake-build-system)
     (arguments
      (list

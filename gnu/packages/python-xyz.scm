@@ -7,7 +7,7 @@
 ;;; Copyright © 2014, 2015 Federico Beffa <beffa@fbengineering.ch>
 ;;; Copyright © 2015 Omar Radwan <toxemicsquire4@gmail.com>
 ;;; Copyright © 2015 Pierre-Antoine Rault <par@rigelk.eu>
-;;; Copyright © 2015-2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015, 2016, 2020 Christine Lemmer-Webber <cwebber@dustycloud.org>
 ;;; Copyright © 2015 Eric Dvorsak <eric@dvorsak.fr>
 ;;; Copyright © 2015, 2016 David Thompson <davet@gnu.org>
@@ -432,15 +432,26 @@ loop.")
 (define-public python-awkward-cpp
   (package
     (name "python-awkward-cpp")
-    (version "32")
+    (version "43")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "awkward-cpp" version))
+       (uri (pypi-uri "awkward_cpp" version))
        (sha256
-        (base32 "1w11fjkwrian3vll7jhnisl1b6m6rk2rqx0n9d1hzyq6cbw5m35d"))))
+        (base32 "1bays82mjyg0clmms0rdaf1jrdyr0pw5njq8v9kgcan8drcpbvf1"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-importlib-resources python-numpy))
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         ;; TODO: Remove this on python-team branch.
+         (add-after 'unpack 'relax-requirements
+           (lambda _
+             (substitute* "pyproject.toml"
+               (("scikit-build-core..0.10")
+                "scikit-build-core")
+               (("^minimum-version =.*") "")))))))
+    (propagated-inputs (list python-numpy))
     (native-inputs
      (list cmake pybind11 python-pytest python-scikit-build-core))
     (home-page "https://github.com/scikit-hep/awkward-1.0")
@@ -452,19 +463,26 @@ package.  It is not useful on its own, only as a dependency for awkward.")
 (define-public python-awkward
   (package
     (name "python-awkward")
-    (version "2.6.3")
+    (version "2.7.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "awkward" version))
        (sha256
-        (base32 "1s280ndr4r2q9qn9c0slan5zw37p41cx8q5z6k6p988afr01c6j8"))))
+        (base32 "1bfg4pggahnfvq4n71ydkb1pwzc89plfdgp9wcv7ky4dss37y1ay"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
       ;; CUDA is and requires proprietary software.
-      '(list "--ignore-glob=tests-cuda**")))
+      '(list "--ignore-glob=tests-cuda**"
+             "-k"
+             (string-append
+              ;; BrokenProcessPool
+              "not test_noop_pickler"
+              " and not test_non_packing_pickler"
+              ;; Regex pattern did not match.
+              " and not test_malformed_pickler"))))
     (propagated-inputs (list python-awkward-cpp
                              python-fsspec
                              python-importlib-metadata
@@ -3303,6 +3321,25 @@ approximate nearest neighbor search with Python bindings.")
 Unicode-to-LaTeX conversion.")
     (license license:expat)))
 
+(define-public python-pylsp-mypy
+  (package
+    (name "python-pylsp-mypy")
+    (version "0.6.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pylsp_mypy" version))
+       (sha256
+        (base32 "1amvqzb5lhhw2011003mwm88chb8sz5aax1jrqc3jg0jpak992fj"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (propagated-inputs (list python-mypy python-lsp-server))
+    (home-page "https://github.com/python-lsp/pylsp-mypy")
+    (synopsis "Mypy linter for the Python LSP Server")
+    (description
+     "Mypy linter integration for use with @code{python-lsp-server}.")
+    (license license:expat)))
+
 (define-public python-pyls-black
   (package
     (name "python-pyls-black")
@@ -6109,7 +6146,7 @@ and convert DDL to BigQuery JSON schema.")
            python-referencing-bootstrap
            python-rpds-py
            python-uri-template
-           python-webcolors))
+           python-webcolors-24))
     (home-page "https://github.com/Julian/jsonschema")
     (synopsis "Implementation of JSON Schema for Python")
     (description
@@ -18480,6 +18517,9 @@ convert an @code{.ipynb} notebook file into various static formats including:
                (("'HOME': .*," all)
                 (string-append "# " all "\n")))
              (setenv "HOME" (getcwd))))
+         ;; Because python-jsonschema has an old python-webcolor.  Remove this
+         ;; when python-team branch is merged.
+         (delete 'sanity-check)
          (add-before 'check 'pre-check
            (lambda _
              ;; Interferes with test expectations.
@@ -18700,7 +18740,14 @@ popular online obfuscators.")
         (base32
          "0pwf3pminkzyzgx5kcplvvbvwrrzd3baa7lmh96f647k30rlpp6r"))))
     (build-system python-build-system)
-    (arguments '(#:tests? #f)) ; there are none.
+    (arguments
+     (list
+      #:tests? #f                       ;there are none.
+      #:phases
+      ;; Because python-jsonschema has an old python-webcolor.  Remove this
+      ;; when python-team branch is merged.
+      '(modify-phases %standard-phases
+         (delete 'sanity-check))))
     (propagated-inputs
      (list python-ipykernel
            python-ipywidgets
@@ -29247,14 +29294,14 @@ codecs for use in data storage and communication applications.")
 (define-public python-zarr
   (package
     (name "python-zarr")
-    (version "2.17.2")
+    (version "2.18.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "zarr" version))
        (sha256
         (base32
-         "1kjj0pk0s6306ljrig77m39zqdy32ch4nyja5lalab9l9v5sdfic"))))
+         "1fr41j8mxhbj7psn00416qs3nm12djhhmybgpqdax0q6vpg0wy9p"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -29263,9 +29310,18 @@ codecs for use in data storage and communication applications.")
               ;; This tests are flaky.  The pass several times on my laptop
               ;; but occasionally fail.  They fail pretty reliably on the
               ;; build farm.
-              "-k not test_lazy_loader and not open_array")
+              "-k" (string-append "not test_lazy_loader and not open_array"
+                                  ;; TODO: remove this on python-team branch.
+                                  ;; This only fails on the master branch.
+                                  " and not test_encode_decode_array_dtype_shape_v3"))
       #:phases
       #~(modify-phases %standard-phases
+          (add-before 'build 'set-version
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("^version_file.*") "")
+                (("dynamic = \\[\"version\"\\]")
+                 (string-append "version = \"" #$version "\"")))))
           (add-after 'unpack 'disable-service-tests
             (lambda _
               (setenv "ZARR_TEST_ABS" "0")
@@ -29274,16 +29330,21 @@ codecs for use in data storage and communication applications.")
     (propagated-inputs
      (list python-asciitree
            python-fasteners
+           python-ipywidgets
+           python-notebook
            python-numcodecs
-           python-numpy))
+           python-numpy
+           python-numpydoc
+           python-pydata-sphinx-theme))
     (native-inputs
-     (list python-fsspec
-           python-pytest
-           python-h5py
-           python-pytest-doctestplus
-           python-pytest-timeout
+     (list python-pytest
            python-pytest-xdist
-           python-setuptools-scm
+           python-pytest-doctestplus
+           python-sphinx
+           python-sphinx-copybutton
+           python-sphinx-design
+           python-sphinx-issues
+           python-setuptools
            python-wheel))
     (home-page "https://github.com/zarr-developers/zarr-python")
     (synopsis "Chunked, compressed, N-dimensional arrays for Python")
@@ -31379,6 +31440,17 @@ on top of either asyncio or trio.  It implements trio-like structured
 concurrency on top of asyncio, and works in harmony with the native SC of trio
 itself.")
     (license license:expat)))
+
+;; TODO: This will become the default on the python-team branch.  Dataclasses
+;; is part of Python.
+(define-public python-anyio/without-dataclasses
+  (package
+    (inherit python-anyio)
+    (propagated-inputs
+     (list python-contextvars
+           python-idna
+           python-sniffio
+           python-typing-extensions))))
 
 (define-public python-argh
   ;; There are 21 commits since the latest release containing important
