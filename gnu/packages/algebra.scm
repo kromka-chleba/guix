@@ -53,6 +53,7 @@
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
   #:use-module (gnu packages multiprecision)
+  #:use-module (gnu packages ncurses)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages ocaml)
   #:use-module (gnu packages perl)
@@ -667,19 +668,19 @@ binary.")
 (define-public bc
   (package
     (name "bc")
-    (version "1.07.1")
+    (version "1.08.0")
     (source (origin
              (method url-fetch)
-             (uri (string-append "mirror://gnu/bc/bc-" version ".tar.gz"))
+             (uri (string-append "mirror://gnu/bc/bc-" version ".tar.xz"))
              (sha256
               (base32
-               "0amh9ik44jfg66csyvf4zz1l878c4755kjndq9j0270akflgrbb2"))
-             (patches (search-patches "bc-fix-cross-compilation.patch"))))
+               "1kvd4hpq0fmb9bali9x21zwb1g0msvsj1jahanz96x13w06v9i3v"))
+             (patches (search-patches "bc-dc-build.patch"))))
     (build-system gnu-build-system)
     (native-inputs
      (list automake autoconf ed flex readline texinfo))
     (inputs
-     (list readline))
+     (list readline  ncurses))
     (arguments
      '(#:configure-flags
        (list "--with-readline")
@@ -695,7 +696,7 @@ binary.")
 an interactive environment for evaluating mathematical statements.  Its
 syntax is similar to that of C, so basic usage is familiar.  It also includes
 \"dc\", a reverse-polish calculator.")
-    (license license:gpl2+)))
+    (license license:gpl3+)))
 
 ;; The original kiss-fft does not have a complete build system and does not
 ;; build any shared libraries.  This is a fork used by Extempore.

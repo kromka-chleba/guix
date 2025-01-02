@@ -1,0 +1,8 @@
+--- a/dc/Makefile.am	2024-10-07 23:11:13.000000000 -0700
++++ b/dc/Makefile.am	2025-01-01 18:37:27.786207409 -0800
+@@ -11,4 +11,4 @@
+
+ AM_CFLAGS = @CFLAGS@
+
+-$(PROGRAMS): $(LDADD)
++$(PROGRAMS): $(LIBBC)
