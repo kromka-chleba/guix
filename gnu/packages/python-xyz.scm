@@ -3321,6 +3321,30 @@ approximate nearest neighbor search with Python bindings.")
 Unicode-to-LaTeX conversion.")
     (license license:expat)))
 
+(define-public python-lsp-black
+  (package
+    (name "python-lsp-black")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/python-lsp/python-lsp-black")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gwf3vwb01a3l8b75jbn8kyfmn0lva8vpgjnr75vazhm3lsf78fp"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-black python-lsp-server python-tomli))
+    (native-inputs
+     (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/python-lsp/python-lsp-black")
+    (synopsis "Black plugin for the Python LSP Server")
+    (description "This package provides a plugin with support for the
+@code{python-black} formatter for the Python LSP Server.")
+    (license license:expat)))
+
 (define-public python-pylsp-mypy
   (package
     (name "python-pylsp-mypy")
@@ -3338,51 +3362,6 @@ Unicode-to-LaTeX conversion.")
     (synopsis "Mypy linter for the Python LSP Server")
     (description
      "Mypy linter integration for use with @code{python-lsp-server}.")
-    (license license:expat)))
-
-(define-public python-pyls-black
-  (package
-    (name "python-pyls-black")
-    (version "0.4.7")
-    (source
-     (origin
-       ;; There are no tests in the PyPI tarball.
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/rupert/pyls-black/")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0bkhfnlik89j3yamr20br4wm8975f20v33wabi2nyxvj10whr5dj"))
-       (patches (search-patches "python-pyls-black-41.patch"))
-       ;; Patch to work with python-lsp-server.  Taken from
-       ;; <https://github.com/rupert/pyls-black/pull/37>.
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           (substitute* "setup.cfg"
-             (("python-language-server")
-              "python-lsp-server"))
-           (substitute* '("pyls_black/plugin.py" "tests/test_plugin.py")
-             (("pyls_format_document")
-              "pylsp_format_document")
-             (("pyls_format_range")
-              "pylsp_format_range")
-             (("from pyls([ \\.])" _ char)
-              (string-append "from pylsp" char)))))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      '(list "-k" "not test_load_config_target_version")))
-    (propagated-inputs
-     (list python-black python-lsp-server python-toml python-tomli))
-    (native-inputs
-     (list python-flake8 python-isort python-mypy python-pytest
-           python-pytest-runner python-setuptools python-wheel))
-    (home-page "https://github.com/rupert/pyls-black")
-    (synopsis "Black plugin for the Python Language Server")
-    (description "Black plugin for the Python Language Server.")
     (license license:expat)))
 
 (define-public python-sh

@@ -1865,7 +1865,7 @@ functionality to display information about the most commonly used services.")
 (define-public wlroots
   (package
     (name "wlroots")
-    (version "0.18.0")
+    (version "0.18.2")
     (source
      (origin
        (method git-fetch)
@@ -1874,24 +1874,22 @@ functionality to display information about the most commonly used services.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "13avi2805wrfkghgc7ar273p61svmm85k3g3hg9bf2gaxsz6f91f"))))
+        (base32 "1l1c4m8m1h8rl00y9yi6qjma5m3lhai9hqv5578q69yg2dcwraxw"))))
     (build-system meson-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'hardcode-paths
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "xwayland/server.c"
-               (("Xwayland") (string-append (assoc-ref inputs
-                                                       "xorg-server-xwayland")
-                                            "/bin/Xwayland")))
-             #t))
-         (add-before 'configure 'fix-meson-file
-           (lambda* (#:key native-inputs inputs #:allow-other-keys)
-             (substitute* "backend/drm/meson.build"
-               (("/usr/share/hwdata/pnp.ids")
-                (string-append (assoc-ref (or native-inputs inputs) "hwdata")
-                               "/share/hwdata/pnp.ids"))))))))
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'hardcode-paths
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "xwayland/server.c"
+                     (("Xwayland")
+                      (search-input-file inputs "bin/Xwayland")))))
+               (add-before 'configure 'fix-meson-file
+                 (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                   (substitute* "backend/drm/meson.build"
+                     (("/usr/share/hwdata/pnp.ids")
+                      (search-input-file
+                       (or native-inputs inputs) "share/hwdata/pnp.ids"))))))))
     (propagated-inputs
      (list ;; As required by wlroots.pc.
            eudev
@@ -3463,7 +3461,7 @@ read and write, and compatible with JSON.")
 (define-public labwc
   (package
     (name "labwc")
-    (version "0.7.4")
+    (version "0.8.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3472,7 +3470,7 @@ read and write, and compatible with JSON.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xwgbqv0ablcjaq77c98m4rpgfylr1mja081ay9lccpjqycgbhgc"))))
+                "1j2fv64yz77rfa003b89q0gfri7pbqvjp27wg8ri7x3hfkxrbxvn"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config gettext-minimal scdoc))
@@ -3480,10 +3478,12 @@ read and write, and compatible with JSON.")
      (list cairo
            glib
            (librsvg-for-system)
+           libliftoff
+           libsfdo
            libxcb
            libxml2
            pango
-           wlroots-0.17))
+           wlroots))
     (home-page "https://labwc.github.io")
     (synopsis "Window-stacking compositor for Wayland")
     (description

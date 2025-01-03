@@ -33,6 +33,7 @@
 ;;; Copyright © 2023 Jaeme Sifat <jaeme@runbox.com>
 ;;; Copyright © 2023 David Pflug <david@pflug.io>
 ;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
+;;; Copyright © 2024 Spencer King <spencer.king@wustl.edu>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1463,7 +1464,7 @@ card.  It offers:
 (define-public ne
   (package
     (name "ne")
-    (version "3.3.2")
+    (version "3.3.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1472,31 +1473,31 @@ card.  It offers:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "16hzja0x41xz6028d8qij9rh1vkiil8qkswd8yznwlcwyl4h04wr"))))
+                "0c9hw4la9jv9ils71iz978rxj5bsv9q915y90w7gkyiljvyxpdcm"))))
     (build-system gnu-build-system)
     (native-inputs
      (list perl texinfo))
     (inputs
      (list ncurses))
     (arguments
-     `(#:tests? #f
-       #:parallel-build? #f             ; or enums.h may not yet be generated
-       #:make-flags
-       (list "STRIP=true"               ; don't
-             (string-append "CC=" ,(cc-for-target))
-             (string-append "PREFIX=" (assoc-ref %outputs "out"))
-             (string-append "LDFLAGS=-L" (assoc-ref %build-inputs "ncurses")
-                            "/lib"))
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'configure 'patch-early-shebang
-           (lambda _
-             (substitute* "version.pl"
-               (("/usr/bin/env .*perl") (which "perl")))))
-         (replace 'configure
-           (lambda _
-             (substitute* "src/makefile"
-              (("-lcurses") "-lncurses")))))))
+     (list #:tests? #f
+           #:parallel-build? #f         ; or enums.h may not yet be generated
+           #:make-flags
+           #~(list "STRIP=true"         ; don't
+                   (string-append "CC=" #$(cc-for-target))
+                   (string-append "PREFIX=" #$output)
+                   (string-append "LDFLAGS=-L" #$(this-package-input "ncurses")
+                                  "/lib"))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'patch-early-shebang
+                 (lambda _
+                   (substitute* "version.pl"
+                     (("/usr/bin/env .*perl") (which "perl")))))
+               (replace 'configure
+                 (lambda _
+                   (substitute* "src/makefile"
+                     (("-lcurses") "-lncurses")))))))
     (home-page "https://ne.di.unimi.it/")
     (synopsis "Text editor with menu bar")
     (description "This package provides a modeless text editor with menu bar.

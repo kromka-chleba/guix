@@ -1983,7 +1983,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-pillow-use-zlib-1.3.patch	\
   %D%/packages/patches/python-pydocstyle-add-support-for-pep701.patch	\
   %D%/packages/patches/python-pyreadstat-link-libiconv.patch	\
-  %D%/packages/patches/python-pyls-black-41.patch		\
   %D%/packages/patches/python-sip-include-dirs.patch	\
   %D%/packages/patches/python-sgmllib3k-assertions.patch	\
   %D%/packages/patches/python-sphobjinv-defer-ssl-import.patch	\
@@ -2378,6 +2377,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/webrtc-audio-processing-x86-no-sse.patch	\
   %D%/packages/patches/webrtc-for-telegram-desktop-unbundle-libsrtp.patch \
   %D%/packages/patches/websocketpp-fix-for-cmake-3.15.patch	\
+  %D%/packages/patches/whisper-cpp-enable-tests.patch           \
   %D%/packages/patches/wmctrl-64-fix.patch			\
   %D%/packages/patches/wmfire-dont-inline-draw-fire.patch	\
   %D%/packages/patches/wmfire-update-for-new-gdk-versions.patch	\
