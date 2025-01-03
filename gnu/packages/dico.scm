@@ -41,14 +41,14 @@
 (define-public dico
   (package
     (name "dico")
-    (version "2.11")
+    (version "2.12")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/dico/dico-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0nic4mggc0yhms130k7x4qp5k9c42fwg6n8hmk5cmynh6gi9h7xc"))))
+                "1xvahrav8aml90qcj4cj3a33y0n7nm1k0ywgks1zy2q91v2qk2vj"))))
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags (list (string-append "--with-guile-site-dir=" %output
