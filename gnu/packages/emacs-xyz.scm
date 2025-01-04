@@ -149,7 +149,8 @@
 ;;; Copyright © 2024 emma thompson <bigbookofbug@proton.me>
 ;;; Copyright © 2024 Liam Hupfer <liam@hpfr.net>
 ;;; Copyright © 2024 aurtzy <aurtzy@gmail.com>
-
+;;; Copyright © 2024 Olivier Rojon <o.rojon@posteo.net>
+;;; Copyright © 2024 Divya Ranjan Pattanaik <divya@subvertising.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -290,6 +291,7 @@
   #:use-module (gnu packages statistics)
   #:use-module (gnu packages libcanberra)
   #:use-module (gnu packages texinfo)
+  #:use-module (gnu packages text-editors)
   #:use-module (gnu packages virtualization)
   #:use-module (gnu packages web-browsers)
   #:use-module (gnu packages wget)
@@ -7428,6 +7430,28 @@ intended to be.")
 whose goal is to provide colorful yet legible options for users who want
 something with a bit more flair than the Modus themes.")
     (license license:gpl3+)))
+
+(define-public emacs-eslint-flymake
+  (let ((commit "c78246330ee3ac1e0e07a709473d98a113d268e5")
+        (revision "1"))
+    (package
+      (name "emacs-eslint-flymake")
+      (version "0.2.0")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emacs-pe/eslint-flymake")
+               (commit commit)))
+         (sha256
+          (base32 "19h95k57hrsysmvqzillzfn6wcinvcidv14fvbaqxgigwfwj0jnw"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-flymake))
+      (home-page "https://github.com/emacs-pe/eslint-flymake")
+      (synopsis "ESLint backend for Flymake")
+      (description
+       "This package lets Flymake run ESLint on the current buffer.")
+      (license license:gpl3+))))
 
 (define-public emacs-espuds
   (package
@@ -18165,7 +18189,7 @@ federated blogging platform WriteFreely.")
 (define-public emacs-org
   (package
     (name "emacs-org")
-    (version "9.7.17")
+    (version "9.7.19")
     (source
      (origin
        (method git-fetch)
@@ -18174,7 +18198,7 @@ federated blogging platform WriteFreely.")
              (commit (string-append "release_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0zr5md07f252wxmvp3mna8sslzlqmnc2lmnnnx6zmp695r4227za"))))
+        (base32 "0qzgxk6427mdsd1yw3z7r0x4wsgkzfq7b4jlsh369zdvn8w4377m"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -23118,6 +23142,27 @@ activity in channels in the status bar so it stays out of your way unless you
 want to use it.")
       (license license:gpl3+))))
 
+(define-public emacs-track-changes
+  (package
+    (name "emacs-track-changes")
+    (version "1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/track-changes-"
+                           version ".tar"))
+       (sha256
+        (base32 "0al6a1xjs6p2pn6z976pnmfqz2x5xcz99b5gkdzz90ywbn7018m4"))))
+    (build-system emacs-build-system)
+    (home-page "https://elpa.gnu.org/packages/track-changes.html")
+    (synopsis "Abstraction library which handles accumulating file changes")
+    (description
+     "This library is a layer of abstraction above
+@code{before-change-functions} and @code{after-change-functions} which takes
+care of accumulating changes until a time when its client finds it convenient
+to react to them.")
+    (license license:gpl3+)))
+
 (define-public emacs-tracking
   (package
     (inherit emacs-circe)
@@ -23942,8 +23987,8 @@ the pipeline, featuring the support for running @code{emacsclient}.")
     (license license:gpl3+)))
 
 (define-public emacs-jupyter
-  (let ((commit "f97f4b5d8c83e0b901020f835183dde8a2bf649e")
-        (revision "1"))
+  (let ((commit "db8a9e233a010a61063f34220821ec76157a2d84")
+        (revision "2"))
     (package
       (name "emacs-jupyter")
       (version (git-version "1.0" revision commit))
@@ -23955,7 +24000,7 @@ the pipeline, featuring the support for running @code{emacsclient}.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0jmhh9ncnf4ai8rr2g474n6dv9m7v983s2w0smy0h7l07sp43klq"))))
+          (base32 "0gjxi84d95sx5fw8q2a8szfhq6kb4xzwq0xr9a3pirkiga9hxymz"))))
       (build-system emacs-build-system)
       (propagated-inputs
        (list emacs-company              ;optional
@@ -25464,8 +25509,8 @@ Denote packages to enable create managing bibliographic notes and citations.")
     (license license:gpl3+)))
 
 (define-public emacs-helm-bibtex
-  (let ((commit "8ebf50d5bd368082d0b7ab79d26a52f372cdef98")
-        (revision "1"))
+  (let ((commit "6064e8625b2958f34d6d40312903a85c173b5261")
+        (revision "2"))
     (package
       (name "emacs-helm-bibtex")
       (version (git-version "2.0.1" revision commit))
@@ -25477,20 +25522,20 @@ Denote packages to enable create managing bibliographic notes and citations.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1x6nfkprj95cp4ldb485v13hrkd7rvzp750d9xz80vk76gpvaw3l"))))
+          (base32 "1q8dm14wdxx14rnlgmz88j6gskvrrsc0f2z2639jwmfhyibw7d77"))))
       (build-system emacs-build-system)
-      (propagated-inputs
-       (list emacs-helm
-             emacs-parsebib
-             emacs-s
-             emacs-dash
-             emacs-f
-             emacs-biblio
-             emacs-ivy))
+      (propagated-inputs (list emacs-biblio
+                               emacs-dash
+                               emacs-f
+                               emacs-helm
+                               emacs-ivy
+                               emacs-parsebib
+                               emacs-s))
       (home-page "https://github.com/tmalsburg/helm-bibtex")
       (synopsis "Bibliography manager based on Helm")
-      (description "This package provides bibliography manager for Emacs,
-based on Helm and the bibtex-completion backend.
+      (description
+       "This package provides bibliography manager for Emacs,
+based on Helm and the BibTeX completion backend.
 
 Key features:
 
@@ -25506,7 +25551,7 @@ BibTeX entries, or plain text references at point, attach PDFs to emails
 @item Quick access to online bibliographic databases such as Pubmed,
 arXiv, Google Scholar, Library of Congress, etc.
 @item Imports BibTeX entries from CrossRef and other sources.
-@end itemize\n")
+@end itemize")
       (license license:gpl3+))))
 
 (define-public emacs-ewmctrl
@@ -27739,6 +27784,48 @@ mode for Lisp programming languages.  It will infer some changes to
 keep Parens and Indentation inline with one another.")
     (license license:gpl3+)))
 
+(define-public emacs-parinfer-rust-mode
+  (package
+    (name "emacs-parinfer-rust-mode")
+    (version "0.9.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/justinbarclay/parinfer-rust-mode")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p00m757maw6dxig0x45gry1l7vm9dm6wg1anfm2rwl6hw1f5q25"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'configure
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((parinfer-lib
+                     (dirname
+                      (search-input-file inputs "lib/libparinfer_rust.so"))))
+                ;; Specify the absolute file names of the parinfer shared
+                ;; library.
+                ;; (make-file-writable "parinfer-rust-mode.el")
+                (emacs-substitute-variables "parinfer-rust-mode.el"
+                  ("parinfer-rust--lib-name" "libparinfer_rust.so")
+                  ("parinfer-rust-library-dir" parinfer-lib))
+                (emacs-substitute-sexps "parinfer-rust-mode.el"
+                  ("defcustom parinfer-rust-library-directory" parinfer-lib)
+                  ("defconst parinfer-rust--lib-name"
+                   "libparinfer_rust.so"))))))))
+    (inputs (list parinfer-rust-emacs))
+    (propagated-inputs (list emacs-track-changes))
+    (home-page "https://github.com/justinbarclay/parinfer-rust-mode")
+    (synopsis "Lisp structure editing mode leveraging Parinfer Rust")
+    (description
+     "Parinfer Rust mode aims to be a simple implementation of Parinfer that
+leverages the Parinfer Rust Emacs library to do most of the heavy lifting.")
+    (license license:gpl3+)))
+
 (define-public emacs-helm-eww
   (package
     (name "emacs-helm-eww")
@@ -29676,8 +29763,8 @@ incompatible versions of it.")
    (license license:gpl3+)))
 
 (define-public emacs-org-board
-  (let ((commit "1393bd46d11a81328ed4fb8471831415a3efe224")
-        (revision "1"))
+  (let ((commit "500fe02bc114e5b535a2eb2ab73954d79428168f")
+        (revision "2"))
     (package
       (name "emacs-org-board")
       (version (git-version "1138" revision commit))
@@ -29689,7 +29776,7 @@ incompatible versions of it.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1kryrg988c3sbxyp1sdgc6xdv2iz6kiflpzn2rw4z3l4grzab53b"))))
+                  "1mcghw9mmlyqsgxk97hd57495sfx8dp6ig7qgs5xn2b2k0ygv4vf"))))
       (build-system emacs-build-system)
       (arguments
        (list
@@ -39738,6 +39825,28 @@ of a leader key as used in Vim or the @code{emacs-evil-leader} package,
 and allows for an arbitrary number of leader keys.")
       (license license:gpl3+))))
 
+(define-public emacs-binder
+  (package
+    (name "emacs-binder")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/divyaranjan/binder")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        "1fdgl31zc15cysv1yys95j0106i2fwfxb3qcwwh7f3mcz2snr2md")))
+    (build-system emacs-build-system)
+    (home-page "https://codeberg.org/divyaranjan/binder")
+    (synopsis
+     "Binder is a global minor mode to facilitate working on multiple files")
+    (description
+     "Primarily, Binder provides a global minor mode Binder Mode.
+This allows working with files in the current @code{binder-project-directory}.")
+    (license license:gpl3+)))
+
 (define-public emacs-spaceleader
   (let ((commit "5d88d120494623d6777d464ec40ff4bb7d6b1d57")
         (revision "1"))
@@ -39767,6 +39876,27 @@ and allows for an arbitrary number of leader keys.")
 without requiring all of Spacemacs.  The @code{<Leader>} key, inspired by Vim,
 provides an easy way to bind keys under a configurable prefix key.")
       (license license:gpl3+))))
+
+(define-public emacs-spacious-padding
+  (package
+    (name "emacs-spacious-padding")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/spacious-padding-"
+                           version ".tar"))
+       (sha256
+        (base32 "0x5bsyd6b1d3bzrsrpf9nvw7xj5ch114m2dilq64bg8y2db3452z"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/protesilaos/spacious-padding")
+    (synopsis "Increase the padding or spacing of frames and windows")
+    (description
+     "The Spacious Padding mode increases the space or padding around several
+elements of the Emacs interface, such as window dividers, the internal frame
+border, the padding of the mode line, and more.  The idea is to produce a more
+comfortable presentation.")
+    (license license:gpl3+)))
 
 (define-public emacs-spamfilter-el
   (package
