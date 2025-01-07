@@ -5,7 +5,7 @@
 ;;; Copyright © 2021 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 jgart <jgart@dismail.de>
 ;;; Copyright © 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
-;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
+;;; Copyright © 2024, 2025 Spencer King <spencer.king@geneoscopy.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1466,6 +1466,28 @@ perform optimization and therefore ideal for computer vision applications such
 as SLAM (simultaneous localization and mapping).")
       (license license:expat))))
 
+(define-public julia-cpuid
+  (package
+    (name "julia-cpuid")
+    (version "0.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/m-j-w/CpuId.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0x2csy8cvd1rm49qpqpkb3zs7swj4r91zdsyjafqr7hvjp9h3hjz"))))
+    (build-system julia-build-system)
+    (propagated-inputs (list julia-precompiletools))
+    (home-page "https://github.com/m-j-w/CpuId.jl")
+    (synopsis "Ask the CPU for its features and specifications")
+    (description
+     "This package allows you to query the availability of specific
+CPU features with low run-time cost.")
+    (license license:expat)))
+
 (define-public julia-crayons
   (package
     (name "julia-crayons")
@@ -2919,6 +2941,28 @@ operations in Julia.")
     (synopsis "Julia wrapper around Google's gumbo C library for parsing HTML")
     (description "@code{Gumbo.jl} is a Julia wrapper around Google's gumbo
 library for parsing HTML.")
+    (license license:expat)))
+
+(define-public julia-hostcpufeatures
+  (package
+    (name "julia-hostcpufeatures")
+    (version "0.1.17")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JuliaSIMD/HostCPUFeatures.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p0phms2zbmlv8bn20lnwn1jh0xjvz7vq266zf296adha534q9pq"))))
+    (build-system julia-build-system)
+    (propagated-inputs (list julia-bittwiddlingconveniencefunctions
+                             julia-ifelse julia-static))
+    (home-page "https://github.com/JuliaSIMD/HostCPUFeatures.jl")
+    (synopsis "Provides information about the CPU's features")
+    (description "This package provides information about the features of
+the host CPU in Julia.")
     (license license:expat)))
 
 (define-public julia-http

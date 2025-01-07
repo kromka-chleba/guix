@@ -1532,7 +1532,7 @@ model-fitting photometry or morphological analyses.")
     (synopsis "Python client to NASA's Astrophysics Data System")
     (description
      "This package provdies a Python Module to Interact with NASA's
-@acronym{Astrophysics Data System,ADS} that Doesn't Suck™.")
+@acronym{Astrophysics Data System,ADS}.")
     (license license:expat)))
 
 (define-public python-aplpy
@@ -6368,7 +6368,7 @@ orbit around the Earth.")
     (description
      "@code{tweakwcs} is a package that provides core algorithms for computing
 and applying corrections to @code{WCS} objects such as to minimize mismatch
-between image and reference catalogs. Currently only aligning images with
+between image and reference catalogs.  Currently only aligning images with
 @code{FITS WCS} and @code{JWST gWCS} are supported.")
     (license license:bsd-3)))
 

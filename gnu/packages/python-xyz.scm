@@ -1864,6 +1864,9 @@ Markdown.  All extensions are found under the module namespace of pymdownx.")
              "-k" (string-append
                    ;; This test tries to write to $HOME/.cache/pint.
                    "not test_auto"
+                   ;; Our pytest can't match RuntimeWarning for some reason.
+                   ;; Note: python-pint@0.24.4 would work around this, too.
+                   " and not test_nonnumeric_magnitudes"
                    ;; Fails with "Group USCSLengthInternational already
                    ;; present in registry"
                    " and not test_load_definitions_stage_2"))))
@@ -14772,7 +14775,7 @@ falling into the Python interpreter.")
     (native-inputs (list python-setuptools python-wheel python-toml))
     (home-page "https://github.com/Maarten-vd-Sande/qnorm")
     (synopsis "Quantile normalization")
-    (description "This tool implements quantile normalization. It properly
+    (description "This tool implements quantile normalization.  It properly
 resolves rank ties, which is important when ties happen frequently, such as
 when working with discrete numbers (integers) in count tables.  This
 implementation should be relatively fast, and can use multiple cores to sort
@@ -19940,7 +19943,7 @@ manipulation library.")
     (synopsis "Calculations with uncertainties")
     (description
      "The uncertainties package transparently handles calculations with
-numbers with uncertainties. It can also yield the derivatives of any
+numbers with uncertainties.  It can also yield the derivatives of any
 expression.")
     (license license:bsd-3)))
 
@@ -30432,7 +30435,7 @@ a mypy plugin that smooths over some limitations in the basic type hints.
 (define-public python-trio-websocket
   (package
     (name "python-trio-websocket")
-    (version "0.9.2")
+    (version "0.11.1")
     (source
      (origin
        (method git-fetch)               ;no tests in pypi archive
@@ -30441,9 +30444,27 @@ a mypy plugin that smooths over some limitations in the basic type hints.
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1yk2ak991kbl30xg8ldpggack1lwkizd7s5cpr28ir34z8iyjnpi"))))
+        (base32 "1sw85r8gikd86zc8jaqv0vmgcf2k62v6zjzxiv8xr6zm8ridplkm"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pytest python-pytest-trio python-trustme))
+    (arguments
+     (list
+      #:test-flags
+      '(list "-k"
+             ;; FIXME: These raise nursery exceptions.  Perhaps pytest-trio is
+             ;; too old?
+             (string-append "not test_handshake_exception_before_accept"
+                            " and not test_reject_handshake"
+                            " and not test_reject_handshake_invalid_info_status"
+                            " and not test_client_open_timeout"
+                            " and not test_client_close_timeout"
+                            " and not test_client_connect_networking_error"
+                            " and not test_finalization_dropped_exception"))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-trio
+           python-setuptools
+           python-trustme
+           python-wheel))
     (propagated-inputs (list python-async-generator python-trio python-wsproto))
     (home-page "https://github.com/HyperionGray/trio-websocket")
     (synopsis "WebSocket library for Trio")
@@ -37701,7 +37722,7 @@ a port of the chalk package for javascript.")
     (synopsis "Expands a regular expression to its possible matches")
     (description
      "The goal of sre_yield is to efficiently generate all values that can
-match a given regular expression, or count possible matches efficiently. It
+match a given regular expression, or count possible matches efficiently.  It
 uses the parsed regular expression, so you get a much more accurate result
 than trying to just split strings.")
     (license license:asl2.0)))

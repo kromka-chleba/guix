@@ -10633,7 +10633,7 @@ architecture.")
          "1i632v3f64q3v1i0p0x850mjhgad49fl24dl6r20r4wa1mhalmp0"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-chardet python-click python-pyyaml))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://mathics.org/")
     (synopsis
      "Character tables and tokenizer for Mathics and the Wolfram language")
@@ -10687,13 +10687,17 @@ the Wolfram language.")
              (substitute* "mathics/builtin/files_io/files.py"
               (("https://raw.githubusercontent.com/Mathics3/mathics-core/master/README.rst")
                (string-append (getcwd) "/README.rst")))))
+         (add-before 'check 'prepare-check
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             ; Doesn't work: (add-installed-pythonpath inputs outputs)
+             (setenv "PYTHONPATH" (getcwd))))
          (add-before 'check 'prepare-locales
            (lambda _
              ;; Otherwise 210 tests fail because the real output would use
              ;; unicode arrow characters.  With this, only 18 (symbolic) tests fail.
              (setenv "MATHICS_CHARACTER_ENCODING" "ASCII"))))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (inputs (list llvm))
     (propagated-inputs (list python-mpmath
                              python-pint

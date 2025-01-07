@@ -52,7 +52,7 @@
 ;;; Copyright © 2021 ikasero <ahmed@ikasero.com>
 ;;; Copyright © 2021 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2021 jgart <jgart@dismail.de>
-;;; Copyright © 2022 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2022, 2024 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Jai Vetrivelan <jaivetrivelan@gmail.com>
 ;;; Copyright © 2022 Derek Chuank <derekchuank@outlook.com>
 ;;; Copyright © 2022, 2023 Wamm K. D. <jaft.r@outlook.com>
@@ -836,7 +836,7 @@ rasterisation.")
 (define-public libdrm
   (package
     (name "libdrm")
-    (version "2.4.123")
+    (version "2.4.124")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -844,7 +844,7 @@ rasterisation.")
                     version ".tar.xz"))
               (sha256
                (base32
-                "17mpmp59icp8vaa47dz9gdpdh583kigq47p9a07lp9s9l5kqbfd2"))))
+                "0yd37j3c1qz9gmwvv7vwqgss8aiizypsg8hn9fpsyjnac4zjjdmc"))))
     (build-system meson-build-system)
     (arguments
      (list #:configure-flags
@@ -2420,10 +2420,10 @@ program for X11.  It was designed to be fast, tiny and scriptable in any languag
     (home-page "https://github.com/vixus0/xftwidth")
     (synopsis "Calculator for determining pixel widths of displayed text using Xft fonts")
     (description "xftwidth is a small C program for calculating the pixel
-widths of displayed text using Xft fonts. It is especially useful in scripts
+widths of displayed text using Xft fonts.  It is especially useful in scripts
 for displaying text in graphical panels, menus, popups, and notification
-windows generated using dzen. These scripts are often used in conjunction with
-minimalistic tiling window managers such as herbstluftwm and bspwm.")
+windows generated using dzen.  These scripts are often used in conjunction
+with minimalistic tiling window managers such as herbstluftwm and bspwm.")
     (license license:expat)))
 
 (define-public xcb-util-xrm
@@ -3148,7 +3148,7 @@ support such as Xfce.")
     (synopsis "Wallpaper setting utility for X")
     (description
      "The xwallpaper utility allows you to set image files as your X
-wallpaper. JPEG, PNG, and XPM file formats are supported.
+wallpaper.  JPEG, PNG, and XPM file formats are supported.
 
 The wallpaper is also advertised to programs which support semi-transparent
 backgrounds.")
@@ -3531,7 +3531,7 @@ desktop notifications.")
 (define-public wofi
   (package
     (name "wofi")
-    (version "1.3")
+    (version "1.4.1")
     (source (origin
               (method hg-fetch)
               (uri (hg-reference
@@ -3540,7 +3540,7 @@ desktop notifications.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1k6b46n0vwdqrr6rfps0n8hghcgivnc42gc7z61phhjgf08j64qv"))))
+                "1z2pmmwq2h3lfsvdazjiz9s3978rcqan7dqdk5iwk4sz2m96irv9"))))
     (build-system meson-build-system)
     (arguments
      (list #:glib-or-gtk? #t))

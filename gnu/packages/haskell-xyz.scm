@@ -4404,7 +4404,7 @@ definition of @code{Monad}.")
     (home-page "https://github.com/haskell-fswatch/hfsnotify")
     (synopsis "Cross platform library for file change notification")
     (description "Cross platform library for file creation, modification, and
-deletion notification. This library builds upon existing libraries for platform
+deletion notification.  This library builds upon existing libraries for platform
 specific Windows, Mac, and Linux file system event notification.")
     (license license:bsd-3)))
 
@@ -4745,10 +4745,10 @@ monoid with invertibility.")
     (synopsis "Tools to build the Gtk2Hs suite of user interface libraries")
     (description
      "This package provides a set of helper programs necessary to build the
-Gtk2Hs suite of libraries. These tools include a modified c2hs binding tool
+Gtk2Hs suite of libraries.  These tools include a modified c2hs binding tool
 that is used to generate FFI declarations, a tool to build a type hierarchy
 that mirrors the C type hierarchy of GObjects found in glib, and a generator
-for signal declarations that are used to call back from C to Haskell. These
+for signal declarations that are used to call back from C to Haskell.  These
 tools are not needed to actually run Gtk2Hs programs.")
     (license license:gpl2)))
 
@@ -8302,7 +8302,7 @@ found at runtime, a userError is thrown.")
      "Implementation of difficult monads made easy with operational semantics")
     (description
      "This library makes it easy to implement monads with tricky control
-flow. This is useful for: writing web applications in a sequential style,
+flow.  This is useful for: writing web applications in a sequential style,
 programming games with a uniform interface for human and AI players and easy
 replay capababilities, implementing fast parser monads, designing monadic
 DSLs, etc.")
@@ -15129,7 +15129,7 @@ ones.
 
 Accurate information about source positions is available for all block and
 inline elements.  Thus the library can be used to create an accurate syntax
-highlighter or an editor with live preview. The parser has been designed for
+highlighter or an editor with live preview.  The parser has been designed for
 robust performance even in pathological cases that tend to cause stack
 overflows or exponential slowdowns in other parsers, with parsing speed that
 varies linearly with input length.")
@@ -15243,7 +15243,7 @@ platform independent way.")
     (synopsis "Support library for Template Haskell")
     (description
      "This package provides modules containing facilities for manipulating
-Haskell source code using Template Haskell. See
+Haskell source code using Template Haskell.  See
 @uref{http://www.haskell.org/haskellwiki/Template_Haskell} for more
 information.")
     (license license:bsd-3)))
@@ -16325,8 +16325,9 @@ benchmarks](https://hackage.haskell.org/package/random-bytestring-0.1.3.2/src/be
     (build-system haskell-build-system)
     (properties '((upstream-name . "ordered-containers")))
     (home-page "https://hackage.haskell.org/package/ordered-containers")
-    (description "")
     (synopsis "Haskell types")
+    (description "Set- and Map-like types that remember the order elements
+were inserted")
     (license license:bsd-3)))
 
 (define-public ghc-cabal-syntax
@@ -16590,7 +16591,7 @@ Lua tables, but are augmented with convenience functions.")
     (native-inputs (list ghc-hspec ghc-hspec-expectations))
     (home-page "https://github.com/CRogers/should-not-typecheck")
     (synopsis
-     "A HUnit/hspec assertion library to verify that an expression does not typecheck")
+     "HUnit/hspec assertion library to verify that an expression does not typecheck")
     (description
      "For examples and an introduction to the library please take a look at the
 <https://github.com/CRogers/should-not-typecheck#should-not-typecheck- README>

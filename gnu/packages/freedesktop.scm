@@ -1462,15 +1462,16 @@ fullscreen) or other display servers.")
 (define-public wayland-protocols
   (package
     (name "wayland-protocols")
-    (version "1.37")
+    (version "1.39")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "https://gitlab.freedesktop.org/wayland/"
-                                  name "/-/releases/" version "/downloads/"
-                                  name "-" version ".tar.xz"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.freedesktop.org/wayland/wayland-protocols")
+                    (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "09pk3qhpc29x1a6srpqqw9dcvalg33vfmp14d276is7j4klrn3m7"))))
+                "1dpcwsd2p6sjf5164b674cr7vq24hp3lfdshijj438r4bx8bld28"))))
     (build-system meson-build-system)
     (inputs
      (list wayland))
@@ -1485,9 +1486,6 @@ functionality not available in the Wayland core protocol.  Such protocols either
 add completely new functionality, or extend the functionality of some other
 protocol either in Wayland core, or some other protocol in wayland-protocols.")
     (home-page "https://wayland.freedesktop.org")
-    (properties
-     '((release-monitoring-url
-        . "https://wayland.freedesktop.org/releases.html")))
     (license license:expat)))
 
 (define-public wayland-protocols-next
@@ -2636,7 +2634,7 @@ Rendering Manager devices.")
     (home-page "https://www.freedesktop.org/wiki/Software/xdg-user-dirs/")
     (synopsis "Tool to help manage \"well known\" user directories")
     (description "xdg-user-dirs is a tool to help manage \"well known\" user
-directories, such as the desktop folder or the music folder. It also handles
+directories, such as the desktop folder or the music folder.  It also handles
 localization (i.e. translation) of the file names.  Designed to be
 automatically run when a user logs in, xdg-user-dirs can also be run
 manually by a user.")
@@ -3282,7 +3280,7 @@ interfaces.")
 (define-public xdg-desktop-portal-hyprland
   (package
     (name "xdg-desktop-portal-hyprland")
-    (version "1.3.6")
+    (version "1.3.9")
     (source
      (origin
        (method git-fetch)
@@ -3291,7 +3289,7 @@ interfaces.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17ba9jkccyp8gv79ds70khgm5wm6x8zs5m9nkilq4n2j7fsa8cfl"))))
+        (base32 "0k1bgdpg5ixxqg9r4vraszbnl4rl9gh87dhyc7rr332rf0j9n0xh"))))
     (build-system qt-build-system)
     (arguments
      (list #:tests? #f                  ;No tests.

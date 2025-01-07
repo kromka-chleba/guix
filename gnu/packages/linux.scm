@@ -608,21 +608,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
 
-(define-public linux-libre-4.19-version "4.19.325")
-(define-public linux-libre-4.19-gnu-revision "gnu1")
-(define deblob-scripts-4.19
-  (linux-libre-deblob-scripts
-   linux-libre-4.19-version
-   linux-libre-4.19-gnu-revision
-   (base32 "0pjal2cc2f99cvw8r4icb4l24j41k48jkj6bqk7pcahzcgx33ycb")
-   (base32 "048isws4h3lya8dwpwyhqglsjg9sckxk0gfsxdbqg336n5vi0gb1")))
-(define-public linux-libre-4.19-pristine-source
-  (let ((version linux-libre-4.19-version)
-        (hash (base32 "1qcd1rrv96p9iz9a9qpx3b9rm2jyps6sgj7l7m21m8ydwmyysyv0")))
-    (make-linux-libre-source version
-                             (%upstream-linux-source version hash)
-                             deblob-scripts-4.19)))
-
 (define %boot-logo-patch
   ;; Linux-Libre boot logo featuring Freedo and a gnu.
   (origin
@@ -687,11 +672,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
                              ;; can be dropped for linux-libre 5.7
                              (search-patch
                               "linux-libre-support-for-Pinebook-Pro.patch"))))
-
-(define-public linux-libre-4.19-source
-  (source-with-patches linux-libre-4.19-pristine-source
-                       (list %boot-logo-patch
-                             %linux-libre-arm-export-__sync_icache_dcache-patch)))
 
 
 ;;;
@@ -806,11 +786,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
   (make-linux-libre-headers* linux-libre-5.4-version
                              linux-libre-5.4-gnu-revision
                              linux-libre-5.4-source))
-
-(define-public linux-libre-headers-4.19
-  (make-linux-libre-headers* linux-libre-4.19-version
-                             linux-libre-4.19-gnu-revision
-                             linux-libre-4.19-source))
 
 ;; The following package is used in the early bootstrap, and thus must be kept
 ;; stable and with minimal build requirements.
@@ -1197,14 +1172,6 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
 
-(define-public linux-libre-4.19
-  (make-linux-libre* linux-libre-4.19-version
-                     linux-libre-4.19-gnu-revision
-                     linux-libre-4.19-source
-                     '("x86_64-linux" "i686-linux" "armhf-linux"
-                       "aarch64-linux" "powerpc64le-linux")
-                     #:configuration-file kernel-config))
-
 ;; Linux-Libre-LTS points to the *newest* released long-term support version of
 ;; Linux-Libre.
 ;; Reference: <https://www.kernel.org/category/releases.html>
@@ -1259,26 +1226,10 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                         ("CONFIG_RTC_DRV_RK808" . #t))
                       (default-extra-linux-options linux-libre-5.4-version))))
 
-(define-public linux-libre-arm-generic-4.19
-  (make-linux-libre* linux-libre-4.19-version
-                     linux-libre-4.19-gnu-revision
-                     linux-libre-4.19-source
-                     '("armhf-linux")
-                     #:defconfig "multi_v7_defconfig"
-                     #:extra-version "arm-generic"))
-
 (define-public linux-libre-arm-omap2plus
   (make-linux-libre* linux-libre-version
                      linux-libre-gnu-revision
                      linux-libre-source
-                     '("armhf-linux")
-                     #:defconfig "omap2plus_defconfig"
-                     #:extra-version "arm-omap2plus"))
-
-(define-public linux-libre-arm-omap2plus-4.19
-  (make-linux-libre* linux-libre-4.19-version
-                     linux-libre-4.19-gnu-revision
-                     linux-libre-4.19-source
                      '("armhf-linux")
                      #:defconfig "omap2plus_defconfig"
                      #:extra-version "arm-omap2plus"))
@@ -1665,9 +1616,10 @@ and the notification, WiFi, and Bluetooth LED.")
      "This package provides the @code{tuxedo_keyboard}, @code{tuxedo_io},
 @code{clevo_wmi} @acronym{WMI, Windows Management Engine} and the
 @code{clevo_acpi} @acronym{ACPI, Advanced Configuration and Power Interface}
-kernel modules to control the keyboard on most Tuxedo computers. Only white
-backlight only models are currently not supported. The @code{tuxedo_io} module
-is also needed for the @code{tuxedo-control-center} (short tcc) package.")
+kernel modules to control the keyboard on most Tuxedo computers.  Only white
+backlight only models are currently not supported.  The @code{tuxedo_io}
+module is also needed for the @code{tuxedo-control-center} (short tcc)
+package.")
     (license license:gpl3+)))
 
 (define-public evdi
@@ -1731,7 +1683,7 @@ display settings applets in graphical environments")
     (description
      "Libevdi is a library that gives applications easy access to
 @acronym{EVDI, Extensible Virtual Display Interface} devices provided by the
-@code{evdi} driver package.  ")
+@code{evdi} driver package.")
     (license license:lgpl2.1)))
 
 (define-public ec
@@ -2551,7 +2503,7 @@ Headers can have its data format described from debugging info and offsets from
 it can be used to further format a number of records.
 
 Finally, the @command{btfdiff} command can be used to compare the output of
-pahole from BTF and DWARF, to make sure they produce the same results. ")
+pahole from BTF and DWARF, to make sure they produce the same results.")
     (license license:gpl2+)))
 
 (define-public fbset
@@ -6691,7 +6643,7 @@ disks and SD cards.  This package provides the userland utilities.")
     (home-page (package-home-page f2fs-tools/static))
     (synopsis "Statically-linked fsck.f2fs command from f2fs-tools")
     (description "This package provides statically-linked fsck.f2fs command taken
-from the f2fs-tools package. It is meant to be used in initrds.")
+from the f2fs-tools package.  It is meant to be used in initrds.")
     (license (package-license f2fs-tools/static))))
 
 (define-public freefall
@@ -7154,9 +7106,9 @@ The following service daemons are also provided:
      (list autoconf automake libtool))
     (inputs (list pciutils rdma-core))
     (synopsis "Open Fabrics Enterprise Distribution (OFED) Performance Tests")
-    (description "This is a collection of tests written over uverbs intended for
-use as a performance micro-benchmark. The tests may be used for hardware or
-software tuning as well as for functional testing.
+    (description "This is a collection of tests written over uverbs intended
+for use as a performance micro-benchmark.  The tests may be used for hardware
+or software tuning as well as for functional testing.
 
 The collection contains a set of bandwidth and latency benchmark such as:
 @enumerate

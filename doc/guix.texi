@@ -22,7 +22,7 @@
 @set SUBSTITUTE-URLS https://@value{SUBSTITUTE-SERVER-1} https://@value{SUBSTITUTE-SERVER-2}
 
 @copying
-Copyright @copyright{} 2012-2024 Ludovic Courtès@*
+Copyright @copyright{} 2012--2025 Ludovic Courtès@*
 Copyright @copyright{} 2013, 2014, 2016, 2024 Andreas Enge@*
 Copyright @copyright{} 2013 Nikita Karetnikov@*
 Copyright @copyright{} 2014, 2015, 2016 Alex Kost@*
@@ -53,7 +53,7 @@ Copyright @copyright{} 2017, 2019, 2020, 2021, 2022, 2023, 2024 Maxim Cournoyer@
 Copyright @copyright{} 2017–2022 Tobias Geerinckx-Rice@*
 Copyright @copyright{} 2017 George Clemmer@*
 Copyright @copyright{} 2017 Andy Wingo@*
-Copyright @copyright{} 2017, 2018, 2019, 2020, 2023, 2024 Arun Isaac@*
+Copyright @copyright{} 2017, 2018, 2019, 2020, 2023, 2024, 2025 Arun Isaac@*
 Copyright @copyright{} 2017 nee@*
 Copyright @copyright{} 2018 Rutger Helling@*
 Copyright @copyright{} 2018, 2021, 2023 Oleg Pykhalov@*
@@ -28903,7 +28903,7 @@ The package that provides rspamd.
 
 @item @code{config-file} (default: @code{%default-rspamd-config-file}) (type: file-like)
 File-like object of the configuration file to use.  By default all
-workers are enabled except fuzzy and they are binded to their usual
+workers are enabled except fuzzy and they are bound to their usual
 ports, e.g localhost:11334, localhost:11333 and so on
 
 @item @code{local.d-files} (default: @code{()}) (type: directory-tree)
@@ -34168,6 +34168,10 @@ Data type representing the configuration of dnsmasq.
 @table @asis
 @item @code{package} (default: @var{dnsmasq})
 Package object of the dnsmasq server.
+
+@item @code{provision} (default: @code{'(dnsmasq)})
+A list of symbols for the Shepherd service corresponding to this dnsmasq
+configuration.
 
 @item @code{no-hosts?} (default: @code{#f})
 When true, don't read the hostnames in /etc/hosts.
@@ -41420,8 +41424,9 @@ BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"
 Available @code{rootless-podman-configuration} fields are:
 
 @table @asis
-@item @code{podman} (default: @code{podman}) (type: package)
+@item @code{podman} (default: @code{podman}) (type: package-or-#f)
 The Podman package that will be installed in the system profile.
+Pass @code{#f} to not install Podman.
 
 @item @code{group-name} (default: @code{"cgroup"}) (type: string)
 The name of the group that will own /sys/fs/cgroup resources.  Users that
@@ -49803,9 +49808,9 @@ will not have the desired effect.  @xref{Package Transformation Options,
 @cindex @LaTeX{} packages
 Guix provides packages for the @TeX{}, @LaTeX{}, ConTeXt, LuaTeX, and
 related typesetting systems, taken from the
-@uref{https://www.tug.org/texlive/, @TeX{} Live distribution}.  However,
-because @TeX{} Live is so huge and because finding one's way in this
-maze is tricky, so this section provides some guidance on how to deploy
+@uref{https://www.tug.org/texlive/, @TeX{} Live distribution}.
+Because @TeX{} Live is so huge and because finding one's way in this
+maze is tricky, this section provides some guidance on how to deploy
 the relevant packages to compile @TeX{} and @LaTeX{} documents.
 
 @TeX{} Live currently comes in two mutually exclusive flavors in Guix:
@@ -49818,10 +49823,10 @@ single @TeX{} Live package} (roughly 4,200), but it is huge---more than
 
 @item
 A ``modular'' @TeX{} Live distribution, in which you only install the
-packages, always prefixed with @samp{texlive-}, you need.
+packages you need, whose name is always prefixed with @samp{texlive-}.
 @end itemize
 
-So to insist, these two flavors cannot be combined@footnote{No rule
+To insist, these two flavors cannot be combined@footnote{No rule
 without exception! As the monolithic @TeX{} Live does not contain the
 @command{biber} executable, it is okay to combine it with
 @code{texlive-biber}, which does.}.  If in the modular setting your

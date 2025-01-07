@@ -303,7 +303,7 @@ also known as DXTn or DXTC) for Mesa.")
 (define-public mesa
   (package
     (name "mesa")
-    (version "24.2.5")
+    (version "24.3.2")
     (source
      (origin
        (method url-fetch)
@@ -313,7 +313,7 @@ also known as DXTn or DXTC) for Mesa.")
                                  "mesa-" version ".tar.xz")))
        (sha256
         (base32
-         "0vyrkmy8j5bygddi2bsssj9g1rrcg4vfhvw0bjxsbmif4km0ngbk"))))
+         "05pp7wghydjx428r4wr6p08nsx1g0ssnxvjlc9wf8s91dlx5z7xd"))))
     (build-system meson-build-system)
     (propagated-inputs
      ;; The following are in the Requires.private field of gl.pc.
@@ -411,7 +411,7 @@ panfrost,r300,r600,svga,softpipe,llvmpipe,tegra,v3d,vc4,virgl,zink"))
               '("-Dvulkan-drivers=intel,intel_hasvk,amd,swrast"))
              ((target-aarch64?)
               ;; This differs from "auto" which only includes swrast and intel
-              '("-Dvulkan-drivers=freedreno,amd,broadcom,swrast"))
+              '("-Dvulkan-drivers=freedreno,amd,broadcom,swrast,asahi"))
              (else
               '("-Dvulkan-drivers=auto")))
 
@@ -545,6 +545,9 @@ directory = ~a
                                         (from-crates-io 'rust-proc-macro2-1)
                                         (from-crates-io 'rust-paste-1))))))))
                 #~())
+         (add-after 'unpack 'set-home-directory
+           ;; Build tries to use a shader cache (non-fatal error).
+           (lambda _ (setenv "HOME" "/tmp")))
          (add-before 'configure 'fix-dlopen-libnames
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((out #$output))

@@ -6,7 +6,7 @@
 ;;; Copyright © 2015, 2016, 2017 David Thompson <davet@gnu.org>
 ;;; Copyright © 2016-2021, 2023, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017, 2020 Kei Kebreau <kkebreau@posteo.net>
-;;; Copyright © 2016, 2018, 2019, 2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2016, 2018, 2019, 2024, 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016, 2017, 2018 Julian Graham <joolean@gmail.com>
 ;;; Copyright © 2017–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2017 Manolis Fragkiskos Ragkousis <manolis837@gmail.com>
@@ -286,7 +286,7 @@ offers a wide range of functions, including par-score calculations.")
    (home-page "https://github.com/Doom-Utils/deutex")
    (synopsis "WAD file composer for Doom and related games")
    (description
-    "DeuTex is a wad composer for Doom, Heretic, Hexen and Strife. It can be
+    "DeuTex is a wad composer for Doom, Heretic, Hexen and Strife.  It can be
 used to extract the lumps of a wad and save them as individual files.
 Conversely, it can also build a wad from separate files.  When extracting a
 lump to a file, it does not just copy the raw data, it converts it to an
@@ -351,7 +351,7 @@ DeuTex has functions such as merging wads, etc.")
       (synopsis "GRF development tools")
       (description
        "The @dfn{Graphics Resource File} (GRF) development tools are a set of
-tools for developing (New)GRFs. It includes a number of smaller programs, each
+tools for developing (New)GRFs.  It includes a number of smaller programs, each
 with a specific task:
 @enumerate
 @item @code{grfcodec} decodes and encodes GRF files for OpenTTD.
@@ -481,7 +481,7 @@ files) into @file{.grf} and/or @file{.nfo} files.")
          (add-before 'build 'build-ext
            (lambda _
              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (native-inputs (list swig))
+    (native-inputs (list swig python-setuptools python-wheel))
     (home-page "https://github.com/pybox2d/pybox2d")
     (synopsis "2D game physics for Python")
     (description
