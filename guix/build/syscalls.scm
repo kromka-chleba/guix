@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2014-2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2014-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015 David Thompson <davet@gnu.org>
 ;;; Copyright © 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2017 Mathieu Othacehe <m.othacehe@gmail.com>
@@ -9,6 +9,7 @@
 ;;; Copyright © 2021 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2024 Noah Evans <noahevans256@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -783,7 +784,7 @@ terminating nul character."
 (define KEXEC_FILE_UNLOAD	#x00000001)
 (define KEXEC_FILE_ON_CRASH	#x00000002)
 (define KEXEC_FILE_NO_INITRAMFS	#x00000004)
-(define KEXEC_FILE_DEBUG	#x00000008)
+(define KEXEC_FILE_DEBUG	#x00000008)       ;missing from Linux 6.6
 
 (define kexec-load-file
   (let* ((proc (syscall->procedure int "syscall"
@@ -794,8 +795,8 @@ terminating nul character."
                                          '*               ;cmdline
                                          unsigned-long))) ;flags
          (syscall-id (match (utsname:machine (uname))
-                       ("i686"    320)
                        ("x86_64"  320)
+                       ;; unsupported on i686
                        ("armv7l"  401)
                        ("aarch64" 294)
                        ("ppc64le" 382)
@@ -988,18 +989,27 @@ fdatasync(2) on the underlying file descriptor."
   (spare            (array fsword 4)))
 
 (define statfs
-  (let ((proc (syscall->procedure int (if musl-libc? "statfs" "statfs64") '(* *))))
-    (lambda (file)
-      "Return a <file-system> data structure describing the file system
+  ;; Check whether we are using the statically-linked Guile, which provides
+  ;; 'statfs-raw' from libguile via a patch.
+  (if (module-defined? the-scm-module 'statfs-raw)
+      (lambda (file)
+        "Return a <file-system> data structure describing the file system
 mounted at FILE."
-      (let*-values (((stat)    (make-bytevector sizeof-statfs))
-                    ((ret err) (proc (string->pointer file)
-                                     (bytevector->pointer stat))))
-        (if (zero? ret)
-            (read-statfs stat)
-            (throw 'system-error "statfs" "~A: ~A"
-                   (list file (strerror err))
-                   (list err)))))))
+        (read-statfs ((module-ref the-scm-module 'statfs-raw) file)))
+      (let ((proc (syscall->procedure int
+                                      (if musl-libc? "statfs" "statfs64")
+                                      '(* *))))
+        (lambda (file)
+          "Return a <file-system> data structure describing the file system
+mounted at FILE."
+          (let*-values (((stat)    (make-bytevector sizeof-statfs))
+                        ((ret err) (proc (string->pointer file)
+                                         (bytevector->pointer stat))))
+            (if (zero? ret)
+                (read-statfs stat)
+                (throw 'system-error "statfs" "~A: ~A"
+                       (list file (strerror err))
+                       (list err))))))))
 
 (define (free-disk-space file)
   "Return the free disk space, in bytes, on the file system that hosts FILE."

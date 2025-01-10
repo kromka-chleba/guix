@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2014-2022, 2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2014-2022, 2024-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2016 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2016, 2017, 2018 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2017 Mathieu Othacehe <m.othacehe@gmail.com>
@@ -198,8 +198,7 @@ via 'kexec'."
              (kexec-load-file kernel initrd
                               (string-join
                                (list #$@(operating-system-kernel-arguments
-                                         os root-device)))
-                              KEXEC_FILE_DEBUG)))))))
+                                         os root-device))))))))))
 
 (define* (upgrade-shepherd-services eval os)
   "Using EVAL, a monadic procedure taking a single G-Expression as an argument,
@@ -231,10 +230,35 @@ services as defined by OS."
                                                             to-restart)))))))
 
 (define (load-system-for-kexec eval os)
-  "Load OS so that it can be rebooted into via kexec, if supported.  Return
-true on success."
-  (eval #~(and (string-contains %host-type "-linux")
-               (primitive-load #$(kexec-loading-program os)))))
+  "Load OS so that it can be rebooted into via kexec, if supported.  Print a
+warning in case of failure."
+  (mlet %store-monad
+      ((result (eval
+                #~(and (string-contains %host-type "-linux")
+                       (with-exception-handler
+                           (lambda (c)
+                             (define kind-and-args?
+                               (exception-predicate &exception-with-kind-and-args))
+
+                             (list 'exception
+                                   (if (kind-and-args? c)
+                                       (call-with-output-string
+                                         (lambda (port)
+                                           (print-exception port #f
+                                                            (exception-kind c)
+                                                            (exception-args c))))
+                                       (object->string c))))
+                         (lambda ()
+                           (primitive-load #$(kexec-loading-program os))
+                           'success)
+                         #:unwind? #t)))))
+    (match result
+      ('success
+       (return #t))
+      (('exception message)
+       (warning (G_ "failed to load operating system for kexec: ~a~%")
+                message)
+       (return #f)))))
 
 
 ;;;

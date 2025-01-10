@@ -514,6 +514,21 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
+(define-public linux-libre-6.12-version "6.12.8")
+(define-public linux-libre-6.12-gnu-revision "gnu")
+(define deblob-scripts-6.12
+  (linux-libre-deblob-scripts
+   linux-libre-6.12-version
+   linux-libre-6.12-gnu-revision
+   (base32 "0i24k4zc6x5lvif12ba53c6cd5ydiah9j32ly2wpl88424ld389h")
+   (base32 "0jwnb1pd8ayfkck3sw3jjlsg7gayig0ymiay53mg7qchhycih8xs")))
+(define-public linux-libre-6.12-pristine-source
+  (let ((version linux-libre-6.12-version)
+        (hash (base32 "0y992b484rkkaqdkz5mw2is1l0izxhm3cl7fi5f72jx0bh3dm492")))
+   (make-linux-libre-source version
+                            (%upstream-linux-source version hash)
+                            deblob-scripts-6.12)))
+
 (define-public linux-libre-6.11-version "6.11.11")
 (define-public linux-libre-6.11-gnu-revision "gnu")
 (define deblob-scripts-6.11
@@ -533,7 +548,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.68")
+(define-public linux-libre-6.6-version "6.6.69")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -543,12 +558,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1x3455v7sfzakq99ydifh65yzvjzrw06p2lchwb6902yzqbnh786")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1qj0b2n4ck9qrgpqcgmhkl2jc4rh4000rqqs2vnwwlpkwc8g8gr8")))
+        (hash (base32 "0d2gilgh8myavzfdjnx7az4dbwvkk7irvsz6rla9bnbmgdb0aqww")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.122")
+(define-public linux-libre-6.1-version "6.1.123")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -558,7 +573,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "060pbbvk3c1r9v6fz1qm5f0hjb29wi67lg7an0nwl6bpjsk5ci52")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "0l3frvlzpl23f9j1vjm2y29d1ppv0ynq40h695i7w2qhh2rw14p8")))
+        (hash (base32 "1g5k9q113nyid3a347abb36v2xfv5vf74ic88af7kf04kzbsr9rk")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
@@ -635,6 +650,11 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (inherit source)
     (patches (append (origin-patches source)
                      patches))))
+
+(define-public linux-libre-6.12-source
+  (source-with-patches linux-libre-6.12-pristine-source
+                       (list %boot-logo-patch
+                             %linux-libre-arm-export-__sync_icache_dcache-patch)))
 
 (define-public linux-libre-6.11-source
   (source-with-patches linux-libre-6.11-pristine-source
@@ -757,6 +777,11 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (description "Headers of the Linux-Libre kernel.")
     (license license:gpl2)))
 
+(define-public linux-libre-headers-6.12
+  (make-linux-libre-headers* linux-libre-6.12-version
+                             linux-libre-6.12-gnu-revision
+                             linux-libre-6.12-source))
+
 (define-public linux-libre-headers-6.11
   (make-linux-libre-headers* linux-libre-6.11-version
                              linux-libre-6.11-gnu-revision
@@ -797,7 +822,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; linux-libre-headers-latest points to the latest headers package
 ;; and should be used as a dependency for packages that depend on
 ;; the headers.
-(define-public linux-libre-headers-latest linux-libre-headers-6.11)
+(define-public linux-libre-headers-latest linux-libre-headers-6.12)
 
 
 ;;;
@@ -1118,6 +1143,14 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 ;;; Generic kernel packages.
 ;;;
 
+(define-public linux-libre-6.12
+  (make-linux-libre* linux-libre-6.12-version
+                     linux-libre-6.12-gnu-revision
+                     linux-libre-6.12-source
+                     '("x86_64-linux" "i686-linux" "armhf-linux"
+                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
+                     #:configuration-file kernel-config))
+
 (define-public linux-libre-6.11
   (make-linux-libre* linux-libre-6.11-version
                      linux-libre-6.11-gnu-revision
@@ -1176,11 +1209,11 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 ;; Linux-Libre.
 ;; Reference: <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-lts-version         linux-libre-6.6-version)
-(define-public linux-libre-lts-gnu-revision    linux-libre-6.6-gnu-revision)
-(define-public linux-libre-lts-pristine-source linux-libre-6.6-pristine-source)
-(define-public linux-libre-lts-source          linux-libre-6.6-source)
-(define-public linux-libre-lts                 linux-libre-6.6)
+(define-public linux-libre-lts-version         linux-libre-6.12-version)
+(define-public linux-libre-lts-gnu-revision    linux-libre-6.12-gnu-revision)
+(define-public linux-libre-lts-pristine-source linux-libre-6.12-pristine-source)
+(define-public linux-libre-lts-source          linux-libre-6.12-source)
+(define-public linux-libre-lts                 linux-libre-6.12)
 
 
 ;;;

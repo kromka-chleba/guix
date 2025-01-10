@@ -67,7 +67,7 @@
 ;;; Copyright © 2023 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2024 Tomas Volf <~@wolfsden.cz>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
-;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -477,7 +477,7 @@ replacing them with data URIs.")
 (define-public monolith
   (package
     (name "monolith")
-    (version "2.8.1")
+    (version "2.8.3")
     (source
      (origin
        (method git-fetch)
@@ -486,24 +486,33 @@ replacing them with data URIs.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xr63302yb5k9c2sihd1iy97j5c44d4jrzfaiwm81d9li577ih58"))))
+        (base32 "082xh0zmmy9abz7y3zjybbwffq7d0j1jl78ggzbwwanvam65v0dp"))))
     (build-system cargo-build-system)
     (arguments
-     `(#:cargo-inputs
+     `(#:install-source? #f
+       #:cargo-inputs
        (("rust-atty" ,rust-atty-0.2)
-        ("rust-base64" ,rust-base64-0.21)
+        ("rust-base64" ,rust-base64-0.22)
         ("rust-chrono" ,rust-chrono-0.4)
         ("rust-clap" ,rust-clap-3)
-        ("rust-cssparser" ,rust-cssparser-0.33)
+        ("rust-cssparser" ,rust-cssparser-0.34)
         ("rust-encoding-rs" ,rust-encoding-rs-0.8)
-        ("rust-html5ever" ,rust-html5ever-0.24)
+        ("rust-html5ever" ,rust-html5ever-0.27)
+        ("rust-markup5ever-rcdom" ,rust-markup5ever-rcdom-0.3)
+        ("rust-openssl" ,rust-openssl-0.10)
         ("rust-percent-encoding" ,rust-percent-encoding-2)
         ("rust-regex" ,rust-regex-1)
-        ("rust-reqwest" ,rust-reqwest-0.11)
+        ("rust-reqwest" ,rust-reqwest-0.12)
         ("rust-sha2" ,rust-sha2-0.10)
         ("rust-url" ,rust-url-2))
        #:cargo-development-inputs
-       (("rust-assert-cmd" ,rust-assert-cmd-2))))
+       (("rust-assert-cmd" ,rust-assert-cmd-2))
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'dont-default-to-vendored-openssl
+           (lambda _
+             (substitute* "Cargo.toml"
+               ((".*\"vendored-openssl\".*") "")))))))
     (native-inputs
      (list pkg-config))
     (inputs
@@ -5595,7 +5604,7 @@ JSON, XML, properties, CSV and TSV.")
 (define-public go-github-com-itchyny-gojq
   (package
     (name "go-github-com-itchyny-gojq")
-    (version "0.12.16")
+    (version "0.12.17")
     (source
      (origin
        (method git-fetch)
@@ -5604,7 +5613,7 @@ JSON, XML, properties, CSV and TSV.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0favs281iaq98cmqwf47amk12xpksznpwgfid24z8migkp8628wl"))))
+        (base32 "0raipf3k392bihjk6kddzl3xsnap8wlvhplngmzx2vkp2f11x6fc"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -7379,7 +7388,13 @@ file links.")
       #~(modify-phases %standard-phases
           (add-after 'unpack 'relax-cargo-requirements
             (lambda _
-              (substitute* "Cargo.toml" (("~") "")))))
+              (substitute* "Cargo.toml" (("~") ""))))
+          (add-after 'install 'install-data
+            (lambda _
+              (invoke "make" (string-append "PREFIX=" #$output)
+                      "copy-data"))))
+      #:parallel-tests? #f  ; As per the Makefile
+      #:install-source? #f
       #:cargo-inputs
       `(("rust-ansi-parser" ,rust-ansi-parser-0.6)
         ("rust-dirs" ,rust-dirs-3)

@@ -1720,10 +1720,15 @@ Astropy objects.")
        (sha256
         (base32 "0xddz4hnsypyvqxhi43alaqh2vl1ripcl4p63qn6dk2v90lra8c0"))))
     (build-system pyproject-build-system)
-    (propagated-inputs
-     (list python-asdf python-fsspec python-zarr))
     (native-inputs
-     (list python-pytest python-setuptools-scm))
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-asdf-3
+           python-fsspec
+           python-zarr))
     (home-page "https://github.com/asdf-format/asdf-zarr")
     (synopsis "Asdf extension to support Zarr arrays")
     (description
@@ -2637,23 +2642,38 @@ across many files.")
 (define-public python-glue-qt
   (package
     (name "python-glue-qt")
-    (version "0.3.1")
+    (version "0.3.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "glue-qt" version))
+       (method git-fetch) ; no fresh release PyPI
+       (uri (git-reference
+             (url "https://github.com/glue-viz/glue-qt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "15ycykhg02xmsrlyv90qxckssmrq355qaqmz7p8nnqygm0gyrnx1"))))
+        (base32 "1zh25y8c98lzsnha4pxm17s6bkkab97rzw9zaik8asrxhc0kgypd"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      ;; Broken upstram, see <https://github.com/glue-viz/glue-qt/issues/23>.
+      #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
+          (add-before 'build 'set-env-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)))
            (add-before 'check 'prepare-x
              (lambda _
                (system "Xvfb &")
                (setenv "DISPLAY" ":0")
                (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-objgraph
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel
+           xorg-server-for-tests))
     (propagated-inputs
      (list python-astropy
            python-echo
@@ -2666,11 +2686,6 @@ across many files.")
            python-qtconsole
            python-qtpy
            python-scipy))
-    (native-inputs
-     (list python-objgraph
-           python-pytest
-           python-setuptools-scm
-           xorg-server-for-tests))
     (home-page "http://glueviz.org")
     (synopsis "Multidimensional data visualization across files")
     (description "Multidimensional data visualization across files.")

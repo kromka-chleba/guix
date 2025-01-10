@@ -36,6 +36,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages algebra)
@@ -66,6 +67,7 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
@@ -238,6 +240,26 @@ For synthesis, the compiler generates netlists in the desired format.")
     (synopsis "FPGA Verilog RTL synthesizer")
     (description "Yosys synthesizes Verilog-2005.")
     (license license:isc)))
+
+(define-public yosys-clang
+  (package
+    (inherit yosys)
+    (name "yosys-clang")
+    (arguments
+     (substitute-keyword-arguments (package-arguments yosys)
+       ((#:make-flags _ #f)
+        #~(list "CC=clang"
+                "CXX=clang++"
+                (string-append "PREFIX=" #$output)))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (replace 'configure
+              (lambda* (#:key make-flags #:allow-other-keys)
+                (apply invoke "make" "config-clang" make-flags)))))))
+    (inputs
+     (modify-inputs (package-inputs yosys)
+       (append clang)))
+    (synopsis "FPGA Verilog RTL synthesizer (Clang variant)")))
 
 (define-public icestorm
   (let ((commit "2bc541743ada3542c6da36a50e66303b9cbd2059")
@@ -501,6 +523,34 @@ constructed by a Python program.")
 a hardware description and verification language.")
     (license license:lgpl2.1+)))
 
+(define-public python-vunit
+  (package
+    (name "python-vunit")
+    (version "4.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/VUnit/vunit")
+             (commit (string-append "v" version))
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0s7j5bykbv34wgnxy5cl4zp6g0caidvzs8pd9yxjq341543xkjwm"))))
+    (build-system python-build-system)
+    (arguments
+     '(#:tests? #f))                ;XXX: requires setuptools_scm >= 2.0.0, <3
+    (propagated-inputs (list python python-colorama))
+    (home-page "https://vunit.github.io")
+    (synopsis "Unit testing framework for VHDL/SystemVerilog")
+    (description
+     "VUnit features the functionality needed to realize continuous and
+automated testing of HDL code.")
+
+    ;; According to 'LICENSE.rst', VUnit itself is under MPL but two
+    ;; subdirectories are under ASL.
+    (license (list license:mpl2.0 license:asl2.0))))
+
 (define-public nvc
   (package
     (name "nvc")
@@ -697,3 +747,31 @@ hardware designs in Verilog.")
 to an FPGA.")
     (home-page "https://trabucayre.github.io/openFPGALoader")
     (license license:asl2.0)))
+
+(define-public python-hdlmake
+  (let ((commit "3cb248fdad601c579b59fd7c194402871209bc54")
+        (revision "0"))
+    (package
+      (name "python-hdlmake")
+      (version (git-version "3.3" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://ohwr.org/project/hdl-make")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "08ivnhxyp44agmifqb4pjbxj23p43qqcg73s2y2z1hqk2six3fdx"))))
+      (build-system pyproject-build-system)
+      (arguments
+       `(#:tests? #f))
+      (native-inputs (list python-setuptools python-wheel))
+      (propagated-inputs (list python-six))
+      (home-page "https://ohwr.org/projects/hdl-make")
+      (synopsis "Generate multi-purpose makefiles for HDL projects")
+      (description
+       "Hdlmake helps manage and share @acronym{HDL, hardware description
+language} code by automatically finding file dependencies, writing synthesis
+and simulation Makefiles.")
+      (license license:gpl3+))))
