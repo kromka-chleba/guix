@@ -135,6 +135,7 @@ Copyright @copyright{} 2024 Nigko Yerden@*
 Copyright @copyright{} 2024 Troy Figiel@*
 Copyright @copyright{} 2024 Sharlatan Hellseher@*
 Copyright @copyright{} 2024 45mg@*
+Copyright @copyright{} 2025 Sören Tempel@*
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -32402,10 +32403,19 @@ started.
 @item @code{log-directory} (default: @code{"/var/log/nginx"})
 The directory to which NGinx will write log files.
 
+@item @code{log-format} (default: @code{'combined}) (type: symbol)
+Logging format for the access log. Nginx defaults to the httpd-like
+format named @code{'combined}.  Other formats can be defined using
+@code{log-formats}.
+
+@item @code{log-formats} (default: @code{'()})
+A list of additional @dfn{log formats} to define, the elements should be
+of type @code{<nginx-log-format-configuration>}.
+
 @item @code{log-level} (default: @code{'error}) (type: symbol)
-Logging level, which can be any of the following values: @code{'debug},
-@code{'info}, @code{'notice}, @code{'warn}, @code{'error}, @code{'crit},
-@code{'alert}, or @code{'emerg}.
+Logging level for the error log, which can be any of the following
+values: @code{'debug}, @code{'info}, @code{'notice}, @code{'warn},
+@code{'error}, @code{'crit}, @code{'alert}, or @code{'emerg}.
 
 @item @code{run-directory} (default: @code{"/var/run/nginx"})
 The directory in which NGinx will create a pid file, and write temporary
@@ -32534,6 +32544,31 @@ flattened into one line.
 (extra-content `("include /etc/nginx/custom-config.conf;"
                  ("include " ,%custom-config.conf ";")))
 @end lisp
+
+@end table
+@end deftp
+
+@deftp {Data Type} nginx-log-format-configuration
+Data type representing the configuration of a custom Nginx log format.
+This type has the following parameters:
+
+@table @asis
+@item @code{name} (type: symbol)
+The name of the log format as a symbol.
+
+@item @code{escape} (default: @code{'default}) (type: symbol)
+The mode used to escape values of variables in the format.  The
+supported values are:
+
+@itemize
+@item @code{'default}, to escape all characters outside of the ASCII
+      printable range.
+@item @code{'json}, to escape all characters invalid in JSON strings.
+@item @code{'none}, to disable escaping.
+@end itemize
+
+@item @code{format} (type: string)
+The format as accepted by the @code{log_format} directive.
 
 @end table
 @end deftp
@@ -34300,6 +34335,102 @@ command-line arguments to @command{dnsmasq} as a list of strings.
 @end table
 @end deftp
 
+@subsubheading Unbound Service
+
+@defvar unbound-service-type
+This is the type of the service to run @uref{https://www.unbound.net,
+Unbound}, a validating, recursive, and caching DNS resolver.  Its value
+must be a @code{unbound-configuration} object as in this example:
+
+@lisp
+(service unbound-service-type
+         (unbound-configuration
+          (forward-zone
+           (list
+            (unbound-zone
+             (name ".")
+             (forward-addr '("149.112.112.112#dns.quad9.net"
+                             "2620:fe::9#dns.quad9.net"))
+             (forward-tls-upstream #t))))))
+@end lisp
+@end defvar
+
+@deftp {Data Type} unbound-configuration
+Available @code{unbound-configuration} fields are:
+
+@table @asis
+@item @code{server} (type: unbound-server)
+General options for the Unbound server.
+
+@item @code{remote-control} (type: unbound-remote)
+Remote control options for the daemon.
+
+@item @code{forward-zone} (default: @code{()}) (type: list-of-unbound-zone)
+A zone for which queries should be forwarded to another resolver.
+
+@item @code{extra-content} (type: maybe-string)
+Raw content to add to the configuration file.
+
+@end table
+@end deftp
+
+@deftp {Data Type} unbound-server
+Available @code{unbound-server} fields are:
+
+@table @asis
+@item @code{interface} (type: maybe-list-of-strings)
+Interfaces listened on for queries from clients.
+
+@item @code{hide-version} (type: maybe-boolean)
+Refuse the version.server and version.bind queries.
+
+@item @code{hide-identity} (type: maybe-boolean)
+Refuse the id.server and hostname.bind queries.
+
+@item @code{tls-cert-bundle} (type: maybe-string)
+Certificate bundle file, used for DNS over TLS.
+
+@item @code{extra-options} (default: @code{()}) (type: alist)
+An association list of options to append.
+
+@end table
+@end deftp
+
+@deftp {Data Type} unbound-remote
+Available @code{unbound-remote} fields are:
+
+@table @asis
+@item @code{control-enable} (type: maybe-boolean)
+Enable remote control.
+
+@item @code{control-interface} (type: maybe-string)
+IP address or local socket path to listen on for remote control.
+
+@item @code{extra-options} (default: @code{()}) (type: alist)
+An association list of options to append.
+
+@end table
+@end deftp
+
+@deftp {Data Type} unbound-zone
+Available @code{unbound-zone} fields are:
+
+@table @asis
+@item @code{name} (type: string)
+Zone name.
+
+@item @code{forward-addr} (type: maybe-list-of-strings)
+IP address of server to forward to.
+
+@item @code{forward-tls-upstream} (type: maybe-boolean)
+Whether the queries to this forwarder use TLS for transport.
+
+@item @code{extra-options} (default: @code{()}) (type: alist)
+An association list of options to append.
+
+@end table
+@end deftp
+
 @node VNC Services
 @subsection VNC Services
 @cindex VNC (virtual network computing)
@@ -35284,6 +35415,10 @@ Cuirass jobs.
 
 @item @code{ttl} (default: @code{2592000})
 Duration to keep build results' GC roots alive, in seconds.
+
+@item @code{build-expiry} (default: 4 months)
+Duration in seconds after which pending builds are canceled.  This helps
+ensure that the backlog does not grow indefinitely.
 
 @item @code{threads} (default: @code{#f})
 Number of kernel threads to use for Cuirass. The default value should be appropriate for most cases.

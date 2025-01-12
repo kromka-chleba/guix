@@ -867,14 +867,14 @@ including tools for signing keys, keyring analysis, and party preparation.
 (define-public pinentry-tty
   (package
     (name "pinentry-tty")
-    (version "1.2.1")
+    (version "1.3.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnupg/pinentry/pinentry-"
                                   version ".tar.bz2"))
               (sha256
                (base32
-                "0rs019acfj7sr4pvc847nk42v5mba9ixqmd98nwqy8w5b9g1hyj5"))))
+                "014crqmr05lsfv13sj6jkcn6w1rvwpxc5hwn32mhg413qwkywwmw"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags '("--enable-pinentry-tty")))
@@ -939,10 +939,19 @@ software.")))
      `(#:configure-flags '("--enable-fallback-curses")))
     (inputs
      (modify-inputs (package-inputs pinentry-tty)
-       (prepend qtbase-5)))
+       (prepend qtbase qtwayland)))
   (description
    "Pinentry provides a console and a Qt GUI that allows users to enter a
 passphrase when @code{gpg} is run and needs it.")))
+
+(define-public pinentry-qt5
+  (package
+    (inherit pinentry-qt)
+    (name "pinentry-qt5")
+    (inputs
+     (modify-inputs (package-inputs pinentry-qt)
+       (replace "qtbase" qtbase-5)
+       (replace "qtwayland" qtwayland-5)))))
 
 (define-public pinentry-efl
   (package

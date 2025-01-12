@@ -512,7 +512,7 @@ desktops.")
 (define-public qbittorrent
   (package
     (name "qbittorrent")
-    (version "5.0.2")
+    (version "5.0.3")
     (source
      (origin
        (method git-fetch)
@@ -521,7 +521,7 @@ desktops.")
              (commit (string-append "release-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0dh3zn8r05s1jfixm7gxzhvvili8k92n6chz0g3qhd8m17613194"))))
+        (base32 "0j7c53whrw069ypyq6xsqhp0x7dsd51ck3vs2a7jzc57dyinfgwz"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -567,7 +567,7 @@ features.")
   (package
     (inherit qbittorrent)
     (name "qbittorrent-enhanced")
-    (version "5.0.2.10")
+    (version "5.0.3.10")
     (source
      (origin
        (method git-fetch)
@@ -577,7 +577,7 @@ features.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1fmb5xbhn6lgfnyks69wa1cl2n9lplpgn67xrjm0yn9kgpkqc47m"))))
+         "04plcbmqbjjg7wkp7vww6ain3bkgaj5njf94pk7wlm2ysa6hbx3r"))))
     (home-page "https://github.com/c0re100/qBittorrent-Enhanced-Edition")
     (description
      "qBittorrent Enhanced is a bittorrent client based on qBittorrent with

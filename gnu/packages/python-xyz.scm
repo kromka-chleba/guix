@@ -19534,7 +19534,7 @@ with a new public API, and RPython support.")
       ;; This test expects the hy executable to be called 'hy', but in Guix
       ;; it's .hy-real.
       #:test-flags #~(list "-k" "not test_sys_executable")))
-    (native-inputs (list python-pytest python-wheel))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (propagated-inputs (list python-funcparserlib))
     (home-page "https://docs.hylang.org/en/stable/")
     (synopsis "Lisp frontend to Python")
@@ -38742,7 +38742,7 @@ window managers.")
 (define-public i3-autotiling
   (package
     (name "i3-autotiling")
-    (version "1.9.1")
+    (version "1.9.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -38751,7 +38751,7 @@ window managers.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "010sw3b2nx5cl578drd3xj58wlza76zkzh1jhsp44chg1vvhacrx"))))
+                "0ag3zz4r3cwpj769m2aw3l8yj93phsydzfz02dig5z81cc025rck"))))
     (build-system python-build-system)
     (arguments (list #:tests? #f))      ;no tests
     (native-inputs (list python-wheel))

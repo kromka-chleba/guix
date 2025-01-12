@@ -1122,7 +1122,7 @@ utilities to ease adding new glyphs to the font.")
 (define-public font-google-noto
   (package
     (name "font-google-noto")
-    (version "24.8.1")
+    (version "2025.01.01")
     (source
      (origin
        (method git-fetch)
@@ -1131,7 +1131,7 @@ utilities to ease adding new glyphs to the font.")
              (commit (string-append "noto-monthly-release-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1xihvv67182m7k7lpz5wmjzg22piaabzy9mj6akb7bgl8ynxs7z8"))))
+        (base32 "0vplwq079dlymbbc4lvvydxpf8hxvjdihvrj2464gzii37n7b7nv"))))
     (build-system font-build-system)
     (arguments
      (list
@@ -1188,7 +1188,7 @@ display all Unicode symbols.")
 (define-public font-google-noto-emoji
   (package
     (name "font-google-noto-emoji")
-    (version "2.042")
+    (version "2.047")
     (source
      (origin
        (method git-fetch)
@@ -1198,7 +1198,7 @@ display all Unicode symbols.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "17i7awyqz9jv0j2blcf0smmpas375c3pdhjv1zqzl861g8qm1lm2"))))
+         "0p9wa55fyxih0bm81h55ip9rc12rh1c2v0dq9dxd2y19rxgcnnxz"))))
     (build-system font-build-system)
     (arguments
      (list
@@ -2138,7 +2138,7 @@ weights and five widths in both Roman and Italic, plus variable fonts.")
 (define-public font-sarasa-gothic
   (package
     (name "font-sarasa-gothic")
-    (version "1.0.20")
+    (version "1.0.27")
     (source
      (origin
        (method url-fetch)
@@ -2146,7 +2146,7 @@ weights and five widths in both Roman and Italic, plus variable fonts.")
                            "/releases/download/v" version
                            "/Sarasa-TTC-" version ".7z"))
        (sha256
-        (base32 "1p84qqjijm618pg7mbzndyl2vjpa6wg8d5rhsi5clppmxjh70ml0"))))
+        (base32 "19k11nl6sib8ms82jvvv23543p4xdzybgfflz2jxjim55w9d1v4y"))))
     (build-system font-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -2161,7 +2161,8 @@ weights and five widths in both Roman and Italic, plus variable fonts.")
     (synopsis "CJK programming font based on Iosevka and Source Han Sans")
     (description
      "Sarasa Gothic is a programming font based on Iosevka and Source Han Sans,
-most CJK characters are same height, and double width as ASCII characters.")))
+most CJK characters are same height, and double width as ASCII characters.")
+    (properties '((upstream-name . "Sarasa")))))
 
 (define-public font-space-grotesk
   (package
@@ -3456,7 +3457,7 @@ and readability.  This package bundles those icons into a font.")
 (define-public font-lxgw-wenkai
   (package
     (name "font-lxgw-wenkai")
-    (version "1.330")
+    (version "1.501")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -3464,7 +3465,7 @@ and readability.  This package bundles those icons into a font.")
                     version "/lxgw-wenkai-v" version ".tar.gz"))
               (sha256
                (base32
-                "1wpxi4jwxkjslnyi0axqyvqqbf58j7hxllsbxz94zclbri8i9iqa"))))
+                "04lqlnyd8d85b11fbk60vf4ycd8n0qvcvwkk0ih3bkc967ln047c"))))
     (build-system font-build-system)
     (home-page "https://lxgw.github.io/2021/01/28/Klee-Simpchin/")
     (synopsis "Simplified Chinese Imitation Song typeface")
@@ -3472,13 +3473,14 @@ and readability.  This package bundles those icons into a font.")
      "LXGW Wenkai is a Simplified Chinese Imitation Song typeface covering the
 CJK Unified Ideographs (base block) and commonly used Hangul.  For characters
 within GB 2312, standard glyphs for Mainland China is used.")
-    (license license:silofl1.1)))
+    (license license:silofl1.1)
+    (properties '((upstream-name . "lxgw-wenkai")))))
 
 (define-public font-lxgw-wenkai-tc
   (package
     (inherit font-lxgw-wenkai)
     (name "font-lxgw-wenkai-tc")
-    (version "1.330")
+    (version "1.501")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -3486,13 +3488,14 @@ within GB 2312, standard glyphs for Mainland China is used.")
                     version "/lxgw-wenkai-tc-v" version ".tar.gz"))
               (sha256
                (base32
-                "06najc2gjhsm50q4q2qlw10n1hdcfpsbnfvgdf6b27gm26rgk5da"))))
+                "0a5b3dim1y6wqr7m4ds98ki9zg96qsm698aphsxzdn2fck0nay8s"))))
     (home-page "https://github.com/lxgw/LxgwWenKaitc")
     (synopsis "Traditional Chinese Imitation Song typeface")
     (description
      "LXGW Wenkai TC is a Traditional Chinese inherited glyphs form Imitation
 Song typeface covering commonly used characters as well as written form of
-dialects in Hong Kong and Taiwan.")))
+dialects in Hong Kong and Taiwan.")
+    (properties '((upstream-name . "lxgw-wenkai-tc")))))
 
 (define-public font-lxgw-neozhisong
   (package
@@ -3557,7 +3560,7 @@ Mainland China.")
 (define-public font-chiron-sung-hk
   (package
     (name "font-chiron-sung-hk")
-    (version "1.014")
+    (version "1.016")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3566,7 +3569,7 @@ Mainland China.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1hvfjvflfyr35ad7hpy5zgc6i580ilfqrz4rbr814i6z9jqz459s"))))
+                "0kznkhf05yd3bxm4mxp1sa74vxw8vxabr71n5lzr10hynn0z1xnq"))))
     (build-system font-build-system)
     (arguments
      (list #:phases
@@ -3595,7 +3598,7 @@ prevalent typefaces in Traditional Chinese regions.")
   (package
     (inherit font-chiron-sung-hk)
     (name "font-chiron-hei-hk")
-    (version "2.515")
+    (version "2.522")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3604,7 +3607,7 @@ prevalent typefaces in Traditional Chinese regions.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "00p5bhzs526ml85wm9421a6a1s7w5kgk0p5wcyfvxh1wvwi9p5gj"))))
+                "0s1wdq9m7y3ygdzzvcgjwp5a6724fpllq6y1i66gb9yjmxkjj3v6"))))
     (synopsis "Traditional Chinese Gothic typeface")
     (description
      "Chiron Hei HK is a Traditional Chinese Gothic typeface based on the Hong

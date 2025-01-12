@@ -3335,25 +3335,34 @@ browser.")
 (define-public drumstick
   (package
     (name "drumstick")
-    (version "2.3.1")
+    (version "2.10.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/drumstick/"
                                   version "/drumstick-" version ".tar.bz2"))
               (sha256
                (base32
-                "1rs248pkgn6d29nkvw9ab6dvi1vsz220jdmz1ddzr29cpyc0adfh"))))
-    (build-system cmake-build-system)
+                "1ggwf9qzaj8vh66g29cb4m0i2cxvkgzl944m5pvj87lpsvahfnmc"))))
+    (build-system qt-build-system)
     (arguments
-     `(#:tests? #f))                      ; no test target
+     (list #:qtbase qtbase
+           #:tests? #f)) ;no test target
     (inputs
-     (list qtbase-5 qtsvg-5 qttools-5 alsa-lib))
+     (list alsa-lib
+           fluidsynth
+           pipewire
+           pulseaudio
+           qt5compat
+           qtsvg
+           qtwayland
+           sonivox))
     (native-inputs
      (list pkg-config
            libxslt ; for xsltproc
            docbook-xsl
            doxygen
-           graphviz)) ; for dot
+           graphviz ; for dot
+           qttools))
     (home-page "https://drumstick.sourceforge.io/")
     (synopsis "C++ MIDI library")
     (description
@@ -3368,22 +3377,31 @@ backends, including ALSA, OSS, Network and FluidSynth.")
 (define-public vmpk
   (package
     (name "vmpk")
-    (version "0.8.4")
+    (version "0.9.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/vmpk/vmpk/"
                                   version "/vmpk-" version ".tar.bz2"))
               (sha256
                (base32
-                "0kh8pns9pla9c47y2nwckjpiihczg6rpg96aignsdsd7vkql69s9"))))
-    (build-system cmake-build-system)
+                "1ndwmshw3skfcxb3f606hv4y80hfisfp5bdc81a0f0qrpx6f2zn4"))))
+    (build-system qt-build-system)
     (arguments
-     `(#:tests? #f))  ; no test target
+     (list #:qtbase qtbase
+           #:tests? #f  ; no test target
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'wrap-drumstick
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (wrap-program (string-append #$output "/bin/vmpk")
+                     `("DRUMSTICKRT" =
+                       (,(search-input-directory inputs
+                                            "/lib/drumstick2")))))))))
     (inputs
-     (list drumstick qtbase-5 qtsvg-5 qtx11extras))
+     (list drumstick qt5compat qtsvg qtwayland))
     (native-inputs
      (list libxslt ;for xsltproc
-           docbook-xml-4.4 docbook-xsl qttools-5 pkg-config))
+           docbook-xml-4.4 docbook-xsl qttools pkg-config))
     (home-page "https://vmpk.sourceforge.io/")
     (synopsis "Virtual MIDI piano keyboard")
     (description
@@ -4010,7 +4028,7 @@ event-based scripts for scrobbling, notifications, etc.")
 (define-public picard
   (package
     (name "picard")
-    (version "2.12.2")
+    (version "2.12.3")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -4018,7 +4036,7 @@ event-based scripts for scrobbling, notifications, etc.")
                     "picard/picard-" version ".tar.gz"))
               (sha256
                (base32
-                "01244105zy1f1g22ivhx9pjd1acqbkycfr9r44h70jyml5abc7z5"))))
+                "0rhscvb46img4flh5dnjvnfdl7fsz9437hg3ixfx8kwv1pbg8zx4"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -5885,10 +5903,39 @@ your favorite sampled sounds and bashing away on a MIDI controller.")
 the electronic or dubstep genre.")
       (license license:gpl3+))))
 
+(define-public sonivox
+  (package
+    (name "sonivox")
+    (version "3.6.14")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/pedrolcl/sonivox")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0zn9v4lxjpnpdlpnv2px8ch3z0xagmqlvff5pd39pss3mxfp32g0"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:configure-flags
+           (if (%current-target-system)
+               #~(list "-DBUILD_TESTING=OFF")
+               #~(list "-DBUILD_TESTING=ON"))))
+    (native-inputs
+     (list googletest))
+    (home-page "https://github.com/pedrolcl/sonivox")
+    (synopsis "Fork of the AOSP platform_external_sonivox")
+    (description "This project is a fork of the Android Open Source Project
+@code{platform_external_sonivox}.  It is a Wave Table synthesizer, using
+embedded samples.  It also supports external DLS soundfont files.  It is also a
+real time GM synthesizer.")
+    (license license:asl2.0)))
+
 (define-public sonivox-eas
   (package
     (name "sonivox-eas")
-    (version "1.3.0")
+    (version "1.5.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5897,11 +5944,13 @@ the electronic or dubstep genre.")
               (file-name (string-append name "-" version "-checkout"))
               (sha256
                (base32
-                "1ygmlrsdzxii2dvj6id2ai3xv3klw2x67ip5rcp823jzczl0wpjd"))))
-    (build-system cmake-build-system)
-    (arguments '(#:tests? #f)) ; there are no tests
+                "1y67bi2vcwb1avwz18i41q85cmqx9svwx4q3kpmh951l49s9k8vz"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase
+           #:tests? #f)) ; there are no tests
     (inputs
-     (list alsa-lib drumstick pulseaudio qtbase-5))
+     (list alsa-lib drumstick pulseaudio qtwayland sonivox))
     (native-inputs
      (list pkg-config))
     (home-page "https://github.com/pedrolcl/Linux-SonivoxEas")
@@ -5909,9 +5958,7 @@ the electronic or dubstep genre.")
     (description "This project is a real time General MIDI synthesizer based
 on the Sonivox EAS Synthesizer by Google.  It does not need external
 soundfonts, using embedded samples instead.")
-    ;; Sonivox is released under the ASL2.0; the rest of the code is under
-    ;; GPLv2+.
-    (license (list license:gpl2+ license:asl2.0))))
+    (license license:gpl2+)))
 
 (define-public whysynth
   (package

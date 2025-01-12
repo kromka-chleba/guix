@@ -41710,8 +41710,8 @@ process via its IPC interface.")
 (define-public emacs-apel-lb
   ;; No release since Jun 15, 2010.
   (let ((version "10.8")                ;tag chise-base-0_25
-        (revision "81")
-        (commit "82eb2325bd149dc57b43a9ce9402c6c6183e4052"))
+        (revision "82")
+        (commit "1a6fd3bab2cc6b0a450c2d801f77a1c9da0f72fb"))
     (package
       (name "emacs-apel-lb")
       (version (git-version version revision commit))
@@ -41723,7 +41723,7 @@ process via its IPC interface.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0qiw19pn1cs8y571irw7bjdygkvwan9ch2i1dg139dri4b6q1il6"))))
+                  "03yjg14rvcxn59wga4jvx28ii16bx5ym93fzfyssm67gqwgyb2gf"))))
       (build-system emacs-build-system)
       (home-page "https://www.emacswiki.org/emacs/WanderLust")
       (synopsis "Library for making portable Emacs Lisp programs")
@@ -41789,8 +41789,8 @@ EasyPG and latest Emacs.")
 
 (define-public emacs-wanderlust
   ;; No release since Jan 15, 2010.
-  (let ((commit "8a0ea2146ee919a5344bb25f198d45016bc716d9")
-        (revision "829"))
+  (let ((commit "891e223673c2c550efbe411885af860c909f0120")
+        (revision "834"))
     (package
       (name "emacs-wanderlust")
       (version (git-version "2.15.9" revision commit))
@@ -41811,7 +41811,7 @@ EasyPG and latest Emacs.")
                            (("package-user-dir") "NONE"))))
                 (sha256
                  (base32
-                  "1w57d6zcqxm6q7rsc6kz84idcpz15rr67jzmfbc2mfiprfvrip1j"))))
+                  "0w00na53zz2nlf9wcq8d8gdi6cgwwj08gi6rfsn9h71pdi98hmxc"))))
       (build-system emacs-build-system)
       (arguments
        (list #:phases
