@@ -1488,6 +1488,28 @@ as SLAM (simultaneous localization and mapping).")
 CPU features with low run-time cost.")
     (license license:expat)))
 
+(define-public julia-cpusummary
+  (package
+    (name "julia-cpusummary")
+    (version "0.2.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JuliaSIMD/CPUSummary.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06kmmnhhcdgm538ax6lblklrih91p2ligg328kljq144j8s6cixm"))))
+    (build-system julia-build-system)
+    (propagated-inputs (list julia-cpuid julia-ifelse julia-precompiletools
+                             julia-static))
+    (home-page "https://github.com/JuliaSIMD/CPUSummary.jl")
+    (synopsis "Provides a summary of CPU features")
+    (description
+     "This package provides a summary of available CPU features in Julia.")
+    (license license:expat)))
+
 (define-public julia-crayons
   (package
     (name "julia-crayons")
@@ -4264,6 +4286,31 @@ functions only use native Julia code, so there is no need to depend on
     (description "This library provides tools for working with Julia code and
 expressions.  This includes a template-matching system and code-walking tools
 that let you do deep transformations of code.")
+    (license license:expat)))
+
+(define-public julia-manualmemory
+  (package
+    (name "julia-manualmemory")
+    (version "0.1.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/JuliaSIMD/ManualMemory.jl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ajd92q65cffyb9x6mb1x1aprr2afn8p52bfkbmf303dy5ac63lj"))))
+    (build-system julia-build-system)
+    ;; Tests have a dependency cycle with VectorizationBase
+    ;; VectorizationBase -> LayoutPointers -> ManualMemory -> VectorizationBase
+    (arguments
+     (list
+      #:tests? #f))
+    (home-page "https://github.com/JuliaSIMD/ManualMemory.jl")
+    (synopsis "Manual memory management utilities in Julia")
+    (description "This package provides manually managed memory buffers backed
+by @code{NTuples} in Julia.")
     (license license:expat)))
 
 (define-public julia-mappedarrays

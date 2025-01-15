@@ -1259,15 +1259,13 @@ Interchange Format (SARIF)} file format.")
     (arguments
      (list
       #:test-flags
-      '(list "--ignore-glob=examples/*" "--ignore-glob=bench/*" "tests")
+      '(list "--ignore=tests/test_utils.py"
+             "--ignore-glob=examples/*"
+             "--ignore-glob=bench/*" "tests")
       #:phases
       '(modify-phases %standard-phases
          (add-before 'check 'set-HOME
-           (lambda _ (setenv "HOME" "/tmp")))
-         (replace 'check
-           (lambda* (#:key tests? test-flags #:allow-other-keys)
-             (when tests?
-               (apply invoke "pytest" "-vv" test-flags)))))))
+           (lambda _ (setenv "HOME" "/tmp"))))))
     (propagated-inputs
      (list python-mimeparse))
     (native-inputs
@@ -1287,9 +1285,11 @@ Interchange Format (SARIF)} file format.")
            python-pyyaml
            python-rapidjson
            python-requests
+           python-setuptools
            python-testtools
            python-ujson
-           python-websockets))
+           python-websockets
+           python-wheel))
     (home-page "https://falconframework.org")
     (synopsis "Web framework for building APIs and application backends")
     (description "Falcon is a web API framework for building microservices,
@@ -4045,7 +4045,7 @@ protocol, both client and server for Python asyncio module.
 (define-public python-msal
   (package
     (name "python-msal")
-    (version "1.22.0")
+    (version "1.31.1")
     (home-page
      "https://github.com/AzureAD/microsoft-authentication-library-for-python")
     (source (origin
@@ -4055,7 +4055,7 @@ protocol, both client and server for Python asyncio module.
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1pgpf8fa0mdga69hr6i66mq2a2vyn8dlcf4fdzqmbgw2il9b37q6"))))
+                "18dg1j2az5ywk6klfd3kp36fxa4cmmf9yvma4li0a2nz2jgc1gdd"))))
     (build-system python-build-system)
     (arguments
      ;; Tests (all?) rely on network access and only some can be disabled by

@@ -4403,6 +4403,28 @@ from Emacs.  It is similar to BBDB, except much, much simpler.")
 shine on top of your cursor so you know where it is.")
     (license license:gpl3+)))
 
+(define-public emacs-bar-cursor
+  (let ((revision "0")
+        (commit "78f195b6db63459033c4f1c7e7add5d82f3ce424"))
+    (package
+      (name "emacs-bar-cursor")
+      (version (git-version "0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/ajsquared/bar-cursor.git")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1g344fzfkq5z53vja68kv55l1x29v15q41qb08nqc9k4pvpwdvmp"))))
+      (build-system emacs-build-system)
+      (synopsis "Bar cursor shape")
+      (description "This package provides a bar cursor shape.  When in
+overwrite mode, it will turn into a block cursor.")
+      (home-page "https://github.com/ajsquared/bar-cursor")
+      (license license:gpl2+))))
+
 (define-public emacs-paradox
   (let ((commit "96401577ed02f433debe7604e49afd478e9eda61")) ;version bump
     (package
@@ -4909,6 +4931,39 @@ or XEmacs.")
        "Latex-extra defines extra commands and keys for LaTeX mode, as well
 as brings user experience improvements.")
       (license license:gpl3+))))
+
+(define-public emacs-xenops
+  (let ((revision "0")
+        (commit "6d9a8d654a6102484ac9087f25931f0664e7dd07"))
+    (package
+      (name "emacs-xenops")
+      (version (git-version "0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/dandavison/xenops.git")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1sasm6rrhvsqndcwm74cgmlk96g2wx81fk9z32rq095yvim4y5qq"))))
+      (propagated-inputs (list emacs-aio emacs-auctex emacs-avy emacs-dash
+                               emacs-f emacs-s))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _
+                (setenv "HOME" "/tmp")
+                (chdir "lisp"))))))
+      (synopsis "WYSIWYG LaTeX environment")
+      (description "This package provides a WYSIWYG LaTeX environment.
+It uses @command{dvisvgm}, @command{xclip}, @command{pngpaste} and
+@command{latex}.")
+      (home-page "https://github.com/dandavison/xenops")
+      (license license:expat))))
 
 (define-public emacs-autothemer
   (let ((commit "8f72afc6dba5ad7cc3a201a084fd20571f945d2e")) ;version bump
@@ -13991,6 +14046,29 @@ communication with other collaborative editors using different protocols,
 though currently Obby (for use with the Gobby editor) is the only
 fully-functional one.")
     (license license:gpl3+)))
+
+(define-public emacs-wakib-keys
+  (let ((revision "0")
+        (commit "85a96e0476d620add31e6e73481dbcf57cabc13e"))
+    (package
+      (name "emacs-wakib-keys")
+      (version (git-version "0.0.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/darkstego/wakib-keys.git")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0fr70jmrcnyyl16h0k6kj3gcd50422ggqps688wa7x51dk6f9cvr"))))
+      (build-system emacs-build-system)
+      (synopsis "Make C-c, C-v and C-x clipboard keys work reliably in Emacs")
+      (description "This package provides an Emacs minor mode that provides
+modern, efficient and easy to learn keybindings (especially C-c, C-x and C-v
+work and provide clipboard action).")
+      (home-page "https://github.com/darkstego/wakib-project")
+      (license license:gpl3+))))
 
 (define-public emacs-hydra
   (package
@@ -32670,7 +32748,7 @@ in Docker environment.")
 (define-public emacs-dape
   (package
     (name "emacs-dape")
-    (version "0.19.0")
+    (version "0.21.0")
     (source
      (origin
        (method git-fetch)
@@ -32679,7 +32757,7 @@ in Docker environment.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1mamaffrckihhp8mgr3ragdxi7l7aqaaacqcbdjhaszlv6lijivi"))))
+        (base32 "0vf479khsigwgdl8r419lh5lmarpy5dddw5v4z7cavwa5dxxsxns"))))
     (build-system emacs-build-system)
     (arguments
      ;; FIXME python tests pass, JS tests require additional dependencies
@@ -32921,6 +32999,28 @@ utilities.")
                emacs-persp-mode
                emacs-perspective
                mu)))))
+
+(define-public emacs-treemacs-nerd-icons
+  (let ((revision "0")
+        (commit "9876cb478145a0ec4e36f64ff6583f3de7126216"))
+    (package
+      (name "emacs-treemacs-nerd-icons")
+      (version (git-version "0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/rainstormstudio/treemacs-nerd-icons.git")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1xphhxdibjhp27z2lj1nxlxf7cfm8vpi44fr01fk9krqy9vaz0q0"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-nerd-icons emacs-treemacs))
+      (synopsis "emacs-treemacs-nerd-icons")
+      (description "This package provides nerd-icons integration for treemacs.")
+      (home-page "https://github.com/rainstormstudio/treemacs-nerd-icons")
+      (license license:gpl3+))))
 
 (define-public emacs-libyaml
   ;; Upstream made no release so far.

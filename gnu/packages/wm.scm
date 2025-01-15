@@ -2601,7 +2601,7 @@ wlr-output-management-unstable-v1 protocol.")
 (define-public stumpwm
   (package
     (name "stumpwm")
-    (version "23.11")
+    (version "24.11")
     (source
      (origin
        (method git-fetch)
@@ -2610,7 +2610,7 @@ wlr-output-management-unstable-v1 protocol.")
              (commit version)))
        (file-name (git-file-name "stumpwm" version))
        (sha256
-        (base32 "0akrkxwmlk2596b0kl3q0nfi81ypfrpyyyf65vw7px5x17gsnq5i"))))
+        (base32 "0b8h33raf0ffl2zv678sxqpvq5xhy6sa88sdm7krnwcd15q8gb85"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs
      (list sbcl-fiasco
@@ -2627,11 +2627,6 @@ wlr-output-management-unstable-v1 protocol.")
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-tests
-            (lambda _
-              (substitute* "stumpwm-tests.asd"
-                (("\"ALL-TESTS\"")
-                 "\"RUN-PACKAGE-TESTS\" :package"))))
           (add-after 'create-asdf-configuration 'build-program
             (lambda* (#:key outputs #:allow-other-keys)
               (build-program
@@ -2662,10 +2657,7 @@ wlr-output-management-unstable-v1 protocol.")
                 (invoke "./autogen.sh")
                 (invoke "sh" "./configure" "SHELL=sh")
                 (apply invoke "make" "stumpwm.info" make-flags)
-                (install-file "stumpwm.info" info))))
-          (add-after 'install-manual 'remove-temporary-cache
-            (lambda* (#:key outputs #:allow-other-keys)
-              (delete-file-recursively (string-append #$output "/.cache")))))))
+                (install-file "stumpwm.info" info)))))))
     (synopsis "Window manager written in Common Lisp")
     (description
      "Stumpwm is a window manager written entirely in Common Lisp.
@@ -2709,8 +2701,8 @@ productive, customizable lisp based systems.")
            (delete 'cleanup)))))))
 
 (define stumpwm-contrib
-  (let ((commit "042a9fcb053839f4b1527d2e6f4baf33e2d16434")
-        (revision "6"))
+  (let ((commit "c4f077b1fe97cd8da6d710e5cbe390eb680629bd")
+        (revision "7"))
     (package
       (name "stumpwm-contrib")
       (version (git-version "0.0.1" revision commit)) ;no upstream release
@@ -2722,7 +2714,7 @@ productive, customizable lisp based systems.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1fdlb7zqgn24qpvmq4d56zn4f455vc2jcln609by4g0py87rvm49"))))
+          (base32 "0fdv4d0rlca64p4dakp1l60701vls2s6kx3gzlflmcf2l49kdbnn"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list stumpwm))

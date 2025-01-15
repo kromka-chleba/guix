@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012-2021, 2023, 2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012-2021, 2023-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2013, 2015, 2018 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2014, 2018 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2014, 2015, 2016, 2020 Mark H Weaver <mhw@netris.org>
@@ -96,7 +96,7 @@
 (define-public libgpg-error
   (package
     (name "libgpg-error")
-    (version "1.47")
+    (version "1.51")
     (source
      (origin
       (method url-fetch)
@@ -104,7 +104,7 @@
                           version ".tar.bz2"))
       (sha256
        (base32
-        "1nwvpg5inpjzbq7r6wqsgmwcnfqyahcw9hi8discqvmrcq4nfg4y"))))
+        "1cp64xa58977fysj1z1rgj60qxbjkzqpkpww6raysgmrnqnin3xy"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -182,14 +182,14 @@ Daemon and possibly more in the future.")
 (define-public libgcrypt
   (package
     (name "libgcrypt")
-    (version "1.10.1")
+    (version "1.11.0")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://gnupg/libgcrypt/libgcrypt-"
                                  version ".tar.bz2"))
              (sha256
               (base32
-               "1pp9zyx02bzgzjzldxf0mx9kp3530xgaaqcz4n2cv100ddaaw57g"))))
+               "172vd1c1zn27mqd7cdb14hpjz35rhr9pg8dass0j0zyfcyc0q4h9"))))
     (build-system gnu-build-system)
     (propagated-inputs
      `(("libgpg-error-host" ,libgpg-error)))
@@ -237,7 +237,7 @@ generation.")
 (define-public libassuan
   (package
     (name "libassuan")
-    (version "2.5.6")
+    (version "3.0.1")
     (source
      (origin
       (method url-fetch)
@@ -245,7 +245,7 @@ generation.")
                           version ".tar.bz2"))
       (sha256
        (base32
-        "09pllidbv01km8qrls21dcz1qwa22ydqyy1r9r79152kilhjgzg9"))))
+        "1ccly6aqyxv3hgshhls6qw177salcrawp0x4lsqs9ph3c4pg9w68"))))
     (build-system gnu-build-system)
     (arguments (if (%current-target-system)
                    (list #:configure-flags
@@ -253,8 +253,7 @@ generation.")
                                   "--with-libgpg-error-prefix="
                                   #$(this-package-input "libgpg-error"))))
                    '()))
-    (propagated-inputs
-     (list libgpg-error pth))
+    (propagated-inputs (list libgpg-error))
     (home-page "https://gnupg.org")
     (synopsis
      "IPC library used by GnuPG and related software")
@@ -268,7 +267,7 @@ provided.")
 (define-public libksba
   (package
     (name "libksba")
-    (version "1.6.3")
+    (version "1.6.7")
     (source
      (origin
       (method url-fetch)
@@ -277,7 +276,7 @@ provided.")
             version ".tar.bz2"))
       (sha256
        (base32
-        "0p6y82j9y6n0l7scjgqhz3as9w13jiqjfx9n2jzynw89nf6wcwiz"))))
+        "0qxpmadxggx5808326i9g4ya0xrnv14mfxpg7rlvckmviq5m2wng"))))
     (build-system gnu-build-system)
     (propagated-inputs
      (list libgpg-error))
@@ -299,13 +298,13 @@ specifications are building blocks of S/MIME and TLS.")
 (define-public npth
   (package
     (name "npth")
-    (version "1.6")
+    (version "1.8")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://gnupg/npth/npth-" version ".tar.bz2"))
        (sha256
-        (base32 "1lg2lkdd3z1s3rpyf88786l243adrzyk9p4q8z9n41ygmpcsp4qk"))))
+        (base32 "0gnaj176jjfi6ldrq1l1sx7ym0z7kjx8ms96bdp5s1m34d7lpllb"))))
     (build-system gnu-build-system)
     (home-page "https://www.gnupg.org")
     (synopsis "Non-preemptive thread library")
@@ -321,9 +320,10 @@ compatible to GNU Pth.")
 (define-public gnupg
   (package
     (name "gnupg")
-    ;; Note: The 2.2.X releases are Long Term Support (LTS), so stick to it
-    ;; for our stable 'gnupg'.
-    (version "2.2.39")
+    ;; Note: Odd minor versions are usually for development purposes.  See
+    ;; <https://gnupg.org/download/index.html> for how to pick the right
+    ;; version.
+    (version "2.4.7")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnupg/gnupg/gnupg-" version
@@ -331,7 +331,7 @@ compatible to GNU Pth.")
               (patches (search-patches "gnupg-default-pinentry.patch"))
               (sha256
                (base32
-                "0bscgv9gg9yhlpyia7b9l438cq6dvv6pwlhbl70df9phhmkdnx5b"))))
+                "0ipbhlxwr79l66b907640a0j67s04w826s50djqf7q579mp7093v"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config))
@@ -392,9 +392,7 @@ compatible to GNU Pth.")
                  (string-append (getcwd) "/tests/gpgscm/gpgscm")))))
           (add-before 'build 'patch-test-paths
             (lambda _
-              (substitute* '("tests/inittests"
-                             "tests/pkits/inittests"
-                             "tests/Makefile"
+              (substitute* '("tests/pkits/inittests"
                              "tests/pkits/common.sh"
                              "tests/pkits/Makefile")
                 (("/bin/pwd") (which "pwd")))
@@ -438,13 +436,13 @@ libskba (working with X.509 certificates and CMS data).")
 (define-public gpgme
   (package
     (name "gpgme")
-    (version "1.18.0")
+    (version "1.24.1")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "mirror://gnupg/gpgme/gpgme-" version ".tar.bz2"))
       (sha256
-       (base32 "17hfigfnq6xz45b5xrp299f68b5mwx0aysd51sx5v4nf8yp4w79n"))))
+       (base32 "0px87fbp90xp8vf1wms02flk14zmrqsfr135f5his1kiiqjx01ga"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -469,19 +467,6 @@ programming task, it is suggested that all software should try to use GPGME
 instead.  This way bug fixes or improvements can be done at a central place
 and every application benefits from this.")
     (license license:lgpl2.1+)))
-
-(define-public gpgme-1.23
-  (hidden-package
-   (package
-     (inherit gpgme)
-     (name "gpgme")
-     (version "1.23.2")
-     (source
-      (origin
-        (method url-fetch)
-        (uri (string-append "mirror://gnupg/gpgme/gpgme-" version ".tar.bz2"))
-        (sha256
-         (base32 "092jrqdmdggjhl0swpvci8cscdcx0hbbr897an0vdk1wyfqyi6cl")))))))
 
 (define-public qgpgme
   (package
@@ -512,9 +497,9 @@ QGpgME was originally developed as part of libkleo and incorporated into
 gpgpme starting with version 1.7.")
     (license license:gpl2+))) ;; Note: this differs from gpgme
 
-(define-public qgpgme-qt6-1.23
+(define-public qgpgme-qt6
   (package
-    (inherit gpgme-1.23)
+    (inherit gpgme)
     (name "qgpgme-qt6")
     (arguments
      `(#:phases
@@ -527,12 +512,12 @@ gpgpme starting with version 1.7.")
                (symlink (string-append gpgme "/lib/libgpgme.la")
                         "src/libgpgme.la"))
              (chdir "lang/qt"))))))
-    (propagated-inputs (list gpgme-1.23))    ;required by QGpgmeConfig.cmake
+    (propagated-inputs (list gpgme))    ;required by QGpgmeConfig.cmake
     (native-inputs
-     (modify-inputs (package-native-inputs gpgme-1.23)
+     (modify-inputs (package-native-inputs gpgme)
        (prepend pkg-config)))
     (inputs
-     (modify-inputs (package-inputs gpgme-1.23)
+     (modify-inputs (package-inputs gpgme)
        (prepend qtbase)))
     (synopsis "Qt API bindings for gpgme")
     (description "QGpgme provides a very high level Qt API around GpgMEpp.")
