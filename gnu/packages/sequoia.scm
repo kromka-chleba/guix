@@ -189,14 +189,14 @@ than just headers; it requires tight integration with the MUA.")
 (define-public rust-sequoia-cert-store-0.6
   (package
     (name "rust-sequoia-cert-store")
-    (version "0.6.1")
+    (version "0.6.2")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "sequoia-cert-store" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "14f3zhkh0hrjmkv6ksvyr29z6mfq1hadqzqsvhp3xwlf9y66bhjg"))))
+        (base32 "19drjzxihs1bgqb0klwf81nxxx9jqgifzi49v8gqw00d6ba9lcwy"))))
     (build-system cargo-build-system)
     (arguments
      `(#:features '("sequoia-openpgp/crypto-nettle")
@@ -208,7 +208,7 @@ than just headers; it requires tight integration with the MUA.")
                        ("rust-openpgp-cert-d" ,rust-openpgp-cert-d-0.3)
                        ("rust-rayon" ,rust-rayon-1)
                        ("rust-rusqlite" ,rust-rusqlite-0.29)
-                       ("rust-sequoia-net" ,rust-sequoia-net-0.28)
+                       ("rust-sequoia-net" ,rust-sequoia-net-0.29)
                        ("rust-sequoia-openpgp" ,rust-sequoia-openpgp-1)
                        ("rust-smallvec" ,rust-smallvec-1)
                        ("rust-thiserror" ,rust-thiserror-1)
@@ -294,6 +294,40 @@ than just headers; it requires tight integration with the MUA.")
     (description
      "This package provides a library for interacting with @code{GnuPG's} gpg-agent.")
     (license license:lgpl2.0+)))
+
+(define-public rust-sequoia-gpg-agent-0.4
+  (package
+    (inherit rust-sequoia-gpg-agent-0.5)
+    (name "rust-sequoia-gpg-agent")
+    (version "0.4.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "sequoia-gpg-agent" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "119njpmhg0is0vlba199bmyp7fi19w8y555i89njkyrfv7yvakds"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:features '("sequoia-openpgp/crypto-nettle")
+       #:cargo-inputs (("rust-anyhow" ,rust-anyhow-1)
+                       ("rust-chrono" ,rust-chrono-0.4)
+                       ("rust-futures" ,rust-futures-0.3)
+                       ("rust-lalrpop" ,rust-lalrpop-0.17)
+                       ("rust-lalrpop-util" ,rust-lalrpop-util-0.17)
+                       ("rust-libc" ,rust-libc-0.2)
+                       ("rust-sequoia-ipc" ,rust-sequoia-ipc-0.35)
+                       ("rust-sequoia-openpgp" ,rust-sequoia-openpgp-1)
+                       ("rust-stfu8" ,rust-stfu8-0.2)
+                       ("rust-tempfile" ,rust-tempfile-3)
+                       ("rust-thiserror" ,rust-thiserror-1)
+                       ("rust-tokio" ,rust-tokio-1))
+       #:cargo-development-inputs (("rust-clap" ,rust-clap-4)
+                                   ("rust-lazy-static" ,rust-lazy-static-1)
+                                   ("rust-sequoia-openpgp" ,rust-sequoia-openpgp-1)
+                                   ("rust-tempfile" ,rust-tempfile-3)
+                                   ("rust-tokio" ,rust-tokio-1)
+                                   ("rust-tokio-test" ,rust-tokio-test-0.4))))))
 
 (define-public rust-sequoia-ipc-0.35
   (package
@@ -879,6 +913,153 @@ This Guix package is built to use the nettle cryptographic library.")
     (description
      "This package provides an implementation of @code{OpenPGP's} web of trust.")
     (license license:lgpl2.0+)))
+
+(define-public sequoia-chameleon-gnupg
+  (package
+    (name "sequoia-chameleon-gnupg")
+    (version "0.11.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "sequoia-chameleon-gnupg" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1rdmyhnvll9r2g4r8xbcjfg5cjw32204cfj6my94p0bc5v6lhv2h"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 ;; According to Debian and Upstream these substitutions are okay.
+                 (copy-file "Cargo.toml.orig" "Cargo.toml")
+                 (substitute* "Cargo.toml"
+                   (("sequoia-policy-config = \"0\\.6\"")
+                    "sequoia-policy-config = \"0.7\"")
+                   (("sequoia-wot = \\{ version = \"0\\.12\"")
+                    "sequoia-wot = { version = \"0.13\""))))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+       #:install-source? #f
+       #:features '(list "crypto-nettle")
+       #:cargo-test-flags
+       '(list "--"
+              ;; Some tests overly depend on specific versions of input crates.
+              "--skip=gpg::generate_key"
+              "--skip=gpg::list_keys"
+              "--skip=gpg::migrate::migration_from_secring"
+              "--skip=gpg::print_mds"
+              "--skip=gpg::quick::add_key_default_default_iso_date"
+              "--skip=gpg::quick::generate_key_default_default_iso_date"
+              "--skip=gpg::sign"
+              "--skip=gpg::verify"
+              ;; No such file or directory
+              "--skip=password_store_git")
+       #:cargo-inputs
+       (list rust-anyhow-1
+             rust-base64-0.21
+             rust-buffered-reader-1
+             rust-chrono-0.4
+             rust-clap-4
+             rust-clap-complete-4
+             rust-clap-mangen-0.2
+             rust-daemonize-0.5
+             rust-dirs-5
+             rust-fd-lock-3
+             rust-filetime-0.2
+             rust-futures-0.3
+             rust-indexmap-2
+             rust-interprocess-1
+             rust-libc-0.2
+             rust-memchr-2
+             rust-openssh-keys-0.6
+             rust-percent-encoding-2
+             rust-rand-0.8
+             rust-rand-distr-0.4
+             rust-rayon-1
+             rust-reqwest-0.11
+             rust-roff-0.2
+             rust-rpassword-7
+             rust-rusqlite-0.29
+             rust-sequoia-cert-store-0.6
+             rust-sequoia-gpg-agent-0.4
+             rust-sequoia-ipc-0.35
+             rust-sequoia-net-0.28
+             rust-sequoia-openpgp-1
+             rust-sequoia-policy-config-0.7
+             rust-sequoia-wot-0.13
+             rust-serde-1
+             rust-serde-json-1
+             rust-shellexpand-3
+             rust-tempfile-3
+             rust-thiserror-1
+             rust-tokio-1)
+       #:cargo-development-inputs
+       (list rust-anyhow-1
+             rust-bzip2-0.4
+             rust-diff-0.1
+             rust-editdistancek-1
+             rust-histo-1
+             rust-interprocess-1
+             rust-ntest-0.9
+             rust-regex-1
+             rust-reqwest-0.11
+             rust-serde-with-3
+             rust-stfu8-0.2
+             rust-tar-0.4
+             rust-tempfile-3)
+       #:phases
+       #~(modify-phases %standard-phases
+           (add-after 'unpack 'set-asset-out-dir
+             (lambda _
+               (setenv "ASSET_OUT_DIR" "target/assets")))
+           (add-after 'install 'install-more
+             (lambda* (#:key outputs #:allow-other-keys)
+               (let* ((out (assoc-ref outputs "out"))
+                      (share (string-append out "/share"))
+                      (bash-completions-dir
+                        (string-append out "/etc/bash_completion.d"))
+                      (zsh-completions-dir
+                        (string-append share "/zsh/site-functions"))
+                      (fish-completions-dir
+                        (string-append share "/fish/vendor_completions.d"))
+                      (elvish-completions-dir
+                        (string-append share "/elvish/lib"))
+                      (man1 (string-append share "/man/man1")))
+                 ;; The completions are generated in build.rs.
+                 (mkdir-p bash-completions-dir)
+                 (mkdir-p elvish-completions-dir)
+                 (for-each (lambda (file)
+                             (install-file file man1))
+                           (find-files "target/assets/man-pages" "\\.1$"))
+                 (copy-file "target/assets/shell-completions/gpg-sq.bash"
+                            (string-append bash-completions-dir "/gpg-sq"))
+                 (copy-file "target/assets/shell-completions/gpgv-sq.bash"
+                            (string-append bash-completions-dir "/gpgv-sq"))
+                 (copy-file "target/assets/shell-completions/gpg-sq.elv"
+                            (string-append elvish-completions-dir "/gpg-sq"))
+                 (copy-file "target/assets/shell-completions/gpgv-sq.elv"
+                            (string-append elvish-completions-dir "/gpgv-sq"))
+                 (install-file "target/assets/shell-completions/_gpg-sq"
+                               zsh-completions-dir)
+                 (install-file "target/assets/shell-completions/_gpgv-sq"
+                               zsh-completions-dir)
+                 (install-file "target/assets/shell-completions/gpg-sq.fish"
+                               fish-completions-dir)
+                 (install-file "target/assets/shell-completions/gpgv-sq.fish"
+                               fish-completions-dir)))))))
+    (inputs
+     (list nettle openssl sqlite))
+    (native-inputs
+     (list clang gnupg pkg-config sequoia-sq))
+    (home-page "https://sequoia-pgp.org/")
+    (synopsis "Sequoia's reimplementation of the GnuPG interface")
+    (description "This package provides Sequoia's reimplementation of the
+@code{GnuPG} interface.
+
+@code{gpg-sq} is Sequoia's alternative implementation of a tool following the
+GnuPG command line interface.  It provides a drop-in but not feature-complete
+replacement for the GnuPG project's @code{gpg}.
+
+This Guix package is built to use the nettle cryptographic library.")
+    (license license:gpl3+)))
 
 (define-public sequoia-sq
   (package

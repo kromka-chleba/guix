@@ -31891,6 +31891,27 @@ the C library @code{hidapi}.  Based off of @code{hidapi-rs} by Osspial.")
 scientific applications with leap second support.")
     (license license:asl2.0)))
 
+(define-public rust-histo-1
+  (package
+    (name "rust-histo")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "histo" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0v6znd33clam2b37rhn2pldd39l61605s1ivxzpjwdygi8f6mad6"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-quickcheck" ,rust-quickcheck-0.4)
+                       ("rust-streaming-stats" ,rust-streaming-stats-0.1))))
+    (home-page "https://github.com/fitzgen/histo")
+    (synopsis "Simple histograms with configurable buckets")
+    (description
+     "This package provides simple histograms with configurable buckets.")
+    (license (list license:asl2.0 license:expat))))
+
 (define-public rust-home-0.5
   (package
     (name "rust-home")
@@ -34816,6 +34837,58 @@ bytestring representations.")
     (synopsis "Interprocess communication toolkit")
     (description "This package provides an interprocess communication toolkit.")
     (license (list license:expat license:asl2.0))))
+
+(define-public rust-interprocess-1
+  (package
+    (inherit rust-interprocess-2)
+    (name "rust-interprocess")
+    (version "1.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "interprocess" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1yrq3xmyf8c506z2fkiyqcxiqv21rap72fz6npizybz47czm7wl1"))))
+    (arguments
+     `(#:tests? #f  ; expected tuple struct or tuple variant, found function `Ok`
+       #:cargo-inputs (("rust-blocking" ,rust-blocking-1)
+                       ("rust-cfg-if" ,rust-cfg-if-1)
+                       ("rust-futures-core" ,rust-futures-core-0.3)
+                       ("rust-futures-io" ,rust-futures-io-0.3)
+                       ("rust-intmap" ,rust-intmap-0.7)
+                       ("rust-libc" ,rust-libc-0.2)
+                       ("rust-once-cell" ,rust-once-cell-1)
+                       ("rust-rustc-version" ,rust-rustc-version-0.4)
+                       ("rust-spinning" ,rust-spinning-0.1)
+                       ("rust-thiserror" ,rust-thiserror-1)
+                       ("rust-to-method" ,rust-to-method-1)
+                       ("rust-tokio" ,rust-tokio-1)
+                       ("rust-winapi" ,rust-winapi-0.3))
+       #:cargo-development-inputs (("rust-anyhow" ,rust-anyhow-1)
+                                   ("rust-futures" ,rust-futures-0.3)
+                                   ("rust-tokio" ,rust-tokio-1))))))
+
+(define-public rust-intmap-0.7
+  (package
+    (name "rust-intmap")
+    (version "0.7.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "intmap" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1ffph34qfda5zxdvy2pvjnip9hgzbjcxw53pvdpcjaxc8n7z4lmf"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-development-inputs (("rust-ordermap" ,rust-ordermap-0.2)
+                                   ("rust-rand" ,rust-rand-0.3))))
+    (home-page "https://github.com/JesperAxelsson/rust-intmap")
+    (synopsis "Specialized HashMap for integer keys")
+    (description
+     "This package provides a specialized @code{HashMap} for integer keys.")
+    (license license:expat)))
 
 (define-public rust-invalidstring-0.1
   (package
@@ -49088,6 +49161,31 @@ the system.")
 the default program configured on the system.")
     (license (list license:expat license:asl2.0))))
 
+(define-public rust-openssh-keys-0.6
+  (package
+    (name "rust-openssh-keys")
+    (version "0.6.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "openssh-keys" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0gkcflf89fdzpmy066larfwk8fxc77ldq3b2r4bsrclq52l31f5b"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-base64" ,rust-base64-0.21)
+                       ("rust-byteorder" ,rust-byteorder-1)
+                       ("rust-md-5" ,rust-md-5-0.10)
+                       ("rust-sha2" ,rust-sha2-0.10)
+                       ("rust-thiserror" ,rust-thiserror-1))
+       #:cargo-development-inputs (("rust-home" ,rust-home-0.5))))
+    (home-page "https://github.com/coreos/openssh-keys")
+    (synopsis "Read and write OpenSSH public keys")
+    (description
+     "This package provides macros to read and write @code{OpenSSH} public keys.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public rust-openssl-0.10
   (package
     (name "rust-openssl")
@@ -49787,6 +49885,27 @@ external events in Rust.")
 iteration.  NOTE: This crate was renamed to @code{indexmap}.  Please use it
 under its new name.")
     (license (list license:asl2.0 license:expat))))
+
+(define-public rust-ordermap-0.2
+  (package
+    (inherit rust-ordermap-0.3)
+    (name "rust-ordermap")
+    (version "0.2.13")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "ordermap" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "12wy6zbndxp6wi5lg3dsahlfr7yh12bxrz7dpdrhxalnrfwg675q"))))
+    (arguments
+     `(#:cargo-inputs (("rust-serde" ,rust-serde-1))
+       #:cargo-development-inputs (("rust-fnv" ,rust-fnv-1)
+                                   ("rust-itertools" ,rust-itertools-0.5)
+                                   ("rust-lazy-static" ,rust-lazy-static-0.2)
+                                   ("rust-quickcheck" ,rust-quickcheck-0.4)
+                                   ("rust-rand" ,rust-rand-0.3)
+                                   ("rust-serde-test" ,rust-serde-test-1))))))
 
 (define-public rust-orgize-0.9
   (package
@@ -74507,6 +74626,26 @@ allowing @code{thread::sleep} to wait the bulk of a sleep time, and spin the fin
 section to guarantee accuracy.")
     (license license:asl2.0)))
 
+(define-public rust-spinning-0.1
+  (package
+    (name "rust-spinning")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "spinning" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0yrs2lzyyrwvs58pya2h22pfdx3vv0h76w1av5c2dbbw5630wkrd"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-lock-api" ,rust-lock-api-0.4))))
+    (home-page "https://github.com/4lDO2/spinning-rs.git")
+    (synopsis "Mutexes and SIX locks implemented by spinning")
+    (description
+     "This package provides Mutexes and SIX locks implemented by spinning.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public rust-spinning-top-0.2
   (package
     (name "rust-spinning-top")
@@ -75476,6 +75615,21 @@ iterated over only by reference rather than by value.")
      "Experimental crate for computing basic statistics on streams.")
     (license (list license:unlicense
                    license:expat))))
+
+(define-public rust-streaming-stats-0.1
+  (package
+    (inherit rust-streaming-stats-0.2)
+    (name "rust-streaming-stats")
+    (version "0.1.29")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "streaming-stats" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "09cbpj40g1wcmkz9bpm9yrqyrvqizn6kmwac1jpb2prq6gr2phyv"))))
+    (arguments
+     `(#:cargo-inputs (("rust-num-traits" ,rust-num-traits-0.2))))))
 
 (define-public rust-strength-reduce-0.2
   (package

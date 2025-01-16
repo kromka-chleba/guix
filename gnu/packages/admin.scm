@@ -71,6 +71,8 @@
 ;;; Copyright © 2024 nathan <nathan_mail@nborghese.com>
 ;;; Copyright © 2024 Nikita Domnitskii <nikita@domnitskii.me>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
+;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -138,6 +140,7 @@
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gawk)
   #:use-module (gnu packages gettext)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
@@ -158,10 +161,12 @@
   #:use-module (gnu packages libunwind)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages logging)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages m4)
   #:use-module (gnu packages mail)
   #:use-module (gnu packages man)
+  #:use-module (gnu packages maths)
   #:use-module (gnu packages markup)
   #:use-module (gnu packages mcrypt)
   #:use-module (gnu packages mpi)
@@ -196,6 +201,7 @@
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
+  #:use-module (gnu packages vulkan)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xml)
@@ -3273,6 +3279,79 @@ processes and threads of the specified process may optionally share the same
 limits.")
     (license license:gpl2+)))
 
+(define-public corectrl
+  (package
+    (name "corectrl")
+    (version "1.4.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/corectrl/corectrl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qpc04xxzv4jbqqlraqriipix4ph7bm1hfiry807jjp668i9n25d"))
+       (patches (search-patches "corectrl-polkit-install-dir.patch"))))
+    (build-system qt-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "-DINSTALL_DBUS_FILES_IN_PREFIX=true"
+                                (string-append "-DPOLKIT_POLICY_INSTALL_DIR="
+                                               #$output
+                                               "/share/polkit-1/actions")
+                                (string-append "-DWITH_PCI_IDS_PATH="
+                                               #$(this-package-input "hwdata")
+                                               "/share/hwdata/pci.ids"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'embed-absolute-references
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "src/core/info/common/cpuinfolscpu.cpp"
+                (("\"lscpu\"")
+                 (string-append
+                  "\"" (search-input-file inputs "bin/lscpu") "\"")))
+              (substitute* "src/core/info/common/gpuinfovulkan.cpp"
+                (("\"vulkaninfo\"")
+                 (string-append
+                  "\"" (search-input-file inputs "bin/vulkaninfo") "\"")))
+              (substitute* (list "src/core/info/common/swinfomesa.cpp"
+                                 "src/core/info/common/gpuinfoopengl.cpp")
+                (("\"glxinfo\"")
+                 (string-append
+                  "\"" (search-input-file inputs "bin/glxinfo") "\""))))))))
+    ;; Text formatting only supported since C++20, which is available in gcc-13.
+    ;; https://en.cppreference.com/w/cpp/compiler_support#cpp_lib_format_201907L
+    (native-inputs (list catch2-3
+                         gcc-13
+                         pkg-config
+                         qttools-5))
+    (inputs (list dbus
+                  botan
+                  hwdata
+                  mesa-utils
+                  polkit
+                  procps
+                  pugixml
+                  qtcharts-5
+                  qtdeclarative-5
+                  qtquickcontrols2-5
+                  qtsvg-5
+                  qtwayland-5
+                  quazip
+                  spdlog
+                  trompeloeil
+                  units
+                  util-linux
+                  vulkan-tools
+                  zlib))
+    (home-page "https://gitlab.com/corectrl/corectrl")
+    (synopsis "Profile based system control utility")
+    (description
+     "CoreCtrl allows you to control with ease your computer hardware using
+application profiles.")
+    (license (list license:gpl3))))
+
 (define-public autojump
   (package
     (name "autojump")
@@ -4372,7 +4451,7 @@ information tool.")
 (define-public fastfetch
   (package
     (name "fastfetch")
-    (version "2.34.0")
+    (version "2.34.1")
     (source
      (origin
        (method git-fetch)
@@ -4381,17 +4460,36 @@ information tool.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17033prhikj3aajfcfzi0mjc4487hyq5r2av38rw59yb95hl6fv5"))))
+        (base32 "1fb8ix2wxvqb414gvc6174dwigpixswbysq7yp9c3rw3c55r294h"))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   (delete-file-recursively "src/3rdparty")))))
     (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "-DENABLE_SYSTEM_YYJSON=ON"
+                                "-DBUILD_FLASHFETCH=OFF"
+                                "-DBUILD_TESTS=ON"
+                                "-DINSTALL_LICENSE=OFF"
+                                "-DBINARY_LINK_TYPE=dynamic"
+                                "-DENABLE_DIRECTX_HEADERS=OFF"
+                                (string-append "-DCUSTOM_PCI_IDS_PATH="
+                                               #$(this-package-input "hwdata")
+                                               "/share/hwdata/pci.ids")
+                                (string-append "-DCUSTOM_AMDGPU_IDS_PATH="
+                                               #$(this-package-input "libdrm")
+                                               "share/libdrm/amdgpu.ids"))))
     (inputs (list dbus
                   glib
+                  hwdata
                   imagemagick
+                  libdrm
                   libxcb
                   mesa
                   wayland
+                  yyjson
                   zlib)) ;for imagemagick and an #ifdef
-    (native-inputs (list pkg-config))
-    (arguments (list #:tests? #f)) ; no test target
+    (native-inputs (list pkg-config python-minimal))
     (home-page "https://github.com/fastfetch-cli/fastfetch")
     (synopsis "Display system information in a stylized manner")
     (description

@@ -1040,36 +1040,33 @@ manager and a system tray.")
 (define-public xmonad
   (package
     (name "xmonad")
-    (version "0.17.2")
+    (version "0.18.0")
     (source
      (origin
        (method url-fetch)
        (uri (hackage-uri "xmonad" version))
        (sha256
-        (base32 "19qz9a23377nzc0qq8nca45s745mfncd4i2vwba14gi7ipipfcil"))))
+        (base32 "1ysxxjkkx2l160nlj1h8ysxrfhxjlmbws2nm0wyiivmjgn20xs11"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "xmonad")))
     (arguments
-      (list
-       #:phases
-       #~(modify-phases %standard-phases
-           (add-after 'install 'install-xsession
-             (lambda _
-               (let* ((xsessions (string-append #$output "/share/xsessions"))
-                      (entry     (string-append xsessions "/xmonad.desktop")))
-                 (mkdir-p xsessions)
-                 (call-with-output-file
-                  entry
-                  (lambda (port)
-                    (format port "~
-                      [Desktop Entry]~@
-                      Name=xmonad~@
-                      Comment=xmonad window manager~@
-                      Exec=~a/bin/xmonad~@
-                      Type=Application~%" #$output)))))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-xsession
+            (lambda _
+              (let* ((xsessions (string-append #$output "/share/xsessions"))
+                     (entry     (string-append xsessions "/xmonad.desktop")))
+                (mkdir-p xsessions)
+                (make-desktop-entry-file
+                 (string-append xsessions "/xmonad.desktop")
+                 #:name "xmonad"
+                 #:exec (string-append #$output "/bin/xmonad")
+                 #:comment '((#f "xmonad window manager"))
+                 #:type "Application")))))))
     (inputs (list ghc-x11 ghc-data-default-class ghc-setlocale))
     (native-inputs (list ghc-quickcheck ghc-quickcheck-classes))
-    (home-page "http://xmonad.org")
+    (home-page "https://xmonad.org")
     (synopsis "Tiling window manager")
     (description
      "Xmonad is a tiling window manager for X.  Windows are arranged
@@ -1085,13 +1082,13 @@ tiled on several screens.")
 (define-public ghc-xmobar
   (package
     (name "ghc-xmobar")
-    (version "0.46")
+    (version "0.48.1")
     (source (origin
               (method url-fetch)
               (uri (hackage-uri "xmobar" version))
               (sha256
                (base32
-                "0glpiq7c0qwfcxnc2flgzj7afm5m1a9ghzwwcq7f8q27m21kddrd"))))
+                "1infcisv7l00a4z4byjwjisg4yndk0cymibfii1c7yzyzrlvavhl"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "xmobar")))
     (native-inputs
@@ -1100,6 +1097,7 @@ tiled on several screens.")
      (list ghc-alsa-core
            ghc-alsa-mixer
            ghc-dbus
+           ghc-extra
            ghc-hinotify
            ghc-http-client-tls
            ghc-http-conduit
@@ -1133,7 +1131,7 @@ tiled on several screens.")
            (lambda _
              (substitute* "src/Xmobar/X11/CairoSurface.hsc"
                (("cairo/cairo-xlib.h") "cairo-xlib.h")))))))
-    (home-page "https://xmobar.org")
+    (home-page "https://codeberg.org/xmobar/xmobar")
     (synopsis "Haskell library for minimalistic text based status bars")
     (description
      "@code{ghc-xmobar} is the haskell library that @code{xmobar} is based on.
@@ -1186,20 +1184,17 @@ particular, it displays commonly-chosen options before uncommon ones.")
 (define-public ghc-xmonad-contrib
   (package
     (name "ghc-xmonad-contrib")
-    (version "0.17.1")
+    (version "0.18.1")
     (source (origin
               (method url-fetch)
               (uri (hackage-uri "xmonad-contrib" version))
               (sha256
                (base32
-                "0lwj8xkyaw6h0rv3lz2jdqrwzz7yghfmnhpndygkb3wgyhvq6dxb"))))
+                "0ck4hq9yhdzggrs3q4ji6nbg6zwhmhc0ckf9vr9d716d98h9swq5"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "xmonad-contrib")))
     (inputs (list ghc-random ghc-x11 xmonad ghc-utf8-string ghc-x11-xft))
     (native-inputs (list ghc-quickcheck ghc-hspec))
-    (arguments
-     `(#:cabal-revision ("1"
-                         "0dc9nbn0kaw98rgpi1rq8np601zjhdr1y0ydg6yb82wwaqawql6z")))
     (home-page "https://xmonad.org/")
     (synopsis "Third party extensions for xmonad")
     (description
