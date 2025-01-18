@@ -395,7 +395,7 @@ Services
 
 * Base Services::               Essential system services.
 * Scheduled Job Execution::     The mcron service.
-* Log Rotation::                The rottlog service.
+* Log Rotation::                Archiving and deleting old logs.
 * Networking Setup::            Setting up network interfaces.
 * Networking Services::         Firewall, SSH daemon, etc.
 * Unattended Upgrades::         Automated system upgrades.
@@ -19230,7 +19230,7 @@ declaration.
 @menu
 * Base Services::               Essential system services.
 * Scheduled Job Execution::     The mcron service.
-* Log Rotation::                The rottlog service.
+* Log Rotation::                Archiving and deleting old logs.
 * Networking Setup::            Setting up network interfaces.
 * Networking Services::         Firewall, SSH daemon, etc.
 * Unattended Upgrades::         Automated system upgrades.
@@ -20873,11 +20873,94 @@ is also prefixed by a timestamp by GNU Shepherd.
 Log files such as those found in @file{/var/log} tend to grow endlessly,
 so it's a good idea to @dfn{rotate} them once in a while---i.e., archive
 their contents in separate files, possibly compressed.  The @code{(gnu
-services admin)} module provides an interface to GNU@tie{}Rot[t]log, a
-log rotation tool (@pxref{Top,,, rottlog, GNU Rot[t]log Manual}).
+services admin)} module provides an interface to the log rotation
+service provided by the Shepherd (@pxref{Log Rotation,,, shepherd, The
+GNU Shepherd Manual}).
+
+This log rotation service is made available through
+@code{log-rotation-service-type}, which takes a
+@code{log-rotation-configuration} record has its value.  By default,
+this provides @code{log-rotation}, a Shepherd ``timed service'' that
+runs periodically---once a week by default.  It automatically knows
+about the log files produced by Shepherd services and can be taught
+about external log files.  You can inspect the service and see when it's
+going to run the usual way:
+
+@example
+$ sudo herd status log-rotation
+Status of log-rotation:
+  It is running since Mon 09 Dec 2024 03:27:47 PM CET (2 days ago).
+  @dots{}
+
+Upcoming timer alarms:
+  Sun 15 Dec 2024 10:00:00 PM CET (in 4 days)
+  Sun 22 Dec 2024 10:00:00 PM CET (in 11 days)
+  Sun 29 Dec 2024 10:00:00 PM CET (in 18 days)
+@end example
+
+You can also list files subject to rotation with @command{herd files
+log-rotation} and trigger rotation manually with @command{herd trigger
+log-rotation}.
 
 This service is part of @code{%base-services}, and thus enabled by
-default, with the default settings, for commonly encountered log files.
+default, with the default settings.
+
+@defvar log-rotation-service-type
+This is the type of the log rotation service.  Its associated value must
+be a @code{log-rotation-configuration} record, as discussed below.
+@end defvar
+
+@anchor{log-rotation-configuration}
+@c %start of fragment
+
+@deftp {Data Type} log-rotation-configuration
+Available @code{log-rotation-configuration} fields are:
+
+@table @asis
+@item @code{provision} (default: @code{(log-rotation)}) (type: list-of-symbols)
+The name(s) of the log rotation Shepherd service.
+
+@item @code{requirement} (default: @code{(user-processes)}) (type: list-of-symbols)
+Dependencies of the log rotation Shepherd service.
+
+@item @code{calendar-event} (type: gexp)
+Gexp containing the @dfn{calendar event} when log rotation occurs.
+@xref{Timers,,,shepherd,The GNU Shepherd Manual}, for more information
+on calendar events.
+
+@item @code{external-log-files} (default: @code{()}) (type: list-of-strings)
+List of file names, external log files that should also be rotated.
+
+@item @code{compression} (default: @code{zstd}) (type: symbol)
+The compression method used for rotated log files, one of @code{'none},
+@code{'gzip}, and @code{'zstd}.
+
+@item @code{expiry} (type: gexp-or-integer)
+Age in seconds after which a log file is deleted.
+
+@item @code{size-threshold} (type: gexp-or-integer)
+Size in bytes below which a log file is @emph{not} rotated.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
+
+@subheading Rottlog
+
+An alternative log rotation service relying on GNU@tie{}Rot[t]log, a log
+rotation tool (@pxref{Top,,, rottlog, GNU Rot[t]log Manual}), is also
+provided.
+
+@quotation Warning
+The Rottlog service presented here is deprecated in favor of
+@code{log-rotation-service-type} (see above).  The
+@code{rottlog-service-type} variable and related tools will be removed
+after 2025-06-15.
+@end quotation
+
 The example below shows how to extend it with an additional
 @dfn{rotation}, should you need to do that (usually, services that
 produce log files already take care of that):
@@ -21011,8 +21094,9 @@ Age in seconds after which a file is subject to deletion (six months by
 default).
 
 @item @code{schedule} (default: @code{"30 12 01,08,15,22 * *"})
-String or gexp denoting the corresponding mcron job schedule
-(@pxref{Scheduled Job Execution}).
+Schedule of the log cleanup job written either as a string in
+traditional cron syntax or as a gexp representing a Shepherd calendar
+event (@pxref{Timers,,, shepherd, The GNU Shepherd Manual}).
 @end table
 @end deftp
 
@@ -23337,10 +23421,10 @@ vrrp_instance my-group @{
 
 @cindex unattended upgrades
 @cindex upgrades, unattended
-Guix provides a service to perform @emph{unattended upgrades}:
-periodically, the system automatically reconfigures itself from the
-latest Guix.  Guix System has several properties that make unattended
-upgrades safe:
+The @code{(gnu services admin)} module provides a service to perform
+@emph{unattended upgrades}: periodically, the system automatically
+reconfigures itself from the latest Guix.  Guix System has several
+properties that make unattended upgrades safe:
 
 @itemize
 @item
@@ -23397,9 +23481,9 @@ service.  The following fields are available:
 
 @table @asis
 @item @code{schedule} (default: @code{"30 01 * * 0"})
-This is the schedule of upgrades, expressed as a gexp containing an
-mcron job schedule (@pxref{Guile Syntax, mcron job specifications,,
-mcron, GNU@tie{}mcron}).
+This is the schedule of upgrades, expressed as a string in traditional
+cron syntax or as a gexp evaluating to a Shepherd calendar event
+(@pxref{Timers,,, shepherd, The GNU Shepherd Manual}).
 
 @item @code{channels} (default: @code{#~%default-channels})
 This gexp specifies the channels to use for the upgrade
@@ -23448,7 +23532,7 @@ When @code{reboot?} is @code{#t}, services are not restarted before
 rebooting.  This means that the value for @code{services-to-restart} is
 ignored.  The updated services will be started after the system reboots.
 
-@item @code{services-to-restart} (default: @code{'(mcron)})
+@item @code{services-to-restart} (default: @code{'(unattended-upgrade)})
 This field specifies the Shepherd services to restart when the upgrade
 completes.
 
@@ -23463,8 +23547,9 @@ Use @command{herd status} to find out candidates for restarting.
 @xref{Services}, for general information about services.  Common
 services to restart would include @code{ntpd} and @code{ssh-daemon}.
 
-By default, the @code{mcron} service is restarted.  This ensures that
-the latest version of the unattended upgrade job will be used next time.
+By default, the @code{unattended-upgrade} service is restarted.  This
+ensures that the latest version of the unattended upgrade job will be
+used next time.
 
 @item @code{system-expiration} (default: @code{(* 3 30 24 3600)})
 This is the expiration time in seconds for system generations.  System
@@ -37518,6 +37603,77 @@ host.  If empty, QEMU uses a default file name.
 @end table
 @end deftp
 
+@subsubheading Xen Guest Agent
+
+@cindex Xen
+@cindex Xen guest agent
+
+The Xen guest agent allows a Xen host to control the emulated system.
+The @code{xe-guest-utilities} service runs the agent on Guix guests.
+
+@url{https://github.com/xenserver/xe-guest-utilities, xe-guest-utilities} collects information about the running virtualized guest. This includes:
+@itemize
+@item
+static information
+@itemize
+@item
+The operating system running
+@item
+The Linux kernel version
+@end itemize
+
+@item
+dynamic information
+@itemize
+@item
+Network interfaces (devices) being added/removed
+@item
+Network connections being unplugged/plugged-in
+@item
+CPUs being added or removed
+@item
+The guest migrating, being paused/resumed, etc.
+@end itemize
+
+@item
+ephemeral information
+@itemize
+@item
+The amount of memory currently in-use and free
+@item
+The amount of disk-space used
+@end itemize
+@end itemize
+
+@quotation Note
+The default Linux-libre kernel that Guix ships already enables the
+necessary paravirtualization features for a guest.  There is nothing you
+need to do for the guest to support Xen's paravirtualization features.
+
+The guest utilities are used to have the guest report information
+@emph{back} to the virtualizing host and support tasks that require
+cooperation between host and guest, like CPU hotplugging.
+@end quotation
+
+@defvar xe-guest-utilities-service-type
+Service type for the Xen guest utilities service.
+@end defvar
+
+@deftp {Data Type} xe-guest-utilities-configuration
+Configuration for the @code{xe-guest-utilities} service.
+
+@table @asis
+@item @code{package} (default: @code{xe-guest-utilities})
+The Xen guest utilities package to use.
+
+@item @code{pid-file} (default: @code{"/var/run/xe-daemon.pid"})
+Name of the file holding the PID of @code{xe-deamon}.
+
+@item @code{log-file} (default: @code{"/var/log/xe-guest-utilities.log"})
+Name of the @code{xe-guest-utilities} log file.
+@end table
+@end deftp
+
 
 @anchor{build-vm}
 @subsubheading Virtual Build Machines
@@ -46116,6 +46272,7 @@ it manually. (@pxref{Configuring the Shell}).
 @end quotation
 
 @findex home-environment
+@vindex %base-home-services
 @lisp
 @include he-config-bare-bones.scm
 @end lisp
@@ -47140,6 +47297,22 @@ You should probably use the service extension
 mechanism instead (@pxref{Shepherd Services}).
 @end table
 @end deftp
+
+@cindex log rotation, for user services
+The Shepherd also comes with a @dfn{log rotation service}, which
+compresses and then deletes old log files produced by services and
+daemons that it runs.  This service is made available through
+@code{home-log-rotation-service-type} as described below.
+
+@defvar home-log-rotation-service-type
+This is the service type for the user Shepherd log rotation service
+(@pxref{Log Rotation Service,,, shepherd, The GNU Shepherd Manual}).
+Its value must be a @code{log-rotation-configuration} record, exactly as
+for its system-wide counterpart.  @xref{log-rotation-configuration}, for
+its reference.
+
+This service is part of @code{%base-home-services}.
+@end defvar
 
 @node Secure Shell
 @subsection Secure Shell

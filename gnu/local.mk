@@ -1,5 +1,5 @@
 # GNU Guix --- Functional package management for GNU
-# Copyright © 2012-2024 Ludovic Courtès <ludo@gnu.org>
+# Copyright © 2012-2025 Ludovic Courtès <ludo@gnu.org>
 # Copyright © 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2022, 2023, 2024 Andreas Enge <andreas@enge.fr>
 # Copyright © 2016 Mathieu Lirzin <mthl@gnu.org>
 # Copyright © 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021 Mark H Weaver <mhw@netris.org>
@@ -101,6 +101,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/compression.scm				\
   %D%/home.scm					\
   %D%/home/services.scm			\
+  %D%/home/services/admin.scm			\
   %D%/home/services/desktop.scm			\
   %D%/home/services/dict.scm			\
   %D%/home/services/dotfiles.scm		\
@@ -1183,7 +1184,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/doc++-segfault-fix.patch			\
   %D%/packages/patches/dovecot-opensslv3.patch			\
   %D%/packages/patches/dovecot-trees-support-dovecot-2.3.patch	\
-  %D%/packages/patches/doxygen-hurd.patch			\
   %D%/packages/patches/dstat-fix-crash-when-specifying-delay.patch	\
   %D%/packages/patches/dstat-skip-devices-without-io.patch	\
   %D%/packages/patches/dtc-meson-cell-overflow.patch		\
@@ -1654,7 +1654,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libgeotiff-fix-tests-with-proj-9.3.0.patch	\
   %D%/packages/patches/libgeotiff-fix-tests-with-proj-9.3.1.patch	\
   %D%/packages/patches/libgeotiff-fix-tests-on-i386.patch	\
-  %D%/packages/patches/libgpg-error-hurd64.patch		\
   %D%/packages/patches/libguestfs-syms.patch            	\
   %D%/packages/patches/libobjc2-unbundle-robin-map.patch	\
   %D%/packages/patches/librewolf-use-system-wide-dir.patch	\
@@ -2017,6 +2016,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/strace-readlink-tests.patch		\
   %D%/packages/patches/sunxi-tools-remove-sys-io.patch	\
   %D%/packages/patches/p11-kit-hurd.patch			\
+  %D%/packages/patches/pari-gp-qfcvp.patch                      \
   %D%/packages/patches/patch-hurd-path-max.patch		\
   %D%/packages/patches/perl-5.14-autosplit-default-time.patch	\
   %D%/packages/patches/perl-5.14-module-pluggable-search.patch	\

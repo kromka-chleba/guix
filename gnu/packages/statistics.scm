@@ -23,6 +23,7 @@
 ;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 Jonas Freimuth <jonas.freimuth@posteo.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -102,6 +103,7 @@
   #:use-module (gnu packages swig)
   #:use-module (gnu packages tbb)
   #:use-module (gnu packages tcl)
+  #:use-module (gnu packages terminals)
   #:use-module (gnu packages tex)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages time)
@@ -7154,6 +7156,86 @@ functions.")
     ;; project is released under GPLv2+ according to the license declaration
     ;; in "setup.py".
     (license (list license:mpl2.0 license:gpl2+ license:lgpl2.1+))))
+
+(define-public python-rchitect
+  (package
+    (name "python-rchitect")
+    (version "0.4.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/randy3k/rchitect")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ijbb0v77ir7j64r4r4kznv03wyc57rcqa9jnsc46476il79dcrk"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-cffi python-packaging python-six))
+    (native-inputs (list python-pytest
+                         python-pytest-cov
+                         python-pytest-mock
+                         python-setuptools
+                         python-wheel
+                         ;; R dependencies needed only for testing.
+                         r-minimal
+                         r-reticulate))
+    (home-page "https://github.com/randy3k/rchitect")
+    (synopsis "Mapping R API to Python")
+    (description
+     "rchitect provides access to R functionality from Python.  Its
+main use is as the driver for radian, the R console.")
+    (license license:expat)))
+
+(define-public python-radian
+  (package
+    (name "python-radian")
+    (version "0.6.13")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/randy3k/radian")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nnwgvifhsxdac7rr9d2zspc97xx0vyzxn1v9g4bnm9061rragc3"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'set-home
+                     (lambda _
+                       ;; During tests radian wants to write history files to
+                       ;; $HOME which causes tests to fail when that does not
+                       ;; exist. Test fails then look like
+                       ;; "Exception: value is " with the value being empty.
+                       (setenv "HOME" "/tmp"))))))
+    (propagated-inputs (list python-prompt-toolkit python-pygments
+                             python-rchitect))
+    (native-inputs (list python-coverage
+                         python-pexpect
+                         python-ptyprocess
+                         python-pyte
+                         python-pytest
+                         python-setuptools
+                         python-wheel
+                         ;; Needed afaict only for
+                         ;; `tests/test_reticulate.py::test_completion`.
+                         python-jedi
+                         ;; R dependencies needed only for testing.
+                         r-askpass
+                         r-minimal
+                         r-reticulate
+                         ;; Needed for sh tests.
+                         git-minimal))
+    (home-page "https://github.com/randy3k/radian")
+    (synopsis "R console")
+    (description
+     "Radian is an alternative console for the R program with multiline
+editing and rich syntax highlight.  One would consider Radian as a IPython
+clone for R, though its design is more aligned to Julia.")
+    (license license:expat)))
 
 (define-public java-jdistlib
   (package

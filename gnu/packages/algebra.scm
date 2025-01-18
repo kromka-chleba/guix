@@ -243,7 +243,7 @@ the real span of the lattice.")
 (define-public pari-gp
   (package
     (name "pari-gp")
-    (version "2.15.5")
+    (version "2.17.0")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -251,7 +251,7 @@ the real span of the lattice.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "10grsn8wr8k02akj8f8wm1rhzrk0qls4phr46gv59nfr2msxmz8f"))))
+                "1a5fn64x7255ma7rkkjg5g17fq6mnjlzjfi8wbncc24dy77ff8z7"))))
     (build-system gnu-build-system)
     (native-inputs (list (texlive-updmap.cfg)))
     (inputs (list gmp libx11 perl readline))
@@ -286,7 +286,7 @@ PARI is also available as a C library to allow for faster computations.")
 (define-public gp2c
   (package
    (name "gp2c")
-   (version "0.0.13")
+   (version "0.0.14")
    (source (origin
             (method url-fetch)
             (uri (string-append
@@ -294,7 +294,7 @@ PARI is also available as a C library to allow for faster computations.")
                   version ".tar.gz"))
             (sha256
               (base32
-                "0dlxlrwwvhmjljjzsq95fsm14j5n5353snd92b0pdg9ylzn784r6"))))
+                "0c3v1g04mkb45xrcrxr9xzp61nnql38k6i6s77i5f14l0b614qdg"))))
    (build-system gnu-build-system)
    (native-inputs (list perl))
    (inputs (list pari-gp))
@@ -320,7 +320,7 @@ GP2C, the GP to C compiler, translates GP scripts to PARI programs.")
 (define-public paritwine
   (package
     (name "paritwine")
-    (version "0.2.0")
+    (version "0.2.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -329,7 +329,7 @@ GP2C, the GP to C compiler, translates GP scripts to PARI programs.")
                     ".tar.gz"))
               (sha256
                (base32
-                "15m5jxmhx5zivk1k9wxpmzs8kqva3kvgxizdrkrmmp1qycn85n23"))))
+                "0xj948ngp9k2l1krwfcpzb4rxrvm2gy3r8w020lniz5hwbslagl7"))))
     (build-system gnu-build-system)
     (propagated-inputs (list pari-gp
                              gmp

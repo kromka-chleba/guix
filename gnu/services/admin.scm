@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2016 Jan Nieuwenhuizen <janneke@gnu.org>
-;;; Copyright © 2016-2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2016-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2023 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2024 Gabriel Wicki <gabriel@erlikon.ch>
@@ -38,6 +38,7 @@
   #:use-module (gnu system accounts)
   #:use-module ((gnu system shadow) #:select (account-service-type))
   #:use-module ((guix store) #:select (%store-prefix))
+  #:use-module (guix deprecation)
   #:use-module (guix gexp)
   #:use-module (guix modules)
   #:use-module (guix packages)
@@ -45,7 +46,18 @@
   #:use-module (srfi srfi-1)
   #:use-module (ice-9 match)
   #:use-module (ice-9 vlist)
-  #:export (%default-rotations
+  #:export (log-rotation-configuration
+            log-rotation-configuration?
+            log-rotation-configuration-provision
+            log-rotation-configuration-requirement
+            log-rotation-configuration-calendar-event
+            log-rotation-configuration-external-log-files
+            log-rotation-configuration-compression
+            log-rotation-configuration-expiry
+            log-rotation-configuration-size-threshold
+            log-rotation-service-type
+
+            %default-rotations
             %rotated-files
 
             log-rotation
@@ -112,13 +124,104 @@
 
 ;;; Commentary:
 ;;;
-;;; This module implements configuration of rottlog by writing
-;;; /etc/rottlog/{rc,hourly|daily|weekly}.  Example usage
-;;;
-;;;     (mcron-service)
-;;;     (service rottlog-service-type)
+;;; This module provides basic system administration tools: log rotation,
+;;; unattended upgrades, etc.
 ;;;
 ;;; Code:
+
+
+;;;
+;;; Shepherd's log rotation service.
+;;;
+
+(define %default-log-rotation-calendar-event
+  ;; Default calendar event when log rotation is triggered.
+  #~(calendar-event #:minutes '(0)
+                    #:hours '(22)
+                    #:days-of-week '(sunday)))
+
+(define (gexp-or-integer? x)
+  (or (gexp? x) (integer? x)))
+
+(define-configuration log-rotation-configuration
+  (provision
+   (list-of-symbols '(log-rotation))
+   "The name(s) of the log rotation Shepherd service."
+   empty-serializer)
+  (requirement
+   (list-of-symbols (if for-home? '() '(user-processes)))
+   "Dependencies of the log rotation Shepherd service."
+   empty-serializer)
+  (calendar-event
+   (gexp %default-log-rotation-calendar-event)
+   "Gexp containing the @dfn{calendar event} when log rotation occurs.
+@xref{Timers,,, shepherd, The GNU Shepherd Manual}, for more information on
+calendar events."
+   empty-serializer)
+  (external-log-files
+   (list-of-strings '())
+   "List of file names, external log files that should also be
+rotated."
+   empty-serializer)
+  (compression
+   (symbol 'zstd)
+   "The compression method used for rotated log files, one of
+@code{'none}, @code{'gzip}, and @code{'zstd}."
+   empty-serializer)
+  (expiry
+   (gexp-or-integer #~(%default-log-expiry))
+   "Age in seconds after which a log file is deleted."
+   empty-serializer)
+  (size-threshold
+   (gexp-or-integer #~(%default-rotation-size-threshold))
+   "Size in bytes below which a log file is @emph{not} rotated."
+   empty-serializer))
+
+(define (log-rotation-shepherd-services config)
+  (list (shepherd-service
+         (provision (log-rotation-configuration-provision config))
+         (requirement (log-rotation-configuration-requirement config))
+         (modules '((shepherd service timer)      ;for 'calendar-event'
+                    (shepherd service log-rotation)))
+         (free-form #~(log-rotation-service
+                       #$(log-rotation-configuration-calendar-event config)
+                       #:provision
+                       '#$(log-rotation-configuration-provision config)
+                       #:requirement
+                       '#$(log-rotation-configuration-requirement config)
+                       #:external-log-files
+                       '#$(log-rotation-configuration-external-log-files
+                           config)
+                       #:compression
+                       '#$(log-rotation-configuration-compression config)
+                       #:expiry
+                       #$(log-rotation-configuration-expiry config)
+                       #:rotation-size-threshold
+                       #$(log-rotation-configuration-size-threshold
+                          config))))))
+
+(define log-rotation-service-type
+  (service-type
+   (name 'log-rotation)
+   (description
+    "Periodically rotate log files using the Shepherd's log rotation service.
+Run @command{herd status log-rotation} to view its status, @command{herd files
+log-rotation} to list files subject to log rotation.")
+   (extensions (list (service-extension shepherd-root-service-type
+                                        log-rotation-shepherd-services)))
+   (compose concatenate)
+   (extend (lambda (config log-files)
+             (log-rotation-configuration
+              (inherit config)
+              (external-log-files
+               (append (log-rotation-configuration-external-log-files config)
+                       log-files)))))
+   (default-value (log-rotation-configuration))))
+
+
+;;;
+;;; Rottlog + mcron.
+;;;
 
 (define-record-type* <log-rotation> log-rotation make-log-rotation
   log-rotation?
@@ -232,12 +335,16 @@ for ROTATION."
   (or (rottlog-configuration-jobs config)
       (default-jobs (rottlog-configuration-rottlog config))))
 
-(define rottlog-service-type
+;; TODO: Deprecated; remove sometime after 2025-06-15.
+(define-deprecated rottlog-service-type
+  log-rotation-service-type
   (service-type
    (name 'rottlog)
    (description
     "Periodically rotate log files using GNU@tie{}Rottlog and GNU@tie{}mcron.
-Old log files are removed or compressed according to the configuration.")
+Old log files are removed or compressed according to the configuration.
+
+This service is deprecated and slated for removal after 2025-06-15.")
    (extensions (list (service-extension etc-service-type rottlog-etc)
                      (service-extension mcron-service-type
                                         rottlog-jobs-or-default)
@@ -283,18 +390,31 @@ Old log files are removed or compressed according to the configuration.")
                                 (length logs) #$directory)
                         (for-each delete-file logs))))))
 
-(define (log-cleanup-mcron-jobs configuration)
+(define (log-cleanup-shepherd-services configuration)
   (match-record configuration <log-cleanup-configuration>
-    (directory expiry schedule)
-    (list #~(job #$schedule
-                 #$(log-cleanup-program directory expiry)))))
+                (directory expiry schedule)
+    (let ((program (log-cleanup-program directory expiry)))
+      (list (shepherd-service
+             (provision '(log-cleanup))
+             (requirement '(user-processes))
+             (modules '((shepherd service timer)))
+             (start #~(make-timer-constructor
+                       #$(if (string? schedule)
+                             #~(cron-string->calendar-event #$schedule)
+                             schedule)
+                       (command '(#$program))))
+             (stop #~(make-timer-destructor))
+             (actions (list (shepherd-action
+                             (name 'trigger)
+                             (documentation "Trigger log cleanup.")
+                             (procedure #~trigger-timer)))))))))
 
 (define log-cleanup-service-type
   (service-type
    (name 'log-cleanup)
    (extensions
-    (list (service-extension mcron-service-type
-                             log-cleanup-mcron-jobs)))
+    (list (service-extension shepherd-root-service-type
+                             log-cleanup-shepherd-services)))
    (description
     "Periodically delete old log files.")))
 
@@ -438,7 +558,7 @@ which lets you search for packages that provide a given file.")
   (reboot?              unattended-upgrade-configuration-reboot?
                         (default #f))
   (services-to-restart  unattended-upgrade-configuration-services-to-restart
-                        (default '(mcron)))
+                        (default '(unattended-upgrade)))
   (system-expiration    unattended-upgrade-system-expiration
                         (default (* 3 30 24 3600)))
   (maximum-duration     unattended-upgrade-maximum-duration
@@ -449,13 +569,16 @@ which lets you search for packages that provide a given file.")
 (define %unattended-upgrade-log-file
   "/var/log/unattended-upgrade.log")
 
-(define (unattended-upgrade-mcron-jobs config)
+(define (unattended-upgrade-shepherd-services config)
   (define channels
     (scheme-file "channels.scm"
                  (unattended-upgrade-configuration-channels config)))
 
   (define log
     (unattended-upgrade-configuration-log-file config))
+
+  (define schedule
+    (unattended-upgrade-configuration-schedule config))
 
   (define services
     (unattended-upgrade-configuration-services-to-restart config))
@@ -483,35 +606,17 @@ which lets you search for packages that provide a given file.")
       #~(begin
           (use-modules (guix build utils)
                        (gnu services herd)
-                       (srfi srfi-19)
                        (srfi srfi-34))
 
-          (define log
-            (open-file #$log "a0"))
-
-          (define (timestamp)
-            (date->string (time-utc->date (current-time time-utc))
-                          "[~4]"))
-
-          (define (alarm-handler . _)
-            (format #t "~a time is up, aborting upgrade~%"
-                    (timestamp))
-            (exit 1))
+          (setvbuf (current-output-port) 'line)
+          (setvbuf (current-error-port) 'line)
 
           ;; 'guix time-machine' needs X.509 certificates to authenticate the
           ;; Git host.
           (setenv "SSL_CERT_DIR"
                   #$(file-append nss-certs "/etc/ssl/certs"))
 
-          ;; Make sure the upgrade doesn't take too long.
-          (sigaction SIGALRM alarm-handler)
-          (alarm #$(unattended-upgrade-maximum-duration config))
-
-          ;; Redirect stdout/stderr to LOG to save the output of 'guix' below.
-          (redirect-port log (current-output-port))
-          (redirect-port log (current-error-port))
-
-          (format #t "~a starting upgrade...~%" (timestamp))
+          (format #t "starting upgrade...~%")
           (guard (c ((invoke-error? c)
                      (report-invoke-error c)))
             (apply invoke #$(file-append guix "/bin/guix")
@@ -530,37 +635,52 @@ which lets you search for packages that provide a given file.")
             (unless #$reboot?
               ;; Rebooting effectively restarts services anyway and execution
               ;; would be halted here if mcron is restarted.
-              (format #t "~a restarting services...~%" (timestamp))
+              (format #t "restarting services...~%")
               (for-each restart-service '#$services))
 
-            ;; XXX: If 'mcron' has been restarted, this is not reached.
-            (format #t "~a upgrade complete~%" (timestamp))
+            ;; XXX: If this service has been restarted, this is not reached.
+            (format #t "upgrade complete~%")
 
             ;; Stopping the root shepherd service triggers a reboot.
             (when #$reboot?
-              (format #t "~a rebooting system~%" (timestamp))
+              (format #t "rebooting system~%")
               (force-output) ;ensure the entire log is written.
               (stop-service 'root))))))
 
   (define upgrade
     (program-file "unattended-upgrade" code))
 
-  (list #~(job #$(unattended-upgrade-configuration-schedule config)
-               #$upgrade)))
+  (list (shepherd-service
+         (provision '(unattended-upgrade))
+         (requirement '(user-processes networking))
+         (modules '((shepherd service timer)))
+         (start #~(make-timer-constructor
+                   #$(if (string? schedule)
+                         #~(cron-string->calendar-event #$schedule)
+                         schedule)
+                   (command '(#$upgrade))
 
-(define (unattended-upgrade-log-rotations config)
-  (list (log-rotation
-         (files
-          (list (unattended-upgrade-configuration-log-file config))))))
+                   #:log-file #$log
+
+                   ;; Make sure the upgrade doesn't take too long.
+                   #:max-duration
+                   #$(unattended-upgrade-maximum-duration config)
+
+                   ;; Wait for the previous attempt to terminate before trying
+                   ;; again.
+                   #:wait-for-termination? #t))
+         (stop #~(make-timer-destructor))
+         (actions (list (shepherd-action
+                         (name 'trigger)
+                         (documentation "Trigger unattended system upgrade.")
+                         (procedure #~trigger-timer)))))))
 
 (define unattended-upgrade-service-type
   (service-type
    (name 'unattended-upgrade)
    (extensions
-    (list (service-extension mcron-service-type
-                             unattended-upgrade-mcron-jobs)
-          (service-extension rottlog-service-type
-                             unattended-upgrade-log-rotations)))
+    (list (service-extension shepherd-root-service-type
+                             unattended-upgrade-shepherd-services)))
    (description
     "Periodically upgrade the system from the current configuration.")
    (default-value (unattended-upgrade-configuration))))

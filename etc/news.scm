@@ -1,6 +1,6 @@
 ;; GNU Guix news, for use by 'guix pull'.
 ;;
-;; Copyright © 2019-2024 Ludovic Courtès <ludo@gnu.org>
+;; Copyright © 2019-2025 Ludovic Courtès <ludo@gnu.org>
 ;; Copyright © 2019–2021, 2024 Tobias Geerinckx-Rice <me@tobias.gr>
 ;; Copyright © 2019, 2020 Miguel Ángel Arruga Vivas <rosen644835@gmail.com>
 ;; Copyright © 2019, 2020 Konrad Hinsen <konrad.hinsen@fastmail.net>
@@ -34,6 +34,121 @@
 
 (channel-news
  (version 0)
+
+ (entry (commit "0aa45f18543552f2396414ab130dab40f8969d27")
+        (title
+         (en "New @code{%base-home-services} variable for Guix Home")
+         (de "Neue Variable @code{%base-home-services} für Guix Home")
+         (fr "Nouvelle variable @code{%base-home-services} pour Guix Home"))
+        (body
+         (en "If you are using Guix Home, we recommend you update your
+configuration to include @code{%base-home-services}, a list of non-essential
+services deemed generally useful (this is comparable to @code{%base-services}
+in Guix System).  That is, your Home configuration should now look like this:
+
+@lisp
+(home-environment
+  ;; fields omitted @dots{}
+  (services (append (list @dots{}) %base-home-services)))
+@end lisp
+
+The dots above should be replaced by your own list of services, as it
+currently appears in your @code{home-environment} declaration.
+
+Currently, @code{%base-home-services} contains only one service: the new log
+rotation service provided by version 1.0 of the Shepherd.")
+         (de "Wenn Sie Guix Home benutzen, empfehlen wir, dass Sie Ihre
+Konfiguration anpassen und @code{%base-home-services} eintragen, eine Liste von
+nicht essenziellen Diensten, die aber in den meisten Fällen nützlich sind
+(vergleichbar mit @code{%base-services} in Guix System).  Das heißt, Ihre
+Persönliche Konfiguration sollte nun diese Form haben:
+
+@lisp
+(home-environment
+  ;; hier stehen andere Felder@dots{}
+  (services (append (list @dots{}) %base-home-services)))
+@end lisp
+
+Statt der drei Auslassungspunkte schreiben Sie Ihre Dienste auf, die bisher in
+der @code{home-environment}-Deklaration Ihrer Persönlichen Umgebung aufgetaucht
+sind.
+
+Derzeit enthält @code{%base-home-services} nur einen Dienst: den neuen Dienst
+zur Protokollrotation, den Version 1.0 von Shepherd bringt.")
+         (fr "Il est recommandé aux utilisateurices de Guix Home de mettre à
+jour leur configuration pour include @code{%base-home-services}, une liste de
+services non-essentiels mais considérés généralement utiles (c'est comparable
+à @code{%base-services} pour Guix System).  Concrètement, la configuration
+Home devrait maintenant ressembler à ça :
+
+@lisp
+(home-environment
+  ;; champs omis @dots{}
+  (services (append (list @dots{}) %base-home-services)))
+@end lisp
+
+Les points de suspension ci-dessus doivent être remplacés par sa propre liste
+de services, celle qui est déjà visible dans sa déclaration
+@code{home-environment}.
+
+Pour le moment @code{%base-home-services} ne contient qu'un seul service : le
+nouveau service de rotation des journaux fourni par la version 1.0 de
+Shepherd.")))
+
+ (entry (commit "a9f21036e43ffe4eeda2ae51b86e563c14509225")
+        (title
+         (en "Rottlog service replaced by new log rotation service")
+         (de "Rottlog-Dienst ersetzt durch neuen Dienst zur Protokollrotation")
+         (fr "Service Rottlog remplacé par un nouveau service de rotation des
+journaux"))
+        (body
+         (en "A noticeable change was made that impacts all Guix System users:
+the Rottlog service was replaced by the new log rotation service.
+Additionally, @code{rottlog-service-type} is now deprecated in favor of
+@code{log-rotation-service-type} and will be removed in six months, in
+accordance with Guix's deprecation policy.  Authors of service types in
+custom Guix channels should therefore no longer extend
+@code{rottlog-service-type}.
+
+The new @code{log-rotation-service-type} builds upon the log rotation service
+provided by version 1.0 of the Shepherd.  It is more flexible and easier to
+use.  Run @command{info \"(guix) Log Rotation\"}, for more info.
+
+Because the new log rotation service depends on Shepherd 1.0 functionality,
+you will need to reboot after reconfiguring if you are not running Shepherd
+1.0 yet.")
+         (de "Eine merkliche Änderung betrifft alle Nutzer von Guix System:
+Anstelle des Rottlog-Dienstes wird jetzt ein neuer Dienst zur Protokollrotation
+benutzt.  Des Weiteren gilt @code{rottlog-service-type} jetzt als veraltet und
+ersetzt durch @code{log-rotation-service-type}; er wird in sechs Monaten
+entfernt werden, wie es Guix’ Richtlinie zu Veraltetem vorsieht.  Autoren
+von Diensttypen in eigenen Guix-Kanälen sollten daher nicht mehr
+@code{rottlog-service-type} erweitern.
+
+Der neue Diensttyp @code{log-rotation-service-type} baut auf auf dem in Version
+1.0 von Shepherd bereitgestellten Protokollrotationsdienst.  Er ist
+vielseitiger und leichter nutzbar.  Führen Sie @command{info \"(guix.de)
+Log-Rotation\"} aus, um mehr zu erfahren.
+
+Weil der neue Protokollrotationsdienst die Funktionalitäten der Version 1.0 von
+Shepherd voraussetzt, werden Sie nach dem Rekonfigurieren Ihren Rechner neu
+starten müssen, falls auf ihm noch nicht Shepherd 1.0 läuft.")
+         (fr "Un changement important a eu lieu impactant toute personne
+utilisant Guix System : le service Rottlog a été remplacé par le nouveau
+service de rotation des journaux.  De plus, @code{rottlog-service-type} est
+maintenant obsolète, remplacé par @code{log-rotation-service-type}, et sera
+retiré d'ici six mois, conformément à la politique d'obsolescence de Guix.
+Les auteurices de services dans des canaux Guix tiers sont donc invité·es à ne
+plus étendre @code{rottlog-service-type}.
+
+Le nouveau @code{log-rotation-service-type} repose sur le service de rotation
+des journaux fourni par la version 1.0 du Shepherd.  Il est plus flexible et
+facile à utiliser.  Lancer @command{info \"(guix.fr) Rotation des journaux\"}
+pour en savoir plus.
+
+Comme ce nouveau service dépend d'une fonctionnalité de Shepherd 1.0, il
+faudra redémarrer après reconfiguration si tu ne fais pas encore tourner
+Shepherd 1.0.")))
 
  (entry (commit "5c2bcafd281fdd31b3dfec5a67ba85084c58cf60")
         (title
