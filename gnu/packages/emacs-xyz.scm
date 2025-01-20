@@ -589,6 +589,30 @@ just one-off queries and multiple independent sessions.  It requires an OpenAI
 API key.")
     (license license:gpl3+)))
 
+(define-public emacs-gptel-quick
+  (let ((commit "79c33058e605b4fbdb1d1f98d1ab428d6eed111d")
+        (revision "0"))
+    (package
+      (name "emacs-gptel-quick")
+      (version (git-version "0.0.5" revision commit))
+      (source
+       (origin
+         (uri (git-reference
+               (url "https://github.com/karthink/gptel-quick")
+               (commit commit)))
+         (method git-fetch)
+         (sha256
+          (base32 "0bw3zjpzyc574jw2qr0j042x68llkjxn66gkfnw7dwwpgwplz671"))
+         (file-name (git-file-name name version))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-gptel))
+      (home-page "https://github.com/karthink/gptel-quick")
+      (synopsis "Quick LLM lookups in Emacs")
+      (description
+       "This package provides a tiny everyday helper for easily looking up or
+summarizing text using an LLM.")
+      (license license:gpl3+))))
+
 (define-public emacs-chatgpt-shell
   (package
     (name "emacs-chatgpt-shell")
@@ -1881,6 +1905,34 @@ the tracked files, for example, and you can browse the history of past
 changes.  There is support for cherry picking, reverting, merging,
 rebasing, and other common Git operations.")
     (license license:gpl3+)))
+
+(define-public emacs-magit-stgit
+  (let ((commit "51168b7438dfb5ca6b9239b8564397cc0cc6e798")
+        (revision "0"))
+    (package
+      (name "emacs-magit-stgit")
+      (version (git-version "2.2.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/stacked-git/magit-stgit.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1z2dhc1m510iyrks5lxp3jlqg4n7qwwirbmxg4c4ll0xngfhnalc"))))
+      (build-system emacs-build-system)
+      (propagated-inputs (list emacs-magit emacs-transient))
+      (home-page "https://github.com/stacked-git/magit-stgit")
+      (synopsis "StGit extension for Magit")
+      (description
+       "This package provides basic support for @code{stgit} in
+@code{emacs-magit}.  When @code{magit-stgit-mode} is turned on, the
+current patch series is displayed in the status buffer.  While point is on a
+patch the changes it introduces can be shown using @code{RET}, it can be selected
+as the current patch using @code{a}, and it can be discarded using @code{k}.  Other
+@code{StGit} commands are available from the @code{StGit} transient on @code{/}.")
+      (license license:gpl3+))))
 
 (define-public emacs-magit-svn
   (package
@@ -5731,32 +5783,36 @@ tool.")
       (license license:gpl2+))))
 
 (define-public emacs-ggtags
-  (package
-    (name "emacs-ggtags")
-    (version "0.9.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://elpa.gnu.org/packages/ggtags-"
-                           version ".tar"))
-       (sha256
-        (base32
-         "0p79x9g94jynl83ndvqp9349vhgkzxzhnc517r8hn44iqxqf6ghg"))))
-    (build-system emacs-build-system)
-    (inputs
-     (list global))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'configure
-           (lambda* (#:key inputs #:allow-other-keys)
-             (chmod "ggtags.el" #o644)
-             (emacs-substitute-variables "ggtags.el"
-               ("ggtags-executable-directory"
-                (dirname (search-input-file inputs "bin/global")))))))))
-    (home-page "https://github.com/leoliu/ggtags")
-    (synopsis "Frontend to the GNU Global source code tagging system")
-    (description "@code{ggtags} provides a frontend to the GNU Global source
+  (let ((commit "4e3630c30fb836872b5d8f2ae3e5d5ae003365d8")
+        (revision "0"))
+    (package
+      (name "emacs-ggtags")
+      (version (git-version "0.9.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/leoliu/ggtags")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1mgdli2kvsg3y6ynsl6547cwwg9f2q0s1cv4b74slpcvq5n1kb90"))))
+      (build-system emacs-build-system)
+      (inputs
+       (list global))
+      (arguments
+       `(#:phases
+         (modify-phases %standard-phases
+           (add-after 'unpack 'configure
+             (lambda* (#:key inputs #:allow-other-keys)
+               (chmod "ggtags.el" #o644)
+               (emacs-substitute-variables "ggtags.el"
+                 ("ggtags-executable-directory"
+                  (dirname (search-input-file inputs "bin/global")))))))))
+      (home-page "https://github.com/leoliu/ggtags")
+      (synopsis "Frontend to the GNU Global source code tagging system")
+      (description "@code{ggtags} provides a frontend to the GNU Global source
 code tagging system.
 
 Features:
@@ -5784,7 +5840,7 @@ current match, total matches and exit status.
 @item Support eldoc.
 @item Search @code{GTAGSLIBPATH} for references and symbols.
 @end itemize\n")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-go-mode
   ;; XXX: Upstream did not tag last release.  The commit below matches version
@@ -14044,27 +14100,25 @@ fully-functional one.")
     (license license:gpl3+)))
 
 (define-public emacs-wakib-keys
-  (let ((revision "0")
-        (commit "85a96e0476d620add31e6e73481dbcf57cabc13e"))
-    (package
-      (name "emacs-wakib-keys")
-      (version (git-version "0.0.1" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/darkstego/wakib-keys.git")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0fr70jmrcnyyl16h0k6kj3gcd50422ggqps688wa7x51dk6f9cvr"))))
-      (build-system emacs-build-system)
-      (synopsis "Make C-c, C-v and C-x clipboard keys work reliably in Emacs")
-      (description "This package provides an Emacs minor mode that provides
+  (package
+    (name "emacs-wakib-keys")
+    (version "1.0.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/darkstego/wakib-keys.git")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0fr70jmrcnyyl16h0k6kj3gcd50422ggqps688wa7x51dk6f9cvr"))))
+    (build-system emacs-build-system)
+    (synopsis "Make C-c, C-v and C-x clipboard keys work reliably in Emacs")
+    (description "This package provides an Emacs minor mode that provides
 modern, efficient and easy to learn keybindings (especially C-c, C-x and C-v
 work and provide clipboard action).")
-      (home-page "https://github.com/darkstego/wakib-project")
-      (license license:gpl3+))))
+    (home-page "https://github.com/darkstego/wakib-project")
+    (license license:gpl3+)))
 
 (define-public emacs-hydra
   (package
@@ -15181,6 +15235,29 @@ the equirement of the Sphinx documentation generator.")
      "Better defaults attempts to address the most obvious deficiencies of the
 Emacs default configuration in uncontroversial ways that nearly everyone can
 agree upon.")
+    (license license:gpl3+)))
+
+(define-public emacs-uniquify-files
+  (package
+    (name "emacs-uniquify-files")
+    (version "1.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/uniquify-files-"
+                           version ".tar"))
+       (sha256
+        (base32 "0xw2l49xhdy5qgwja8bkiq2ibdppl45xzqlr17z92l1vfq4akpzp"))))
+    (build-system emacs-build-system)
+    (home-page "https://elpa.gnu.org/packages/uniquify-files.html")
+    (synopsis "Disambiguate files with the same basename")
+    (description "This package helps differentiate files with the same name
+but in different directories when displayed in Emacs buffers or completion
+interfaces.
+
+Generally, you probably want to use emacs' builtin uniquify instead--which
+makes unique buffer names.  Only if you want to programmatically generate
+unique file names you need this package here.")
     (license license:gpl3+)))
 
 (define-public emacs-undohist-el
@@ -21480,7 +21557,11 @@ one if it fails.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0s17nv59gzgqgskid41lfacsqnzdiq2p3ds0vglcfqwypr3k898c"))))
+                  "0s17nv59gzgqgskid41lfacsqnzdiq2p3ds0vglcfqwypr3k898c"))
+                ;; Backporting an unreleased fix from
+                ;; https://github.com/nemethf/eglot-x/commit/354150c299e241df09c8b904b68177fd9b41fe0e
+                ;; Remove this patch once version 0.7 is released
+                (patches (search-patches "emacs-eglot-x-fix-apply-text-edits.patch"))))
       (build-system emacs-build-system)
       (inputs (list emacs-eglot))
       (home-page "https://github.com/nemethf/eglot-x")
@@ -33015,26 +33096,24 @@ utilities.")
                mu)))))
 
 (define-public emacs-treemacs-nerd-icons
-  (let ((revision "0")
-        (commit "9876cb478145a0ec4e36f64ff6583f3de7126216"))
-    (package
-      (name "emacs-treemacs-nerd-icons")
-      (version (git-version "0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/rainstormstudio/treemacs-nerd-icons.git")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1xphhxdibjhp27z2lj1nxlxf7cfm8vpi44fr01fk9krqy9vaz0q0"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-nerd-icons emacs-treemacs))
-      (synopsis "emacs-treemacs-nerd-icons")
-      (description "This package provides nerd-icons integration for treemacs.")
-      (home-page "https://github.com/rainstormstudio/treemacs-nerd-icons")
-      (license license:gpl3+))))
+  (package
+    (name "emacs-treemacs-nerd-icons")
+    (version "0.0.1-1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/rainstormstudio/treemacs-nerd-icons.git")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "15mfxaimbwv87nxsna83wcslmpzyclx8n09kzwmchy97ri2xl67h"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-nerd-icons emacs-treemacs))
+    (synopsis "emacs-treemacs-nerd-icons")
+    (description "This package provides nerd-icons integration for treemacs.")
+    (home-page "https://github.com/rainstormstudio/treemacs-nerd-icons")
+    (license license:gpl3+)))
 
 (define-public emacs-libyaml
   ;; Upstream made no release so far.
@@ -36068,6 +36147,27 @@ time.")
     (synopsis "Emacs client for Mastodon")
     (description "@code{mastodon.el} is an Emacs client for Mastodon, the
 federated microblogging social network.")
+    (license license:gpl3+)))
+
+(define-public emacs-fedi
+  (package
+    (name "emacs-fedi")
+    (version "0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/martianh/fedi.el")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0a5zq7axxh3khx6465s7ym9s7v2iw7ky9z486d0zg41k7926bm9d"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-markdown-mode))
+    (home-page "https://codeberg.org/martianh/fedi.el")
+    (synopsis "Library to make writing clients for APIs easier")
+    (description "@code{fedi.el} is an Emacs library used by several fediverse
+frontend packages.")
     (license license:gpl3+)))
 
 (define-public emacs-ebdb

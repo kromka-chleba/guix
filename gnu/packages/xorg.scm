@@ -40,6 +40,7 @@
 ;;; Copyright © 2023, 2024 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2023, 2024 Kaelyn Takata <kaelyn.alexi@protonmail.com>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2475,14 +2476,14 @@ DRI (Direct Rendering Infrastructure) drivers.")
 (define-public xev
   (package
     (name "xev")
-    (version "1.2.5")
+    (version "1.2.6")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://xorg/individual/app/xev-"
                            version ".tar.xz"))
        (sha256
-        (base32 "1hbfwcnbyz4w13fbhnghl0vdhf6w9f9pb7jgjwrhykkii51ilin9"))))
+        (base32 "1mq7332kgisd9yq0w0rv11vhwhgpkmpg7pfdlyn776dc13hcbqb1"))))
     (build-system gnu-build-system)
     (arguments `(#:configure-flags ',(malloc0-flags)))
     (inputs
@@ -5981,14 +5982,14 @@ form.")
 (define-public xmag
   (package
     (name "xmag")
-    (version "1.0.7")
+    (version "1.0.8")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://xorg/individual/app/xmag-"
                            version ".tar.xz"))
        (sha256
-        (base32 "0qblrqrhxml2asgbck53a1v7c4y7ap7jcyqjg500h1i7bb63d680"))))
+        (base32 "0clm0vm35lkcir5w3bkypax9j57vyzkl9l89qqxbanvr7mc3qv9j"))))
     (build-system gnu-build-system)
     (arguments
      (list

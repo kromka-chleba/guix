@@ -66,14 +66,14 @@
   ;; directory.
   (package
     (name "gnucash")
-    (version "5.9")
+    (version "5.10")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/gnucash/gnucash%20%28stable%29/"
                            version "/gnucash-" version ".tar.bz2"))
        (sha256
-        (base32 "1l1g4acangbf4r27vsvavds0yqqa8smy4s676by68r639wvfbqjv"))))
+        (base32 "14xd0w2afbyk0dzsw9f528722i3p1vhs78vr09r8cnzfk0v9z7bq"))))
     (outputs '("out" "doc" "debug" "python"))
     (build-system cmake-build-system)
     (arguments
@@ -102,6 +102,11 @@
               (substitute* "CMakeLists.txt"
                 (("set\\(SHELL /bin/bash\\)")
                  (string-append "set(SHELL " (which "bash") ")")))))
+          (add-after 'unpack 'set-perl-path
+            (lambda _
+              (substitute* "libgnucash/app-utils/gnc-quotes.cpp"
+                (("c_cmd\\{bp::search_path\\(\"perl\"\\)\\}")
+                 (format #f "c_cmd{~s}" #$(file-append perl "/bin/perl"))))))
           ;; The qof test requires the en_US, en_GB, and fr_FR locales.
           (add-before 'check 'install-locales
             (lambda _
@@ -141,26 +146,35 @@
                      ,(map (lambda (o)
                              (string-append o "/lib/perl5/site_perl/"
                                             #$(package-version perl)))
-                           (if (string=? prog "gnc-fq-helper")
-                               (list
-                                #$@(transitive-input-references
-                                    'inputs
-                                    (map (lambda (l)
-                                           (assoc l (package-inputs this-package)))
-                                         '("perl-finance-quote"
-                                           "perl-date-manip"))))
-                               (list
-                                #$@(transitive-input-references
-                                    'inputs
-                                    (map (lambda (l)
-                                           (assoc l (package-inputs this-package)))
-                                         '("perl-finance-quote")))))))))
+                           (list
+                            #$@(transitive-input-references
+                                'inputs
+                                (map (lambda (l)
+                                       (assoc l (package-inputs this-package)))
+                                     '("perl-json-parse"
+                                       "perl-finance-quote"))))))))
                '("gnucash"
-                 "gnc-fq-update"))))
+                 "gnucash-cli"))))
           (add-after 'install 'glib-or-gtk-compile-schemas
             (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-compile-schemas))
           (add-after 'install 'glib-or-gtk-wrap
-            (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap)))))
+            (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap))
+          (add-before 'glib-or-gtk-wrap 'delete-gnc-fq-update
+            (lambda _
+              ;; We are not updating Finance::Quote from CPAN.  There is no
+              ;; reason to install this binary.
+              (delete-file (string-append #$output "/bin/gnc-fq-update"))))
+          (add-after 'glib-or-gtk-wrap 'unwrap-some
+            (lambda _
+              (for-each
+               (lambda (prog)
+                 (delete-file (string-append #$output "/bin/" prog))
+                 (rename-file (string-append #$output "/bin/." prog "-real")
+                              (string-append #$output "/bin/" prog)))
+               ;; Sadly glib-or-gtk-wrap does not allow excluding individual
+               ;; files.  Being wrapped breaks the finance-quote-wrapper (it
+               ;; is expected to be a perl script, not a shell one).
+               '("finance-quote-wrapper")))))))
     (native-inputs
      (list gmp
            `(,glib "bin")               ;glib-compile-schemas, etc.
@@ -183,7 +197,6 @@
            libofx
            libxml2
            libxslt
-           perl-date-manip
            perl-finance-quote
            perl-json
            perl-json-parse
@@ -220,7 +233,7 @@ installed as well as Yelp, the Gnome help browser.")
                "mirror://sourceforge/gnucash/gnucash%20%28stable%29/"
                version "/gnucash-docs-" version revision ".tar.gz"))
          (sha256
-          (base32 "1jclya8p005dfwhkx4yqbcml631y4xngl8v08kg33d0ws4mkmi4v"))))
+          (base32 "0hx8gd5xbypbgw1hfnjiyxhkjxpid1qpmvihwlpb803lx9v8jkk0"))))
       (build-system cmake-build-system)
       ;; These are native-inputs because they are only required for building the
       ;; documentation.
