@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2019, 2021-2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2019, 2021-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019, 2020, 2021 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2019, 2020, 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
@@ -56,6 +56,8 @@
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
+  #:use-module (gnu packages sphinx)
+  #:use-module (gnu packages time)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
@@ -68,6 +70,66 @@
   #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (guix utils))
+
+(define-public python-aioresponses
+  (package
+    (name "python-aioresponses")
+    (version "0.7.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "aioresponses" version))
+       (sha256
+        (base32 "16p8mdyfirddrsay62ji7rwcrqmmzxzf2isdbfm9cj5p338rbr42"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (replace 'check
+           (lambda* (#:key tests? #:allow-other-keys)
+             (when tests?
+               (invoke
+                "pytest" "-vv" "tests" "-k"
+                (string-append
+                 ;; These tests require network access.
+                 "not test_address_as_instance_of_url_combined_with_pass_through "
+                 "and not test_pass_through_with_origin_params"))))))))
+    (native-inputs
+     (list python-pbr python-ddt python-pytest))
+    (propagated-inputs
+     (list python-aiohttp python-setuptools))
+    (home-page "https://github.com/pnuckowski/aioresponses")
+    (synopsis "Mock out requests made by ClientSession from aiohttp package")
+    (description
+     "Aioresponses is a helper to mock/fake web requests in python aiohttp
+package.  For requests module there are a lot of packages that help us with
+testing (eg. httpretty, responses, requests-mock).  When it comes to testing
+asynchronous HTTP requests it is a bit harder (at least at the beginning).
+The purpose of this package is to provide an easy way to test asynchronous
+HTTP requests.")
+    (license license:expat)))
+
+(define-public python-allpairspy
+  (package
+    (name "python-allpairspy")
+    (version "2.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "allpairspy" version))
+       (sha256
+        (base32 "1c987h13dly9919d15w3h747rgn50ilnv7dginhlprxbj564hn4k"))))
+    (build-system python-build-system)
+    (native-inputs
+     (list python-pytest python-pytest-runner))
+    (home-page "https://github.com/thombashi/allpairspy")
+    (synopsis "Pairwise test combinations generator")
+    (description
+     "This is a Python library for test combinations generator.  The generator
+allows one to create a set of tests using @emph{pairwise combinations} method,
+reducing a number of combinations of variables into a lesser set that covers
+most situations.")
+    (license license:expat)))
 
 (define-public python-assay
   ;; No release yet.
@@ -122,55 +184,107 @@
 Python with a fluent API.")
     (license license:bsd-3)))
 
-(define-public python-robotframework-jsonlibrary
+(define-public python-atpublic
   (package
-    (name "python-robotframework-jsonlibrary")
-    (version "0.5")
+    (name "python-atpublic")
+    (version "3.1.1")
     (source
-     (origin
-       (method git-fetch)   ; no tests data in PyPi package
-       (uri (git-reference
-             (url (string-append "https://github.com/robotframework-thailand/"
-                                 "robotframework-jsonlibrary"))
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1zkhcmwlp9gy9a0262ylykr9pljq9mpkaa69340hhfkzygzi30dc"))))
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "atpublic" version))
+        (sha256
+         (base32
+          "060v2b5jfn7p99j09amxlb6w9ynwbq7fix31kl0caz0hs09fx61h"))))
     (build-system pyproject-build-system)
+    (arguments (list #:build-backend "pdm.backend"))
     (native-inputs
-     (list python-pytest
-           python-setuptools
-           python-wheel))
-    (propagated-inputs
-     (list python-jsonpath-ng
-           python-jsonschema
-           python-robotframework))
-    (home-page "https://github.com/robotframework-thailand/robotframework-jsonlibrary")
-    (synopsis "Robot Framework test library for manipulating JSON Object")
+     (list python-pytest python-pdm-backend python-sybil python-pytest-cov))
+    (home-page "https://public.readthedocs.io/")
+    (synopsis "@code{@@public} decorator for populating @code{__all__}")
     (description
-     "@code{robotframework-jsonlibrary} is a Robot Framework test library for
-manipulating JSON Object.  You can manipulate your JSON object using JSONPath")
-    ;; This is free and unencumbered software released into the public domain.
-    (license license:unlicense)))
+     "This Python module adds a @code{@@public} decorator and function which
+populates a module's @code{__all__} and optionally the module globals.  With
+it, the declaration of a name's public export semantics are not separated from
+the implementation of that name.")
+    (license (list license:asl2.0
+                   license:lgpl3))))    ; only for setup_helpers.py
 
-(define-public python-tappy
+(define-public python-avocado-framework
   (package
-    (name "python-tappy")
-    (version "3.0")
+    (name "python-avocado-framework")
+    (version "96.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "tap.py" version))
+       (uri (pypi-uri "avocado-framework" version))
        (sha256
-        (base32
-         "0w4w6pqjkv54j7rv6vdrpfxa72c5516bnlhpcqr3vrb4zpmyxvpm"))))
+        (base32 "0zhz6423p0b5gqx2mvg7dmq8m9gbsay7wqjdwzirlwcg2v3rcz0m"))))
     (build-system python-build-system)
-    (home-page "https://github.com/python-tap/tappy")
-    (synopsis "Tools for Test Anything Protocol")
-    (description "Tappy is a set of tools for working with the Test Anything
-Protocol (TAP) in Python.  TAP is a line based test protocol for recording test
-data in a standard way.")
-    (license license:bsd-3)))
+    (arguments
+     (list
+      ;; The test suite hangs, due to a serious bug in Python/Avocado (see:
+      ;; https://github.com/avocado-framework/avocado/issues/4935).
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda* (#:key native-inputs inputs #:allow-other-keys)
+              ;; These are runtime dependencies (inputs).
+              (substitute* "avocado/plugins/spawners/podman.py"
+                (("default='/usr/bin/podman'")
+                 "default='podman'"))
+              (substitute* "avocado/utils/podman.py"
+                (("\"/usr/bin/env\", \"python3\"")
+                 (format #f "~s" (search-input-file inputs "bin/python"))))
+              (substitute* "avocado/utils/memory.py"
+                (("\"sync\"")
+                 (format #f "~s" (search-input-file inputs "bin/sync")))
+                (("/bin/sh")
+                 (search-input-file inputs "bin/sh")))
+              ;; Batch process the tests modules with less care; if something
+              ;; is wrong, the test suite will fail.  These are tests
+              ;; dependencies (native inputs).
+              (substitute* (find-files "selftests" "\\.py$")
+                (("#!/usr/bin/env")
+                 (string-append "#!" (search-input-file (or native-inputs inputs)
+                                                        "bin/env")))
+                (("/bin/(false|true|sh|sleep|sudo)" _ name)
+                 (search-input-file (or native-inputs inputs)
+                                    (string-append "bin/" name))))))
+          (add-after 'unpack 'remove-broken-entrypoints
+            ;; The avocado-external-runner entry point fails to load, the
+            ;; 'scripts' top level package not being found (see:
+            ;; https://github.com/avocado-framework/avocado/issues/5370).
+            (lambda _
+              (substitute* "setup.py"
+                (("'avocado-external-runner = scripts.external_runner:main'.*")
+                 ""))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "HOME" "/tmp")
+                (setenv "PYTHONPATH" (getcwd))
+                (invoke "./selftests/check.py" "--skip" "static-checks")))))))
+    (native-inputs (list bash-minimal coreutils-minimal perl sudo))
+    (inputs (list bash-minimal coreutils-minimal))
+    (home-page "https://avocado-framework.github.io/")
+    (synopsis "Tools and libraries to help with automated testing")
+    (description "Avocado is a set of tools and libraries to help with
+automated testing, i.e. a test framework.  Native tests are written in Python
+and they follow the unittest pattern, but any executable can serve as a
+test.  The following output formats are supported:
+@table @asis
+@item xUnit
+an XML format that contains test results in a structured form, and are used by
+other test automation projects, such as Jenkins.
+@item JSON
+a widely used data exchange format.  The JSON Avocado plugin outputs job
+information, similarly to the xunit output plugin.
+@item TAP
+Provides the basic TAP (Test Anything Protocol) results.  Unlike most existing
+Avocado machine readable outputs this one is streamlined (per test results).
+@end table")
+    (license license:gpl2)))            ;some files are under GPLv2 only
 
 (define-public python-beartype
   (package
@@ -197,6 +311,238 @@ data in a standard way.")
     (synopsis "Fast runtime type checking for Python")
     (description "Beartype aims to be a very fast runtime type checking tool
 written in pure Python.")
+    (license license:expat)))
+
+(define-public python-codacy-coverage
+  (package
+    (name "python-codacy-coverage")
+    (version "1.3.11")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "codacy-coverage" version))
+        (sha256
+         (base32
+          "1g0c0w56xdkmqb8slacyw5qhzrkp814ng3ddh2lkiij58y9m2imr"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:tests? #f)); no tests
+    (propagated-inputs
+     (list python-check-manifest python-requests))
+    (home-page "https://github.com/codacy/python-codacy-coverage")
+    (synopsis "Codacy coverage reporter for Python")
+    (description "This package analyses Python test suites and reports how much
+of the code is covered by them.  This tool is part of the Codacy suite for
+analysing code quality.")
+    (license license:expat)))
+
+(define-public python-covdefaults
+  (package
+    (name "python-covdefaults")
+    (version "1.1.0")
+    (source
+     (origin
+       ;; The PyPI tarball does not include tests.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/asottile/covdefaults")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "11a24c0wzv01n55fy4kdpnyqna4m9k0mp58kmhiaks34xw4k37hq"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (replace 'check
+           (lambda _
+             (invoke "pytest" "-vv"))))))
+    (native-inputs
+     (list python-coverage python-pytest))
+    (home-page "https://github.com/asottile/covdefaults")
+    (synopsis "Coverage plugin to provide opinionated default settings")
+    (description
+     "Covdefaults is a coverage plugin to provide opinionated default
+ settings.")
+    (license license:expat)))
+
+(define-public python-coveralls
+  (package
+    (name "python-coveralls")
+    (version "4.0.1")
+    (home-page "https://github.com/coveralls-clients/coveralls-python")
+    (source
+     (origin
+       ;; The PyPI release lacks tests, so we pull from git instead.
+       (method git-fetch)
+       (uri (git-reference (url home-page) (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1411h7rwxgp9ag26bmlpy7g7sdh39f56dc1mrd1n74bjsgvwzj6l"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags '(list
+                          ;; XXX: Avoid git dependency.
+                          "--ignore=tests/git_test.py"
+                          ;; XXX: Unable to find coverage package.
+                          "--ignore=tests/api/reporter_test.py"
+                          "--ignore=tests/integration_test.py")))
+    (propagated-inputs
+     (list python-coverage python-docopt python-pyyaml python-requests))
+    (native-inputs
+     (list poetry python-mock python-pytest python-responses))
+    (synopsis "Show coverage stats online via coveralls.io")
+    (description
+     "Coveralls.io is a service for publishing code coverage statistics online.
+This package provides seamless integration with coverage.py (and thus pytest,
+nosetests, etc...) in Python projects.")
+    (license license:expat)))
+
+(define-public python-cucumber-tag-expressions
+  (package
+    (name "python-cucumber-tag-expressions")
+    (version "6.1.1")
+    (source
+     (origin
+       (method git-fetch)               ;no tests in PyPI archive
+       (uri (git-reference
+             (url "https://github.com/cucumber/tag-expressions")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1hanh7hzxmx0f6fp2ykabsg32snmp8y9pd7s5xix15r1gnn7lvp9"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Project's repository contains go, java, javascript, perl, python
+          ;; and ruby implementations.
+          (add-after 'unpack 'chdir-python
+            (lambda _
+              (chdir "python"))))))
+    (native-inputs
+     (list python-pathpy
+           python-pytest
+           python-pytest-html
+           python-pyyaml
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (home-page "https://github.com/cucumber/tag-expressions")
+    (synopsis "Tag-expression parser for cucumber/behave")
+    (description
+     "This package provides a tag-expression parser for Cucumber and
+@command{behave}.")
+    (license license:expat)))
+
+(define-public python-eradicate
+  (package
+    (name "python-eradicate")
+    (version "2.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "eradicate" version))
+       (sha256
+        (base32
+         "1j30g9jfmbfki383qxwrfds8b23yiwywj40lng4lqcf5yab4ahr7"))))
+    (build-system python-build-system)
+    (home-page "https://github.com/myint/eradicate")
+    (synopsis "Remove commented-out code from Python sources")
+    (description "The @command{eradicate} command removes commented-out code
+from Python files.  It does this by detecting block comments that contain
+valid Python syntax that are likely to be commented out code.")
+    (license license:expat)))
+
+(define-public python-expecttest
+  (let ((commit "683b09a352cc426851adc2e3a9f46e0ab25e4dee")
+        (revision "0"))
+    (package
+      (name "python-expecttest")
+      (version (git-version "0.2.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ezyang/expecttest")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1djwxp9x1hczzxbimv1b1bmd083am88v27l82nmlkhvzyg2cmpvv"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  ;; The test runs tests expected to fail, so the output is
+                  ;; confusing
+                  (invoke "python3" "test_expecttest.py")))))))
+      (native-inputs (list python-hypothesis poetry))
+      (home-page "https://github.com/ezyang/expecttest")
+      (synopsis "Python module for expect tests")
+      (description "@code{expecttest} is a Python module for expect tests, where
+the initial expected value of a test can be automatically set by running the
+test itself.")
+      (license license:expat))))
+
+(define-public python-green
+  (package
+    (name "python-green")
+    (version "4.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "green" version))
+       (sha256
+        (base32 "1cd62nbn5dvlpnsyplp6cb24wd230san8dpm6pnl99n2kwzpq1m4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "-vr" "green")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (apply invoke "python" "-m" "green" test-flags)))))))
+    (native-inputs
+     (list python-mypy
+           python-setuptools
+           python-testtools
+           python-wheel))
+    (propagated-inputs
+     (list python-colorama
+           python-coverage
+           python-lxml
+           python-unidecode))
+    (home-page "https://github.com/CleanCut/green")
+    (synopsis "Clean, colorful, fast Python test runner")
+    (description
+     "@code{green} is a Python test runner that describes itself as:
+@table @emph
+@item Clean
+Low redundancy in output.  Result statistics for each test is vertically aligned.
+@item Colorful
+Terminal output makes good use of color when the terminal supports it.
+@item Fast
+Tests run in independent processes (one per processor by default).
+@item Powerful
+Multi-target and auto-discovery support.
+@item Traditional
+It uses the normal @code{unittest} classes and methods.
+@item Descriptive
+Multiple verbosity levels, from just dots to full docstring output.
+@item Convenient
+Bash-completion and ZSH-completion of options and test targets.
+@item Thorough
+Built-in integration with @url{http://nedbatchelder.com/code/coverage/, coverage}.
+@end table")
     (license license:expat)))
 
 (define-public python-pytest-click
@@ -336,77 +682,6 @@ are useful when writing automated tests in Python.")
     (home-page "https://testfixtures.readthedocs.io/en/latest/")
     (license license:expat)))
 
-(define-public python-cucumber-tag-expressions
-  (package
-    (name "python-cucumber-tag-expressions")
-    (version "6.1.1")
-    (source
-     (origin
-       (method git-fetch)               ;no tests in PyPI archive
-       (uri (git-reference
-             (url "https://github.com/cucumber/tag-expressions")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1hanh7hzxmx0f6fp2ykabsg32snmp8y9pd7s5xix15r1gnn7lvp9"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; Project's repository contains go, java, javascript, perl, python
-          ;; and ruby implementations.
-          (add-after 'unpack 'chdir-python
-            (lambda _
-              (chdir "python"))))))
-    (native-inputs
-     (list python-pathpy
-           python-pytest
-           python-pytest-html
-           python-pyyaml
-           python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    (home-page "https://github.com/cucumber/tag-expressions")
-    (synopsis "Tag-expression parser for cucumber/behave")
-    (description
-     "This package provides a tag-expression parser for Cucumber and
-@command{behave}.")
-    (license license:expat)))
-
-(define-public python-coveralls
-  (package
-    (name "python-coveralls")
-    (version "4.0.1")
-    (home-page "https://github.com/coveralls-clients/coveralls-python")
-    (source
-     (origin
-       ;; The PyPI release lacks tests, so we pull from git instead.
-       (method git-fetch)
-       (uri (git-reference (url home-page) (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1411h7rwxgp9ag26bmlpy7g7sdh39f56dc1mrd1n74bjsgvwzj6l"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list #:test-flags '(list
-                          ;; XXX: Avoid git dependency.
-                          "--ignore=tests/git_test.py"
-                          ;; XXX: Unable to find coverage package.
-                          "--ignore=tests/api/reporter_test.py"
-                          "--ignore=tests/integration_test.py")))
-    (propagated-inputs
-     (list python-coverage python-docopt python-pyyaml python-requests))
-    (native-inputs
-     (list poetry python-mock python-pytest python-responses))
-    (synopsis "Show coverage stats online via coveralls.io")
-    (description
-     "Coveralls.io is a service for publishing code coverage statistics online.
-This package provides seamless integration with coverage.py (and thus pytest,
-nosetests, etc...) in Python projects.")
-    (license license:expat)))
-
 (define-public python-icontract
   (package
     (name "python-icontract")
@@ -526,68 +801,6 @@ result documents that can be read by tools such as Jenkins or Bamboo.")
      "Pyinstrument is a Python profiler to help you optimize your code.")
     (license license:bsd-3)))
 
-(define-public python-vcrpy
-  (package
-    (name "python-vcrpy")
-    (version "6.0.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "vcrpy" version))
-       (sha256
-        (base32 "02fwmmc33qqybzbj1lvdz458g1fffm5cgnqihj4larw4268kvqc8"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      #~(list "--ignore=tests/integration"
-              "-k" (string-join
-                    ;; These tests require network access.
-                    (list "not testing_connect"
-                          "test_get_vcr_with_matcher"
-                          "test_testcase_playback")
-                    " and not "))))
-    (native-inputs
-     (list nss-certs-for-test
-           python-flask
-           python-httplib2
-           python-ipaddress
-           python-mock
-           python-pytest
-           python-pytest-cov
-           python-pytest-httpbin
-           python-setuptools
-           python-urllib3
-           python-wheel))
-    (propagated-inputs
-     (list python-pyyaml
-           python-six
-           python-wrapt
-           python-yarl))
-    (home-page "https://github.com/kevin1024/vcrpy")
-    (synopsis "Automatically mock your HTTP interactions")
-    (description
-     "VCR.py simplifies and speeds up tests that make HTTP requests.  The first
-time you run code that is inside a VCR.py context manager or decorated function,
-VCR.py records all HTTP interactions that take place through the libraries it
-supports and serializes and writes them to a flat file (in yaml format by
-default).  This flat file is called a cassette.  When the relevant piece of code
-is executed again, VCR.py will read the serialized requests and responses from
-the aforementioned cassette file, and intercept any HTTP requests that it
-recognizes from the original test run and return the responses that corresponded
-to those requests.  This means that the requests will not actually result in
-HTTP traffic, which confers several benefits including:
-@enumerate
-@item The ability to work offline
-@item Completely deterministic tests
-@item Increased test execution speed
-@end enumerate
-If the server you are testing against ever changes its API, all you need to do
-is delete your existing cassette files, and run your tests again.  VCR.py will
-detect the absence of a cassette file and once again record all HTTP
-interactions, which will update them to correspond to the new API.")
-    (license license:expat)))
-
 (define-public python-pytest-socket
   (package
     (name "python-pytest-socket")
@@ -641,34 +854,25 @@ interactions, which will update them to correspond to the new API.")
 through Python's socket interface")
     (license license:expat)))
 
-(define-public python-pytest-ordering
+(define-public python-pytest-order
   (package
-    (name "python-pytest-ordering")
-    (version "0.6")
+    (name "python-pytest-order")
+    (version "1.3.0")
     (source
      (origin
-       ;; No tests in the PyPI tarball.
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/ftobia/pytest-ordering")
-             (commit version)))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (pypi-uri "pytest_order" version))
        (sha256
-        (base32 "14msj5gyqza0gk3x7h1ivmjrwza82v84cj7jx3ks0fw9lpin7pjq"))))
-    (build-system python-build-system)
+        (base32 "1pixy83l6hcg16gjc04vp4misk2w989alkd9msnw1s9y7pn8yq2i"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (add-installed-pythonpath inputs outputs)
-             (invoke "pytest" "-vv" "-k"
-                     ;; This test fails because of a type mismatch of an
-                     ;; argument passed to @code{pytest.main}.
-                     "not test_run_marker_registered"))))))
+     (list
+      ;; XXX: 4 failed, 18 errors
+      #:tests? #f))
     (native-inputs
-     (list python-pytest))
-    (home-page "https://github.com/ftobia/pytest-ordering")
+     (list python-pytest python-pytest-xdist
+           python-setuptools python-wheel))
+    (home-page "https://github.com/pytest-dev/pytest-order")
     (synopsis "Pytest plugin to run your tests in a specific order")
     (description
      "This plugin defines Pytest markers to ensure that some tests, or groups
@@ -809,7 +1013,7 @@ running the tests.")
         (base32 "1wbgfsn4pcdm0bw61pwaaq707mlfnixlff3x8m5mpsf6jhrzql30"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/omarkohl/pytest-datafiles")
     (synopsis "Pytest plugin to create a tmpdir")
     (description
@@ -862,33 +1066,6 @@ files and/or directories.")
      "This package contains a plugin for the Pytest framework that provides
 advanced doctest support and enables the testing of reStructuredText files.")
     (license license:bsd-3)))
-
-(define-public python-pytest-exploratory
-  (package
-    (name "python-pytest-exploratory")
-    (version "0.5")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest_exploratory" version))
-       (sha256
-        (base32 "159rcqv6wrdqdlag1gz39n6fk58232hbxshan043ljgpp1qfs6xk"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "tests")))))))
-    (propagated-inputs
-     (list python-ipython python-py python-pytest))
-    (native-inputs (list python-pytest))
-    (home-page "https://github.com/nokia/pytest-exploratory")
-    (synopsis "Interactive console for Pytest")
-    (description "This Pytest plugin provides an IPython extension that allows
-for interactively selecting and running Pytest tests.")
-    (license license:expat)))
 
 (define-public python-pytest-filter-subpackage
   (package
@@ -1189,36 +1366,6 @@ in Pytest.")
 @command{pydocstyle}.")
     (license license:expat)))
 
-(define-public python-covdefaults
-  (package
-    (name "python-covdefaults")
-    (version "1.1.0")
-    (source
-     (origin
-       ;; The PyPI tarball does not include tests.
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/asottile/covdefaults")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "11a24c0wzv01n55fy4kdpnyqna4m9k0mp58kmhiaks34xw4k37hq"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "pytest" "-vv"))))))
-    (native-inputs
-     (list python-coverage python-pytest))
-    (home-page "https://github.com/asottile/covdefaults")
-    (synopsis "Coverage plugin to provide opinionated default settings")
-    (description
-     "Covdefaults is a coverage plugin to provide opinionated default
- settings.")
-    (license license:expat)))
-
 (define-public python-pytest-subtests
   (package
     (name "python-pytest-subtests")
@@ -1270,6 +1417,8 @@ support and @code{subtests} fixture.")
              (lambda* (#:key inputs outputs #:allow-other-keys)
                (add-installed-pythonpath inputs outputs)
                (invoke "pytest" "tests/"))))))
+      (native-inputs
+       (list python-urllib3))
       (propagated-inputs
        (list python-pytest python-vcrpy))
       (home-page "https://github.com/ktosiek/pytest-vcr")
@@ -1601,19 +1750,23 @@ framework.")
 (define-public python-pytest-pycodestyle
   (package
     (name "python-pytest-pycodestyle")
-    (version "2.2.0")
+    (version "2.4.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "pytest-pycodestyle" version))
+       (uri (pypi-uri "pytest_pycodestyle" version))
        (sha256
         (base32
-         "1clyjypn93hwvz17f4i6n2688835d4y8qsq2aw17d6fkbqiy8mg7"))))
-    (build-system python-build-system)
+         "1jdm5arsh150fvph0960kycb1cwj728mksfwxb65bbbl4zaypkr7"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: pytest failed to import 'py.io', while python can.
+      #:tests? #f))
     (propagated-inputs
-     (list python-pycodestyle))
+     (list python-py python-pycodestyle python-pytest))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest-isort python-setuptools python-wheel))
     (home-page "https://github.com/henry0312/pytest-pycodestyle")
     (synopsis "Pytest plugin to run pycodestyle")
     (description "This package provides a plugin to run @code{pycodestyle}
@@ -1700,43 +1853,6 @@ rounds that are calibrated to the chosen timer.")
     (description
      "This plugin provides a set of fixtures and utility functions to start
 service processes for your tests with pytest.")
-    (license license:expat)))
-
-(define-public python-pytest-toolbox
-  (package
-    (name "python-pytest-toolbox")
-    (version "0.4")
-    (source
-     (origin
-       ;; No tests in the PyPI tarball.
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/samuelcolvin/pytest-toolbox")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1wqkr3g5gmqdxmhzfsxbwy8pm3cadaj6a8cxq58w9bacly4hqbh0"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'check 'pre-check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (substitute* "setup.cfg"
-                  ((".*timeout.*") ""))))))))
-    (native-inputs
-     (list python-pydantic
-           python-pytest
-           python-pytest-isort
-           python-setuptools
-           python-wheel))
-    (home-page "https://github.com/samuelcolvin/pytest-toolbox")
-    (synopsis "Numerous useful plugins for Pytest")
-    (description
-     "Pytest Toolbox contains many useful plugins for Pytest.  Among them are
-new fixtures, new methods and new comparison objects.")
     (license license:expat)))
 
 (define-public python-pytest-aiohttp
@@ -2063,19 +2179,22 @@ libraries.")
        (uri (pypi-uri "pytest-qt" version))
        (sha256
         (base32 "0i38qp2rqb44grbk9rn7zr5ffjvdlcl6k380759ji920m51632bn"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:test-target "pytest"
-       #:phases
-       (modify-phases %standard-phases
+     (list
+      ;;#:test-target "pytest"
+      #:phases
+      '(modify-phases %standard-phases
          (add-before 'check 'set-qpa
-           (lambda _
-             (setenv "QT_QPA_PLATFORM" "offscreen")
-             #t)))))
+           (lambda _ (setenv "QT_QPA_PLATFORM" "offscreen"))))))
     (propagated-inputs
-     (list python-pyqt))
+     (list python-pluggy python-pyqt python-pytest))
     (native-inputs
-     (list python-pytest python-pytest-runner python-setuptools-scm))
+     (list python-pre-commit
+           python-setuptools
+           python-setuptools-scm
+           python-tox
+           python-wheel))
     (home-page "https://github.com/pytest-dev/pytest-qt")
     (synopsis "Pytest support for PyQt and PySide applications")
     (description
@@ -2085,29 +2204,6 @@ tests for PyQt5 and PySide2 applications.
 The main usage is to use the @code{qtbot} fixture, responsible for handling
 @code{qApp} creation as needed and provides methods to simulate user
 interaction, like key presses and mouse clicks.")
-    (license license:expat)))
-
-(define-public python-codacy-coverage
-  (package
-    (name "python-codacy-coverage")
-    (version "1.3.11")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "codacy-coverage" version))
-        (sha256
-         (base32
-          "1g0c0w56xdkmqb8slacyw5qhzrkp814ng3ddh2lkiij58y9m2imr"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f)); no tests
-    (propagated-inputs
-     (list python-check-manifest python-requests))
-    (home-page "https://github.com/codacy/python-codacy-coverage")
-    (synopsis "Codacy coverage reporter for Python")
-    (description "This package analyses Python test suites and reports how much
-of the code is covered by them.  This tool is part of the Codacy suite for
-analysing code quality.")
     (license license:expat)))
 
 (define-public python-httmock
@@ -2132,30 +2228,66 @@ analysing code quality.")
 Python software under test, when they make an HTTP query.")
     (license license:asl2.0)))
 
-(define-public python-atpublic
+(define-public python-inline-snapshot
   (package
-    (name "python-atpublic")
-    (version "3.1.1")
+    (name "python-inline-snapshot")
+    (version "0.18.2")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "atpublic" version))
-        (sha256
-         (base32
-          "060v2b5jfn7p99j09amxlb6w9ynwbq7fix31kl0caz0hs09fx61h"))))
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "inline_snapshot" version))
+       (sha256
+        (base32 "09pqgz4phal2pjkv03wg3gvj7jr89rrb93rfw4hd2x9v8px4mqqv"))))
     (build-system pyproject-build-system)
-    (arguments (list #:build-backend "pdm.backend"))
+    (arguments
+     (list
+      #:test-flags
+      ;; Missing "freezer" fixture
+      '(list "--ignore=tests/test_external.py"
+             "--ignore=tests/test_pytest_plugin.py"
+             "-k"
+             (string-append
+              "not test_trailing_comma"
+              ;; Cannot use inline-snapshop when xdist is available.
+              " and not test_xdist"
+              " and not test_xdist_disabled"
+              " and not test_xdist_and_disable"
+              " and not test_typing"))))
+    (propagated-inputs (list python-asttokens
+                             python-black
+                             python-click
+                             python-executing
+                             python-mkdocs
+                             python-rich
+                             python-tomli
+                             python-typing-extensions))
     (native-inputs
-     (list python-pytest python-pdm-backend python-sybil python-pytest-cov))
-    (home-page "https://public.readthedocs.io/")
-    (synopsis "@code{@@public} decorator for populating @code{__all__}")
+     (list python-dirty-equals
+           python-freezegun
+           python-hatchling
+           python-pydantic
+           python-pytest
+           python-pytest-mock
+           python-pytest-subtests))
+    (home-page "https://pypi.org/project/inline-snapshot/")
+    (synopsis "Golden master/snapshot/approval testing library")
     (description
-     "This Python module adds a @code{@@public} decorator and function which
-populates a module's @code{__all__} and optionally the module globals.  With
-it, the declaration of a name's public export semantics are not separated from
-the implementation of that name.")
-    (license (list license:asl2.0
-                   license:lgpl3))))    ; only for setup_helpers.py
+     "This package can be used for different things:
+
+@enumerate
+@item golden master/approval/snapshot testing.  The idea is that you have a
+  function with a currently unknown result and you want to write a tests, which
+  ensures that the result does not change during refactoring.
+@item Compare things which are complex like lists with lot of numbers or
+  complex data structures.
+@item Things which might change during the development like error messages.
+@end enumerate
+
+@code{inline-snapshot} automates the process of recording, storing and
+updating the value you want to compare with.  The value is converted with
+@code{repr()} and stored in the source file as argument of the
+@code{snapshot()} function.")
+    (license license:expat)))
 
 (define-public python-memory-profiler
   (package
@@ -2441,60 +2573,6 @@ among others.")
 annotations.")
     (license license:asl2.0)))
 
-(define-public python-eradicate
-  (package
-    (name "python-eradicate")
-    (version "2.0.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "eradicate" version))
-       (sha256
-        (base32
-         "1j30g9jfmbfki383qxwrfds8b23yiwywj40lng4lqcf5yab4ahr7"))))
-    (build-system python-build-system)
-    (home-page "https://github.com/myint/eradicate")
-    (synopsis "Remove commented-out code from Python sources")
-    (description "The @command{eradicate} command removes commented-out code
-from Python files.  It does this by detecting block comments that contain
-valid Python syntax that are likely to be commented out code.")
-    (license license:expat)))
-
-(define-public python-expecttest
-  (let ((commit "683b09a352cc426851adc2e3a9f46e0ab25e4dee")
-        (revision "0"))
-    (package
-      (name "python-expecttest")
-      (version (git-version "0.2.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/ezyang/expecttest")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "1djwxp9x1hczzxbimv1b1bmd083am88v27l82nmlkhvzyg2cmpvv"))))
-      (build-system pyproject-build-system)
-      (arguments
-       (list
-        #:phases
-        #~(modify-phases %standard-phases
-            (replace 'check
-              (lambda* (#:key tests? #:allow-other-keys)
-                (when tests?
-                  ;; The test runs tests expected to fail, so the output is
-                  ;; confusing
-                  (invoke "python3" "test_expecttest.py")))))))
-      (native-inputs (list python-hypothesis poetry))
-      (home-page "https://github.com/ezyang/expecttest")
-      (synopsis "Python module for expect tests")
-      (description "@code{expecttest} is a Python module for expect tests, where
-the initial expected value of a test can be automatically set by running the
-test itself.")
-      (license license:expat))))
-
 (define-public python-robber
   (package
     (name "python-robber")
@@ -2518,6 +2596,37 @@ test itself.")
     (description "Robber is a Python assertion library for test-driven and
 behavior-driven development (TDD and BDD).")
     (license license:expat)))
+
+(define-public python-robotframework-jsonlibrary
+  (package
+    (name "python-robotframework-jsonlibrary")
+    (version "0.5")
+    (source
+     (origin
+       (method git-fetch)   ; no tests data in PyPi package
+       (uri (git-reference
+             (url (string-append "https://github.com/robotframework-thailand/"
+                                 "robotframework-jsonlibrary"))
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zkhcmwlp9gy9a0262ylykr9pljq9mpkaa69340hhfkzygzi30dc"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-jsonpath-ng
+           python-jsonschema
+           python-robotframework))
+    (home-page "https://github.com/robotframework-thailand/robotframework-jsonlibrary")
+    (synopsis "Robot Framework test library for manipulating JSON Object")
+    (description
+     "@code{robotframework-jsonlibrary} is a Robot Framework test library for
+manipulating JSON Object.  You can manipulate your JSON object using JSONPath")
+    ;; This is free and unencumbered software released into the public domain.
+    (license license:unlicense)))
 
 (define-public python-slotscheck
   (package
@@ -2587,7 +2696,7 @@ help in debugging failures and optimizing the scheduler to improve speed.")
 (define-public python-pytest-subprocess
   (package
     (name "python-pytest-subprocess")
-    (version "1.5.0")
+    (version "1.5.2")
     (source
      (origin
        (method git-fetch)               ;no tests in PyPI archive
@@ -2597,7 +2706,7 @@ help in debugging failures and optimizing the scheduler to improve speed.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "103nxv37sjvxlwmw87hxsrphkxkryv4dgb65kjjfr4722r37vmxv"))))
+         "1mncfyn0vkbf7d03zc8wmv7nl354ck5i9gfblp9220ihc52whhy0"))))
     (build-system pyproject-build-system)
     (native-inputs (list python-anyio
                          python-coverage
@@ -2606,7 +2715,8 @@ help in debugging failures and optimizing the scheduler to improve speed.")
                          python-pygments
                          python-pytest
                          python-pytest-asyncio
-                         python-pytest-rerunfailures))
+                         python-pytest-rerunfailures
+                         python-wheel))
     (home-page "https://github.com/aklajnert/pytest-subprocess")
     (synopsis "Fake subprocess for Pytest")
     (description
@@ -2647,148 +2757,10 @@ help in debugging failures and optimizing the scheduler to improve speed.")
 you to test your code asynchronously.")
     (license license:expat)))
 
-(define-public python-allpairspy
-  (package
-    (name "python-allpairspy")
-    (version "2.5.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "allpairspy" version))
-       (sha256
-        (base32 "1c987h13dly9919d15w3h747rgn50ilnv7dginhlprxbj564hn4k"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-pytest python-pytest-runner))
-    (home-page "https://github.com/thombashi/allpairspy")
-    (synopsis "Pairwise test combinations generator")
-    (description
-     "This is a Python library for test combinations generator.  The generator
-allows one to create a set of tests using @emph{pairwise combinations} method,
-reducing a number of combinations of variables into a lesser set that covers
-most situations.")
-    (license license:expat)))
-
-(define-public python-aioresponses
-  (package
-    (name "python-aioresponses")
-    (version "0.7.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "aioresponses" version))
-       (sha256
-        (base32 "16p8mdyfirddrsay62ji7rwcrqmmzxzf2isdbfm9cj5p338rbr42"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke
-                "pytest" "-vv" "tests" "-k"
-                (string-append
-                 ;; These tests require network access.
-                 "not test_address_as_instance_of_url_combined_with_pass_through "
-                 "and not test_pass_through_with_origin_params"))))))))
-    (native-inputs
-     (list python-pbr python-ddt python-pytest))
-    (propagated-inputs
-     (list python-aiohttp python-setuptools))
-    (home-page "https://github.com/pnuckowski/aioresponses")
-    (synopsis "Mock out requests made by ClientSession from aiohttp package")
-    (description
-     "Aioresponses is a helper to mock/fake web requests in python aiohttp
-package.  For requests module there are a lot of packages that help us with
-testing (eg. httpretty, responses, requests-mock).  When it comes to testing
-asynchronous HTTP requests it is a bit harder (at least at the beginning).
-The purpose of this package is to provide an easy way to test asynchronous
-HTTP requests.")
-    (license license:expat)))
-
-(define-public python-avocado-framework
-  (package
-    (name "python-avocado-framework")
-    (version "96.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "avocado-framework" version))
-       (sha256
-        (base32 "0zhz6423p0b5gqx2mvg7dmq8m9gbsay7wqjdwzirlwcg2v3rcz0m"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      ;; The test suite hangs, due to a serious bug in Python/Avocado (see:
-      ;; https://github.com/avocado-framework/avocado/issues/4935).
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-paths
-            (lambda* (#:key native-inputs inputs #:allow-other-keys)
-              ;; These are runtime dependencies (inputs).
-              (substitute* "avocado/plugins/spawners/podman.py"
-                (("default='/usr/bin/podman'")
-                 "default='podman'"))
-              (substitute* "avocado/utils/podman.py"
-                (("\"/usr/bin/env\", \"python3\"")
-                 (format #f "~s" (search-input-file inputs "bin/python"))))
-              (substitute* "avocado/utils/memory.py"
-                (("\"sync\"")
-                 (format #f "~s" (search-input-file inputs "bin/sync")))
-                (("/bin/sh")
-                 (search-input-file inputs "bin/sh")))
-              ;; Batch process the tests modules with less care; if something
-              ;; is wrong, the test suite will fail.  These are tests
-              ;; dependencies (native inputs).
-              (substitute* (find-files "selftests" "\\.py$")
-                (("#!/usr/bin/env")
-                 (string-append "#!" (search-input-file (or native-inputs inputs)
-                                                        "bin/env")))
-                (("/bin/(false|true|sh|sleep|sudo)" _ name)
-                 (search-input-file (or native-inputs inputs)
-                                    (string-append "bin/" name))))))
-          (add-after 'unpack 'remove-broken-entrypoints
-            ;; The avocado-external-runner entry point fails to load, the
-            ;; 'scripts' top level package not being found (see:
-            ;; https://github.com/avocado-framework/avocado/issues/5370).
-            (lambda _
-              (substitute* "setup.py"
-                (("'avocado-external-runner = scripts.external_runner:main'.*")
-                 ""))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (setenv "HOME" "/tmp")
-                (setenv "PYTHONPATH" (getcwd))
-                (invoke "./selftests/check.py" "--skip" "static-checks")))))))
-    (native-inputs (list bash-minimal coreutils-minimal perl sudo))
-    (inputs (list bash-minimal coreutils-minimal))
-    (home-page "https://avocado-framework.github.io/")
-    (synopsis "Tools and libraries to help with automated testing")
-    (description "Avocado is a set of tools and libraries to help with
-automated testing, i.e. a test framework.  Native tests are written in Python
-and they follow the unittest pattern, but any executable can serve as a
-test.  The following output formats are supported:
-@table @asis
-@item xUnit
-an XML format that contains test results in a structured form, and are used by
-other test automation projects, such as Jenkins.
-@item JSON
-a widely used data exchange format.  The JSON Avocado plugin outputs job
-information, similarly to the xunit output plugin.
-@item TAP
-Provides the basic TAP (Test Anything Protocol) results.  Unlike most existing
-Avocado machine readable outputs this one is streamlined (per test results).
-@end table")
-    (license license:gpl2)))            ;some files are under GPLv2 only
-
 (define-public python-pandas-vet
   (package
     (name "python-pandas-vet")
-    ;; Newer versions require flake8>=6.0.0.
-    (version "0.2.3")
+    (version "2023.8.2")
     (source
      (origin
        ;; No tests in the PyPI tarball.
@@ -2798,10 +2770,29 @@ Avocado machine readable outputs this one is streamlined (per test results).
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1b3pqcargv68p2lpv72q49siq6mxfh3znxhz9vd91rp6fd6lf2cz"))))
+        (base32 "0vkc9sa8x6vfmnd24pxp3gjlmbwx926h4y5alkdbbpb9x5h5ml3j"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-version
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("^source = \"regex_commit\"") "")
+                (("^tag_sign.*") "")
+                (("\\[tool.hatch.version\\]") "")
+                (("dynamic = \\[\"version\"\\]")
+                 (string-append "version = \"" #$version "\"")))
+              (with-output-to-file "src/pandas_vet/__about__.py"
+                (let* ((version #$(package-version this-package) )
+                       (version-tuple (string-join (string-split version #\.) ", ")))
+                  (lambda ()
+                    (format #t
+                            "__version__ = version = '~a'
+__version_tuple__ = version_tuple = (~a)~%" version version-tuple)))))))))
     (propagated-inputs (list python-attrs python-flake8))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-hatchling python-pytest python-pytest-cov))
     (home-page "https://github.com/deppen8/pandas-vet")
     (synopsis "Opionated @code{flake8} plugin for @code{pandas} code")
     (description
@@ -2857,33 +2848,6 @@ eliminate flaky failures.")
        (sha256
         (base32 "16cin0chv59w4rvnd6r0fisp0s8avmp07rwn9da6yixw43jdncp1"))))))
 
-(define-public python-xunitparser
-  (package
-    (name "python-xunitparser")
-    (version "1.3.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "xunitparser" version))
-       (sha256
-        (base32 "00lapxi770mg7jkw16zy3a91hbdfz4a9h43ryczdsgd3z4cl6vyf"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; See https://github.com/laurentb/xunitparser/pull/11
-         (add-after 'unpack 'fix-test-suite
-           (lambda _
-             (substitute* "xunitparser.py"
-               (("(^ +)self.stderr = None" m indent)
-                (string-append m "\n" indent "self._cleanup = False\n"))))))))
-    (home-page "http://git.p.engu.in/laurentb/xunitparser/")
-    (synopsis "Read JUnit/XUnit XML files and map them to Python objects")
-    (description "xunitparser reads a JUnit/XUnit XML file and maps it to
-Python objects.  It tries to use the objects available in the standard
-@code{unittest} module.")
-    (license license:expat)))
-
 (define-public python-test-utils
   (package
     (name "python-test-utils")
@@ -2905,7 +2869,7 @@ which make writing and running functional and integration tests easier.")
 (define-public python-nox
   (package
     (name "python-nox")
-    (version "2022.11.21")
+    (version "2024.10.09")
     (source
      (origin
        ;; No tests in the PyPI tarball.
@@ -2915,25 +2879,8 @@ which make writing and running functional and integration tests easier.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1xfd63h75wiiyri4f7qyvy50f2ny0v4r4wx2h4px9ddbkh2k5g9p"))))
+        (base32 "0gvv6hcwmmmg1sgwar42061ahx5p773d5fzx3c7sq81wh3gp7lqr"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               ;; NOTE: This manipulation looks not clear as upstream package
-               ;; contains "nox/tox_to_nox.jinja2" file which is not copied
-               ;; during install phase and causes check and sanity-check
-               ;; phases fail due to missing file. Try to find more simple
-               ;; solution.
-               (add-after 'unpack 'rename-tox-to-nox-jinja2
-                 (lambda _
-                   (rename-file "nox/tox_to_nox.jinja2" "nox/tox_to_nox.jinja2.py")))
-               (add-after 'install 'rename-tox-to-nox-jinja2-back
-                 (lambda _
-                   (let* ((src-file (car (find-files (string-append #$output "/lib")
-                                                     "tox_to_nox\\.jinja2\\.py$")))
-                          (dst-file (string-drop-right src-file 3)))
-                     (rename-file src-file dst-file)))))))
     (propagated-inputs
      (list python-argcomplete
            python-colorlog
@@ -2941,11 +2888,10 @@ which make writing and running functional and integration tests easier.")
            python-py
            python-virtualenv))
     (native-inputs
-     (list python-jinja2
+     (list python-hatchling
+           python-jinja2
            python-pytest
-           python-tox
-           python-setuptools
-           python-wheel))
+           python-tox))
     (home-page "https://nox.thea.codes/")
     (synopsis "Flexible test automation")
     (description
@@ -2954,19 +2900,53 @@ Python environments, similar to @code{tox}.  Unlike tox, Nox uses a standard
 Python file for configuration.")
     (license license:asl2.0)))
 
+(define-public python-time-machine
+  (package
+    (name "python-time-machine")
+    (version "2.16.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "time_machine" version))
+       (sha256
+        (base32 "1qn7cj9lx3m7pwa8ak1106f9c54yvpa996x84gfqmyfjfg1ar6aa"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-dateutil))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/adamchainz/time-machine")
+    (synopsis "Travel through time in your tests.")
+    (description "This package lets you set a different time for your tests.")
+    (license license:expat)))
+
 (define-public python-tox
   (package
     (name "python-tox")
-    (version "4.8.0")
+    (version "4.23.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "tox" version))
        (sha256
         (base32
-         "0yq3d2wif88d2iih8c2dwjx7rz8axkc7b6gskl5z3k0jbd1wznia"))))
+         "0b2a5wrjwryjzg58v1mwzx3wn7pr2wwk7z2cwy16xpsmwl05w1w6"))))
     (build-system pyproject-build-system)
-    (arguments (list #:tests? #f))      ;require python-devpi-process
+    (arguments
+     (list
+      #:test-flags
+      '(list "-k"
+             (string-join
+              (map (lambda (test)
+                     (string-append "not test_" test))
+                   '( ;; These freeze the test suite
+                     "parallel"
+                     "parallel_live"
+                     ;; Needs internet access
+                     "build_wheel_external"
+                     "run_installpkg_targz"
+                     "python_generate_hash_seed"
+                     ;; XXX Tries to call python-wrapper-3.10.7/bin/tox
+                     "call_as_exe"))
+              " and "))))
     (propagated-inputs
      (list python-cachetools
            python-chardet
@@ -2977,18 +2957,20 @@ Python file for configuration.")
            python-pluggy
            python-pyproject-api
            python-tomli
+           python-typing-extensions
            python-virtualenv))
     (native-inputs
-     (list python-distlib
-           ;;python-devpi-process  ;FIXME: package me
+     (list python-devpi-process
            python-flaky
-           python-hatchling
            python-hatch-vcs
+           python-hatchling
            python-psutil
            python-pytest
            python-pytest-mock
            python-pytest-xdist
-           python-re-assert))
+           python-re-assert
+           python-time-machine
+           python-wheel))
     (home-page "https://tox.readthedocs.io")
     (synopsis "Virtualenv-based automation of test activities")
     (description "Tox is a generic virtualenv management and test command line
@@ -3001,22 +2983,25 @@ servers.")
 (define-public python-sybil
   (package
     (name "python-sybil")
-    (version "3.0.1")
+    (version "9.0.0")
     (source
       (origin
-        (method url-fetch)
-        (uri (pypi-uri "sybil" version))
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://github.com/simplistix/sybil")
+              (commit version)))
         (sha256
-          (base32 "03ak1w93linfqx6c9lwgq5niyy3j9yblv4ip40hmlzmg0hidq0kg"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-        (modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest")))))))
-    (native-inputs (list python-pytest python-pytest-cov))
+         (base32 "0r491k91fi2nb0kdd6di8cb2kxcvsk1xzw3sgwsxhhg4qynsp3bi"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-mypy
+                         python-myst-parser
+                         python-pytest
+                         python-pytest-cov
+                         python-pyyaml
+                         python-seedir
+                         python-setuptools
+                         python-testfixtures
+                         python-wheel))
     (home-page "https://github.com/simplistix/sybil")
     (synopsis "Automated testing for examples in code and documentation")
     (description
@@ -3025,6 +3010,25 @@ documentation by parsing them from their source and evaluating the
 parsed examples as part of your normal test run.  Integration is
 provided for the main Python test runners.")
     (license license:expat)))
+
+(define-public python-tappy
+  (package
+    (name "python-tappy")
+    (version "3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "tap.py" version))
+       (sha256
+        (base32
+         "0w4w6pqjkv54j7rv6vdrpfxa72c5516bnlhpcqr3vrb4zpmyxvpm"))))
+    (build-system python-build-system)
+    (home-page "https://github.com/python-tap/tappy")
+    (synopsis "Tools for Test Anything Protocol")
+    (description "Tappy is a set of tools for working with the Test Anything
+Protocol (TAP) in Python.  TAP is a line based test protocol for recording test
+data in a standard way.")
+    (license license:bsd-3)))
 
 (define-public python-pytest-parawtf
   (package
@@ -3057,7 +3061,7 @@ parametrize.  This plugin allows you to use all four.")
 (define-public python-pytest-httpx
   (package
     (name "python-pytest-httpx")
-    (version "0.34.0")
+    (version "0.35.0")
     (source
      (origin
        ;; pypi package doesn't include the tests
@@ -3067,8 +3071,12 @@ parametrize.  This plugin allows you to use all four.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0dk1z9zy483nffbmn883mcjrlwkn79c3sqlxf6qnwcgrvdw1w9zz"))))
+        (base32 "1w8qwhcaq1l63kfj4ncsi3355ln37ws6066mxr0b9646g68wp69v"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: 261 failed, 170 errors
+      #:tests? #f))
     (native-inputs
      (list python-pytest
            python-pytest-asyncio
@@ -3110,25 +3118,66 @@ attachments).
 @end itemize")
     (license license:expat)))
 
-(define-public python-xvfbwrapper
+(define-public python-vcrpy
   (package
-    (name "python-xvfbwrapper")
-    (version "0.2.9")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "xvfbwrapper" version))
-              (sha256
-               (base32
-                "097wxhvp01ikqpg1z3v8rqhss6f1vwr399zpz9a05d2135bsxx5w"))))
-    (build-system python-build-system)
-    (propagated-inputs (list xorg-server-for-tests))
-    (home-page "https://github.com/cgoldberg/xvfbwrapper")
-    (synopsis "Python module for controlling virtual displays with Xvfb")
+    (name "python-vcrpy")
+    (version "6.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "vcrpy" version))
+       (sha256
+        (base32 "02fwmmc33qqybzbj1lvdz458g1fffm5cgnqihj4larw4268kvqc8"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--ignore=tests/integration"
+              "-k" (string-join
+                    ;; These tests require network access.
+                    (list "not testing_connect"
+                          "test_get_vcr_with_matcher"
+                          "test_testcase_playback")
+                    " and not "))))
+    (native-inputs
+     (list nss-certs-for-test
+           python-flask
+           python-httplib2
+           python-ipaddress
+           python-mock
+           python-pytest
+           python-pytest-cov
+           python-pytest-httpbin
+           python-setuptools
+           python-urllib3
+           python-wheel))
+    (propagated-inputs
+     (list python-pyyaml
+           python-six
+           python-wrapt
+           python-yarl))
+    (home-page "https://github.com/kevin1024/vcrpy")
+    (synopsis "Automatically mock your HTTP interactions")
     (description
-     "Xvfb (X virtual framebuffer) is a display server implementing
-the X11 display server protocol.  It runs in memory and does not require a
-physical display.  Only a network layer is necessary.  Xvfb is useful for
-running acceptance tests on headless servers.")
+     "VCR.py simplifies and speeds up tests that make HTTP requests.  The first
+time you run code that is inside a VCR.py context manager or decorated function,
+VCR.py records all HTTP interactions that take place through the libraries it
+supports and serializes and writes them to a flat file (in yaml format by
+default).  This flat file is called a cassette.  When the relevant piece of code
+is executed again, VCR.py will read the serialized requests and responses from
+the aforementioned cassette file, and intercept any HTTP requests that it
+recognizes from the original test run and return the responses that corresponded
+to those requests.  This means that the requests will not actually result in
+HTTP traffic, which confers several benefits including:
+@enumerate
+@item The ability to work offline
+@item Completely deterministic tests
+@item Increased test execution speed
+@end enumerate
+If the server you are testing against ever changes its API, all you need to do
+is delete your existing cassette files, and run your tests again.  VCR.py will
+detect the absence of a cassette file and once again record all HTTP
+interactions, which will update them to correspond to the new API.")
     (license license:expat)))
 
 (define-public python-vulture
@@ -3168,56 +3217,50 @@ dead code.  Also, code that is only called implicitly may be reported as
 unused.")
     (license license:expat)))
 
-(define-public python-green
+(define-public python-xunitparser
   (package
-    (name "python-green")
-    (version "4.0.2")
+    (name "python-xunitparser")
+    (version "1.3.4")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "green" version))
+       (uri (pypi-uri "xunitparser" version))
        (sha256
-        (base32 "1cd62nbn5dvlpnsyplp6cb24wd230san8dpm6pnl99n2kwzpq1m4"))))
-    (build-system pyproject-build-system)
+        (base32 "00lapxi770mg7jkw16zy3a91hbdfz4a9h43ryczdsgd3z4cl6vyf"))))
+    (build-system python-build-system)
     (arguments
-     (list
-      #:test-flags #~(list "-vr" "green")
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? test-flags #:allow-other-keys)
-              (when tests?
-                (apply invoke "python" "-m" "green" test-flags)))))))
-    (native-inputs
-     (list python-mypy
-           python-setuptools
-           python-testtools
-           python-wheel))
-    (propagated-inputs
-     (list python-colorama
-           python-coverage
-           python-lxml
-           python-unidecode))
-    (home-page "https://github.com/CleanCut/green")
-    (synopsis "Clean, colorful, fast Python test runner")
+     `(#:phases
+       (modify-phases %standard-phases
+         ;; See https://github.com/laurentb/xunitparser/pull/11
+         (add-after 'unpack 'fix-test-suite
+           (lambda _
+             (substitute* "xunitparser.py"
+               (("(^ +)self.stderr = None" m indent)
+                (string-append m "\n" indent "self._cleanup = False\n"))))))))
+    (home-page "http://git.p.engu.in/laurentb/xunitparser/")
+    (synopsis "Read JUnit/XUnit XML files and map them to Python objects")
+    (description "xunitparser reads a JUnit/XUnit XML file and maps it to
+Python objects.  It tries to use the objects available in the standard
+@code{unittest} module.")
+    (license license:expat)))
+
+(define-public python-xvfbwrapper
+  (package
+    (name "python-xvfbwrapper")
+    (version "0.2.9")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "xvfbwrapper" version))
+              (sha256
+               (base32
+                "097wxhvp01ikqpg1z3v8rqhss6f1vwr399zpz9a05d2135bsxx5w"))))
+    (build-system python-build-system)
+    (propagated-inputs (list xorg-server-for-tests))
+    (home-page "https://github.com/cgoldberg/xvfbwrapper")
+    (synopsis "Python module for controlling virtual displays with Xvfb")
     (description
-     "@code{green} is a Python test runner that describes itself as:
-@table @emph
-@item Clean
-Low redundancy in output.  Result statistics for each test is vertically aligned.
-@item Colorful
-Terminal output makes good use of color when the terminal supports it.
-@item Fast
-Tests run in independent processes (one per processor by default).
-@item Powerful
-Multi-target and auto-discovery support.
-@item Traditional
-It uses the normal @code{unittest} classes and methods.
-@item Descriptive
-Multiple verbosity levels, from just dots to full docstring output.
-@item Convenient
-Bash-completion and ZSH-completion of options and test targets.
-@item Thorough
-Built-in integration with @url{http://nedbatchelder.com/code/coverage/, coverage}.
-@end table")
+     "Xvfb (X virtual framebuffer) is a display server implementing
+the X11 display server protocol.  It runs in memory and does not require a
+physical display.  Only a network layer is necessary.  Xvfb is useful for
+running acceptance tests on headless servers.")
     (license license:expat)))

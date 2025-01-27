@@ -23,7 +23,7 @@
 ;;; Copyright © 2020-2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2021, 2022 Aurora <rind38@disroot.org>
 ;;; Copyright © 2021 Matthew James Kraai <kraai@ftbfs.org>
-;;; Copyright © 2021-2024 André A. Gomes <andremegafone@gmail.com>
+;;; Copyright © 2021-2025 André A. Gomes <andremegafone@gmail.com>
 ;;; Copyright © 2021, 2022, 2023 Cage <cage-dev@twistfold.it>
 ;;; Copyright © 2021 Cameron Chaparro <cameron@cameronchaparro.com>
 ;;; Copyright © 2021, 2024 Charles Jackson <charles.b.jackson@protonmail.com>
@@ -45,6 +45,7 @@
 ;;; Copyright © 2024 Carlo Zancanaro <carlo@zancanaro.id.au>
 ;;; Copyright © 2024 Nik Gaffney <nik@fo.am>
 ;;; Copyright © 2024 Grigory Shepelev <shegeley@gmail.com>
+;;; Copyright © 2025 Junker <dk@junkeria.club>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -126,6 +127,7 @@
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages statistics)
   #:use-module (gnu packages tcl)
+  #:use-module (gnu packages texinfo)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages video)
@@ -933,8 +935,17 @@ within your Lisp program, so you don't need to invoke a separate tool.")
          (sha256
           (base32 "0pdj779j3nwzn8f1661vf00rrjrbks1xgiq0rvwjw6qyxsfqfnl9"))))
       (build-system asdf-build-system/sbcl)
+      (arguments
+       (list #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'build 'build-doc
+                   (lambda _
+                     (with-directory-excursion "doc"
+                       (invoke "make" "info")
+                       (install-file "alexandria.info"
+                                     (string-append #$output "/share/info"))))))))
       (native-inputs
-       (list sbcl-rt))
+       (list sbcl-rt texinfo))
       (synopsis "Collection of portable utilities for Common Lisp")
       (description
        "Alexandria is a collection of portable utilities.  It does not contain
@@ -947,7 +958,15 @@ portable between implementations.")
   (sbcl-package->cl-source-package sbcl-alexandria))
 
 (define-public ecl-alexandria
-  (sbcl-package->ecl-package sbcl-alexandria))
+  (let ((pkg (sbcl-package->ecl-package sbcl-alexandria)))
+    (package
+      (inherit pkg)
+      (outputs '("out"))
+      (arguments
+       (substitute-keyword-arguments (package-arguments pkg)
+         ((#:phases phases)
+          `(modify-phases ,phases
+             (delete 'build-doc))))))))
 
 (define-public sbcl-alexandria-plus
   (let ((commit "adafb09838a84895bedb119f8253b89b6a04a2c5")
@@ -12527,7 +12546,7 @@ based on code from chapter 24 of the book @emph{Practical Common Lisp}.")
 (define-public sbcl-command-line-args
   (package
     (name "sbcl-command-line-args")
-    (version "0.1.2")
+    (version "0.1.3")
     (source
      (origin
        (method git-fetch)
@@ -12536,7 +12555,7 @@ based on code from chapter 24 of the book @emph{Practical Common Lisp}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-command-line-args" version))
        (sha256
-        (base32 "1ds3s26lbl7j8i3m8d7c69jdcpwdc21qjqd9sarrz6mw1i26xfd5"))))
+        (base32 "1vzybqnqwrfl8b708h8wx8xsm1ml5c3r0lcx23615hb4p800iagf"))))
     (build-system asdf-build-system/sbcl)
     (arguments
      '(#:asd-systems '("whereiseveryone.command-line-args")))
@@ -29977,6 +29996,36 @@ backtrace portably.")
 
 (define-public ecl-trivial-backtrace
   (sbcl-package->ecl-package sbcl-trivial-backtrace))
+
+(define-public sbcl-trivial-battery
+  (let ((commit "318c9da88b4d11d3f33062e0fd09be660a383404")
+        (revision "1"))
+    (package
+      (name "sbcl-trivial-battery")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/pokepay/trivial-battery")
+               (commit commit)))
+         (file-name (git-file-name "cl-trivial-battery" version))
+         (sha256
+          (base32 "12ni2502v9gjszhjsh0aai08cm64gl8g815xghdjhcf7y34ffl2b"))))
+      (build-system asdf-build-system/sbcl)
+      (inputs (list sbcl-split-sequence))
+      (home-page "https://github.com/pokepay/trivial-battery")
+      (synopsis "Trivial library for getting the battery information")
+      (description
+       "This package provides a Common Lisp library for getting the battery
+information.")
+      (license license:bsd-2))))
+
+(define-public cl-trivial-battery
+  (sbcl-package->cl-source-package sbcl-trivial-battery))
+
+(define-public ecl-trivial-battery
+  (sbcl-package->ecl-package sbcl-trivial-battery))
 
 (define-public sbcl-trivial-benchmark
   (let ((commit "1fbc8d15f09ed8aa426bc73956b8b7c9b2668802")

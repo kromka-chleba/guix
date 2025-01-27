@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015-2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016, 2020-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2016 Hartmut Goebel <h.goebel@crazy-compilers.com>
@@ -583,7 +583,7 @@ Performance is achieved by using the LLVM JIT compiler.")
   (deprecated-package "guile-aiscm-next" guile-aiscm))
 
 (define-public llama-cpp
-  (let ((tag "b4137"))
+  (let ((tag "b4549"))
     (package
       (name "llama-cpp")
       (version (string-append "0.0.0-" tag))
@@ -595,7 +595,7 @@ Performance is achieved by using the LLVM JIT compiler.")
                (commit tag)))
          (file-name (git-file-name name tag))
          (sha256
-          (base32 "0agm0188f9y2pr15v83a2fm0k9b8wag96qb3ryq4l2g6nkysiqlj"))))
+          (base32 "1xf2579q0r8nv06kj8padi6w9cv30w58vdys65nq8yzm3dy452a1"))))
       (build-system cmake-build-system)
       (arguments
        (list
@@ -630,9 +630,8 @@ Performance is achieved by using the LLVM JIT compiler.")
               ;; run in Guix build environment
               (lambda _
                 (substitute* '("examples/eval-callback/CMakeLists.txt")
-                  (("add_test") "#add_test"))
-                (substitute* '("examples/eval-callback/CMakeLists.txt")
-                  (("set_property") "#set_property"))))
+                  (("COMMAND llama-eval-callback")
+                   "COMMAND true llama-eval-callback"))))
             (add-before 'install 'install-python-scripts
               (lambda _
                 (let ((bin (string-append #$output "/bin/")))
@@ -1091,6 +1090,76 @@ It currently houses implementations of
 @end itemize
 ")
     (license license:expat))) ; MIT License
+
+(define-public python-pot
+  (package
+    (name "python-pot")
+    (version "0.9.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pot" version))
+       (sha256
+        (base32 "0hk0dmjgnpwka0a7gyzrcq155wzlvzcrsav3qaizyg0wymzywi4n"))
+       (snippet '(delete-file "ot/lp/emd_wrap.cpp"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-autograd
+           python-numpy
+           python-pytorch
+           python-pytorch-geometric
+           python-pymanopt
+           python-scikit-learn
+           python-scipy))
+    (native-inputs (list python-cython
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/PythonOT/POT")
+    (synopsis "Python Optimal Transport Library")
+    (description "This Python library provides several solvers for
+optimization problems related to Optimal Transport for signal, image
+processing and machine learning.")
+    (license license:expat)))
+
+(define-public python-pymanopt
+  (package
+    (name "python-pymanopt")
+    (version "2.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pymanopt" version))
+       (sha256
+        (base32 "1nm1yz5hbj1valqq23r8c1g9rhfdndfswlqv6xrnvc3f8fd95167"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Tests require jax and tensorflow, which are optional.
+      #:tests? #false
+      #:phases
+      '(modify-phases %standard-phases
+         ;; This is probably a bad idea.  We don't have scipy 1.13 just yet.
+         (add-after 'unpack 'relax-requirements
+           (lambda _
+             (substitute* "pyproject.toml"
+               ((",!=1.12\\.\\*") "")))))))
+    (propagated-inputs (list python-numpy python-scipy))
+    (native-inputs (list python-autograd
+                         python-flake8
+                         python-flake8-bugbear
+                         python-isort
+                         python-matplotlib
+                         python-pytest
+                         python-pytest-cov
+                         python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
+    (home-page "https://pymanopt.org/")
+    (synopsis "Toolbox for optimization on Riemannian manifolds")
+    (description
+     "This package is a toolbox for optimization on Riemannian manifolds with
+support for automatic differentiation.")
+    (license license:bsd-3)))
 
 (define-public python-ripser
   (package
@@ -1932,7 +2001,10 @@ data analysis.")
                                    ;; The error message format has changed,
                                    ;; but the behavior itself is still the
                                    ;; same.
-                                   " and not test_parameter_validation"))
+                                   " and not test_parameter_validation"
+                                   ;; exceptions must be derived from Warning,
+                                   ;; not <class 'NoneType'>
+                                   " and not test_seuclidean"))
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'build 'build-ext
@@ -1983,6 +2055,7 @@ citation number.")
     ;; v0.6 relies on deprecated scikit-learn functionality
     (arguments `(#:tests? #f))
     (inputs (list python-numpy python-scipy python-scikit-learn))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://pypi.org/project/mord/")
     (synopsis "Ordinal regression models for scikit-learn")
     (description
@@ -2014,7 +2087,6 @@ and are compatible with its API.")
                              python-confection
                              python-contextvars
                              python-cymem
-                             python-dataclasses
                              python-murmurhash
                              python-numpy
                              python-packaging
@@ -2230,7 +2302,7 @@ standard feature selection algorithms.")
 (define-public python-cleanlab
   (package
     (name "python-cleanlab")
-    (version "2.6.3")
+    (version "2.7.0")
     ;; The version on pypi does not come with tests.
     (source (origin
               (method git-fetch)
@@ -2240,7 +2312,7 @@ standard feature selection algorithms.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1f5iq4f8rzvn8scrwgfvc9qaqs9h159wiiy7wp6526frr67xk918"))))
+                "0f8v5246nzy22r7zswv9vbpxc7wxaqjwry9iq0fqjp2ffch88h6j"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2254,7 +2326,10 @@ standard feature selection algorithms.")
              ;; the guix-science channel.
              "--ignore-glob=tests/datalab/**"
              ;; Tries to download datasets from the internet at runtime.
-             "--ignore=tests/test_dataset.py")
+             "--ignore=tests/test_dataset.py"
+             ;; Test requiring not packaged dataset.
+             "--ignore=tests/spurious_correlation/test_correlation_visualizer.py"
+             "--ignore=tests/spurious_correlation/test_spurious_correlation.py")
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'remove-datasets
@@ -2267,11 +2342,12 @@ standard feature selection algorithms.")
            python-termcolor
            python-tqdm))
     (native-inputs
-     (list python-pytest
-           python-pytest-lazy-fixture
+     (list ;; python-dataset ; https://github.com/huggingface/datasets
+           python-pytest
            python-pytorch
-           python-torchvision
            python-setuptools
+           python-torchvision
+           python-typing-extensions
            python-wheel))
     (home-page "https://cleanlab.ai")
     (synopsis "Automatically find and fix dataset issues")
@@ -4065,7 +4141,7 @@ These include a barrier, broadcast, and allreduce.")
 (define-public python-tensorly
   (package
     (name "python-tensorly")
-    (version "0.8.1")
+    (version "0.9.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4074,7 +4150,7 @@ These include a barrier, broadcast, and allreduce.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "184mvs1gwycsh2f8jgdyc3jyhiylbn4xw2srpjd264dz2l9ms2l7"))))
+                "01xdkhzwq7s18pp6433d4dhyblmlhjs87acagxh73vfsqyknb9h3"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -5089,6 +5165,8 @@ Note: currently this package does not provide GPU support.")
              "-k" (string-append
                    ;; Permissions error
                    "not test_packaging"
+                   ;; Unknown multiprocessing failure
+                   " and not test_data_share_memory"
                    ;; This can fail due to accuracy problems
                    " and not test_gdc"
                    ;; These refuse to be run on CPU and really want a GPU
@@ -5143,18 +5221,20 @@ Neural Networks for a wide range of applications related to structured data.")
 (define-public python-lightning-cloud
   (package
     (name "python-lightning-cloud")
-    (version "0.5.34")
+    (version "0.5.70")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "lightning_cloud" version))
               (sha256
                (base32
-                "0mqrhq3s23mn8n4i0q791pshn3dgplp0h9ny0pmmp798q0798dzs"))))
+                "11xx7w7ypyf6bzwz7pbdakap68a1lnsv3icis8wm8magkfglash2"))))
     (arguments (list #:tests? #f))      ; no tests in PyPI archive.
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-click
-                             python-fastapi-for-pytorch-lightning
+    (propagated-inputs (list python-boto3
+                             python-click
+                             python-fastapi
                              python-multipart
+                             python-protobuf
                              python-pyjwt
                              python-requests
                              python-rich
@@ -5296,11 +5376,11 @@ feedback.")
     (license license:expat)))
 
 (define-public python-pytorch-lightning
-  (let ((commit "2064887b12dd934a5f9a2bf45897f29e3bfc74d1")
+  (let ((commit "9177ec09caadcf88859e1f1e3e10a18e8832069a")
         (revision "0"))
     (package
       (name "python-pytorch-lightning")
-      (version (git-version "2.3.3" revision commit))
+      (version (git-version "2.5.0.post0" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -5309,62 +5389,24 @@ feedback.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1pfmwgzh21i21i4ixank488615q7j8nkvlxd82kmmam97gsd6krg"))))
+                  "0n1dqqaxga0s02l04vy9jfphx7g20m4as17jaxl5bgwzrjfh6k2f"))))
       (build-system pyproject-build-system)
       (arguments
        (list
         #:test-flags
-        '(list "-m" "not cloud and not tpu" "tests/tests_pytorch"
-               ;; we don't have onnxruntime
-               "--ignore=tests/tests_pytorch/models/test_onnx.py"
-
-               ;; We don't have tensorboard, so we skip all those tests that
-               ;; require it for logging.
-               "--ignore=tests/tests_pytorch/checkpointing/test_model_checkpoint.py"
-               "--ignore=tests/tests_pytorch/loggers/test_all.py"
-               "--ignore=tests/tests_pytorch/loggers/test_logger.py"
-               "--ignore=tests/tests_pytorch/loggers/test_tensorboard.py"
-               "--ignore=tests/tests_pytorch/loggers/test_wandb.py"
-               "--ignore=tests/tests_pytorch/models/test_cpu.py"
-               "--ignore=tests/tests_pytorch/models/test_hparams.py"
-               "--ignore=tests/tests_pytorch/models/test_restore.py"
-               "--ignore=tests/tests_pytorch/profilers/test_profiler.py"
-               "--ignore=tests/tests_pytorch/test_cli.py"
-               "--ignore=tests/tests_pytorch/trainer/flags/test_fast_dev_run.py"
-               "--ignore=tests/tests_pytorch/trainer/logging_/test_eval_loop_logging.py"
-               "--ignore=tests/tests_pytorch/trainer/logging_/test_train_loop_logging.py"
-               "--ignore=tests/tests_pytorch/trainer/properties/test_loggers.py"
-               "--ignore=tests/tests_pytorch/trainer/properties/test_log_dir.py"
-               "--ignore=tests/tests_pytorch/trainer/test_trainer.py"
-
-               ;; This needs internet access
-               "--ignore=tests/tests_pytorch/helpers/test_models.py"
-               "--ignore=tests/tests_pytorch/helpers/test_datasets.py"
-               "--ignore=tests/tests_pytorch/helpers/datasets.py"
-
-               ;; We have no legacy checkpoints
-               "--ignore=tests/tests_pytorch/checkpointing/test_legacy_checkpoints.py"
-
-               ;; TypeError: _FlakyPlugin._make_test_flaky() got an unexpected
-               ;; keyword argument 'reruns'
-               "--ignore=tests/tests_pytorch/models/test_amp.py"
-               "--ignore=tests/tests_pytorch/utilities/test_all_gather_grad.py"
-
-               ;; Requires CUDA
-               "--ignore=tests/tests_pytorch/plugins/precision/test_bitsandbytes.py"
-
+        ;; The tests train a model.  They are much too expensive for our
+        ;; purposes, so we only run the core tests.
+        '(list "-m" "not cloud and not tpu"
+               "tests/tests_pytorch/core"
                "-k"
                (string-append
-                ;; We don't have tensorboard
-                "not test_property_logger"
-                " and not test_cli_logger_shorthand"
-                ;; Wrong module appears in sys.modules
-                " and not test_patch_legacy_imports_unified"
-                ;; Missing log message
-                " and not test_should_stop_early_stopping_conditions_met"
-                " and not test_fit_loop_done_log_messages"
-                ;; Something wrong with Flaky
-                " and not test_servable_module_validator_with_trainer"))
+                ;; Some multiprocessing complaint.
+                "not test_result_reduce_ddp"
+                ;; FutureWarning is raised.
+                " and not test_result_collection_restoration"
+                ;; These need tensorboard
+                " and not test_property_logger"
+                " and not test_property_loggers"))
         #:phases
         '(modify-phases %standard-phases
            (add-after 'unpack 'patch-version-detection
@@ -5395,7 +5437,7 @@ feedback.")
              python-croniter
              python-dateutils
              python-deepdiff
-             python-fastapi-for-pytorch-lightning
+             python-fastapi
              python-fsspec
              python-inquirer
              python-jsonargparse
@@ -5405,7 +5447,6 @@ feedback.")
              python-packaging
              python-pytorch
              python-pyyaml
-             python-starsessions-for-pytorch-lightning
              python-torchmetrics
              python-torchvision
              python-tqdm
@@ -5557,6 +5598,37 @@ and common image transformations for computer vision.")
     (description "This package enables you to deserialize Lua torch-serialized objects from
 Python.")
     (license license:bsd-3)))
+
+(define-public python-geomloss
+  (package
+    (name "python-geomloss")
+    (version "0.2.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "geomloss" version))
+       (sha256
+        (base32 "1szsjpcwjlvqiiws120fwn581a6hs8gm9si8c75v40ahbh44f729"))))
+    (build-system pyproject-build-system)
+    ;; There are no automated tests.
+    (arguments (list #:tests? #false))
+    (propagated-inputs (list python-numpy python-pytorch))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://www.kernel-operations.io/geomloss/")
+    (synopsis
+     "Geometric loss functions between point clouds, images and volumes")
+    (description
+     "The GeomLoss library provides efficient GPU implementations for:
+
+@itemize
+@item Kernel norms (also known as Maximum Mean Discrepancies).
+@item Hausdorff divergences, which are positive definite generalizations of
+the Chamfer-ICP loss and are analogous to log-likelihoods of Gaussian Mixture
+Models.
+@item Debiased Sinkhorn divergences, which are affordable yet positive and
+definite approximations of Optimal Transport (Wasserstein) distances.
+@end itemize")
+    (license license:expat)))
 
 (define-public python-hmmlearn
   (package
@@ -5781,6 +5853,7 @@ and Numpy.")
            python-pyro-api
            python-pytorch
            python-tqdm))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://pyro.ai")
     (synopsis "Python library for probabilistic modeling and inference")
     (description
@@ -6296,10 +6369,6 @@ without dependencies, with
        (sha256
         (base32 "1cab4wsnlsxn2z90qmymv8ppmsq8yq2amiqwid3r0xfbxx92flqs"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-cloudpickle python-farama-notifications
-                             python-importlib-metadata python-numpy
-                             python-typing-extensions))
-    (native-inputs (list python-pytest python-scipy python-setuptools))
     (arguments
      (list
       #:phases
@@ -6308,6 +6377,11 @@ without dependencies, with
             (lambda _
               (with-output-to-file "tests/__init__.py"
                 (lambda _ (display ""))))))))
+    (propagated-inputs (list python-cloudpickle python-farama-notifications
+                             python-importlib-metadata python-numpy
+                             python-typing-extensions))
+    (native-inputs
+     (list python-pytest python-scipy python-setuptools python-wheel))
     (home-page "https://gymnasium.farama.org/")
     (synopsis
      "Standard API for reinforcement learning and a set of reference environments")

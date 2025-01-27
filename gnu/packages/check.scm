@@ -24,7 +24,7 @@
 ;;; Copyright © 2017, 2019 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2017, 2019 Kei Kebreau <kkebreau@posteo.net>
 ;;; Copyright © 2017 Nikita <nikita@n0.is>
-;;; Copyright © 2015, 2017, 2018, 2020, 2021, 2023, 2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015, 2017, 2018, 2020, 2021, 2023, 2024, 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016-2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2017-2018, 2020-2021, 2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2018 Fis Trivial <ybbs.daans@hotmail.com>
@@ -32,6 +32,7 @@
 ;;; Copyright © 2019 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2020 Lars-Dominik Braun <ldb@leibniz-psychology.org>
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
+;;; Copyright © 2020 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2020 Josh Marshall <joshua.r.marshall.1991@gmail.com>
 ;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
@@ -1124,6 +1125,53 @@ generation.")
 similar to unit tests.")
     (license license:asl2.0)))
 
+(define-public gotestsum
+  (package
+    (name "gotestsum")
+    (version "1.12.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gotestyourself/gotestsum")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fx92jh6ay4rk1ljbgp9b2m4fafqwy0a19q7lhdabgb1j8dvgxvs"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "gotest.tools/gotestsum"
+      #:test-flags
+      #~(list "-skip"
+              (string-join
+               (list "TestE2E_IgnoresWarnings"
+                     "TestE2E_MaxFails_EndTestRun"
+                     "TestScanTestOutput_TestTimeoutPanicRace/panic-race-2")
+               "|"))
+      ;; Run just unit test, integration tests from "testjson" require: run
+      ;; 'go test . -update' to automatically update
+      ;; testdata/summary/with-run-id to the new expected value.'
+      #:test-subdirs #~(list "cmd/..." "internal/...")))
+    (native-inputs
+     (list go-github-com-bitfield-gotestdox
+           go-github-com-dnephin-pflag
+           go-github-com-fatih-color
+           go-github-com-fsnotify-fsnotify
+           go-github-com-google-go-cmp
+           go-github-com-google-shlex
+           go-golang-org-x-sync
+           go-golang-org-x-sys
+           go-golang-org-x-term
+           go-golang-org-x-tools
+           go-gotest-tools-v3))
+    (synopsis "Go test runner with output optimized for humans")
+    (description "This package provides a @code{go test} runner with output
+optimized for humans, JUnit XML for CI integration, and a summary of the
+test results.")
+    (home-page "https://github.com/gotestyourself/gotestsum")
+    (license license:asl2.0)))
+
 (define-public greatest
   (package
    (name "greatest")
@@ -1301,7 +1349,7 @@ but it works for any C/C++ project.")
 (define-public actionlint
   (package
     (name "actionlint")
-    (version "1.7.2")
+    (version "1.7.6")
     (source
      (origin
        (method git-fetch)
@@ -1310,7 +1358,7 @@ but it works for any C/C++ project.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1rgsxv4clgfyl4gr8bjk81p4b87c6hr34flxzw6011h0vjc54n7x"))))
+        (base32 "1waq9v48pbys8b8qmmvl0wi77jzri033fh8194gcwfzipvxb6y9l"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1322,13 +1370,16 @@ but it works for any C/C++ project.")
       #:unpack-path "github.com/rhysd/actionlint"))
     ;; XXX: Install Man page, wrap with shellcheck and pyflakes.
     (native-inputs
-     (list go-github-com-fatih-color
+     (list go-github-com-bmatcuk-doublestar-v4
+           go-github-com-fatih-color
+           go-github-com-google-go-cmp
            go-github-com-mattn-go-colorable
            go-github-com-mattn-go-runewidth
-           go-github-com-robfig-cron
+           go-github-com-mattn-go-shellwords
+           go-github-com-robfig-cron-v3
+           go-github-com-yuin-goldmark
            go-golang-org-x-sync
-           go-golang-org-x-sync
-           go-github-com-google-go-cmp
+           go-golang-org-x-sys
            go-gopkg-in-yaml-v3))
     (home-page "https://rhysd.github.io/actionlint/")
     (synopsis "Static checker for GitHub Actions workflow files")
@@ -1986,33 +2037,6 @@ Python's @code{random.seed}.")
 @file{setup.py} files can use to run tests.")
     (license license:expat)))
 
-(define-public python-pytest-lazy-fixture
-  (package
-    (name "python-pytest-lazy-fixture")
-    (version "0.6.3")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "pytest-lazy-fixture" version))
-        (sha256
-         (base32 "1b0hmnsxw4s2wf9pks8dg6dfy5cx3zcbzs8517lfccxsfizhqz8f"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             ;; Make the installed plugin discoverable by Pytest.
-             (add-installed-pythonpath inputs outputs)
-             (invoke "pytest" "-vv"))))))
-    (propagated-inputs
-     (list python-pytest))
-    (home-page "https://github.com/tvorog/pytest-lazy-fixture")
-    (synopsis "Use fixtures in @code{pytest.mark.parametrize}")
-    (description "This plugin helps to use fixtures in
-@code{pytest.mark.parametrize}.")
-    (license license:expat)))
-
 (define-public python-pytest-lazy-fixtures
   (package
     (name "python-pytest-lazy-fixtures")
@@ -2185,6 +2209,9 @@ side-effects (such as setting environment variables).")
     (build-system python-build-system)
     (native-inputs
      (list python-pytest))
+    (arguments
+     ;; Tests not shipped with PyPI archive, and require TLS CA cert.
+     (list #:tests? #f))
     (home-page (string-append "https://web.archive.org/web/20161029233413/"
                               "http://pythonpaste.org/scripttest/"))
     (synopsis "Python library to test command-line scripts")
@@ -2196,19 +2223,21 @@ subprocess and see the output as well as any file modifications.")
 (define-public python-testtools-bootstrap
   (package
     (name "python-testtools-bootstrap")
-    (version "2.6.0")
+    (version "2.7.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "testtools" version))
        (sha256
         (base32
-         "02mkphygx8897617m8qnmj0alksyvvfcjmazzfxyrlzjq0a5xdi8"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))
+         "18vy77n4ab2dvgx5ni6gfp2d0haxhh3yrkm6mih8n3zsy30vprav"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #f))
     (propagated-inputs
-     `(("python-fixtures" ,python-fixtures-bootstrap)
-       ("python-pbr" ,python-pbr-minimal)))
+     (list python-fixtures-bootstrap python-pbr-minimal))
+    (native-inputs
+     (list python-hatchling python-hatch-vcs
+           python-setuptools)) ;due to python-pbr-minimal
     (home-page "https://github.com/testing-cabal/testtools")
     (synopsis
      "Extensions to the Python standard library unit testing framework")
@@ -2221,17 +2250,31 @@ subprocess and see the output as well as any file modifications.")
     (inherit python-testtools-bootstrap)
     (name "python-testtools")
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:phases
+      '(modify-phases %standard-phases
          (replace 'check
            (lambda* (#:key tests? #:allow-other-keys)
              (when tests?
+               ;; There are six failing tests:
+               ;; "test_fast_keyboard_interrupt_stops_test_run"
+               ;; "test_keyboard_interrupt_stops_test_run"
+               ;; "test_fast_sigint_raises_no_result_error"
+               ;; "test_fast_sigint_raises_no_result_error_second_time"
+               ;; "test_sigint_raises_no_result_error"
+               ;; "test_sigint_raises_no_result_error_second_time"
+               (substitute* "testtools/tests/twistedsupport/__init__.py"
+                 (("test_spinner,") "")
+                 (("test_runtest,") ""))
                (invoke "python" "-m" "testtools.run"
                        "testtools.tests.test_suite")))))))
     (propagated-inputs
      (list python-fixtures python-pbr))
     (native-inputs
-     `(("python-testscenarios" ,python-testscenarios-bootstrap)))
+     (list python-hatchling python-hatch-vcs
+           python-testscenarios-bootstrap
+           python-twisted
+           python-setuptools)) ;due to python-pbr
     (description
      "Testtools extends the Python standard library unit testing framework to
 provide matchers, more debugging information, and cross-Python
@@ -2547,6 +2590,23 @@ to make testing async code easier.")
        (sha256
         (base32 "1lz4h8y6m6hxnsl7kqh0rjxqp5q2wc2m5gd88371rikd7ari16vm"))))))
 
+(define-public python-pytest-asyncio-0.21
+  (package
+    (inherit python-pytest-asyncio)
+    (version "0.21.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest_asyncio" version))
+       (sha256
+        (base32 "0iag2lmglfajiasxi3dr2110gq0nxc5paq6hp4kb751b4gy3hxyn"))))
+    (native-inputs
+     (list python-flaky
+           python-pytest-trio
+           python-setuptools-scm
+           python-setuptools
+           python-wheel))))
+
 (define-public python-cov-core
   (package
     (name "python-cov-core")
@@ -2595,7 +2655,7 @@ C/C++, R, and more, and uploads it to the @code{codecov.io} service.")
 (define-public python-testpath
   (package
     (name "python-testpath")
-    (version "0.5.0")
+    (version "0.6.0")
     (source
      (origin
        (method git-fetch)
@@ -2605,32 +2665,11 @@ C/C++, R, and more, and uploads it to the @code{codecov.io} service.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "08r1c6bhvj8pcdvzkqv1950k36a6q3v81fd2p1yqdq3c07mcwgif"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-requirements
-            (lambda _
-              (substitute* "pyproject.toml"
-                (("flit_core >=3.2.0,<3.3")
-                 "flit_core >=3.2.0"))))
-          ;; XXX: PEP 517 manual build copied from python-isort.
-          (replace 'build
-            (lambda _
-              (invoke "python" "-m" "build" "--wheel" "--no-isolation" ".")))
-          (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest"))))
-          (replace 'install
-            (lambda _
-              (let ((whl (car (find-files "dist" "\\.whl$"))))
-                (invoke "pip" "--no-cache-dir" "--no-input"
-                        "install" "--no-deps" "--prefix" #$output whl)))))))
+         "0pib1xsvjwwyyhv0sqzxvgg814k83dmv1ppwfkkq9llkhr8k7s9y"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-pypa-build python-flit-core python-pytest))
+     (list python-flit-core
+           python-pytest))
     (home-page "https://github.com/jupyter/testpath")
     (synopsis "Test utilities for code working with files and commands")
     (description
@@ -4313,6 +4352,7 @@ data.")
      ;; Tests require pytest < 6
      (list #:tests? #f))
     (propagated-inputs (list python-pytest python-tornado))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/vidartf/pytest-tornado")
     (synopsis
      "Fixtures and markers to simplify testing of Tornado applications")

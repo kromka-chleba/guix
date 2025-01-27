@@ -16,6 +16,7 @@
 ;;; Copyright © 2021 Lars-Dominik Braun <ldb@leibniz-psychology.org>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2023 Mehmet Tekman <mtekman89@gmail.com>
+;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -243,7 +244,7 @@ the real span of the lattice.")
 (define-public pari-gp
   (package
     (name "pari-gp")
-    (version "2.17.0")
+    (version "2.17.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -251,7 +252,7 @@ the real span of the lattice.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "1a5fn64x7255ma7rkkjg5g17fq6mnjlzjfi8wbncc24dy77ff8z7"))))
+                "1p75zpqlbz7dx6nmn4g5bb369g7gnmsg3r21hljjadr3f4q6zfk7"))))
     (build-system gnu-build-system)
     (native-inputs (list (texlive-updmap.cfg)))
     (inputs (list gmp libx11 perl readline))
@@ -1164,23 +1165,26 @@ features, and more.")
 (define-public xtensor
   (package
     (name "xtensor")
-    (version "0.24.6")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/xtensor-stack/xtensor")
-                    (commit version)))
-              (sha256
-               (base32
-                "0gf5m5p61981pv7yh5425lcv8dci948ri37hn1zlli7xg54x0g3i"))
-              (file-name (git-file-name name version))))
+    (version "0.25.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xtensor-stack/xtensor")
+             (commit version)))
+       (sha256
+        (base32 "0ziqybfm0fh6kr8qwxqacr04m9gm0njbn520izm6rsh9hysxsmw5"))
+       (file-name (git-file-name name version))))
     (build-system cmake-build-system)
-    (native-inputs
-     (list doctest googletest xtl))
     (arguments
-     `(#:configure-flags
-       '("-DBUILD_TESTS=ON")
-       #:test-target "xtest"))
+     (list
+      #:configure-flags #~(list "-DBUILD_TESTS=ON")
+      #:test-target "xtest"))
+    (native-inputs
+     (list doctest
+           googletest
+           nlohmann-json
+           xtl))
     (home-page "https://xtensor.readthedocs.io/en/latest/")
     (synopsis "C++ tensors with broadcasting and lazy computing")
     (description "xtensor is a C++ library meant for numerical analysis with
@@ -1591,7 +1595,7 @@ of M4RI from F_2 to F_{2^e}.")
 (define-public eclib
   (package
     (name "eclib")
-    (version "20220621")
+    (version "20241112")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1600,7 +1604,7 @@ of M4RI from F_2 to F_{2^e}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "07wbkzmn6w0hrv2vim7f0il7k59ccc66x5vnn623xkmhfw32b3nz"))))
+                "0v5981y0bv9s2sz6x2yh7mxzqsp9rrfv1jvdv12rwf64yacgmbz0"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake libtool))
@@ -1611,8 +1615,7 @@ of M4RI from F_2 to F_{2^e}.")
 elliptic curves over Q) and modular symbol code; it has been written by
 John Cremona to compute his elliptic curve database.")
     (license license:gpl2+)
-    (home-page (string-append "http://homepages.warwick.ac.uk/staff/"
-                              "J.E.Cremona/mwrank/index.html"))))
+    (home-page "https://johncremona.github.io/mwrank/index.html")))
 
 (define-public lrcalc
   (package

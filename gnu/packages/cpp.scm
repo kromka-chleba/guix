@@ -42,6 +42,7 @@
 ;;; Copyright © 2024 dan <i@dan.games>
 ;;; Copyright © 2024 Peepo Froggings <peepofroggings@tutanota.de>
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
+;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 
 ;;; This file is part of GNU Guix.
 ;;;
@@ -606,30 +607,32 @@ enabled in different parts of your code.")
 (define-public xsimd
   (package
     (name "xsimd")
-    (version "9.0.1")
+    (version "11.0.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/QuantStack/xsimd")
+             (url "https://github.com/xtensor-stack/xsimd")
              (commit version)))
        (sha256
-        (base32 "1fcy0djwpwvls6yqxqa82s4l4gvwkqkr8i8bibbb3dm0lqvhnw52"))
+        (base32 "148wylv88vp31rz7l357ch7k0l50apfk4x31qdqk9y4d2hj6ld3f"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags (list "-DBUILD_TESTS=ON")
-       #:test-target "xtest"))
+     (list
+      #:configure-flags #~(list "-DBUILD_TESTS=ON")
+      #:test-target "xtest"))
     (native-inputs
-     (list googletest))
+     (list doctest
+           googletest))
     (home-page "https://github.com/xtensor-stack/xsimd")
     (synopsis "C++ wrappers for SIMD intrinsics and math implementations")
     (description
-     "xsimd provides a unified means for using @acronym{SIMD, single instruction
-multiple data} features for library authors.  Namely, it enables manipulation of
-batches of numbers with the same arithmetic operators as for single values.
-It also provides accelerated implementation of common mathematical functions
-operating on batches.")
+     "xsimd provides a unified means for using @acronym{SIMD, single
+instruction multiple data} features for library authors.  Namely, it enables
+manipulation of batches of numbers with the same arithmetic operators as for
+single values.  It also provides accelerated implementation of common
+mathematical functions operating on batches.")
     (license license:bsd-3)))
 
 (define-public google-highway
@@ -1057,31 +1060,26 @@ for C++17.")
 (define-public xtl
   (package
     (name "xtl")
-    (version "0.7.5")
-    (source (origin
-              (method git-fetch)
-              (uri
-               (git-reference
-                (url "https://github.com/QuantStack/xtl")
-                (commit version)))
-              (sha256
-               (base32
-                "1llfy6pkzqx2va74h9xafjylyvw6839a843mqc05n6x6wll5bkam"))
-              (file-name (git-file-name name version))))
-    (native-inputs
-     (list doctest googletest nlohmann-json))
+    (version "0.7.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xtensor-stack/xtl")
+             (commit version)))
+       (sha256
+        (base32 "1b42mjxchinsf2ylbvhyypfysg5sfphxqby53vlg82wvr23rijkz"))
+       (file-name (git-file-name name version))))
+    (build-system cmake-build-system)
     (arguments
      (list
-      #:configure-flags
-      #~(list "-DBUILD_TESTS=ON")
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda _
-              (with-directory-excursion "test"
-                (invoke "./test_xtl")))))))
-    (home-page "https://github.com/QuantStack/xtl")
-    (build-system cmake-build-system)
+      #:configure-flags #~(list "-DBUILD_TESTS=ON")
+      #:test-target "xtest"))
+    (native-inputs
+     (list doctest
+           googletest
+           nlohmann-json))
+    (home-page "https://github.com/xtensor-stack/xtl")
     (synopsis "C++ template library providing some basic tools")
     (description "xtl is a C++ header-only template library providing basic
 tools (containers, algorithms) used by other QuantStack packages.")
@@ -3562,3 +3560,92 @@ Specification for URL parser can be found from the WHATWG website.")
      "This is a simple C++ library that facilitates parsing command line
 arguments in a type independent manner.")
     (license license:expat)))
+
+(define-public aklomp-base64
+  (package
+    (name "aklomp-base64")
+    (version "0.5.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/aklomp/base64.git")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0xc541vhq44d9i1vf5hyrznqd1kyad9qbvsghcfr17pk1xyqv1kl"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #t
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:key tests? parallel-tests? #:allow-other-keys)
+                   (if tests?
+                       (invoke "ctest" "-VV" "--build-config" "Release" "--output-on-failure")
+                       (format #t "test suite not run~%")))))
+
+           #:configure-flags
+           #~(append
+              (list "-DBASE64_BUILD_TESTS=ON"
+                    "-DCMAKE_BUILD_TYPE=Release")
+              (let ((system #$(or (%current-target-system)
+                                  (%current-system))))
+                (cond
+                 ;; ARM 64-bit (aarch64)
+                 ((string-prefix? "aarch64-" system)
+                  (list
+                   "-DCMAKE_C_FLAGS=-march=armv8-a"
+                   "-DNEON64_CFLAGS= "
+                   "-DBASE64_WITH_NEON64=ON"
+                   "-DBASE64_WITH_AVX2=OFF"
+                   "-DBASE64_WITH_SSSE3=OFF"
+                   "-DBASE64_WITH_SSE41=OFF"
+                   "-DBASE64_WITH_SSE42=OFF"
+                   "-DBASE64_WITH_AVX=OFF"
+                   "-DBASE64_WITH_AVX512=OFF"))
+                 ;; ARM 32-bit (armhf)
+                 ((string-prefix? "armhf-" system)
+                  (list
+                   "-DCMAKE_C_FLAGS=-march=armv7 -mfpu=neon"
+                   "-DNEON32_CFLAGS=-march=armv7 -mfpu=neon"
+                   "-DBASE64_WITH_NEON32=ON"
+                   "-DBASE64_WITH_AVX2=OFF"
+                   "-DBASE64_WITH_SSSE3=OFF"
+                   "-DBASE64_WITH_SSE41=OFF"
+                   "-DBASE64_WITH_SSE42=OFF"
+                   "-DBASE64_WITH_AVX=OFF"
+                   "-DBASE64_WITH_AVX512=OFF"))
+                 ;; x86_64 (with all extensions except AVX512).
+                 ((string-prefix? "x86_64-" system)
+                  (list
+                   "-DAVX2_CFLAGS=-mavx2"
+                   "-DSSSE3_CFLAGS=-mssse3"
+                   "-DSSE41_CFLAGS=-msse4.1"
+                   "-DSSE42_CFLAGS=-msse4.2"
+                   "-DAVX_CFLAGS=-mavx"
+                   "-DBASE64_WITH_AVX512=OFF"))
+                 ;; i686 (32-bit x86, limited extensions)
+                 ((string-prefix? "i686-" system)
+                  (list
+                   "-DSSE41_CFLAGS=-msse4.1"
+                   "-DSSE42_CFLAGS=-msse4.2"
+                   "-DBASE64_WITH_AVX=OFF"
+                   "-DBASE64_WITH_AVX2=OFF"
+                   "-DBASE64_WITH_AVX512=OFF"))
+                 (else
+                  (list
+                   "-DBASE64_WITH_AVX2=OFF"
+                   "-DBASE64_WITH_SSSE3=OFF"
+                   "-DBASE64_WITH_SSE41=OFF"
+                   "-DBASE64_WITH_SSE42=OFF"
+                   "-DBASE64_WITH_AVX=OFF"
+                   "-DBASE64_WITH_AVX512=OFF"
+                   "-DBASE64_WITH_NEON32=OFF"
+                   "-DBASE64_WITH_NEON64=OFF")))))))
+    (synopsis "Fast base64 stream encoder/decoder")
+    (description "This package provides a base64 stream encoder/decoder
+written in C99.")
+    (properties `((tunable? . #t)))
+    (home-page "https://github.com/aklomp/base64")
+    (license license:bsd-2)))

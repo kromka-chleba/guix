@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2014 David Thompson <davet@gnu.org>
-;;; Copyright © 2015, 2017, 2019, 2020, 2021, 2023, 2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015, 2017, 2019, 2020, 2021, 2023, 2024, 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015, 2016, 2017 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2016-2019, 2022, 2023 Marius Bakke <marius@gnu.org>
@@ -182,6 +182,9 @@ sources.")
               ;; XXX: Not clear why this fails with a version comparison
               ;; failure.
               " and not test_needs_sphinx"
+              ;; This fails on some machines with the failed assertion
+              ;; '5:11:17\u202fAM' == '5:11:17 AM'.
+              " and not test_format_date"
               ;; This is a harmless failure.  The expected output looks for a
               ;; long string that happens to contain a literal space
               ;; character, but in the actual output the space character is
@@ -281,22 +284,22 @@ sources.")
 (define-public python-sphinxcontrib-apidoc
   (package
     (name "python-sphinxcontrib-apidoc")
-    (version "0.3.0")
+    (version "0.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sphinxcontrib-apidoc" version))
        (sha256
         (base32
-         "1f9zfzggs8a596jw51fpfmr149n05mrlyy859iydazbvry9gb6vj"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f))                    ;requires python-pytest<4.0
+         "0mfdfxqxksixxpcigrjykaq6p2j5ic4yx5gv2lvq4pra469cvvv5"))))
+    (build-system pyproject-build-system)
     (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
      (list python-pbr
-           python-pytest
-           python-sphinx
-           python-testrepository))
+           python-sphinx))
     (home-page "https://github.com/sphinx-contrib/apidoc")
     (synopsis "Sphinx extension for running @code{sphinx-apidoc}")
     (description "This package provides Sphinx extension for running
@@ -345,22 +348,25 @@ Apple help books.")
 (define-public python-sphinx-click
   (package
     (name "python-sphinx-click")
-    (version "4.0.3")
+    (version "6.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sphinx-click" version))
        (sha256
         (base32
-         "1nqy3b7wr64rbmdp7kpi723az53a89y6250h46i505g1rw0czam1"))))
-    (build-system python-build-system)
+         "0ns6mfiw4q6g0kh11dfyzpn0rkjq9v4f3w8ry0pn5in03lr69mpm"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (replace 'check
-                          (lambda* (#:key tests? #:allow-other-keys)
-                            (when tests?
-                              (invoke "pytest" "-vv" "tests")))))))
-    (native-inputs (list python-pbr python-pytest python-wheel))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-build-system
+            (lambda _
+              ;; The build system is confused about this top level directory,
+              ;; so we delete it.
+              (delete-file-recursively "releasenotes"))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (propagated-inputs (list python-click python-docutils python-sphinx))
     (home-page "https://github.com/click-contrib/sphinx-click")
     (synopsis "Sphinx extension that documents click applications")
@@ -1314,7 +1320,7 @@ executed during the Sphinx build process.")
 (define-public python-jupyter-sphinx
   (package
     (name "python-jupyter-sphinx")
-    (version "0.3.2")
+    (version "0.5.3")
     (source
      (origin
        ;; Pypi tarball doesn't contain tests.
@@ -1325,21 +1331,26 @@ executed during the Sphinx build process.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0bsb17vzbgvrzvh87pi88b157hyigdwnf1lhrgvan03i2300h15c"))))
-    (build-system python-build-system)
+         "1l8skhjir7j9jr4xdmwzj5lk5w31jn21ydpcxvgr6adgnrdbgy53"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-       #:phases
-       #~(modify-phases %standard-phases
-           (replace 'check
-             (lambda* (#:key tests? #:allow-other-keys)
-               (when tests?
-                 (invoke "pytest")))))))
+      #:test-flags
+      #~(list "-W" "ignore::DeprecationWarning")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'ignore-warnings
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("\"error\",") "")))))))
     (propagated-inputs
      (list python-ipython python-ipywidgets python-nbconvert
            python-nbformat))
     (native-inputs
-     (list python-pytest python-sphinx))
+     (list python-hatchling
+           python-ipykernel
+           python-pytest
+           python-sphinx))
     (home-page "https://github.com/jupyter/jupyter-sphinx/")
     (synopsis "Jupyter Sphinx Extensions")
     (description

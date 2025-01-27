@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015, 2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015, 2024, 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015, 2020, 2023, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2020, 2023 Marius Bakke <marius@gnu.org>
@@ -215,13 +215,13 @@ PyPI (pypi.org).")
 (define-public python-typing-extensions
   (package
     (name "python-typing-extensions")
-    (version "4.10.0")
+    (version "4.12.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "typing_extensions" version))
               (sha256
                (base32
-                "1jxkj4pni8pdyrn79sq441lsp40xzw363n0qvfc6zfcgkv4dgaxh"))))
+                "1f7z47hmz48kgixzb3ffw6zml8j1iflf6ml8xr6xsng5qxasszhs"))))
     (build-system pyproject-build-system)
     ;; Disable the test suite to keep the dependencies to a minimum.  Also,
     ;; the test suite requires Python's test module, not available in Guix.
@@ -863,13 +863,13 @@ abstractions for handling wheels and installing packages from wheels.")
 (define-public python-pdm-backend
   (package
     (name "python-pdm-backend")
-    (version "2.0.6")
+    (version "2.4.3")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "pdm_backend" version))
               (sha256
                (base32
-                "06bq846yy33alxbljgcf4lx9g2mx4b2sv04i59rrn9rxapcg2651"))))
+                "0a0741c1g5vxhrizyxh40mjxdmbsc4xid5vy4aji23f1g9x09nfv"))))
     (build-system pyproject-build-system)
     (arguments
      (list

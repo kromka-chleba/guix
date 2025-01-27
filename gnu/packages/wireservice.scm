@@ -3,6 +3,7 @@
 ;;; Copyright © 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2022 Guillaume Le Vaillant <glv@posteo.net>
+;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -21,73 +22,53 @@
 
 (define-module (gnu packages wireservice)
   #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix download)
+  #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
   #:use-module (gnu packages check)
   #:use-module (gnu packages databases)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages time)
   #:use-module (gnu packages xml))
 
-;; Common package definition for packages from https://github.com/wireservice.
-(define-syntax-rule (wireservice-package extra-fields ...)
-  (package
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "nosetests" "tests")))
-         (add-after 'install 'install-docs
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (doc (string-append out "/share/doc/"
-                                        ,(package-name this-package)
-                                        "-"
-                                        ,(package-version this-package))))
-               (with-directory-excursion "docs"
-                 (for-each
-                  (lambda (target)
-                    (invoke "make" target)
-                    (copy-recursively (string-append "_build/" target)
-                                      (string-append doc "/" target)))
-                  '("html" "dirhtml" "singlehtml" "text")))
-               #t))))))
-    (license license:expat)
-    extra-fields ...))
-
 (define-public python-leather
-  (wireservice-package
-   (name "python-leather")
-   (version "0.3.4")
-   (source (origin
-             (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/wireservice/leather")
-                   (commit version)))
-             (file-name (git-file-name name version))
-             (sha256
-              (base32
-               "00cg4cidl15q1xv2pmxdkia5brig7x0xy9hwf2mlf9cq39bpj1w6"))))
-   (native-inputs
-    `(("python-nose" ,python-nose)
-      ("python-sphinx" ,python-sphinx)
-      ("python-sphinx-rtd-theme" ,python-sphinx-rtd-theme)
-      ("python-csselect" ,python-cssselect)
-      ("python-lxml" ,python-lxml)))
-   (propagated-inputs
-    `(("python-six" ,python-six)))
-   (home-page "https://leather.rtfd.org")
-   (synopsis "Python charting for 80% of humans")
-   (description "Leather is a Python charting library for those who need
-charts now and don't care if they're perfect.")))
+  (package
+    (name "python-leather")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/wireservice/leather")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "193hchrcrh5zyj0xlfs839h25jwzxvzjpbniqjd18mgnip5mk0zn"))))
+    (build-system pyproject-build-system)
+    ;; XXX: Documentation requires <https://github.com/pradyunsg/furo> which
+    ;; is not packaged yet and depends on some missing Node.js packages
+    (native-inputs
+     (list python-cssselect
+           python-lxml
+           python-pytest
+           python-setuptools
+           python-sphinx
+           python-sphinx-design
+           python-wheel))
+    (home-page "https://leather.rtfd.org")
+    (synopsis "Python charting for 80% of humans")
+    (description
+     "Leather is a Python charting library for those who need charts now and
+don't care if they're perfect.")
+    (license license:expat)))
 
 (define python-agate-locales
   (make-glibc-utf8-locales
@@ -96,148 +77,177 @@ charts now and don't care if they're perfect.")))
    #:name "python-agate-locales"))
 
 (define-public python-agate
-  (wireservice-package
-   (name "python-agate")
-   (version "1.7.1")
-   (source (origin
-             (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/wireservice/agate")
-                   (commit version)))
-             (file-name (git-file-name name version))
-             (sha256
-              (base32
-               "1wqyml7f70hr7zhgwvwqy4bdshlbcmp4jmyc5y12jyx10xp3sk7c"))))
-   (native-inputs
-    (list (libc-utf8-locales-for-target)
-          python-agate-locales
-          python-nose
-          python-sphinx
-          python-sphinx-rtd-theme
-          python-cssselect
-          python-lxml))
-   (propagated-inputs
-    (list python-babel
-          python-isodate
-          python-leather
-          python-parsedatetime
-          python-pytimeparse
-          python-six
-          python-slugify))
-   (home-page "https://agate.rtfd.org")
-   (synopsis "Data analysis library")
-   (description "Agate is a Python data analysis library.  It is an
-alternative to numpy and pandas that solves real-world problems with readable
-code.  Agate was previously known as journalism.")))
+  (package
+    (name "python-agate")
+    (version "1.12.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/wireservice/agate")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1qvjlcbv42pjphz5i7vvd5p25barqmglhdzksaspg66n83gps8gv"))))
+    (build-system pyproject-build-system)
+    ;; XXX: Documentation requires <https://github.com/pradyunsg/furo> which
+    ;; is not packaged yet and depends on some missing Node.js packages
+    (native-inputs
+     (list (libc-utf8-locales-for-target)
+           python-agate-locales
+           python-cssselect
+           python-lxml
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-babel
+           python-isodate
+           python-leather
+           python-parsedatetime
+           python-pytimeparse
+           python-slugify
+           python-tzdata))
+    (home-page "https://agate.rtfd.org")
+    (synopsis "Data analysis library")
+    (description
+     "Agate is a Python data analysis library.  It is an alternative to numpy
+and pandas that solves real-world problems with readable code.  Agate was
+previously known as journalism.")
+    (license license:expat)))
 
 (define-public python-agate-sql
-  (wireservice-package
-   (name "python-agate-sql")
-   (version "0.5.9")
-   (source (origin
-             (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/wireservice/agate-sql")
-                   (commit version)))
-             (file-name (git-file-name name version))
-             (sha256
-              (base32
-               "112q523w4jf3k8p4ynvjzfqa4j32ri34h2ppvicialp2lz5drvf0"))))
-   (native-inputs
-    `(("python-nose" ,python-nose)
-      ("python-sphinx" ,python-sphinx)
-      ("python-sphinx-rtd-theme" ,python-sphinx-rtd-theme)))
-   (propagated-inputs
-    `(("python-agate" ,python-agate)
-      ("python-crate" ,python-crate)
-      ("python-sqlalchemy" ,python-sqlalchemy)))
-   (home-page "https://agate-sql.rtfd.org")
-   (synopsis "SQL read/write support to agate")
-   (description "@code{agatesql} uses a monkey patching pattern to add SQL
-support to all @code{agate.Table} instances.")))
+  (package
+    (name "python-agate-sql")
+    (version "0.7.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/wireservice/agate-sql")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "03pvya65jm4s5sxwz0msj5dwjr6mk7dja3wdyh7hmf31dpczkjm8"))))
+    (build-system pyproject-build-system)
+    ;; XXX: Documentation requires <https://github.com/pradyunsg/furo> which
+    ;; is not packaged yet and depends on some missing Node.js packages
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-agate
+           python-crate
+           python-sqlalchemy))
+    (home-page "https://agate-sql.rtfd.org")
+    (synopsis "SQL read/write support to agate")
+    (description
+     "@code{agatesql} uses a monkey patching pattern to add SQL support to all
+@code{agate.Table} instances.")
+    (license license:expat)))
 
 (define-public python-agate-dbf
-  (wireservice-package
-   (name "python-agate-dbf")
-   (version "0.2.2")
-   (source (origin
-             (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/wireservice/agate-dbf")
-                   (commit version)))
-             (file-name (git-file-name name version))
-             (sha256
-              (base32
-               "03l3qlyw7588jhjjsiy15valqlzs8gjai8f74v18zv2za0zjqbzl"))))
-   (native-inputs
-    `(("python-nose" ,python-nose)
-      ("python-sphinx" ,python-sphinx)
-      ("python-sphinx-rtd-theme" ,python-sphinx-rtd-theme)))
-   (propagated-inputs
-    `(("python-agate" ,python-agate)
-      ("python-dbfread" ,python-dbfread)))
-   (home-page "https://agate-dbf.rtfd.org")
-   (synopsis "Add read support for dbf files to agate")
-   (description "@code{agatedbf} uses a monkey patching pattern to add read
-for dbf files support to all @code{agate.Table} instances.")))
+  (package
+    (name "python-agate-dbf")
+    (version "0.2.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/wireservice/agate-dbf")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0z9zmc05sjxw02xl9ygjsdyp32nb3m2qrig0pmvhvf5hj1faigxi"))))
+    (build-system pyproject-build-system)
+    ;; XXX: Documentation requires <https://github.com/pradyunsg/furo> which
+    ;; is not packaged yet and depends on some missing Node.js packages
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-agate
+           python-dbfread))
+    (home-page "https://agate-dbf.rtfd.org")
+    (synopsis "Add read support for dbf files to agate")
+    (description
+     "@code{agatedbf} uses a monkey patching pattern to add read for dbf files
+support to all @code{agate.Table} instances.")
+    (license license:expat)))
 
 (define-public python-agate-excel
-  (wireservice-package
-   (name "python-agate-excel")
-   (version "0.2.5")
-   (source (origin
-             (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/wireservice/agate-excel")
-                   (commit version)))
-             (file-name (git-file-name name version))
-             (sha256
-              (base32
-               "1y3cw57000inwczx50n16kxkr3xi2l241iml1qcqp29a0ba5c519"))))
-   (native-inputs
-    (list python-nose
-          python-sphinx
-          python-sphinx-rtd-theme))
-   (propagated-inputs
-    (list python-agate
-          python-olefile
-          python-openpyxl
-          python-xlrd))
-   (home-page "https://agate-excel.rtfd.org")
-   (synopsis "Add read support for Excel files (xls and xlsx) to agate")
-   (description "@code{agateexcel} uses a monkey patching pattern to add read
-for xls and xlsx files support to all @code{agate.Table} instances.")))
+  (package
+    (name "python-agate-excel")
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/wireservice/agate-excel")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mg5ldnyc72yllwl8x2gpb142l43wss5f4sgp610db1v2w12rzhj"))))
+    (build-system pyproject-build-system)
+    ;; XXX: Documentation requires <https://github.com/pradyunsg/furo> which
+    ;; is not packaged yet and depends on some missing Node.js packages
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-agate
+           python-olefile
+           python-openpyxl
+           python-xlrd))
+    (home-page "https://agate-excel.rtfd.org")
+    (synopsis "Add read support for Excel files (xls and xlsx) to agate")
+    (description
+     "@code{agateexcel} uses a monkey patching pattern to add read for xls and
+xlsx files support to all @code{agate.Table} instances.")
+    (license license:expat)))
 
 (define-public csvkit
   (package
     (name "csvkit")
-    (version "1.1.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "csvkit" version))
-              (sha256
-               (base32
-                "08wj0hlmbdmklar12cjzqp91vcxzwifsvmgasszas8kbiyvvgpdy"))
-              (patches
-               (search-patches "csvkit-set-locale-for-tests.patch"))))
-    (build-system python-build-system)
+    (version "2.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "csvkit" version))
+       (sha256
+        (base32 "1lbd2khkyr75rdc2fblvv8qkl33fv3nx6kj158qzy4spdlk6155a"))
+       (patches
+        (search-patches "csvkit-set-locale-for-tests.patch"))))
+    (outputs (list "out" "doc"))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; AssertionError: '9748.346\n' != '9,748.346\n
+      #:test-flags #~(list "-k" "not test_decimal_format")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-docs
+            (lambda _
+              (let* ((man1 (string-append #$output:doc "/share/man/man1")))
+                (with-directory-excursion "docs"
+                  (invoke "make" "man")
+                  (copy-recursively "_build/man" man1))))))))
     (native-inputs
      (list (libc-utf8-locales-for-target)
            python-psycopg2 ; to test PostgreSQL support
-           python-sphinx python-sphinx-rtd-theme))
+           python-pytest
+           python-setuptools
+           python-sphinx
+           python-sphinx-rtd-theme
+           python-wheel))
     (inputs
-     (list python-agate-dbf python-agate-excel python-agate-sql
-           python-six python-text-unidecode))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'install-docs
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out  (assoc-ref outputs "out"))
-                    (man1 (string-append out "/share/man/man1")))
-               (with-directory-excursion "docs"
-                 (invoke "make" "man")
-                 (copy-recursively "_build/man" man1))))))))
+     (list python-agate-dbf
+           python-agate-excel
+           python-agate-sql
+           python-text-unidecode))
     (home-page "https://csvkit.rtfd.org")
     (synopsis "Command-line tools for working with CSV")
     (description "csvkit is a suite of command-line tools for converting to

@@ -118,6 +118,7 @@
   #:use-module (gnu packages bittorrent)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages build-tools)
+  #:use-module (gnu packages certs)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
@@ -369,12 +370,6 @@ and its related documentation.")
                #$version))
       #:phases
       #~(modify-phases %standard-phases
-          ;; XXX: Replace when go-build-system supports nested path.
-          (replace 'check
-            (lambda* (#:key import-path tests? #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go" "test" "-v" "./...")))))
           (add-after 'install 'install-manpage
             (lambda* (#:key import-path #:allow-other-keys)
               (let ((man1 (string-append #$output "/share/man/man1/"))
@@ -401,8 +396,7 @@ and its related documentation.")
            go-golang-org-x-net
            go-golang-org-x-oauth2
            go-golang-org-x-term
-           go-golang-org-x-text
-           go-mvdan-cc-xurls-v2))
+           go-golang-org-x-text))
     (home-page "https://miniflux.app/")
     (synopsis "Minimalist and opinionated feed reader")
     (description
@@ -1960,7 +1954,7 @@ UTS#46.")
 (define-public esbuild
   (package
     (name "esbuild")
-    (version "0.14.0")
+    (version "0.24.0")
     (source
      (origin
        (method git-fetch)
@@ -1969,43 +1963,28 @@ UTS#46.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "09r1xy0kk6c9cpz6q0mxr4why373pwxbm439z2ihq3k1d5kk7x4w"))
+        (base32 "1j99m7rdql6iq3llrr8bm85hq34ssc8bmb6vhwr1ibgspjl0jd3k"))
        (modules '((guix build utils)))
        (snippet
-        '(begin
-           ;; Remove prebuilt binaries
-           (delete-file-recursively "npm")
-           #t))))
+        #~(begin
+            ;; Remove prebuilt binaries
+            (delete-file-recursively "npm")))))
     (build-system go-build-system)
     (arguments
-     `(#:import-path "github.com/evanw/esbuild/cmd/esbuild"
-       #:unpack-path "github.com/evanw/esbuild"
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? unpack-path #:allow-other-keys)
-             (when tests?
-               ;; The "Go Race Detector" is only supported on 64-bit
-               ;; platforms, this variable disables it.
-               ;; TODO: Causes too many rebuilds, rewrite to limit to x86_64,
-               ;; aarch64 and ppc64le.
-               ,(if (target-riscv64?)
-                  `(setenv "ESBUILD_RACE" "")
-                  `(unless ,(target-64bit?)
-                     (setenv "ESBUILD_RACE" "")))
-               (with-directory-excursion (string-append "src/" unpack-path)
-                 (invoke "make" "test-go")))
-             #t)))))
+     (list
+      #:import-path "github.com/evanw/esbuild/cmd/esbuild"
+      #:unpack-path "github.com/evanw/esbuild"
+      #:test-flags #~(list #$(if (target-64bit?) "-race" "-short"))
+      ;; Test subdirectories are compiled from #:import-path.
+      #:test-subdirs #~(list "../../internal/..." "../../pkg/..." )))
     (inputs
-     `(("golang.org/x/sys" ,go-golang-org-x-sys)))
-    (native-inputs
-     `(("github.com/kylelemons/godebug" ,go-github-com-kylelemons-godebug)))
+     (list go-golang-org-x-sys-for-esbuild))
     (home-page "https://esbuild.github.io/")
     (synopsis "Bundler and minifier tool for JavaScript and TypeScript")
     (description
-     "The esbuild tool provides a unified bundler, transpiler and
-minifier.  It packages up JavaScript and TypeScript code, along with JSON
-and other data, for distribution on the web.")
+     "The esbuild tool provides a unified bundler, transpiler and minifier.
+It packages up JavaScript and TypeScript code, along with JSON and other data,
+for distribution on the web.")
     (license license:expat)))
 
 (define-public tinyproxy
@@ -5294,8 +5273,8 @@ Cloud.")
     (license license:expat)))
 
 (define-public guix-data-service
-  (let ((commit "c886685e9284da4bbed9377f70dd70da9e7ca29f")
-        (revision "58"))
+  (let ((commit "25bf45fe7734ea8de4e98c97595420b19c871e61")
+        (revision "59"))
     (package
       (name "guix-data-service")
       (version (string-append "0.0.1-" revision "." (string-take commit 7)))
@@ -5307,7 +5286,7 @@ Cloud.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0rg8ydzg4s984bvz73343vqb3fkykk7x48121c1rzdiakh3ndp1i"))))
+                  "1na02i9mfxpc9hwnvx2zp2ykvxgffc8i0fjzbh9vi9n1l6iryiwz"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -5549,13 +5528,17 @@ you'd expect.")
                 "0s7c8r6y5jv6wda2v3k47hawfdr9j3rwk717l6byvh5qsbbml0vd"))))
     (build-system go-build-system)
     (arguments
-     (list #:import-path "github.com/mikefarah/yq/v4"
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'install 'remove-binary
-                 (lambda _
-                   (delete-file-recursively
-                    (string-append #$output "/bin")))))))
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/mikefarah/yq/v4"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Tests need this.
+          (add-after 'unpack 'fix-access-to-doc
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (for-each make-file-writable
+                          (find-files "./pkg/yqlib/doc" "\\.md"))))))))
     (propagated-inputs
      (list go-github-com-a8m-envsubst
            go-github-com-alecthomas-participle-v2
@@ -5590,14 +5573,12 @@ JSON, XML, properties, CSV and TSV.")
     (inherit go-github-com-mikefarah-yq-v4)
     (name "yq")
     (arguments
-     (list #:install-source? #f
-           #:import-path "github.com/mikefarah/yq/v4"
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'install 'rename-binary
-                 (lambda _
-                   (rename-file (string-append #$output "/bin/v4")
-                                (string-append #$output "/bin/yq")))))))
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-mikefarah-yq-v4)
+       ((#:install-source? _ #t) #f)
+       ((#:skip-build? _ #t) #f)
+       ((#:tests? _ #t) #f)
+       ((#:import-path _) "github.com/mikefarah/yq")))
     (propagated-inputs '())
     (inputs (package-propagated-inputs go-github-com-mikefarah-yq-v4))))
 
@@ -7110,17 +7091,22 @@ efficient where possible.")
         (base32 "0s1vjdaf3pk2xd0hvi5f7p3jm2rgwpbc734jdp9r50m1smfhxpi0"))))
     (build-system python-build-system)
     (arguments
-     `(#:tests? #f  ; Tests require network access.
-       #:phases
-       (modify-phases %standard-phases
+     (list
+      #:phases
+      '(modify-phases %standard-phases
          (replace 'check
            (lambda* (#:key tests? #:allow-other-keys)
              (when tests?
-               (invoke "nosetests")))))))
+               (setenv "EVENTLET_NO_GREENDNS" "YES")
+               (invoke "nosetests" "--exclude=(passthrough|streaming|httpretty_should_handle)")))))))
     (native-inputs
-     (list python-coverage
+     (list nss-certs-for-test
+           python-coverage
            python-eventlet
+           python-freezegun
+           python-httplib2
            python-nose
+           python-pyparsing
            python-rednose
            python-requests
            python-sure
@@ -7154,7 +7140,7 @@ command-line arguments or read from stdin.")
 (define-public python-internetarchive
   (package
     (name "python-internetarchive")
-    (version "1.8.5")
+    (version "5.1.0")
     (source
      (origin
        (method git-fetch)
@@ -7164,47 +7150,34 @@ command-line arguments or read from stdin.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0ih7hplv92wbv6cmgc1gs0v35qkajwicalwcq8vcljw30plr24fp"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; Python 3.7 removed `_pattern_type'.
-           (for-each (lambda (file)
-                       (chmod file #o644)
-                       (substitute* file
-                         (("^import re\n" line)
-                          (string-append line "re._pattern_type = re.Pattern\n"))))
-                     (find-files "." "\\.py$"))
-           ;; Mapping got moved to collections.abc
-           (substitute* "internetarchive/utils.py"
-             (("from collections import Mapping")
-              "from collections.abc import Mapping"))))))
-    (build-system python-build-system)
+         "186nx0dj0lgqrqkg9kzng5h0scbz3m6bk44vj83wzckr8yh3q08z"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (delete 'check)
-         (add-after 'install 'check
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (add-installed-pythonpath inputs outputs)
-             (setenv "PATH" (string-append (assoc-ref outputs "out") "/bin"
-                                           ":" (getenv "PATH")))
-             (invoke "py.test" "-v" "-k"
-                     (string-append
-                      ;; These tests attempt to make a connection to
-                      ;; an external web service.
-                      "not test_get_item_with_kwargs"
-                      " and not test_ia")))))))
+     (list
+      #:test-flags
+      '(list "-k"
+             (string-append
+              ;; These tests need Internet access.
+              "not test_get_item_with_kwargs"
+              " and not test_upload"
+              " and not test_ia"))))
     (propagated-inputs
-     (list python-requests
-           python-jsonpatch-0.4
-           python-docopt
+     (list python-backports-csv
            python-clint
+           python-docopt
+           python-importlib-metadata
+           python-jsonpatch
+           python-requests
            python-six
-           python-schema-0.5
-           python-backports-csv))
+           python-schema
+           python-tqdm))
     (native-inputs
-     (list python-pytest python-pytest-capturelog python-responses))
+     (list nss-certs-for-test
+           python-pytest
+           python-pytest-capturelog
+           python-responses
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/jjjake/internetarchive")
     (synopsis "Command-line interface to archive.org")
     (description "@code{ia} is a command-line tool for using
@@ -7328,7 +7301,7 @@ Instagram and YouTube.")
 (define-public linkchecker
   (package
     (name "linkchecker")
-    (version "10.0.1")
+    (version "10.5.0")
     (source
      (origin
        (method git-fetch)
@@ -7337,24 +7310,31 @@ Instagram and YouTube.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1j97dc9a4yhpscwadhv5dxp7036pnrxiaky18l8ddr3pvxdjvkxs"))))
-    (build-system python-build-system)
-    (inputs
-     (list python-beautifulsoup4 python-dnspython python-pyxdg
-           python-requests))
-    (native-inputs
-     `(("gettext" ,gettext-minimal)
-       ("python-pytest" ,python-pytest)
-       ("python-miniboa" ,python-miniboa)
-       ("python-parameterized" ,python-parameterized)))
+        (base32 "19giahk5bs2r2ay54cc6b2ba5hr3lszn5a89m7zmwb0bk9655z56"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "py.test" "tests")))))))
+     (list
+      #:test-flags
+      #~(list
+        ;; OSError: Command ... '-m', 'linkcheck', '-V']' returned non-zero
+        ;; exit status 2.
+         "--deselect=tests/test_linkchecker.py::TestLinkchecker::test_linkchecker"
+         ;; FileNotFoundError: [Errno 2] No such file or directory: 'msgfmt'
+         "--deselect=tests/test_po.py::TestPo::test_pos")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (native-inputs
+     (list python-hatch-vcs
+           python-hatchling
+           python-pytest
+           python-setuptools-scm))
+    (inputs
+     (list python-beautifulsoup4
+           python-dnspython
+           python-requests))
     (home-page "https://linkchecker.github.io/linkchecker/")
     (synopsis "Check websites for broken links")
     (description "LinkChecker is a website validator.  It checks for broken
@@ -9011,7 +8991,7 @@ Anonip can also be uses as a Python module in your own Python application.")
          "0kckcwvqklavd855np9aq5js6mg84isrlwchr504yigwma0sm7hm"))))
     (build-system go-build-system)
     (propagated-inputs
-     (list go-github-com-robfig-cron go-golang-org-x-time))
+     (list go-github-com-robfig-cron-v3 go-golang-org-x-time))
     (arguments
      `(#:import-path "github.com/tsileo/poussetaches"))
     (home-page "https://github.com/tsileo/poussetaches")

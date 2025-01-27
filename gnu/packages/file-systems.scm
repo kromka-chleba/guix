@@ -14,6 +14,7 @@
 ;;; Copyright © 2023 Aaron Covrig <aaron.covrig.us@ieee.org>
 ;;; Copyright © 2024 Ahmad Draidi <a.r.draidi@redscript.org>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2025 Julian Flake <flake@uni-koblenz.de>
 ;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -322,14 +323,14 @@ integration with @code{avfs}.")
 (define-public davfs2
   (package
     (name "davfs2")
-    (version "1.6.1")
+    (version "1.7.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://download.savannah.nongnu.org/releases/"
                            "davfs2/davfs2-" version ".tar.gz"))
        (sha256
-        (base32 "1h65j2py59b97wbzzjhp4wbkk6351v3hrjscjcfab0p5xi4bjgnf"))))
+        (base32 "1b5izj2qivys6nkqjy08nznjwszar8d46ajmw5cf5jvkcw6dv3i9"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -510,6 +511,7 @@ significantly increases the risk of irreversible data loss!")
     (build-system go-build-system)
     (arguments
      (list
+      #:install-source? #f
       #:import-path "github.com/rfjakob/gocryptfs"
       #:build-flags
       #~(list
@@ -518,6 +520,15 @@ significantly increases the risk of irreversible data loss!")
                      " -X main.GitVersionFuse=" #$(package-version
                                                    go-github-com-hanwen-go-fuse-v2)
                      " -X main.BuildDate=" "[reproducible]"))
+      #:test-flags
+      #~(list "-skip" (string-join
+                       (list "TestPrepareAtSyscall"
+                             "TestPrepareAtSyscallPlaintextnames"
+                             "TestGetdents")
+                       "|"))
+      ;; XXX: Test suit requires a root access to mount, limit to some unit
+      ;; tests, figure out how to enable most of the them.
+      #:test-subdirs #~(list "internal/...")
       #:phases
       #~(modify-phases %standard-phases
           ;; after 'check phase, should maybe unmount leftover mounts as in
@@ -535,18 +546,14 @@ significantly increases the risk of irreversible data loss!")
                 "github.com/rfjakob/gocryptfs/contrib/findholes"
                 "github.com/rfjakob/gocryptfs/contrib/atomicrename")))))))
     (native-inputs (list
-                    go-github-com-hanwen-go-fuse-v2
                     go-github-com-aperturerobotics-jacobsa-crypto
-                    go-github-com-jacobsa-oglematchers
-                    go-github-com-jacobsa-oglemock
-                    go-github-com-jacobsa-ogletest
-                    go-github-com-jacobsa-reqtrace
+                    go-github-com-hanwen-go-fuse-v2
+                    go-github-com-moby-sys-mountinfo
                     go-github-com-pkg-xattr
                     go-github-com-rfjakob-eme
                     go-github-com-sabhiram-go-gitignore
                     go-github-com-spf13-pflag
                     go-golang-org-x-crypto
-                    go-golang-org-x-net
                     go-golang-org-x-sys
                     go-golang-org-x-term
                     openssl
@@ -1563,7 +1570,7 @@ with the included @command{xfstests-check} helper.")
 (define-public zfs
   (package
     (name "zfs")
-    (version "2.2.7")
+    (version "2.3.0")
     (outputs '("out" "module" "src"))
     (source
       (origin
@@ -1572,7 +1579,7 @@ with the included @command{xfstests-check} helper.")
                             "/download/zfs-" version
                             "/zfs-" version ".tar.gz"))
         (sha256
-         (base32 "0wkniyfjmbvyyfqv35fhbdx58qk7rck3f91j05x419pjmfzy7f5j"))))
+         (base32 "19jnjcpaknb8yf7zh7f36kmnb9m91ndzxwqpqfwwc92znpm8g1vf"))))
     (build-system linux-module-build-system)
     (arguments
      (list
@@ -1959,31 +1966,6 @@ Dropbox API v2.")
 local file system using FUSE.")
   (license license:gpl3+)))
 
-(define-public go-github-com-hanwen-fuse
-  (package
-    (name "go-github-com-hanwen-fuse")
-    (version "2.0.3")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/hanwen/go-fuse")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1y44d08fxyis99s6jxdr6dbbw5kv3wb8lkhq3xmr886i4w41lz03"))))
-    (build-system go-build-system)
-    (arguments
-     `(#:import-path "github.com/hanwen/go-fuse"))
-    (propagated-inputs
-     (list go-golang-org-x-sys))
-    (home-page "https://github.com/hanwen/go-fuse")
-    (synopsis "FUSE bindings for Go")
-    (description
-     "This package provides Go native bindings for the FUSE kernel module.")
-    (license license:bsd-3)))
-
 (define-public rewritefs
   (let ((revision "1")
         (commit "3a56de8b5a2d44968b8bc3885c7d661d46367306"))
@@ -2145,7 +2127,7 @@ memory-efficient.")
                 (setenv "DESTDIR" #$output)
                 (invoke "make" "install")))))))
     (inputs
-     (list go-github-com-mattn-go-sqlite3 go-github-com-hanwen-fuse))
+     (list go-github-com-mattn-go-sqlite3 go-github-com-hanwen-go-fuse))
     (home-page "https://github.com/oniony/TMSU")
     (synopsis "Tag files and access them through a virtual file system")
     (description

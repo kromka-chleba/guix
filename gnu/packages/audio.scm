@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015-2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015 Taylan Ulrich Bayırlı/Kammer <taylanbayirli@gmail.com>
 ;;; Copyright © 2015 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2015 Alex Kost <alezost@gmail.com>
@@ -11,7 +11,7 @@
 ;;; Copyright © 2016–2023 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018, 2020, 2024 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2018 okapi <okapi@firemail.cc>
-;;; Copyright © 2018, 2020, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2018, 2020, 2022-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2018 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2018 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2018, 2019, 2022 Marius Bakke <marius@gnu.org>
@@ -79,6 +79,7 @@
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cdrom)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages crates-audio)
@@ -140,6 +141,7 @@
   #:use-module (gnu packages samba)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
+  #:use-module (gnu packages sphinx)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tbb)
   #:use-module (gnu packages telephony)
@@ -163,6 +165,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system trivial)
   #:use-module (guix build-system waf)
   #:use-module (guix download)
@@ -3143,34 +3146,85 @@ included are the command line utilities @code{send_osc} and @code{dump_osc}.")
 (define-public python-soundfile
   (package
     (name "python-soundfile")
-    (version "0.10.3.post1")
+    (version "0.13.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "SoundFile" version))
+       (uri (pypi-uri "soundfile" version))
        (sha256
         (base32
-         "0yqhrfz7xkvqrwdxdx2ydy4h467sk7z3gf984y1x2cq7cm1gy329"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-cffi python-numpy libsndfile))
-    (native-inputs
-     (list python-pytest))
+         "0mc3g5l9fzj57m62zrwwz0w86cbihpna3mikgh8kpmz7ppc9jcz8"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f ; missing OGG support
-       #:phases
-       (modify-phases %standard-phases
+     (list
+      #:test-flags
+      ;; Error opening 'tests/stereo.mp3': File contains data in an
+      ;; unimplemented format.
+      '(list "-k" "not test_write_mp3_compression")
+      #:phases
+      '(modify-phases %standard-phases
          (add-after 'unpack 'patch
            (lambda* (#:key inputs #:allow-other-keys)
              (substitute* "soundfile.py"
                (("_find_library\\('sndfile'\\)")
-                (string-append "\"" (assoc-ref inputs "libsndfile")
-                               "/lib/libsndfile.so\""))))))))
+                (string-append "\"" (search-input-file inputs "/lib/libsndfile.so")
+                               "\""))))))))
+    (propagated-inputs
+     (list python-cffi python-numpy libsndfile))
+    (native-inputs
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/bastibe/SoundFile")
     (synopsis "Python bindings for libsndfile")
     (description "This package provides python bindings for libsndfile based on
 CFFI and NumPy.")
     (license license:expat)))
+
+(define-public python-soxr
+  (package
+    (name "python-soxr")
+    (version "0.5.0.post1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "soxr" version))
+       (sha256
+        (base32 "0wzz7j0z814mm99xr19vfrwp2x904lbwhf513x7085m4x3rvk4kh"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'find-nanobind
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((python #$(this-package-native-input "python"))
+                     (version (python-version python))
+                     (nanobind (search-input-file
+                                inputs
+                                (string-append "lib/python" version
+                                               "/site-packages/nanobind/"
+                                               "cmake/nanobind-config.cmake"))))
+                (setenv "CMAKE_PREFIX_PATH"
+                        (string-append (dirname nanobind)
+                                       ":" (getenv "CMAKE_PREFIX_PATH")))))))))
+    (propagated-inputs (list python-numpy))
+    (native-inputs (list cmake-minimal
+                         python
+                         python-linkify-it-py
+                         python-myst-parser
+                         python-nanobind
+                         python-pytest
+                         python-scikit-build-core
+                         python-setuptools
+                         python-setuptools-scm
+                         python-sphinx
+                         python-typing-extensions
+                         python-wheel))
+    (home-page "https://github.com/dofuuz/python-soxr")
+    (synopsis "High quality, one-dimensional sample-rate conversion library")
+    (description
+     "Python-SoXR is a Python wrapper of libsoxr, a high quality,
+one-dimensional sample-rate conversion library.")
+    (license license:lgpl2.1)))
 
 (define-public python-python3-midi
   (package
@@ -4354,6 +4408,30 @@ and playback rates of audio streams or audio files.  It is intended for
 application developers writing sound processing tools that require tempo/pitch
 control functionality, or just for playing around with the sound effects.")
     (license license:lgpl2.1+)))
+
+(define-public soundtouch-1/integer-samples
+  (package
+    (inherit soundtouch)
+    (name "soundtouch")
+    (version "1.9.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/soundtouch/soundtouch.git")
+             (commit (string-append name "-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ir961w5gz86cm6yivr1ypi6n2y52vn319gy2gvdkkbbz5wyjkrq"))))
+    (arguments
+     ;; Dolphin expects the samples to be of the integer type.
+     (list #:configure-flags #~(list "--enable-integer-samples")
+           #:phases #~(modify-phases %standard-phases
+                        (replace 'bootstrap
+                          (lambda _
+                            ;; Avoid the bootstrap script, which has a broken
+                            ;; shebang.
+                            (invoke "autoreconf" "-vif"))))))))
 
 (define-public stargate-soundtouch
   ;; Stargate's fork of soundtouch.
@@ -6404,7 +6482,7 @@ and much more.")
 (define-public python-resampy
   (package
     (name "python-resampy")
-    (version "0.2.2")
+    (version "0.4.3")
     (source
      (origin
        (method git-fetch)
@@ -6415,20 +6493,12 @@ and much more.")
          (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0qmkxl5sbgh0j73n667vyi7ywzh09iaync91yp1j5rrcmwsn0qfs"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (invoke "pytest" "tests")))))))
+        (base32 "0dlm9ksm7yzgg582sic0vqwfcwdya1g4gnydxldfhaq4y0wakr9c"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-numba python-numpy python-scipy python-six))
     (native-inputs
-     (list python-pytest python-pytest-cov))
+     (list python-pytest python-pytest-cov python-setuptools python-wheel))
     (home-page "https://github.com/bmcfee/resampy")
     (synopsis "Efficient signal resampling")
     (description
@@ -6441,30 +6511,52 @@ Home Page}.")
 (define-public python-librosa
   (package
     (name "python-librosa")
-    (version "0.8.1")
+    (version "0.10.2.post1")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "librosa" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/librosa/librosa/")
+             (commit version)
+             ;; For test files.
+             (recursive? #true)))
        (sha256
-        (base32 "1cx6rhcvak0hy6bx84jwzpxmwgi92m82w77279akwjmfd3khagf5"))))
-    (build-system python-build-system)
+        (base32 "1x37148y1rh4sq2nc59iw9jlza3zwawxnlb7bd9w36an05aclmnh"))))
+    (build-system pyproject-build-system)
     (arguments
-     ;; Tests require internet connection to download MATLAB scripts for
-     ;; generating the testing data.
-     `(#:tests? #f))
+     (list
+      #:test-flags
+      ;; Ignore --mpl flag.
+      '(list "-c" "/dev/null"
+             "-k" (string-append
+                   ;; Resampling tests require python-samplerate.
+                   "not resample"
+                   ;; These tests use Pooch and download data files.
+                   " and not example and not test_cite"
+                   ;; XXX assert 22050 == 31744
+                   " and not test_stream"))))
     (propagated-inputs
      (list python-audioread
            python-decorator
            python-joblib
+           python-lazy-loader
+           python-msgpack
            python-numba
            python-numpy
-           python-packaging
            python-pooch
-           python-resampy
            python-scikit-learn
            python-scipy
-           python-soundfile))
+           python-soundfile
+           python-soxr
+           python-typing-extensions))
+    (native-inputs
+     (list python-matplotlib
+           python-packaging
+           python-pytest
+           python-pytest-cov
+           python-resampy
+           python-setuptools
+           python-wheel))
     (home-page "https://librosa.org")
     (synopsis "Python module for audio and music processing")
     (description

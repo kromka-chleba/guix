@@ -20,7 +20,7 @@
 ;;; Copyright © 2021 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 muradm <mail@muradm.net>
 ;;; Copyright © 2021, 2022 Petr Hodina <phodina@protonmail.com>
-;;; Copyright © 2021-2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2021-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2021 Jacob Hrbek <kreyren@rixotstudio.cz>
 ;;; Copyright © 2021, 2022 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2022 Aleksandr Vityazev <avityazev@posteo.org>
@@ -2164,6 +2164,77 @@ reductions on 32-bit ARM.")
     (synopsis "Flexible concrete Error type")
     (description "This package provides a flexible concrete Error type built on
 @code{std::error::Error}.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-anyinput-0.1
+  (package
+    (name "rust-anyinput")
+    (version "0.1.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "anyinput" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "08dkks0pg097vcjj3a43fxzazs2cnmf1jd7kcj8s3y6lfxj80n12"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-anyinput-derive" ,rust-anyinput-derive-0.1))))
+    (home-page "https://github.com/CarlKCarlK/anyinput")
+    (synopsis "Macro for functions that accept any input")
+    (description
+     "This package provides a macro for easier writing of functions that
+accept any string-, path-, iterator-, array-, or ndarray-like input.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-anyinput-core-0.1
+  (package
+    (name "rust-anyinput-core")
+    (version "0.1.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "anyinput-core" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "17y761xzk0xy7n5q0d76fb29f40cd59qa3b4kv58g9n8k2qivks9"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-ndarray" ,rust-ndarray-0.16)
+                       ("rust-proc-macro-error" ,rust-proc-macro-error-1)
+                       ("rust-proc-macro2" ,rust-proc-macro2-1)
+                       ("rust-quote" ,rust-quote-1)
+                       ("rust-strum" ,rust-strum-0.26)
+                       ("rust-syn" ,rust-syn-2))))
+    (home-page "https://github.com/CarlKCarlK/anyinput")
+    (synopsis "Internal helper library of anyinput")
+    (description
+     "This package provides an internal helper library of anyinput.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-anyinput-derive-0.1
+  (package
+    (name "rust-anyinput-derive")
+    (version "0.1.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "anyinput-derive" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1xcgkdkskmh8xxxyr1chfapn9avk8d8s7jjph5zy4ff22dri4m7y"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-anyinput-core" ,rust-anyinput-core-0.1)
+                       ("rust-proc-macro-error" ,rust-proc-macro-error-1)
+                       ("rust-proc-macro2" ,rust-proc-macro2-1))))
+    (home-page "https://github.com/CarlKCarlK/anyinput")
+    (synopsis "Internal helper library of anyinput")
+    (description
+     "This package provides an internal helper library of anyinput.")
     (license (list license:expat license:asl2.0))))
 
 (define-public rust-apache-avro-0.16
@@ -13303,6 +13374,34 @@ or to a file as well.")
 descriptors.")
     (license license:expat)))
 
+(define-public rust-cloud-file-0.2
+  (package
+    (name "rust-cloud-file")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "cloud-file" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1xvqmizskv88c9mgb78y2aclkbmq1bhlvsnk20xkx6x2wnlwyd51"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-bytecount" ,rust-bytecount-0.6)
+                       ("rust-bytes" ,rust-bytes-1)
+                       ("rust-futures" ,rust-futures-0.3)
+                       ("rust-futures-util" ,rust-futures-util-0.3)
+                       ("rust-object-store" ,rust-object-store-0.11)
+                       ("rust-thiserror" ,rust-thiserror-1)
+                       ("rust-tokio" ,rust-tokio-1)
+                       ("rust-url" ,rust-url-2))))
+    (home-page "https://github.com/CarlKCarlK/cloud-file")
+    (synopsis "Simple reading of cloud files in Rust")
+    (description
+     "This package is for simple reading of cloud files in Rust.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public rust-cloudabi-0.1
   (package
     (name "rust-cloudabi")
@@ -13490,14 +13589,14 @@ diagnostics easy and relatively painless for everyone!")
 (define-public rust-codspeed-2
   (package
     (name "rust-codspeed")
-    (version "2.4.0")
+    (version "2.7.2")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "codspeed" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "0ikj07wl9g7az7mnlarmsyjh6a77vm4l2lmwbsbx2h85m9bb11ab"))))
+        (base32 "15yf7gnb4s1fdvprdpn41yfydxpnv2clyd7lar0ia76zz6fhw2j5"))))
     (build-system cargo-build-system)
     (arguments
      `(#:cargo-inputs (("rust-colored" ,rust-colored-2)
@@ -13512,14 +13611,14 @@ diagnostics easy and relatively painless for everyone!")
 (define-public rust-codspeed-bencher-compat-2
   (package
     (name "rust-codspeed-bencher-compat")
-    (version "2.4.0")
+    (version "2.7.2")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "codspeed-bencher-compat" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "172c4xkvwbpvjhrx0w6lc4fa250cxdi8fmfvpv6mffghcxaqpr6h"))))
+        (base32 "0n0m440c021s1pqb2k5w41a0l3pq5fwpwk489948kddm67pgwnh2"))))
     (build-system cargo-build-system)
     (arguments
      `(#:cargo-inputs (("rust-bencher" ,rust-bencher-0.1)
@@ -21809,6 +21908,28 @@ objects back to their original types.  The same as the rust-downcast-rs crate.")
 parameters, associated types, and type constraints.")
     (license (list license:expat license:asl2.0))))
 
+(define-public rust-dpc-pariter-0.4
+  (package
+    (name "rust-dpc-pariter")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "dpc-pariter" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0s546d43yyiw55jz3yw4nyxgzmnc4f0gamzkfi6m7kyw2xlf2anl"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-crossbeam" ,rust-crossbeam-0.8)
+                       ("rust-crossbeam-channel" ,rust-crossbeam-channel-0.5)
+                       ("rust-num-cpus" ,rust-num-cpus-1))))
+    (home-page "https://github.com/dpc/pariter")
+    (synopsis "Parallel iterator processing")
+    (description "This is a package for parallel iterator processing.")
+    (license (list license:mpl2.0 license:expat license:asl2.0))))
+
 (define-public rust-draw-state-0.8
   (package
     (name "rust-draw-state")
@@ -25685,6 +25806,37 @@ Atom, RSS 2.0, RSS 1.0, RSS 0.x and JSON Feed")
     (description
      "This package provides a simple, efficient logging system for Rust.")
     (license license:expat)))
+
+(define-public rust-fetch-data-0.2
+  (package
+    (name "rust-fetch-data")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "fetch-data" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1wjjb3l37kdvvq3pv93cxlxxr2pc7kx0ssk2gqispw5bhggnlyda"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-anyinput" ,rust-anyinput-0.1)
+                       ("rust-base16ct" ,rust-base16ct-0.2)
+                       ("rust-ctor" ,rust-ctor-0.2)
+                       ("rust-directories" ,rust-directories-5)
+                       ("rust-getrandom" ,rust-getrandom-0.2)
+                       ("rust-sha2" ,rust-sha2-0.10)
+                       ("rust-temp-testdir" ,rust-temp-testdir-0.2)
+                       ("rust-thiserror" ,rust-thiserror-1)
+                       ("rust-ureq" ,rust-ureq-2))))
+    (home-page "https://github.com/CarlKCarlK/fetch-data")
+    (synopsis "Fetch data files from a URL")
+    (description
+     "This package lets you fetch data files from a URL, but only if needed.
+It verifies contents via SHA256 and provides some Python Pooch
+compatibility.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public rust-fetch-unroll-0.3
   (package
@@ -36370,8 +36522,44 @@ heavily inspired by the Temporal project.")
      "Provides the Time Zone Database for use in your binary on specific platforms.")
     (license (list license:unlicense license:expat))))
 
+(define-public rust-jiter-0.7
+  (package
+    (name "rust-jiter")
+    (version "0.7.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "jiter" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "09fx71x93sh15028pd0f78flv9j4fkvg6lgi22y5gbv83c99mxh7"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-ahash" ,rust-ahash-0.8)
+        ("rust-bitvec" ,rust-bitvec-1)
+        ("rust-lexical-parse-float" ,rust-lexical-parse-float-0.8)
+        ("rust-num-bigint" ,rust-num-bigint-0.4)
+        ("rust-num-traits" ,rust-num-traits-0.2)
+        ("rust-pyo3" ,rust-pyo3-0.22)
+        ("rust-pyo3-build-config" ,rust-pyo3-build-config-0.22)
+        ("rust-smallvec" ,rust-smallvec-1))
+       #:cargo-development-inputs
+       (("rust-bencher" ,rust-bencher-0.1)
+        ("rust-codspeed-bencher-compat" ,rust-codspeed-bencher-compat-2)
+        ("rust-paste" ,rust-paste-1)
+        ("rust-pyo3" ,rust-pyo3-0.22)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1))))
+    (native-inputs (list python-minimal-wrapper))   ; For the tests.
+    (home-page "https://github.com/pydantic/jiter/")
+    (synopsis "Fast Iterable JSON parser")
+    (description "This package provides an iterable JSON parser.")
+    (license license:expat)))
+
 (define-public rust-jiter-0.5
   (package
+    (inherit rust-jiter-0.7)
     (name "rust-jiter")
     (version "0.5.0")
     (source
@@ -36381,7 +36569,6 @@ heavily inspired by the Temporal project.")
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
         (base32 "0ayj16d1rx5h5v7ihxgg198a9c190b6shsylzzfhxx9y2i4kbqh2"))))
-    (build-system cargo-build-system)
     (arguments
      `(#:cargo-inputs (("rust-ahash" ,rust-ahash-0.8)
                        ("rust-bitvec" ,rust-bitvec-1)
@@ -36397,12 +36584,36 @@ heavily inspired by the Temporal project.")
         ("rust-paste" ,rust-paste-1)
         ("rust-pyo3" ,rust-pyo3-0.22)
         ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1))))
-    (native-inputs (list python-minimal-wrapper))   ; For the tests.
-    (home-page "https://github.com/pydantic/jiter/")
-    (synopsis "Iterable JSON parser")
-    (description "This package provides an iterable JSON parser.")
-    (license license:expat)))
+        ("rust-serde-json" ,rust-serde-json-1))))))
+
+(define-public rust-jiter-0.2
+  (package
+    (inherit rust-jiter-0.5)
+    (name "rust-jiter")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "jiter" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "163b67vsgn6xlnzypjk40r9wf27hc4ax9hfpwwd0ry6w1a37f4cf"))))
+    (arguments
+     `(#:cargo-inputs
+       (("rust-ahash" ,rust-ahash-0.8)
+        ("rust-lexical-parse-float" ,rust-lexical-parse-float-0.8)
+        ("rust-num-bigint" ,rust-num-bigint-0.4)
+        ("rust-num-traits" ,rust-num-traits-0.2)
+        ("rust-pyo3" ,rust-pyo3-0.21)
+        ("rust-pyo3-build-config" ,rust-pyo3-build-config-0.21)
+        ("rust-smallvec" ,rust-smallvec-1))
+       #:cargo-development-inputs
+       (("rust-bencher" ,rust-bencher-0.1)
+        ("rust-codspeed-bencher-compat" ,rust-codspeed-bencher-compat-2)
+        ("rust-paste" ,rust-paste-1)
+        ("rust-pyo3" ,rust-pyo3-0.21)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1))))))
 
 (define-public rust-jiter-0.0.6
   (package
@@ -44204,8 +44415,48 @@ a non-blocking way, without waiting for the connection to become fully
 established.")
     (license (list license:asl2.0 license:expat))))
 
+(define-public rust-ndarray-0.16
+  (package
+    (name "rust-ndarray")
+    (version "0.16.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "ndarray" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0ha8sg5ad501pgkxw0wczh8myc2ma3gyxgcny4mq8rckrqnxfbl8"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:tests? #f      ; use of undeclared crate or module `ndarray_gen`
+       #:cargo-inputs
+       (("rust-approx" ,rust-approx-0.5)
+        ("rust-cblas-sys" ,rust-cblas-sys-0.1)
+        ("rust-libc" ,rust-libc-0.2)
+        ("rust-matrixmultiply" ,rust-matrixmultiply-0.3)
+        ("rust-num-complex" ,rust-num-complex-0.4)
+        ("rust-num-integer" ,rust-num-integer-0.1)
+        ("rust-num-traits" ,rust-num-traits-0.2)
+        ("rust-portable-atomic" ,rust-portable-atomic-1)
+        ("rust-portable-atomic-util" ,rust-portable-atomic-util-0.2)
+        ("rust-rawpointer" ,rust-rawpointer-0.2)
+        ("rust-rayon" ,rust-rayon-1)
+        ("rust-serde" ,rust-serde-1))
+       #:cargo-development-inputs (("rust-approx" ,rust-approx-0.5)
+                                   ("rust-defmac" ,rust-defmac-0.2)
+                                   ("rust-itertools" ,rust-itertools-0.13)
+                                   ("rust-quickcheck" ,rust-quickcheck-1))))
+    (home-page "https://github.com/rust-ndarray/ndarray")
+    (synopsis "N-dimensional container for general elements and for numerics")
+    (description
+     "This package implements an n-dimensional array for general elements and
+for numerics.  Lightweight array views and slicing; views support chunking and
+splitting.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public rust-ndarray-0.15
   (package
+    (inherit rust-ndarray-0.16)
     (name "rust-ndarray")
     (version "0.15.6")
     (source
@@ -44215,7 +44466,6 @@ established.")
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
         (base32 "0cpsm28hyk8qfjs4g9649dprv3hm53z12qqwyyjqbi3yjr72vcdd"))))
-    (build-system cargo-build-system)
     (arguments
      `(#:skip-build? #t
        #:cargo-inputs
@@ -44234,13 +44484,7 @@ established.")
        (("rust-approx" ,rust-approx-0.4)
         ("rust-defmac" ,rust-defmac-0.2)
         ("rust-itertools" ,rust-itertools-0.10)
-        ("rust-quickcheck" ,rust-quickcheck-1))))
-    (home-page "https://github.com/rust-ndarray/ndarray")
-    (synopsis "N-dimensional container for general elements and for numerics")
-    (description "@code{ndarray} implements an n-dimensional container for
-general elements and for numerics.")
-    (license (list license:asl2.0
-                   license:expat))))
+        ("rust-quickcheck" ,rust-quickcheck-1))))))
 
 (define-public rust-ndarray-0.14
   (package
@@ -44331,6 +44575,59 @@ general elements and for numerics.")
        (("rust-defmac" ,rust-defmac-0.1)
         ("rust-quickcheck" ,rust-quickcheck-0.7)
         ("rust-rawpointer" ,rust-rawpointer-0.1))))))
+
+(define-public rust-ndarray-npy-0.9
+  (package
+    (name "rust-ndarray-npy")
+    (version "0.9.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "ndarray-npy" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1abqnbfn9xhq5q5nli78yip3wh2zq4gi7dnrm50r3i38qj43fcbv"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs
+       (("rust-byteorder" ,rust-byteorder-1)
+        ("rust-ndarray" ,rust-ndarray-0.16)
+        ("rust-num-complex" ,rust-num-complex-0.4)
+        ("rust-num-traits" ,rust-num-traits-0.2)
+        ("rust-py-literal" ,rust-py-literal-0.4)
+        ("rust-zip" ,rust-zip-2))))
+    (home-page "https://github.com/jturner314/ndarray-npy")
+    (synopsis ".npy and .npz file format support for ndarray")
+    (description
+     "This package provides @file{.npy} and @file{.npz} file format support
+for @code{ndarray}.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-ndarray-rand-0.15
+  (package
+    (name "rust-ndarray-rand")
+    (version "0.15.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "ndarray-rand" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1n15dm0x9g6s69vwqgsfj2pdw5wlha6bv9pfrn6p356idzdv74zh"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-ndarray" ,rust-ndarray-0.16)
+                       ("rust-quickcheck" ,rust-quickcheck-1)
+                       ("rust-rand" ,rust-rand-0.8)
+                       ("rust-rand-distr" ,rust-rand-distr-0.4))))
+    (home-page "https://github.com/rust-ndarray/ndarray")
+    (synopsis "Constructors for randomized arrays")
+    (description
+     "This package provides constructors for randomized arrays.  It provides
+@{rand} integration for @{ndarray}.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public rust-ndk-0.9
   (package
@@ -48230,6 +48527,36 @@ giga, kibi.")
 giga, kibi.")
     (license license:expat)))
 
+(define-public rust-numpy-0.22
+  (package
+    (name "rust-numpy")
+    (version "0.22.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "numpy" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0kpii5mvz4ag29qw4zrqzfmi3m2kmbg882kcxn2ls6m91ny2kfgd"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-half" ,rust-half-2)
+                       ("rust-libc" ,rust-libc-0.2)
+                       ("rust-nalgebra" ,rust-nalgebra-0.32)
+                       ("rust-ndarray" ,rust-ndarray-0.15)
+                       ("rust-num-complex" ,rust-num-complex-0.2)
+                       ("rust-num-integer" ,rust-num-integer-0.1)
+                       ("rust-num-traits" ,rust-num-traits-0.2)
+                       ("rust-pyo3" ,rust-pyo3-0.22)
+                       ("rust-rustc-hash" ,rust-rustc-hash-1))))
+    (home-page "https://github.com/PyO3/rust-numpy")
+    (synopsis "PyO3-based Rust bindings of the NumPy C-API")
+    (description
+     "This package provides PyO3-based Rust bindings of the @code{NumPy}
+C-API.")
+    (license license:bsd-2)))
+
 (define-public rust-numtoa-0.2
   (package
     (name "rust-numtoa")
@@ -48564,6 +48891,53 @@ file formats.")
     (description
      "This package provides a thread-safe object pool with automatic return and
 attach/detach semantics.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-object-store-0.11
+  (package
+    (name "rust-object-store")
+    (version "0.11.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "object_store" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1bywk2bbjpvr26581rs44csl6myiw0cr6gqnw76zlmhsjrlcpz1w"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs
+       (("rust-async-trait" ,rust-async-trait-0.1)
+        ("rust-base64" ,rust-base64-0.22)
+        ("rust-bytes" ,rust-bytes-1)
+        ("rust-chrono" ,rust-chrono-0.4)
+        ("rust-futures" ,rust-futures-0.3)
+        ("rust-httparse" ,rust-httparse-1)
+        ("rust-humantime" ,rust-humantime-2)
+        ("rust-hyper" ,rust-hyper-1)
+        ("rust-itertools" ,rust-itertools-0.13)
+        ("rust-md-5" ,rust-md-5-0.10)
+        ("rust-parking-lot" ,rust-parking-lot-0.12)
+        ("rust-percent-encoding" ,rust-percent-encoding-2)
+        ("rust-quick-xml" ,rust-quick-xml-0.37)
+        ("rust-rand" ,rust-rand-0.8)
+        ("rust-reqwest" ,rust-reqwest-0.12)
+        ("rust-ring" ,rust-ring-0.17)
+        ("rust-rustls-pemfile" ,rust-rustls-pemfile-2)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1)
+        ("rust-snafu" ,rust-snafu-0.8)
+        ("rust-tokio" ,rust-tokio-1)
+        ("rust-tracing" ,rust-tracing-0.1)
+        ("rust-url" ,rust-url-2)
+        ("rust-walkdir" ,rust-walkdir-2))))
+    (home-page "https://github.com/apache/arrow-rs/tree/main/object_store")
+    (synopsis "Generic object store interface")
+    (description
+     "This package provides a generic object store interface for uniformly
+interacting with AWS S3, Google Cloud Storage, Azure Blob Storage and local
+files.")
     (license (list license:expat license:asl2.0))))
 
 (define-public rust-object-store-0.9
@@ -58755,6 +59129,30 @@ in codeblocks, while assuring quality with a powerful test suite.")
     (synopsis "Safe interface to pwd.h")
     (description "This package provides a safe interface to @code{pwd.h}.")
     (license license:public-domain)))
+
+(define-public rust-py-literal-0.4
+  (package
+    (name "rust-py-literal")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "py_literal" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1qd8j3a9zlpq6rjaxabpc9sacw62dn1cr38p3y4x7fbdsjizfb8h"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-num-bigint" ,rust-num-bigint-0.4)
+                       ("rust-num-complex" ,rust-num-complex-0.4)
+                       ("rust-num-traits" ,rust-num-traits-0.2)
+                       ("rust-pest" ,rust-pest-2)
+                       ("rust-pest-derive" ,rust-pest-derive-2))))
+    (home-page "https://github.com/jturner314/py_literal")
+    (synopsis "Read and write Python literals")
+    (description "This package lets you read and write Python literals.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public rust-pyo3-0.23
   (package
@@ -74412,17 +74810,17 @@ maximal amount of configuration possible intended.")
      "An RSpec inspired minimal testing framework for Rust.")
     (license license:expat)))
 
-(define-public rust-speedate-0.14
+(define-public rust-speedate-0.15
   (package
     (name "rust-speedate")
-    (version "0.14.4")
+    (version "0.15.0")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "speedate" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "0mx5gx74gh2wwvq4vyn1fshj3yjvxqn0y8gkn3q97inlvf0098h8"))))
+        (base32 "0dzryiwvdbdcz74x0hidb5g1c2aal4n9cxsdlqwxxrq79vgplpls"))))
     (build-system cargo-build-system)
     (arguments
      `(#:cargo-inputs (("rust-strum" ,rust-strum-0.26)
@@ -74436,23 +74834,23 @@ maximal amount of configuration possible intended.")
 duration parsing.")
     (license license:expat)))
 
-(define-public rust-speedate-0.13
+(define-public rust-speedate-0.14
   (package
-    (inherit rust-speedate-0.14)
+    (inherit rust-speedate-0.15)
     (name "rust-speedate")
-    (version "0.13.0")
+    (version "0.14.4")
     (source
      (origin
        (method url-fetch)
        (uri (crate-uri "speedate" version))
        (file-name (string-append name "-" version ".tar.gz"))
        (sha256
-        (base32 "16xi4d98ab3ag7rkba2fv37kk3d0fgg0l287hq4vz36i1z2pcbr4"))))
+        (base32 "0mx5gx74gh2wwvq4vyn1fshj3yjvxqn0y8gkn3q97inlvf0098h8"))))
     (arguments
-     `(#:cargo-inputs (("rust-strum" ,rust-strum-0.25)
-                       ("rust-strum-macros" ,rust-strum-macros-0.25))
+     `(#:cargo-inputs (("rust-strum" ,rust-strum-0.26)
+                       ("rust-strum-macros" ,rust-strum-macros-0.26))
        #:cargo-development-inputs (("rust-chrono" ,rust-chrono-0.4)
-                                   ("rust-iso8601" ,rust-iso8601-0.4)
+                                   ("rust-iso8601" ,rust-iso8601-0.6)
                                    ("rust-paste" ,rust-paste-1))))))
 
 (define-public rust-speedy-0.8
@@ -75274,6 +75672,30 @@ Rust.")
     (synopsis "Statistical computing library for Rust")
     (description "This package provides a statistical computing library for
 Rust.")
+    (license license:expat)))
+
+(define-public rust-statrs-0.17
+  (package
+    (name "rust-statrs")
+    (version "0.17.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "statrs" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0mbjasnlh7xqa1rvq48xffqxnc53hgjlgqjd0ifa58068rza15zn"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-approx" ,rust-approx-0.5)
+                       ("rust-nalgebra" ,rust-nalgebra-0.32)
+                       ("rust-num-traits" ,rust-num-traits-0.2)
+                       ("rust-rand" ,rust-rand-0.8))))
+    (home-page "https://github.com/statrs-dev/statrs")
+    (synopsis "Statistical computing library for Rust")
+    (description
+     "This package provides a statistical computing library for Rust.")
     (license license:expat)))
 
 (define-public rust-statrs-0.13

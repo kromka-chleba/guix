@@ -5,7 +5,7 @@
 ;;; Copyright © 2022 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2023 Zongyuan Li <zongyuan.li@c0x0o.me>
 ;;; Copyright © 2023 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2024 Tomas Volf <~@wolfsden.cz>
+;;; Copyright © 2024, 2025 Tomas Volf <~@wolfsden.cz>
 ;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
 ;;; Copyright © 2024 Jean-Pierre De Jesus DIAZ <jean@foundation.xyz>
 ;;;
@@ -163,7 +163,7 @@ runtime (like runc or crun) for a single container.")
 (define-public distrobox
   (package
     (name "distrobox")
-    (version "1.8.0")
+    (version "1.8.1.1")
     (source
      (origin
        (method git-fetch)
@@ -171,7 +171,7 @@ runtime (like runc or crun) for a single container.")
              (url "https://github.com/89luca89/distrobox")
              (commit version)))
        (sha256
-        (base32 "1igd2g19m4slk90zaz8ry49722xbrhwama988pj4m5ll9x715nkv"))
+        (base32 "0w4hg8qa0v01f8sfxgj00q1fb4581lbajkh1dl5vbsvlrm27w67l"))
        (file-name (git-file-name name version))))
     (build-system copy-build-system)
     (arguments
@@ -468,7 +468,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
 (define-public podman
   (package
     (name "podman")
-    (version "5.3.1")
+    (version "5.3.2")
     (outputs '("out" "docker"))
     (properties
       `((output-synopsis "docker" "docker alias for podman")))
@@ -479,7 +479,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
              (url "https://github.com/containers/podman")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1315rqsfiwq4i2vvdzb6nkwbvgwimsj7f71ma1svvqhp8kbly04h"))
+        (base32 "100jjj3fjb2mlx6hdj8gm4c1khcfrrf67rvm3r1nz7p007pkx4yg"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -626,7 +626,7 @@ being rootless and not requiring any daemon to be running.")
 (define-public buildah
   (package
     (name "buildah")
-    (version "1.38.0")
+    (version "1.38.1")
     (source
      (origin
        (method git-fetch)
@@ -634,7 +634,7 @@ being rootless and not requiring any daemon to be running.")
              (url "https://github.com/containers/buildah")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1lnl5v8d5p4g0rm4d90rw4hdh066w7v8r9g1h0v1z533mbgxgry8"))
+        (base32 "10bgdn154b0akmni27vasnpylvwk9anb1gj08g6n004di9chg7ds"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

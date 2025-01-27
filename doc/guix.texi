@@ -111,12 +111,12 @@ Copyright @copyright{} 2022 (@*
 Copyright @copyright{} 2022 John Kehayias@*
 Copyright @copyright{} 2022⁠–⁠2023 Bruno Victal@*
 Copyright @copyright{} 2022 Ivan Vilata-i-Balaguer@*
-Copyright @copyright{} 2023-2024 Giacomo Leidi@*
+Copyright @copyright{} 2023-2025 Giacomo Leidi@*
 Copyright @copyright{} 2022 Antero Mejr@*
 Copyright @copyright{} 2023 Karl Hallsby@*
 Copyright @copyright{} 2023 Nathaniel Nicandro@*
 Copyright @copyright{} 2023 Tanguy Le Carrour@*
-Copyright @copyright{} 2023, 2024 Zheng Junjie@*
+Copyright @copyright{} 2023-2024 Zheng Junjie@*
 Copyright @copyright{} 2023 Brian Cully@*
 Copyright @copyright{} 2023 Felix Lechner@*
 Copyright @copyright{} 2023 Foundation Devices, Inc.@*
@@ -17044,6 +17044,7 @@ The available targets are:
    - i586-pc-gnu
    - i686-linux-gnu
    - i686-w64-mingw32
+   - loongarch64-linux-gnu
    - mips64el-linux-gnu
    - or1k-elf
    - powerpc-linux-gnu
@@ -41513,7 +41514,25 @@ A @code{<dicod-database>} object serving the GNU Collaborative International
 Dictionary of English using the @code{gcide} package.
 @end defvar
 
-The following is an example @code{dicod-service-type} configuration.
+@deffn {Procedure} dicod-freedict-database dictionary-name
+Returns a record of type @code{dicod-database} for purpose of
+configuring a database for the FreeDict multilingual dictionary named by
+@var{dictionary-name}, a string such as @code{"kur-eng"} for the
+Kurdish-to-English dictionary, into a service of type
+@code{dicod-service-type}.
+@end deffn
+
+@defvar %dicod-databases:freedict
+A relatively large list of records of type @code{dicod-database}, made
+available for users who wish to configure all the FreeDict multilingual
+dictionaries provided by the @code{freedict-dictionaries} package into a
+service of type @code{dicod-service-type}.
+@end defvar
+
+The following is an example @code{dicod-service-type} configuration,
+extending a @command{dicod} daemon serving databases for the wordnet and
+gcide dictionaries, as well as a selection of FreeDict multilingual
+dictionaries.
 
 @lisp
 (service dicod-service-type
@@ -41524,12 +41543,15 @@ The following is an example @code{dicod-service-type} configuration.
                       (module "wordnet")
                       (options
                        (list #~(string-append "wnhome=" #$wordnet))))))
-          (databases (list
+          (databases (cons*
                       (dicod-database
                        (name "wordnet")
                        (complex? #t)
                        (handler "wordnet"))
-                      %dicod-database:gcide))))
+                      %dicod-database:gcide
+                      (map
+                       dicod-freedict-database
+                       '("fra-eng" "eng-fra" "eng-spa" "spa-eng"))))))
 @end lisp
 
 @cindex Docker
@@ -42709,19 +42731,16 @@ following configuration:
                                     "/etc/guix/signing-key.sec"))))))))))
 @end lisp
 
-Each @code{restic-backup-job} translates to an mcron job which sets the
+Each @code{restic-backup-job} translates to a Shepherd timer which sets the
 @env{RESTIC_PASSWORD} environment variable by reading the first line of
 @code{password-file} and runs @command{restic backup}, creating backups
 using rclone of all the files listed in the @code{files} field.
 
-The @code{restic-backup-service-type} installs as well @code{restic-guix}
-to the system profile, a @code{restic} utility wrapper that allows for easier
-interaction with the Guix configured backup jobs.  For example the following
-could be used to instantaneusly trigger a backup for the above shown
-configuration, without waiting for the scheduled job:
+The @code{restic-backup-service-type} provides the ability to instantaneously
+trigger a backup with the @code{trigger} Shepherd action:
 
 @example
-restic-guix backup remote-ftp
+sudo herd trigger remote-ftp
 @end example
 
 @c %start of fragment
@@ -42752,6 +42771,23 @@ The restic package to be used for the current job.
 @item @code{user} (default: @code{"root"}) (type: string)
 The user used for running the current job.
 
+@item @code{group} (default: @code{"root"}) (type: string)
+The group used for running the current job.
+
+@item @code{log-file} (type: maybe-string)
+The file system path to the log file for this job.  By default the file will
+have be @file{/var/log/restic-backup/@var{job-name}.log}, where @var{job-name} is the
+name defined in the @code{name} field.
+
+@item @code{max-duration} (type: maybe-number)
+The maximum duration in seconds that a job may last.  Past
+@code{max-duration} seconds, the job is forcefully terminated.
+
+@item @code{wait-for-termination?} (default: @code{#f}) (type: boolean)
+Wait until the job has finished before considering executing it again;
+otherwise, perform it strictly on every occurrence of event, at the risk of
+having multiple instances running concurrently.
+
 @item @code{repository} (type: string)
 The restic repository target of this job.
 
@@ -42764,9 +42800,12 @@ that will be used to set the @env{RESTIC_PASSWORD} environment variable
 for the current job.
 
 @item @code{schedule} (type: gexp-or-string)
-A string or a gexp that will be passed as time specification in the
-mcron job specification (@pxref{Syntax, mcron job specifications,,
-mcron,GNU@tie{}mcron}).
+A string or a gexp representing the frequency of the backup.  Gexp must
+evaluate to @code{calendar-event} records or to strings.  Strings must contain
+Vixie cron date lines.
+
+@item @code{requirement} (default: @code{'()}) (type: list-of-symbols)
+The list of Shepherd services that this backup job depends upon.
 
 @item @code{files} (default: @code{'()}) (type: list-of-lowerables)
 The list of files or directories to be backed up.  It must be a list of
@@ -45684,6 +45723,40 @@ system:
                                             (shepherd my-shepherd))))))
 @end lisp
 
+@anchor{shepherd-transient-timer-services}
+@cindex @code{transient} service, Shepherd
+@defvar shepherd-transient-service-type
+This service type represents the Shepherd's @code{transient} service,
+which lets you spawn commands in the background and interact with them
+as regular Shepherd service; it is similar to @command{systemd-run}.
+
+For example, the command below spawns @command{rsync} in the background,
+in an environment where the @env{SSH_AUTH_SOCK} environment variable has
+the given value:
+
+@example
+herd spawn transient -E SSH_AUTH_SOCK=$SSH_AUTH_SOCK -- \
+  rsync -e ssh -vur . backup.example.org:
+@end example
+
+@xref{Transient Service Maker,,, shepherd, The GNU Shepherd Manual}, for
+more info on the @code{transient} service.
+@end defvar
+
+@cindex @code{timer} service, Shepherd
+@defvar shepherd-timer-service-type
+This is the service type representing the Shepherd's @code{timer}
+service, which lets you schedule the execution of commands, similar to
+the venerable @command{at} command.  Here is an example:
+
+@example
+herd schedule timer at 07:00 -- mpg123 Music/alarm.mp3
+@end example
+
+@xref{Timer Service,,, shepherd, The GNU Shepherd Manual}, for more info
+on the @code{timer} service.
+@end defvar
+
 @defvar %shepherd-root-service
 This service represents PID@tie{}1.
 @end defvar
@@ -46645,8 +46718,9 @@ dotfiles/
 @end example
 
 For an informal specification please refer to the Stow manual
-(@pxref{Top,,, stow, Introduction}). This tree structure is installed following
-GNU Stow's logic to the home directory upon @command{guix home reconfigure}.
+(@pxref{Introduction,,, stow, The GNU Stow Manual}). This tree structure
+is installed following GNU Stow's logic to the home directory upon
+@command{guix home reconfigure}.
 
 A suitable configuration with a @code{'plain} layout could be:
 
@@ -47312,6 +47386,17 @@ for its system-wide counterpart.  @xref{log-rotation-configuration}, for
 its reference.
 
 This service is part of @code{%base-home-services}.
+@end defvar
+
+@defvar home-shepherd-transient-service-type
+@defvarx home-shepherd-timer-service-type
+These are the @code{timer} and @code{transient} Shepherd services.  The
+former lets you schedule command execution for later, while the latter
+can run commands in the background as a regular service.
+
+@xref{shepherd-transient-timer-services, the system @code{timer} and
+@code{transient} services}, which are their Guix System counterparts,
+for more info.
 @end defvar
 
 @node Secure Shell
@@ -48150,6 +48235,9 @@ The WirePlumber package to use.
 @item @code{enable-pulseaudio?} (default: @code{#t}) (type: boolean)
 When true, enable PipeWire's PulseAudio emulation support, allowing
 PulseAudio clients to use PipeWire transparently.
+
+@item @code{extra-content} (default: @code{""}) (type: string)
+Extra content to add to the end of @file{~/.config/alsa/asoundrc}.
 @end table
 @end deftp
 
@@ -49352,6 +49440,10 @@ Platform targeting ARM v7 CPU running GNU/Linux.
 
 @defvar aarch64-linux
 Platform targeting ARM v8 CPU running GNU/Linux.
+@end defvar
+
+@defvar loongarch64-linux
+Platform targeting loongarch 64-bit CPU running GNU/Linux.
 @end defvar
 
 @defvar mips64-linux

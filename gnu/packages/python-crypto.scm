@@ -446,19 +446,33 @@ blake3, a cryptographic hash function.")
          "1yxqfb5131wahjyw9pxz03bq476rcfx62s6k53xx4cqbzzgdaqkq"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'adjust-test
-                 (lambda _
-                   ;; Newer PyOpenSSL no longer separates extensions with
-                   ;; newline (this can be removed for >1.3.0).
-                   (substitute* "test/test_certauth.py"
-                     (("7334\\\\n, DNS")
-                      "7334, DNS")))))))
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    (list
+                     ;; Those tests uses PKCS12, which has been removed in
+                     ;; pyopenssl 23.3.0:
+                     "not test_custom_not_before_not_after"
+                     "test_ca_cert_in_mem"
+                     ;; Those tests try to download certificates:
+                     "test_file_wildcard"
+                     "test_file_wildcard_subdomains"
+                     "test_in_mem_parent_wildcard_cert"
+                     "test_in_mem_parent_wildcard_cert_at_tld"
+                     "test_in_mem_parent_wildcard_cert_2")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'adjust-test
+            (lambda _
+              ;; Newer PyOpenSSL no longer separates extensions with
+              ;; newline (this can be removed for >1.3.0).
+              (substitute* "test/test_certauth.py"
+                (("7334\\\\n, DNS") "7334, DNS")))))))
     (propagated-inputs
      (list python-pyopenssl python-tldextract))
     (native-inputs
-     (list python-pytest-cov))
+     (list python-pytest-cov python-setuptools python-wheel))
     (home-page "https://github.com/ikreymer/certauth")
     (synopsis "Certificate authority creation tool")
     (description "This package provides a small library, built on top of
@@ -519,20 +533,18 @@ is used by the Requests library to verify HTTPS requests.")
 (define-public python-cryptography-vectors
   (package
     (name "python-cryptography-vectors")
-    (version "43.0.3")
+    (version "44.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cryptography_vectors" version))
        (sha256
         (base32
-         "1d46wj4831g2vmixffk2b0bb0x67x5rlnqbpfa8fi17lcm98hspz"))))
+         "1aw06msy65rs27yxfp4xlwfq432ny1af5cx8s7zsbfa5div2hqhh"))))
     (build-system pyproject-build-system)
     (arguments (list #:tests? #f))  ; No tests included.
     (native-inputs
-     (list python-flit-core
-           python-setuptools
-           python-wheel))
+     (list python-flit-core))
     (home-page "https://github.com/pyca/cryptography")
     (synopsis "Test vectors for the cryptography package")
     (description
@@ -543,19 +555,16 @@ is used by the Requests library to verify HTTPS requests.")
 (define-public python-cryptography
   (package
     (name "python-cryptography")
-    (version "43.0.3")
+    (version "44.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cryptography" version))
        (sha256
         (base32
-         "01d8anh4crjvpa0s044rxkdi9cjnz4w15dj3yipjljba4q0r0nri"))
+         "00is2nzcl2pyhr90llga5mnbw3rvakn75rq10x1r6hhb6i7q6knd"))
        (snippet
         #~(begin (use-modules (guix build utils))
-                 ;; Help the configure phase.  Remove this next release.
-                 (with-output-to-file "Cargo.toml"
-                   (lambda () (newline)))
                  (for-each delete-file
                            (find-files "." "Cargo\\.lock$"))
                  (substitute* "pyproject.toml"
@@ -569,7 +578,7 @@ is used by the Requests library to verify HTTPS requests.")
                   ((guix build pyproject-build-system) #:prefix py:)
                   (guix build utils))
       #:cargo-inputs
-      (list rust-asn1-0.16
+      (list rust-asn1-0.20
             rust-cc-1
             rust-cfg-if-1
             rust-foreign-types-0.3
@@ -578,7 +587,7 @@ is used by the Requests library to verify HTTPS requests.")
             rust-openssl-0.10
             rust-openssl-sys-0.9
             rust-pem-3
-            rust-pyo3-0.22
+            rust-pyo3-0.23
             rust-self-cell-1)
       #:install-source? #false
       #:phases
@@ -587,7 +596,7 @@ is used by the Requests library to verify HTTPS requests.")
             (lambda* (#:key vendor-dir #:allow-other-keys)
               ;; Don't keep the whole tarball in the vendor directory
               (delete-file-recursively
-                (string-append vendor-dir "/cryptography-" #$version ".tar.zst"))))
+               (string-append vendor-dir "/cryptography-" #$version ".tar.zst"))))
           (replace 'build
             (assoc-ref py:%standard-phases 'build))
           (delete 'check)
@@ -600,12 +609,16 @@ is used by the Requests library to verify HTTPS requests.")
             (assoc-ref py:%standard-phases 'install)))))
     (native-inputs
      (list python-certifi
+           python-cffi
+           python-click
            python-cryptography-vectors
-           python-iso8601
+           python-mypy
            python-pretend
-           python-pytest                ;for subtests
+           python-pytest
            python-pytest-benchmark
-           python-pytest-subtests
+           python-pytest-cov
+           python-pytest-randomly
+           python-pytest-xdist
            python-setuptools
            python-wheel))
     (inputs (list maturin openssl python-wrapper))
@@ -624,15 +637,15 @@ ciphers, message digests and key derivation functions.")
 (define-public python-pyopenssl
   (package
     (name "python-pyopenssl")
-    (version "24.2.1")
+    (version "24.3.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pyopenssl" version))
        (sha256
         (base32
-         "158fpy6fsmkrci67qpzg06ha3ygh3ah3xzxjrc6md3blwgdz0is2"))))
-    (build-system python-build-system)
+         "0dmv720kn5ws7bs1rkn59qmhzv5wxkkgriampi34g0vxawcs1xs9"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
@@ -650,8 +663,12 @@ ciphers, message digests and key derivation functions.")
                         "not test_fallback_default_verify_paths ")))))))
     (propagated-inputs (list python-cryptography))
     (inputs (list openssl))
-    (native-inputs (list libfaketime python-pretend python-pytest
-                         python-pytest-rerunfailures))
+    (native-inputs
+     (list libfaketime
+           python-pretend
+           python-pytest
+           python-pytest-rerunfailures
+           python-wheel))
     (home-page "https://github.com/pyca/pyopenssl")
     (synopsis "Python wrapper module around the OpenSSL library")
     (description "PyOpenSSL is a high-level wrapper around a subset of the
@@ -953,14 +970,14 @@ protocol (Javascript Object Signing and Encryption).")
 (define-public python-pycryptodome
   (package
     (name "python-pycryptodome")
-    (version "3.15.0")
+    (version "3.21.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pycryptodome" version))
        (sha256
         (base32
-         "1f0qc0ns3ppybkr7wi66gsl5wfkcx1fdklmh3362nn84spddsdci"))
+         "15vjyjy686kgm4fnpwlah1wvxxy0wvr4q5vnp1iygnlv8q6pwy7p"))
        (modules '((guix build utils)))
        (snippet pycryptodome-unbundle-tomcrypt-snippet)))
     (build-system python-build-system)
@@ -1015,7 +1032,7 @@ PyCryptodome variants, the other being python-pycryptodomex.")
        (method url-fetch)
        (uri (pypi-uri "pycryptodomex" version))
        (sha256
-        (base32 "1vf0xbsqvcp4k3cl8cmxrlij9a88hajw6d3z0jhd3c5d5nxz2hbk"))
+        (base32 "0v4y03ha7rm9kdcv9fkrmc94425z3q3mq1nn5p1jbpc1ag80nb92"))
        (modules '((guix build utils)))
        (snippet pycryptodome-unbundle-tomcrypt-snippet)))
     (description
@@ -1779,3 +1796,23 @@ against (name, birthdate, etc.)
 in different situations.
 @end enumerate")
     (license license:expat)))
+
+(define-public python-pydes
+  (package
+    (name "python-pydes")
+    (version "2.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyDes" version))
+       (sha256
+        (base32 "04lh71f47y04vspfrdrq6a0hn060ibxvdp5z1pcr0gmqs8hqxaz2"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "http://twhiteman.netfirms.com/des.html")
+    (synopsis
+     "Pure python implementation of the DES and TRIPLE DES encryption algorithms")
+    (description
+     "This package provides a pure Python implementation of the DES and
+TRIPLE DES encryption algorithms.")
+    (license license:public-domain)))

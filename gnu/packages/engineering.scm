@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015-2023 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015 Federico Beffa <beffa@fbengineering.ch>
 ;;; Copyright © 2016, 2018, 2020-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 David Thompson <davet@gnu.org>
@@ -35,7 +35,7 @@
 ;;; Copyright © 2022 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2022, 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
-;;; Copyright © 2022, 2023 Felix Gruber <felgru@posteo.net>
+;;; Copyright © 2022, 2023, 2025 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2023 Theofilos Pechlivanis <theofilos.pechlivanis@gmail.com>
 ;;; Copyright © 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 pinoaffe <pinoaffe@gmail.com>
@@ -1744,6 +1744,14 @@ developed at MIT to model electromagnetic systems.")
                (base32
                 "0i37c9k6q1iglmzp9736rrgsnx7sw8xn3djqbbjw29zsyl3pf62c"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-shebang
+                 (lambda _
+                   (substitute* "bootstrap.sh"
+                     (("# !/bin/sh")
+                      (string-append "#!" (which "sh")))))))))
     (native-inputs
      (list autoconf
            automake
@@ -2661,32 +2669,35 @@ specification can be downloaded at @url{http://3mf.io/specification/}.")
 (define-public python-pyvisa
   (package
     (name "python-pyvisa")
-    (version "1.13.0")
+    (version "1.14.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "PyVISA" version))
               (sha256
                (base32
-                "1iprr3h6d4w6v8ksgqpkgg545sai7i8hi5a5an394p26b25h1yl9"))
+                "0ybsxpc4339434ha5anix511ckdyp12cym3ld1vsspacxm0h00vi"))
               (modules '((guix build utils)))
-              (snippet '(begin
-                          ;; Delete bundled python-prettytable.
-                          (delete-file-recursively "pyvisa/thirdparty")))))
+              ;; Delete bundled python-prettytable.
+              (snippet '(delete-file-recursively "pyvisa/thirdparty"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (add-after 'unpack 'use-system-prettytable
-                          (lambda _
-                            (substitute* "pyvisa/shell.py"
-                              (("from .thirdparty import prettytable")
-                               "import prettytable")))))))
+     (list
+      #:test-flags
+      '(list "--pyargs" "pyvisa")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-system-prettytable
+            (lambda _
+              (substitute* "pyvisa/shell.py"
+                (("from .thirdparty import prettytable")
+                 "import prettytable")))))))
     (native-inputs
      (list python-pytest
            python-setuptools
+           python-setuptools-scm
            python-wheel))
     (propagated-inputs
-     (list python-dataclasses
-           python-prettytable
+     (list python-prettytable
            python-typing-extensions))
     (home-page "https://pyvisa.readthedocs.io/en/latest/")
     (synopsis "Python binding for the VISA library")
@@ -2706,7 +2717,11 @@ measurement devices and test equipment via GPIB, RS232, Ethernet or USB.")
        (sha256
         (base32 "139ahp08kci8asmv35bcibbnkfr5s1ff5j84n490s47ibsglk4yi"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pyproj python-pytest unzip))
+    (native-inputs (list python-pyproj
+                         python-pytest
+                         python-setuptools
+                         python-wheel
+                         unzip))
     (propagated-inputs (list python-deepdiff
                              python-geojson
                              python-networkx
@@ -2743,6 +2758,8 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
     (native-inputs (list python-nbmake
                          python-pytest
                          python-pytest-xdist
+                         python-setuptools
+                         python-wheel
                          unzip))
     (propagated-inputs (list python-matplotlib
                              python-pandapower
@@ -4790,7 +4807,7 @@ more.")
 (define-public python-asyncua
   (package
     (name "python-asyncua")
-    (version "1.0.3")
+    (version "1.1.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4800,11 +4817,11 @@ more.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0bazk3k2dyzlrh7yxs4pc76m5ysm7riia3ncg7as3xr4y9dy29bx"))))
+                "0aisj8cpfhq50h4pv2p0c9iw5cqy3hxhn5adp8wd01c46dhg6y2x"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-asynctest
-           python-pytest-asyncio
+           python-pytest-asyncio-0.21
            python-pytest-mock
            python-pytest-runner
            python-setuptools
@@ -4813,13 +4830,16 @@ more.")
      (list python-aiofiles
            python-aiosqlite
            python-cryptography
-           python-dateutil python-pytz
+           python-dateutil
+           python-pyopenssl
+           python-pytz
            python-importlib-metadata
-           python-sortedcontainers))
+           python-sortedcontainers
+           python-typing-extensions))
+    (home-page "https://freeopcua.github.io/")
     (synopsis "OPC UA / IEC 62541 client and server library")
     (description "This package provides an OPC UA / IEC 62541 client and
 server for Python and pypy3.")
-    (home-page "https://freeopcua.github.io/")
     (license license:lgpl3+)))
 
 (define-public modglue

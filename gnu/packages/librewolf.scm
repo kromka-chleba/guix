@@ -21,7 +21,7 @@
 ;;; Copyright © 2021, 2022, 2023 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2023 Tomas Volf <wolf@wolfsden.cz>
-;;; Copyright © 2023 Ian Eure <ian@retrospec.tv>
+;;; Copyright © 2023, 2024, 2025 Ian Eure <ian@retrospec.tv>
 ;;; Copyright © 2024 Remco van 't Veer <remco@remworks.net>
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;;
@@ -117,16 +117,16 @@
 (define computed-origin-method (@@ (guix packages) computed-origin-method))
 
 (define firefox-l10n
-  (let ((commit "bdfd4e10606204450a3e88d219ecf2b252349c2b"))
+  (let ((commit "d219efa7c64850dfb5904893e17a5431c7058192"))
     (origin
       (method git-fetch)
       (uri (git-reference
             (url "https://github.com/mozilla-l10n/firefox-l10n.git")
             (commit commit)))
       (file-name (git-file-name "firefox-l10n" commit))
-      (sha256 (base32 "0i31b1024jck6467j9phcqvac32psl4nkyb0nm4h9zzyj8zw31xp")))))
+      (sha256 (base32 "0g778fnxg5mkqm3rgryzl64f3n4pczngjdlby07vh2dycvmlyga8")))))
 
-(define* (make-librewolf-source #:key version firefox-hash librewolf-hash)
+(define* (make-librewolf-source #:key version firefox-hash librewolf-hash l10n)
   (let* ((ff-src (firefox-source-origin
                   (car (string-split version #\-))
                   firefox-hash))
@@ -154,7 +154,7 @@
                       #+(canonical-package xz)
                       #+(canonical-package sed)
                       #+(canonical-package grep)
-                      #+(canonical-package gzip)
+                      #+(canonical-package pigz)
                       #+(canonical-package tar)))
                (set-path-environment-variable
                 "PYTHONPATH"
@@ -182,7 +182,7 @@
                  (substitute* "scripts/librewolf-patches.py"
                    (("l10n_dir = Path(\"..\", \"l10n\")")
                     (string-append
-                     "l10n_dir = \"" #+firefox-l10n "\""))))
+                     "l10n_dir = \"" #+l10n "\""))))
 
                ;; Run the build script
                (invoke "make" "all")
@@ -194,26 +194,29 @@
         "torbrowser-compare-paths.patch"
         "librewolf-use-system-wide-dir.patch")))))
 
-;; Define the versions of rust needed to build librewolf, trying to match
-;; upstream.  See the file taskcluster/ci/toolchain/rust.yml at
-;; https://searchfox.org under the particular firefox release, like
-;; mozilla-esr102.
-(define rust-librewolf rust) ; 1.75 is the default in Guix, 1.65 is the minimum.
+;;; Define the versions of rust needed to build firefox, trying to match
+;;; upstream.  See table at [0], `Uses' column for the specific version.
+;;; Using `rust' will likely lead to a newer version then listed in the table,
+;;; but since in Guix only the latest packaged Rust is officially supported,
+;;; it is a tradeoff worth making.
+;;; 0: https://firefox-source-docs.mozilla.org/writing-rust-code/update-policy.html
+(define rust-librewolf rust-1.81)
 
 ;; Update this id with every update to its release date.
 ;; It's used for cache validation and therefore can lead to strange bugs.
 ;; ex: date '+%Y%m%d%H%M%S'
-(define %librewolf-build-id "20241130102406")
+(define %librewolf-build-id "20250121184331")
 
 (define-public librewolf
   (package
     (name "librewolf")
-    (version "133.0-1")
+    (version "134.0.1-1")
     (source
      (make-librewolf-source
       #:version version
-      #:firefox-hash "0q6cqfnwc2x09frdvsndmhck8ixrnbl281j9rqw5w8bd7fd2qas9"
-      #:librewolf-hash "1xf7gx3xm3c7dhch9gwpb0xp11lcyim1nrbm8sjljxdcs7iq9jy4"))
+      #:firefox-hash "1rb54b62zcmhabmx3rsd5badv9wwih6h19a0g80c03qgwwy8b8g3"
+      #:librewolf-hash "0bcjk3pkyq2w39n022kcpl8nqd8ng9653jc8gklfrfw9avwmpmk2"
+      #:l10n firefox-l10n))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -569,10 +572,13 @@
                                        (string-append (assoc-ref inputs
                                                                  lib-name)
                                                       "/lib"))
-                                     '("mesa" "libpng-apng" "libnotify" "libva"
-                                       "pulseaudio" "gtk+" "pipewire"
-                                       ;; For U2F and WebAuthn
-                                       "eudev")))
+                                     '("eudev" ; For U2F and WebAuthn
+                                       "libnotify"
+                                       "libpng-apng"
+                                       "libva"
+                                       "mesa"
+                                       "pipewire" ; For sharing on Wayland
+                                       "pulseaudio")))
 
                               ;; VA-API is run in the RDD (Remote Data Decoder) sandbox
                               ;; and must be explicitly given access to files it needs.
@@ -583,11 +589,12 @@
                               ;; runpaths of the needed libraries to add everything to
                               ;; LD_LIBRARY_PATH.  These will then be accessible in the
                               ;; RDD sandbox.
-                              (rdd-whitelist (map (cut string-append <> "/")
-                                                  (delete-duplicates (append-map
-                                                                      runpaths-of-input
-                                                                      '("mesa"
-                                                                        "ffmpeg")))))
+                              (rdd-whitelist
+                               (map (cut string-append <> "/")
+                                    (delete-duplicates
+                                     (append-map runpaths-of-input
+                                                 '("mesa"
+                                                   "ffmpeg")))))
                               (gtk-share (string-append (assoc-ref inputs
                                                                    "gtk+")
                                                         "/share")))
@@ -661,7 +668,7 @@
                   gtk+
                   gtk+-2
                   hunspell
-                  icu4c-73
+                  icu4c-75
                   jemalloc
                   libcanberra
                   libevent

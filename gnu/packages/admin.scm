@@ -31,7 +31,7 @@
 ;;; Copyright © 2019, 2021, 2022 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2019, 2020, 2021 Mathieu Othacehe <m.othacehe@gmail.com>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
-;;; Copyright © 2020, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2020, 2023, 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020, 2021, 2022 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020 Morgan Smith <Morgan.J.Smith@outlook.com>
@@ -70,9 +70,11 @@
 ;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2024 nathan <nathan_mail@nborghese.com>
 ;;; Copyright © 2024 Nikita Domnitskii <nikita@domnitskii.me>
+;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
+;;; Copyright © 2024 nik gaffney <nik@fo.am>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -147,7 +149,10 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-compression)
+  #:use-module (gnu packages golang-crypto)
+  #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages groff)
   #:use-module (gnu packages gtk)
@@ -283,6 +288,53 @@ digest algorithms that are used to check the integrity of files.  All of the
 usual file attributes can be checked for inconsistencies.")
     (home-page "https://aide.github.io/")
     (license license:gpl2+)))
+
+(define-public hetznercloud-cli
+  (package
+    (name "hetznercloud-cli")
+    (version "1.49.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hetznercloud/cli")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mgd1rv0i18h7jbzl034ffpfxvnjirp60qwxsjpfy42jh1d8xbjm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ; XXX: figure out hot to enable them
+      #:install-source? #f
+      #:import-path "github.com/hetznercloud/cli/cmd/hcloud"
+      #:unpack-path "github.com/hetznercloud/cli"))
+    (native-inputs
+     (list go-github-com-burntsushi-toml
+           go-github-com-cheggaaa-pb-v3
+           go-github-com-dustin-go-humanize
+           go-github-com-fatih-color
+           go-github-com-fatih-structs
+           go-github-com-goccy-go-yaml
+           go-github-com-guptarohit-asciigraph
+           go-github-com-hetznercloud-hcloud-go-v2
+           go-github-com-jedib0t-go-pretty-v6
+           go-github-com-spf13-cast
+           go-github-com-spf13-cobra
+           go-github-com-spf13-pflag
+           go-github-com-spf13-viper
+           go-github-com-stretchr-testify
+           go-github-com-swaggest-assertjson
+           go-go-uber-org-mock
+           go-golang-org-x-crypto
+           go-golang-org-x-term))
+    (home-page "https://github.com/hetznercloud/cli")
+    (synopsis "Command-line interface for the Hetzner Cloud service")
+    (description
+     "This package provides the @code{hcloud} binary, a command-line interface
+for interacting with the @url{https://www.hetzner.com/,Hetzner Cloud}
+service.")
+    (license license:expat)))
 
 (define-public progress
   (package
@@ -2982,99 +3034,85 @@ specified directories.")
 (define-public ansible-core
   (package
     (name "ansible-core")
-    (version "2.17.1")
+    ;; XXX: Starting from 2.18.1, Ansible requires Python 3.11 or newer on the
+    ;; controller, this is the latest version supporting 3.10.
+    (version "2.17.7")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ansible_core" version))
        (sha256
-        (base32 "007ginimzbizx2c3fp3vccizscyki0fp4yg3bzl3qz6ipdqrsi26"))))
-    (build-system python-build-system)
+        (base32 "1kysajyc0kh885dlba6aj0a2mnpcq06q09n3kcixdqn4sqsvgais"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:modules ((guix build python-build-system)
+     (list
+      #:modules '((guix build pyproject-build-system)
                   (guix build utils)
                   (ice-9 ftw))
-       #:phases
-       (modify-phases %standard-phases
-         ;; Several ansible commands (ansible-config, ansible-console, etc.)
-         ;; are just symlinks to a single ansible executable.  The ansible
-         ;; executable behaves differently based on the value of sys.argv[0].
-         ;; This does not work well with our wrap phase, and therefore the
-         ;; following two phases are required as a workaround.
-         (add-after 'unpack 'hide-wrapping
-           (lambda _
-             ;; Overwrite sys.argv[0] to hide the wrapper script from it.
-             (substitute* "bin/ansible"
-               (("import traceback" all)
-                (string-append all "
+      #:test-flags
+      #~(list "units"
+              "--exclude" "test/units/cli/test_adhoc.py"
+              "--exclude" "test/units/galaxy/test_collection_install.py"
+              "--num-workers" (number->string (parallel-job-count)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "requirements.txt"
+                ;; resolvelib >= 0.5.3, < 1.1.0
+                ((">= 0.5.3, < 1.1.0") ""))))
+          ;; Several ansible commands (ansible-config, ansible-console, etc.)
+          ;; are just symlinks to a single ansible executable.  The ansible
+          ;; executable behaves differently based on the value of sys.argv[0].
+          ;; This does not work well with our wrap phase, and therefore the
+          ;; following two phases are required as a workaround.
+          (add-after 'unpack 'hide-wrapping
+            (lambda _
+              ;; Overwrite sys.argv[0] to hide the wrapper script from it.
+              (substitute* "bin/ansible"
+                (("import traceback" all)
+                 (string-append all "
 import re
 sys.argv[0] = re.sub(r'\\.([^/]*)-real$', r'\\1', sys.argv[0])
 ")))))
-         (add-after 'install 'replace-symlinks
-           (lambda* (#:key outputs #:allow-other-keys)
-             ;; Replace symlinks with duplicate copies of the ansible
-             ;; executable so that sys.argv[0] has the correct value.
-             (define bin (string-append (assoc-ref outputs "out") "/bin"))
-             (with-directory-excursion bin
-               (for-each
-                (lambda (ansible-symlink)
-                  (delete-file ansible-symlink)
-                  (copy-file "ansible" ansible-symlink))
-                (scandir "." (lambda (x)
-                               (and (eq? 'symlink (stat:type (lstat x)))
-                                    (string-prefix? "ansible-" x)
-                                    (string=? "ansible" (readlink x)))))))))
-         (add-after 'unpack 'skip-controller-tests
-           (lambda _
-             ;; XXX: This disables all the controller tests, which fail for
-             ;; unknown reasons, seemingly while attempting to set the
-             ;; locale to en_US.UTF-8.
-             (substitute* "test/lib/ansible_test/_internal/commands\
-/units/__init__.py"
-               (("^            if test_context == TestContext.controller:.*"
-                 all)
-                (string-append all "                continue\n")))))
-         (add-after 'unpack 'preserve-pythonpath
-           (lambda _
-             (substitute* "test/lib/ansible_test/_internal/ansible_util.py"
-               (("PYTHONPATH=get_ansible_python_path\\(args\\)" all)
-                (string-append all "+ ':' + os.environ['GUIX_PYTHONPATH']")))
-             (substitute* "test/lib/ansible_test/_internal/commands\
-/units/__init__.py"
-               (("PYTHONPATH=get_units_ansible_python_path\\(args, \
-test_context)" all)
-                (string-append all "+ ':' + os.environ['GUIX_PYTHONPATH']")))))
-         (add-after 'unpack 'patch-paths
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (substitute* "lib/ansible/module_utils/compat/selinux.py"
-               (("libselinux.so.1" name)
-                (string-append (assoc-ref inputs "libselinux")
-                               "/lib/" name)))
-             (substitute* "test/units/modules/test_async_wrapper.py"
-               (("/usr/bin/python")
-                (which "python")))))
+          (add-after 'install 'replace-symlinks
+            (lambda _
+              ;; Replace symlinks with duplicate copies of the ansible
+              ;; executable so that sys.argv[0] has the correct value.
+              (with-directory-excursion (string-append #$output "/bin")
+                (for-each
+                 (lambda (ansible-symlink)
+                   (delete-file ansible-symlink)
+                   (copy-file "ansible" ansible-symlink))
+                 (scandir "." (lambda (x)
+                                (and (eq? 'symlink (stat:type (lstat x)))
+                                     (string-prefix? "ansible-" x)
+                                     (string=? "ansible" (readlink x)))))))))
+          (add-after 'unpack 'patch-paths
+            (lambda _
+              (substitute* "lib/ansible/module_utils/compat/selinux.py"
+                (("libselinux.so.1" name)
+                 (string-append #$(this-package-input "libselinux")
+                                "/lib/" name)))
+              (substitute* "test/lib/ansible_test/_internal/ansible_util.py"
+                (("PYTHONPATH=get_ansible_python_path\\(args\\)" all)
+                 (string-append all "+ ':' + os.environ['GUIX_PYTHONPATH']")))
+              (substitute* "test/lib/ansible_test/_internal/commands/units/__init__.py"
+                (("PYTHONPATH=get_units_ansible_python_path\\(args, test_context)" all)
+                 (string-append all "+ ':' + os.environ['GUIX_PYTHONPATH']")))
+              (substitute* "test/units/modules/test_async_wrapper.py"
+                (("/usr/bin/python")
+                 (which "python")))))
          (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
+           (lambda* (#:key inputs outputs tests? test-flags #:allow-other-keys)
              (when tests?
                ;; Otherwise Ansible fails to create its config directory.
                (setenv "HOME" "/tmp")
-               ;; These tests fail in the container; it appears that the
-               ;; mocking of the absolute file names such as /usr/bin/svcs do
-               ;; not work as intended there.
-               (delete-file "test/units/modules/test_iptables.py")
-               (delete-file "test/units/modules/test_service.py")
-               ;; These tests fail with a "unsupported locale setting" error
-               ;; when invoking 'locale.setlocale(locale.LC_ALL, '')'
-               (delete-file "test/units/module_utils/basic/\
-test_command_nonexisting.py")
-               (delete-file "test/units/module_utils/basic/test_tmpdir.py")
                ;; The test suite needs to be run with 'ansible-test', which
                ;; does some extra environment setup.  Taken from
                ;; https://raw.githubusercontent.com/ansible/ansible/\
                ;; devel/test/utils/shippable/shippable.sh.
-               (invoke "./bin/ansible-test" "units" "-v"
-                       "--num-workers" (number->string
-                                        (parallel-job-count)))))))))
+               (apply invoke "python" "bin/ansible-test" test-flags)))))))
     (native-inputs
      (list openssh
            openssl
@@ -3084,15 +3122,20 @@ test_command_nonexisting.py")
            python-pytest-forked
            python-pytest-mock
            python-pytest-xdist
-           python-pytz))
+           python-pytz
+           python-setuptools
+           python-wheel))
     (inputs                    ;optional dependencies captured in wrap scripts
-     (list libselinux python-paramiko python-passlib python-pexpect
+     (list libselinux
            sshpass))
     (propagated-inputs      ;core dependencies listed in egg-info/requires.txt
      (list python-cryptography
            python-jinja2
-           python-pyyaml
            python-packaging             ;for version number parsing
+           python-paramiko
+           python-passlib
+           python-pexpect
+           python-pyyaml
            python-resolvelib))
     (home-page "https://www.ansible.com/")
     (synopsis "Radically simple IT automation")
@@ -5013,7 +5056,7 @@ Logitech Unifying Receiver.")
   (package
     (name "lynis")
     ;; Also update the ‘lynis-sdk’ input to the commit matching this release.
-    (version "3.0.9")
+    (version "3.1.1")
     (source
      (origin
        (method git-fetch)
@@ -5022,7 +5065,7 @@ Logitech Unifying Receiver.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1rgiifbzlk9lfjhbgxy6pqza5kxpr5rsr8vj9fcqvqihzdb5izj1"))
+        (base32 "05bh16i916xz9w8p8fz8flzj9ayyzg7wpbi7q61ylrlahhc03nqd"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -5038,10 +5081,10 @@ Logitech Unifying Receiver.")
            (method git-fetch)
            (uri (git-reference
                  (url "https://github.com/CISOfy/lynis-sdk")
-                 (commit "92522b3ec39ad4cdef4756dc303d99741ec7fe20")))
+                 (commit "f4f885f1f049f59940487a6ffc2d53806c729d12")))
            (file-name (git-file-name "lynis-sdk" version))
            (sha256
-            (base32 "05qq4395x8f0kyl1ppm74npsf8sb3hhgz0ck4fya91sy6a26b4ja"))))))
+            (base32 "09d98wmvan7nlchm056kls5xm939d1231pwsvlp4q2aznz8cmg42"))))))
     (arguments
      (list
       #:phases
@@ -5471,7 +5514,6 @@ disk utilization, priority, username, state, and exit code.")
      (list
       #:install-source? #f
       #:import-path "github.com/linuxboot/fiano"
-      #:unpack-path "github.com/linuxboot/fiano"
       #:phases
       #~(modify-phases %standard-phases
           ;; XXX: Replace this part when it's implemented in go-build-system.
@@ -5483,10 +5525,7 @@ disk utilization, priority, username, state, and exit code.")
                          (string-append import-path "/cmds/" cmd)))
                (list "cbfs"
                      "create-ffs"
-                     ;; TODO: Not packed yet in guix, long jorney:
-                     ;; - github.com/tjfoc/gmsm
-                     ;;
-                     ;; "fittool"
+                     "fittool"
                      "fmap"
                      "fspinfo"
                      "glzma"
@@ -5501,20 +5540,14 @@ disk utilization, priority, username, state, and exit code.")
                    (invoke "go" "test" "-v"
                            (string-append import-path dir "/...")))
                  (list "/pkg/bytes"
-                       ;; TODO: Not packed yet in Guix, long jorney:
-                       ;; - github.com/jedib0t
-                       ;;
-                       ;; "/pkg/amd"
+                       "/pkg/amd"
                        "/pkg/cbfs"
                        "/pkg/compression"
                        "/pkg/fmap"
                        "/pkg/fsp"
                        "/pkg/guid"
                        "/pkg/guid2english"
-                       ;; TODO: Not packed yet in Guix, long jorney:
-                       ;; - github.com/tjfoc/gmsm
-                       ;;
-                       ;; "/pkg/intel"
+                       "/pkg/intel"
                        "/pkg/knownguids"
                        "/pkg/log"
                        "/pkg/uefi"
@@ -5541,7 +5574,7 @@ disk utilization, priority, username, state, and exit code.")
                    (install-file cmd bindir))
                  (list "cbfs"
                        "create-ffs"
-                       ;; "fittool"
+                       "fittool"
                        "fmap"
                        "fspinfo"
                        "glzma"
@@ -5550,11 +5583,18 @@ disk utilization, priority, username, state, and exit code.")
                        "utk"))))))))
     (inputs
      (list go-github-com-dustin-go-humanize
+           go-github-com-fatih-camelcase
            go-github-com-hashicorp-go-multierror
+           go-github-com-jedib0t-go-pretty-v6
            go-github-com-jessevdk-go-flags
+           go-github-com-klauspost-compress
            go-github-com-pierrec-lz4
            go-github-com-spf13-pflag
+           go-github-com-stretchr-testify
+           go-github-com-tjfoc-gmsm
            go-github-com-ulikunitz-xz
+           go-github-com-xaionaro-go-bytesextra
+           go-github-com-xaionaro-gosrc
            go-golang-org-x-text))
     (home-page "https://github.com/linuxboot/fiano")
     (synopsis "UEFI image editor")
@@ -5709,7 +5749,7 @@ FIFO and UNIX interprocess communication.")
 (define-public runitor
   (package
     (name "runitor")
-    (version "0.8.0")
+    (version "1.3.0-build.4")
     (source
       (origin
         (method git-fetch)
@@ -5718,7 +5758,7 @@ FIFO and UNIX interprocess communication.")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-          (base32 "0vjfbyrbp5ywgzdz9j3x0qgjvnq7nw7193x8v9yy6k2cih1zsacn"))))
+          (base32 "00l83jcjmf5kcq8yzq575kk6ljkkr2xhm5cx27zzb1yhxn93xj7n"))))
     (build-system go-build-system)
     (arguments
      `(#:unpack-path "bdd.fi/x/runitor"
@@ -6361,7 +6401,7 @@ file or files to several hosts.")
 (define-public doctl
   (package
     (name "doctl")
-    (version "1.94.0")
+    (version "1.120.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6370,7 +6410,12 @@ file or files to several hosts.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0a221n0x7qrq0dbhhf1saya2g7jyy1798k3rhy9nzyvqzc4vnd0x"))))
+                "12fgymgiv6894ghar7ljg69hb7mi18pa2a74sp7fyymqvyhiv6z9"))
+              (snippet
+               ;; TODO: Unbundle more.
+               #~(begin (use-modules (guix build utils))
+                        (for-each delete-file-recursively
+                                  (list "vendor/golang.org"))))))
     (build-system go-build-system)
     (arguments
      (list #:import-path "github.com/digitalocean/doctl/cmd/doctl"
@@ -6400,6 +6445,17 @@ file or files to several hosts.")
                                        "/etc/fish/completions/doctl.fish")
                    (install-completion "zsh"
                                        "/etc/zsh/site-functions/_doctl"))))))
+    (native-inputs
+     (list go-golang-org-x-crypto
+           go-golang-org-x-mod
+           go-golang-org-x-net
+           go-golang-org-x-oauth2
+           go-golang-org-x-sync
+           go-golang-org-x-sys
+           go-golang-org-x-term
+           go-golang-org-x-text
+           go-golang-org-x-time
+           go-golang-org-x-tools))
     (home-page "https://github.com/digitalocean/doctl")
     (synopsis "Command line client for DigitalOcean")
     (description

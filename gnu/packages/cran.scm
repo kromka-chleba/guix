@@ -39,6 +39,7 @@
 ;;; Copyright © 2022 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2024 Marco Baggio <guix@mawumag.com>
 ;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
+;;; Copyright © 2024 Tor-björn Claesson <tclaesson@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -5643,6 +5644,29 @@ that.")
 regression and Passing-Bablock regression functions.")
     (license license:lgpl2.0+)))
 
+(define-public r-deoptim
+  (package
+    (name "r-deoptim")
+    (version "2.2-8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "DEoptim" version))
+       (sha256
+        (base32 "0k7mvf7j8y1sqv8zpiwkw4xcmgki37drkxjijrsmmhkfybfan7k3"))))
+    (properties `((upstream-name . "DEoptim")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-parallelly))
+    (home-page "https://github.com/ArdiaD/DEoptim")
+    (synopsis "Global optimization by differential evolution")
+    (description
+     "This package implements the Differential Evolution algorithm.
+This algorithm is used for the global optimization of a real-valued function
+of a real-valued parameter vector.  The implementation of
+@code{DifferentialEvolution} in DEoptim interfaces with C code for
+efficiency.")
+    (license license:gpl2+)))
+
 (define-public r-depmixs4
   (package
     (name "r-depmixs4")
@@ -7010,6 +7034,36 @@ extensive prebuilt widgets make it possible to build beautiful,
 responsive, and powerful applications with minimal effort.")
     (license license:artistic2.0)))
 
+(define-public r-shinyauthr
+  (package
+    (name "r-shinyauthr")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "shinyauthr" version))
+       (sha256
+        (base32 "0apaqjkxpr96kx9indl0pifk5y75gdx5npfcvxfg5k2crpx9vmxk"))))
+    (properties `((upstream-name . "shinyauthr")))
+    (build-system r-build-system)
+    ;; One of the tests requires r-shinytest, which has a big JavaScript
+    ;; problem.
+    (arguments (list #:tests? #false))
+    (native-inputs (list r-testthat))
+    (propagated-inputs (list r-dplyr
+                             r-glue
+                             r-rlang
+                             r-shiny
+                             r-shinyjs
+                             r-sodium))
+    (home-page "https://github.com/paulc91/shinyauthr")
+    (synopsis "Shiny authentication modules")
+    (description
+     "With this package you can add in-app user authentication to Shiny,
+allowing you to secure publicly hosted apps and build dynamic user interfaces
+from user information.")
+    (license license:expat)))
+
 (define-public r-shinydisconnect
   (package
     (name "r-shinydisconnect")
@@ -7092,6 +7146,28 @@ exposing it as code that can be run outside of Shiny (e.g., from an R
 console).  It also provides tools for bundling both the code and results to
 the end user.")
     (license license:gpl3)))
+
+(define-public r-shiny-router
+  (package
+    (name "r-shiny-router")
+    (version "0.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "shiny.router" version))
+       (sha256
+        (base32 "1zg8cdxmw620i1iv7jrghd768gw7iv52hi6lx79xvnfjz8w4si3x"))))
+    (properties `((upstream-name . "shiny.router")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-glue r-htmltools r-rlang r-shiny))
+    (native-inputs (list r-testthat))
+    (home-page "https://appsilon.github.io/shiny.router/")
+    (synopsis "Basic Routing for Shiny Web Applications")
+    (description
+     "This package provides a simple router for your Shiny apps.  The router
+allows you to create dynamic web applications with a real-time User Interface
+and easily share url to pages within your Shiny apps.")
+    (license license:expat)))
 
 ;; This package includes minified JavaScript files.  When upgrading please
 ;; check that there are no new minified JavaScript files.
@@ -7741,6 +7817,30 @@ page dashboard or a multi-page template, where the navigation menu is
 contained in the navigation bar.")
     (license license:gpl2+)))
 
+(define-public r-spdl
+  (package
+    (name "r-spdl")
+    (version "0.0.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "spdl" version))
+       (sha256
+        (base32 "185qzlwac7acq126xpvcd71nv25zgkrdr8m73gv2sn1zxj78hyid"))))
+    (properties `((upstream-name . "spdl")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-rcppspdlog))
+    (home-page "https://github.com/eddelbuettel/spdl")
+    (synopsis "Easier use of RcppSpdlog functions via wrapper")
+    (description
+     "Logging functions in @code{RcppSpdlog} provide access to the logging
+functionality from the spdlog C++ library.  This package offers shorter
+convenience wrappers for the R functions which match the C++ functions, namely
+via, say, @code{spdl::debug()} at the debug level.  The actual formatting is
+done by the @code{fmt::format()} function from the fmtlib library (that is
+also @code{std::format()} in C++20 or later).")
+    (license license:gpl2+)))
+
 (define-public r-spelling
   (package
     (name "r-spelling")
@@ -8074,6 +8174,29 @@ coordinates.")
     (description "This package performs search for the global minimum of a very
 complex non-linear objective function with a very large number of optima.")
     (license license:gpl2)))
+
+(define-public r-geojsonr
+  (package
+    (name "r-geojsonr")
+    (version "1.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "geojsonR" version))
+       (sha256
+        (base32 "10li5xj0vx6a86nccwql4inwfbjycvaxqfbjdp4h1p5qxyibnls3"))))
+    (properties `((upstream-name . "geojsonR")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-r6 r-rcpp r-rcpparmadillo))
+    (native-inputs (list r-knitr r-testthat))
+    (home-page "https://github.com/mlampros/geojsonR")
+    (synopsis "GeoJson processing toolkit")
+    (description
+     "This package includes functions for processing @code{GeoJson} objects
+relying on RFC 7946.  The geojson encoding is based on json11, a tiny JSON
+library for C++11.  Furthermore, the source code is exported in R through the
+Rcpp and @code{RcppArmadillo} packages.")
+    (license license:expat)))
 
 (define-public r-geos
   (package
@@ -8758,6 +8881,55 @@ and Francois (2011, JSS), and the book by Eddelbuettel (2013, Springer); see
 @code{citation(\"Rcpp\")} for details on these last two.")
     (license license:gpl2+)))
 
+(define-public r-rcppcctz
+  (package
+    (name "r-rcppcctz")
+    (version "0.2.13")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "RcppCCTZ" version))
+       (sha256
+        (base32 "1wmbyaj08fbl4g47aq0mfkkvqwpah3d2j94fzc813dijxlsi847l"))))
+    (properties
+     `((upstream-name . "RcppCCTZ")
+       (updater-extra-native-inputs . ("tzdata-for-tests"))))
+    (build-system r-build-system)
+    (propagated-inputs (list r-rcpp))
+    (native-inputs (list r-tinytest tzdata-for-tests))
+    (home-page "https://github.com/eddelbuettel/rcppcctz")
+    (synopsis "Rcpp bindings for the CCTZ library")
+    (description
+     "Rcpp access to the CCTZ timezone library is provided.  CCTZ is a C++
+library for translating between absolute and civil times using the rules of a
+time zone.  The CCTZ source code is included in this package.")
+    (license (list license:gpl2+
+                   license:asl2.0)))) ;for CCTZ
+
+(define-public r-rcppdate
+  (package
+    (name "r-rcppdate")
+    (version "0.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "RcppDate" version))
+       (sha256
+        (base32 "1cnhvbgqfcjrwm1rx6bhhj4yf4dipcp6g1hjv1qa86pmxzyjp3dn"))))
+    (properties `((upstream-name . "RcppDate")))
+    (build-system r-build-system)
+    (home-page "https://github.com/eddelbuettel/rcppdate")
+    (synopsis "date C++ header library for date and time functionality")
+    (description
+     "This package provides a header-only C++ library is provided with support
+for dates, time zones, ISO weeks, Julian dates, and Islamic dates.
+@code{date} offers extensive date and time functionality for the C++11, C++14
+and C++17 standards.  A slightly modified version has been accepted (along
+with @file{tz.h}) as part of C++20.  This package regroups all header files
+from the upstream repository so that other R packages can use them in their
+C++ code.")
+    (license license:gpl2+)))
+
 (define-public r-rcppde
   (package
     (name "r-rcppde")
@@ -8802,6 +8974,33 @@ additional statistical distributions that can be called from C++ when writing
 code using Rcpp or RcppArmadillo.  Functions are available that return a
 @code{NumericVector} as well as doubles, and for multivariate or matrix
 distributions, Armadillo vectors and matrices.")
+    (license license:gpl2+)))
+
+(define-public r-rcppint64
+  (package
+    (name "r-rcppint64")
+    (version "0.0.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "RcppInt64" version))
+       (sha256
+        (base32 "1h4lshkn3p3c7swygbpmkg0pa80xcp3f9alck5q4bmml61hicwjk"))))
+    (properties `((upstream-name . "RcppInt64")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-rcpp))
+    (native-inputs (list r-tinytest))
+    (home-page "https://github.com/eddelbuettel/rcppint64")
+    (synopsis
+     "Rcpp-based helper functions to pass Int64 values between R and C++")
+    (description
+     "@code{int64} values can be created and accessed via the @code{bit64}
+package and its @code{integer64} class which package the @code{int64}
+representation cleverly into a @code{double}.  The @code{nanotime} package
+builds on this to support nanosecond-resolution timestamps.  This package
+helps conversions between R and C++ via several helper functions provided via
+a single header file.  A complete example client package is included as an
+illustration.")
     (license license:gpl2+)))
 
 (define-public r-rcppml
@@ -10214,6 +10413,32 @@ correspondence curves in \"Measuring reproducibility of high-throughput
 experiments\" (2011), Annals of Applied Statistics, Vol. 5, No. 3, 1752-1779,
 by Li, Brown, Huang, and Bickel")
     (license license:gpl2+)))
+
+(define-public r-imola
+  (package
+    (name "r-imola")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "imola" version))
+       (sha256
+        (base32 "087zdzn1vkyvqrdlwnackr6jyacrhg69q4b77s8z477kplickw8x"))))
+    (properties `((upstream-name . "imola")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-glue
+                             r-htmltools
+                             r-magrittr
+                             r-shiny
+                             r-stringi
+                             r-yaml))
+    (native-inputs (list r-knitr))
+    (home-page "https://github.com/pedrocoutinhosilva/imola")
+    (synopsis "CSS layouts (grid and flexbox) for R/Shiny")
+    (description
+     "This package allows users to create CSS grid and flexbox layouts for
+R/Shiny without needing to write custom CSS.")
+    (license license:expat)))
 
 (define-public r-inext
   (package
@@ -13577,6 +13802,28 @@ units, plus unit conversions based on the data from @acronym{NIST, National
 Institute of Standards and Technology}, USA.")
     (license license:gpl3+)))
 
+(define-public r-numero
+  (package
+    (name "r-numero")
+    (version "1.9.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "Numero" version))
+       (sha256
+        (base32 "04pf6x7qmgkfyj98c23maxcvlwwwfw6jas7l72xp0713lyndjl15"))))
+    (properties `((upstream-name . "Numero")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-rcpp))
+    (native-inputs (list r-knitr r-rmarkdown))
+    (home-page "https://cran.r-project.org/package=Numero")
+    (synopsis "Statistical framework to define subgroups in complex datasets")
+    (description
+     "The package includes the necessary functions to construct a
+self-organizing map of data, to evaluate the statistical signifcance of the
+observed data patterns, and to visualize the results.")
+    (license license:gpl2+)))
+
 (define-public r-stabs
   (package
     (name "r-stabs")
@@ -14971,7 +15218,7 @@ local smoothers and many more.")
           (add-after 'unpack 'process-javascript
             (lambda* (#:key inputs #:allow-other-keys)
               (with-directory-excursion "inst/assets/html2canvas/"
-                (minify (assoc-ref inputs "_")
+                (minify (assoc-ref inputs "html2canvas.js")
                         #:target "html2canvas.min.js")))))))
     (propagated-inputs
      (list r-base64enc
@@ -27716,6 +27963,34 @@ releases/download/v0.10.1/mathquill-0.10.1.tgz")
 authoring books and technical documents with R Markdown.")
     (license license:gpl3)))
 
+(define-public r-optimparallel
+  (package
+    (name "r-optimparallel")
+    (version "1.0-2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "optimParallel" version))
+       (sha256
+        (base32 "178ayfaivkbxkghxbg97lx4gl27kxkmgaaw9y8q5206r4cncd6qg"))))
+    (properties `((upstream-name . "optimParallel")))
+    (build-system r-build-system)
+    (arguments
+     (list
+      #:phases '(modify-phases %standard-phases
+                  (add-after 'unpack 'set-HOME
+                    (lambda _
+                      (setenv "HOME" "/tmp"))))))
+    (native-inputs (list r-numderiv r-r-rsp r-testthat))
+    (home-page "https://github.com/florafauna/optimParallel-R")
+    (synopsis "Parallel version of the L-BFGS-B optimization method")
+    (description
+     "This tool provides a parallel version of the L-BFGS-B method of
+@code{optim()}.  The main function of the package is @code{optimParallel()},
+which has the same usage and output as @code{optim()}.  Using
+@code{optimParallel()} can significantly reduce the optimization time.")
+    (license license:gpl2+)))
+
 (define-public r-options
   (package
     (name "r-options")
@@ -38102,6 +38377,52 @@ range of object-specific analytical and tree-visualization functions found
 across a wide array of bioinformatic R packages.")
     (license license:gpl3)))
 
+(define-public r-phytools
+  (package
+    (name "r-phytools")
+    (version "2.4-4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "phytools" version))
+       (sha256
+        (base32 "1i25dlikdx9av5653ra2709sjm9fc3fsis1yfsb7zagivi408ph9"))))
+    (properties `((upstream-name . "phytools")))
+    (build-system r-build-system)
+    (propagated-inputs (list r-ape
+                             r-clustergeneration
+                             r-coda
+                             r-combinat
+                             r-deoptim
+                             r-doparallel
+                             r-expm
+                             r-foreach
+                             r-maps
+                             r-mass
+                             r-mnormt
+                             r-nlme
+                             r-numderiv
+                             r-optimparallel
+                             r-phangorn
+                             r-scatterplot3d))
+    (home-page "https://github.com/liamrevell/phytools")
+    (synopsis "Phylogenetic tools for comparative biology")
+    (description
+     "This package offers extensive tools for phylogenetic analysis.  It
+focuses on phylogenetic comparative biology but also includes methods for
+visualizing, analyzing, manipulating, reading, writing, and inferring
+phylogenetic trees.  Functions for comparative biology include ancestral state
+reconstruction, model fitting, and phylogeny and trait data simulation.  A
+broad range of plotting methods includes mapping trait evolution on trees,
+projecting trees into phenotype space or geographic maps, and visualizing
+correlated speciation between trees.  Additional functions allow for reading,
+writing, analyzing, inferring, simulating, and manipulating phylogenetic trees
+and comparative data.  Examples include computing consensus trees, simulating
+trees and data under various models, and attaching species or clades to a tree
+either randomly or non-randomly.  This package provides numerous tools for
+tree manipulations and analyses that are valuable for phylogenetic research.")
+    (license license:gpl2+)))
+
 (define-public r-kmer
   (package
     (name "r-kmer")
@@ -39260,6 +39581,63 @@ to speed up repeated queries of the same set of target points.")
      "This package contains methods described by Dennis Helsel in his
 book @emph{Nondetects and Data Analysis: Statistics for Censored
 Environmental Data}.")
+    (license license:gpl2+)))
+
+(define-public r-nanoarrow
+  (package
+    (name "r-nanoarrow")
+    (version "0.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "nanoarrow" version))
+       (sha256
+        (base32 "0wad6dvc7f4z9ll0v5mvqlvk2waf2wfhpnd3sckxsjfpg2s1an6b"))))
+    (properties `((upstream-name . "nanoarrow")))
+    (build-system r-build-system)
+    (native-inputs (list r-arrow
+                         r-bit64
+                         r-blob
+                         r-hms
+                         r-jsonlite
+                         r-testthat
+                         r-tibble
+                         r-vctrs
+                         r-withr))
+    (home-page "https://arrow.apache.org/nanoarrow/latest/r/")
+    (synopsis "Interface to the nanoarrow C library")
+    (description
+     "This package provides an R interface to the @code{nanoarrow} C library
+and the Apache Arrow application binary interface.  Functions to import and
+export @code{ArrowArray}, @code{ArrowSchema}, and @code{ArrowArrayStream} C
+structures to and from R objects are provided alongside helpers to facilitate
+zero-copy data transfer among R bindings to libraries implementing the Arrow C
+data interface.")
+    (license license:asl2.0)))
+
+(define-public r-nanotime
+  (package
+    (name "r-nanotime")
+    (version "0.3.11")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (cran-uri "nanotime" version))
+       (sha256
+        (base32 "19q8xklkdp8jsq1hjj78wzr0q00fy8z5p2skyz2xlzvam3555pnb"))))
+    (properties
+     `((upstream-name . "nanotime")
+       (updater-extra-native-inputs . ("tzdata-for-tests"))))
+    (build-system r-build-system)
+    (propagated-inputs (list r-bit64 r-rcpp r-rcppcctz r-rcppdate r-zoo))
+    (native-inputs (list r-tinytest tzdata-for-tests))
+    (home-page "https://github.com/eddelbuettel/nanotime")
+    (synopsis "Nanosecond-resolution time support for R")
+    (description
+     "Full 64-bit resolution date and time functionality with nanosecond
+granularity is provided, with easy transition to and from the standard POSIXct
+type.  Three additional classes offer interval, period and duration
+functionality for nanosecond-resolution timestamps.")
     (license license:gpl2+)))
 
 (define-public r-naturalsort

@@ -3577,7 +3577,7 @@ from @code{tree-il}.")
 (define-public guile-hoot
   (package
     (name "guile-hoot")
-    (version "0.5.0")
+    (version "0.6.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://spritely.institute/files/releases"
@@ -3585,7 +3585,7 @@ from @code{tree-il}.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0c7qrhr4k3bdsfbdncb11ysfq94bapkpigckmj23rdc0skvijwk4"))))
+                "0miq9bv09xvzdrcvzdrca9vychsznpzi4jj87f5r1mwz0xxpvxjb"))))
     (build-system gnu-build-system)
     (arguments
      '(#:make-flags '("GUILE_AUTO_COMPILE=0"
@@ -5266,14 +5266,14 @@ Relay Chat} (IRC).")
 (define-public guile-websocket
   (package
     (name "guile-websocket")
-    (version "0.1")
+    (version "0.2.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://files.dthompson.us/guile-websocket/"
                                   "guile-websocket-" version ".tar.gz"))
               (sha256
                (base32
-                "0x2hw188kcg6zd6480dqfynfvzjgfp50kji4y4ql69mnf1jd6h94"))))
+                "143ng1x5xwy218wd1svj718ikqnrglwsywyzpd3ap9jnivw66g7f"))))
     (build-system gnu-build-system)
     (arguments
      '(#:make-flags
@@ -5281,7 +5281,7 @@ Relay Chat} (IRC).")
     (native-inputs
      (list autoconf automake pkg-config))
     (inputs
-     (list guile-3.0))
+     (list guile-3.0 guile-gnutls))
     (synopsis "Websocket server/client for Guile")
     (description "Guile-websocket provides an implementation of the
 WebSocket protocol as defined by RFC 6455.")
@@ -6263,8 +6263,8 @@ is an attempt to combine both into something useful.")
       (license license:asl2.0))))
 
 (define-public guile-knots
-  (let ((commit "d572f591a3c136bfc7b23160e16381c92588f8d9")
-        (revision "4"))
+  (let ((commit "c1796f0081cef266cbbc494cbf0791b4105d5b89")
+        (revision "5"))
     (package
     (name "guile-knots")
     (version (git-version "0" revision commit))
@@ -6275,7 +6275,7 @@ is an attempt to combine both into something useful.")
                     (commit commit)))
               (sha256
                (base32
-                "0g85frfniblxb2cl81fg558ic3cxvla7fvml08scjgbbxn8151gv"))
+                "1dlckjjixxljcz7pvsxqvcwqdz2x8gpvgh781lgxw5prs0pxccl2"))
               (file-name (string-append name "-" version "-checkout"))))
     (build-system gnu-build-system)
     (native-inputs
@@ -6480,16 +6480,16 @@ This module implements this interface by use of Guile's dynamic FFI.")
 (define-public guile-goblins
   (package
     (name "guile-goblins")
-    (version "0.14.0")
+    (version "0.15.0")
     (source
      (origin
        (method url-fetch)
-       (uri (string-append "https://spritely.institute/files/releases"
+       (uri (string-append "https://files.spritely.institute/releases"
                            "/guile-goblins/guile-goblins-"
                            version ".tar.gz"))
        (sha256
         (base32
-         "1gqyx8mq54dcs8waxjidk6xk43b2dfnw3hrbs22z6pnd9rdaj7wd"))))
+         "1dyxh8xvl8f707dzfzckz4343z1iwfp7v6wwyryn5psy86gq328z"))))
     (build-system gnu-build-system)
     (arguments
      (list #:make-flags
@@ -6498,7 +6498,7 @@ This module implements this interface by use of Guile's dynamic FFI.")
      (list pkg-config texinfo))
     (inputs (list guile-3.0))
     (propagated-inputs
-     (list guile-fibers guile-gcrypt guile-gnutls))
+     (list guile-fibers guile-gnutls guile-websocket))
     (home-page "https://spritely.institute/goblins")
     (synopsis "Distributed programming environment for Guile")
     (description

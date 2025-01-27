@@ -66,20 +66,23 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cpp)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages djvu)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gawk)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
-  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages graphics)
   #:use-module (gnu packages image)
@@ -93,6 +96,7 @@
   #:use-module (gnu packages perl-check)
   #:use-module (gnu packages photo)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages profiling)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-compression)
@@ -101,6 +105,7 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages suckless)
+  #:use-module (gnu packages stb)
   #:use-module (gnu packages terminals)
   #:use-module (gnu packages upnp)
   #:use-module (gnu packages version-control)
@@ -111,6 +116,55 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages))
+
+(define-public swayimg
+  (package
+    (name "swayimg")
+    (version "3.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/artemsen/swayimg")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "15nqb1igikkvrzx3dhyj9msynfpvrnqvql6plqm8fhg10fbimfhd"))))
+    (build-system meson-build-system)
+    (arguments
+     `(#:configure-flags '(,(string-append "-Dversion=" version))))
+    (native-inputs (list pkg-config))
+    (inputs (list bash-completion
+                  fontconfig
+                  freetype
+                  giflib
+                  ijg-libjpeg
+                  imath
+                  json-c
+                  libavif
+                  libexif
+                  libheif
+                  libjxl
+                  libpng
+                  librsvg
+                  libtiff
+                  libwebp
+                  libxkbcommon
+                  openexr
+                  wayland
+                  wayland-protocols))
+    (home-page "https://github.com/artemsen/swayimg")
+    (synopsis "Customizable and lightweight image viewer for Wayland")
+    (description
+     "Swayimg is a fully customizable and lightweight image viewer for Wayland
+based display servers.  It supports the most popular image formats (JPEG, JPEG
+XL, PNG, GIF, SVG, WebP, HEIF/AVIF, AV1F/AVIFS, TIFF, EXR, BMP, PNM, TGA, QOI,
+DICOM, Farbfeld).  It has fully customizable keyboard bindings, colors, and
+many other parameters.  It also supports loading images from files and pipes,
+and provides gallery and viewer modes with slideshow and animation support.
+It also includes a Sway integration mode: the application creates an overlay
+above the currently active window, which gives the illusion that you are
+opening the image directly in a terminal window.")
+    (license license:expat)))
 
 (define-public ytfzf
   (package
@@ -522,7 +576,7 @@ It supports JPEG, PNG and GIF formats.")
 (define-public pixterm
   (package
     (name "pixterm")
-    (version "1.3.1")
+    (version "1.3.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -531,14 +585,14 @@ It supports JPEG, PNG and GIF formats.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0fm6c0mjz6zillqjirnjjf7mkrax1gyfcv6777i07ms3bnv0pcii"))))
+                "08x0pwnl3cyq5f29fxj379p9klzxl85p8jq2595xdz3mhb3pkgsg"))))
     (build-system go-build-system)
     (arguments
-     '(#:import-path "github.com/eliukblau/pixterm/cmd/pixterm"
+     '(#:install-source? #f
+       #:import-path "github.com/eliukblau/pixterm/cmd/pixterm"
        #:unpack-path "github.com/eliukblau/pixterm"))
     (inputs (list go-github-com-disintegration-imaging
                   go-github-com-lucasb-eyer-go-colorful
-                  go-golang-org-x-crypto
                   go-golang-org-x-image
                   go-golang-org-x-term))
     (home-page "https://github.com/eliukblau/pixterm")
@@ -1176,3 +1230,65 @@ Advanced users can share tags and files anonymously through custom servers that
 any user may run.  Everything is free and privacy is the first concern.")
     (home-page "https://hydrusnetwork.github.io/hydrus/")
     (license license:wtfpl2)))
+
+(define-public vv
+  (package
+    (name "vv")
+    (version "3.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/wolfpld/vv.git")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0swx5pnv8f58p7721a02jnrvi0w84cbp6p484vvqd3yryrc1k05v"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f ; no tests.
+           #:cmake cmake-3.30
+           #:configure-flags
+           #~ (list "-DMARCH_NATIVE=OFF"
+                    "-DCMAKE_BUILD_TYPE=Release"
+                    "-DCPM_USE_LOCAL_PACKAGES=ON"
+                    "-DCPM_LOCAL_PACKAGES_ONLY=ON"
+                    (string-append "-DCPM_stb_SOURCE="
+                                   #$stb-image-resize2
+                                   "/include")
+                    (string-append "-DCPM_tracy_SOURCE="
+                                   #$(package-source tracy-wayland))
+                    "-DCMAKE_CXX_STANDARD=20"
+                    "-DCMAKE_CXX_STANDARD_REQUIRED=ON")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-dependencies
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "src/image/vector/PdfImage.cpp"
+                     (("\"libpoppler-glib.so\"")
+                      (string-append "\""
+                                     (assoc-ref inputs "poppler")
+                                     "/lib/libpoppler-glib.so"
+                                     "\"")))))
+               (replace 'install
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   ;; The provided installer doesn't have:
+                   ;; install(TARGETS vv DESTINATION bin)
+                   ;; So nothing would have been installed.
+                   (install-file "vv"
+                                 (string-append (assoc-ref outputs "out")
+                                                "/bin")))))))
+    (native-inputs
+     (list pkg-config gcc-14))
+    (inputs
+     (list cairo openexr libheif libjpeg-turbo libjxl-0.10 lcms libpng libraw
+           librsvg libsixel libtiff libwebp zlib
+           aklomp-base64 stb-image poppler))
+    (synopsis "Image viewer for the terminal")
+    (description "This package provides a color-correct image viewer for the
+terminal.  Your terminal should support the Kitty Graphics protocol.  If it
+doesn't, it should support the Sixel protocol.")
+    (properties `((tunable? . #t)))
+    (home-page "https://wolf.nereid.pl/posts/image-viewer/")
+    ;; Author tried to make it BSD-3--but it uses a GPL library (poppler)
+    (license license:gpl2+)))

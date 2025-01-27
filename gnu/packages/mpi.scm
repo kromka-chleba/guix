@@ -37,13 +37,18 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages bison)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages documentation)
   #:use-module (gnu packages fabric-management)
+  #:use-module (gnu packages flex)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages java)
   #:use-module (gnu packages libevent)
+  #:use-module (gnu packages libunwind)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages pciutils)
+  #:use-module (gnu packages profiling)
   #:use-module (gnu packages python)
   #:use-module (gnu packages xorg)
   #:use-module (gnu packages gtk)
@@ -681,3 +686,68 @@ modular framework for other derived implementations.")
           '%standard-phases)
          phases)))
     (synopsis "Implementation of the Message Passing Interface (MPI) for OmniPath")))
+
+(define (make-scorep mpi)
+  (package
+    (name (string-append "scorep-" (package-name mpi)))
+    (version "3.1")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "http://www.vi-hps.org/upload/packages/scorep/scorep-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "0h45357djna4dn9jyxx0n36fhhms3jrf22988m9agz1aw2jfivs9"))
+              (modules '((guix build utils)))
+              (snippet
+               ;; Remove bundled software.
+               '(begin
+                  (for-each delete-file-recursively
+                            '("vendor/opari2" "vendor/cube"))
+                  #t))))
+    (build-system gnu-build-system)
+    (inputs
+     `(("mpi" ,mpi)
+       ("papi" ,papi)
+       ("opari2" ,opari2)
+       ("libunwind" ,libunwind)
+       ("otf2" ,otf2)
+       ("cubelib" ,cube "lib")                    ;for lib, include
+       ("openmpi" ,openmpi)
+       ("zlib" ,zlib)))
+    (native-inputs
+     (list gfortran
+           flex
+           cube ;for cube-config
+           bison
+           python
+           doxygen
+           which))
+    (arguments
+     `(#:configure-flags
+       (list "--enable-shared" "--disable-static"
+             (string-append "--with-opari2="
+                            (assoc-ref %build-inputs "opari2"))
+             (string-append "--with-cube="
+                            (assoc-ref %build-inputs "cube")))
+       #:parallel-tests? #f
+       #:make-flags '("V=1")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'install 'licence
+           (lambda* (#:key outputs #:allow-other-keys)
+             (let ((doc (string-append (assoc-ref outputs "out")
+                                       "/share/doc/scorep")))
+               (install-file "COPYING" doc)
+               #t))))))
+    (home-page "https://www.vi-hps.org/projects/score-p/")
+    (synopsis "Performance measurement infrastructure for parallel code")
+    (description
+     "The Score-P (Scalable Performance Measurement Infrastructure for
+Parallel Codes) measurement infrastructure is a scalable and easy-to-use tool
+suite for profiling, event trace recording, and online analysis of
+high-performance computing (HPC) applications.")
+    (license license:cpl1.0)))
+
+(define-public scorep-openmpi (make-scorep openmpi))

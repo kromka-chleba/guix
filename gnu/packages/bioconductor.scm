@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015-2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016, 2017, 2018, 2020, 2021 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016 Pjotr Prins <pjotr.guix@thebird.nl>
 ;;; Copyright © 2016 Ben Woodcroft <donttrustben@gmail.com>
@@ -12002,7 +12002,7 @@ region sets and other genomic features.")
              (for-each (match-lambda
                          ((source . target)
                           (minify source #:target target)))
-                       `((,(assoc-ref inputs "_")
+                       `((,(assoc-ref inputs "jquery-1.8.0.js")
                           . "inst/extdata/jslib/jquery-1.8.0.min.js"))))))))
     (propagated-inputs
      (list r-annotate
@@ -13195,7 +13195,7 @@ tissues.  Current functionalities include
          (add-after 'unpack 'process-javascript
            (lambda* (#:key inputs #:allow-other-keys)
              (with-directory-excursion "inst/htmlwidgets/lib/d3"
-               (let ((source (assoc-ref inputs "_"))
+               (let ((source (assoc-ref inputs "d3.v4.js"))
                      (target "d3.v4.min.js"))
                  (format #true "Processing ~a --> ~a~%"
                          source target)
@@ -18633,7 +18633,7 @@ Bioconductor.")
          (add-after 'unpack 'process-javascript
            (lambda* (#:key inputs #:allow-other-keys)
              (with-directory-excursion "inst/htmlwidgets/lib/d3"
-               (let ((source (assoc-ref inputs "_"))
+               (let ((source (assoc-ref inputs "d3.v4.js"))
                      (target "d3.v4.min.js"))
                  (invoke "esbuild" source "--minify"
                          (string-append "--outfile=" target)))))))))

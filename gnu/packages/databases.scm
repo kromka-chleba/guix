@@ -28,7 +28,7 @@
 ;;; Copyright © 2017, 2018 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2017 Rutger Helling <rhelling@mykolab.com>
 ;;; Copyright © 2017, 2018, 2019 Pierre Langlois <pierre.langlois@gmx.com>
-;;; Copyright © 2015, 2017, 2018, 2019, 2021, 2022, 2023, 2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015, 2017, 2018, 2019, 2021-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2017 Kristofer Buffington <kristoferbuffington@gmail.com>
 ;;; Copyright © 2018 Amirouche Boubekki <amirouche@hypermove.net>
 ;;; Copyright © 2018 Joshua Sierles, Nextjournal <joshua@nextjournal.com>
@@ -90,6 +90,7 @@
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
+  #:use-module (gnu packages certs)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
@@ -711,59 +712,6 @@ client.")
 around TangentOrg’s libmemcached library, and can be used as a drop-in
 replacement for the @code{python-memcached} library.")
     (license license:bsd-3)))
-
-(define-public go-github-com-bradfitz-gomemcache
-  (package
-    (name "go-github-com-bradfitz-gomemcache")
-    (version "0.0.0-20190913173617-a41fca850d0b")
-    (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/bradfitz/gomemcache")
-               (commit (go-version->git-ref version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "18qpds6xr73jy80pj7l3pc1l1ndcy3va2dl8fzk17bgwg49sxwfz"))
-        (modules '((guix build utils)))
-        (snippet
-         '(begin
-            ;; Fixes the 'untyped-int -> string of one rune' issue.
-            ;; https://github.com/golang/go/issues/32479
-            (substitute* "memcache/memcache_test.go"
-              (("string\\(0x7f") "string(rune(0x7f)"))))))
-    (build-system go-build-system)
-    (arguments
-     '(#:unpack-path "github.com/bradfitz/gomemcache"
-       #:import-path "github.com/bradfitz/gomemcache/memcache"))
-    (home-page "https://github.com/bradfitz/gomemcache")
-    (synopsis "Memcache client library in Go")
-    (description
-     "This is a memcache client library for the Go programming language.")
-    (license license:asl2.0)))
-
-(define-public go-github-com-couchbase-gomemcached
-  (package
-    (name "go-github-com-couchbase-gomemcached")
-    (version "0.1.4")
-    (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/couchbase/gomemcached")
-               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "10w74gc05x5naspls39sv2r92krrg31mk266w3lyqqwc0s3fxysl"))))
-    (build-system go-build-system)
-    (arguments '(#:import-path "github.com/couchbase/gomemcached"))
-    (native-inputs
-     (list go-github-com-stretchr-testify))
-    (home-page "https://github.com/couchbase/gomemcached")
-    (synopsis "Memcached binary protocol toolkit for go")
-    (description
-     "This package provides memcache client and server functionality.")
-    (license license:expat)))
 
 (define-public litecli
  (package
@@ -3029,32 +2977,6 @@ one-to-one, while still providing an idiomatic interface.")
      "Package rdb implements parsing and encoding of the Redis RDB file format.")
     (license license:expat)))
 
-(define-public go-github-com-gomodule-redigo
-  (package
-    (name "go-github-com-gomodule-redigo")
-    (version "1.8.8")
-    (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/gomodule/redigo")
-               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "0wplaaxg7f6c6c08gdp33l48hygn8gq1rhlnjzr1c9qcggsm07k1"))))
-    (build-system go-build-system)
-    (arguments
-     '(#:unpack-path "github.com/gomodule/redigo"
-       #:import-path "github.com/gomodule/redigo/redis"))
-    (native-inputs
-     (list go-github-com-stretchr-testify
-           redis))
-    (home-page "https://github.com/gomodule/redigo")
-    (synopsis "Go client for Redis")
-    (description
-     "Redigo is a Go client for the Redis database.")
-    (license license:asl2.0)))
-
 (define-public kyotocabinet
   (package
     (name "kyotocabinet")
@@ -3384,7 +3306,7 @@ can autogenerate peewee models using @code{pwiz}, a model generator.")
         (base32 "0dmzpsnlqjjz0vm0r9xjk69xfsm235bpnk3jccr8ww4s8y7qc0nq"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list poetry))
+     (list poetry python-setuptools))
     (home-page "https://github.com/tortoise/pypika-tortoise")
     (synopsis "Pypika fork for tortoise-orm")
     (description "Pypika-tortoise is a fork of pypika which has been
@@ -3608,34 +3530,6 @@ development.")
     ;; source files are in the public domain.
     (license (list license:public-domain license:bsd-3))))
 
-(define-public python-pyodbc-c
-  (package
-    (name "python-pyodbc-c")
-    (version "3.1.5")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://gitlab.com/daym/pyodbc-c/")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "08y60c5sx0k953zfx0s2a155l8py968sb17ap9a9fg8bjnj783k8"))))
-    (build-system python-build-system)
-    (inputs
-     (list unixodbc))
-    (arguments
-     `(;; The tests require a running SQL server that they don't help set up.
-       #:tests? #f))
-    (home-page "https://gitlab.com/daym/pyodbc-c")
-    (synopsis "Python ODBC Library written in C")
-    (description "@code{python-pyodbc-c} provides a Python DB-API driver
-for ODBC, similar to python-pyodbc but written in C.
-
-It's designed to stand alone and not have other dependencies on other packages
-or languages.  It uses only Python's built-in data types.")
-    (license (license:x11-style "file://LICENSE.TXT"))))
-
 (define-public python-pyodbc
   (package
     (name "python-pyodbc")
@@ -3702,34 +3596,6 @@ file format to other databases such as MySQL, Oracle, Sybase, PostgreSQL,
 etc., and an SQL engine for performing simple SQL queries.")
     (license (list license:lgpl2.0
                    license:gpl2+))))
-
-(define-public go-gopkg-in-mgo-v2
-  (package
-    (name "go-gopkg-in-mgo-v2")
-    (version "2.0.0-20190816093944-a6b53ec6cb22")
-    (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://gopkg.in/mgo.v2")
-               (commit (go-version->git-ref version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "1lgvwxsbmdrf4938qkxl56wbwgbphk2qqnmpf73qdmlv4qsg14na"))))
-    (build-system go-build-system)
-    (arguments
-     '(#:tests? #f      ; Tests try to use a running mongodb server.
-       #:import-path "gopkg.in/mgo.v2"))
-    (propagated-inputs
-     (list go-gopkg.in-tomb.v2))
-    (inputs
-     (list cyrus-sasl))
-    (native-inputs
-     (list go-gopkg-in-check-v1))
-    (home-page "https://gopkg.in/mgo.v2")
-    (synopsis "MongoDB driver for Go")
-    (description "This package provides a MongoDB driver for Go.")
-    (license license:bsd-2)))
 
 (define-public python-lmdb
   (package
@@ -4106,7 +3972,7 @@ this library provides functions to facilitate such comparisons.")
      (list python-dateutil
            python-editor
            python-mako
-           python-sqlalchemy
+           python-sqlalchemy-2
            python-typing-extensions))
     (home-page "https://bitbucket.org/zzzeek/alembic")
     (synopsis "Database migration tool for SQLAlchemy")
@@ -4137,7 +4003,7 @@ text search extension.")
 (define-public python-sqlite-utils
   (package
     (name "python-sqlite-utils")
-    (version "3.32.1")
+    (version "3.38")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -4146,7 +4012,7 @@ text search extension.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1qf9zwn9gdkx8825klicwkw8zj5wpidd8csdhjxvybq56nkgnrpm"))))
+                "1rai8rbw5drxppypyl3r8j9gr12278h3snkj7l280zkskbxxh7hf"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases #~(modify-phases %standard-phases
@@ -4393,7 +4259,7 @@ with the @code{psycopg} PostgreSQL driver.")
 (define-public python-psycopg
   (package
     (name "python-psycopg")
-    (version "3.1.10")
+    (version "3.2.4")
     (source (origin
               ;; Fetch from git because PyPI contains only cythonized sources.
               (method git-fetch)
@@ -4403,54 +4269,41 @@ with the @code{psycopg} PostgreSQL driver.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0hqk45wlaflz69cy1r0hbv11bwb89p6hjb7zmgqas26gdhg37n0r"))))
-    (build-system python-build-system)
+                "0fb83fhaa3saapqv37901hlv017bj40q0dmkxd79aaq442sjf9w2"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-before 'build 'change-directory
-                 (lambda _
-                   (chdir "psycopg")))
-               (add-after 'build 'build-c-extensions
-                 (lambda _
-                   (with-directory-excursion "../psycopg_c"
-                     ((assoc-ref %standard-phases 'build)))))
-               (add-after 'install 'install-c-extensions
-                 (lambda* (#:key inputs outputs #:allow-other-keys)
-                   ;; For some reason setup.py refuses to install if the
-                   ;; installation directory is not on PYTHONPATH.
-                   (setenv "PYTHONPATH" (site-packages inputs outputs))
-                   (with-directory-excursion "../psycopg_c"
-                     ((assoc-ref %standard-phases 'install)
-                      #:inputs inputs
-                      #:outputs outputs))))
-               (add-before 'check 'start-postgresql
-                 (lambda _
-                   (let ((dbdir (string-append (getcwd) "/../pgdir")))
-                     (invoke "initdb" "-D" dbdir)
-                     (invoke "pg_ctl" "-D" dbdir
-                             "-o" (string-append "-k " dbdir)
-                             "-l" (string-append dbdir "/db.log")
-                             "start")
-
-	             (invoke "psql" "-h" dbdir "-d" "postgres"
-                             "-c" "CREATE DATABASE nixbld;"))))
-               (replace 'check
-                 (lambda* (#:key inputs tests? #:allow-other-keys)
-                   (when tests?
-                     (setenv "TZDIR" (search-input-directory inputs
-                                                             "share/zoneinfo"))
-                     (with-directory-excursion ".."
-                       (invoke "pytest" "-vv"
-                               "-o" "asyncio_mode=auto"
-                               ;; FIXME: Many of the typing tests are failing,
-                               ;; conveniently tagged as slow...
-                               "-k" "not slow")))))
-               ;; The sanity check phase attempts loading the C extension
-               ;; before the Python library, which results in the following:
-               ;;   <ImportError: the psycopg package should be imported
-               ;;    before psycopg_c>.
-               (delete 'sanity-check))))
+     (list
+      #:test-flags
+      '(list "-o" "asyncio_mode=auto"
+             ;; FIXME: Many of the typing tests are failing,
+             ;; conveniently tagged as slow...
+             "-k" "not slow" "..")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'change-directory
+            (lambda _ (chdir "psycopg")))
+          (add-after 'build 'build-c-extensions
+            (lambda _
+              (with-directory-excursion "../psycopg_c"
+                ((assoc-ref %standard-phases 'build)))))
+          (add-after 'install 'install-c-extensions
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (with-directory-excursion "../psycopg_c"
+                ((assoc-ref %standard-phases 'install)
+                 #:inputs inputs #:outputs outputs))))
+          (add-before 'check 'start-postgresql
+            (lambda* (#:key inputs tests? #:allow-other-keys)
+              (when tests?
+                (setenv "TZDIR" (search-input-directory inputs
+                                                        "share/zoneinfo"))
+                (let ((dbdir (string-append (getcwd) "/../pgdir")))
+                  (invoke "initdb" "-D" dbdir)
+                  (invoke "pg_ctl" "-D" dbdir
+                          "-o" (string-append "-k " dbdir)
+                          "-l" (string-append dbdir "/db.log")
+                          "start")
+	          (invoke "psql" "-h" dbdir "-d" "postgres"
+                          "-c" "CREATE DATABASE nixbld;"))))))))
     (native-inputs
      (list python-cython-3
            python-mypy
@@ -4458,7 +4311,9 @@ with the @code{psycopg} PostgreSQL driver.")
            python-pytest
            python-pytest-asyncio
            python-anyio
+           python-setuptools
            python-tenacity
+           python-wheel
            pproxy
            tzdata-for-tests))
     (inputs
@@ -4566,7 +4421,7 @@ for Python.  The design goals are:
 (define-public python-hiredis
   (package
     (name "python-hiredis")
-    (version "2.2.2")
+    (version "3.1.0")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -4575,18 +4430,10 @@ for Python.  The design goals are:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "066rm5m7aa8skm0a57cf45153bwmbl9yyi4s60an14hb25n947gi"))
+                "1g9qj37phq9989av0bwkqy40f5wx9q08y19dsmzwd1ssqsxwhfav"))
               (patches
-               (search-patches "python-hiredis-fix-header.patch"
-                               "python-hiredis-use-system-hiredis.patch"))))
+               (search-patches "python-hiredis-use-system-hiredis.patch"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (add-before 'check 'delete-extraneous-__init__.py
-                          (lambda _
-                            ;; The fix was forwarded upstream, see:
-                            ;; https://github.com/redis/hiredis-py/pull/160.
-                            (delete-file "tests/__init__.py"))))))
     (native-inputs (list python-pytest python-setuptools python-wheel))
     (inputs (list hiredis))
     (home-page "https://github.com/redis/hiredis-py")
@@ -5849,7 +5696,17 @@ compatible with SQLite using a graphical user interface.")
     (arguments
      (list
       #:install-source? #f
-      #:import-path "github.com/lighttiger2505/sqls"))
+      #:import-path "github.com/lighttiger2505/sqls"
+      ;; XXX: Try to enable more or all tests.
+      #:test-subdirs #~(list "ast/..."
+                             "dialect/..."
+                             "parser/..."
+                             "internal/completer"
+                             "internal/config/..."
+                             "internal/database"
+                             "internal/debug"
+                             "internal/formatter"
+                             "internal/lsp")))
     (native-inputs
      (list go-github-com-google-go-cmp
            go-github-com-go-sql-driver-mysql
@@ -5900,7 +5757,7 @@ mechanism of @code{dogpile}.")
 (define-public datasette
   (package
     (name "datasette")
-    (version "1.0a7")
+    (version "1.0a16")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -5909,41 +5766,17 @@ mechanism of @code{dogpile}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1wwdx2xqkxygbww1nzpr6h702ims6zcxpjskh8fldn1kby591qgg"))))
+                "10c754idn9ka5hhai1qwjwlxw4dajdlrh162k71i5gwn4cgq6wr5"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      ;; There are multiple unexplained test failures (see:
-      ;; https://github.com/simonw/datasette/issues/2048).
+      ;; See https://github.com/simonw/datasette/issues/2048
       #~(list "-k" (string-append
-                    "not (test_database_page_for_database_with_dot_in_name"
-                    " or test_row_strange_table_name"
-                    " or test_database_with_space_in_name"
-                    " or test_tilde_encoded_database_names"
-                    " or test_weird_database_names"
-                    " or test_css_classes_on_body"
-                    " or test_templates_considered"
-                    " or test_row_html_compound_primary_key"
-                    " or test_edit_sql_link_on_canned_queries"
-                    " or test_alternate_url_json"
-                    " or test_table_with_slashes_in_name"
-                    " or test_searchable"
-                    " or test_custom_query_with_unicode_characters"
-                    " or test_searchmode)")
-              "-n" (number->string (parallel-job-count))
-              "-m" "not serial")        ;cannot run in parallel
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-requirements
-            (lambda _
-              ;; The package needlessly specifies exact versions
-              ;; of dependencies, when it works fine with others.
-              (substitute* "setup.py"
-                (("(black)==[0-9\\.]+" _ package)
-                 package)
-                (("click-default-group-wheel")
-                 "click-default-group")))))))
+                    ;; These contain two unexpected extra items.
+                    "not test_searchable"
+                    " and not test_searchmode")
+              "-n" (number->string (parallel-job-count)))))
     (propagated-inputs
      (list python-aiofiles
            python-asgi-csrf
@@ -5963,7 +5796,8 @@ mechanism of @code{dogpile}.")
            python-sqlite-utils
            python-uvicorn))
     (native-inputs
-     (list python-beautifulsoup4
+     (list nss-certs-for-test
+           python-beautifulsoup4
            python-black
            python-cogapp
            python-pip

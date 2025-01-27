@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2012 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2013, 2014 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2015-2022 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015-2022, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 José Miguel Sánchez García <jmi2k@openmailbox.org>
 ;;; Copyright © 2016 Carlo Zancanaro <carlo@zancanaro.id.au>
 ;;; Copyright © 2016 Rene Saavedra <rennes@openmailbox.org>
@@ -494,7 +494,7 @@ can load dynamic libraries.")
 (define-public parinfer-rust-emacs
   (package
     (name "parinfer-rust-emacs")
-    (version "0.4.6")
+    (version "0.4.7")
     (source
      (origin
        (method git-fetch)
@@ -502,22 +502,22 @@ can load dynamic libraries.")
              (url "https://github.com/justinbarclay/parinfer-rust-emacs")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1v5lcbs1x4f3b428sj9rkjbmfpzyxzny7i0pgdpnr8nyjvpkzns8"))
+        (base32 "1gay4m6hd893p5m3fayfdqxncg8cg9kw60w5qm8z14p9nxyqb0i5"))
        (file-name (git-file-name name version))))
     (build-system cargo-build-system)
     (arguments
      (list
       #:install-source? #f
-      #:cargo-inputs `(("rust-getopts" ,rust-getopts-0.2)
-                       ("rust-libc" ,rust-libc-0.2)
-                       ("rust-emacs" ,rust-emacs-0.19)
-                       ("rust-serde" ,rust-serde-1)
-                       ("rust-serde-json" ,rust-serde-json-1)
-                       ("rust-serde-derive" ,rust-serde-derive-1)
-                       ("rust-stdweb" ,rust-stdweb-0.4)
-                       ("rust-unicode-segmentation" ,rust-unicode-segmentation-1)
-                       ("rust-unicode-width" ,rust-unicode-width-0.1)
-                       ("rust-winapi" ,rust-winapi-0.3))
+      #:cargo-inputs (list rust-getopts-0.2
+                           rust-libc-0.2
+                           rust-emacs-0.19
+                           rust-serde-1
+                           rust-serde-json-1
+                           rust-serde-derive-1
+                           rust-stdweb-0.4
+                           rust-unicode-segmentation-1
+                           rust-unicode-width-0.1
+                           rust-winapi-0.3)
       #:phases #~(modify-phases %standard-phases
                    (add-after 'install 'install-library
                      (lambda _

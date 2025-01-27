@@ -11,7 +11,7 @@
 ;;; Copyright © 2020 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020, 2021, 2022 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2020 Prafulla Giri <pratheblackdiamond@gmail.com>
-;;; Copyright © 2020, 2021, 2022, 2023, 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2020-2025 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2021 Alexandros Theodotou <alex@zrythm.org>
 ;;; Copyright © 2021 la snesne <lasnesne@lagunposprasihopre.org>
 ;;; Copyright © 2021, 2022, 2023, 2024 Vinicius Monego <monego@posteo.net>
@@ -19,6 +19,7 @@
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2023 Mehmet Tekman <mtekman89@gmail.com>
 ;;; Copyright © 2024 Remco van 't Veer <remco@remworks.net>
+;;; Copyright © 2025 Sughosha <sughosha@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -102,6 +103,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages samba)
+  #:use-module (gnu packages scanner)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages tls)
@@ -829,7 +831,7 @@ painting, image manipulating and icon editing.")
 (define-public krita
   (package
     (name "krita")
-    (version "5.2.3")
+    (version "5.2.6")
     (source
      (origin
        (method url-fetch)
@@ -837,7 +839,7 @@ painting, image manipulating and icon editing.")
              "mirror://kde/stable/krita/" version "/krita-" version
              ".tar.gz"))
        (sha256
-        (base32 "1h2whbccgr2xhln4zx708hksg4284dhgjz10cnnkfgiwp7nlcsj6"))
+        (base32 "1yymhbybnjkl0smfqv6sm13iz4pp5ask3bjl5klv9x7xaj2i5ms8"))
        (patches (search-patches "krita-bump-sip-abi-version-to-12.8.patch"))))
     (build-system qt-build-system)
     (arguments
@@ -1331,6 +1333,61 @@ multi-floor indoor maps.")
 transport data and for performing public transport journey queries.")
     (license (list license:lgpl2.0+))))
 
+(define-public ksanecore
+  (package
+    (name "ksanecore")
+    (version "24.12.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                             "/src/ksanecore-" version ".tar.xz"))
+       (sha256
+        (base32 "0bh7i2qh5jdxfgy122vbwin7g46s16kdmam6szj14zc1ggnhqvfb"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase))
+    (native-inputs
+     (list extra-cmake-modules))
+    (inputs
+     (list ki18n
+           sane-backends))
+    (home-page "https://invent.kde.org/libraries/ksanecore")
+    (synopsis "Library providing logic to interface scanners")
+    (description
+     "KSaneCore is a library that provides a Qt interface for the SANE library
+for scanner hardware.")
+    (license license:lgpl3+)))
+
+(define-public libksane
+  (package
+    (name "libksane")
+    (version "24.12.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                             "/src/libksane-" version ".tar.xz"))
+       (sha256
+        (base32 "1sv81mpai350196x5sskvf2qsq2abmvjpv28zy7n8cy31if931ga"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase))
+    (native-inputs
+     (list extra-cmake-modules))
+    (inputs
+     (list ki18n
+           ksanecore
+           ktextwidgets
+           kwallet
+           kwidgetsaddons))
+    (home-page "https://invent.kde.org/graphics/libksane")
+    (synopsis "Library providing QWidget with logic to interface scanners")
+    (description
+     "Libksane is a Qt-based interface for SANE library to control flat
+scanners.")
+    (license license:lgpl3+)))
+
 (define-public snorenotify
   (package
     (name "snorenotify")
@@ -1622,14 +1679,14 @@ Python, PHP, and Perl.")
 (define-public libkdegames
   (package
     (name "libkdegames")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/libkdegames-" version ".tar.xz"))
        (sha256
-        (base32 "1sqhlhanb5vfbxp6g01rkgaj5v9gi1cxfgsmw39s0cikjfvidwpa"))))
+        (base32 "0y7y883bd9f2w9dq5l9r8jsi6hrk0fddaj9w7y1g9zk4rfkmm13y"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -1725,14 +1782,14 @@ creating routes by drag and drop and more.")
 (define-public okular
   (package
     (name "okular")
-    (version "24.08.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/" name "-" version ".tar.xz"))
        (sha256
-        (base32 "1yy86fnra7dhc79m3ka0lqarp47336iln3fs8nyys2p6bdywg2a0"))))
+        (base32 "085zw8lrb2ll7p9178xl8m2bnvv5aw5xxy18wcyqnnfc9495ql5v"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -1812,7 +1869,7 @@ a variety of formats, including PDF, PostScript, DejaVu, and EPub.")
 (define-public poxml
   (package
     (name "poxml")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri
@@ -1820,12 +1877,12 @@ a variety of formats, including PDF, PostScript, DejaVu, and EPub.")
                               "/src/poxml-" version ".tar.xz"))
               (sha256
                (base32
-                "0998ss7jib255x9kyhsz79lgnf97m7hbm6dsyh6xj9rcwv8i9srk"))))
+                "1mbkmh0zy5bi13vbcqdnppg2f1cl77hdfscy3wp2mfz209sa83a0"))))
     (build-system cmake-build-system)
     (native-inputs
-     (list extra-cmake-modules kdoctools-5))
+     (list extra-cmake-modules kdoctools))
     (inputs
-     (list gettext-minimal qtbase-5))
+     (list gettext-minimal qtbase))
     (home-page "https://apps.kde.org/development/")
     (synopsis "Tools for translating DocBook XML files with Gettext")
     (description "This is a collection of tools that facilitate translating

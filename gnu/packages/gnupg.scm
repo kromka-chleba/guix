@@ -630,15 +630,15 @@ decrypt messages using the OpenPGP format by making use of GPGME.")
 (define-public python-gnupg
   (package
     (name "python-gnupg")
-    (version "0.4.8")
+    (version "0.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "python-gnupg" version))
        (sha256
         (base32
-         "1mq7hljy3bjkxdvh3qx2bv4y0b66l9pmc6i06ys75y7dbjpf2kdn"))))
-    (build-system python-build-system)
+         "0ali2zz6k568yzhdgzm8f14v6s5ymihlyffbvfxc9q60gww8wxbh"))))
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -654,7 +654,7 @@ decrypt messages using the OpenPGP format by making use of GPGME.")
                ;; so we disable them.
                (invoke "python" "test_gnupg.py" "--no-doctests")))))))
     (native-inputs
-     (list gnupg))
+     (list gnupg python-setuptools python-wheel))
     (home-page "https://pythonhosted.org/python-gnupg/index.html")
     (synopsis "Wrapper for the GNU Privacy Guard")
     (description
@@ -1083,14 +1083,14 @@ however, pgpdump produces more detailed and easier to understand output.")
 (define-public gpa
   (package
     (name "gpa")
-    (version "0.10.0")
+    (version "0.11.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnupg/gpa/"
                                   name "-" version ".tar.bz2"))
               (sha256
                (base32
-                "1cbpc45f8qbdkd62p12s3q2rdq6fa5xdzwmcwd3xrj55bzkspnwm"))))
+                "1k1kvxffyb4nm83yp3mnx9bfmcciwb7vfw8c3xscnh85yxdzma16"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -1108,7 +1108,7 @@ however, pgpdump produces more detailed and easier to understand output.")
            gpgme
            libassuan
            libgpg-error
-           gtk+-2))
+           gtk+))
     (home-page "https://gnupg.org/software/gpa/")
     (synopsis "Graphical user interface for GnuPG")
     (description

@@ -5,7 +5,7 @@
 ;;; Copyright © 2016, 2017 Danny Milosavljevic <dannym+a@scratchpost.org>
 ;;; Copyright © 2013, 2014, 2015, 2016, 2020 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016, 2017, 2019-2023 Marius Bakke <marius@gnu.org>
-;;; Copyright © 2015-2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2017, 2021 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016, 2017, 2020 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
@@ -49,7 +49,7 @@
 ;;; Copyright © 2021 Alice Brenon <alice.brenon@ens-lyon.fr>
 ;;; Copyright © 2022 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
-;;; Copyright © 2022, 2023 Felix Gruber <felgru@posteo.net>
+;;; Copyright © 2022, 2023, 2025 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2022 Peter Polidoro <peter@polidoro.io>
 ;;; Copyright © 2022 Antero Mejr <antero@mailbox.org>
 ;;; Copyright © 2022 Luis Henrique Gomes Higino <luishenriquegh2701@gmail.com>
@@ -142,6 +142,289 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages)
   #:use-module (srfi srfi-1))
+
+(define-public python-devpi-common
+  (package
+    (name "python-devpi-common")
+    (version "4.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "devpi_common" version))
+       (sha256
+        (base32 "1k217b0fvsc7k2afw6wwlvqr1ksnv1vjzfm61g358vn98nd0lni3"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-lazy python-packaging-legacy
+                             python-requests))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (home-page "https://github.com/devpi/devpi")
+    (synopsis
+     "Utilities jointly used by devpi-server, devpi-client and others")
+    (description
+     "This package provides utilities jointly used by devpi-server,
+devpi-client and others.")
+    (license license:expat)))
+
+(define-public python-devpi-client
+  (package
+    (name "python-devpi-client")
+    (version "7.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "devpi-client" version))
+       (sha256
+        (base32 "0ywx4ql8lsypb17n2miq39bmkrp232sdk8g6pskqp1y3b223chy1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; This wants to use pip install
+      '(list "--ignore=testing/test_upload.py"
+             ;; These complain about finding distutils.  It's not my fault,
+             ;; mate, setuptools is right there, but you won't pick it!
+             "--ignore=testing/test_list_remove.py"
+             "--ignore=testing/test_main.py"
+             "--ignore=testing/test_install.py"
+             "--ignore=testing/test_functional.py"
+             "--ignore=testing/test_test.py")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'patch-tests
+           (lambda _
+             ;; Do not replace the directory name of the store item.
+             (substitute* "testing/conftest.py"
+               (("\"devpi-server\", \"devpi-init\"")
+                "\"/bin/devpi-server\", \"/bin/devpi-init\""))))
+         (add-before 'check 'set-HOME
+           ;; Some tests need this
+           (lambda _ (setenv "HOME" "/tmp"))))))
+    (propagated-inputs (list python-pypa-build
+                             python-check-manifest
+                             python-colorama
+                             python-devpi-common
+                             python-iniconfig
+                             python-pkginfo
+                             python-platformdirs
+                             python-pluggy
+                             python-pypitoken
+                             python-tomli))
+    (native-inputs
+     (list python-devpi-server
+           python-pytest
+           python-setuptools
+           python-virtualenv))
+    (home-page "https://github.com/devpi/devpi")
+    (synopsis "Devpi upload/install/... commands for Python developers")
+    (description
+     "The devpi command line tool is typically used in conjunction with
+devpi-server.  It allows to upload, test and install packages from devpi
+indexes.")
+    (license license:expat)))
+
+(define-public python-devpi-process
+  (package
+    (name "python-devpi-process")
+    (version "1.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "devpi_process" version))
+       (sha256
+        (base32 "0v26i8bs0n8f2ikizwyvq77fw3l0nsyl4wj8yff0r3y351ydqbs1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'relax-requirements
+           (lambda _
+             ;; Our package is too old, sorry.
+             (substitute* "pyproject.toml"
+               (("typing-extensions>=4.12.2")
+                "typing-extensions>=4.10.0"))))
+         (add-after 'unpack 'patch-tool-locations
+           (lambda* (#:key inputs #:allow-other-keys)
+             (substitute* "src/devpi_process/__init__.py"
+               (("_exe\\(\"devpi-init\"\\)")
+                (string-append "\"" (search-input-file inputs "/bin/devpi-init") "\""))
+               (("_exe\\(\"devpi-server\"\\)")
+                (string-append "\"" (search-input-file inputs "/bin/devpi-server") "\""))
+               (("_exe\\(\"devpi\"\\)")
+                (string-append "\"" (search-input-file inputs "/bin/devpi") "\""))))))))
+    (propagated-inputs (list python-devpi-client python-devpi-server
+                             python-typing-extensions))
+    (native-inputs
+     (list nss-certs-for-test
+           python-covdefaults
+           python-hatchling
+           python-hatch-vcs
+           python-httpx
+           python-pytest
+           python-pytest-cov))
+    (home-page "https://github.com/devpi/devpi")
+    (synopsis "API to create and use a devpi server process")
+    (description
+     "This package provides a programmatic API to create and use a devpi
+server process.")
+    (license license:expat)))
+
+(define-public python-devpi-server
+  (package
+    (name "python-devpi-server")
+    (version "6.14.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "devpi-server" version))
+       (sha256
+        (base32 "08smfjhnvqj68fp45gzqm9axjcgnksc0z31v48llivnzlxwf8cmr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; These all fail with: "module 'py' has no attribute 'io'"
+      '(list "--ignore=test_devpi_server/test_importexport.py"
+             "--ignore=test_devpi_server/test_main.py"
+             "--ignore=test_devpi_server/test_genconfig.py")))
+    (propagated-inputs (list python-argon2-cffi
+                             python-attrs
+                             python-defusedxml
+                             python-devpi-common
+                             python-httpx
+                             python-itsdangerous
+                             python-lazy
+                             python-legacy-cgi
+                             python-passlib
+                             python-platformdirs
+                             python-pluggy
+                             python-py
+                             python-pyramid
+                             python-repoze-lru
+                             python-ruamel.yaml
+                             python-strictyaml
+                             python-waitress))
+    (native-inputs
+     (list python-execnet
+           python-pytest
+           python-pytest-timeout
+           python-setuptools
+           python-webtest
+           python-wheel))
+    (home-page "https://devpi.net")
+    (synopsis "Pypi.org caching server")
+    (description "This package implements a reliable private and pypi.org
+caching server.")
+    (license license:expat)))
+
+(define-public python-eventlet
+  (package
+    (name "python-eventlet")
+    (version "0.38.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "eventlet" version))
+       (sha256
+        (base32
+         "1b7dhy3pyp3nfv0zzjrs7i3kam40cl1nh3acy2fd59ywy4x84ika"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      '(list "-k"
+             (string-append
+              "not TestGetaddrinfo"
+              " and not TestProxyResolver"
+              " and not test_noraise_dns_tcp"
+              " and not test_raise_dns_tcp"
+              " and not test_hosts_no_network"
+              " and not test_import_rdtypes_then_eventlet"
+              " and not test_patcher_existing_locks"
+              " and not test_dns_methods_are_green"))
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'avoid-OSError
+           (lambda _
+             ;; If eventlet tries to load greendns, an OSError is thrown when
+             ;; getprotobyname is called.  Thankfully there is an environment
+             ;; variable to disable the greendns import, so use it:
+             (setenv "EVENTLET_NO_GREENDNS" "yes"))))))
+    (native-inputs
+     (list python-hatch-vcs
+           python-hatchling
+           python-pytest
+           python-twine))
+    (propagated-inputs
+     (list python-dnspython
+           python-greenlet
+           python-monotonic))
+    (home-page "https://eventlet.net")
+    (synopsis "Concurrent networking library for Python")
+    (description
+     "Eventlet is a concurrent networking library for Python that
+allows you to change how you run your code, not how you write it.
+It uses @code{epoll} or @code{libevent} for highly scalable non-blocking I/O.
+Coroutines ensure that the developer uses a blocking style of programming
+that is similar to threading, but provide the benefits of non-blocking I/O.
+The event dispatch is implicit, which means you can easily use @code{Eventlet}
+from the Python interpreter, or as a small part of a larger application.")
+    (license license:expat)))
+
+(define-public python-hookdns
+  (package
+    (name "python-hookdns")
+    (version "2.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hookdns" version))
+       (sha256
+        (base32 "087x12dy6slhyqwqblby2fpjdcy61yk3lqp3fplami0rmbn02fb7"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; Tests requiring networking.
+                    (list
+                     "not test_patch_contextmanager_with_another_hostname"
+                     "test_patch_contextmanager_with_another_hostname_ipv6"
+                     "test_patch_contextmanager_with_ipv4"
+                     "test_patch_contextmanager_with_name"
+                     "test_patch_contextmanager_with_public_fqdn_and_"
+                     "test_patch_contextmanager_with_unknown_hostname"
+                     "test_patch_decorator_with_another_hostname"
+                     "test_patch_decorator_with_another_hostname_ipv6"
+                     "test_patch_decorator_with_ipv4"
+                     "test_patch_decorator_with_name"
+                     "test_patch_decorator_with_public_fqdn_and_a_name_for_"
+                     "test_patch_decorator_with_unknown_hostname"
+                     "test_real_getaddrinfo_with_name_ipv6"
+                     "test_real_getaddrinfo_with_public_fqdn_ipv4"
+                     "test_real_getaddrinfo_with_public_fqdn_ipv6"
+                     "test_real_gethostbyname_ex_with_public_fqdn"
+                     "test_real_gethostbyname_with_public_fqdn"
+                     "test_real_requests_ip"
+                     "test_real_requests_name"
+                     "test_real_requests_with_public_fqdn"
+                     "test_reentrant")
+                    " and not "))))
+    (native-inputs
+     (list python-pytest
+           python-requests
+           python-setuptools
+           python-wheel))
+    (home-page "https://github.com/cle-b/hookdns")
+    (synopsis "DNS resolution customization library")
+    (description
+     "HookDNS implements functionality that allows for modifying name
+resolution in a Python script without any changes to the hosts file or the use
+of a fake DNS resolver.")
+    (license license:asl2.0)))
 
 (define-public python-huggingface-hub
   (package
@@ -310,6 +593,26 @@ scripting Launchpad via its the web service API.")
 reusable library for parsing, manipulating, and generating URIs.")
     (license license:lgpl3)))
 
+(define-public python-legacy-cgi
+  (package
+    (name "python-legacy-cgi")
+    (version "2.6.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "legacy_cgi" version))
+       (sha256
+        (base32 "0hksizyq7awmwh3337zy0rmj47x6b5igzam6ffj74gbwfjfakbgj"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-poetry-core python-pytest))
+    (home-page "https://github.com/jackrosenthal/legacy-cgi")
+    (synopsis "Fork of the legacy standard library cgi and cgitb modules")
+    (description
+     "This is a fork of the standard library modules @code{cgi} and
+@code{cgitb}.  They are slated to be removed from the Python standard libary
+in Python 3.13 by PEP-594.")
+    (license license:psfl)))
+
 (define-public python-portend
   (package
     (name "python-portend")
@@ -442,6 +745,110 @@ implements @code{collections.abc.MutableSequence}.  It can be made immutable
 by calling @code{FrozenList.freeze}.")
     (license license:asl2.0)))
 
+(define-public python-aiobotocore
+  (package
+    (name "python-aiobotocore")
+    (version "2.17.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "aiobotocore" version))
+       (sha256
+        (base32 "1hlwgy1z6ln6bh7b2i9syv7q2bagjkjbws247gbgkgv5qlri6153"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Too many tests fail seemingly because they need Internet access.
+      #:tests? #false
+      #:test-flags
+      '(list
+        ;; No module named 'tests'
+        "--ignore=tests/test_config.py"
+        ;; function uses no argument 's3_verify'
+        "--ignore=tests/test_basic_s3.py"
+        ;; function uses no argument 'signature_version'
+        "--ignore=tests/test_dynamodb.py"
+        ;; attempted relative import with no known parent package
+        "--ignore=tests/test_stubber.py"
+        ;; No module named 'pip'
+        "--ignore=tests/test_version.py")))
+    (propagated-inputs (list python-aiohttp
+                             python-aioitertools
+                             python-botocore
+                             python-jmespath
+                             python-multidict
+                             python-dateutil
+                             python-urllib3
+                             python-wrapt))
+    (native-inputs
+     (list python-dill
+           python-docutils
+           python-moto
+           python-pytest
+           python-pytest-asyncio
+           python-requests
+           python-setuptools
+           python-werkzeug
+           python-wheel))
+    (home-page "https://pypi.org/project/aiobotocore/")
+    (synopsis "Async client for AWS services using botocore and aiohttp")
+    (description "This package provides an async client for Amazon services
+using botocore and aiohttp/asyncio.  This library is a mostly full featured
+asynchronous version of botocore.")
+    (license license:asl2.0)))
+
+(define-public python-aiohappyeyeballs
+  (package
+    (name "python-aiohappyeyeballs")
+    (version "2.4.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "aiohappyeyeballs" version))
+       (sha256
+        (base32 "0ibpfm552pflim399qq34cnd79xhz5qr5khqzhx1hqwwi23pvpaz"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-poetry-core
+           python-pytest
+           python-pytest-asyncio
+           python-pytest-cov))
+    (home-page "https://github.com/aio-libs/aiohappyeyeballs")
+    (synopsis "Happy Eyeballs for asyncio")
+    (description "This library exists to allow connecting with Happy
+Eyeballs (RFC 8305) when you already have a list of @code{addrinfo} and not a
+DNS name.")
+    (license license:psfl)))
+
+(define-public python-aioitertools
+  (package
+    (name "python-aioitertools")
+    (version "0.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "aioitertools" version))
+       (sha256
+        (base32 "0syxv2r90d6410hc68jxhk610pdgx19n1n5rc7shaxxv9xdhbaf2"))))
+    (build-system pyproject-build-system)
+    ;; Curiously, no tests are collected although they exist.
+    (arguments (list #:tests? #false))
+    (propagated-inputs (list python-typing-extensions))
+    (native-inputs
+     (list python-coverage
+           python-flake8
+           python-flit-core
+           python-mypy
+           python-pytest
+           python-pytest-asyncio
+           python-sphinx))
+    (home-page "https://pypi.org/project/aioitertools/")
+    (synopsis "Itertools and builtins for AsyncIO and mixed iterables")
+    (description
+     "This package provides an implementation of itertools, builtins, and more
+for AsyncIO and mixed-type iterables.")
+    (license license:expat)))
+
 (define-public python-aiosignal
   (package
     (name "python-aiosignal")
@@ -471,46 +878,68 @@ for adding, removing and dropping callbacks.")
 (define-public python-aiohttp
   (package
     (name "python-aiohttp")
-    (version "3.8.4")
+    (version "3.11.11")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "aiohttp" version))
        (sha256
-        (base32 "0p5bj6g7ca19gvwk8fz00k579ma9w9kd27ssh2zl3r61ca8ilbmz"))
+        (base32 "0gihj076nm3863sqfnbh786621w1ad7lj7fq88d85wzbwvqwfjdv"))
        (snippet
         #~(begin
             (use-modules ((guix build utils)))
             ;; TODO: Unbundle the llhttp sources.
             ;; (delete-file-recursively "vendor")
-            (delete-file "aiohttp/_helpers.c")
             (delete-file "aiohttp/_http_parser.c")
-            (delete-file "aiohttp/_http_writer.c")
-            (delete-file "aiohttp/_websocket.c")))))
-    (build-system python-build-system)
+            (delete-file "aiohttp/_http_writer.c")))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:test-flags
+      '(list
+        ;; This tests requires the 'proxy.py' module, not yet packaged.
+        "--ignore=tests/test_proxy_functional.py"
+        ;; These tests need brotli.
+        "--ignore=tests/test_web_sendfile_functional.py"
+        "--ignore=tests/test_web_functional.py"
+        ;; These tests need pytest_codspeed
+        "--ignore-glob=tests/test_benchmarks*"
+        ;; These tests need python_on_whales
+        "--ignore=tests/autobahn/test_autobahn.py"
+        "-k"
+        ;; These tests fail for unknown reasons (see:
+        ;; https://github.com/aio-libs/aiohttp/issues/7130)
+        (string-append
+         "not test_no_warnings "
+         "and not test_default_loop "
+         "and not test_ctor_global_loop "
+         "and not test_set_loop_default_loop "
+
+         ;; Disable brotli tests, because we’re not providing that optional
+         ;; library.
+         "and not test_feed_eof_no_err_brotli "
+
+         ;; Disable the following tests as they require
+         ;; networking.
+         "and not TestDeflateBuffer "
+         "and not test_client_session_timeout_zero "
+         "and not test_empty_body "
+         "and not test_mark_formdata_as_processed[pyloop] "
+         "and not test_receive_runtime_err[pyloop] "
+
+         ;; assert 'gzip, deflate' == 'gzip, deflate, br'
+         "and not test_headers[pyloop] "
+         ;; ~/.. does not resolve
+         "and not test_add_static_path_resolution"))
+      #:phases
+      '(modify-phases %standard-phases
          (add-after 'unpack 'fix-tests
            (lambda _
-             ;; Disable brotli tests, because we’re not providing that
-             ;; optional library.
-             (substitute* "tests/test_http_parser.py"
-               (("    async def test_feed_eof_no_err_brotli")
-                "    @pytest.mark.xfail\n    async def test_feed_eof_no_err_brotli"))
              ;; Make sure the timestamp of this file is > 1990, because a few
              ;; tests like test_static_file_if_modified_since_past_date depend
              ;; on it.
              (let ((late-90s (* 60 60 24 365 30)))
-               (utime "tests/data.unknown_mime_type" late-90s late-90s))
-
-             ;; Disable test that attempts to access httpbin.org.
-             (substitute* "tests/test_formdata.py"
-               (("async def test_mark_formdata_as_processed.*" all)
-                (string-append "@pytest.mark.xfail\n" all)))
-
-             ;; Don't test the aiohttp pytest plugin to avoid a dependency loop.
-             (delete-file "tests/test_pytest_plugin.py")))
+               (utime "tests/data.unknown_mime_type" late-90s late-90s))))
          (add-before 'build 'cythonize
            (lambda _
              ;; Adapted from the Makefile.
@@ -519,66 +948,27 @@ for adding, removing and dropping callbacks.")
                 (lambda (file)
                   (invoke "cython" "-3"
                           file "-I" "."))
-                (find-files "." "_.*\\.pyx$")))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (let ((skipped-tests
-                     (string-append
-                       ;; This test probably requires to be run with the
-                       ;; library loaded from the the build directory.
-                       "not test_c_parser_loaded and "
-                       ;; TODO: These tests fail with recent versions of Pytest
-                       ;; and the fix is difficult to backport:
-                       ;; https://github.com/aio-libs/aiohttp/pull/6872
-                       ;; Re-enable after 3.9.
-                       "not test_session_close_awaitable and "
-                       "not test_async_with_session and "
-                       "not test_close_run_until_complete_not_deprecated and "
-                       ;; Disable the following tests as they require
-                       ;; networking.
-                       "not TestDeflateBuffer and "
-                       "not test_client_session_timeout_zero and "
-                       "not test_empty_body and "
-                       "not test_mark_formdata_as_processed[pyloop] and "
-                       "not test_receive_runtime_err[pyloop] "
-                       ;; These tests fail for unknown reasons (see:
-                       ;; https://github.com/aio-libs/aiohttp/issues/7130)
-                       "and not test_no_warnings "
-                       "and not test_default_loop "
-                       "and not test_ctor_global_loop "
-                       "and not test_set_loop_default_loop ")))
-               (when tests?
-                 ;; This tests requires the 'proxy.py' module, not yet
-                 ;; packaged.
-                 (delete-file "tests/test_proxy_functional.py")
-                 ;; Sometimes tests fail when run in parallel.
-                 (invoke "pytest" "-vv"
-                         "-o" "addopts=''" "--ignore=aiohttp"
-                         ;; These tests cause errors (see:
-                         ;; https://github.com/aio-libs/aiohttp/issues/7130).
-                         "--ignore" "tests/test_web_sendfile_functional.py"
-                         "--ignore" "tests/test_web_urldispatcher.py"
-                         "-k" skipped-tests))))))))
+                (find-files "." "_.*\\.pyx$"))))))))
     (propagated-inputs
-     (list python-aiodns
+     (list python-aiohappyeyeballs
            python-aiosignal
-           python-attrs
-           python-asynctest
            python-async-timeout
-           python-charset-normalizer
+           python-attrs
            python-frozenlist
-           python-idna-ssl
            python-multidict
+           python-propcache
            python-yarl))
     (native-inputs
      (list gunicorn-bootstrap
-           python-async-generator
-           python-cython
+           python-cython-3
            python-freezegun
            python-pytest
+           python-pytest-cov
            python-pytest-mock
            python-pytest-xdist
-           python-re-assert))
+           python-re-assert
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/aio-libs/aiohttp/")
     (synopsis "Async HTTP client/server framework (asyncio)")
     (description "@code{aiohttp} is an asynchronous HTTP client/server
@@ -596,17 +986,19 @@ Callback Hell.
 (define-public python-aiohttp-socks
   (package
     (name "python-aiohttp-socks")
-    (version "0.7.1")
+    (version "0.10.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "aiohttp_socks" version))
        (sha256
         (base32
-         "06il43dv6qm858af841vq9qadw6h7qsfs06nnwagmwqyi72cl592"))))
-    (build-system python-build-system)
+         "0s70jpcr9wc8ld2v1w309cz7r8mm2bipf6zbkdqqaa0z0pwf3wj9"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #false)) ;none included
     (propagated-inputs
-     (list python-aiohttp python-attrs python-socks))
+     (list python-aiohttp python-socks))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/romis2012/aiohttp-socks")
     (synopsis "SOCKS proxy connector for aiohttp")
     (description "This package provides a SOCKS proxy connector for
@@ -751,24 +1143,16 @@ stream is an enhanced asynchronous iterable.")
 (define-public python-asgiref
   (package
     (name "python-asgiref")
-    (version "3.7.2")
+    (version "3.8.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "asgiref" version))
               (sha256
-               (base32 "1vdgj8mikd2j6ijlhf7b4n2nxkvq72r1c0hj8mdvl6d8jfmf634y"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "-vv")))))))
+               (base32 "146mhkn3zp2bqf7j6r3chdlvfzgs5x1lrnqahsllgjdyl20bshy3"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-mypy python-pytest python-pytest-asyncio))
-    (propagated-inputs
-     (list python-typing-extensions))
+     (list python-mypy python-pytest python-pytest-asyncio python-setuptools
+           python-wheel))
     (home-page "https://github.com/django/asgiref/")
     (synopsis "ASGI specs, helper code, and adapters")
     (description
@@ -780,7 +1164,7 @@ WSGI.  This package includes libraries for implementing ASGI servers.")
 (define-public python-asgi-csrf
   (package
     (name "python-asgi-csrf")
-    (version "0.9")
+    (version "0.11")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -789,18 +1173,8 @@ WSGI.  This package includes libraries for implementing ASGI servers.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1j134mjh0ff61rvkm3q67m463j1bhyxc9dwsdany3scnd4vsqqws"))))
+                "1dn9v47z2b599cnwahxvzsll2w28940ycgh5skxgq04vcqqssf29"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list #:test-flags
-           ;; Provide a null config to avoid the extraneous dependency on
-           ;; python-pytest-coverage.
-           #~(list "-c" "/dev/null"
-                   ;; Disable two failing tests (see:
-                   ;; https://github.com/simonw/asgi-csrf/issues/24).
-                   "-k" (string-append
-                         "not (test_multipart "
-                         "or test_multipart_failure_wrong_token)"))))
     (propagated-inputs (list python-itsdangerous python-multipart))
     (native-inputs (list python-asgi-lifespan
                          python-httpx
@@ -821,7 +1195,7 @@ that is then compared to a @code{csrftoken} hidden form field or a
 (define-public python-asgi-lifespan
   (package
     (name "python-asgi-lifespan")
-    (version "1.0.1")
+    (version "2.1.0")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -830,7 +1204,7 @@ that is then compared to a @code{csrftoken} hidden form field or a
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "10a5ci9ddr8wnjf3wai7xifbbplirhyrgvw4p28q0ha63cvhb2j2"))))
+                "0iqa3h61gsq1qd6j9v68k989596m9n9k1dx8zv6135rmhzzrs296"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -838,15 +1212,28 @@ that is then compared to a @code{csrftoken} hidden form field or a
       '(list "-c" "/dev/null"           ;ignore coverage-related options
              "-k"
              (string-append
-              ;; XXX: Some tests fail because of a 'lifespan.shutdown.failed'
-              ;; extra event, perhaps because our version of trio is older.
-              "not (test_lifespan_manager[asyncio-None-ValueError-None]"
-              " or test_lifespan_manager[asyncio-ValueError-None-None]"
-              " or test_lifespan_manager[asyncio-ValueError-ValueError-None]"
-              " or test_lifespan_manager[trio-None-ValueError-None]"
-              " or test_lifespan_manager[trio-ValueError-None-None]"
-              " or test_lifespan_manager[trio-ValueError-ValueError-None])"))))
-    (native-inputs (list python-pytest
+              ;; XXX: Some tests fail because of "Exceptions from Trio nursery"
+              "not (test_lifespan_manager[trio-None-None-StartupFailed]"
+              " or test_lifespan_manager[trio-None-BodyFailed-None]"
+              " or test_lifespan_manager[trio-None-BodyFailed-StartupFailed]"
+              " or test_lifespan_manager[trio-ShutdownFailed-None-None]"
+              " or test_lifespan_manager[trio-ShutdownFailed-None-StartupFailed]"
+              " or test_lifespan_manager[trio-ShutdownFailed-BodyFailed-StartupFailed]"
+              " or test_lifespan_timeout[trio-slow_shutdown]"
+              " or test_lifespan_not_supported[trio-http_only]"
+              " or test_lifespan_not_supported[trio-http_no_assert]"
+              " or test_lifespan_not_supported[trio-http_no_assert_before_receive_request]"
+              ")"))
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'compatibility
+           (lambda _
+             ;; httpx version 0.28.0 removed the "app" shortcut.
+             (substitute* "tests/test_manager.py"
+               (("app=manager.app")
+                "transport=httpx.ASGITransport(manager.app)")))))))
+    (native-inputs (list python-httpx
+                         python-pytest
                          python-pytest-asyncio
                          python-pytest-trio
                          python-starlette
@@ -879,7 +1266,9 @@ ASGI server.")
       #~(list "-k" (string-join
                     (list "not test_starlette_stream_response"
                           "test_starlette_base_http_middleware"
-                          "test_baize_stream_response")
+                          "test_baize_stream_response"
+                          ;; Fails because of harmless whitespace differences.
+                          "test_wsgi_post")
                     " and not "))
       #:build-backend "pdm.backend"))
     (native-inputs
@@ -909,7 +1298,7 @@ way around.  It depends only on the Python standard library.")
                (base32
                 "1m6rwvivg61l3h34hf6p6gkqmr69sb1c4k5ha379nxq0p8bfgahb"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/jonashaag/httpauth")
     (synopsis "WSGI HTTP Digest Authentication middleware")
     (description "@code{python-httpauth} is WSGI middleware that secures some/all
@@ -1002,7 +1391,7 @@ Model} (SAM) templates into AWS CloudFormation templates.")
 (define-public python-aws-xray-sdk
   (package
     (name "python-aws-xray-sdk")
-    (version "2.12.0")
+    (version "2.14.0")
     (home-page "https://github.com/aws/aws-xray-sdk-python")
     (source (origin
               (method git-fetch)
@@ -1010,7 +1399,7 @@ Model} (SAM) templates into AWS CloudFormation templates.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0082q89dq5ww0a7q7rnyhywqvy4i8h3c0mnj7ilv3b0indhkasl8"))))
+                "0khm86218rfjmgfw0azk7gnq6y9gkj95i0i30wa5v2li1z4z8qxd"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1027,9 +1416,14 @@ Model} (SAM) templates into AWS CloudFormation templates.")
              "--ignore=tests/ext/pymysql/test_pymysql.py"
              "--ignore=tests/ext/pynamodb/test_pynamodb.py"
              "--ignore=tests/ext/sqlalchemy_core/test_postgres.py"
+             "--ignore=tests/ext/sqlalchemy_core/test_dburl.py"
              "--ignore=tests/test_async_recorder.py"
+             ;; FIXME: module 'sqlalchemy.orm' has no attribute 'DeclarativeBase'.
+             "--ignore-glob=tests/ext/sqlalchemy*"
+             "--ignore=tests/ext/flask_sqlalchemy/test_query.py"
              ;; FIXME: Why is this failing?
              "--ignore=tests/test_patcher.py"
+             "--ignore=tests/test_lambda_context.py"
              ;; These tests want to access httpbin.org.
              "--ignore=tests/ext/requests/test_requests.py"
              "--ignore=tests/ext/httplib/test_httplib.py"
@@ -1069,6 +1463,47 @@ Model} (SAM) templates into AWS CloudFormation templates.")
      "The AWS X-Ray SDK for Python enables Python developers to record and
 emit information from within their applications to the AWS X-Ray service.")
     (license license:asl2.0)))
+
+(define-public python-python3-saml
+  (package
+    (name "python-python3-saml")
+    (version "1.16.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/SAML-Toolkits/python3-saml")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1isisymhk8zblj5942jfl0zq392q5fpjikx52nywvzb0m2dcc81b"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; 214 tests pass, 50 fail; many fail because of required Internet
+      ;; access or because of assumptions about the location of test files.
+      #:tests? #false
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; FIXME: This should be fixed in python-xmlsec
+          (add-before 'check 'pre-check
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "LD_LIBRARY_PATH"
+                      (dirname (search-input-file inputs "lib/libxmlsec1-openssl.so.1.2.37"))))))))
+    (propagated-inputs (list python-isodate python-lxml python-xmlsec))
+    (native-inputs (list python-coverage
+                         python-flake8
+                         python-freezegun
+                         python-poetry-core
+                         python-pytest
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/SAML-Toolkits/python3-saml")
+    (synopsis "Saml Python toolkit")
+    (description
+     "The SAML Python Toolkit lets you add SAML support to your Python
+software.")
+    (license license:expat)))
 
 (define-public python-ovh
   (package
@@ -1208,6 +1643,69 @@ for resource properties and best practices.")
 @url{http://jschema.org,JSchema} JSON schema.")
     (license license:expat)))
 
+(define-public python-requests-cache
+  (package
+    (name "python-requests-cache")
+    (version "1.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "requests_cache" version))
+       (sha256
+        (base32 "1l8i4l2pd26gbrlcdb5z056wvsqfr3vvbyqq2f8x1f65zn3ckav8"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              ;; These tests require access to external services, e.g. MongoDB
+              ;; and Redis.
+              "--ignore=tests/integration"
+              ;; AttributeError: <class 'requests.adapters.HTTPAdapter'> does
+              ;; not have the attribute 'get_connection_with_tls_context'
+              "-k" "not test_mock_session")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; PermissionError: [Errno 13] Permission denied:
+              ;; '/homeless-shelter'
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-poetry-core
+           python-pytest
+           python-pytest-rerunfailures
+           python-pytest-xdist
+           python-requests-mock
+           python-responses
+           python-rich
+           python-tenacity
+           python-time-machine
+           python-timeout-decorator))
+    (propagated-inputs
+     (list python-attrs
+           python-boto3
+           python-bson
+           python-cattrs
+           python-itsdangerous
+           python-orjson
+           python-platformdirs
+           python-pymongo
+           python-pyyaml
+           python-redis
+           python-requests
+           python-ujson
+           python-url-normalize
+           python-urllib3))
+    (home-page "https://github.com/requests-cache/requests-cache")
+    (synopsis "Persistent HTTP cache for Python requests")
+    (description
+     "This package provides a drop-in replacement for @code{requests.Session}
+with caching offload to SQLite, Redis, MongoDB and AWS DynamoDB or save
+responses as planin JSON/YAML file or save responses as plain JSON/YAML
+files.")
+    (license license:bsd-2)))
+
 (define-public python-sarif-om
   (package
     (name "python-sarif-om")
@@ -1231,7 +1729,7 @@ Interchange Format (SARIF)} file format.")
 (define-public python-falcon
   (package
     (name "python-falcon")
-    (version "3.1.0")
+    (version "4.0.2")
     (source
      (origin
        ;; Use git, as there are some test files missing from the PyPI release,
@@ -1241,37 +1739,29 @@ Interchange Format (SARIF)} file format.")
              (url "https://github.com/falconry/falcon")
              (commit version)))
        (file-name (git-file-name name version))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           (delete-file-recursively "falcon/vendor")
-           (substitute* "setup.py"
-             ((".*falcon\\.vendor\\.mimeparse.*") ""))
-           (substitute* '("falcon/media/handlers.py"
-                          "falcon/request.py"
-                          "tests/test_deps.py")
-             (("from falcon\\.vendor ") "")
-             (("mimeparse.mimeparse") "mimeparse"))))
        (sha256
         (base32
-         "17k31d8avl63xsr6fzvmkxcsm7gnz5dqpgsz65psm1lpc38c79k3"))))
+         "1zhyvfbz4c1bxd4vbsgk19dzih6kkzgin10lmsr32x3b4qgnwqxs"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      '(list "--ignore=tests/test_utils.py"
-             "--ignore-glob=examples/*"
-             "--ignore-glob=bench/*" "tests")
+      '(list "-k" "not slow"
+             "--ignore-glob=examples/*" "--ignore-glob=bench/*" "tests")
       #:phases
       '(modify-phases %standard-phases
-         (add-before 'check 'set-HOME
-           (lambda _ (setenv "HOME" "/tmp"))))))
+         (add-before 'check 'pre-check
+           (lambda _
+             (setenv "FALCON_ASGI_WRAP_NON_COROUTINES" "Y")
+             (setenv "FALCON_TESTING_SESSION" "Y")
+             (setenv "PYTHONASYNCIODEBUG" "1")
+             (setenv "HOME" "/tmp"))))))
     (propagated-inputs
      (list python-mimeparse))
     (native-inputs
      (list python-aiofiles
            python-cbor2
-           python-cython                ;for faster binaries
+           python-cython-3                ;for faster binaries
            python-fakeredis
            python-httpx
            python-mujson
@@ -1574,20 +2064,22 @@ Swartz.")
               (sha256
                (base32
                 "18whsdpllg8574ma4r0qawkgw4nam6lsf63pi6761j38rvl84lg9"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (if tests?
-                 (invoke "pytest" "-vv")
-                 (format #t "test suite not run~%"))
-             #t)))))
+     (list
+      #:test-flags
+      '(list "-k"
+             ;; These fail because of unexpected locations of line breaks.
+             (string-append "not test_public_key_to_pem "
+                            "and not test_private_key_to_pem "
+                            "and not test_public_key_load_cycle "
+                            "and not test_private_key_load_cycle"))))
     (native-inputs
      (list ;; All native inputs are for tests.
            python-pyasn1 python-pytest python-pytest-cov
-           python-pytest-runner))
+           python-pytest-runner
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-cryptography python-ecdsa python-rsa python-six))
     (synopsis "JOSE implementation in Python")
@@ -1597,6 +2089,35 @@ Swartz.")
 JSON Web Algorithms (JWA) - collectively can be used to encrypt and/or sign
 content using a variety of algorithms.")
     (license license:expat)))
+
+(define-public python-joserfc
+  (package
+    (name "python-joserfc")
+    (version "1.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "joserfc" version))
+       (sha256
+        (base32 "11m600bmj70bp96wxhwvyj4d57w0zahzq3vic7s4a4k85pl7nl64"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; No module named 'Crypto'
+      '(list "--ignore=tests/jwe/test_chacha20.py"
+             ;; Deprecation warnings are not raised.
+             "-k" (string-append "not test_guess_bytes_key"
+                                 " and not test_guess_callable_key"
+                                 " and not test_guess_str_key"))))
+    (propagated-inputs (list python-cryptography))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/authlib/joserfc")
+    (synopsis "Python library for JOSE RFCs")
+    (description
+     "This package provides a Python library for JOSE RFCs, including JWS,
+JWE, JWK, JWA, and JWT.")
+    (license license:bsd-3)))
 
 (define-public python-jwcrypto
   (package
@@ -1617,6 +2138,27 @@ content using a variety of algorithms.")
      "WCrypto is an implementation of the @dfn{Javascript Object Signing and
 Encryption} (JOSE) Web Standards.")
     (license license:lgpl3+)))
+
+(define-public python-pypitoken
+  (package
+    (name "python-pypitoken")
+    (version "7.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pypitoken" version))
+       (sha256
+        (base32 "18hhwmdfs9y5ypl1n8z2h2ys2f52mv5xr043gzgb34mpmg0wi46x"))))
+    (build-system pyproject-build-system)
+    ;; There are no tests.
+    (arguments (list #:tests? #false))
+    (propagated-inputs (list python-jsonschema python-pymacaroons
+                             python-typing-extensions))
+    (native-inputs (list python-poetry-core))
+    (home-page "https://pypitoken.readthedocs.io/en/latest/")
+    (synopsis "Manipulate PyPI API tokens")
+    (description "This package lets you manipulate PyPI API tokens.")
+    (license license:expat)))
 
 (define-public python-pyscss
   (package
@@ -1867,41 +2409,58 @@ between a web browser and web server.")
     (license license:expat)))
 
 (define-public python-flask-assets
-  (package
-    (name "python-flask-assets")
-    (version "2.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "Flask-Assets" version))
-       (sha256
-        (base32 "1hmqldxc7zciksmcl35jx0wbyrrxc7vk2a57mmmd8i07whsymz8x"))))
-    (build-system python-build-system)
-    (arguments
-     ;; Tests require python-flask-script which is incompatible with Flask2.
-     `(#:tests? #f))
-    (propagated-inputs
-     (list python-flask python-webassets))
-    (home-page "https://github.com/miracle2k/flask-assets")
-    (synopsis "Asset management for Flask")
-    (description "This package integrates @code{webassets} with Flask, adding
+  ;; The latest release still depends on the abandoned flask-script, whereas
+  ;; at this later commit (already 2 years old at the time of this writing)
+  ;; the dependency has been lifted.
+  (let ((commit "62efd23fe95ee6a86fc1cfaa98fc1e2152093557")
+        (revision "1"))
+    (package
+      (name "python-flask-assets")
+      (version (git-version "2.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/miracle2k/flask-assets/")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "11q8vm2ipj4xrvawy9vl1l4k8kb4r72ghy1n8xrzci52v6lx8960"))))
+      (build-system pyproject-build-system)
+      (propagated-inputs
+       (list python-flask python-webassets))
+      (native-inputs
+       (list nss-certs-for-test python-pytest python-setuptools python-wheel))
+      (home-page "https://github.com/miracle2k/flask-assets")
+      (synopsis "Asset management for Flask")
+      (description "This package integrates @code{webassets} with Flask, adding
 support for merging, minifying and compiling CSS and Javascript files.")
-    (license license:bsd-2)))
+      (license license:bsd-2))))
 
 (define-public python-flask-babel
   (package
     (name "python-flask-babel")
-    (version "2.0.0")
+    (version "4.0.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "Flask-Babel" version))
-        (sha256
-          (base32
-            "0z95v77vib5il8hphyh16n7i15a2gmc06i615vm346ifvdfg9ypr"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch) ;no tests in pypi release
+       (uri (git-reference
+             (url "https://github.com/python-babel/flask-babel")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32
+         "19yq3f5rixbwhv7wxdarvi9hdj98a9dq8y76in9c1q3jxaigw104"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-poetry-core
+           python-pytest
+           python-pytest-cov
+           python-pytest-mock))
     (propagated-inputs
-     (list python-flask python-babel python-jinja2 python-pytz))
+     (list python-babel
+           python-flask
+           python-jinja2
+           python-pytz))
     (home-page "https://github.com/python-babel/flask-babel")
     (synopsis "Add i18n/l10n support to Flask applications")
     (description "This package implements internationalization and localization
@@ -1959,19 +2518,21 @@ into Jinja2 by default.")
 (define-public python-flask-misaka
   (package
     (name "python-flask-misaka")
-    (version "1.0.0")
+    (version "1.0.1")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "Flask-Misaka" version))
         (sha256
           (base32
-            "12gm6hq3lvlj0ddw8p6lk5pky8jk3pw758ihffjl49shnnzc68zl"))))
-    (build-system python-build-system)
+            "1yi9iall3ml1n8bff1mg49xajmldcm5pc0fkpl3w2rlnny08giax"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags #~(list "tests.py")))
     (native-inputs
-      (list python-coverage python-mock))
+     (list python-flask python-pytest python-setuptools python-wheel))
     (propagated-inputs
-      (list python-flask python-misaka))
+      (list python-markupsafe python-misaka))
     (home-page "https://github.com/singingwolfboy/flask-misaka/")
     (synopsis "Flask interface to Misaka, a Markdown parsing library")
     (description
@@ -2172,6 +2733,57 @@ high-speed transfers via libcurl and frequently outperforms alternatives.")
     ;; under the terms of LGPLv2.1+ or Expat.
     (license (list license:lgpl2.1+ license:expat))))
 
+(define-public python-url-normalize
+  (package
+    (name "python-url-normalize")
+    (version "1.4.3")
+    (source
+     (origin
+       (method git-fetch)               ; no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/niksite/url-normalize")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09nac5nh94x0n4bfazjfxk96b20mfsx6r1fnvqv85gkzs0rwqkaq"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-poetry-core
+            (lambda _
+              ;; Patch to use the core poetry API.
+              (substitute* "pyproject.toml"
+                (("poetry.masonry.api") "poetry.core.masonry.api")))))))
+    (native-inputs
+     (list python-poetry-core
+           python-pytest
+           python-pytest-flakes
+           python-pytest-cov
+           python-pytest-socket))
+    (home-page "https://github.com/niksite/url-normalize")
+    (synopsis "URL normalization for Python")
+    (description
+     "This package provides a URI Normalization function with following
+features:
+@itemize
+@item take care of IDN domains
+@item always provide the URI scheme in lowercase characters
+@item always provide the host, if any, in lowercase characters
+@item only perform percent-encoding where it is essential
+@item always use uppercase A-through-F characters when percent-encoding
+@item prevent dot-segments appearing in non-relative URI paths
+@item for schemes that define a default authority, use an empty authority if
+the default is desired
+@item for schemes that define an empty path to be equivalent to a path of
+@code{/}, use @code{/}
+@item for schemes that define a port, use an empty port if the default is
+desired
+@item all portions of the URI must be utf-8 encoded NFC from Unicode strings
+@end itemize")
+    (license license:expat)))
+
 (define-public python-webencodings
   (package
     (name "python-webencodings")
@@ -2211,57 +2823,72 @@ is Python’s.")
     (license license:bsd-3)))
 
 (define-public python-omnipath
-  (package
-    (name "python-omnipath")
-    (version "1.0.8")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "omnipath" version))
-              (sha256
-               (base32
-                "0krr4wzfwa6fs550cs0lcqwjj90p1inyncj9kvzi4x4m26xbj89q"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      ;; These require internet access
-      '(list "-k" "not test_download_homologene and not test_complex_genes")
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'relax
-           (lambda _
-             (substitute* "requirements.txt"
-               (("wrapt>=1.12.0")
-                "wrapt>=1.11.0"))))
-         (add-after 'unpack 'set-home
-           (lambda _ (setenv "HOME" "/tmp"))))))
-    (propagated-inputs
-     (list python-attrs
-           python-docrep
-           python-inflect
-           python-networkx
-           python-packaging
-           python-pandas
-           python-requests
-           python-tqdm
-           python-typing-extensions
-           python-urllib3
-           python-wrapt))
-    (native-inputs
-     (list python-bump2version
-           python-pytest
-           python-pytest-mock
-           python-pytest-socket
-           python-requests-mock
-           python-setuptools-scm
-           python-tox
-           python-setuptools
-           python-wheel))
-    (home-page "https://omnipathdb.org/")
-    (synopsis "Python client for the OmniPath web service")
-    (description "This package provides a Python client for the OmniPath web
+  ;; The latest release is incompatible with Numpy 2 and pretty old.  A new
+  ;; release is expected soon.
+  (let ((commit "3d1613493aa1554618fb2d7297f82e034b7694ce")
+        (revision "0"))
+    (package
+      (name "python-omnipath")
+      (version (git-version "1.0.8" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/saezlab/omnipath/")
+                      (commit commit)))
+                (file-name (git-file-name name commit))
+                (sha256
+                 (base32
+                  "03lqbgqihglh9mmp7lwmar26fcnsb1qaidrzbmp0z2wvsrgi4fg7"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:test-flags
+        '(list "-k"
+               (string-append
+                ;; These require internet access
+                "not test_download_homologene"
+                " and not test_complex_genes"
+                ;; Arrays are not equal: Mismatched elements: 4759 / 255465 (1.86%)
+                " and not test_import_intercell_network"))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'build 'pretend-version
+              ;; The version string is usually derived via setuptools-scm, but
+              ;; without the git metadata available, the version string is set
+              ;; to '0.0.0'.
+              (lambda _
+                (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
+                        #$(version-major+minor (package-version this-package)))))
+            (add-after 'unpack 'set-home
+              (lambda _ (setenv "HOME" "/tmp"))))))
+      (propagated-inputs
+       (list python-attrs
+             python-docrep
+             python-inflect
+             python-networkx
+             python-packaging
+             python-pandas
+             python-requests
+             python-tqdm
+             python-typing-extensions
+             python-urllib3
+             python-wrapt))
+      (native-inputs
+       (list nss-certs-for-test
+             python-bump2version
+             python-pytest
+             python-pytest-mock
+             python-pytest-socket
+             python-requests-mock
+             python-setuptools
+             python-setuptools-scm
+             python-tox
+             python-wheel))
+      (home-page "https://omnipathdb.org/")
+      (synopsis "Python client for the OmniPath web service")
+      (description "This package provides a Python client for the OmniPath web
 service.")
-    (license license:expat)))
+      (license license:expat))))
 
 (define-public python-openai
   (package
@@ -2318,7 +2945,13 @@ OpenAI API.")
           (add-after 'unpack 'remove-coverage-pytest-options
             (lambda _
               (substitute* "pyproject.toml"
-                (("^--cov.*") "")))))))
+                (("^--cov.*") ""))))
+          ;; See https://github.com/python-openapi/openapi-schema-validator/issues/204
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("jsonschema-specifications.*")
+                 "jsonschema-specifications = \">=2023.5.2\"\n")))))))
     (native-inputs (list python-poetry-core python-pytest))
     (propagated-inputs
      (list python-isodate
@@ -2359,9 +2992,6 @@ JSON Schema Specification Draft 2020-12.
                           "-k" "not example")
       #:phases
       #~(modify-phases %standard-phases
-          ;; Requirement.parse('jsonschema-specifications<2024.0.0,>=2023.5.2'),
-          ;; {'openapi-schema-validator'})
-          (delete 'sanity-check)
           (add-after 'unpack 'remove-coverage-pytest-options
             (lambda _
               (substitute* "pyproject.toml"
@@ -2388,7 +3018,7 @@ compliance with the specification.")
 (define-public python-openapi-core
   (package
     (name "python-openapi-core")
-    (version "0.19.1")
+    (version "0.19.4")
     (source
      (origin
        (method git-fetch)
@@ -2398,7 +3028,7 @@ compliance with the specification.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1fdz01wssgqh9dzc7qddl0fms2zivhalghzk63ynblss2r91yc8s"))))
+         "092sj2933jmvq5r76khr0vphih490vls1ga3s43gz8i47aqaxx96"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2407,16 +3037,12 @@ compliance with the specification.")
              ;; Ignore Pytest configuration in setup.cfg that adds
              ;; unwanted flake8 and coverage options.
              "-c" "/dev/null"
-             "-k" (string-append
-                   ;; Type mismatches
-                   "not TestFlaskOpenAPIRequest"
-                   " and not TestFlaskOpenAPIResponse"))))
+             "-k" "not test_chars_valid")))
     (native-inputs (list python-django
                          python-falcon
                          python-flask
                          python-mock
                          python-poetry-core
-                         python-pypa-build
                          python-pytest
                          python-responses))
     (propagated-inputs
@@ -2481,14 +3107,14 @@ for clients and servers.")
 (define-public python-cssutils
   (package
     (name "python-cssutils")
-    (version "2.6.0")
+    (version "2.11.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cssutils" version))
        (sha256
         (base32
-         "13l1y0xr3fgbl95w3pinb5av5dqk2ip39pih6vgrz47c3hyd5p7p"))))
+         "1qpq7xvzqp4cfcb8837rnd30x4hws3rkp33qpvmnxbxn2djsfqq5"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -2497,12 +3123,17 @@ for clients and servers.")
           (replace 'check
             (lambda _
               (invoke "pytest" "-vv" "-k"
-                      ;; disable tests requiring network
-                      (string-append "not test_parseUrl "
-                                     "and not encutils "
+                      (string-append "not encutils "
                                      "and not website.logging")))))))
     (native-inputs
-     (list python-pytest python-jaraco-test python-setuptools python-wheel))
+     (list python-cssselect
+           python-jaraco-test
+           python-lxml
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-more-itertools))
     (home-page "https://github.com/jaraco/cssutils")
     (synopsis
       "CSS Cascading Style Sheets library for Python")
@@ -2898,18 +3529,27 @@ term.js Javascript terminal emulator library.")
 (define-public python-wsgi-intercept
   (package
     (name "python-wsgi-intercept")
-    (version "1.2.2")
+    (version "1.13.1")
     (source (origin
              (method url-fetch)
              (uri (pypi-uri "wsgi_intercept" version))
              (sha256
               (base32
-               "0kjj2v2dvmnpdd5h5gk9rzz0f54rhjb0yiz3zg65bmp65slfw65d"))))
-    (build-system python-build-system)
+               "1h94dj7h7n7zdj3ll4imqjhq5vk21yidk2niwnmpw7xik9inrgbr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: tests required internet access
+      #:tests? #f))
     (propagated-inputs
      (list python-six))
     (native-inputs
-     (list python-pytest python-httplib2 python-requests python-urllib3))
+     (list python-httplib2
+           python-pytest
+           python-requests
+           python-setuptools
+           python-urllib3
+           python-wheel))
     (synopsis "Puts a WSGI application in place of a real URI for testing")
     (description "Wsgi_intercept installs a WSGI application in place of a real
 URI for testing.  Testing a WSGI application normally involves starting a
@@ -3076,7 +3716,7 @@ not an object-relational mapping.  This comes with several advantaged:
                           (invoke "zope-testrunner" "-vv" "--test-path=src"
                                   "--all")
                           (format #t "test suite not run~%")))))))
-    (native-inputs (list python-zope-testrunner))
+    (native-inputs (list python-zope-testrunner python-setuptools python-wheel))
     (home-page "https://github.com/zopefoundation/zodbpickle")
     (synopsis "Uniform pickling interface for @code{zodb}")
     (description
@@ -3719,7 +4359,8 @@ WebSocket usage in Python programs.")
     (propagated-inputs
      (list python-requests))
     (native-inputs
-     (list python-pytest python-pytest-cov))
+     (list python-pytest python-pytest-cov
+           python-setuptools python-wheel))
     (home-page "https://github.com/ithaka/apiron")
     (synopsis "Python wrapper for interacting with RESTful APIs")
     (description
@@ -4354,7 +4995,7 @@ opt.override_default_trust_store_from_path(None, os.getenv('SSL_CERT_FILE')) if 
   (package
     ;; Note: updating awscli typically requires updating botocore as well.
     (name "awscli")
-    (version "1.36.0")
+    (version "1.36.32")
     (source
      (origin
        (method git-fetch)               ; no tests in PyPI release
@@ -4363,7 +5004,7 @@ opt.override_default_trust_store_from_path(None, os.getenv('SSL_CERT_FILE')) if 
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1iwivc5kj2h5619rvbncrh4649lalxj7bxndzvrjw398vv7cixp5"))))
+        (base32 "1b4bfv7mgrxw7nfbv9ag97qcsqch2p7raip6111rqg5vdhvsck19"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4375,12 +5016,11 @@ opt.override_default_trust_store_from_path(None, os.getenv('SSL_CERT_FILE')) if 
               ;;
               ;; AssertionError: 'argument operation: Invalid choice, valid
               ;; choices are:' not found in '
-              "-k" (string-append "not test_subscribe_to_shard_removed"
-                                  ;; Tests fail during mocking.
-                                  " and not test_expected_runtime_dependencies"
-                                  " and not test_expected_unbounded_runtime_dependencies"
-                                  " and not test_no_groff_or_mandoc_exists"
-                                  " and not test_start_conversation_removed"))
+              "-k"
+              (string-append "not test_subscribe_to_shard_removed"
+                             " and not test_start_conversation_removed"
+                             ;; Tests fail during mocking.
+                             " and not test_no_groff_or_mandoc_exists"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-reference-to-groff
@@ -4436,21 +5076,19 @@ Services (AWS) API.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      ;; The resource leak tests use ps to check for memory consumption.
+      '(list "--ignore=functional/botocore/leak/test_resource_leaks.py"
+             ;; These tests complain about unavailable TLS certs.
+             "--ignore=functional/ec2instanceconnect/test_opentunnel.py"
+             ;; These seem to require Internet access.
+             "--ignore=unit/botocore/test_awsrequest.py")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'ignore-deprecations
             (lambda _
               (substitute* "pyproject.toml"
                 (("\"error::") "\"ignore::"))))
-          (add-after 'unpack 'remove-pep517
-            (lambda _
-              (rename-file "backends/pep517.py" "backends/dummypep517.py")
-              (substitute* "pyproject.toml"
-                (("pep517") "dummypep517"))
-              (setenv "PYTHONPATH"
-                      (string-append (getcwd) ":"
-                                     (getcwd) "/backends:"
-                                     (getenv "GUIX_PYTHONPATH")))))
           (add-after 'unpack 'fix-reference-to-groff
             (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "awscli/help.py"
@@ -4460,16 +5098,25 @@ Services (AWS) API.")
                                 (search-input-file inputs "bin/groff")
                                 "'")))))
           (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
               (when tests?
-                (substitute* "scripts/ci/run-tests"
-                  (("--numprocesses=auto --dist=loadfile --maxprocesses=4") ""))
-                ;; For an unknown reason pytest receives SIGTERM and no tests
-                ;; are run..
-                #;
+                (let ((skip-args
+                       (string-append
+                        "-k" "\""
+                        ;; No idea why this fails.
+                        "not test_no_groff_or_mandoc_exists"
+                        ;; Needs $HOME
+                        " and not test_attach_history_handler"
+                        ;; Complains about TLS certs.
+                        " and not test_command_returns_shutdown_exception"
+                        "\"")))
+                  (substitute* "scripts/ci/run-tests"
+                    (("--numprocesses=auto" m)
+                     (string-join (cons* m skip-args test-flags) " "))))
                 (invoke "python" "scripts/ci/run-tests")))))))
     (inputs
      (list groff
+           nss-certs-for-test
            python-awscrt-for-awscli
            python-colorama
            python-botocore
@@ -4477,6 +5124,7 @@ Services (AWS) API.")
            python-dateutil
            python-docutils
            python-jmespath
+           python-jsonschema
            python-prompt-toolkit
            python-ruamel.yaml-0.16
            python-ruamel.yaml.clib
@@ -4485,6 +5133,7 @@ Services (AWS) API.")
      (list python-distro
            python-flit
            python-pytest
+           python-pytest-xdist
            python-wheel))))
 
 ;; This is not an official release of awscli version 2, so it should not be
@@ -4660,25 +5309,19 @@ Django middleware.")
 (define-public python-flask-wtf
   (package
     (name "python-flask-wtf")
-    (version "1.0.1")
+    (version "1.2.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "Flask-WTF" version))
        (sha256
         (base32
-         "1jd614662r6ifh4svs8zfwm4k8bal5z3n6pq607bas8gxrpmrzil"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "pytest" "-vv"))))))
+         "0sv6hjva1fdizb7sr46230pplx8qz8rnb4bxrfy71xbc8cgfxlkr"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
-     (list python-flask python-itsdangerous python-wtforms))
+     (list python-flask python-flask python-itsdangerous python-wtforms))
     (native-inputs
-     (list python-pytest))
+     (list python-hatchling python-pytest))
     (home-page "https://github.com/lepture/flask-wtf")
     (synopsis "Simple integration of Flask and WTForms")
     (description "Flask-WTF integrates Flask and WTForms, including CSRF, file
@@ -4819,42 +5462,41 @@ for the basic TCP/IP protocols.")
 (define-public python-geventhttpclient
   (package
     (name "python-geventhttpclient")
-    (version "2.0.9")
+    (version "2.3.3")
     (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "geventhttpclient" version))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/geventhttpclient/geventhttpclient")
+                    (commit version)
+                    (recursive? #true)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "04qmcc7qpnif70ph61339dcld4g107fkhpa0gdmbs8z98v9kkg4a"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  ;; Delete pre-compiled files.
-                  (for-each delete-file (find-files "src/geventhttpclient"
-                                                    ".*\\.pyc"))))))
-    (build-system python-build-system)
+                "1ya0i0fbx054mfx5d1k75fcf64xzp7vva8lkwwzan41xbnc56nyj"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'delete-network-tests
-           (lambda _
-             (delete-file "src/geventhttpclient/tests/test_client.py")))
-         (add-after 'unpack 'fix-compatibility-issue
-           ;; See: https://github.com/gwik/geventhttpclient/issues/137.
-           (lambda _
-             (substitute* "src/geventhttpclient/tests/test_ssl.py"
-               ((".*sock.last_seen_sni = None.*")
-                ""))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "src/geventhttpclient/tests" "-v"
-                       ;; Append the test modules to sys.path to avoid
-                       ;; namespace conflict which breaks SSL tests.
-                       "--import-mode=append")))))))
-    (native-inputs (list nss-certs-for-test python-dpkt python-pytest))
+     (list
+      #:test-flags
+      ;; Disable network tests.
+      '(list "-k"
+             (string-append "not test_client_simple"
+                            " and not test_client_ssl"
+                            " and not test_client_with_default_headers"
+                            " and not test_client_without_leading_slash"
+                            " and not test_download"
+                            " and not test_fail_invalid_ca_certificate"
+                            " and not test_httpbin_multipart"
+                            " and not test_multi_queries_greenlet_safe"
+                            " and not test_no_form_encode_header"
+                            " and not test_no_form_encoded_header"
+                            " and not test_request_with_headers"
+                            " and not test_response_context_manager"
+                            " and not test_urllib_request"))))
+    (native-inputs (list nss-certs-for-test
+                         python-dpkt python-pytest python-requests
+                         python-setuptools python-wheel))
     (propagated-inputs (list python-brotli python-certifi python-gevent
-                             python-six python-urllib3))
+                             python-urllib3))
     (home-page "https://github.com/geventhttpclient/geventhttpclient")
     (synopsis "HTTP client library for gevent")
     (description "@code{python-geventhttpclient} is a high performance,
@@ -4919,7 +5561,7 @@ provide an easy-to-use Python interface for building OAuth1 and OAuth2 clients."
 (define-public python-cachecontrol
   (package
     (name "python-cachecontrol")
-    (version "0.12.10")
+    (version "0.14.1")
     (source
      (origin
        (method git-fetch)
@@ -4930,14 +5572,16 @@ provide an easy-to-use Python interface for building OAuth1 and OAuth2 clients."
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0fviacb13h72l5c77p35lgr6kvlidfdb9xsicg3v6lblmp9cn2ws"))))
-    (build-system python-build-system)
+         "07ifs4dhahhsgj4vxgfl5ymnmb4my5l2wb8jiinn6fncszcfmr59"))))
+    (build-system pyproject-build-system)
     (arguments
      ;; Versions > 0.11.6 depend on CherryPy for testing.
      ;; It's too much work to package CherryPy for now.
      `(#:tests? #f))
     (propagated-inputs
-     (list python-requests python-msgpack python-lockfile))
+     (list python-filelock python-lockfile python-msgpack python-requests))
+    (native-inputs
+     (list python-flit-core))
     (home-page "https://github.com/ionrock/cachecontrol")
     (synopsis "The httplib2 caching algorithms for use with requests")
     (description "CacheControl is a port of the caching algorithms in
@@ -4955,7 +5599,8 @@ provide an easy-to-use Python interface for building OAuth1 and OAuth2 clients."
         (uri (pypi-uri "CacheControl" version))
         (sha256
          (base32
-          "07jsfhlbcwgqg6ayz8nznzaqg5rmxqblbzxz1qvg5wc44pcjjy4g"))))))
+          "07jsfhlbcwgqg6ayz8nznzaqg5rmxqblbzxz1qvg5wc44pcjjy4g"))))
+    (native-inputs (list python-setuptools python-wheel))))
 
 (define-public python-betamax
   (package
@@ -5018,6 +5663,35 @@ Betamax.")
 Betamax that may possibly end up in the main package.")
     (home-page "https://gitlab.com/betamax/serializers")
     (license license:asl2.0)))
+
+(define-public python-s3fs
+  (package
+    (name "python-s3fs")
+    (version "2024.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "s3fs" version))
+       (sha256
+        (base32 "0mpxk4xvg0gwzapdh9r3fvnjhi8ymf96f7c756xabk26b67kl3qv"))))
+    (build-system pyproject-build-system)
+    ;; Many tests fail with "No such file or directory" raised by the HTTP
+    ;; client.
+    (arguments (list #:tests? #false))
+    (propagated-inputs (list python-aiobotocore python-aiohttp python-fsspec))
+    (native-inputs
+     (list python-flask ;for moto
+           python-flask-cors
+           python-moto
+           python-pytest
+           python-pytest-asyncio
+           python-setuptools
+           python-wheel))
+    (home-page "https://github.com/fsspec/s3fs/")
+    (synopsis "Convenient filesystem interface over S3")
+    (description "This package provides a convenient filesystem interface over
+S3.")
+    (license license:bsd-3)))
 
 (define-public python-s3transfer
   (package
@@ -5082,51 +5756,24 @@ Betamax that may possibly end up in the main package.")
      "This package contains a Flask module for creating REST APIs.")
     (license license:bsd-3)))
 
-(define-public python-flask-basicauth
-  (package
-    (name "python-flask-basicauth")
-    (version "0.2.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "Flask-BasicAuth" version))
-       (sha256
-        (base32
-         "1zq1spkjr4sjdnalpp8wl242kdqyk6fhbnhr8hi4r4f0km4bspnz"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'fix-imports
-                    (lambda _
-                      (substitute* '("docs/index.rst"
-                                     "docs/conf.py"
-                                     "flask_basicauth.py"
-                                     "test_basicauth.py")
-                        (("flask\\.ext\\.basicauth")
-                         "flask_basicauth"))
-                      #t)))))
-    (propagated-inputs
-     (list python-flask))
-    (home-page "https://github.com/jpvanhal/flask-basicauth")
-    (synopsis "HTTP basic access authentication for Flask")
-    (description
-     "This package provides HTTP basic access authentication for Flask.")
-    (license license:bsd-3)))
-
 (define-public python-flask-htpasswd
   (package
     (name "python-flask-htpasswd")
-    (version "0.3.1")
+    (version "0.5.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "flask-htpasswd" version))
         (sha256
           (base32
-            "14q1y1y9i9bhabdnwd25jqzc4ljli23smxfyyh8abxz1vq93pxra"))))
-    (build-system python-build-system)
+            "19arq4rn5nll0bbnsff1j10blm0ydp8nvs09c56s29kmlgj3r42x"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:tests? #false)) ;none included
     (propagated-inputs
-     (list python-flask python-itsdangerous python-passlib python-tox))
+     (list python-flask python-passlib python-pyjwt python-tox))
+    (native-inputs (list python-pytest
+                         python-setuptools
+                         python-wheel))
     (home-page "https://github.com/carsongee/flask-htpasswd")
     (synopsis "Basic authentication via htpasswd files in Flask applications")
     (description "This package provides Basic authentication via
@@ -5245,7 +5892,7 @@ on the command line.")
 (define-public python-flask-login
   (package
     (name "python-flask-login")
-    (version "0.6.0")
+    (version "0.6.3")
     (source
      (origin
        (method git-fetch)
@@ -5254,7 +5901,7 @@ on the command line.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "12yw01ccgjn9c88cbkrd6k1ykjxd8fxip2b1isvxjirphnlqhn9g"))))
+        (base32 "0wk3dni5qssmbn8ii3hsh89qa3kwr97i92k27bzgsgxvvsfwwzja"))))
     (build-system pyproject-build-system)
     (propagated-inputs
      (list python-flask))
@@ -5264,7 +5911,9 @@ on the command line.")
            python-mock
            python-pytest
            python-semantic-version
-           python-werkzeug))
+           python-setuptools
+           python-werkzeug
+           python-wheel))
     (home-page "https://github.com/maxcountryman/flask-login")
     (synopsis "User session management for Flask")
     (description
@@ -5352,12 +6001,19 @@ for Flask.")
                          "self.t.is_alive"))
                       ;; This test requires 'postcss' and 'babel' which are
                       ;; not yet available in Guix.
-                      (delete-file "tests/test_filters.py")))
+                      (delete-file "tests/test_filters.py")
+                      ;; These expect pytest, but when pytest is added to the
+                      ;; environment more tests fail.
+                      (delete-file "tests/test_cache.py")
+                      (delete-file "tests/test_bundle_build.py")
+                      (delete-file "tests/test_bundle_urls.py")))
                   (replace 'check
                     (lambda _
-                      (invoke "pytest" "-vv"))))))
+                      (invoke "nosetests" "-vv"))))))
+    (propagated-inputs
+     (list python-pyyaml))
     (native-inputs
-     (list python-jinja2 python-mock python-nose python-pytest))
+     (list python-jinja2 python-mock python-nose))
     (home-page "https://github.com/miracle2k/webassets")
     (synopsis "Media asset management")
     (description "Merges, minifies and compresses Javascript and CSS files,
@@ -5428,22 +6084,30 @@ this it tries to be opinion-free and very extendable.")
 (define-public python-engineio
   (package
     (name "python-engineio")
-    (version "4.0.1")
+    (version "4.11.2")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "python-engineio" version))
+       (uri (pypi-uri "python_engineio" version))
        (sha256
         (base32
-         "0xqkjjxbxakz9fd7v94rkr2r5r9nrkap2c3gf3abbd0j6ld5qmxv"))))
-    (build-system python-build-system)
+         "0abijzn4srf89jlj0kqcd9xbhyxvglzxkciy5nxv815rrvdb0nql"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; File not found.
+      #:test-flags '(list "-k" "not test_static_files")))
     (propagated-inputs
-     (list python-aiohttp python-requests python-websocket-client))
-    (arguments '(#:tests? #f))        ; Tests not included in release tarball.
+     (list python-aiohttp
+           python-requests
+           python-simple-websocket
+           python-tornado
+           python-websocket-client))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/miguelgrinberg/python-engineio/")
     (synopsis "Engine.IO server")
-    (description "Python implementation of the Engine.IO realtime client and
-server.")
+    (description "This package provides a Python implementation of the
+@code{Engine.IO} realtime client and server.")
     (license license:expat)))
 
 (define-public python-ephemeral-port-reserve
@@ -5470,7 +6134,7 @@ it.")
 (define-public python-flask-migrate
   (package
     (name "python-flask-migrate")
-    (version "3.1.0")
+    (version "4.1.0")
     (home-page "https://github.com/miguelgrinberg/flask-migrate/")
     (source (origin
               (method git-fetch)
@@ -5479,10 +6143,12 @@ it.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0zj7qpknvlhrh4fsp5sx4fwyx3sp41ynclka992zympm3xym9zyq"))))
-    (build-system python-build-system)
+                "09qw1hhyssa5gahm199x67d55c55m3k9m23xp2bdacwsiv8jw57g"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-flask python-alembic python-flask-sqlalchemy))
+    (native-inputs
+     (list python-pytest python-setuptools python-wheel))
     (synopsis "SQLAlchemy database migrations for Flask programs using
 Alembic")
     (description "This package contains SQLAlchemy database migration tools
@@ -5538,17 +6204,21 @@ thread-local variable.")
 (define-public python-flask-httpauth
   (package
     (name "python-flask-httpauth")
-    (version "3.2.3")
+    (version "4.8.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "Flask-HTTPAuth" version))
        (sha256
         (base32
-         "13gff5w1mqpzm5nccyg02v3ifb9ifqh5k866cssjhghhg6msfjsz"))))
-    (build-system python-build-system)
+         "0yh9fn6pak64has89pcy03f1cn198vkil872y5jjr53kph2qlmk6"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-flask))
     (native-inputs
-     (list python-flask))
+     (list nss-certs-for-test
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/miguelgrinberg/flask-httpauth/")
     (synopsis "Basic and Digest HTTP authentication for Flask routes")
     (description "@code{flask_httpauth} provides Basic and Digest HTTP
@@ -5758,7 +6428,7 @@ available in Django, but is a standalone package.")
        (sha256
         (base32 "1nx4x0ifanlbrzh3f9ns8ihnchlkzf54ilvqmgcgcz2j72vm43rp"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (propagated-inputs (list python-sqlalchemy python-wtforms))
     (home-page "https://github.com/wtforms/wtforms-sqlalchemy/")
     (synopsis "SQLAlchemy tools for WTForms")
@@ -5886,37 +6556,38 @@ name resolutions asynchronously.")
 (define-public python-yarl
   (package
     (name "python-yarl")
-    (version "1.6.3")
+    (version "1.18.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "yarl" version))
        (sha256
         (base32
-         "045z4ssg8g5h0qhz8hnx74hswgkndaldqq1xi5l1n5s0j996d44a"))
-       (modules '((guix build utils)))
-       (snippet
-         #~(begin
-             (delete-file "yarl/_quoting_c.c")))))
-    (build-system python-build-system)
+         "1qfj6kvdxr8bzka4lp0bh0xfgr5mzx7zzvj2jb4vcxxzbk20265c"))))
+    (build-system pyproject-build-system)
     (arguments
-      (list #:tests? #f     ; test suite can't find yarl._quoting_c
-            #:phases
-            #~(modify-phases %standard-phases
-                (add-after 'unpack 'cythonize-code
-                  (lambda _
-                    (invoke "cython" "yarl/_quoting_c.pyx")))
-                (replace 'check
-                  (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-                    (when tests?
-                      (substitute* "setup.cfg"
-                        (("--cov=yarl") ""))
-                      (add-installed-pythonpath inputs outputs)
-                      (invoke "python" "-m" "pytest")))))))
+     (list
+      #:test-flags '(list "--ignore-glob=tests/test_*_benchmarks.py")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'patch-build-system
+           (lambda _
+             ;; XXX: I don't know how to tell it to build the extensions in
+             ;; place.
+             (substitute* "packaging/pep517_backend/_backend.py"
+               (("build_inplace=False") "build_inplace=True")))))))
     (native-inputs
-     (list python-cython python-pytest python-pytest-runner))
+     (list python-covdefaults
+           python-cython-3
+           python-expandvars
+           python-pytest
+           python-pytest-cov
+           python-pytest-xdist
+           python-setuptools
+           python-tomli
+           python-wheel))
     (propagated-inputs
-     (list python-idna python-multidict))
+     (list python-packaging python-idna python-multidict python-propcache))
     (home-page "https://github.com/aio-libs/yarl/")
     (synopsis "Yet another URL library")
     (description "@code{yarl} module provides handy @code{URL} class
@@ -6314,47 +6985,17 @@ library to create slugs from unicode strings while keeping it DRY.")
                    (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
                            #$(package-version this-package)))))))
     (propagated-inputs (list python-jinja2))
-    (native-inputs (list python-numpy python-pytest python-setuptools-scm))
+    (native-inputs
+     (list python-numpy
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (home-page "https://github.com/python-visualization/branca")
     (synopsis "Generate complex HTML+JS pages with Python")
     (description "This library is a spinoff from @code{folium} that would host
 the non-map-specific features.  It can be used to generate HTML + JS.")
     (license license:expat)))
-
-(define-public python-tinycss
-  (package
-    (name "python-tinycss")
-    (version "0.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "tinycss" version))
-       (sha256
-        (base32 "0vkifr595h28ymkjhrswwf0bm23lhznh5f44xyp7x7jy1ssnyc0j"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list #:test-flags
-           '(list "-k" "not test_speedups")))
-    (native-inputs
-     (list python-pytest-cov
-           python-pytest-flake8
-           python-pytest-isort
-           python-pytest-runner
-           python-setuptools
-           python-wheel))
-    (home-page "https://tinycss.readthedocs.io/")
-    (synopsis "Complete yet simple CSS parser for Python")
-    (description
-     "@code{tinycss} is a complete yet simple CSS parser for Python.  It
-supports the full syntax and error handling for CSS 2.1 as well as some CSS 3
-modules:
-
-@itemize
-@item CSS Color 3
-@item CSS Fonts 3
-@item CSS Paged Media 3
-@end itemize")
-    (license license:bsd-3)))
 
 (define-public python-tinycss2
   (package
@@ -6653,7 +7294,7 @@ and fairly speedy.")
 (define-public python-uvicorn
   (package
     (name "python-uvicorn")
-    (version "0.32.1")
+    (version "0.34.0")
     (source
      (origin
        ;; PyPI tarball has no tests.
@@ -6663,7 +7304,7 @@ and fairly speedy.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0mrp87l2d5k2dcz07wj2vysjsa99lw5xp12a1a2xiciahg04w7ib"))))
+        (base32 "05lkxnpzmr0kik81kdcvavjvvc4d1lgmw88mr4vbwsqk147wgqbc"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -6676,7 +7317,8 @@ and fairly speedy.")
               ;; Maybe this <https://github.com/encode/uvicorn/issues/2466>.
               "--ignore=tests/supervisors/test_multiprocess.py")))
     (native-inputs
-     (list python-a2wsgi
+     (list nss-certs-for-test
+           python-a2wsgi
            python-hatchling
            python-httpx-bootstrap
            python-pytest
@@ -6962,7 +7604,7 @@ Some things HTTP Core does do:
 (define-public python-httpx
   (package
     (name "python-httpx")
-    (version "0.27.2")
+    (version "0.28.1")
     (source
      (origin
        ;; PyPI tarball does not contain tests.
@@ -6972,7 +7614,7 @@ Some things HTTP Core does do:
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1jd5w3nhpvrbj66nk2njvfnk0g1mkxivwa52j2yyhcna1xafsk1p"))))
+        (base32 "00d6rb21xwazwb0sj68zhra0qxxcwkd0vv7bg3k1jg94dmk2w7xl"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -7106,44 +7748,48 @@ them to a designated prefix.")
 (define-public python-warcio
   ;; The PyPI release is missing some test support files (see:
   ;; https://github.com/webrecorder/warcio/issues/132).
-  (let ((revision "0")
-        (commit "aa702cb321621b233c6e5d2a4780151282a778be"))
-    (package
-      (name "python-warcio")
-      (version (git-version "1.7.4" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/webrecorder/warcio")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "11afr6zy3r6rda81010iq496dazg4xid0izg3smg6ighpmvsnzf2"))))
-      (build-system pyproject-build-system)
-      (arguments
-       (list
-        #:test-flags  ; These tests fail due to networking requirements.
-        '(list "-k" (format #f "not ~a"
-                            (string-join
-                             '("test_post_chunked"
-                               "test_remote"
-                               "test_capture_http_proxy"
-                               "test_capture_https_proxy"
-                               "test_capture_https_proxy_same_session")
-                             " and not ")))))
-      (native-inputs
-       ;; These inputs are required for the test suite.
-       (list python-httpbin python-pytest-cov python-requests
-             python-wsgiprox))
-      (home-page "https://github.com/webrecorder/warcio")
-      (synopsis "Streaming web archival archive (WARC) library")
-      (description "warcio is a Python library to read and write the WARC format
+  (package
+    (name "python-warcio")
+    (version "1.7.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/webrecorder/warcio")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0r3kijsm8wsbipi5pxsrqpg5nn4w8iaw5i8010b0ligmfxnxamlb"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags  ; These tests fail due to networking requirements.
+      '(list "-k" (format #f "not ~a"
+                          (string-join
+                           '("test_post_chunked"
+                             "test_remote"
+                             "test_capture_http_proxy"
+                             "test_capture_https_proxy"
+                             "test_capture_https_proxy_same_session")
+                           " and not "))
+             ; The following test requires the hookdns package.
+             "--ignore=test/test_capture_http_proxy.py")))
+    (native-inputs
+     ;; These inputs are required for the test suite.
+     (list python-httpbin
+           python-pytest-cov
+           python-requests
+           python-setuptools
+           python-wheel
+           python-wsgiprox))
+    (home-page "https://github.com/webrecorder/warcio")
+    (synopsis "Streaming web archival archive (WARC) library")
+    (description "warcio is a Python library to read and write the WARC format
 commonly used in Web archives. It is designed for fast, low-level access to
 web archival content, oriented around a stream of WARC records rather than
 files.")
-      (license license:asl2.0))))
+    (license license:asl2.0)))
 
 (define-public python-websockets
   (package
@@ -7396,7 +8042,7 @@ changed the process is restarted.")
          "1ha4pp96y3jk33qnyir5851cnj4dc06q6wqn1b0w54l3fsds28vi"))))
     (build-system pyproject-build-system)
     (arguments (list #:test-flags #~(list "tests/unit")))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (propagated-inputs
      (list python-geojson-for-pyowm
            python-pysocks
@@ -7410,25 +8056,26 @@ changed the process is restarted.")
 (define-public python-pyramid
   (package
     (name "python-pyramid")
-    (version "1.10.4")
+    (version "2.0.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "pyramid" version))
               (sha256
                (base32
-                "0rkxs1ajycg2zh1c94xlmls56mx5m161sn8112skj0amza6cn36q"))))
-    (build-system python-build-system)
+                "1phqdz068hl3zda263qkjp5am8fmvmpcxp3nrhsna8g472kkh89p"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-hupper
+           python-plaster
            python-plaster-pastedeploy
+           python-setuptools
            python-translationstring
            python-venusian
            python-webob
-           python-zope-deprecation
-           python-zope-interface
-           python-webtest
            python-zope-component
-           python-plaster))
+           python-zope-deprecation
+           python-zope-interface))
+    (native-inputs (list python-pytest python-webtest python-wheel))
     (home-page "https://trypyramid.com/")
     (synopsis "Python web-framework suitable for small and large sites")
     (description
@@ -7470,7 +8117,8 @@ based on filters.")
        (sha256
         (base32 "1dx533fsbq1mbz3by7qkm5bh2c253nwvm8214pqbwbfq07kqkwf2"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-coverage python-coveralls python-pytest))
+    (native-inputs (list python-coverage python-coveralls python-pytest
+                         python-setuptools python-wheel))
     (home-page "https://github.com/danvk/RangeHTTPServer")
     (synopsis "SimpleHTTPServer with support for range requests")
     (description
@@ -7534,18 +8182,19 @@ Swagger.")
 (define-public python-flask-socketio
   (package
     (name "python-flask-socketio")
-    (version "5.0.1")
+    (version "5.5.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "Flask-SocketIO" version))
+       (uri (pypi-uri "flask_socketio" version))
        (sha256
         (base32
-         "09r2gpj2nbn72v2zaf6xsvlazln77pgqzp2pg2021nja47sijhsw"))))
-    (build-system python-build-system)
+         "1i0yqn39b4v4r2whppx47sg7iicvqzssd1clx7cclk07l52cjinr"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
      (list python-flask python-socketio))
-    (arguments '(#:tests? #f))        ; Tests not included in release tarball.
+    (native-inputs
+     (list python-pytest python-redis python-setuptools python-wheel))
     (home-page "https://github.com/miguelgrinberg/Flask-SocketIO/")
     (synopsis "Socket.IO integration for Flask applications")
     (description "Socket.IO integration for Flask applications")
@@ -7977,7 +8626,7 @@ challenges.")
 (define-public python-imap-tools
   (package
     (name "python-imap-tools")
-    (version "1.6.0")
+    (version "1.9.0")
     (source
      (origin
        (method git-fetch)               ; no tests in PyPI release
@@ -7986,7 +8635,7 @@ challenges.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0w4x5l5w7rz1mrmbbjbfqbf3f5p89wi2fw245yvg8k98zgy012sg"))))
+        (base32 "0iawc6shxn8p0ysiqiahfic5rp1r16f7rfn11c8y2fl8falckynr"))))
     (arguments
      (list
       #:test-flags
@@ -7999,7 +8648,7 @@ challenges.")
                                   " and not test_live"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/ikvk/imap_tools")
     (synopsis "Work with email and mailbox by IMAP")
     (description
@@ -8194,53 +8843,61 @@ fast.  It allows the usage of the @code{async/await} syntax added in Python
 (define-public python-socketio
   (package
     (name "python-socketio")
-    (version "5.1.0")
+    (version "5.12.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "python-socketio" version))
+       (uri (pypi-uri "python_socketio" version))
        (sha256
         (base32
-         "14vhpxdn54lz54mhcqlgcks0ssbws9gd1y7ii16a2g3gpfdc531k"))))
-    (build-system python-build-system)
+         "175sd3fdld3s477i6b3v49yhf1alsbm1vaxzq44nqrqb8wgzz682"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags
+           '(list "--timeout=60"
+                  ;; These tests freeze.
+                  "--ignore-glob=tests/async/*")))
     (propagated-inputs
-     (list python-aiohttp
-           python-bidict
-           python-engineio
-           python-requests
-           python-websocket-client
-           python-websockets))
-    (arguments '(#:tests? #f))        ; Tests not included in release tarball.
+     (list python-bidict python-engineio python-msgpack))
+    (native-inputs
+     (list python-pytest
+           python-pytest-asyncio
+           python-pytest-timeout
+           python-setuptools
+           python-uvicorn
+           python-wheel))
     (home-page "https://github.com/miguelgrinberg/python-socketio/")
     (synopsis "Python Socket.IO server")
     (description
-     "Python implementation of the Socket.IO realtime client and server.")
+     "This package provides a Python implementation of the @code{Socket.IO}
+realtime client and server.")
     (license license:expat)))
 
 (define-public python-socks
   (package
     (name "python-socks")
-    (version "2.0.3")
+    (version "2.6.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "python-socks" version))
+       (uri (pypi-uri "python_socks" version))
        (sha256
         (base32
-         "12msk06c0glljcrx1byd78xgv05lxw81vknqwhn8ccs7an7cmag3"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f                      ; tests not included
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "tests/" "-s")))))))
+         "17pcyd1gg2a7k2i4lvnqi9095brhf7pbpkqfcjmhpzkgmfd94hwp"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
-     (list python-async-timeout python-curio python-trio))
+     (list python-trio))
     (native-inputs
-     (list python-pytest))
+     (list python-anyio
+           python-async-timeout
+           python-flask
+           python-pytest
+           python-pytest-asyncio
+           python-setuptools
+           python-tiny-proxy
+           python-trustme
+           python-wheel
+           python-yarl))
     (home-page "https://github.com/romis2012/python-socks")
     (synopsis
      "Core proxy (SOCKS4, SOCKS5, HTTP tunneling) functionality for Python")
@@ -8268,6 +8925,33 @@ SOCKS proxy implementation.  It supports SOCKS4, SOCKS4A, and SOCKS5.
 means the library itself does not handle the actual sending of the bytes
 through the network, it only deals with the implementation details of the
 SOCKS protocols.  It can be paired with any I/O library.")
+    (license license:expat)))
+
+(define-public python-simple-websocket
+  (package
+    (name "python-simple-websocket")
+    (version "1.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "simple_websocket" version))
+       (sha256
+        (base32 "1r1all55d5dimiw3qwdhj53cxj9yjgnskcysmcscarx0g9726fbr"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; Requires Internet access to resolve example.com
+     (list #:test-flags '(list "--ignore=tests/test_client.py")))
+    (propagated-inputs (list python-wsproto))
+    (native-inputs (list python-flake8
+                         python-pytest
+                         python-pytest-cov
+                         python-setuptools
+                         python-tox
+                         python-wheel))
+    (home-page "https://github.com/miguelgrinberg/simple-websocket")
+    (synopsis "Simple WebSocket server and client for Python")
+    (description "This package provides a simple @code{WebSocket} server and
+client for Python.")
     (license license:expat)))
 
 (define-public python-siosocks
@@ -8306,6 +8990,32 @@ Features:
 @item One-shot socks server (@code{python -m siosocks})
 @end itemize")
     (license license:expat)))
+
+(define-public python-tiny-proxy
+  (package
+    (name "python-tiny-proxy")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "tiny_proxy" version))
+       (sha256
+        (base32 "05nq62fn3p7s1a6dkdvnrzmk39d9ddrzb3pqbbli025qs3m9j1bq"))))
+    (build-system pyproject-build-system)
+    ;; There are only a handful of tests and they require the as yet
+    ;; unpackaged httpx_socks.
+    (arguments (list #:tests? #false))
+    (propagated-inputs (list python-anyio))
+    (native-inputs
+     (list python-httpx
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (home-page "https://github.com/romis2012/tiny-proxy")
+    (synopsis "Simple proxy server (SOCKS4(a), SOCKS5(h), HTTP tunnel)")
+    (description "This package provides a simple proxy server (SOCKS4(a),
+SOCKS5(h), HTTP tunnel).")
+    (license license:asl2.0)))
 
 (define-public python-azure-nspkg
   (package
@@ -8470,39 +9180,40 @@ of the CRC32C hashing algorithm.")
 (define-public python-google-auth
   (package
     (name "python-google-auth")
-    (version "2.34.0")
+    (version "2.37.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "google_auth" version))
        (sha256
-        (base32 "1k04kkg5n3pi4awjxxsa50ail68wwf2gklmb686v46aw8fb77f4f"))))
-    (build-system python-build-system)
+        (base32 "002xvp1139lrw2c2s2yllg5499ghfxzg9lv35i4q770zpwx64m00"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest")))))))
+     (list
+      #:test-flags
+      ;; This one test uses crypto.sign with an outdated calling convention.
+      '(list "--ignore=tests/transport/test__mtls_helper.py")))
     (propagated-inputs
      (list python-cachetools
-           python-cryptography
            python-pyasn1-modules
-           python-rsa
-           python-six))
+           python-pyjwt
+           python-rsa))
     (native-inputs
      (list nss-certs-for-test
+           python-aioresponses
+           python-cryptography
            python-flask
            python-freezegun
            python-mock
-           python-oauth2client
            python-pyopenssl
            python-pytest
+           python-pytest-asyncio
            python-pytest-localserver
            python-pyu2f
            python-requests
-           python-responses))
+           python-responses
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/googleapis/google-auth-library-python")
     (synopsis "Google Authentication Library")
     (description "This library simplifies using Google's various
@@ -8744,24 +9455,27 @@ translate entities on HTML strings, among other things.")
 (define-public python-webcolors
   (package
     (name "python-webcolors")
-    (version "1.11.1")
+    (version "24.11.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "webcolors" version))
        (sha256
-        (base32 "1rkda75h2p65zx6r84c9mjavn4xpviqvqrklvdvcklapd5in1wvn"))))
-    (build-system python-build-system)
+        (base32 "1xl0vn4xa03vjwx6fj19q9kgb94g65gvdf3p0ivsy0i2ydldgczc"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (invoke "pytest")))))))
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'patch-pyproject
+           (lambda _
+             ;; XXX Our version of python-pdm-backend does not recognize
+             ;; "dependency-groups", but is fine with the bogus
+             ;; "tool.whatever".
+             (substitute* "pyproject.toml"
+               (("\\[dependency-groups\\]") "[tool.whatever]")))))))
     (native-inputs
-     (list python-pytest))
+     (list python-pdm-backend python-pytest))
     (home-page "https://github.com/ubernostrum/webcolors")
     (synopsis "HTML/CSS color definitions library")
     (description "@code{python-webcolors} is a module for working with
@@ -8950,7 +9664,8 @@ Full documentation may be found at
          "0jl3j20iqvzqqw5q5ldval5wrc2pdx94zff3b6b87j51yjx3qjhr"))))
     (build-system python-build-system)
     (arguments
-     `(#:phases
+     `(#:tests? #f         ;XXX: need /etc/ssl/certs/ca-certificates.crt
+       #:phases
        (modify-phases %standard-phases
          (replace 'check
            (lambda* (#:key tests? #:allow-other-keys)
@@ -9089,13 +9804,13 @@ regular expressions.")
 (define-public python-scrapy
   (package
     (name "python-scrapy")
-    (version "2.11.2")
+    (version "2.12.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "scrapy" version))
        (sha256
-        (base32 "07a0nfzkz4vr1353456lavvw36l9s2ia7x91l7mzygzwhi9mdgfz"))))
+        (base32 "13vqykvjv9d0hj02l0s025r107dncfj7as0r0iv484lv01v6wvfn"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:test-flags
@@ -9104,41 +9819,45 @@ regular expressions.")
                          "not " (string-join
                                  (list "test_pformat"
                                        "test_pformat_old_windows"
-                                       "test_pformat_windows")
-                                 " and not ")))
+                                       "test_pformat_windows"
+                                       ;; Connection refused.
+                                       "test_persist")
+                                 " and not "))
+                   ;; Connection refused to some local FTP server.
+                   "--ignore=tests/test_feedexport.py")
            #:phases
            #~(modify-phases %standard-phases
                (add-before 'check 'prepare-test-environment
                  (lambda _
                    (setenv "HOME" "/tmp"))))))
     (propagated-inputs
-     (list python-botocore              ; Optional: For S3FeedStorage class.
-           python-cryptography
+     (list python-cryptography
            python-cssselect
            python-defusedxml
            python-itemadapter
            python-itemloaders
            python-lxml
+           python-packaging
            python-parsel
            python-protego
            python-pydispatcher
            python-pyopenssl
            python-queuelib
            python-service-identity
-           python-setuptools
            python-tldextract
+           python-typing-extensions
            python-twisted
            python-w3lib
            python-zope-interface))
     (native-inputs
      (list nss-certs-for-test
+           python-mypy
            python-pexpect
-           python-pyftpdlib
            python-pytest
            python-pytest-xdist
+           python-setuptools
            python-sybil
            python-testfixtures
-           python-uvloop
            python-wheel))
     (home-page "https://scrapy.org")
     (synopsis "High-level Web crawling and Web scraping framework")
@@ -9287,27 +10006,29 @@ resources using Web Application Description Language (WADL) files as guides.")
 (define-public python-zeep
   (package
     (name "python-zeep")
-    (version "4.1.0")
+    (version "4.3.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "zeep" version))
-       (patches
-        (search-patches "python-zeep-Fix-pytest_httpx-test-cases.patch"))
        (sha256
-        (base32 "1ranr4hkjd2kbbhxa3is1qlgkankj3sml5gla6bqs0kbvpmg4rsq"))))
-    (build-system python-build-system)
+        (base32 "0vm0asfak0pxfa9i753imcy72hk8gkxbj6pmw185b7dhw7lqalzl"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (setenv "HOME" (getcwd)) ; one test requires write access
-               (invoke "pytest" "-vv")))))))
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'compatibility
+           (lambda _
+             ;; httpx removed the "proxies" keyword.  It's now either "mounts"
+             ;; or "proxy".  See https://github.com/encode/httpx/pull/2879.
+             (substitute* "src/zeep/transports.py"
+               (("proxies=") "proxy="))))
+         ;; One test requires write access
+         (add-before 'check 'set-HOME
+           (lambda _ (setenv "HOME" (getcwd)))))))
     (propagated-inputs
      (list python-attrs
-           python-cached-property
            python-isodate
            python-lxml
            python-platformdirs
@@ -9316,16 +10037,21 @@ resources using Web Application Description Language (WADL) files as guides.")
            python-requests-file
            python-requests-toolbelt))
     (native-inputs
-     (list python-aiohttp
-           python-aioresponses
+     (list nss-certs-for-test
+           python-coverage
+           python-flake8
+           python-flake8-blind-except
+           python-flake8-debugger
            python-freezegun
-           python-mock
+           python-isort
            python-pretend
            python-pytest
            python-pytest-asyncio
            python-pytest-cov
            python-pytest-httpx
-           python-requests-mock))
+           python-requests-mock
+           python-setuptools
+           python-wheel))
     (home-page "https://docs.python-zeep.org/en/stable/")
     (synopsis "Python SOAP client based on lxml / requests")
     (description "Zeep is a Python SOAP client.  Highlights:
@@ -9420,7 +10146,7 @@ SendGrid Web API v3 endpoints, including the new v3 /mail/send.")
 (define-public python-starlette
   (package
     (name "python-starlette")
-    (version "0.41.3")
+    (version "0.42.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9429,7 +10155,7 @@ SendGrid Web API v3 endpoints, including the new v3 /mail/send.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "18lk9rzj0qpzmm7llmk4mx3dc58ylq9rh5rfyccv0ws8a4ggvdy4"))))
+                "0r46v6b687pqr4sjcv0rwd1ln248fnx0xkawbn945r04pg7c999q"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-anyio
                              python-typing-extensions
@@ -9450,28 +10176,7 @@ SendGrid Web API v3 endpoints, including the new v3 /mail/send.")
 Interface) framework/toolkit for building async web services in Python.")
     (license license:bsd-3)))
 
-(define-public python-starlette-for-fastapi-0.88
-  (package
-    (inherit python-starlette)
-    (name "python-starlette")
-    (version "0.22.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/encode/starlette")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0ybhcw80vj44p5b61kbm0jmw4lndm0dqsysi33rysnh20csqn8dz"))))
-    (arguments
-     (list
-      #:test-flags
-      ;; XXX: unclear why these tests fail with a decoding error.
-      '(list "-k" "not test_gzip_ignored_for_responses_with_encoding_set")))))
-
-;; A newer version exists, but python-pytorch-lightning requires <2.0.
-(define-public python-starsessions-for-pytorch-lightning
+(define-public python-starsessions
   (package
     (name "python-starsessions")
     (version "1.3.0")
@@ -9494,7 +10199,10 @@ Interface) framework/toolkit for building async web services in Python.")
              ;; it seems restricted to the tests only.
              ;; AttributeError: 'Cookies' object has no attribute
              ;; 'clear_session_cookies'
-             "-k" "not test_session_clears_on_tab_close")
+             "-k"
+             (string-append "not test_session_clears_on_tab_close"
+                            ;; This fails because an error is not raised.
+                            " and not test_session_wants_secret_key"))
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'compatibilitiy
@@ -9505,7 +10213,7 @@ Interface) framework/toolkit for building async web services in Python.")
     (propagated-inputs
      (list python-redis
            python-itsdangerous
-           python-starlette-for-fastapi-0.88))
+           python-starlette))
     (native-inputs
      (list python-black
            python-flake8
@@ -9547,63 +10255,56 @@ and FastAPI.")
 (define-public python-fastapi
   (package
     (name "python-fastapi")
-    (version "0.92.0")
+    (version "0.115.6")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "fastapi" version))
               (sha256
                (base32
-                "1pm4p5i9h732f0qag85yd9ngjz8x9bhs3fyk2j861cn8s9dhyfh2"))))
+                "0m36nyldk0640mbsysm446bz6rfynpjsm5lajmra8kn1vmx6zi4y"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      ;; The test_create_user tests fail with a 400 error: "Email already registered".
-      '(list "--ignore=docs_src/sql_databases/sql_app_py310/tests/test_sql_app.py"
-             "--ignore=docs_src/sql_databases/sql_app_py39/tests/test_sql_app.py")))
+      ;; Argument() missing 1 required positional argument: 'default'
+      '(list "--ignore=tests/test_fastapi_cli.py"
+             ;; cannot import name 'StaticPool' from 'sqlalchemy'
+             "--ignore-glob=tests/test_tutorial/*"
+             ;; FIXME: Unclear why these 8 tests fail.
+             "--ignore=tests/test_dependency_contextmanager.py")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'relax-requirements
+           (lambda _
+             (substitute* "pyproject.toml"
+               (("<0.42.0") "<=0.42.0")))))))
     (propagated-inputs (list python-email-validator
+                             python-fastapi-cli
                              python-httpx
                              python-itsdangerous
                              python-jinja2
                              python-multipart
                              python-orjson
-                             python-starlette
-                             python-pydantic
+                             python-pydantic-2
+                             python-pydantic-settings
                              python-pyyaml
-                             python-uvicorn
-                             python-ujson))
-    (native-inputs (list python-databases
-                         python-flask
-                         python-hatchling
-                         python-isort
-                         python-jose
-                         python-mypy
-                         python-passlib
-                         python-peewee
-                         python-pytest
-                         python-sqlalchemy
-                         python-types-orjson
-                         python-types-ujson))
+                             python-starlette
+                             python-typing-extensions
+                             python-ujson
+                             python-uvicorn))
+    (native-inputs
+     (list python-dirty-equals
+           python-flask
+           python-inline-snapshot
+           python-pdm-backend
+           python-pyjwt
+           python-pytest
+           python-sqlalchemy))
     (home-page "https://github.com/tiangolo/fastapi")
     (synopsis "Web framework based on type hints")
     (description "FastAPI provides a web API framework based on pydantic and
 starlette.")
     (license license:expat)))
-
-(define-public python-fastapi-for-pytorch-lightning
-  (package
-    (inherit python-fastapi)
-    (name "python-fastapi")
-    (version "0.88.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "fastapi" version))
-              (sha256
-               (base32
-                "00pznprvjvrkiqcvn0ksz1pq5n2cgmxhk0gc0mb7q3ha302g6nwi"))))
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs python-fastapi)
-       (replace "python-starlette" python-starlette-for-fastapi-0.88)))))
 
 (define-public python-fastapi-csrf-protect
   (package
@@ -9637,7 +10338,7 @@ pattern.")
 (define-public python-fastapi-pagination-minimal
   (package
     (name "python-fastapi-pagination-minimal")
-    (version "0.12.0")
+    (version "0.12.34")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9646,19 +10347,15 @@ pattern.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0qkcphjk1qy680v1hkmqbs4p7srvx020wy39b97anrn9dyyi5ah6"))))
+                "004w9h4ana0p766n7f0z0n06v1472yjci1hvbys9gncpclcc49gj"))))
     (build-system pyproject-build-system)
-    (arguments
-     ;; Tests depend on python-cassandra,
-     ;; which is not yet packaged in Guix.
-     `(#:tests? #f))
-    (native-inputs
-     (list poetry))
+    ;; We run the tests in python-fastapi-pagination only.
+    (arguments (list #:tests? #false))
     ;; These are the only required dependencies,
     ;; please add all optional dependencies to the
     ;; full python-fastapi-pagination below.
-    (propagated-inputs (list python-fastapi
-                             python-pydantic))
+    (propagated-inputs (list python-fastapi python-pydantic-2))
+    (native-inputs (list python-poetry-core))
     (home-page "https://github.com/uriyyo/fastapi-pagination")
     (synopsis "FastAPI pagination library")
     (description "@code{fastapi-pagination} is a Python library designed to
@@ -9671,6 +10368,19 @@ return paginated responses to your clients.")
   (package
     (inherit python-fastapi-pagination-minimal)
     (name "python-fastapi-pagination")
+    (arguments
+     (list
+      #:test-flags
+      '(list "--unit-tests" "--ignore=tests/ext")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'patch-tests
+           (lambda _
+             ;; We don't have a package for python-cassandra or motor, but we
+             ;; also don't need them as we only run the unit tests anyway.
+             (substitute* "tests/conftest.py"
+               (("from cassandra.cluster.*") "")
+               (("from motor.*") "")))))))
     (propagated-inputs
      (modify-inputs (package-propagated-inputs
                      python-fastapi-pagination-minimal)
@@ -9678,7 +10388,7 @@ return paginated responses to your clients.")
                 python-databases
                 python-django
                 python-fastapi
-                python-pydantic
+                python-pydantic-2
                 python-sqlalchemy
                 (package
                   (inherit python-tortoise-orm)
@@ -9687,10 +10397,21 @@ return paginated responses to your clients.")
                                                   python-tortoise-orm)
                      ((#:phases phases '%standard-phases)
                       `(modify-phases ,phases
-                        (delete 'sanity-check)))))
+                         (delete 'sanity-check)))))
                   (propagated-inputs
                    (modify-inputs (package-propagated-inputs python-tortoise-orm)
                      (replace "python-aiosqlite" python-aiosqlite)))))))
+    (native-inputs
+     (list python-aiosqlite
+           python-asgi-lifespan
+           python-asyncpg
+           python-faker
+           python-httpx
+           python-poetry-core
+           python-pytest
+           python-pytest-asyncio
+           python-sqlalchemy
+           python-typing-extensions))
     (description
      (string-append (package-description python-fastapi-pagination-minimal)
                     "
@@ -9698,6 +10419,30 @@ return paginated responses to your clients.")
 This package, as opposed to @code{python-fastapi-pagination-minimal}, depends on
 all available optional dependencies supported by mainline
 @code{fastapi-pagination}."))))
+
+(define-public python-fastapi-cli
+  (package
+    (name "python-fastapi-cli")
+    (version "0.0.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "fastapi_cli" version))
+       (sha256
+        (base32 "0pk0ldmymc25ys4v6mslzd5vsjh9r69hfylh2ljl29pmarcvdcq2"))))
+    (build-system pyproject-build-system)
+    ;; Tests require fastapi, which depends on this package.
+    (arguments (list #:tests? #false))
+    (propagated-inputs (list python-rich-toolkit python-typer python-uvicorn))
+    (native-inputs
+     (list python-inline-snapshot python-pdm-backend python-pytest))
+    (home-page "https://pypi.org/project/fastapi-cli/")
+    (synopsis
+     "Run and manage FastAPI apps from the command line with FastAPI CLI")
+    (description
+     "FastAPI CLI is a command line program fastapi that you can use to serve
+your FastAPI app, manage your FastAPI project, and more.")
+    (license license:expat)))
 
 (define-public python-pyactiveresource
   (package
@@ -9883,23 +10628,25 @@ hardware on Grid'5000 or via OpenStack, to Vagrant, Chameleon, and more.")
 (define-public python-pynetbox
   (package
     (name "python-pynetbox")
-    (version "7.2.0")
+    (version "7.4.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "pynetbox" version))
               (sha256
                (base32
-                "1pzmkl4nr247v4022i33v32jlx88wwcdy7ycyfd4pnl19vag8d9p"))))
+                "1hq0mqykwdsmcrj61fxxzdkpc7wnld4grhkcxy560ym79jbbb0iz"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (add-after 'unpack 'disable-failing-tests
-                          (lambda _
-                            ;; Integration tests depend on docker.
-                            (delete-file-recursively "tests/integration"))))))
-    (propagated-inputs (list python-requests))
-    (native-inputs (list python-pytest python-pyyaml python-setuptools
-                         python-setuptools-scm python-wheel))
+     (list
+      #:test-flags
+      ;; Integration tests depend on docker.
+      '(list "--ignore=tests/integration")))
+    (propagated-inputs (list python-packaging python-requests))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (home-page "https://github.com/netbox-community/pynetbox")
     (synopsis "NetBox API client library")
     (description "Python module to query and edit data stored in a
@@ -9920,7 +10667,7 @@ hardware on Grid'5000 or via OpenStack, to Vagrant, Chameleon, and more.")
     (arguments
      (list #:tests? #f)) ; would require network (and SSL certificates)
     (propagated-inputs (list python-requests))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/jsvine/waybackpack")
     (synopsis
      "Download the entire Wayback Machine archive for a given URL")

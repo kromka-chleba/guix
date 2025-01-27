@@ -3,7 +3,7 @@
 ;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2017, 2018 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
 ;;; Copyright © 2018–2021 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2018, 2023, 2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2018, 2023-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2018, 2019 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2018 Joshua Sierles, Nextjournal <joshua@nextjournal.com>
 ;;; Copyright © 2018, 2019, 2020, 2021 Julien Lepiller <julien@lepiller.eu>
@@ -14,7 +14,7 @@
 ;;; Copyright © 2020, 2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Christopher Baines <mail@cbaines.net>
 ;;; Copyright © 2020–2024 Felix Gruber <felgru@posteo.net>
-;;; Copyright © 2021, 2023, 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2021, 2023-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2021, 2023, 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2021, 2022 Nikolay Korotkiy <sikmir@disroot.org>
@@ -859,6 +859,53 @@ projections.")
                    ;; cmake/*
                    license:boost1.0))))
 
+(define-public python-pyogrio
+  (package
+    (name "python-pyogrio")
+    (version "0.10.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyogrio" version))
+       (sha256
+        (base32 "0g5j3a2n5hdnmi45261y84rqk1bikcvrdblgh9wfhk9jd2siq1gc"))))
+    (properties
+     `((updater-extra-inputs . ("gdal"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; These tests need Internet access.
+      '(list "-k" (string-append "not test_url"
+                                 " and not test_url_with_zip"
+                                 " and not test_uri_s3"))
+      #:phases
+      '(modify-phases %standard-phases
+         (add-before 'check 'build-extensions
+           (lambda _
+             (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (propagated-inputs (list python-certifi python-numpy python-packaging))
+    (inputs (list gdal))
+    (native-inputs (list python-cython-3
+                         python-pytest
+                         python-pytest-cov
+                         python-setuptools
+                         python-tomli
+                         python-versioneer
+                         python-wheel))
+    (home-page "https://pypi.org/project/pyogrio/")
+    (synopsis "Vectorized spatial vector file format I/O using GDAL/OGR")
+    (description "Pyogrio provides a GeoPandas-oriented API to OGR vector data
+sources, such as ESRI Shapefile, GeoPackage, and GeoJSON.  Vector data sources
+have geometries, such as points, lines, or polygons, and associated records
+with potentially many columns worth of data.  Pyogrio uses a vectorized
+approach for reading and writing GeoDataFrames to and from OGR vector data
+sources in order to give you faster interoperability.  It uses pre-compiled
+bindings for GDAL/OGR so that the performance is primarily limited by the
+underlying I/O speed of data source drivers in GDAL/OGR rather than multiple
+steps of converting to and from Python data types within Python.")
+    (license license:expat)))
+
 (define-public python-pyproj
   (package
     (name "python-pyproj")
@@ -990,14 +1037,14 @@ pyproj, Rtree, and Shapely.")
 (define-public python-geopandas
   (package
     (name "python-geopandas")
-    (version "0.14.2")
+    (version "1.0.1")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "geopandas" version))
         (sha256
           (base32
-            "1nycf79nzris058lz1fyg0byj874wxq33an3y74zvybnhdxxawbf"))))
+            "1aq8rb1a97n9h0yinrcr6nhfj7gvh8h6wr2ng9dj1225afjp1gxq"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1011,10 +1058,19 @@ pyproj, Rtree, and Shapely.")
          ;; Disable tests that require internet access.
          "-m" "not web")))
     (propagated-inputs
-      (list python-fiona python-packaging python-pandas python-pyproj
+      (list python-numpy
+            python-packaging
+            python-pandas
+            python-pyogrio
+            python-pyproj
             python-shapely))
     (native-inputs
-      (list python-pytest python-setuptools python-wheel))
+      (list python-codecov
+            python-pytest
+            python-pytest-cov
+            python-pytest-xdist
+            python-setuptools
+            python-wheel))
     (home-page "https://geopandas.org")
     (synopsis "Geographic pandas extensions")
     (description "The goal of GeoPandas is to make working with
@@ -1477,7 +1533,8 @@ utilities for data translation and processing.")
                                       " and not test_fetch_baja_bathymetry"
                                       " and not test_fetch_rio_magnetic"
                                       " and not test_fetch_california_gps"))))
-    (native-inputs (list python-cartopy python-distributed python-pytest))
+    (native-inputs (list python-cartopy python-distributed python-pytest
+                         python-setuptools python-wheel))
     (propagated-inputs (list python-dask
                              python-numpy
                              python-pandas
@@ -1765,8 +1822,13 @@ version_spec = re.sub('[()]', '', version_spec)\n" m)))))
                              python-scipy
                              python-traitlets
                              python-xarray))
-    (native-inputs (list python-netcdf4 python-packaging python-pytest
-                         python-pytest-mpl))
+    (native-inputs
+     (list python-netcdf4
+           python-packaging
+           python-pytest
+           python-pytest-mpl
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/Unidata/MetPy")
     (synopsis "Collection of tools to deal with weather data")
     (description "MetPy is a collection of tools in Python for reading,
@@ -2398,17 +2460,18 @@ associated with an address.")
 (define-public python-maxminddb
   (package
     (name "python-maxminddb")
-    (version "2.6.2")
+    (version "2.6.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "maxminddb" version))
        (sha256
-        (base32
-         "0r7jcqzr3hy9jims0ygjdhndysbs02hsaybx9f4vq2k2w8r2v13x"))))
+        (base32 "0m6j8pvarnw4d88537ghi1gl7nskwgkijx5c3fm4g83sm9mq1hyj"))))
     (build-system pyproject-build-system)
-    (arguments
-     `(#:tests? #f)) ;; Tests require a copy of the maxmind database
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (inputs
      (list libmaxminddb))
     (home-page "https://www.maxmind.com/")
@@ -2436,6 +2499,8 @@ MaxMind DB files.")
      (list python-maxminddb
            python-requests
            python-aiohttp))
+    (native-inputs
+     (list python-setuptools python-wheel))
     (home-page "https://www.maxmind.com/")
     (synopsis "MaxMind GeoIP2 API")
     (description "Provides an API for the GeoIP2 web services and databases.
@@ -3345,16 +3410,20 @@ path loss.")
 (define-public python-geographiclib
   (package
     (name "python-geographiclib")
-    (version "1.50")
+    (version "2.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "geographiclib" version))
         (sha256
          (base32
-          "0cn6ap5fkh3mkfa57l5b44z3gvz7j6lpmc9rl4g2jny2gvp4dg8j"))))
-    (build-system python-build-system)
-    (home-page "https://geographiclib.sourceforge.io/1.50/python/")
+          "0naql53537dsa6g9lzz1hf688b1vvih6dj2yjcyjs71yvj2irx7p"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (home-page "https://geographiclib.sourceforge.io/2.0/python/")
     (synopsis "Python geodesic routines from GeographicLib")
     (description
      "This is a python implementation of the geodesic routines in GeographicLib.")
@@ -3388,26 +3457,27 @@ Maxmind-Geolite2-CSV, supports IPv4/IPv6 and is pure Python.")
 (define-public python-geopy
   (package
     (name "python-geopy")
-    (version "2.0.0")
+    (version "2.4.1")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "geopy" version))
         (sha256
          (base32
-          "0fx0cv0kgbvynpmjgsvq2fpsyngd5idiscdn8pd5201f1ngii3mq"))))
-    (build-system python-build-system)
+          "1lfhnd04hbzmsdm5bqisvx2218v5cf6369xhbjz8jzfhga73sa2h"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "--skip-tests-requiring-internet")))
     (propagated-inputs
      (list python-geographiclib))
     (native-inputs
-     (list python-async-generator
-           python-coverage
-           python-flake8
-           python-isort
+     (list python-docutils
            python-pytest
-           python-pytest-aiohttp
-           python-readme-renderer
-           python-pytz))
+           python-pytest-asyncio
+           python-pytz
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/geopy/geopy")
     (synopsis "Geocoding library for Python")
     (description "@code{geopy} is a Python client for several popular geocoding

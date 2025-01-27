@@ -10,6 +10,7 @@
 ;;; Copyright © 2023 Simon South <simon@simonsouth.net>
 ;;; Copyright © 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
+;;; Copyright © 2025 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -154,7 +155,7 @@ For synthesis, the compiler generates netlists in the desired format.")
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.48")
+    (version "0.49")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -162,7 +163,7 @@ For synthesis, the compiler generates netlists in the desired format.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "1y5yrmw8b5l2s70451rcy83h0kavdjrsavwvxff3nrgqi3q4r1sc"))
+                "0mw8csk91s72vl73a9ngc3rrwhr4rfr8fm0abfycj3wcy8n3zr57"))
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -554,31 +555,29 @@ automated testing of HDL code.")
 (define-public nvc
   (package
     (name "nvc")
-    (version "1.14.0")
+    (version "1.15.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                     (url "https://github.com/nickg/nvc.git")
-                     (commit (string-append "r" version))))
-              (file-name (string-append name "-" version "-checkout"))
+                    (url "https://github.com/nickg/nvc")
+                    (commit (string-append "r" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1b71j8bps9zirvxhycrc9fhbr3f89si6h064xnly7gq06ggnv8n5"))))
+                "1hqkgwkvflha1fpch13byb8clwa97n6z1d9a2d34cqzsjrzkdx0k"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:out-of-source? #t
-       #:configure-flags
-       '("--enable-vhpi")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'clean-up
-           (lambda _
-             (delete-file "autogen.sh"))))))
+     (list #:out-of-source? #t
+           #:configure-flags #~(list "--enable-vhpi")
+           #:phases #~(modify-phases %standard-phases
+                        (add-after 'unpack 'clean-up
+                          (lambda _
+                            (delete-file "autogen.sh"))))))
     (native-inputs
      (list automake
            autoconf
            flex
-           gnu-gettext
+           gettext-minimal
            libtool
            pkg-config
            which

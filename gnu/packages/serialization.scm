@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015, 2017, 2019, 2020, 2021, 2023 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015, 2017, 2019, 2020, 2021, 2023, 2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016 Lukas Gradl <lgradl@openmailbox.org>
 ;;; Copyright © 2016 David Craven <david@craven.ch>
 ;;; Copyright © 2016, 2019, 2020, 2022 Marius Bakke <marius@gnu.org>
@@ -68,7 +68,8 @@
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-science)
-  #:use-module (gnu packages python-xyz))
+  #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages time))
 
 (define-public avro-cpp-1.9
   (package
@@ -422,6 +423,24 @@ that implements both the msgpack and msgpack-rpc specifications.")
     (inputs
      `(("lua" ,lua-5.2)))))
 
+(define-public libcsv
+  (package
+    (name "libcsv")
+    (version "3.0.3")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://sourceforge/libcsv/libcsv/libcsv-"
+                                  version "/libcsv-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1r6pxdxrc3vfil1f9ng1dblm82asdqz6hkz7dj4vkkh3p0f47h6r"))))
+    (build-system gnu-build-system)
+    (home-page "http://sourceforge.net/projects/libcsv/")
+    (synopsis "CSV parser and writer library")
+    (description
+     "This package provides a C library for parsing and writing CSV data.")
+    (license license:lgpl2.1+)))
+
 (define-public libscfg
   (package
     (name "libscfg")
@@ -704,7 +723,7 @@ RPC system.  Think JSON, except binary.  Or think Protocol Buffers, except faste
 (define-public python-msgspec
   (package
     (name "python-msgspec")
-    (version "0.16.0")
+    (version "0.18.6")
     (source (origin
               ;; There are no tests in the PyPI tarball.
               (method git-fetch)
@@ -719,7 +738,7 @@ RPC system.  Think JSON, except binary.  Or think Protocol Buffers, except faste
                   (delete-file "msgspec/atof_consts.h")))
               (sha256
                (base32
-                "09q567klcv7ly60w9lqip2ffyhrij100ky9igh3p3vqwbml33zb3"))))
+                "0akq8lc3547i0j67dpnq1si3dvdc51r4f66dka2h7mq6c4zxq3fn"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -845,6 +864,25 @@ style and key ordering are kept, so you can diff the source.")
     (description
      "This package provides a C version of the reader, parser and emitter for
 @code{ruamel.yaml} derived from libyaml.")
+    (license license:expat)))
+
+(define-public python-strictyaml
+  (package
+    (name "python-strictyaml")
+    (version "1.7.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "strictyaml" version))
+       (sha256
+        (base32 "01y4hrakk1psdj6ir5k70apqkjjipvja0c40pbfvahmbzjjm9y12"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-dateutil python-ruamel.yaml))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://pypi.org/project/strictyaml/")
+    (synopsis "Strict, typed YAML parser")
+    (description "StrictYAML is a type-safe YAML parser that parses and
+validates a restricted subset of the YAML specification.")
     (license license:expat)))
 
 (define-public python-cbor

@@ -26,6 +26,7 @@
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2024 Ricardo Wurmus <rekado@elephly.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -48,7 +49,6 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages geo)
-  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages perl)
@@ -439,17 +439,20 @@ under several distributions that's hard or impossible to figure out.")
 (define-public python-isodate
   (package
     (name "python-isodate")
-    (version "0.6.1")
+    (version "0.7.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "isodate" version))
        (sha256
         (base32
-         "1sdx4z0x6kv1qxjfi0gd82wfg16wca04q0nb93ba1c78wwfqiia8"))))
-    (build-system python-build-system)
+         "1rjkm5qj3lz60sgva5g38cpfqd8byj2jlaf0qskg8xna8c7smlac"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-six))
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (home-page "https://github.com/gweis/isodate/")
     (synopsis "Python date parser and formatter")
     (description
@@ -692,7 +695,7 @@ choosing.")
      (list
       #:import-path "github.com/antonmedv/countdown"))
     (native-inputs
-     (list go-github.com-nsf-termbox-go))
+     (list go-github-com-nsf-termbox-go))
     (home-page "https://github.com/antonmedv/countdown")
     (synopsis "Counts to zero with a text user interface")
     (description

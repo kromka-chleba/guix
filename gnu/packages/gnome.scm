@@ -39,7 +39,7 @@
 ;;; Copyright © 2019, 2024, 2025 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2019 Jelle Licht <jlicht@fsfe.org>
 ;;; Copyright © 2019 Jonathan Frederickson <jonathan@terracrypt.net>
-;;; Copyright © 2019-2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2019, 2020 Martin Becze <mjbecze@riseup.net>
 ;;; Copyright © 2019 David Wilson <david@daviwil.com>
 ;;; Copyright © 2019, 2020 Raghav Gururajan <raghavgururajan@disroot.org>
@@ -237,6 +237,7 @@
   #:use-module (gnu artwork)
   #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
@@ -2719,7 +2720,8 @@ forgotten when the session ends.")
     (arguments
      `(#:glib-or-gtk? #t
        #:build-type "release"
-       #:configure-flags '("-Dnautilus=false")
+       #:configure-flags '("-Dnautilus=false"
+                           "-Dps=enabled")
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'skip-gtk-update-icon-cache
@@ -12811,22 +12813,38 @@ integrate seamlessly with the GNOME desktop.")
            libxml2
            qemu-minimal                 ;for qemu-img
            sparql-query
-           spice-gtk
            tracker
            vte
            webkitgtk-for-gtk3))
+    (propagated-inputs
+     ;; Propagating spice-gtk is necessary so that the gnome-desktop-service
+     ;; type configures the polkit actions necessary for the USB redirection
+     ;; feature to work when gnome-boxes added as a extra GNOME package.
+     (list spice-gtk))
     (home-page "https://wiki.gnome.org/Apps/Boxes")
     (synopsis "View, access, and manage remote and virtual systems")
     (description "GNOME Boxes is a simple application to view, access, and
 manage remote and virtual systems.  Note that this application requires the
 @code{libvirt} and @code{virtlog} daemons to run.  Use the command
 @command{info '(guix) Virtualization Services'} to learn how to configure
-these services on the Guix System.  If you do not use the
-@code{gnome-desktop-service-type}, you will also want to extend the
-@code{polkit-service-type} with the @code{spice-gtk} package, as well as
-configure the @file{libexec/spice-client-glib-usb-acl-helper} executable of
-@code{spice-gtk} as setuid, to make it possible to redirect USB devices as a
-non-privileged user.")
+these services on the Guix System.
+
+To make it possible to redirect USB devices as a non-privileged user, some
+extra configuration is necessary: if you use the
+@code{gnome-desktop-service-type}, you should add the @code{gnome-boxes}
+package to the @code{extra-packages} field of the
+@code{gnome-desktop-configuration}, for example:
+@lisp
+(service gnome-desktop-service-type
+         (gnome-desktop-configuration
+          (extra-packages (list gnome-boxes gnome-essential-extras))))
+@end lisp
+If you do @emph{not} use the @code{gnome-desktop-service-type}, you will need
+manually extend the @code{polkit-service-type} with the @code{spice-gtk}
+package, as well as configure the
+@file{libexec/spice-client-glib-usb-acl-helper} executable of @code{spice-gtk}
+as setuid, to make it possible to redirect USB devices as a non-privileged
+user.")
     (license (list
               ;; For data/icons/empty-boxes.png.
               license:cc-by2.0
@@ -13640,7 +13658,7 @@ profiler via Sysprof, debugging support, and more.")
 (define-public komikku
   (package
     (name "komikku")
-    (version "1.46.0")
+    (version "1.57.0")
     (source
      (origin
        (method git-fetch)
@@ -13650,7 +13668,7 @@ profiler via Sysprof, debugging support, and more.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1ggg4hgd1kyc69b06kcgvvjwmz72xgjakva19gs3nrszr4cinank"))))
+         "0z8sigv1a8a96y0hgm21j4qmpy06ziqw8yhlgbp8kbg70g5yhrbg"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -13698,6 +13716,7 @@ profiler via Sysprof, debugging support, and more.")
            python-natsort
            python-piexif
            python-pillow
+           python-pillow-heif
            python-pure-protobuf
            python-pycairo
            python-pygobject
@@ -13717,6 +13736,51 @@ profiler via Sysprof, debugging support, and more.")
     (synopsis "Manga reader for GNOME")
     (description "Komikku is an online/offline manga reader for GNOME,
 developed with the aim of being used with the Librem 5 phone.")
+    (license license:gpl3+)
+    (native-search-paths (list (search-path-specification
+                                (variable "KOMIKKU_SERVERS_PATH")
+                                (files '("lib/komikku/servers")))))))
+
+(define-public komikku-servers
+  (package
+    (name "komikku-servers")
+    (version "1.59.0")                  ; latest version that works with 1.57
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/valos/Komikku/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0sfqmqcpdl3bsbs0wxl4jwvd7wpgigkvvasy1niz6qm2vnp35gzq"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:install-plan
+      #~'(("komikku/servers" "lib/komikku/servers"))
+      #:modules '((guix build copy-build-system)
+                  (guix build utils)
+                  (ice-9 ftw))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'delete-conflicting-files
+            (lambda _
+              (with-directory-excursion "komikku/servers"
+                (for-each delete-file
+                          (scandir "."
+                                   (lambda (f) (string-suffix? ".py" f)))))))
+          (add-after 'install 'compile
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((site-dir (string-append (assoc-ref outputs "out")
+                                             "/lib/komikku/servers")))
+                (invoke "python" "-m" "compileall"
+                        "--invalidation-mode=unchecked-hash" site-dir)))))))
+    (native-inputs (list python-wrapper))
+    (home-page "https://apps.gnome.org/Komikku")
+    (synopsis "Servers for Komikku")
+    (description "This package provides more recent servers for Komikku.")
     (license license:gpl3+)))
 
 (define-public libgda

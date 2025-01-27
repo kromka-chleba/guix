@@ -218,6 +218,17 @@ hierarchical form with variable field lengths.")
      (list
       #:phases
       #~(modify-phases %standard-phases
+          #$@(if (target-loongarch64?)
+                 #~((add-after 'unpack 'update-config-scripts
+                      (lambda* (#:key inputs native-inputs #:allow-other-keys)
+                        ;; Replace outdated config.guess and config.sub.
+                        (for-each (lambda (file)
+                                    (install-file
+                                     (search-input-file
+                                      (or native-inputs inputs)
+                                      (string-append "/bin/" file)) "."))
+                                  '("config.guess" "config.sub")))))
+                 #~())
           (add-after 'install 'use-other-outputs
             (lambda _
               (let ((doc (string-append #$output:doc "/share/"))
@@ -242,7 +253,10 @@ hierarchical form with variable field lengths.")
     (synopsis "C parser for XML")
     (inputs (list xz))
     (propagated-inputs (list zlib)) ; libxml2.la says '-lz'.
-    (native-inputs (list perl))
+    (native-inputs (append (if (target-loongarch64?)
+                               (list config)
+                               '())
+                           (list perl)))
     (native-search-paths
      (list $SGML_CATALOG_FILES $XML_CATALOG_FILES))
     (search-paths native-search-paths)
@@ -1119,21 +1133,25 @@ different Unicode encodings which happen automatically during
 parsing/saving.")
     (license license:expat)))
 
-(define-public python-pyxb
+(define-public python-pyxb-x
   (package
-    (name "python-pyxb")
-    (version "1.2.6")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "PyXB" version))
-              (sha256
-               (base32
-                "1d17pyixbfvjyi2lb0cfp0ch8wwdf44mmg3r5pwqhyyqs66z601a"))))
-    (build-system python-build-system)
-    (home-page "https://pyxb.sourceforge.net/")
+    (name "python-pyxb-x")
+    (version "1.2.6.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyxb_x" version))
+       (sha256
+        (base32 "1d9p42aklk0w5yy39p319h5ldvy7glng0jcgcjk6xgg6sfl1yh5z"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; XXX: tests FAILED (failures=3, errors=122)
+     (list #:tests? #f))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "http://pyxb.sourceforge.net")
     (synopsis "Python XML Schema Bindings")
     (description
-     "PyXB (\"pixbee\") is a pure Python package that generates Python source
+     "@code{PyXB-X} (\"pixbix\") is a pure Python package that generates Python source
 code for classes that correspond to data structures defined by XMLSchema.")
     (license (list license:asl2.0    ; Most files.
                    license:expat     ; pyxb/utils/six.py

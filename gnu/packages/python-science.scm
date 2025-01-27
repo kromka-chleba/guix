@@ -23,7 +23,7 @@
 ;;; Copyright © 2022, 2024 Antero Mejr <antero@mailbox.org>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2023, 2024 Troy Figiel <troy@troyfigiel.com>
-;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2024-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 Marco Baggio <marco.baggio@mdc-berlin.de>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024 Rick Huijzer <ikbenrickhuyzer@gmail.com>
@@ -195,7 +195,7 @@ maintainability.")
                              python-osqp
                              python-scipy
                              python-scs))
-    (native-inputs (list python-pytest python-setuptools))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/cvxpy/cvxpy")
     (synopsis "DSL for modeling convex optimization problems")
     (description
@@ -298,7 +298,12 @@ formulas for Python.")
     (propagated-inputs (list python-numpy python-qdldl python-scipy))
     ;; We need setuptools-scm only for the version number.  Without it the
     ;; version number will be "0.0.0" and downstream packages will complain.
-    (native-inputs (list cmake-minimal python-pytest python-setuptools-scm))
+    (native-inputs
+     (list cmake-minimal
+           python-pytest
+           python-setuptools-scm
+           python-setuptools
+           python-wheel))
     (home-page "https://osqp.org/")
     (synopsis "OSQP: operator splitting QP solver")
     (description "The OSQP (Operator Splitting Quadratic Program) solver is a
@@ -316,7 +321,11 @@ numerical optimization package.")
        (sha256
         (base32 "1lspam0k8gnw1yglqxvdv350fq00nkgdfmkizmx7bk0hxjjkj5ab"))))
     (build-system pyproject-build-system)
-    (native-inputs (list cmake-minimal pybind11))
+    (native-inputs
+     (list cmake-minimal
+           pybind11
+           python-setuptools
+           python-wheel))
     (propagated-inputs (list python-numpy python-scipy))
     (home-page "https://github.com/oxfordcontrol/qdldl-python/")
     (synopsis "QDLDL LDL factorization routine")
@@ -423,13 +432,13 @@ routines such as routines for numerical integration and optimization.")
 (define-public python-scikit-allel
   (package
     (name "python-scikit-allel")
-    (version "1.3.5")
+    (version "1.3.13")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "scikit-allel" version))
+       (uri (pypi-uri "scikit_allel" version))
        (sha256
-        (base32 "1vg88ng6gd175gzk39iz1drxig5l91dyx398w2kbw3w8036zv8gj"))))
+        (base32 "0d9yadzhsjjqkh6rz273f53iwczk0c7pv9dajzcrmfnk036b8f4s"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -451,21 +460,18 @@ routines such as routines for numerical integration and optimization.")
            (lambda _
              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
     (propagated-inputs
-     (list python-dask
-           python-numpy
-           python-click))
+     (list python-dask python-numpy))
     (native-inputs
-     (list python-cython
-           python-setuptools
-           python-wheel
-           ;; The following are all needed for the tests
-           htslib
+     (list htslib
+           python-cython
            python-h5py
            python-hmmlearn
            python-numexpr
+           python-numpy
            python-pytest
-           python-scipy
+           python-setuptools
            python-setuptools-scm
+           python-wheel
            python-zarr))
     (home-page "https://github.com/cggh/scikit-allel")
     (synopsis "Explore and analyze genetic variation data")
@@ -477,13 +483,13 @@ genetic variation data.")
 (define-public python-scikit-build-core
   (package
     (name "python-scikit-build-core")
-    (version "0.9.3")
+    (version "0.10.7")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "scikit_build_core" version))
        (sha256
-        (base32 "146k3w3kcamyyqassmsmp6h4f5lb3cdqnbjjcbf0jm1s8wz1279l"))))
+        (base32 "1y64d8rl39banfwdkszyd4sbzp795q8lj66yxrz2l84mwygvbjq4"))))
     (build-system pyproject-build-system)
     ;; Tests are aborted with the admonition: "setup.py install is
     ;; deprecated. Use build and pip and other standards-based tools."
@@ -496,7 +502,6 @@ genetic variation data.")
                              python-tomli
                              python-typing-extensions))
     (native-inputs (list pybind11
-                         python-pypa-build
                          python-cattrs
                          python-fastjsonschema
                          python-hatch-fancy-pypi-readme
@@ -504,7 +509,9 @@ genetic variation data.")
                          python-hatchling
                          python-numpy
                          python-pip
+                         python-pypa-build
                          python-pytest
+                         python-pytest-subprocess
                          python-rich
                          python-setuptools
                          python-setuptools-scm
@@ -575,7 +582,7 @@ and linear forms into vectors.")
      (list
       #:test-flags #~(list "--pyargs" "skfuzzy")))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest python-setuptools python-wheel))
     (propagated-inputs
      (list python-networkx python-numpy python-scipy))
     (home-page "https://github.com/scikit-fuzzy/scikit-fuzzy")
@@ -657,6 +664,7 @@ logic, also known as grey logic.")
         (base32 "0ycqizgsj7q57asc1bphzhf1fx9zqn0vx5rli7q541bas64hfqiy"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-numpy python-pytorch python-scipy))
+    (native-inputs (list python-setuptools))
     (home-page "https://github.com/guofei9987/scikit-opt")
     (synopsis "Swarm intelligence algorithms in Python")
     (description
@@ -791,6 +799,7 @@ the following purposes in mind:
              python-cython-3
              python-packaging
              python-pytest
+             python-setuptools
              python-setuptools-scm
              python-tomli
              python-tox))
@@ -1233,7 +1242,9 @@ doing practical, real world data analysis in Python.")
       #:test-flags
       #~(list "--pyargs" "pandas"
               ;; "--exitfirst"
-              "--numprocesses" (number->string (parallel-job-count))
+              ;; XXX The tests won't even start on my 16 core laptop, but they
+              ;; start with 4 processes.
+              "--numprocesses" (number->string (min 4 (parallel-job-count)))
               "-m" "not slow and not network and not db"
               ;; All tests errored.
               "--ignore=pandas/tests/io/test_clipboard.py"
@@ -1278,10 +1289,8 @@ doing practical, real world data analysis in Python.")
                    (string-append "__version__ = \""
                                   #$(package-version this-package)
                                   "\""))))))
-          (add-before 'check 'prepare-x
+          (add-before 'check 'pre-check
             (lambda _
-              (system "Xvfb &")
-              (setenv "DISPLAY" ":0")
               (setenv "HOME" ".")
               ;; Skip tests that require lots of resources.
               (setenv "PANDAS_CI" "1")))
@@ -1327,9 +1336,7 @@ doing practical, real world data analysis in Python.")
            python-pytest-localserver
            python-pytest-mock
            python-pytest-xdist
-           python-versioneer
-           ;; Needed to test clipboard support.
-           xorg-server-for-tests))
+           python-versioneer))
     (home-page "https://pandas.pydata.org")
     (synopsis "Data structures for data analysis, time series, and statistics")
     (description
@@ -1665,49 +1672,44 @@ y, z)}.")
 (define-public python-pythran
   (package
     (name "python-pythran")
-    (version "0.11.0")
+    (version "0.17.0")
     (home-page "https://github.com/serge-sans-paille/pythran")
     (source (origin
               (method git-fetch)
               (uri (git-reference (url home-page) (commit version)))
               (file-name (git-file-name name version))
               (sha256
-               (base32 "0cm7wfcyvkp1wmq7n1lyf2d3sj6158jf63bagjpjmfnjwij19n0p"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  ;; Remove bundled Boost and xsimd.
-                  (delete-file-recursively "third_party")))))
-    (build-system python-build-system)
+               (base32 "1rm9lfbz5qvah1m0rr5gaaahkf1gzwlw1ysvym2l2yh0clglav94"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'do-not-install-third-parties
-                 (lambda _
-                   (substitute* "setup.py"
-                     (("third_parties = .*")
-                      "third_parties = []\n"))))
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     ;; Remove compiler flag that trips newer GCC:
-                     ;; https://github.com/serge-sans-paille/pythran/issues/908
-                     (substitute* "pythran/tests/__init__.py"
-                       (("'-Wno-absolute-value',")
-                        ""))
-                     (setenv "HOME" (getcwd))
-                     ;; This setup is modelled after the upstream CI system.
-                     (call-with-output-file ".pythranrc"
-                       (lambda (port)
-                         (format port "[compiler]\nblas=openblas~%")))
-                     (invoke "pytest" "-vv"
-                             (string-append "--numprocesses="
-                                            (number->string
-                                             (parallel-job-count)))
-                             "pythran/tests/test_cases.py")))))))
+     (list
+      #:test-flags
+      '(list (string-append "--numprocesses=" (number->string
+                                               (parallel-job-count)))
+             ;; XXX There are lots of tests of the format
+             ;; pythran/tests/test_*.py, but they cannot easily be selected.
+             "pythran/tests/test_typing.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; Remove compiler flag that trips newer GCC:
+                ;; https://github.com/serge-sans-paille/pythran/issues/908
+                (substitute* "pythran/tests/__init__.py"
+                  (("'-Wno-absolute-value',") ""))
+                (setenv "HOME" (getcwd))
+                ;; This setup is modelled after the upstream CI system.
+                (call-with-output-file ".pythranrc"
+                  (lambda (port)
+                    (format port "[compiler]\nblas=openblas~%")))))))))
     (native-inputs
      ;; For tests.
-     (list openblas python-pytest python-pytest-xdist))
+     (list openblas
+           python-pytest
+           python-pytest-xdist
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list boost xsimd                  ;headers need to be available
            python-beniget python-gast python-numpy python-ply))
@@ -1810,7 +1812,7 @@ evaluating arrays of polynomials based on @code{numpy.ndarray objects}.")
       (base32 "0ff48nagfaai3j26g1db4zq2bwdv6kj5l7xhcs2l9kzg7qzrmhr7"))))
   (build-system pyproject-build-system)
   (propagated-inputs (list python-click python-colorama python-tomli))
-  (native-inputs (list python-pytest))
+  (native-inputs (list python-pytest python-setuptools python-wheel))
   (home-page "https://github.com/scientific-python/spin")
   (synopsis "Developer tool for scientific Python libraries")
   (description "@code{spin} is a simple interface for common development
@@ -1898,7 +1900,7 @@ that is 20-25x faster than @code{numpy.histogram2d}.")
         (base32 "19labbgnq85p4r4jbli2p045lgh57larhi2g2anagfxnlzpqdf5a"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-numpy))
-    (native-inputs (list python-scipy))
+    (native-inputs (list python-scipy python-setuptools python-wheel))
     (home-page "https://danifold.net/fastcluster.html")
     (synopsis "Fast hierarchical clustering routines for R and Python")
     (description "The fastcluster package implements seven common hierarchical
@@ -2063,7 +2065,12 @@ name) using the Python's @code{dataclass}.")
     (build-system pyproject-build-system)
     (propagated-inputs (list python-packaging python-xarray))
     ;; We need setuptools-scm to correctly record the version string.
-    (native-inputs (list python-pytest python-setuptools-scm python-zarr))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel
+           python-zarr))
     (home-page "https://github.com/xarray-contrib/datatree")
     (synopsis "Hierarchical tree-like data structures for xarray")
     (description "Datatree is a prototype implementation of a tree-like
@@ -2107,7 +2114,11 @@ functions and around einops with an API and features adapted to xarray.")
         (base32 "08194629696z98dkc74i6c9zmy1jicvd2ajb75q0lsf0i427cv4w"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-numpy python-xarray))
-    (native-inputs (list python-pytest python-setuptools-scm))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (home-page "https://github.com/carbonplan/xarray-schema")
     (synopsis "Schema validation for Xarray objects")
     (description "This package implements schema validation for Xarray
@@ -2868,7 +2879,7 @@ computing in Python.  It extends both the @code{concurrent.futures} and
 (define-public python-modin
   (package
     (name "python-modin")
-    (version "0.15.1")
+    (version "0.32.0")
     (source
      (origin
        ;; The archive on pypi does not include all required files.
@@ -2879,38 +2890,40 @@ computing in Python.  It extends both the @code{concurrent.futures} and
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0nf2pdqna2vn7vq7q7b51f3cfbrxfn77pyif3clibjsxzvfm9k03"))))
-    (build-system python-build-system)
+         "1vb3iffgspryb6nvwiwdnypb922vkn2yvyzc1y0wwxcb0c0fl78d"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'make-files-writable
-           (lambda _
-             (for-each make-file-writable (find-files "."))))
+     (list
+      #:test-flags
+      ;; These four tests fail because an expected error is not raised.
+      '(list "-k" "not test_binary_bad_broadcast")
+      #:phases
+      '(modify-phases %standard-phases
          (add-after 'unpack 'loosen-requirements
            (lambda _
              (substitute* "setup.py"
                ;; Don't depend on a specific version of Pandas.
-               (("pandas==")
-                "pandas>="))))
+               (("pandas==") "pandas>="))))
          (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
+           (lambda* (#:key tests? test-flags #:allow-other-keys)
              (when tests?
                (setenv "MODIN_ENGINE" "dask")
-               (invoke "python" "-m" "pytest"
-                       "modin/pandas/test/test_concat.py")
+               (apply invoke "python" "-m" "pytest"
+                      "modin/tests/numpy" test-flags)
                (setenv "MODIN_ENGINE" "python")
-               (invoke "python" "-m" "pytest"
-                       "modin/pandas/test/test_concat.py")))))))
+               (apply invoke "python" "-m" "pytest"
+                      "modin/tests/numpy" test-flags)))))))
     (propagated-inputs
      (list python-cloudpickle
            python-dask
            python-distributed
            python-numpy
            python-packaging
-           python-pandas))
+           python-pandas
+           python-s3fs))
     (native-inputs
-     (list python-coverage
+     (list python-boto3
+           python-coverage
            python-jinja2
            python-lxml
            python-matplotlib
@@ -2927,7 +2940,8 @@ computing in Python.  It extends both the @code{concurrent.futures} and
            python-tables
            python-tqdm
            python-xarray
-           python-xlrd))
+           python-xlrd
+           python-wheel))
     (home-page "https://github.com/modin-project/modin")
     (synopsis "Make your pandas code run faster")
     (description
@@ -3149,7 +3163,13 @@ to do spectral analysis in Python.")
     (arguments
      (list
       ;; This one test fails because it doesn't raise an expected exception.
-      #:test-flags #~(list "-k" "not test_bad_values")))
+      #:test-flags '(list "-k" "not test_bad_values")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'numpy-compatibility
+           (lambda _
+             (substitute* "traittypes/tests/test_traittypes.py"
+               (("np\\.int") "int")))))))
     (propagated-inputs (list python-traitlets))
     (native-inputs
      (list python-numpy
@@ -3728,13 +3748,13 @@ NeuroML2 models.")
 (define-public python-pynetdicom
   (package
     (name "python-pynetdicom")
-    (version "2.0.2")
+    (version "2.1.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "pynetdicom" version))
               (sha256
                (base32
-                "0farmgviaarb3f4xn751card3v0lza57vwgl5azxxq65p7li44i3"))))
+                "1smzrnc93nmv8jz4np9knas74a46b1nhb3hjpf8n9vfpxypgnwcn"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3753,9 +3773,19 @@ NeuroML2 models.")
                     " and not test_pr_level_patient"
                     " and not test_pr_level_series"
                     " and not test_scp_cancelled"))))
-    (native-inputs (list python-pyfakefs python-pytest python-setuptools
-                         python-wheel))
-    (propagated-inputs (list python-pydicom python-sqlalchemy))
+    (native-inputs (list python-codespell
+                         python-coverage
+                         python-poetry-core
+                         python-pytest
+                         python-pytest-cov
+                         python-pytest-xdist
+                         python-sphinx
+                         python-sphinx-rtd-theme))
+    (propagated-inputs (list python-mypy
+                             python-numpydoc
+                             python-pydicom
+                             python-pyfakefs
+                             python-sqlalchemy))
     (home-page "https://github.com/pydicom/pynetdicom")
     (synopsis "Python implementation of the DICOM networking protocol")
     (description
@@ -3832,7 +3862,7 @@ compagnies.")
 (define-public python-libneuroml
   (package
     (name "python-libneuroml")
-    (version "0.4.1")
+    (version "0.6.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3841,15 +3871,18 @@ compagnies.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0mrm4rd6x1sm6hkvhk20mkqp9q53sl3lbvq6hqzyymkw1iqq6bhy"))))
+                "04cfff9phm19x87p86xrkhd6wlpxvdwk3rf1c3qgyncfchws0sjh"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-lxml python-six))
     (native-inputs
      (list python-pytest
            python-numpy
            python-setuptools
            python-tables
            python-wheel))
+    (propagated-inputs
+     (list python-lxml
+           python-natsort
+           python-networkx))
     (home-page "https://libneuroml.readthedocs.org/en/latest/")
     (synopsis
      "Python library for working with NeuroML descriptions of neuronal models")
