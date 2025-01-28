@@ -153,7 +153,7 @@
 ;;; Copyright © 2024 Adriel Dumas--Jondeau <leirda@disroot.org>
 ;;; Copyright © 2024 Navid Afkhami <navid.afkhami@mdc-berlin.de>
 ;;; Copyright © 2024 TakeV <takev@disroot.org>
-;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2024, 2025 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2024 Rick Huijzer <ikbenrickhuyzer@gmail.com>
 ;;; Copyright © 2024 Peter Kannewitz <petre-vps@posteo.net>
 ;;; Copyright © 2024 Aaron Covrig <aaron.covrig.us@ieee.org>
@@ -13248,7 +13248,7 @@ without using the configuration machinery.")
 (define-public python-optree
   (package
     (name "python-optree")
-    (version "0.11.0")
+    (version "0.14.0")
     (source
      (origin
        (method git-fetch)
@@ -13258,21 +13258,21 @@ without using the configuration machinery.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0sk5lm1xyxi7z0yjckip77qvbidyb7i1znmn9fz96q74hl9ffyan"))
-       (patches (search-patches "python-optree-fix-32-bit.patch"))))
+         "17zph1jgzk0zaanj7057qj8x5cml8j66ip0xmlbwmq4396hmdlbs"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      ;; This test fails due to a circular import
-      ''("-k" "not test_treespec_pickle_missing_registration")))
+      ;; These tests fails due to a circular import
+      '`("-k" ,(string-append "not test_treespec_pickle_missing_registration"
+                              " and not test_import_no_warnings"))))
     (propagated-inputs (list python-typing-extensions))
     (native-inputs
      (list python-pytest
            python-setuptools
            python-wheel
-           cmake
-           pybind11))
+           cmake-minimal
+           pybind11-2.13))
     (home-page "https://github.com/metaopt/optree")
     (synopsis "Optimized PyTree Utilities")
     (description "This package contains operations on PyTrees (a tree made of
@@ -15034,24 +15034,28 @@ syllables in a word.")
 (define-public python-sympy
   (package
     (name "python-sympy")
-    (version "1.11.1")
+    (version "1.13.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sympy" version))
        (sha256
-        (base32 "0n46x1rfy8c2a9za3yp2va5icigxj805f9fmiq8c1drwwvf808z3"))))
-    (build-system python-build-system)
+        (base32 "1nf4zrjjbnv47n6sl6x9blfyarski61vdjaz4ygb62hfag3d4zxj"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
+     '(#:phases
        (modify-phases %standard-phases
          (replace 'check
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke
-               (or (which "python3") (which "python"))
-               "-c" "import sympy; sympy.test(\"/core\")"))))))
-    (propagated-inputs
-     (list python-mpmath))
+           (lambda* (#:key tests? #:allow-other-keys)
+             (if tests?
+                 (invoke "python3" "-c"
+                         "import sympy; sympy.test(\"/core\")")))))))
+    (propagated-inputs (list python-mpmath))
+    (native-inputs
+     (list python-hypothesis
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://www.sympy.org/")
     (synopsis "Python library for symbolic mathematics")
     (description
@@ -29080,6 +29084,22 @@ library: to minimize boilerplate code in traditional extension modules by
 inferring type information using compile-time introspection.")
     (license license:bsd-3)))
 
+;; Needed for python-optree
+(define-public pybind11-2.13
+  (package
+    (inherit pybind11)
+    (name "pybind11")
+    (version "2.13.6")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/pybind/pybind11")
+                    (commit (string-append "v" version))))
+              (sha256
+               (base32
+                "1dbnki0pnky39kr04afd9ks597bzjc530zbk33jjss53nfvdvlj8"))
+              (file-name (git-file-name name version))))))
+
 ;; Needed for scipy
 (define-public pybind11-2.10
   (package
@@ -39768,6 +39788,35 @@ write text fast, and for various text generation, statistics, and modeling tasks
               (sha256
                (base32
                 "0mikjfvq26kh8asnn9v55z41pap4c5ypymqnwwi4xkavc3mzyda2"))))))
+
+(define-public python-whenever
+  (package
+    (name "python-whenever")
+    (version "0.6.16")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "whenever" version))
+       (sha256
+        (base32 "1diqibiv07i0q4sqqd1qw4bbzmp84zlrfv8lmlc395b5czwpf5pj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases (modify-phases %standard-phases
+                  ;; Use the pure python version
+                  (add-before 'build 'setenv
+                    (lambda _
+                      (setenv "WHENEVER_NO_BUILD_RUST_EXT" "1"))))))
+    (propagated-inputs (list python-tzdata))
+    (native-inputs (list python-setuptools python-setuptools-rust python-wheel))
+    (home-page "https://whenever.readthedocs.io/")
+    (synopsis "Modern datetime library for Python")
+    (description "Modern datetime library for Python.  Supports:
+@itemize
+@item DST-safe arithmetic
+@item Nanosecond precision
+@item Date arithmetic
+@end itemize")
+    (license license:expat)))
 
 (define-public python-xmp-toolkit
   (package

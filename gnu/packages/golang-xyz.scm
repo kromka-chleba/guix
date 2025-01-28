@@ -12313,6 +12313,10 @@ programs that use traditional command lines.")
     (build-system go-build-system)
     (arguments
      (list
+      ;; XXX: Tests hang in CI without any error trace, causing the built to
+      ;; fail, find out why.  They pass just fine during local build on AMD
+      ;; Ryzen 7 3800X.
+      #:tests? #f
       #:import-path "github.com/pelletier/go-toml/v2"
       #:parallel-tests? #f
       #:test-flags
@@ -15819,7 +15823,11 @@ Go host programs.")
     (arguments
      (list
       #:skip-build? #t
-      #:import-path "github.com/zclconf/go-cty"))
+      #:import-path "github.com/zclconf/go-cty"
+      #:test-flags
+      ;; Tests fail on non 64bit systems: unexpected error: invalid index:
+      ;; value must be a whole number, between -2147483648 and 2147483647.
+      #~(list #$@(if (not (target-64bit?)) '("-skip" "TestElement") '()))))
     (native-inputs
      (list go-github-com-google-go-cmp))
     (propagated-inputs

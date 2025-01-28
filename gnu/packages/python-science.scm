@@ -3353,9 +3353,15 @@ it can be used for displaying many qualitatively different samples.")
                (base32
                 "1ywc2jzj40m6wmq227j3snxvp4434s0m1xk1abg6v6mr87pv2sa9"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-decorator python-numpy python-scipy
-                             python-six))
-    (native-inputs (list python-nose))
+    (native-inputs
+     (list python-nose
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-decorator
+           python-numpy
+           python-scipy
+           python-six))
     (home-page "https://github.com/sods/paramz")
     (synopsis "The Parameterization Framework")
     (description
@@ -3420,17 +3426,24 @@ machine learning algorithms based on GPs.")
 (define-public python-pods
   (package
     (name "python-pods")
-    (version "0.1.14")
+    (version "0.1.17")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pods" version))
        (sha256
-        (base32 "157xxs12qbnz1g6agy0a4dqhsa4msbqryrxpg5w3r3pb8gxdl4dh"))))
+        (base32 "1z57jdwml2jzr2dq20p7pzx3ayhajgfd2d0xqjvgzx576hp2z1ac"))))
     (build-system pyproject-build-system)
-    (arguments (list #:tests? #f))      ;no test suite
-    (propagated-inputs (list python-pandas python-pyyaml python-scipy
-                             python-tables))
+    ;; Tests depend on Nose framework and try to download test data from
+    ;; <https://github.com/SheffieldML/GPmat>.
+    (arguments (list #:tests? #f))
+    (native-inputs
+     (list python-poetry-core))
+    (propagated-inputs
+     (list python-pandas
+           python-pyyaml
+           python-scipy
+           python-tables))
     (home-page "https://github.com/lawrennd/ods")
     (synopsis "Python software for Open Data Science")
     (description "This package provides utilities and tools for open data
@@ -3507,53 +3520,65 @@ data.")
     (license license:expat)))
 
 (define-public python-deepdish
-  (package
-    (name "python-deepdish")
-    (version "0.3.7")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "deepdish" version))
-              (sha256
-               (base32
-                "1wqzwh3y0mjdyba5kfbvlamn561d3afz50zi712c7klkysz3mzva"))))
-    (arguments
-     ;; XXX: The project may no longer be compatible with the version of
-     ;; numpy packed in Guix.
-     ;; See: https://github.com/uchicago-cs/deepdish/issues/50.
-     ;;
-     ;; However, there is a maintained fork that appears to be a good
-     ;; replacement: https://github.com/portugueslab/flammkuchen.
-     ;;
-     ;; Disable few failing tests to pass the build.
-     (list #:test-flags
-           #~(list "-k" (string-append "not test_pad"
-                                       " and not test_pad_repeat_border"
-                                       " and not test_pad_repeat_border_corner"
-                                       " and not test_pad_to_size"))
-           #:phases #~(modify-phases %standard-phases
-                        (add-after 'unpack 'dont-vendor-six
-                          (lambda _
-                            (delete-file "deepdish/six.py")
-                            (substitute* "deepdish/io/hdf5io.py"
-                              (("from deepdish import six") "import six"))
-                            (substitute* "deepdish/io/ls.py"
-                              (("from deepdish import io, six, __version__")
-                               "from deepdish import io, __version__
+  ;; XXX: The project may no longer be compatible with the version of NumPy
+  ;; packed in Guix (now 1.24.4), use the latest commit containing fixes.
+  ;; See: <https://github.com/uchicago-cs/deepdish/issues/50>.
+  ;; However, there is a maintained fork that appears to be a good
+  ;; replacement: https://github.com/portugueslab/flammkuchen.
+  (let ((commit "3f2dff7a03f1b31f6924b665ad5b8c299329c1cd")
+        (revision "0"))
+    (package
+      (name "python-deepdish")
+      (version (git-version "0.3.7" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/uchicago-cs/deepdish")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1n3r6z5zd18kdmzyg1gkm9lqi573szlxbls1ck5wjn4a14ar9fw3"))))
+      (arguments
+       ;; Disable few failing tests to pass the build.
+       (list
+        #:test-flags
+        #~(list "-k" (string-append "not test_pad"
+                                    " and not test_pad_repeat_border"
+                                    " and not test_pad_repeat_border_corner"
+                                    " and not test_pad_to_size"))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'dont-vendor-six
+              (lambda _
+                (delete-file "deepdish/six.py")
+                (substitute* "deepdish/io/hdf5io.py"
+                  (("from deepdish import six") "import six"))
+                (substitute* "deepdish/io/ls.py"
+                  (("from deepdish import io, six, __version__")
+                   "from deepdish import io, __version__
 import six
 ")))))))
-    (build-system pyproject-build-system)
-    (native-inputs (list python-pandas python-setuptools python-wheel))
-    (propagated-inputs (list python-numpy python-scipy python-six
-                             python-tables))
-    (home-page "https://github.com/uchicago-cs/deepdish")
-    (synopsis "Python library for HDF5 file saving and loading")
-    (description
-     "Deepdish is a Python library to load and save HDF5 files.
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-pytest
+             python-pandas
+             python-setuptools
+             python-wheel))
+      (propagated-inputs
+       (list python-numpy
+             python-scipy
+             python-six
+             python-tables))
+      (home-page "https://github.com/uchicago-cs/deepdish")
+      (synopsis "Python library for HDF5 file saving and loading")
+      (description
+       "Deepdish is a Python library to load and save HDF5 files.
 The primary feature of deepdish is its ability to save and load all kinds of
 data as HDF5.  It can save any Python data structure, offering the same ease
 of use as pickling or @code{numpy.save}, but with the language
 interoperability offered by HDF5.")
-    (license license:bsd-3)))
+      (license license:bsd-3))))
 
 (define-public python-simple-pid
   (package
