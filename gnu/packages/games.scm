@@ -8376,7 +8376,6 @@ at their peak of economic growth and military prowess.
              cppcheck
              libedit
              pkg-config
-             python-pylint
              python-pyyaml
              python-wrapper)
        (if (supported-package? ruby-asciidoctor/minimal)

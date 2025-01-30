@@ -6967,7 +6967,6 @@ after Andy Lester’s Perl module WWW::Mechanize.")
                              python-pillow))
     (native-inputs
      (list python-flit-core
-           python-pylint
            python-pytest
            python-pytest-xdist))
     (home-page "https://github.com/google/mediapy")
@@ -10181,7 +10180,6 @@ which can produce feeds in RSS 2.0, RSS 0.91, and Atom formats.")
      (list python-coverage
            python-pycodestyle
            python-pyflakes
-           python-pylint
            python-pytest
            python-pytest-cov
            python-setuptools
