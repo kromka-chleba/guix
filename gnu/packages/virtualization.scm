@@ -2232,7 +2232,6 @@ mainly implemented in user space.")
     (native-inputs
      (list python-avocado-framework
            python-flake8
-           python-isort
            python-setuptools
            python-setuptools-scm
            python-wheel))
