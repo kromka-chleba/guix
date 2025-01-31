@@ -4282,7 +4282,6 @@ convention of suggesting best recommended practices for using
      (list python-mkdocs-material
            python-numpy
            python-pytest
-           python-pytest-cov
            python-pytest-xdist
            python-setuptools
            python-wheel))
@@ -4572,7 +4571,7 @@ pyts.preprocessing.transformer.QuantileTransformer")))
              python-scikit-learn
              python-scipy))
       (native-inputs
-       (list python-pytest python-pytest-cov python-setuptools))
+       (list python-pytest python-setuptools))
       (home-page "https://github.com/johannfaouzi/pyts")
       (synopsis "Python package for time series classification")
       (description
@@ -5640,7 +5639,6 @@ multiple-axes, polar charts, and bubble charts.")
                          python-mock
                          python-pandas
                          python-pytest
-                         python-pytest-cov
                          python-setuptools
                          python-setuptools-scm
                          python-wheel

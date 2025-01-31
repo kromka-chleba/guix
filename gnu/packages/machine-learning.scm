@@ -1552,7 +1552,6 @@ learning.")
     (native-inputs (list python-autograd
                          python-matplotlib
                          python-pytest
-                         python-pytest-cov
                          python-setuptools
                          python-setuptools-scm
                          python-wheel))
@@ -4225,7 +4224,7 @@ These include a barrier, broadcast, and allreduce.")
          ;; nor is examples/plot_quantum.py
          " and not test_file_is_generated"))))
     (propagated-inputs (list python-jsmin python-numpy python-scipy))
-    (native-inputs (list python-pytest python-pytest-cov python-sphinx
+    (native-inputs (list python-pytest python-sphinx
                          python-setuptools python-wheel))
     (home-page "https://github.com/tensorly/tensorly")
     (synopsis "Tensor learning in Python")
@@ -5880,7 +5879,6 @@ PyTorch code to decouple the science from the engineering.")
            python-pandas
            python-psutil
            python-pytest
-           python-pytest-cov
            python-pytest-doctestplus
            python-pytest-rerunfailures
            python-pytest-timeout
