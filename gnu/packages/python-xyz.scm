@@ -9984,16 +9984,25 @@ parse and apply unified diffs.  It has features such as:
 (define-public python-numexpr
   (package
     (name "python-numexpr")
-    (version "2.8.4")
+    (version "2.9.0") ; starting from 2.10.0, NumPy 2+ is required
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "numexpr" version))
        (sha256
-        (base32
-         "0iv1h1lvry5vmzqyvwxfbckyhzm1vbb1bmhmj4dnj64d84vjahym"))))
-    (build-system python-build-system)
-    (arguments `(#:tests? #f))          ; no tests included
+        (base32 "1w5ampdamlwj8ix1ipzxngmrlqpnmcmk95gbi6839kijqkv147gj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'build-extensions
+            (lambda _
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-numpy))
     (home-page "https://github.com/pydata/numexpr")
@@ -29541,14 +29550,14 @@ validation testing and application logic.")
 (define-public python-numba
   (package
     (name "python-numba")
-    (version "0.59.1")
+    (version "0.61.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "numba" version))
        (sha256
         (base32
-         "02rp5x59kw3qw6x821d4k4r4x8r8qpl1a16j9rvx4a30p4r93xkn"))))
+         "09grslc9ij1ry94c5yz10rvf0w29vn7pwilijphrj20np24jx3c8"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -29597,9 +29606,8 @@ validation testing and application logic.")
                        "int(platform.machine()[len('armv'):-1]) >= 7")))))
                 (#t '()))))
          (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
+           (lambda* (#:key tests? #:allow-other-keys)
              (when tests?
-               (add-installed-pythonpath inputs outputs)
                ;; Something is wrong with the PYTHONPATH when running the
                ;; tests from the build directory, as it complains about not being
                ;; able to import certain modules.

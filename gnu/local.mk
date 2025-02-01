@@ -1745,7 +1745,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libmpeg2-global-symbol-test.patch	\
   %D%/packages/patches/libmygpo-qt-fix-qt-5.11.patch		\
   %D%/packages/patches/libmygpo-qt-missing-qt5-modules.patch	\
-  %D%/packages/patches/libpciaccess-hurd64.patch		\
   %D%/packages/patches/libphonenumber-reproducible-build.patch	\
   %D%/packages/patches/libqalculate-3.8.0-libcurl-ssl-fix.patch	\
   %D%/packages/patches/libquicktime-ffmpeg.patch 		\
@@ -1812,6 +1811,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/lxc-no-static-bin.patch	\
   %D%/packages/patches/mactelnet-remove-init.patch		\
   %D%/packages/patches/mailutils-variable-lookup.patch		\
+  %D%/packages/patches/mandoc-support-zstd-compression.patch	\
   %D%/packages/patches/make-impure-dirs.patch			\
   %D%/packages/patches/mariadb-rocksdb-atomic-linking.patch	\
   %D%/packages/patches/mathjax-disable-webpack.patch			\
@@ -2289,6 +2289,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/texi2html-i18n.patch			\
   %D%/packages/patches/texmacs-wayland-hidpi.patch	\
   %D%/packages/patches/thefuck-test-environ.patch		\
+  %D%/packages/patches/thefuck-remove-broken-tests.patch	\
   %D%/packages/patches/tidy-CVE-2015-5522+5523.patch		\
   %D%/packages/patches/timewarrior-time-sensitive-tests.patch	\
   %D%/packages/patches/tinyxml-use-stl.patch			\
@@ -2398,9 +2399,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/x265-arm-flags.patch			\
   %D%/packages/patches/xdg-desktop-portal-disable-portal-tests.patch\
   %D%/packages/patches/xdg-desktop-portal-wlr-harcoded-length.patch\
-  %D%/packages/patches/xf86-video-ark-remove-mibstore.patch	\
-  %D%/packages/patches/xf86-video-nouveau-fixup-ABI.patch	\
-  %D%/packages/patches/xf86-video-savage-xorg-compat.patch 	\
   %D%/packages/patches/xf86-video-siliconmotion-fix-ftbfs.patch \
   %D%/packages/patches/xfig-Enable-error-message-for-missing-libraries.patch		\
   %D%/packages/patches/xfig-Fix-double-free-when-requesting-MediaBox.patch		\

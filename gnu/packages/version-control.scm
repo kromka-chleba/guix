@@ -4392,7 +4392,7 @@ TkDiff is included for browsing and merging your changes.")
 (define-public git-filter-repo
   (package
     (name "git-filter-repo")
-    (version "2.38.0")
+    (version "2.45.0")
     (source
      (origin
        (method git-fetch)
@@ -4402,14 +4402,19 @@ TkDiff is included for browsing and merging your changes.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1al43zpw1mdfy9i05w4xw178abypjwnkk52lqvmbl19lr1l47r4i"))
+         "03sjxscj7pkldvwcvlqi6k79rcxkd2fyy1rjvpwyp4jgni5kddkx"))
+       ;; TODO: Remove when updating to 2.47.0.
+       (modules '((guix build utils)))
+       (snippet
+        #~(substitute* "t/t9390-filter-repo.sh"
+            (("(test_expect_success) ('--version')" _ prefix suffix)
+             (string-append prefix " IN_FILTER_REPO_CLONE " suffix))))
        ;; Modified from <https://github.com/newren/git-filter-repo/pull/477>.
        ;; Used with 'unpack-git-source phase.
        (patches (search-patches "git-filter-repo-generate-doc.patch"))))
     (build-system gnu-build-system)
     (arguments
      (list
-      #:tests? #f                       ;No tests.
       #:imported-modules
       `(,@%default-gnu-imported-modules
         (guix build python-build-system))
@@ -4431,10 +4436,16 @@ TkDiff is included for browsing and merging your changes.")
                 (mkdir-p "git-source")
                 (chdir "git-source")
                 ((assoc-ref %standard-phases 'unpack)
-                 #:source #+(package-source git))
+                 #:source
+                 #+(package-source (this-package-native-input "git-minimal")))
                 (for-each
                  (cut install-file <> doc-source)
-                 (find-files "." "asciidoc\\.conf$|manpage.*\\.xsl$"))
+                 (find-files "." "asciidoc\\.conf\\.in$|manpage.*\\.xsl$"))
+                ;; These attributes are probably not needed.
+                (with-directory-excursion doc-source
+                  (substitute* "asciidoc.conf.in"
+                    (("@GIT_(VERSION|DATE)@") ""))
+                  (rename-file "asciidoc.conf.in" "asciidoc.conf"))
                 (chdir old-path)
                 (delete-file-recursively "git-source"))))
           (add-before 'build 'set-pythondir
@@ -4444,12 +4455,21 @@ TkDiff is included for browsing and merging your changes.")
                  (string-append pre (site-packages inputs outputs))))))
           (replace 'build
             (lambda* (#:key make-flags #:allow-other-keys)
-              (apply invoke "make" "doc" make-flags))))))
+              (apply invoke "make" "doc" make-flags)))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (substitute* "t/t9391-filter-repo-lib-usage.sh"
+                (("/bin/bash") (which "bash")))
+              (when tests?
+                (invoke "t/run_tests")))))))
     (native-inputs
      (list asciidoc
            docbook-xsl
+           git-minimal
            libxml2                        ;for XML_CATALOG_FILES
-           xmlto))
+           xmlto
+           perl
+           rsync))
     (inputs (list python))                ;for the shebang
     (home-page "https://github.com/newren/git-filter-repo")
     (synopsis "Quickly rewrite Git repository history")

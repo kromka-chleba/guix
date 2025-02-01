@@ -360,7 +360,7 @@ commands (lock/unlock/before-sleep) and inhibit.")
 (define-public hyprland
   (package
     (name "hyprland")
-    (version "0.47.0")
+    (version "0.47.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/hyprwm/Hyprland"
@@ -377,7 +377,7 @@ commands (lock/unlock/before-sleep) and inhibit.")
                               "subprojects"))))
               (sha256
                (base32
-                "1s54vqniahda893fdn1b0ipx44arqd20kv6rdyqvrh1mp5bnj5s5"))))
+                "1k59aqny2bhfx5jw8yp0h8gqwxyrbvx9cp9pnsxhd4cgxk9fp2h5"))))
     (build-system cmake-build-system)
     (arguments
      (list #:cmake cmake-3.30
@@ -400,8 +400,9 @@ commands (lock/unlock/before-sleep) and inhibit.")
                       (search-input-file
                        inputs (string-append "bin/" cmd))))
                    (substitute* '("src/Compositor.cpp"
+                                  "src/xwayland/XWayland.cpp"
                                   "src/managers/VersionKeeperManager.cpp")
-                     (("!executableExistsInPath.*\".") "false")
+                     (("!NFsUtils::executableExistsInPath.*\".") "false")
                      (("hyprland-update-screen" cmd)
                       (search-input-file inputs (in-vicinity "bin" cmd)))))))))
     (native-inputs
@@ -801,19 +802,20 @@ subscribe to events.")
 (define-public qtile
   (package
     (name "qtile")
-    (version "0.23.0")
+    (version "0.30.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "qtile" version))
        (sha256
-        (base32 "1v8rxm2xg2igxv6gwa78wrkxzgfxmxfgflbjdp4fm7cxjdx3zrpa"))))
+        (base32 "0zd2bh4mvgwjxkkwn3angkaqzm7ldcmzg3gdc098jzzlf90fmywm"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       ;; A lot of tests fail despite Xvfb and writable temp/cache space.
       #:tests? #f
-      #:test-flags '("--ignore=test/widgets/test_widget_init_configure.py")
+      #:test-flags
+      #~(list "--ignore=test/widgets/test_widget_init_configure.py")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-paths
@@ -852,10 +854,12 @@ subscribe to events.")
      (list python-cairocffi
            python-cffi
            python-dateutil
-           python-dbus-next
+           python-dbus-fast
            python-iwlib
            python-keyring
+           python-libcst
            python-mpd2
+           python-pygobject
            python-pyxdg
            python-xcffib))
     (native-inputs
@@ -865,7 +869,9 @@ subscribe to events.")
             python-pytest
             python-pytest-cov
             python-psutil
+            python-setuptools
             python-setuptools-scm
+            python-wheel
             xorg-server-for-tests))
     (home-page "http://qtile.org")
     (synopsis "Hackable tiling window manager written and configured in Python")
