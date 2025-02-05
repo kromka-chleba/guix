@@ -126,7 +126,7 @@
 ;;; Copyright © 2020, 2021, 2022, 2023 Andrew Tropin <andrew@trop.in>
 ;;; Copyright © 2023 Dominik Delgado Steuter <d@delgado.nrw>
 ;;; Copyright © 2023 Juliana Sims <juli@incana.org>
-;;; Copyright © 2023 Evgeny Pisemsky <mail@pisemsky.site>
+;;; Copyright © 2023, 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2023 Gabriel Wicki <gabriel@erlikon.ch>
 ;;; Copyright © 2022-2023 Simon Josefsson <simon@josefsson.org>
 ;;; Copyright © 2023 Fabio Natali <me@fabionatali.com>
@@ -9707,7 +9707,7 @@ files which are intended to be packages.")
 (define-public emacs-el-job
   (package
     (name "emacs-el-job")
-    (version "0.3.21")
+    (version "0.3.23")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9716,7 +9716,7 @@ files which are intended to be packages.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0jxq4j7sc46wp4niakrcfavv3jiba89civ492aj4szlx0wnz08pl"))))
+                "0mj92dsd169ij2g3vmq626vdh5aqc9zbc43yjip7dl1qy4lh34sk"))))
     (build-system emacs-build-system)
     (arguments
      (list #:tests? #true
@@ -19503,28 +19503,64 @@ a (typically) noncontiguous set of text.")
 Additionally it can display the number of unread emails in the mode line.")
       (license license:gpl3+))))
 
-(define-public emacs-mu4e-column-faces
+(define-public emacs-org-notify
   (package
-    (name "emacs-mu4e-column-faces")
-    (version "20221213.2206")
+    (name "emacs-org-notify")
+    (version "0.1.1")
     (source
      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/Alexander-Miller/mu4e-column-faces.git")
-             (commit "1bbb646ea07deb1bd2daa4c6eb36e0f65aac40b0")))
-       (file-name (git-file-name name version))
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/org-notify-" version
+                           ".tar"))
        (sha256
-        (base32 "12cb37lj8j1fd5kp3gbnzgknb57j5l8xgrnhb60ysff66m1mbrr7"))))
+        (base32 "1vg0h32x5lc3p5n71m23q8mfdd1fq9ffmy9rsm5rcdphfk8s9x5l"))))
     (build-system emacs-build-system)
-    (propagated-inputs
-     (list mu))
-    (home-page "https://github.com/Alexander-Miller/mu4e-column-faces")
-    (synopsis "Faces for individual mu4e columns")
+    (home-page "https://github.com/p-m/org-notify")
+    (synopsis "Notifications for Org-mode")
     (description
-     "This package provides a minor mode for individual column faces in mu4e's
-mail overview.")
+     "This package allows you to get notifications when there is something
+to do (for org mode).
+
+Sometimes, you need a reminder a few days before a deadline, e.g. to buy a
+present for a birthday, and then another notification one hour before to have
+enough time to choose the right clothes.
+
+For other events, e.g. rolling the dustbin to the roadside once per week, you
+probably need another kind of notification strategy.
+
+This package tries to satisfy the various needs.
+
+In order to activate this package, you must add the following code into your
+.emacs or .emacs.d configuration:
+
+@lisp
+(require org-notify)
+(org-notify-start)
+@end lisp")
     (license license:gpl3+)))
+
+(define-public emacs-mu4e-column-faces
+  (package
+   (name "emacs-mu4e-column-faces")
+   (version "20221213.2206")
+   (source
+    (origin
+     (method git-fetch)
+     (uri (git-reference
+           (url "https://github.com/Alexander-Miller/mu4e-column-faces.git")
+           (commit "1bbb646ea07deb1bd2daa4c6eb36e0f65aac40b0")))
+     (file-name (git-file-name name version))
+     (sha256
+      (base32 "12cb37lj8j1fd5kp3gbnzgknb57j5l8xgrnhb60ysff66m1mbrr7"))))
+   (build-system emacs-build-system)
+   (propagated-inputs
+    (list mu))
+   (home-page "https://github.com/Alexander-Miller/mu4e-column-faces")
+   (synopsis "Faces for individual mu4e columns")
+   (description
+    "This package provides a minor mode for individual column faces in mu4e's
+mail overview.")
+   (license license:gpl3+)))
 
 (define-public emacs-mu4e-jump-to-list
   (let ((commit "358bba003543b49ffa266e503e54aebd0ebe614b")
@@ -29151,6 +29187,49 @@ A screenshot is taken for every user action.  Call
 the GIF result.")
     (license license:gpl3+)))
 
+(define-public emacs-go-translate
+  (package
+    (name "emacs-go-translate")
+    (version "3.0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lorniu/go-translate/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0603iq1vjbm44sl7qrmkdfcqzzc703h1g5hdcswpj7pi0w7fxb4s"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:tests? #t
+      #:test-command #~(list "emacs"
+                             "-Q"
+                             "--batch"
+                             "-L"
+                             "."
+                             "-l"
+                             "gt-tests.el"
+                             "-f"
+                             "ert-run-tests-batch-and-exit")
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'skip-failing-tests
+                     (lambda _
+                       (substitute* "gt-tests.el"
+                         (("\\(ert-deftest test--gt-translation-life-cycle .*"
+                           all)
+                          (string-append all "(skip-unless nil)\n"))
+                         (("\\(ert-deftest test--gt-valid-literally .*" all)
+                          (string-append all "(skip-unless nil)\n"))))))))
+    (home-page "https://github.com/lorniu/go-translate/")
+    (synopsis "Configurable and scalable translation framework")
+    (description
+     "This is a translation framework on Emacs, with high configurability
+and extensibility.  It can easily be extended to various Text-to-Text
+conversion scenarios.")
+    (license license:gpl3+)))
+
 (define-public emacs-google-translate
   (package
     (name "emacs-google-translate")
@@ -32934,7 +33013,7 @@ in Docker environment.")
 (define-public emacs-dape
   (package
     (name "emacs-dape")
-    (version "0.21.0")
+    (version "0.22.0")
     (source
      (origin
        (method git-fetch)
@@ -32943,7 +33022,7 @@ in Docker environment.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vf479khsigwgdl8r419lh5lmarpy5dddw5v4z7cavwa5dxxsxns"))))
+        (base32 "0zxv49fd6m7xsaa6d9lyhjmnnxihlkycp3vin836qmk9cq6a7dlp"))))
     (build-system emacs-build-system)
     (arguments
      ;; FIXME python tests pass, JS tests require additional dependencies

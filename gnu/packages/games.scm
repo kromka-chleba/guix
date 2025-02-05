@@ -30,7 +30,7 @@
 ;;; Copyright © 2017, 2019, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2017, 2018 Rutger Helling <rhelling@mykolab.com>
 ;;; Copyright © 2017 Roel Janssen <roel@gnu.org>
-;;; Copyright © 2017-2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2017-2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2018 okapi <okapi@firemail.cc>
 ;;; Copyright © 2018 Tim Gesthuizen <tim.gesthuizen@yahoo.de>
 ;;; Copyright © 2018 Madalin Ionel-Patrascu <madalinionel.patrascu@mdc-berlin.de>
@@ -181,6 +181,7 @@
   #:use-module (gnu packages libidn)
   #:use-module (gnu packages libunwind)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages lisp)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages man)
@@ -1728,7 +1729,7 @@ The game features:
 (define-public freedoom
   (package
     (name "freedoom")
-    (version "0.12.1")
+    (version "0.13.0")
     (source
      (origin
        (method git-fetch)
@@ -1737,7 +1738,7 @@ The game features:
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1mq60lfwaaxmch7hsz8403pwafnlsmsd5z2df2j77ppwndwcrypb"))))
+        (base32 "01fwzwi4a68n26d627dkcn85jz854mc3zfnzzkvinmx9yy3z5qmq"))))
     (build-system gnu-build-system)
     (arguments
      '(#:make-flags
@@ -2175,6 +2176,71 @@ destroying an ancient book using a special wand.")
     ;; guichan (BSD-3).  The "Coercri" library is released under the Boost
     ;; license.  The whole package is released under GPLv3+.
     (license license:gpl3+)))
+
+(define-public ghosthop
+  (let ((commit "9fefc22830ff8fde484452d7a249f4c54feec0fc")
+        (revision "1"))
+    (package
+      (name "ghosthop")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://gitlab.com/gcmas/ghosthop.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "021awll73bgjk61r6y6cbqn0dpmki9jp627km7yhx5px15panslq"))
+         (modules '((guix build utils)))
+         (snippet '(delete-file-recursively "vendor"))))
+      (build-system copy-build-system)
+      (arguments
+       (list
+        #:install-plan
+        ;; 'ghosthop' loads 'asset' and 'scm' from the current directory.
+        #~'(("ghosthop" "opt/ghosthop/")
+            ("asset" "opt/ghosthop/")
+            ("scm" "opt/ghosthop/"))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'install 'build
+              ;; Avoid its Makefile to build with system libraries.
+              (lambda* (#:key inputs #:allow-other-keys)
+                (with-output-to-file "rlbind.c"
+                  (lambda ()
+                    (invoke "repl" "rlbind.scm")))
+                (invoke #$(cc-for-target)
+                        "-o" "ghosthop"
+                        "-O3" "-lm" "-lraylib"
+                        (search-input-file inputs "/share/s7/s7.c")
+                        "rlbind.c" "src/init.c")
+                (invoke #$(strip-for-target) "ghosthop")))
+            (add-after 'install 'install-launcher
+              ;; Create a launcher script for 'ghosthop'.
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (let* ((out (assoc-ref outputs "out"))
+                       (bindir (string-append out "/bin"))
+                       (gamedir (string-append out "/opt/ghosthop"))
+                       (launcher (string-append bindir "/ghosthop"))
+                       (bash (search-input-file inputs "/bin/bash")))
+                  (mkdir (dirname launcher))
+                  (with-output-to-file launcher
+                    (lambda ()
+                      (format #t "#!~a~%" bash)
+                      (format #t "cd ~a~%" gamedir)
+                      (format #t "exec -a ghosthop ~a~%"
+                              (string-append gamedir "/ghosthop"))))
+                  (chmod launcher #o755)))))))
+      (native-inputs (list s7))
+      (inputs (list bash-minimal raylib))
+      (home-page "https://gitlab.com/gcmas/ghosthop")
+      (synopsis "Puzzle game with colored rules")
+      (description "This is a small puzzle game made for the 2024 Spring Lisp
+Game Jam.  The objective is to reach the goal by assigning rules to colors.")
+      (license (list license:gpl3+            ;code and other assets
+                     license:cc-by-sa3.0))))) ;music
 
 (define-public gnome-2048
   (package
@@ -3716,7 +3782,7 @@ a C library, so they can easily be integrated into other programs.")
 (define-public taisei
   (package
     (name "taisei")
-    (version "1.4")
+    (version "1.4.2")
     (source
      (origin
        (method url-fetch)
@@ -3724,15 +3790,14 @@ a C library, so they can easily be integrated into other programs.")
                            "taisei/releases/download/v" version
                            "/taisei-" version ".tar.xz"))
        (sha256
-        (base32 "1glrr99xiyz674d1izgvmk9w1zxanc94d34pacd0wya66bbml0nc"))))
+        (base32 "19sgm175clkvpcv0b9p4jkjpfxqw0kyl2i5p8w63kwzqcjp9m1jx"))))
     (build-system meson-build-system)
     (arguments
      (list
       #:build-type "release" ;comment out for bug-reporting (and cheats)
       #:configure-flags #~(list "-Dr_default=gles30"
-                                "-Dr_gles20=true"
-                                "-Dr_gles30=true"
-                                "-Dshader_transpiler=true")))
+                                "-Dr_gles30=enabled"
+                                "-Dshader_transpiler=enabled")))
     (native-inputs
      (list pkg-config
            python
@@ -10716,75 +10781,38 @@ the game is to stay alive and collect prizes.  The robot program conveniently
 may be written in a plain text file in the Scheme programming language.")
     (license license:gpl3+)))
 
-(define-public ri-li
+(define-public li-ri
   (package
-    (name "ri-li")
-    (version "2.0.1")
+    (name "li-ri")
+    (version "3.1.5")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/ri-li/"
-                                  "Ri-li%20Linux_Unix/Ri-li%20V" version "/"
-                                  "Ri-li-" version ".tar.bz2"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/petitlapin/Li-Ri")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1gcdsgnnbbn1mb1hkpwniv3fhkaj1nn8gq33v5c16q3wqchcq77p"))
-              ;; Taken from
-              ;; <https://github.com/NixOS/nixpkgs/blob/master/pkgs/games/rili/moderinze_cpp.patch>.
-              ;; It doesn't build otherwise.
-              (patches (search-patches "ri-li-modernize_cpp.patch"))))
-    (build-system gnu-build-system)
+                "1fd5hl9qhgvyix51la8sl34jzk4mcin8sai05gidy2r2grb1dy4s"))))
+    (build-system cmake-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; Remove "gentoo" subdirectory from Makefile, as it is
-         ;; missing a make file and generates a build failure.
-         (add-after 'configure 'fix-build
-           (lambda _
-             (substitute* "Makefile"
-               ((" gentoo") ""))
-             #t))
-         (add-after 'install 'install-desktop-file
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (apps (string-append out "/share/applications"))
-                    (pixmaps (string-append out "/share/pixmaps")))
-               (for-each (lambda (f) (install-file f pixmaps))
-                         (find-files "data" "\\.(png|ico)$"))
-               (mkdir-p apps)
-               (with-output-to-file (string-append apps "/ri-li.desktop")
-                 (lambda _
-                   (format #t
-                           "[Desktop Entry]~@
-                     Name=Ri-li~@
-                     Exec=~a/bin/Ri_li~@
-                     Icon=~a/Ri-li-icon-32x32.png~@
-                     Categories=Game;ArcadeGame;~@
-                     Keywords=toy;train;wooden;snake-like;engine;~@
-                     Comment=a toy simulator game~@
-                     Comment[de]=Ein Spiel mit einem kleinen Zug~@
-                     Comment[fr]=un jeu de petit train~@
-                     Comment[ro_RO]=un joc cu un tren de jucărie~@
-                     Terminal=false~@
-                     Type=Application~%"
-                           out pixmaps))))
-             #t))
-         (add-after 'install-desktop-file 'remove-spurious-files
-           ;; Delete redundant files already installed somewhere else.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (for-each delete-file
-                         (find-files (string-append out "/share/Ri-li")
-                                     "\\.(png|ico)|COPYING"))
-               #t))))))
-    (inputs
-     `(("sdl" ,(sdl-union (list sdl sdl-mixer)))))
-    (home-page "http://www.ri-li.org")
+     (list #:tests? #false              ;no tests
+           #:configure-flags
+           #~(list "-DUSE_SYSTEM_SIMPLEINI=ON"
+                   (string-append "-DLIRI_DATA_DIR=" #$output "/share/Li-ri/"))))
+    (native-inputs (list pkg-config))
+    (inputs (list sdl2 sdl2-mixer simpleini))
+    (home-page "https://github.com/petitlapin/Li-Ri")
     (synopsis "Toy train simulation game")
-    (description "Ri-li is a game in which you drive a wooden toy
-steam locomotive across many levels and collect all the coaches to
-win.")
-    ;; The project is dual-licensed GPL2+ and GPL3+.
-    (license (list license:gpl2+ license:gpl3+))))
+    (description
+     "Li-Ri is a game in which you drive a wooden toy steam locomotive
+across many levels and collect all the coaches to win.")
+    ;; Source files mention "either version 2 or version 3" for GPL
+    ;; license.  Desktop file is licensed under CC0 terms.
+    (license (list license:gpl2 license:gpl3 license:cc0))))
+
+(define-public ri-li
+  (deprecated-package "ri-li" li-ri))
 
 (define-public freeorion
   (package

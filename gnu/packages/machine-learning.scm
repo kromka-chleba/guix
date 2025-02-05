@@ -6460,3 +6460,62 @@ without dependencies, with
      "This package provides a standard API for reinforcement learning and a
 diverse set of reference environments (formerly Gym).")
     (license license:expat)))
+
+(define-public dlib
+  (package
+   (name "dlib")
+   (version "19.24.6")
+   (source
+    (origin
+     (method git-fetch)
+     (uri (git-reference
+           (url "https://github.com/davisking/dlib.git")
+           (commit (string-append "v" version))))
+     (file-name (git-file-name name version))
+     (sha256
+      (base32 "11j86nxkj78v8xdx2s80mfplq4j0rs0y0iidqgma12b2pdk3p486"))
+     (modules '((guix build utils)))
+     (snippet
+      '(begin
+         (delete-file-recursively "dlib/external")))))
+   (build-system cmake-build-system)
+   (arguments
+    `(#:phases
+      (modify-phases %standard-phases
+                     (add-after 'unpack 'chdir
+                                (lambda _
+                                  (chdir "dlib")))
+                     (replace 'check
+                              (lambda _
+                                ;; Following the instructions on the website.
+                                (mkdir "../dlib/test/build")
+                                (with-directory-excursion "../dlib/test/build"
+                                                          (invoke "cmake" "..")
+                                                          (invoke "cmake" "--build" "." "--config" "Release")
+                                                          (invoke "./dtest" "--runall")))))))
+   (inputs (list libpng libjpeg-turbo openblas zlib libjxl))
+   (home-page "https://github.com/davisking/dlib")
+   (synopsis
+    "Toolkit for making machine learning and data analysis applications")
+   (description
+    "This package provides a toolkit for making machine learning and data
+analysis applications in C++.")
+   (license license:boost1.0)))
+
+;; This will build dlib in the process of building python-dlib--and that
+;; seems to be intended by upstream.  Well, at least it probably optimizes
+;; better that way.
+(define-public python-dlib
+  (package
+   (inherit dlib)
+   (name "python-dlib")
+   (build-system pyproject-build-system)
+   (arguments
+    `(#:phases
+      (modify-phases %standard-phases
+                     (add-after 'unpack 'subst
+                                (lambda _
+                                  (substitute* "tools/python/CMakeLists.txt"
+                                               (("add_subdirectory[(][.][.]/[.][.]/dlib/external/pybind11 pybind11_build[)]")
+                                                "find_package(pybind11 CONFIG)")))))))
+   (native-inputs (list python-setuptools python-wheel cmake-minimal perl pkg-config pybind11))))

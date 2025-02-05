@@ -572,7 +572,7 @@ exec ${system}/rc \"$@\"
      `(("libgcrypt" ,libgcrypt)                  ;for /hurd/random
        ("libdaemon" ,libdaemon)                  ;for /bin/console --daemonize
        ("unifont" ,unifont)
-       ("libpciaccess" ,libpciaccess)
+       ("libpciaccess" ,libpciaccess-static)
 
        ;; For NFS support
        ("libtirpc" ,libtirpc/hurd)
@@ -700,7 +700,7 @@ implementing them.")
                  (install-file "netdde" hurd)
                  (install-file "netdde.static" hurd)))))))
       (inputs
-       (list hurd libpciaccess zlib `(,zlib "static")))
+       (list hurd libpciaccess-static zlib `(,zlib "static")))
       (native-inputs
        `(("coreutils" ,coreutils)
          ("gawk" ,gawk)

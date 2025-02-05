@@ -11,7 +11,7 @@
 ;;; Copyright © 2016, 2017 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2016 Raymond Nicholson <rain1@openmailbox.org>
 ;;; Copyright © 2016 Mathieu Lirzin <mthl@gnu.org>
-;;; Copyright © 2016, 2018-2023 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2016, 2018-2023, 2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2016, 2018, 2019, 2020, 2021, 2022, 2023 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016 David Craven <david@craven.ch>
 ;;; Copyright © 2016 John Darrington <jmd@gnu.org>
@@ -513,7 +513,22 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.12-version "6.12.11")
+(define-public linux-libre-6.13-version "6.13.1")
+(define-public linux-libre-6.13-gnu-revision "gnu")
+(define deblob-scripts-6.13
+  (linux-libre-deblob-scripts
+   linux-libre-6.13-version
+   linux-libre-6.13-gnu-revision
+   (base32 "0ix54dxka85cb5dn7wxfdfphycf9s2315m1lclbzg2950ykv6k4p")
+   (base32 "0h0nn8ia9ylxb56i49mgj4wvbish22kgcgrn8kqz3zgwmgws86kr")))
+(define-public linux-libre-6.13-pristine-source
+  (let ((version linux-libre-6.13-version)
+        (hash (base32 "0smnalhyrgh5s3mw60q56r1jxj993ckfpldxvfrz27a7xb4gc4gh")))
+   (make-linux-libre-source version
+                            (%upstream-linux-source version hash)
+                            deblob-scripts-6.13)))
+
+(define-public linux-libre-6.12-version "6.12.12")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -523,7 +538,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0jwnb1pd8ayfkck3sw3jjlsg7gayig0ymiay53mg7qchhycih8xs")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "0jgczvy1kr55s4bs8n2vmxnxnfvp5rkm4yd54gqm78c7ppyp4la7")))
+        (hash (base32 "1zwfw3lci3ihandx2cpq3h12x7l94jzr4xkd5lzkn1ppgv8l52g9")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
@@ -532,7 +547,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.74")
+(define-public linux-libre-6.6-version "6.6.75")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -542,12 +557,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1gqha26cxijizyhg6k5397bc9pn54wxz01d4gb7j2xx22rkxjwhb")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "0ka9snxl0y57fajy8vszwa4ggn48pid8m1879d4vl3mbicd2nppi")))
+        (hash (base32 "1402g6qjk1242gsl6n8xlbg01m0nb19n30ac1ffi7fhnjzxb3pzp")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.127")
+(define-public linux-libre-6.1-version "6.1.128")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -557,12 +572,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "060pbbvk3c1r9v6fz1qm5f0hjb29wi67lg7an0nwl6bpjsk5ci52")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "0xkqpwhvz6qhaxzg1j993lv1iyvb2zydgq6d8mhdbfkz38fx9c0q")))
+        (hash (base32 "1wshgkgcxaf4mnm4ngngsj8gq1cg8kq56f5kqsdfcw0m339nfkc7")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.177")
+(define-public linux-libre-5.15-version "5.15.178")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
@@ -572,12 +587,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1pbl08jzqh944z34bz25k2v7igsm3r89jbcg0hba3cvyybkkfc2g")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "1q56w3lqwi3ynny6z7siqzv3h8nryksyw70r3fhghca2il4bi7pa")))
+        (hash (base32 "0hkw2l4gr5m6jw2adxcgm2sb6kl0w51r6s4hcbn6rlm4bvmzgsgg")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
 
-(define-public linux-libre-5.10-version "5.10.233")
+(define-public linux-libre-5.10-version "5.10.234")
 (define-public linux-libre-5.10-gnu-revision "gnu1")
 (define deblob-scripts-5.10
   (linux-libre-deblob-scripts
@@ -587,12 +602,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "14jdl5rk3w7h97svl6j6ngbywj5qixmpv6ifhqkzjxpp07xngvs4")))
 (define-public linux-libre-5.10-pristine-source
   (let ((version linux-libre-5.10-version)
-        (hash (base32 "0lkz2g8r032f027j3gih3f7crx991mrpng9qgqc5k4cc1wl5g7i3")))
+        (hash (base32 "1rgb4v6dvqlw1mgzsli0hxaj2d5d4m1nylgcrwm4bkpiwbzc95wm")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.10)))
 
-(define-public linux-libre-5.4-version "5.4.289")
+(define-public linux-libre-5.4-version "5.4.290")
 (define-public linux-libre-5.4-gnu-revision "gnu1")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
@@ -602,7 +617,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1q1wcslpwpwsnwzbddjdc0qv2h89492skyw2zsjyb4rpz41s66mg")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "043dl195h06hs3zdjd6j1m1zgvmky3s0plrpma75zqf8ab05yghy")))
+        (hash (base32 "0mm4q8f6kbqddy4zaxjf5xyqpnla5qprvsf7v3vq01gmlzr3rivc")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
@@ -634,6 +649,11 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (inherit source)
     (patches (append (origin-patches source)
                      patches))))
+
+(define-public linux-libre-6.13-source
+  (source-with-patches linux-libre-6.13-pristine-source
+                       (list %boot-logo-patch
+                             %linux-libre-arm-export-__sync_icache_dcache-patch)))
 
 (define-public linux-libre-6.12-source
   (source-with-patches linux-libre-6.12-pristine-source
@@ -756,6 +776,11 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (description "Headers of the Linux-Libre kernel.")
     (license license:gpl2)))
 
+(define-public linux-libre-headers-6.13
+  (make-linux-libre-headers* linux-libre-6.13-version
+                             linux-libre-6.13-gnu-revision
+                             linux-libre-6.13-source))
+
 (define-public linux-libre-headers-6.12
   (make-linux-libre-headers* linux-libre-6.12-version
                              linux-libre-6.12-gnu-revision
@@ -801,7 +826,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; linux-libre-headers-latest points to the latest headers package
 ;; and should be used as a dependency for packages that depend on
 ;; the headers.
-(define-public linux-libre-headers-latest linux-libre-headers-6.12)
+(define-public linux-libre-headers-latest linux-libre-headers-6.13)
 
 
 ;;;
@@ -895,7 +920,11 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
     ("CONFIG_VIRTIO_MMIO" . m)
     ("CONFIG_FUSE_FS" . m)
     ("CONFIG_CIFS" . m)
-    ("CONFIG_9P_FS" . m)))
+    ("CONFIG_9P_FS" . m)
+    ;; Disable the EFI pstore storage backend to avoid causing
+    ;; unrecoverable failures on some EFI systems:
+    ;; https://lists.gnu.org/archive/html/help-guix/2025-01/msg00173.html
+    ("CONFIG_EFI_VARS_PSTORE_DEFAULT_DISABLE" . #t)))
 
 (define (config->string options)
   (string-join (map (match-lambda
@@ -1121,6 +1150,14 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 ;;;
 ;;; Generic kernel packages.
 ;;;
+
+(define-public linux-libre-6.13
+  (make-linux-libre* linux-libre-6.13-version
+                     linux-libre-6.13-gnu-revision
+                     linux-libre-6.13-source
+                     '("x86_64-linux" "i686-linux" "armhf-linux"
+                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
+                     #:configuration-file kernel-config))
 
 (define-public linux-libre-6.12
   (make-linux-libre* linux-libre-6.12-version
@@ -9578,6 +9615,32 @@ be small and simple, so it's good for embedded systems.  It's also more or less
 compatible with Python's ConfigParser style of .INI files, including RFC
 822-style multi-line syntax and name: value entries.")
     (license license:bsd-3)))
+
+(define-public simpleini
+  (let ((commit "6048871ea9ee0ec24be5bd099d161a10567d7dc2")
+        (revision "1"))
+    (package
+      (name "simpleini")
+      (version (git-version "4.22" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/brofield/simpleini")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1szaflnrzw1zx9v5g6mbbiaf9wfglp4n4jjq2793k9ryz3qxil9j"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list #:configure-flags #~(list "-DSIMPLEINI_USE_SYSTEM_GTEST=ON")))
+      (native-inputs (list googletest))
+      (home-page "https://github.com/brofield/simpleini")
+      (synopsis "Simple API to read and write INI-style files")
+      (description
+       "SimpleIni provides a simple API to read and write INI-style
+configuration files.  It supports data files in ASCII, MBCS and Unicode.")
+      (license license:expat))))
 
 (define-public xfsprogs
   (package

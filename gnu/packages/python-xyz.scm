@@ -116,7 +116,7 @@
 ;;; Copyright © 2021 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2022, 2023 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Aleksandr Vityazev <avityazev@posteo.org>
-;;; Copyright © 2022 Evgeny Pisemsky <mail@pisemsky.site>
+;;; Copyright © 2022, 2024, 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2022 drozdov <drozdov@portalenergy.tech>
 ;;; Copyright © 2022 Peter Polidoro <peter@polidoro.io>
 ;;; Copyright © 2022, 2023 Wamm K. D. <jaft.r@outlook.com>
@@ -157,10 +157,10 @@
 ;;; Copyright © 2024 Rick Huijzer <ikbenrickhuyzer@gmail.com>
 ;;; Copyright © 2024 Peter Kannewitz <petre-vps@posteo.net>
 ;;; Copyright © 2024 Aaron Covrig <aaron.covrig.us@ieee.org>
-;;; Copyright © 2024, 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2024 Markku Korkeala <markku.korkeala@iki.fi>
 ;;; Copyright © 2025 Jordan Moore <lockbox@struct.foo>
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
+;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3529,7 +3529,7 @@ Unicode-to-LaTeX conversion.")
 (define-public python-lsp-black
   (package
     (name "python-lsp-black")
-    (version "1.3.0")
+    (version "2.0.0")
     (source
      (origin
        (method git-fetch)
@@ -3538,8 +3538,16 @@ Unicode-to-LaTeX conversion.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gwf3vwb01a3l8b75jbn8kyfmn0lva8vpgjnr75vazhm3lsf78fp"))))
+        (base32 "0ilh6nx15kzrp29nkrpx03vx6dw3n7wq65qwv7bg7kcnyiwacplx"))))
     (build-system pyproject-build-system)
+    (arguments
+     ;; The python version is too old for these tests to pass properly.
+     (list #:test-flags
+           `'("-k" ,(string-append
+                     "not test_pylsp_format_document_syntax_error"
+                     " and not test_pylsp_format_range_syntax_error"
+                     " and not test_load_config_defaults"
+                     " and not test_load_config_with_skip_options"))))
     (propagated-inputs
      (list python-black python-lsp-server python-tomli))
     (native-inputs
@@ -7261,6 +7269,31 @@ important tasks for becoming a daemon process:
 @end enumerate")
     ;; Only setup.py is gpl3+, everything else is apache 2.0 licensed.
     (license (list license:asl2.0 license:gpl3+))))
+
+(define-public python-elevate
+  (package
+    (name "python-elevate")
+    (version "0.1.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "elevate" version))
+       (sha256
+        (base32 "02g23lxzzl64j1b4fsnrdxqiahl9lnrqyxpqwcfzn0g33px1kbak"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'clean-up
+           (lambda _
+             ;; Uses stuff we don't have.
+             (delete-file "elevate/windows.py"))))))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/barneygale/elevate")
+    (synopsis "Python library for requesting root privileges")
+    (description "This package provides a Python library for requesting
+root privileges.")
+    (license license:expat)))
 
 (define-public python-annotated-types
   (package
@@ -21707,6 +21740,29 @@ GnuPG encryption, and more.  It also supports management of Amazon's
 CloudFront content delivery network.")
     (license license:gpl2+)))
 
+(define-public python-securetar
+  (package
+    (name "python-securetar")
+    (version "2025.1.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pvizeli/securetar")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1b9m29j4mjiv7925wrbiyj6vyx7m9qmdz40zqd4vgxhz4pq6x3xw"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel python-pytest))
+    (propagated-inputs (list python-cryptography))
+    (home-page "https://github.com/pvizeli/securetar")
+    (synopsis "Python module to handle tarfile backups")
+    (description
+     "This library provides a streaming wrapper around python tarfile and allow
+secure handling files and support encryption.")
+    (license license:asl2.0)))
+
 (define-public python-pkgconfig
   (package
     (name "python-pkgconfig")
@@ -36078,19 +36134,17 @@ SMT solvers and is built on top of the Z3 solver.")
 (define-public python-pysmt
   (package
     (name "python-pysmt")
-    (version "0.9.5")
+    (version "0.9.6")
     (source
      (origin
        ;; Fetching from Git as pypi release doesn't include all test files.
        (method git-fetch)
-       (patches (search-patches "python-pysmt-fix-pow-return-type.patch"
-                 "python-pysmt-fix-smtlib-serialization-test.patch"))
        (uri (git-reference
              (url "https://github.com/pysmt/pysmt")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0hrxv23y5ip4ijfx5pvbwc2fq4zg9jz42wc9zqgqm0g0mjc9ckvh"))))
+        (base32 "0jiw8pa6hfh9ajr953q187qgpdnk3bvaa3wmrxs8ilw5jc41sq8y"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -38304,6 +38358,43 @@ and to reference instance methods using weak-references.")
 Additionally, it includes a number of subclasses useful for implementing async
 and threaded programming in python, such as async/await.")
     (license license:expat)))
+
+(define-public python-pypubsub
+  (package
+    (name "python-pypubsub")
+    (version "4.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/schollii/pypubsub")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02j74w28wzmdvxkk8i561ywjgizjifq3hgcl080yj0rvkd3wivlb"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "tests/suite"
+                  (invoke "py.test"))))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (home-page "https://github.com/schollii/pypubsub")
+    (synopsis "Python publish-subcribe library")
+    (description
+     "This library provides a publish-subscribe API to facilitate event-based
+or message-based architecture in a single-process application.  It is centered
+on the notion of a topic - senders publish messages of a given topic, and
+listeners subscribe to messages of a given topic, all inside the same
+process.")
+    (license license:bsd-2)))
 
 (define-public python-queuelib
   (package
