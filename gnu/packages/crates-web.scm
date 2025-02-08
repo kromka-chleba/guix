@@ -756,7 +756,7 @@ during testing.")
 (define-public rust-actix-http-test-0.2
   (package
     (inherit rust-actix-http-test-1)
-    (name "rust-actix-http-test-2")
+    (name "rust-actix-http-test")
     (version "0.2.5")
     (source
      (origin
@@ -1953,13 +1953,15 @@ the Actix ecosystem.")
         (base32 "0nd432yg1cl9kj4i9c37a9hvwffayqh6zsvb4fmh31g5bsp9xf8s"))))
     (build-system cargo-build-system)
     (arguments
-     `(#:cargo-inputs (("html5ever" ,rust-html5ever-0.27)
-                       ("maplit" ,rust-maplit-1)
-                       ("tendril" ,rust-tendril-0.4)
-                       ("url" ,rust-url-2)
-                       ("once_cell" ,rust-once-cell-1))
-       #:cargo-development-inputs (("version-sync" ,rust-version-sync-0.9)
-                                   ("env_logger" ,rust-env-logger-0.10))))
+     (list #:cargo-inputs
+           (list rust-html5ever-0.27
+                 rust-maplit-1
+                 rust-tendril-0.4
+                 rust-url-2
+                 rust-once-cell-1)
+           #:cargo-development-inputs
+           (list rust-version-sync-0.9
+                 rust-env-logger-0.10)))
     (home-page "https://github.com/rust-ammonia/ammonia")
     (synopsis "Repair and secure untrusted HTML")
     (description "Ammonia is a whitelist-based HTML sanitization library.
@@ -2154,7 +2156,7 @@ built on the Actix ecosystem.")
 (define-public rust-awc-0.2
   (package
     (inherit rust-awc-2)
-    (name "rust-awc-2")
+    (name "rust-awc")
     (version "0.2.8")
     (source
      (origin

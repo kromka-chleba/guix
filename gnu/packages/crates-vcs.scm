@@ -137,6 +137,105 @@
         ("rust-serial-test" ,rust-serial-test-3)
         ("rust-tempfile" ,rust-tempfile-3))))))
 
+(define-public rust-auth-git2-0.5
+  (package
+    (name "rust-auth-git2")
+    (version "0.5.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "auth-git2" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "149p4485g7js5a0lnblgw549mhy62rkdh4ib63kky09b46pva41q"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list #:tests? #f  ; use of undeclared crate or module `log`
+           #:cargo-inputs
+           (list rust-dirs-5
+                 rust-git2-0.19
+                 rust-log-0.4
+                 rust-terminal-prompt-0.2)
+           #:cargo-development-inputs
+           (list rust-assert2-0.3
+                 rust-clap-4
+                 rust-env-logger-0.10
+                 rust-git2-0.19)))
+    (native-inputs (list pkg-config))
+    (inputs (list libgit2-1.8 libssh2 zlib))
+    (home-page "https://github.com/de-vri-es/auth-git2-rs")
+    (synopsis "Authentication for `git2`")
+    (description "This package provides Authentication for `git2`.")
+    (license license:bsd-2)))
+
+(define-public rust-forgejo-api-0.5
+  (package
+    (name "rust-forgejo-api")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "forgejo-api" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "114lhnafx34xak9dx7hcsvgdr48bnzn7k32al276h00jl9wjd3ag"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list #:tests? #f  ; Wants to run against a forgejo instance.
+           #:cargo-inputs
+           (list rust-base64ct-1
+                 rust-bytes-1
+                 rust-reqwest-0.11
+                 rust-serde-1
+                 rust-serde-json-1
+                 rust-soft-assert-0.1
+                 rust-thiserror-1
+                 rust-time-0.3
+                 rust-tokio-1
+                 rust-url-2
+                 rust-zeroize-1)
+           #:cargo-development-inputs
+           (list rust-eyre-0.6
+                 rust-reqwest-0.11
+                 rust-tokio-1)))
+    (native-inputs (list pkg-config))
+    (inputs (list openssl))
+    (home-page "https://codeberg.org/Cyborus/forgejo-api")
+    (synopsis "Interface to Forgejo's Web API")
+    (description "This package provides an interface to Forgejo's Web API.")
+    (license (list license:asl2.0 license:expat))))
+
+(define-public rust-forgejo-api-0.4
+  (package
+    (inherit rust-forgejo-api-0.5)
+    (name "rust-forgejo-api")
+    (version "0.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "forgejo-api" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0bc1m39g3i8mm70cf35hcqh898xpm2y4x819y8qfaaw6pnhg90pn"))))
+    (arguments
+     (list #:tests? #f  ; Wants to run against a forgejo instance.
+           #:cargo-inputs
+           (list rust-base64ct-1
+                 rust-bytes-1
+                 rust-reqwest-0.11
+                 rust-serde-1
+                 rust-serde-json-1
+                 rust-soft-assert-0.1
+                 rust-thiserror-1
+                 rust-time-0.3
+                 rust-tokio-1
+                 rust-url-2
+                 rust-zeroize-1)
+           #:cargo-development-inputs
+           (list rust-eyre-0.6
+                 rust-reqwest-0.11
+                 rust-tokio-1)))))
+
 (define-public rust-git-testament-0.2
   (package
     (name "rust-git-testament")

@@ -938,8 +938,8 @@ as well as pick-place files.")
 
 (define-public translate2geda
   ;; There has been no formal release yet.
-  (let ((commit "4c19e7eefa338cea8f1ee999ea8b37f8d0698169")
-        (revision "1"))
+  (let ((commit "2ec576e608a6f6eead5f6bc1952234d9874703c7")
+        (revision "2"))
     (package
       (name "translate2geda")
       (version (git-version "0" revision commit))
@@ -951,27 +951,29 @@ as well as pick-place files.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1h062bbpw8nk0jamkya1k4lsgaia796jyviiz2gkdi6k1bxhwgpa"))))
+                  "0pcwbnp25fjzznzw97d233awa4j0sdfi06wza45rsp8nx1ri7a7k"))))
       (build-system ant-build-system)
       (arguments
-       `(#:tests? #f ; there are no tests
-         #:jar-name "translate2geda.jar"
-         #:source-dir "."
-         #:main-class "translate2geda"
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'install 'install-bin
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (bin (string-append out "/bin"))
-                      (wrapper (string-append bin "/translate2geda")))
-                 (mkdir-p bin)
-                 (with-output-to-file wrapper
+       (list #:tests? #f ; there are no tests
+             #:jar-name "translate2geda.jar"
+             #:source-dir "."
+             #:main-class "translate2geda"
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'install 'install-bin
                    (lambda _
-                     (format #t "#!/bin/sh~%exec ~a -jar ~a/share/java/translate2geda.jar"
-                             (which "java") out)))
-                 (chmod wrapper #o555))
-               #t)))))
+                     (let* ((bin (string-append #$output "/bin"))
+                            (wrapper (string-append bin "/translate2geda"))
+                            (jar "/share/java/translate2geda.jar"))
+                       (mkdir-p bin)
+                       (with-output-to-file wrapper
+                         (lambda _
+                           (format #t
+                                   "#!/bin/sh~%exec ~a -jar ~a~a~%"
+                                   (which "java")
+                                   #$output
+                                   jar)))
+                       (chmod wrapper #o555)))))))
       (home-page "https://github.com/erichVK5/translate2geda")
       (synopsis "Utility for converting symbol and footprint formats to gEDA")
       (description
@@ -1909,14 +1911,13 @@ bindings for Python, Java, OCaml and more.")
   (package
     (inherit capstone)
     (name "python-capstone")
-    (propagated-inputs
-     (list capstone))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:phases
+       #~(modify-phases %standard-phases
          (add-after 'unpack 'chdir-and-fix-setup-py
-           (lambda* (#:key inputs #:allow-other-keys)
+           (lambda _
              (chdir "bindings/python")
              ;; Do not build the library again, because we already have it.
              (substitute* "setup.py" ((".*   build_libraries.*") ""))
@@ -1924,16 +1925,19 @@ bindings for Python, Java, OCaml and more.")
              ;; library.
              (substitute* "capstone/__init__.py"
                (("pkg_resources.resource_filename.*")
-                (string-append "'" (dirname (search-input-file
-                                             inputs "lib/libcapstone.so"))
-                               "',\n")))))
+                (format #f "'~a/lib',~%" #$(this-package-input "capstone"))))))
          (replace 'check
            (lambda* (#:key tests? #:allow-other-keys)
              (when tests?
-               (invoke "make" "check")))))))))
+               (invoke "make" "check")))))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list capstone))))
 
 
-(define-public python-esptool-3.0
+(define-public python-esptool
   (package
     (name "python-esptool")
     (version "3.0")
@@ -4256,9 +4260,17 @@ G-code instructions for FFF printers or PNG layers for mSLA 3D printers.")
        (uri (pypi-uri "wireviz" version))
        (sha256
         (base32 "1qbh0pknpymc42k4661b8ghbfk9him75xx57siyrl9is5s6as98f"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-click python-graphviz python-pillow python-pyyaml))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; no tests in git checkout or PyPI archive
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (inputs
+     (list python-click
+           python-graphviz
+           python-pillow
+           python-pyyaml))
     (home-page "https://github.com/wireviz/WireViz")
     (synopsis "Easily document cables and wiring harnesses")
     (description

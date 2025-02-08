@@ -374,6 +374,24 @@ annotations on struct fields.  It came as a spin-off from
 commands.")
     (license license:expat)))
 
+(define-public go-git-sr-ht-rjarry-go-opt-v2
+  (package
+    (inherit go-git-sr-ht-rjarry-go-opt)
+    (name "go-git-sr-ht-rjarry-go-opt-v2")
+    (version "2.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~rjarry/go-opt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1092926vcgkhp2yjpvlx7g7q60j0bbkkq6n4v1nv2mapxvrs7xjf"))))
+    (arguments
+     (list
+      #:import-path "git.sr.ht/~rjarry/go-opt/v2"))))
+
 (define-public go-git-sr-ht-rockorager-tcell-term
   (package
     (name "go-git-sr-ht-rockorager-tcell-term")
@@ -2834,10 +2852,6 @@ package provides an API for comparing Golden files.")
     (arguments
      (list
       #:import-path "github.com/cheggaaa/pb/v3"
-      #:unpack-path "github.com/cheggaaa/pb"))
-    (arguments
-     (list
-      #:import-path "github.com/cheggaaa/pb/v3"
       #:unpack-path "github.com/cheggaaa/pb"))))
 
 (define-public go-github-com-chzyer-logex
@@ -4103,7 +4117,7 @@ supports concurrent serializable transactions.")
 (define-public go-github-com-dgraph-io-ristretto
   (package
     (name "go-github-com-dgraph-io-ristretto")
-    (version "0.1.1")
+    (version "1.0.1")
     (source
      (origin
        (method git-fetch)
@@ -4112,7 +4126,7 @@ supports concurrent serializable transactions.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0mjni3zaxvjvw5c7nh4sij13sslg92x9xi3ykxzbv2s6g2ynigss"))))
+        (base32 "0lp6plhiskdpka44qlcw1x90nknccnkj1bnmxyxhzm8knx8c5yvw"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -4132,13 +4146,7 @@ supports concurrent serializable transactions.")
             (lambda* (#:key import-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" import-path)
                 (delete-file-recursively "benchmarks")
-                (delete-file-recursively "contrib"))))
-          ;; XXX: Replace when go-build-system supports nested path.
-          (replace 'check
-            (lambda* (#:key import-path tests? #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go" "test" "-v" "./..."))))))))
+                (delete-file-recursively "contrib")))))))
     (native-inputs
      (list go-github-com-stretchr-testify))
     (propagated-inputs
@@ -4154,6 +4162,25 @@ supports concurrent serializable transactions.")
      "Ristretto is a concurrent, fixed size, in-memory cache with a dual focus
 on throughput and hit ratio performance.")
     (license (list license:asl2.0 license:expat))))
+
+(define-public go-github-com-dgraph-io-ristretto-v2
+  (package
+    (inherit go-github-com-dgraph-io-ristretto)
+    (name "go-github-com-dgraph-io-ristretto-v2")
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dgraph-io/ristretto")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1q65y9psk8vnrsjlmaqhc8l3fwpsh23wrr4cjz8jfnph45hhh4jk"))))
+    (arguments
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-dgraph-io-ristretto)
+       ((#:import-path _) "github.com/dgraph-io/ristretto/v2")))))
 
 (define-public go-github-com-dgryski-go-linebreak
   (package

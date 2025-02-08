@@ -5362,7 +5362,7 @@ of bibliographic references.")
 (define-public emacs-corfu
   (package
     (name "emacs-corfu")
-    (version "1.6")
+    (version "1.7")
     (source
      (origin
        (method git-fetch)
@@ -5371,7 +5371,7 @@ of bibliographic references.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11n8qdjpavvy0s1zhxzxxvcv5i07gsjs02ad7fj51p7j8y4hjvym"))))
+        (base32 "0yyc64bfqpsjs5iwgwxm171sg85al4mzj4pv3qd4cpmkgmamrrv3"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -6357,6 +6357,41 @@ place (e.g., the current page and zoom) of PDF buffers under PDFView mode or
 DocView mode, and revisiting those PDF files later using the same mode will
 restore the saved place.")
     (license license:gpl3+)))
+
+(define-public emacs-org-pdftools
+  (let ((revision "0")
+        (commit "4e420233a153a9c4ab3d1a7e1d7d3211c836f0ac"))
+    (package
+      (name "emacs-org-pdftools")
+      (version (git-version "0.0.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/fuxialexander/org-pdftools.git")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0n8apjqlm7rs66l635szvsvc4qn8m147g07rgkd30a4v4m24mj8x"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list #:phases
+             #~(modify-phases %standard-phases
+               (add-after 'unpack 'setenv
+                 (lambda _
+                   (substitute* "org-pdftools.el"
+                    ;; Fix a small typo.
+                    (("let [(]pdf-isearch-narrow-to-page t[)]")
+                     "let ((pdf-isearch-narrow-to-page t))"))
+                   (setenv "HOME" "/tmp"))))))
+      (propagated-inputs (list emacs-org-noter emacs-pdf-tools))
+      ;(native-inputs (list emacs-log4e emacs-with-simulated-input))
+      (synopsis "Org mode PDF tools (for doc-view, nov.el and pdf-tools)")
+      (description "This package provides org-mode PDF tools (for builtin
+doc-view and for pdf-view), for example to be able to store links to a page
+in a PDF into an org file.")
+      (home-page "https://github.com/fuxialexander/org-pdftools")
+      (license license:gpl3+))))
 
 (define-public emacs-sakura-theme
   (package
@@ -16789,7 +16824,7 @@ that uses the standard completion function completing-read.")
 (define-public emacs-yaml
   (package
     (name "emacs-yaml")
-    (version "0.5.5")
+    (version "1.1.0")
     (source
      (origin
        (method git-fetch)
@@ -16798,7 +16833,7 @@ that uses the standard completion function completing-read.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0qq9jr1ihk1b5wfvppyvb8c2pq2gma9wysggd22iln4nqz2mjc81"))))
+        (base32 "1wbsmfnrbbsdsp5xnn3rmk7cws7ri9kn309ii4dnihjbr8s865jh"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -29922,6 +29957,27 @@ turn.")
 accept and reject GitHub pull requests.")
       (license license:gpl3+))))
 
+(define-public emacs-pr-review
+  (package
+    (name "emacs-pr-review")
+    (version "0.1.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/blahgeek/emacs-pr-review.git")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1cm92263jqvq2lg378xqi8ikbqw98lxjpsl29sja2xg2wf6p7gml"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-magit emacs-ghub emacs-markdown-mode))
+    (synopsis "Review GitHub Pull Requests")
+    (description "This package provides a way to review GitHub Pull
+Requests from magit.")
+    (home-page "https://github.com/blahgeek/emacs-pr-review/")
+    (license license:gpl3+)))
+
 (define-public emacs-deadgrep
   (package
     (name "emacs-deadgrep")
@@ -35858,7 +35914,18 @@ text-property translator.")
         (base32
          "14n9bq0vxz6gnd5d8nzfc327647iww7gxly43rd4lw7fza8dk380"))))
     (build-system emacs-build-system)
-    (arguments (list #:exclude #~(list "emacs-devel.el")))
+    (arguments
+     (list #:include
+           #~(list "org-noter-core.el"
+                   "org-noter.el"
+                   "org-noter-test-utils.el"
+                   "modules/org-noter-pdf.el"
+                   "modules/org-noter-djvu.el"
+                   "modules/org-noter-nov.el"
+                   "modules/org-noter-org-roam.el"
+                   "modules/org-noter-pdf.el")
+           #:exclude
+           #~(list "emacs-devel.el")))
     (native-inputs (list emacs-log4e emacs-with-simulated-input))
     (propagated-inputs (list emacs-org))
     (home-page "https://github.com/org-noter/org-noter")

@@ -10696,17 +10696,37 @@ architecture.")
 (define-public python-mathics-scanner
   (package
     (name "python-mathics-scanner")
-    (version "1.3.1")
+    (version "1.4.1")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/Mathics3/mathics-scanner.git")
-             (commit "1.3.1")))
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "1i632v3f64q3v1i0p0x850mjhgad49fl24dl6r20r4wa1mhalmp0"))))
+         "0y34kzqha5wp6n8cyvhhz47mq33x9kwi8ibj67q6pf08qslg154n"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'prepare
+            (lambda _
+              ;; They forgot to update the version number.
+              (substitute* "mathics_scanner/version.py"
+               (("__version__=\"[^\"]*\"")
+                (string-append "__version__=\"" #$version "\"")))
+              (invoke "bash" "./admin-tools/make-JSON-tables.sh")
+              ;; Missing installation of "operators.yml".
+              (substitute* "pyproject.toml"
+               (("\"data/named-characters.yml\",")
+                "\"data/named-characters.yml\", \"data/operators.yml\","))
+              ;; Would cause a crash at runtime every time you select
+              ;; anything when running build_tables.py .
+              (substitute* "mathics_scanner/generate/build_tables.py"
+               (("\"operator-to-amslatex\",") "")))))))
     (propagated-inputs (list python-chardet python-click python-pyyaml))
     (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://mathics.org/")
@@ -10720,13 +10740,13 @@ the Wolfram language.")
 (define-public python-mathics-pygments
   (package
     (name "python-mathics-pygments")
-    (version "1.0.3")
+    (version "1.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mathics_pygments" version))
        (sha256
-        (base32 "1q54c8mb9pgw8ncbs9hln183nxvvxq0d8495c8zakccsfswvznx2"))))
+        (base32 "1iagdic8f0yjx01kdds40jfcxcpdbrd3i0ywydl01dhyyvd2yjk9"))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-mathics-scanner python-pygments))
     (native-inputs (list python-setuptools python-wheel))
@@ -10738,7 +10758,7 @@ the Wolfram language.")
 (define-public python-mathics-core
   (package
     (name "python-mathics-core")
-    (version "7.0.0")
+    (version "8.0.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -10747,7 +10767,7 @@ the Wolfram language.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0hhk2qq6swnprf9hliazwi3858sv3b3015g0mnm4ycdk5fsc7y57"))))
+                "1ymxwbjj51kplw94q17ha2cjs9vhv4b1cqd131mw1b5sxdrlig59"))))
     (arguments
      `(;; <https://github.com/pytest-dev/pytest/pull/10173> is missing .closed
        #:test-flags '("-s")
@@ -10756,15 +10776,21 @@ the Wolfram language.")
          (add-after 'unpack 'patch-bugs
            (lambda _
              (substitute* "pyproject.toml"
+              (("\"data/*.json\",")
+              "\"data/*.json\", \"data/operator-tables.json\",")
               (("\"autoload/\\*.m\",")
                ;; They forgot to install autoload/rules/*.m
                "\"autoload/*.m\", \"autoload/rules/*.m\","))
              ;; Prevent internet access by tests.
              (substitute* "mathics/builtin/files_io/files.py"
               (("https://raw.githubusercontent.com/Mathics3/mathics-core/master/README.rst")
-               (string-append (getcwd) "/README.rst")))))
+               (string-append (getcwd) "/README.rst")))
+             ;; setup.py has some weird acrobatics that cannot work right.
+             (invoke "mathics3-generate-operator-json-table" "-o"
+                     "mathics/data/operator-tables.json")))
          (add-before 'check 'prepare-check
            (lambda* (#:key inputs outputs #:allow-other-keys)
+             ;(copy-file "operator-tables.json" "mathics/data/operator-tables.json")
              ; Doesn't work: (add-installed-pythonpath inputs outputs)
              (setenv "PYTHONPATH" (getcwd))))
          (add-before 'check 'prepare-locales
@@ -10778,6 +10804,8 @@ the Wolfram language.")
     (propagated-inputs (list python-mpmath
                              python-pint
                              python-palettable
+                             python-pympler
+                             python-stopit
                              python-sympy
                              python-numpy
                              python-mathics-scanner
@@ -10795,13 +10823,13 @@ to Wolfram.")
 (define-public python-mathicsscript
   (package
     (name "python-mathicsscript")
-    (version "7.0.0")
+    (version "8.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mathicsscript" version))
        (sha256
-        (base32 "15ppg8sj03j63664npdqiv1lfk2mqnrqjb5817zjyy04z9s0kp7l"))))
+        (base32 "12si397b9ap5ibvbap72bvkmssh8hdap8jbmdmhsj1qdb1axrac4"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:phases
@@ -10829,13 +10857,13 @@ Mathics3.")
 (define-public python-mathics-django
   (package
     (name "python-mathics-django")
-    (version "7.0.0")
+    (version "8.0.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "Mathics-Django" version))
+       (uri (pypi-uri "mathics_django" version))
        (sha256
-        (base32 "02ccq0kx9i9b339p48j6xixr5wqj58dp8rhcik07b7vrfvznnxdi"))))
+        (base32 "02rwmbzb6dgsz5brwanyv3lahlc2zyhyv0xshmii652mhrgkv9gg"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:phases

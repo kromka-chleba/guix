@@ -856,57 +856,63 @@ suite native in R.")
       (license license:expat))))
 
 (define-public r-bpcells
-  (let ((commit "32ce67312185d3ed1046b4218dd3aaf1b35dcfda")
-        (revision "1"))
-    (package
-      (name "r-bpcells")
-      (version (git-version "0.1.0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/bnprks/BPCells/")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0im4sqvbii326acmd1hnimyzsllnbvnh9al3dp1nla6isgi7s6cg"))))
-      (properties `((upstream-name . "BPCells")))
-      (build-system r-build-system)
-      (arguments
-       (list
-        #:phases
-        '(modify-phases %standard-phases
-           (add-after 'unpack 'do-not-tune
-             (lambda _
-               (substitute* "configure"
-                 (("\"-march=native\"") "\"\"")))))))
-      (inputs (list hdf5 zlib))
-      (propagated-inputs (list r-dplyr
-                               r-ggplot2
-                               r-ggrepel
-                               r-hexbin
-                               r-magrittr
-                               r-matrix
-                               r-patchwork
-                               r-rcolorbrewer
-                               r-rcpp
-                               r-rcppeigen
-                               r-rlang
-                               r-scales
-                               r-scattermore
-                               r-stringr
-                               r-tibble
-                               r-tidyr
-                               r-vctrs))
-      (native-inputs (list pkg-config))
-      (home-page "https://github.com/bnprks/BPCells/")
-      (synopsis "Single cell counts matrices to PCA")
-      (description
-       "This is a package providing efficient operations for single cell
+  (package
+    (name "r-bpcells")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/bnprks/BPCells")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "12h1di45fg06nhsliii7v0h1z567pkpis1xm4ar1qr8ns1n8iljw"))))
+    (properties `((upstream-name . "BPCells")))
+    (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'chdir
+           (lambda _ (chdir "r"))))))
+    (propagated-inputs
+     (list r-dplyr
+           r-ggplot2
+           r-ggrepel
+           r-hexbin
+           r-lifecycle
+           r-magrittr
+           r-matrix
+           r-patchwork
+           r-rcolorbrewer
+           r-rcpp
+           r-rcppeigen
+           r-readr
+           r-rlang
+           r-scales
+           r-scattermore
+           r-stringr
+           r-tibble
+           r-tidyr
+           r-vctrs
+
+           ;; Suggested packages
+           r-genomicranges
+           r-igraph
+           r-iranges
+           r-matrixstats))
+    (inputs (list hdf5 zlib))
+    (native-inputs (list pkg-config))
+    (home-page "https://github.com/bnprks/BPCells")
+    (synopsis "Single cell counts matrices to PCA")
+    (description
+     "This is a package providing efficient operations for single cell
 ATAC-seq fragments and RNA counts matrices.  It is interoperable with standard
 file formats, and introduces efficient bit-packed formats that allow large
 storage savings and increased read speeds.")
-      (license license:gpl3))))
+    ;; Either license
+    (license (list license:asl2.0 license:expat))))
 
 (define-public r-btools
   (let ((commit "fa21d4ca01d37ea4d98b45582453f3bf95cbc2b5")
@@ -2583,6 +2589,51 @@ cell types and subtypes.")
 and sequence consensus.")
     (license license:expat)))
 
+(define-public python-cnmf
+  (package
+    (name "python-cnmf")
+    (version "1.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "cnmf" version))
+       (sha256
+        (base32 "0aic8cwj6riykcfgl6v2x3si5z04gaknkh5a8lcyv1qh4s1gx3d3"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f ; no tests in git checkout and PyPI archive
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-envs
+            (lambda _
+              (setenv "MPLCONFIGDIR" "/tmp")
+              ;; Numba needs a writable dir to cache functions.
+              (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-anndata
+           python-fastcluster
+           python-matplotlib
+           python-numba
+           python-numpy
+           python-palettable
+           python-pandas
+           python-pyyaml
+           python-scanpy
+           python-scikit-learn
+           python-scipy))
+    (home-page "https://github.com/dylkot/cNMF")
+    (synopsis "Consensus NMF for scRNA-Seq data")
+    (description
+     "This tool offers a pipeline for inferring gene expression programs from
+scRNA-Seq. It takes a count matrix (N cells X G genes) as input and produces
+a (K x G) matrix of gene expression programs (GEPs) and a (N x K) matrix
+specifying the usage of each program for each cell in the data.")
+    (license license:expat)))
+
 (define-public python-cyvcf2
   (package
     (name "python-cyvcf2")
@@ -2793,6 +2844,15 @@ from single-cell RNA-sequencing.")
        (sha256
         (base32 "15lxgncrnsx1hapfx78pvx4rjx5d48hqixdnacdy55d84myfmrym"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-pyproject
+            (lambda _
+              ;; License field should not be empty.
+              (substitute* "pyproject.toml"
+                (("^license = \"\"") "")))))))
     (propagated-inputs (list python-numpy
                              python-pandas
                              python-scikit-learn
@@ -13222,6 +13282,38 @@ The generated output can be graphically summarized using the built-in plotting
 function.")
       (license license:gpl2))))
 
+(define-public r-music
+  (let ((commit "f21fe67f5670d5e9fca0ad7550abaae3423eb59c")
+        (revision "2"))
+    (package
+      (name "r-music")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/xuranw/MuSiC")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "05q72sml35sw3rd0lyg7r9r3470q47x5dsjn4bpgzl99s5d76llx"))))
+      (properties `((upstream-name . "MuSiC")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-biobase
+                               r-ggplot2
+                               r-matrix
+                               r-mcmcpack
+                               r-nnls
+                               r-singlecellexperiment
+                               r-toast))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/xuranw/MuSiC")
+      (synopsis "Multi-subject single cell deconvolution")
+      (description
+       "MuSiC is a deconvolution method that utilizes cross-subject scRNA-seq
+to estimate cell type proportions in bulk RNA-seq data.")
+      (license license:gpl3+))))
+
 (define-public r-sleuth
   (package
     (name "r-sleuth")
@@ -15714,10 +15806,9 @@ dispersal.  Its output can be processed by treeannotator (from the
                   "-E" (format #f "'(~a)'" (string-join disabled-tests "|")))
             ";"))))))
     (native-inputs
-     `(("python" ,python-wrapper)
-       ("swig" ,swig)))
+     (list python-wrapper swig))
     (inputs
-     (list boost
+     (list boost-for-mysql
            cgal
            gsl
            hdf5
@@ -22308,6 +22399,59 @@ duplicates, samblaster will require approximately 20MB of memory per 1M read
 pairs.")
     (license license:expat)))
 
+(define-public r-hdf5dataframe
+  (let ((commit "1cdb905b1f6af3339938de3e1ca407908bc93e47")
+        (revision "1"))
+    (package
+      (name "r-hdf5dataframe")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/BIMSBbioinfo/HDF5DataFrame")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1pk22h56x873gahj2nwnwxzyq5a27h363mxk1491irypvk78dpn9"))))
+      (properties `((upstream-name . "HDF5DataFrame")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-biocgenerics r-delayedarray r-hdf5array
+                               r-rhdf5 r-s4vectors))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/BIMSBbioinfo/HDF5DataFrame")
+      (synopsis "Bioconductor-friendly bindings for Parquet")
+      (description
+       "This package implements bindings for h5 files that are compatible with
+Bioconductor S4 data structures, namely the @code{DataFrame} and
+@code{DelayedArray}.  This allows HDF5-backed data to be easily used as data
+frames with arbitrary sets of columns.")
+      (license license:expat))))
+
+(define-public r-imagearray
+  (let ((commit "78b4b18d4326aca8aecb2cf01b019c5809078310")
+        (revision "1"))
+    (package
+      (name "r-imagearray")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/BIMSBbioinfo/ImageArray")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0lqcvp0xrvi5c5v31cjvcbjcyrd2wssc948fvndarvg0vhvgqw71"))))
+      (properties `((upstream-name . "ImageArray")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-delayedarray r-hdf5array r-magick r-s4arrays
+                               r-zarrarray))
+      (home-page "https://github.com/BIMSBbioinfo/ImageArray")
+      (synopsis "DelayedArray based image operations")
+      (description "@code{DelayedArray} based image operations.")
+      (license license:expat))))
+
 (define-public r-velocyto
   (let ((commit "d7790346cb99f49ab9c2b23ba70dcf9d2c9fc350")
         (revision "1"))
@@ -22428,7 +22572,36 @@ patterns.")
                                r-shinyjs
                                r-sp
                                r-stringr
-                               r-uwot))
+                               r-uwot
+
+                               ;; Suggested packages
+                               r-anndata
+                               r-anndatar
+                               r-arrow
+                               r-bpcells
+                               r-circlize
+                               r-codetools
+                               r-complexheatmap
+                               r-delayedarray
+                               r-deseq2
+                               r-geojsonr
+                               r-ggforce
+                               r-ggnewscale
+                               r-glmgampoi
+                               r-hdf5array
+                               r-hdf5dataframe
+                               r-hdf5r
+                               r-imagearray
+                               r-music
+                               r-rstudioapi
+                               r-seurat
+                               r-seuratobject
+                               r-singlecellexperiment
+                               r-spacexr
+                               r-spatialexperiment
+                               r-vitesscer
+                               r-xml
+                               r-zarrdataframe))
       (native-inputs (list pkg-config r-testthat))
       (home-page "https://github.com/BIMSBbioinfo/VoltRon")
       (synopsis "VoltRon for spatial data integration and analysis")
@@ -22438,6 +22611,65 @@ multi-omics integration using spatial image registration.  @code{VoltRon} is
 capable of analyzing multiple types and modalities of spatially-aware
 datasets.  @code{VoltRon} visualizes and analyzes regions of interests (ROIs),
 spots, cells and even molecules.")
+      (license license:expat))))
+
+(define-public r-zarrdataframe
+  (let ((commit "fa89bd272ebc33a90edd4016c6f87f966102a4f5")
+        (revision "1"))
+    (package
+      (name "r-zarrdataframe")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/BIMSBbioinfo/ZarrDataFrame")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "121vyqwyg773l77xvx0rvrf0dyn26g3b01v42pz0a8lj4qmk86vn"))))
+      (properties `((upstream-name . "ZarrDataFrame")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-biocgenerics r-delayedarray r-pizzarr
+                               r-s4vectors r-zarrarray))
+      (native-inputs (list r-knitr))
+      (home-page "https://github.com/BIMSBbioinfo/ZarrDataFrame")
+      (synopsis "Bioconductor-friendly Bindings for Zarr")
+      (description
+       "This package implements bindings for zarr store that are compatible
+with Bioconductor S4 data structures, namely the @code{DataFrame} and
+@code{DelayedArray}.  This allows Zarr-backed data to be easily used as data
+frames with arbitrary sets of columns.")
+      (license license:expat))))
+
+(define-public r-zarrarray
+  (let ((commit "508d87193b20feba8cd24fa96b33e1bc9cc49958")
+        (revision "1"))
+    (package
+      (name "r-zarrarray")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/BIMSBbioinfo/ZarrArray")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0fz7zj9ixmz6yh709cd55abc5378b549cx454cgk274nhp24xdbr"))))
+      (properties `((upstream-name . "ZarrArray")))
+      (build-system r-build-system)
+      (propagated-inputs (list r-biocgenerics
+                               r-delayedarray
+                               r-iranges
+                               r-matrix
+                               r-pizzarr
+                               r-s4arrays
+                               r-s4vectors
+                               r-sparsearray))
+      (home-page "https://github.com/BIMSBbioinfo/ZarrArray")
+      (synopsis "Zarr backend for DelayedArray objects")
+      (description "Zarr backend for @code{DelayedArray} objects.")
       (license license:expat))))
 
 (define-public methyldackel

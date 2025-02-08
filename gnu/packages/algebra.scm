@@ -17,6 +17,7 @@
 ;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2023 Mehmet Tekman <mtekman89@gmail.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -36,6 +37,7 @@
 (define-module (gnu packages algebra)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
+  #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
@@ -46,11 +48,13 @@
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fltk)
+  #:use-module (gnu packages fontutils)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages image)
   #:use-module (gnu packages java)
+  #:use-module (gnu packages libffi)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mpi)
   #:use-module (gnu packages multiprecision)
@@ -241,6 +245,15 @@ the real span of the lattice.")
      (base32
       "1pch6bk76f1i6cwwgm7hhxi5h71m52lqayp4mnyj0jmjk406bhdp"))))
 
+(define pari-seadata-small
+  ;; version from 2009-06-18
+  (origin
+    (method url-fetch)
+    (uri "https://pari.math.u-bordeaux.fr/pub/pari/packages/seadata-small.tgz")
+    (sha256
+     (base32
+      "13qafribxwkz8h3haa0cng7arz0kh7398br4y7vqs9ib8w9yjnxz"))))
+
 (define-public pari-gp
   (package
     (name "pari-gp")
@@ -266,9 +279,10 @@ the real span of the lattice.")
               (invoke "./Configure"
                       "--mt=pthread"
                       (string-append "--prefix=" #$output))))
-          (add-after 'install 'install-galdata
+          (add-after 'install 'install-data
             (lambda _
               (invoke "tar" "-xvf" #$pari-galdata)
+              (invoke "tar" "-xvf" #$pari-seadata-small)
               (copy-recursively "data/" (string-append
                                          #$output
                                          "/share/pari")))))))
@@ -585,7 +599,7 @@ matrices, and polynomials over the integers and over finite fields.")
 (define-public singular
   (package
    (name "singular")
-   (version "4.3.2p10")
+   (version "4.3.2p16")
    (source
     (origin
       (method url-fetch)
@@ -600,7 +614,7 @@ matrices, and polynomials over the integers and over finite fields.")
                         #\.) "-")
                       "/singular-" version ".tar.gz"))
              (sha256 (base32
-                      "1a2j2pkp73rb1xdd5623gkk1snwd85yimssnz86y0m79zvyckhi8"))))
+                      "05ia8zqiddj1agg9bfdx54z0sjqcgjgi6lz7ck2ngv562fx36mv7"))))
    (build-system gnu-build-system)
    (native-inputs
     (list doxygen graphviz perl))
@@ -1866,3 +1880,104 @@ and not by the available RAM.")
     (description (string-append (package-description form)
                                 "  This package also includes
 @code{parform}, a version of FORM parallelized using OpenMPI."))))
+
+(define-public reduce
+  (package
+    (name "reduce")
+    (version "2024-08-12")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://sourceforge/reduce-algebra/snapshot_"
+                    version "/Reduce-svn6860-src.tar.gz"))
+              (sha256
+               (base32
+                "13bij9d4dj96vd5di59skz77s2fihj7awmkx403fvh9rd04ly25z"))
+              (modules '((guix build utils)))
+              (patches (search-patches "reduce-unbundle-libffi.patch"))
+              ;; remove binaries and unnecessary parts
+              ;; to ensure we build from source files only
+              (snippet '(map delete-file-recursively
+                         (append (find-files "csl/generated-c" "\\.img$")
+                          '("psl" "vsl"
+                            "jlisp"
+                            "jslisp"
+                            "libedit"
+                            "macbuild"
+                            "MacPorts"
+                            "mac-universal"
+                            "reduce2"
+                            "winbuild64"
+                            "common-lisp"
+                            "contrib"
+                            "generic/qreduce"
+                            "web/htdocs/images/Thumbs.db")
+                          (find-files "csl"
+                           "^(embedded|new-embedded|winbuild|support-packages)$"
+                           #:directories? #t)
+                          (find-files "libraries"
+                           "^(original|wineditline|libffi|libffi-for-mac)$"
+                           #:directories? #t))))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "--without-autogen"
+                   ;; fix conflict with internal build name determination
+                   "--build="
+                   "--with-csl"
+                   (string-append "CPPFLAGS=-I"
+                                  #$freetype
+                                  "/include/freetype2"))
+           #:make-flags #~(list "csl")
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "scripts/testall.sh" "--csl" "--noregressions"))))
+               (add-before 'patch-source-shebangs 'autogen
+                 (lambda _
+                   (invoke "sh" "autogen.sh")))
+               (add-after 'install 'fix-install
+                 (lambda _
+                   (copy-file "bin/rfcsl"
+                              (string-append #$output "/bin/rfcsl"))
+                   (copy-file "generic/newfront/redfront.1"
+                              (string-append #$output
+                                             "/share/man/man1/rfcsl.1"))
+                   (let ((.desktop-file
+                          "debianbuild/reduce/debian/redcsl.desktop")
+                         (icon "debianbuild/reduce/debian/reduce.png"))
+                     (install-file .desktop-file
+                                   (string-append #$output
+                                                  "/share/applications"))
+                     (install-file icon
+                                   (string-append
+                                    #$output
+                                    "/share/icons/hicolor/32x32/apps")))
+                   (with-directory-excursion #$output
+                     (map (lambda (dir)
+                            (map (lambda (file)
+                                   (chmod file #o444))
+                                 (find-files dir)))
+                          '("share/man/man1" "share/reduce/fonts"))))))))
+    (native-inputs (list autoconf automake libtool which))
+    (inputs
+     ;; bundled libraries: fox (adjusted) editline (adjusted)
+     ;; crlibm softfloat
+     (list freetype libffi libx11 libxext libxft ncurses))
+    (synopsis "Portable general-purpose computer algebra system")
+    (description
+     "REDUCE is a portable general-purpose computer algebra system.  It is a
+system for doing scalar, vector and matrix algebra by computer, which also
+supports arbitrary precision numerical approximation and interfaces to
+gnuplot to provide graphics.  It can be used interactively for simple
+calculations but also provides a full programming language, with a syntax
+similar to other modern programming languages.  REDUCE supports alternative
+user interfaces including Run-REDUCE, TeXmacs and GNU Emacs.  This package
+provides the Codemist Standard Lisp (CSL) version of REDUCE.  It uses the
+gnuplot program, if installed, to draw figures.")
+    (home-page "https://reduce-algebra.sourceforge.io/")
+    (license (license:non-copyleft "file://README"
+                                   "See README in the distribution."))))
+

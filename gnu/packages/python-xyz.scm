@@ -198,6 +198,7 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
+  #:use-module (gnu packages crates-check)
   #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crates-windows)
   #:use-module (gnu packages crypto)
@@ -215,6 +216,7 @@
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages game-development)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gdb)
   #:use-module (gnu packages geo)
@@ -577,6 +579,37 @@ comparison operators, as defined in the original
 @url{http://goessner.net/articles/JsonPath/, JSONPath} proposal.")
     (license license:asl2.0)))
 
+(define-public python-multiplex
+  (package
+    (name "python-multiplex")
+    (version "0.6.1")
+    (source
+     (origin
+       (method git-fetch)               ;no tests in PyPI archive
+       (uri (git-reference
+             (url "https://github.com/dankilman/multiplex")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1a662liqhiya47i6vrz3q03w08viqg3wj5j3g58mz175hcdcmmmv"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-poetry-core
+           python-pytest
+           python-pytest-asyncio))
+    (propagated-inputs
+     (list python-aiofiles
+           python-aiostream
+           python-click
+           python-easy-ansi
+           python-pyte))
+    (home-page "https://github.com/dankilman/multiplex")
+    (synopsis "Parallel stream of outputs from multiple processes")
+    (description
+     "This package provides a functionality to view output of multiple
+processes, in parallel, in the console, with an interactive TUI.")
+    (license license:expat)))
+
 (define-public python-pyxdameraulevenshtein
   (package
     (name "python-pyxdameraulevenshtein")
@@ -598,6 +631,29 @@ comparison operators, as defined in the original
      "@code{pyxDamerauLevenshtein} implements the Damerau-Levenshtein (DL)
 edit distance algorithm for Python in Cython for high performance.")
     (license license:bsd-3)))
+
+(define-public python-takethetime
+  (package
+    (name "python-takethetime")
+    (version "0.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "TakeTheTime" version))
+       (sha256
+        (base32 "1y9gzqb9l1f2smx8783ccjzjvby5mphshgrfks7s75mml59h9qyv"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; tests are time dependent and not provided in PyPI
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (home-page "https://github.com/ErikBjare/TakeTheTime")
+    (synopsis "Timing chunks of code")
+    (description
+     "This package implements a functionality for time taking using context
+managers.")
+    (license license:expat)))
 
 (define-public python-trubar
   (package
@@ -23123,40 +23179,95 @@ some degree most natural languages too.")
 (define-public python-libcst
   (package
     (name "python-libcst")
-    (version "0.3.18") ; starting from 0.4.0 project depends on Rust
+    (version "1.6.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "libcst" version))
               (sha256
                (base32
-                "1ll0yyxbz8zyqcy9kfcqi3l5fah2zqisvpjbzjnz7s7dmb84q59h"))))
-    (build-system pyproject-build-system)
+                "1nzhvg52whpmfv8fkrnv7rlrmgc5m43hpyp8ra9kffx47yzcs3p8"))
+              (snippet
+               #~(begin (use-modules (guix build utils))
+                        ;; This is mostly to keep the cargo-build-system happy
+                        (with-output-to-file "Cargo.toml"
+                          (lambda ()
+                            (format #t "\
+[workspace]
+
+members = [
+    \"native\",]")))))))
+    (build-system cargo-build-system)
     (arguments
      (list
-      #:test-flags
-      #~(list
-         ;; Reported upstream: <https://github.com/Instagram/LibCST/issues/346>.
-         "--ignore=libcst/tests/test_fuzz.py"
-         ;; Reported upstream: <https://github.com/Instagram/LibCST/issues/347>.
-         "--ignore=libcst/tests/test_pyre_integration.py"
-         "--ignore=libcst/codemod/tests/test_codemod_cli.py"
-         "--ignore=libcst/metadata/tests/test_full_repo_manager.py"
-         "--ignore=libcst/metadata/tests/test_type_inference_provider.py"
-         "-k" (string-join
-               ;; AssertionError: False is not true : libcst.matchers.__init__
-               ;; needs new codegen!
-               (list "not test_codegen_clean_matcher_classes"
-                     "test_codegen_clean_return_types"
-                     "test_codegen_clean_visitor_functions")
-               " and not "))))
+      #:install-source? #false
+      #:cargo-test-flags
+      ;; According to .github/workflows/ci.yml
+      '(list "--manifest-path=native/Cargo.toml"
+             "--release"
+             "--no-default-features")
+      #:cargo-inputs
+      (list rust-chic-1
+            rust-memchr-2
+            rust-paste-1
+            rust-peg-0.8
+            rust-pyo3-0.22
+            rust-quote-1
+            rust-regex-1
+            rust-syn-2
+            rust-thiserror-1)
+      #:cargo-development-inputs
+      (list rust-criterion-0.5
+            rust-difference-2
+            rust-itertools-0.13
+            rust-rayon-1
+            rust-trybuild-1)
+      #:imported-modules `(,@%pyproject-build-system-modules
+                           ,@%cargo-build-system-modules)
+      #:modules `((guix build cargo-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'prepare-source
+            (lambda _
+              (delete-file "native/Cargo.lock")))
+          (add-after 'configure 'dont-vendor-self
+            (lambda* (#:key vendor-dir #:allow-other-keys)
+              ;; Don't keep the whole tarball in the vendor directory
+              (delete-file-recursively
+                (string-append vendor-dir "/libcst-" #$version ".tar.zst"))))
+          (replace 'build
+            (assoc-ref py:%standard-phases 'build))
+          (add-after 'install 'wrap
+            (lambda _
+              ;; Collection of python- and pyproject-build-system phases
+              ;; between 'install and 'check.
+              (assoc-ref py:%standard-phases 'add-install-to-pythonpath)
+              (assoc-ref py:%standard-phases 'add-install-to-path)
+              (assoc-ref py:%standard-phases 'wrap)
+              (assoc-ref py:%standard-phases 'create-entrypoints)
+              (assoc-ref py:%standard-phases 'compile-bytecode)))
+          ;; We are not the only ones who cannot load libcst.native
+          ;; during the 'check phase
+          ;; https://github.com/Instagram/LibCST/issues/1176
+          ;(add-after 'wrap 'python-check
+          ;  (lambda args
+          ;    (apply (assoc-ref py:%standard-phases 'check)
+          ;           #:test-flags '()
+          ;           args)))
+          (replace 'install
+            (assoc-ref py:%standard-phases 'install)))))
     (native-inputs
-     (list python-pytest
+     (list python-minimal-wrapper
+           python-hypothesmith
+           python-pytest
            python-setuptools
+           python-setuptools-rust
+           python-setuptools-scm
            python-wheel))
+    (inputs (list maturin))
     (propagated-inputs
-     (list python-typing-extensions
-           python-typing-inspect
-           python-pyyaml))
+     (list python-pyyaml))
     (home-page "https://github.com/Instagram/LibCST")
     (synopsis "Concrete Syntax Tree (CST) parser and serializer library for Python")
     (description
@@ -23179,9 +23290,14 @@ feels like an AST.")
    (package
      (inherit python-libcst)
      (name "python-libcst-minimal")
-     (arguments '(#:tests? #f))
+     (arguments
+      (substitute-keyword-arguments (package-arguments python-libcst)
+        ((#:tests? _ #t) #f)))
     (native-inputs
-     (list python-setuptools
+     (list python-minimal-wrapper
+           python-setuptools
+           python-setuptools-rust
+           python-setuptools-scm
            python-wheel)))))
 
 (define-public python-typeapi
@@ -27205,31 +27321,49 @@ functionality like full case-folding for case-insensitive matches in Unicode.")
        (sha256
         (base32
          "09syrsfrcknr1k2wmj05gfd5d0dyjfxzbipzbd0agv9775vwi9lf"))))
-    (build-system python-build-system)
-    (inputs
-     (list mesa freeglut glu))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f ; Tests fail: AttributeError: 'GLXPlatform' object has no
-                                        ;attribute 'OSMesa'
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'fix-paths
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (substitute* '("OpenGL/platform/ctypesloader.py")
-               (("filenames_to_try = \\[\\]") "filenames_to_try = [name]"))
-             (substitute* '("OpenGL/platform/glx.py" "tests/check_glut_load.py")
-               (("'GL'")
-                (string-append "'" (assoc-ref inputs "mesa") "/lib/libGL.so'"))
-               (("'GLU'")
-                (string-append "'" (assoc-ref inputs "glu") "/lib/libGLU.so'"))
-               (("'glut',")
-                (string-append "'" (assoc-ref inputs "freeglut") "/lib/libglut.so',"))
-               (("'GLESv1_CM'")
-                (string-append "'" (assoc-ref inputs "mesa") "/lib/libGLESv1_CM.so'"))
-               (("'GLESv2'")
-                (string-append "'" (assoc-ref inputs "mesa") "/lib/libGLESv2.so'")))
-               ;; Not providing libgle. It seems to be very old.
-             #t)))))
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; XXX: Check why these test fail.
+                    (list "not test_get_read_fb_binding"
+                          "test_get_version"
+                          "test_glCallLists_twice2"
+                          "test_lookupint"
+                          "test_pointers")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'fix-paths
+            (lambda _
+              (substitute* '("OpenGL/platform/ctypesloader.py")
+                (("filenames_to_try = \\[\\]") "filenames_to_try = [name]"))
+              (substitute* '("OpenGL/platform/glx.py"
+                             "OpenGL/platform/egl.py"
+                             "OpenGL/platform/osmesa.py"
+                             "OpenGL/platform/darwin.py"
+                             "tests/check_glut_load.py")
+                (("'GLU'")
+                 (format #f "'~a/~a'" #$(this-package-input "glu")
+                         "lib/libGLU.so"))
+                (("'glut',")
+                 (format #f "'~a/~a'," #$(this-package-input "freeglut")
+                         "lib/libglut.so"))
+                (("'(GL|EGL|GLESv1_CM|GLESv2|OSMesa)'" all gl-library)
+                 (format #f "'~a/~a'" #$(this-package-input "mesa")
+                         (string-append "lib/lib" gl-library ".so"))))
+              ;; Not providing libgle. It seems to be very old.
+              )))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-pygame
+           python-wheel))
+    (inputs
+     (list freeglut
+           glu
+           mesa))
     (home-page "https://pyopengl.sourceforge.net")
     (synopsis "Standard OpenGL bindings for Python")
     (description

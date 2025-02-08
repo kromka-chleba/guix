@@ -1815,7 +1815,7 @@ KF5/Qt5 to KF6/Qt6")
 (define-public mpvqt
   (package
     (name "mpvqt")
-    (version "1.0.0")
+    (version "1.0.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1823,7 +1823,7 @@ KF5/Qt5 to KF6/Qt6")
                     name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1fafyn3a8hgg1g3nfka6hyynlmqdygaxz0fhp4ckxwz54nlx4cci"))))
+                "130p3irs1llv7n1hs7w5xms29amh0aa2bi238wjgc9ww65gvhdwz"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config))
@@ -1841,14 +1841,14 @@ KF5/Qt5 to KF6/Qt6")
 (define-public plasmatube
   (package
     (name "plasmatube")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
-                     (uri (string-append "mirror://kde/stable/release-service/" version
-                           "/src/plasmatube-" version ".tar.xz"))
+              (uri (string-append "mirror://kde/stable/release-service/" version
+                                  "/src/plasmatube-" version ".tar.xz"))
               (sha256
                (base32
-                "0dkn1ysgvhwrfdffpwbgzblc0jbb94h5r4cp23gnnk38iy4fsrim"))))
+                "00nbcpllsz2f8jvwxyikqfyvl9qg1xpaqgp8r0jj1xnzjnq1d207"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules pkg-config python-minimal))
     (inputs
@@ -1859,6 +1859,7 @@ KF5/Qt5 to KF6/Qt6")
            kirigami-addons
            ki18n
            kwindowsystem
+           purpose
            qtdeclarative
            qtmultimedia
            qtsvg

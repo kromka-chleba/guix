@@ -69,7 +69,7 @@
 (define-public crun
   (package
     (name "crun")
-    (version "1.19.1")
+    (version "1.20")
     (source
      (origin
        (method url-fetch)
@@ -79,7 +79,7 @@
              "/crun-" version ".tar.gz"))
        (sha256
         (base32
-         "1hf8ggkw9wiznlp7xarjjrmhgpdmqxzaq0a41wd18h360s1z5a9j"))))
+         "0rd41j7sb5563jflnvc2kvdzp9gyv7ska3s6dgg70w25kmlsqiip"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -626,7 +626,7 @@ being rootless and not requiring any daemon to be running.")
 (define-public buildah
   (package
     (name "buildah")
-    (version "1.38.1")
+    (version "1.39.0")
     (source
      (origin
        (method git-fetch)
@@ -634,7 +634,7 @@ being rootless and not requiring any daemon to be running.")
              (url "https://github.com/containers/buildah")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "10bgdn154b0akmni27vasnpylvwk9anb1gj08g6n004di9chg7ds"))
+        (base32 "02m91m5i12iwb801c6516ilbrhvn8ikrbcb109h55cf2h1grdf7m"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

@@ -47,6 +47,7 @@
 ;;; Copyright © 2021, 2022, 2024 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2021, 2022, 2024 jgart <jgart@dismail.de>
 ;;; Copyright © 2021 Alice Brenon <alice.brenon@ens-lyon.fr>
+;;; Copyright © 2021 Mekeor Melire <mekeor.melire@gmail.com>
 ;;; Copyright © 2022 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2022, 2023, 2025 Felix Gruber <felgru@posteo.net>
@@ -318,6 +319,76 @@ server process.")
     (synopsis "Pypi.org caching server")
     (description "This package implements a reliable private and pypi.org
 caching server.")
+    (license license:expat)))
+
+(define-public python-domain-connect
+  (package
+    (name "python-domain-connect")
+    (version "0.0.11")
+    (source
+     (origin
+       (method git-fetch)               ;no tests in PyPI archive
+       (uri (git-reference
+             (url "https://github.com/Domain-Connect/domainconnect_python")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dhqbx15h074g51mj73j9hlyvb11isjnj4s9ih5kbw1g4vf1q1jk"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Check and sanity-check phases require /etc/resolv.conf, which is not
+      ;; present in container.
+      #:tests? #f
+      #:phases #~(modify-phases %standard-phases (delete 'sanity-check))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-cryptography
+           python-dnspython
+           python-future
+           python-publicsuffix
+           python-publicsuffixlist))
+    (home-page "https://github.com/Domain-Connect/domainconnect_python")
+    (synopsis "Client library for Domain Connect protocol")
+    (description
+     "This package provides a Service Provider functionality in both Sync and
+Async mode for @url{https://domainconnect.org/, Domain Connect protocol}.")
+    (license license:expat)))
+
+(define-public python-domain-connect-dyndns
+  (package
+    (name "python-domain-connect-dyndns")
+    (version "0.0.9")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "domain-connect-dyndns" version))
+       (sha256
+        (base32 "0srrblcb64bp7k5cqqivx4kykqdkmmzmspxwv66vix9k7wxdwqzx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Check and sanity-check phases require /etc/resolv.conf, which is not
+      ;; present in container.
+      #:tests? #f
+      #:phases #~(modify-phases %standard-phases (delete 'sanity-check))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-dnspython
+           python-domain-connect
+           python-requests
+           python-validators))
+    (home-page "https://github.com/Domain-Connect/DomainConnectDDNS-Python")
+    (synopsis "Domain Connect Dynamic DNS in Python")
+    ;; Project lacks meaningful description in README, see
+    ;; <https://github.com/Domain-Connect/DomainConnectDDNS-Python/issues/43>.
+    (description
+     "Python client library for Dynamic DNS using
+@url{https://www.domainconnect.org/, Domain Connect} protocol.")
     (license license:expat)))
 
 (define-public python-eventlet
@@ -1463,6 +1534,34 @@ Model} (SAM) templates into AWS CloudFormation templates.")
      "The AWS X-Ray SDK for Python enables Python developers to record and
 emit information from within their applications to the AWS X-Ray service.")
     (license license:asl2.0)))
+
+(define-public python-publicsuffixlist
+  (package
+    (name "python-publicsuffixlist")
+    (version "1.0.2.20250202")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "publicsuffixlist" version))
+       (sha256
+        (base32 "0llam7g7sv08lcfgy18iph8br8ldjmy2qbjaykc9pd3z4iisb0yd"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (home-page "https://github.com/ko-zu/psl")
+    (synopsis "Public suffix list for Python")
+    (description
+     "This package provides an implementation of
+@url{https://publicsuffix.org/, Public Suffix List } as Python library.
+
+Features:
+@itemize
+@item supports IDN (unicode and punycoded)
+@item shipped with built-in PSL and an updater script
+@item written in Pure Python with no library dependencies
+@end itemize")
+    (license license:mpl2.0)))
 
 (define-public python-python3-saml
   (package
