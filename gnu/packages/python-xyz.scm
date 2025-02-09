@@ -7789,41 +7789,6 @@ format.")
     (description "This package provides a REPL plugin for Click.")
     (license license:expat)))
 
-(define-public python-doc8
-  (package
-    (name "python-doc8")
-    (version "0.8.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "doc8" version))
-       (sha256
-        (base32
-         "0hw5w8mpgsp51qg8nnq28p7y1jiksvz7a0axnn5bkgss3af9zy1d"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (delete 'check)
-         (add-after 'install 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (invoke "pytest" "-v"))
-             #t)))))
-    (propagated-inputs
-     (list python-chardet python-docutils python-restructuredtext-lint
-           python-six python-stevedore))
-    (native-inputs
-     (list python-testtools python-pytest))
-    (home-page "https://launchpad.net/doc8")
-    (synopsis
-     "Style checker for Sphinx (or other) RST documentation")
-    (description
-     "Doc8 is an opinionated style checker for reStructured Text and plain
-text styles of documentation.")
-    (license license:asl2.0)))
-
 (define-public python-pygdbmi
   (package
     (name "python-pygdbmi")
