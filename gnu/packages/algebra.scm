@@ -12,7 +12,7 @@
 ;;; Copyright © 2020 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
-;;; Copyright © 2020, 2021, 2023, 2024 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020, 2021, 2023, 2024, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 Lars-Dominik Braun <ldb@leibniz-psychology.org>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2023 Mehmet Tekman <mtekman89@gmail.com>
@@ -63,6 +63,7 @@
   #:use-module (gnu packages ocaml)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -599,7 +600,7 @@ matrices, and polynomials over the integers and over finite fields.")
 (define-public singular
   (package
    (name "singular")
-   (version "4.3.2p16")
+   (version "4.4.0p7")
    (source
     (origin
       (method url-fetch)
@@ -613,23 +614,24 @@ matrices, and polynomials over the integers and over finite fields.")
                                     version))
                         #\.) "-")
                       "/singular-" version ".tar.gz"))
-             (sha256 (base32
-                      "05ia8zqiddj1agg9bfdx54z0sjqcgjgi6lz7ck2ngv562fx36mv7"))))
+            (sha256
+              (base32
+               "0625541pxxhs7789i3ddf5fm1pqvf1kyljyaii41djg9j12cdhbc"))))
    (build-system gnu-build-system)
+   (arguments
+    (list
+     #:configure-flags #~(list (string-append "--with-ntl="
+                                              #$(this-package-input "ntl")))))
    (native-inputs
     (list doxygen graphviz perl))
    (inputs
-    `(("cddlib" ,cddlib)
-      ("gmp" ,gmp)
-      ("flint" ,flint)
-      ("mpfr" ,mpfr)
-      ("ntl" ,ntl)
-      ("python" ,python-2)
-      ("readline" ,readline)))
-   (arguments
-    `(#:configure-flags
-      (list (string-append "--with-ntl="
-                           (assoc-ref %build-inputs "ntl")))))
+    (list cddlib
+          gmp
+          flint
+          mpfr
+          ntl
+          python-2
+          readline))
    (synopsis "Computer algebra system for polynomial computations")
    (description
     "Singular is a computer algebra system for polynomial computations,
@@ -640,6 +642,28 @@ geometry and singularity theory.")
    ;; combined work becomes gpl3. See COPYING in the source code.
    (license license:gpl3)
    (home-page "https://www.singular.uni-kl.de/index.php")))
+
+(define-public python-pysingular
+  (package
+    (name "python-pysingular")
+    (version "0.9.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "PySingular" version))
+       (sha256
+        (base32 "037n3s1l08g75k22saki6813wi3ciiq45zxca11izilgagbx20ya"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; there are no tests
+    (native-inputs (list python-setuptools python-wheel))
+    ;; XXX: GMP failed to be loaded from Singular.  Pass it here for now.
+    (inputs (list gmp singular))
+    (home-page "https://github.com/sebasguts/PySingular")
+    (synopsis "Simple interface to Singular")
+    (description "This package provides a simple Python interface to the
+Singular computer algebra system.")
+    (license license:gpl2+)))
 
 (define-public gmp-ecm
   (package
@@ -1015,6 +1039,61 @@ Optional thin wrappers allow usage of the library from other languages.")
 to other CAS it does not try to provide extensive algebraic capabilities and a
 simple programming language but instead accepts a given language (C++) and
 extends it by a set of algebraic capabilities.")
+    (license license:gpl2+)))
+
+(define-public normaliz
+  (package
+    (name "normaliz")
+    (version "3.10.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/normaliz/Normaliz")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1smla96wjyv5ygg77ps9np6bfzp2qynq8vd1msybabi4621cnrma"))))
+    (build-system gnu-build-system)
+    (native-inputs (list autoconf automake libtool pkg-config))
+    ;; Flint is optional. TODO: Try to build with nauty and cocoalib support.
+    ;; The configure script fails to find nauty.h.
+    (inputs (list flint gmp))
+    (home-page "https://www.normaliz.uni-osnabrueck.de/")
+    (synopsis "Tool for discrete convex geometry")
+    (description "Normaliz is a tool for computations in affine monoids,
+vector configurations, rational polyhedra and rational cones.  Normaliz now
+computes rational and algebraic polyhedra, i.e., polyhedra defined over real
+algebraic extensions of QQ.")
+    (license license:gpl3+)))
+
+(define-public python-pynormaliz
+  (package
+    (name "python-pynormaliz")
+    (version "2.21")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pynormaliz" version))
+       (sha256
+        (base32 "0hsyxml71i2b9pa375ipbfpackj3y67jlg2rxgc433sfy3895wvf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f ; tests need normaliz to be built with nauty support
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (if tests?
+                           (invoke "python" "tests/runtests.py")))))))
+    (native-inputs (list python-setuptools python-wheel))
+    (inputs (list flint gmp normaliz))
+    (home-page "https://github.com/Normaliz/PyNormaliz")
+    (synopsis "Python interface to Normaliz")
+    (description
+     "PyNormaliz provides an interface to Normaliz via libNormaliz.  It offers
+the complete functionality of Normaliz, and can be used interactively from
+Python.")
     (license license:gpl2+)))
 
 (define-public eigen
@@ -1495,7 +1574,7 @@ finite fields.")
 (define-public m4ri
   (package
     (name "m4ri")
-    (version "20140914")
+    (version "20200125")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1504,7 +1583,7 @@ finite fields.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xfg6pffbn8r1s0y7bn9b8i55l00d41dkmhrpf7pwk53qa3achd3"))))
+                "1dxgbv6zdyki3h61qlv7003wzhy6x14zmcaz9x19md1i7ng07w1k"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake libtool pkg-config))
@@ -1609,7 +1688,7 @@ of M4RI from F_2 to F_{2^e}.")
 (define-public eclib
   (package
     (name "eclib")
-    (version "20241112")
+    (version "20250122")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1618,7 +1697,7 @@ of M4RI from F_2 to F_{2^e}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0v5981y0bv9s2sz6x2yh7mxzqsp9rrfv1jvdv12rwf64yacgmbz0"))))
+                "0f50r23788n6b899za1a7x6jkrhwj3y2v5y4xc98k63mp0wvqfq1"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake libtool))
@@ -1757,6 +1836,46 @@ no more than about 20 bits long).")
 (@dfn{DCT}), Discrete Sine Transform (@dfn{DST}) and Discrete Hartley Transform
 (@dfn{DHT}).")
     (license license:gpl2+)))
+
+(define-public libsemigroups
+  (package
+    (name "libsemigroups")
+    (version "2.7.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/libsemigroups/libsemigroups")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0pk7887g4in7fskl0da8l2xppv293jm31ykacsss3vs5fff2pw7a"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      ;; FIXME: libsemigroup's build system doesn't have an option to use
+      ;; external HPCombi.  Try to work it around in the future and skip
+      ;; support for now.
+      #:configure-flags #~(list "--enable-fmt=yes"
+                                "--enable-hpcombi=no"
+                                "--with-external-eigen=yes"
+                                "--with-external-fmt=yes")
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'fix-version
+                     (lambda* (#:key inputs #:allow-other-keys)
+                       (substitute* "etc/version-number.sh"
+                         (("/bin/sh")
+                          (search-input-file inputs "/bin/bash"))))))))
+    (native-inputs
+     (list autoconf automake libtool pkg-config))
+    (inputs (list eigen fmt))
+    (home-page "https://github.com/libsemigroups/libsemigroups")
+    (synopsis "Library for semigroups and monoids")
+    (description
+     "@code{libsemigroups} is a C++14 library containing implementations of
+several algorithms for computing finite, and finitely presented,
+semigroups and monoids.")
+    (license license:gpl3+)))
 
 (define-public sollya
   (package
@@ -1920,7 +2039,8 @@ and not by the available RAM.")
                            #:directories? #t))))))
     (build-system gnu-build-system)
     (arguments
-     (list #:configure-flags
+     (list #:parallel-build? #f
+           #:configure-flags
            #~(list "--without-autogen"
                    ;; fix conflict with internal build name determination
                    "--build="
@@ -1980,4 +2100,37 @@ gnuplot program, if installed, to draw figures.")
     (home-page "https://reduce-algebra.sourceforge.io/")
     (license (license:non-copyleft "file://README"
                                    "See README in the distribution."))))
+
+(define-public msolve
+  (package
+    (name "msolve")
+    (version "0.7.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/algebraic-solving/msolve")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1ipsdw5sk4d344ki4r5ma9vn8gyi8hrk0n951r0720wvgxkw920p"))))
+    (build-system gnu-build-system)
+    (native-inputs (list autoconf automake libtool))
+    (inputs (list flint gmp mpfr))
+    (home-page "https://msolve.lip6.fr/")
+    (synopsis
+     "Library for polynomial system solving through algebraic methods")
+    (description "@code{msolve} is a C library implementing computer algebra
+algorithms for solving polynomial systems (with rational coefficients or
+coefficients in a prime field).
+
+Currently, with msolve, you can basically solve multivariate polynomial
+systems.  This encompasses:
+
+@itemize
+@item the computation of Groebner bases
+@item real root isolation of the solutions to polynomial systems
+@item the computation of the dimension and the degree of the solution set.
+@end itemize")
+    (license license:gpl2+)))
 

@@ -43,6 +43,7 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages xml)
+  #:use-module (guix gexp)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
   #:use-module (guix download)
@@ -199,22 +200,24 @@ with mox as possible, but small enhancements have been made.")
 (define-public python-openstackdocstheme
   (package
     (name "python-openstackdocstheme")
-    (version "1.18.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "openstackdocstheme" version))
-              (sha256
-               (base32
-                "1ki5204rjdqjvr8xr9w2qc1z6b6d2i5jas0i70xzkf9njlzjzv2r"))))
-    (build-system python-build-system)
+    (version "3.4.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "openstackdocstheme" version))
+       (sha256
+        (base32 "0f8vk9556cx3h2z2dwqqkylv3rijd1p15qjy4xjv9sxxcfngdx1q"))))
+    (build-system pyproject-build-system)
     (arguments
-     ;; FIXME: Tests require an old version of python-hacking, which in
-     ;; turn depends on mox3 which depends on this package.
-     `(#:tests? #f))
-    (propagated-inputs
-     (list python-dulwich python-pbr))
+     (list
+      #:tests? #f)) ; no tests in PyPI archive or git checkout
     (native-inputs
-     (list python-sphinx))
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-dulwich
+           python-pbr
+           python-sphinx))
     (home-page "https://docs.openstack.org/openstackdocstheme/latest/")
     (synopsis "OpenStack Docs Theme")
     (description
@@ -658,32 +661,41 @@ in transmittable and storable formats, such as JSON and MessagePack.")
 (define-public python-reno
   (package
     (name "python-reno")
-    (version "2.7.0")
+    (version "4.1.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "reno" version))
-        (sha256
-          (base32 "0gwzi5dvacqx43smxl3rd1z33npn7gfhm50bvgmq90fib2q431wc"))))
-    (build-system python-build-system)
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "reno" version))
+       (sha256
+        (base32 "0w2kc9znm3ffcfsrwhvqkq6878jk3l9hibs7vv4mw88nppyz34pr"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'init-git
-           (lambda _
-             ;; reno expects a git repo
-             (invoke "git" "init"))))))
-    (propagated-inputs
-      (list python-dulwich python-pbr python-pyyaml python-six))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "HOME" "/tmp")
+              ;; reno expects a git repo
+              (invoke "git" "init"))))))
     (native-inputs
-      `(("python-testtools" ,python-testtools)
-        ("python-testscenarios" ,python-testscenarios)
-        ("python-testrepository" ,python-testrepository)
-        ("python-mock" ,python-mock)
-        ("python-docutils" ,python-docutils)
-        ("python-sphinx" ,python-sphinx)
-        ("gnupg" ,gnupg)
-        ("git" ,git-minimal/pinned)))
+     (list git-minimal/pinned
+           gnupg
+           python-docutils
+           python-openstackdocstheme
+           python-pytest
+           python-setuptools
+           python-sphinx
+           python-stestr
+           python-subunit
+           python-testscenarios
+           python-testtools
+           python-wheel))
+    (propagated-inputs
+     (list python-dulwich
+           python-packaging
+           python-pbr
+           python-pyyaml))
     (home-page "https://docs.openstack.org/reno/latest/")
     (synopsis "Release notes manager")
     (description "Reno is a tool for storing release notes in a git repository
@@ -1064,7 +1076,7 @@ regardless of whether they are bundled or not.")
     (propagated-inputs (list python-appdirs
                              python-cryptography
                              python-decorator
-                             python-dogpile.cache
+                             python-dogpile-cache
                              python-importlib-metadata
                              python-iso8601
                              python-jmespath

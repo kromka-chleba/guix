@@ -39,7 +39,7 @@
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020 Nicolò Balzarotti <nicolo@nixo.xyz>
 ;;; Copyright © 2020 B. Wilson <elaexuotee@wilsonb.com>
-;;; Copyright © 2020, 2021 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020, 2021, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2020 Martin Becze <mjbecze@riseup.net>
 ;;; Copyright © 2021 Gerd Heber <gerd.heber@gmail.com>
@@ -2739,6 +2739,54 @@ linear and quadratic objectives.  There are limited facilities for nonlinear
 and quadratic objectives using the Simplex algorithm.")
     (license license:epl1.0)))
 
+(define-public python-cylp
+  (package
+    (name "python-cylp")
+    (version "0.92.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "cylp" version))
+       (sha256
+        (base32 "1mhvjrhvpgnpw4zwri92dj168qvyclcpsqvzbj5maxx5cilnhkww"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "-k" (string-append
+                                 "not " (string-join
+                                         (list
+                                          "test_removeVar2" ; AssertionError
+                                          ;; Tests below segfault
+                                          "test_dantzig"
+                                          "test_lifo"
+                                          "test_mf"
+                                          "test_pe")
+                                         " and not ")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (if tests? ; rebuild extensions
+                  (invoke "python" "setup.py" "build_ext" "--inplace")))))))
+    (propagated-inputs (list python-numpy python-pytest python-scipy))
+    (inputs (list cbc))
+    (native-inputs (list pkg-config
+                         python-cython-3
+                         python-hypothesis
+                         python-numpy
+                         python-pytest
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/coin-or/cylp")
+    (synopsis "Python interface for CLP, CBC, and CGL")
+    (description
+     "CyLP is a Python interface to COIN-OR’s Linear and mixed-integer program
+solvers (CLP, CBC, and CGL).  CyLP’s unique feature is that you can use it to
+alter the solution process of the solvers from within Python.  For example,
+you may define cut generators, branch-and-bound strategies, and primal/dual
+Simplex pivot rules completely in Python.")
+    (license license:epl2.0)))
+
 (define-public gecode
   (let* ((commit "f7f0d7c273d6844698f01cec8229ebe0b66a016a")
          (version (git-version "6.2.0" "1" commit)))
@@ -2851,6 +2899,45 @@ and applications.  It provides a modular and extensible solver.")
 fixed point (16.16) format.")
       (license license:expat))))
 
+(define-public glucose
+  (package
+    (name "glucose")
+    (version "4.2.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/audemard/glucose")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0zrn4hnkf8k95dc3s3acydl1bqkr8a0axw56g7n562lx7zj7sd62"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f ; there are no tests
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=ON"
+              (string-append "-DCMAKE_BUILD_RPATH=" #$output "/lib"))
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'install
+                     (lambda _
+                       (for-each
+                        (lambda (bin)
+                          (install-file bin (string-append #$output "/bin")))
+                        '("glucose-simp" "glucose-syrup"))
+                       (for-each
+                        (lambda (lib)
+                          (install-file lib (string-append #$output "/lib")))
+                        '("libglucose.so" "libglucosep.so")))))))
+    (inputs (list zlib))
+    (home-page "https://www.labri.fr/perso/lsimon/research/glucose/")
+    (synopsis "SAT Solver")
+    (description "Glucose is a SAT solver based on a scoring scheme introduced
+in 2009 for the clause learning mechanism of so called “Modern” SAT solvers.
+It is designed to be parallel.")
+    (license license:expat)))
+
 (define-public libflame
   ;; The latest release (5.2.0) dates back to 2019.  Use a newer one, which
   ;; among other things provides extra LAPACK symbols, such as 'dgemlq_'
@@ -2927,6 +3014,32 @@ Computational Engineering and Sciences} at The University of Texas at Austin.
 @code{libflame} includes a compatibility layer, @code{lapack2flame}, which
 includes a complete LAPACK implementation.")
       (license license:bsd-3))))
+
+(define-public hpcombi
+  (package
+    (name "hpcombi")
+    (version "1.0.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/libsemigroups/hpcombi")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "00mbxw5x6m61n0x68dsiyq97i7b08h3hkbj9is2w6gcg571jy319"))))
+    (arguments
+     (list #:configure-flags #~(list "-DBUILD_TESTING=ON")))
+    (native-inputs
+     (list catch2-3))
+    (build-system cmake-build-system)
+    (home-page "https://libsemigroups.github.io/HPCombi/")
+    (synopsis "Fast combinatorics in C++ using SSE/AVX instruction sets")
+    (description "HPCombi is a C++17 header-only library using the SSE and AVX
+instruction sets, and some equivalents, for very fast manipulation of
+combinatorial objects such as transformations, permutations, and boolean
+matrices of small size.")
+    (license license:gpl3+)))
 
 (define-public scasp
   (package
@@ -3975,7 +4088,7 @@ self-contained C-extension for Python.")
 (define-public python-cvxopt
   (package
     (name "python-cvxopt")
-    (version "1.2.7")
+    (version "1.3.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3984,7 +4097,7 @@ self-contained C-extension for Python.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "114z34wwx1bsv4q6xj9p5q99dffgnj9s4i4arx10g191xq9q8i5y"))))
+                "0vdfag3rr906w0gk7vxm2yxfy8y92i4wmqxi82cbykpfp5r82i36"))))
     (build-system python-build-system)
     (arguments
      `(#:phases

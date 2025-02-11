@@ -62,7 +62,7 @@
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gnupg)
-  #:use-module (gnu packages golang)
+  #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages image)
@@ -280,33 +280,6 @@ OpenBSD tool of the same name.")
     (synopsis "Crate to sign files and verify signatures")
     (description
      "This package provides a crate to sign files and verify signatures.")
-    (license license:expat)))
-
-(define-public go-minisign
-  (package
-    (name "go-minisign")
-    (version "0.1.0")
-    (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/jedisct1/go-minisign")
-               (commit version)))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32
-          "0wc0rk5m60yz52f0cncmbgq67yvb1rcx91gvzjg6jpc4mpw2db27"))
-        (modules '((guix build utils)))
-        (snippet
-         '(begin (delete-file-recursively "vendor") #t))))
-    (build-system go-build-system)
-    (arguments
-     '(#:import-path "github.com/jedisct1/go-minisign"))
-    (propagated-inputs
-     (list go-golang-org-x-crypto))
-    (home-page "https://github.com/jedisct1/go-minisign")
-    (synopsis "Minisign verification library for Golang")
-    (description "A Golang library to verify Minisign signatures.")
     (license license:expat)))
 
 (define-public encfs
@@ -1691,7 +1664,7 @@ SunMD5, sha1crypt, NT, bsdicrypt, bigcrypt, and descrypt.")
 (define-public ssh-to-pgp
   (package
     (name "ssh-to-pgp")
-    (version "1.1.2")
+    (version "1.1.4")
     (source
      (origin
        (method git-fetch)
@@ -1700,14 +1673,17 @@ SunMD5, sha1crypt, NT, bsdicrypt, bigcrypt, and descrypt.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1mph8mm80qzrsd07v7drfrhdah9n9ibsqfcf9kbffi1pw83cm0aa"))))
+        (base32 "1xaj6pnk5y2flnxm57j9bpdpll9vhg1rbjj4v3a7hn1gginxpprx"))))
     (build-system go-build-system)
     (arguments
-     '(#:import-path "github.com/Mic92/ssh-to-pgp"))
+     (list
+      #:install-source? #f
+      #:import-path "github.com/Mic92/ssh-to-pgp"
+      ;; failed: No secret key
+      #:test-flags #~(list "-skip" "TestCli")))
     (native-inputs
-     (list gnupg))
-    (propagated-inputs
-     (list go-golang-org-x-sys
+     (list gnupg
+           go-github-com-protonmail-go-crypto
            go-golang-org-x-crypto))
     (home-page "https://github.com/Mic92/ssh-to-pgp")
     (synopsis "Convert SSH RSA keys to GPG keys")

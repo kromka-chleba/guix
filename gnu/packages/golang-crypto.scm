@@ -1083,7 +1083,7 @@ RSA, RSA-PSS, and ECDSA, though hooks are present for adding your own.")
   (package
     (inherit go-github-com-golang-jwt-jwt-v4)
     (name "go-github-com-golang-jwt-jwt-v5")
-    (version "5.2.0")
+    (version "5.2.1")
     (source
      (origin
        (method git-fetch)
@@ -1092,7 +1092,7 @@ RSA, RSA-PSS, and ECDSA, though hooks are present for adding your own.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0px12zhdmzqjj5zlcr136rcsilpmi4chiz6arxv49q372j4nhmia"))))
+        (base32 "13l2p4g9f7bpz0nf2sc4r5ms06ps7bs7z1vpzzv943q094pjs0yw"))))
     (arguments
      (list
       #:import-path "github.com/golang-jwt/jwt/v5"))))
@@ -1233,6 +1233,31 @@ MurmurHash} revision (aka MurmurHash3).")))
     (description "This package provides AES Cipher Block Chaining CipherText
 Stealing encryption and decryption methods.")
     (license license:asl2.0)))
+
+(define-public go-github-com-jedisct1-go-minisign
+  (package
+    (name "go-github-com-jedisct1-go-minisign")
+    (version "0.2.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jedisct1/go-minisign")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15wxg55q95kfany1zmzaazm6dzmd9k4jzigmmscwyavdbkb8ng5b"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/jedisct1/go-minisign"))
+    (propagated-inputs
+     (list go-golang-org-x-crypto))
+    (home-page "https://github.com/jedisct1/go-minisign")
+    (synopsis "Minisign verification library for Golang")
+    (description
+     "A Golang library to verify Minisign signatures.")
+    (license license:expat)))
 
 (define-public go-github-com-jzelinskie-whirlpool
   (package

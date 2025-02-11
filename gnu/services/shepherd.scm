@@ -553,11 +553,6 @@ need to be restarted to complete their upgrade."
 ;;; User processes.
 ;;;
 
-(define %do-not-kill-file
-  ;; Name of the file listing PIDs of processes that must survive when halting
-  ;; the system.  Typical example is user-space file systems.
-  "/etc/shepherd/do-not-kill")
-
 (define (user-processes-shepherd-service requirements)
   "Return the 'user-processes' Shepherd service with dependencies on
 REQUIREMENTS (a list of service names).
@@ -575,77 +570,19 @@ system mounts, etc.  This is similar to the 'sysvinit' target in systemd."
          (requirement requirements)
          (start #~(const #t))
          (stop #~(lambda _
-                   (define (kill-except omit signal)
-                     ;; Kill all the processes with SIGNAL except those listed
-                     ;; in OMIT and the current process.
-                     (let ((omit (cons (getpid) omit)))
-                       (for-each (lambda (pid)
-                                   (unless (memv pid omit)
-                                     (false-if-exception
-                                      (kill pid signal))))
-                                 (processes))))
-
-                   (define omitted-pids
-                     ;; List of PIDs that must not be killed.
-                     (if (file-exists? #$%do-not-kill-file)
-                         (map string->number
-                              (call-with-input-file #$%do-not-kill-file
-                                (compose string-tokenize
-                                         (@ (ice-9 rdelim) read-string))))
-                         '()))
-
-                   (define (now)
-                     (car (gettimeofday)))
-
-                   (define (sleep* n)
-                     ;; Really sleep N seconds.
-                     ;; Work around <http://bugs.gnu.org/19581>.
-                     (define start (now))
-                     (let loop ((elapsed 0))
-                       (when (> n elapsed)
-                         (sleep (- n elapsed))
-                         (loop (- (now) start)))))
-
-                   (define lset= (@ (srfi srfi-1) lset=))
-
                    (display "sending all processes the TERM signal\n")
 
-                   (if (null? omitted-pids)
-                       (begin
-                         ;; Easy: terminate all of them.
-                         (kill -1 SIGTERM)
-                         (sleep* #$grace-delay)
-                         (kill -1 SIGKILL))
-                       (begin
-                         ;; Kill them all except OMITTED-PIDS.  XXX: We would
-                         ;; like to (kill -1 SIGSTOP) to get a fixed list of
-                         ;; processes, like 'killall5' does, but that seems
-                         ;; unreliable.
-                         (kill-except omitted-pids SIGTERM)
-                         (sleep* #$grace-delay)
-                         (kill-except omitted-pids SIGKILL)
-                         (delete-file #$%do-not-kill-file)))
+                   (kill -1 SIGTERM)
+                   (sleep #$grace-delay)
+                   (kill -1 SIGKILL)
 
                    (let wait ()
-                     ;; Reap children, if any, so that we don't end up with
-                     ;; zombies and enter an infinite loop.
-                     (let reap-children ()
-                       (define result
-                         (false-if-exception
-                          (waitpid WAIT_ANY (if (null? omitted-pids)
-                                                0
-                                                WNOHANG))))
-
-                       (when (and (pair? result)
-                                  (not (zero? (car result))))
-                         (reap-children)))
-
                      (let ((pids (processes)))
-                       (unless (lset= = pids (cons 1 omitted-pids))
+                       (unless (equal? '(1) pids)
                          (format #t "waiting for process termination\
  (processes left: ~s)~%"
                                  pids)
-                         (sleep* 2)
+                         (sleep 1)
                          (wait))))
 
                    (display "all processes have been terminated\n")

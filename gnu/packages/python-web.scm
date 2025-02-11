@@ -6541,28 +6541,21 @@ package from WTForms.  The package has been renamed to
 (define-public python-paste
   (package
     (name "python-paste")
-    (version "3.5.2")
+    (version "3.10.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "Paste" version))
+       (uri (pypi-uri "paste" version))
        (sha256
         (base32
-         "1xjakxrdvy4kgfy170gb9bl8zp9hqjjwh1h1vlik1pxw606399ym"))
-       (patches (search-patches "python-paste-remove-timing-test.patch"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; This test calls out to the internet.
-           (delete-file "tests/test_proxy.py") #t))))
+         "0jjyl39r5ncx98rwi855x71qrwvwm59idgn7q0c7m2jyb8314g8w"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest python-wheel))
-    (propagated-inputs
-     (list python-six python-setuptools))
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://pythonpaste.readthedocs.io/")
-    (synopsis
-     "Python web development tools, focusing on WSGI")
+    (synopsis "Python web development tools, focusing on WSGI")
     (description
      "Paste provides a variety of web development tools and middleware which
 can be nested together to build web applications.  Paste's design closely
@@ -6572,30 +6565,26 @@ follows ideas flowing from WSGI (Web Standard Gateway Interface).")
 (define-public python-pastescript
   (package
     (name "python-pastescript")
-    (version "2.0.2")
+    (version "3.7.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "PasteScript" version))
+       (uri (pypi-uri "pastescript" version))
        (sha256
-        (base32
-         "1h3nnhn45kf4pbcv669ik4faw04j58k8vbj1hwrc532k0nc28gy0"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-nose))
-    (propagated-inputs
-     (list python-paste python-pastedeploy))
-    (home-page (string-append "https://web.archive.org/web/20161025192515/"
-                              "http://pythonpaste.org/script/"))
+        (base32 "08959bmp62pb2rlwr4wpwij15y83jcf9wa9jgg32jlvfzf6h4vsk"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(;; Unfortunately, this requires the latest unittest2,
-       ;; but that requires traceback2 which requires linecache2 which requires
-       ;; unittest2.  So we're skipping tests for now.
-       ;; (Note: Apparently linetest2 only needs unittest2 for its tests,
-       ;; so in theory we could get around this situation somehow.)
-       #:tests? #f))
-    (synopsis
-     "Pluggable command line tool for serving web applications and more")
+     (list
+      #:test-flags #~(list "--ignore=tests/appsetup/testfiles")))
+    (native-inputs
+     (list python-pytest
+           python-wheel))
+    (propagated-inputs
+     (list python-paste
+           python-pastedeploy
+           python-setuptools))
+    (home-page "https://github.com/pasteorg/pastescript")
+    (synopsis "Pluggable command line tool for serving web applications and more")
     (description
      "PasteScript is a plugin-friendly command line tool which provides a
 variety of features, from launching web applications to bootstrapping project

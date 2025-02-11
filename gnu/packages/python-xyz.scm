@@ -9520,16 +9520,24 @@ the Texinfo, HTML, and PDF formats.")))
 (define-public python-npx
   (package
     (name "python-npx")
-    (version "0.1.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "npx" version))
-              (sha256
-               (base32
-                "1m0v2p5mh3aqrypl4ipgzvr5nhx7bk5vv9ah2xr9l1xgj6nnmqnc"))))
+    (version "0.1.6")
+    (source
+     (origin
+       (method git-fetch)               ; no source archive in PyPI
+       (uri (git-reference
+             (url "https://github.com/sigma-py/npx")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0a3rb3ydl13m1r48kdvnbi31566jxm10p36argkz5kjr2ilkrx8v"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-numpy))
-    (native-inputs (list python-flit-core python-networkx python-pytest))
+    (native-inputs
+     (list python-networkx
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy))
     (home-page "https://github.com/nschloe/npx")
     (synopsis "Extensions for NumPy")
     (description "NumPy is a large library used everywhere in scientific
@@ -9542,17 +9550,20 @@ methods is arguably lacking.  This package provides drop-in wrappers
 (define-public python-munch
   (package
     (name "python-munch")
-    (version "2.5.0")
+    (version "4.0.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "munch" version))
-        (sha256
-         (base32
-          "1lnvlic9g68hcmgdnv5bzp0nx2bf1kjclj54gx0s7nyl4ipmywrd"))))
-    (build-system python-build-system)
-    (native-inputs (list python-pbr python-pytest))
-    (propagated-inputs (list python-six))
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "munch" version))
+       (sha256
+        (base32
+         "0d928bdzm0d9s9f058xa72pywps2zjdgvhrp9rm22qqj8r8v2b2l"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-astroid
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/Infinidat/munch")
     (synopsis "Dot-accessible dictionary")
     (description "Munch is a dot-accessible dictionary similar to JavaScript

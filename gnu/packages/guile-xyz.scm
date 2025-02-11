@@ -3279,33 +3279,37 @@ is no support for parsing block and inline level HTML.")
   (package
     (name "mcron")
     (version "1.2.3")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://git.savannah.gnu.org/git/mcron.git")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "07gqwbjfsgf16ff624hkav0qhl10dv579y10fxas2kbjavqm4yx5"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.savannah.gnu.org/git/mcron.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07gqwbjfsgf16ff624hkav0qhl10dv579y10fxas2kbjavqm4yx5"))))
     (build-system gnu-build-system)
     (arguments
      (list
-      #:phases #~(modify-phases %standard-phases
-                   (add-before 'check 'adjust-tests
-                     (lambda _
-                       (substitute* "tests/job-specifier.scm"
-                         ;; (getpw) fails with "entry not found" in the build
-                         ;; environment, so pass an argument.
-                         (("\\(getpw\\)")
-                          "(getpwnam (getuid))")
-                         ;; The build environment lacks an entry for root in
-                         ;; /etc/passwd.
-                         (("\\(getpw 0\\)")
-                          "(getpwnam \"nobody\")")
-                         ;; FIXME: Skip the 4 faulty tests (see above).
-                         (("\\(test-equal \"next-year\"" all)
-                          (string-append "(test-skip 4)\n" all))))))))
+      #:configure-flags
+      #~(list
+         "--with-sendmail=/run/privileged/bin/sendmail -t")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'adjust-tests
+            (lambda _
+              (substitute* "tests/job-specifier.scm"
+                ;; (getpw) fails with "entry not found" in the build
+                ;; environment, so pass an argument.
+                (("\\(getpw\\)")
+                 "(getpwnam (getuid))")
+                ;; The build environment lacks an entry for root in
+                ;; /etc/passwd.
+                (("\\(getpw 0\\)")
+                 "(getpwnam \"nobody\")")
+                ;; FIXME: Skip the 4 faulty tests (see above).
+                (("\\(test-equal \"next-year\"" all)
+                 (string-append "(test-skip 4)\n" all))))))))
     (native-inputs (list autoconf
                          automake
                          guile-3.0    ;for 'guild compile'

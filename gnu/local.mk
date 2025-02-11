@@ -921,6 +921,8 @@ if HAVE_GUILE_SSH
 
 GNU_SYSTEM_MODULES +=         			\
   %D%/machine/digital-ocean.scm			\
+  %D%/machine/hetzner.scm			\
+  %D%/machine/hetzner/http.scm			\
   %D%/machine/ssh.scm
 
 endif HAVE_GUILE_SSH
@@ -998,7 +1000,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/ath9k-htc-firmware-gcc.patch		\
   %D%/packages/patches/ath9k-htc-firmware-gcc-compat.patch	\
   %D%/packages/patches/atlas-gfortran-compat.patch		\
-  %D%/packages/patches/audacity-ffmpeg-fallback.patch		\
   %D%/packages/patches/audiofile-fix-datatypes-in-tests.patch	\
   %D%/packages/patches/audiofile-fix-sign-conversion.patch	\
   %D%/packages/patches/audiofile-CVE-2015-7747.patch		\
@@ -2107,7 +2108,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-memcached-syntax-warnings.patch	\
   %D%/packages/patches/python-mox3-python3.6-compat.patch	\
   %D%/packages/patches/python-packaging-test-arch.patch		\
-  %D%/packages/patches/python-paste-remove-timing-test.patch	\
   %D%/packages/patches/python-pyan3-fix-absolute-path-bug.patch \
   %D%/packages/patches/python-pyan3-fix-positional-arguments.patch \
   %D%/packages/patches/python-pytorch-fix-codegen.patch		\

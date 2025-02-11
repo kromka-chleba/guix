@@ -43,6 +43,7 @@
   #:use-module (ice-9 match)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9)
+  #:use-module (srfi srfi-11)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-34)
   #:use-module (srfi srfi-37)
@@ -500,36 +501,27 @@ bailing out~%"))
   "Return LST, a list of top-level expressions and blanks, with
 top-level package definitions in alphabetical order.  Packages which
 share a name are placed with versions in descending order."
-  (define (package-name pkg)
+  (define (package-fields pkg)
     (match pkg
-      ((('define-public _ expr) _ ...)
+      ((('define-public pkg _ ... (or ('let _ expr) expr)) _ ...)
        (match expr
-         ((or ('package _ ('name name) _ ...)
-              ('package ('name name) _ ...))
-          name)
-         (_ #f)))
-      (_ #f)))
-
-  (define (package-version pkg)
-    (match pkg
-      ((('define-public _ expr) _ ...)
-       (match expr
-         ((or ('package _ _ ('version version) _ ...)
-              ('package _ ('version version) _ ...))
-          version)
-         (_ #f)))
-      (_ #f)))
+         (((or 'package 'package/inherit) fields ...)
+          (let ((name (and=> (assoc-ref fields 'name) first))
+                (version (and=> (assoc-ref fields 'version) first)))
+            (values name version)))
+         (_ (and (values #f #f)))))
+      (_ (and (values #f #f)))))
 
   (define (package>? lst1 lst2)
-    (let ((name1 (package-name lst1))
-          (name2 (package-name lst2))
-          (version1 (package-version lst1))
-          (version2 (package-version lst2)))
-      (and name1 name2 (or (string>? name1 name2)
-                           (and (string=? name1 name2)
-                                version1
-                                version2
-                                (version>? version2 version1))))))
+    (let-values (((name1 version1) (package-fields lst1))
+                 ((name2 version2) (package-fields lst2)))
+      (and (string? name1)
+           (string? name2)
+           (or (string>? name1 name2)
+               (and (string=? name1 name2)
+                    (string? version1)
+                    (string? version2)
+                    (version>? version2 version1))))))
 
         ;; Group define-public with preceding blanks and defines.
   (let ((lst (fold2 (lambda (expr tail head)
@@ -550,7 +542,12 @@ are put in alphabetical order."
     (let* ((lst (call-with-input-file file read-with-comments/sequence
                                       #:guess-encoding #t))
            (lst (if order?
-                    (order-packages lst)
+                    (let loop ((lst lst))
+                      (match lst
+                        (((? blank? blank) rest ...)
+                         (cons blank (loop rest)))
+                        ((module rest ...)
+                         (cons module (order-packages rest)))))
                     lst)))
       (with-atomic-file-output file
         (lambda (port)
