@@ -116,7 +116,7 @@
 ;;; Copyright © 2022 Haider Mirza <haider@haider.gq>
 ;;; Copyright © 2022 Jose G Perez Taveras <josegpt27@gmail.com>
 ;;; Copyright © 2022 Hilton Chain <hako@ultrarare.space>
-;;; Copyright © 2022 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2022, 2024, 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2022 Thiago Jung Bauermann <bauermann@kolabnow.com>
 ;;; Copyright © 2022 Joeke de Graaf <joeke@posteo.net>
 ;;; Copyright © 2023 Simon Streit <simon@netpanic.org>
@@ -436,6 +436,33 @@ provided.  The implementation uses the bookmark system to save buffers
 states–that is, any major mode that supports the bookmark system is
 compatible.")
     (license license:gpl3+)))
+
+(define-public emacs-age
+  (let ((commit "890c467ebc27538507c54a03afd2f7260630d7f5")
+        (revision "0"))
+    (package
+      (name "emacs-age")
+      ;; 0.1.4 in the code but 0.1.5 on github
+      (version (git-version "0.1.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/anticomputer/age.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0777nvrvswv81g0rkclm7r2ai1xfjf380lhg8lidd060dkp71ic1"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/anticomputer/age.el")
+      (synopsis "Age Encryption support for Emacs")
+      (description
+       "This package provides transparent Age file encryption and decryption
+in Emacs.  It is based on the Emacs @code{EasyPG} code and offers similar
+Emacs file handling for Age encrypted files: maintain @code{.org.age}
+encrypted Org files, provide Age encrypted authentication information out of
+@code{.authinfo.age}, open/edit/save Age encrypted files via @code{tramp}...")
+      (license license:gpl3+))))
 
 (define-public emacs-bookmark-plus
   (package
