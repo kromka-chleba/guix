@@ -136,7 +136,7 @@ function for every found clique.")
 (define-public libbraiding
   (package
     (name "libbraiding")
-    (version "1.0")
+    (version "1.3.1")
     (source
      (origin
        (method git-fetch)
@@ -147,10 +147,11 @@ function for every found clique.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0l68rikfr7k2l547gb3pp3g8cj5zzxwipm79xrb5r8ffj466ydxg"))))
+         "1d9vrn507phpzwwmmrxiig8s484rdi3gjghj75d4sdzbiqyyr9yp"))
+       (patches (search-patches "libbraiding-no-s.patch"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list autoconf automake libtool))
+     (list autoconf automake libtool pkg-config))
     (synopsis "Computations with braid groups")
     (description "libbraiding performs computations with braid groups,
 in particular it computes normal forms of group elements.")
@@ -186,17 +187,17 @@ represented as strings.")
 (define-public python-cypari2
   (package
     (name "python-cypari2")
-    (version "2.1.2")
+    (version "2.2.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "cypari2" version))
        (sha256
         (base32
-         "0ymc4i9y60aazscc1blivirkr1rflzz6akkmvfzyn5l7mgnlbk83"))))
-    (build-system python-build-system)
+         "1f43bx3pryc1mg7i9gijl2c6aavijlbcxx9wyw11jn40lak1g85a"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-cython))
+     (list python-cython-3 python-setuptools python-wheel))
     (propagated-inputs
      (list python-cysignals))
     (inputs

@@ -27,6 +27,8 @@
 ;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;; Copyright © 2024 Sebastian Dümcke <code@sam-d.com>
+;; Copyright © 2025 Roman Scherer <roman@burningswell.com>
+
 ;;
 ;; Copying and distribution of this file, with or without modification, are
 ;; permitted in any medium without royalty provided the copyright notice and
@@ -35,22 +37,63 @@
 (channel-news
  (version 0)
 
+ (entry (commit "0753a17ddf6f4fab98b93c25f1a93b97ff9e46bb")
+        (title
+         (en "The @command{guix deploy} command now supports the Hetzner Cloud
+service")
+         (de "Der Befehl @command{guix deploy} unterstützt jetzt den
+Hetzner-Clouddienst"))
+        (body
+         (en "In addition to deploying machines over SSH and on the Digital
+Ocean cloud service, the @command{guix deploy} command now supports deployment
+on the Hetzner Cloud service as well.  When deploying a machine with the new
+@code{hetzner-environment-type}, a @acronym{VPS, virtual private server} will
+be provisioned on the Hetzner Cloud, and the machine configuration's operating
+system will be installed on it.  Provisioning happens through the Hetzner
+Cloud API and you need to set the @code{GUIX_HETZNER_API_TOKEN} environment
+variable to a Hetzner Cloud API token.  Additionally, you can use the
+@code{hetzner-configuration} record to customize the deployment, such as the
+system architecture, type of VPS, etc.")
+         (de "Der Befehl @command{guix deploy} kann jetzt zusätzlich zum
+Bereitstellen von Maschinen über SSH und auf den Digital-Ocean-Clouddienst auch
+benutzt werden, um ein System auf den Hetzner-Clouddienst einzuspielen.  Bei
+einer Bereitstellung mit dem neuen @code{hetzner-environment-type} wird ein
+@acronym{VPS, Virtual Private Server} auf der Hetzner-Cloud bereitgestellt und
+das in der Konfigurationsdatei der Maschine deklarierte Betriebssystem wird
+darauf installiert.  Zum Bereitstellen wird Hetzners Cloud-API benutzt und Sie
+müssen die Umgebungsvariable @code{GUIX_HETZNER_API_TOKEN} auf einen API-Token
+der Hetzner-Cloud-API festlegen.  Außerdem können Sie mit einem
+@code{hetzner-configuration}-Verbundsobjekt die Bereitstellung anpassen und
+etwa die Systemarchitektur, den VPS-Typ usw.@: wählen.")))
+
   (entry (commit "616ae36e0f557cecb4abe58c5b0973b9428d25e0")
         (title
-         (en "Kernel persistent storage in UEFI disabled"))
+         (en "Kernel persistent storage in UEFI disabled")
+         (de "Im Kernel wurde persistenter Speicher in UEFI abgeschaltet"))
         (body
-          (en "The linux-libre kernel's persistent storage (pstore) mechanism
+         (en "The linux-libre kernel's persistent storage (pstore) mechanism
 can use UEFI non-volative memory to store information that would otherwise be
 lost, such as kernel panic logs.  However, this can permanently fill the
 non-volatile memory on some hardware implementations, breaking the ability to
 reconfigure Guix System.  Therefore, this mechanism has been disabled by default
-in the build-time kernel configuration.  Users can re-enable it if desired.")))
+in the build-time kernel configuration.  Users can re-enable it if desired.")
+         (de "Im Kernel Linux-libre kann nicht flüchtiger Speicher eines UEFI
+als persistenter Speicher (pstore) benutzt werden, um Informationen zu
+behalten, die andernfalls nicht mehr einsehbar wären, wie Protokolle einer
+Kernel Panic.  Jedoch kann dadurch der nicht flüchtige Speicher auf manchen
+Hardware-Implementierungen dauerhaft gefüllt werden, wodurch weiteres
+Rekonfigurieren eines Guix System unmöglich wird.  Daher wurde dieser
+Mechanismus in der Vorgabeeinstellung neu erstellter Kernels abgeschaltet.
+Interessierte Benutzer können ihn wieder aktivieren.")))
 
  (entry (commit "f40eff02413c20cdb6200d90cbb7f674cea475fd")
         (title
-         (en "Linux-libre 6.13 now available"))
+         (en "Linux-libre 6.13 now available")
+         (de "Linux-libre 6.13 jetzt verfügbar"))
         (body
-         (en "The 6.13 linux-libre series is now available in GNU Guix.")))
+         (en "The 6.13 linux-libre series is now available in GNU Guix.")
+         (de "Die Versionsreihe 6.13 von Linux-libre ist ab jetzt in GNU Guix
+verfügbar.")))
 
  (entry (commit "0aa45f18543552f2396414ab130dab40f8969d27")
         (title

@@ -9,7 +9,7 @@
 ;;; Copyright © 2016, 2017, 2020 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 Pjotr Prins <pjotr.guix@thebird.nl>
 ;;; Copyright © 2016, 2017, 2023 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2016-2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Peter Feigl <peter.feigl@nexoid.at>
 ;;; Copyright © 2016 John J. Foerch <jjfoerch@earthlink.net>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
@@ -44,6 +44,7 @@
 ;;; Copyright © 2021 WinterHound <winterhound@yandex.com>
 ;;; Copyright © 2021 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
+;;; Copyright © 2021 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2021, 2025 muradm <mail@muradm.net>
 ;;; Copyright © 2021 pineapples <guixuser6392@protonmail.com>
 ;;; Copyright © 2021 Petr Hodina <phodina@protonmail.com>
@@ -692,6 +693,45 @@ environments:
   @acronym{MIME,Multipurpose Internet Mail Extensions} messages
 @end itemize")
     (license license:gpl3)))
+
+(define-public collectl
+  (package
+    (name "collectl")
+    (version "4.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://sourceforge/collectl/collectl/collectl-" version
+             "/collectl-" version ".src.tar.gz"))
+       (sha256
+        (base32 "1wc9k3rmhqzh6cx5dcpqhlc3xcpadsn2ic54r19scdjbjx6jd1r1"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f ; There are no tests.
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build) ; There's nothing to build.
+          (replace 'configure
+            (lambda _
+              (substitute* "INSTALL"
+                (("DESTDIR:=\"/\"") (format #f "DESTDIR:=~s" #$output))
+                (("DESTDIR/usr") "DESTDIR"))))
+          (replace 'install
+            (lambda _
+              (substitute* "collectl"
+                (("\\$configFile='';")
+                 (string-append "$configFile='" #$output "/etc';")))
+              (invoke "./INSTALL"))))))
+    (inputs
+     (list perl))
+    (home-page "http://collectl.sourceforge.net")
+    (synopsis "Performance data collector")
+    (description
+     "This package provides a program that collects various performance
+measurement data like CPU, memory, disk and network performance numbers.")
+    (license license:artistic2.0)))
 
 (define-public daemontools
   (package
@@ -5942,7 +5982,8 @@ it won't take longer to install 15 machines than it would to install just 2.")
                  (install-file "greetd-ipc.7" man7)
                  (install-file "agreety.1" man1))))))))
     (inputs
-     (list linux-pam))
+     ;; Full bash, not bash-minimal.  See https://issues.guix.gnu.org/76105.
+     (list bash linux-pam))
     (native-inputs
      (list scdoc))
     (synopsis "Minimal and flexible login manager daemon")

@@ -2129,19 +2129,18 @@ Extensions, Shortcuts, File browser mode and Custom Color Themes.")
            `(,glib "bin")
            pkg-config))
     (inputs
-     (list cairo
-           glib
-           libjpeg-turbo
+     (list libjpeg-turbo
            (librsvg-for-system)
            libxcb
            libxkbcommon
-           pango
            startup-notification
            xcb-util
            xcb-util-cursor
            xcb-util-keysyms
            xcb-util-wm
            xcb-util-xrm))
+    (propagated-inputs
+     (list cairo glib pango))           ;in Requires.private of rofi.pc
     (native-search-paths
      ;; This is where rofi will search for plugins by default.
      (list (search-path-specification
@@ -2191,7 +2190,7 @@ wayland support."))))
 (define-public rofi-calc
   (package
     (name "rofi-calc")
-    (version "2.1.0")
+    (version "2.3.0")
     (source
      (origin
        (method git-fetch)
@@ -2201,7 +2200,7 @@ wayland support."))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "021z7hwvdcs3g7icyp6xhry0xlq29gg1288hg2kzyzqq4l2irxdi"))))
+         "041i50rbk7cdbrmn43hz4kx4ijdzff4pw1jv2symwfn07z9a6f30"))))
     (build-system gnu-build-system)
     (arguments
      (list

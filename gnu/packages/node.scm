@@ -679,7 +679,7 @@ parser definition into a C output.")
 (define-public llhttp-bootstrap
   (package
     (name "llhttp")
-    (version "8.1.2")
+    (version "9.2.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -688,7 +688,8 @@ parser definition into a C output.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1808y8mpdcmsi8rxndilngg4nn2fbqfgb29f47kk9mmdpqg5s17r"))
+                "0mzg19aqb1am498gms0z75cwd5kmfg9p78b1hhxw67019nsjcbac"))
+              (patches (search-patches "llhttp-ponyfill-object-fromentries.patch"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -749,14 +750,14 @@ source files.")
 (define-public node-lts
   (package
     (inherit node-bootstrap)
-    (version "20.18.1")
+    (version "22.12.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nodejs.org/dist/v" version
                                   "/node-v" version ".tar.gz"))
               (sha256
                (base32
-                "1f180vgr6lrg4gs48q5c414j5sdwaqqp1vnswwr3pvryhznqrbav"))
+                "1qrcn9hm85bmh81ircaa0vmxrqmiip1iwczvpsyn9sdn0b0ffmri"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -837,14 +838,16 @@ source files.")
                ;; seem to be indicative of real problems in practice.
                (for-each delete-file
                          '("test/parallel/test-cluster-primary-error.js"
-                           "test/parallel/test-cluster-primary-kill.js"))
+                           "test/parallel/test-cluster-primary-kill.js"
+                           "test/parallel/test-node-run.js"))
 
                ;; These require a DNS resolver.
                (for-each delete-file
                          '("test/parallel/test-dns.js"
                            "test/parallel/test-dns-lookupService-promises.js"
                            "test/parallel/test-net-socket-connect-without-cb.js"
-                           "test/parallel/test-tcp-wrap-listen.js"))
+                           "test/parallel/test-tcp-wrap-listen.js"
+                           "test/report/test-report-exclude-network.js"))
 
                ;; These tests require networking.
                (for-each delete-file
@@ -955,9 +958,9 @@ fi"
                  (chmod file #o555))))))))
     (native-inputs
      (list ;; Runtime dependencies for binaries used as a bootstrap.
-           c-ares
+           c-ares-for-node-lts
            brotli
-           icu4c
+           icu4c-73
            libuv-for-node-lts
            `(,nghttp2 "lib")
            openssl
@@ -972,8 +975,8 @@ fi"
     (inputs
      (list bash-minimal
            coreutils
-           c-ares
-           icu4c
+           c-ares-for-node-lts
+           icu4c-73
            libuv-for-node-lts
            llhttp-bootstrap
            brotli
