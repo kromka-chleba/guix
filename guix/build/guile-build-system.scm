@@ -18,7 +18,7 @@
 
 (define-module (guix build guile-build-system)
   #:use-module ((guix build gnu-build-system) #:prefix gnu:)
-  #:use-module (guix build utils)
+  #:use-module ((guix build utils) #:hide (delete))
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:use-module (ice-9 match)
@@ -76,11 +76,10 @@ determined."
   (match (assoc-ref (or native-inputs inputs) "locales")
     (#f #t)
     (locales
-     (setenv "GUIX_LOCPATH" (string-append locales "/lib/locale"))
-     #t)))
+     (setenv "GUIX_LOCPATH" (string-append locales "/lib/locale")))))
 
 (define* (invoke-each commands
-                      #:key (max-processes (current-processor-count))
+                      #:key (max-processes (parallel-job-count))
                       report-progress)
   "Run each command in COMMANDS in a separate process, using up to
 MAX-PROCESSES processes in parallel.  Call REPORT-PROGRESS at each step.
@@ -112,8 +111,7 @@ Raise an error if one of the processes exit with non-zero."
          (lambda ()
            (primitive-exit 127))))
       (pid
-       (hashv-set! processes pid command)
-       #t)))
+       (hashv-set! processes pid command))))
 
   (let loop ((commands  commands)
              (running   0)
@@ -147,6 +145,10 @@ Raise an error if one of the processes exit with non-zero."
 (define* (build #:key outputs inputs native-inputs
                 (source-directory ".")
                 (compile-flags '())
+                ;; FIXME: Turn on parallel building of Guile modules by
+                ;; default after the non-determinism issues in the Guile byte
+                ;; compiler are resolved (see bug #20272).
+                (parallel-build? #f)
                 (scheme-file-regexp %scheme-file-regexp)
                 (not-compiled-file-regexp #f)
                 target
@@ -207,9 +209,8 @@ installed; this is useful for files that are meant to be included."
                                  (string-append source-directory "/" file)
                                  flags)))
                    source-files)
-       #:max-processes (parallel-job-count)
-       #:report-progress report-build-progress))
-    #t))
+       #:max-processes (if parallel-build? (parallel-job-count) 1)
+       #:report-progress report-build-progress))))
 
 (define* (install-documentation #:key outputs
                                 (documentation-file-regexp
@@ -220,8 +221,7 @@ installed; this is useful for files that are meant to be included."
          (doc (string-append out "/share/doc/"
                              (strip-store-file-name out))))
     (for-each (cut install-file <> doc)
-              (find-files "." documentation-file-regexp))
-    #t))
+              (find-files "." documentation-file-regexp))))
 
 (define %standard-phases
   (modify-phases gnu:%standard-phases

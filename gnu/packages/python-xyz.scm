@@ -9447,6 +9447,75 @@ capabilities.")
      '((upstream-name . "numpy")))
     (license license:bsd-3)))
 
+(define-public python-numpy-2
+  (package
+    (inherit python-numpy)
+    (name "python-numpy")
+    (version "2.2.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://github.com/numpy/numpy/releases/download/v"
+             version "/numpy-" version ".tar.gz"))
+       (sha256
+        (base32
+         "13sdvwiqn85vw1dn1k1nd5ihadv82zhqm615imrqgmil33v0csgd"))))
+    (arguments
+     (list
+      ;; TODO: Tests fail on setup, there is some issue with vendored-meson.
+      #:tests? #f 
+      #:modules '((guix build utils)
+                  (guix build pyproject-build-system)
+                  (ice-9 format))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-executable-paths
+            (lambda _
+              (substitute* "numpy/distutils/exec_command.py"
+                (("'/bin/sh'")
+                 (format #f "~s" (which "bash"))))))
+          (add-before 'build 'parallelize-build
+            (lambda _
+              (setenv "OMP_NUM_THREAD"
+                      (number->string (parallel-job-count)))
+              (setenv "NPY_NUM_BUILD_JOBS"
+                      (number->string (parallel-job-count)))))
+          ;; XXX: It fails with an issue "'fenv_t' has not been declared..."
+          ;; when the gfortran header is used.  Remove gfortran from
+          ;; CPLUS_INCLUDE_PATH as a workaround.  Taken from
+          ;; <https://issues.guix.gnu.org/73439#45>.
+          (add-after 'set-paths 'hide-gfortran
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((gfortran (assoc-ref inputs "gfortran")))
+                (setenv "CPLUS_INCLUDE_PATH"
+                        (string-join
+                         (delete (string-append gfortran "/include/c++")
+                                 (string-split (getenv "CPLUS_INCLUDE_PATH") #\:))
+                         ":")))))
+          (add-before 'build 'configure-blas
+            (lambda* (#:key inputs #:allow-other-keys)
+              (call-with-output-file "site.cfg"
+                (lambda (port)
+                  (format port
+                          "[openblas]
+libraries = openblas
+library_dirs = ~a/lib
+include_dirs = ~:*~a/include~%" #$(this-package-input "openblas")))))))))
+    (native-inputs
+     (list gfortran
+           meson-python
+           ninja
+           pkg-config
+           python-hypothesis
+           python-mypy
+           python-pytest
+           python-pytest-xdist
+           python-setuptools
+           python-setuptools
+           python-typing-extensions
+           python-wheel))))
+
 (define-public python-numpy-documentation
   (package
     (inherit python-numpy)
@@ -35711,19 +35780,26 @@ Screenflick.")
 (define-public python-jinja2-cli
   (package
     (name "python-jinja2-cli")
-    (version "0.7.0")
+    (version "0.8.2")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "jinja2-cli" version))
-        (sha256
-          (base32
-            "0vikx7v6fbvww6kfrv0k5a24jyv3ak7nindg60906pdd1m9qvkcw"))))
-    (build-system python-build-system)
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mattrobenolt/jinja2-cli")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "03ap7rxc1g302m0wacn47rf65d6dqrawa4maam9yapyr96viif7b"))))
+    (build-system pyproject-build-system)
     (propagated-inputs
-      (list python-jinja2))
+     (list python-jinja2))
     (native-inputs
-      (list python-flake8 python-jinja2 python-pytest))
+     (list python-flake8
+           python-jinja2
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/mattrobenolt/jinja2-cli")
     (synopsis "Command-line interface to Jinja2")
     (description

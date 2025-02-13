@@ -227,7 +227,6 @@ with '-virtfs' options for the host file systems listed in SHARED-FS."
             '("-enable-kvm")
             '())
 
-     "-no-reboot"
      "-object" "rng-random,filename=/dev/urandom,id=guix-vm-rng"
      "-device" "virtio-rng-pci,rng=guix-vm-rng"
 
@@ -422,10 +421,14 @@ host."
                     (default #f)))
 
 (define-syntax virtual-machine
-  (syntax-rules ()
+  (syntax-rules (operating-system)
     "Declare a virtual machine running the specified OS, with the given
 options."
-    ((_ os)                                       ;shortcut
+    ((_ (operating-system os))
+     ;; Also accept the long form (virtual-machine (operating-system os)), for
+     ;; correctness.
+     (%virtual-machine (operating-system os)))
+    ((_ os)                             ;shortcut
      (%virtual-machine (operating-system os)))
     ((_ fields ...)
      (%virtual-machine fields ...))))

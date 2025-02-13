@@ -2,7 +2,7 @@
 ;;; Copyright © 2017, 2018, 2019, 2020, 2022 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2019, 2020 Christopher Howard <christopher@librehacker.com>
 ;;; Copyright © 2019, 2020 Evan Straw <evan.straw99@gmail.com>
-;;; Copyright © 2020-2024 Guillaume Le Vaillant <glv@posteo.net>
+;;; Copyright © 2020-2025 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2020 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2020 Charlie Ritter <chewzerita@posteo.net>
 ;;; Copyright © 2020–2022 Tobias Geerinckx-Rice <me@tobias.gr>
@@ -74,6 +74,7 @@
   #:use-module (gnu packages image)
   #:use-module (gnu packages image-processing)
   #:use-module (gnu packages javascript)
+  #:use-module (gnu packages jemalloc)
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
@@ -1498,7 +1499,7 @@ E.g.: @code{(udev-rules-service 'bladerf bladerf)}.")
 (define-public hamlib
   (package
     (name "hamlib")
-    (version "4.5.5")
+    (version "4.6.2")
     (source
      (origin
        (method git-fetch)
@@ -1507,7 +1508,7 @@ E.g.: @code{(udev-rules-service 'bladerf bladerf)}.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1z774z0g7ryamzvdm5f9b3py0lacrvmp2581jn3d581lw35hvfjw"))))
+        (base32 "1vq5ppn5hipklpp49wvq252br4s35mjc2z9dr23yhrx4qxby6gnr"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf
@@ -2852,7 +2853,7 @@ software-defined radio receivers.")
 (define-public wfview
   (package
     (name "wfview")
-    (version "1.64")
+    (version "2.03")
     (source
      (origin
        (method git-fetch)
@@ -2861,7 +2862,7 @@ software-defined radio receivers.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gsijp2h72bdq0jiw8lcfdyp6rwjizngg7wjgkbdm4m05y7c5nj1"))))
+        (base32 "0b74sbi10plrd6dyqm80k0gggvh7fdnwzlddk18gnj5zzsiq562f"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -2871,14 +2872,16 @@ software-defined radio receivers.")
           (add-after 'unpack 'fix-paths
             (lambda _
               (substitute* "wfview.pro"
-                (("\\.\\./wfview/")
-                 "../")
-                (("!win32:DEFINES \\+= HOST=.* UNAME=.*")
-                 "!win32:DEFINES += HOST=\\\\\\\"guix\\\\\\\" UNAME=\\\\\\\"build\\\\\\\"")
+                (("`hostname`")
+                 "guix")
+                (("`whoami`")
+                 "build")
                 (("\\$\\(shell git -C .* HEAD\\)")
                  "")
                 (("!win32:LIBS \\+= -L\\./ -lopus")
-                 "!win32:LIBS += -L./ -lopus -lqcustomplot"))
+                 "!win32:LIBS += -L./ -lopus -lqcustomplot")
+                (("/sbin/")
+                 ""))
               (substitute* '("wfmain.cpp")
                 (("/usr/share")
                  (string-append #$output "/share")))))
@@ -2903,6 +2906,7 @@ software-defined radio receivers.")
            qtbase-5
            qtmultimedia-5
            qtserialport-5
+           qtwebsockets-5
            rtaudio))
     (home-page "https://wfview.org/")
     (synopsis "Software to control Icom radios")
@@ -2912,6 +2916,7 @@ spectrum waterfall.  It supports at least the following models:
 
 @itemize
 @item IC-705
+@item IC-905
 @item IC-7300
 @item IC-7610
 @item IC-7850
@@ -3204,7 +3209,7 @@ Navigation Satellite System.")
 (define-public satdump
   (package
     (name "satdump")
-    (version "1.1.0")
+    (version "1.2.2")
     (source
      ;; TODO: The sources embed some libraries (in src-core/libs).
      ;; Using regular packaged shared libraries instead will require big
@@ -3216,18 +3221,23 @@ Navigation Satellite System.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0mz665h02v4hg0v6kb1b3lj7vd2kp7wgasasm10q6qwqr7c133p4"))))
+        (base32 "13f0r513pvf5wax81i6443z3i0808zqf3yppvln8171hsgwdwagr"))))
     (build-system cmake-build-system)
     (native-inputs (list pkg-config))
     (inputs
      (list airspy
            airspyhf
+           armadillo
            bladerf
+           curl
            fftwf
            glew
            glfw
            hackrf
+           hdf5
+           jemalloc
            libpng
+           libtiff
            luajit
            nng
            portaudio
@@ -3244,8 +3254,8 @@ satellites.")
     (license license:gpl3)))
 
 (define-public chirp
-  (let ((commit "f59b5b254c33be55c73368d6ab036eaadd9e5e76")
-        (revision "1"))
+  (let ((commit "9e4335230929b5e07c95a5bbd8051a6051f9bdfc")
+        (revision "2"))
     (package
       (name "chirp")
       (version (git-version "0.4.0" revision commit))
@@ -3257,7 +3267,7 @@ satellites.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1s2qwz00nxqqfrs87ayjbdqg5i8mxf5xgxmqpincsn8rjxgw1s7x"))))
+          (base32 "1zamjrrxn63gm9ahyy26grwd3qq0bzx1wpn91d5rxxik718lz9yk"))))
       (build-system python-build-system)
       (native-inputs
        (list python-mock
@@ -3270,9 +3280,11 @@ satellites.")
       (inputs
        (list python-future
              python-importlib-resources
+             python-lark-parser
              python-pyserial
              python-requests
              python-six
+             python-suds
              python-wxpython
              python-yattag))
       (arguments
@@ -3280,6 +3292,8 @@ satellites.")
              #:tests? #f
              #:phases
              #~(modify-phases %standard-phases
+                 ;; FIXME: Why does sanity-check phase fail to find lark?
+                 (delete 'sanity-check)
                  (add-after 'build 'set-home-for-tests
                    (lambda _
                      (setenv "HOME" "/tmp"))))))
@@ -3293,7 +3307,7 @@ memory contents between them.")
 (define-public qdmr
   (package
     (name "qdmr")
-    (version "0.11.2")
+    (version "0.12.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3302,7 +3316,7 @@ memory contents between them.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1r40shli0c66f559m25hd1xagyblh8qhzz7wyqyy7r167fvzagfd"))))
+                "08g00xwdqchc21nmacw45s65k8hnk8450yavjb1dx8kmd31kds79"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f ;no tests

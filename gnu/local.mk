@@ -1255,11 +1255,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/fail2ban-python310-server-action.patch	\
   %D%/packages/patches/fail2ban-python310-server-actions.patch	\
   %D%/packages/patches/fail2ban-python310-server-jails.patch	\
-  %D%/packages/patches/falcosecurity-libs-install-pman.patch	\
-  %D%/packages/patches/falcosecurity-libs-libscap-pc.patch	\
-  %D%/packages/patches/falcosecurity-libs-pkg-config.patch	\
-  %D%/packages/patches/falcosecurity-libs-shared-library-fix.patch	\
-  %D%/packages/patches/falcosecurity-libs-libsinsp-pkg-config.patch	\
+  %D%/packages/patches/falcosecurity-libs-shared-build.patch	\
   %D%/packages/patches/farstream-gupnp.patch                         \
   %D%/packages/patches/farstream-make.patch                          \
   %D%/packages/patches/fastcap-mulGlobal.patch			\
@@ -2010,6 +2006,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/qtdeclarative-disable-qmlcache.patch	\
   %D%/packages/patches/quodlibet-fix-invalid-glob.patch	\
   %D%/packages/patches/quodlibet-fix-mtime-tests.patch		\
+  %D%/packages/patches/qucs-s-qucsator-rf-search.patch		\
   %D%/packages/patches/qxlsx-fix-include-directory.patch	\
   %D%/packages/patches/sdcc-disable-non-free-code.patch		\
   %D%/packages/patches/sdl-pango-api_additions.patch		\

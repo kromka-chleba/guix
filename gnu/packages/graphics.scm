@@ -2587,7 +2587,7 @@ and build scripts for the OpenXR loader.")
 (define-public tinygltf
   (package
     (name "tinygltf")
-    (version "2.8.21")
+    (version "2.9.5")
     (source
      (origin
        (method git-fetch)
@@ -2596,7 +2596,7 @@ and build scripts for the OpenXR loader.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14712lndwlk4y001jxf2rxhwrw0w5gbc2hyh9kpik1galdzg41ii"))
+        (base32 "0gx4wa0kxhig3wjn8v14dbjxl15xn0srkfxb5szzhrl06dv0nszc"))
        (modules '((guix build utils)))
        (snippet #~(begin
                     (for-each delete-file-recursively
@@ -2611,6 +2611,7 @@ and build scripts for the OpenXR loader.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:configure-flags #~(list "-DBUILD_SHARED_LIBS=ON")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'use-our-packages
@@ -2623,10 +2624,6 @@ and build scripts for the OpenXR loader.")
                        "stb_image_write.h")
               (symlink (search-input-file inputs "include/catch.hpp")
                        "catch.hpp")))
-          (add-after 'install 'delete-static-lib
-            (lambda _
-              (delete-file (string-append #$output
-                                          "/lib/libtinygltf.a"))))
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (if tests?

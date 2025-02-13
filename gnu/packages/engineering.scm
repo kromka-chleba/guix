@@ -34,7 +34,7 @@
 ;;; Copyright © 2022 Konstantinos Agiannis <agiannis.kon@gmail.com>
 ;;; Copyright © 2022 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2022, 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
-;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022, 2023, 2025 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2023 Theofilos Pechlivanis <theofilos.pechlivanis@gmail.com>
 ;;; Copyright © 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
@@ -885,6 +885,52 @@ create diagrams and schematics.  The software is primarily intended to create
 electrical documentation but it can also be used to draw any kinds of diagrams,
 such as those made in pneumatics, hydraulics, process industries, electronics,
 and others.")
+    (license license:gpl2+)))
+
+(define-public qucs-s
+  (package
+    (name "qucs-s")
+    (version "24.4.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/ra3xdh/qucs_s")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0307046h3vf6pprbvv47r46mpm764w49ci2cg0i3l1w9rbqlypln"))
+              (patches (search-patches "qucs-s-qucsator-rf-search.patch"))))
+    (build-system qt-build-system)
+    (arguments
+     (list
+      #:qtbase qtbase                   ;for Qt 6
+      #:configure-flags #~(list "-DWITH_QT6=ON")
+      #:tests? #f                       ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'adjust-default-settings
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "qucs/settings.cpp"
+                (("\"ngspice\"")
+                 (format #f "~s" (search-input-file inputs "bin/ngspice")))
+                (("\"octave\"")
+                 (format #f "~s" (search-input-file inputs "bin/octave")))))))))
+    (native-inputs (list qttools))
+    (inputs (list ngspice octave qtbase qtcharts qtsvg qtwayland))
+    (synopsis "GUI for different circuit simulation kernels")
+    (description
+     "@acronym{Qucs-S, Quite universal circuit simulator with SPICE} provides
+a fancy graphical user interface for a number of popular circuit simulation
+engines.  The package contains libraries for schematic capture, visualization
+and components.  The following simulation kernels are supported:
+@itemize
+@item Ngspice (recommended)
+@item Xyce
+@item SpiceOpus
+@item Qucsator (non-SPICE)
+@end itemize\n")
+    (home-page "https://ra3xdh.github.io/")
     (license license:gpl2+)))
 
 (define-public gerbv
