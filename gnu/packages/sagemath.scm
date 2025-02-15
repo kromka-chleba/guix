@@ -1,9 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2019 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2019 Nicolas Goaziou <mail@nicolasgoaziou.fr>
-;;; Copyright © 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
-;;; Copyright © 2021 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2019, 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;;
@@ -289,108 +285,9 @@ libraries GMO, MPFR and MPC.")
 Polyhedra Library (PPL).")
     (license license:gpl3+)))
 
-(define-public ratpoints
+(define-public conway-polynomials
   (package
-    (name "ratpoints")
-    (version "2.1.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "http://www.mathe2.uni-bayreuth.de/stoll/programs/"
-                    "ratpoints-" version ".tar.gz"))
-              (sha256
-               (base32
-                "0zhad84sfds7izyksbqjmwpfw4rvyqk63yzdjd3ysd32zss5bgf4"))
-              (patches
-               ;; Taken from
-               ;; <https://git.sagemath.org/sage.git/plain/build/pkgs/ratpoints/patches/>
-               (search-patches "ratpoints-sturm_and_rp_private.patch"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:test-target "test"
-       #:make-flags
-       (list (string-append "INSTALL_DIR=" (assoc-ref %outputs "out"))
-             "CCFLAGS=-fPIC")
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)            ;no configure script
-         (add-before 'install 'create-install-directories
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (mkdir-p out)
-               (with-directory-excursion out
-                 (for-each (lambda (d) (mkdir-p d))
-                           '("bin" "include" "lib"))))
-             #t)))))
-    (inputs
-     (list gmp))
-    (home-page "http://www.mathe2.uni-bayreuth.de/stoll/programs/")
-    (synopsis "Find rational points on hyperelliptic curves")
-    (description "Ratpoints tries to find all rational points within
-a given height bound on a hyperelliptic curve in a very efficient way,
-by using an optimized quadratic sieve algorithm.")
-    (license license:gpl2+)))
-
-;; Sage has become upstream of the following package.
-(define-public zn-poly
-  (package
-    (name "zn-poly")
-    (version "0.9.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url (string-append "https://gitlab.com/sagemath/"
-                                  "zn_poly.git/"))
-              (commit version)))
-       (file-name (git-file-name "zn_poly" version))
-       (sha256
-        (base32 "1wbc3apxcldxfcw1dnwnn7fvlfb6bwvlr8glvgv6hf79p9r2s4j0"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     `(("python" ,python-2)))
-    (inputs
-     (list gmp))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           ;; The configure script chokes on --enable-fast-install.
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (invoke "./configure"
-                     (string-append "--prefix=" (assoc-ref outputs "out"))
-                     "--cflags=-O3 -fPIC")))
-         (add-before 'build 'prepare-build
-           (lambda _
-             (setenv "CC" "gcc")
-             #t))
-         (add-after 'build 'build-so
-           (lambda _
-             (invoke "make" "libzn_poly.so")))
-         (add-after 'install 'install-so
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (lib (string-append out "/lib"))
-                    (soname (string-append "libzn_poly-" ,version ".so"))
-                    (target (string-append lib "/" soname)))
-               (install-file "libzn_poly.a" lib)
-               (install-file soname lib)
-               (symlink target
-                        (string-append lib "/libzn_poly.so"))
-               (symlink target
-                        (string-append lib "/libzn_poly-"
-                                       ,(version-major+minor version)
-                                       ".so")))
-             #t)))))
-    (synopsis "Arithmetic for polynomials over Z/NZ")
-    (description "zn_poly implements the arithmetic of polynomials the
-coefficients of which are modular integers.")
-    (license (list license:gpl2 license:gpl3)) ; dual licensed
-    (home-page "https://gitlab.com/sagemath/zn_poly")))
-
-(define-public sagemath-data-conway-polynomials
-  (package
-    (name "sagemath-data-conway-polynomials")
+    (name "conway-polynomials")
     (version "0.10")
     (source
      (origin
@@ -409,9 +306,9 @@ polynomials.  The aim of this package is to make them available through a
 generic Python interface.")
     (license license:gpl3+)))
 
-(define-public sagemath-data-polytopes-db
+(define-public polytopes-db
   (package
-    (name "sagemath-data-polytopes-db")
+    (name "polytopes-db")
     (version "20170220")
     (source (origin
               (method url-fetch)
@@ -431,9 +328,9 @@ to be used by SageMath.")
     ;; Debian says GPLv2+.
     (license license:gpl2+)))
 
-(define-public sagemath-data-graphs
+(define-public graphs
   (package
-    (name "sagemath-data-graphs")
+    (name "graphs")
     (version "20210214")
     (source (origin
               (method url-fetch)
@@ -454,30 +351,3 @@ to be used by SageMath.")
 database.")
     ;; Debian says GPLv2+.
     (license license:gpl2+)))
-
-(define-public sagemath-data-combinatorial-designs
-  (package
-    (name "sagemath-data-combinatorial-designs")
-    (version "20140630")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://mirrors.mit.edu/sage/spkg/upstream/"
-                    "combinatorial_designs/combinatorial_designs-"
-                    version ".tar.bz2"))
-              (sha256
-               (base32
-                "0bj8ngiq59hipa6izi6g5ph5akmy4cbk0vlsb0wa67f7grnnqj69"))))
-    (build-system copy-build-system)
-    (arguments
-     '(#:install-plan '(("." "share/combinatorial_designs/"))))
-    (home-page "https://www.sagemath.org")
-    (synopsis "Data for Combinatorial Designs")
-    (description
-     "This package data for combinatorial designs.  It currently contains:
-
-@itemize
-@item The table of @acronym{MOLS, Mutually orthogonal Latin squares} from the
-Handbook of Combinatorial Designs, 2ed.
-@end itemize")
-    (license license:public-domain)))

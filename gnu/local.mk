@@ -1169,6 +1169,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/debops-setup-py-avoid-git.patch	\
   %D%/packages/patches/dee-vapi.patch			\
   %D%/packages/patches/dfu-programmer-fix-libusb.patch		\
+  %D%/packages/patches/dhclient-script-resolvconf-support.patch \
   %D%/packages/patches/directfb-davinci-glibc-228-compat.patch	\
   %D%/packages/patches/dkimproxy-add-ipv6-support.patch		\
   %D%/packages/patches/docbook-utils-documentation-edits.patch	\
@@ -2150,7 +2151,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/randomjungle-disable-static-build.patch	\
   %D%/packages/patches/rapidcheck-fix-libs.patch		\
   %D%/packages/patches/raptor2-heap-overflow.patch		\
-  %D%/packages/patches/ratpoints-sturm_and_rp_private.patch	\
   %D%/packages/patches/ratpoison-shell.patch			\
   %D%/packages/patches/retroarch-unbundle-spirv-cross.patch	\
   %D%/packages/patches/rct-add-missing-headers.patch		\

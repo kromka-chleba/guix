@@ -46,6 +46,7 @@
   #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (gnu packages)
+  #:use-module (gnu packages admin)
   #:use-module (gnu packages algebra)
   #:use-module (gnu packages apr)
   #:use-module (gnu packages astronomy)
@@ -59,6 +60,7 @@
   #:use-module (gnu packages code)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages cryptsetup)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages djvu)
   #:use-module (gnu packages documentation)
@@ -1271,26 +1273,91 @@ multi-floor indoor maps.")
     (native-inputs
      (list extra-cmake-modules pkg-config))
     (inputs
-     (list kauth
-           kcoreaddons
-           ki18n
-           kwidgetsaddons
-           polkit-qt6
-           qtbase
-           qca-qt6
-           `(,util-linux "lib")))
+     `(("coreutils" ,coreutils)
+       ("cryptsetup" ,cryptsetup)
+       ("eudev" ,eudev)
+       ("kauth" ,kauth)
+       ("kcoreaddons" ,kcoreaddons)
+       ("ki18n" ,ki18n)
+       ("kwidgetsaddons" ,kwidgetsaddons)
+       ("lvm2" ,lvm2)
+       ("mdadm" ,mdadm)
+       ("polkit-qt6" ,polkit-qt6)
+       ("qtbase" ,qtbase)
+       ("qca-qt6" ,qca-qt6)
+       ("smartmontools" ,smartmontools)
+       ("util-linux" ,util-linux)
+       ("util-linux:lib" ,util-linux "lib")))
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-cmake-install-directories
+          (add-after 'unpack 'fix-polkit-action-path
             (lambda _
               (substitute* "src/util/CMakeLists.txt"
                 (("DESTINATION \\$\\{POLKITQT-1_POLICY_FILES_INSTALL_DIR\\}")
-                 "DESTINATION share/polkit-1/actions")))))))
+                 "DESTINATION share/polkit-1/actions"))
+              (substitute* "src/backend/corebackend.cpp"
+                  (("\\/usr") #$output))))
+          (add-before 'configure 'patch-trustedprefixes-file
+              (lambda* (#:key inputs #:allow-other-keys)
+                (call-with-output-file "src/util/trustedprefixes"
+                  (lambda (port)
+                    (map (lambda (prefix)
+                           (display prefix port)
+                           (newline port))
+                         (list (assoc-ref inputs "coreutils")
+                               (assoc-ref inputs "util-linux")
+                               (assoc-ref inputs "eudev")
+                               (assoc-ref inputs "cryptsetup")
+                               (assoc-ref inputs "lvm2")
+                               (assoc-ref inputs "mdadm")
+                               (assoc-ref inputs "smartmontools")
+                               "/run/current-system/profile"
+                               "/usr"
+                               "/")))))))))
     (home-page "https://community.kde.org/Frameworks")
     (synopsis "Library for managing partitions")
     (description "Library for managing partitions.")
+    (license license:gpl3+)))
+
+(define-public partitionmanager
+  (package
+    (name "partitionmanager")
+    (version "24.05.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/partitionmanager-" version ".tar.xz"))
+       (sha256
+        (base32 "01xmwkwv8jrwx2jpg797ar8ac9gbdagrl2v3yzqn62fhwcwjcxy6"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase))
+    (native-inputs
+     (list extra-cmake-modules kdoctools))
+    (inputs
+     (list kconfig
+           kconfigwidgets
+           kcoreaddons
+           kcrash
+           kdbusaddons
+           ki18n
+           kio
+           kjobwidgets
+           kpmcore
+           kwidgetsaddons
+           kwindowsystem
+           kxmlgui
+           polkit-qt6))
+    (home-page "https://apps.kde.org/partitionmanager/")
+    (synopsis "Disk device, partition and file system manager")
+    (description "KDE Partition Manager is a utility to help you manage the
+disks, partitions, and file systems.  It allows you to easily create, copy,
+move, delete, back up, restore, and resize them without losing data.  It
+supports a large number of file systems, including ext2/3/4, btrfs, NTFS,
+FAT16/32, JFS, XFS and more.")
     (license license:gpl3+)))
 
 (define-public kpublictransport

@@ -41,6 +41,7 @@
 ;;; Copyright © 2023 pinoaffe <pinoaffe@gmail.com>
 ;;; Copyright © 2024 Juliana Sims <juli@incana.org>
 ;;; Copyright © 2024 Nguyễn Gia Phong <mcsinyx@disroot.org>
+;;; Copyright © 2025 Frederick Muriuki Muriithi <fredmanglis@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2770,6 +2771,39 @@ specification can be downloaded at @url{http://3mf.io/specification/}.")
     (home-page "https://3mf.io/")
     (license license:bsd-2)))
 
+(define-public python-keithley2600
+  (package
+    (name "python-keithley2600")
+    (version "2.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/OE-FET/keithley2600")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19bs7lswb04a5xr4zdsknynmpllpj18nb19jcbjnzf1fs1dqg0hw"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; no tests provided
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy
+           python-pyvisa
+           python-pyvisa-py))
+    (home-page "https://keithley2600.readthedocs.io/en/stable/")
+    (synopsis "Full Python driver for Keithley 2600 series of SMU")
+    (description
+     "This package provides a full Python driver for the Keithley 2600B series
+of source measurement units.  This driver provides access to base commands and
+higher level functions such as IV measurements, transfer and output curves,
+etc.  Base commands replicate the functionality and syntax from the Keithley's
+internal TSP Lua functions.")
+    (license license:expat)))
+
 (define-public python-pyvisa
   (package
     (name "python-pyvisa")
@@ -2808,6 +2842,32 @@ specification can be downloaded at @url{http://3mf.io/specification/}.")
     (description "PyVISA is a Python package for support of the
 @acronym{VISA, Virtual Instrument Software Architecture}, in order to control
 measurement devices and test equipment via GPIB, RS232, Ethernet or USB.")
+    (license license:expat)))
+
+(define-public python-pyvisa-py
+  (package
+    (name "python-pyvisa-py")
+    (version "0.7.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "PyVISA-py" version))
+       (sha256
+        (base32 "0lg8a041yg4yl31bxyyy51nh92rdp8ps94pzpyz7siaqg235npsc"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-wheel
+           python-setuptools))
+    (propagated-inputs
+     (list python-pyvisa
+           python-typing-extensions))
+    (home-page "https://pyvisa-py.readthedocs.io/")
+    (synopsis "Backend for PyVISA")
+    (description
+     "PyVISA-py is a backend for PyVISA that implements most of the methods
+for Message Based communication (Serial/USB/GPIB/Ethernet) using Python and
+some well developed, easy to deploy and cross platform libraries.")
     (license license:expat)))
 
 (define-public python-pandapower

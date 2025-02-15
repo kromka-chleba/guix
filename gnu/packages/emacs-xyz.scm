@@ -136,7 +136,7 @@
 ;;; Copyright © 2023 Camilo Q.S. (Distopico) <distopico@riseup.net>
 ;;; Copyright © 2023 Thanos Apollo <public@thanosapollo.com>
 ;;; Copyright © 2023 Ian Eure <ian@retrospec.tv>
-;;; Copyright © 2024 Suhail Singh <suhail@bayesians.ca>
+;;; Copyright © 2024-2025 Suhail Singh <suhail@bayesians.ca>
 ;;; Copyright © 2024 dan <i@dan.games>
 ;;; Copyright © 2024 Ilya Chernyshov <ichernyshovvv@gmail.com>
 ;;; Copyright © 2024 Wilko Meyer <w@wmeyer.eu>
@@ -13375,7 +13375,7 @@ replaced with the directory you choose.")
 (define-public emacs-consult-notmuch
   (package
     (name "emacs-consult-notmuch")
-    (version "0.8.1")
+    (version "1.0.0")
     (source
      (origin
        (method git-fetch)
@@ -13384,7 +13384,7 @@ replaced with the directory you choose.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gcd69i99prnskh1na7clydqgh1y9rbzkdc6dy9zmin9hfdrw1yd"))))
+        (base32 "1kgi3y1lkp1jd784ncyysr5yimyq6bjpvgx9wxfca14ylb8my37a"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-consult emacs-notmuch))
@@ -22847,7 +22847,7 @@ created by @code{git format-patch}, from @code{magit}, @code{dired} and
 (define-public emacs-git-email
   (package
     (name "emacs-git-email")
-    (version "0.6.2")
+    (version "0.7.0")
     (source
      (origin
        (method git-fetch)
@@ -22856,7 +22856,7 @@ created by @code{git format-patch}, from @code{magit}, @code{dired} and
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1miyz67dk1vi1gs6kgfrmihid90qb9ks79hskhsa2w2a62772jif"))))
+        (base32 "0mda886spz48jvv00xv7ki4154z02bwqbwjfa7clvdw83lfp33am"))))
     (build-system emacs-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -33667,7 +33667,7 @@ commands (a prefix and a suffix) we prefer to call it just a \"transient\".")
 (define-public emacs-forge
   (package
      (name "emacs-forge")
-     (version "0.4.6")
+     (version "0.4.7")
      (source
       (origin
         (method git-fetch)
@@ -33676,7 +33676,7 @@ commands (a prefix and a suffix) we prefer to call it just a \"transient\".")
               (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
-         (base32 "0mh542c9hy401jcvammd89v9ja3zxc16k7zhfflq67x90987mwhp"))))
+         (base32 "1576ic28h5nanab092r2w7id66jv2wf3vw8fkhsbvm6fi4l6g4vg"))))
      (build-system emacs-build-system)
      (arguments
       `(#:tests? #f                     ;no tests
@@ -33695,7 +33695,6 @@ commands (a prefix and a suffix) we prefer to call it just a \"transient\".")
       (list texinfo))
      (propagated-inputs
       (list emacs-closql
-            emacs-dash
             emacs-emacsql
             emacs-ghub
             emacs-let-alist

@@ -173,7 +173,7 @@ line applications.")
 (define-public fplll
   (package
     (name "fplll")
-    (version "5.4.2")
+    (version "5.5.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -182,7 +182,7 @@ line applications.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0044nyfnwzgyfrsikbcbh00f54dd61hwn3fb6711rrskkfnw977a"))))
+                "0m38c1h5586aykac1yy5753a2ygggasrhmmrk092lcnl55ldgy2s"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake libtool pkg-config))
@@ -217,19 +217,20 @@ the real span of the lattice.")
 (define-public python-fpylll
   (package
     (name "python-fpylll")
-    (version "0.5.7")
+    (version "0.6.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "fpylll" version))
        (sha256
         (base32
-         "1xjqcwq90blgzvnbkbzdys8mdhi2b4li6faywm6yi8shxvz8iz0s"))))
-    (build-system python-build-system)
+         "12i4sj6p0z94r1p568jprcnklpi6qh926whzywv23d973jg09x53"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (inputs
      (list fplll gmp mpfr pari-gp))
     (propagated-inputs
-     (list python-cysignals python-cython python-flake8 python-numpy
+     (list python-cysignals python-cython-3 python-flake8 python-numpy
            python-pytest))
     (home-page "https://github.com/fplll/fpylll")
     (synopsis "Python interface for fplll")
