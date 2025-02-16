@@ -56,6 +56,7 @@
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
+;;; Copyright © 2025 Ashvith Shetty <ashvithshetty0010@zohomail.in>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -249,6 +250,98 @@ use the C library from the project called FUSE.")
      "Package bytefmt contains helper methods and constants for converting to and from
 a human-readable byte format.")
     (license license:asl2.0)))
+
+(define-public go-codeberg-org-anaseto-gruid
+  (package
+    (name "go-codeberg-org-anaseto-gruid")
+    (version "0.23.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/anaseto/gruid.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19751r5skzn43af1ccgk8km3b3kxzvqzvw0igxbirvw862g1il04"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "codeberg.org/anaseto/gruid"))
+    (propagated-inputs
+     (list go-golang-org-x-image))
+    (home-page "https://codeberg.org/anaseto/gruid")
+    (synopsis "Grid-based UI and game framework")
+    (description
+     "Package gruid provides a model for building grid-based applications.
+The interface abstracts rendering and input for different platforms.  There
+are drivers for terminal apps (gruid-tcell), native graphical apps (gruid-sdl)
+and browser apps (gruid-js).")
+    (license license:isc)))
+
+(define-public go-codeberg-org-anaseto-gruid-js
+  (package
+    (name "go-codeberg-org-anaseto-gruid-js")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/anaseto/gruid-js.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0m42d469djrix9gnhj6jzvq9kaj2av6ndzl9bf17iyagmqsp5d8x"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "codeberg.org/anaseto/gruid-js"
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: The final application needs to provide the same environment
+          ;; variables before build to prevent issue like this: imports
+          ;; syscall/js: build constraints exclude all Go files in
+          ;; <...>/syscall/js.
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "GOOS" "js")
+              (setenv "GOARCH" "wasm"))))))
+    (propagated-inputs
+     (list go-codeberg-org-anaseto-gruid))
+    (home-page "https://codeberg.org/anaseto/gruid-js")
+    (synopsis "Gruid Driver using syscall/js and wasm and HTML5 canvas")
+    (description
+     "Package js provides a Driver for making browser apps using wasm.  The
+user needs to serve using an http server a directory containing the app.wasm
+file along with an index.html file.")
+    (license license:isc)))
+
+(define-public go-codeberg-org-anaseto-gruid-tcell
+  (package
+    (name "go-codeberg-org-anaseto-gruid-tcell")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/anaseto/gruid-tcell.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zr5xlmnxva5n3c5fj5hxg1wcsw1pq4favfwwv5nclwgzbd0mjr5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "codeberg.org/anaseto/gruid-tcell"))
+    (propagated-inputs
+     (list go-codeberg-org-anaseto-gruid
+           go-github-com-gdamore-tcell-v2))
+    (home-page "https://codeberg.org/anaseto/gruid-tcell")
+    (synopsis "Gruid Driver using the tcell library")
+    (description
+     "Package tcell provides a gruid Driver for making terminal apps.")
+    (license license:isc)))
 
 (define-public go-dario-cat-mergo
   (package
@@ -2410,6 +2503,10 @@ over strings.")
     (build-system go-build-system)
     (arguments
      (list
+      ;; github.com/charlievieth/fastwalk/fastwalk_test.go:962:48: cannot use
+      ;; math.MaxUint32 (untyped int constant 4294967295) as int value in
+      ;; argument to fmt.Sprintf (overflows).
+      #:tests? (target-64bit?)
       #:import-path "github.com/charlievieth/fastwalk"))
     (home-page "https://github.com/charlievieth/fastwalk")
     (synopsis "Fast directory traversal for Golang")
@@ -5414,7 +5511,7 @@ also favors portability, and includes support for all POSIX systems.")
   (package
     (inherit go-github-com-gdamore-tcell)
     (name "go-github-com-gdamore-tcell-v2")
-    (version "2.7.4")
+    (version "2.8.1")
     (source
      (origin
        (method git-fetch)
@@ -5423,7 +5520,7 @@ also favors portability, and includes support for all POSIX systems.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "05b22sgyf8lnwjddxlfvlj7i8b67gnidhbnz86vvx8fddggpa5nd"))))
+        (base32 "0lr81rqcd30djsz1xa7pqh7k3vyip2xp95g14qqr87xxvb4ggm6v"))))
     (arguments
      (list
       #:import-path "github.com/gdamore/tcell/v2"))
@@ -9592,6 +9689,31 @@ modified.  Such data structures are effectively immutable, as their operations
 do not update the structure in-place, but instead always yield a new
 structure.  It's a stable fork of https://github.com/mndrix/ps.")
     (license license:expat)))
+
+(define-public go-github-com-layeh-gopher-luar
+  (package
+    (name "go-github-com-layeh-gopher-luar")
+    (version "1.0.11")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/layeh/gopher-luar")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zfafqy2jwjmrr0gl3h2ivn0iixb0bvslcwcly9bcmc5yxq35m89"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "layeh.com/gopher-luar"))
+    (propagated-inputs (list go-github-com-yuin-gopher-lua))
+    (home-page "https://github.com/layeh/gopher-luar")
+    (synopsis "Simplifies data passing to and from gopher-lua")
+    (description
+     "Package @code{gopher-luar} simplifies data passing to and from
+ @url{https://github.com/yuin/gopher-lua, gopher-lua}.")
+    (license license:mpl2.0)))
 
 (define-public go-github-com-leodido-go-urn
   (package
@@ -15934,6 +16056,235 @@ configuration languages, but other uses may be possible too.")
 utilities for cty Golang module.")
     (license license:expat)))
 
+(define-public go-github-com-zyedidia-clipper
+  (package
+    (name "go-github-com-zyedidia-clipper")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/zyedidia/clipper")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18fv2cdll1d7d5wxs6r7kkhmk60pziiw3iy7knmdbcbhrk9rg112"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/zyedidia/clipper"))
+    (home-page "https://github.com/zyedidia/clipper")
+    (synopsis "Clipboard access in Golang")
+    (description
+     "This package provides a cross-platform clipboard library.
+
+Platforms supported:
+@itemize
+@item Linux via @code{xclip} or @code{xsel} or @code{wl-copy/wl-paste}
+@item MacOS via @code{pbcopy/pbpaste}
+@item Windows via the Windows clipboard API
+@item WSL via clip.exe/powershell.exe
+@item Android Termux via @code{termux-clipboard-set/termux-clipboard-get}
+@item Plan9 via @code{/dev/snarf}
+@item Anything else via a user-defined script
+@end itemize")
+    (license (list license:expat license:bsd-3))))
+
+(define-public go-github-com-zyedidia-glob
+  (package
+    (name "go-github-com-zyedidia-glob")
+    (version "0.0.0-20170209203856-dd4023a66dc3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/zyedidia/glob")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vqw4xbqq6j8p5m7mwxvb448w69vjvgzx0ndsfzdh2cxfirwp3y7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/zyedidia/glob"))
+    (home-page "https://github.com/zyedidia/glob")
+    (synopsis "String globbing in Go")
+    (description
+     "Package glob provides objects for matching strings with globs.")
+    (license license:expat)))
+
+;; For micro@2.0.14
+(define-public go-github-com-zyedidia-go-runewidth
+  (hidden-package
+   (package
+     (inherit go-github-com-mattn-go-runewidth)
+     (name "go-github-com-zyedidia-go-runewidth")
+     (version "0.0.12")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://github.com/zyedidia/go-runewidth")
+              (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "18gv5fkd69v8bwngj6r5zc572vyd1qhafz1wi3d7ynz3w0mmq85c"))))
+     (arguments
+      (list
+       #:import-path "github.com/zyedidia/go-runewidth"))
+     (home-page "https://github.com/zyedidia/go-runewidth")
+     (description
+      "It's an alternative fork of
+@url{https://github.com/mattn/go-runewidth}."))))
+
+(define-public go-github-com-zyedidia-go-shellquote
+  (package
+    (name "go-github-com-zyedidia-go-shellquote")
+    (version "0.0.0-20200613203517-eccd813c0655")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/zyedidia/go-shellquote")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0jxjj60kicpzc6i7vigg0i8iwnhf6jawcalq201a5wkxnkmdlw9g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/kballard/go-shellquote"))
+    (home-page "https://github.com/zyedidia/go-shellquote")
+    (synopsis "Go utilities for performing shell-like word splitting/joining")
+    (description
+     "Shellquote provides utilities for joining/splitting strings using sh's
+word-splitting rules.
+
+It's an alternative fork of @url{https://github.com/kballard/go-shellquote}.")
+    (license license:expat)))
+
+(define-public go-github-com-zyedidia-json5
+  (package
+    (name "go-github-com-zyedidia-json5")
+    (version "0.0.0-20200102012142-2da050b1a98d")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/zyedidia/json5")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1sgydazf3npr788b4w17ydmlh3fd1zmpriv9b69967ww90ckh2kz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/zyedidia/json5"))
+    (home-page "https://github.com/zyedidia/json5")
+    (synopsis "Go JSON5 decoder package based on encoding/json")
+    (description
+     "This is a Go package that implements decoding of
+@url{https://github.com/json5/json5, JSON5}.
+
+It's an alternative fork of @url{https://github.com/titanous/json5}.")
+    (license (list license:expat license:bsd-3))))
+
+(define-public go-github-com-zyedidia-poller
+  (package
+    (name "go-github-com-zyedidia-poller")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/zyedidia/poller")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10cjrqfk1j0l55bdbpm7kv4mqc665pngc8avai0p9chq03y2654g"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/zyedidia/poller"))
+    (home-page "https://github.com/zyedidia/poller")
+    (synopsis "File-descriptor multiplexer based on epoll(7)")
+    (description
+     "Package poller is a file-descriptor multiplexer.  It allows concurent
+Read and Write operations from and to multiple file-descriptors without
+allocating one OS thread for every blocked operation.  It operates similarly
+to Go's netpoller (which multiplexes network connections) without requiring
+special support from the Go runtime.  It can be used with tty devices,
+character devices, pipes, FIFOs, and any file-descriptor that is poll-able,
+can be used with select(2), epoll(7), etc.
+
+In addition, package poller allows the user to set timeouts (deadlines) for
+read and write operations, and also allows for safe cancelation of blocked
+read and write operations; a Close from another go-routine safely cancels
+ongoing (blocked) read and write operations.
+
+It's an active fork of @url{https://github.com/npat-efault/poller}.")
+    (license license:bsd-2)))
+
+;; For micro@2.0.14
+(define-public go-github-com-zyedidia-tcell-v2
+  (hidden-package
+   (package
+     (inherit go-github-com-gdamore-tcell-v2)
+     (name "go-github-com-zyedidia-tcell-v2")
+     (version "2.0.10")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://github.com/zyedidia/tcell")
+              (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "1rbivmy79sc8hnygj7b3axhiqgbx6xc4f28pz69nhq9w2skk3zb9"))))
+     (arguments
+      (list
+       #:import-path "github.com/zyedidia/tcell/v2"))
+     (propagated-inputs
+      (list go-github-com-gdamore-encoding
+            go-github-com-lucasb-eyer-go-colorful
+            go-github-com-mattn-go-runewidth
+            go-github-com-xo-terminfo
+            go-github-com-zyedidia-poller
+            go-golang-org-x-sys
+            go-golang-org-x-text))
+     (home-page "https://github.com/zyedidia/tcell")
+     (description
+      "It's an alternative fork of @url{https://github.com/gdamore/tcell}."))))
+
+(define-public go-github-com-zyedidia-terminal
+  (package
+    (name "go-github-com-zyedidia-terminal")
+    (version "0.0.0-20230315200948-4b3bcf6dddef")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/zyedidia/terminal")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lqplkpllv63msf7sp8igrhvkrnr8l8hz4v5daliyn4qwvgs3k63"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/zyedidia/terminal"))
+    (propagated-inputs (list go-github-com-creack-pty))
+    (home-page "https://github.com/zyedidia/terminal")
+    (synopsis "Package terminal is a vt10x terminal emulation backend")
+    (description
+     "Package terminal is a vt10x terminal emulation backend, influenced
+largely by @code{st}, @code{rxvt}, @code{xterm}, and @code{iTerm} as
+reference.  Use it for terminal muxing, a terminal emulation frontend, or
+wherever else you need terminal emulation.
+
+It's an active fork of @url{https://github.com/james4k/terminal}.")
+    (license license:expat)))
+
 (define-public go-go-abhg-dev-komplete
   (package
     (name "go-go-abhg-dev-komplete")
@@ -17719,19 +18070,16 @@ tools."))))
 tool."))))
 
 (define-public go-ulid
-  (package
-    (inherit go-github-com-oklog-ulid-v2)
+  (package/inherit go-github-com-oklog-ulid-v2
     (name "go-ulid")
     (arguments
      (list
       #:install-source? #f
       #:import-path "github.com/oklog/ulid/v2/cmd/ulid"
       #:unpack-path "github.com/oklog/ulid/v2"))
-    (native-inputs
-     (list go-github-com-pborman-getopt-v2))
     (description
-     (string-append (package-description go-github-com-oklog-ulid)
-                    "  This package provides an command line interface (CLI)
+     (string-append (package-description go-github-com-oklog-ulid-v2)
+                    "\nThis package provides a command line interface (CLI)
 tool."))))
 
 (define-public gofumpt

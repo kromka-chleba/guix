@@ -41,7 +41,7 @@
 ;;; Copyright © 2020, 2021 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2020 Alex McGrath <amk@amk.ie>
 ;;; Copyright © 2020, 2021, 2022 Michael Rohleder <mike@rohleder.de>
-;;; Copyright © 2020, 2021, 2022, 2023 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020, 2021, 2022, 2023, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2020 Alexandru-Sergiu Marton <brown121407@posteo.ro>
 ;;; Copyright © 2020 Ivan Kozlov <kanichos@yandex.ru>
@@ -3891,7 +3891,7 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
 (define-public mlt
   (package
     (name "mlt")
-    (version "7.28.0")
+    (version "7.30.0")
     (source
      (origin
        (method git-fetch)
@@ -3900,7 +3900,7 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "074rb3d3k9i6vmc2201qa7yfnnz8xs3kkvbnfwngjzyrzk6r14xr"))))
+        (base32 "0zks2h5rb8v5y24nwd33cfkzja6qbibify5gf1wv77w1hgf02gml"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -6072,7 +6072,7 @@ transitions, and effects and then export your film to many common formats.")
 (define-public shotcut
   (package
     (name "shotcut")
-    (version "24.11.17")
+    (version "25.01.25")
     (source
      (origin
        (method git-fetch)
@@ -6081,32 +6081,32 @@ transitions, and effects and then export your film to many common formats.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "15p48l5qphhlx2yrxvnya585ws5aq6k9m4w26qbpf60i0qnldq5h"))))
+        (base32 "1cxwa1gzjb5y0640wmdssdjny5wr4r70a6nih65zsqgv223ydfb2"))))
     (build-system qt-build-system)
     (arguments
-     `(#:tests? #f                      ;there are no tests
+     (list
+      #:tests? #f                      ;there are no tests
        #:phases
-       (modify-phases %standard-phases
+       #~(modify-phases %standard-phases
          (add-after 'unpack 'patch-executable-paths
-           (lambda* (#:key inputs #:allow-other-keys)
+           (lambda _
              ;; Shotcut expects ffmpeg and melt executables in the shotcut
              ;; directory.  Use full store paths.
-             (let* ((ffmpeg (assoc-ref inputs "ffmpeg"))
-                    (mlt (assoc-ref inputs "mlt")))
+             (let ((ffmpeg #$(this-package-input "ffmpeg"))
+                    (mlt #$(this-package-input "mlt")))
                (substitute* "src/jobs/ffmpegjob.cpp"
                  (("\"ffmpeg\"") (string-append "\"" ffmpeg "/bin/ffmpeg\"")))
                (substitute* "src/jobs/meltjob.cpp"
                  (("\"melt\"") (string-append "\"" mlt "/bin/melt\""))
                  (("\"melt-7\"") (string-append "\"" mlt "/bin/melt-7\""))))))
          (add-after 'install 'wrap-executable
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (frei0r (assoc-ref inputs "frei0r-plugins"))
-                    (jack (assoc-ref inputs "jack"))
-                    (ladspa (assoc-ref inputs "ladspa"))
-                    (mlt (assoc-ref inputs "mlt"))
-                    (sdl2 (assoc-ref inputs "sdl2")))
-               (wrap-program (string-append out "/bin/shotcut")
+           (lambda _
+             (let ((frei0r #$(this-package-input "frei0r-plugins"))
+                    (jack #$(this-package-input "jack"))
+                    (ladspa #$(this-package-input "ladspa"))
+                    (mlt #$(this-package-input "mlt"))
+                    (sdl2 #$(this-package-input "sdl2")))
+               (wrap-program (string-append #$output "/bin/shotcut")
                  `("FREI0R_PATH" ":" =
                    (,(string-append frei0r "/lib/frei0r-1")))
                  `("LADSPA_PATH" ":" =
@@ -6116,7 +6116,7 @@ transitions, and effects and then export your film to many common formats.")
                  `("PATH" ":" prefix
                    ,(list (string-append mlt "/bin"))))))))))
     (native-inputs
-     (list pkg-config python-wrapper qttools))
+     (list pkg-config python-wrapper qttools vulkan-headers))
     (inputs
      (list bash-minimal
            ffmpeg
@@ -6124,13 +6124,15 @@ transitions, and effects and then export your film to many common formats.")
            frei0r-plugins
            jack-1
            ladspa
+           libxkbcommon
            mlt
            pulseaudio
            qtbase
            qtcharts
            qtdeclarative
            qtmultimedia
-           sdl2))
+           sdl2
+           vulkan-loader))
     (home-page "https://www.shotcut.org/")
     (synopsis "Video editor built on the MLT framework")
     (description

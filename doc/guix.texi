@@ -19880,11 +19880,17 @@ privacy---often the result of host name lookups is in local cache, so
 external name servers do not even need to be queried.
 @end defvar
 
-@cindex syslog
-@cindex logging
+@cindex syslog, with external syslogd
+@cindex logging, syslog
 @defvar syslog-service-type
-Type of the service that runs the syslog daemon, whose value is a
-@code{<syslog-configuration>} object.
+Type of the service that runs the syslog daemon (@command{syslogd}),
+whose value is a @code{<syslog-configuration>} object (see below).
+
+@quotation Note
+This service is redundant with and for the most part superseded by
+@code{shepherd-system-log-service-type} (@pxref{shepherd-system-log, the
+Shepherd system log}).
+@end quotation
 @end defvar
 
 To have a modified @code{syslog-configuration} come into effect after
@@ -26574,6 +26580,49 @@ See @uref{http://plugin.org.uk/ladspa-swh/docs/ladspa-swh.html} for the
 details.
 
 @end defvar
+
+@subsubheading Speaker Safety Daemon System Service
+
+@uref{https://github.com/AsahiLinux/speakersafetyd, Speaker Safety
+Daemon} is a user-space daemon that implements an analogue of the Texas
+Instruments Smart Amp speaker protection model.  It can be used to
+protect the speakers on Apple Silicon devices.
+
+@defvar speakersafetyd-service-type
+This is the type for the @code{speakersafetyd} system service, whose
+value is a @command{speakersafetyd-configuration} record.
+
+@lisp
+(service speakersafetyd-service-type)
+@end lisp
+
+See below for details about @code{speakersafetyd-configuration}.
+@end defvar
+
+@c %start of fragment
+@deftp {Data Type} speakersafetyd-configuration
+Available @code{speakersafetyd-configuration} fields are:
+
+@table @asis
+@item @code{blackbox-directory} (default: @code{"/var/lib/speakersafetyd/blackbox"}) (type: string)
+The directory to which blackbox files are written when the speakers are
+getting too hot.  The blackbox files contain audio and debug information
+which the developers of @code{speakersafetyd} might ask for when
+reporting bugs.
+
+@item @code{configuration-directory} (type: file-like)
+The base directory as a G-expression (@pxref{G-Expressions}) that
+contains the configuration files of the speaker models.
+
+@item @code{maximum-gain-reduction} (default: @code{7}) (type: integer)
+Maximum gain reduction before panicking, useful for debugging.
+
+@item @code{speakersafetyd} (default: @code{speakersafetyd}) (type: file-like)
+The Speaker Safety Daemon package to use.
+
+@end table
+@end deftp
+@c %end of fragment
 
 @node File Search Services
 @subsection File Search Services
@@ -46003,6 +46052,65 @@ herd schedule timer at 07:00 -- mpg123 Music/alarm.mp3
 @xref{Timer Service,,, shepherd, The GNU Shepherd Manual}, for more info
 on the @code{timer} service.
 @end defvar
+
+@anchor{shepherd-system-log}
+@cindex system log service, from Shepherd
+@cindex syslogd, Shepherd system log service
+@defvar shepherd-system-log-service-type
+This service implements a @dfn{system log}, reading messages
+applications send to @file{/dev/log} and writing them to files or
+terminals according to user-defined rules.  It provides functionality
+traditionally implemented by @command{syslogd} programs.
+
+The value of services of this type must be a
+@code{system-log-configuration} record, as described below.
+
+This service is part of @code{%base-services} (@pxref{Base Services}).
+@end defvar
+
+@c %start of fragment
+
+@deftp {Data Type} system-log-configuration
+Available @code{system-log-configuration} fields are:
+
+@table @asis
+@item @code{provision} (default: @code{(system-log syslogd)}) (type: list-of-symbols)
+The name(s) of the system log service.
+
+@item @code{requirement} (default: @code{(root-file-system)}) (type: list-of-symbols)
+Dependencies of the system log service.
+
+@item @code{kernel-log-file} (type: gexp-or-string-or-false)
+File from which kernel messages are read, @file{/dev/kmsg} by default.
+
+@item @code{message-destination} (default: @code{#f}) (type: gexp-or-false)
+This gexp must evaluate to a procedure that, when passed a log message,
+returns the list of files to write it to; @code{#f} is equivalent to
+using @code{(default-message-destination-procedure)}.  @xref{System Log
+Service,,,shepherd,The GNU Shepherd Manual}, for information on how to
+write that procedure.
+
+@item @code{date-format} (type: gexp-or-string)
+String or string-valued gexp specifying how to format timestamps in log
+file.  It must be a valid string for @code{strftime} (@pxref{Time,,,
+guile,GNU Guile Reference Manual}), including delimiting space---e.g.,
+@code{"%c "} for a format identical to that of traditional syslogd
+implementations.
+
+@item @code{history-size} (type: gexp-or-integer)
+Number of logging messages kept in memory for the purposes of making
+them available to @command{herd status system-log}.
+
+@item @code{max-silent-time} (type: gexp-or-integer)
+Time after which a mark is written to log files if nothing was logged
+during that time frame.
+
+@end table
+
+@end deftp
+
+
+@c %end of fragment
 
 @defvar %shepherd-root-service
 This service represents PID@tie{}1.

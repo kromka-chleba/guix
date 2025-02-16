@@ -19,7 +19,7 @@
 ;;; Copyright © 2020, 2023 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020, 2021 Ekaitz Zarraga <ekaitz@elenq.tech>
 ;;; Copyright © 2020 B. Wilson <elaexuotee@wilsonb.com>
-;;; Copyright © 2020, 2021, 2022, 2023, 2024 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020, 2021, 2022, 2023, 2024, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020, 2021, 2023 Morgan Smith <Morgan.J.Smith@outlook.com>
 ;;; Copyright © 2021 qblade <qblade@protonmail.com>
 ;;; Copyright © 2021 Gerd Heber <gerd.heber@gmail.com>
@@ -206,7 +206,7 @@ their devices.")
 (define-public librecad
   (package
     (name "librecad")
-    (version "2.2.0.2")
+    (version "2.2.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -215,21 +215,21 @@ their devices.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "04pyywkc0nzhdx1wi0g63hldmbpdp0wvlrhqv8p3m1z6wyyafgjn"))))
+                "1nal6xfh9qcvn96gapb1jn3nyz3n3wwidqdc864rv38lrigms66i"))))
     (build-system qt-build-system)
     (arguments
-     '(#:test-target "check"
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key inputs #:allow-other-keys)
-             (system* "qmake" (string-append "BOOST_DIR="
-                                             (assoc-ref inputs "boost")))))
+     (list
+      #:test-target "check"
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda _
+              (system* "qmake" (string-append "BOOST_DIR="
+                                              #$(this-package-input "boost")))))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out   (assoc-ref outputs "out"))
-                    (bin   (string-append out "/bin"))
-                    (share (string-append out "/share/librecad")))
+             (let ((bin   (string-append #$output "/bin"))
+                   (share (string-append #$output "/share/librecad")))
                (mkdir-p bin)
                (install-file "unix/librecad" bin)
                (mkdir-p share)
@@ -2173,7 +2173,7 @@ high-performance parallel differential evolution (DE) optimization algorithm.")
   ;; See <https://debbugs.gnu.org/cgi/bugreport.cgi?bug=27344#236>.
   (package
     (name "libngspice")
-    (version "43")
+    (version "44.2")
     (source
      (origin
        (method url-fetch)
@@ -2184,7 +2184,7 @@ high-performance parallel differential evolution (DE) optimization algorithm.")
                    "mirror://sourceforge/ngspice/ng-spice-rework/"
                    "old-releases/" version "/ngspice-" version ".tar.gz")))
        (sha256
-        (base32 "169nn6bw5628m2k8cy77yd1vs22plj83grisq58j07sk11pnmp8l"))))
+        (base32 "1zfpj09vqjamgkhnipwpwmvrzhfymikml7lw80igsx2lpnvxznp7"))))
     (build-system gnu-build-system)
     (arguments
      (list

@@ -57,7 +57,7 @@
 ;;; Copyright © 2023 Wilko Meyer <w@wmeyer.eu>
 ;;; Copyright © 2024 Benjamin Slade <slade@lambda-y.net>
 ;;; Copyright © 2024 Jean Simard <woshilapin@tuziwo.info>
-;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024, 2025 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
@@ -3322,6 +3322,8 @@ from the Cyrus IMAP project.")
      (list
       #:configure-flags
       #~(list "--localstatedir=/var"
+              ;; Allow work with /etc/mailname.
+              "--sysconfdir=/etc"
               "--with-libbsd"
               ;; This is the default only if it exists at build time—it doesn't.
               "--with-path-socket=/var/run"
@@ -3336,35 +3338,43 @@ from the Cyrus IMAP project.")
               (string-append "ac_cv_path_ZCAT="
                              #$(this-package-input "gzip") "/bin/zcat"))
       #:phases
-      `(modify-phases %standard-phases
-         ;; Fix some incorrectly hard-coded external tool file names.
-         (add-after 'unpack 'patch-FHS-file-names
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "mk/pathnames"
-               ;; avoids warning smtpd: couldn't enqueue offline message
-               ;; smtpctl exited abnormally
-               (("(-DPATH_SMTPCTL=).*\\\\" all def)
-                (string-append def "\\\"/run/privileged/bin/smtpctl\\\" \\"))
-               (("(-DPATH_MAKEMAP=).*\\\\" all def)
-                (string-append def "\\\"/run/privileged/bin/makemap\\\" \\")))
-             (substitute* "usr.sbin/smtpd/smtpctl.c"
-               ;; ‘gzcat’ is auto-detected at compile time, but ‘cat’ isn't.
-               (("/bin/cat" file) (search-input-file inputs file)))
-             (substitute* "usr.sbin/smtpd/mda_unpriv.c"
-               (("/bin/sh" file) (search-input-file inputs file)))))
-         ;; OpenSMTPD provides a single smtpctl utility to control both the
-         ;; daemon and the local submission subsystem.  To accomodate systems
-         ;; that require historical interfaces such as sendmail, newaliases or
-         ;; makemap, smtpctl operates in compatibility mode if called with the
-         ;; historical name.
-         (add-after 'install 'install-compability-links
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out  (assoc-ref outputs "out"))
-                    (sbin (string-append out "/sbin/")))
-               (for-each (lambda (command)
-                           (symlink "smtpctl" (string-append sbin command)))
-                         (list "mailq" "makemap" "newaliases"
-                               "send-mail" "sendmail"))))))))
+      #~(modify-phases %standard-phases
+          ;; Fix some incorrectly hard-coded external tool file names.
+          (add-after 'unpack 'patch-FHS-file-names
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "mk/pathnames"
+                ;; avoids warning smtpd: couldn't enqueue offline message
+                ;; smtpctl exited abnormally
+                (("(-DPATH_SMTPCTL=).*\\\\" all def)
+                 (string-append def "\\\"/run/privileged/bin/smtpctl\\\" \\"))
+                (("(-DPATH_MAKEMAP=).*\\\\" all def)
+                 (string-append def "\\\"/run/privileged/bin/makemap\\\" \\")))
+              (substitute* "usr.sbin/smtpd/smtpctl.c"
+                ;; ‘gzcat’ is auto-detected at compile time, but ‘cat’ isn't.
+                (("/bin/cat" file) (search-input-file inputs file)))
+              (substitute* "usr.sbin/smtpd/mda_unpriv.c"
+                (("/bin/sh" file) (search-input-file inputs file)))))
+          ;; Avoid install smtpd.conf to /etc.
+          (add-after 'unpack 'fix-smtpd.conf-install-path
+            (lambda _
+              (let ((etc (string-append #$output "/etc")))
+                (mkdir-p etc)
+                (substitute* "mk/smtpd/Makefile.am"
+                  (("\\$\\(DESTDIR\\)\\$\\(sysconfdir\\)/smtpd\\.conf")
+                   (string-append etc "/smtpd.conf"))))))
+          ;; OpenSMTPD provides a single smtpctl utility to control both the
+          ;; daemon and the local submission subsystem.  To accomodate systems
+          ;; that require historical interfaces such as sendmail, newaliases or
+          ;; makemap, smtpctl operates in compatibility mode if called with the
+          ;; historical name.
+          (add-after 'install 'install-compability-links
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out  (assoc-ref outputs "out"))
+                     (sbin (string-append out "/sbin/")))
+                (for-each (lambda (command)
+                            (symlink "smtpctl" (string-append sbin command)))
+                          (list "mailq" "makemap" "newaliases"
+                                "send-mail" "sendmail"))))))))
     (synopsis "Lightweight SMTP daemon")
     (description
      "OpenSMTPD is an implementation of server-side @acronym{SMTP, Simple Mail

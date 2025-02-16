@@ -75,6 +75,7 @@
 ;;; Copyright © 2022-2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Hendursaga <hendursaga@aol.com>
 ;;; Copyright © 2022 Parnikkapore <poomklao@yahoo.com>
+;;; Copyright © 2022 Cairn <cairn@pm.me>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2023 Florian Pelz <pelzflorian@pelzflorian.de>
 ;;; Copyright © 2023 Ivana Drazovic <iv.dra@hotmail.com>
@@ -85,6 +86,7 @@
 ;;; Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
 ;;; Copyright © 2024 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
+;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -155,7 +157,6 @@
   #:use-module (gnu packages gnu-doc)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages gnuzilla)
-  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages gperf)
@@ -8424,30 +8425,28 @@ whatever you make of it.")
     (license license:gpl3)))
 
 (define-public badass
-  (let ((commit "3c3cd669b4fc8f73a102e3702788f7b28dc47dbb")
-        (revision "0"))
   (package
     (name "badass")
-    (version (git-version "0.0" revision commit))
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://github.com/umayr/badass")
-                     (commit commit)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "05c9vdcb5ym3z0n5ll3v39mw4yl9jcjnlydmn0yl89ai9pv71zb6"))))
+    (version "0.0.0-20151201180210-02e7c38d503f")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/umayr/badass")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1b0y7xz9y0cqxfphfznz2zhfk7mm2vvmldf088w2fm8c8spj4g28"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "github.com/umayr/badass"))
+    (home-page "https://github.com/umayr/badass")
     (synopsis "Hacking contribution graphs in git")
     (description
      "Badass generates false commits for a range of dates, essentially
 hacking the gamification of contribution graphs on platforms such as
 Github or Gitlab.")
-    (home-page "https://github.com/umayr/badass")
-    (license license:expat))))
+    (license license:expat)))
 
 (define-public colobot
   (package
@@ -10613,91 +10612,51 @@ and bring the war to your enemy.")
                    license:expat license:fdl1.3+ license:public-domain
                    license:zlib))))
 
-(define-public go-github-com-anaseto-gruid
-  (package
-    (name "go-github-com-anaseto-gruid")
-    (version "0.21.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/anaseto/gruid")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0rvsavkvg2hziwdh8sjk3n5v92m5mfjb8v9m7ch22maxfwq5kv6y"))))
-    (build-system go-build-system)
-    (arguments
-     '(#:import-path "github.com/anaseto/gruid"))
-    (propagated-inputs
-     (list go-golang-org-x-image))
-    (home-page "https://github.com/anaseto/gruid")
-    (synopsis "Cross-platform grid-based UI and game framework")
-    (description "The gruid module provides packages for easily building
-grid-based applications in Go.  The library abstracts rendering and input for
-different platforms.  There are drivers available for terminal apps, native
-graphical apps and browser apps.  The original application for the library was
-creating grid-based games, but it's also well suited for any grid-based
-application.")
-    (license license:isc)))
-
-(define-public go-github-com-anaseto-gruid-tcell
-  (package
-    (name "go-github-com-anaseto-gruid-tcell")
-    (version "0.1.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/anaseto/gruid-tcell")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "09ajr9mbldjfc44qprplbf8dr8yhlbn2nfnas2z62m9wmklc0qiv"))))
-    (build-system go-build-system)
-    (arguments
-     '(#:import-path "github.com/anaseto/gruid-tcell"))
-    (propagated-inputs
-     `(("go-github-com-gdamore-tcell-v2" ,go-github-com-gdamore-tcell-v2)
-       ("go-github-com-anaseto-gruid" ,go-github-com-anaseto-gruid)))
-    (home-page "https://github.com/anaseto/gruid-tcell")
-    (synopsis "Gruid driver using the tcell library")
-    (description "The gruid-tcell module provides a Gruid driver for building
-terminal full-window applications.")
-    (license license:isc)))
-
 (define-public harmonist
   (package
     (name "harmonist")
-    (version "0.4.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://git.tuxfamily.org/harmonist/harmonist.git")
-                     (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "17ai39pw9xq4asfvhs0whx07hljlivygazbwrxjrnxwrn06483hr"))))
+    (version "0.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/anaseto/harmonist")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1gn9zmnjw1f4xbdk281cmxh7swxc16i663q8pzn5s135gdg6qgdm"))))
     (build-system go-build-system)
     (arguments
-     '(#:import-path "git.tuxfamily.org/harmonist/harmonist"))
-    (inputs
-     `(("go-github-com-gdamore-tcell-v2" ,go-github-com-gdamore-tcell-v2)
-       ("go-github-com-nsf-termbox-go" ,go-github-com-nsf-termbox-go)
-       ("go-github-com-anaseto-gruid" ,go-github-com-anaseto-gruid)
-       ("go-github-com-anaseto-gruid-tcell" ,go-github-com-anaseto-gruid-tcell)))
+     (list
+      #:install-source? #f
+      #:import-path "codeberg.org/anaseto/harmonist"))
+    (native-inputs
+     (list go-codeberg-org-anaseto-gruid
+           go-codeberg-org-anaseto-gruid-js
+           go-codeberg-org-anaseto-gruid-sdl
+           go-codeberg-org-anaseto-gruid-tcell
+           go-github-com-gdamore-tcell-v2))
     (home-page "https://harmonist.tuxfamily.org/")
     (synopsis "Stealth coffee-break roguelike game")
-    (description "Harmonist: Dayoriah Clan Infiltration is a stealth
-coffee-break roguelike game.  The game has a heavy focus on tactical
-positioning, light and noise mechanisms, making use of various terrain types
-and cones of view for monsters.  Aiming for a replayable streamlined experience,
-the game avoids complex inventory management and character building, relying
-on items and player adaptability for character progression.")
+    (description
+     "Harmonist: Dayoriah Clan Infiltration is a stealth coffee-break
+roguelike game.  The game has a heavy focus on tactical positioning, light and
+noise mechanisms, making use of various terrain types and cones of view for
+monsters.  Aiming for a replayable streamlined experience, the game avoids
+complex inventory management and character building, relying on items and
+player adaptability for character progression.")
     (license license:isc)))
+
+(define-public harmonist-sdl
+  (package/inherit harmonist
+    (name "harmonist-sdl")
+    (arguments
+     (substitute-keyword-arguments (package-arguments harmonist)
+       ((#:tests? _ #t) #f)
+       ((#:build-flags _ #'()) #~(list "--tags=sdl"))))
+    (native-inputs
+     (modify-inputs (package-native-inputs harmonist)
+       (prepend pkg-config)))))
 
 (define-public gnurobots
   (package

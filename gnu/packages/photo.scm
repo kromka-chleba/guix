@@ -534,7 +534,7 @@ photographic equipment.")
 (define-public darktable
   (package
     (name "darktable")
-    (version "5.0.0")
+    (version "5.0.1")
     (source
      (origin
        (method url-fetch)
@@ -542,7 +542,7 @@ photographic equipment.")
              "https://github.com/darktable-org/darktable/releases/"
              "download/release-" version "/darktable-" version ".tar.xz"))
        (sha256
-        (base32 "18d37x4qlnhzbr372lxmi70vq6j4l2pnmql2f8957fr4wvk3d8ga"))))
+        (base32 "116rdmxl2csxysghm4h9h1rwms6pqcawf351czpq7adv9q4qv4aa"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -559,10 +559,6 @@ photographic equipment.")
                  (string-append "\""
                                 (search-input-file inputs "/lib/libOpenCL.so")
                                 "\"")))))
-          (add-before 'configure 'set-LDFLAGS
-            (lambda _
-              (setenv "LDFLAGS"
-                      (string-append "-Wl,-rpath=" #$output "/lib/darktable"))))
           (add-after 'install 'wrap-program
             (lambda _
               (wrap-program (string-append #$output "/bin/darktable")
