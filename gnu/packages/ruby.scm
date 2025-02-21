@@ -3165,7 +3165,7 @@ support.")
     (build-system ruby-build-system)
     (native-inputs
      (list bundler
-           ;; The test suite tests all the available backends. Currenly, this just
+           ;; The test suite tests all the available backends. Currently, this just
            ;; means the node backend.
            ;;
            ;; PASSED: test:node
@@ -4122,7 +4122,7 @@ Ruby Gems.")
     (build-system ruby-build-system)
     (synopsis "ActiveSupport stream silencing without ActiveSupport")
     (description "SilentStream is an extraction of some parts of
-ActiveSupport's Kernel Reporting Core Extentions around silencing IO
+ActiveSupport's Kernel Reporting Core Extensions around silencing IO
 streams.")
     (home-page "https://github.com/pboling/silent_stream")
     (license license:expat)))
@@ -6376,7 +6376,7 @@ of Memory.")
     (build-system ruby-build-system)
     (synopsis "URI class for parsing data URIs")
     (description
-     "Data @acronym{URI, universal resource idenfitier}s allow resources to be
+     "Data @acronym{URI, universal resource identifier}s allow resources to be
 embedded inside a URI.  The URI::Data class provides support for parsing these
 URIs using the normal URI.parse method.")
     (home-page "https://github.com/dball/data_uri")
@@ -6985,7 +6985,7 @@ then be analyzed or manipulated more easily than the underlying AST layer.")
     (arguments
      '(#:test-target "spec"             ;avoid rubocop dependency
        #:phases (modify-phases %standard-phases
-                  (add-after 'patch-source-shebangs 'patch-shell-invokations
+                  (add-after 'patch-source-shebangs 'patch-shell-invocations
                     (lambda _
                       (substitute* '("lib/parallel_tests/tasks.rb"
                                      "spec/parallel_tests/tasks_spec.rb")
@@ -11398,7 +11398,7 @@ definitions.")
                 ;; triggered in the build environment, for reasons unknown.
                 (("def test_cp_r_dev.*" all)
                  (string-append all "    return true\n"))))))))
-    (synopsis "Ruby utility libray to manipulate files")
+    (synopsis "Ruby utility library to manipulate files")
     (description "The FileUtils Ruby library includes Several file utility
 methods for copying, moving, removing, etc.")
     (home-page "https://github.com/ruby/fileutils")
@@ -13933,7 +13933,7 @@ interface.  It allows Jekyll to rebuild your site when a file changes.")
                (("gem 'activerecord.*$") "gem 'activerecord'\n"))))
          (add-before 'check 'delete-Gemfile.lock
            (lambda _
-             ;; Bundler isn't being used for fetching dependendencies, so
+             ;; Bundler isn't being used for fetching dependencies, so
              ;; delete the Gemfile.lock
              (delete-file "Gemfile.lock")
              #t))
@@ -16351,7 +16351,7 @@ and social networks to better index and display your site's content.")
                                              "/share/zoneinfo"))
                       #t))
                   (add-before 'check 'delete-test-BatchProcessor
-                    ;; test_BatchProcessor fails with exeption:
+                    ;; test_BatchProcessor fails with exception:
                     ;; run> terminated with exception (report_on_exception is true)
                     (lambda _
                       (delete-file "test/test_BatchProcessor.rb")
@@ -17829,7 +17829,7 @@ the power of the built-in @code{OptionParser}.")
                    "`find spec -type f | sort`"))))
             (add-after 'wrap 'populate-dictionaries
               (lambda args
-                ;; We must initiallize these files here, or they will never be
+                ;; We must initialize these files here, or they will never be
                 ;; usable with the default settings. A more flexible approach
                 ;; might use something like `Gem.find_files()` or
                 ;; XDG_DATA_DIRS.

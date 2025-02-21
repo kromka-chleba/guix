@@ -279,7 +279,7 @@ it to your needs by using several command line options.")
 (define-public elementary-xfce-icon-theme
   (package
     (name "elementary-xfce-icon-theme")
-    (version "0.20")
+    (version "0.20.1")
     (source
      (origin
        (method git-fetch)
@@ -288,7 +288,7 @@ it to your needs by using several command line options.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fdfqf98rk3z30qcs5ca3i3ybwg4icvq6yrxwv8i3yl0ikw6rc4k"))))
+        (base32 "1vv0fsi8myyhxc0miaphhkl4w8g0zkbirrarclbxpahp1pmxw3g1"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -306,7 +306,7 @@ it to your needs by using several command line options.")
      "This is a fork of the upstream elementary project. This icon
 theme is supposed to keep everything working for Xfce, but gets updates from
 upstream occasionally.")
-    (license gpl2+)))
+    (license gpl3+)))
 
 (define-public exo
   (package
@@ -416,7 +416,7 @@ management D-Bus specification.")
 (define-public libxfce4windowing
   (package
     (name "libxfce4windowing")
-    (version "4.20.0")
+    (version "4.20.2")
     (source
      (origin
        (method git-fetch)
@@ -425,7 +425,7 @@ management D-Bus specification.")
              (commit (string-append name "-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "158jhw5kq3dzmgmy9wr9fgspwcdq84r6hjfnvbn48wx9d2q9pwdp"))))
+        (base32 "151bs8rf0q3cln28lla5yk254dr75b508a0611crfavqrsrn23az"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -450,7 +450,7 @@ windowing-system-independent manner.")
 (define-public xfce4-panel
   (package
     (name "xfce4-panel")
-    (version "4.20.0")
+    (version "4.20.3")
     (source
      (origin
        (method git-fetch)
@@ -459,7 +459,7 @@ windowing-system-independent manner.")
              (commit (string-append name "-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "049dhis9106zig5awr9ppnxm357d93z842h015pd8rni9sayc7m0"))))
+        (base32 "0fmybf6caqdqgw68z7nn4c7a6wxn896niw50m8zf3div8d9s7ddl"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -619,7 +619,7 @@ seamlessly with the tiling window manager i3.")
 (define-public xfce4-whiskermenu-plugin
   (package
     (name "xfce4-whiskermenu-plugin")
-    (version "2.8.3")
+    (version "2.9.1")
     (source
      (origin
        (method git-fetch)
@@ -629,7 +629,7 @@ seamlessly with the tiling window manager i3.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "025nnf1h361a4nl8l28rk7w37d3jajr8dm359lnfq8xz3f6yy4n5"))))
+        (base32 "0alxsb1lzlpzwpy4ra26n16inz906r2ssdqjrq6jjwh5gw44lz08"))))
     (build-system cmake-build-system)
     (native-inputs
      (list gettext-minimal pkg-config))
@@ -795,7 +795,7 @@ allows you to shut down the computer from Xfce.")
 (define-public xfce4-settings
   (package
     (name "xfce4-settings")
-    (version "4.20.0")
+    (version "4.20.1")
     (source
      (origin
        (method git-fetch)
@@ -804,7 +804,7 @@ allows you to shut down the computer from Xfce.")
              (commit (string-append name "-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1xv8fcrrk54r6naxhwj9ff8f1q9g08fh0ailazvbmi1jww12xwyi"))
+        (base32 "1hk8jsiczpzvm7zs79g5jk6amg988rg1w1ir4z3x0yklqgalw4gl"))
        (patches (search-patches "xfce4-settings-defaults.patch"))))
     (build-system gnu-build-system)
     (arguments
@@ -846,7 +846,7 @@ like appearance, display, keyboard and mouse settings.")
 (define-public thunar
   (package
     (name "thunar")
-    (version "4.20.1")                           ;stable version = even minor
+    (version "4.20.2")                           ;stable version = even minor
     (source
      (origin
        (method git-fetch)
@@ -855,7 +855,7 @@ like appearance, display, keyboard and mouse settings.")
              (commit (string-append name "-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "16pjl2xzaqzzl316bpp6s9fqrz7xfl818ixxl8nq2zpw8fvgv37q"))))
+        (base32 "12qgg4n92v4h9k4acpm4a40gfv3vk2w9hrcwa301bm3bkqh0vqmn"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      '(#:configure-flags '("--enable-maintainer-mode" ;for thunar-marshal.c
@@ -945,7 +945,7 @@ archive files using the file context menus in the Thunar file manager.")
 (define-public thunar-shares-plugin
   (package
     (name "thunar-shares-plugin")
-    (version "0.3.2")
+    (version "0.4.0")
     (source
      (origin
        (method git-fetch)
@@ -955,10 +955,10 @@ archive files using the file context menus in the Thunar file manager.")
              (commit (string-append name "-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0agq4f16mlrri84n81wgrhipvg55gh527jw42wiv6ac9vnqlcnw8"))))
+        (base32 "1m4xdmfs6zcxsq96p0wgwgqv2av7bqqsbpsrbqkq78mrmn9533nl"))))
     (build-system gnu-build-system)
-    (native-inputs (list xfce4-dev-tools))
-    (inputs (list thunar gtk+))
+    (native-inputs (list autoconf-2.71 xfce4-dev-tools))
+    (inputs (list thunar gtk+ xfconf))
     (home-page "https://docs.xfce.org/xfce/thunar/thunar-shares-plugin")
     (synopsis "Folder share plugin for Thunar file manager")
     (description
@@ -1120,7 +1120,7 @@ window manager.")
 (define-public xfdesktop
   (package
     (name "xfdesktop")
-    (version "4.20.0")
+    (version "4.20.1")
     (source
      (origin
        (method git-fetch)
@@ -1129,7 +1129,7 @@ window manager.")
              (commit (string-append name "-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0z3ps7n1ilsgx83phk46aqzfp96zxisxl7xngls054ak9nb3fj7k"))
+        (base32 "13kzh63dskdl5ayzza8a9db40g16sfzzh0aq7vy6hk0xf4fyq720"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -1536,7 +1536,7 @@ memory usage graphically, and it can display processes as a tree.")
 (define-public orage
   (package
     (name "orage")
-    (version "4.18.0")
+    (version "4.20.0")
     (source
      (origin
        (method git-fetch)
@@ -1545,7 +1545,7 @@ memory usage graphically, and it can display processes as a tree.")
              (commit (string-append name "-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1sidyq4358cp701rkfj4p0ikshf612jm5f9j4gma6h6v2dxp7gxw"))))
+        (base32 "0z32b2wg2pfwcvpp81dmdlnwqxnh7ps08mr13syzl7v0qj29p9jm"))))
     (build-system gnu-build-system)
     (native-inputs
      (list xfce4-dev-tools))
@@ -1565,7 +1565,7 @@ several different time zones.")
 (define-public xfce4-notifyd
   (package
     (name "xfce4-notifyd")
-    (version "0.9.6")
+    (version "0.9.7")
     (source
      (origin
        (method git-fetch)
@@ -1574,7 +1574,7 @@ several different time zones.")
              (commit (string-append name "-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0li1vxh460ak329sxpz8zbyggv4m38mzdanpjxdjxf9gypsp65ag"))))
+        (base32 "1bj34lkasrrnbgr5gnk8yvhxxypi4n0p3gq20w766f4rg75nh1x6"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list xfce4-dev-tools))

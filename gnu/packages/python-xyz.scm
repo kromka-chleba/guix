@@ -445,7 +445,11 @@ loop.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1kvzhhd2ah0sadlsp5xs3qbiknixq4xwhk3yb6kmhcdl2zcbi4cn"))))
+        (base32 "1kvzhhd2ah0sadlsp5xs3qbiknixq4xwhk3yb6kmhcdl2zcbi4cn"))
+       (modules '((guix build utils)))
+       (snippet #~(substitute* "pyproject.toml"
+                    (("version = \"0\"")
+                     (format #f "version = \"~a\"" #$version))))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-poetry-core
@@ -1368,7 +1372,7 @@ using a dot syntax, for example: @code{dictionary['deeply.nested.key']}.")
      "Often when we want to label multiple points on a graph the text will
 start heavily overlapping with both other labels and data points.  This can be
 a major problem requiring manual solution.  However this can be largely
-automatized by smart placing of the labels (difficult) or iterative adjustment
+automated by smart placing of the labels (difficult) or iterative adjustment
 of their positions to minimize overlaps (relatively easy).  This library
 implements the latter option to help with matplotlib graphs.")
     (license license:expat)))
@@ -3830,6 +3834,26 @@ and simplified.  It supports SPDX license expressions as well as other naming
 conventions and aliases in the same expression.")
     (license license:gpl2+)))
 
+(define-public python-limits
+  (package
+    (name "python-limits")
+    (version "4.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "limits" version))
+       (sha256
+        (base32 "0nkdwkvn2rs5swnd4ihv6yg6b5124apqzrrymqcm75pwil2mqkx5"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-deprecated python-packaging
+                             python-typing-extensions))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://limits.readthedocs.io/")
+    (synopsis "Rate limiting utilities")
+    (description "This package provides a Python library to perform rate
+limiting with commonly used storage backends.")
+    (license license:expat)))
+
 (define-public python-wand
   (package
     (name "python-wand")
@@ -5966,7 +5990,7 @@ port forwards using @acronym{UPnP, Universal Plug and Play}.")
            python-setuptools-scm
            python-wheel))
     (home-page "https://github.com/pytest-dev/py")
-    (synopsis "Python library for parsing, I/O, instrospection, and logging")
+    (synopsis "Python library for parsing, I/O, introspection, and logging")
     (description
      "Py is a Python library for file name parsing, .ini file parsing, I/O,
 code introspection, and logging.")
@@ -9697,42 +9721,23 @@ objects.")
 (define-public python-sparse
   (package
     (name "python-sparse")
-    (version "0.15.4")
+    (version "0.15.5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sparse" version))
        (sha256
         (base32
-         "111bqz2xqr17rrc7svd20z94xf3zkfs9anjvzpr683zz4iywbcfl"))))
+         "0rp29gp82qwwkq210pzh2qmlqhi2007nb7p7nwqmrkgmjq6cwxjc"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-version
-            (lambda _
-              (with-output-to-file "sparse/_version.py"
-                (let* ((version #$(package-version this-package) )
-                       (version-tuple (string-join (string-split version #\.) ", ")))
-                  (lambda ()
-                    (format #t
-                            "__version__ = version = '~a'
-__version_tuple__ = version_tuple = (~a)~%" version version-tuple))))
-              (substitute* "pyproject.toml"
-                (("\\[tool\\.setuptools_scm\\]") "")
-                (("^version_file.*") "")
-                (("^dynamic = \\[\"version\"\\]")
-                 (string-append "version = \"" #$version "\"\n"))))))))
     (propagated-inputs
      (list python-numba python-numpy python-scipy))
     (native-inputs
      (list python-dask
-           python-pre-commit
            python-pytest
            python-pytest-cov
            python-setuptools
-           python-setuptools-scm
+           python-setuptools-scm-next
            python-wheel))
     (home-page "https://github.com/pydata/sparse/")
     (synopsis "Library for multi-dimensional sparse arrays")
@@ -14107,7 +14112,7 @@ computing.")
            python-wheel))
     (home-page "https://gitlab.linss.com/open-source/python/uri-template")
     (synopsis "RFC 6570 URI Template Processor")
-    (description "This packages implements URI Template expansion in strict
+    (description "This package implements URI Template expansion in strict
 adherence to RFC 6570, but adds a few extensions.")
     (license license:expat)))
 
@@ -23518,7 +23523,7 @@ until the object is actually required, and caches the result of said call.")
           (add-after 'unpack 'patch-getprotobyname-calls
             ;; These calls are problematic in the build environment as there is
             ;; no /etc/protocols.  This breaks the sanity-check phase of any
-            ;; package depnding on this one.
+            ;; package depending on this one.
             (lambda _
               (substitute* "dns/rdtypes/IN/WKS.py"
                 (("socket.getprotobyname\\('tcp'\\)")
@@ -23573,7 +23578,7 @@ It supports TSIG authenticated messages and EDNS0.")
           (add-after 'unpack 'patch-getprotobyname-calls
             ;; These calls are problematic in the build environment as there is
             ;; no /etc/protocols.  This breaks the sanity-check phase of any
-            ;; package depnding on this one.
+            ;; package depending on this one.
             (lambda _
               (substitute* "dns/rdtypes/IN/WKS.py"
                 (("socket.getprotobyname\\('tcp'\\)")
@@ -25291,7 +25296,7 @@ efficient as possible on all supported Python versions.")
 Mustache templating language renderer.")
     (license license:expat)))
 
-;; XXX: Try to inherit from duckdb and build from source with all extentions.
+;; XXX: Try to inherit from duckdb and build from source with all extensions.
 (define-public python-duckdb
   (package
     (name "python-duckdb")
@@ -26665,8 +26670,8 @@ functionality removed from @code{packaging}.")
     (home-page "https://github.com/benknight/hue-python-rgb-converter")
     (synopsis "RGB conversion tool in Python")
     (description
-     "This packages implements funtionality of RGB/CIE1931 'xy' gammuts
-convertion: Gamut A, B, and C.")
+     "This package implements functionality of RGB/CIE1931 'xy' gammuts
+conversion: Gamut A, B, and C.")
     (license license:expat)))
 
 (define-public python-sure
@@ -29299,7 +29304,7 @@ user-space file systems in Python.")
          (replace 'check
            (lambda* (#:key tests? #:allow-other-keys)
              (when tests?
-               ;; These tests don't import currectly.
+               ;; These tests don't import correctly.
                (delete-file "test/test_js_client.py")
                (delete-file "test/test_tsd_types.py")
                (delete-file "test/test_python_gen.py")
@@ -34447,7 +34452,7 @@ dates in almost any string formats commonly found on web pages.")
          (replace 'check
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (add-installed-pythonpath inputs outputs)
-             ;; This invokation is taken from tox.ini.
+             ;; This invocation is taken from tox.ini.
              (invoke "nosetests" "-d" "-v" "tests/"))))))
     (home-page "https://github.com/akesterson/dpath-python")
     (synopsis "File-system-like pathing and searching for dictionaries")

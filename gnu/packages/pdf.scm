@@ -151,7 +151,7 @@
                          python-pillow))
     (home-page "https://github.com/jpakkane/a4pdf")
     (synopsis "Color-managed PDF generator")
-    (description "A4PDF is a low-level libray for generating PDF files.
+    (description "A4PDF is a low-level library for generating PDF files.
 It does not have a document model and instead uses PDF primitives
 directly.  It uses LittleCMS for color management but otherwise does not
 convert data in any way.")
@@ -175,10 +175,10 @@ convert data in any way.")
                 (sha256
                  (base32
                   "1vwgv28b291lrcs9fljnlbnicv16lwj4vvl4bz6w3ldp9n5isjmf"))))
-      (build-system cmake-build-system)
+      (build-system qt-build-system)
       (arguments
        `(#:tests? #f))
-      (inputs (list qtbase-5 qttools-5 poppler-qt5))
+      (inputs (list qtbase-5 qttools-5 qtwayland-5 poppler-qt5))
       (native-inputs (list pkg-config extra-cmake-modules))
       (home-page "http://www.qtrac.eu/diffpdf-foss.html")
       (synopsis "Compare two PDF files")
@@ -1132,7 +1132,7 @@ selected)
 @item Eraser with multiple configurations
 @item LaTeX support
 @item bug reporting, autosave, and auto backup tools
-@item Customizeable toolbar, with multiple configurations, e.g., to
+@item Customizable toolbar, with multiple configurations, e.g., to
 optimize toolbar for portrait / landscape
 @item Page Template definitions
 @item Shape drawing (line, arrow, circle, rectangle)
@@ -1749,11 +1749,12 @@ Keywords: html2pdf, htmltopdf")
        ;; XXX: Fix build with mupdf-0.23.0+.
        ;; See also: https://github.com/ahrm/sioyek/issues/804
        (patches (search-patches "sioyek-fix-build.patch"))))
-    (build-system gnu-build-system)
+    (build-system qt-build-system)
     (arguments
      (list
       #:configure-flags
       #~(list (string-append "PREFIX=" #$output))
+      #:test-target "check"
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-paths
@@ -1781,6 +1782,7 @@ Keywords: html2pdf, htmltopdf")
            openjpeg
            qt3d-5
            qtbase-5
+           qtwayland-5
            zlib))
     (home-page "https://sioyek.info/")
     (synopsis "PDF viewer with a focus on technical books and research papers")

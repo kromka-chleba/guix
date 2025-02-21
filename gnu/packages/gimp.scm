@@ -224,7 +224,7 @@ provided, as well as a framework to add new color models and data types.")
 (define-public gegl
   (package
     (name "gegl")
-    (version "0.4.52")
+    (version "0.4.54")
     (source
      (origin
        (method url-fetch)
@@ -238,7 +238,7 @@ provided, as well as a framework to add new color models and data types.")
                                  (version-major+minor version)
                                  "/gegl-" version ".tar.xz")))
        (sha256
-        (base32 "02h0jq9r1d521n12h7zjf4lv1pqgsfhac765b188qi70qc7jl8fa"))))
+        (base32 "07lb4czm99kcgnqhnz21ybfcy1z3qj7p9d9cxsnpjhvbikq458rm"))))
     (build-system meson-build-system)
     (arguments
      `(#:phases
@@ -425,7 +425,7 @@ that is extensible via a plugin system.")
   (package
     (inherit gimp)
     (name "gimp-next")
-    (version "3.0.0-RC2")
+    (version "3.0.0-RC3")
     (source
      (origin
        (method url-fetch)
@@ -433,7 +433,7 @@ that is extensible via a plugin system.")
                            (version-major+minor version)
                            "/gimp-" version ".tar.xz"))
        (sha256
-        (base32 "1dwxdml6sh1gv9rwl9pp02gla4dzp43mgcxjz11mbkl0y5nzklpl"))))
+        (base32 "1v1qgq7yy6q4vkdm9qzhsw6w7lxbmfb4g2016lzkl29dy9y55yv1"))))
     (build-system meson-build-system)
     (arguments
      (list #:modules `((ice-9 popen)

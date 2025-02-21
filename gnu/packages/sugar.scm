@@ -74,9 +74,8 @@
       `(,@%glib-or-gtk-build-system-modules
         (guix build python-build-system))
       #:modules
-      '((guix build glib-or-gtk-build-system)
-        ((guix build python-build-system) #:prefix python:)
-        (guix build utils))
+      `(((guix build python-build-system) #:prefix python:)
+        ,@%glib-or-gtk-build-system-default-modules)
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-build-system
@@ -252,9 +251,8 @@ activities and other Sugar components.")
       `(,@%glib-or-gtk-build-system-modules
         (guix build python-build-system))
       #:modules
-      '((guix build glib-or-gtk-build-system)
-        ((guix build python-build-system) #:prefix python:)
-        (guix build utils))
+      `(((guix build python-build-system) #:prefix python:)
+        ,@%glib-or-gtk-build-system-default-modules)
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'patch-build-system
@@ -322,9 +320,8 @@ and metadata, and the journal with querying and full text search.")
       `(,@%glib-or-gtk-build-system-modules
         (guix build python-build-system))
       #:modules
-      '((guix build glib-or-gtk-build-system)
-        ((guix build python-build-system) #:prefix python:)
-        (guix build utils))
+      `(((guix build python-build-system) #:prefix python:)
+        ,@%glib-or-gtk-build-system-default-modules)
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-build-system
@@ -726,7 +723,7 @@ import logging
        (list gettext-minimal))
       (home-page "https://github.com/sugarlabs/sugar-commander")
       (synopsis "Manage your Sugar journal")
-      (description "Sugar-commander lets you import items from removeable
+      (description "Sugar-commander lets you import items from removable
 devices like USB drives and SD cards using a familiar hierarchical view of
 files on these devices, as opposed to the flattened Journal view that the
 Sugar Journal gives to these devices.  It also enables you to see how much

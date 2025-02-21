@@ -3239,7 +3239,7 @@ and cyclic tridiagonal linear systems.")
      `(#:cabal-revision ("4"
                          "026mkj9fz64rdrap25mp8cwdrzwj90h35qg9kkn078fac93aaq10")))
     (home-page "https://diagrams.github.io/")
-    (synopsis "Scalable Vector Grpahics backend for the diagrams framework")
+    (synopsis "Scalable Vector Graphics backend for the diagrams framework")
     (description "This package provides a modular backend for rendering
 diagrams created with the diagrams embedded domain-specific
 language (EDSL) to Scalable Vector Graphics (SVG) files.")
@@ -3994,7 +3994,7 @@ when used with GHC versions which already provide the
     (synopsis "Desktop Notifications client")
     (description
      "This package provides a library for issuing notifications using
-@code{FreeDesktop.org's} Desktop Notifications protcol.  This protocol is
+@code{FreeDesktop.org's} Desktop Notifications protocol.  This protocol is
 supported by services such as Ubuntu's @code{NotifyOSD}.")
     (license license:bsd-3)))
 
@@ -5394,7 +5394,7 @@ Accounting.")
            openblas))
     (home-page "https://github.com/albertoruiz/hmatrix")
     (synopsis "Haskell numeric linear algebra library")
-    (description "The HMatrix package provices a Haskell library for
+    (description "The HMatrix package provides a Haskell library for
 dealing with linear systems, matrix decompositions, and other
 numerical computations based on BLAS and LAPACK.")
     (license license:bsd-3)))
@@ -6106,7 +6106,7 @@ example code on the home page for a quick introduction.")
     (home-page "https://github.com/ekmett/intervals")
     (synopsis "Interval arithmetic")
     (description "This library provides @code{Numeric.Interval.Interval},
-which represets a closed, convex set of floating point values.")
+which represents a closed, convex set of floating point values.")
     (license license:bsd-3)))
 
 (define-public ghc-invariant
@@ -8304,7 +8304,7 @@ found at runtime, a userError is thrown.")
      "This library makes it easy to implement monads with tricky control
 flow.  This is useful for: writing web applications in a sequential style,
 programming games with a uniform interface for human and AI players and easy
-replay capababilities, implementing fast parser monads, designing monadic
+replay capabilities, implementing fast parser monads, designing monadic
 DSLs, etc.")
     (license license:bsd-3)))
 
@@ -16121,7 +16121,7 @@ a = Solo a .  Note: it's not a @@newtype@@ . @@Solo@@ is available in
      "This package provides extra instances for type-classes in the
 [indexed-traversable](https://hackage.haskell.org/package/indexed-traversable)
 package. .  The intention is to keep this package minimal; it provides instances
-that formely existed in @@lens@@ or @@optics-extra@@.  We recommend putting
+that formerly existed in @@lens@@ or @@optics-extra@@.  We recommend putting
 other instances directly into their defining packages.  The
 @@indexed-traversable@@ package is light, having only GHC boot libraries as its
 dependencies.")
@@ -16525,7 +16525,7 @@ JSON to and from the Lua stack.")
     (description
      "This package provides a parser for plain-text representations of tables.  This
 package supports table headers, cells spanning multiple columns or rows, as well
-as a way to specfiy column alignments.")
+as a way to specify column alignments.")
     (license license:expat)))
 
 (define-public ghc-lpeg
@@ -17002,7 +17002,7 @@ scripting language <https://lua.org Lua>.")
     (inputs (list ghc-network))
     (native-inputs (list ghc-hspec hspec-discover))
     (home-page "https://github.com/yesodweb/wai")
-    (synopsis "Efficient netowrk recv")
+    (synopsis "Efficient network recv")
     (description "Network recv based on buffer pools")
     (license license:bsd-3)))
 
@@ -17159,7 +17159,7 @@ such as ala'.")
     (synopsis
      "Data validation based on Applicative and Selective functors")
     (description
-     "Lighweight pure data validation based on Applicative and Selective functors.")
+     "Lightweight pure data validation based on Applicative and Selective functors.")
     (license license:mpl2.0)))
 
 (define-public ghc-tdigest

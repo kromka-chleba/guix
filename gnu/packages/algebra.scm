@@ -1341,9 +1341,7 @@ xtensor provides:
        (method url-fetch)
        (uri (string-append "https://files.gap-system.org/gap-"
                            (version-major+minor version)
-                           "/tar.gz/gap-"
-                           version
-                           ".tar.gz"))
+                           "/tar.gz/gap-" version ".tar.gz"))
        (sha256
         (base32 "11v4a3cpjpf6pc0hd6x1wlglq9jzakq4naggp671psvgq9r54pw4"))
        (modules '((guix build utils) (ice-9 ftw) (srfi srfi-1)))
@@ -1351,16 +1349,7 @@ xtensor provides:
         '(begin
            ;; Delete bundled external libraries.
            (for-each delete-file-recursively
-                     '("extern" "hpcgap/extern"))
-           ;; Delete packages that are known not to build.
-           ;; TODO: Investigate.
-           (with-directory-excursion "pkg"
-             (for-each delete-file-recursively
-                       '("caratinterface" ; ./configure: /bin/sh: bad interpreter: No such file or directory
-                         "normalizinterface" ; tries to download normaliz even when it is available
-                         "semigroups" ; bundled dependencies
-                         "xgap" ; make: /bin/sh: No such file or directory
-                        )))))))
+                     '("extern" "hpcgap/extern"))))))
     (build-system gnu-build-system)
     (native-inputs (list (texlive-updmap.cfg
                            (list texlive-enumitem
@@ -1380,21 +1369,40 @@ xtensor provides:
        (list (string-append "LDFLAGS=-Wl,-rpath=" %output "/lib"))
        #:phases
        (modify-phases %standard-phases
+         (add-after 'unpack 'prepare-package-source
+           (lambda _
+             (with-directory-excursion "pkg"
+               ;; Unpack package tarball, so that shebangs can be modified.
+               (with-directory-excursion "caratinterface"
+                 (invoke "tar" "xvf" "carat.tgz")))))
+         ;; The following phases are added after 'build, apparently in
+         ;; reverse order. So we carry out 'build, then 'build-doc, then
+         ;; 'remove-packages, then 'build-packages.
          (add-after 'build 'build-packages
            (lambda _
              (setenv "CONFIG_SHELL" (which "bash"))
              (setenv "CC" "gcc")
              (with-directory-excursion "pkg"
                (invoke "../bin/BuildPackages.sh"))))
-         (add-after 'build-packages 'build-doc
+         (add-after 'build 'remove-packages
+           ;; Delete packages that are known not to build.
+           ;; TODO: Investigate.
+           (lambda _
+             (with-directory-excursion "pkg"
+               (for-each delete-file-recursively
+                         '("normalizinterface" ; tries to download normaliz even when it is available
+                           "semigroups" ; bundled dependencies
+                           "xgap" ; make: /bin/sh: No such file or directory
+             )))))
+         (add-after 'build 'build-doc
            ;; The documentation is bundled, but we create it from source.
+           ;; This needs to be done before 'remove-packages, since
+           ;; otherwise this phase fails due to missing cross references.
+           ;; Otherwise said, the documentation will include that of
+           ;; removed packages. It needs to be done after 'build since
+           ;; it requires the gap binary.
            (lambda _
              (with-directory-excursion "doc"
-               ;; We do not build all packages, which breaks
-               ;; cross-references in the documentation. Since
-               ;; gap-4.14.0, this causes an error.
-               (substitute* "make_doc"
-                 (("QuitGap\\(false\\);") "QuitGap(true);"))
                (invoke "./make_doc"))))
          (add-after 'install 'install-packages
            (lambda* (#:key outputs #:allow-other-keys)
@@ -1410,7 +1418,7 @@ emphasis on computational group theory.  It provides a programming language,
 a library of thousands of functions implementing algebraic algorithms
 written in the GAP language as well as large data libraries of algebraic
 objects.")
-    ;; gap itself is gpl2+, but some packages have different licenses.
+    ;; gap itself is gpl2+, but some packages have different licenses,
     ;; effectively forcing the combined work to be licensed as gpl3+.
     (license license:gpl3+)))
 

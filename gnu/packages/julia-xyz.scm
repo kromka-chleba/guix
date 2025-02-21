@@ -3572,7 +3572,7 @@ interfaces with @file{.ini} files.")
     (synopsis
      "Canonical default initial values and identity elements for Julia")
     (description
-     "This package provides a canoncial set of default initial values
+     "This package provides a canonical set of default initial values
 and identity elements for Julia.")
     (license license:expat)))
 
@@ -4714,7 +4714,7 @@ additions is not changed.")
     (description
      "This package provides an interface for manipulating multivariate polynomials.
 Implementing algorithms on polynomials using this interface will allow the algorithm
-to work for all polynomials implenting this interface.  The interface contains
+to work for all polynomials implementing this interface.  The interface contains
 functions for accessing the coefficients, monomials, defining arithmetic operations
 on them, rational functions, division with remainder, calculus and differentiation,
 and evaluation and substitution.")
@@ -6827,7 +6827,7 @@ interface functions for working with all kinds tabular data.")
     (license license:expat)))
 
 (define-public julia-tableshowutils
-  ;; The 0.2.5 release is not fully compatable with newer versions of Julia.
+  ;; The 0.2.5 release is not fully compatible with newer versions of Julia.
   (let ((commit "c4e02d8b9bbb31fc81ed6618955e9b1c7cb04460")
         (revision "1"))
     (package

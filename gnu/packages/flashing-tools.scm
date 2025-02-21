@@ -38,6 +38,7 @@
   #:use-module (guix build-system go)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system qt)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -353,7 +354,7 @@ RK3036, RK3066, RK312X, RK3168, RK3188, RK3288, RK3368.")
               (sha256
                (base32
                 "1ygn4snvcmi98rgldgxf5hwm7zzi1zcsihfvm6awf9s6mpcjzbqz"))))
-    (build-system cmake-build-system)
+    (build-system qt-build-system)
     (arguments
      `(#:build-type "Release"
        #:tests? #f                      ; no tests
@@ -376,7 +377,7 @@ RK3036, RK3066, RK312X, RK3168, RK3188, RK3288, RK3368.")
                (install-file "libpit/libpit.a" lib)
                #t))))))
     (inputs
-     (list libusb qtbase-5 zlib))
+     (list libusb qtbase-5 qtwayland-5 zlib))
     (home-page "https://glassechidna.com.au/heimdall/")
     (synopsis "Flash firmware onto Samsung mobile devices")
     (description "@command{heimdall} is a tool suite used to flash firmware (aka

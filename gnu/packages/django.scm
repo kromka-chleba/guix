@@ -185,13 +185,13 @@ to the @dfn{don't repeat yourself} (DRY) principle.")
 (define-public python-django-cache-url
   (package
     (name "python-django-cache-url")
-    (version "3.4.4")
+    (version "3.4.5")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "django-cache-url" version))
               (sha256
                (base32
-                "0dpx2wmcclmd3jkprdljz3makq12vd0sjv3xnvlj5vk1lg7glb7g"))))
+                "05yr19gi5ln6za0y9nf184klaixnf1dr1nfajn63893mf6ab37zb"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-django python-setuptools python-wheel))
@@ -355,17 +355,18 @@ with arguments to the field constructor.")
 (define-public python-django-classy-tags
   (package
     (name "python-django-classy-tags")
-    (version "2.0.0")
+    (version "4.1.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "django-classy-tags" version))
         (sha256
          (base32
-          "1javam3zqi3y3j0r490mm61v48yh75jaha99gb7lsxkaz6yri7fm"))))
-    (build-system python-build-system)
-    ;; FIXME: How to make the test templates available to Django?
-    (arguments '(#:tests? #f))
+          "0ngffhbicyx1j0j0nxdvbg9bhs9ss88xvx3dhr6irrx65ymd3nf8"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-django))
     (home-page "https://github.com/divio/django-classy-tags")
@@ -676,14 +677,14 @@ queries done via the Django ORM, SQLAlchemy generated queries are displayed.")
 (define-public python-django-gravatar2
   (package
     (name "python-django-gravatar2")
-    (version "1.4.4")
+    (version "1.4.5")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "django-gravatar2" version))
        (sha256
         (base32
-         "1vn921fb6jjx7rf5dzhy66rkb71nwmh9ydd0xs9ys72icw4jh4y8"))))
+         "0r03m1qkh56g92x136xdq8n92mj7gbi1fh0djarxhp9rbr35dfrd"))))
     (build-system python-build-system)
     (arguments
      '(;; TODO: The django project for the tests is missing from the release.
@@ -768,13 +769,13 @@ example, explicit calls to callables from templates and better performance.")
 (define-public python-dj-database-url
   (package
     (name "python-dj-database-url")
-    (version "2.1.0")
+    (version "2.3.0")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "dj-database-url" version))
+              (uri (pypi-uri "dj_database_url" version))
               (sha256
                (base32
-                "0pqkifl5zradgsznjpk6g6zp64gnsxdav7x3knf56vh8w7pjq17j"))))
+                "11w7532lq05c3wysbn7f5jf82yj0vjjmsi2ylkjmfsqq6kkfhlmf"))))
     (build-system python-build-system)
     (propagated-inputs
      (list python-django python-typing-extensions))
@@ -832,7 +833,7 @@ applications with a @var{SEARCH_URL} variable.")
 (define-public python-django-picklefield
   (package
     (name "python-django-picklefield")
-    (version "3.1.0")
+    (version "3.2.0")
     (home-page "https://github.com/gintas/django-picklefield")
     ;; Use a git checkout because the PyPI release lacks tests.
     (source
@@ -844,7 +845,7 @@ applications with a @var{SEARCH_URL} variable.")
         (file-name (git-file-name name version))
         (sha256
          (base32
-          "00d8sm6cnkv5bxbs2a3qrm4g69nlaa1wari7mc697df8q91v6r0n"))))
+          "0ykcw0wb064zv17piwiz6ldy2d2jil93x1ckk5pcfnc7hhk1phsh"))))
     (build-system python-build-system)
     (arguments
      '(#:phases (modify-phases %standard-phases
@@ -1393,25 +1394,25 @@ provides features like a Web-browsable API and authentication policies.")
 (define-public python-django-sekizai
   (package
     (name "python-django-sekizai")
-    (version "2.0.0")
+    (version "4.1.0")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "django-sekizai" version))
         (sha256
          (base32
-          "0vrkli625b5s1wldri3dyrfvqbxg7zxy2pg0rpjixw3b1ndz0ag8"))))
+          "1bfdag32yqjq3vqvyi9izdkmfcs2qip42rcmxpphqp0bmv5kdjia"))))
     (build-system python-build-system)
     (arguments '(#:tests? #f)) ; Tests not included with release.
     (propagated-inputs
-     (list python-django python-django-classy-tags python-six))
+     (list python-django python-django-classy-tags))
     (home-page "https://github.com/divio/django-sekizai")
     (synopsis "Template blocks for Django projects")
     (description "Sekizai means blocks in Japanese, and that is what this app
 provides.  A fresh look at blocks.  With @code{django-sekizai} you can define
 placeholders where your blocks get rendered and at different places in your
 templates append to those blocks.  This is especially useful for css and
-javascript.  Your subtemplates can now define css and javscript files to be
+javascript.  Your subtemplates can now define css and javascript files to be
 included, and the css will be nicely put at the top and the javascript to the
 bottom, just like you should.  Also sekizai will ignore any duplicate content in
 a single block.")
@@ -1599,13 +1600,13 @@ to ElasticSearch.")
 (define-public python-django-netfields
   (package
     (name "python-django-netfields")
-    (version "1.3.0")
+    (version "1.3.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "django-netfields" version))
               (sha256
                (base32
-                "122d0db1f420cwzrd7hynfbnnpqkjj2ridym5mrnj0l736nin5rr"))))
+                "0q2s6b689hwql4qcw02m3zj2fwsx1w4ffhw81yvp71dq3dh46jg5"))))
     (build-system python-build-system)
     (arguments '(#:tests? #f))      ;XXX: Requires a running PostgreSQL server
     (propagated-inputs

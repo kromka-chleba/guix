@@ -222,7 +222,7 @@ devpi-client and others.")
     (synopsis "Devpi upload/install/... commands for Python developers")
     (description
      "The devpi command line tool is typically used in conjunction with
-devpi-server.  It allows to upload, test and install packages from devpi
+devpi-server.  It allows uploading, testing and installing packages from devpi
 indexes.")
     (license license:expat)))
 
@@ -680,7 +680,7 @@ reusable library for parsing, manipulating, and generating URIs.")
     (synopsis "Fork of the legacy standard library cgi and cgitb modules")
     (description
      "This is a fork of the standard library modules @code{cgi} and
-@code{cgitb}.  They are slated to be removed from the Python standard libary
+@code{cgitb}.  They are slated to be removed from the Python standard library
 in Python 3.13 by PEP-594.")
     (license license:psfl)))
 
@@ -2121,7 +2121,7 @@ parallel as well as downloading each file in a number of chunks.
 
 asciicast demo of parfive parfive works by creating a downloader object,
 appending files to it and then running the download. parfive has a synchronous
-API, but uses asyncio to paralellise downloading the files.")
+API, but uses asyncio to parallelise downloading the files.")
     (license license:expat)))
 
 (define-public python-html2text
@@ -4530,31 +4530,18 @@ than Python’s urllib2 library.")
 
 (define-public python-requests-next
   (package
+    (inherit python-requests)
     (name "python-requests")
     (version "2.32.3")
-    (source (origin
-             (method url-fetch)
-             (uri (pypi-uri "requests" version))
-             (sha256
-              (base32
-               "0q5742pnibwy74169kacin3dmqg9jzmzk7qab5aq5caffcbm8djm"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list nss-certs-for-test))
-    (propagated-inputs
-     (list python-certifi
-           python-charset-normalizer
-           python-idna
-           python-urllib3))
-    (arguments
-     ;; FIXME: Some tests require network access.
-     '(#:tests? #f))
-    (home-page "http://python-requests.org/")
-    (synopsis "Python HTTP library")
-    (description
-     "Requests is a Python HTTP client library.  It aims to be easier to use
-than Python’s urllib2 library.")
-    (license license:asl2.0)))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "requests" version))
+       (sha256
+        (base32 "0q5742pnibwy74169kacin3dmqg9jzmzk7qab5aq5caffcbm8djm"))))
+     (native-inputs
+      (modify-inputs (package-native-inputs python-requests)
+        (prepend nss-certs-for-test)))))
 
 (define-public python-requests-kerberos
   (package
@@ -7024,6 +7011,41 @@ such as IoT applications or multi-user database-driven business applications.")
 Python.")
     (license license:bsd-3)))
 
+(define-public python-slowapi
+  (package
+    (name "python-slowapi")
+    (version "0.1.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/laurents/slowapi")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lc1n6lvh01dhhrc507qri9rz1w72l2riii03ixh7n7n1gwjpws7"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; These tests fail because the timestamp contains more decimal points
+      ;; than expected, so a simple equality comparison fails.
+      '(list "-k" (string-append "not test_headers_no_breach"
+                                 " and not test_headers_breach"))))
+    (propagated-inputs (list python-limits python-redis))
+    (native-inputs
+     (list python-fastapi
+           python-hiro
+           python-mock
+           python-poetry-core
+           python-pytest))
+    (home-page "https://github.com/laurents/slowapi")
+    (synopsis "Rate limiting extension for Starlette and Fastapi")
+    (description
+     "This package provides a rate limiting extension for Starlette and
+Fastapi.")
+    (license license:expat)))
+
 (define-public python-slugify
   (package
     (name "python-slugify")
@@ -8575,7 +8597,7 @@ interpreter written in pure Python.")
     (home-page "https://github.com/web-push-libs/encrypted-content-encoding")
     (synopsis "Encrypted Content Encoding for HTTP")
     (description
-     "This package provices a simple implementation of Encrypted Content
+     "This package provides a simple implementation of Encrypted Content
 Encoding for HTTP.")
     (license license:expat)))
 

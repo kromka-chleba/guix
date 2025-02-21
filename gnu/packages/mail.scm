@@ -8,7 +8,7 @@
 ;;; Copyright © 2015 Paul van der Walt <paul@denknerd.org>
 ;;; Copyright © 2015, 2016, 2018 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2015 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2015-2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Christine Lemmer-Webber <cwebber@dustycloud.org>
 ;;; Copyright © 2016 Al McElrath <hello@yrns.org>
 ;;; Copyright © 2016, 2017, 2018, 2019, 2020, 2021 Leo Famulari <leo@famulari.name>
@@ -506,33 +506,45 @@ with a @code{ncurses} user interface similar to @code{alpine} and
 @code{pine}.")
     (license license:expat)))
 
-(define-public go-gitlab.com-shackra-goimapnotify
+(define-public goimapnotify
   (package
-    (name "go-gitlab.com-shackra-goimapnotify")
-    (version "2.3.7")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://gitlab.com/shackra/goimapnotify")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "06jhxvhdvdv049qpvp8ahnhvswvbpakpw7aq2lw790f3x89px2ss"))))
+    (name "goimapnotify")
+    (version "2.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/shackra/goimapnotify")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06gmhrmfl31icr2lld9g2bnqjs0y2fq7kjfzm8zjg8d3n3vs7rl9"))))
     (build-system go-build-system)
     (arguments
-     `(#:import-path "gitlab.com/shackra/goimapnotify"))
-    (propagated-inputs
+     (list
+      #:install-source? #f
+      #:import-path "gitlab.com/shackra/goimapnotify"))
+    (native-inputs
      (list go-github-com-emersion-go-imap
+           go-github-com-emersion-go-imap-id
            go-github-com-emersion-go-imap-idle
-           go-github-com-emersion-go-sasl go-github-com-sirupsen-logrus
-           go-golang-org-x-text))
+           go-github-com-emersion-go-sasl
+           go-github-com-fatih-color
+           go-github-com-sirupsen-logrus
+           go-github-com-spf13-viper))
+    (home-page "https://gitlab.com/shackra/goimapnotify")
     (synopsis "Execute scripts on IMAP mailbox changes")
     (description
-     "Script to execute scripts on IMAP mailbox changes (new/deleted/updated
-messages) using IDLE.  Implemented in Go.")
-    (home-page "https://gitlab.com/shackra/goimapnotify")
+     "This package provides a CLI application to execute scripts on IMAP
+mailbox changes (new/deleted/updated messages) using
+@url{https://en.wikipedia.org/wiki/IMAP_IDLE, IDLE} and it is mostly
+compatible with the configuration of
+@url{https://github.com/a-sk/python-imapnotify, imapnotify made with
+Python}.")
     (license license:gpl3+)))
+
+(define-public go-gitlab.com-shackra-goimapnotify
+  (deprecated-package "go-gitlab.com-shackra-goimapnotify" goimapnotify))
 
 (define-public guile2.2-mailutils
   (package
@@ -3821,15 +3833,15 @@ some configuration.")
 (define-public postorius
   (package
     (name "postorius")
-    (version "1.3.6")
+    (version "1.3.13")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "postorius" version))
        (sha256
         (base32
-         "0s0sv97nmszl5pl9rnnyzp3sxpmdhpxqrdwv7nc0ww8zs99w831b"))))
-    (build-system python-build-system)
+         "08hs2g2yfya869chi74xwhqkrq9l4dm1k5ddx14hv42j91ffybb0"))))
+    (build-system pyproject-build-system)
     (arguments
      '(#:phases
        (modify-phases %standard-phases
@@ -3842,10 +3854,17 @@ some configuration.")
                  #t))))
        #:tests? #f)) ; Tests try to run a mailman instance to test against.
     (inputs
-     (list python-readme-renderer python-mailmanclient
-           python-django python-django-mailman3))
+     (list python-readme-renderer
+           python-mailmanclient
+           python-django
+           python-django-mailman3))
     (native-inputs
-     (list python-beautifulsoup4 python-isort python-mock python-vcrpy))
+     (list python-beautifulsoup4
+           python-isort
+           python-mock
+           python-pdm-backend
+           python-pytest
+           python-vcrpy))
     (home-page "https://gitlab.com/mailman/postorius")
     (synopsis "Web user interface for GNU Mailman")
     (description
@@ -4189,13 +4208,13 @@ servers.  The 4rev1 and 4 versions of IMAP are supported.")
 (define-public urlscan
   (package
     (name "urlscan")
-    (version "1.0.1")
+    (version "1.0.6")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "urlscan" version))
         (sha256
-         (base32 "0zrh2c8p70fq9y7afmpbsirz22nq2qhnks5c5zfmgnm2b9p9iv70"))))
+         (base32 "10a5rgvzy6baqmr0x4lmzsr73a4jpbm04xyjmqlkr493vq08kgrv"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:tests? #f))        ; No tests.
@@ -5035,16 +5054,18 @@ feeds, converts them into emails, and sends them.")
                    "sendgmail-remove-domain-restriction.patch"
                    "sendgmail-accept-ignored-gsuite-flag.patch"))
          (sha256
-          (base32
-           "1cxpkiaajhq1gjsg47r2b5xgck0r63pvkyrkm7af8c8dw7fyn64f"))))
-      (inputs
-       (list go-golang-org-x-oauth2 go-cloud-google-com-go-compute-metadata))
+          (base32 "1cxpkiaajhq1gjsg47r2b5xgck0r63pvkyrkm7af8c8dw7fyn64f"))))
       (build-system go-build-system)
       (arguments
-       '(#:unpack-path "github.com/google/gmail-oauth2-tools"
-         #:import-path "github.com/google/gmail-oauth2-tools/go/sendgmail"))
-      (home-page
-       "https://github.com/google/gmail-oauth2-tools/tree/master/go/sendgmail")
+       (list
+        #:install-source? #f
+        #:tests? #f ; no tests
+        #:unpack-path "github.com/google/gmail-oauth2-tools"
+        #:import-path "github.com/google/gmail-oauth2-tools/go/sendgmail"))
+      (inputs
+       (list go-golang-org-x-oauth2
+             go-cloud-google-com-go-compute-metadata))
+      (home-page "https://github.com/google/gmail-oauth2-tools")
       (synopsis
        "Sendmail-compatible tool for using Gmail with @code{git send-email}")
       (description

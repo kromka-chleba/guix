@@ -108,10 +108,8 @@
                            (guix build cmake-build-system)
                            (guix build qt-build-system)
                            (guix build qt-utils))
-      #:modules '((guix build glib-or-gtk-build-system)
-                  ((guix build qt-build-system)
-                   #:prefix qt:)
-                  (guix build utils))
+      #:modules `(((guix build qt-build-system) #:prefix qt:)
+                  ,@%glib-or-gtk-build-system-default-modules)
       #:configure-flags
       #~(list "--with-im-config-data"
               "--with-imsettings-data"
@@ -229,10 +227,8 @@ focuses especially on Korean input (Hangul, Hanja, ...).")
         (guix build qt-build-system)
         (guix build qt-utils))
        #:modules
-       ((guix build glib-or-gtk-build-system)
-        ((guix build qt-build-system)
-         #:prefix qt:)
-        (guix build utils))
+       (((guix build qt-build-system) #:prefix qt:)
+        ,@%glib-or-gtk-build-system-default-modules)
        #:configure-flags
        (list
         ;; FIXME
@@ -1135,7 +1131,7 @@ fi")))))))
     (inputs (list libiconv))
     (home-page "https://taku910.github.io/mecab")
     (synopsis "Morphological analysis engine for texts")
-    (description "Mecab is a morphological analysis engine developped as a
+    (description "Mecab is a morphological analysis engine developed as a
 collaboration between the Kyoto university and Nippon Telegraph and Telephone
 Corporation.  The engine is independent of any language, dictionary or corpus.")
     (license (list license:gpl2+ license:lgpl2.1+ license:bsd-3))))

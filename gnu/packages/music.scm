@@ -764,9 +764,12 @@ Winamp/XMMS skins.")
                                (lambda (file stat)
                                  (string-match "^3rdparty/[^/]*$" file))
                                #:directories? #t))))))
-    (build-system cmake-build-system)
+    (build-system qt-build-system)
     (arguments
-     `(#:test-target "run_strawberry_tests"
+     `(#:qtbase ,qtbase
+       #:test-target "run_strawberry_tests"
+       #:configure-flags
+       `("-DBUILD_WITH_QT6=ON")
        #:phases
        (modify-phases %standard-phases
          (add-after 'install 'wrap-program
@@ -807,6 +810,7 @@ Winamp/XMMS skins.")
            protobuf
            pulseaudio
            qtbase
+           qtwayland
            sqlite
            taglib))
     (home-page "https://www.strawberrymusicplayer.org/")
@@ -1011,7 +1015,7 @@ settings (aliasing, linear interpolation and cubic interpolation).")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1i5gz5zck8s0kskjgnx9c75gh7zx0kbjsqzl2765f99p9svprirq"))))
-    (build-system cmake-build-system)
+    (build-system qt-build-system)
     (arguments
      `(#:test-target "tests"
        #:phases
@@ -1038,6 +1042,7 @@ settings (aliasing, linear interpolation and cubic interpolation).")
            qtbase-5
            qtsvg-5
            qtxmlpatterns
+           qtwayland-5
            zlib))
     (home-page "http://hydrogen-music.org/")
     (synopsis "Drum machine")
@@ -5526,6 +5531,7 @@ includes LV2 plugins and a JACK standalone client.")
            qtquickcontrols2-5
            qtscript
            qtsvg-5
+           qtwayland-5
            qtx11extras
            qtxmlpatterns))
     (propagated-inputs
@@ -5720,7 +5726,7 @@ specification and header.")
                            "rosegarden-" version ".tar.xz"))
        (sha256
         (base32 "1k0mpxpakcywss7pi50nzn54ak90svjavr4qk6yi9bq9dc9ncgvz"))))
-    (build-system cmake-build-system)
+    (build-system qt-build-system)
     (arguments
      (list
       #:configure-flags #~(list "-DCMAKE_BUILD_TYPE=Release")
@@ -5793,6 +5799,7 @@ specification and header.")
            lilypond
            lrdf
            qtbase-5
+           qtwayland-5
            shared-mime-info
            tar
            lirc

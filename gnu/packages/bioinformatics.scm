@@ -1315,7 +1315,13 @@ RNA-seq or spatial transcriptomics.")
                                r-reticulate
                                r-robustrankaggreg
                                r-rsvd
-                               r-seurat))
+                               r-seurat
+
+                               ;; Needed for use with reticulate
+                               python-anndata
+                               python-geosketch
+                               python-scanpy
+                               scvelo))
       (native-inputs (list r-knitr))
       (home-page "https://github.com/WWXkenmo/NetID_package")
       (synopsis
@@ -1665,7 +1671,7 @@ similar.")
     (description
      "This package implements methods for batch correction and integration of
 scRNA-seq datasets, based on the Seurat anchor-based integration framework.
-In particular, STACAS is optimized for the integration of heterogenous
+In particular, STACAS is optimized for the integration of heterogeneous
 datasets with only limited overlap between cell sub-types (e.g. TIL sets of
 CD8 from tumor with CD8/CD4 T cells from lymphnode), for which the default
 Seurat alignment methods would tend to over-correct biological differences.
@@ -1694,7 +1700,7 @@ information about cell-types in order to assist the integration process.")
       (home-page "https://github.com/vertesy/Stringendo")
       (synopsis "Stringendo is a string parsing library")
       (description
-       "This package provides string parsing functionalites for generating
+       "This package provides string parsing functionalities for generating
 plotnames, filenames and paths.")
       (license license:gpl3))))
 
@@ -3752,7 +3758,7 @@ operations:
 @item index the reference genome before alignment;
 @item align reads to the corresponding reference genome;
 @item pre-process by convert pair-end reads into fragments, checking the
-  mapping quality score, alingment and filtration;
+  mapping quality score, alignment and filtration;
 @item create the cell-by-bin matrix.
 @end itemize")
     (license license:asl2.0)))
@@ -3859,7 +3865,7 @@ use-case, we encourage users to compose functions to achieve their goals.")
       '(list "-k"
              (string-append ;; Unclear why this one fails.  There is no backtrace.
                             "not test_to_dataframe_is_sparse"
-                            ;; These need skbio, but that neeeds biom-format.
+                            ;; These need skbio, but that needs biom-format.
                             " and not test_align_tree_intersect_obs"
                             " and not test_align_tree_intersect_tips"
                             " and not test_align_tree_sample"))
@@ -6454,7 +6460,7 @@ resources for bioinformatics.")
            python-umap-learn))
     (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/swolock/scrublet")
-    (synopsis "Tool to indentify and remove doublets in single-cell data")
+    (synopsis "Tool to identify and remove doublets in single-cell data")
     (description "This package provides a tool for identifying and removing
 doublets in single-cell RNA-seq data.")
     (license license:expat)))
@@ -9698,7 +9704,7 @@ pipeline as a series of consecutive filters, each performing a dedicated
 analysis.  Many of the filters are available, from alignment cleaning to
 phylogeny reconstruction and population genetics analysis.  Despite various
 filtering options and format conversion tools, MafFilter can compute a wide
-range of statistics (phylogenetic trees, nucleotide diversity, inferrence of
+range of statistics (phylogenetic trees, nucleotide diversity, inference of
 selection, etc.).")
     (license license:gpl3+)))
 
@@ -9779,6 +9785,97 @@ sequences).")
     (license (license:non-copyleft
               "https://mafft.cbrc.jp/alignment/software/license.txt"
               "BSD-3 with different formatting"))))
+
+(define-public mageck
+  (package
+    (name "mageck")
+    (version "0.5.9.5")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://sourceforge/mageck/"
+                                  (version-major+minor version)
+                                  "/mageck-" version ".tar.gz"))
+              (sha256
+               (base32
+                "0fnry7d3ngiw0jarvmwd3pxy5vvsf931m4aifz6mjfd6dl1ihsmh"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:modules '((guix build pyproject-build-system)
+                  (guix build utils)
+                  (srfi srfi-1)
+                  (ice-9 match))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-python3
+            (lambda _
+              (substitute* "bin/mageck"
+                (("python2") "python"))))
+         (add-after 'unpack 'numpy-compatibility
+           (lambda _
+              (substitute* "mageck/cnv_normalization.py"
+                (("np.float") "float"))))
+          ;; The build system declares executables both in "scripts" and
+          ;; "data", which all are supposed to end up in #$output/bin.  The
+          ;; pyproject-build-system gets confused by this, though, so we have
+          ;; to manually install the mageck executable after the 'install
+          ;; phase.
+          (add-after 'unpack 'patch-build-system
+            (lambda _
+              (substitute* "setup.py"
+                (("scripts=\\['bin/mageck'\\],") ""))))
+          (add-after 'install 'install-mageck
+            (lambda _
+              (install-file "bin/mageck" (string-append #$output "/bin"))))
+          (add-after 'install-mageck 'make-excutable
+            (lambda _
+              (for-each (lambda (file) (chmod file #o555))
+                        (find-files (string-append #$output "/bin")))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (let ((tests '(("demo1" "run.sh")
+                               ("demo2" "runmageck.sh")
+                               ("demo3" "run.sh")
+                               ("demo4" "run.sh"))))
+                  (setenv "PATH"
+                          (string-append #$output "/bin:"
+                                         (getenv "PATH")))
+                  (for-each (match-lambda
+                              ((dir script)
+                               (with-directory-excursion (string-append "demo/" dir)
+                                 (invoke "bash" script))))
+                            tests))))))))
+    (inputs
+     (list python-numpy
+           python-scipy
+           python-matplotlib
+           python-statsmodels
+           python-pyqt
+           r-minimal
+           r-xtable
+           r-gplots))
+    (home-page "https://sourceforge.net/projects/mageck/")
+    (synopsis "Model-based analysis of genome-wide CRISPR-Cas9 Knockout")
+    (description
+     "Model-based Analysis of Genome-wide CRISPR-Cas9
+Knockout (MAGeCK) is a computational tool to identify important genes
+from the recent genome-scale CRISPR-Cas9 knockout screens
+technology.  Its features include:
+
+@enumerate
+@item Simple, easy to use pipeline to screen genes in Genome-wide
+   CRISPR-Cas9 Knockout experiments;
+@item High sensitivity and low false discovery rate;
+@item Fully utilize the screening data by performing both positive and
+   negative screening in one dataset;
+@item Provide statistical evaluation in genes, sgRNAs and pathways;
+@item Require as few as 2 samples;
+@item Identify cell-type specific targets;
+@item A set of visualization features that generate publication
+   standard figures.
+@end enumerate\n")
+    (license license:bsd-3)))
 
 (define-public mash
   (package
@@ -13272,7 +13369,7 @@ variation, gene modules and their regulatory models and more.")
                                r-snow))
       (native-inputs (list r-knitr))
       (home-page "https://github.com/TillBirkner/metadeconfoundR")
-      (synopsis "Check multiple covariates for potenial confounding effects")
+      (synopsis "Check multiple covariates for potential confounding effects")
       (description
        "This package detects naive associations between omics features and
 metadata in cross-sectional data-sets using non-parametric tests.  In a second
@@ -13613,7 +13710,7 @@ single-cell data.")
       (description "Azimuth utilizes an annotated reference dataset.  It
 automates the processing, analysis, and interpretation.  This applies
 specifically to new single-cell RNA-seq or ATAC-seq experiments.  Azimuth
-leverages a reference-based mapping pipeline that inputs acounts matrix and
+leverages a reference-based mapping pipeline that inputs accounts matrix and
 performs normalization, visualization, cell annotation, and differential
 expression.")
       (license license:gpl3))))
@@ -17004,6 +17101,42 @@ genomics data, primarily @acronym{mtscATAC-seq, mitochondrial single-cell
 ATAC-sequence}, but is generally applicable across other assays.")
     (license license:expat)))
 
+(define-public python-multicore-tsne
+  (let ((commit "c1dbf84eb550980876d8ed822af4e9dfd21c5e05")
+        (revision "1"))
+    (package
+      (name "python-multicore-tsne")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/DmitryUlyanov/Multicore-TSNE.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "0dj805mmd35rfkj7jpkhvnj47x51lqpvascjwyaqxj7pwk6sbkzv"))))
+      (build-system pyproject-build-system)
+      ;; Tests require an old version of scikit-learn.  See
+      ;; https://github.com/DmitryUlyanov/Multicore-TSNE/issues/97.
+      (arguments (list #:tests? #false))
+      (propagated-inputs
+       (list python-cffi python-numpy python-packaging))
+      (native-inputs
+       (list cmake-minimal
+             python-scipy
+             python-scikit-learn
+             python-setuptools
+             python-wheel))
+      (home-page "https://github.com/DmitryUlyanov/Multicore-TSNE")
+      (synopsis "Parallel t-SNE implementation with Python and Torch wrappers")
+      (description
+       "This package contains a multicore Barnes-Hut implementation of the
+t-SNE algorithm.  The implementation is described here:
+@url{http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf}.")
+      (license license:bsd-3))))
+
 (define-public python-multivelo
   (package
     (name "python-multivelo")
@@ -18688,7 +18821,7 @@ interaction inference from scRNA-seq data.")
     (synopsis "Annotation, analysis and visualization of circRNA data")
     (description "Circus is an R package for annotation, analysis and
 visualization of circRNA data.  Users can annotate their circRNA candidates
-with host genes, gene featrues they are spliced from, and discriminate between
+with host genes, gene features they are spliced from, and discriminate between
 known and yet unknown splice junctions.  Circular-to-linear ratios of circRNAs
 can be calculated, and a number of descriptive plots easily generated.")
     (license license:artistic2.0)))
@@ -20540,7 +20673,7 @@ phase + query phase).")
 (define-public filtlong
   ;; The recommended way to install is to clone the git repository
   ;; https://github.com/rrwick/Filtlong#installation
-  ;; and the lastest release is more than nine months old
+  ;; and the latest release is more than nine months old
   (let ((commit "d1bb46dfe8bc7efe6257b5ce222c04bfe8aedaab")
         (revision "1"))
     (package

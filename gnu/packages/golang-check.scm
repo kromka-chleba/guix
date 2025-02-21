@@ -175,7 +175,7 @@ github.com/sergi/go-diff, mainly for diffing strings in tests.")
     (home-page "https://github.com/bitfield/gotestdox")
     (synopsis "Format Go test results as readable documentation")
     (description
-     "This packages implements a functionality to run tests and report the
+     "This package implements a functionality to run tests and report the
 results, converting test names WrittenInCamelCase into ordinary sentences.")
     (license license:expat)))
 
@@ -2365,7 +2365,7 @@ built-in @code{testing} package, but can be used in other contexts too.")
        (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; Submodules with their own go.mod files and packaged separatly:
+            ;; Submodules with their own go.mod files and packaged separately:
             ;;
             ;; - gotest.tools/x/generics
             (for-each delete-file-recursively
@@ -2481,7 +2481,7 @@ advanced Go linter.")
     (home-page "https://gitlab.com/cznic/ccorpus2")
     (synopsis "Continuation of ccorpus using @code{embed.FS}")
     (description
-     "This packge provides a test corpus of C code.")
+     "This package provides a test corpus of C code.")
     (license license:bsd-3)))
 
 (define-public go-mvdan-cc-unparam

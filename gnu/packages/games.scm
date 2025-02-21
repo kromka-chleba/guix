@@ -2670,7 +2670,7 @@ role, and your gender.")
     (home-page "https://pipewalker.sourceforge.net/")
     (synopsis "Logical tile puzzle")
     (description
-     "PipeWalker is a simple puzzle game with many diffent themes: connect all
+     "PipeWalker is a simple puzzle game with many different themes: connect all
 computers to one network server, bring water from a source to the taps, etc.
 The underlying mechanism is always the same: you must turn each tile in the
 grid in the right direction to combine all components into a single circuit.
@@ -6608,6 +6608,7 @@ colors, pictures, and sounds.")
                   qtdeclarative-5
                   qtquickcontrols2-5
                   qtsvg-5
+                  qtwayland-5
                   sdl2
                   sdl2-ttf
                   sdl2-gamecontrollerdb))
@@ -8258,7 +8259,7 @@ making Yamagi Quake II one of the most solid Quake II implementations available.
        (sha256
         (base32
          "1ag2cp346f9bz9qy6za6q54id44d2ypvkyhvnjha14qzzapwaysj"))))
-    (build-system cmake-build-system)
+    (build-system qt-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -8282,7 +8283,8 @@ making Yamagi Quake II one of the most solid Quake II implementations available.
      (list qtbase-5 qtsvg-5))
     (native-inputs
      `(("gettext-minimal" ,gettext-minimal)
-       ("qttools-5" ,qttools-5)))
+       ("qttools-5" ,qttools-5)
+       ("qtwayland-5" ,qtwayland-5)))
     (synopsis "Realistic physics puzzle game")
     (description "The Butterfly Effect (tbe) is a game that uses
 realistic physics simulations to combine lots of simple mechanical
@@ -10451,10 +10453,10 @@ simulator.")
               (sha256
                (base32
                 "1wfzkgq81764qzxgk0y5vvpxcrb3icvrr4dd4mj8njrqgbwmn0mw"))))
-    (build-system cmake-build-system)
+    (build-system qt-build-system)
     (arguments (list #:tests? #f))      ;no test suite
     (native-inputs (list tinycmmc))
-    (inputs (list qtbase-5))
+    (inputs (list qtbase-5 qtwayland-5))
     (home-page "https://github.com/Grumbel/evtest-qt")
     (synopsis "Evdev Joystick Tester")
     (description "@command{evtest-qt} is a simple joystick tester for devices
@@ -10552,7 +10554,7 @@ play with up to four players simultaneously.  It has network support.")
               (sha256
                (base32
                 "04pjpkjhpy720n803gv35iygmjdvsrmw13mih4ympjnqbgjfa7r0"))))
-    (build-system cmake-build-system)
+    (build-system qt-build-system)
     (arguments
      (list
       ;; XXX: Engine is built as Pascal source code, requiring Free Pascal
@@ -10592,6 +10594,7 @@ play with up to four players simultaneously.  It has network support.")
            lua-5.1
            physfs
            qtbase-5
+           qtwayland-5
            (sdl-union
             (list sdl2 sdl2-mixer sdl2-net sdl2-ttf sdl2-image))))
     (native-inputs
@@ -11007,7 +11010,7 @@ can be downloaded from @url{https://zero.sjeng.org/best-network}.")
     (inputs (list qtbase-5 qtsvg-5))
     (home-page "https://portnov.github.io/qcheckers/")
     (synopsis "Qt-based checkers boardgame")
-    (description "QCheckers, formely known as KCheckers, is a is a Qt version
+    (description "QCheckers, formerly known as KCheckers, is a is a Qt version
 of the classic boardgame checkers (also known as draughts).")
     (license license:gpl2+)))
 

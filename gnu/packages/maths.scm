@@ -3429,7 +3429,7 @@ This is the certified version of the Open Cascade Technology (OCCT) library.")
                     `("PYTHONPATH" prefix (,dest))))))))))
     (inputs (list bash-minimal python))
     (home-page "https://www.fast-downward.org/")
-    (synopsis "Domain-independant classical planning system")
+    (synopsis "Domain-independent classical planning system")
     (description "Fast Downward is a portfolio-based planning system that
 supports the propositional fragment of PDDL2.2.")
     (license license:gpl3+)))
@@ -5773,6 +5773,22 @@ from the GotoBLAS2-1.13 BSD version.")
     (synopsis "Optimized BLAS library based on GotoBLAS (ILP64 version)")
     (license license:bsd-3)))
 
+(define-public openblas-0.3.29
+  (package
+    (inherit openblas)
+    (name "openblas")
+    (version "0.3.29")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xianyi/OpenBLAS")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1wm00hn0vzb45nqg0q3ka15wjqjzma5lh1x6227di73icqdcbzcz"))))))
+
 (define-public libblastrampoline
   (package
     (name "libblastrampoline")
@@ -6411,7 +6427,7 @@ target_link_libraries(CHOLMOD_static PRIVATE ${METIS_LIBRARY} ${GKLIB_LIBRARY})"
     (home-page "https://people.engr.tamu.edu/davis/suitesparse.html")
     (synopsis "Library for solving sparse symmetric positive definite linear
 equations")
-    (description "CHOLMOD is a set of routins for factorizing sparse symmetrix
+    (description "CHOLMOD is a set of routines for factorizing sparse symmetrix
 positive definite matrices, updating/downdating sparse Cholesky factorizations
 and other related operations.")
     (license (list license:gpl2+ license:lgpl2.1+))))

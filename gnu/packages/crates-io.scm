@@ -49,6 +49,7 @@
 ;;; Copyright © 2024 Murilo <murilo@disroot.org>
 ;;; Copyright © 2025 Divya Ranjan Pattanaik <divya@subvertising.org>
 ;;; Copyright © 2025 Karl Hallsby <karl@hallsby.com>
+;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1803,6 +1804,29 @@ it outputs messages to Android's logcat.")
     (description
      "This package provides a library which provides a set of methods to work
 with ANSI strings.")
+    (license license:expat)))
+
+(define-public rust-ansi-to-html-0.1
+  (package
+    (name "rust-ansi-to-html")
+    (version "0.1.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "ansi-to-html" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "18kwlgr3vfsij8gvl7vxw11yl628b1s8z2pldh73z4zzq2693gf7"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-once-cell" ,rust-once-cell-1)
+                       ("rust-regex" ,rust-regex-1)
+                       ("rust-thiserror" ,rust-thiserror-1))
+       #:cargo-development-inputs (("rust-insta" ,rust-insta-1))))
+    (home-page
+     "https://github.com/Aloso/to-html/tree/master/crates/ansi-to-html")
+    (synopsis "ANSI escape codes to HTML converter")
+    (description "This package provides an ANSI escape codes to HTML converter.")
     (license license:expat)))
 
 (define-public rust-ansi-width-0.1
@@ -18373,7 +18397,7 @@ crate into higher level tools.")
          (base32
           "1pkf4ay1210g9wqyqhkgvlcsv4i6kgdcmgnh19mrymylznv7pcal"))))
     (build-system cargo-build-system)
-    (arguments '(#:skip-build? #t)) ; Not meant to be built independantly.
+    (arguments '(#:skip-build? #t)) ; Not meant to be built independently.
     (home-page "https://github.com/dtolnay/cxx")
     (synopsis "Test suite of the cxx crate")
     (description "This package provides the test suite of the cxx crate.")
@@ -88390,6 +88414,26 @@ arithmetic.")
      "Unchecked indexing wrapper using regular index syntax.")
     (license (list license:asl2.0 license:expat))))
 
+(define-public rust-unescape-0.1
+  (package
+    (name "rust-unescape")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "unescape" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0vlgws15n4kz8xq4igzr1f80nbiyr838k687hn6ly8a36an7vffc"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/saghm/unescape-rs")
+    (synopsis
+     "Unescapes strings with escape sequences written out as literal characters")
+    (description
+     "This package unescapes strings with escape sequences written out as
+literal characters.")
+    (license license:expat)))
+
 (define-public rust-ungrammar-1
   (package
     (name "rust-ungrammar")
@@ -94573,7 +94617,7 @@ language.")
         (base32 "0gz3nmiaidscb5c85rh3qxi8i584gz5xm3amlxqminl8jq27k40g"))))
     (build-system cargo-build-system)
     (arguments
-     `(#:skip-build? #t ;; dependency cypthon not yet availalbe
+     `(#:skip-build? #t ;; dependency cypthon not yet available
        #:cargo-development-inputs
        (;; ("rust-cpython" ,rust-cpython-0.2)  TODO
         ("rust-quickcheck" ,rust-quickcheck-0.7)

@@ -1044,7 +1044,7 @@ floating-point (no compression, LZW- or ZIP-compressed), FITS 8-bit, 16-bit,
            libusb
            zlib))
     (home-page "https://www.indilib.org")
-    (synopsis "Library for astronimical intrumentation control")
+    (synopsis "Library for astronimical instrumentation control")
     (description
      "INDI (Instrument-Neutral Device Interface) is a distributed XML-based
 control protocol designed to operate astronomical instrumentation.  INDI is
@@ -1303,7 +1303,7 @@ performance is at least on par with that of its predecessor; however,
 significant improvements were made to the algorithms for scalar SHTs, which
 are roughly twice as fast when using the same CPU capabilities.
 
-Supporting paper is availalbe at https://arxiv.org/abs/1303.4945")
+Supporting paper is available at https://arxiv.org/abs/1303.4945")
     (license license:gpl2+)))
 
 (define-public libskry
@@ -1579,7 +1579,7 @@ model-fitting photometry or morphological analyses.")
     (home-page "http://www.github.com/andycasey/ads/")
     (synopsis "Python client to NASA's Astrophysics Data System")
     (description
-     "This package provdies a Python Module to Interact with NASA's
+     "This package provides a Python Module to Interact with NASA's
 @acronym{Astrophysics Data System,ADS}.")
     (license license:expat)))
 
@@ -1999,7 +1999,7 @@ mining in astronomy.")
     (description
      "The BayesicFitting package is a python version of the the fitter classes
 in @acronym{HCSS, Herschel Common Science System}.  HCSS was the all
-encompassing software system for the operations and analysis of the ESA satelite
+encompassing software system for the operations and analysis of the ESA satellite
 Herschel.")
     (license license:gpl3+)))
 
@@ -2994,7 +2994,7 @@ observationally-derived galaxy merger catalogs.")
     (arguments
      (list
       #:test-flags
-      ;; Tests requiring additinal FITS files.
+      ;; Tests requiring additional FITS files.
       ;; <https://portal.nersc.gov/project/cmb>
       ;; <https://portal.nersc.gov/project/sobs>
       #~(list "-k" (string-join
@@ -3192,7 +3192,7 @@ natively in Siril.")
     (arguments
      (list
       #:test-flags
-      ;; Tests requiring additinal FITS files.
+      ;; Tests requiring additional FITS files.
       ;; <https://healpy.github.io/healpy-data>
       ;; <https://portal.nersc.gov/project/cmb/pysm-data>
       #~(list "-k" (string-join
@@ -3336,7 +3336,7 @@ end products of specific X-ray observatories.")
      (list python-requests
            python-wxpython))
     (home-page "https://siril.org/tutorials/pysiril/")
-    (synopsis "Acquisition files preparation software to proces with SiriL")
+    (synopsis "Acquisition files preparation software to process with SiriL")
     (description
      "SiriLic (SiriL's Interactif Companion) is a software for preparing
 acquisition files (raw, Biases, Flat and Dark) for processing with SiriL
@@ -4842,7 +4842,7 @@ Virtual observatory (VO) using Python.")
     (home-page "https://github.com/punch-mission/regularizepsf")
     (synopsis "Point spread function modeling and regularization")
     (description
-     "This package inplements functionality of @acronym{Point Spread Function,
+     "This package implements functionality of @acronym{Point Spread Function,
 PSF} describing how the optical system spreads light from sources.")
     (license license:expat)))
 
@@ -4968,7 +4968,7 @@ orbits described in TLE files.")
      (list
       #:test-flags
       #~(list "--numprocesses" (number->string (parallel-job-count))
-              ;; Requries SpicePy not packed in Guix yet.
+              ;; Requires SpicePy not packed in Guix yet.
               "--ignore=sunpy/coordinates/tests/test_spice.py")
       #:phases
       #~(modify-phases %standard-phases
@@ -5026,7 +5026,7 @@ python_files = test_*.py"))))))))
            python-reproject
            python-scikit-image
            python-scipy
-           ;; python-spiceypy ; Not packed yet in Guix, long jorney.
+           ;; python-spiceypy ; Not packed yet in Guix, long journey.
            python-tqdm
            python-zeep))
     (home-page "https://sunpy.org")
@@ -5283,7 +5283,7 @@ spherical polygons that represent arbitrary regions of the sky.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; Tests require additinal data, see
+      ;; Tests require additional data, see
       ;; <https://spisea.readthedocs.io/en/latest/getting_started.html>.
       #:tests? #f
       #:phases
@@ -6136,7 +6136,7 @@ well as ephemerides services
     (synopsis "Alternative fork of SEP library")
     (description
      "This package provides an alternative maintained fork of SEP python
-libary with bug fixtures.")
+library with bug fixtures.")
     (license (list license:expat license:lgpl3+ license:bsd-3))))
 
 (define-public python-suntime
@@ -6801,7 +6801,7 @@ between image and reference catalogs.  Currently only aligning images with
            python-setuptools-scm))
     (inputs
      (list
-      ;; Requried for installation, see
+      ;; Required for installation, see
       ;; <https://webbpsf.readthedocs.io/en/stable/installation.html>, no
       ;; licence provided. "To run WebbPSF, you must download these files and
       ;; tell WebbPSF where to find them using the WEBBPSF_PATH environment
@@ -7320,7 +7320,7 @@ large number of image formats.")
     (synopsis "SDP Processing Function Library")
     (description
      "This package provides a Square Kilometre Array (SKA) Science Data
-Processor (SDP) function libary for radio astronomy.")
+Processor (SDP) function library for radio astronomy.")
     (license license:bsd-3)))
 
 (define-public python-ska-sdp-func
@@ -7401,7 +7401,7 @@ astronomical fields.  SkyMaker is part of the
     (build-system gnu-build-system)
     (arguments
      ;; FIXME: Tests failed
-     ;; Issue submited upstream https://github.com/danieljprice/splash/issues/67
+     ;; Issue submitted upstream https://github.com/danieljprice/splash/issues/67
      ;;
      ;; make: *** No rule to make target 'test_interpolate3D.o', needed by 'test1'.  Stop.
      ;;
@@ -7517,7 +7517,7 @@ deconvolution).  Such post-processing is not performed by Stackistry.")
       #:test-target "test"
       #:configure-flags
       #~(list "-DENABLE_GPS=1"
-              ;; TODO: Enable when all of the dependencies are availalbe for Qt6.
+              ;; TODO: Enable when all of the dependencies are available for Qt6.
               "-DENABLE_QT6=0"
               "-DENABLE_TESTING=0"
               (string-append "-DCMAKE_CXX_FLAGS=-isystem "
@@ -7699,7 +7699,7 @@ any arbitrary astrometric projection defined in the WCS standard.")
       (build-system cmake-build-system)
       (arguments
        (list #:tests? #f ; no tests
-             #:build-type "Release" ; to improve performace
+             #:build-type "Release" ; to improve performance
              #:configure-flags #~(list "-DCMAKE_CXX_STANDARD=14")))
       (inputs (list gfortran hdf5 perl sqlite zlib))
       (home-page "https://projets.lam.fr/projects/unsio/wiki")
@@ -7800,7 +7800,7 @@ header.")
      "WCSTools is a set of software utilities, written in C, which create,
 display and manipulate the world coordinate system of a FITS or IRAF image,
 using specific keywords in the image header which relate pixel position within
-the image to position on the sky.  Auxillary programs search star catalogs and
+the image to position on the sky.  Auxiliary programs search star catalogs and
 manipulate images.")
     (license license:gpl2+)))
 
@@ -7823,8 +7823,8 @@ manipulate images.")
     (home-page "https://webbpsf.readthedocs.io/en/stable/installation.html")
     (synopsis "JWST pupil shape, instrument throughputs, and aperture positions data files")
     (description
-     "This package contains FIT and CSV files requried for WebbPSF
-installation and distributed separatly from it.")
+     "This package contains FIT and CSV files required for WebbPSF
+installation and distributed separately from it.")
     (license license:bsd-3)))
 
 (define-public weightwatcher

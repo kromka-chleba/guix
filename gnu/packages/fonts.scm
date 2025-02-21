@@ -62,6 +62,8 @@
 ;;; Copyright © 2024 Christina O'Donnell <cdo@mutix.org>
 ;;; Copyright © 2025 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024 Josep Bigorra <jjbigorra@gmail.com>
+;;; Copyright © 2023 Santiago Payà Miralta <santiagopim@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -712,7 +714,7 @@ expansion of Franklin Gothic, a classic font.  It covers 105 Latin Languages.")
                (apply invoke "make" "install-otb" (string-append "prefix=" otb)
                       make-flags))))
          (add-after 'install 'install-documentation
-           ;; There's no way to decypher the cryptic file names without this.
+           ;; There's no way to decipher the cryptic file names without this.
            (lambda* (#:key outputs #:allow-other-keys)
              (for-each (match-lambda
                          ((name . directory)
@@ -1921,8 +1923,24 @@ guix repl <<EOF
                   font-iosevka-curly
                   font-iosevka-curly-slab
                   font-iosevka-etoile
+                  font-iosevka-ss01
+                  font-iosevka-ss02
+                  font-iosevka-ss03
+                  font-iosevka-ss04
+                  font-iosevka-ss05
+                  font-iosevka-ss06
+                  font-iosevka-ss07
                   font-iosevka-ss08
-                  font-iosevka-ss09))
+                  font-iosevka-ss09
+                  font-iosevka-ss10
+                  font-iosevka-ss11
+                  font-iosevka-ss12
+                  font-iosevka-ss13
+                  font-iosevka-ss14
+                  font-iosevka-ss15
+                  font-iosevka-ss16
+                  font-iosevka-ss17
+                  font-iosevka-ss18))
   (for-each (lambda (hash)
               (format #t "~a: ~a~%" (car hash) (cdr hash)))
             (reverse iosevka-hashes))
@@ -2065,6 +2083,104 @@ programming.  Iosevka is completely generated from its source code.")
        (sha256
         (base32 "16lbcms4rnx7dh016c15wpz94b932hfvlng78jv1lhdr13w7s60z"))))))
 
+(define-public font-iosevka-ss01
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss01")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss01-" version ".zip"))
+       (sha256
+        (base32 "01awvcjp9yrvb57pr55ynp12kvjcjyl4yddbaqxh39if2hlp530n"))))))
+
+(define-public font-iosevka-ss02
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss02")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss02-" version ".zip"))
+       (sha256
+        (base32 "1j849rpz8lrarhnc020wy6m0lk3xizjrxihbc0bqld6pmjam6b7n"))))))
+
+(define-public font-iosevka-ss03
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss03")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss03-" version ".zip"))
+       (sha256
+        (base32 "118c1wfzkhg4918c246r5d8633qfcjz5356acl38jfz45nhhvls5"))))))
+
+(define-public font-iosevka-ss04
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss04")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss04-" version ".zip"))
+       (sha256
+        (base32 "0xsylys7ky1v0pb5w0d1dw9hsxpda4yqzjafbqgk98id3b08fvay"))))))
+
+(define-public font-iosevka-ss05
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss05")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss05-" version ".zip"))
+       (sha256
+        (base32 "0rpmw3cpzigv39nnirwmai118n5bnpmr58s90p20n4wgvr0rnfz2"))))))
+
+(define-public font-iosevka-ss06
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss06")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss06-" version ".zip"))
+       (sha256
+        (base32 "0pw41ncg2qjabi33ql2xp4a76gxxynybqbgrj7lk30dyr597v5v9"))))))
+
+(define-public font-iosevka-ss07
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss07")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss07-" version ".zip"))
+       (sha256
+        (base32 "0ww21ydwj0537xzk8f2przcd232fibzrsgil7pl5xmf2di226hx5"))))))
+
 (define-public font-iosevka-ss08
   (package
     (inherit font-iosevka)
@@ -2092,6 +2208,132 @@ programming.  Iosevka is completely generated from its source code.")
                            "/ttc-iosevka-ss09-" version ".zip"))
        (sha256
         (base32 "1h5jfrpply7ypc4h6ivxs30qkrbni51zkj78xz6nz4zbnp923yi0"))))))
+
+(define-public font-iosevka-ss10
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss10")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss10-" version ".zip"))
+       (sha256
+        (base32 "0j8i7ampwrlw8ka3vjad2z7ll2606ia8zp7c65i14m73v3vcyxfi"))))))
+
+(define-public font-iosevka-ss11
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss11")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss11-" version ".zip"))
+       (sha256
+        (base32 "1v76db3jfx82ifxs3mci6xsy6xkvadl40nnla1afb3d4ycd907ni"))))))
+
+(define-public font-iosevka-ss12
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss12")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss12-" version ".zip"))
+       (sha256
+        (base32 "0ax80i0nd7z5x92hrk8mpv3n1x6hhxgwlqm7niv9nqm78dgma8sz"))))))
+
+(define-public font-iosevka-ss13
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss13")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss13-" version ".zip"))
+       (sha256
+        (base32 "03nmlsgnphi3q5mm36l7a9rynijsjhh6g6b68xxxl3djmby613as"))))))
+
+(define-public font-iosevka-ss14
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss14")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss14-" version ".zip"))
+       (sha256
+        (base32 "1liapgr528qd88y6brhskcniddxanqqmx2qww21rqfyv9wl110wj"))))))
+
+(define-public font-iosevka-ss15
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss15")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss15-" version ".zip"))
+       (sha256
+        (base32 "19mhdl6dzb4003m00chnj9918l3mxrwfvfxh3wmvp6h4sfa6hymk"))))))
+
+(define-public font-iosevka-ss16
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss16")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss16-" version ".zip"))
+       (sha256
+        (base32 "0zsmjgv1i5bb3gk0zl0yi6lrrb8mikl1hlhi7p0vfapas7p5ylyy"))))))
+
+(define-public font-iosevka-ss17
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss17")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss17-" version ".zip"))
+       (sha256
+        (base32 "02p5q5wwn2awaifdknyki8q25c2f1mq59fa6w4vf6n3k95s8sys5"))))))
+
+(define-public font-iosevka-ss18
+  (package
+    (inherit font-iosevka)
+    (name "font-iosevka-ss18")
+    (version (package-version font-iosevka))
+    (source
+     (origin
+       (method url-fetch/zipbomb)
+       (uri (string-append "https://github.com/be5invis/Iosevka"
+                           "/releases/download/v" version
+                           "/ttc-iosevka-ss18-" version ".zip"))
+       (sha256
+        (base32 "1lpkcpqjpf2982pc9kk4dg788vwdpxg18i8mcwx6wa7wfkykrq24"))))))
 
 (define-public font-aporetic
   (package
@@ -2519,6 +2761,32 @@ designed to make long texts pleasant and easy to read, even in less than ideal
 reproduction and display environments.  This package provides only TrueType
 files (TTF).")
     (home-page "https://software.sil.org/charis/")
+    (license license:silofl1.1)))
+
+(define-public font-monaspace
+  (package
+    (name "font-monaspace")
+    (version "1.101")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/githubnext/monaspace")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "00bpzzpwz5m20ap0c1gy0rf99pc76g8lk6jr0wh7xs8fjazq7lf1"))))
+    (build-system font-build-system)
+    (outputs '("out" "ttf" "woff"))
+    (home-page "https://monaspace.githubnext.com")
+    (synopsis "Innovative superfamily of fonts for code")
+    (description
+     "The Monaspace type system is a monospaced type superfamily with some
+modern tricks up its sleeve.  It consists of five variable axis typefaces.
+Each one has a distinct voice, but they are all metrics-compatible with one
+another, allowing you to mix and match them for a more expressive
+typographical palette.")
     (license license:silofl1.1)))
 
 (define-public font-mononoki

@@ -44,7 +44,7 @@
 ;;; Copyright © 2022 Antero Mejr <antero@mailbox.org>
 ;;; Copyright © 2022 Taiju HIGASHI <higashi@taiju.info>
 ;;; Copyright © 2022, 2023 Zheng Junjie <873216071@qq.com>
-;;; Copyright © 2022 Evgeny Pisemsky <mail@pisemsky.site>
+;;; Copyright © 2022, 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2023 Andrew Tropin <andrew@trop.in>
 ;;; Copyright © 2024 Ilya Chernyshov <ichernyshovvv@gmail.com>
@@ -106,6 +106,7 @@
   #:use-module (gnu packages man)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mes)
+  #:use-module (gnu packages messaging)
   #:use-module (gnu packages mp3)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
@@ -1225,7 +1226,7 @@ for calling methods on remote servers by exchanging JSON objects.")
     (inputs `(("guile" ,guile-next)))
     (propagated-inputs (list guile-fibers))
     (home-page "https://git.sr.ht/~abcdw/guile-ares-rs")
-    (synopsis "Asyncronous Reliable Extensible Sleek RPC Server for Guile")
+    (synopsis "Asynchronous Reliable Extensible Sleek RPC Server for Guile")
     (description "Asynchronous Reliable Extensible Sleek RPC Server for
  Guile.  It's based on nREPL protocol and can be used for programmable
  interactions with a running guile processes, for implementing REPLs, IDEs,
@@ -1556,6 +1557,32 @@ programming languages).")
 Services} (AWS) APIs, including EFS, EC2, Route53, and more.  Guile AWS uses
 the Guile compiler tower to generate the DSL from AWS JSON specifications.")
       (license license:gpl3+))))
+
+(define-public guile-mqtt
+  (package
+    (name "guile-mqtt")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/mdjurfeldt/" name
+                           "/releases/download/v" version
+                           "/" name "-" version ".tar.gz"))
+       (sha256
+        (base32 "16a3r6yk41yskwv4qbkrsi0f5rvc7aw2s5di74i8y89j1x9yp9zs"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:make-flags #~(list "GUILE_AUTO_COMPILE=0")))
+    (native-inputs (list guile-3.0 pkg-config))
+    (inputs (list mosquitto))
+    (home-page "https://github.com/mdjurfeldt/guile-mqtt")
+    (synopsis "Guile bindings for the libmosquitto library")
+    (description
+     "This package provides Guile bindings for the libmosquitto MQTT client library.
+The bindings are written in GOOPS, and the user can extend the client class by
+inheritance.")
+    (license license:lgpl3+)))
 
 (define-public guile-simple-zmq
   (let ((commit "d25d1865e3378d93c44e2b4f5246a70b078a489d")
@@ -3900,7 +3927,7 @@ denote the invalidity of certain code paths in a Scheme program.")
     (description
      "This package provides an implementation of SRFI 146 for Guile.
 SRFI 146 defines datastructures that implement mappings (finite sets
-of associations consiting of a key and a value).  Two types of
+of associations consisting of a key and a value).  Two types of
 mappings are defined: One using a comparator to define an order on the
 keys and another using a hash function on the keys.  The
 datastructures and procedures are by default purely-functional.  This
@@ -4052,7 +4079,7 @@ or errors (Left).")
       (license license:expat))))
 
 (define-public guile-srfi-197
-  ;; There is minor fix to the documention after the final tag, so use
+  ;; There is minor fix to the documentation after the final tag, so use
   ;; the newest commit instead.
   (let ((commit "d31b8be86460bf837cccf2737a1b9b9c01788573")
         (revision "0"))
@@ -5733,7 +5760,7 @@ using a short read-capability.")
       (description
        "R7RS-small Scheme library for reading and writing @acronym{RSV, rows
 of string values} data format, a very simple binary format for storing tables
-of strings.  It is a competitor for CSV (Comma Seperated Values) and TSV (Tab
+of strings.  It is a competitor for CSV (Comma Separated Values) and TSV (Tab
 Separated Values).  Its main benefit is that the strings are represented as
 Unicode encoded as UTF-8, and the value and row separators are byte values
 that are never used in UTF-8, so the strings do not need any error prone
@@ -6267,8 +6294,8 @@ is an attempt to combine both into something useful.")
       (license license:asl2.0))))
 
 (define-public guile-knots
-  (let ((commit "d597b77fcb4eb1f776e84337d7086e9e7a729abd")
-        (revision "8"))
+  (let ((commit "13f11185765b436aaa96b070b31b7b093a2122b7")
+        (revision "10"))
     (package
     (name "guile-knots")
     (version (git-version "0" revision commit))
@@ -6279,7 +6306,7 @@ is an attempt to combine both into something useful.")
                     (commit commit)))
               (sha256
                (base32
-                "0bv67gzw76cwahicy980cg3fk77580453sg6hzjxw9360s58aw2j"))
+                "029nvm8dwvf1ha2ya2xmgwnh1z6582ig7ih3c70d4fwnpg4ir52f"))
               (file-name (string-append name "-" version "-checkout"))))
     (build-system gnu-build-system)
     (native-inputs

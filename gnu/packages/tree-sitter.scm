@@ -283,7 +283,7 @@ This package includes the @command{tree-sitter} command-line tool.")
 tree-sitter- prefix to generate package name and also for generating
 REPOSITORY-URL value if it's not specified explicitly, TEXT is a string which
 will be used in description and synopsis. GET-CLEANUP-SNIPPET is a function,
-it recieves GRAMMAR-DIRECTORIES as an argument and should return a G-exp,
+it receives GRAMMAR-DIRECTORIES as an argument and should return a G-exp,
 which will be used as a snippet in origin."
   (let* ((multiple? (> (length grammar-directories) 1))
          (grammar-names (string-append text " grammar" (if multiple? "s" "")))
@@ -596,9 +596,21 @@ which will be used as a snippet in origin."
 (define-public tree-sitter-clojure
   (tree-sitter-grammar
    "clojure" "Clojure"
-   "0bgd9g1j4ww45g0l0aa1jac49421z95cc2rhcgqmgx7nzn94rszp"
-   "0.0.11"
-   #:repository-url "https://github.com/sogaiu/tree-sitter-clojure"))
+   "1j41ba48sid6blnfzn6s9vsl829qxd86lr6yyrnl95m42x8q5cx4"
+   "0.0.13"
+   #:repository-url "https://github.com/sogaiu/tree-sitter-clojure"
+   #:get-cleanup-snippet
+   (lambda (grammar-directories)
+     #~(begin
+         (use-modules (guix build utils))
+         (for-each
+          (lambda (lang)
+            (with-directory-excursion lang
+              (delete-file "src/grammar.json")
+              (delete-file "src/node-types.json")
+              (delete-file "src/parser.c")
+              (delete-file-recursively "src/tree_sitter")))
+          '#$grammar-directories)))))
 
 (define-public tree-sitter-markdown
   ;; No tags

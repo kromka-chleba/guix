@@ -1167,7 +1167,7 @@ for the @code{OpenStreetMap} Overpass API.")
     (description
      "@code{ogr2osm} is a tool for converting ogr-readable files into
 @acronym{OSM, OpenStreetMap} format.  It supports reading from OGR files like
-shapefiles or PostgresSQL database and converts data into @code{osm} or
+shapefiles or PostgreSQL database and converts data into @code{osm} or
 @code{osm.pbf} formats.  A translation file can be used to manipulate the data
 during conversion.")
     (license license:expat)))
@@ -1730,7 +1730,7 @@ extension.")
     (home-page "https://github.com/SciTools/cf-units")
     (synopsis "Units of measure as required by the CF metadata conventions")
     (description
-     "This package provids units of measure as required by the Climate and
+     "This package provides units of measure as required by the Climate and
 Forecast (CF) metadata conventions.  Provision of a wrapper class to support
 Unidata/UCAR UDUNITS-2 library, and the cftime calendar functionality.")
     (license license:lgpl3+)))

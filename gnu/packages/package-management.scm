@@ -998,8 +998,8 @@ transactions from C or Python.")
     (license license:gpl2+)))
 
 (define-public bffe
-  (let ((commit "d2ff7c36f379dc2c9b619b9941b4cd612df95857")
-        (revision "9"))
+  (let ((commit "3442bffe7ccf15e3f270a45603eca2b891b87f44")
+        (revision "10"))
     (package
       (name "bffe")
       (version (git-version "0" revision commit))
@@ -1010,7 +1010,7 @@ transactions from C or Python.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0q8hlcj2fqza0wlcd21f1q13hmj7vp2gsapkxkprxl7d72g5l3ma"))
+                  "17zrj97zl21cxy6w5ncg8p1y83hanqssdh18zg40s93hx7b7l3r3"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (native-inputs
@@ -1027,6 +1027,7 @@ transactions from C or Python.")
              guix-build-coordinator
              guile-fibers
              guile-knots
+             guile-pfds
              guile-prometheus
              guile-lib))
       (propagated-inputs
@@ -1037,6 +1038,7 @@ transactions from C or Python.")
              guix-build-coordinator
              guile-fibers
              guile-knots
+             guile-pfds
              guile-prometheus
              guile-lib))
       (home-page "https://git.cbaines.net/guix/bffe")
@@ -1554,8 +1556,8 @@ environments.")
                   "0k9zkdyyzir3fvlbcfcqy17k28b51i20rpbjwlx2i1mwd2pw9cxc")))))))
 
 (define-public guix-build-coordinator
-  (let ((commit "bce23c532fd662a65b8d5353a6f16f86292481a1")
-        (revision "115"))
+  (let ((commit "7e807facb43f146d462a6f4fc67d08e919886a06")
+        (revision "118"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1566,7 +1568,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "078px0r8xbhwi1w6am7sm0yk6hb262i59wzxyxp3bx69k98pa1cl"))
+                  "0c3bf3xpiyrpzg5dvhk1xgxcgig9759asq84cp5a90g2s1r73vj5"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -2393,4 +2395,43 @@ from R7RS, which allows most R7RS code to run on R6RS implementations.")
 modify their environment during the session with modulefiles.  Modules are
 used on high-performance clusters to dynamically add and remove paths
 to specific versions of applications.")
+    (license license:gpl2+)))
+
+(define-public gnome-packagekit
+  (package
+    (name "gnome-packagekit")
+    (version "43.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://gitlab.gnome.org/GNOME/gnome-packagekit.git")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1fnspk8wfh3v663qpqq3m1fgp21nskgisidihx41wgcsbzbvp1a5"))))
+    (build-system meson-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "-Dsystemd=false")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'check 'start-xorg-server
+                 (lambda _
+                    (system "Xvfb :1 &")
+                    (setenv "DISPLAY" ":1")))
+               (add-before 'install 'setenv
+                 (lambda _
+                   ;; Prevent gtk-update-icon-cache, glib-compile-schemas,
+                   ;; update-desktop-database
+                   ;; (since we are doing it ourselves with a profile hook).
+                   (setenv "DESTDIR" "/"))))))
+    (native-inputs
+     (list gnu-gettext pkg-config (list glib "bin") xorg-server-for-tests))
+    (inputs
+     (list glib gtk+ packagekit polkit))
+    (synopsis "GNOME frontend for PackageKit")
+    (description "This package provides a PackageKit frontend for GNOME.
+PackageKit is a common unified interface for package managers.")
+    (home-page "https://gitlab.gnome.org/GNOME/gnome-packagekit")
     (license license:gpl2+)))

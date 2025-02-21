@@ -1672,36 +1672,36 @@ purposes.")
 (define-public python-imgviz
   (package
     (name "python-imgviz")
-    (version "1.2.6")
+    (version "1.7.6")
     (source
      (origin
        ;; PyPi tarball lacks tests.
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/wkentaro/imgviz.git")
+             (url "https://github.com/wkentaro/imgviz")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bm0wdv5p26i8nl4kx3145cz553v401sgbpgc96sddzjfmfiydcw"))
-      (snippet
-       #~(begin (use-modules (guix build utils))
-                (substitute* "imgviz/draw.py"
-                  (("collections\\.Iterable") "collections.abc.Iterable"))
-                (substitute* "imgviz/tile.py"
-                  (("collections\\.Sequence") "collections.abc.Sequence"))))))
-    (build-system python-build-system)
+        (base32 "0z7nwnvqh3hbbccf7v56398aiiwqs68kyrgc5vsmmh1cp4pwrgnb"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (invoke "pytest" "-v" "tests"))
-             #t)))))
+     (list #:phases
+           #~(modify-phases %standard-phases
+               ;; LookupError: Error getting the version from source `vcs`:
+               ;; setuptools-scm was unable to detect version for <...>
+               (add-after 'unpack 'pretend-version
+                 (lambda _
+                   (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (native-inputs
+     (list python-pytest
+           python-hatchling
+           python-hatch-vcs
+           python-hatch-fancy-pypi-readme))
     (propagated-inputs
-      (list python-matplotlib python-numpy python-pillow python-pyyaml))
-    (native-inputs (list python-pytest))
+     (list python-matplotlib
+           python-numpy
+           python-pillow
+           python-pyyaml))
     (home-page "http://github.com/wkentaro/imgviz")
     (synopsis "Image Visualization Tools")
     (description "Python library for object detection, semantic and instance
@@ -1711,31 +1711,28 @@ segmentation.")
 (define-public python-pims
   (package
     (name "python-pims")
-    (version "0.6.1")
+    (version "0.7")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "PIMS" version))
+       (uri (pypi-uri "pims" version))
        (sha256
-        (base32 "0fsg353mbbj1ad06nwrp8p9xcrzy6rca6b52nvlbraaf3m309dz2"))))
+        (base32 "0swlh8g4kf8p24g0ghkmwcj9y45rc59lmqx459nhhmhj6167m42m"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
       ;; We don't have all the (sometimes very large) data files, so we skip
       ;; these tests.
-      '(list "--ignore=pims/tests/test_imseq.py"
-             "--ignore=pims/tests/test_norpix.py"
-             "-k"
-             (string-append " not TestImageReaderTIFF"
-                            " and not TestOpenFiles"
-                            " and not TestSpeStack"
-                            " and not TestTiffStack_pil"
-                            " and not TestTiffStack_tifffile"
-                            " and not TestVideo_ImageIO"))))
+      '(list "--ignore=pims/tests/test_common.py"
+             "--ignore=pims/tests/test_imseq.py"
+             "--ignore=pims/tests/test_norpix.py")))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-imageio python-numpy python-slicerator))
-    (native-inputs (list python-pytest))
     (home-page "https://github.com/soft-matter/pims")
     (synopsis "Python Image Sequence")
     (description "Scientific video can be packaged in various ways: familiar

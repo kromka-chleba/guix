@@ -37,6 +37,7 @@
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
+;;; Copyright © 2025 Jussi Timperi <jussi.timperi@iki.fi>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1913,6 +1914,33 @@ netlink,similarly to what @code{tc -s qdisc show} does.")
 used to build IMAP clients and servers.")
     (license license:expat)))
 
+(define-public go-github-com-emersion-go-imap-id
+  (let ((commit "f94a56b9ecde7e39e7ea38d62c745b557cb94139")
+        (revision "0"))
+    (package
+      (name "go-github-com-emersion-go-imap-id")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/emersion/go-imap-id")
+               (commit commit)))
+         (sha256
+          (base32 "1pi87xq6nrb1kdf4za4xp8cfkpwr3p93kjrmzmnr4z0j90y26vfi"))
+         (file-name (git-file-name name version))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:import-path "github.com/emersion/go-imap-id"))
+      (propagated-inputs (list go-github-com-emersion-go-imap))
+      (home-page "https://github.com/emersion/go-imap-id")
+      (synopsis "ID extension for go-imap")
+      (description
+       "This package provides an ID extension for go-imap as specified in
+@url{https://www.rfc-editor.org/rfc/rfc2971, RFC 2971}.")
+      (license license:expat))))
+
 ;; XXX: This repository has been archived by the owner on Sep 8, 2021. It is
 ;; now read-only.
 (define-public go-github-com-emersion-go-imap-idle
@@ -2555,7 +2583,7 @@ decompose request handling into many smaller layers.")
        (modules '((guix build utils)))
        (snippet
         #~(begin
-            ;; Submodules with their own go.mod files and packaged separatly:
+            ;; Submodules with their own go.mod files and packaged separately:
             ;;
             ;; - github.com/go-jose/go-jose/jose-util
             (delete-file-recursively "jose-util")))))
@@ -6155,7 +6183,7 @@ in Golang.")
       #:tests? #f
       #:import-path "https://github.com/pion/ice"
       #:phases
-      ;; Failed to build and only requried for inheritance:
+      ;; Failed to build and only required for inheritance:
       ;;
       ;; cannot use a.net (type *vnet.Net) as type transport.Net in field value:
       ;; *vnet.Net does not implement transport.Net (wrong type for CreateDialer method)
@@ -6821,7 +6849,7 @@ writer, as per specification:
 @@url{https://www.haproxy.org/download/2.3/doc/proxy-protocol.txt}.  It is to
 be used in one of or both proxy clients and proxy servers that need to support
 said protocol.  Both protocol versions, 1 (text-based) and 2 (binary-based)
-are supported. @acronym{TLV, tag-length-value} parsers extensions comming with
+are supported. @acronym{TLV, tag-length-value} parsers extensions coming with
 this library support AWS, Azure and GCP.")
     (license license:asl2.0)))
 
@@ -6928,7 +6956,7 @@ Caching.")
     (home-page "https://github.com/pquerna/ffjson")
     (synopsis "Faster JSON for Golang")
     (description
-     "This package implements functinality to generate static
+     "This package implements functionality to generate static
 @code{MarshalJSON} and @code{UnmarshalJSON} functions for structures in Go.
 The generated functions reduce the reliance upon runtime reflection to do
 serialization and are generally 2 to 3 times faster.  In cases where
@@ -9286,7 +9314,7 @@ tool."))))
        ((#:import-path _ "github.com/multiformats/go-multiaddr-dns")
         "github.com/multiformats/go-multiaddr-dns/madns")))
     (description
-     "This package provides a CLI binary executible built from
+     "This package provides a CLI binary executable built from
 go-github-com-multiformats-go-multiaddr-dns.")))
 
 (define-public go-minify
@@ -9299,7 +9327,7 @@ go-github-com-multiformats-go-multiaddr-dns.")))
       #:tests? #f ; tested in the library
       #:import-path "github.com/tdewolff/minify/cmd/minify"
       #:unpack-path "github.com/tdewolff/minify"))
-    (description "This package provides a CLI binary executible built from
+    (description "This package provides a CLI binary executable built from
 go-github-com-tdewolff-minify-v2 source.")))
 
 (define-public gron

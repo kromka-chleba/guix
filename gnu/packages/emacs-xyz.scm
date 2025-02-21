@@ -152,6 +152,7 @@
 ;;; Copyright © 2024 Olivier Rojon <o.rojon@posteo.net>
 ;;; Copyright © 2024 Divya Ranjan Pattanaik <divya@subvertising.org>
 ;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>
+;;; Copyright © 2025 Skylar Hill <stellarskylark@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -500,7 +501,7 @@ input via a small child-frame spawned at the position of the cursor.")
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-eros emacs-sesman emacs-queue))
     (home-page "https://git.sr.ht/~abcdw/emacs-arei")
-    (synopsis "Asyncronous Reliable Extensible IDE")
+    (synopsis "Asynchronous Reliable Extensible IDE")
     (description "Sleek Guile IDE for Emacs.")
     (license license:gpl3+)))
 
@@ -591,8 +592,8 @@ API key.")
     (license license:gpl3+)))
 
 (define-public emacs-gptel-quick
-  (let ((commit "79c33058e605b4fbdb1d1f98d1ab428d6eed111d")
-        (revision "0"))
+  (let ((commit "d7a3aedefdc656a136d5664f2dac165a1f6ebf0e")
+        (revision "1"))
     (package
       (name "emacs-gptel-quick")
       (version (git-version "0.0.5" revision commit))
@@ -603,7 +604,7 @@ API key.")
                (commit commit)))
          (method git-fetch)
          (sha256
-          (base32 "0bw3zjpzyc574jw2qr0j042x68llkjxn66gkfnw7dwwpgwplz671"))
+          (base32 "05khdra5aig8466flwl62nsngyn9cz11zwjn0vyyig9c48n8nfka"))
          (file-name (git-file-name name version))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-gptel))
@@ -892,10 +893,11 @@ configuration language which makes it trivial to write your own themes.")
     (license license:gpl3+)))
 
 (define-public emacs-inspector
-  (let ((commit "c5617289dd40efb45f8160420c29000c7d7489de")) ;version bump
+  (let ((commit "0c02fd712ff89006227838e18a4685678abd9ba8")
+        (revision "1"))
     (package
       (name "emacs-inspector")
-      (version "0.38")
+      (version (git-version "0.38" revision commit))
       (source
        (origin
          (uri (git-reference
@@ -903,7 +905,7 @@ configuration language which makes it trivial to write your own themes.")
                (commit commit)))
          (method git-fetch)
          (sha256
-          (base32 "1pbmldzflsx9z0f4lj3k6is4i6p04dizvh9bviz14nnp4sdkyz8r"))
+          (base32 "0fidzh8zwaxvkxdzj01rznixaqs00kl3w5xi1qylcjl5jvl6vrmg"))
          (file-name (git-file-name name version))))
       (build-system emacs-build-system)
       (arguments
@@ -1126,7 +1128,7 @@ a neat percentage.")
     (propagated-inputs (list emacs-async emacs-projectile))
     (home-page "https://github.com/zachmassia/platformio-mode")
     (synopsis "Minor mode for building and uploading PlatformIO projects")
-    (description "This package provices an Emacs minor mode for building and
+    (description "This package provides an Emacs minor mode for building and
 uploading PlatformIO projects.")
     (license license:gpl3+)))
 
@@ -1406,8 +1408,8 @@ information in the mode line.")
     (license license:expat)))
 
 (define-public emacs-snow
-  (let ((commit "35ea06f19047ac99eaff9663cb035491c4a13e07")
-        (revision "0"))
+  (let ((commit "be17977677fa29709a726715a1a1cba1bd299f68")
+        (revision "1"))
      (package
       (name "emacs-snow")
       (version (git-version "0" revision commit))
@@ -1419,7 +1421,7 @@ information in the mode line.")
                 (commit commit)))
           (file-name (git-file-name name version))
           (sha256
-          (base32 "1pcqvg70r1k73k3jxgz5qzwqsvwjnwvpfrbjf4b54smglz2nvz19"))))
+          (base32 "0fh1hmwpszm9frvnqr2b8rlfx33dy9jm5r82hldgxdbhlv8dq4d0"))))
        (build-system emacs-build-system)
       (home-page "https://github.com/alphapapa/snow.el/")
       (synopsis "Let it snow in Emacs")
@@ -1909,32 +1911,31 @@ rebasing, and other common Git operations.")
     (license license:gpl3+)))
 
 (define-public emacs-magit-stgit
-  (let ((commit "51168b7438dfb5ca6b9239b8564397cc0cc6e798")
-        (revision "0"))
-    (package
-      (name "emacs-magit-stgit")
-      (version (git-version "2.2.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/stacked-git/magit-stgit.git")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1z2dhc1m510iyrks5lxp3jlqg4n7qwwirbmxg4c4ll0xngfhnalc"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-magit emacs-transient))
-      (home-page "https://github.com/stacked-git/magit-stgit")
-      (synopsis "StGit extension for Magit")
-      (description
-       "This package provides basic support for @code{stgit} in
+  (package
+    (name "emacs-magit-stgit")
+    (version "3.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/stacked-git/magit-stgit.git")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1z2dhc1m510iyrks5lxp3jlqg4n7qwwirbmxg4c4ll0xngfhnalc"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-magit emacs-transient emacs-llama
+                             emacs-dash))
+    (home-page "https://github.com/stacked-git/magit-stgit")
+    (synopsis "StGit extension for Magit")
+    (description
+     "This package provides basic support for @code{stgit} in
 @code{emacs-magit}.  When @code{magit-stgit-mode} is turned on, the
 current patch series is displayed in the status buffer.  While point is on a
 patch the changes it introduces can be shown using @code{RET}, it can be selected
 as the current patch using @code{a}, and it can be discarded using @code{k}.  Other
 @code{StGit} commands are available from the @code{StGit} transient on @code{/}.")
-      (license license:gpl3+))))
+    (license license:gpl3+)))
 
 (define-public emacs-magit-svn
   (package
@@ -2278,8 +2279,8 @@ inspired by Plan 9 Acme and the Sam text editor.")
       (license license:gpl3+))))
 
 (define-public emacs-catppuccin-theme
-  (let ((commit "4441d5114fdcc2eb05186a974b4bbad7224e43b5")
-        (revision "1"))
+  (let ((commit "2975032bcf55d23b1cc05e323f5c30ec36bf17ba")
+        (revision "2"))
     (package
       (name "emacs-catppuccin-theme")
       (version (git-version "1.0.0" revision commit))
@@ -2287,11 +2288,11 @@ inspired by Plan 9 Acme and the Sam text editor.")
        (origin
          (method git-fetch)
          (uri (git-reference
-	       (url "https://github.com/catppuccin/emacs")
-	       (commit commit)))
+               (url "https://github.com/catppuccin/emacs")
+               (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1y2ads0w5l3mm0mxxbi2ppb6csq8hw2fd9cmak3myv13qzw92x3w"))))
+          (base32 "0lqmqzanky88jlmrq1qafp5cls2wc39rm65325522izbvqaalgrp"))))
       (build-system emacs-build-system)
       (home-page "https://github.com/catppuccin/emacs")
       (synopsis "Soothing pastel theme for Emacs")
@@ -5456,7 +5457,7 @@ be regarded as @code{emacs-company-quickhelp} for @code{emacs-corfu}.")
 (define-public emacs-cape
   (package
     (name "emacs-cape")
-    (version "1.8")
+    (version "1.9")
     (source
      (origin
        (method git-fetch)
@@ -5465,7 +5466,7 @@ be regarded as @code{emacs-company-quickhelp} for @code{emacs-corfu}.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0ij4skr231bh3qs7s49h4ni8zkagg8k6b3jr611c0wax5gas1jzl"))))
+        (base32 "0pcgxv011z0gl0g38yh2dr09sx17pwpbvydz2dzvm730k9lbyikh"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -5481,8 +5482,7 @@ be regarded as @code{emacs-company-quickhelp} for @code{emacs-corfu}.")
               (install-file "cape.info"
                             (string-append #$output "/share/info")))))))
     (native-inputs (list texinfo))
-    (propagated-inputs
-     (list emacs-compat))
+    (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/minad/cape")
     (synopsis "Completion at point extensions for Emacs")
     (description
@@ -13845,7 +13845,7 @@ facilitate Perl programming.  CPerl Mode has provided an excellent environment
 for coding; Emacs::PDE provides other common tools such as creating files
 using templates, smart compiling, @command{perldoc}, @command{perltidy},
 debugger, tags tree view and so on.  PDE also provides an easy configuration
-for Perl programing, and a tutorial for novices to start using Emacs.")
+for Perl programming, and a tutorial for novices to start using Emacs.")
     (license license:perl-license)))
 
 (define-public emacs-perspective
@@ -16824,7 +16824,7 @@ that uses the standard completion function completing-read.")
 (define-public emacs-yaml
   (package
     (name "emacs-yaml")
-    (version "1.1.0")
+    (version "1.2.0")
     (source
      (origin
        (method git-fetch)
@@ -16833,11 +16833,11 @@ that uses the standard completion function completing-read.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wbsmfnrbbsdsp5xnn3rmk7cws7ri9kn309ii4dnihjbr8s865jh"))))
+        (base32 "131g2nv18fjcqgc9v17b0a7zyw2m6ydbhj6riahihd340bci2s6w"))))
     (build-system emacs-build-system)
     (arguments
      (list
-      #:tests? #true
+      #:tests? #t
       #:test-command #~(list "emacs" "--batch" "-Q"
                              "-l" "yaml.el"
                              "-l" "yaml-tests.el"
@@ -20944,7 +20944,7 @@ function to be used by other frontend programs.")
     (license license:gpl2+)))
 
 (define-public emacs-pyim-basedict
-  ;; XXX: The commit below points to the lastest (un-tagged) release.
+  ;; XXX: The commit below points to the latest (un-tagged) release.
   (let ((commit "d61af27686f7a39e6c138b7261a686e7ea7a0ef7"))
     (package
       (name "emacs-pyim-basedict")
@@ -22980,6 +22980,27 @@ files.  It parses the source files using Ruby's builtin @code{Ripper} class
 and performs syntax checks on them.")
       (license license:ruby))))
 
+(define-public emacs-enwc
+  (package
+    (name "emacs-enwc")
+    (version "2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/enwc-" version
+                           ".tar"))
+       (sha256
+        (base32 "0y8154ykrashgg0bina5ambdrxw2qpimycvjldrk9d67hrccfh3m"))))
+    (build-system emacs-build-system)
+    (home-page "https://savannah.nongnu.org/p/enwc")
+    (synopsis "The Emacs Network Client")
+    (description
+     "ENWC is the Emacs Network Client.  It is designed to provide a front-end
+to various network managers, such as @code{NetworkManager} and Wicd.
+Currently, only @code{NetworkManager} and Wicd are supported, although
+experimental support exists for Connman.")
+    (license license:gpl3+)))
+
 (define-public emacs-inheritenv
   (package
     (name "emacs-inheritenv")
@@ -24732,7 +24753,7 @@ and can be consulted and modified.")
       (home-page "https://github.com/purescript-emacs/psc-ide-emacs")
       (synopsis "Emacs integration for PureScript's psc-ide tool")
       (description
-       "This package provices Emacs integration for @code{psc-ide}, an IDE
+       "This package provides Emacs integration for @code{psc-ide}, an IDE
 protocol for PureScript programming language.  It features:
 
 @itemize
@@ -24883,7 +24904,7 @@ object @code{nil} corresponds 1:1 with @code{NULL} in the database.")
 (define-public emacs-closql
   (package
     (name "emacs-closql")
-    (version "2.1.0")
+    (version "2.2.0")
     (source
      (origin
        (method git-fetch)
@@ -24893,7 +24914,7 @@ object @code{nil} corresponds 1:1 with @code{NULL} in the database.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "17i5gni6hw8lvg0660c0hldr0xbrdry4hmx9n5i4pry3wwnhzngr"))))
+         "1x5nwbmwvgl96f7grhh60472m0d6jiykls0f52c1ff03b2dhplax"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-compat emacs-emacsql))
@@ -25668,7 +25689,7 @@ files to be expanded upon opening them.")
 (define-public emacs-parsebib
   (package
     (name "emacs-parsebib")
-    (version "6.4")
+    (version "6.6")
     (source
      (origin
        (method git-fetch)
@@ -25677,13 +25698,13 @@ files to be expanded upon opening them.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1mx47gkn3l7hvknksfcl9r36hhm2hlskibvbkxd31sgzhzgjaxdr"))))
+        (base32 "0gh8bv6q9041q0b9spw7glj3lfvkj8yl743b4xc1y5mjj8alb466"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/joostkremers/parsebib")
     (synopsis "Library for parsing @file{.bib} files")
     (description
      "This package provides an Emacs library for parsing @file{.bib} files.")
-    (license license:gpl3+)))
+    (license license:bsd-3)))
 
 (define-public emacs-ebib
   (package
@@ -27979,7 +28000,7 @@ It follows DrRacket concepts where applicable.")
     (home-page "https://github.com/hasu/emacs-ob-racket")
     (synopsis "Org Babel support for Racket")
     (description
-     "This package adds spport for working with Racket code blocks with
+     "This package adds support for working with Racket code blocks with
 Org Babel in Org mode.")
     (license license:gpl3+)))
 
@@ -29834,7 +29855,7 @@ later.")
     (license license:gpl3+)))
 
 (define-public emacs-srfi
-  ;; SRFI data gets updated quite frequently; lastest tag is from
+  ;; SRFI data gets updated quite frequently; latest tag is from
   ;; 2020; commit from 2021-08-12.
   (let ((commit "e31bf04a3be3aad1286b7fe919c2e4810aae751e")
         (revision "0"))
@@ -33630,27 +33651,26 @@ as Emacs Lisp.")
 (define-public emacs-transient
   (package
     (name "emacs-transient")
-    (version "0.8.2")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/magit/transient")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1jz65hgv4b6k4s3nfzr6js98ghl33f7vk1zyhvh7pxiznsi2s010"))))
+    (version "0.8.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/magit/transient")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01g6r5pmprkg75n23zr27nml7dg0ncsrwgbpfnjf0snhjwb4cbhx"))))
     (build-system emacs-build-system)
     (arguments
-     `(#:tests? #f                      ;no test suite
+     `(#:tests? #f ;no test suite
        #:phases (modify-phases %standard-phases
                   (add-after 'unpack 'build-info-manual
                     (lambda _
                       (invoke "make" "info")
                       ;; Move the info file to lisp so that it gets
                       ;; installed by the emacs-build-system.
-                      (rename-file "docs/transient.info"
-                                   "lisp/transient.info")))
+                      (rename-file "docs/transient.info" "lisp/transient.info")))
                   (add-after 'build-info-manual 'enter-lisp-directory
                     (lambda _
                       (chdir "lisp"))))))
@@ -35627,6 +35647,29 @@ corresponding Evil keys.")
      "This library is a direct translation of the Samba release 2.2.0
 implementation of Windows NT and LanManager compatible password encryption.")
     (license license:gpl3+)))
+
+(define-public emacs-nushell-mode
+  (let ((commit "c179c3cf573b2cc9421dc08bf47e2d619c7791ee")
+        (revision "0"))
+    (package
+      (name "emacs-nushell-mode")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/mrkkrp/nushell-mode.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "08kx31h22szvmccswwmhyj615c9fqln45darlfkj7q84dmc2fd3n"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/mrkkrp/nushell-mode")
+      (synopsis "Major mode for Nushell scripts")
+      (description
+       "This package provides a very basic version of major mode for Nushell shell
+scripts.")
+      (license license:gpl3+))))
 
 (define-public emacs-nadvice
   (package

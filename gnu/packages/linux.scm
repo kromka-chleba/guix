@@ -63,7 +63,7 @@
 ;;; Copyright © 2021 Solene Rapenne <solene@perso.pw>
 ;;; Copyright © 2021, 2022 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2021 Ryan Sundberg <ryan@arctype.co>
-;;; Copyright © 2022-2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2022-2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2022 Rene Saavedra <nanuui@protonmail.com>
 ;;; Copyright © 2022 muradm <mail@muradm.net>
 ;;; Copyright © 2022, 2023 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
@@ -513,17 +513,17 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.13-version "6.13.2")
+(define-public linux-libre-6.13-version "6.13.3")
 (define-public linux-libre-6.13-gnu-revision "gnu")
 (define deblob-scripts-6.13
   (linux-libre-deblob-scripts
    linux-libre-6.13-version
    linux-libre-6.13-gnu-revision
-   (base32 "0ix54dxka85cb5dn7wxfdfphycf9s2315m1lclbzg2950ykv6k4p")
-   (base32 "1iavxsbygd1p4lpp1jbgpjhc1wybyz3vp6wr7i1ddvchz4fyr06c")))
+   (base32 "1fs8d4xkgssji51cz9pxj749qgr63ns6szlmjqf613cakdmlw5j7")
+   (base32 "0bgc4f2xxb68f35iwq8d039zd2lw7d1pv7i2335587s4dyyp8xan")))
 (define-public linux-libre-6.13-pristine-source
   (let ((version linux-libre-6.13-version)
-        (hash (base32 "01g73bnif9ynccb772628sca01y8zkww8wzb39qfkfvbj20jkxnd")))
+        (hash (base32 "0b60rbii83lx2h455nm66hhlnygckprbaw3qifmala16xlazncys")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.13)))
@@ -547,7 +547,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.76")
+(define-public linux-libre-6.6-version "6.6.78")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -557,7 +557,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1gqha26cxijizyhg6k5397bc9pn54wxz01d4gb7j2xx22rkxjwhb")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "180kxgacwx7kr76gls8gw4zrrdrqb9xf6fjmmfi38h66y0aqn5l1")))
+        (hash (base32 "1vckmam50nw8gms1wj18p5mv7rkpl849k3q587bkl4smsndrm8ss")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
@@ -1167,11 +1167,11 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
 
-(define-public linux-libre-version         linux-libre-6.12-version)
-(define-public linux-libre-gnu-revision    linux-libre-6.12-gnu-revision)
-(define-public linux-libre-pristine-source linux-libre-6.12-pristine-source)
-(define-public linux-libre-source          linux-libre-6.12-source)
-(define-public linux-libre                 linux-libre-6.12)
+(define-public linux-libre-version         linux-libre-6.13-version)
+(define-public linux-libre-gnu-revision    linux-libre-6.13-gnu-revision)
+(define-public linux-libre-pristine-source linux-libre-6.13-pristine-source)
+(define-public linux-libre-source          linux-libre-6.13-source)
+(define-public linux-libre                 linux-libre-6.13)
 
 (define-public linux-libre-6.6
   (make-linux-libre* linux-libre-6.6-version
@@ -1698,7 +1698,7 @@ package.")
 (define-public evdi
   (package
     (name "evdi")
-    (version "1.14.4")                  ;inherited by libevdi
+    (version "1.14.8")                  ;inherited by libevdi
     (source
      (origin
        (method git-fetch)
@@ -1707,7 +1707,7 @@ package.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1r9gd4ffr8sh9y3ic8fxwgp4gjls2yd6bgsgvcf0vy571s2aqggr"))))
+        (base32 "18n8kk4gbbj252a2dqb7mbpscfb437x42flh1fsl4g5c8brczc77"))))
     (build-system linux-module-build-system)
     (arguments
      (list #:tests? #f                  ;no test suite
@@ -7609,7 +7609,7 @@ native Linux file system, and has been part of the Linux kernel since version
     (home-page
      "http://www.citi.umich.edu/projects/nfsv4/crossrealm/libnfsidmap_config.html")
     (synopsis "NFSv4 support library for name/ID mapping")
-    (description "Libnfsidmap is a library holding mulitiple methods of
+    (description "Libnfsidmap is a library holding multiple methods of
 mapping names to ids and visa versa, mainly for NFSv4.  It provides an
 extensible array of mapping functions, currently consisting of two choices:
 the default @code{nsswitch} and the experimental @code{umich_ldap}.")
@@ -8734,7 +8734,7 @@ receiving to-be-logged packets from the kernel nfnetlink_log subsystem
          "0ax9959c4bapq78n13bbaibcf1gwjir3ngx8l2dh45lw9m4ha2lr"))))
     (build-system gnu-build-system)
     (outputs '("out"
-               ;; additonal non-default output plugins
+               ;; additional non-default output plugins
                "json" "pcap" "sqlite3" "pgsql" "mysql"))
     (native-inputs (list pkg-config))
     (inputs (list libnfnetlink
@@ -9273,7 +9273,7 @@ libraries, which are often integrated directly into libfabric.")
 communications interface for the True Scale family of products.  PSM users are
 enabled with mechanisms necessary to implement higher level communications
 interfaces in parallel environments.")
-    ;; Only Intel-compatable processors are supported.
+    ;; Only Intel-compatible processors are supported.
     (supported-systems '("i686-linux" "x86_64-linux"))
     (license (list license:bsd-2 license:gpl2)))) ;dual
 
@@ -9527,7 +9527,7 @@ The PSM2 API is a high-performance vendor-specific protocol that provides a
 low-level communications interface for the Intel Omni-Path family of
 high-speed networking devices.")
     (home-page "https://github.com/intel/opa-psm2")
-    ;; Only the x86_64 architecure is supported.
+    ;; Only the x86_64 architecture is supported.
     (supported-systems '("x86_64-linux"))
     (license (list license:bsd-3 license:gpl2)))) ; dual
 

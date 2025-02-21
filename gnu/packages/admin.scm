@@ -1540,7 +1540,7 @@ It can also list the processes responsible in a @command{top}-like table.
 A less common nmon feature is its ability to create highly detailed log files
 in @acronym{CSV, comma-separated values} format.  These can be imported into
 spreadsheets or fed straight into an @acronym{RRD, round-robin database} using
-@command{rrdtool} for further analyisis, or to create colourful graphs.")
+@command{rrdtool} for further analysis, or to create colourful graphs.")
     (license license:gpl3+)))
 
 (define-public sipcalc
@@ -2592,7 +2592,7 @@ command.")
     (inherit wpa-supplicant)
     (name "wpa-supplicant-gui")
     (inputs (modify-inputs (package-inputs wpa-supplicant)
-              (prepend qtbase-5 qtsvg-5)))
+              (prepend qtbase-5 qtsvg-5 qtwayland-5)))
     (native-inputs
      ;; For icons.
      (modify-inputs (package-native-inputs wpa-supplicant)
@@ -4616,7 +4616,7 @@ information tool.")
 (define-public fastfetch
   (package
     (name "fastfetch")
-    (version "2.34.1")
+    (version "2.36.1")
     (source
      (origin
        (method git-fetch)
@@ -4625,7 +4625,7 @@ information tool.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1fb8ix2wxvqb414gvc6174dwigpixswbysq7yp9c3rw3c55r294h"))
+        (base32 "13999l229v2awcl29y3fgijhg8hbk8i9gz6j31z7p9xhkrhn3y42"))
        (modules '((guix build utils)))
        (snippet '(begin
                    (delete-file-recursively "src/3rdparty")))))
@@ -5661,7 +5661,7 @@ disk utilization, priority, username, state, and exit code.")
                        "/pkg/visitors"
                        "/cmds/cbfs"
                        "/cmds/create-ffs"
-                       ;; TODO: Not packed yet in Guix, long jorney:
+                       ;; TODO: Not packed yet in Guix, long journey:
                        ;; - github.com/u-root/u-root
                        ;;
                        ;; "/cmds/fmap"

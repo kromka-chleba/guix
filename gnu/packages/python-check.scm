@@ -1212,7 +1212,7 @@ someone to import them in their actual tests to use them.")
     (home-page "https://github.com/pytest-dev/pytest-html")
     (synopsis "Pytest plugin for generating HTML reports")
     (description
-     "This packages provides a pytest plugin for generating HTML reports.")
+     "This package provides a pytest plugin for generating HTML reports.")
     (license license:mpl2.0)))
 
 (define-public python-pytest-metadata
@@ -2264,6 +2264,26 @@ tests for PyQt5 and PySide2 applications.
 The main usage is to use the @code{qtbot} fixture, responsible for handling
 @code{qApp} creation as needed and provides methods to simulate user
 interaction, like key presses and mouse clicks.")
+    (license license:expat)))
+
+(define-public python-hiro
+  (package
+    (name "python-hiro")
+    (version "1.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hiro" version))
+       (sha256
+        (base32 "0s2xz72i7kbm0l75vr04cqq2war74p3p376wm76999f93npkjcys"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://hiro.readthedocs.io/")
+    (synopsis "Time manipulation utilities for testing in Python")
+    (description "Hiro provides context managers and utilities to either
+freeze, accelerate or decelerate and jump between different points in time.
+Functions exposed by the standard library’s @code{time}, @code{datetime} and
+@code{date} modules are patched within the contexts exposed.")
     (license license:expat)))
 
 (define-public python-httmock

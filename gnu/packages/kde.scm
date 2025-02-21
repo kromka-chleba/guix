@@ -20,6 +20,7 @@
 ;;; Copyright © 2023 Mehmet Tekman <mtekman89@gmail.com>
 ;;; Copyright © 2024 Remco van 't Veer <remco@remworks.net>
 ;;; Copyright © 2025 Sughosha <sughosha@disroot.org>
+;;; Copyright © 2025 Junker <dk@junkeria.club>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -94,6 +95,7 @@
   #:use-module (gnu packages markup)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages mp3)
+  #:use-module (gnu packages ocr)
   #:use-module (gnu packages onc-rpc)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
@@ -140,6 +142,38 @@
     (description "Baloo is a framework for searching and managing metadata.
 This package contains GUI widgets for baloo.")
     (license license:lgpl2.0+)))
+
+(define-public crow-translate
+  (package
+    (name "crow-translate")
+    (version "3.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/crow-translate/" version
+                           "/crow-translate-v" version ".tar.gz"))
+       (sha256
+        (base32 "18f7i5sxrvqp6h7zj77sdxyy9rlbw0rv3w7akf1j14072ala9bwc"))))
+    (build-system qt-build-system)
+    (arguments '(#:tests? #f)) ; there are no tests.
+    (inputs
+     (list qtbase-5
+           qtx11extras
+           qtsvg-5
+           qtmultimedia-5
+           tesseract-ocr
+           kwayland-5))
+    (native-inputs
+     (list pkg-config
+           extra-cmake-modules
+           qttools-5))
+    (home-page "https://invent.kde.org/office/crow-translate")
+    (synopsis "Application for translating text")
+    (description
+     "Crow Translate is an application written in C++/Qt for translating
+and speaking text which relies on Mozhi to interface with various
+translation engines.")
+    (license license:gpl3+)))
 
 (define-public futuresql
   (package
@@ -269,14 +303,14 @@ browser for easy news reading.")
 (define-public gwenview
   (package
     (name "gwenview")
-    (version "24.12.1")
+    (version "24.12.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/gwenview-" version ".tar.xz"))
        (sha256
-        (base32 "08s5ksqqwj6d46drkvl8ka9c2lp62z3j5vhg65d762s6xnnd5a19"))))
+        (base32 "0qw4jl4zasa32skmf4qysx4spn91j1n6pmc7w8s1l6n6ncsffkjg"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1102,15 +1136,15 @@ cards.")
 (define-public kommit
   (package
     (name "kommit")
-    (version "1.6.0")
+    (version "1.7.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/"
                                   name "/" name "-"
-                                  version ".tar.xz"))
+                                  "v" version ".tar.xz"))
               (sha256
                (base32
-                "09ahnizl5mqdrg583lxkwwnsq8ci95fk49wx9733ah4c39gync5c"))))
+                "14gr0ms99il76k3yrdff2z4fj5pi5c613gk9n60gg66rmr7m3pnx"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1125,26 +1159,26 @@ cards.")
                      (invoke "ctest" "-E"
                              "(difftest|clonedialogtest|tagtest|indextest|\
 branchestest|configtest|stashtest|filetest|overlaytest|remotetest|clonetest|\
-submoduletest)")))))))
+submoduletest|cachetest|switchtest)")))))))
     (native-inputs
      (list extra-cmake-modules kdoctools pkg-config))
     (inputs
      (list ;; module cyclic referencing
-            (module-ref
-             (resolve-interface
-              '(gnu packages kde-systemtools))
-             'dolphin)         ;for dolphin plugin
-           kconfigwidgets
-           kcoreaddons
-           kcrash
-           kdbusaddons
-           ki18n
-           kxmlgui
-           kio
-           ktextwidgets
-           ktexteditor
-           ksyntaxhighlighting
-           libgit2-1.8))
+      (module-ref
+       (resolve-interface
+        '(gnu packages kde-systemtools))
+       'dolphin)         ;for dolphin plugin
+      kconfigwidgets
+      kcoreaddons
+      kcrash
+      kdbusaddons
+      ki18n
+      kxmlgui
+      kio
+      ktextwidgets
+      ktexteditor
+      ksyntaxhighlighting
+      libgit2-1.8))
     (home-page "https://apps.kde.org/kommit/")
     (synopsis "Git client for KDE")
     (description
@@ -1484,7 +1518,7 @@ different notification systems.")
 (define-public kdeconnect
   (package
     (name "kdeconnect")
-    (version "24.12.1")
+    (version "24.12.2")
     (source
      (origin
        (method url-fetch)
@@ -1493,7 +1527,7 @@ different notification systems.")
                            version ".tar.xz"))
        (sha256
         (base32
-         "0b6n5bh071ww4nmpwyhgrm1wlkjpvr61s52xfd7b6bzz8v8ilanz"))))
+         "1zs7xz9s47s34zxnzhwiz3ip85cpbq119zjg52sv0vpji8bdjadf"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1683,20 +1717,21 @@ unmount drives and view them in a file manager.")
 (define-public ktimer
   (package
     (name "ktimer")
-    (version "24.05.2")
+    (version "24.12.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/" version
                                   "/src/ktimer-" version ".tar.xz"))
               (sha256
                (base32
-                "1s3fwxxdpc4qsxby01sdp5c2sdzb1a9y37d172gvk41148swl5np"))))
+                "0gzqn29lw1zxkhpi2l3rk784al1m8za62rhx4r8wjn772j2gink4"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules
            kdoctools))
     (inputs
-     (list kdbusaddons
+     (list kcrash
+           kdbusaddons
            ki18n
            kio
            knotifications
@@ -1851,14 +1886,14 @@ creating routes by drag and drop and more.")
 (define-public okular
   (package
     (name "okular")
-    (version "24.12.1")
+    (version "24.12.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/" name "-" version ".tar.xz"))
        (sha256
-        (base32 "085zw8lrb2ll7p9178xl8m2bnvv5aw5xxy18wcyqnnfc9495ql5v"))))
+        (base32 "1pjn2pjc4diamadnchyqjlcqlmnr82sjz7ny4yp3w2lhx9yw4v03"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -1938,7 +1973,7 @@ a variety of formats, including PDF, PostScript, DejaVu, and EPub.")
 (define-public poxml
   (package
     (name "poxml")
-    (version "24.12.1")
+    (version "24.12.2")
     (source (origin
               (method url-fetch)
               (uri
@@ -1946,7 +1981,7 @@ a variety of formats, including PDF, PostScript, DejaVu, and EPub.")
                               "/src/poxml-" version ".tar.xz"))
               (sha256
                (base32
-                "1mbkmh0zy5bi13vbcqdnppg2f1cl77hdfscy3wp2mfz209sa83a0"))))
+                "16c3v285vry7g878amy99c8r28vcqlydd511658lysidwz8xkmig"))))
     (build-system cmake-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
