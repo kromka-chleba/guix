@@ -105,6 +105,7 @@
             tcl/tk
             unicode
             unlicense
+            upl1.0
             vim
             w3c
             x11 x11-style
@@ -747,6 +748,11 @@ at URI, which may be a file:// URI pointing the package's tree."
   (license "Unlicense"
            "https://unlicense.org/"
            "https://www.gnu.org/licenses/license-list.html#Unlicense"))
+
+(define upl1.0
+  (license "UPL-1.0"
+           "https://directory.fsf.org/wiki/License:UPL-1.0"
+           "https://www.gnu.org/licenses/license-list#UPL"))
 
 (define w3c
   (license "W3C Software Notice and License"
