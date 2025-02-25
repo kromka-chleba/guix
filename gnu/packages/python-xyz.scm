@@ -11194,7 +11194,6 @@ include_dirs = ~:*~a/include~%"
            pkg-config
            python-cython
            python-hypothesis
-           python-mypy
            python-pytest
            python-pytest-xdist
            python-setuptools
