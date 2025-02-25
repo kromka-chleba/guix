@@ -30936,7 +30936,6 @@ By default it uses the open Python vulnerability database Safety DB.")
                   texlive-lm
                   texlive-regexpatch
                   texlive-xcolor))
-           python-pip
            python-poetry-core
            python-setuptools))
     (inputs (list pandoc python-pandocfilters))
