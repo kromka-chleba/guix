@@ -93,7 +93,7 @@
         "tox" ; test wrapper for other environments
         "codecov" "coverage"  ; coverage
         "black" "isort" "pycodestyle" "pep8"  ; style
-        "pyflakes" "flake8" "pylint" "mypy"  ; style+lint
+        "check-manifest" "pyflakes" "flake8" "pylint" "mypy"  ; style+lint
         "coveralls" "twine"  ; upload integration tools
         "pytest-isort" "pytest-flake8" "pytest-cov" "pytest-black"
         "pytest-pep8" "pytest-mypy" "pytest-pep8" "pre-commit"))  ; variants
