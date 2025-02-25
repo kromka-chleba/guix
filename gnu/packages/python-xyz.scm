@@ -3014,7 +3014,7 @@ using a dot syntax, for example: @code{dictionary['deeply.nested.key']}.")
                (base32
                 "1shyvajayyzbkp9dihb4mz835jnkp0kqqbyjfqci6v43da6q2kd2"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-coveralls python-flake8 python-pydocstyle
+    (propagated-inputs (list python-coveralls python-pydocstyle
                              python-pytest python-pytest-cov))
     (native-inputs (list python-flit-core))
     (home-page "https://github.com/rasterio/affine")
@@ -27008,8 +27008,7 @@ identifying what the file is.")
                          "not test_smoke"
                          " and not test_smoke_n_system_special_chars"))))
     (native-inputs
-     (list python-coverage
-           python-mock
+     (list python-mock
            python-pytest
            python-setuptools
            python-wheel))

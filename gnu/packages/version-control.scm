@@ -2668,7 +2668,6 @@ visualize your public Git repositories on a web interface.")
     (native-inputs
      (list git-minimal/pinned
            python-covdefaults
-           python-coverage
            python-distlib
            python-pytest
            python-pytest-env
