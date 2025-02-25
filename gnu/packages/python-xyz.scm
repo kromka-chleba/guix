@@ -3534,18 +3534,8 @@ variables into the markdown template.")
        (sha256
         (base32 "0gdpabnyl1kyy0cjrnph6xl4fyhgim50a1amsaqq3hahki6i2ip1"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'reduce-test-coverage-since-failing
-            (lambda _
-              (substitute* "setup.cfg"
-                (("(^.*cov.*$|^.*flake8.*$)") "")))))))
     (native-inputs
      (list python-pytest
-           python-pytest-cov
-           python-pytest-flake8
            python-setuptools
            python-wheel))
     (home-page "https://github.com/python-lsp/docstring-to-markdown")
