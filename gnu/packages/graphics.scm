@@ -43,6 +43,7 @@
 ;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2025 James Smith <jsubuntuxp@disroot.org>
 ;;; Copyright © 2026 Cayetano Santos <csantosb@inventati.org>
+;;; Copyright © 2026 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -121,7 +122,7 @@
   #:use-module (gnu packages plotutils)
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages pth)
-  #:use-module (gnu packages pulseaudio)  ; libsndfile, libsamplerate
+  #:use-module (gnu packages pulseaudio) ; libsndfile, libsamplerate
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
@@ -689,103 +690,148 @@ It was developed by DreamWorks Animation for use in volumetric applications
 typically encountered in feature film production.")
     (license license:mpl2.0)))
 
+(define-public blender-assets
+  (package
+    (name "blender-assets")
+    (version "4.3.2")
+    (source
+     (origin
+       (method git-fetch/lfs) ;Needs LFS because .blender files are dummies
+       (uri (git-reference
+              (url "https://projects.blender.org/blender/blender-assets.git")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   (delete-file-recursively "working")))
+       (sha256
+        (base32 "14h43mgsbymcnf6qrxd89mv2dws7n270jjss7c04a16d8in25x87"))))
+    (build-system copy-build-system)
+    (home-page "https://www.blender.org/")
+    (synopsis "Buldled assets for Blender")
+    (description
+     "Assets bundled with Blender releases in the Essentials assets library.")
+    (license license:cc0)))
+
 (define-public blender
   (package
     (name "blender")
-    (version "3.6.23")                   ;4.2.x+ requires Python >= 3.12
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://download.blender.org/source/"
-                                  "blender-" version ".tar.xz"))
-              (sha256
-               (base32
-                "16ah70kqznxz60n39d4hnlnwh1vi7xn9kx37di708n03l5bn6mmw"))))
+    (version "4.3.2") ;4.2.x+ requires Python >= 3.12
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://download.blender.org/source/" "blender-"
+                           version ".tar.xz"))
+       (sha256
+        (base32 "1n4nsqmzfd51kxd6w30bmfbj4qkh9ccg7x7szbh3253m697avmn8"))))
     (build-system cmake-build-system)
     (arguments
      (list
+      #:modules '((guix build cmake-build-system)
+                  (guix build utils)
+                  (ice-9 string-fun))
       ;; Test files are very large and not included in the release tarball.
       #:tests? #f
-      #:configure-flags
-      (let ((python-version (version-major+minor (package-version python))))
-        #~(list "-DWITH_CODEC_FFMPEG=ON"
-                "-DWITH_CODEC_SNDFILE=ON"
-                "-DWITH_CYCLES=ON"
-                "-DWITH_DOC_MANPAGE=ON"
-                "-DWITH_FFTW3=ON"
-                "-DWITH_IMAGE_OPENJPEG=ON"
-                "-DWITH_INPUT_NDOF=ON"
-                "-DWITH_INSTALL_PORTABLE=OFF"
-                "-DWITH_JACK=ON"
-                "-DWITH_MOD_OCEANSIM=ON"
-                "-DWITH_OPENVDB=ON"
-                "-DWITH_OPENSUBDIV=ON"
-                "-DWITH_PYTHON_INSTALL=OFF"
-                "-DWITH_SYSTEM_BULLET=ON"
-                "-DWITH_SYSTEM_EIGEN3=ON"
-                "-DWITH_SYSTEM_FREETYPE=ON"
-                "-DWITH_SYSTEM_GLOG=ON"
-                "-DWITH_SYSTEM_LZO=ON"
-                (string-append "-DPYTHON_LIBRARY=python" #$python-version)
-                (string-append "-DPYTHON_LIBPATH="
-                               (assoc-ref %build-inputs "python")
-                               "/lib")
-                (string-append "-DPYTHON_INCLUDE_DIR="
-                               (assoc-ref %build-inputs "python")
-                               "/include/python" #$python-version)
-                (string-append "-DPYTHON_VERSION=" #$python-version)
-                (string-append "-DPYTHON_NUMPY_INCLUDE_DIRS="
-                               (assoc-ref %build-inputs "python-numpy")
-                               "/lib/python" #$python-version
-                               "/site-packages/numpy/core/include/")
-                (string-append "-DPYTHON_NUMPY_PATH="
-                               (assoc-ref %build-inputs "python-numpy")
-                               "/lib/python" #$python-version
-                               "/site-packages/")))
+      #:configure-flags (let ((python-version (version-major+minor (package-version
+                                                                    python-next))))
+                          #~(list "-DWITH_CODEC_FFMPEG=ON"
+                                  "-DWITH_CODEC_SNDFILE=ON"
+                                  "-DWITH_CYCLES=ON"
+                                  "-DWITH_DOC_MANPAGE=ON"
+                                  "-DWITH_FFTW3=ON"
+                                  "-DWITH_IMAGE_OPENJPEG=ON"
+                                  "-DWITH_INPUT_NDOF=ON"
+                                  "-DWITH_INSTALL_PORTABLE=OFF"
+                                  "-DWITH_JACK=ON"
+                                  "-DWITH_MOD_OCEANSIM=ON"
+                                  "-DWITH_OPENVDB=ON"
+                                  "-DWITH_OPENSUBDIV=ON"
+                                  "-DWITH_PYTHON_INSTALL=OFF"
+                                  "-DWITH_SYSTEM_BULLET=ON"
+                                  "-DWITH_SYSTEM_EIGEN3=ON"
+                                  "-DWITH_SYSTEM_FREETYPE=ON"
+                                  "-DWITH_SYSTEM_GLOG=ON"
+                                  "-DWITH_SYSTEM_LZO=ON"
+                                  (string-append "-DPYTHON_LIBRARY=python"
+                                                 #$python-version)
+                                  (string-append "-DPYTHON_LIBPATH="
+                                                 (assoc-ref %build-inputs
+                                                            "python-next")
+                                                 "/lib")
+                                  (string-append "-DPYTHON_INCLUDE_DIR="
+                                                 (assoc-ref %build-inputs
+                                                            "python-next")
+                                                 "/include/python"
+                                                 #$python-version)
+                                  (string-append "-DPYTHON_VERSION="
+                                                 #$python-version)
+                                  (string-append
+                                   "-DPYTHON_NUMPY_INCLUDE_DIRS="
+                                   (assoc-ref %build-inputs "python-numpy")
+                                   "/lib/python"
+                                   "3.11" ;no 3.12 for numpy yet
+                                   "/site-packages/numpy/core/include/")
+                                  (string-append "-DPYTHON_NUMPY_PATH="
+                                                 (assoc-ref %build-inputs
+                                                            "python-numpy")
+                                                 "/lib/python"
+                                                 "3.11" ;no 3.12 for numpy yet
+                                                 "/site-packages/")))
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'install-assets
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((datafiles-input #$(this-package-input "blender-assets")))
+                (copy-recursively datafiles-input "./release/datafiles/assets"))))
           (add-after 'install 'wrap-bin
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((out (assoc-ref outputs "out"))
                      (python-path (getenv "GUIX_PYTHONPATH")))
                 (wrap-program (string-append out "/bin/blender")
-                  `("GUIX_PYTHONPATH" ":" prefix (,python-path)))))))))
-    (inputs
-     (list bash-minimal
-           boost
-           bullet
-           eigen
-           embree
-           ffmpeg-6
-           fftw
-           freetype-with-brotli
-           glew
-           glog
-           gmp                        ;needed for boolean operations on meshes
-           imath
-           jack-1
-           jemalloc
-           libepoxy
-           libjpeg-turbo
-           libpng
-           libsndfile
-           libtiff
-           libx11
-           libxi
-           libxrender
-           lzo
-           onetbb
-           openal
-           opencolorio
-           openexr
-           openimageio
-           openjpeg
-           opensubdiv
-           openvdb
-           pugixml
-           python
-           python-numpy-1
-           zlib
-           `(,zstd "lib")))
+                  `("GUIX_PYTHONPATH" ":" prefix
+                    (,python-path)))))))))
+    (native-inputs (list pkg-config))
+    (inputs (list bash-minimal
+                  blender-assets
+                  boost
+                  bullet
+                  eigen
+                  embree
+                  ffmpeg-5
+                  fftw
+                  fftwf
+                  freetype-with-brotli
+                  glew
+                  glog
+                  gmp ;needed for boolean operations on meshes
+                  imath
+                  jack-1
+                  jemalloc
+                  libepoxy
+                  libjpeg-turbo
+                  libpng
+                  libsndfile
+                  libtiff
+                  libx11
+                  libxi
+                  libxrender
+                  lzo
+                  openal
+                  opencolorio
+                  openexr
+                  openimageio
+                  openjpeg
+                  opensubdiv
+                  openvdb
+                  pugixml
+                  python-next
+                  python-numpy
+                  shaderc
+                  tbb
+                  vulkan-headers
+                  vulkan-loader
+                  zlib
+                  `(,zstd "lib")))
     (home-page "https://www.blender.org/")
     (synopsis "3D graphics creation suite")
     (description
