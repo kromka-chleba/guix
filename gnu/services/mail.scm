@@ -521,10 +521,20 @@ as @code{#t}.)")
               (serialize-namespace-configuration field-name val))
             val))
 
+(define (package-list? val)
+  (and (list? val) (and-map package? val)))
+(define (serialize-package-list field-name val)
+  #f)
+
 (define-configuration dovecot-configuration
   (dovecot
    (file-like dovecot)
    "The dovecot package.")
+
+  (extensions
+   (package-list '())
+   "Plugins and extensions to the Dovecot package. Specify a list of dovecot
+plugins that needs to be available for dovecot and its modules.")
 
   (listen
    (comma-separated-string-list '("*" "::"))
@@ -1109,7 +1119,7 @@ isn't enough disk space, just skip it.
 @item fcntl
 Use this if possible.  Works with NFS too if lockd is used.
 @item flock
-May not exist in all systems.  Doesn't work with NFS. 
+May not exist in all systems.  Doesn't work with NFS.
 @item lockf
 May not exist in all systems.  Doesn't work with NFS.
 @end table
@@ -1500,6 +1510,11 @@ greyed out, instead of only later giving \"not selectable\" popup error.
    (file-like dovecot)
    "The dovecot package.")
 
+  (extensions
+   (package-list '())
+   "Plugins and extensions to the Dovecot package. Specify a list of dovecot
+plugins that needs to be available for dovecot and its modules.")
+
   (string
    (string (configuration-missing-field 'opaque-dovecot-configuration
                                         'string))
@@ -1525,6 +1540,21 @@ greyed out, instead of only later giving \"not selectable\" popup error.
          (home-directory "/var/empty")
          (shell (file-append shadow "/sbin/nologin")))))
 
+(define (make-dovecot-moduledir packages)
+  "Return a computed file containing a union of Dovecot module directories from PACKAGES.
+Each package's '/lib/dovecot' directory is combined into a single location."
+  ;; Create a union of the set of modules and dovecot itself.
+  (with-imported-modules '((guix build union))
+    (computed-file
+     "dovecot-moduledir"
+     #~(begin
+         (use-modules (guix build union) (srfi srfi-26))
+
+         (union-build #$output
+                      (map (cut string-append <>
+                                "/lib/dovecot")
+                           (list #$@packages)))))))
+
 (define (%dovecot-activation config)
   ;; Activation gexp.
   (let ((config-str
@@ -1535,7 +1565,15 @@ greyed out, instead of only later giving \"not selectable\" popup error.
            (with-output-to-string
              (lambda ()
                (serialize-configuration config
-                                        dovecot-configuration-fields)))))))
+                                        dovecot-configuration-fields))))))
+        (moduledir-directory
+         (cond
+          ((opaque-dovecot-configuration? config)
+           (make-dovecot-moduledir (cons* (opaque-dovecot-configuration-dovecot config)
+                                          (opaque-dovecot-configuration-extensions config))))
+          (else
+           (make-dovecot-moduledir (cons* (dovecot-configuration-dovecot config)
+                                          (dovecot-configuration-extensions config)))))))
     (with-imported-modules (source-module-closure '((gnu build activation)))
       #~(begin
           (use-modules (guix build utils) (gnu build activation))
@@ -1586,6 +1624,8 @@ greyed out, instead of only later giving \"not selectable\" popup error.
             (copy-file #$(plain-file "dovecot.conf" config-str)
                        "/etc/dovecot/dovecot.conf")
             (mkdir-p/perms "/etc/dovecot/private" user #o700)
+            (mkdir-p "/usr/lib")
+            (switch-symlinks "/usr/lib/dovecot" #$moduledir-directory)
             (create-self-signed-certificate-if-absent
              #:private-key "/etc/dovecot/private/default.pem"
              #:public-key "/etc/dovecot/default.pem"
@@ -1600,7 +1640,7 @@ greyed out, instead of only later giving \"not selectable\" popup error.
     (list (shepherd-service
            (documentation "Run the Dovecot POP3/IMAP mail server.")
            (provision '(dovecot))
-           (requirement '(pam networking))
+           (requirement '(user-processes pam networking))
            (start #~(make-forkexec-constructor
                      (list (string-append #$dovecot "/sbin/dovecot")
                            "-F")))
@@ -1903,7 +1943,7 @@ exim_group = exim
     (($ <imap4d-configuration> package config-file)
      (list (shepherd-service
             (provision '(imap4d))
-            (requirement '(networking syslogd))
+            (requirement '(user-processes networking syslogd))
             (documentation "Run the imap4d daemon.")
             (start (let ((imap4d (file-append package "/sbin/imap4d")))
                      #~(make-forkexec-constructor
@@ -2195,7 +2235,7 @@ authentication plugin that extracts the username from the certificate.")
   (list (shepherd-service
          (provision '(radicale))
          (documentation "Run the radicale daemon.")
-         (requirement '(networking))
+         (requirement '(user-processes networking))
          (start #~(make-forkexec-constructor
                    (list #$(file-append (radicale-configuration-package cfg)
                                         "/bin/radicale")
@@ -2317,7 +2357,7 @@ in these files will override the defaults.")
    (boolean #f)
    "Do not apply Jinja templates.")
   (shepherd-requirements
-   (list-of-symbols '(loopback))
+   (list-of-symbols '(user-processes loopback))
    "This is a list of symbols naming Shepherd services that this service
 will depend on."))
 

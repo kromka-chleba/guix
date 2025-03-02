@@ -186,6 +186,7 @@
   #:use-module (gnu packages php)
   #:use-module (gnu packages photo)
   #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages polkit)
   #:use-module (gnu packages popt)
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages protobuf)
@@ -2375,13 +2376,13 @@ It is usually a complement to @code{ffmpeg-normalize}.")
 (define-public ffmpeg-normalize
   (package
     (name "ffmpeg-normalize")
-    (version "1.31.0")
+    (version "1.31.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "ffmpeg_normalize" version))
               (sha256
                (base32
-                "0f8m0ikn4jw975fy66zli6z7zck5ng717dk3hravxzpj1kf1s6vx"))))
+                "0b1vfipr0a40q1xm61f3nbi24kxs6a97j34dl5f8by5g68h19z71"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases
@@ -6883,4 +6884,47 @@ playback or skips to a position in the video, this is replicated across all
 media players connected to the same server and in the same \"room\" (viewing
 session).  A built-in text chat for discussing the synced media is also
 included for convenience.")
+    (license license:asl2.0)))
+
+(define-public showmethekey
+  (package
+    (name "showmethekey")
+    (version "1.18.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/AlynxZhou/showmethekey.git")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1lmjqr5j8nr990dq5gvkwm33vpvzh8zhcmgxn03m4n4xgq1dg5zy"))))
+    (build-system meson-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'setenv
+                 (lambda _
+                   (substitute* "meson.build"
+                    ;; We do that ourselves later--so replace by a dummy
+                    ;; command.
+                    (("gtk4-update-icon-cache")
+                     "true")))))))
+    (native-inputs
+     (list (list glib "bin") gnu-gettext pkg-config))
+    (inputs
+     (list libevdev eudev libinput glib gtk libadwaita json-glib cairo pango
+           libxkbcommon polkit))
+    (synopsis "Show keypresses on screen")
+    (description "This package shows the keys that the user presses on the
+screen.
+
+Presumably, that's because you are presenting the screen to someone else
+that should see the keys.
+
+This package works in Xorg and Wayland since it directly reads the keys from
+the evdev device via libinput.
+
+Users in group ``wheel'' can skip password authentication.")
+    (home-page "https://github.com/AlynxZhou/showmethekey")
     (license license:asl2.0)))

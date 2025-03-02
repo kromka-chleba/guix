@@ -14975,6 +14975,7 @@ gnu/packages/guile.scm:147:2: guile: updating from version 2.0.10 to version 2.0
 @dots{}
 @end example
 
+@cindex target version, guix refresh
 In some specific cases, you may have many packages specified via a
 manifest or a module selection which should all be updated together; for
 these cases, the @option{--target-version} option can be provided to have
@@ -14993,6 +14994,17 @@ gnu/packages/qt.scm:1202:13: qtdeclarative would be upgraded from 5.15.8 to 5.15
 gnu/packages/qt.scm:1762:13: qtserialbus would be upgraded from 5.15.8 to 5.15.10
 gnu/packages/qt.scm:2070:13: qtquickcontrols2 would be upgraded from 5.15.8 to 5.15.10
 @dots{}
+@end example
+
+@cindex partial target version, guix refresh
+The @option{--target-version} option accepts partial version prefixes,
+which can be useful to update to the latest major or major-minor
+prefixed version:
+
+@example
+$ guix refresh qtbase@@5 qtdeclarative@@5 --target-version=5
+gnu/packages/qt.scm:1472:13: qtdeclarative would be upgraded from 5.15.8 to 5.15.10
+gnu/packages/qt.scm:452:13: qtbase would be upgraded from 5.15.8 to 5.15.10
 @end example
 
 Sometimes the upstream name differs from the package name used in Guix,
@@ -15335,7 +15347,12 @@ Never try to download missing OpenPGP keys.  Instead just bail out.
 
 @item interactive
 When a package signed with an unknown OpenPGP key is encountered, ask
-the user whether to download it or not.  This is the default behavior.
+the user whether to download it or not.
+
+@item auto
+Automatically selects the @code{interactive} policy when the standard
+input is connected to a pseudo terminal (TTY), else @code{always}.  This
+is the default behavior.
 @end table
 
 @item --key-server=@var{host}
@@ -27484,6 +27501,25 @@ Available @code{dovecot-configuration} fields are:
 The dovecot package.
 @end deftypevr
 
+@deftypevr {@code{dovecot-configuration} parameter} package-list extensions
+A list of additional Dovecot plugin packages to make available at runtime. During
+service activation, the @file{lib/dovecot} directory from each specified package
+is combined with Dovecot's core modules into a unified module directory.
+
+For example, to enable Sieve filtering:
+
+@lisp
+(extensions (list dovecot-pigeonhole))
+@end lisp
+
+Each package in the list must provide its modules at @file{lib/dovecot},
+as this is where @code{make-dovecot-moduledir} expects to find its
+extensions. The service combines these directories to create a unified
+module structure.
+
+The default value is an empty list, providing only core Dovecot functionality.
+@end deftypevr
+
 @deftypevr {@code{dovecot-configuration} parameter} comma-separated-string-list listen
 A list of IPs or hosts where to listen for connections.  @samp{*}
 listens on all IPv4 interfaces, @samp{::} listens on all IPv6
@@ -29519,7 +29555,7 @@ Ignore running workers as privileged users.
 @item @code{skip-template?} (default: @code{#f}) (type: boolean)
 Do not apply Jinja templates.
 
-@item @code{shepherd-requirements} (default: @code{(loopback)}) (type: list-of-symbols)
+@item @code{shepherd-requirements} (default: @code{(user-processes loopback)}) (type: list-of-symbols)
 This is a list of symbols naming Shepherd services that this service
 will depend on.
 
@@ -38175,6 +38211,30 @@ Name of the @code{xe-guest-utilities} log file.
 @end table
 @end deftp
 
+@code{xe-guest-utilities} is the standard guest utilities used for Xen
+guests.  More recently the Xen Project has been working to develop
+@code{xen-guest-agent}, a modern drop-in replacement for
+@code{xe-guest-utilities}.  While they nearly have feature-parity,
+@code{xen-guest-agent} currently lacks some of the features of its
+predecessor, namely disk metrics and ``PV drivers version''.
+
+@defvar xen-guest-agent-service-type
+Service type for the Xen guest agent service.
+@end defvar
+
+@deftp {Data Type} xen-guest-agent-configuration
+Configuration for the @code{xen-guest-agent} service.
+
+@table @asis
+@item @code{package} (default: @code{xen-guest-agent})
+The Xen guest agent package to use.
+@end table
+@end deftp
+
+@quotation Warning
+@code{xe-guest-utilities} and @code{xen-guest-agent} are mutually exclusive.
+@end quotation
+
 
 @anchor{build-vm}
 @subsubheading Virtual Build Machines
@@ -45189,6 +45249,14 @@ guix deploy @var{file} -x -- herd restart @var{service}
 The @command{guix deploy -x} command returns zero if and only if the
 command succeeded on all the machines.
 
+You may also wish to roll back configurations on machines to a previous
+generation.  You can do that using the @option{--roll-back} or
+@option{-r} option like so:
+
+@example
+guix deploy --roll-back @var{file}
+@end example
+
 @c FIXME/TODO: Separate the API doc from the CLI doc.
 
 Below are the data types you need to know about when writing a
@@ -45337,7 +45405,9 @@ server type} this virtual server should be created with.  For example,
 @code{"cx42"} corresponds to a x86_64 server that has 8 VCPUs, 16 GB of
 memory and 160 GB of storage, while @code{"cax31"} to the AArch64
 equivalent.  Other server types and their current prices can be found
-@uref{https://www.hetzner.com/cloud/#pricing, here}.
+@uref{https://www.hetzner.com/cloud/#pricing, here}.  The @code{"cpx11"}
+server type is currently not supported, since its rescue system is too
+small to bootstrap a Guix system from.
 
 @item @code{ssh-key}
 The file name of the SSH private key to use to authenticate with the
@@ -46117,6 +46187,13 @@ shepherd, The GNU Shepherd Manual}, for details.
 
 @item @code{requirement} (default: @code{'()})
 List of symbols denoting the Shepherd services this one depends on.
+
+@cindex @code{user-processes} Shepherd service
+With very few exceptions, services that start a daemon must depend at
+least on the @code{user-processes} service; this ensures that these
+daemons are started after all the file systems have been mounted and
+that, during shutdown, they are stopped before attempting to terminate
+remaining user processes.
 
 @cindex one-shot services, for the Shepherd
 @item @code{one-shot?} (default: @code{#f})

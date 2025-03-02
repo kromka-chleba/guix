@@ -14,7 +14,7 @@
 ;;; Copyright © 2021 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2022 (unmatched-parenthesis <paren@disroot.org>
 ;;; Copyright © 2022 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2022, 2023 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2022, 2023, 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2023 Benjamin <benjamin@uvy.fr>
 ;;; Copyright © 2023 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2023 Felix Lechner <felix.lechner@lease-up.com>
@@ -135,10 +135,22 @@ can be ignored.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "183iqzmdwk4b35vxrdg2gdzd4277yr5bgbgl9brqv3w1dap5v4pm"))))
+        (base32 "183iqzmdwk4b35vxrdg2gdzd4277yr5bgbgl9brqv3w1dap5v4pm"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Age source bundles manpages already. Seems OK not to rebuild
+            ;; them with ronn, they are pretty auditable.
+            (with-directory-excursion "doc"
+              (for-each delete-file '("age.1.html"
+                                      "age.1.ronn"
+                                      "age-keygen.1.html"
+                                      "age-keygen.1.ronn")))))))
     (build-system go-build-system)
     (arguments
      (list
+      #:build-flags #~(list (string-append "-ldflags=-X main.Version="
+                                           #$version))
       #:embed-files #~(list "armor.*" "header_crlf" "hmac_.*" "scrypt.*"
                             "stanza_.*" "stream_.*" "version_unsupported"
                             "x25519.*" "x25519_.*")
@@ -155,9 +167,8 @@ can be ignored.")
     (synopsis "Secure file encryption tool, format, and Go library")
     (description
      "This package implements file encryption according to the
-@{age-encryption.org/v1, https://age-encryption.org/v1} specification.
-It features small explicit keys, no configuration options, and Unix-style
-composability.")
+@url{https://age-encryption.org/v1} specification.  It features small explicit
+keys, no configuration options, and Unix-style composability.")
     (license license:bsd-3)))
 
 (define-public go-filippo-io-edwards25519
@@ -2562,37 +2573,40 @@ Go.")
 ;;;
 
 (define-public age
-  (package
-    (inherit go-filippo-io-age)
+  (package/inherit go-filippo-io-age
     (name "age")
     (arguments
-     (list
-      #:install-source? #f
-      #:import-path "filippo.io/age/cmd/age"
-      #:unpack-path "filippo.io/age"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'remove-failing-test-data-files
-            ;; FIXME: testdata/output_file.txt:49: unknown command "ttyin"
-            ;; age: error: input and output file are the same: "inputcopy"
-            ;; age: error: input and output file are the same: "./inputcopy"
-            ;; age: error: input and output file are the same: "keycopy"
-            (lambda* (#:key import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                (for-each delete-file
-                          (list "testdata/scrypt.txt"
-                                "testdata/output_file.txt"
-                                "testdata/encrypted_keys.txt"
-                                "testdata/terminal.txt"))))))))))
+     (substitute-keyword-arguments
+         (package-arguments go-filippo-io-age)
+       ((#:tests? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:unpack-path _ "") "filippo.io/age")
+       ((#:phases phases '%standard-phases)
+        #~(modify-phases #$phases
+            (replace 'build
+              (lambda* (#:key import-path #:allow-other-keys #:rest arguments)
+                (for-each
+                 (lambda (cmd)
+                   (apply (assoc-ref #$phases 'build)
+                          `(,@arguments
+                            #:import-path ,(string-append import-path cmd))))
+                 (list "/cmd/age"
+                       "/cmd/age-keygen"))))
+            (add-after 'install 'install-man-pages
+              (lambda _
+                (let ((man (string-append #$output "/man/man1/")))
+                  (install-file "src/filippo.io/age/doc/age.1" man)
+                  (install-file "src/filippo.io/age/doc/age-keygen.1" man))))))))
+    (native-inputs (package-propagated-inputs go-filippo-io-age))
+    (propagated-inputs '())
+    (inputs '())
+    (description
+     (string-append (package-description go-filippo-io-age)
+                    "\nThis package provides a command line interface (CLI)
+tools."))))
 
 (define-public age-keygen
-  (package
-    (inherit go-filippo-io-age)
-    (name "age-keygen")
-    (arguments
-     `(#:import-path "filippo.io/age/cmd/age-keygen"
-       #:unpack-path "filippo.io/age"
-       #:install-source? #f))))
+  (deprecated-package "age-keygen" age))
 
 (define-public go-jwker
   (package/inherit go-github-com-jphastings-jwker

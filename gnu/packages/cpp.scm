@@ -76,6 +76,7 @@
   #:use-module (guix gexp)
   #:use-module (gnu packages)
   #:use-module (gnu packages assembly)
+  #:use-module (gnu packages audio)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bdw-gc)
@@ -117,6 +118,7 @@
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages web)
+  #:use-module (gnu packages webkit)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg)
@@ -195,6 +197,33 @@ allocator that makes it easy to generate complex code without a significant
 development effort.")
       (license license:zlib))))
 
+(define-public asyncplusplus
+  (package
+    (name "asyncplusplus")
+    (version "1.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/Amanieu/asyncplusplus")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0iswbh7y46kn412c52af0n8bc4fplm3y94yh10n2lchispzar72j"))
+              (modules '((guix build utils)))
+              (snippet
+               ;; Fix install location of cmake files.
+               '(substitute* "CMakeLists.txt"
+                  (("DESTINATION cmake")
+                    "DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake")))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f)) ;no tests
+    (home-page "https://github.com/Amanieu/asyncplusplus")
+    (synopsis "Concurrency framework for C++11")
+    (description "Async++ is a concurrency framework for C++11.")
+    (license license:expat)))
+
 (define-public biblesync
   (package
     (name "biblesync")
@@ -258,6 +287,28 @@ navigation, and handling of incoming packets.")
 This project is maintained by Kitware in support of ITK, the Insight
 Segmentation and Registration Toolkit.")
   (license license:asl2.0)))
+
+(define-public cpp-utilities
+  (package
+    (name "cpp-utilities")
+    (version "5.27.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Martchus/cpp-utilities")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1nm6d87j11jc5617qk58a81ajxgrncr7xsf4dkyscrygi2n3dbgz"))))
+    (build-system cmake-build-system)
+    (home-page "https://github.com/Martchus/cpp-utilities/")
+    (synopsis "Useful C++ classes and routines")
+    (description
+     "This package provides useful C++ classes and routines such as argument
+parser, IO and conversion utilities.")
+    (license license:gpl2+)))
 
 (define-public range-v3
   (package
@@ -634,6 +685,34 @@ manipulation of batches of numbers with the same arithmetic operators as for
 single values.  It also provides accelerated implementation of common
 mathematical functions operating on batches.")
     (license license:bsd-3)))
+
+(define-public icecream-cpp
+  ;; Last release was in 2020.
+  (let ((commit "95c8b91c2214be76a2847cd4ab37dccd9250ed77")
+        (revision "0"))
+    (package
+      (name "icecream-cpp")
+      (version (git-version "0.3.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/renatoGarcia/icecream-cpp")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0zw4aj5xs13grf7qj6f33dq7md9hn5i9mf6kz66b5jsx2fly6xxs"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list #:configure-flags #~(list "-DBUILD_TESTING=ON")))
+      (native-inputs (list boost catch2))
+      (home-page "https://github.com/renatoGarcia/icecream-cpp")
+      (synopsis "C++ library for @code{printf} debugging")
+      (description
+       "IceCream-Cpp is a C++ library for @code{printf} debugging.  It is
+inspired by the @url{https://github.com/gruns/icecream, Python library} of the
+same name.")
+      (license license:expat))))
 
 (define-public google-highway
   (package
@@ -1720,6 +1799,44 @@ Google's C++ code base.")
 a zero-dependency C++ header-only parser combinator library for creating
 parsers according to a Parsing Expression Grammar (PEG).")
     (license license:expat)))
+
+(define-public lexy
+  ;; Bug fixes since last release.
+  (let ((commit "34d2adf74a2b25b6bdd760a3bbb931f3fd5e60cd")
+        (revision "0"))
+    (package
+      (name "lexy")
+      (version (git-version "2022.12.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/foonathan/lexy")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1ywcy3wdmqjj5z1w64hk0dwf8iv6p62s48m7l6vn881hfzc8hcxz"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list #:configure-flags #~(list "-DLEXY_BUILD_DOCS=OFF") ; needs Hugo
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-dependencies
+                   (lambda _
+                     (substitute* "tests/CMakeLists.txt"
+                       (("^message\\(STATUS \"Fetching doctest\"\\).*") "")
+                       (("^include\\(FetchContent\\).*") "")
+                       (("^FetchContent_Declare\\(doctest .*") "")
+                       (("^FetchContent_MakeAvailable\\(doctest\\)")
+                        "find_package(doctest REQUIRED)")
+                       (("^(target_link_libraries\\(lexy_test_base .*) doctest\\)"
+                         _ prefix)
+                        (string-append prefix ")"))))))))
+      (native-inputs (list doctest))
+      (home-page "https://lexy.foonathan.net/")
+      (synopsis "C++ parser combinator library")
+      (description "lexy is a parser combinator library for C++17 and later.")
+      (license license:boost1.0))))
 
 (define-public psascan
   (package
@@ -3160,6 +3277,60 @@ queues, resource pools, strings, etc.
 @item And more.
 @end itemize")
       (license license:zlib))))
+
+(define-public juce
+  (package
+    (name "juce")
+    (version "8.0.6")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/juce-framework/JUCE")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1n2w571wc7fl178x5ynxiaxvhjvqskfwnd0x295yzr6vpc35a1mv"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f                  ;no test suite
+           #:configure-flags #~(list "-DJUCE_TOOL_INSTALL_DIR=bin")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-paths
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute*
+                       (find-files "." "jucer_ProjectExport_CodeBlocks.h$")
+                     (("/usr/include/freetype2")
+                      (search-input-directory inputs "/include/freetype2")))
+                   (substitute*
+                       (find-files "." "juce_linux_Fonts.cpp$")
+                     (("fonts\\.conf\" };")
+                      (string-append
+                       "fonts.conf\"\n\""
+                       (search-input-file inputs "/etc/fonts/fonts.conf")
+                       "\"\n};"))))))))
+    (native-inputs
+     (list alsa-lib
+           curl
+           jack-1
+           libx11
+           pkg-config
+           webkitgtk-with-libsoup2))
+    (inputs (list fontconfig freetype libjpeg-turbo libpng))
+    (home-page "https://juce.com")
+    (synopsis "C++ application framework for audio plugins and plugin hosts")
+    (description
+     "JUCE is a C++ application framework for creating applications including
+VST, VST3, AU, AUv3, AAX and LV2 audio plug-ins and plug-in hosts.")
+    (license
+     (list license:asl2.0  ;for Oboe and AudioUnitSDK
+           license:bsd-3   ;for FLAC, Ogg Vorbis and OpenGL Extension Wrangler
+           license:expat   ;for Mesa 3-D graphics and jucer icons
+           license:gpl3    ;for JUCE and VST3 SDK
+           license:ijg     ;for jpeglib
+           license:isc     ;for LV2 SDK
+           license:zlib)))) ;for pngLib, zlib and Box2D
 
 (define-public ftxui
   (package

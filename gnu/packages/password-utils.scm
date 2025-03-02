@@ -827,7 +827,7 @@ through the pass command.")
   (package
     (inherit password-store)
     (name "pass-age")
-    (version "1.7.4a1")
+    (version "1.7.4a2")
     (source
      (origin
        (method git-fetch)
@@ -836,7 +836,7 @@ through the pass command.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0g8x2zivid18qf1czq1yqychmbdzxzs83rg8a5b392m2rzxlrx08"))))
+        (base32 "1ap2i08zjvacd2rllrsx9bw3zz5i99bk0i5yxrssvn6w60bwjqdl"))))
     (build-system copy-build-system)
     (arguments
      '(#:modules
@@ -879,7 +879,7 @@ through the pass command.")
          ("src/completion/pass.zsh-completion"
           "/share/zsh/site-functions/_passage"))))
     (inputs
-     (list age age-keygen coreutils-minimal git-minimal
+     (list age coreutils-minimal git-minimal
            procps qrencode sed tree util-linux))
     (home-page "https://github.com/FiloSottile/passage")
     (synopsis "Encrypted password manager")

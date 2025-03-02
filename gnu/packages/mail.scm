@@ -17,7 +17,7 @@
 ;;; Copyright © 2016, 2017 Troy Sankey <sankeytms@gmail.com>
 ;;; Copyright © 2016, 2017, 2018 Nikita <nikita@n0.is>
 ;;; Copyright © 2016 Clément Lassieur <clement@lassieur.org>
-;;; Copyright © 2016–2024 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2016–2025 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2016 John Darrington <jmd@gnu.org>
 ;;; Copyright © 2016, 2018 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2017 Thomas Danckaert <post@thomasdanckaert.be>
@@ -2156,7 +2156,8 @@ facilities for checking incoming mail.")
      `(#:configure-flags '("--sysconfdir=/etc"
                            "--localstatedir=/var"
                            "--with-sqlite"  ; not auto-detected
-                           "--with-lucene") ; not auto-detected
+                           "--with-lucene"
+                           "--with-moduledir=/usr/lib/dovecot") ; not auto-detected
        ;; The -rdynamic linker flag is needed for the backtrace() function to
        ;; have symbol names rather than just addresses.  Dovecot's tests rely
        ;; on this, see https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=962630.
@@ -2176,9 +2177,12 @@ facilities for checking incoming mail.")
                                 "src/lib-smtp/test-bin/sendmail-success.sh")
                (("cat") (which "cat")))))
          (replace 'install
-           (lambda* (#:key make-flags #:allow-other-keys)
+           (lambda* (#:key outputs make-flags #:allow-other-keys)
+             ;; The .la files don't like having the moduledir moved.
+             (for-each delete-file (find-files "." "\\.la"))
              ;; Simple hack to avoid installing a trivial README in /etc.
              (apply invoke "make" "install" "sysconfdir=/tmp/bogus"
+                    (string-append "moduledir=" (assoc-ref outputs "out") "/lib/dovecot")
                     make-flags))))))
     (home-page "https://www.dovecot.org")
     (synopsis "Secure POP3/IMAP server")
@@ -4261,7 +4265,7 @@ It is a replacement for the @command{urlview} program.")
 (define-public mumi
   (package
     (name "mumi")
-    (version "0.4.0")
+    (version "0.5.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4270,7 +4274,7 @@ It is a replacement for the @command{urlview} program.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1rkma9391zfz2m8i0452vglcf9ck5d2vmilj9zz8x48jhyn9lvig"))))
+                "0r9kbxn97si74swppfyznn3s17ng9x1clq6w9fi9m1ml2blmi5dv"))))
     (build-system gnu-build-system)
     (arguments
      (list

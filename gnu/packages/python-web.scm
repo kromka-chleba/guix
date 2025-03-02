@@ -568,7 +568,7 @@ of a fake DNS resolver.")
            python-mypy
            python-numpy
            python-pillow
-           python-pydantic
+           python-pydantic-2
            python-pytest
            python-pytest-asyncio
            python-pytest-cov
@@ -1419,16 +1419,6 @@ routes using HTTP Digest Authentication.")
       #:test-flags
       #~(list "--numprocesses" (number->string (parallel-job-count))
               "--ignore=tests/bin/test_public_interface.py"
-              "-k"
-              (string-join
-               ;; AttributeError: module 'pydantic.v1' has no attribute
-               ;; 'error_wrappers'
-               (list "not test_connector_with_empty_properties"
-                     "test_connector_with_invalid_permission"
-                     "test_connector_with_invalid_permission_type"
-                     "test_connector_without_source"
-                     "test_transform_invalid_document")
-               " and not ")
               "tests")
       #:phases
       #~(modify-phases %standard-phases
@@ -1450,7 +1440,7 @@ routes using HTTP Digest Authentication.")
     (propagated-inputs
      (list python-boto3
            python-jsonschema
-           python-pydantic
+           python-pydantic-2
            python-typing-extensions))
     (home-page "https://github.com/aws/serverless-application-model")
     (synopsis "Transform AWS SAM templates into AWS CloudFormation templates")
@@ -1804,6 +1794,34 @@ with caching offload to SQLite, Redis, MongoDB and AWS DynamoDB or save
 responses as planin JSON/YAML file or save responses as plain JSON/YAML
 files.")
     (license license:bsd-2)))
+
+(define-public python-s3path
+  (package
+    (name "python-s3path")
+    (version "0.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "s3path" version))
+       (sha256
+        (base32 "0gbvyr60mkpm7jbjiya0pmx26q6cfp27p5czw08jwn3k5cp77krk"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: All tests fail with error: fixture 's3_mock' not found.
+      #:tests? #f))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-boto3
+           python-smart-open))
+    (home-page "https://github.com/liormizr/s3path")
+    (synopsis "Pathlib extension for AWS S3 Service")
+    (description
+     "S3Path provide a Python convenient File-System/Path like interface for
+AWS S3 Service using boto3 S3 resource as a driver.")
+    (license license:asl2.0)))
 
 (define-public python-sarif-om
   (package
@@ -3444,8 +3462,8 @@ RFC6455, regardless of your programming paradigm.")
                              python-priority
                              python-tomli
                              python-wsproto))
-    (native-inputs (list python-httpx
-                         python-hypothesis
+    (native-inputs (list nss-certs-for-test
+                         python-httpx
                          python-poetry-core
                          python-pytest
                          python-pytest-asyncio
@@ -4769,6 +4787,26 @@ protocol, both client and server for Python asyncio module.
  TYPE (\"I\" and \"A\"), PASV, ABOR, APPE, REST.")
     (license license:asl2.0)))
 
+(define-public python-mohawk
+  (package
+    (name "python-mohawk")
+    (version "1.1.0")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "mohawk" version))
+              (sha256
+               (base32
+                "08wppsv65yd0gdxy5zwq37yp6jmxakfz4a2yx5wwq2d222my786j"))))
+    (build-system python-build-system)
+    (native-inputs (list python-mock  python-nose))
+    (propagated-inputs (list python-six))
+    (home-page "https://github.com/kumar303/mohawk")
+    (synopsis "Library for Hawk HTTP authorization")
+    (description
+     "Mohawk is an alternate Python implementation of the Hawk HTTP
+authorization scheme.")
+    (license license:bsd-3)))
+
 (define-public python-msal
   (package
     (name "python-msal")
@@ -5098,7 +5136,7 @@ opt.override_default_trust_store_from_path(None, os.getenv('SSL_CERT_FILE')) if 
       #~(list "--numprocesses" (number->string (parallel-job-count))
               ;; Tests require networking.
               "--ignore" "tests/integration"
-              ;; It strugles to set PYTHONPATH.
+              ;; It struggles to set PYTHONPATH.
               ;;
               ;; AssertionError: 'argument operation: Invalid choice, valid
               ;; choices are:' not found in '
@@ -7431,7 +7469,12 @@ and fairly speedy.")
               ;; <uvicorn.supervisors.multiprocess.Process object at
               ;; 0x7ffff39b6110>.is_alive.
               ;; Maybe this <https://github.com/encode/uvicorn/issues/2466>.
-              "--ignore=tests/supervisors/test_multiprocess.py")))
+              "--ignore=tests/supervisors/test_multiprocess.py"
+
+              #$@(cond
+                  ((target-aarch64?)
+                   '("-k not test_send_binary_data_to_server_bigger_than_default_on_websockets"))
+                  (#t '())))))
     (native-inputs
      (list nss-certs-for-test
            python-a2wsgi
@@ -10425,21 +10468,20 @@ starlette.")
 (define-public python-fastapi-csrf-protect
   (package
     (name "python-fastapi-csrf-protect")
-    (version "0.3.1")
+    (version "0.3.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/aekasitt/fastapi-csrf-protect")
-                    ;; This commit corresponds to version 0.3.1
-                    (commit "536acd651d0d3f9862a0b753ba64dd2d187f8655")))
+                    (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1zlwa0fplmcihylyvakskwkbkl2cq291fmys5x6wrpfdbjrqbgbj"))))
+                "181yawlbpd4709mamsradr9zj0jrbp4qvwfvmggs80pd36iiwyy8"))))
     (build-system pyproject-build-system)
     (propagated-inputs
      (list python-fastapi python-itsdangerous
-           python-pydantic))
+           python-pydantic-2))
     (native-inputs
      (list python-poetry-core
            python-pytest))

@@ -33,10 +33,11 @@
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022, 2023 Evgeny Pisemsky <mail@pisemsky.site>
-;;; Copyright © 2022, 2023, 2024 gemmaro <gemmaro.dev@gmail.com>
+;;; Copyright © 2022, 2023, 2024, 2025 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2023 Mădălin Ionel Patrașcu <madalinionel.patrascu@mdc-berlin.de>
 ;;; Copyright © 2023 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2023 Jake Leporte <jakeleporte@outlook.com>
+;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2023 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2020, 2023 Tim Gesthuizen <tim.gesthuizen@yahoo.de>
 ;;;
@@ -637,6 +638,27 @@ replacement for @command{xmlto}.")
     (description "AppConfig is a bundle of Perl5 modules for reading
 configuration files and parsing command line arguments.")
     (license (package-license perl))))
+
+(define-public perl-array-intspan
+  (package
+    (name "perl-array-intspan")
+    (version "2.004")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/D/DD/DDUMONT/Array-IntSpan-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "168crsh363lgh2s127hnrbda37wvcq36xpcv59mywm89rspigkad"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/Array-IntSpan")
+    (synopsis "Handle arrays of scalars or objects using integer ranges")
+    (description "This module brings the speed advantages of
+@code{Set::IntSpan} (written by Steven McDougall) to arrays.  Uses include
+manipulating grades, routing tables, or any other situation where you have
+mutually exclusive ranges of integers that map to given values.")
+    (license license:artistic2.0)))
 
 (define-public perl-array-utils
   (package
@@ -2120,7 +2142,7 @@ of the style used by the Git version control system.")
 (define-public perl-config-ini
   (package
     (name "perl-config-ini")
-    (version "0.025")
+    (version "0.029")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2128,9 +2150,9 @@ of the style used by the Git version control system.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "0clphq6a17chvb663fvjnxqvyvh26g03x0fl4bg9vy4ibdnzg2v2"))))
+                "1spxzpwpwspw7cwkkg97rf0dafmjl95cv43xj1568402fdx7kghb"))))
     (build-system perl-build-system)
-    (inputs
+    (propagated-inputs
      (list perl-mixin-linewise perl-perlio-utf8_strict perl-sub-exporter))
     (home-page "https://metacpan.org/release/Config-INI")
     (synopsis "Simple .ini-file format reader and writer")
@@ -4832,6 +4854,26 @@ By itself it is not a particularly interesting module by any measure, however
 it ties together a family of modern toolchain modules.")
     (license (package-license perl))))
 
+(define-public perl-extutils-cchecker
+  (package
+    (name "perl-extutils-cchecker")
+    (version "0.11")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/P/PE/PEVANS/ExtUtils-CChecker-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1x8vafpff5nma18svxp1h3mp069fjmzlsdvnbcgn3z1pgrkkcxqi"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build perl-test-fatal))
+    (home-page "https://metacpan.org/release/ExtUtils-CChecker")
+    (synopsis "Configure time utilities for using C headers and libraries")
+    (description "This module provides configure time utilities for using
+C headers, libraries, or OS features.")
+    (license (package-license perl))))
+
 (define-public perl-extutils-cppguess
   (package
     (name "perl-extutils-cppguess")
@@ -5085,6 +5127,49 @@ interface XS for C++; it is a thin layer over plain XS.")
     (synopsis "Build helper for linking Fortran libraries")
     (description "This package provides some compilation helpers so you can
 link Fortran libraries into C libraries.")
+    (license (package-license perl))))
+
+(define-public perl-feature-compat-class
+  (package
+    (name "perl-feature-compat-class")
+    (version "0.06")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/P/PE/PEVANS/Feature-Compat-Class-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1hsyjza638pmmasyk6qjw9mbzjpm3cfjdrs09ww0ylarjk1z7s7q"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build))
+    (propagated-inputs (list perl-object-pad))
+    (home-page "https://metacpan.org/release/Feature-Compat-Class")
+    (synopsis "Forward-compatible @code{class} syntax in Perl")
+    (description "This module provides the @code{class} keyword and related
+others (@code{method}, @code{field} and @code{ADJUST}) in a forward-compatible
+way.")
+    (license (package-license perl))))
+
+(define-public perl-feature-compat-try
+  (package
+    (name "perl-feature-compat-try")
+    (version "0.05")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/P/PE/PEVANS/Feature-Compat-Try-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "0z3df58bamp1zx996mwvxy75h67p80wgl4sz3h9xnc5c7hbwg8ar"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build))
+    (propagated-inputs (list perl-syntax-keyword-try))
+    (home-page "https://metacpan.org/release/Feature-Compat-Try")
+    (synopsis "@code{try/catch} syntax in Perl")
+    (description "This module provides syntactical support for
+@code{try/catch} control flows.")
     (license (package-license perl))))
 
 (define-public perl-file-changenotify
@@ -5837,6 +5922,28 @@ cleaned up when expected.
 Specifically, this module supports two different types of guards: guard
 objects, which execute a given code block when destroyed, and scoped guards,
 which are tied to the scope exit.")
+    (license (package-license perl))))
+
+(define-public perl-hash-defhash
+  (package
+    (name "perl-hash-defhash")
+    (version "0.072")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/P/PE/PERLANCAR/Hash-DefHash-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1kmislv2lwj66n97jqi3wvzgc4s0icz4krp239ni128awqd2k061"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-test-exception))
+    (propagated-inputs
+     (list perl-regexp-pattern-defhash perl-string-trim-more))
+    (home-page "https://metacpan.org/release/Hash-DefHash")
+    (synopsis "Manipulate defhash")
+    (description "Routines to manipulate @dfn{defhash}, a convention to
+define things more precisely and uniformly using a hash, in Perl.")
     (license (package-license perl))))
 
 (define-public perl-hash-fieldhash
@@ -6625,6 +6732,26 @@ logging mechanism.")
 @code{Log::Any} adapter using @code{Log::Log4perl} for logging.")
     (license (package-license perl))))
 
+(define-public perl-log-any-adapter-screen
+  (package
+  (name "perl-log-any-adapter-screen")
+  (version "0.140")
+  (source (origin
+            (method url-fetch)
+            (uri (string-append
+                  "mirror://cpan/authors/id/P/PE/PERLANCAR/Log-Any-Adapter-Screen-"
+                  version ".tar.gz"))
+            (sha256
+             (base32
+              "1bl8n0d7wsfj3dijxi1bh65qfz75i1qbp14wkk3bsjv895fz6awr"))))
+  (build-system perl-build-system)
+  (propagated-inputs (list perl-log-any))
+  (home-page "https://metacpan.org/release/Log-Any-Adapter-Screen")
+  (synopsis "Send logs to screen, with colors and some other features")
+  (description "This module provides a @code{Log::Any} adapter to send log
+messages to screen, with colors and some other features.")
+  (license (package-license perl))))
+
 (define-public perl-log-contextual
   (package
     (name "perl-log-contextual")
@@ -6795,6 +6922,26 @@ one: logging, exceptions, and translations.")
 that aims to be compatible with the Uniforum message translations system as
 implemented for example in GNU gettext.")
     (license license:gpl3+)))
+
+(define-public perl-lib-relative
+  (package
+    (name "perl-lib-relative")
+    (version "1.002")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/D/DB/DBOOK/lib-relative-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "12x7r08y04ml02wawhnk7j8zcb0ijd6vwy1yc0bnjh3w2qah4iz4"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/lib-relative")
+    (synopsis "Add paths relative to the current file to @code{@@INC}")
+    (description
+     "@code{lib::relative} module proposes a more straightforward method than
+adding a path to @code{@@INC}: take a path relative to the current
+file, absolutize it, and add it to @code{@@INC}.")
+    (license license:artistic2.0)))
 
 (define-public perl-lingua-en-sentence
   (package
@@ -6988,7 +7135,7 @@ commonly needed functionality on lists which is not going to go into
     (build-system perl-build-system)
     (native-inputs
      (list perl-test-leaktrace))
-    (inputs
+    (propagated-inputs
      (list perl-exporter-tiny perl-module-implementation))
     (home-page "https://metacpan.org/release/List-SomeUtils")
     (synopsis "Provide the stuff missing in List::Util")
@@ -7001,6 +7148,29 @@ better performance as everything is implemented in C.  The pure-Perl
 implementation of these functions only serves as a fallback in case the C
 portions of this module couldn't be compiled on this machine.")
     (license (package-license perl))))
+
+(define-public perl-list-someutils-xs
+  (package
+    (name "perl-list-someutils-xs")
+    (version "0.58")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/D/DR/DROLSKY/List-SomeUtils-XS-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "15xjnkjj4yxv1qn9krsbkzzkm51hibg2k3lf5767j6s848k4v7jg"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-list-someutils perl-test-warnings
+                         perl-test-leaktrace))
+    (home-page "https://metacpan.org/release/List-SomeUtils-XS")
+    (synopsis "XS implementation for @code{List::SomeUtils}")
+    (description
+     "@code{List::SomeUtils::XS} is a XS implementation for
+@code{List::SomeUtils}.  There are no user-facing parts here.  See
+@code{List::SomeUtils} for API details.")
+    (license license:artistic2.0)))
 
 (define-public perl-mailtools
   (package
@@ -7375,7 +7545,7 @@ comes with a script called @samp{perlver}.")
 (define-public perl-mixin-linewise
   (package
     (name "perl-mixin-linewise")
-    (version "0.108")
+    (version "0.111")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -7383,9 +7553,9 @@ comes with a script called @samp{perlver}.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "1wmfr19w9y8qys7b32mnj1vmps7qwdahqas71a9p62ac8xw0dwkx"))))
+                "1nq1gc4320djn5mqgk55v2vjm3zwq36wq7b365f2kdg9di8qi3nj"))))
     (build-system perl-build-system)
-    (inputs
+    (propagated-inputs
      (list perl-perlio-utf8_strict perl-sub-exporter))
     (home-page "https://metacpan.org/release/Mixin-Linewise")
     (synopsis "Write your linewise code for handles; this does the rest")
@@ -8924,6 +9094,28 @@ the locale information or can be specified by the user.")
 number exists in a given range, and to be able to manipulate the range.")
     (license (package-license perl))))
 
+(define-public perl-object-pad
+  (package
+    (name "perl-object-pad")
+    (version "0.79")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/P/PE/PEVANS/Object-Pad-" version
+                    ".tar.gz"))
+              (sha256
+               (base32
+                "1miawakw2w4q6ifygj4g03x57db0bysivckapmjl3mb2kvw102zv"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build perl-test2-suite
+                         perl-xs-parse-keyword perl-xs-parse-sublike))
+    (propagated-inputs (list perl-xs-parse-keyword perl-xs-parse-sublike))
+    (home-page "https://metacpan.org/release/Object-Pad")
+    (synopsis "Syntax for lexical field-based objects")
+    (description "This module provides a simple syntax for creating object
+classes.")
+    (license (package-license perl))))
+
 (define-public perl-object-signature
   (package
     (name "perl-object-signature")
@@ -9818,6 +10010,35 @@ object and tying it, @code{Readonly} simply flips the @code{SvREADONLY} bit in
 the scalar's @code{FLAGS} structure.")
     (license license:perl-license)))
 
+(define-public perl-ref-util
+  (package
+    (name "perl-ref-util")
+    (version "0.204")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/A/AR/ARC/Ref-Util-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "1q85y5lzgl8wz5qnz3j6mch2fmllr668h54wszaz6i6gp8ysfps1"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-readonly))
+    (propagated-inputs (list perl-ref-util-xs))
+    (home-page "https://metacpan.org/release/Ref-Util")
+    (synopsis "Utility functions for checking references")
+    (description
+     "@code{Ref::Util} introduces several functions to help identify references in
+a smarter (and usually faster) way.  The difference with conventional approach:
+@itemize
+@item No comparison against a string constant
+@item Supports blessed variables
+@item Supports tied variables and magic
+@item Ignores overloading
+@item Ignores subtle types
+@item Usually faster
+@end itemize")
+    (license license:x11)))
+
 (define-public perl-ref-util-xs
   (package
     (name "perl-ref-util-xs")
@@ -9886,6 +10107,25 @@ complete recursive-descent parsing.  It allows you to go beyond matching
 complex, nested and recursive structures, and allows you to parse and extract
 hierarchical data from it.")
     (license license:perl-license)))
+
+(define-public perl-regexp-pattern-defhash
+  (package
+    (name "perl-regexp-pattern-defhash")
+    (version "0.001")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/P/PE/PERLANCAR/Regexp-Pattern-DefHash-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1737hli8sn08rnbfckq0a7pfd8a1ihb6mnp34rlq2j8fkqldcrcq"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/Regexp-Pattern-DefHash")
+    (synopsis "Regexp patterns related to DefHash")
+    (description "Regexp patterns related to DefHash, a convention to define
+things more precisely and uniformly using a hash.")
+    (license (package-license perl))))
 
 (define-public perl-regexp-util
   (package
@@ -10178,7 +10418,7 @@ word-characters are compared lexically.")
 (define-public perl-specio
   (package
     (name "perl-specio")
-    (version "0.38")
+    (version "0.49")
     (source
      (origin
        (method url-fetch)
@@ -10186,16 +10426,30 @@ word-characters are compared lexically.")
                            "Specio-" version ".tar.gz"))
        (sha256
         (base32
-         "1s5xd9awwrzc94ymimjkxqs6jq513wwlmwwarxaklvg2hk4lps0l"))))
+         "1by79pab88avvwv3r8sm78wsml1jssq3kc5yvk4fyf1p5ck6cmz8"))))
     (build-system perl-build-system)
+    (native-inputs (list perl-pathtools ;contains File::Spec
+                         perl-test-needs
+                         perl-xstring
+                         ;; optional test requirements
+                         perl-moo-2
+                         perl-moose
+                         perl-namespace-autoclean))
     (propagated-inputs
-     (list perl-devel-stacktrace
+     (list perl-carp
+           perl-clone
+           perl-devel-stacktrace
            perl-eval-closure
+           perl-exporter
            perl-module-runtime
            perl-mro-compat
-           perl-role-tiny
+           perl-ref-util
+           perl-role-tiny-2 ;contains Role::Tiny::With
+           perl-scalar-list-utils ;contains List::Util and Scalar::Util
+           perl-sub-quote
            perl-test-fatal
-           perl-test-needs))
+           perl-test-simple ;contains Test::More
+           perl-try-tiny))
     (home-page "https://metacpan.org/release/Specio")
     (synopsis "Classes for representing type constraints and coercion")
     (description "The Specio distribution provides classes for representing type
@@ -10206,6 +10460,29 @@ to a variable. In fact, there's no built-in way to apply a type to a variable at
 all.  Instead, you can explicitly check a value against a type, and optionally
 coerce values to that type.")
     (license license:artistic2.0)))
+
+(define-public perl-specio-library-path-tiny
+  (package
+    (name "perl-specio-library-path-tiny")
+    (version "0.05")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/D/DR/DROLSKY/Specio-Library-Path-Tiny-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "0lbsqb3l5ra2k6481dkc7m1zk92fjpwnvgvql1k2rsyspjwhppv0"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-file-pushd perl-test-fatal))
+    (propagated-inputs (list perl-path-tiny perl-specio))
+    (home-page "https://metacpan.org/release/Specio-Library-Path-Tiny")
+    (synopsis "Types and coercions for Specio")
+    (description
+     "This library provides a set of @code{Path::Tiny} types and coercions for
+Specio.  These types can be used with @code{Moose}, @code{Moo},
+@code{Params::ValidationCompiler}, and other modules.")
+    (license license:asl2.0)))
 
 (define-public perl-spiffy
   (package
@@ -10599,6 +10876,26 @@ known prefixes.")
     (description
      "@code{shell-quote} lets you pass arbitrary strings through the shell so
 that they won't be changed.")
+    (license (package-license perl))))
+
+(define-public perl-string-trim-more
+  (package
+    (name "perl-string-trim-more")
+    (version "0.03")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/P/PE/PERLANCAR/String-Trim-More-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "0zsfq6350pnaxpa0g5syh3w04qx5fa6svw1idxy8k4ha7vbzp73k"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/String-Trim-More")
+    (synopsis "String trimming utilities")
+    (description "This module is an alternative to @code{String::Trim}.
+Instead of a single @code{trim} function, this module provides several from
+which you can choose on, depending on your needs.")
     (license (package-license perl))))
 
 (define-public perl-string-print
@@ -12767,6 +13064,25 @@ dynamic linking mechanisms available on many platforms.  Its primary purpose is
 to implement cheap automatic dynamic loading of Perl modules.")
     (license (package-license perl))))
 
+(define-public perl-xstring
+  (package
+    (name "perl-xstring")
+    (version "0.005")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/A/AT/ATOOMIC/XString-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "117q718hlw6gi9zy16ssm0pf0lll4l20hg77395bmrmf35fgaizj"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/XString")
+    (synopsis "Isolated string helpers from @samp{B}")
+    (description
+     "XString provides the @samp{B} string helpers in one isolated
+package.  Right now only @code{cstring} and @code{perlstring} are available.")
+    (license license:perl-license)))
+
 (define-public perl-xs-object-magic
   (package
     (name "perl-xs-object-magic")
@@ -12793,7 +13109,7 @@ neither visible nor modifiable from Perl space).")
 (define-public perl-xs-parse-keyword
   (package
     (name "perl-xs-parse-keyword")
-    (version "0.06")
+    (version "0.34")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -12801,15 +13117,38 @@ neither visible nor modifiable from Perl space).")
                     version ".tar.gz"))
               (sha256
                (base32
-                "0nnr8akkxb2h2y3d5r51pr84vvxkq89ynmi9azkbnn79jmbcbgvq"))))
+                "1hfny6bbpj5n2bmr213bpi547825jzbs2143nd19skcj16sdscqh"))))
     (build-system perl-build-system)
-    (native-inputs (list perl-module-build perl-test-simple))
+    (native-inputs (list perl-extutils-cchecker perl-module-build
+                         perl-test2-suite))
     (home-page "https://metacpan.org/dist/XS-Parse-Keyword")
     (synopsis "XS functions to assist in parsing keyword syntax")
     (description
      "This module provides some XS functions to assist in writing
 syntax modules that provide new perl-visible syntax, primarily for authors of
 keyword plugins using the @code{PL_keyword_plugin} hook mechanism.")
+    (license (package-license perl))))
+
+(define-public perl-xs-parse-sublike
+  (package
+    (name "perl-xs-parse-sublike")
+    (version "0.18")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/P/PE/PEVANS/XS-Parse-Sublike-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "0m2iv6sfkkj6ckx7nprniqrj5qg2qyir8ns8l2rwmqnvxw2pqq16"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build perl-test2-suite))
+    (home-page "https://metacpan.org/release/XS-Parse-Sublike")
+    (synopsis "XS functions to assist in parsing sub-like syntax")
+    (description
+     "This module provides some XS functions to assist in writing parsers for
+@code{sub}-like syntax, primarily for authors of keyword plugins using the
+@code{PL_keyword_plugin} hook mechanism.")
     (license (package-license perl))))
 
 (define-public perl-yaml
@@ -13196,6 +13535,25 @@ be used.")
     (license (package-license perl))))
 
 ;;; END: Core module overrides
+
+(define-public perl-file-chdir
+  (package
+    (name "perl-file-chdir")
+    (version "0.1011")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/D/DA/DAGOLDEN/File-chdir-" version
+                    ".tar.gz"))
+              (sha256
+               (base32
+                "0ybcmw1qw2spwcgyv82i8g53l7wbsy09hjzpvs0xdma8vw9gksri"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/File-chdir")
+    (synopsis "A more sensible way to change directories")
+    (description "This module provides @code{$CWD} and @code{@@CWD} as
+alternatives to @code{chdir()}.")
+    (license (package-license perl))))
 
 (define-public perl-file-find-object
  (package
@@ -13587,7 +13945,7 @@ template logic does not have access outside the template without permission.")
 (define-public perl-regexp-pattern
   (package
     (name "perl-regexp-pattern")
-    (version "0.2.8")
+    (version "0.2.14")
     (source
      (origin
        (method url-fetch)
@@ -13595,7 +13953,7 @@ template logic does not have access outside the template without permission.")
              "mirror://cpan/authors/id/P/PE/PERLANCAR/Regexp-Pattern-"
              version ".tar.gz"))
        (sha256
-        (base32 "064igp2wxgsz4yb33v1r90i8clwjzs2xnpvw9niqlqrbzzrd4q1l"))))
+        (base32 "05j1fzgmv02n5qz4vyf30p1sj7v5lv2rab258aqwmb4w5gvjqaa4"))))
     (build-system perl-build-system)
     (native-inputs
      (list perl-test-exception))

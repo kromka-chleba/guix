@@ -87,6 +87,7 @@
 ;;; Copyright © 2024 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2023-2025 Adam Faiz <adam.faiz@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2676,6 +2677,54 @@ The underlying mechanism is always the same: you must turn each tile in the
 grid in the right direction to combine all components into a single circuit.
 Every puzzle has a complete solution, although there may be more than one.")
     (license license:gpl3+)))
+
+(define-public dsda-doom
+  (package
+    (name "dsda-doom")
+    (version "0.28.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kraflab/dsda-doom")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1qvxx4r3ahiy8w9x0559g581971ycmbqm1kszzc65w1aa85f5q2f"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f ;no tests
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'chdir
+                     (lambda _
+                       (chdir "prboom2"))))))
+    (inputs
+     (list sdl2
+           sdl2-mixer
+           fluidsynth
+           portmidi
+           libmad
+           libzip
+           glu
+           dumb
+           libvorbis))
+    (home-page "https://github.com/kraflab/dsda-doom")
+    (synopsis "Doom source port, successor of PrBoom+")
+    (description
+     "This is a successor of PrBoom+ with new features, including:
+@enumerate
+@item Heretic, Hexen, MBF21, Doom-in-Hexen, UDMF, and MAPINFO support
+@item In-game console and scripting
+@item Full controller support
+@item Palette-based opengl renderer
+@item Debugging features for testing
+@item Strict mode for speedrunning
+@item Various quality of life improvements
+@item Advanced tools for TASing
+@item Rewind
+@end enumerate")
+    (license license:gpl2+)))
 
 (define-public prboom-plus
   (package
@@ -6216,6 +6265,67 @@ safety of the Chromium vessel.")
     ;; Clarified Artistic License for everything but sound, which is covered
     ;; by the Expat License.
     (license (list license:clarified-artistic license:expat))))
+
+(define-public tuxemon
+  (let ((commit "19708725f8b2d939e39b726f49a8a078eba8bf32")
+        (revision "0"))
+  (package
+    (name "tuxemon")
+    (version (git-version "0.4.34" revision commit))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/Tuxemon/Tuxemon")
+              (commit commit)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0jdhk6xs4895gifxlkaxk7625wvw2yl1yc6ciay137dk78amhp86"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (substitute* "requirements.txt"
+              (("pygame-ce") "pygame") ; The pygame-ce fork isn't packaged in Guix
+              (("pygame-menu-ce") "pygame-menu")
+              (("==") ">="))
+            (substitute* "tuxemon/constants/paths.py"
+              (("LIBDIR, ....,") "LIBDIR,"))))))
+    (build-system python-build-system)
+    (native-inputs (list python-flit-core python-setuptools))
+    (propagated-inputs
+     (list python-babel
+           python-cbor
+           python-neteria
+           python-natsort
+           python-pygame
+           python-pyscroll
+           python-pytmx
+           python-pillow
+           python-prompt-toolkit
+           python-pydantic-2
+           python-pygame-menu
+           python-pyyaml
+           python-requests))
+    (arguments
+     (list #:tests? #f ; Tests won't be updated until the API stabilises
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'install-mods
+                 (lambda _
+                   (let ((site (string-append #$output "/lib/python"
+                                              #$(version-major+minor
+                                                 (package-version python))
+                                              "/site-packages/tuxemon/mods")))
+                     (mkdir-p site)
+                     (copy-recursively "mods" site)))))))
+    (home-page "https://www.tuxemon.org/")
+    (synopsis "Monster-fighting RPG")
+    (description
+     "Tuxemon is a monster-fighting RPG.
+In the spirit of other clones like SuperTux and SuperTuxKart,
+Tuxemon aims to create a game with its own unique style
+that sets it apart from other monster fighting RPGs.")
+    (license license:gpl3+))))
 
 (define-public tuxpaint
   (package
@@ -12438,6 +12548,26 @@ on the pitch of the voice and the rhythm of singing.")
     (home-page "https://usdx.eu/")
     (license license:gpl2+)))
 
+(define-public xmahjongg
+  (package
+    (name "xmahjongg")
+    (version "3.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://www.lcdf.org/xmahjongg/xmahjongg-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "1kzz8y34q7wibcrmfb3p9rrz88qriz4slxpf1yrrfny23il66g94"))))
+    (build-system gnu-build-system)
+    (inputs (list libx11))
+    (home-page "http://www.lcdf.org/xmahjongg/")
+    (synopsis "Solitaire Mah Jongg game")
+    (description
+     "Xmahjongg is a simple solitaire game.  The object is to remove all Mah
+Jongg tiles from the playing field by taking one matching pair at a time.")
+    (license license:gpl2+)))
+
 (define-public steam-devices-udev-rules
   ;; Last release from 2019-04-10
   (let ((commit "13443480a64fe8f10676606bd57da6de89f8ccb1")
@@ -12477,7 +12607,7 @@ virtual reality devices.")
 (define-public gemrb
   (package
     (name "gemrb")
-    (version "0.9.3")
+    (version "0.9.4")
     (source
      (origin
        (method git-fetch)
@@ -12486,13 +12616,16 @@ virtual reality devices.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wfmq4z2in18k4znshd7h1i496zlskbci49yp5d54mfxvyp534m5"))
-       ;; Remove the patch in the next version, as commit d339c0d fixes this
+        (base32 "16pp9vw717pk9q8q3asxk4j64rmywbnpw91cr3qanwnmdi5p5gj4"))
+       ;; Remove the patch in the next version, as commit cca8e71 fixes this
        (patches (search-patches
-                 "gemrb-add-path-suffixes-for-vlc-headers.patch"))))
+                 "gemrb-remove-ifdef-and-externalize-path-setting-to-cmake.patch"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags `("-DUSE_TESTS=ON" "-DOPENGL_BACKEND=OpenGL")))
+     (list
+      #:cmake cmake-3.30
+      #:configure-flags
+      #~(list "-DUSE_TESTS=ON" "-DOPENGL_BACKEND=OpenGL")))
     (native-inputs (list python-3.10 glibc-locales googletest))
     (inputs (list freetype
                   libiconv
@@ -12504,14 +12637,13 @@ virtual reality devices.")
                   vlc
                   zlib))
     (home-page "https://gemrb.org/")
-    (synopsis
-     "Portable open-source implementation of Bioware's Infinity Engine")
+    (synopsis "Portable implementation of Bioware's Infinity Engine")
     (description
      "GemRB (Game Engine Made with preRendered Background) is a portable
-     open-source reimplementation of the Infinity Engine that underpinned
-     Baldur's Gate, Icewind Dale and Planescape: Torment.  It sports a
-     cleaner design, greater extensibility and several innovations.")
-    (license (list license:gpl2))))
+reimplementation of the Infinity Engine that underpinned Baldur's Gate,
+Icewind Dale and Planescape: Torment.  It sports a cleaner design, greater
+extensibility and several innovations.")
+    (license license:gpl2+)))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances

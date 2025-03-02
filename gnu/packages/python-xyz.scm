@@ -135,6 +135,7 @@
 ;;; Copyright © 2023 Gabriel Wicki <gabriel@erlikon.ch>
 ;;; Copyright © 2023 Amade Nemes <nemesamade@gmail.com>
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
+;;; Copyright © 2023 Lu Hui <luhux76@gmail.com>
 ;;; Copyright © 2023 Kaelyn Takata <kaelyn.alexi@protonmail.com>
 ;;; Copyright © 2023 dan <i@dan.games>
 ;;; Copyright © 2023 Dominik Delgado Steuter <d@delgado.nrw>
@@ -161,6 +162,7 @@
 ;;; Copyright © 2025 Jordan Moore <lockbox@struct.foo>
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
+;;; Copyright © 2025, Cayetano Santos <csantosb@inventati.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1157,6 +1159,39 @@ Python dataclasses.")
      "The @code{databind.json} package implements the de-/serialization to or
 from JSON payloads using the @code{databind.core} framework.")
     (license license:expat)))
+
+(define-public python-dlmanager
+  (package
+    (name "python-dlmanager")
+    (version "0.1.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/parkouss/dlmanager")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0f2j7d396z50yd5r86jx8m5bxyv2i0cw967j68xcwpcg3b216zmr"))
+              (modules '((guix build utils)))
+              (snippet
+               #~(begin
+                   (substitute* "setup.py"
+                     (("pytest.main.self.pytest_args.")
+                      "pytest.main(self.pytest_args.split(' '))"))))))
+    (build-system python-build-system)
+    (native-inputs
+     (list python-pytest python-mock))
+    (propagated-inputs
+     (list python-requests python-six))
+    (home-page "https://github.com/parkouss/dlmanager")
+    (synopsis "Download manager library")
+    (description
+     "Dlmanager is a download manager library.  It can download files in
+background and in parallel, and cancel downloads.  It stores downloads in
+a given directory, avoiding re-downloading files and limits the size of this
+directory, removing oldest files.")
+    (license license:gpl3+)))
 
 (define-public python-docspec
   (package
@@ -2574,7 +2609,7 @@ implementation for the Telegram Bot API.")
     (build-system pyproject-build-system)
     (propagated-inputs (list python-packaging
                              python-platformdirs
-                             python-pydantic
+                             python-pydantic-2
                              python-sphinx
                              python-sphinx-autodoc-typehints
                              python-sphinx-rtd-theme
@@ -2587,6 +2622,47 @@ implementation for the Telegram Bot API.")
 Python tools, such as rope and add support for a @file{pyproject.toml}
 configuration file.")
     (license license:lgpl3+)))
+
+(define-public python-pytooling
+  (package
+    (name "python-pytooling")
+    (version "8.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pyTooling/pyTooling/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07mca75d2zd6xl0isf0vrcblsc2niyqi7941dgjpiafnsgiygfzf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:tests? #f)) ; requires recent versions of mypy and lxml
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://pytooling.github.io/pyTooling/")
+    (synopsis "Miscellaneous Python tools")
+    (description
+     "pyTooling is a collection of (abstract) data models, lacking classes,
+decorators, a new performance boosting meta-class, and enhanced exceptions.
+It also provides lots of helper functions---e.g., to ease the handling of
+package descriptions or to unify multiple existing APIs into a single API.")
+    (license license:asl2.0)))
+
+(define-public python-pytooling-4
+  (package
+    (inherit python-pytooling)
+    (name "python-pytooling")
+    (version "4.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/pyTooling/pyTooling/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1midq2im2ksdy0knssnlwijdkjk0hwjxk5xin93xg4l7j89kvmj3"))))))
 
 (define-public python-colorlog
   (package
@@ -5799,6 +5875,24 @@ any Python package.")
 interface programs.  This library provides features to parse arguments,
 automatic tab-completion, color support, logging to @code{std}, etc.")
     (license license:expat)))
+
+(define-public python-extract-dtb
+  (package
+    (name "python-extract-dtb")
+    (version "1.2.3")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "extract-dtb" version))
+              (sha256
+               (base32
+                "1a7rfvwisgri8b00pch6d9pfrl8s93w8g09yzxf4xh0qvmsxmh43"))))
+    (build-system python-build-system)
+    (home-page "https://github.com/PabloCastellano/extract-dtb/")
+    (synopsis "Extract device tree blobs (DTB) from kernel images")
+    (description
+     "This package provides a tool to split a kernel image with appended
+@acronym{DTB, Device Tree Blobs} into separated kernel and DTB files.")
+    (license license:gpl3+)))
 
 (define-public python-mimeparse
   (package
@@ -9879,22 +9973,46 @@ readable format.")
 (define-public python-patiencediff
   (package
     (name "python-patiencediff")
-    (version "0.2.0")
+    (version "0.2.15")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "patiencediff" version))
         (sha256
          (base32
-          "0yjk50lsd4gnllxls925xbcdxwvmda37w2a1shk0p1nvl3fcha6q"))))
-    (build-system python-build-system)
+          "012jjgkkpk563l1mgj2ax4z32h0l558adhr2qa3chfrfsgpi22fh"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   ;; Fails because bin/patiencediff expects two files to diff
+                   (delete 'sanity-check))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://www.breezy-vcs.org/")
     (synopsis "Python implementation of the patiencediff algorithm")
     (description
      "This package contains a Python implementation of the @code{patiencediff}
 algorithm.  Patiencediff provides a good balance of performance, nice output for
 humans, and implementation simplicity.")
-    (license license:gpl2)))
+    (license license:gpl2+)))
+
+(define-public python-merge3
+  (package
+    (name "python-merge3")
+    (version "0.0.15")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "merge3" version))
+       (sha256
+        (base32 "1brb97v24i5ym3cfxsv416a0m1n78s1aqllmwg4xymjdv09w5snk"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/breezy-team/merge3")
+    (synopsis "Python implementation of 3-way merge")
+    (description
+     "This Python library implements 3-way merge for text.")
+    (license license:gpl2+)))
 
 (define-public python-wmctrl
   (package
@@ -19462,16 +19580,15 @@ This allows one to make simple text-mode user interfaces on Unix-like systems")
 (define-public python-confection
   (package
     (name "python-confection")
-    (version "0.0.4")
+    (version "0.1.5")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "confection" version))
               (sha256
                (base32
-                "1ksfn10zhnpkcj3y0c3xs4dznvc062bk62x4c3ig0dd6bn4gbpdi"))))
+                "03hgb6601mx6iip4nr8i0is8x5vmh85z286j7j8lhkxxlqydswlf"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-pydantic python-srsly
-                             python-typing-extensions))
+    (propagated-inputs (list python-pydantic-2 python-srsly))
     (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/explosion/confection")
     (synopsis "Config system for Python")
@@ -20390,13 +20507,13 @@ document.")
 (define-public python-symengine
   (package
     (name "python-symengine")
-    (version "0.13.0")
+    (version "0.14.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "symengine" version))
        (sha256
-        (base32 "0k61j333kpxf23c92hnc0svjywylffx72arcf1wjbwgbjy4a10xb"))))
+        (base32 "1np271qg2bnn32h52p0b102ybamjn9vaxpmsycx345zik327dp6r"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -20631,7 +20748,7 @@ browser from Python.")
      (list
       #:test-flags
       #~(list "--numprocesses" (number->string (min (parallel-job-count) 8))
-              ;; It strugles to find 'botocore'.
+              ;; It struggles to find 'botocore'.
               "--ignore" "tests/functional/leak/test_resource_leaks.py"
               ;; Tests require networking.
               "--ignore" "tests/integration")))
@@ -22662,57 +22779,18 @@ objects, patterned after the Mocha library for Ruby.")
 (define-public python-inflect
   (package
     (name "python-inflect")
-    (version "6.0.4")
+    (version "7.5.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "inflect" version))
               (sha256
                (base32
-                "1sqj4svg2vbn4vq332nxnvky2433rgxbvjd529lddjmn2yd68hhq"))))
+                "07spmlkmskwhxc0j5j4ms3w0f6pyv3h8iqwcbahdabklqc0riwgs"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      '(list "--ignore=_custom_build/backend.py"
-             "-k" "not mypy-status")
-      #:phases
-      '(modify-phases %standard-phases
-         ;; The build system insists on ignoring the existing environment and
-         ;; running "pip install".
-         (add-after 'unpack 'do-not-use-pip-install
-           (lambda _
-             (substitute* "pyproject.toml"
-               (("^build-backend.*") "\
-build-backend = \"backend\"
-backend_path = [\"_custom_build\"]\n")
-               (("requires = .*") "requires = []\n"))
-             (mkdir-p "_custom_build")
-             (with-output-to-file "_custom_build/backend.py"
-               (lambda _
-                 (display "\
-from setuptools import build_meta as _orig
-from setuptools.build_meta import *
-def get_requires_for_build_wheel(config_settings=None):
-    return []
-def get_requires_for_build_sdist(config_settings=None):
-    return []
-")))
-             (setenv "PYTHONPATH"
-                     (string-append (getcwd) "/_custom_build")))))))
-    (propagated-inputs (list python-pydantic))
-    (native-inputs (list python-flake8
-                         python-pygments
-                         python-pytest
-                         python-pytest-black
-                         python-pytest-checkdocs
-                         python-pytest-cov
-                         python-pytest-enabler
-                         python-pytest-flake8
-                         python-pytest-mypy
-                         ;; For the version number
-                         python-setuptools-scm
-                         python-setuptools
-                         python-wheel))
+    (propagated-inputs (list python-more-itertools python-typeguard
+                             python-typing-extensions))
+    (native-inputs (list python-pygments python-pytest python-setuptools
+                         python-setuptools-scm python-wheel))
     (home-page "https://github.com/jaraco/inflect")
     (synopsis "Correctly generate plurals, singular nouns, ordinals, indefinite articles")
     (description
@@ -23259,6 +23337,31 @@ write tooling that generates distribution files from Python projects.")
 resilience.  Lark can parse all context-free languages.  That means it is
 capable of parsing almost any programming language out there, and to
 some degree most natural languages too.")
+    (license license:expat)))
+
+(define-public python-find-libpython
+  (package
+    (name "python-find-libpython")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ktbarrett/find_libpython")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1z1r9nix2z75sv41j97pnl6jgj2lk6k8la23vavxjpprsc9ld1dd"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel
+                         ;; tests
+                         python-pytest))
+    (home-page "https://github.com/ktbarrett/find_libpython")
+    (synopsis "Find the path to the @code{libpython} dynamic library")
+    (description
+     "@code{find_libpython} helps find the path to the
+@code{libpython} dynamic library for the current Python environment.  It is
+both a script and a Python package.")
     (license license:expat)))
 
 (define-public python-libcst
@@ -27311,15 +27414,16 @@ web frameworks.")
     (name "python-apache-libcloud")
     (version "3.1.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "apache-libcloud" version))
-        (sha256
-         (base32
-          "1b28j265kvibgxrgxx0gwfm6cmv252c8ph1j2vb0cpms8ph5if5v"))))
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "apache-libcloud" version))
+       (sha256
+        (base32
+         "1b28j265kvibgxrgxx0gwfm6cmv252c8ph1j2vb0cpms8ph5if5v"))))
     (build-system python-build-system)
     (arguments
-     '(#:phases
+     '(#:tests? #f ; XXX: all tests fail requiring additional credentials
+       #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'patch-ssh
            (lambda* (#:key inputs #:allow-other-keys)
@@ -27898,6 +28002,25 @@ Git.")
      "@code{setuptools-rust} is a plugin for @code{setuptools} to build
 Rust Python extensions implemented with @code{PyO3} or @code{rust-cpython}.")
     (license license:expat)))
+
+(define-public python-setuptools-gettext
+  (package
+    (name "python-setuptools-gettext")
+    (version "0.1.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "setuptools_gettext" version))
+       (sha256
+        (base32 "0b0d74cwa9lk32cajzpxxg9nwm5hch17xc6bzg6i4iqsygprkw23"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-tomli
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/breezy-team/setuptools-gettext")
+    (synopsis "Setuptools plugin for gettext")
+    (description "This package provides a plugin for Setuptools for gettext.")
+    (license license:gpl2+)))
 
 (define-public python-pyclipper
   (package
@@ -32108,6 +32231,11 @@ standard error channel (stderr) in your program.")
                 "-k"
                 (string-append
                  "not test_is_block_device"
+
+                 ,@(cond
+                    ((target-aarch64?)
+                     '(" and not test_keyboardinterrupt_during_test"))
+                    (#t '()))
 
                  ;; These fail because of network (or specifically IPv6
                  ;; network) access (see:
@@ -39414,6 +39542,24 @@ with it, and it also implements recommendations from the
 and names, built from Unicode CLDR and the IANA subtag registry, if you
 install @code{python-language-data}.")
     (license license:expat)))
+
+(define-public python-anyascii
+  (package
+    (name "python-anyascii")
+    (version "0.3.2")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "anyascii" version))
+              (sha256
+               (base32
+                "0c27rr3fmc1cx9mkmgx94zdf9yil0napzfkwpjw2bqjghkpk4pcx"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-flit-core python-setuptools))
+    (home-page "https://anyascii.com")
+    (synopsis "Unicode to ASCII transliteration")
+    (description "@code{anyascii} converts Unicode characters to their best
+ASCII representation.")
+    (license license:isc)))
 
 (define-public python-geomet
   (package

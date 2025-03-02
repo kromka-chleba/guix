@@ -16,6 +16,8 @@
 ;;; Copyright © 2018 Kei Kebreau <kkebreau@posteo.net>
 ;;; Copyright © 2020 Paul Garlick <pgarlick@tourbillion-technology.com>
 ;;; Copyright © 2020 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
+;;; Copyright © 2025 gemmaro <gemmaro.dev@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -37,6 +39,7 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages web)
+  #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix download)
   #:use-module (guix git-download)
@@ -95,7 +98,7 @@ lexically, just dynamically.")
 (define-public perl-test2-suite
   (package
     (name "perl-test2-suite")
-    (version "0.000072")
+    (version "0.000155")
     (source
       (origin
         (method url-fetch)
@@ -103,33 +106,59 @@ lexically, just dynamically.")
                             version ".tar.gz"))
         (sha256
          (base32
-          "0hgd6n29qjh1pwqvbglm2kb852yqshmixqqjhsr2kvvibdr58qpf"))))
+          "0gfmm95xfjy5c376cl0qxqqhr7ibnn1371knd61rgh4vsv26p3n7"))))
     (build-system perl-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'set-env
-           (lambda _ (setenv "PERL_USE_UNSAFE_INC" "1") #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-env
+            (lambda _
+              (setenv "PERL_USE_UNSAFE_INC" "1"))))))
+    (native-inputs (list perl-json-maybexs))
     (propagated-inputs
-     (list perl-importer perl-term-table perl-sub-info))
+     (list perl-module-pluggable perl-term-size-any perl-term-table
+           perl-term-readkey perl-unicode-linebreak))
     (home-page "https://metacpan.org/pod/Test2-Suite")
     (synopsis "Full set of tools for Test2::Suite")
     (description "This package provides a rich set of tools, plugins, bundles,
 etc built upon the Test2 testing library.")
     (license perl-license)))
 
+(define-public perl-test2-tools-command
+  (package
+    (name "perl-test2-tools-command")
+    (version "0.20")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/J/JM/JMATES/Test2-Tools-Command-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "0n388mc1rqfd960yyfn74lgxwrv2b5yrijxf499g7xdvaj44crn4"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build perl-test2-suite))
+    (propagated-inputs (list perl-file-chdir perl-test2-suite))
+    (home-page "https://metacpan.org/release/Test2-Tools-Command")
+    (synopsis "Test simple Unix commands")
+    (description "This module tests that commands given particular arguments
+result in particular outputs by way of the exit status word, standard output,
+and standard error.")
+    (license bsd-3)))
+
 (define-public perl-test2-plugin-nowarnings
   (package
     (name "perl-test2-plugin-nowarnings")
     (version "0.06")
     (source
-      (origin
-        (method url-fetch)
-        (uri (string-append "mirror://cpan/authors/id/D/DR/DROLSKY/Test2-Plugin-NoWarnings-"
-                            version ".tar.gz"))
-        (sha256
-         (base32
-          "002qk6qsm0l6r2kaxywvc38w0yf0mlavgywq8li076pn6kcw3242"))))
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/D/DR/DROLSKY/Test2-Plugin-NoWarnings-"
+                           version ".tar.gz"))
+       (sha256
+        (base32
+         "002qk6qsm0l6r2kaxywvc38w0yf0mlavgywq8li076pn6kcw3242"))))
     (build-system perl-build-system)
     (native-inputs
      (list perl-ipc-run3))
@@ -236,7 +265,7 @@ Built using @code{Test::Builder}, it was designed to work with other
     (build-system perl-build-system)
     (native-inputs
      (list perl-module-build))
-    (inputs
+    (propagated-inputs
      (list perl-test-class perl-test-most perl-module-runtime
            perl-try-tiny perl-mro-compat))
     (home-page "https://metacpan.org/release/Test-Class-Most")
@@ -1270,6 +1299,26 @@ portability across operating systems of the names of the files present in the
 distribution of a module.  The tests use the advices given in 'Files and
 Filesystems' in perlport.  The author of a distribution can select which tests
 to execute.")
+    (license perl-license)))
+
+(define-public perl-test-regexp-pattern
+  (package
+    (name "perl-test-regexp-pattern")
+    (version "0.010")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/P/PE/PERLANCAR/Test-Regexp-Pattern-"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "11lmwa5y41lhvk0sikn35b4l678jc2y9ybw0rfxv844cjcas0cm4"))))
+    (build-system perl-build-system)
+    (propagated-inputs (list perl-hash-defhash perl-regexp-pattern))
+    (home-page "https://metacpan.org/release/Test-Regexp-Pattern")
+    (synopsis "Test Regexp::Pattern patterns")
+    (description "This module performs various checks on a module's
+@code{Regexp::Pattern} patterns.")
     (license perl-license)))
 
 (define-public perl-test-requires

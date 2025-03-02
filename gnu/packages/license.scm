@@ -4,6 +4,7 @@
 ;;; Copyright © 2020, 2021 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2021 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2022 Felix Gruber <felgru@posteo.net>
+;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2024 Evgeny Pisemsky <mail@pisemsky.site>
 ;;;
@@ -26,11 +27,13 @@
   #:use-module (gnu packages)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages perl-check)
   #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages web)
   #:use-module (guix build-system perl)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
@@ -47,7 +50,7 @@
 (define-public perl-regexp-pattern-license
   (package
     (name "perl-regexp-pattern-license")
-    (version "3.1.94")
+    (version "3.11.0")
     (source
      (origin
        (method url-fetch)
@@ -55,12 +58,11 @@
              "mirror://cpan/authors/id/J/JO/JONASS/Regexp-Pattern-License-"
              "v" version ".tar.gz"))
        (sha256
-        (base32 "0kznpv628jrndn4nw646f6pl7yqvmacwljlygvsjfdkyh0i4sr2k"))))
+        (base32 "1blkraliby1696pqici7k1pkwcrf7gbdavfxfffa2mk8lr4a6xw6"))))
     (build-system perl-build-system)
     (native-inputs
-     (list perl-regexp-pattern perl-test-exception))
-    (propagated-inputs
-     (list perl-strictures-2 perl-try-tiny))
+     (list perl-regexp-pattern perl-test-regexp-pattern
+           perl-test-without-module perl-test2-suite perl-try-tiny))
     (home-page "https://metacpan.org/release/Regexp-Pattern-License")
     (synopsis "Regular expressions for legal licenses")
     (description "Regexp::Pattern::License provides a hash of regular
@@ -72,7 +74,7 @@ Regexp::Pattern is a convention for organizing reusable regex patterns.")
 (define-public perl-string-copyright
   (package
     (name "perl-string-copyright")
-    (version "0.003006")
+    (version "0.003014")
     (source
      (origin
        (method url-fetch)
@@ -81,17 +83,49 @@ Regexp::Pattern is a convention for organizing reusable regex patterns.")
              version ".tar.gz"))
        (sha256
         (base32
-         "0fzymv065nn3glwnw34nkyadzw2dh4rcz8avmki4zrnk4k45m01a"))))
+         "0xdm0ml65r77sk1pklnq4spbmn9qid4m44rnva8hhh00b9044k9f"))))
     (build-system perl-build-system)
     (native-inputs
-     (list perl-number-range))
+     (list perl-test-without-module perl-test2-suite))
     (propagated-inputs
-     (list perl-exporter-tiny))
+     (list perl-exporter-tiny perl-set-intspan))
     (home-page "https://metacpan.org/release/String-Copyright")
     (synopsis "Representation of text-based copyright statements")
     (description "String::Copyright Parses common styles of copyright
 statements and serializes in normalized format.")
     (license gpl3+)))
+
+(define-public perl-string-license
+  (package
+    (name "perl-string-license")
+    (version "0.0.9")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://cpan/authors/id/J/JO/JONASS/String-License-v"
+                    version ".tar.gz"))
+              (sha256
+               (base32
+                "1dbw8rgwdlgnlvscijpb2dnw5irfd6wvca587bprq5kk19mf7jzf"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-file-basedir
+                         perl-regexp-pattern-license
+                         perl-software-license
+                         perl-test-without-module
+                         perl-test2-suite
+                         perl-yaml-libyaml))
+    (propagated-inputs (list perl-array-intspan
+                             perl-feature-compat-class
+                             perl-log-any
+                             perl-namespace-clean
+                             perl-path-tiny
+                             perl-regexp-pattern
+                             perl-regexp-pattern-license))
+    (home-page "https://metacpan.org/release/String-License")
+    (synopsis "Detect source code license statements in a text string")
+    (description "@code{String::License} identifies license statements in a
+string and serializes them in a normalized format.")
+    (license agpl3+)))
 
 (define-public perl-software-license
   (package
@@ -119,7 +153,7 @@ statements and serializes in normalized format.")
 (define-public licensecheck
   (package
     (name "licensecheck")
-    (version "3.0.37")
+    (version "3.3.9")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -127,51 +161,53 @@ statements and serializes in normalized format.")
                     "v" version ".tar.gz"))
               (sha256
                (base32
-                "12l83zf85zagpagizmzy3bwkc659sbzqf18cycx8g4h6d3mc5kqw"))))
+                "17sfw2cz5x339zq6xc2nfjps2vwpj3d307v90gva498fvnlk1y4y"))))
     (build-system perl-build-system)
     (native-inputs
-     (list perl-regexp-pattern
-           perl-software-license
-           perl-test-requires
-           perl-test-roo
-           perl-test-script
-           perl-universal-require
-           perl-number-range
-           perl-sub-quote))
+     (list perl-encode-locale
+           perl-regexp-pattern-license
+           perl-string-copyright
+           perl-test-without-module
+           perl-test2-suite
+           perl-test2-tools-command))
     (propagated-inputs
-     `(("perl-getopt-long-descriptive" ,perl-getopt-long-descriptive)
-       ("perl-moo" ,perl-moo-2)
-       ("perl-namespace-clean" ,perl-namespace-clean)
-       ("perl-path-iterator-rule" ,perl-path-iterator-rule)
-       ("perl-path-tiny" ,perl-path-tiny)
-       ("perl-pod-constants" ,perl-pod-constants)
-       ("perl-regexp-pattern-license" ,perl-regexp-pattern-license)
-       ("perl-sort-key" ,perl-sort-key)
-       ("perl-strictures" ,perl-strictures-2)
-       ("perl-string-copyright" ,perl-string-copyright)
-       ("perl-string-escape" ,perl-string-escape)
-       ("perl-try-tiny" ,perl-try-tiny)
-       ("perl-module-runtime" ,perl-module-runtime)))
-    (inputs
-     `(("bash" ,bash-minimal))) ; for wrap-program
+     (list perl-feature-compat-class
+           perl-feature-compat-try
+           perl-io-interactive
+           perl-log-any
+           perl-log-any-adapter-screen
+           perl-namespace-clean
+           perl-path-iterator-rule
+           perl-path-tiny
+           perl-pod-constants
+           perl-string-copyright
+           perl-string-escape
+           perl-string-license))
+    (inputs (list bash-minimal))        ; for wrap-program
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'wrap-program
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (perllib (string-append out "/lib/perl5/site_perl/"
-                                            ,(package-version perl))))
-               (wrap-program (string-append out "/bin/licensecheck")
-                 `("PERL5LIB" ":"
-                   prefix (,(string-append perllib ":" (getenv "PERL5LIB")))))
-               #t))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-licensecheck
+            (lambda _
+              (let ((licensecheck (string-append #$output "/bin/licensecheck"))
+                    (perl5lib (string-append #$output "/lib/perl5/site_perl/"
+                                             #$(package-version perl))))
+                (wrap-program licensecheck
+                  `("PERL5LIB" ":" prefix
+                    ,(list perl5lib (getenv "PERL5LIB")))))))
+          (add-after 'wrap-licensecheck 'check-wrap
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (unsetenv "PERL5LIB")
+                (invoke/quiet (string-append #$output "/bin/licensecheck")
+                              "--version")))))))
     (home-page "https://metacpan.org/release/App-Licensecheck")
     (synopsis "License checker for source files")
     (description "Licensecheck attempts to determine the license that applies
 to each file passed to it, by searching the start of the file for text
 belonging to various licenses.")
-    (license (package-license perl))))
+    (license agpl3+)))
 
 (define-public reuse
   (package

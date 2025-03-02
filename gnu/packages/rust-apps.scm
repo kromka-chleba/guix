@@ -2860,6 +2860,45 @@ by modifying your @file{Cargo.toml} file from the command line.")
 rebase.")
     (license license:gpl3+)))
 
+(define-public pastel
+  (package
+    (name "pastel")
+    (version "0.10.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "pastel" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1mwy4nx3jn74sr1q8ap98faja5wp7hz51yqga8l050xz645kb8wj"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:cargo-inputs
+      `(("rust-atty" ,rust-atty-0.2)
+        ("rust-clap" ,rust-clap-3)
+        ("rust-clap-complete" ,rust-clap-complete-3)
+        ("rust-nom" ,rust-nom-7)
+        ("rust-once-cell" ,rust-once-cell-1)
+        ("rust-output-vt100" ,rust-output-vt100-0.1)
+        ("rust-rand" ,rust-rand-0.8)
+        ("rust-regex" ,rust-regex-1))
+      #:cargo-development-inputs
+      `(("rust-approx" ,rust-approx-0.5)
+        ("rust-assert-cmd" ,rust-assert-cmd-2)
+        ("rust-criterion" ,rust-criterion-0.5)
+        ("rust-rand-xoshiro" ,rust-rand-xoshiro-0.6))))
+    (home-page "https://github.com/sharkdp/pastel")
+    (synopsis
+     "Command-line tool to generate, analyze, convert and manipulate colors")
+    (description
+     "Pastel is a command-line tool to generate, analyze, convert and
+manipulate colors.  It supports many different color formats and color spaces
+like RGB (sRGB), HSL, CIELAB, CIELCh as well as ANSI 8-bit and 24-bit
+representations.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public procs
   (package
     (name "procs")
@@ -4890,3 +4929,43 @@ to navigate to the best match.")
     (synopsis "Like jq, but for HTML")
     (description "Extract content from HTML files using CSS selectors.")
     (license license:expat)))
+
+(define-public podlet
+  (package
+    (name "podlet")
+    (version "0.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "podlet" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1j394gv9fpl1wii7l0v4y31mdni6r98l223wd6x2v3ia82091xg4"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:install-source? #f
+       #:cargo-inputs (("rust-clap" ,rust-clap-4)
+                       ("rust-color-eyre" ,rust-color-eyre-0.6)
+                       ("rust-compose-spec" ,rust-compose-spec-0.2)
+                       ("rust-indexmap" ,rust-indexmap-2)
+                       ("rust-ipnet" ,rust-ipnet-2)
+                       ("rust-k8s-openapi" ,rust-k8s-openapi-0.22)
+                       ("rust-nix" ,rust-nix-0.28)
+                       ("rust-path-clean" ,rust-path-clean-1)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-serde-json" ,rust-serde-json-1)
+                       ("rust-serde-yaml" ,rust-serde-yaml-0.9)
+                       ("rust-shlex" ,rust-shlex-1)
+                       ("rust-smart-default" ,rust-smart-default-0.7)
+                       ("rust-thiserror" ,rust-thiserror-1)
+                       ("rust-umask" ,rust-umask-2)
+                       ("rust-url" ,rust-url-2)
+                       ("rust-zbus" ,rust-zbus-4))))
+    (home-page "https://github.com/containers/podlet")
+    (synopsis
+     "Generate Podman Quadlet files from a Podman command, compose file,
+or existing object")
+    (description
+     "This package generates Podman Quadlet files from a Podman command,
+compose file, or existing object.")
+    (license license:mpl2.0)))

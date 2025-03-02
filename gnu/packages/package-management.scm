@@ -179,8 +179,8 @@
   ;; Note: the 'update-guix-package.scm' script expects this definition to
   ;; start precisely like this.
   (let ((version "1.4.0")
-        (commit "5f6fdadb4af5a0a94f41c4365a3c73e31fed01af")
-        (revision 32))
+        (commit "3355de608cb2267435c2592fc7dc76a1dcc5c02d")
+        (revision 33))
     (package
       (name "guix")
 
@@ -196,7 +196,7 @@
                       (commit commit)))
                 (sha256
                  (base32
-                  "1ga22j8dajsknv6n9m8k6w16l7h4ig68p3ypm7dv05yni7fa81a4"))
+                  "0i4l0n06sa9iqknlycy19h5yyqsx3ysyzhb8732d7s7zr2icibk2"))
                 (file-name (string-append "guix-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -998,8 +998,8 @@ transactions from C or Python.")
     (license license:gpl2+)))
 
 (define-public bffe
-  (let ((commit "3442bffe7ccf15e3f270a45603eca2b891b87f44")
-        (revision "10"))
+  (let ((commit "435e99fad0314a6a074d95feb5505ac21f8c6496")
+        (revision "11"))
     (package
       (name "bffe")
       (version (git-version "0" revision commit))
@@ -1010,7 +1010,7 @@ transactions from C or Python.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "17zrj97zl21cxy6w5ncg8p1y83hanqssdh18zg40s93hx7b7l3r3"))
+                  "07d484hz8zv9m1c0kshzz0q5pjli9160w4j3qn6f8i3dm9w13jw5"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (native-inputs
@@ -1556,8 +1556,8 @@ environments.")
                   "0k9zkdyyzir3fvlbcfcqy17k28b51i20rpbjwlx2i1mwd2pw9cxc")))))))
 
 (define-public guix-build-coordinator
-  (let ((commit "7e807facb43f146d462a6f4fc67d08e919886a06")
-        (revision "118"))
+  (let ((commit "f73098f432e7084b377e4cbe1e72cde34ad63f18")
+        (revision "120"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1568,7 +1568,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0c3bf3xpiyrpzg5dvhk1xgxcgig9759asq84cp5a90g2s1r73vj5"))
+                  "13ks8zpajqdfhjwivffl28f51yavl8mvkdsqgp0hrfgb1jpj6z8n"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1607,7 +1607,7 @@ environments.")
                                           "guile-gnutls"
                                           #$@(if (target-hurd?)
                                                  '()
-                                                 '("guile-fibers"
+                                                 '("guile-fibers-next"
                                                    "guile-knots")))))
                        (wrap-program file
                          `("PATH" ":" prefix
@@ -1651,7 +1651,7 @@ environments.")
              guile-gcrypt
              guix
              guile-prometheus
-             guile-fibers
+             guile-fibers-next
              guile-knots
              guile-lib
              guile-next))
@@ -1671,7 +1671,7 @@ environments.")
              guile-sqlite3
              guix
              guile-gnutls
-             guile-fibers
+             guile-fibers-next
              guile-knots))
       (home-page "https://git.cbaines.net/guix/build-coordinator/")
       (synopsis "Tool to help build derivations")

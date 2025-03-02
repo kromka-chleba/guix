@@ -3272,7 +3272,7 @@ defined rule on an input file.")
                             " and not test_cli.py"
                             " and not test_mutate.py"))))
     (propagated-inputs (list openmm python-numpy))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/openmm/pdbfixer")
     (synopsis "Application for fixing problems in Protein Data Bank")
     (description
@@ -3578,6 +3578,50 @@ this by providing automatic download of Ensembl genome assemblies and
 annotation, provides Python genomic feature search and sequence retrieval from
 the managed genomes, STAR indexing and mapping and more.")
       (license license:gpl3+))))
+
+(define-public python-pygam
+  (package
+    (name "python-pygam")
+    (version "0.9.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dswah/pyGAM")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bv404idswsm2ay3yziq1i2cbydq4f3vjav5s4i15bgd13k7zvim"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'patch-pyproject
+            (lambda _
+              (substitute* "pyproject.toml"
+                ;; Change build backend
+                (("build-backend = .*")
+                 "build-backend = \"poetry.core.masonry.api\"\n")
+                ;; Modify version field
+                (("^version = \"0.0.0\"")
+                 (string-append "version = \"" #$version "\""))))))))
+    (propagated-inputs (list python-black
+                             python-flake8
+                             python-ipython
+                             python-numpy
+                             python-pandas
+                             python-poetry-core
+                             python-progressbar2
+                             python-scipy))
+    (native-inputs (list python-mock python-pytest python-pytest-cov))
+    (home-page "https://github.com/dswah/pyGAM")
+    (synopsis "Generalized additive models in Python")
+    (description
+     "This tool is for building Generalized Additive Models in Python.
+It emphasizes modularity and performance.  The API will be immediately
+familiar to anyone with experience of scikit-learn or scipy.")
+    (license license:asl2.0)))
 
 (define-public python-pysnptools
   (package
@@ -6677,6 +6721,12 @@ CWL descriptions.")
            (with-imported-modules `((guix build guile-build-system)
                                     ,@%default-gnu-imported-modules)
              #~(modify-phases %standard-phases
+                 (replace 'patch-source-shebangs
+                   (lambda* (#:key inputs #:allow-other-keys)
+                     (substitute* "bin/ravanan"
+                       (("^exec guile")
+                        (string-append "exec "
+                                       (search-input-file inputs "/bin/guile"))))))
                  (delete 'configure)
                  (add-after 'install 'wrap
                    (lambda* (#:key inputs outputs #:allow-other-keys)
@@ -20159,7 +20209,8 @@ genomic scores), long range contacts and the visualization of viewpoints.")
            python-pysam
            python-tqdm))
     (native-inputs
-     (list python-pytest))
+     (list python-pytest
+           python-wheel))
     (home-page "https://pygenometracks.readthedocs.io")
     (synopsis "Program and library to plot beautiful genome browser tracks")
     (description
@@ -22630,8 +22681,8 @@ patterns.")
       (license license:gpl3))))
 
 (define-public r-voltron
-  (let ((commit "8f88699a82abf39f9825ebdccb786f02b20009d2")
-        (revision "3"))
+  (let ((commit "381754801c2d0cf44c8a3a25326f3a89eef17411")
+        (revision "4"))
     (package
       (name "r-voltron")
       (version (git-version "0.2.0" revision commit))
@@ -22643,7 +22694,7 @@ patterns.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1vfwyiyi67d7n76jm8vlf7s5rwwga7nrnr9rbd4kx9hfbf26wgf0"))))
+          (base32 "1x8b51qlxz4zc23asz4wmvhy7fbvxnhn5svlalgdrj7bibq345qq"))))
       (properties `((upstream-name . "VoltRon")))
       (build-system r-build-system)
       (arguments

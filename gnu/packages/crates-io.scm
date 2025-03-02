@@ -21685,6 +21685,84 @@ from macros.")
 This project is a fork of Faraday's boondock.")
     (license license:asl2.0)))
 
+(define-public rust-k8s-openapi-0.22
+  (package
+    (name "rust-k8s-openapi")
+    (version "0.22.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "k8s-openapi" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0mcpy1gdxpqayc74i3x3ayh3q5bl6dzvsgmw91jq1r9sjkxill0r"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-base64" ,rust-base64-0.22)
+                       ("rust-chrono" ,rust-chrono-0.4)
+                       ("rust-schemars" ,rust-schemars-0.8)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-serde-value" ,rust-serde-value-0.7)
+                       ("rust-serde-json" ,rust-serde-json-1))))
+    (home-page "https://github.com/Arnavion/k8s-openapi")
+    (synopsis "Bindings for the Kubernetes client API")
+    (description
+     "This package provides Bindings for the Kubernetes client API.")
+    (license license:asl2.0)))
+
+(define-public rust-compose-spec-macros-0.1
+  (package
+    (name "rust-compose-spec-macros")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "compose_spec_macros" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0z4r9n38h5346ksfilkaxa76zzivdhvj9axq8yjm6wv9nhl1pf25"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-proc-macro2" ,rust-proc-macro2-1)
+                       ("rust-quote" ,rust-quote-1)
+                       ("rust-syn" ,rust-syn-2))))
+    (home-page "https://github.com/k9withabone/compose_spec_rs")
+    (synopsis "Procedural macros for use in the compose_spec crate")
+    (description
+     "This package provides Procedural macros for use in the compose_spec crate.")
+    (license license:mpl2.0)))
+
+(define-public rust-compose-spec-0.2
+  (package
+    (name "rust-compose-spec")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "compose_spec" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "17h8g1mrwk8yphqxfhdgyvn5hpagmm5p3p8p6yxh23hl3d6zdshi"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-compose-spec-macros" ,rust-compose-spec-macros-0.1)
+                       ("rust-indexmap" ,rust-indexmap-2)
+                       ("rust-ipnet" ,rust-ipnet-2)
+                       ("rust-itoa" ,rust-itoa-1)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-serde-yaml" ,rust-serde-yaml-0.9)
+                       ("rust-thiserror" ,rust-thiserror-1)
+                       ("rust-url" ,rust-url-2))))
+    (home-page "https://github.com/k9withabone/compose_spec_rs")
+    (synopsis "Types for (de)serializing from/to the compose-spec")
+    (description
+     "This package provides types for (de)serializing from/to compose-spec, a
+container description format.")
+    (license license:mpl2.0)))
+
 (define-public rust-docmatic-0.1
   (package
     (name "rust-docmatic")

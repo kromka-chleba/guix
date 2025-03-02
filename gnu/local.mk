@@ -70,6 +70,7 @@
 # Copyright © 2024 Noé Lopez <noelopez@free.fr>
 # Copyright © 2024 Runciter <runciter@whispers-vpn.org>
 # Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
+# Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
 #
 # This file is part of GNU Guix.
 #
@@ -424,6 +425,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/kerberos.scm			\
   %D%/packages/kodi.scm				\
   %D%/packages/language.scm			\
+  %D%/packages/lc0.scm			\
   %D%/packages/lean.scm				\
   %D%/packages/lego.scm				\
   %D%/packages/less.scm				\
@@ -562,6 +564,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/polkit.scm			\
   %D%/packages/popt.scm				\
   %D%/packages/potassco.scm				\
+  %D%/packages/power.scm			\
   %D%/packages/printers.scm			\
   %D%/packages/profiling.scm			\
   %D%/packages/prolog.scm			\
@@ -856,6 +859,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/tests/image.scm				\
   %D%/tests/install.scm				\
   %D%/tests/ldap.scm				\
+  %D%/tests/lightdm.scm			\
   %D%/tests/linux-modules.scm			\
   %D%/tests/mail.scm				\
   %D%/tests/messaging.scm			\
@@ -865,6 +869,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/tests/reconfigure.scm			\
   %D%/tests/rsync.scm				\
   %D%/tests/samba.scm				\
+  %D%/tests/sddm.scm				\
   %D%/tests/security.scm			\
   %D%/tests/security-token.scm			\
   %D%/tests/shadow.scm  			\
@@ -1056,7 +1061,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/bloomberg-bde-tools-fix-install-path.patch	\
   %D%/packages/patches/boolector-find-googletest.patch	\
   %D%/packages/patches/boost-fix-duplicate-definitions-bug.patch	\
-  %D%/packages/patches/breezy-fix-gio.patch			\
   %D%/packages/patches/byobu-writable-status.patch		\
   %D%/packages/patches/bubblewrap-fix-locale-in-tests.patch	\
   %D%/packages/patches/busybox-add-missing-sha-NI-guard.patch	\
@@ -1241,6 +1245,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/epiphany-fix-encoding-test.patch	\
   %D%/packages/patches/ergodox-firmware-fix-json-target.patch	\
   %D%/packages/patches/ergodox-firmware-fix-numpad.patch	\
+  %D%/packages/patches/ericw-tools-add-check-for-sse2-in-light.cc.patch	\
+  %D%/packages/patches/ericw-tools-gcc-11-pass-const-to-offsetof.patch	\
   %D%/packages/patches/erlang-man-path.patch			\
   %D%/packages/patches/esmini-use-pkgconfig.patch		\
   %D%/packages/patches/esmtp-add-lesmtp.patch		\
@@ -1409,7 +1415,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/gdm-pass-gdk-pixbuf-loader-env.patch	\
   %D%/packages/patches/gemmi-fix-pegtl-usage.patch		\
   %D%/packages/patches/gemmi-fix-sajson-types.patch		\
-  %D%/packages/patches/gemrb-add-path-suffixes-for-vlc-headers.patch \
+  %D%/packages/patches/gemrb-remove-ifdef-and-externalize-path-setting-to-cmake.patch	\
   %D%/packages/patches/genimage-mke2fs-test.patch		\
   %D%/packages/patches/geoclue-config.patch			\
   %D%/packages/patches/gettext-libunicode-update.patch		\
@@ -2009,6 +2015,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-sphobjinv-defer-ssl-import.patch	\
   %D%/packages/patches/python-sphinx-prompt-docutils-0.19.patch	\
   %D%/packages/patches/python-wxwidgets-type-errors.patch	\
+  %D%/packages/patches/qcodeeditor-qt6.patch			\
   %D%/packages/patches/qtdeclarative-5-disable-qmlcache.patch	\
   %D%/packages/patches/qtdeclarative-disable-qmlcache.patch	\
   %D%/packages/patches/quodlibet-fix-invalid-glob.patch	\
@@ -2214,7 +2221,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/rw-igraph-0.10.patch			\
   %D%/packages/patches/rxvt-unicode-fix-cursor-position.patch	\
   %D%/packages/patches/s7-flint-3.patch                      	\
-  %D%/packages/patches/sage-update-eclib.patch               	\
   %D%/packages/patches/sage-update-pari-gp.patch               	\
   %D%/packages/patches/sajson-for-gemmi-numbers-as-strings.patch	\
   %D%/packages/patches/sajson-build-with-gcc10.patch		\
@@ -2390,7 +2396,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/wacomtablet-add-missing-includes.patch	\
   %D%/packages/patches/wacomtablet-qt5.15.patch			\
   %D%/packages/patches/warsow-qfusion-fix-bool-return-type.patch	\
-  %D%/packages/patches/waybar-0.11.0-fix-tray-icons.patch	\
   %D%/packages/patches/wcstools-extend-makefiles.patch	\
   %D%/packages/patches/wdl-link-libs-and-fix-jnetlib.patch	\
   %D%/packages/patches/webkitgtk-adjust-bubblewrap-paths.patch	\

@@ -513,7 +513,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.13-version "6.13.3")
+(define-public linux-libre-6.13-version "6.13.4")
 (define-public linux-libre-6.13-gnu-revision "gnu")
 (define deblob-scripts-6.13
   (linux-libre-deblob-scripts
@@ -523,22 +523,22 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0bgc4f2xxb68f35iwq8d039zd2lw7d1pv7i2335587s4dyyp8xan")))
 (define-public linux-libre-6.13-pristine-source
   (let ((version linux-libre-6.13-version)
-        (hash (base32 "0b60rbii83lx2h455nm66hhlnygckprbaw3qifmala16xlazncys")))
+        (hash (base32 "17ikc4yvjj36s2pjbk58pq0hx96gri6hilc4bb7fjcdwxz40n3mq")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.13)))
 
-(define-public linux-libre-6.12-version "6.12.13")
+(define-public linux-libre-6.12-version "6.12.16")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
    linux-libre-6.12-version
    linux-libre-6.12-gnu-revision
-   (base32 "0i24k4zc6x5lvif12ba53c6cd5ydiah9j32ly2wpl88424ld389h")
-   (base32 "113bw33p7kjssvrs2ahilg2kdnabj98sywifc3zsbd91n3668iwg")))
+   (base32 "1q7irnysdzi85wapdwnrm0jza8ahaza4977m349ykxrrahbxh1nj")
+   (base32 "1ijzynl3isl9az2aqnb4cvrq1y90f3irhc4d7flrzi1ra4dqjc9w")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "1fpvfj4q2v3przxj5lkb3ra28h3g0mq9dqj4rvx4qnsmkvmdxszk")))
+        (hash (base32 "1i3xkprqsd3yqbai1pbgrszcg6ycy5rwpblzzw5m4lagd4m3d0az")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
@@ -547,7 +547,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.6-version "6.6.78")
+(define-public linux-libre-6.6-version "6.6.79")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -557,12 +557,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1gqha26cxijizyhg6k5397bc9pn54wxz01d4gb7j2xx22rkxjwhb")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1vckmam50nw8gms1wj18p5mv7rkpl849k3q587bkl4smsndrm8ss")))
+        (hash (base32 "13gyklpaxil0dc08pxrq4hpxi7crb81f70qnmacs188d8w2gk9h7")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.128")
+(define-public linux-libre-6.1-version "6.1.129")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -572,7 +572,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "060pbbvk3c1r9v6fz1qm5f0hjb29wi67lg7an0nwl6bpjsk5ci52")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "1wshgkgcxaf4mnm4ngngsj8gq1cg8kq56f5kqsdfcw0m339nfkc7")))
+        (hash (base32 "0axm373w49cjga541nxk9rxpkh75wl1b04l8w6clm93mvszy6qwx")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
@@ -8013,7 +8013,7 @@ monitoring tools for Linux.  These include @code{mpstat}, @code{iostat},
      (list #:tests? #f                  ; no tests
            #:make-flags
            #~(list (string-append "prefix=" #$output)
-                   (string-append "sysconfdir=" #$output "/etc"))
+                   (string-append "sysconfdir=" #$output "/lib"))  ;udev rule
            #:phases
            #~(modify-phases %standard-phases
                (delete 'configure)
@@ -8129,7 +8129,7 @@ interface in sysfs, which can be accomplished with the included udev rules.")
 (define-public tlp
   (package
     (name "tlp")
-    (version "1.5.0")
+    (version "1.8.0")
     (source
      (origin
        (method git-fetch)
@@ -8138,7 +8138,7 @@ interface in sysfs, which can be accomplished with the included udev rules.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0cssclk2brhwvn9dm7h5snm2svwy0c8cfr4z2cgkdkac2pfaaxw4"))))
+        (base32 "0r8r95wjb1sl5v8mli7kba2py9hc0ps915fx4lap5pg108ik9a06"))))
     (native-inputs
      (list shellcheck))
     (inputs
@@ -8168,78 +8168,63 @@ interface in sysfs, which can be accomplished with the included udev rules.")
     (arguments
      ;; XXX: The full test suite is run with "checkall" but it requires
      ;; "checkbashisms" and "perlcritic", not yet packaged in Guix.
-     `(#:test-target "shellcheck"
-       #:modules ((guix build gnu-build-system)
+     (list
+      #:make-flags
+      #~(list "TLP_CONFUSR=/etc/tlp.conf" "TLP_CONFDIR=/etc/tlp.d")
+      #:test-target "shellcheck"
+      #:modules '((guix build gnu-build-system)
                   (guix build utils)
                   (srfi srfi-1))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)            ; no configure script
-         (add-before 'build 'setenv
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (setenv "TLP_WITH_SYSTEMD" "0")
-               (setenv "TLP_NO_INIT" "1")
-               (setenv "TLP_NO_PMUTILS" "1")
-               (setenv "TLP_SBIN" (string-append out "/bin"))
-               (setenv "TLP_BATD" (string-append out "/share/tlp/bat.d"))
-               (setenv "TLP_BIN" (string-append out "/bin"))
-               (setenv "TLP_TLIB" (string-append out "/share/tlp"))
-               (setenv "TLP_FLIB" (string-append out "/share/tlp/func.d"))
-               (setenv "TLP_ULIB" (string-append out "/lib/udev"))
-               (setenv "TLP_CONFDEF"
-                       (string-append out "/share/tlp/defaults.conf"))
-               (setenv "TLP_CONFDIR" (string-append out "/etc/tlp.d"))
-               (setenv "TLP_CONFREN"
-                       (string-append out "/share/tlp/rename.conf"))
-               (setenv "TLP_ELOD"
-                       (string-append out "/lib/elogind/system-sleep"))
-               (setenv "TLP_SHCPL"
-                       (string-append out "/share/bash-completion/completions"))
-               (setenv "TLP_MAN" (string-append out "/share/man"))
-               (setenv "TLP_META" (string-append out "/share/metainfo")))))
-         (add-before 'install 'fix-installation
-           (lambda _
-             ;; Stop the Makefile from trying to create system directories.
-             (substitute* "Makefile"
-               (("\\[ -f \\$\\(_CONFUSR\\) \\]") "#")
-               (("install -d -m 755 \\$\\(_VAR\\)") "#"))))
-         (replace 'install
-           (lambda _ (invoke "make" "install-tlp" "install-man-tlp")))
-         (add-after 'install 'wrap
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((bin (string-append (assoc-ref outputs "out") "/bin"))
-                    (bin-files (find-files bin ".*")))
-               (define (bin-directory input-name)
-                 (let ((p (assoc-ref inputs input-name)))
-                   (and p (string-append p "/bin"))))
-               (define (sbin-directory input-name)
-                 (string-append (assoc-ref inputs input-name) "/sbin"))
-               (for-each (lambda (program)
-                           (wrap-program program
-                             `("PATH" ":" prefix
-                               ,(append
-                                 (filter-map bin-directory
-                                             '("bash"
-                                               "coreutils"
-                                               "dbus"
-                                               "eudev"
-                                               "grep"
-                                               "inetutils"
-                                               "kmod"
-                                               "perl"
-                                               "sed"
-                                               "usbutils"
-                                               "util-linux"
-                                               "x86-energy-perf-policy"))
-                                 (filter-map sbin-directory
-                                             '("ethtool"
-                                               "hdparm"
-                                               "iw"
-                                               "pciutils"
-                                               "rfkill"
-                                               "wireless-tools"))))))
-                         bin-files)))))))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)           ; no configure script
+          (add-before 'build 'setenv
+            (lambda _
+              (setenv "TLP_WITH_SYSTEMD" "0")
+              (setenv "TLP_NO_INIT" "1")))
+          (add-before 'build 'fix-installation
+            (lambda _
+              ;; Stop the Makefile from trying to create system directories.
+              (substitute* "Makefile"
+                (("= /usr") (string-append "= " #$output))
+                (("= /etc") (string-append "= " #$output "/etc"))
+                (("install -d -m 755 \\$\\(_VAR\\)") "#"))))
+          (replace 'install
+            (lambda _ (invoke "make" "install-tlp" "install-man-tlp")))
+          (add-after 'install 'wrap
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((bin (string-append (assoc-ref outputs "out") "/bin"))
+                     (bin-files (find-files bin ".*")))
+                (define (bin-directory input-name)
+                  (let ((p (assoc-ref inputs input-name)))
+                    (and p (string-append p "/bin"))))
+                (define (sbin-directory input-name)
+                  (string-append (assoc-ref inputs input-name) "/sbin"))
+                (for-each (lambda (program)
+                            (wrap-program program
+                              `("PATH" ":" prefix
+                                ,(append
+                                  (filter-map bin-directory
+                                              '("bash"
+                                                "coreutils"
+                                                "dbus"
+                                                "eudev"
+                                                "grep"
+                                                "inetutils"
+                                                "kmod"
+                                                "perl"
+                                                "sed"
+                                                "usbutils"
+                                                "util-linux"
+                                                "x86-energy-perf-policy"))
+                                  (filter-map sbin-directory
+                                              '("ethtool"
+                                                "hdparm"
+                                                "iw"
+                                                "pciutils"
+                                                "rfkill"
+                                                "wireless-tools"))))))
+                          bin-files)))))))
     (home-page "https://linrunner.de/en/tlp/tlp.html")
     (synopsis "Power management tool for Linux")
     (description "TLP is a power management tool for Linux.  It comes with
@@ -8253,7 +8238,7 @@ every time the power supply source is changed.")
 (define-public tlpui
   (package
     (name "tlpui")
-    (version "1.5.0-7")
+    (version "1.8.0")
     (source
      (origin
        (method git-fetch)
@@ -8262,17 +8247,12 @@ every time the power supply source is changed.")
              (commit (string-append "tlpui-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "07gi0i6wqjb5h0hmy7i7bjscfrf9v825xv85j7fxinxwrj42053y"))))
-    (build-system python-build-system)
+        (base32 "1q33p4gf5ii53wlgs61gghqxp3js5c45pn5nlibg2ygw069225r5"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-setup.py
-            ;; Install data_files to $out/share instead of /usr/share.
-            (lambda _
-              (substitute* "setup.py"
-                (("/usr/") ""))))
           (add-after 'unpack 'set-absolute-locations
             (lambda* (#:key inputs #:allow-other-keys)
               (let ((defaults.conf
@@ -8298,36 +8278,28 @@ every time the power supply source is changed.")
                   (substitute* "settingshelper.py"
                     (("(command_exists = ).*" _ lead)
                      (string-append lead "True\n")))))))
-          (add-before 'check 'fix-home-directory
+          (add-after 'install 'install-desktop-file
             (lambda _
-              ;; Tests fail with "Permission denied:
-              ;; '/homeless-shelter'".
-              (setenv "HOME" "/tmp")))
-          ;; `sanity-check' phase errors out with the following
-          ;; messages: "Unable to init server: Could not connect:
-          ;; Connection refused" and "Error: cannot read user
-          ;; configuration from /etc/tlp.conf or /etc/default/tlp".
-          (delete 'sanity-check)
-          ;; Skip two failing tests (out of 10) about configuration file
-          ;; issues.
-          (add-before 'check 'skip-failing-tests
-            (lambda _
-              (substitute* "test/test_tlp_settings.py"
-                ((".*?windowxsize = 900.*") "")
-                ((".*?windowysize = 600.*") ""))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "python" "-m" "discover"))))
-          (add-after 'install 'wrap-gi-python
+              (let ((dir (string-append #$output "/share/applications")))
+                (install-file "tlpui.desktop" dir))))
+          (add-after 'wrap 'wrap-gi-python
             (lambda _
               (let ((gi-typelib-path (getenv "GI_TYPELIB_PATH")))
                 (wrap-program (string-append #$output "/bin/tlpui")
                   `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path)))))))))
     (native-inputs
-     (list `(,glib "bin") gobject-introspection python-discover))
+     (list `(,glib "bin")
+           gobject-introspection
+           python-poetry-core
+           python-pytest
+           python-pyyaml))
     (inputs
-     (list gtk+ pciutils python-pygobject tlp usbutils))
+     (list gtk+
+           pciutils
+           python-pygobject
+           tlp
+           usbutils))
+    (propagated-inputs (list (librsvg-for-system)))
     (home-page "https://github.com/d4nj1/TLPUI")
     (synopsis "User interface for TLP written in Python")
     (description
@@ -10062,6 +10034,39 @@ libraries are used by the @command{sysdig} command-line utility.")
 types and interfaces and translates so that the X server can use them.")
     (license license:gpl2+)))
 
+(define-public keyd
+  (package
+    (name "keyd")
+    (version "2.5.0")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/rvaiya/keyd")
+               (commit (string-append "v" version))))
+        (sha256
+          (base32
+            "0nkra6lwdjhjcwj6486cgy562n4bcp98fjgl52rj8pp76i15yad7"))))
+    (arguments
+      (list #:tests? #f ; tests require root
+            #:make-flags
+            #~(list (string-append "CC=" #$(cc-for-target))
+                    "PREFIX="
+                    (string-append "DESTDIR=" #$output))
+            #:phases
+            '(modify-phases
+               %standard-phases
+               (delete 'configure)))) ; no autoconf
+    (build-system gnu-build-system)
+    (inputs (list linux-libre-headers))
+    (synopsis "Key remapping daemon for Linux")
+    (description
+      "Keyd is a keyboard remapping utility with intuitive ini configuration
+file format.  Keyd has several features, many of which are traditionally only
+found in custom keyboard firmware like QMK.")
+    (home-page "https://github.com/rvaiya/keyd")
+    (license license:expat)))
+
 (define-public pipewire
   (package
     (name "pipewire")
@@ -11384,3 +11389,42 @@ Linux input convention.  Specifically, that allows you to use the D-pad
 as a gamepad.")
     (home-page "https://github.com/dkosmari/hid-wiimote-plus")
     (license license:gpl2+)))
+
+(define-public python-evemu
+  (package
+    (name "python-evemu")
+    (version "2.7.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.freedesktop.org/libevdev/evemu")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1sxf6v2wnajj9srlkfjfymjmmp4dlq73gzjcjmaw015a3c0xl029"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f ; would open device files
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "python/evemu/base.py"
+                     (("\"libevdev.so\"")
+                      (string-append "\"" (assoc-ref inputs "libevdev")
+                                     "/lib/libevdev.so\""))))))))
+    (native-inputs
+     (list asciidoc autoconf automake libtool docbook-xsl pkg-config
+           python-wrapper xmlto))
+    (inputs
+     (list libevdev))
+    (synopsis "Record and replay input device events")
+    (description "This package provides a way to record and replay device
+descriptions and events, making it possible to emulate input devices
+through the Linux kernel's input system.  Emulated devices are for most
+practical purposes indistinguishable from real devices.
+
+It provides a command line program and also a Python library.")
+    (home-page "https://www.freedesktop.org/wiki/Evemu/")
+    (license license:gpl3)))

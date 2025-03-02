@@ -13,6 +13,7 @@ exec $pre_inst_env_maybe guix repl -- "$0" "$@"
 ;;; Copyright © 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2025 Jelle Licht <jlicht@fsfe.org>
+;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -122,7 +123,6 @@ exec $pre_inst_env_maybe guix repl -- "$0" "$@"
         #:scope
         (list "gnu/packages/django.scm"
               "gnu/packages/jupyter.scm"
-              ;; Match haskell.scm and haskell-*.scm.
               (make-regexp* "^gnu/packages/python(-.+|)\\.scm$")
               "gnu/packages/sphinx.scm"
               "gnu/packages/tryton.scm"
@@ -324,6 +324,15 @@ ecosystem."
                       "guix/import/elpa.scm"
                       "guix/scripts/import/elpa.scm"
                       "tests/elpa.scm")))
+
+(define-team electronics
+  (team 'electronics
+        #:name "Electronics team"
+        #:description "Electronics and hardware related packages."
+        #:scope (list "gnu/packages/fpga.scm"
+                      "gnu/packages/electronics.scm"
+                      "gnu/packages/libftdi.scm"
+                      "gnu/packages/engineering.scm")))
 
 (define-team lisp
   (team 'lisp
@@ -663,6 +672,10 @@ GLib/GIO, GTK, GStreamer and Webkit."
                        "me@tobias.gr")
   core mentors)
 
+(define-member (person "Steve George"
+                       "steve@futurile.net")
+  rust)
+
 (define-member (person "Leo Famulari"
                        "leo@famulari.name")
   kernel)
@@ -741,15 +754,11 @@ GLib/GIO, GTK, GStreamer and Webkit."
 
 (define-member (person "Maxim Cournoyer"
                        "maxim.cournoyer@gmail.com")
-  documentation gnome qt telephony)
+  documentation gnome qt telephony electronics)
 
 (define-member (person "Katherine Cox-Buday"
                        "cox.katherine.e+guix@gmail.com")
   emacs go lisp)
-
-(define-member (person "Marius Bakke"
-                       "marius@gnu.org")
-  python)
 
 (define-member (person "Munyoki Kilyungi"
                        "me@bonfacemunyoki.com")
@@ -818,6 +827,10 @@ GLib/GIO, GTK, GStreamer and Webkit."
 (define-member (person "Jelle Licht"
                        "jlicht@fsfe.org")
   javascript)
+
+(define-member (person "Cayetano Santos"
+                       "csantosb@inventati.org")
+  emacs electronics)
 
 
 (define (find-team name)

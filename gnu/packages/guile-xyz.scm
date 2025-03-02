@@ -53,6 +53,7 @@
 ;;; Copyright © 2024 Alec Barreto <mrh57@posteo.net>
 ;;; Copyright © 2024 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Florian Pelz <pelzflorian@pelzflorian.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1017,6 +1018,25 @@ is not available for Guile 2.0.")
     (native-inputs
      (modify-inputs (package-native-inputs guile-fibers-1.1)
        (replace "guile" guile-2.2)))))
+
+(define-public guile-fibers-next
+  (let ((commit "96cd1f4d4639b5c0f0b2fb7ebfd29b339a368dcc")
+        (revision "0"))
+    (package
+      (inherit guile-fibers)
+      (name "guile-fibers-next")
+      (version (git-version "1.3.1"
+                            revision
+                            commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/wingo/fibers")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0kmsbdcpw2qdl20ihjsdcbw3nlii9f6zpkhhrwqmlyqi46hyq9xl")))))))
 
 (define-public guile-filesystem
   (package
@@ -2628,11 +2648,21 @@ capabilities.")
 modern applications in Guile Scheme.  It comprises a direct binding to the
 GObject Introspection API and higher-level functionality for importing Gnome
 libraries and making GObject classes (and methods) available in Guile's
-object-oriented programming system, GOOPS.")
+object-oriented programming system, GOOPS.
+
+Note: Currently, when developing with G-Golf in @command{guix shell}, there is
+a @uref{https://bugs.gnu.org/75157, grafts bug in Guix}.  To avoid it, use
+Guix' @code{--no-grafts} option.  Guix packages that use @code{wrap-program}
+are unaffected.")
     (license license:lgpl3+)))
 
 (define-public g-golf
-  (deprecated-package "g-golf" guile-g-golf))
+  ;; Use ‘guile-g-golf’ above in package inputs and other code.  This alias
+  ;; exists as a compromise, see
+  ;; https://lists.gnu.org/archive/html/guix-devel/2025-02/msg00296.html.
+  (package
+    (inherit guile-g-golf)
+    (name "g-golf")))
 
 (define-public guile2.2-g-golf
   (package
@@ -2642,6 +2672,330 @@ object-oriented programming system, GOOPS.")
      (modify-inputs (package-inputs guile-g-golf)
        (replace "guile" guile-2.2)
        (replace "guile-lib" guile2.2-lib)))))
+
+(define-public g-golf-gtk-4-examples
+  (package
+    (inherit guile-g-golf)
+    (name "g-golf-gtk-4-examples")
+    (arguments
+     (list
+      #:modules `(((guix build guile-build-system)
+                   #:select
+                   (target-guile-effective-version))
+                  (srfi srfi-26)
+                  ,@%default-gnu-modules)
+      #:phases
+      (with-imported-modules `((guix build guile-build-system)
+                               ,@%default-gnu-imported-modules)
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'prepare-examples
+              (lambda _
+                (chdir "examples/gtk-4")
+                ;; Re-use the existing Makefile for its wildcard syntax.
+                (rename-file "Makefile.am" "Makefile")
+                ;; Add a rule to install the examples.  We install to the
+                ;; documentation directory where examples are usually located,
+                ;; but we will later create a copy in /bin for `guix shell'.
+                (let ((port (open-file "Makefile" "al")))
+                  (format port "
+prefix = ~a
+bindir = $(prefix)/bin
+examplesdir = $(prefix)/share/doc/g-golf/examples/gtk-4
+.PHONY: install
+install:
+	mkdir -p $(bindir)
+	mkdir -p $(examplesdir)/css
+	mkdir -p $(examplesdir)/demos
+	mkdir -p $(examplesdir)/images
+	mkdir -p $(examplesdir)/ui
+	for f in $(EXTRA_DIST); do      \\
+	  cp $$f $(examplesdir)/$$f;    \\
+	done
+	install demos/libfpt.so $(examplesdir)/demos
+" #$output)
+                  (close-port port))))
+            (delete 'configure)
+            (replace 'build
+              (lambda _
+                ;; The layout-manager-2 example calls `make', GCC at run-time.
+                ;; But since it would compile to the read-only /gnu/store, we
+                ;; deviate by compiling in advance in the build phase,
+                ;; ignoring failing `make' calls.  We do not propagate `make'.
+                (with-directory-excursion "demos"
+                  (when #$(%current-target-system)
+                    (substitute* "Makefile"
+                      (("^CC = gcc$")
+                       (string-append "CC = " #$(cc-for-target) "\n"))))
+                  (system* "make"))))
+            ;; There are no tests for examples, but we do an installcheck phase,
+            ;; which respects when #:tests? is turned off.  So delete 'check.
+            (delete 'check)
+            (add-before 'install 'patch-scm-files
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; `current-filename' calls in examples are broken.
+                (map (lambda (binary)
+                       (let ((installed-binary (string-append
+                                                #$output "\
+/share/doc/g-golf/examples/gtk-4/" binary)))
+                         (substitute* binary
+                           (("\\(current-filename\\)")
+                            (string-append "\"" installed-binary "\""))
+                           (("\\(getcwd\\)")
+                            (string-append "\"" #$output "\
+/share/doc/g-golf/examples/gtk-4\""))
+                           (("^exec guile ")
+                            (string-append
+                             "exec " (search-input-file inputs "/bin/guile")
+                             " ")))))
+                     (map (cut string-drop <> 2) ;strip ./ prefix
+                          (find-files "." (lambda (file stat)
+                                        ;executables or .scm modules
+                                            (or (= (stat:perms stat) #o755)
+                                                (string-suffix? ".scm"
+                                                                file))))))))
+            (add-after 'install 'wrap-binaries
+              (lambda* (#:key inputs #:allow-other-keys)
+                (let* ((version (target-guile-effective-version))
+                       (g-golf (assoc-ref inputs "guile-g-golf"))
+                       (gcairo (assoc-ref inputs "guile-cairo-next"))
+                       (adwaita-icons (assoc-ref inputs "adwaita-icon-theme"))
+                       (scm (string-append "/share/guile/site/" version))
+                       (go (string-append "/lib/guile/"
+                                          version "/site-ccache"))
+                       (binaries
+                        (find-files "." (lambda (file stat) ;executables
+                                          (= (stat:perms stat) #o755)))))
+                  (map (lambda (binary)
+                         (let ((installed-binary (string-append
+                                                  #$output "/\
+share/doc/g-golf/examples/gtk-4/" binary)))
+                           (wrap-program installed-binary
+                             `("GUILE_LOAD_PATH" prefix
+                               (,(string-append g-golf scm)
+                                ,(string-append gcairo scm)))
+                             `("GUILE_LOAD_COMPILED_PATH" prefix
+                               (,(string-append g-golf go)
+                                ,(string-append gcairo go)))
+                             `("GI_TYPELIB_PATH" prefix
+                               (,(getenv "GI_TYPELIB_PATH")))
+                             ;; Library path for libraries loaded by binaries.
+                             `("LD_LIBRARY_PATH" prefix
+                               (,(string-append gcairo "/lib")))
+                             `("XDG_DATA_DIRS" suffix
+                               (,(string-append adwaita-icons "/share"))))
+                           ;; Also create a copy in /bin for `guix shell'.
+                           (copy-file installed-binary
+                                      (string-append #$output "/bin/" binary))))
+                       binaries))))
+            ;; Add installcheck to ensure nothing breaks.
+            (add-after 'strip 'installcheck
+              (lambda* (#:key inputs tests? #:allow-other-keys)
+                (cond
+                 ((not tests?)
+                  (display "test suite not run\n"))
+                 (#$(%current-target-system)
+                  (display "cross-compiling; reftest skipped\n"))
+                 (else
+                  ;; Start an X server.
+                  (system "Xvfb :1 &")
+                  (setenv "DISPLAY" ":1")
+                  (let* ((g-golf-drawing (string-append
+                                          #$output "\
+/share/doc/g-golf/examples/gtk-4/drawing-widget"))
+                         (pid (spawn g-golf-drawing `(,g-golf-drawing)
+                                     #:search-path? #f)))
+                    (sleep 10) ;2s is enough on my machine
+                    (display "Taking a screenshot with G-Golf.\n")
+                    (system* "import" "-window" "root"
+                             "drawing-widget.out.png")
+                    (sleep 5) ;1s is enough on my machine
+                    (kill pid SIGINT)
+                    (waitpid pid))
+                  (let* ((python (search-input-file inputs "/bin/python3"))
+                         (pygobject-drawing #$(this-package-native-input
+                                               "drawing-widget.py"))
+                         (pid (spawn python `(,python ,pygobject-drawing)
+                                     #:search-path? #f)))
+                    (sleep 5) ;1s is enough on my machine
+                    (display "Taking a screenshot with Pygobject.\n")
+                    (system* "import" "-window" "root"
+                             "drawing-widget.ref.png")
+                    (sleep 5)
+                    (kill pid SIGINT)
+                    (waitpid pid))
+                  (if (= (pk (system* "compare" "-metric" "AE" "-fuzz" "1%"
+                                      "drawing-widget.out.png"
+                                      "drawing-widget.ref.png"
+                                      "drawing-widget.dif.png")) 0)
+                      (display "All good; they look the same.\n")
+                      (error "Reftest failed; screenshots differ."))))))))))
+    (inputs
+     (list adwaita-icon-theme
+           bash-minimal
+           gtk
+           guile-3.0
+           guile-cairo-next
+           guile-g-golf))
+    (native-inputs
+     (list pkg-config
+           which
+           ;; For installcheck:
+           imagemagick
+           python-minimal
+           python-pygobject
+           xorg-server-for-tests
+           ;; Python version of drawing-widget from
+           ;; https://lists.gnu.org/archive/html/guile-user/2024-05/msg00032.html
+           (origin
+             (method url-fetch)
+             (uri "\
+https://lists.gnu.org/archive/html/guile-user/2024-05/txtT_80XuINsX.txt")
+             (sha256
+              (base32
+               "07j2v159a3bb99i8kwbqrcgslcmhhnqa5ah53q2b9bdk8042grsx"))
+             (file-name "drawing-widget.py"))))
+    (propagated-inputs (list))
+    (synopsis "G-Golf GTK 4 examples")
+    (description
+     "G-Golf port of (a subset of) the upstream @code{gtk4-demo} examples in
+the @code{gtk:bin} Guix package output.  Run @command{guix edit
+g-golf-gtk-4-examples} for inspiration how to wrap G-Golf applications when
+writing a Guix package.")))
+
+(define-public g-golf-adw-1-examples
+  (package
+    (inherit guile-g-golf)
+    (name "g-golf-adw-1-examples")
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:tests? #f ;there are no tests for examples
+      #:modules `(((guix build guile-build-system)
+                   #:select
+                   (target-guile-effective-version))
+                  (guix build glib-or-gtk-build-system)
+                  (srfi srfi-26)
+                  ,@%default-gnu-modules)
+      #:phases
+      (with-imported-modules `((guix build guile-build-system)
+                               ,@%default-gnu-imported-modules)
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'prepare-examples
+              (lambda _
+                (chdir "examples/adw-1")
+                ;; Re-use the existing Makefile for its wildcard syntax.
+                (rename-file "Makefile.am" "Makefile")
+                (substitute* "Makefile"
+                  ;; Fix syntax error.
+                  (("hello-world")
+                   "hello-world \\"))
+                ;; Add a rule to install the examples.  We install to the
+                ;; documentation directory where examples are usually located,
+                ;; but we will later create a copy in /bin for `guix shell'.
+                (let ((port (open-file "Makefile" "al")))
+                  (format port "
+prefix = ~a
+bindir = $(prefix)/bin
+examplesdir = $(prefix)/share/doc/g-golf/examples/adw-1
+.PHONY: install
+install:
+	mkdir -p $(bindir)
+	mkdir -p $(examplesdir)/demo/icons
+	mkdir -p $(examplesdir)/demo/pages
+	for f in $(EXTRA_DIST); do      \\
+	  cp -r $$f $(examplesdir)/$$f; \\
+	done
+	cp demo/g-resources $(examplesdir)/demo/g-resources
+" #$output)
+                  (close-port port))))
+            (delete 'configure)
+            (replace 'build
+              (lambda _
+                ;; Create files for adwaita-1-demo needed in install phase.
+                (with-directory-excursion "demo"
+                  (system* "make")
+                  (system* "glib-compile-resources"
+                           "--target" "g-resources"
+                           "g-resources.xml"))))
+            (add-before 'install 'patch-scm-files
+              (lambda* (#:key inputs #:allow-other-keys)
+                ;; `current-filename' calls in examples are broken.
+                (map (lambda (binary)
+                       (let ((installed-binary (string-append
+                                                #$output "\
+/share/doc/g-golf/examples/adw-1/" binary)))
+                         (substitute* binary
+                           (("\\(current-filename\\)")
+                            (string-append "\"" installed-binary "\""))
+                           (("^exec guile ")
+                            (string-append
+                             "exec " (search-input-file inputs "/bin/guile")
+                             " ")))))
+                     (map (cut string-drop <> 2) ;strip ./ prefix
+                          (find-files "." (lambda (file stat)
+                                        ;executables or .scm modules
+                                            (or (= (stat:perms stat) #o755)
+                                                (string-suffix? ".scm"
+                                                                file))))))))
+            (add-after 'install 'wrap-binaries
+              (lambda* (#:key inputs #:allow-other-keys)
+                (let* ((version (target-guile-effective-version))
+                       (g-golf (assoc-ref inputs "guile-g-golf"))
+                       (adwaita-icons (assoc-ref inputs "adwaita-icon-theme"))
+                       (libadwaita-icons (assoc-ref inputs "libadwaita"))
+                       (scm (string-append "/share/guile/site/" version))
+                       (go (string-append "/lib/guile/"
+                                          version "/site-ccache"))
+                       (binaries
+                        (find-files "." (lambda (file stat) ;executables
+                                          (= (stat:perms stat) #o755)))))
+                  (map (lambda (binary)
+                         (let ((installed-binary (string-append
+                                                  #$output "\
+/share/doc/g-golf/examples/adw-1/" binary)))
+                           (wrap-program installed-binary
+                             `("GUILE_LOAD_PATH" prefix
+                               (,(string-append g-golf scm)))
+                             `("GUILE_LOAD_COMPILED_PATH" prefix
+                               (,(string-append g-golf go)))
+                             `("GI_TYPELIB_PATH" prefix
+                               (,(getenv "GI_TYPELIB_PATH")))
+                             `("GDK_PIXBUF_MODULE_FILE" =
+                               (,(getenv "GDK_PIXBUF_MODULE_FILE")))
+                             `("XDG_DATA_DIRS" suffix
+                               (,(string-append #$output "/bin/demo")
+                                ,(string-append adwaita-icons "/share")
+                                ,(string-append libadwaita-icons "/share"))))))
+                       binaries))))
+            (add-after 'wrap-binaries 'copy-binaries
+              (lambda _
+                (copy-file (string-append
+                            #$output "\
+/share/doc/g-golf/examples/adw-1/demo/adwaita-1-demo")
+                             (string-append
+                              #$output "/bin/adwaita-1-demo"))
+                                (copy-file (string-append
+                            #$output "\
+/share/doc/g-golf/examples/adw-1/hello-world")
+                             (string-append
+                              #$output "/bin/hello-world"))))))))
+    (inputs
+     (list adwaita-icon-theme
+           bash-minimal
+           libadwaita
+           (librsvg-for-system)
+           gtk
+           guile-3.0
+           guile-g-golf))
+    (native-inputs (list `(,glib "bin") ;for glib-compile-resources
+                         guile-3.0))
+    (propagated-inputs (list))
+    (synopsis "G-Golf Adw-1 examples")
+    (description
+     "G-Golf port of the upstream @code{adwaita-1-demo} example in the
+@code{libadwaita} Guix package.  It adds one simple hello-world example as
+well.  Run @command{guix edit g-golf-adw-1-examples} for inspiration how to
+wrap G-Golf applications when writing a Guix package.")))
 
 (define-public g-wrap
   (package
@@ -6294,8 +6648,8 @@ is an attempt to combine both into something useful.")
       (license license:asl2.0))))
 
 (define-public guile-knots
-  (let ((commit "13f11185765b436aaa96b070b31b7b093a2122b7")
-        (revision "10"))
+  (let ((commit "f41d1853ceb9f8d297fc756925a08f6d11d30d10")
+        (revision "12"))
     (package
     (name "guile-knots")
     (version (git-version "0" revision commit))
@@ -6306,7 +6660,7 @@ is an attempt to combine both into something useful.")
                     (commit commit)))
               (sha256
                (base32
-                "029nvm8dwvf1ha2ya2xmgwnh1z6582ig7ih3c70d4fwnpg4ir52f"))
+                "1rfl2dk57pc7dmvn7rm80mj4q0la5bv1x1smkq7mzsfpcyzps6mg"))
               (file-name (string-append name "-" version "-checkout"))))
     (build-system gnu-build-system)
     (native-inputs

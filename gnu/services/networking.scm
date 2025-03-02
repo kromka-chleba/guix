@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2013-2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2016, 2018, 2020 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 John Darrington <jmd@gnu.org>
@@ -390,18 +390,18 @@
                                  '()))
 
                            (false-if-exception (delete-file #$pid-file))
-                           (let ((pid (fork+exec-command
-                                       ;; By default dhclient uses a
-                                       ;; pre-standardization implementation of
-                                       ;; DDNS, which is incompatable with
-                                       ;; non-ISC DHCP servers; thus, pass '-I'.
-                                       ;; <https://kb.isc.org/docs/aa-01091>.
-                                       `(,dhclient "-nw" "-I"
-                                                   #$(string-append "-" version)
-                                                   "-pf" ,#$pid-file
-                                                   ,@config-file-args
-                                                   ,@ifaces))))
-                             (and (zero? (cdr (waitpid pid)))
+                           (let ((status (spawn-command
+                                          ;; By default dhclient uses a
+                                          ;; pre-standardization implementation of
+                                          ;; DDNS, which is incompatable with
+                                          ;; non-ISC DHCP servers; thus, pass '-I'.
+                                          ;; <https://kb.isc.org/docs/aa-01091>.
+                                          `(,dhclient "-nw" "-I"
+                                                      #$(string-append "-" version)
+                                                      "-pf" ,#$pid-file
+                                                      ,@config-file-args
+                                                      ,@ifaces))))
+                             (and (zero? status)
                                   (read-pid-file #$pid-file)))))
                 (stop #~(make-kill-destructor)))))))
     (package
@@ -936,7 +936,7 @@ CONFIG, an <opendht-configuration> object."
   (shepherd-service
    (documentation "Run an OpenDHT node.")
    (provision '(opendht dhtnode dhtproxy))
-   (requirement '(networking syslogd))
+   (requirement '(user-processes networking syslogd))
    (start #~(make-forkexec-constructor
              (list #$@(opendht-configuration->command-line-arguments config))
              #:user "opendht"
@@ -2036,7 +2036,7 @@ simulation."
            (stop #~(make-kill-destructor)))
           (shepherd-service
            (provision '(vswitchd))
-           (requirement '(ovsdb))
+           (requirement '(user-processes ovsdb))
            (documentation "Run the Open vSwitch daemon.")
            (start #~(make-forkexec-constructor
                      (list #$ovs-vswitchd "--pidfile")
@@ -2248,7 +2248,7 @@ table inet filter {
       (shepherd-service
        (documentation "Run the PageKite service.")
        (provision '(pagekite))
-       (requirement '(networking))
+       (requirement '(user-processes networking))
        (actions (list (shepherd-configuration-action config-file)))
        (start #~(make-forkexec-constructor
                  (list #$pagekite
@@ -2446,7 +2446,7 @@ See @command{yggdrasil -genconf} for config options.")
          ;; While IPFS is most useful when the machine is connected
          ;; to the network, only loopback is required for starting
          ;; the service.
-         (requirement '(loopback))
+         (requirement '(user-processes loopback))
          (documentation "Connect to the IPFS network")
          (start #~(make-forkexec-constructor
                    #$ipfs-daemon-command

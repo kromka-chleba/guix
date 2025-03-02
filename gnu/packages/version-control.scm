@@ -54,14 +54,16 @@
 ;;; Copyright © 2023 Josselin Poiret <dev@jpoiret.xyz>
 ;;; Copyright © 2024 Hilton Chain <hako@ultrarare.space>
 ;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2023 Ryan Desfosses <rdesfo@sdf.org>
 ;;; Copyright © 2024 Suhail Singh <suhail@bayesians.ca>
 ;;; Copyright © 2024 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2024 Javier Olaechea <pirata@gmail.com>
-;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Wilko Meyer <w@wmeyer.eu>
 ;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -183,7 +185,7 @@
 (define-public breezy
   (package
     (name "breezy")
-    (version "3.2.2")
+    (version "3.3.9")
     (source
      (origin
        (method url-fetch)
@@ -195,51 +197,106 @@
        (snippet '(for-each delete-file (find-files "." "\\pyx.c$")))
        (sha256
         (base32
-         "1md4b6ajawf5h50fqizmjj0g833ihc674dh7fn0mvl4d412nwyhq"))
-       (patches (search-patches "breezy-fix-gio.patch"))))
-    (build-system python-build-system)
+         "1n6mqd1iy50537kb4lsr52289yyr1agmkxpchxlhb9682zr8nn62"))))
+    (build-system cargo-build-system)
     (arguments
      (list
-      #:tests? #f                       ;FIXME: the test suite hangs
+      #:cargo-inputs (list rust-lazy-static-1
+                           rust-pyo3-0.22
+                           rust-regex-1)
+      #:install-source? #f
+      #:modules
+      '((guix build cargo-build-system)
+        ((guix build python-build-system) #:prefix py:)
+        (guix build utils))
+      #:imported-modules
+      `(,@%cargo-build-system-modules
+        ,@%python-build-system-modules)
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'ensure-no-mtimes-pre-1980
+            (assoc-ref py:%standard-phases 'ensure-no-mtimes-pre-1980))
+          (add-after 'ensure-no-mtimes-pre-1980 'enable-bytecode-determinism
+            (assoc-ref py:%standard-phases 'enable-bytecode-determinism))
+          (add-after 'enable-bytecode-determinism 'ensure-no-cythonized-files
+            (assoc-ref py:%standard-phases 'ensure-no-cythonized-files))
           (add-after 'unpack 'patch-test-shebangs
             (lambda _
               (substitute* (append (find-files "breezy/bzr/tests")
                                    (find-files "breezy/tests"))
                 (("#!/bin/sh")
                  (format #f "#!~a" (which "sh"))))))
-          (replace 'check
+          (add-before 'build 'adjust-for-python-3.10
+            (lambda _
+              (substitute* '("breezy/doc_generate/__init__.py"
+                             "breezy/tests/test_selftest.py")
+                ;; AttributeError: module 'datetime' has no attribute 'UTC'
+                ;; This only works for python >= 3.11
+                (("datetime.UTC") "datetime.timezone.utc"))))
+          (replace 'build
+            (assoc-ref py:%standard-phases 'build))
+          (delete 'check)             ;moved after the install phase
+          (replace 'install
+            (assoc-ref py:%standard-phases 'install))
+          (add-after 'install 'add-install-to-pythonpath
+            (assoc-ref py:%standard-phases 'add-install-to-pythonpath))
+          (add-after 'add-install-to-pythonpath 'add-install-to-path
+            (assoc-ref py:%standard-phases 'add-install-to-path))
+          (add-after 'add-install-to-path 'install-completion
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out  (assoc-ref outputs "out"))
+                     (bash (string-append out "/share/bash-completion"
+                                          "/completions")))
+                (install-file "contrib/bash/brz" bash))))
+          (add-after 'add-install-to-path 'wrap
+            (assoc-ref py:%standard-phases 'wrap))
+          (add-after 'wrap 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
-                ;; The test_read_bundle tests fails with "TypeError: a
-                ;; bytes-like object is required, not '_ResultTuple'" (see:
-                ;; https://bugs.launchpad.net/brz/+bug/1968415/comments/4).
-                (substitute* "breezy/bzr/tests/__init__.py"
-                  (("'test_read_bundle'," all)
-                   (string-append "# " all)))
                 (setenv "BZR_EDITOR" "nano")
-                (setenv "HOME" "/tmp")
-                (invoke "testr" "init")
-                (invoke "testr" "run")))))))
-    (native-inputs
-     (list nano                         ;for tests
-           python-cython
-           python-docutils
-           python-subunit
-           python-testrepository))
-    (inputs
-     (list gettext-minimal
-           python-configobj
-           python-dulwich
-           python-fastbencode
-           python-fastimport
-           python-launchpadlib
-           python-paramiko
-           python-patiencediff
-           python-pycryptodome
-           python-pygobject
-           python-pygpgme))
+                (invoke "brz" "selftest" "--verbose" "--parallel=fork"
+                        ;; This test hangs
+                        "-x" "breezy.tests.blackbox.test_serve"
+                        ;; No GnuPG key results for pattern: bazaar@example.com
+                        "-x" "breezy.tests.test_gpg"
+                        ;; compgen: command not found
+                        "-x" "bash_completion"
+                        ;; No such file or directory: '/etc/mtab'
+                        "-x" "breezy.tests.blackbox.test_diff.TestExternalDiff.test_external_diff"
+                        ;; Value "/etc/ssl/certs/ca-certificates.crt" is not valid for "ssl.ca_certs"
+                        "-x" "breezy.tests.test_https_urllib.CaCertsConfigTests.test_default_exists"
+                        ;; Unknown Failure
+                        "-x" "breezy.tests.test_plugins.TestLoadPluginAt.test_compiled_loaded"
+                        "-x" "breezy.tests.test_plugins.TestPlugins.test_plugin_get_path_pyc_only"
+                        "-x" "breezy.tests.test_selftest.TestActuallyStartBzrSubprocess.test_start_and_stop_bzr_subprocess_send_signal"))))
+          (add-before 'strip 'rename-pth-file
+            (assoc-ref py:%standard-phases 'rename-pth-file)))))
+    (native-inputs (list gettext-minimal
+                         python-wrapper
+                         python-cython
+                         python-setuptools
+                         python-setuptools-gettext
+                         python-setuptools-rust
+                         python-tomli
+                         python-wheel
+                         ;; tests
+                         nano
+                         python-testtools
+                         python-packaging
+                         python-subunit))
+    (inputs (list python-configobj
+                  python-dulwich
+                  python-fastbencode
+                  python-fastimport
+                  python-launchpadlib
+                  python-merge3
+                  python-paramiko
+                  python-gpg
+                  python-patiencediff
+                  python-pygithub
+                  python-pyyaml
+                  python-tzlocal
+                  python-urllib3))
     (home-page "https://www.breezy-vcs.org/")
     (synopsis "Decentralized revision control system")
     (description
@@ -1123,7 +1180,7 @@ provides an integration with GitHub and GitLab.")
 (define-public got
   (package
     (name "got")
-    (version "0.103")
+    (version "0.108")
     (source (origin
               (method url-fetch)
               (uri
@@ -1132,7 +1189,7 @@ provides an integration with GitHub and GitLab.")
                   version ".tar.gz"))
               (sha256
                (base32
-                "0y18961xrj4rja850i31gadiaps2qnkfb4jlramlz9akyf9mwh1j"))))
+                "1qnk5d1vyxyyqr6sc6wkc7b7w274zr0jv8vdq13sx1rmvl5353bc"))))
     (inputs
      (list libevent
            `(,util-linux "lib")
@@ -1403,6 +1460,52 @@ write native speed custom Git applications in any language with bindings.")
                    ;; Tests may be disabled if cross-compiling.
                    (format #t "Test suite not run.~%"))))))))))
 
+(define-public git-issue
+  (let ((commit "d056998566d30235072b97982756ff607e9ecce9")
+        (revision "0"))
+    (package
+      (name "git-issue")
+      (version (git-version "0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/dspinellis/git-issue")
+                      (commit commit)))
+                (sha256
+                 (base32
+                  "0002bjzv6rgpxbbsjiswg73prl7iq217qvafbxhsjp2wjj00i0sm"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list #:make-flags #~(list (string-append "PREFIX=" #$output))
+             #:test-target "test"
+             #:phases
+             #~(modify-phases %standard-phases
+                 (delete 'configure) ;no configure script
+                 (add-before 'build 'generate-docs
+                   (lambda _
+                     (invoke "make" "sync-docs")))
+                 (add-before 'check 'fix-tests
+                   (lambda _
+                     (substitute* "test.sh"
+                       ;; Skip 3 failing tests.
+                       (("fail \"Uncommitted files sync-docs.*")
+                        "ok \"ignored\"\n")
+                       (("try_grep '\\^Tags:\\.\\*cloned'")
+                        "ok \"ignored\"")
+                       (("try \"\\$gi\" tag \"\\$issue\" cloned")
+                        "ok \"ignored\"")
+                       ;; Fix a test.
+                       (("#!/bin/sh") (string-append "#!" (which "sh")))))))))
+      (native-inputs (list git-minimal util-linux))
+      (inputs (list jq curl))
+      (synopsis "Git-based decentralized issue management")
+      (description
+       "This is a minimalist decentralized issue management system based on
+Git, offering (optional) bidirectional integration with GitHub and GitLab
+issue management.")
+      (home-page "https://github.com/dspinellis/git-issue")
+      (license license:gpl3+))))
+
 (define-public git-crypt
   (package
     (name "git-crypt")
@@ -1423,7 +1526,7 @@ write native speed custom Git applications in any language with bindings.")
      (list docbook-xml-4.2 docbook-xsl libxslt))
     (arguments
      (list
-      #:tests? #f ; No tests.
+      #:tests? #f                       ; No tests.
       #:make-flags
       #~(list
          "ENABLE_MAN=yes"

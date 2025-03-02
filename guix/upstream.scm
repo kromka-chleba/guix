@@ -263,16 +263,17 @@ them matches."
 (define* (package-latest-release package
                                  #:optional
                                  (updaters (force %updaters))
-                                 #:key (version #f))
-  "Return an upstream source to update PACKAGE, a <package> object, or #f if
-none of UPDATERS matches PACKAGE.  When several updaters match PACKAGE, try
-them until one of them returns an upstream source.  It is the caller's
-responsibility to ensure that the returned source is newer than the current
-one."
+                                 #:key version partial-version?)
+  "Return an <upstream-source> object to update PACKAGE, a <package> object,
+or #f if none of UPDATERS matches PACKAGE.  When several updaters match
+PACKAGE, try them until one of them returns an upstream source.  It is the
+caller's responsibility to ensure that the returned source is newer than the
+current one."
   (any (match-lambda
          (($ <upstream-updater> name description pred import)
           (and (pred package)
-               (import package #:version version))))
+               (import package #:version version
+                       #:partial-version? partial-version?))))
        updaters))
 
 (define* (package-latest-release* package
@@ -314,14 +315,14 @@ than that of PACKAGE."
                                         #$output)))))
 
 (define* (download-tarball store url signature-url
-                           #:key (key-download 'interactive) key-server)
+                           #:key (key-download 'auto) key-server)
   "Download the tarball at URL to the store; check its OpenPGP signature at
 SIGNATURE-URL, unless SIGNATURE-URL is false.  On success, return the tarball
 file name; return #f on failure (network failure or authentication failure).
 
 KEY-DOWNLOAD specifies a download policy for missing OpenPGP keys; allowed
-values: 'interactive' (default), 'always', and 'never'; KEY-SERVER specifies
-the OpenPGP key server where the key should be looked up."
+values: 'auto' (default), 'always', 'interactive' and 'never'; KEY-SERVER
+specifies the OpenPGP key server where the key should be looked up."
   (let ((tarball (download-to-store store url)))
     (if (not signature-url)
         tarball
@@ -511,17 +512,22 @@ SOURCE, an <upstream-source>."
 
 (define* (package-update store package
                          #:optional (updaters (force %updaters))
-                         #:key (version #f)
-                         (key-download 'interactive) key-server)
+                         #:key version partial-version?
+                         (key-download 'auto) key-server)
   "Return the new version, the file name of the new version tarball, and input
 changes for PACKAGE; return #f (three values) when PACKAGE is up-to-date;
 raise an error when the updater could not determine available releases.
 KEY-DOWNLOAD specifies a download policy for missing OpenPGP keys; allowed
-values: 'always', 'never', and 'interactive' (default).
+values: 'always', 'auto' (default), 'never', and 'interactive'.
 
 When VERSION is specified, update PACKAGE to that version, even if that is a
-downgrade."
-  (match (package-latest-release package updaters #:version version)
+downgrade.  When PARTIAL-VERSION? is true, treat VERSION as having been only
+partially specified, in which case the package will be updated to the newest
+compatible version if there are no exact match for VERSION.  For example,
+providing \"46\" as the version may update the package to version \"46.6.4\"."
+  (match (package-latest-release package updaters
+                                 #:version version
+                                 #:partial-version? partial-version?)
     ((? upstream-source? source)
      (if (or (version>? (upstream-source-version source)
                         (package-version package))
