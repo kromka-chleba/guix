@@ -9154,6 +9154,39 @@ Also included are keybindings for spec files and Dired buffers, as well as
 snippets for yasnippet.")
       (license license:gpl3+))))
 
+(define-public emacs-vhdl-ext
+  (package
+    (name "emacs-vhdl-ext")
+    (version "0.5.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gmlarumbe/vhdl-ext/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0vgmhsgrh8x8br5grnh1jnf01r2q148xxyf028jgaq09wwjkdvkc"))))
+    (build-system emacs-build-system)
+    (arguments
+     ;; the testing framework test-hdl requires network
+     `(#:tests? #f
+       #:test-command '("make")))
+    (propagated-inputs (list emacs-ag
+                             emacs-async
+                             emacs-flycheck
+                             emacs-hydra
+                             emacs-lsp-mode
+                             emacs-outshine
+                             emacs-ripgrep
+                             emacs-vhdl-ts-mode))
+    (home-page "https://github.com/gmlarumbe/vhdl-ext/")
+    (synopsis "Extensions to Emacs @code{vhdl-mode}")
+    (description "This package provides additional features and utilities for
+@code{vhdl-mode}, such as snippet selection via @code{hydra}, code navigation, code
+formatting, and code folding.")
+    (license license:gpl3+)))
+
 (define-public emacs-vhdl-mode
   (package
     (name "emacs-vhdl-mode")
@@ -10232,18 +10265,25 @@ by a query, so both a link can refer to several mails.")
 (define-public emacs-debbugs
   (package
     (name "emacs-debbugs")
-    (version "0.43")
+    (version "0.44")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://elpa.gnu.org/packages/debbugs-"
                            version ".tar"))
        (sha256
-        (base32 "1jzdr7bp48incg1bdnq4s1ldnyp6hncz0mydy0bizk3c68chsls5"))))
+        (base32 "02kb24rscbhs4w6xknf5d6l1cicy99b0004hr20pkki6faapzpx2"))))
     (build-system emacs-build-system)
-    (arguments '(#:include '("\\.el$" "\\.wsdl$" "\\.info$")))
-    (propagated-inputs
-     (list emacs-soap-client))
+    (arguments
+     (list
+      #:include #~(list "\\.el$" "\\.wsdl$" "\\.info$")
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'add-test-dir-to-emacs-load-path
+                     (lambda _
+                       (setenv "EMACSLOADPATH"
+                               (string-append (getcwd) "/test:"
+                                              (getenv "EMACSLOADPATH"))))))))
+    (propagated-inputs (list emacs-soap-client))
     (home-page "https://elpa.gnu.org/packages/debbugs.html")
     (synopsis "Access the Debbugs bug tracker in Emacs")
     (description
@@ -24760,17 +24800,17 @@ close, copy, cut, paste, undo, redo.")
     ;; The emacs package version does not match the password-store version,
     ;; even though it is part of the same repository.  When updating, look at
     ;; the version declared in password-store.el.
-    (version "2.3.0")
+    (version "2.3.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "git://git.zx2c4.com/password-store")
-             (commit "26d2dae04bb76a87be6960861c10432820cd5d55")))
+             (url "https://git.zx2c4.com/password-store")
+             (commit "b5e965a838bb68c1227caa2cdd874ba496f10149")))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1pkx6pgkkpddxrshzq3x8ilfwqjw9gawnbbskcbssxc88wrpbcjb"))))
+         "0hb5zm7hdp7vmqk39a9s1iyncx4swmwfq30dnnzkjk2y08lnb7ac"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -24780,10 +24820,8 @@ close, copy, cut, paste, undo, redo.")
             (lambda _
               (copy-file "contrib/emacs/password-store.el"
                          "password-store.el")
-              (delete-file-recursively "contrib")
-              (delete-file-recursively "man")
-              (delete-file-recursively "src")
-              (delete-file-recursively "tests")))
+              (for-each delete-file-recursively
+                        '("contrib" "man" "src" "tests"))))
           (add-after 'extract-el-file 'patch-executables
             (lambda* (#:key inputs #:allow-other-keys)
               (emacs-substitute-variables "password-store.el"
@@ -24792,7 +24830,7 @@ close, copy, cut, paste, undo, redo.")
     (inputs
      (list password-store))
     (propagated-inputs
-     (list emacs-s emacs-with-editor))
+     (list emacs-with-editor))
     (home-page "https://git.zx2c4.com/password-store/tree/contrib/emacs")
     (synopsis "Password store (pass) support for Emacs")
     (description
@@ -39843,6 +39881,29 @@ support for in-buffer highlighting of defined terms and high-quality exports
 across all Org export back-ends.")
       (license license:gpl3+))))
 
+(define-public emacs-org-gnosis
+  (package
+    (name "emacs-org-gnosis")
+    (version "0.0.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.thanosapollo.org/org-gnosis")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15r305lbci797nlh6m3xy1q0cwfz85x7k76adp71z8706n2w9j71"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-compat emacs-emacsql))
+    (home-page "https://thanosapollo.org/projects/org-gnosis/")
+    (synopsis "Roam-like note taking system.")
+    (description
+     "Org Gnosis is a knowledge management tool that leverages Org mode for
+storing notes and journal entries, integrating them with an SQLite database
+for efficient retrieval and relationship mapping.")
+    (license license:gpl3+)))
+
 (define-public emacs-uml-mode
   ;; Package has no release.  Version is extracted from "Version:" keyword in
   ;; main file.
@@ -41965,31 +42026,25 @@ on the chosen style."))))
       (license license:gpl3+)))) ; License is in pyimport.el
 
 (define-public emacs-straight-el
-  (let ((commit "b3760f5829dba37e855add7323304561eb57a3d4")
-        (revision "3"))
+  (let ((commit "44a866f28f3ded6bcd8bc79ddc73b8b5044de835")
+        (revision "4"))
     (package
       (name "emacs-straight-el")
       (version (git-version "0" revision commit))
       (source
        (origin
          (method git-fetch)
-         (uri
-          (git-reference
-           (url "https://github.com/radian-software/straight.el")
-           (commit commit)))
+         (uri (git-reference
+               (url "https://github.com/radian-software/straight.el/")
+               (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "10kvm2gzn7yf2wkfprq7cm6m2la83rdi394rcrsxql3yyhd0v599"))))
+          (base32 "086ly0szbf1lxkdi76jzjd6znz9shrmdbw7a9mr977s27219l8mf"))))
       (build-system emacs-build-system)
       (arguments
        (list
         #:tests? #t
-        #:test-command
-        #~(list "emacs" "-Q" "--batch"
-                "-L" "."
-                "--load" "ert"
-                "--load" "tests/straight-test.el"
-                "--eval" "(progn (require 'straight-ert-print-hack) (ert-run-tests-batch-and-exit))")
+        #:test-command '(list "make" "tests")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-git-executable
@@ -41998,14 +42053,9 @@ on the chosen style."))))
                 (substitute* "straight.el"
                   (("\"git\"")
                    (string-append "\""
-                                  (search-input-file inputs "/bin/git")
-                                  "\""))))))))
-      (native-inputs
-       (list texinfo))
-      (inputs
-       (list git))
-      (propagated-inputs
-       (list emacs-magit))
+                                  (search-input-file inputs "/bin/git") "\""))))))))
+      (inputs (list git))
+      (propagated-inputs (list emacs-magit))
       (home-page "https://github.com/radian-software/straight.el/")
       (synopsis "Purely functional package manager for the Emacs hacker")
       (description

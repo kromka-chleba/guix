@@ -21,6 +21,7 @@
 
 (define-module (gnu packages stenography)
   #:use-module (guix build-system python)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -31,11 +32,13 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages libusb)
+  #:use-module (gnu packages linux)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
-  #:use-module (gnu packages wxwidgets))
+  #:use-module (gnu packages wxwidgets)
+  #:use-module (gnu packages xorg))
 
 (define-public python-plover-stroke
   (package
@@ -57,7 +60,7 @@
 (define-public plover
   (package
     (name "plover")
-    (version "4.0.0.dev12")
+    (version "4.0.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -66,8 +69,8 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0vk6nh2gpn7f7rv2spi2a7n3m0d9kaan6r22mx3vwxprpbvrkbm8"))))
-    (build-system python-build-system)
+                "1vipma8jqn0ypjy5zm185ld10kxnz7c8ywr4cz5qdwa5p80yr07n"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
@@ -82,15 +85,26 @@
                         ;; FIXME: Ignore failing test.
                         "--ignore" "test/gui_qt/test_dictionaries_widget.py"))))
           ;; Ensure that icons are found at runtime.
-          (add-after 'install 'wrap-executable
+          (add-after 'wrap 'wrap-executable
             (lambda* (#:key inputs #:allow-other-keys)
               (wrap-program (string-append #$output "/bin/plover")
                 `("QT_PLUGIN_PATH" prefix
                   (,(search-input-directory inputs "/lib/qt5/plugins/")))
                 `("LD_LIBRARY_PATH" prefix
-                  (,(string-append #$(this-package-input "dbus") "/lib")))))))))
+                  (,(string-append #$(this-package-input "dbus") "/lib"))))))
+          (add-after 'wrap-executable 'run-on-xwayland
+            ;; By default, Plover won't run on Wayland, and requires a call to
+            ;; xhost to run on XWayland.
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((plover (string-append #$output "/bin/plover"))
+                     (xhost (search-input-file inputs "bin/xhost")))
+                (substitute* plover
+                  (("exec .*" line)
+                   (string-append xhost " +si:localuser:$USER\n"
+                                  line)))))))))
     (native-inputs
      (list python-babel
+           python-evdev
            python-mock
            python-pytest
            python-pytest-qt
@@ -107,7 +121,8 @@
            python-rtf-tokenize
            python-wcwidth
            python-xlib
-           qtsvg-5))
+           qtsvg-5
+           xhost))
     (home-page "https://www.openstenoproject.org/plover/")
     (synopsis "Stenography engine")
     (description
