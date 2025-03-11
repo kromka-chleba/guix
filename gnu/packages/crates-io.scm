@@ -32880,6 +32880,28 @@ SystemTime}}.")
      "This package provides a Humantime serialization timestamp format.")
     (license (list license:expat license:asl2.0))))
 
+(define-public rust-hxdmp-0.2
+  (package
+    (name "rust-hxdmp")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "hxdmp" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1c66j4z423w2lc3iqzzbg10y8ip58i90lpx7mimq8rklibr2fyx1"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:tests? #false                  ;doctest fails.
+       #:cargo-development-inputs (("rust-lazy-static" ,rust-lazy-static-1))))
+    (home-page "https://github.com/rustyhorde/hxdmp")
+    (synopsis "Small utility to create hexdump output from byte slices")
+    (description
+     "This package provides a small utility to create hexdump output from byte
+slices.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public rust-hyphenation-0.8
   (package
     (name "rust-hyphenation")
@@ -33784,6 +33806,31 @@ ignore files such as @file{.gitignore} against file paths.")
     (description "This package provides functions to find, parse, and interpret
 ignore files.")
     (license license:asl2.0)))
+
+(define-public rust-ihex-3
+  (package
+    (name "rust-ihex")
+    (version "3.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "ihex" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1wlzfyy5fsqgpki5vdapw0jjczqdm6813fgd3661wf5vfi3phnin"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-test-flags '("--"
+                            "--skip=test_reader_respects_all_newline_formats")))
+    (home-page "http://github.com/martinmroz/ihex")
+    (synopsis
+     "Rust library for parsing and generating Intel HEX (or IHEX) objects")
+    (description
+     "This package provides a Rust library for parsing and generating Intel
+HEX (or IHEX) objects.  This format is commonly used for representing compiled
+program code and data to be loaded into a microcontroller, flash memory or
+ROM.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public rust-im-rc-15
   (package

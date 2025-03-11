@@ -20,6 +20,7 @@
 ;;; Copyright © 2022 Sughosha <sughosha@proton.me>
 ;;; Copyright © 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
 ;;; Copyright © 2023 Eidvilas Markevičius <markeviciuseidvilas@gmail.com>
+;;; Copyright © 2025 aurtzy <aurtzy@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -760,28 +761,50 @@ faster window switching.")
                  "gtk_update_icon_cache: false")
                 (("update_desktop_database: true")
                  "update_desktop_database: false"))))
+          ;; TODO: Remove after 'patch-shebangs is fixed to handle '/usr/bin/env -S'
+          ;; shebangs (see bug#74450).
+          (add-after 'unpack 'patch-gjs-shebangs
+            (lambda* (#:key inputs #:allow-other-keys)
+              (for-each (lambda (file)
+                          (substitute* file
+                            (("^#!/usr/bin/env -S gjs.*$")
+                             (string-append "#!" (which "gjs") " -m"))))
+                        '("installed-tests/minijasmine"
+                          "src/gsconnect-preferences"
+                          "src/service/nativeMessagingHost.js"
+                          "src/service/daemon.js"
+                          "webextension/gettext.js"))))
           (add-before 'configure 'fix-paths
             (lambda* (#:key inputs #:allow-other-keys)
               (let ((gapplication (search-input-file inputs "/bin/gapplication"))
                     (gi-typelib-path (getenv "GI_TYPELIB_PATH")))
-                (substitute* "data/org.gnome.Shell.Extensions.GSConnect.desktop.in"
-                  (("gapplication") gapplication))
                 (for-each
                  (lambda (file)
                    (substitute* file
-                     (("'use strict';")
-                      (string-append "'use strict';\n\n"
-                                     "'" gi-typelib-path "'.split(':').forEach("
-                                     "path => imports.gi.GIRepository.Repository."
-                                     "prepend_search_path(path));"))))
-                 '("src/extension.js" "src/prefs.js")))))
-          (add-after 'install 'wrap-daemons
+                     (("gapplication") gapplication)))
+                 '("data/org.gnome.Shell.Extensions.GSConnect.desktop.in"
+                   "data/org.gnome.Shell.Extensions.GSConnect.Preferences.desktop.in"))
+                (for-each (lambda (file)
+                            (with-atomic-file-replacement
+                             file
+                             (lambda (input output)
+                               (format output "~a"
+                                       (string-append
+                                        "'" gi-typelib-path "'.split(':').forEach("
+                                        "path => imports.gi.GIRepository.Repository."
+                                        "prepend_search_path(path));\n"))
+                               (dump-port input output))))
+                          '("src/extension.js" "src/prefs.js")))))
+          (add-after 'install 'wrap-programs
             (lambda _
               (let* ((out #$output)
-                     (service-dir
-                      (string-append out "/share/gnome-shell/extensions"
-                                     "/gsconnect@andyholmes.github.io/service"))
+                     (gsconnect-dir (string-append
+                                     out "/share/gnome-shell/extensions"
+                                     "/gsconnect@andyholmes.github.io"))
+                     (service-dir (string-append gsconnect-dir "/service"))
                      (gi-typelib-path (getenv "GI_TYPELIB_PATH")))
+                (wrap-program (string-append gsconnect-dir "/gsconnect-preferences")
+                  `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path)))
                 (wrap-program (string-append service-dir "/daemon.js")
                   `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path)))))))))
     (inputs

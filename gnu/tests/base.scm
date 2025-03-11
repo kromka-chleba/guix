@@ -27,17 +27,15 @@
   #:autoload   (gnu system image) (system-image)
   #:use-module (gnu system privilege)
   #:use-module (gnu system shadow)
-  #:use-module (gnu system nss)
   #:use-module (gnu system vm)
   #:use-module (gnu services)
   #:use-module (gnu services base)
-  #:use-module (gnu services dbus)
-  #:use-module (gnu services avahi)
-  #:use-module (gnu services mcron)
   #:use-module (gnu services shepherd)
   #:use-module (gnu services networking)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages bootstrap)
+  #:use-module (gnu packages guile)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages ocr)
@@ -49,6 +47,7 @@
   #:use-module (guix monads)
   #:use-module (guix modules)
   #:use-module (guix packages)
+  #:use-module (guix profiles)
   #:use-module (guix utils)
   #:use-module ((srfi srfi-1) #:hide (partition))
   #:use-module (ice-9 match)
@@ -60,9 +59,11 @@
             %test-halt
             %test-root-unmount
             %test-cleanup
-            %test-mcron
-            %test-nss-mdns
-            %test-activation))
+            %test-activation
+
+            %hello-dependencies-manifest
+            guix-daemon-test-cases
+            %test-guix-daemon))
 
 (define %simple-os
   (simple-operating-system))
@@ -874,248 +875,6 @@ non-ASCII names from /tmp.")
 
 
 ;;;
-;;; Mcron.
-;;;
-
-(define %mcron-os
-  ;; System with an mcron service, with one mcron job for "root" and one mcron
-  ;; job for an unprivileged user.
-  (let ((job1 #~(job '(next-second '(0 5 10 15 20 25 30 35 40 45 50 55))
-                     (lambda ()
-                       (unless (file-exists? "witness")
-                        (call-with-output-file "witness"
-                          (lambda (port)
-                            (display (list (getuid) (getgid)) port)))))))
-        (job2 #~(job next-second-from
-                     (lambda ()
-                       (call-with-output-file "witness"
-                         (lambda (port)
-                           (display (list (getuid) (getgid)) port))))
-                     #:user "alice"))
-        (job3 #~(job next-second-from             ;to test $PATH
-                     "touch witness-touch")))
-    (simple-operating-system
-     (service mcron-service-type
-              (mcron-configuration (jobs (list job1 job2 job3)))))))
-
-(define (run-mcron-test name)
-  (define os
-    (marionette-operating-system
-     %mcron-os
-     #:imported-modules '((gnu services herd)
-                          (guix combinators))))
-
-  (define test
-    (with-imported-modules '((gnu build marionette))
-      #~(begin
-          (use-modules (gnu build marionette)
-                       (srfi srfi-64)
-                       (ice-9 match))
-
-          (define marionette
-            (make-marionette (list #$(virtual-machine os))))
-
-          (test-runner-current (system-test-runner #$output))
-          (test-begin "mcron")
-
-          (test-assert "service running"
-            (marionette-eval
-             '(begin
-                (use-modules (gnu services herd))
-                (start-service 'mcron))
-             marionette))
-
-          ;; Make sure root's mcron job runs, has its cwd set to "/root", and
-          ;; runs with the right UID/GID.
-          (test-equal "root's job"
-            '(0 0)
-            (wait-for-file "/root/witness" marionette))
-
-          ;; Likewise for Alice's job.  We cannot know what its GID is since
-          ;; it's chosen by 'groupadd', but it's strictly positive.
-          (test-assert "alice's job"
-            (match (wait-for-file "/home/alice/witness" marionette)
-              ((1000 gid)
-               (>= gid 100))))
-
-          ;; Last, the job that uses a command; allows us to test whether
-          ;; $PATH is sane.
-          (test-equal "root's job with command"
-            ""
-            (wait-for-file "/root/witness-touch" marionette
-                           #:read '(@ (ice-9 rdelim) read-string)))
-
-          ;; Make sure the 'schedule' action is accepted.
-          (test-equal "schedule action"
-            '(#t)                                 ;one value, #t
-            (marionette-eval '(with-shepherd-action 'mcron ('schedule) result
-                                result)
-                             marionette))
-
-          (test-end))))
-
-  (gexp->derivation name test))
-
-(define %test-mcron
-  (system-test
-   (name "mcron")
-   (description "Make sure the mcron service works as advertised.")
-   (value (run-mcron-test name))))
-
-
-;;;
-;;; Avahi and NSS-mDNS.
-;;;
-
-(define %avahi-os
-  (operating-system
-    (inherit %simple-os)
-    (name-service-switch %mdns-host-lookup-nss)
-    (services (cons* (service avahi-service-type
-                              (avahi-configuration (debug? #t)))
-                     (service dbus-root-service-type)
-                     (service dhcp-client-service-type) ;needed for multicast
-
-                     ;; Enable heavyweight debugging output.
-                     (modify-services (operating-system-user-services
-                                       %simple-os)
-                       (nscd-service-type config
-                                          => (nscd-configuration
-                                              (inherit config)
-                                              (debug-level 3)
-                                              (log-file "/dev/console")))
-                       (syslog-service-type config
-                                            =>
-                                            (syslog-configuration
-                                             (inherit config)
-                                             (config-file
-                                              (plain-file
-                                               "syslog.conf"
-                                               "*.* /dev/console\n")))))))))
-
-(define (run-nss-mdns-test)
-  ;; Test resolution of '.local' names via libc.  Start the marionette service
-  ;; *after* nscd.  Failing to do that, libc will try to connect to nscd,
-  ;; fail, then never try again (see '__nss_not_use_nscd_hosts' in libc),
-  ;; leading to '.local' resolution failures.
-  (define os
-    (marionette-operating-system
-     %avahi-os
-     #:requirements '(nscd)
-     #:imported-modules '((gnu services herd)
-                          (guix combinators))))
-
-  (define mdns-host-name
-    (string-append (operating-system-host-name os)
-                   ".local"))
-
-  (define test
-    (with-imported-modules '((gnu build marionette))
-      #~(begin
-          (use-modules (gnu build marionette)
-                       (srfi srfi-1)
-                       (srfi srfi-64)
-                       (ice-9 match))
-
-          (define marionette
-            (make-marionette (list #$(virtual-machine os))))
-
-          (mkdir #$output)
-          (chdir #$output)
-
-          (test-runner-current (system-test-runner))
-          (test-begin "avahi")
-
-          (test-assert "nscd PID file is created"
-            (marionette-eval
-             '(begin
-                (use-modules (gnu services herd))
-                (start-service 'nscd))
-             marionette))
-
-          (test-assert "nscd is listening on its socket"
-            (marionette-eval
-             ;; XXX: Work around a race condition in nscd: nscd creates its
-             ;; PID file before it is listening on its socket.
-             '(let ((sock (socket PF_UNIX SOCK_STREAM 0)))
-                (let try ()
-                  (catch 'system-error
-                    (lambda ()
-                      (connect sock AF_UNIX "/var/run/nscd/socket")
-                      (close-port sock)
-                      (format #t "nscd is ready~%")
-                      #t)
-                    (lambda args
-                      (format #t "waiting for nscd...~%")
-                      (usleep 500000)
-                      (try)))))
-             marionette))
-
-          (test-assert "avahi is running"
-            (marionette-eval
-             '(begin
-                (use-modules (gnu services herd))
-                (start-service 'avahi-daemon))
-             marionette))
-
-          (test-assert "network is up"
-            (marionette-eval
-             '(begin
-                (use-modules (gnu services herd))
-                (start-service 'networking))
-             marionette))
-
-          (test-equal "avahi-resolve-host-name"
-            0
-            (marionette-eval
-             '(system*
-               "/run/current-system/profile/bin/avahi-resolve-host-name"
-               "-v" #$mdns-host-name)
-             marionette))
-
-          (test-equal "avahi-browse"
-            0
-            (marionette-eval
-             '(system* "/run/current-system/profile/bin/avahi-browse" "-avt")
-             marionette))
-
-          (test-assert "getaddrinfo .local"
-            ;; Wait for the 'avahi-daemon' service and perform a resolution.
-            (match (marionette-eval
-                    '(getaddrinfo #$mdns-host-name)
-                    marionette)
-              (((? vector? addrinfos) ..1)
-               (pk 'getaddrinfo addrinfos)
-               (and (any (lambda (ai)
-                           (= AF_INET (addrinfo:fam ai)))
-                         addrinfos)
-                    (any (lambda (ai)
-                           (= AF_INET6 (addrinfo:fam ai)))
-                         addrinfos)))))
-
-          (test-assert "gethostbyname .local"
-            (match (pk 'gethostbyname
-                       (marionette-eval '(gethostbyname #$mdns-host-name)
-                                        marionette))
-              ((? vector? result)
-               (and (string=? (hostent:name result) #$mdns-host-name)
-                    (= (hostent:addrtype result) AF_INET)))))
-
-
-          (test-end))))
-
-  (gexp->derivation "nss-mdns" test))
-
-(define %test-nss-mdns
-  (system-test
-   (name "nss-mdns")
-   (description
-    "Test Avahi's multicast-DNS implementation, and in particular, test its
-glibc name service switch (NSS) module.")
-   (value (run-nss-mdns-test))))
-
-
-;;;
 ;;; Activation: Order of activation scripts
 ;;; Create accounts before running scripts using them
 
@@ -1229,3 +988,195 @@ glibc name service switch (NSS) module.")
    (name "activation")
    (description "Test that activation scripts are run in the correct order")
    (value (run-activation-test name))))
+
+
+;;;
+;;; Build daemon.
+;;;
+
+(define (manifest-entry-without-grafts entry)
+  "Return ENTRY with grafts disabled on its contents."
+  (manifest-entry
+    (inherit entry)
+    (item (with-parameters ((%graft? #f))
+            (manifest-entry-item entry)))))
+
+(define %hello-dependencies-manifest
+  ;; Build dependencies of 'hello' needed to test 'guix build hello'.
+  (concatenate-manifests
+   (list (map-manifest-entries
+          manifest-entry-without-grafts
+          (package->development-manifest hello))
+
+         ;; Add the source of 'hello'.
+         (manifest
+          (list (manifest-entry
+                  (name "hello-source")
+                  (version (package-version hello))
+                  (item (let ((file (origin-actual-file-name
+                                     (package-source hello))))
+                          (computed-file
+                           "hello-source"
+                           #~(begin
+                               ;; Put the tarball in a subdirectory since
+                               ;; profile union crashes otherwise.
+                               (mkdir #$output)
+                               (mkdir (in-vicinity #$output "src"))
+                               (symlink #$(package-source hello)
+                                        (in-vicinity #$output
+                                                     (string-append "src/"
+                                                                    #$file))))))))))
+
+         ;; Include 'guile-final', which is needed when building derivations
+         ;; such as that of 'hello' but missing from the development manifest.
+         ;; Add '%bootstrap-guile', used by 'guix install --bootstrap'.
+         (map-manifest-entries
+          manifest-entry-without-grafts
+          (packages->manifest (list (canonical-package guile-3.0)
+                                    %bootstrap-guile))))))
+
+(define (guix-daemon-test-cases marionette)
+  "Return a gexp with SRFI-64 test cases testing guix-daemon.  Those test are
+evaluated in MARIONETTE, a gexp denoting a marionette (system under test).
+Assume that an unprivileged account for 'user' exists on the system under
+test."
+  #~(begin
+      (test-equal "guix describe"
+        0
+        (marionette-eval '(system* "guix" "describe")
+                         #$marionette))
+
+      (test-equal "hello not already built"
+        #f
+        ;; Check that the next test will really build 'hello'.
+        (marionette-eval '(file-exists?
+                           #$(with-parameters ((%graft? #f))
+                               hello))
+                         #$marionette))
+
+      (test-equal "guix build hello"
+        0
+        ;; Check that guix-daemon is up and running and that the build
+        ;; environment is properly set up (build users, etc.).
+        (marionette-eval '(system* "guix" "build" "hello" "--no-grafts")
+                         #$marionette))
+
+      (test-assert "hello indeed built"
+        (marionette-eval '(file-exists?
+                           #$(with-parameters ((%graft? #f))
+                               hello))
+                         #$marionette))
+
+      (test-equal "guix install hello"
+        0
+        ;; Check that ~/.guix-profile & co. are properly created.
+        (marionette-eval '(let ((pw (getpwuid (getuid))))
+                            (setenv "USER" (passwd:name pw))
+                            (setenv "HOME" (pk 'home (passwd:dir pw)))
+                            (system* "guix" "install" "hello"
+                                     "--no-grafts" "--bootstrap"))
+                         #$marionette))
+
+      (test-equal "user profile created"
+        0
+        (marionette-eval '(system "ls -lad ~/.guix-profile")
+                         #$marionette))
+
+      (test-equal "hello"
+        0
+        (marionette-eval '(system "~/.guix-profile/bin/hello")
+                         #$marionette))
+
+      (test-equal "guix install hello, unprivileged user"
+        0
+        ;; Check that 'guix' is in $PATH for new users and that
+        ;; ~user/.guix-profile also gets created, assuming that 'user' exists
+        ;; as an unprivileged user account.
+        (marionette-eval '(system "su - user -c \
+'guix install hello --no-grafts --bootstrap'")
+                         #$marionette))
+
+      (test-equal "user hello"
+        0
+        (marionette-eval '(system "~user/.guix-profile/bin/hello")
+                         #$marionette))
+
+      (test-equal "unprivileged user profile created"
+        0
+        (marionette-eval '(system "ls -lad ~user/.guix-profile")
+                         #$marionette))
+
+      (test-equal "store is read-only"
+        EROFS
+        (marionette-eval '(catch 'system-error
+                            (lambda ()
+                              (mkdir (in-vicinity #$(%store-prefix)
+                                                  "whatever"))
+                              0)
+                            (lambda args
+                              (system-error-errno args)))
+                         #$marionette))))
+
+(define (run-guix-daemon-test os)
+  (define test-image
+    (image (operating-system os)
+           (format 'compressed-qcow2)
+           (volatile-root? #f)
+           (shared-store? #f)
+           (partition-table-type 'mbr)
+           (partitions
+            (list (partition
+                   (size (* 4 (expt 2 30)))
+                   (offset (* 512 2048))          ;leave room for GRUB
+                   (flags '(boot))
+                   (label "root"))))))
+
+  (define test
+    (with-imported-modules (source-module-closure
+                            '((gnu build marionette)
+                              (guix build utils)))
+      #~(begin
+          (use-modules (gnu build marionette)
+                       (guix build utils)
+                       (srfi srfi-64))
+
+          (define marionette
+            (make-marionette
+             (list (string-append #$qemu-minimal "/bin/" (qemu-command))
+                   #$@(common-qemu-options (system-image test-image) '()
+                                           #:image-format "qcow2"
+                                           #:rw-image? #t)
+                   "-m" "512"
+                   "-nographic" "-serial" "stdio"
+                   "-snapshot")))
+
+          (test-runner-current (system-test-runner #$output))
+          (test-begin "guix-daemon")
+
+          #$(guix-daemon-test-cases #~marionette)
+
+          (test-end))))
+
+  (gexp->derivation "guix-daemon-test" test))
+
+(define %test-guix-daemon
+  (system-test
+   (name "guix-daemon")
+   (description
+    "Test 'guix-daemon' behavior on a multi-user system.")
+   (value
+    (let ((os (marionette-operating-system
+               (operating-system
+                 (inherit (operating-system-with-gc-roots
+                           %simple-os
+                           (list (profile
+                                  (name "hello-build-dependencies")
+                                  (content %hello-dependencies-manifest)))))
+                 (kernel-arguments '("console=ttyS0"))
+                 (users (cons (user-account
+                               (name "user")
+                               (group "users"))
+                              %base-user-accounts)))
+               #:imported-modules '((gnu services herd)
+                                    (guix combinators)))))
+      (run-guix-daemon-test os)))))

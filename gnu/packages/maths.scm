@@ -10922,7 +10922,7 @@ the Wolfram language.")
 (define-public python-mathics-core
   (package
     (name "python-mathics-core")
-    (version "8.0.0")
+    (version "8.0.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -10931,7 +10931,7 @@ the Wolfram language.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1ymxwbjj51kplw94q17ha2cjs9vhv4b1cqd131mw1b5sxdrlig59"))))
+                "1ikgw3w3silxisih92g1wgcwb37k7qkwfmdv5r6yy4ki74qvyk5q"))))
     (arguments
      `(;; <https://github.com/pytest-dev/pytest/pull/10173> is missing .closed
        #:test-flags '("-s")
@@ -11021,13 +11021,13 @@ Mathics3.")
 (define-public python-mathics-django
   (package
     (name "python-mathics-django")
-    (version "8.0.0")
+    (version "8.0.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "mathics_django" version))
+       (uri (pypi-uri "Mathics_Django" version))
        (sha256
-        (base32 "02rwmbzb6dgsz5brwanyv3lahlc2zyhyv0xshmii652mhrgkv9gg"))))
+        (base32 "1cwvm72w6c3vz49gj09ihiwicj291ia51xhkxgi9z88a9vszx5pq"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:phases

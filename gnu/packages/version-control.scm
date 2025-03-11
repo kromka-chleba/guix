@@ -2596,23 +2596,15 @@ execution of any hook written in any language before every commit.")
 (define-public mercurial
   (package
     (name "mercurial")
-    (version "6.2.2")
+    (version "6.7.2")
     (source (origin
              (method url-fetch)
              (uri (string-append "https://www.mercurial-scm.org/"
                                  "release/mercurial-" version ".tar.gz"))
-             (patches (search-patches "mercurial-hg-extension-path.patch"
-                                      "mercurial-openssl-compat.patch"))
+             (patches (search-patches "mercurial-hg-extension-path.patch"))
              (sha256
               (base32
-               "1pr00hdk3l9095fhq6302fgj0wmbqhqs93y4r457ba4pyjjrvyly"))
-             (modules '((guix build utils)))
-             (snippet
-              '(substitute* (find-files "tests" "\\.(t|sh)$")
-                 ;; grep 3.8 emits deprecation warnings for 'egrep' and
-                 ;; 'fgrep' which breaks expected test output.
-                 (("egrep") "grep -E")
-                 (("fgrep") "grep -F")))))
+               "01nqvp3cvidlz9z5vm05vpq81r6x10jwwfcaz0gw9anz0l60f8hw"))))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags
@@ -2707,7 +2699,7 @@ interface.")
 (define-public python-hg-evolve
   (package
     (name "python-hg-evolve")
-    (version "10.3.2")
+    (version "11.1.3")
     (source
       (origin
         (method hg-fetch)
@@ -2717,7 +2709,7 @@ interface.")
         (file-name (hg-file-name name version))
         (sha256
           (base32
-            "0qgk39s5pwxbshfa6x1f1ccxahja3fs265dddxy6q99spy3b3x5h"))))
+            "09rq3hgbb6qjws0kymnh8lbglsc5yjby3b2bc0savs2agf88j83z"))))
     (build-system python-build-system)
     (arguments
      ;; Tests need mercurial source code.

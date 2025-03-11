@@ -26,6 +26,9 @@
   #:autoload   (guix store) (%store-prefix %store-monad %graft?)
   #:use-module (gnu compression)
   #:use-module (gnu tests)
+  #:use-module ((gnu tests base)
+                #:select (%hello-dependencies-manifest
+                          guix-daemon-test-cases))
   #:use-module (gnu packages base)
   #:use-module (gnu packages bootstrap)
   #:use-module (gnu packages guile)
@@ -140,39 +143,7 @@ system is expected to be on DEVICE."
   ;; Manifest of the Guix installation tarball.
   (concatenate-manifests
    (list (packages->manifest (list guix))
-
-         ;; Include the dependencies of 'hello' in addition to 'guix' so that
-         ;; we can test 'guix build hello'.
-         (map-manifest-entries
-          manifest-entry-without-grafts
-          (package->development-manifest hello))
-
-         ;; Add the source of 'hello'.
-         (manifest
-          (list (manifest-entry
-                  (name "hello-source")
-                  (version (package-version hello))
-                  (item (let ((file (origin-actual-file-name
-                                     (package-source hello))))
-                          (computed-file
-                           "hello-source"
-                           #~(begin
-                               ;; Put the tarball in a subdirectory since
-                               ;; profile union crashes otherwise.
-                               (mkdir #$output)
-                               (mkdir (in-vicinity #$output "src"))
-                               (symlink #$(package-source hello)
-                                        (in-vicinity #$output
-                                                     (string-append "src/"
-                                                                    #$file))))))))))
-
-         ;; Include 'guile-final', which is needed when building derivations
-         ;; such as that of 'hello' but missing from the development manifest.
-         ;; Add '%bootstrap-guile', used by 'guix install --bootstrap'.
-         (map-manifest-entries
-          manifest-entry-without-grafts
-          (packages->manifest (list (canonical-package guile-3.0)
-                                    %bootstrap-guile))))))
+         %hello-dependencies-manifest)))
 
 (define %guix-install-script
   ;; The 'guix-install.sh' script.
@@ -267,81 +238,13 @@ GNU/Linux distro, and check that the installation is functional."
                                                  (%store-prefix))))))
                              marionette))
 
-          (test-equal "hello not already built"
-            #f
-            ;; Check that the next test will really build 'hello'.
-            (marionette-eval '(file-exists?
-                               #$(with-parameters ((%graft? #f))
-                                   hello))
-                             marionette))
-
-          (test-equal "guix build hello"
-            0
-            ;; Check that guix-daemon is up and running and that the build
-            ;; environment is properly set up (build users, etc.).
-            (marionette-eval '(system* "guix" "build" "hello" "--no-grafts")
-                             marionette))
-
-          (test-assert "hello indeed built"
-            (marionette-eval '(file-exists?
-                               #$(with-parameters ((%graft? #f))
-                                   hello))
-                             marionette))
-
-          (test-equal "guix install hello"
-            0
-            ;; Check that ~/.guix-profile & co. are properly created.
-            (marionette-eval '(let ((pw (getpwuid (getuid))))
-                                (setenv "USER" (passwd:name pw))
-                                (setenv "HOME" (pk 'home (passwd:dir pw)))
-                                (system* "guix" "install" "hello"
-                                         "--no-grafts" "--bootstrap"))
-                             marionette))
-
-          (test-equal "user profile created"
-            0
-            (marionette-eval '(system "ls -lad ~/.guix-profile")
-                             marionette))
-
-          (test-equal "hello"
-            0
-            (marionette-eval '(system "~/.guix-profile/bin/hello")
-                             marionette))
-
           (test-equal "create user account"
             0
             (marionette-eval '(system* "useradd" "-d" "/home/user" "-m"
                                        "user")
                              marionette))
 
-          (test-equal "guix install hello, unprivileged user"
-            0
-            ;; Check that 'guix' is in $PATH for new users and that
-            ;; ~user/.guix-profile also gets created.
-            (marionette-eval '(system "su - user -c \
-'guix install hello --no-grafts --bootstrap'")
-                             marionette))
-
-          (test-equal "user hello"
-            0
-            (marionette-eval '(system "~user/.guix-profile/bin/hello")
-                             marionette))
-
-          (test-equal "unprivileged user profile created"
-            0
-            (marionette-eval '(system "ls -lad ~user/.guix-profile")
-                             marionette))
-
-          (test-equal "store is read-only"
-            EROFS
-            (marionette-eval '(catch 'system-error
-                                (lambda ()
-                                  (mkdir (in-vicinity #$(%store-prefix)
-                                                      "whatever"))
-                                  0)
-                                (lambda args
-                                  (system-error-errno args)))
-                             marionette))
+          #$(guix-daemon-test-cases #~marionette)
 
           (test-assert "screenshot after"
             (marionette-control (string-append "screendump " #$output

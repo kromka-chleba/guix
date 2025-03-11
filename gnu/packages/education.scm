@@ -679,14 +679,14 @@ language and very flexible regarding to new or unknown keyboard layouts.")
 (define-public kqtquickcharts
   (package
     (name "kqtquickcharts")
-    (version "24.12.2")
+    (version "24.12.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/kqtquickcharts-" version ".tar.xz"))
               (sha256
                (base32
-                "0a9rpp165s3ishc1jsaalgjixir591a8f6r9qqzji50jgf629ivc"))))
+                "1hgcl062i94abq0cwz9fijyjhv2qs3fsjikiy2jb3sh73m6jydqn"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list qtdeclarative-5))
@@ -700,14 +700,14 @@ charts.")
 (define-public ktouch
   (package
     (name "ktouch")
-    (version "24.12.2")
+    (version "24.12.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/ktouch-" version ".tar.xz"))
        (sha256
-        (base32 "1bnzsvw81glw6clx6j0s0h9rxqdb9avqjnjxswjwsj1bv6r8g71j"))))
+        (base32 "1sqzm8xf3xaia0b761mgpb2q4gc8yxwhvkzwdvw0spj25irdv7n5"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools-5 pkg-config))

@@ -682,7 +682,7 @@ aliasing facilities to work just as they would on normal mail.")
 (define-public mutt
   (package
     (name "mutt")
-    (version "2.2.13")
+    (version "2.2.14")
     (source (origin
              (method url-fetch)
              (uri (list
@@ -692,7 +692,7 @@ aliasing facilities to work just as they would on normal mail.")
                                    version ".tar.gz")))
              (sha256
               (base32
-               "1ywfql0l0ykrwbd6ynxdclvxk6ll62gllfizd5kxi5ycq7fzl8zb"))
+               "1vqlvqjlldcrkb4m5nl44my0rfw7wsvlkyb2dwyz8fhy95nznqni"))
              (patches (search-patches "mutt-store-references.patch"))))
     (build-system gnu-build-system)
     (inputs
@@ -4265,7 +4265,7 @@ It is a replacement for the @command{urlview} program.")
 (define-public mumi
   (package
     (name "mumi")
-    (version "0.6.1")
+    (version "0.7.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4274,7 +4274,7 @@ It is a replacement for the @command{urlview} program.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "09lzk70r9j7qd96pa5fbkiibwz6jk7kcw0mfl3bliqgjb925bapv"))))
+                "1317ygmms6r2xpbhas6n63hpw3xw9ya8x44s0g9z5n21xpwk4c13"))))
     (build-system gnu-build-system)
     (arguments
      (list

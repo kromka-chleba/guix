@@ -37,6 +37,7 @@
 ;;; Copyright © 2023 Mădălin Ionel Patrașcu <madalinionel.patrascu@mdc-berlin.de>
 ;;; Copyright © 2023 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2023 Jake Leporte <jakeleporte@outlook.com>
+;;; Copyright © 2023 Wilko Meyer <w@wmeyer.eu>
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2023 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2020, 2023 Tim Gesthuizen <tim.gesthuizen@yahoo.de>
@@ -556,6 +557,38 @@ users can force the decision of which backend to use by setting the environment
 variable ANY_MOOSE to be Moose or Mouse.")
     (license (package-license perl))))
 
+(define-public perl-app-nopaste
+  (package
+    (name "perl-app-nopaste")
+    (version "1.013")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/E/ET/ETHER/App-Nopaste-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "1c1bjpnzxfw22hqkysr7d2y07zfqhwgzc2s2b3ywm449d1qikm1w"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-libwww perl-test-deep perl-test-fatal))
+    (propagated-inputs (list perl-browser-open
+                             perl-class-load
+                             perl-clipboard
+                             perl-getopt-long-descriptive
+                             perl-json-maybexs
+                             perl-libwww
+                             perl-module-pluggable
+                             perl-module-runtime
+                             perl-namespace-clean
+                             perl-path-tiny
+                             perl-uri
+                             perl-www-mechanize
+                             perl-www-pastebin-pastebincom-create))
+    (home-page "https://metacpan.org/release/App-Nopaste")
+    (synopsis "Easy access to any pastebin")
+    (description "@code{App::Nopaste} provides easy access to any
+pastebin.")
+    (license license:perl-license)))
+
 (define-public perl-app-cpanminus
   (package
     (name "perl-app-cpanminus")
@@ -714,25 +747,6 @@ not asynchronous - it won't interrupt a running perl interpreter.
 This module implements asynchronous notifications that enable you to
 signal running perl code from another thread, asynchronously, and
 sometimes even without using a single syscall.")
-    (license (package-license perl))))
-
-(define-public perl-sys-sigaction
-  (package
-    (name "perl-sys-sigaction")
-    (version "0.23")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append
-             "mirror://cpan/authors/id/L/LB/LBAXTER/Sys-SigAction-" version
-             ".tar.gz"))
-       (sha256
-        (base32 "0lykjlq5dsf7z927lpllzixd953izi3w7bg2pgy32h2k8n9nrvy4"))))
-    (build-system perl-build-system)
-    (home-page "https://metacpan.org/release/Sys-SigAction")
-    (synopsis "Consistent signal handling")
-    (description "This package provides a way for perl programs to handle
-signals.")
     (license (package-license perl))))
 
 (define-public perl-attribute-util
@@ -962,6 +976,26 @@ compiling the surrounding scope.")
     (synopsis "Wrap OP check callbacks")
     (description "This module allows you to wrap OP check callbacks.")
     (license (package-license perl))))
+
+(define-public perl-b-utils
+  (package
+    (name "perl-b-utils")
+    (version "0.27")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/E/ET/ETHER/B-Utils-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "1spzhmk3z6c4blmra3kn84nq20fira2b3vjg86m0j085lgv56zzr"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-extutils-depends))
+    (propagated-inputs (list perl-task-weaken))
+    (home-page "https://metacpan.org/release/B-Utils")
+    (synopsis "Helper functions for op tree manipulation")
+    (description "@code{B::Utils} provide helper functions for op
+tree manupulation.")
+    (license license:perl-license)))
 
 (define-public perl-b-keywords
   (package
@@ -1959,6 +1993,26 @@ to make deep copies of Perl data structures.  It calls itself recursively to
 copy nested hash, array, scalar and reference types, including tied variables
 and objects.")
     (license (package-license perl))))
+
+(define-public perl-clipboard
+  (package
+    (name "perl-clipboard")
+    (version "0.28")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/S/SH/SHLOMIF/Clipboard-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "09kdjsq5xvdhqcg61y7rvcxz9zq0904ms3ssq9bk69lla40pk3cy"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build))
+    (propagated-inputs (list perl-cgi perl-uri))
+    (home-page "https://metacpan.org/release/Clipboard")
+    (synopsis "Copy and paste with any OS")
+    (description "@{Clipboard} provides functionality to copy and
+paste with any OS.")
+    (license license:perl-license)))
 
 (define-public perl-common-sense
   (package
@@ -2972,6 +3026,28 @@ different from all other UUIDs/GUIDs generated until 3400 CE.")
 their argument and produces a string as its result.  The string contains Perl
 code that, when \"eval\"ed, produces a deep copy of the original arguments.")
     (license (package-license perl))))
+
+(define-public perl-data-dump-streamer
+  (package
+    (name "perl-data-dump-streamer")
+    (version "2.42")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/Y/YV/YVES/Data-Dump-Streamer-" version
+             ".tar.gz"))
+       (sha256
+        (base32 "1b8w9l3d6g4jyc9f5fglbpc0q71f1kfilj013rbbxrswnhgybxj7"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-extutils-depends perl-module-build))
+    (propagated-inputs (list perl-algorithm-diff perl-b-utils
+                             perl-cpanel-json-xs perl-padwalker))
+    (home-page "https://metacpan.org/release/Data-Dump-Streamer")
+    (synopsis "Accurately serialize a data structure as Perl code.")
+    (description "@code{Data::Dump::Streamer} provides ways to accurately
+serialize a data structure as Perl code.")
+    (license license:perl-license)))
 
 (define-public perl-data-dumper
   (package
@@ -4192,6 +4268,42 @@ hierarchy the overloads are declared and where the code implementing it is.")
     (description "This module is a data dumper optimized for logging of
 arbitrary parameters.")
     (license (package-license perl))))
+
+(define-public perl-devel-repl
+  (package
+    (name "perl-devel-repl")
+    (version "1.003029")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/E/ET/ETHER/Devel-REPL-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "0s9w8ws2ckv0mbvns2irq4npmvj6chf6iyy3z0pspaz3izcfp1vw"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-test-fatal))
+    (propagated-inputs (list perl-app-nopaste
+                             perl-b-keywords
+                             perl-data-dump-streamer
+                             perl-data-dumper-concise
+                             perl-file-next
+                             perl-lexical-persistence
+                             perl-module-refresh
+                             perl-module-runtime
+                             perl-moose
+                             perl-moosex-getopt
+                             perl-moosex-object-pluggable
+                             perl-namespace-autoclean
+                             perl-ppi
+                             perl-ppi-xs
+                             perl-sys-sigaction
+                             perl-task-weaken))
+    (home-page "https://metacpan.org/release/Devel-REPL")
+    (synopsis "Modern Perl interactive shell.")
+    (description "@code{Devel::REPL} is a modern Perl interactive
+shell.")
+    (license license:perl-license)))
 
 (define-public perl-devel-stacktrace
   (package
@@ -6629,6 +6741,26 @@ which produces a descriptive fatal error if the JSON is invalid, and so on.")
 versa.")
     (license (package-license perl))))
 
+(define-public perl-lexical-persistence
+  (package
+    (name "perl-lexical-persistence")
+    (version "1.023")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/R/RC/RCAPUTO/Lexical-Persistence-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "0i39wf55wzvz1iisl66csxdrz9m3wzcl4w4zxafcm19qfi5gmlll"))))
+    (build-system perl-build-system)
+    (propagated-inputs (list perl-devel-lexalias perl-padwalker))
+    (home-page "https://metacpan.org/release/Lexical-Persistence")
+    (synopsis "Persistent lexical variable values for arbitrary calls.")
+    (description "@code{Lexical::Persistence} introduces persistent lexical
+variable values for arbitrary calls.")
+    (license license:perl-license)))
+
 (define-public perl-lexical-sealrequirehints
   (package
     (name "perl-lexical-sealrequirehints")
@@ -8073,6 +8205,27 @@ logical structure of your classes, focusing on \"what\" rather than \"how\".
 A class definition with Moose reads like a list of very concise English
 sentences.")
     (license (package-license perl))))
+
+(define-public perl-moosex-object-pluggable
+  (package
+    (name "perl-moosex-object-pluggable")
+    (version "0.0014")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/E/ET/ETHER/MooseX-Object-Pluggable-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "1q347v68dy6k6rpz60w97bxm7yk9ivfcgq332h8w4n9zx2xprgzk"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build-tiny perl-moose perl-test-fatal))
+    (propagated-inputs (list perl-module-pluggable perl-module-runtime
+                             perl-moose perl-namespace-autoclean perl-try-tiny))
+    (home-page "https://metacpan.org/release/MooseX-Object-Pluggable")
+    (synopsis "Make your classes pluggable")
+    (description "@code{MooseX::Object::Pluggable} makes your classes pluggable.")
+    (license license:perl-license)))
 
 (define-public perl-moosex-emulate-class-accessor-fast
   (package
@@ -9814,6 +9967,24 @@ applications.")
 code.")
     (license license:perl-license)))
 
+(define-public perl-ppi-xs
+  (package
+    (name "perl-ppi-xs")
+    (version "0.910")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/E/ET/ETHER/PPI-XS-" version
+                           ".tar.gz"))
+       (sha256
+        (base32 "0q7wdzsf15qx1bh2ckgldz533cswbp9nzs6v9d6v9hvzixyy7x6d"))))
+    (build-system perl-build-system)
+    (propagated-inputs (list perl-ppi))
+    (home-page "https://metacpan.org/release/PPI-XS")
+    (synopsis "(Minor) XS acceleration for PPI")
+    (description "@code{PPI::XS} provides (minor) XS acceleration for PPI.")
+    (license license:perl-license)))
+
 (define-public perl-ppix-regexp
   (package
     (name "perl-ppix-regexp")
@@ -11293,6 +11464,25 @@ determining their type and clock speed.")
     (description "Sys::Hostname::Long tries very hard to get the full hostname
 of a system.")
     (license (package-license perl))))
+
+(define-public perl-sys-sigaction
+  (package
+    (name "perl-sys-sigaction")
+    (version "0.23")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/L/LB/LBAXTER/Sys-SigAction-" version
+             ".tar.gz"))
+       (sha256
+        (base32 "0lykjlq5dsf7z927lpllzixd953izi3w7bg2pgy32h2k8n9nrvy4"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/Sys-SigAction")
+    (synopsis "Perl extension for Consistent Signal Handling")
+    (description "@code{Sys::SigAction} is a Perl extension for Consistent
+Signal Handling.")
+    (license license:perl-license)))
 
 (define-public perl-sys-syscall
   (package
@@ -13380,6 +13570,25 @@ through subclassing in a much more straightforward way than with
 @code{MakeMaker}.  It also does not require a @command{make} on your
 system---most of the @code{Module::Build} code is pure-Perl.")
     (license (package-license perl))))
+
+(define-public perl-module-refresh
+  (package
+    (name "perl-module-refresh")
+    (version "0.18")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/B/BP/BPS/Module-Refresh-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "0ngg1ndi11jl0xhn11y8bk5w38l5yqrjgcz2m64n9pxg16lxm570"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-path-class perl-module-install))
+    (home-page "https://metacpan.org/release/Module-Refresh")
+    (synopsis "Refresh %INC files when updated on disk")
+    (description "@{Module::Refresh} provides ways to refresh %INC files
+when updated on disk.")
+    (license license:perl-license)))
 
 (define-public perl-parse-cpan-meta
   (package

@@ -840,6 +840,7 @@ GNU_SYSTEM_MODULES =				\
 						\
   %D%/tests.scm					\
   %D%/tests/audio.scm				\
+  %D%/tests/avahi.scm				\
   %D%/tests/base.scm				\
   %D%/tests/cachefilesd.scm			\
   %D%/tests/ci.scm				\
@@ -864,6 +865,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/tests/lightdm.scm			\
   %D%/tests/linux-modules.scm			\
   %D%/tests/mail.scm				\
+  %D%/tests/mcron.scm				\
   %D%/tests/messaging.scm			\
   %D%/tests/networking.scm			\
   %D%/tests/package-management.scm		\
@@ -1265,6 +1267,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/fail2ban-python310-server-action.patch	\
   %D%/packages/patches/fail2ban-python310-server-actions.patch	\
   %D%/packages/patches/fail2ban-python310-server-jails.patch	\
+  %D%/packages/patches/faiss-tests-CMakeLists-find-googletest.patch	\
   %D%/packages/patches/falcosecurity-libs-shared-build.patch	\
   %D%/packages/patches/farstream-gupnp.patch                         \
   %D%/packages/patches/farstream-make.patch                          \
@@ -1843,7 +1846,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/mecab-variable-param.patch		\
   %D%/packages/patches/memtest86+-build-reproducibly.patch	\
   %D%/packages/patches/mercurial-hg-extension-path.patch	\
-  %D%/packages/patches/mercurial-openssl-compat.patch		\
   %D%/packages/patches/mhash-keygen-test-segfault.patch		\
   %D%/packages/patches/mia-fix-boost-headers.patch		\
   %D%/packages/patches/mia-vtk9.patch				\

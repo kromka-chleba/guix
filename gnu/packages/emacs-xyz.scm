@@ -9226,6 +9226,7 @@ with Emacs.")
      ;; the testing framework, test-hdl, requires network
      `(#:tests? #f
        #:test-command '("make")))
+    (propagated-inputs (list tree-sitter-vhdl))
     (home-page "https://github.com/gmlarumbe/vhdl-ts-mode/")
     (synopsis "VHDL Tree-sitter mode")
     (description
@@ -13584,6 +13585,37 @@ provided by your completion setup---to any directory you’ve visited recently,
 or to a project or bookmarked directory.  The minibuffer prompt will be
 replaced with the directory you choose.")
     (license license:gpl3+)))
+
+(define-public emacs-consult-mu
+  (let ((commit "e1dc63674b924698b30a9ecc0400a05864711c85")
+        (revision "0"))
+    (package
+      (name "emacs-consult-mu")
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/armindarvish/consult-mu/")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "17ad0901xbg2vrgdvpp67kia2r7gqsvbkqqb44f4pwakr7zwiz2y"))))
+      (build-system emacs-build-system)
+      (arguments
+       '(#:phases (modify-phases %standard-phases
+                    (add-after 'unpack 'move-source-files
+                      (lambda _
+                        (let ((el-files (find-files "./extras" ".*\\.el$")))
+                          (for-each (lambda (f)
+                                      (rename-file f
+                                                   (basename f))) el-files)))))))
+      (propagated-inputs (list emacs-consult emacs-embark mu))
+      (home-page "https://github.com/armindarvish/consult-mu/")
+      (synopsis "Search mu4e emails with Consult")
+      (description "This package provides a query interface for mu4e using
+Consult.")
+      (license license:gpl3+))))
 
 (define-public emacs-consult-notmuch
   (package
@@ -39201,6 +39233,40 @@ Flyspell's on-the-fly spell checking and extends these checks to also detect
 language.  Auto-dictionary then sets @code{ispell-dictionary} to use the
 detected language.")
     (license license:gpl2+)))
+
+(define-public emacs-persid
+  (let ((commit "cf84a4340bd3e5b16b4412e98c4243da9f72503a")
+        (revision "2"))
+    (package
+      (name "emacs-persid")
+      (version (git-version "0.1.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/rougier/persid")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "16nij3sv1fgpbxz7z3z4vdwxavz5hbad2y0585vp24h3zxhqq74y"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/rougier/persid")
+      (synopsis "Persistent Identifier Library")
+      (description "This package provides a library to manipulate
+persistent identifiers that are used to locate scholar resources
+online.  The library knows about the following formats:
+@itemize
+@item isbn: @url{https://isbn.org, International Standard Book Number}
+@item issn: @url{https://www.issn.org, International Standard Serial Number}
+@item doi: @url{https://www.doi.org, Digital Object identifier}
+@item pmid: @url{https://pubmed.ncbi.nlm.nih.gov, PubMed}
+@item pmcid: @url{https://www.ncbi.nlm.nih.gov/pmc, PubMed Central}
+@item arxiv: @url{https://arxiv.org, Cornell University}
+@end itemize
+
+Given an identifier in one of the known formats, the libray can query
+information about the resources and format it as a bibtex entry.")
+      (license license:gpl3+))))
 
 (define-public emacs-persist
   (package

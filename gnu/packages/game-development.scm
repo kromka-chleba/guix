@@ -34,6 +34,7 @@
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 宋文武 <iyzsong@envs.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -76,6 +77,7 @@
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages build-tools)
+  #:use-module (gnu packages c)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages check)
   #:use-module (gnu packages curl)
@@ -101,7 +103,9 @@
   #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages icu4c)
   #:use-module (gnu packages image)
+  #:use-module (gnu packages javascript)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages lisp)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages m4)
@@ -122,12 +126,14 @@
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages readline)
+  #:use-module (gnu packages ruby)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages speech)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages sqlite)
+  #:use-module (gnu packages squirrel)
   #:use-module (gnu packages stb)
   #:use-module (gnu packages swig)
   #:use-module (gnu packages texinfo)
@@ -135,6 +141,7 @@
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages video)
+  #:use-module (gnu packages vim)
   #:use-module (gnu packages vulkan)
   #:use-module (gnu packages web)
   #:use-module (gnu packages wxwidgets)
@@ -2024,48 +2031,64 @@ also comes with a built-in image and sound editor.")
       (license license:expat))))
 
 (define-public grafx2
-  (package
-    (name "grafx2")
-    (version "2.4")
-    (source (origin
-              (method url-fetch)
-              ;; XXX: There is no URL that contains the version. :(
-              (uri "http://pulkomandy.tk/projects/GrafX2/downloads/21")
-              (file-name (string-append "grafx2-" version ".tgz"))
-              (sha256
-               (base32
-                "0svsy6rqmdj11b400c242i2ixihyz0hds0dgicqz6g6dcgmcl62q"))))
-    (build-system gnu-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (delete 'configure) ; no configure script
-         (add-before 'build 'change-to-src-directory
-           (lambda _
-             (chdir "src")
-             #t)))
-       #:make-flags
-       ;; SDL header files are referenced without the preceeding "SDL/".
-       (list (string-append "CFLAGS=-I"
-                            (assoc-ref %build-inputs "sdl-union")
-                            "/include/SDL"
-                            " -fcommon")
-             (string-append "prefix="
-                            (assoc-ref %outputs "out")))
-       #:tests? #f)) ; no check target
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list libpng lua-5.1
-           (sdl-union (list sdl sdl-image sdl-ttf))))
-    (synopsis "Bitmap paint program")
-    (description "GrafX2 is a bitmap paint program inspired by the Amiga
+  (let ((3rd/6502                       ;GPLv3+, used in source form
+         (origin
+           (method url-fetch)
+           (uri "https://github.com/redcode/6502/releases/download/v0.1/6502-v0.1.tar.xz")
+           (sha256
+            (base32 "03wlndlmfsz51x7hmrfs02r3fzqk8a0grbzm2h80pm33f4r0z9dv"))))
+        (3rd/recoil                     ;GPLv2+, does not install a library
+         (origin
+           (method url-fetch)
+           (uri "https://downloads.sourceforge.net/project/recoil/recoil/6.4.2/recoil-6.4.2.tar.gz")
+           (sha256
+            (base32 "1p73cgfacia2gxvswhdixk6grpp9rs2n5258axh5vdb6ly8w3pi3")))))
+    (package
+      (name "grafx2")
+      (version "2.9")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://gitlab.com/GrafX2/grafX2")
+               (commit (string-append "v" version))))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0rf85pm40nmp9f95adbzzfx2ypvqjl51wqvk461c4bk8z7anlniz"))
+         (modules '((guix build utils)))
+         (snippet
+          #~(begin
+              (mkdir "3rdparty/archives")
+              (copy-file #$3rd/6502
+                         "3rdparty/archives/6502-v0.1.tar.xz")
+              (copy-file #$3rd/recoil
+                         "3rdparty/archives/recoil-6.4.2.tar.gz")))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)          ; no configure script
+            (add-before 'build 'change-to-src-directory
+              (lambda _
+                (chdir "src"))))
+        #:make-flags
+        #~(list "API=sdl2"
+                (string-append "PREFIX="
+                               (assoc-ref %outputs "out")))
+        #:tests? #f))                  ; no check target
+      (native-inputs
+       (list pkg-config which))
+      (inputs
+       (list fontconfig lua (sdl-union (list sdl2 sdl2-image sdl2-ttf))))
+      (synopsis "Bitmap paint program")
+      (description "GrafX2 is a bitmap paint program inspired by the Amiga
 programs Deluxe Paint and Brilliance.  Specializing in 256-color drawing, it
 includes a very large number of tools and effects that make it particularly
 suitable for pixel art, game graphics, and generally any detailed graphics
 painted with a mouse.")
-    (home-page "http://pulkomandy.tk/projects/GrafX2")
-    (license license:gpl2))) ; GPLv2 only
+      (home-page "http://pulkomandy.tk/projects/GrafX2")
+      (license license:gpl2)))) ; GPLv2 only
 
 (define-public ois
   (package
@@ -3670,7 +3693,7 @@ progresses the level, or you may regenerate tiles as the world changes.")
 (define-public raylib
   (package
     (name "raylib")
-    (version "5.0")
+    (version "5.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3680,7 +3703,7 @@ progresses the level, or you may regenerate tiles as the world changes.")
               ;; TODO: Unbundle src/external
               (sha256
                (base32
-                "0327licmylwlh5iyzw35pq7ci2d15rp3jms5i9p0vfg1rlv2sjw0"))))
+                "1dhy9ghbwvz0s434j03rfa2l6wxcfj028vlkk1xbf5q97vin5pr7"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f  ;no test
@@ -3699,8 +3722,14 @@ progresses the level, or you may regenerate tiles as the world changes.")
 #define MA_ENABLE_ONLY_SPECIFIC_BACKENDS
 #define MA_ENABLE_PULSEAUDIO
 #include \"external/miniaudio.h\"
-")))))))
-    (inputs (list glfw pulseaudio))
+"))))
+               (add-after 'install 'install-api-files
+                 ;; For generating bindings.
+                 (lambda _
+                   (copy-recursively
+                    (string-append #$source "/parser/output")
+                    (string-append #$output "/share/raylib")))))))
+    (inputs (list glfw-3.4 pulseaudio))
     (native-inputs (list pkg-config))
     (synopsis "C library for videogame programming")
     (description
@@ -3709,6 +3738,131 @@ progresses the level, or you may regenerate tiles as the world changes.")
   writing your game.")
     (home-page "https://www.raylib.com/")
     (license license:zlib)))
+
+(define-public tic80
+  ;; Use an unreleased version for 'PREFER_SYSTEM_LIBRARIES'.
+  (let ((commit "fcfd7c9862e9157512bcab53affecd592b320131")
+        ;; These C libraries are used in source form by tic80.
+        (3rd/jsmn
+         (origin                        ;Expat
+           (method git-fetch)
+           (uri (git-reference
+                 (url "https://github.com/zserge/jsmn")
+                 (commit "25647e692c7906b96ffd2b05ca54c097948e879c")))
+           (file-name "jsmn-checkout")
+           (sha256
+            (base32
+             "19xgrap95a8ziicgd0c3fns51z1g4q06b5lb5pg76ah4ychhgg5p"))))
+        (3rd/blip-buf
+         (origin                        ;LGPL2.1+
+           (method git-fetch)
+           (uri (git-reference
+                 (url "https://github.com/nesbox/blip-buf")
+                 (commit "330226d9b55ecbeea644e17b5e0f096a165ca07e")))
+           (file-name "blip-buf-checkout")
+           (sha256
+            (base32
+             "0fycffd6pbh9ilmr032dlrwd6dhvpkjp2r9x98r0kmwqpxc4x90d"))))
+        (3rd/msf-gif
+         (origin                        ;Expat or Public Domain
+           (method url-fetch)
+           (uri (string-append
+                 "https://github.com/notnullnotvoid/msf_gif/releases/download/"
+                 "v2.3/msf_gif.h"))
+           (sha256
+            (base32
+             "1ivjwwqxqjfhm8caz1srkp8wx7fpzvpf7s26ifif7cryvqch8vnf")))))
+    (package
+      (name "tic80")
+      (version (git-version "1.2.0" "1" commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/nesbox/TIC-80")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "17zxfiji6cb9ad7j3l82bdig0k7bz77bzwg7m0vd9ywrwk0kgxjk"))
+         (modules '((guix build utils)))
+         (snippet
+          #~(begin
+              (delete-file-recursively "vendor")
+              (copy-recursively #$3rd/jsmn "vendor/jsmn")
+              (copy-recursively #$3rd/blip-buf "vendor/blip-buf")
+              (mkdir "vendor/msf_gif")
+              (copy-file #$3rd/msf-gif "vendor/msf_gif/msf_gif.h")))))
+      (build-system cmake-build-system)
+      (arguments
+       (list #:tests? #f                ;no tests
+             #:configure-flags
+             #~'("-DBUILD_STATIC=ON" ;don't build runtimes as shared libraries
+                 "-DPREFER_SYSTEM_LIBRARIES=ON"
+                 "-DCMAKE_EXE_LINKER_FLAGS=-lpulse" ;for miniaudio
+                 ;; TODO: moon, python, wren
+                 "-DBUILD_WITH_FENNEL=ON"
+                 "-DBUILD_WITH_JANET=ON"
+                 "-DBUILD_WITH_JS=ON"
+                 "-DBUILD_WITH_LUA=ON"
+                 "-DBUILD_WITH_RUBY=ON"
+                 "-DBUILD_WITH_SCHEME=ON"
+                 "-DBUILD_WITH_SQUIRREL=ON"
+                 "-DBUILD_WITH_WASM=ON")
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'prepare-sources
+                   (lambda _
+                     (let* ((s7 #$(this-package-input "s7"))
+                            (fennel #$(this-package-input "fennel")))
+                       (install-file (string-append s7 "/include/s7.h")
+                                     "vendor/s7/")
+                       (install-file (string-append s7 "/share/s7/s7.c")
+                                     "vendor/s7/")
+                       (mkdir "vendor/fennel")
+                       (copy-file (car (find-files fennel "fennel\\.lua"))
+                                  "vendor/fennel/loadfennel.lua")
+                       (with-directory-excursion "vendor/fennel"
+                         (substitute* "loadfennel.lua"
+                           (("return mod") "package.loaded['fennel'] = mod"))
+                         (invoke "xxd" "-i" "loadfennel.lua" "fennel.h")))
+                     (substitute* "src/api/mruby.c"
+                       (("#include <mruby\\.h>" all)
+                        (string-append
+                         all "\n#include <mruby/internal.h>")))
+                     (substitute* "src/ext/fft.c"
+                       (("#include \"miniaudio\\.h\"") "
+#define MA_NO_RUNTIME_LINKING
+#define MA_ENABLE_ONLY_SPECIFIC_BACKENDS
+#define MA_ENABLE_PULSEAUDIO
+#define MA_ENABLE_NULL
+#include \"miniaudio.h\"
+")))))))
+      (native-inputs
+       (list pkg-config xxd))
+      (inputs
+       (list argparse
+             fennel
+             giflib
+             janet
+             kubazip
+             libpng
+             lua
+             mruby
+             naett
+             pulseaudio
+             quickjs
+             s7
+             sdl2
+             squirrel
+             wasm3))
+      (synopsis "Fantasy tiny computer")
+      (home-page "https://tic80.com/")
+      (description
+       "TIC-80 is a fantasy computer for making, playing and sharing tiny
+games.  There are built-in tools for development: code, sprites, maps, sound
+editors and the command line, which is enough to create a mini retro game.")
+      (license license:expat))))
 
 (define-public bbcsdl
   (package

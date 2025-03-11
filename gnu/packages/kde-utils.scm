@@ -46,6 +46,7 @@
   #:use-module (gnu packages mp3)
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages pdf)
+  #:use-module (gnu packages photo)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages kde)
   #:use-module (gnu packages kde-frameworks)
@@ -60,14 +61,14 @@
 (define-public ark
   (package
     (name "ark")
-    (version "24.12.2")
+    (version "24.12.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/" version
                                   "/src/ark-" version ".tar.xz"))
               (sha256
                (base32
-                "181w855vvg08xcd7d0nmnvcdnjhp0nix23d6g5gmx9agb6ppmbdd"))
+                "1gsazr9qc4s9ybgmz43dsmlkl2gnszqfcrbsnaznjlgmg0wd9caf"))
               ;; The libarchive package in Guix does not support
               ;; xar; disable related tests.
               (patches (search-patches "ark-skip-xar-test.patch"))))
@@ -263,17 +264,18 @@ well as CD-ROM images.")
 (define-public filelight
   (package
     (name "filelight")
-    (version "24.05.2")
+    (version "24.12.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/filelight-" version ".tar.xz"))
               (sha256
                (base32
-                "0mibgqhab7cbis0vw89f5y73185jq1dgmcsqdd8g4clkglgvdlrk"))))
+                "1sc7n533fqmf4ckfiwikxraj2mgk470gkypiwnxw1kwqpd2l6fpc"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
-    (inputs (list kirigami
+    (inputs (list kcrash
+                  kirigami
                   kirigami-addons
                   kquickcharts
                   kxmlgui
@@ -292,7 +294,7 @@ your computer.")
 (define-public francis
   (package
     (name "francis")
-    (version "24.05.2")
+    (version "24.12.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -301,7 +303,7 @@ your computer.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0lm0gh035qc9ip9hs00gxl3y9d9a8846ggypzgzngkqazic9i82k"))))
+                "02jhbwq1407x172y7vfgk6j4mb1lpaxm97ckfz5qhdxdh8mnqsmf"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list kirigami
@@ -322,7 +324,7 @@ your computer.")
 (define-public isoimagewriter
   (package
     (name "isoimagewriter")
-    (version "24.12.2")
+    (version "24.12.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -331,7 +333,7 @@ your computer.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0vrxki3iixa35fimsy20wv3pipp3xnkd6i13vdb4hhv8zzip320b"))))
+                "1k2n0xvdq7zc6qb1mv12shz0x0y7sqbciss12im1s4887y65gnbf"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list kauth
@@ -349,17 +351,49 @@ your computer.")
      "This package provides a tool to write ISO files to USB disks.")
     (license license:gpl3+)))
 
+(define-public kamera
+  (package
+    (name "kamera")
+    (version "24.12.3")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://kde/stable/release-service/"
+                                  version "/src/kamera-" version ".tar.xz"))
+              (sha256
+               (base32
+                "1jvd5lhjpfl9zs53qg69440awqxxhzdkjni0pqk80y953kfsghx0"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase))
+    (native-inputs
+     (list extra-cmake-modules kdoctools))
+    (inputs
+     (list kcmutils
+           kconfig
+           kconfigwidgets
+           kxmlgui
+           ki18n
+           kio
+           libgphoto2))
+    (home-page "https://apps.kde.org/kamera/")
+    (synopsis "KDE integration to digital cameras")
+    (description
+     "Kamera provides a configuration tool and a KIO worker to read and write
+to camera devices supported by @code{libgphoto2} using
+@acronym{PTP,Pictute Transfer Protocol}.")
+    (license license:gpl2+)))
+
 (define-public kate
   (package
     (name "kate")
-    (version "24.12.2")
+    (version "24.12.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kate-" version ".tar.xz"))
        (sha256
-        (base32 "13pqjwdc38w2yjfz757mhv7lw4r4jcm0f5wsir3vmxwl6nchh9jx"))))
+        (base32 "0zrmsvjmjgdn2q4rmf81gi2f24fcxz26kk2b6h0v6484fgl2z5f8"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -454,14 +488,14 @@ Kate's features include:
 (define-public kbackup
   (package
     (name "kbackup")
-    (version "24.12.2")
+    (version "24.12.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/kbackup-" version ".tar.xz"))
               (sha256
                (base32
-                "1c0sbplld5rqjn9g72bg98biv7r2s8zid8b9rbh2f1pxc6d6dzf5"))))
+                "0vc391siifl03nnc0bwp1xfxl4gdz1wlfxbjf3grfm40dknrm5nh"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list kguiaddons
@@ -493,14 +527,14 @@ drive, USB stick, etc
 (define-public kcalc
   (package
     (name "kcalc")
-    (version "24.12.2")
+    (version "24.12.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/kcalc-" version ".tar.xz"))
               (sha256
                (base32
-                "1ykpnq45f1s1fchb2zw9jmlac12j2qbmvgzgw44zplbffb138y0f"))))
+                "0lcp6ppvifa92s8dcp9hmxg1y1769bh35ysm5amrpvkpa5kbm8xv"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs (list extra-cmake-modules kdoctools))
@@ -635,14 +669,14 @@ with support for QR scanning.")
 (define-public kfind
   (package
     (name "kfind")
-    (version "24.12.2")
+    (version "24.12.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/kfind-" version ".tar.xz"))
               (sha256
                (base32
-                "03w4119375pcjaqmnza3iz5ffggldhs3nna5m10zywm36m771kzm"))))
+                "0aq45cl3rqd2jya2p03vxfzdmgv1hy5c5nxp6pszl7g9s43rqm7d"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs (list extra-cmake-modules kdoctools))
