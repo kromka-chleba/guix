@@ -998,8 +998,8 @@ transactions from C or Python.")
     (license license:gpl2+)))
 
 (define-public bffe
-  (let ((commit "7bdb7b99518c23d388db5a59911b290003b98823")
-        (revision "12"))
+  (let ((commit "ec2cae0a12cb578a88846cde1980ea98e352b1db")
+        (revision "13"))
     (package
       (name "bffe")
       (version (git-version "0" revision commit))
@@ -1010,7 +1010,7 @@ transactions from C or Python.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "00zmjys8fx1kgngzp92l61q0d9hayfgycp0g73j3myii2y7bkdkd"))
+                  "0ifhf3hrwxr479lz5wk7n3mw9rzrwmj7is65daj26g24wjlxbick"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (native-inputs
@@ -1556,8 +1556,8 @@ environments.")
                   "0k9zkdyyzir3fvlbcfcqy17k28b51i20rpbjwlx2i1mwd2pw9cxc")))))))
 
 (define-public guix-build-coordinator
-  (let ((commit "bdf7c2f5062a13052f425b64ed0e38d7f080c29d")
-        (revision "123"))
+  (let ((commit "bacdd64432f3b2f04fb07c99fc83bcd4067e7e09")
+        (revision "124"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1568,7 +1568,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1vifn2knhkhrhh7hjfr70nfg3r54w061v6pbyldq236jmfrkpvj1"))
+                  "0bb5pjbi5bx650vmpxf5ginswkr1s0aqx8cif82asxwhjn5nqz6g"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments

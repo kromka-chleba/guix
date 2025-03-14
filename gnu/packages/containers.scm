@@ -469,7 +469,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
 (define-public podman
   (package
     (name "podman")
-    (version "5.4.0")
+    (version "5.4.1")
     (outputs '("out" "docker"))
     (properties
       `((output-synopsis "docker" "docker alias for podman")))
@@ -480,7 +480,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
              (url "https://github.com/containers/podman")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1mvhqw07bpi7rzsbdy0k9i33rhrv5ngq2jvihpj241yd72gbhhw8"))
+        (base32 "11qiqkndjl3m8vzal1fx4lb3h4jv7aplasqjfi5y0a9rpq2wqaj6"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -627,7 +627,7 @@ being rootless and not requiring any daemon to be running.")
 (define-public buildah
   (package
     (name "buildah")
-    (version "1.39.1")
+    (version "1.39.2")
     (source
      (origin
        (method git-fetch)
@@ -635,7 +635,7 @@ being rootless and not requiring any daemon to be running.")
              (url "https://github.com/containers/buildah")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1sx667g3j00vjj8h3lwf62vfa0ignw3k6gapc60wmhd8n3jxzw13"))
+        (base32 "0b16zhsf9g863wxjvqyapb6wa8dr6r1rwrpffy6hf98fnq38jyh8"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

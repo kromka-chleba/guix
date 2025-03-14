@@ -1775,7 +1775,7 @@ tracker's SOAP service, such as @url{https://bugs.gnu.org}.")
 (define-public guile-email
   (package
     (name "guile-email")
-    (version "0.3.2")
+    (version "0.4.0")
     (source
      (origin
        (method url-fetch)
@@ -1783,7 +1783,7 @@ tracker's SOAP service, such as @url{https://bugs.gnu.org}.")
                            "guile-email-" version ".tar.lz"))
        (sha256
         (base32
-         "1lxiigsch4skh46s71phg0xzlwlcs3cyvq5q5i7gqkksg6737xjw"))))
+         "1n8d3vk5hi3lbnz72z4175ify2723fqly7r7p72x7pd12raxgv89"))))
     (build-system gnu-build-system)
     (native-inputs
      (list lzip texinfo))
@@ -2565,19 +2565,24 @@ capabilities.")
     (home-page "https://dthompson.us/projects/sly.html")
     (license license:gpl3+)))
 
+(define* (g-golf-source #:key version hash)
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+          (url "https://git.savannah.gnu.org/git/g-golf.git")
+          (commit (string-append "v" version))))
+    (file-name (git-file-name "g-golf" version))
+    (hash hash)))
+
 (define-public guile-g-golf
   (package
     (name "guile-g-golf")
-    (version "0.8.0")
+    (version "0.8.1")
     (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://git.savannah.gnu.org/git/g-golf.git")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "14b6pjchra0axqifpm90m7jbxla2sarhd7bfhzqbn7d14b74sv2d"))))
+     (g-golf-source #:version version
+                    #:hash
+                    (content-hash
+                     "044iidjd24cjncvx510ai46is9jxni72iz8pxyi34g4p7gbbcbi7")))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -2641,7 +2646,7 @@ capabilities.")
     (propagated-inputs
      (list gobject-introspection))
     (home-page "https://www.gnu.org/software/g-golf/")
-    (synopsis "Guile bindings for GObject Introspection")
+    (synopsis "Guile Object Library for GNOME")
     (description
      "G-Golf (Gnome: (Guile Object Library for)) is a library for developing
 modern applications in Guile Scheme.  It comprises a direct binding to the
@@ -2865,6 +2870,13 @@ writing a Guix package.")))
   (package
     (inherit guile-g-golf)
     (name "g-golf-adw-1-examples")
+    ;; XXX: Update version when we have a recent enough libadwaita.
+    (version "0.8.0")
+    (source
+     (g-golf-source #:version version
+                    #:hash
+                    (content-hash
+                     "14b6pjchra0axqifpm90m7jbxla2sarhd7bfhzqbn7d14b74sv2d")))
     (build-system glib-or-gtk-build-system)
     (arguments
      (list
@@ -2878,7 +2890,10 @@ writing a Guix package.")))
       #:phases
       (with-imported-modules `((guix build guile-build-system)
                                ,@%default-gnu-imported-modules)
-        #~(modify-phases %standard-phases
+        ;; With above modules, %standard-phases would not be from
+        ;; glib-or-gtk-build-system anymore:
+        #~(modify-phases (@ (guix build glib-or-gtk-build-system)
+                            %standard-phases)
             (add-after 'unpack 'prepare-examples
               (lambda _
                 (chdir "examples/adw-1")
@@ -6632,8 +6647,8 @@ is an attempt to combine both into something useful.")
       (license license:asl2.0))))
 
 (define-public guile-knots
-  (let ((commit "e3bc3c12b046d50bfd42960ec7649d0173bd0cc5")
-        (revision "14"))
+  (let ((commit "da69fd19f3072a405e394881a11c345704f31806")
+        (revision "15"))
     (package
     (name "guile-knots")
     (version (git-version "0" revision commit))
@@ -6644,7 +6659,7 @@ is an attempt to combine both into something useful.")
                     (commit commit)))
               (sha256
                (base32
-                "15qr81i5hbg9hq023aw25hqhp4as1s9axp005ypabkshlz5b0lv8"))
+                "0nnmlw1vl927yc2vnbp1fv9750pm4233lzj4ns6h1n0zxb63rnbr"))
               (file-name (string-append name "-" version "-checkout"))))
     (build-system gnu-build-system)
     (native-inputs

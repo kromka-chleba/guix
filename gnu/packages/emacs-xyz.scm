@@ -23067,7 +23067,7 @@ created by @code{git format-patch}, from @code{magit}, @code{dired} and
 (define-public emacs-git-email
   (package
     (name "emacs-git-email")
-    (version "0.7.0")
+    (version "0.7.2")
     (source
      (origin
        (method git-fetch)
@@ -23076,7 +23076,7 @@ created by @code{git format-patch}, from @code{magit}, @code{dired} and
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0mda886spz48jvv00xv7ki4154z02bwqbwjfa7clvdw83lfp33am"))))
+        (base32 "0p8c449nvn77bxmq1pinpw47lx6gj1k08yrxgi8bc8xrwkni9glp"))))
     (build-system emacs-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -33358,7 +33358,7 @@ in Docker environment.")
 (define-public emacs-dape
   (package
     (name "emacs-dape")
-    (version "0.22.0")
+    (version "0.23.0")
     (source
      (origin
        (method git-fetch)
@@ -33367,7 +33367,7 @@ in Docker environment.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0zxv49fd6m7xsaa6d9lyhjmnnxihlkycp3vin836qmk9cq6a7dlp"))))
+        (base32 "043rpkvzhh9kiz2di349n6am1xp9d26gn4dz3zzn6d89fhl3bpkh"))))
     (build-system emacs-build-system)
     (arguments
      ;; FIXME python tests pass, JS tests require additional dependencies

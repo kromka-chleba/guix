@@ -1345,12 +1345,14 @@ dist_patch_DATA =						\
   %D%/packages/patches/ganeti-disable-version-symlinks.patch	\
   %D%/packages/patches/ganeti-haskell-pythondir.patch		\
   %D%/packages/patches/ganeti-lens-compat.patch			\
+  %D%/packages/patches/ganeti-openssh-test-fix.patch		\
   %D%/packages/patches/ganeti-pyyaml-compat.patch		\
   %D%/packages/patches/ganeti-procps-compat.patch		\
   %D%/packages/patches/ganeti-reorder-arbitrary-definitions.patch	\
   %D%/packages/patches/ganeti-relax-dependencies.patch		\
   %D%/packages/patches/ganeti-shepherd-master-failover.patch	\
   %D%/packages/patches/ganeti-shepherd-support.patch		\
+  %D%/packages/patches/ganeti-sphinx-import.patch		\
   %D%/packages/patches/ganeti-template-haskell-2.17.patch	\
   %D%/packages/patches/ganeti-template-haskell-2.18.patch	\
   %D%/packages/patches/gawk-shell.patch				\
@@ -2223,7 +2225,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/rw-igraph-0.10.patch			\
   %D%/packages/patches/rxvt-unicode-fix-cursor-position.patch	\
   %D%/packages/patches/s7-flint-3.patch                      	\
-  %D%/packages/patches/sage-update-pari-gp.patch               	\
   %D%/packages/patches/sajson-for-gemmi-numbers-as-strings.patch	\
   %D%/packages/patches/sajson-build-with-gcc10.patch		\
   %D%/packages/patches/sbc-fix-build-non-x86.patch		\

@@ -228,7 +228,8 @@
       ;; <https://bugs.gnu.org/40527>.
       #:tests? (or (%current-target-system)
                    (not (string=? "i686-linux" (%current-system))))
-      #:parallel-tests? (not (target-arm32?))
+      #:parallel-tests? (not (or (target-arm32?)
+                                 (target-riscv64?)))
       #:configure-flags
       #~(let ((gcc (search-input-file %build-inputs "/bin/gcc"))
               (openbios (search-input-file %build-inputs
@@ -362,6 +363,11 @@
               ((target-riscv64?)
                #~((add-after 'unpack 'disable-some-tests
                     (lambda _
+                      ;; Extend the test timeout for this test:
+                      (substitute* "tests/unit/meson.build"
+                        (("test-crypto-tlssession': 90")
+                         "test-crypto-tlssession': 180"))
+
                       ;; qemu.qmp.QMPConnectError:
                       ;; Unexpected empty reply from server
                       (delete-file "tests/qemu-iotests/040")
@@ -766,10 +772,12 @@ firmware blobs.  You can
                                        "ganeti-procps-compat.patch"
                                        "ganeti-disable-version-symlinks.patch"
                                        "ganeti-lens-compat.patch"
+                                       "ganeti-openssh-test-fix.patch"
                                        "ganeti-template-haskell-2.17.patch"
                                        "ganeti-template-haskell-2.18.patch"
                                        "ganeti-reorder-arbitrary-definitions.patch"
-                                       "ganeti-relax-dependencies.patch"))))
+                                       "ganeti-relax-dependencies.patch"
+                                       "ganeti-sphinx-import.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:imported-modules (,@%default-gnu-imported-modules
@@ -913,13 +921,19 @@ firmware blobs.  You can
                (("test/py/ganeti\\.hypervisor\\.hv_kvm_unittest\\.py") "")
                (("test/py/ganeti\\.tools\\.ensure_dirs_unittest\\.py") "")
                (("test/py/ganeti\\.utils\\.io_unittest-runasroot\\.py") "")
+               ;; Tracked at: https://github.com/ganeti/ganeti/issues/1752
+               (("test/py/ganeti\\.ssh_unittest\\.py") "")
                ;; Disable the bash_completion test, as it requires the full
                ;; bash instead of bash-minimal.
                (("test/py/bash_completion\\.bash")
                 "")
                ;; This test requires networking.
                (("test/py/import-export_unittest\\.bash")
-                ""))))
+                ""))
+             (substitute* "test/hs/Test/Ganeti/OpCodes.hs"
+               ;; Some serdes failure, tracked at:
+               ;; https://github.com/ganeti/ganeti/issues/1753
+               ((", 'case_py_compat_types") ""))))
          (add-after 'build 'build-bash-completions
            (lambda _
              (setenv "PYTHONPATH" ".")

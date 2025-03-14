@@ -993,14 +993,14 @@ features include brush stabilizers, brush engines and wrap-around mode.")
 (define-public massif-visualizer
   (package
     (name "massif-visualizer")
-    (version "24.12.1")
+    (version "24.12.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/massif-visualizer-" version ".tar.xz"))
        (sha256
-        (base32 "0b42qigfypnipdqlnprqffgz99ksnfqms6r49vnvycaqfkk76n1r"))))
+        (base32 "09da7qlrq21rb2971wx43790ki6hk7xn255j82kfmx2kp9ilwvxm"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config shared-mime-info))
@@ -1294,7 +1294,7 @@ multi-floor indoor maps.")
 (define-public kpmcore
   (package
     (name "kpmcore")
-    (version "24.05.2")
+    (version "24.12.3")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -1302,7 +1302,7 @@ multi-floor indoor maps.")
                     "/src/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1nrmfxs8hbba8b3ml4g9qaf0klzcm8ar052npv5lm0whx6zld1lf"))))
+                "19xfaqj7i8mi5iwkh8n5d5h3m15bny0mzg2skpgbjdlmzc773iga"))))
     (build-system cmake-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config))
@@ -1358,14 +1358,14 @@ multi-floor indoor maps.")
 (define-public partitionmanager
   (package
     (name "partitionmanager")
-    (version "24.05.2")
+    (version "24.12.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/partitionmanager-" version ".tar.xz"))
        (sha256
-        (base32 "01xmwkwv8jrwx2jpg797ar8ac9gbdagrl2v3yzqn62fhwcwjcxy6"))))
+        (base32 "17p63a9igpbcv0xdziaf3d30n88rj9474w9yx2cpvh0m2nrv3582"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase))
@@ -1437,14 +1437,14 @@ transport data and for performing public transport journey queries.")
 (define-public ksanecore
   (package
     (name "ksanecore")
-    (version "24.12.1")
+    (version "24.12.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                              "/src/ksanecore-" version ".tar.xz"))
        (sha256
-        (base32 "0bh7i2qh5jdxfgy122vbwin7g46s16kdmam6szj14zc1ggnhqvfb"))))
+        (base32 "06g43b1l72aghkhcn59ss8kjc4sammn5ii5x5sql34kmvgiwamwk"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase))

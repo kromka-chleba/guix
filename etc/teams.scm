@@ -606,6 +606,14 @@ GLib/GIO, GTK, GStreamer and Webkit."
                       "guix/build/glib-or-gtk-build-system.scm"
                       "guix/build/meson-build-system.scm")))
 
+(define-team kde
+  (team 'kde
+        #:name "KDE team"
+        #:description
+        "The plasma desktop environment, and KDE Applications."
+        #:scope (list (make-regexp* "^gnu/packages/(kde)(-.+|)\\.scm$")
+                      "gnu/packages/education.scm")))
+
 (define-team xfce
   (team 'xfce
         #:name "Xfce team"
@@ -835,7 +843,11 @@ GLib/GIO, GTK, GStreamer and Webkit."
 
 (define-member (person "Zheng Junjie"
                        "z572@z572.online")
-  core-packages qt)
+  core-packages qt kde)
+
+(define-member (person "Sughosha"
+                       "sughosha@disroot.org")
+  kde)
 
 (define-member (person "Jelle Licht"
                        "jlicht@fsfe.org")

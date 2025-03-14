@@ -39,14 +39,14 @@
   ;; yet, so we'll keep both for just a little longer.
   (package
     (name "ncdu")
-    (version "1.21")
+    (version "1.22")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://dev.yorhel.nl/download/ncdu-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "19h1jvgiw7dvpxlhg6sqzc1c8gjkaj7z9girc255gkkbnjlx7558"))))
+                "0sqp39lkryjljvvrwv0x37a9fklg3g060iqhh42i5m84vjbc1mha"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -70,17 +70,18 @@ ncurses installed.")
   (package
     (inherit ncdu-1)
     (name "ncdu")
-    (version "2.7")
+    (version "2.8")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://dev.yorhel.nl/download/ncdu-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "001hp47g45rlmbirg85cqflfg049xhdf5d0xjp7m565vl8acq65j"))))
+                "0h4fwgkny70d7v7r4nbhcwjx9aijbgpl508prcrgbzf9grpmfqda"))))
     (build-system zig-build-system)
     (arguments
-     (list #:install-source? #f
+     (list #:zig zig-0.14
+           #:install-source? #f
            #:zig-release-type "safe"
            #:zig-build-flags
            #~(list "-Dpie")))
