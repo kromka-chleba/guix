@@ -3072,7 +3072,7 @@ export.")
 (define-public pd
   (package
     (name "pd")
-    (version "0.55-0")
+    (version "0.55-2")
     (source (origin
               (method url-fetch)
               (uri
@@ -3080,7 +3080,7 @@ export.")
                               version ".src.tar.gz"))
               (sha256
                (base32
-                "1gn3mc65v29b9s7qbqmi7y5ka4j7y997fyqrb3s1b5g7drxbwfph"))))
+                "0nsspfwcka6bjcnhb8pr0kvwqakr931lljmvx3w0s6fxs7w9g0hh"))))
     (build-system gnu-build-system)
     (arguments
      (let ((wish (string-append "wish" (version-major+minor
@@ -3123,7 +3123,7 @@ projects.")
 (define-public libpd
   (package
     (name "libpd")
-    (version "0.11.0")
+    (version "0.14.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3133,7 +3133,7 @@ projects.")
               (file-name (string-append name "-" version "-checkout"))
               (sha256
                (base32
-                "1bcg1d9iyf9n37hwwphmih0c8rd1xcqykil5z1cax6xfs76552nk"))))
+                "1bc1bqwviqddhh44cp2y2v2i6dnj92hwx8ld7bwcxgyp2zmlhiaz"))))
     (build-system gnu-build-system)
     (arguments
      '(#:tests? #f                      ; no tests

@@ -88,6 +88,7 @@
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023-2025 Adam Faiz <adam.faiz@disroot.org>
+;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2128,6 +2129,47 @@ built-in level editor.")
            license:expat
            license:public-domain
            license:silofl1.1))))
+
+(define-public kgames
+  (package
+    (name "kgames")
+    (version "2.4.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/keith-packard/kgames")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "09alaszhwnzzv5b0cxv5dia9y0fm63n2igv42ydkq299h7avb5fq"))))
+    (build-system meson-build-system)
+    (arguments
+     (list #:configure-flags
+           #~'("-Duser-menu=false"
+               "-Dbindir=bin")))
+    (native-inputs
+     (list bison flex pkg-config))
+    (inputs
+     (list cairo
+           fontconfig
+           freetype
+           librsvg
+           libx11
+           libxaw
+           libxft
+           libxmu
+           libxpm
+           libxrender
+           ncurses))
+    (synopsis "Xaw based solitaire games")
+    (home-page "https://github.com/keith-packard/kgames")
+    (description
+     "This package provides a collection of solitaire games: kaces, kcanfield,
+kcribbage, kdominos, kklondike, kmcarlo, kmontana, kslyfox, kspider, ktabby,
+kthieves, ktowers, xmille and xreversi.")
+    ;; Code is under BSD-3 and Expat, card images are under CC0.
+    (license (list license:bsd-3 license:expat license:cc0))))
 
 (define-public knightsgame
   (package
@@ -7017,7 +7059,7 @@ for Un*x systems with X11.")
 (define-public freeciv
   (package
    (name "freeciv")
-   (version "3.1.3")
+   (version "3.1.4")
    (source
     (origin
      (method url-fetch)
@@ -7029,7 +7071,7 @@ for Un*x systems with X11.")
                   (version-major+minor version) "/" version
                   "/freeciv-" version ".tar.xz")))
      (sha256
-      (base32 "0bvz5hqppj589w08bzrfzf5m6nwfwrzgg03lqb3p8hspjkx8c43l"))))
+      (base32 "1r4n6bqvazsn6q41xq5l86xj7rpfi4dxva6mhz17ql640fwrp68l"))))
    (build-system gnu-build-system)
    (inputs
     (list curl cyrus-sasl gtk+ sdl2-mixer sqlite zlib))
@@ -8957,6 +8999,68 @@ further optional visual, tactical and physical enhancements while remaining
 entirely config file, savegame, netplay and demo compatible with the
 original.")
     (home-page "https://www.chocolate-doom.org/wiki/index.php/Crispy_Doom")))
+
+(define-public woof-doom
+  (package
+    (name "woof-doom")
+    (version "15.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/fabiangreffrath/woof")
+             (commit (string-append "woof_" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "04c7hm4jnr9aiz6w4520zww6b7j86qv9xaf87hdv48cjc9sp2ljk"))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   (with-directory-excursion "third-party"
+                     (delete-file-recursively "miniz")
+                     (delete-file-recursively "yyjson")
+                     (delete-file-recursively "spng"))
+                   (delete-file-recursively "win32")
+                   (substitute* (find-files "src" ".")
+                     (("miniz.h") "miniz/miniz.h"))))
+       (patches (search-patches "woof-doom-unbundle-spng-miniz.patch"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f)) ;'demotest' requires internet access.
+    (native-inputs (list python))
+    (inputs (list libebur128
+                  libsndfile
+                  libxmp
+                  miniz
+                  openal
+                  sdl2
+                  sdl2-net
+                  spng
+                  yyjson
+                  fluidsynth))
+    (home-page "https://github.com/fabiangreffrath/woof")
+    (synopsis "MBF-style Doom source port targeted at modern systems")
+    (description
+     "Woof! is a continuation of the MBF lineage of Doom source ports, with
+modern features such as dynamic resolution scaling, uncapped framerates,
+adjustable field of view, 3D audio with HRTF and 7.1 surround sound
+support, and modern gamepad features including rumble, gyro, and flick
+stick support.  Supports the new MBF21 format, as well as the MUSINFO,
+UMAPINFO, DEHEXTRA, and DSDHacked specifictions.")
+    (license
+     ;; See README.md
+     (list (license:non-copyleft
+            "https://bitbucket.org/jpommier/pffft/src/master/pffft.h"
+            "FFTPACK license")
+           license:bsd-2
+           license:bsd-3
+           license:cc-by3.0
+           license:cc0
+           license:expat
+           license:gpl2
+           license:gpl3+
+           license:public-domain
+           license:gpl2+))))
 
 (define xonotic-data
   (package

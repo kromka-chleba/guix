@@ -16251,6 +16251,28 @@ those with lower, regardless of date.  The idea is to prioritize content
 important to you.")
     (license license:gpl3+)))
 
+(define-public emacs-elfeed-tube
+  (package
+    (name "emacs-elfeed-tube")
+    (version "0.15")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/karthink/elfeed-tube")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vsrsnvz0ysd36a99zk7n2giv0gxznlnls8zq6lcc0hwqw78i5cq"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-elfeed emacs-aio emacs-mpv))
+    (home-page "https://github.com/karthink/elfeed-tube/")
+    (synopsis "YouTube integration for Elfeed")
+    (description
+     "@code{elfeed-tube} is an extension for Elfeed that enhances Youtube RSS
+feed subscriptions.")
+    (license license:unlicense)))
+
 (define-public emacs-el-x
   (package
     (name "emacs-el-x")
@@ -25707,7 +25729,7 @@ according to a parsing expression grammar.")
 (define-public emacs-eldev
   (package
     (name "emacs-eldev")
-    (version "1.11")
+    (version "1.11.1")
     (source
      (origin
        (method git-fetch)
@@ -25716,7 +25738,7 @@ according to a parsing expression grammar.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "144wf5im2fy1fv8jjik1s9zfyicphh2pi4dp6q4airrkiirmmr3m"))))
+        (base32 "0sf8xyzblc0fs2d65jgcycavnzmrp1wg0sfr29gjkq1kvzyl7phb"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -41291,7 +41313,7 @@ and preferred services can easily be configured.")
 (define-public emacs-vertico
   (package
     (name "emacs-vertico")
-    (version "1.11")
+    (version "2.0")
     (source
      (origin
        (method git-fetch)
@@ -41300,7 +41322,7 @@ and preferred services can easily be configured.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0h1hvrd6z42vhjbmm7l16l42fr4xkb3bdzh7cgrmpm1s69cvn2fs"))))
+        (base32 "0qgw0mhfrjylhyznjmjf7wqs5p3xvdv0lq19pql54plbnr6fspqk"))))
     (build-system emacs-build-system)
     (arguments
      (list

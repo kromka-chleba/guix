@@ -1559,7 +1559,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/guile-lzlib-hurd64.patch			\
   %D%/packages/patches/guile-present-coding.patch		\
   %D%/packages/patches/guile-rsvg-pkgconfig.patch		\
-  %D%/packages/patches/guile-emacs-build-fixes.patch		\
   %D%/packages/patches/gtk2-fix-builder-test.patch		\
   %D%/packages/patches/gtk2-harden-list-store.patch		\
   %D%/packages/patches/gtk2-respect-GUIX_GTK2_PATH.patch	\
@@ -1989,7 +1988,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/pango-skip-libthai-test.patch		\
   %D%/packages/patches/password-store-tree-compat.patch		\
   %D%/packages/patches/pciutils-hurd64.patch			\
-  %D%/packages/patches/pdfpc-build-with-vala-0.56.patch         \
   %D%/packages/patches/pdl-2.019-glut-bitmap-fonts.patch	\
   %D%/packages/patches/petri-foo-0.1.87-fix-recent-file-not-exist.patch			\
   %D%/packages/patches/plasma-framework-fix-KF5PlasmaMacros.cmake.patch \
@@ -2412,6 +2410,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/wmctrl-64-fix.patch			\
   %D%/packages/patches/wmfire-dont-inline-draw-fire.patch	\
   %D%/packages/patches/wmfire-update-for-new-gdk-versions.patch	\
+  %D%/packages/patches/woof-doom-unbundle-spng-miniz.patch	\
   %D%/packages/patches/wordnet-CVE-2008-2149.patch			\
   %D%/packages/patches/wordnet-CVE-2008-3908-pt1.patch			\
   %D%/packages/patches/wordnet-CVE-2008-3908-pt2.patch			\
