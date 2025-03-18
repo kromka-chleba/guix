@@ -68,14 +68,14 @@
   (package
     (name "usbredir")
     (home-page "https://spice-space.org")
-    (version "0.14.0")
+    (version "0.15.0")
     (source (origin
               (method url-fetch)
               (uri (string-append home-page "/download/" name "/" name "-"
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0cm3pal2fmi5168i3vdy18qw2wmvhfy02fn9li2sx3rjg1fgnkcj"))))
+                "0q890pzi0744isnw72lxk59aaqvhmg1dli8j35la123n4y0a7hkd"))))
     (build-system meson-build-system)
     (propagated-inputs (list libusb))
     (inputs (list glib))
@@ -90,7 +90,7 @@ different (virtual) machine than the one to which the USB device is attached.")
 (define-public virglrenderer
   (package
     (name "virglrenderer")
-    (version "1.0.1")
+    (version "1.1.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -99,7 +99,7 @@ different (virtual) machine than the one to which the USB device is attached.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xw2qk8557gqpm1ssgk3ccshgljm6sh3wbbwpsp9cl0h4hdf2wq2"))))
+                "0cw3a0xkmlkc5a0yydbcyvr1hhxm0x6msn8d4pf1q4ck4q97ff3q"))))
     (build-system meson-build-system)
     (inputs (list libepoxy mesa))
     (native-inputs (list pkg-config python))

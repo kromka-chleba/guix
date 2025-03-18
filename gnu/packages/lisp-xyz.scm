@@ -1520,7 +1520,7 @@ Clojure, as well as several expansions on the idea.")
 (define-public asdf-cli
   (package
     (name "asdf-cli")
-    (version "0.1.0")
+    (version "0.1.1")
     (source
      (origin
        (method git-fetch)
@@ -1529,7 +1529,7 @@ Clojure, as well as several expansions on the idea.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "asdf-cli" version))
        (sha256
-        (base32 "0ihq898riv5awna2l3vm0fpawfb2ihh1sy75lsh6454s45mlpmlj"))))
+        (base32 "1dsvmqazn25h3b55ycd96am5f18ymk9rga8xy72d6ykm4ki8w7pn"))))
     (build-system asdf-build-system/sbcl)
     (arguments
      (list
@@ -1545,7 +1545,8 @@ Clojure, as well as several expansions on the idea.")
               (let ((bin (string-append #$output "/bin")))
                 (install-file "asdf" bin)))))))
     (inputs
-     (list sbcl-command-line-args
+     (list sbcl-alexandria
+           sbcl-command-line-args
            sbcl-cl-annot))
     (propagated-inputs
      (list sbcl
@@ -4395,7 +4396,7 @@ execution mechanism for Common Lisp.")))
 (define-public sbcl-cl-autowrap
   (let ((revision "2")
         (commit "a5d71ebd7c21b87f449db1e16ab815750d7c0ea4"))
-    ;; no taged branches
+    ;; no tagged branches
     (package
       (name "sbcl-cl-autowrap")
       (version (git-version "1.0" revision commit))
@@ -13727,7 +13728,7 @@ them as strings.")
   (sbcl-package->ecl-package sbcl-decimals))
 
 (define-public sbcl-deeds
-  ;; taged branch is outdated
+  ;; tagged branch is outdated
   (let ((revision "1")
         (commit "f5df54eac79b58a34030e0eb8acf3952c788410d"))
     (package
@@ -18582,7 +18583,7 @@ codes header file found on Linux and FreeBSD.")
       (synopsis
        "Encoding/end-of-line detection and external-format abstraction for Common Lisp")
       (description
-       "Inquisitor is a cross-implementation library provding
+       "Inquisitor is a cross-implementation library providing
 encoding/end-of-line detection and external-format abstraction for Common Lisp.")
       (license license:expat))))
 
@@ -19717,7 +19718,7 @@ needed.  The low-level command API is fully mapped however.")
              sbcl-queues))
       (synopsis "ANSI CL adaptation of the SBCL mailbox utility")
       (description
-       "This package provides an ANSI CL adaptation of the SBCL mailbox utilty.")
+       "This package provides an ANSI CL adaptation of the SBCL mailbox utility.")
       (home-page "https://github.com/lem-project/lem-mailbox")
       (license license:expat))))
 
@@ -21533,7 +21534,7 @@ whole lot more into a single form.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               ;; Upstream changed the maintaner.
+               ;; Upstream changed the maintainer.
                ;; legacy https://github.com/gwkkwg/metacopy
                (url "https://github.com/hraban/metacopy")
                (commit commit)))
@@ -24161,8 +24162,8 @@ variable portably in Common Lisp.")
   (sbcl-package->ecl-package sbcl-path-parse))
 
 (define-public sbcl-pathname-utils
-  (let ((commit "f28068a79825f37002e96d13dfd739172382bf94")
-        (revision "3"))
+  (let ((commit "3309d65a568acc392ade6a4096c940eb15e1149e")
+        (revision "4"))
     (package
       (name "sbcl-pathname-utils")
       (version (git-version "1.1.0" revision commit))
@@ -24174,7 +24175,7 @@ variable portably in Common Lisp.")
                (commit commit)))
          (file-name (git-file-name "cl-pathname-utils" version))
          (sha256
-          (base32 "10xs0wnnkbdiirr1cb7q7hzi2zmksfsrj0p7yws0j1l215vz8qs8"))))
+          (base32 "0w7h0qhi53myakfbwvwgr9srbz5mmgsdcbynzkh5vjiibwjg1c3i"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-parachute))
@@ -24183,7 +24184,7 @@ variable portably in Common Lisp.")
       (home-page "https://shinmera.github.io/pathname-utils/")
       (synopsis "Collection of utilities to help with pathname operations")
       (description
-       "This package provides a Common Lisp system a with collection of common
+       "This package provides a Common Lisp system with a collection of common
 tests and operations to help handling pathnames.  It does not actually deal in
 handling the accessing of files on the underlying system however.")
       (license license:zlib))))
@@ -25564,7 +25565,7 @@ values in other options.")
            (add-after 'unpack 'replace-*base-directory*-var
              (lambda* (#:key outputs #:allow-other-keys)
                ;; In the ASD, the author makes an attempt to
-               ;; programatically determine the location of the
+               ;; programmatically determine the location of the
                ;; source-code so lisp can call into "py4cl.py". We can
                ;; hard-code this since we know where this file will
                ;; reside.
@@ -26552,7 +26553,7 @@ Rucksack with some enhancements.")
          (modify-phases %standard-phases
            (add-after 'unpack 'fix-build
              (lambda _
-               ;; File faild to load, and we don't use it as tests are
+               ;; File failed to load, and we don't use it as tests are
                ;; disabled, so let's delete it.
                (delete-file "rutilsx-test.asd"))))))
       (inputs

@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2014, 2015, 2021 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2016, 2018 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2016, 2018, 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016-2018, 2020, 2023 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Leo Famulari <leo@famulari.name>
@@ -176,7 +176,7 @@ of a larger interface.")
 (define-public babl
   (package
     (name "babl")
-    (version "0.1.110")
+    (version "0.1.112")
     (source (origin
               (method url-fetch)
               (uri (list (string-append "https://download.gimp.org/pub/babl/"
@@ -190,7 +190,7 @@ of a larger interface.")
                                         "/babl-" version ".tar.xz")))
               (sha256
                (base32
-                "0hsp7xqsmij8njxd0hz22mikgxad0q1yycb4ys4m69yn81svwixz"))))
+                "0yca08ay7jygj59bc6fi73pcipi1h6sams43rkzci1qp8a16csgv"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -224,7 +224,7 @@ provided, as well as a framework to add new color models and data types.")
 (define-public gegl
   (package
     (name "gegl")
-    (version "0.4.54")
+    (version "0.4.56")
     (source
      (origin
        (method url-fetch)
@@ -238,7 +238,7 @@ provided, as well as a framework to add new color models and data types.")
                                  (version-major+minor version)
                                  "/gegl-" version ".tar.xz")))
        (sha256
-        (base32 "07lb4czm99kcgnqhnz21ybfcy1z3qj7p9d9cxsnpjhvbikq458rm"))))
+        (base32 "0p6cscnjlpcv123rgkjj5ks43jxkbryiqh23aspcjnlv1ywn8jm0"))))
     (build-system meson-build-system)
     (arguments
      `(#:phases
@@ -425,7 +425,7 @@ that is extensible via a plugin system.")
   (package
     (inherit gimp)
     (name "gimp-next")
-    (version "3.0.0-RC3")
+    (version "3.0.0")
     (source
      (origin
        (method url-fetch)
@@ -433,7 +433,7 @@ that is extensible via a plugin system.")
                            (version-major+minor version)
                            "/gimp-" version ".tar.xz"))
        (sha256
-        (base32 "1v1qgq7yy6q4vkdm9qzhsw6w7lxbmfb4g2016lzkl29dy9y55yv1"))))
+        (base32 "081d3n88fcly67qmp0zf4a1b5r5vdj4gnj9cwp0cmn0vklywmwck"))))
     (build-system meson-build-system)
     (arguments
      (list #:modules `((ice-9 popen)
@@ -451,12 +451,10 @@ that is extensible via a plugin system.")
                      (substitute* "app/gimp-version.c"
                        (("CC_VERSION") (string-append "\"" cc-version "\""))))))
                (add-after 'install 'move-doc
-                 (lambda* (#:key outputs #:allow-other-keys)
-                   (let ((out (assoc-ref outputs "out"))
-                         (doc (assoc-ref outputs "doc")))
-                     (mkdir-p (string-append doc "/share"))
-                     (rename-file (string-append out "/share/doc")
-                                  (string-append doc "/share/doc"))))))))
+                 (lambda _
+                   (mkdir-p (string-append #$output:doc "/share"))
+                   (rename-file (string-append #$output "/share/doc")
+                                (string-append #$output:doc "/share/doc")))))))
     (inputs (modify-inputs (package-inputs gimp)
               (replace "gtk+" gtk+)
               (prepend libxmu libxt)

@@ -141,7 +141,7 @@
 ;;; Copyright © 2023 Dominik Delgado Steuter <d@delgado.nrw>
 ;;; Copyright © 2023 Ivan Vilata-i-Balaguer <ivan@selidor.net>
 ;;; Copyright © 2023 Ontje Lünsdorf <ontje.luensdorf@dlr.de>
-;;; Copyright © 2023 gemmaro <gemmaro.dev@gmail.com>
+;;; Copyright © 2023, 2025 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2023 Parnikkapore <poomklao@yahoo.com>
 ;;; Copyright © 2023 Foundation Devices, Inc. <hello@foundationdevices.com>
 ;;; Copyright © c4droid <c4droid@foxmail.com>
@@ -584,6 +584,63 @@ Sorensen distance, plus some bonuses.  All distance computations are
 implemented in pure Python, and most of them are also implemented in C.")
     (license license:gpl2+)))
 
+(define-public python-flexcache
+  (package
+    (name "python-flexcache")
+    (version "0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "flexcache" version))
+       (sha256
+        (base32 "0mh6c3s0ykmnnhzys72xq5ls4myzpz1y86fmz0ngw6v2l3aknx0q"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-pytest-mpl
+           python-pytest-subtests
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-typing-extensions))
+    (home-page "https://github.com/hgrecco/flexcache")
+    (synopsis "Caching transformed versions of a source object")
+    (description
+     "This package implements a functionality to cache on disk the result of
+expensive calculations.  It was started as part of
+@url{https://github.com/hgrecco/pint, Pint}, the Python units package.")
+    (license license:bsd-3)))
+
+(define-public python-flexparser
+  (package
+    (name "python-flexparser")
+    (version "0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "flexparser" version))
+       (sha256
+        (base32 "1cpn5scxnxbd2jrnany4znzzn9im5h5gwr59bp62rglman89hv96"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-pytest-mpl
+           python-pytest-subtests
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-typing-extensions))
+    (home-page "https://github.com/hgrecco/flexparser")
+    (synopsis "Parsing made fun ... using typing")
+    (description "This project provides a typed parser.  It was started as
+part of @url{https://github.com/hgrecco/pint, Pint}, the Python units
+package. ")
+    (license license:bsd-3)))
+
 (define-public python-jsonpath-ng
   (package
     (name "python-jsonpath-ng")
@@ -708,6 +765,32 @@ many CNC and laser operations.")
      "This package implements a functionality for time taking using context
 managers.")
     (license license:expat)))
+
+(define-public python-tatsu
+  (package
+    (name "python-tatsu")
+    (version "5.13.1")
+    (source
+     (origin
+       (method git-fetch) ; no tests in PyPI releasefor tests
+       (uri (git-reference
+             (url "https://github.com/neogeny/TatSu")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pdq9d45vbp7j600ig4k21mv2wipvmz05dji91x7kifhzfl5i6w9"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (home-page "https://tatsu.readthedocs.io/en/stable/")
+    (synopsis "PEG/Packrat Parser generator for Python")
+    (description
+     "TatSu (竜) takes a grammar in a variation of Extended Backus-Naur
+Form (EBNF) as input, and outputs a memoizing Parsing Expression Grammar (PEG)
+or Packrat parser in Python.")
+    (license license:bsd-2)))
 
 (define-public python-trubar
   (package
@@ -2094,46 +2177,6 @@ Java objects.")
     (description "PyMdown Extensions is a collection of extensions for Python
 Markdown.  All extensions are found under the module namespace of pymdownx.")
     (license license:expat)))
-
-(define-public python-pint
-  (package
-    (name "python-pint")
-    (version "0.23")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "Pint" version))
-              (sha256
-               (base32
-                "1d69dqs0j907x4hgz2k8f3zjzhgs9zvlw2k0gi955g3dc28rnl71"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      '(list "--ignore=pint/testsuite/benchmarks"
-             "-k" (string-append
-                   ;; This test tries to write to $HOME/.cache/pint.
-                   "not test_auto"
-                   ;; Our pytest can't match RuntimeWarning for some reason.
-                   ;; Note: python-pint@0.24.4 would work around this, too.
-                   " and not test_nonnumeric_magnitudes"
-                   ;; Fails with "Group USCSLengthInternational already
-                   ;; present in registry"
-                   " and not test_load_definitions_stage_2"))))
-    (native-inputs
-     (list python-pytest python-pytest-benchmark python-pytest-cov
-           python-pytest-mpl python-pytest-subtests
-           python-setuptools python-setuptools-scm python-wheel))
-    (propagated-inputs
-     (list python-typing-extensions
-           python-uncertainties))
-    (home-page "https://github.com/hgrecco/pint")
-    (synopsis "Physical quantities module")
-    (description
-     "Pint is a Python package to define, operate and manipulate physical
-quantities: the product of a numerical value and a unit of measurement.  It
-allows arithmetic operations between them and conversions from and to
-different units.")
-    (license license:bsd-3)))
 
 (define-public python-plotext
   (package

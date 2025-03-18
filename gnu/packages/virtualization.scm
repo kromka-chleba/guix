@@ -358,7 +358,10 @@
                 (("\\['ahci-test'\\]") "[]"))
               ;; This test appears to be flaky as well, probably resulting
               ;; from a race condition.
-              (delete-file "tests/qemu-iotests/tests/copy-before-write")))
+              (delete-file "tests/qemu-iotests/tests/copy-before-write")
+              ;; This test fails non-deterministically (see:
+              ;; https://gitlab.com/qemu-project/qemu/-/issues/2867).
+              (delete-file "tests/qemu-iotests/161")))
           #$@(cond
               ((target-riscv64?)
                #~((add-after 'unpack 'disable-some-tests
@@ -1326,7 +1329,7 @@ of one or more RISC-V harts.")
 (define-public libosinfo
   (package
     (name "libosinfo")
-    (version "1.10.0")
+    (version "1.12.0")
     (source
      (origin
        (method url-fetch)
@@ -1334,7 +1337,7 @@ of one or more RISC-V harts.")
                            version ".tar.xz"))
        (sha256
         (base32
-         "0193sdvv9yj3h6wwhj441d2fhccc7fh0m36sl0fv5pl0ql7y0lm2"))))
+         "1dn6pzv0gzkxrjvi60cdzdmyxqlcsvinbrbds91xm4v7wbn5g1dd"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -1356,13 +1359,18 @@ of one or more RISC-V harts.")
                                                  "share/osinfo")))))))))
     (inputs (list libsoup libxml2 libxslt osinfo-db))
     (native-inputs
-     (list `(,glib "bin")                ;glib-mkenums, etc.
+     (list `(,glib "bin")               ;glib-mkenums, etc.
            gobject-introspection
            gtk-doc/stable
            hwdata
            vala
            intltool
            pkg-config))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "OSINFO_SYSTEM_DIR")
+            (separator #f)              ;single entry
+            (files '("share/osinfo")))))
     (home-page "https://libosinfo.org/")
     (synopsis "Operating system information database")
     (description "libosinfo is a GObject based library API for managing
@@ -1549,15 +1557,16 @@ pretty simple, REST API.")
 (define-public libvirt
   (package
     (name "libvirt")
-    (version "10.10.0")
+    (version "11.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://libvirt.org/sources/libvirt-"
                            version ".tar.xz"))
        (sha256
-        (base32 "15jpfrn3d2zyhbm5ip7bmpjb6ch2bfxm1h6yfgh0l3bw3g9ppgg1"))
-       (patches (search-patches "libvirt-add-install-prefix.patch"))))
+        (base32 "0vl0lgzw3x4fkghhw7nfxk8fxj3bbn9f17y0hg7miba283zpd881"))
+       (patches (search-patches "libvirt-add-install-prefix.patch"
+                                "libvirt-respect-modules-path.patch"))))
     (build-system meson-build-system)
     (arguments
      (list

@@ -109,7 +109,8 @@
   #:use-module (gnu packages web)
   #:use-module (gnu packages webkit)
   #:use-module (gnu packages xml)
-  #:use-module (gnu packages xorg))
+  #:use-module (gnu packages xorg)
+  #:use-module ((guix search-paths) #:select ($SSL_CERT_DIR $SSL_CERT_FILE)))
 
 (define-public midori
   (package
@@ -356,7 +357,7 @@ and the GTK+ toolkit.")
 (define-public lynx
   (package
     (name "lynx")
-    (version "2.9.1")
+    (version "2.9.2")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -364,7 +365,7 @@ and the GTK+ toolkit.")
                     "/lynx" version ".tar.bz2"))
               (sha256
                (base32
-                "1i9r2g2aa6np6pll4iqk9m8rmkiiam85m4jp6zgkbx0dq8i9pnx6"))))
+                "1kh7zfv7m9srqapppandx3hkc82rr7r9fkhz22g6d4fr6scvhx3k"))))
     (build-system gnu-build-system)
     (native-inputs (list pkg-config perl))
     (inputs (list ncurses
@@ -375,6 +376,7 @@ and the GTK+ toolkit.")
                   zlib
                   gzip
                   bzip2))
+    (native-search-paths (list $SSL_CERT_DIR $SSL_CERT_FILE))
     (arguments
      (list #:configure-flags
            #~(let ((openssl #$(this-package-input "openssl")))
@@ -396,7 +398,7 @@ and the GTK+ toolkit.")
            #~(modify-phases %standard-phases
                (add-before 'configure 'set-makefile-shell
                  (lambda _ (substitute* "po/makefile.inn"
-                        (("/bin/sh") (which "sh")))))
+                             (("/bin/sh") (which "sh")))))
                (replace 'install
                  (lambda* (#:key (make-flags '()) #:allow-other-keys)
                    (apply invoke "make" "install-full" make-flags))))))
