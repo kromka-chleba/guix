@@ -212,7 +212,7 @@ across a broad spectrum of applications.")
     (version "1.83.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append "https://boostorg.jfrog.io/artifactory/main/release/"
+              (uri (string-append "https://archives.boost.io/release/"
                                   version "/source/boost_"
                                   (version-with-underscores version) ".tar.bz2"))
               (patches
@@ -232,10 +232,9 @@ across a broad spectrum of applications.")
     (version "1.68.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append
-                    "mirror://sourceforge/boost/boost/" version "/boost_"
-                    (string-map (lambda (x) (if (eq? x #\.) #\_ x)) version)
-                    ".tar.bz2"))
+              (uri (string-append "https://archives.boost.io/release/"
+                                  version "/source/boost_"
+                                  (version-with-underscores version) ".tar.bz2"))
               (sha256
                (base32
                 "1dyqsr9yb01y0nnjdq9b8q5s2kvhxbayk34832k5cpzn7jy30qbz"))))
@@ -325,10 +324,9 @@ across a broad spectrum of applications.")
     (version "1.59.0")
     (source (origin
               (method url-fetch)
-              (uri (string-append
-                    "mirror://sourceforge/boost/boost/" version "/boost_"
-                    (string-map (lambda (x) (if (eq? x #\.) #\_ x)) version)
-                    ".tar.bz2"))
+              (uri (string-append "https://archives.boost.io/release/"
+                                  version "/source/boost_"
+                                  (version-with-underscores version) ".tar.bz2"))
               (sha256
                (base32
                 "1jj1aai5rdmd72g90a3pd8sw9vi32zad46xv5av8fhnr48ir6ykj"))))

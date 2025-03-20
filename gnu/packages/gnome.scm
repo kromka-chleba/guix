@@ -79,6 +79,8 @@
 ;;; Copyright © 2023 Zhu Zihao <all_but_last@163.com>
 ;;; Copyright © 2024 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
+;;; Copyright © 2024 Justin Veilleux <terramorpha@cock.li>
+;;; Copyright © 2025 Noé Lopez <noelopez@free.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -135,6 +137,7 @@
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages file-systems)
+  #:use-module (gnu packages firmware)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages game-development)
@@ -12192,7 +12195,7 @@ micro-pauses and rest breaks, and restricts you to your daily limit.")
 (define-public ghex
   (package
     (name "ghex")
-    (version "42.3")
+    (version "46.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/ghex/"
@@ -12200,7 +12203,7 @@ micro-pauses and rest breaks, and restricts you to your daily limit.")
                                   "ghex-" version ".tar.xz"))
               (sha256
                (base32
-                "1vsd6l78pymdrsgdgj7xhxyrf09j4w08zrbvs8qdn8a9na50zm5d"))))
+                "0c8zcsng3925sw3bxffyj4lczna389k7rzv2p0h0v9wpcfipdwm8"))))
     (build-system meson-build-system)
     (arguments
      '(#:glib-or-gtk? #t
@@ -12221,7 +12224,8 @@ micro-pauses and rest breaks, and restricts you to your daily limit.")
            yelp-tools))
     (inputs
      (list at-spi2-core
-           gtk))
+           gtk
+           libadwaita))
     (synopsis "GNOME hexadecimal editor")
     (description "The GHex program can view and edit files in two ways:
 hexadecimal or ASCII.  It is useful for editing binary files in general.")
@@ -12895,7 +12899,7 @@ integrate seamlessly with the GNOME desktop.")
 (define-public gnome-boxes
   (package
     (name "gnome-boxes")
-    (version "47.0")
+    (version "48.0")
     (source
      (origin
        (method url-fetch)
@@ -12903,7 +12907,8 @@ integrate seamlessly with the GNOME desktop.")
                            (version-major version) "/"
                            "gnome-boxes-" version ".tar.xz"))
        (sha256
-        (base32 "13y7ic1k5sknld4ak2m1k0nb6p18wsqwb4libilm2kdzw4nnrgv5"))))
+        (base32 "1b9ya5pcb5dfii0qs9r167a3kxymdsq624bpi1nvzbwgar15ypyh"))))
+    (outputs '("out" "debug"))
     (build-system meson-build-system)
     (arguments
      (list #:glib-or-gtk? #t
@@ -14594,3 +14599,73 @@ or @acronym{RDP, Remote Desktop Protocol}.")
     (description "This package provides a graphical frontend for
 GNU Privacy Guard built with libadwaita.")
     (license license:expat)))
+
+(define-public gnome-software
+  (package
+    (name "gnome-software")
+    (version "46.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri
+        (string-append "mirror://gnome/sources/"
+                       name "/"
+                       (version-major version) "/"
+                       name "-" version ".tar.xz"))
+       (sha256 (base32 "0b5y9z64582aarw3v92wjm63yib2q85ylny1k7k4d2y48jivirb9"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:test-options
+      ;; The plugins test suite requires a D-Bus system session, which
+      ;; attempts to set its session under /var/run and fails.
+      #~(list "--no-suite=plugins")
+      #:glib-or-gtk? #t
+      #:configure-flags
+      #~(list "-Dhardcoded_proprietary_webapps=false")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-iso-codes
+            (lambda _
+              (with-directory-excursion "src"
+                (substitute* "./gs-language.c"
+                  (("DATADIR")
+                   (format #f "\"~a/share\"" #$iso-codes))))))
+          (add-before 'install 'disable-gtk-update-icon-cache
+            (lambda _
+              (setenv "DESTDIR" "/")
+              ;; Needed for complete RUNPATHs, but not actually needed at runtime.
+              (copy-file
+               "../build/lib/libgnomesoftware.so.20"
+               (string-append #$output "/lib/libgnomesoftware.so.20")))))))
+    (native-inputs
+     (list docbook-xsl
+           gettext-minimal
+           `(,glib "bin")
+           gtk-doc
+           libglib-testing
+           libxslt                      ;for xsltproc
+           pkg-config
+           sysprof
+           valgrind))
+    (inputs
+     (list appstream
+           flatpak
+           fwupd
+           gdk-pixbuf
+           gtk
+           json-glib
+           libadwaita
+           libgudev
+           libostree
+           libsoup-minimal
+           libxmlb
+           malcontent
+           packagekit
+           polkit))
+    (synopsis "Graphical software manager for GNOME")
+    (description "GNOME Software allows you to find and install new
+applications and system extensions and remove existing installed
+applications.")
+    (license license:gpl2+)
+    (home-page "https://apps.gnome.org/en/Software/")))

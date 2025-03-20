@@ -1912,6 +1912,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/nss-getcwd-nonnull.patch			\
   %D%/packages/patches/nss-increase-test-timeout.patch		\
   %D%/packages/patches/nss-3.56-pkgconfig.patch			\
+  %D%/packages/patches/ntp-fix-dereferencing-the-wrong-variable.patch   \
   %D%/packages/patches/nvi-assume-preserve-path.patch		\
   %D%/packages/patches/nvi-dbpagesize-binpower.patch		\
   %D%/packages/patches/nvi-db4.patch				\
@@ -2425,7 +2426,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/xfig-Fix-double-free-when-requesting-MediaBox.patch		\
   %D%/packages/patches/xfig-Use-pkg-config-to-set-fontconfig-CFLAGS-and-LIBS.patch	\
   %D%/packages/patches/xfce4-settings-defaults.patch		\
-  %D%/packages/patches/xgboost-use-system-dmlc-core.patch       \
+  %D%/packages/patches/xgboost-use-system-dmlc-core.patch	\
+  %D%/packages/patches/xinit-startx-mcookie-path.patch		\
   %D%/packages/patches/xmonad-dynamic-linking.patch		\
   %D%/packages/patches/xplanet-1.3.1-cxx11-eof.patch		\
   %D%/packages/patches/xplanet-1.3.1-libdisplay_DisplayOutput.cpp.patch	\
