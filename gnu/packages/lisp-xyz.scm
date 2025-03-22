@@ -16677,6 +16677,38 @@ Heap.")
 (define-public ecl-funds
   (sbcl-package->ecl-package sbcl-funds))
 
+(define-public sbcl-fuzzy-dates
+  (let ((commit "d6a2c229870a633594afc15a07fb16082960dfba")
+        (revision "0"))
+    (package
+      (name "sbcl-fuzzy-dates")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/shinmera/fuzzy-dates")
+               (commit commit)))
+         (file-name (git-file-name "cl-fuzzy-dates" version))
+         (sha256
+          (base32 "0qaig90b91nrwgxs55c8zaah5iq72rgxw1clmjqw0iilfg5wgllr"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs (list sbcl-parachute))
+      (inputs (list sbcl-cl-ppcre
+                    sbcl-documentation-utils))
+      (home-page "https://github.com/vindarel/fuzzy-dates")
+      (synopsis "Fuzzily parse date and time strings")
+      (description
+       "Library to fuzzily parse time and date strings into a universal-time
+timestamp.")
+      (license license:zlib))))
+
+(define-public cl-fuzzy-dates
+  (sbcl-package->cl-source-package sbcl-fuzzy-dates))
+
+(define-public ecl-fuzzy-dates
+  (sbcl-package->ecl-package sbcl-fuzzy-dates))
+
 (define-public sbcl-fuzzy-match
   (let ((commit "e46ca41ef4641461f7be006782e3cfdcf73ba98a")
         (revision "1"))
@@ -27673,11 +27705,11 @@ running into parallelism problems when having to change directory.")
   (sbcl-package->ecl-package sbcl-simple-inferiors))
 
 (define-public sbcl-simple-matrix
-  (let ((commit "549113a853f09b2d2983497ee92f8fea7a8195ed")
+  (let ((commit "d12ba2bc65d99bc8076ddff55f36a5c2915bf7ab")
         (revision "0"))
     (package
       (name "sbcl-simple-matrix")
-      (version (git-version "1.4" revision commit))
+      (version (git-version "1.5" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -27686,7 +27718,7 @@ running into parallelism problems when having to change directory.")
                (commit commit)))
          (file-name (git-file-name "cl-simple-matrix" version))
          (sha256
-          (base32 "1f454mvr1zypcjijfddplsv0k1pa7p5n05pblxvjljszdxxf27g8"))))
+          (base32 "1ya395plzng8dz0ns7spfyfgxcn18c17di74qk6i2f50gr5nj4cn"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs (list sbcl-fiveam))
       (synopsis "Matrix library for Common Lisp")

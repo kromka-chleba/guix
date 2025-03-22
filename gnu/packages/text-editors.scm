@@ -209,8 +209,8 @@ intuitive, while also taking advantage of the capabilities of modern terminals."
     (license license:expat)))
 
 (define-public lem
-  (let ((commit "534cb9f2e1e1b0ffbdf4552a39801deec21a76f8")
-        (revision "3"))
+  (let ((commit "6e655f662356c192e46676437ad47e257cbbceb9")
+        (revision "4"))
     (package
       (name "lem")
       (version (git-version "2.2.0" revision commit))
@@ -221,7 +221,7 @@ intuitive, while also taking advantage of the capabilities of modern terminals."
                (url "https://github.com/lem-project/lem/")
                (commit commit)))
          (sha256
-          (base32 "0dxn5hc8lfw1l5d7kn16psbdvxrn8m7nvn3qhicqq7m3mml40v2h"))
+          (base32 "09qbry1wb05vy6yldy27w6x8cp39lhlx4migpxsq3vpabz1l3vxn"))
          (file-name (git-file-name name version))
          (snippet
           #~(begin
@@ -1870,14 +1870,14 @@ highlighting for dozens of languages.  Jed is very small and fast.")
 (define-public xnedit
   (package
     (name "xnedit")
-    (version "1.6.2")
+    (version "1.6.3")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/xnedit/" name "-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0y4cwnbsrf9myxwj84jklrzqlvp512nygh0gqnvmsif4g3iqah0y"))))
+                "0mb30xl0j27fs37hxskap50xawv7f1pb6ymp6yh8dz8j4iwrz9lb"))))
 
     (build-system gnu-build-system)
     (arguments

@@ -1028,16 +1028,17 @@ desktop environment.")
 (define-public icewm
   (package
     (name "icewm")
-    (version "3.7.1")
+    (version "3.7.2")
     (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/ice-wm/icewm/releases/download/"
-                    version "/icewm-" version ".tar.lz"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/ice-wm/icewm")
+                    (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1n5df4sjjsz0v8g5d7w6msbx86f4a3hljxfn8gsa0snmqm1fb1hd"))))
-    (build-system gnu-build-system)
+                "0zrj9ka9sglxchmkcgzdbjgzzzcfrfnk4ydhwzbi91vrrq7c6sh3"))))
+    (build-system cmake-build-system)
     (native-inputs (list pkg-config))
     (inputs (list fontconfig
                   fribidi
@@ -1065,9 +1066,9 @@ desktop environment.")
                  ;; strtest.cc tests failing due to $HOME and /etc setup
                  ;; difference under guix
                  (lambda _
-                   (substitute* "src/Makefile.in"
-                     (("TESTS = strtest\\$\\(EXEEXT\\)")
-                      "TESTS = ")))))))
+                   (substitute* "src/CMakeLists.txt"
+                     (("add_test\\(strtest \\$\\{CMAKE_BINARY_DIR\\}/strtest\\)")
+                      "")))))))
     (home-page "https://ice-wm.org/")
     (synopsis "Window manager for the X Window System")
     (description
@@ -2509,7 +2510,7 @@ compository, supporting the following features:
                   pipewire
                   playerctl
                   pulseaudio
-                  spdlog
+                  spdlog-1.13
                   wayland
                   wireplumber))
     (native-inputs
@@ -2583,7 +2584,7 @@ core/thread.")
 (define-public mako
   (package
     (name "mako")
-    (version "1.9.0")
+    (version "1.10.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2592,24 +2593,9 @@ core/thread.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0wcyhnpah1g5qpixfwlpybsjcl22iv39jrxlbi84xv2gfyi2vmj2"))))
+                "0hv083k3gp1gl2gxi91f2xf21hcn33z68j6r5844hzi7g8wwmp9v"))))
     (build-system meson-build-system)
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'patch-makoctl
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   (substitute* "makoctl"
-                     (("^BUSCTL=.*$")
-                      (string-append
-                       "BUSCTL="
-                       (search-input-file inputs "bin/basuctl")
-                       "\n"))
-                     (("jq ")
-                      (string-append
-                       (search-input-file inputs "bin/jq")
-                       " "))))))))
-    (inputs (list basu cairo gdk-pixbuf jq pango wayland))
+    (inputs (list basu cairo gdk-pixbuf pango wayland))
     (native-inputs (list pkg-config scdoc wayland-protocols))
     (home-page "https://wayland.emersion.fr/mako")
     (synopsis "Lightweight Wayland notification daemon")
