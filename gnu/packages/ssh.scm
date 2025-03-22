@@ -209,9 +209,9 @@ applications.")
    (build-system gnu-build-system)
    ;; The installed libssh2.pc file does not include paths to libgcrypt and
    ;; zlib libraries, so we need to propagate the inputs.
-   (propagated-inputs (list libgcrypt zlib))
+   (propagated-inputs (list openssl zlib))
    (arguments
-    (list #:configure-flags #~'("--with-libgcrypt"
+    (list #:configure-flags #~'("--with-crypto=openssl"
                                 "--disable-static"
                                 "--disable-docker-tests" )))
    (synopsis "Client-side C library implementing the SSH2 protocol")
