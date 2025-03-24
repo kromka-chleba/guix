@@ -119,7 +119,7 @@
 ;;; Copyright © 2022, 2024, 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2022 Thiago Jung Bauermann <bauermann@kolabnow.com>
 ;;; Copyright © 2022 Joeke de Graaf <joeke@posteo.net>
-;;; Copyright © 2023 Simon Streit <simon@netpanic.org>
+;;; Copyright © 2023, 2025 Simon Streit <simon@netpanic.org>
 ;;; Copyright © 2023 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2023 Ivan Vilata-i-Balaguer <ivan@selidor.net>
 ;;; Copyright © 2022 Demis Balbach <db@minikn.xyz>
@@ -581,7 +581,7 @@ e.g. emacs-geiser-guile for Guile.")
 (define-public emacs-gptel
   (package
     (name "emacs-gptel")
-    (version "0.9.7")
+    (version "0.9.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -590,7 +590,7 @@ e.g. emacs-geiser-guile for Guile.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "15ny2d04ci04swmxikkyb7lsjr51gvxpr2cj02gwx88bidx34md2"))))
+                "1wjzv39pcg6lcmlw6yc4fdfln2cnshzaa0dxgkniq9dfznf7hnmd"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -606,7 +606,7 @@ e.g. emacs-geiser-guile for Guile.")
               (emacs-substitute-variables "gptel.el"
                 ("gptel-use-curl" 't)))))))
     (inputs (list curl))
-    (propagated-inputs (list emacs-compat))
+    (propagated-inputs (list emacs-compat emacs-transient))
     (home-page "https://github.com/karthink/gptel")
     (synopsis "GPTel is a simple ChatGPT client for Emacs")
     (description
@@ -644,7 +644,7 @@ summarizing text using an LLM.")
 (define-public emacs-chatgpt-shell
   (package
     (name "emacs-chatgpt-shell")
-    (version "2.13.1")
+    (version "2.16.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -653,19 +653,24 @@ summarizing text using an LLM.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1vlvwim1v14cvd4w3bd10xfzaw3mhsiv5qh4ka67jgninq8kjls5"))))
+                "1xq4hfr3m5sgi9wrr3nrp6fsnnw8d044gz0y50d4h46cvq8c6f2g"))))
     (build-system emacs-build-system)
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
                ;; This phase prevents build phase failure.
-               (add-before 'build 'generate-empty-config-file
+               (add-after 'unpack 'generate-empty-config-file
                  (lambda _
                    (setenv "HOME" (getcwd))
                    (mkdir-p ".emacs.d")
                    (call-with-output-file ".emacs.d/.chatgpt-shell.el"
                      (lambda (port)
-                       (display "nil" port))))))))
+                       (display "nil" port))))))
+           #:tests? #t
+           #:test-command #~(list "emacs" "-Q" "--batch"
+                                  "-l" "test_chatgpt-shell.el"
+                                  "-l" "chatgpt-shell.el"
+                                  "-f" "ert-run-tests-batch-and-exit")))
     (propagated-inputs (list emacs-shell-maker))
     (home-page "https://github.com/xenodium/chatgpt-shell")
     (synopsis "ChatGPT and DALL-E Emacs shells and Org Babel libraries")
@@ -6954,6 +6959,40 @@ them whenever another command is invoked.")
 a command.")
     (license license:gpl3+)))
 
+(define-public emacs-khardel
+  (package
+    (name "emacs-khardel")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/DamienCassou/khardel")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gqijnmj24phryi6n74iq410k0637j0li1ncdymxhk3bdmp4mb40"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list #:tests? #false              ;no tests
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'fix-path
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (emacs-substitute-variables "khardel.el"
+                     ("khardel-command"
+                      (search-input-file inputs "/bin/khard"))))))))
+    (inputs
+     (list khard))
+    (propagated-inputs
+     (list emacs-yaml-mode))
+    (home-page "https://github.com/DamienCassou/khardel")
+    (synopsis "Emacs interface to Khard")
+    (description
+     "Khardel provide an Emacs integration with Khard, a console application
+to search and edit contacts in vCard format.")
+    (license license:gpl3+)))
+
 (define-public emacs-ligature
   (let ((commit "3d1460470736777fd8329e4bb4ac359bf4f1460a")
         (revision "1"))
@@ -8237,6 +8276,24 @@ for the Zig programming language in Emacs.")
     (synopsis "Zettelkasten-style linked notes for Emacs")
     (description
      "Emacs packages for working with Zettelkasten-style linked notes.")
+    (license license:gpl3+)))
+
+(define-public emacs-erc
+  (package
+    (name "emacs-erc")
+    (version "5.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/erc-" version ".tar"))
+       (sha256
+        (base32 "16qyfsa2q297xcfjiacjms9v14kjwwrsp3m8kcs5s50aavzfvc1s"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-compat))
+    (home-page "https://www.gnu.org/software/emacs/erc.html")
+    (synopsis "An Emacs Internet Relay Chat client")
+    (description
+     "ERC is a powerful, modular, and extensible IRC client for Emacs.")
     (license license:gpl3+)))
 
 (define-public emacs-znc
@@ -10001,6 +10058,30 @@ and passes it back to the current Emacs.  In the meantime, current Emacs does
 not hang at all.")
     (license license:gpl3+)))
 
+(define-public emacs-elastic-modes
+  (let ((commit "ea49bb03b78cb9fd17655990223e3095f137a3ce")
+        (revision "1"))
+    (package
+      (name "emacs-elastic-modes")
+      (version "1.0.0")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/jyp/elastic-modes")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1dkigkjw4i9nz5rl0dnic16ljdnp5cyz2xic3hc2myqnjlqnc6z6"))))
+      (build-system emacs-build-system)
+      (arguments (list #:tests? #false)) ;no tests
+      (propagated-inputs (list emacs-dash))
+      (home-page "https://github.com/jyp/elastic-modes")
+      (synopsis "Text and code alignment for variable-width fonts")
+      (description
+       "This is an Emacs package for text and code alignment for
+variable-width (i.e., proportional, or variable pitch) fonts.")
+      (license license:gpl3+))))
 
 (define-public emacs-elisp-demos
   (package
@@ -14670,13 +14751,13 @@ the same name.")
 (define-public emacs-swiper
   (package
     (name "emacs-swiper")
-    (version "0.14.2")
+    (version "0.15.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://elpa.gnu.org/packages/swiper-" version ".tar"))
        (sha256
-        (base32 "1x6jnc0nrk68kww12gq6w8nss6ny76xz0fgxf57550bbipx9pa8m"))))
+        (base32 "16vznhb8zqzqvg3i2pkwfani2h19dm08aj7qv334mlyj97rv1ppn"))))
     (build-system emacs-build-system)
     (propagated-inputs
      (list emacs-ivy))
@@ -23998,6 +24079,35 @@ literate programming tools for exporting, weaving and tangling.")
     (description
      "This is an Emacs minor mode for editing Ansible files.")
     (license license:gpl2+)))
+
+(define-public emacs-ansible-doc
+  (let ((commit "648c844ab46f56c2c7ee25687ad2952a5d5eb4c7")
+        (revision "2")
+        (version "0.4"))
+    (package
+      (name "emacs-ansible-doc")
+      (version (git-version version revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/fredericgiquel/ansible-doc")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "02xnkgsrq54bpk26z9cs352r5rq0scmzw2czlq2pyq1332g6lycd"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/fredericgiquel/ansible-doc")
+      (synopsis "Ansible documentation for Emacs")
+      (description
+       "This package provides an Ansible documentation for GNU Emacs.
+
+@code{ansible-doc} allows you to view the documentation of an Ansible
+module and @code{ansible-doc-mode} minor mode adds documentation
+lookup to YAML Mode.  You could enable the mode with @code{(add-hook
+'yaml-mode-hook #'ansible-doc-mode)}.")
+      (license license:gpl3+))))
 
 (define-public emacs-polymode-ansible
   (package
@@ -42039,26 +42149,26 @@ Fennel code within Emacs.")
 
 (define-public emacs-org-modern
   (package
-   (name "emacs-org-modern")
-   (version "1.6")
-   (source
+    (name "emacs-org-modern")
+    (version "1.7")
+    (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/minad/org-modern")
              (commit version)))
        (sha256
-        (base32 "0a7viid1lrn02w1n4yjivjyssbd1qq850giqwnp3mrjf9adwzh2a"))
+        (base32 "04bmlwc81d8h8n10xb2nhwmcvn1701nr73hxajl6hasswzqqmh70"))
        (file-name (git-file-name name version))))
-   (build-system emacs-build-system)
-   (propagated-inputs (list emacs-compat))
-   (home-page "https://github.com/minad/org-modern")
-   (synopsis "Modern Org style")
-   (description
-"Org Modern implements a modern style for your Org buffers using font locking
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-compat))
+    (home-page "https://github.com/minad/org-modern")
+    (synopsis "Modern Org style")
+    (description
+     "Org Modern implements a modern style for your Org buffers using font locking
 and text properties.  The package styles headlines, keywords, tables and
 source blocks.")
-   (license license:gpl3+)))
+    (license license:gpl3+)))
 
 (define-public emacs-org-margin
   (let* ((commit "4013b59ff829903a7ab86b95593be71aa5c9b87d")

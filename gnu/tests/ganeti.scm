@@ -33,54 +33,55 @@
   #:export (%test-ganeti-kvm %test-ganeti-lxc))
 
 (define %ganeti-os
-  (operating-system
-    (host-name "gnt1")
-    (timezone "Etc/UTC")
-    (locale "en_US.UTF-8")
+  (operating-system-with-console-syslog
+   (operating-system
+     (host-name "gnt1")
+     (timezone "Etc/UTC")
+     (locale "en_US.UTF-8")
 
-    (bootloader (bootloader-configuration
-                 (bootloader grub-bootloader)
-                 (targets '("/dev/vda"))))
-    (file-systems (cons (file-system
-                          (device (file-system-label "my-root"))
-                          (mount-point "/")
-                          (type "ext4"))
-                        %base-file-systems))
-    (firmware '())
+     (bootloader (bootloader-configuration
+                  (bootloader grub-bootloader)
+                  (targets '("/dev/vda"))))
+     (file-systems (cons (file-system
+                           (device (file-system-label "my-root"))
+                           (mount-point "/")
+                           (type "ext4"))
+                         %base-file-systems))
+     (firmware '())
 
-    (packages (append (list ganeti-instance-debootstrap ganeti-instance-guix)
-                      %base-packages))
+     (packages (append (list ganeti-instance-debootstrap ganeti-instance-guix)
+                       %base-packages))
 
-    ;; The hosts file must contain a nonlocal IP for host-name.
-    (essential-services
-     (modify-services (operating-system-default-essential-services this-operating-system)
-       (hosts-service-type config => (list
-                                      (host "127.0.0.1" "localhost")
-                                      (host "::1"       "localhost")))))
-    (services
-     (append (list (service static-networking-service-type
-                            (list %qemu-static-networking))
-                   (service openssh-service-type
-                            (openssh-configuration
-                             (permit-root-login 'prohibit-password)))
+     ;; The hosts file must contain a nonlocal IP for host-name.
+     (essential-services
+      (modify-services (operating-system-default-essential-services this-operating-system)
+        (hosts-service-type config => (list
+                                       (host "127.0.0.1" "localhost")
+                                       (host "::1"       "localhost")))))
+     (services
+      (append (list (service static-networking-service-type
+                             (list %qemu-static-networking))
+                    (service openssh-service-type
+                             (openssh-configuration
+                              (permit-root-login 'prohibit-password)))
 
-                   ;; In addition, the cluster name must resolve to an IP address that
-                   ;; is not currently provisioned.
-                   (simple-service 'ganeti-host-entries hosts-service-type
-                                   (list
-                                    (host "10.0.2.15" "gnt1.example.com" '("gnt1"))
-                                    (host "192.168.254.254" "ganeti.example.com")))
+                    ;; In addition, the cluster name must resolve to an IP address that
+                    ;; is not currently provisioned.
+                    (simple-service 'ganeti-host-entries hosts-service-type
+                                    (list
+                                     (host "10.0.2.15" "gnt1.example.com" '("gnt1"))
+                                     (host "192.168.254.254" "ganeti.example.com")))
 
-                   (service ganeti-service-type
-                            (ganeti-configuration
-                             (file-storage-paths '("/srv/ganeti/file-storage"))
-                             (rapi-configuration
-                              (ganeti-rapi-configuration
-                               ;; Disable TLS so we can test the RAPI without
-                               ;; pulling in GnuTLS.
-                               (ssl? #f)))
-                             (os %default-ganeti-os))))
-             %base-services))))
+                    (service ganeti-service-type
+                             (ganeti-configuration
+                              (file-storage-paths '("/srv/ganeti/file-storage"))
+                              (rapi-configuration
+                               (ganeti-rapi-configuration
+                                ;; Disable TLS so we can test the RAPI without
+                                ;; pulling in GnuTLS.
+                                (ssl? #f)))
+                              (os %default-ganeti-os))))
+              %base-services)))))
 
 (define* (run-ganeti-test hypervisor #:key
                           (master-netdev "eth0")
@@ -116,7 +117,7 @@
                        (gnu build marionette))
 
           (define marionette
-            (make-marionette (list #$vm)))
+            (make-marionette (list #$vm "-m" "1024")))
 
           (test-runner-current (system-test-runner #$output))
           (test-begin "ganeti")
@@ -154,9 +155,8 @@
           (test-eq "watcher pause"
             0
             (marionette-eval
-             '(begin
-                (system* #$(file-append ganeti "/sbin/gnt-cluster")
-                         "watcher" "pause" "1h"))
+             '(system* #$(file-append ganeti "/sbin/gnt-cluster")
+                       "watcher" "pause" "1h")
              marionette))
 
           (test-assert "force-start wconfd"
@@ -174,8 +174,7 @@
           (test-eq "gnt-cluster verify 1"
             0
             (marionette-eval
-             '(begin
-                (system* #$(file-append ganeti "/sbin/gnt-cluster") "verify"))
+             '(system* #$(file-append ganeti "/sbin/gnt-cluster") "verify")
              marionette))
 
           ;; Try stopping and starting daemons with daemon-util like
@@ -183,33 +182,29 @@
           (test-eq "daemon-util stop-all"
             0
             (marionette-eval
-             '(begin
-                (system* #$(file-append ganeti "/lib/ganeti/daemon-util")
-                         "stop-all"))
+             '(system* #$(file-append ganeti "/lib/ganeti/daemon-util")
+                       "stop-all")
              marionette))
 
           (test-eq "daemon-util start-all"
             0
             (marionette-eval
-             '(begin
-                (system* #$(file-append ganeti "/lib/ganeti/daemon-util")
-                         "start-all"))
+             '(system* #$(file-append ganeti "/lib/ganeti/daemon-util")
+                       "start-all")
              marionette))
 
           ;; Check that the cluster is still healthy after the daemon restarts.
           (test-eq "gnt-cluster verify 2"
             0
             (marionette-eval
-             '(begin
-                (system* #$(file-append ganeti "/sbin/gnt-cluster") "verify"))
+             '(system* #$(file-append ganeti "/sbin/gnt-cluster") "verify")
              marionette))
 
           (test-eq "watcher continue"
             0
             (marionette-eval
-             '(begin
-                (system* #$(file-append ganeti "/sbin/gnt-cluster")
-                         "watcher" "continue"))
+             '(system* #$(file-append ganeti "/sbin/gnt-cluster")
+                       "watcher" "continue")
              marionette))
 
           ;; Try accessing the RAPI.
@@ -244,9 +239,8 @@
           (test-eq "gnt-cluster destroy"
             0
             (marionette-eval
-             '(begin
-                (system* #$(file-append ganeti "/sbin/gnt-cluster")
-                         "destroy" "--yes-do-it"))
+             '(system* #$(file-append ganeti "/sbin/gnt-cluster")
+                       "destroy" "--yes-do-it")
              marionette))
 
           (test-end))))

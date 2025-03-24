@@ -978,23 +978,38 @@ cross-validation.")
 (define-public python-tdda
   (package
     (name "python-tdda")
-    (version "2.0.9")
+    (version "2.2.17")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "tdda" version))
        (sha256
-        (base32 "1xs91s8b7cshjcqw88qsrjh10xly799k5rf2ycawqfz2mw8sy3br"))))
+        (base32 "1l2ph60m20ii4ljgd81wccpp5p8p2m81irr97k7850s2l1qnikcw"))))
     (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (when tests?
-                        (invoke "tdda" "test")))))))
+     (list
+      #:test-flags
+      #~(list
+         ;; One test fails with error: AssertionError: False is not true : 5
+         ;; lines are different, starting at line 1
+         "--deselect=tdda/test_tdda.py::TestOne::test_ddiff_values_output")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; "datetime.UTC" is not availalbe in Python 3.10 but in
+          ;; 3.11 it's present
+          ;; <https://docs.python.org/3/library/datetime.html#datetime.UTC>.
+          (add-after 'unpack 'fix-Python3.11-datetime.UTC
+            (lambda _
+            (substitute* (find-files "." "\\.py")
+              (("datetime.UTC")
+               "datetime.timezone.utc")))))))
     (native-inputs
      (list python-numpy
+           python-chardet
            python-pandas
+           python-pyarrow
+           python-pytest
+           python-rich
            python-setuptools
            python-wheel))
     (home-page "https://www.stochasticsolutions.com")
@@ -2622,7 +2637,7 @@ readable.")
 (define-public python-vedo
   (package
     (name "python-vedo")
-    (version "2022.2.0")
+    (version "2025.5.3")
     (source
      (origin
        (method git-fetch)
@@ -2631,43 +2646,34 @@ readable.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1hhv4xc4bphhd1zrnf7r6fpf65xvkdqmb1lh51qg1xpv91h2az0h"))))
-    (build-system python-build-system)
+        (base32 "0hrqyvcxxbc1wz0cnafc8rvsi5mj19kck4b6pmddh25rlhdcr5qb"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-tests
-           ;; These tests require online data.
+     (list
+      ;; XXX: The whole test suite depends on the data from
+      ;; <https://vedo.embl.es/examples> providing samples which need to be
+      ;; downloaded during tests, find the way how to enable it.
+      #:tests? #f
+      #:phases
+       #~(modify-phases %standard-phases
+         (add-after 'unpack 'relax-requirements
+           ;; vtk does not provide Python metadata.
+           ;;
+           ;; ...checking requirements: ERROR: vedo==2025.5.3
+           ;; DistributionNotFound(Requirement.parse('vtk'), {'vedo'})
            (lambda _
-             (substitute* "tests/common/test_actors.py"
-               (("^st = .*") "")
-               (("^assert isinstance\\(st\\.GetTexture\\(\\), .*") ""))
-             (delete-file "tests/common/test_pyplot.py")))
-         (add-after 'build 'mpi-setup
-           ,%openmpi-setup)
-         (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (when tests?
-               (setenv "HOME" (getcwd))
-               (add-installed-pythonpath inputs outputs)
-               (with-directory-excursion "tests"
-                 (for-each (lambda (dir)
-                             (with-directory-excursion dir
-                               (invoke "./run_all.sh")))
-                           '("common" "dolfin"))))))
-         ;; Disable the sanity check, which fails with the following error:
-         ;;
-         ;;   ...checking requirements: ERROR: vedo==2022.2.0 DistributionNotFound(Requirement.parse('vtk<9.1.0'), {'vedo'})
-         (delete 'sanity-check))))
+             (substitute* "pyproject.toml"
+               (("\"vtk\",") "")))))))
     (native-inputs
      (list pkg-config
-           python-pkgconfig))
+           python-pkgconfig
+           python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list fenics
-           python-deprecated
+     (list python-deprecated
            python-matplotlib
            python-numpy
+           python-pygments
            vtk))
     (home-page "https://github.com/marcomusy/vedo")
     (synopsis
@@ -3749,46 +3755,6 @@ for parameterized model creation and handling.  Its features include:
  @item Efficient storage of models, for reloading.
  @item Efficient caching.
 @end itemize")
-    (license license:bsd-3)))
-
-(define-public python-gpy
-  (package
-    (name "python-gpy")
-    (version "1.13.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "GPy" version))
-              (sha256
-               (base32
-                "05d1ry4jpp0srsrmp3qd6s0p2bjc4c0z99450pzdr79vagbfvlk4"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'compatibility
-           (lambda _
-             ;; This file uses Python 2 statements
-             (delete-file "GPy/testing/mpi_test__.py")
-             (substitute* "setup.py"
-               (("scipy>=1.3.0,<1.12.0")
-                "scipy>=1.3.0,<=1.13.0"))
-             ;; Use numpy.exp because scipy.ext no longer exists
-             (substitute* "GPy/kern/src/sde_standard_periodic.py"
-               (("sp\\.exp") "np.exp"))
-             (substitute* "GPy/kern/src/sde_stationary.py"
-               (("sp\\.poly1d") "np.poly1d")
-               (("sp\\.roots") "np.roots")))))))
-    (native-inputs
-     (list python-cython python-matplotlib python-pods python-pytest))
-    (propagated-inputs
-     (list python-numpy python-paramz python-scipy python-six))
-    (home-page "https://sheffieldml.github.io/GPy/")
-    (synopsis "The Gaussian Process Toolbox")
-    (description
-     "@command{GPy} is a Gaussian Process (GP) framework written in
-Python, from the Sheffield machine learning group.  GPy implements a range of
-machine learning algorithms based on GPs.")
     (license license:bsd-3)))
 
 (define-public python-pods

@@ -3925,17 +3925,17 @@ socket or command line.")
 (define-public synthpod
   (package
     (name "synthpod")
-    (version "0.1.6507")
+    (version "0.1.6715")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://git.open-music-kontrollers.ch/lv2/synthpod")
+                    (url "https://git.open-music-kontrollers.ch/~hp/synthpod")
                     ;; Version is not tagged but mentioned in VERSION file.
-                    (commit "6e84a075ea8fea95094dcbc2b30f968717a81960")))
+                    (commit "54c285cfe0fbd80dc574101a8a2952cf3374fc38")))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1chazkdxjgjzfxqmlk4ywhilkj9l3bybd9xghjg9r67df2diqhbs"))))
+                "1axb7f6rd2x9kd4hzk9895zvqj0lwlmc3zj23yx17yypd0w7yg0c"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -5044,20 +5044,17 @@ plugins, a switch trigger, a toggle switch, and a peakmeter.")
 (define-public qmidiarp
   (package
     (name "qmidiarp")
-    (version "0.6.5")
+    (version "0.7.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/qmidiarp/qmidiarp/"
                                   version "/qmidiarp-" version ".tar.bz2"))
               (sha256
                (base32
-                "043yh1p0rrbj1v840y27529m9260g55gvh1km8az4jxy7mns58r2"))))
+                "0571y3b49dwcgxif0h4q5mlracm3wi338yawy0whmpdnpfzbvls0"))))
     (build-system gnu-build-system)
-    (arguments
-     `(#:configure-flags
-       (list "--enable-qt5")))
     (inputs
-     (list qtbase-5 alsa-lib jack-1 liblo lv2))
+     (list alsa-lib cairo glu jack-2 liblo lv2 pango qtbase-5))
     (native-inputs
      (list pkg-config qttools-5))
     (home-page "https://qmidiarp.sourceforge.net/")

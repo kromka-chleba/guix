@@ -52,7 +52,9 @@
                shepherd-service-modules
 
                shepherd-action
-               shepherd-configuration-action))
+               shepherd-configuration-action
+               shepherd-trigger-action
+               shepherd-timer))
 
 (define-record-type* <home-shepherd-configuration>
   home-shepherd-configuration make-home-shepherd-configuration

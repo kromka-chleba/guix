@@ -176,6 +176,64 @@
   #:use-module (gnu packages xorg)
   #:use-module ((srfi srfi-1) #:hide (zip)))
 
+(define-public aacircuit
+  ;; No release in PyPI or version tag on Git, use the latest commit.
+  (let ((commit "18635c846754b6219da1a2ceb8977714f70004d0")
+        (revision "0"))
+    (package
+      (name "aacircuit")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/Blokkendoos/AACircuit")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "07agb7fbpbq74zm27j9b00imr46q6kpwhxzmmffw2s9scv80c1km"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  ;; Delete develompent test file.
+                  (delete-file "tests/test_flake.py")
+                  ;; Exclude tests intended for visual review.
+                  (setenv "NOSE_EXCLUDE"
+                          (string-join '("test_export_pdf"
+                                         "test_import_aacircuit_export_pdf")
+                                       ","))
+                  (setenv "HOME" "/tmp")
+                  (invoke "xvfb-run" "./testrunner.sh")))))))
+      (native-inputs
+       ;; XXX: Test runner may be migrated to Pytest
+       ;; <https://docs.pytest.org/en/7.1.x/how-to/nose.html> after report to
+       ;; the upstream to modify them, use deprecated Nose test runner for
+       ;; now.
+       (list python-nose
+             python-setuptools
+             python-wheel
+             xvfb-run))
+      (propagated-inputs
+       (list gtk+
+             python-bresenham
+             python-platformdirs
+             python-pycairo
+             python-pyclip
+             python-pygobject
+             python-pypubsub))
+      (home-page "https://github.com/Blokkendoos/AACircuit")
+      (synopsis "Draw electronic circuits with ASCII characters")
+      (description
+       "This is a pythonized, kind of reverse engineered version of original
+AACircuit written by Andreas Weber in Borland Delphi.  The idea and GUI layout
+are also taken from the original.")
+      (license license:gpl3+))))
+
 (define-public cutecom
   (package
     (name "cutecom")
@@ -716,30 +774,30 @@ multipole-accelerated algorithm.")
                                        "fasthenry-spUtils.patch"
                                        "fasthenry-spSolve.patch"
                                        "fasthenry-spFactor.patch"))))
+    (native-inputs (list gcc-9))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags '("CC=gcc" "RM=rm" "SHELL=sh" "all")
-       #:parallel-build? #f
-       #:tests? #f ;; no tests-suite
-       #:modules ((srfi srfi-1)
-                  ,@%default-gnu-modules)
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (replace 'install
-                  (lambda* (#:key outputs #:allow-other-keys)
-                    (let* ((out (assoc-ref outputs "out"))
-                           (data (string-append out "/share"))
-                           (bin (string-append out "/bin"))
-                           (doc (string-append data "/doc/" ,name "-" ,version))
-                           (examples (string-append doc "/examples")))
-                      (with-directory-excursion "bin"
-                        (for-each (lambda (f)
-                                    (install-file f bin))
-                                  (find-files "." ".*")))
-                      (copy-recursively "doc" doc)
-                      (copy-recursively "examples" examples)
-                      #t))))))
+     (list #:make-flags #~(list "CC=gcc" "RM=rm" "SHELL=sh" "all")
+           #:parallel-build? #f
+           #:tests? #f ;; no tests-suite
+           #:modules `((srfi srfi-1)
+                       ,@%default-gnu-modules)
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)
+               (replace 'install
+                 (lambda _
+                   (let* ((data (string-append #$output "/share"))
+                          (bin (string-append #$output "/bin"))
+                          (doc (string-append data "/doc/"
+                                              #$name "-" #$version))
+                          (examples (string-append doc "/examples")))
+                     (with-directory-excursion "bin"
+                       (for-each (lambda (f)
+                                   (install-file f bin))
+                                 (find-files "." ".*")))
+                     (copy-recursively "doc" doc)
+                     (copy-recursively "examples" examples)))))))
     (home-page "https://www.rle.mit.edu/cpg/research_codes.htm")
     (synopsis "Multipole-accelerated inductance analysis program")
     (description
@@ -866,15 +924,15 @@ required for Fritzing app.")
     (arguments
      ;; XXX: tests are built for the CMake build option but it seems to be
      ;; broken in 0.8.0.
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               ;; Patch hardcoded path before running qmake.
-               (substitute* "qelectrotech.pro" (("\\/usr\\/local") out))
-               (invoke "qmake")))))))
+     (list #:tests? #f
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'configure
+                 (lambda _
+                   ;; Patch hardcoded path before running qmake.
+                   (substitute* "qelectrotech.pro"
+                     (("\\/usr\\/local") #$output))
+                   (invoke "qmake"))))))
     (native-inputs
      (list pkg-config qttools-5))
     (inputs
@@ -1675,7 +1733,7 @@ send break and throttle transmission speed.")
 (define-public libmodbus
   (package
     (name "libmodbus")
-    (version "3.1.10")
+    (version "3.1.11")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1684,15 +1742,20 @@ send break and throttle transmission speed.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0nbpk1n56kclab8fl32dxi46v2bwax3gfk1zkc796srm7vj42sbv"))))
+                "15rqrzamlp6cvixz6klnawlc9s3w34bapc1fs2c4amwyvi3n5xvp"))
+              ;; The patch removes a test that requires networking.
+              ;; See <https://github.com/stephane/libmodbus/issues/802>
+              (patches
+               (search-patches "libmodbus-disable-networking-test.patch"))))
     (build-system gnu-build-system)
-    (native-inputs (list autoconf automake libtool))
+    (native-inputs (list autoconf psmisc automake libtool))
     (synopsis "Library for the Modbus protocol")
     (description "@code{libmodbus} is a library to send/receive data with a
 device which respects the Modbus protocol.  This library can use a serial port
 or an Ethernet connection.")
     (home-page "https://libmodbus.org/")
     (license license:lgpl2.1+)))
+
 (define-public harminv
   (package
     (name "harminv")

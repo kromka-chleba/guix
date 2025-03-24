@@ -49,7 +49,7 @@
 # Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
 # Copyright © 2022 Daniel Meißner <daniel.meissner-i4k@ruhr-uni-bochum.de>
 # Copyright © 2022, 2024 Remco van 't Veer <remco@remworks.net>
-# Copyright © 2022, 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+# Copyright © 2022, 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 # Copyright © 2022, 2023 John Kehayias <john.kehayias@protonmail.com>
 # Copyright © 2022 muradm <mail@muradm.net>
 # Copyright © 2022 Hilton Chain <hako@ultrarare.space>
@@ -1831,6 +1831,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/mandoc-support-zstd-compression.patch	\
   %D%/packages/patches/make-impure-dirs.patch			\
   %D%/packages/patches/mariadb-rocksdb-atomic-linking.patch	\
+  %D%/packages/patches/marisa-fix-MARISA_WORD_SIZE.patch	\
   %D%/packages/patches/mathjax-disable-webpack.patch			\
   %D%/packages/patches/mathjax-no-a11y.patch			\
   %D%/packages/patches/mathjax-3.1.2-no-a11y.patch		\
@@ -1842,6 +1843,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/mcrypt-CVE-2012-4527.patch			\
   %D%/packages/patches/libmemcached-build-with-gcc7.patch	\
   %D%/packages/patches/libmhash-hmac-fix-uaf.patch		\
+  %D%/packages/patches/libmodbus-disable-networking-test.patch \
+  %D%/packages/patches/lib-tl-for-telegram-memcpy.patch	\
   %D%/packages/patches/llama-cpp-vulkan-optional.patch	\
   %D%/packages/patches/llhttp-ponyfill-object-fromentries.patch	\
   %D%/packages/patches/lvm2-no-systemd.patch    		\
@@ -2301,8 +2304,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/texinfo-headings-single.patch		\
   %D%/packages/patches/texinfo-5-perl-compat.patch		\
   %D%/packages/patches/telegram-desktop-allow-disable-libtgvoip.patch   \
+  %D%/packages/patches/telegram-desktop-hashmap-incomplete-value.patch	\
+  %D%/packages/patches/telegram-desktop-qguiapp.patch		\
   %D%/packages/patches/telegram-desktop-unbundle-cppgir.patch   \
-  %D%/packages/patches/telegram-desktop-unbundle-gsl.patch      \
   %D%/packages/patches/telegram-purple-adjust-test.patch	\
   %D%/packages/patches/telepathy-glib-fix-test.patch	\
   %D%/packages/patches/teuchos-remove-duplicate-using.patch	\

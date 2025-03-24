@@ -18461,7 +18461,7 @@ command from the package with the same name.  It relies on the
 @code{dm-crypt} Linux kernel module.
 @end defvar
 
-@deffn {Procedure} luks-device-mapping-with-options [#:key-file]
+@deffn {Procedure} luks-device-mapping-with-options [#:key-file #:allow-discards?]
 Return a @code{luks-device-mapping} object, which defines LUKS block
 device encryption using the @command{cryptsetup} command from the
 package with the same name.  It relies on the @code{dm-crypt} Linux
@@ -18483,6 +18483,15 @@ given location at the time of the unlock attempt.
  (type (luks-device-mapping-with-options
         #:key-file "/crypto.key")))
 @end lisp
+
+
+@code{allow-discards?} allows the use of discard (TRIM) requests for the
+underlying device.  This is useful for solid state drives.  However,
+this option can have a negative security impact because it can make
+file system level operations visible on the physical device.  For more
+information, refer to the description of the @code{--allow-discards}
+option in the @code{cryptsetup-open(8)} man page.
+
 @end deffn
 
 @defvar raid-device-mapping
@@ -20849,14 +20858,123 @@ instance of @code{greetd-user-session}.
 @subsection Scheduled Job Execution
 
 @cindex cron
-@cindex mcron
 @cindex scheduling jobs
-The @code{(gnu services mcron)} module provides an interface to
+It is often useful to have system tasks run periodically.  This can be
+achieved by defining Shepherd @dfn{timers} or by using the historical
+and somewhat less flexible mcron service.
+
+@subsubsection Shepherd Timers
+
+@cindex timers, Shepherd
+@cindex Shepherd timers
+The Shepherd supports running jobs periodically by defining
+@dfn{timers}, a special kind of service.  A Shepherd timer can be
+defined like another Shepherd service, but with specific @code{start}
+and @code{stop} methods (@pxref{Shepherd Services}):
+
+@lisp
+;; Defining a timer, verbosely.
+(shepherd-service
+ (provision '(updatedb))
+ (requirement '(user-processes))
+ (modules '((shepherd service timer)))
+ (start #~(make-timer-constructor
+           ;; Everyday at 3AM (using Vixie cron syntax).
+           (cron-string->calendar-event "0 3 * * *")
+           (command '(#$(file-append findutils "/bin/updatedb")))
+           #:wait-for-termination? #t))
+ (stop #~(make-timer-destructor))
+ (documentation "Periodically run 'updatedb'.")
+ (actions (list shepherd-trigger-action)))
+@end lisp
+
+This is quite some boilerplate so you can instead use this equivalent
+shorthand notation:
+
+@lisp
+;; Equivalent timer definition, but shorter.
+(shepherd-timer '(updatedb) "0 3 * * *"
+                #~(#$(file-append findutils "/bin/updatedb"))
+                #:requirement '(user-processes))
+@end lisp
+
+This procedure is defined as follows.
+
+@anchor{shepherd-timer-procedure}
+@deffn {Procedure} shepherd-timer @var{provision} @var{schedule} @
+         @var{command} [#:requirement '()] @
+         [#:documentation %default-timer-documentation]
+Return a Shepherd service with the given @var{provision} periodically
+running @var{command}, a list-valued gexp, according to @var{schedule},
+a string in Vixie cron syntax or a gexp providing a Shepherd calendar
+event.  @var{documentation} is the string that appears when running
+@code{herd doc @var{service}}.
+@end deffn
+
+The example below shows how to define a timer and to add it to your
+operating system configuration.
+
+@lisp
+(use-modules (gnu))
+(use-service-modules shepherd)
+(use-package-modules base)
+
+(define updatedb-timer
+  ;; Run 'updatedb' at 3AM everyday.
+  (shepherd-timer '(updatedb)
+                  "0 3 * * *"  ;Vixie cron syntax
+                  #~(#$(file-append findutils "/bin/updatedb")
+                     "--prunepaths=/tmp /var/tmp /gnu/store")
+                  #:requirement '(user-processes)))
+
+(define garbage-collection-timer
+  ;; Run 'guix gc' everyday at 5AM.
+  (shepherd-timer '(garbage-collection)
+                  #~(calendar-event #:hours '(5) #:minutes '(0))
+                  #~("/run/current-system/profile/bin/guix"
+                     "gc" "-F" "10G")
+                  #:requirement '(guix-daemon)))
+
+(operating-system
+  ;; @dots{}
+
+  ;; Extend the Shepherd service with additional timers
+  ;; using 'simple-service'.
+  (services (cons (simple-service 'my-timers
+                                   shepherd-root-service-type
+                                   (list garbage-collection-timer
+                                         updatedb-timer))
+                  %base-services)))
+@end lisp
+
+The resulting system contains these two services, which can be inspected
+with @command{herd status}.  They can also be triggered manually:
+
+@example
+herd trigger garbage-collection
+@end example
+
+@xref{Timers,,, shepherd, The GNU Shepherd Manual} for more information
+on Shepherd timers.
+
+@anchor{mcron-service}
+@subsubsection Mcron
+
+@cindex mcron
+Alternatively,
+the @code{(gnu services mcron)} module provides an interface to
 GNU@tie{}mcron, a daemon to run jobs at scheduled times (@pxref{Top,,,
 mcron, GNU@tie{}mcron}).  GNU@tie{}mcron is similar to the traditional
 Unix @command{cron} daemon; the main difference is that it is
-implemented in Guile Scheme, which provides a lot of flexibility when
-specifying the scheduling of jobs and their actions.
+implemented in Guile Scheme.  It is overall less convenient than
+Shepherd timers: individual jobs cannot depend on specific Shepherd
+services, logging is coarse-grain (one file for all the jobs), jobs may
+not be inspected, updated, or triggered manually.
+
+@quotation Note
+For the reasons given above, we recommend using Shepherd timers rather
+than mcron for your periodic tasks.
+@end quotation
 
 The example below defines an operating system that runs the
 @command{updatedb} (@pxref{Invoking updatedb,,, find, Finding Files})
@@ -27162,8 +27280,9 @@ The GNU@tie{}Findutils package from which the @command{updatedb} command
 is taken.
 
 @item @code{schedule} (default: @code{%default-file-database-update-schedule})
-String or G-exp denoting an mcron schedule for the periodic
-@command{updatedb} job (@pxref{Guile Syntax,,, mcron, GNU@tie{}mcron}).
+This is the schedule of database updates, expressed as a string in
+traditional cron syntax or as a gexp evaluating to a Shepherd calendar
+event (@pxref{Timers,,, shepherd, The GNU Shepherd Manual}).
 
 @item @code{excluded-directories} (default @code{%default-file-database-excluded-directories})
 List of regular expressions of directories to ignore when building the
@@ -27203,9 +27322,10 @@ following fields:
 The Guix package to use.
 
 @item @code{schedule} (default: @code{%default-package-database-update-schedule})
-String or G-exp denoting an mcron schedule for the periodic
-@command{guix locate --update} job (@pxref{Guile Syntax,,, mcron,
-GNU@tie{}mcron}).
+This is the schedule of the periodic @command{guix locate --update} job,
+expressed as a string in traditional cron syntax or as a gexp evaluating
+to a Shepherd calendar event (@pxref{Timers,,, shepherd, The GNU
+Shepherd Manual}).
 
 @item @code{method} (default: @code{'store})
 Indexing method for @command{guix locate}.  The default value,
@@ -35747,9 +35867,10 @@ IP address that no longer correspond to their freshly resolved host
 name.  Set this to @code{#t} if one or more endpoints use host names
 provided by a dynamic DNS service to keep the sessions alive.
 
-@item @code{monitor-ips-interval} (default: @code{'(next-minute (range 0 60 5))})
-The time interval at which the IP monitoring job should run, provided as
-an mcron time specification (@pxref{Guile Syntax,,,mcron}).
+@item @code{monitor-ips-interval} (default: @code{"*/5 * * * *"})
+This is the monitoring schedule, expressed as a string in traditional
+cron syntax or as a gexp evaluating to a Shepherd calendar event
+(@pxref{Timers,,, shepherd, The GNU Shepherd Manual}).
 
 @item @code{private-key} (default: @code{"/etc/wireguard/private.key"})
 The private key file for the interface.  It is automatically generated
@@ -39871,8 +39992,11 @@ The service takes a @code{ganeti-watcher-configuration} object.
 @item @code{ganeti} (default: @code{ganeti})
 The @code{ganeti} package to use for this service.
 
-@item @code{schedule} (default: @code{'(next-second-from (next-minute (range 0 60 5)))})
-How often to run the script.  The default is every five minutes.
+@item @code{schedule} (default: @code{"*/5 * * * *"})
+When to run the script, expressed either as a string in traditional cron
+syntax or as a gexp representing a Shepherd calendar event
+(@pxref{Timers,,, shepherd, The GNU Shepherd Manual}).  The default is
+every five minutes.
 
 @item @code{rapi-ip} (default: @code{#f})
 This option needs to be specified only if the RAPI daemon is configured to use
@@ -41055,7 +41179,7 @@ committed using the message ``gitolite setup by GNU Guix''.
 Data type representing the configuration for @code{gitolite-service-type}.
 
 @table @asis
-@item @code{package} (default: @var{gitolite})
+@item @code{package} (default: @code{gitolite})
 Gitolite package to use.  There are optional Gitolite dependencies that
 are not included in the default package, such as Redis and git-annex.
 These features can be made available by using the @code{make-gitolite}
@@ -41072,21 +41196,21 @@ programs can be invoked by Gitolite's scripts:
 (make-gitolite (list redis git-annex))
 @end example
 
-@item @code{user} (default: @var{git})
+@item @code{user} (default: @code{"git"})
 User to use for Gitolite.  This will be user that you use when accessing
 Gitolite over SSH.
 
-@item @code{group} (default: @var{git})
+@item @code{group} (default: @code{"git"})
 Group to use for Gitolite.
 
-@item @code{home-directory} (default: @var{"/var/lib/gitolite"})
+@item @code{home-directory} (default: @code{"/var/lib/gitolite"})
 Directory in which to store the Gitolite configuration and repositories.
 
-@item @code{rc-file} (default: @var{(gitolite-rc-file)})
+@item @code{rc-file} (default: @code{(gitolite-rc-file)})
 A ``file-like'' object (@pxref{G-Expressions, file-like objects}),
 representing the configuration for Gitolite.
 
-@item @code{admin-pubkey} (default: @var{#f})
+@item @code{admin-pubkey} (default: @code{#f})
 A ``file-like'' object (@pxref{G-Expressions, file-like objects}) used to
 setup Gitolite.  This will be inserted in to the @file{keydir} directory
 within the gitolite-admin repository.
@@ -42116,6 +42240,7 @@ in its default configuration with:
 @end defvar
 
 @c %start of fragment
+
 @deftp {Data Type} fstrim-configuration
 Available @code{fstrim-configuration} fields are:
 
@@ -42123,11 +42248,11 @@ Available @code{fstrim-configuration} fields are:
 @item @code{package} (default: @code{util-linux}) (type: file-like)
 The package providing the @command{fstrim} command.
 
-@item @code{schedule} (default: @code{"0 0 * * 0"}) (type: mcron-time)
-Schedule for launching @command{fstrim}.  This can be a procedure, a
-list or a string.  For additional information, see @ref{Guile
-Syntax,,Job specification,mcron,the mcron manual}.  By default this is
-set to run weekly on Sunday at 00:00.
+@item @code{schedule} (default: @code{"0 0 * * 0"}) (type: Shepherd calendar event)
+Schedule for launching @command{fstrim}, expressed as a string in
+traditional cron syntax or as a gexp evaluating to a Shepherd calendar
+event (@pxref{Timers,,, shepherd,The GNU Shepherd Manual}).  By default
+this is set to run weekly on Sunday at 00:00.
 
 @item @code{listed-in} (default: @code{'("/etc/fstab" "/proc/self/mountinfo")}) (type: maybe-list-of-strings)
 List of files in fstab or kernel mountinfo format.  All missing or empty
@@ -42146,7 +42271,10 @@ Extra options to append to @command{fstrim} (run @samp{man fstrim} for
 more information).
 
 @end table
+
 @end deftp
+
+
 @c %end of fragment
 
 @cindex modprobe
@@ -48600,17 +48728,22 @@ readline} for more information about all the configuration options.
 @node Mcron Home Service
 @subsection Scheduled User's Job Execution
 
-@cindex cron
-@cindex mcron
-@cindex scheduling jobs
-
+@cindex cron, per-user
+@cindex mcron, per-user
+@cindex scheduling jobs per-user
 The @code{(gnu home services mcron)} module provides an interface to
 GNU@tie{}mcron, a daemon to run jobs at scheduled times (@pxref{Top,,,
 mcron, GNU@tie{}mcron}).  The information about system's mcron is
-applicable here (@pxref{Scheduled Job Execution}), the only difference
+applicable here (@pxref{mcron-service, mcron reference}), the only difference
 for home services is that they have to be declared in a
 @code{home-environment} record instead of an @code{operating-system}
 record.
+
+@quotation Note
+We recommend defining periodic tasks as Shepherd timers, which provide
+more flexibility than mcron.  @xref{Shepherd Home Service}, for more
+info.
+@end quotation
 
 @defvar home-mcron-service-type
 This is the type of the @code{mcron} home service, whose value is a
@@ -48773,6 +48906,45 @@ You should probably use the service extension
 mechanism instead (@pxref{Shepherd Services}).
 @end table
 @end deftp
+
+@cindex timers, per-user
+The Shepherd allows you to define @dfn{timers}, a special type of
+service that performs a given task periodically.  Just like you can
+define timers at the system level (@pxref{Scheduled Job Execution}), you
+can do so in your home environment.
+
+The example below defines a home environment where a Shepherd timer runs
+the @command{mkid} command twice per day (@pxref{mkid invocation,,,
+idutils, ID Database Utilities}).  It does so by extending
+@code{home-shepherd-service-type} with @code{simple-service}; the
+Shepherd timer itself is produced by the @code{shepherd-timer} procedure
+(@pxref{shepherd-timer-procedure, @code{shepherd-timer}}), which is
+given the service name, a gexp specifying its schedule, and a gexp
+specifying the command to run.
+
+@lisp
+(use-modules (gnu) (guix)
+             (gnu home services shepherd)
+             (gnu packages idutils))
+
+(define idutils-service
+  ;; Index my 'doc' directory everyday at 12:15PM and 7:15PM.
+  (simple-service
+   'update-idutils-database home-shepherd-service-type
+   (list (shepherd-timer '(update-idutils-database)
+                         #~(calendar-event #:hours '(12 19)
+                                           #:minutes '(15))
+                         #~(#$(file-append idutils "/bin/mkid")
+                            "doc")))))
+
+(home-environment
+  ;; @dots{}
+  (services (append (list idutils-service)
+                    %base-home-services)))
+@end lisp
+
+@xref{Timers,,, shepherd, The GNU Shepherd Manual} for more information
+on Shepherd timers.
 
 @cindex log rotation, for user services
 The Shepherd also comes with a @dfn{log rotation service}, which

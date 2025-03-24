@@ -50,7 +50,7 @@
 ;;; Copyright © 2021 Alexey Abramov <levenson@mmer.org>
 ;;; Copyright © 2021, 2022, 2023 Andrew Tropin <andrew@trop.in>
 ;;; Copyright © 2021 David Wilson <david@daviwil.com>
-;;; Copyright © 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
 ;;; Copyright © 2021 Thiago Jung Bauermann <bauermann@kolabnow.com>
@@ -3601,112 +3601,111 @@ for use with HTML5 video.")
 (define-public avidemux
   (package
     (name "avidemux")
-    (version "2.7.8")
+    (version "2.8.1")
     (source (origin
-             (method url-fetch)
-             (uri (string-append
-                   "mirror://sourceforge/avidemux/avidemux/" version "/"
-                   "avidemux_" version ".tar.gz"))
-             (sha256
-              (base32
-               "00blv5455ry3bb86zyzk1xmq3rbqmbif62khc0kq3whza97l12k2"))
-             (patches (search-patches "avidemux-install-to-lib.patch"))))
-    (build-system cmake-build-system)
+              (method url-fetch)
+              (uri (string-append
+                    "mirror://sourceforge/avidemux/avidemux/" version "/"
+                    "avidemux_" version ".tar.gz"))
+              (sha256
+               (base32
+                "18ixmm18wp3vlczzdq4wfnkr5kxpz9y217dnjb0mgkl3hv5bvnbp"))
+              (patches (search-patches "avidemux-install-to-lib.patch"))))
+    (build-system qt-build-system)
     (native-inputs
-     `(("perl" ,perl)
-       ("pkg-config" ,pkg-config)
-       ("python" ,python-wrapper)
-       ("qttools-5" ,qttools-5)
-       ("yasm" ,yasm)))
+     (list perl pkg-config python-wrapper qttools-5 yasm))
     ;; FIXME: Once packaged, add libraries not found during the build.
     (inputs
-     `(("alsa-lib" ,alsa-lib)
-       ("fontconfig" ,fontconfig)
-       ("freetype" ,freetype)
-       ("fribidi" ,fribidi)
-       ("glu" ,glu)
-       ("jack" ,jack-1)
-       ("lame" ,lame)
-       ("libaom" ,libaom)
-       ("libva" ,libva)
-       ("libvdpau" ,libvdpau)
-       ("libvorbis" ,libvorbis)
-       ("libvpx" ,libvpx)
-       ("libxv" ,libxv)
-       ("pulseaudio" ,pulseaudio)
-       ("qtbase" ,qtbase-5)
-       ("sqlite" ,sqlite)
-       ("zlib" ,zlib)))
+     (list alsa-lib
+           fontconfig
+           freetype
+           fribidi
+           glu
+           jack-1
+           lame
+           libaom
+           libva
+           libvdpau
+           libvorbis
+           libvpx
+           libxv
+           pulseaudio
+           qtbase-5
+           qtwayland-5
+           sqlite
+           zlib))
     (arguments
-     `(#:tests? #f                      ; no check target
-       #:phases
-       ;; Make sure files inside the included ffmpeg tarball are
-       ;; patch-shebanged.
-       (let ((ffmpeg "ffmpeg-4.2.4"))
-         (modify-phases %standard-phases
-           (add-before 'patch-source-shebangs 'unpack-ffmpeg
-             (lambda _
-               (with-directory-excursion "avidemux_core/ffmpeg_package"
-                 (invoke "tar" "xf" (string-append ffmpeg ".tar.bz2"))
-                 (delete-file (string-append ffmpeg ".tar.bz2")))
-               #t))
-           (add-after 'patch-source-shebangs 'repack-ffmpeg
-             (lambda _
-               (with-directory-excursion "avidemux_core/ffmpeg_package"
-                 (substitute* (string-append ffmpeg "/configure")
-                   (("#! /bin/sh") (string-append "#!" (which "sh"))))
-                 (invoke "tar" "cjf" (string-append ffmpeg ".tar.bz2") ffmpeg
-                         ;; avoid non-determinism in the archive
-                         "--sort=name" "--mtime=@0"
-                         "--owner=root:0" "--group=root:0")
-                 (delete-file-recursively ffmpeg))
-               #t))
-           (replace 'configure
-             (lambda _
-               ;; Copy-paste settings from the cmake build system.
-               (setenv "CMAKE_LIBRARY_PATH" (getenv "LIBRARY_PATH"))
-               (setenv "CMAKE_INCLUDE_PATH" (getenv "C_INCLUDE_PATH"))
-               #t))
-           (replace 'build
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (lib (string-append out "/lib"))
-                      (top (getcwd))
-                      (build_component
-                       (lambda* (component srcdir #:optional (args '()))
-                         (let ((builddir (string-append "build_" component)))
-                           (mkdir builddir)
-                           (with-directory-excursion builddir
-                             (apply invoke "cmake"
-                                    "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE"
-                                    (string-append "-DCMAKE_INSTALL_PREFIX=" out)
-                                    (string-append "-DCMAKE_INSTALL_RPATH=" lib)
-                                    (string-append "-DCMAKE_SHARED_LINKER_FLAGS="
-                                                   "\"-Wl,-rpath=" lib "\"")
-                                    (string-append "-DAVIDEMUX_SOURCE_DIR=" top)
-                                    (string-append "../" srcdir)
-                                    "-DENABLE_QT5=True"
-                                    args)
-                             (invoke "make" "-j"
-                                     (number->string (parallel-job-count)))
-                             (invoke "make" "install"))))))
-                 (mkdir out)
-                 (build_component "core" "avidemux_core")
-                 (build_component "cli" "avidemux/cli")
-                 (build_component "qt4" "avidemux/qt4")
-                 (build_component "plugins_common" "avidemux_plugins"
-                                  '("-DPLUGIN_UI=COMMON"))
-                 (build_component "plugins_cli" "avidemux_plugins"
-                                  '("-DPLUGIN_UI=CLI"))
-                 (build_component "plugins_qt4" "avidemux_plugins"
-                                  '("-DPLUGIN_UI=QT4"))
-                 (build_component "plugins_settings" "avidemux_plugins"
-                                  '("-DPLUGIN_UI=SETTINGS"))
-                 ;; Remove .exe and .dll file.
-                 (delete-file-recursively
-                  (string-append out "/share/ADM6_addons"))
-                 #t)))
-           (delete 'install)))))
+     (list
+      #:tests? #f                       ; no check target
+      #:phases
+      ;; Make sure files inside the included ffmpeg tarball are
+      ;; patch-shebanged.
+      #~(let ((ffmpeg "ffmpeg-4.4.2"))
+          (modify-phases %standard-phases
+            (add-before 'patch-source-shebangs 'unpack-ffmpeg
+              (lambda _
+                (with-directory-excursion "avidemux_core/ffmpeg_package"
+                  (invoke "tar" "xf" (string-append ffmpeg ".tar.bz2"))
+                  (delete-file (string-append ffmpeg ".tar.bz2"))
+                  (with-directory-excursion ffmpeg
+                    (invoke
+                     "patch" "-p1" "--force" "-i"
+                     #$(local-file
+                        (search-patch "ffmpeg-4-binutils-2.41.patch")))))))
+            (add-after 'patch-source-shebangs 'repack-ffmpeg
+              (lambda _
+                (with-directory-excursion "avidemux_core/ffmpeg_package"
+                  (substitute* (string-append ffmpeg "/configure")
+                    (("#! /bin/sh") (string-append "#!" (which "sh"))))
+                  (invoke "tar" "cjf" (string-append ffmpeg ".tar.bz2") ffmpeg
+                          ;; avoid non-determinism in the archive
+                          "--sort=name" "--mtime=@0"
+                          "--owner=root:0" "--group=root:0")
+                  (delete-file-recursively ffmpeg))))
+            (replace 'configure
+              (lambda _
+                ;; Copy-paste settings from the cmake build system.
+                (setenv "CMAKE_LIBRARY_PATH" (getenv "LIBRARY_PATH"))
+                (setenv "CMAKE_INCLUDE_PATH" (getenv "C_INCLUDE_PATH"))))
+            (replace 'build
+              (lambda _
+                (let* ((out #$output)
+                       (lib (string-append out "/lib"))
+                       (top (getcwd))
+                       (build_component
+                        (lambda* (component srcdir #:optional (args '()))
+                          (let ((builddir (string-append "build_" component)))
+                            (mkdir builddir)
+                            (with-directory-excursion builddir
+                              (apply invoke "cmake"
+                                     "-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=TRUE"
+                                     (string-append "-DCMAKE_INSTALL_PREFIX=" out)
+                                     (string-append "-DCMAKE_INSTALL_RPATH=" lib)
+                                     (string-append "-DCMAKE_SHARED_LINKER_FLAGS="
+                                                    "\"-Wl,-rpath=" lib "\"")
+                                     (string-append "-DAVIDEMUX_SOURCE_DIR=" top)
+                                     (string-append "../" srcdir)
+                                     "-DENABLE_QT5=True"
+                                     args)
+                              (invoke "make" "-j"
+                                      (number->string (parallel-job-count)))
+                              (invoke "make" "install"))))))
+                  (mkdir out)
+                  (build_component "core" "avidemux_core")
+                  (build_component "cli" "avidemux/cli")
+                  (build_component "qt4" "avidemux/qt4")
+                  (build_component "plugins_common" "avidemux_plugins"
+                                   '("-DPLUGIN_UI=COMMON"))
+                  (build_component "plugins_cli" "avidemux_plugins"
+                                   '("-DPLUGIN_UI=CLI"))
+                  (build_component "plugins_qt4" "avidemux_plugins"
+                                   '("-DPLUGIN_UI=QT4"))
+                  (build_component "plugins_settings" "avidemux_plugins"
+                                   '("-DPLUGIN_UI=SETTINGS"))
+                  ;; Remove .exe and .dll file.
+                  (delete-file-recursively
+                   (string-append out "/share/ADM6_addons")))))
+            (delete 'install)))))
     (home-page "http://fixounet.free.fr/avidemux/")
     (synopsis "Video editor")
     (description "Avidemux is a video editor designed for simple cutting,

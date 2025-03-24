@@ -76,6 +76,7 @@
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2024 nik gaffney <nik@fo.am>
+;;; Copyright © 2025 Simon Streit <simon@netpanic.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -214,43 +215,6 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg))
 
-;; This package uses su instead of sudo (because of SpaceFM).
-(define-public ktsuss
-  (package
-    (name "ktsuss")
-    (version "2.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri
-        (git-reference
-         (url "https://github.com/nomius/ktsuss")
-         (commit version)))
-       (sha256
-        (base32 "0q9931f9hp47v1n8scli4bdg2rkjpf5jf8v7jj2gdn83aia1r2hz"))
-       (file-name (git-file-name name version))))
-    (build-system glib-or-gtk-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-file-names
-           (lambda _
-             (substitute* "configure.ac"
-               (("supath=`which su 2>/dev/null`")
-                "supath=/run/privileged/bin/su"))
-             #t)))))
-    (native-inputs
-     (list autoconf automake libtool pkg-config))
-    (inputs
-     (list glib gtk+-2))
-    (synopsis "Graphical front end for @command{su}")
-    (description
-     "Ktsuss stands for ``Keep the @command{su} simple, stupid''.
-It is a graphical version of @command{su} written in C and GTK+ 2, with
-simplicity in mind.")
-    (home-page "https://github.com/nomius/ktsuss")
-    (license license:bsd-3)))
-
 (define-public aide
   (package
     (name "aide")
@@ -290,6 +254,48 @@ digest algorithms that are used to check the integrity of files.  All of the
 usual file attributes can be checked for inconsistencies.")
     (home-page "https://aide.github.io/")
     (license license:gpl2+)))
+
+(define-public daemontools
+  (package
+    (name "daemontools")
+    (version "0.76")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append
+                    "https://cr.yp.to/daemontools/"
+                    "daemontools-" version ".tar.gz"))
+              (sha256
+               (base32
+                "07scvw88faxkscxi91031pjkpccql6wspk4yrlnsbrrb5c0kamd5"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f ;; No tests as far as I can tell.
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'chdir
+                 (lambda _
+                   (chdir #$(string-append "daemontools-" version))))
+               (delete 'configure)
+               (add-before 'build 'patch
+                 (lambda _
+                   (substitute* "src/error.h"
+                     (("extern int errno;")
+                      "#include <errno.h>"))))
+               (replace 'build
+                 (lambda _
+                   (invoke "package/compile")))
+               (replace 'install
+                 (lambda _
+                   (let ((bin (string-append #$output "/bin")))
+                     (for-each (lambda (file)
+                                 (install-file file bin))
+                               (find-files "command"))))))))
+    (synopsis "Tools for managing UNIX style services")
+    (description
+     "@code{daemontools} is a collection of tools for managing UNIX
+services.")
+    (license license:public-domain)
+    (home-page "https://cr.yp.to/daemontools.html")))
 
 (define-public hetznercloud-cli
   (package
@@ -337,6 +343,42 @@ usual file attributes can be checked for inconsistencies.")
 for interacting with the @url{https://www.hetzner.com/,Hetzner Cloud}
 service.")
     (license license:expat)))
+
+;; This package uses su instead of sudo (because of SpaceFM).
+(define-public ktsuss
+  (package
+    (name "ktsuss")
+    (version "2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/nomius/ktsuss")
+         (commit version)))
+       (sha256
+        (base32 "0q9931f9hp47v1n8scli4bdg2rkjpf5jf8v7jj2gdn83aia1r2hz"))
+       (file-name (git-file-name name version))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-file-names
+                 (lambda _
+                   (substitute* "configure.ac"
+                     (("supath=`which su 2>/dev/null`")
+                      "supath=/run/privileged/bin/su")))))))
+    (native-inputs
+     (list autoconf automake libtool pkg-config))
+    (inputs
+     (list glib gtk+-2))
+    (synopsis "Graphical front end for @command{su}")
+    (description
+     "Ktsuss stands for ``Keep the @command{su} simple, stupid''.
+It is a graphical version of @command{su} written in C and GTK+ 2, with
+simplicity in mind.")
+    (home-page "https://github.com/nomius/ktsuss")
+    (license license:bsd-3)))
 
 (define-public progress
   (package
@@ -733,52 +775,6 @@ environments:
      "This package provides a program that collects various performance
 measurement data like CPU, memory, disk and network performance numbers.")
     (license license:artistic2.0)))
-
-(define-public daemontools
-  (package
-    (name "daemontools")
-    (version "0.76")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://cr.yp.to/daemontools/"
-                    "daemontools-" version ".tar.gz"))
-              (sha256
-               (base32
-                "07scvw88faxkscxi91031pjkpccql6wspk4yrlnsbrrb5c0kamd5"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:tests? #f ;; No tests as far as I can tell.
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'chdir
-           (lambda _
-             (chdir ,(string-append "daemontools-" version))
-             #t))
-         (delete 'configure)
-         (add-before 'build 'patch
-           (lambda _
-             (substitute* "src/error.h"
-               (("extern int errno;")
-                "#include <errno.h>"))
-             #t))
-         (replace 'build
-           (lambda _
-             (invoke "package/compile")))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin")))
-               (for-each (lambda (file)
-                           (install-file file bin))
-                         (find-files "command")))
-             #t)))))
-    (synopsis "Tools for managing UNIX style services")
-    (description
-     "@code{daemontools} is a collection of tools for managing UNIX
-services.")
-    (license license:public-domain)
-    (home-page "https://cr.yp.to/daemontools.html")))
 
 (define-public daemonize
   (package
@@ -3371,34 +3367,6 @@ environment or in a cluster.  The project can also be used to deploy
 virtualization environments using KVM/libvirt, Docker or LXC technologies to
 manage virtual machines and/or containers.")
     (license license:gpl3+)))
-
-(define-public emacs-ansible-doc
-  (let ((commit "86083a7bb2ed0468ca64e52076b06441a2f8e9e0"))
-    (package
-      (name "emacs-ansible-doc")
-      (version (git-version "0.4" "1" commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/lunaryorn/ansible-doc.el")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "0lap404ch74w99n3xip176jr42b38xhyzkfnkyqg0g3wk2cd3aq8"))))
-      (build-system emacs-build-system)
-      ;; Unmaintained by upstream.
-      (home-page "https://github.com/lunaryorn/ansible-doc.el")
-      (synopsis "Ansible documentation for Emacs")
-      (description
-       "This package provides an Ansible documentation for GNU Emacs.
-
-@code{ansible-doc} allows you to view the documentation of an Ansible
-module and @code{ansible-doc-mode} minor mode adds documentation
-lookup to YAML Mode.  You could enable the mode with @code{(add-hook
-'yaml-mode-hook #'ansible-doc-mode)}.")
-      (license license:gpl3+))))
 
 (define-public cpulimit
   (package
@@ -6208,7 +6176,7 @@ that require it.")
 (define-public sysdig
   (package
     (name "sysdig")
-    (version "0.40.0-alpha6")           ;for the 0.20 patch to apply
+    (version "0.40.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6217,7 +6185,7 @@ that require it.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0pxmx3by0lckw7zv54wrg0cr13j1mhk2z0x4qachrf2mz5qjq2cd"))))
+                "1npm630fix7vssd7hiv2sh3jbs43jl748zbrhwpx8gly25zqvy1h"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f                  ;no test suite

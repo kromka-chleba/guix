@@ -72,6 +72,8 @@
             shepherd-action-procedure
 
             shepherd-configuration-action
+            shepherd-timer
+            shepherd-trigger-action
 
             %default-modules
 
@@ -256,6 +258,31 @@ DEFAULT is given, use it as the service's default value."
   "Return the 'canonical name' of SERVICE."
   (first (shepherd-service-provision service)))
 
+(define %default-timer-documentation
+  "Periodically run a command.") ;no i18n since it gets in the shepherd process
+
+(define* (shepherd-timer provision schedule command
+                         #:key
+                         (requirement '())
+                         (documentation %default-timer-documentation))
+  "Return a Shepherd service with the given PROVISION periodically running
+COMMAND, a list-valued gexp, according to SCHEDULE, a string in Vixie cron
+syntax or a gexp providing a Shepherd calendar event.  DOCUMENTATION is the
+string that appears when running 'herd doc SERVICE'."
+  (shepherd-service
+   (provision provision)
+   (requirement requirement)
+   (modules '((shepherd service timer)))
+   (start #~(make-timer-constructor
+             #$(if (string? schedule)
+                   #~(cron-string->calendar-event #$schedule)
+                   schedule)
+             (command '(#$@command))
+             #:wait-for-termination? #t))
+   (stop #~(make-timer-destructor))
+   (documentation documentation)
+   (actions (list shepherd-trigger-action))))
+
 (define (assert-valid-graph services)
   "Raise an error if SERVICES does not define a valid shepherd service graph,
 for instance if a service requires a nonexistent service, or if more than one
@@ -403,6 +430,13 @@ of the service's configuration file."
    (procedure #~(lambda (_)
                   (format #t "~a~%" #$file)
                   #$file))))
+
+(define shepherd-trigger-action
+  ;; Action to trigger a timer.
+  (shepherd-action
+   (name 'trigger)
+   (documentation "Trigger immediate execution of this timer.")
+   (procedure #~trigger-timer)))
 
 (define (shepherd-configuration-file services shepherd)
   "Return the shepherd configuration file for SERVICES.  SHEPHERD is used
