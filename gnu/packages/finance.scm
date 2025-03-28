@@ -19,7 +19,7 @@
 ;;; Copyright © 2020 Christine Lemmer-Webber <cwebber@dustycloud.org>
 ;;; Copyright © 2020 Tom Zander <tomz@freedommail.ch>
 ;;; Copyright © 2020, 2023 Marius Bakke <marius@gnu.org>
-;;; Copyright © 2020, 2021, 2022, 2024 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020, 2021, 2022, 2024, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Carlo Holl <carloholl@gmail.com>
 ;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2021 ZmnSCPxj jxPCSnmZ <ZmnSCPxj@protonmail.com>
@@ -297,14 +297,14 @@ Accounting.")
 (define-public homebank
   (package
     (name "homebank")
-    (version "5.8.5")
+    (version "5.8.6")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.gethomebank.org/public/sources"
                                   "/homebank-" version ".tar.gz"))
               (sha256
                (base32
-                "15wy6fhw0604xhf7zjj7gnxa1b8ns3j3ysidii39a0w4awg4bd2f"))))
+                "1xfx4vc7yiy66pf1iii0v4rnpvh9k7lxkqy5709mqyfdy9xql4xg"))))
     (build-system glib-or-gtk-build-system)
     (native-inputs
      (list pkg-config intltool))
@@ -2178,7 +2178,7 @@ editing on the Web.")
 (define-public quantlib
   (package
     (name "quantlib")
-    (version "1.34")
+    (version "1.37")
     (source
      (origin
        (method url-fetch)
@@ -2186,7 +2186,7 @@ editing on the Web.")
              "https://github.com/lballabio/QuantLib/releases/download/v"
              version "/QuantLib-" version ".tar.gz"))
        (sha256
-        (base32 "0l7yn9bal0csyix0ydzcfj003kma4sx7w5hyfxhh6mbnxn6am1zb"))))
+        (base32 "095d6vj938wjfhjxgcwpqwvjy6xlwl522gn2rk69wg0ky97fb15j"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -2231,20 +2231,36 @@ interactive controls.  This package provides a GTK+ graphical user interface
 (define-public python-ta-lib
   (package
     (name "python-ta-lib")
-    (version "0.4.32")
+    (version "0.6.3")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "TA-Lib" version))
+       ;; Git repo contains Make rules to regenerate precompiled files
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/TA-Lib/ta-lib-python")
+             (commit (string-append "TA_Lib-" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "186sgkpggy50gs2pa2p22zppl57xgfhpmja5l13xiskv44iw6x7v"))))
-    (build-system python-build-system)
-    (inputs
-     (list ta-lib))
-    (propagated-inputs
-     (list python-numpy))
-    (native-inputs
-     (list python-cython python-nose python-pandas))
+        (base32 "1qf00rnsn3s38yxqym1q4bdh98yykik5jdw492gn5ymddr499n1f"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Ignore Polars test (not packaged, depends on Rust)
+      #:test-flags #~(list "--ignore" "tests/test_polars.py")
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'delete-precompiled-files
+                     (lambda _
+                       (delete-file "talib/_ta_lib.c")))
+                   (add-before 'build 'regenerate-talibc
+                     (lambda _
+                       (invoke "make" "cython"))))))
+    (inputs (list ta-lib))
+    (propagated-inputs (list python-numpy))
+    (native-inputs (list python-cython-3
+                         python-pandas
+                         python-pytest
+                         python-setuptools
+                         python-wheel))
     (home-page "https://github.com/mrjbq7/ta-lib")
     (synopsis "Python wrapper for TA-Lib")
     (description
@@ -2255,32 +2271,21 @@ providing common functions for the technical analysis of financial market data."
 (define-public ta-lib
   (package
     (name "ta-lib")
-    (version "0.4.0")
+    (version "0.6.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "mirror://sourceforge/ta-lib/ta-lib/"
-                           version "/ta-lib-" version "-src.tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/TA-Lib/ta-lib")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0lf69nna0aahwpgd9m9yjzbv2fbfn081djfznssa84f0n7y1xx4z"))))
+        (base32 "012sp7s1fxp6lnh3am0r6r46ya9jwnarkvlvq21w2nndqd4n4d39"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'link-math-library
-           (lambda _
-             (substitute* "src/Makefile.am"
-               (("ta_common/libta_common.la")
-                "ta_common/libta_common.la -lm"))
-             (substitute* "src/Makefile.in"
-               (("\\$\\(libta_lib_la_LDFLAGS\\) \\$\\(LDFLAGS\\) -o \\$@")
-                "$(libta_lib_la_LDFLAGS) $(LDFLAGS) -lm -o $@")))))
-       ;; Parallel build fails with:
-       ;; mv -f .deps/gen_code-gen_code.Tpo .deps/gen_code-gen_code.Po
-       ;; mv: cannot stat '.deps/gen_code-gen_code.Tpo': No such file or directory
-       ;; Makefile:254: recipe for target 'gen_code-gen_code.o' failed
-       #:parallel-build? #f
-       #:configure-flags '("--disable-static")))
+     (list #:tests? #f ; no tests
+           #:configure-flags #~(list "--disable-static")))
+    (native-inputs (list autoconf-2.71 automake libtool))
     (home-page "https://ta-lib.org")
     (synopsis "Technical analysis library")
     (description

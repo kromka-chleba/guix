@@ -28,6 +28,7 @@
 ;;; Copyright © 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2025 Lars Bilke <lars.bilke@ufz.de>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -56,6 +57,7 @@
   #:use-module (guix build-system python)
   #:use-module (guix build-system qt)
   #:use-module (guix build-system r)
+  #:use-module (guix build-system zig)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -73,6 +75,7 @@
   #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages build-tools)
+  #:use-module (gnu packages busybox)
   #:use-module (gnu packages c)
   #:use-module (gnu packages certs)
   #:use-module (gnu packages check)
@@ -121,6 +124,7 @@
   #:use-module (gnu packages machine-learning)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages multiprecision)
+  #:use-module (gnu packages ncurses)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
@@ -151,7 +155,8 @@
   #:use-module (gnu packages webkit)
   #:use-module (gnu packages wxwidgets)
   #:use-module (gnu packages xml)
-  #:use-module (gnu packages xorg))
+  #:use-module (gnu packages xorg)
+  #:use-module (gnu packages zig))
 
 (define-public gmt
   (package
@@ -610,6 +615,92 @@ writing GeoTIFF information tags.")
                    license:bsd-3
                    (license:non-copyleft "file://LICENSE"
                                          "See LICENSE in the distribution.")))))
+
+(define-public mepo
+  (package
+    (name "mepo")
+    (version "1.3.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~mil/mepo")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cz4ihz4mw1v47x3xycyayfs28xlns2war2dif31awzg02a3rlfl"))))
+    (build-system zig-build-system)
+    (arguments
+     (list #:install-source? #f
+           #:zig zig-0.14
+           #:zig-release-type "safe"
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-geoclue-demos-path
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "scripts/mepo_ui_menu_user_pin_updater.sh"
+                     (("/usr/libexec/geoclue-2.0/demos/agent")
+                      (search-input-file
+                        inputs
+                        "libexec/geoclue-2.0/demos/agent"))
+                     (("/usr/libexec/geoclue-2.0/demos/where-am-i")
+                      (search-input-file
+                        inputs
+                        "libexec/geoclue-2.0/demos/where-am-i")))))
+               (add-after 'install 'wrap-scripts
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (let ((bin-dirs
+                          (map (lambda (bin)
+                                 (dirname (search-input-file inputs bin)))
+                               '("bin/column" ;util-linux
+                                 "bin/gpspipe" ;gpsd
+                                 "bin/jq"
+                                 "bin/xargs" ;busybox
+                                 "bin/xwininfo"
+                                 "bin/zenity"))))
+                     (for-each (lambda (script)
+                                 (wrap-program
+                                   (string-append #$output "/bin/" script)
+                                   `("PATH" ":" prefix ,bin-dirs)))
+                       '("mepo_dl.sh"
+                         "mepo_generated_osmtags.sh"
+                         "mepo_geojson_import.sh"
+                         "mepo_ui_central_menu.sh"
+                         "mepo_ui_helper_menu.sh"
+                         "mepo_ui_helper_pref_pan.sh"
+                         "mepo_ui_menu_dbg_queueclear.sh"
+                         "mepo_ui_menu_dbg_queuedownloadinteractive.sh"
+                         "mepo_ui_menu_dbg_queuedownloadnoninteractive.sh"
+                         "mepo_ui_menu_pin_drop.sh"
+                         "mepo_ui_menu_pref_fontsize.sh"
+                         "mepo_ui_menu_pref_network.sh"
+                         "mepo_ui_menu_pref_stateload.sh"
+                         "mepo_ui_menu_pref_statesave.sh"
+                         "mepo_ui_menu_pref_url.sh"
+                         "mepo_ui_menu_pref_zoom.sh"
+                         "mepo_ui_menu_reposition_nominatim.sh"
+                         "mepo_ui_menu_route_graphhopper.sh"
+                         "mepo_ui_menu_route_mobroute.sh"
+                         "mepo_ui_menu_search_nominatim.sh"
+                         "mepo_ui_menu_search_overpass.sh"
+                         "mepo_ui_menu_user_pin_updater.sh"))))))))
+    (native-inputs (list pkg-config))
+    ;; TODO: package Mobroute
+    (inputs (list bash-minimal busybox curl geoclue gpsd jq ncurses
+                  sdl2 sdl2-gfx sdl2-image sdl2-ttf
+                  util-linux xwininfo zenity))
+    (home-page "https://mepo.lrdu.org")
+    (synopsis "OpenStreetMap map viewer")
+    (description
+     "Mepo is a fast, simple, and hackable OSM map viewer for desktop and
+mobile Linux devices.  It supports Wayland and X Windows.
+
+Mepo works both offline and online, features a minimalist both touch/mouse
+and keyboard compatible interface, and offers a simple and powerful JSON API
+to allow the user to change and add functionality such as adding their own
+search and routing scripts, adding arbitrary buttons/keybindings to the UI,
+and more.")
+    (license license:gpl3+)))
 
 (define-public librasterlite2
   (package
@@ -4038,3 +4129,105 @@ cloud data (produced by 3D imaging systems such as laser scanners),
 attributes associated with 3D point data (color and intensity),
 and 2D images (photos taken using a 3D imaging system).")
     (license license:boost1.0)))
+
+(define-public cloudcompare
+  (package
+    (name "cloudcompare")
+    (version "2.13.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/CloudCompare/CloudCompare")
+             (commit (string-append "v" version))
+             ;; TODO: External source code could be unbundled.
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0wck05zbfkw7cg8h6fjiinjzrsk55858qg0k2m5rmr9dfdzjbzbb"))))
+    (inputs (list qtbase-5
+                  qtsvg-5
+                  qtlocation-5
+                  qttools-5
+                  gdal
+                  laszip
+                  xerces-c
+                  libe57format
+                  zlib))
+    (native-inputs (list xvfb-run))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list
+                           ;; Options
+                           "-DOPTION_BUILD_CCVIEWER=NO"
+                           "-DBUILD_TESTING=ON"
+                           "-DOPTION_USE_SHAPE_LIB=YES"
+                           "-DOPTION_USE_DXF_LIB=YES"
+                           "-DOPTION_USE_GDAL=YES"
+                           ;; Shaders
+                           ;; At least one shader is needed
+                           "-DPLUGIN_GL_QEDL=YES"
+                           "-DPLUGIN_GL_QSSAO=YES"
+                           ;; IO
+                           "-DPLUGIN_IO_QCORE=YES"
+                           "-DPLUGIN_IO_QADDITIONAL=NO"
+                           "-DPLUGIN_IO_QCSV_MATRIX=NO"
+                           ;; No guix package for DRACO
+                           "-DPLUGIN_IO_QDRACO=NO"
+                           "-DPLUGIN_IO_QE57=YES"
+                           ;; No guix package for FBX
+                           "-DPLUGIN_IO_QFBX=NO"
+                           ;; laszip replaces PDAL in CloudCompare 2.13
+                           "-DPLUGIN_IO_QLAS=YES"
+                           "-DPLUGIN_IO_QPDAL=NO"
+                           "-DPLUGIN_IO_QPHOTOSCAN=YES"
+                           ;; No guix package for Riegl RDBlib
+                           "-DPLUGIN_IO_QRDB=NO"
+                           "-DPLUGIN_IO_QSTEP=NO"
+                           ;; Plugins
+                           "-DPLUGIN_STANDARD_QANIMATION=YES"
+                           "-DQANIMATION_WITH_FFMPEG_SUPPORT=NO"
+                           "-DPLUGIN_STANDARD_QBROOM=YES"
+                           ;; Compilation error
+                           "-DPLUGIN_STANDARD_QCANUPO=YES"
+                           "-DPLUGIN_STANDARD_QCLOUDLAYERS=YES"
+                           "-DPLUGIN_STANDARD_QCOLORIMETRIC_SEGMENTER=YES"
+                           "-DPLUGIN_STANDARD_QCOMPASS=YES"
+                           ;; Only for Windows at the moment
+                           "-DPLUGIN_STANDARD_QCORK=NO"
+                           "-DPLUGIN_STANDARD_QCSF=YES"
+                           "-DPLUGIN_STANDARD_QFACETS=YES"
+                           ;; Error with eigen
+                           "-DPLUGIN_STANDARD_QHOUGH_NORMALS=NO"
+                           "-DPLUGIN_STANDARD_QHPR=YES"
+                           ;; Need qtWebSocket engine
+                           "-DPLUGIN_STANDARD_QJSONRPC=NO"
+                           "-DPLUGIN_STANDARD_QM3C2=YES"
+                           ;; Need PCL lib
+                           "-DPLUGIN_STANDARD_MASONRY_QAUTO_SEG=NO"
+                           "-DPLUGIN_STANDARD_MASONRY_QMANUAL_SEG=NO"
+                           "-DPLUGIN_STANDARD_QPCL=NO"
+                           ;; Need CGAL
+                           "-DPLUGIN_STANDARD_QMESH_BOOLEAN=NO"
+                           "-DPLUGIN_STANDARD_QMPLANE=YES"
+                           "-DPLUGIN_STANDARD_QPCV=NO"
+                           "-DPLUGIN_STANDARD_QPOISSON_RECON=YES"
+                           "-DPLUGIN_STANDARD_QRANSAC_SD=YES"
+                           "-DPLUGIN_STANDARD_QSRA=YES")
+      #:build-type "Release"
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda _
+              (invoke "xvfb-run" "make" "test"))))))
+    (home-page "https://cloudcompare.org/")
+    (synopsis "Point cloud processing software")
+    (description
+     "CloudCompare is a 3D point cloud (and triangular mesh) processing
+software.  It was originally designed to perform comparison between two
+3D point clouds (such as the ones obtained with a laser scanner) or between
+a point cloud and a triangular mesh.  It relies on an octree structure that
+is highly optimized for this particular use-case.  It is also meant to deal
+with huge point clouds.")
+    (license license:gpl2+)))

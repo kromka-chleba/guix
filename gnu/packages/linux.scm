@@ -513,7 +513,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.13-version "6.13.7")
+(define-public linux-libre-6.13-version "6.13.8")
 (define-public linux-libre-6.13-gnu-revision "gnu")
 (define deblob-scripts-6.13
   (linux-libre-deblob-scripts
@@ -523,7 +523,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1a6ri9awza8nf7cdabp09dk327cx0dw8q3rhm016a578kb4ihviq")))
 (define-public linux-libre-6.13-pristine-source
   (let ((version linux-libre-6.13-version)
-        (hash (base32 "07c08x68fgcsgriss5z8w427h69y52s887vas91jzb5p70hbcf9s")))
+        (hash (base32 "1fqsfnam0ca2lyqgi9vh7x6xa24yjk6ym6z85bn6nrrxsxczm6i5")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.13)))
@@ -532,7 +532,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.19")
+(define-public linux-libre-6.12-version "6.12.20")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -542,12 +542,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0p2jla4faz634jin9pz6a0cfpaz4jvy5bx6cmyk8dbsmhnx4h149")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "0cb5ri6xsd9fyf0s48xrrsbhqzbgjd0iddnid6qk8i60prbz0fyp")))
+        (hash (base32 "1ivakcj0gi191687zagl1qfsip0567p1pk3yy1s2xf0agfq8j3i3")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.83")
+(define-public linux-libre-6.6-version "6.6.84")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -557,7 +557,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "12897yw71dz859nv13nzh6pp5j497l8ps0ddgpbbynm72bny1fy5")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "0262q81mwhy8plql8hnnfvagp460vfl127kaayya113l7gkbnjw9")))
+        (hash (base32 "19vvq558vs2ivj4l6kmyha30a94fh42wmijsghsdnq8salhhglkz")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
@@ -2865,7 +2865,7 @@ partitions.  Write functionality is also provided but check the README.")
 (define-public dwarves
   (package
     (name "dwarves")
-    (version "1.27")
+    (version "1.29")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2874,7 +2874,7 @@ partitions.  Write functionality is also provided but check the README.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0qwc3772az1h3c78pyswawyvyq9spj5s1prj7ckfij9nazp3a007"))
+                "1ia3r77zyw7r8mydy1zrrdnqzm9ginsvf9pqviq48rglihhddvli"))
               (patches
                (search-patches "dwarves-threading-reproducibility.patch"))))
     (build-system cmake-build-system)
@@ -10639,30 +10639,16 @@ persistent over reboots.")
           (add-before 'build 'pre-build
             (lambda _
               (chdir "src")))
-          (add-after 'install 'install-linux-bpf-headers
-            ;; Workaround users such as 'dwarves' requiring btf_enum64
-            ;; definition from the kernel Linux >= 6 headers (see:
-            ;; https://github.com/acmel/dwarves/issues/49).
-            ;; TODO: Remove once our 'linux-libre-headers' package is
-            ;; upgraded to a >= 6 release.
-            (lambda _
-              (let ((linux-libre-headers #$(this-package-native-input
-                                            "linux-libre-headers")))
-                (for-each (lambda (f)
-                            (install-file (string-append linux-libre-headers
-                                                         "/include/" f)
-                                          (string-append #$output "/include/"
-                                                         (dirname f))))
-                          ;; This list contains btf.h and its transitive
-                          ;; dependencies.
-                          (list "asm/posix_types.h"
-                                "asm/types.h"
-                                "asm-generic/types.h"
-                                "asm-generic/int-ll64.h"
-                                "linux/btf.h"
-                                "linux/posix_types.h"
-                                "linux/stddef.h"
-                                "linux/types.h"))))))))
+          (replace 'install
+            (lambda* (#:key make-flags #:allow-other-keys #:rest args)
+              (apply (assoc-ref %standard-phases 'install)
+                     (append args
+                             (list #:make-flags
+                                   (append (list "install"
+                                                 ;; Also install the kernel
+                                                 ;; user API (uAPI) headers.
+                                                 "install_uapi_headers")
+                                           make-flags)))))))))
     (native-inputs (list linux-libre-headers-latest pkg-config))
     (propagated-inputs (list elfutils zlib)) ;in Requires.private of libbpf.pc
     (home-page "https://github.com/libbpf/libbpf")
@@ -11770,3 +11756,28 @@ practical purposes indistinguishable from real devices.
 It provides a command line program and also a Python library.")
     (home-page "https://www.freedesktop.org/wiki/Evemu/")
     (license license:gpl3)))
+
+(define-public dualsensectl
+  (package
+    (name "dualsensectl")
+    (version "0.7")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/nowrep/dualsensectl.git")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "05snsp5r3hc2yc1nf0w4aam1my4h0lkxnmy7k4glxvasd9jwahzw"))))
+    (build-system meson-build-system)
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list eudev dbus hidapi))
+    (synopsis "Linux tool for controlling PS5 DualSense controller")
+    (description "This package provides a Linux tool for controlling a PS5
+DualSense controller.  It has to be already connected via USB or connected
+via Bluetooth.")
+    (home-page "https://github.com/nowrep/dualsensectl")
+    (license license:gpl2)))

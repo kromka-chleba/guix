@@ -322,6 +322,29 @@ more.")
 currently does not do much, but it might in the future.")
     (license license:gpl3+)))
 
+(define-public guile-oauth
+  (package
+    (name "guile-oauth")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/aconchillo/guile-oauth")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "002hgs4xfrrz0rqa6n1078cn7vz5f70azw1kpljvb4dmv228gfxq"))))
+    (build-system gnu-build-system)
+    (native-inputs (list autoconf automake pkg-config))
+    (inputs (list guile-3.0 gnutls guile-gcrypt guile-gnutls guile-json-4))
+    (home-page "https://github.com/aconchillo/guile-oauth")
+    (synopsis "OAuth module for Guile")
+    (description
+     "This package provides Guile modules to interface with the OAuth and
+OAuth2 protocols.")
+    (license license:gpl3+)))
+
 (define-public guile-openai
   (let ((commit "751cd5db5f8bb7c00e60042a7ec86100930b0f02")
         (revision "1"))
@@ -483,7 +506,7 @@ f library for Emacs.")
                 (uri (git-reference
                       (url "https://github.com/ijp/guildhall")
                       (commit commit)))
-                (file-name (string-append name "-" version "-checkout"))
+                (file-name (git-file-name name version))
                 (sha256
                  (base32
                   "115bym7bg66h3gs399yb2vkzc2ygriaqsn4zbrg8f054mgy8wzn1"))))
@@ -608,7 +631,7 @@ pictures) for email addresses using the Libravatar specification.")
                 (sha256
                  (base32
                   "097vny990wp2qpjij6a5a5gwc6fxzg5wk56inhy18iki5v6pif1p"))
-                (file-name (string-append name "-" version "-checkout"))))
+                (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -773,7 +796,7 @@ you send to a FIFO file.")
               (uri (git-reference
                     (url "https://github.com/artyom-poptsov/guile-dsv")
                     (commit (string-append "v" version))))
-              (file-name (string-append name "-" version "-checkout"))
+              (file-name (git-file-name name version))
               (sha256
                (base32
                 "1iavc1dg1899v519hvbzcmvdc16rahcwwvj68jycqdc5px5z285i"))))
@@ -1341,7 +1364,7 @@ using Guile's foreign function interface.")
               (sha256
                (base32
                 "19y33wg94pf0n98dkfqd1zbw93fgky4sawxsxl6s3vyqwl0yi5vh"))
-              (file-name (string-append name "-" version "-checkout"))))
+              (file-name (git-file-name name version))))
     (build-system guile-build-system)
     (arguments
      '(#:source-directory "src"
@@ -1448,7 +1471,7 @@ works with Guile 1.4.x to 2.0.x.")
               (sha256
                (base32
                 "0f8rykqx3mdbi7mgvvanx65i9gn5wmb768vlzrbg002v38284bf2"))
-              (file-name (string-append name "-" version "-checkout"))))
+              (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config autoconf automake guile-3.0))
@@ -1891,7 +1914,7 @@ Scheme by using Guile’s foreign function interface.")
                 (uri (git-reference
                       (url "https://framagit.org/prouby/guile-mastodon.git")
                       (commit commit)))
-                (file-name (string-append name "-" version "-checkout"))
+                (file-name (git-file-name name version))
                 (sha256
                  (base32
                   "17ic44jypv1yq296w8b4nm99189fdgmdw1pdx0172x97dicsf2j6"))))
@@ -2319,7 +2342,7 @@ provides tight coupling to Guix.")
        (uri (git-reference
              (url "https://github.com/artyom-poptsov/guile-ics")
              (commit (string-append "v" version))))
-       (file-name (string-append name "-" version "-checkout"))
+       (file-name (git-file-name name version))
        (sha256
         (base32
          "1zxclhyrsbp9v6sj36kmphiwqhb06rcm1zjskg5091py8361wjd6"))))
@@ -3060,7 +3083,7 @@ provides access to that interface and its types from the Scheme level.")
                 (uri (git-reference
                       (url "https://github.com/fisherdj/miniAdapton")
                       (commit commit)))
-                (file-name (string-append name "-" version "-checkout"))
+                (file-name (git-file-name name version))
                 (sha256
                  (base32
                   "09q51zkw2fypad5xixskfzw2cjhjgs5cswdp3i7cpp651rb3zndh"))))
@@ -3345,7 +3368,7 @@ available:
               (uri (git-reference
                     (url "https://github.com/ijp/minikanren")
                     (commit "e844d85512f8c055d3f96143ee506007389a25e3")))
-              (file-name (string-append name "-" version "-checkout"))
+              (file-name (git-file-name name version))
               (sha256
                (base32
                 "0r50jlpzi940jlmxyy3ddqqwmj5r12gb4bcv0ssini9v8km13xz6"))))
@@ -4790,7 +4813,7 @@ debugging code.")
               (uri (git-reference
                     (url "https://github.com/artyom-poptsov/guile-png")
                     (commit (string-append "v" version))))
-              (file-name (string-append name "-" version "-checkout"))
+              (file-name (git-file-name name version))
               (sha256
                (base32
                 "0hgdp8fgyg6rdy130fsn4nnb58c98lsrayjyy5491l53814ggy65"))))
@@ -6647,8 +6670,8 @@ is an attempt to combine both into something useful.")
       (license license:asl2.0))))
 
 (define-public guile-knots
-  (let ((commit "da69fd19f3072a405e394881a11c345704f31806")
-        (revision "15"))
+  (let ((commit "e1858dfff5e360b36b167cd94c806759f9b4e7e8")
+        (revision "16"))
     (package
     (name "guile-knots")
     (version (git-version "0" revision commit))
@@ -6659,8 +6682,8 @@ is an attempt to combine both into something useful.")
                     (commit commit)))
               (sha256
                (base32
-                "0nnmlw1vl927yc2vnbp1fv9750pm4233lzj4ns6h1n0zxb63rnbr"))
-              (file-name (string-append name "-" version "-checkout"))))
+                "1342a7rw9zqxgii5q4ahiqabmgqbvczjdx1308yf9k3d8x6gk41q"))
+              (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config
@@ -6864,7 +6887,7 @@ This module implements this interface by use of Guile's dynamic FFI.")
 (define-public guile-goblins
   (package
     (name "guile-goblins")
-    (version "0.15.0")
+    (version "0.15.1")
     (source
      (origin
        (method url-fetch)
@@ -6873,7 +6896,7 @@ This module implements this interface by use of Guile's dynamic FFI.")
                            version ".tar.gz"))
        (sha256
         (base32
-         "1dyxh8xvl8f707dzfzckz4343z1iwfp7v6wwyryn5psy86gq328z"))))
+         "05qqryhhs9rci01j08nbchmif1h9889bwqqv830ywygl1bld50ys"))))
     (build-system gnu-build-system)
     (arguments
      (list #:make-flags

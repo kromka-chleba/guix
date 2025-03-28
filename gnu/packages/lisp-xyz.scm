@@ -20,7 +20,7 @@
 ;;; Copyright © 2020 Dimakis Dimakakos <me@bendersteed.tech>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2020, 2021, 2022 Adam Kandur <rndd@tuta.io>
-;;; Copyright © 2020-2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2020-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2021, 2022 Aurora <rind38@disroot.org>
 ;;; Copyright © 2021 Matthew James Kraai <kraai@ftbfs.org>
 ;;; Copyright © 2021-2025 André A. Gomes <andremegafone@gmail.com>
@@ -6504,8 +6504,8 @@ common of which is probably Active Directory.")
   (sbcl-package->ecl-package sbcl-cl-gss))
 
 (define-public sbcl-cl-gtk4
-  (let ((commit "d116905e7b68508d03681a50b3b24d63e7b111e4")
-        (revision "1"))
+  (let ((commit "c05d3ec6849e9319c6655f6d77dda086064dd295")
+        (revision "2"))
     (package
       (name "sbcl-cl-gtk4")
       (version (git-version "1.0.0" revision commit))
@@ -6517,7 +6517,7 @@ common of which is probably Active Directory.")
                (commit commit)))
          (file-name (git-file-name "cl-gtk4" version))
          (sha256
-          (base32 "0mprmmvbagnflvhynn51l42nbwr08rld99ls0c48m5lpjn0ja4zc"))))
+          (base32 "05r1zw9jhhliflkbamw96gp585xc1cz7dx28sz67mki34mc19s8v"))))
       (build-system asdf-build-system/sbcl)
       (arguments
        '(#:asd-systems '("cl-gtk4" "cl-gdk4")))
@@ -11458,8 +11458,8 @@ terminals.")
   (sbcl-package->ecl-package sbcl-clinenoise))
 
 (define-public sbcl-clingon
-  (let ((commit "379fc41e7b3977661f1454cf35acdbfae046d40d")
-        (revision "0"))
+  (let ((commit "f2a730f1073e41d78557019085fbb0c662fd3189")
+        (revision "1"))
     (package
       (name "sbcl-clingon")
       (version (git-version "0.5.0" revision commit))
@@ -11471,7 +11471,7 @@ terminals.")
                (commit commit)))
          (file-name (git-file-name "cl-clingon" version))
          (sha256
-          (base32 "11p9lplx0fc5ghx601i150vrd46zdbvw0hfrbrrrdqplxaqpywq5"))))
+          (base32 "0p8i9bkzzy4v0pg15dldrl73xri4kxyxa7si82bawh1dnnm53jgc"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
        (list sbcl-rove))
@@ -11480,6 +11480,8 @@ terminals.")
              sbcl-cl-reexport
              sbcl-split-sequence
              sbcl-with-user-abort))
+      (arguments
+       (list #:tests? #f)) ; FIXME: Tests run forever
       (home-page "https://github.com/dnaeon/clingon")
       (synopsis "Command-line option parsing library for Common Lisp")
       (description
@@ -19590,10 +19592,20 @@ language name mapping.")
          (sha256
           (base32 "15y9x5wkg3fqndc04w2sc650fnwimxp4gjgpv9xvvdm9x4v433x6"))))
       (build-system asdf-build-system/sbcl)
-      (arguments '(#:tests? #f)) ; There are no tests.
       (inputs
         (list sbcl-stdutils
               sbcl-s-xml-rpc))
+      (arguments
+       (list #:tests? #f ; There are no tests.
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'fix-build
+                   (lambda _
+                     ;; Remove a declaration causing a type conflict with
+                     ;; recent versions of SBCL.
+                     (substitute* "src/my-meta.lisp"
+                       (("\\(type simple-base-string ,source-symbol\\)")
+                        "")))))))
       (home-page "https://langutils.common-lisp.dev/")
       (synopsis "Common Lisp natural language processing toolkit")
       (description
@@ -19902,6 +19914,19 @@ not counting tests)
     (build-system asdf-build-system/sbcl)
     (native-inputs (list sbcl-fiveam))
     (inputs (list sbcl-alexandria sbcl-iterate))
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'fix-build
+                 (lambda _
+                   ;; Modify a type check causing a type conflict warning
+                   ;; with SBCL 2.5.2.
+                   (substitute* "src/simplex.lisp"
+                     (("\\(check-type tableau tableau\\)")
+                      "(unless (typep tableau 'tableau)
+                         (error 'type-error
+                                :datum tableau
+                                :expected-type 'tableau))")))))))
     (synopsis "Common Lisp linear programming")
     (description
      "This is a Common Lisp library for solving linear programming problems.")
@@ -20139,37 +20164,36 @@ environment for Common Lisp.")
 ;;   (sbcl-package->ecl-package sbcl-lisp-stat))
 
 (define-public sbcl-lispbuilder-sdl
-  (let ((commit "589b3c6d552bbec4b520f61388117d6c7b3de5ab"))
+  (let ((commit "9590d70044aa9054292357cf416571ba7b1e08fc")
+        (revision "2"))
     (package
       (name "sbcl-lispbuilder-sdl")
-      (version (git-version "0.9.8.2" "1" commit))
+      (version (git-version "0.9.8.2" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/lispbuilder/lispbuilder")
                (commit commit)))
-         (file-name (git-file-name name version))
+         (file-name (git-file-name "cl-lispbuilder-sdl" version))
          (sha256
-          (base32 "0zga59fjlhq3mhwbf80qwqwpkjkxqnn2mhxajlb8563vhn3dbafp"))))
+          (base32 "018sapnhqb60v7144h34n1an8njz88j35z7kanvnc6fj9gm8vhj1"))))
       (build-system asdf-build-system/sbcl)
-      (inputs
-       `(("cffi" ,sbcl-cffi)
-         ("trivial-garbage" ,sbcl-trivial-garbage)
-         ("sdl" ,sdl)))
       (arguments
        `(#:phases
          (modify-phases %standard-phases
            (add-after 'unpack 'cd-sdl
              (lambda _
-               (chdir "lispbuilder-sdl")
-               #t))
+               (chdir "lispbuilder-sdl")))
            (add-after 'cd-sdl 'fix-paths
              (lambda* (#:key inputs #:allow-other-keys)
                (substitute* "cffi/library.lisp"
-                 (("libSDL[^\"]*" all)
-                  (string-append (assoc-ref inputs "sdl") "/lib/" all)))
-               #t)))))
+                 (("libSDL-1.2.so" _)
+                  (search-input-file inputs "/lib/libSDL-1.2.so"))))))))
+      (inputs
+       (list sbcl-cffi
+             sbcl-trivial-garbage
+             sdl))
       (home-page "https://github.com/lispbuilder/lispbuilder/wiki/LispbuilderSDL")
       (synopsis "Common Lisp wrapper for SDL")
       (description

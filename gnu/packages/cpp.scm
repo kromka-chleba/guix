@@ -43,7 +43,8 @@
 ;;; Copyright © 2024 Peepo Froggings <peepofroggings@tutanota.de>
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
-
+;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
+;;;
 ;;; This file is part of GNU Guix.
 ;;;
 ;;; GNU Guix is free software; you can redistribute it and/or modify it
@@ -117,6 +118,7 @@
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages pulseaudio)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages tex)
   #:use-module (gnu packages web)
   #:use-module (gnu packages webkit)
   #:use-module (gnu packages xdisorg)
@@ -468,6 +470,29 @@ the @code{Clang/LLVM} infrastructure to extract the data, and emits it in
 various formats, including @code{json}.")
     (license license:gpl2+)))
 
+(define-public edlib
+  (package
+    (name "edlib")
+    (version "1.2.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Martinsos/edlib")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0ibpxs3r8ii2s3g7kdbyr8brg6ha5l0fb21idw8531gx9v2qzh4v"))))
+    (build-system cmake-build-system)
+    (arguments
+     '(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")))
+    (home-page "https://github.com/Martinsos/edlib")
+    (synopsis "Lightweight library for sequence alignment")
+    (description "This package provides a lightweight library for calculating
+the edit distance between two sequences and finding an optimal alignment path
+for transforming one sequence into another.")
+    (license license:expat)))
+
 (define-public expected-lite
   (package
     (name "expected-lite")
@@ -521,6 +546,32 @@ the @code{std::expected} proposal (@url{http://wg21.link/p0323}).")
 strings, configuration, bit streams, threading, translation, and cross-platform
 operating system functions.")
     (license license:zlib)))
+
+(define-public lunasvg
+  (package
+    (name "lunasvg")
+    (version "3.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sammycage/lunasvg")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14ppk3k6sdbf3lwhv2gjqy32vwa7ck9jcj9xfk0fxwfqbvbp6608"))))
+    (build-system cmake-build-system)
+    (inputs (list plutovg))
+    (arguments
+     '(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")
+       #:tests? #f)) ;No tests.
+    (home-page "https://github.com/sammycage/lunasvg")
+    (synopsis "SVG rendering and manipulation library in C++")
+    (description
+     "LunaSVG is an SVG rendering library in C++, designed to be
+lightweight and portable, offering efficient rendering and manipulation of
+Scalable Vector Graphics (SVG) files.")
+    (license license:expat)))
 
 (define-public rttr
   (package
@@ -589,6 +640,28 @@ the name of the library itself, which is written in C++.")
  APIs on top of Standard Template Library (@dfn{STL}) classes.")
       (license (list license:expat        ; cJSON
                      license:bsd-4)))))   ; everything else (LICENSE.txt)
+
+(define-public plutovg
+  (package
+    (name "plutovg")
+    (version "0.0.13")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sammycage/plutovg")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0y2w0qhs89bnh440z1xj65vg4c71rlwinxgs3p8bvh2fmbi7lqff"))))
+    (build-system cmake-build-system)
+    (arguments
+     '(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")
+       #:tests? #f)) ;No tests.
+    (home-page "https://github.com/sammycage/plutovg")
+    (synopsis "Tiny 2D vector graphics library in C")
+    (description "PlutoVG is a standalone 2D vector graphics library in C.")
+    (license license:expat)))
 
 (define-public pystring
   (package
@@ -675,6 +748,40 @@ combination of these streams.")
 @code{DEBUG_ASSERT()} macro, which among other features can be selectively
 enabled in different parts of your code.")
       (license license:zlib)))
+
+(define-public xdgpp
+  (let ((commit "f01f810714443d0f10c333d4d1d9c0383be41375")
+        (revision "0"))
+    (package
+      (name "xdgpp")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://git.sr.ht/~danyspin97/xdgpp")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1w8da10whrhc7j82jf90814m3blabkl9s0kg8hv8h2fj5y3ji7hw"))))
+      (build-system gnu-build-system)
+      (native-inputs (list catch2))
+      (arguments
+       (list
+        #:test-target "test"
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            (replace 'install
+              (lambda _
+                (install-file "xdg.hpp"
+                              (string-append #$output "/include")))))))
+      (home-page "https://git.sr.ht/~danyspin97/xdgpp")
+      (synopsis "C++17 implementation of the XDG Base Directory Specification")
+      (description
+       "This package provides a header-only library to retrieve the file names
+of XDG base directories, such as XDG_CONFIG_HOME.")
+      (license license:expat))))
 
 (define-public xsimd
   (package
@@ -839,7 +946,7 @@ language used in Hyprland.")
 (define-public hyprutils
   (package
     (name "hyprutils")
-    (version "0.5.0")
+    (version "0.5.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -848,7 +955,7 @@ language used in Hyprland.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1w6967kid21zczxsvwfls8ql65gnc6fr4sx856viw9l4f3855wad"))))
+                "0pj3xvsfnl7d91kwijj5rw7zs7svdh44dijn8npf1357jkizsp8i"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1121,6 +1228,100 @@ intuitive syntax and trivial integration.")
 
 (define-public json-modern-cxx
   (deprecated-package "json-modern-cxx" nlohmann-json))
+
+(define-public jthread
+  (let ((commit "0fa8d394254886c555d6faccd0a3de819b7d47f8")
+        (revision "0"))
+    (package
+      (name "jthread")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/josuttis/jthread")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "11cq4zh7pv86c62ah5im00gxr4cw6d396dp9117z8s271j4lrp6f"))
+         (snippet
+          ;; NOTE: remove precompiled PDFs.
+          #~(begin
+              (use-modules (guix build utils))
+              (for-each (lambda (file)
+                          (delete-file file))
+                        (find-files "." ".pdf"))
+              (delete-file-recursively "doc")))))
+      (outputs '("out" "doc"))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            (delete 'build)
+            (add-after 'unpack 'cd-and-generate-makefile
+              (lambda _
+                (call-with-output-file "source/Makefile.h"
+                  (lambda (port)
+                    ;; GCC 2.95 fails to deal with anonymous unions in glibc's
+                    ;; 'struct_rusage.h', so skip that.
+                    (display "CXX17 := c++ -std=c++17 -pthread\n" port)))))
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "make" "-C" "source"))))
+            (add-after 'check 'build-docs
+              (lambda _
+                (with-directory-excursion "tex"
+                  ;; NOTE: remove strict versioning.
+                  (substitute* "styles.tex"
+                    (("lst@CheckVersion\\{1.6\\}")
+                     "lst@CheckVersion{1.10}"))
+                  (invoke "pdflatex" "std")
+                  (invoke "pdflatex" "std")))) ;Rerun to update references.
+            (replace 'install
+              (lambda _
+                (for-each (lambda (file)
+                            (install-file file
+                                          (string-append #$output "/include")))
+                          '("source/condition_variable_any2.hpp"
+                            "source/stop_token.hpp" "source/jthread.hpp"))))
+            (add-after 'install 'install-doc
+              (lambda _
+                (let ((out (string-append #$output:doc "/share/doc/")))
+                  (mkdir-p out)
+                  (copy-file "tex/std.pdf"
+                             (string-append out
+                                            #$name "-"
+                                            #$version ".pdf"))))))))
+      (native-inputs
+       (list perl
+             (texlive-updmap.cfg
+              (list texlive-ulem
+                    texlive-rsfs
+                    texlive-memoir
+                    texlive-substr
+                    texlive-xcolor
+                    texlive-isodate
+                    texlive-caption
+                    texlive-relsize
+                    texlive-extract
+                    texlive-xpatch
+                    texlive-xkeyval
+                    texlive-jknapltx
+                    texlive-booktabs
+                    texlive-enumitem
+                    texlive-etoolbox
+                    texlive-listings
+                    texlive-microtype
+                    texlive-underscore))))
+      (home-page "https://github.com/josuttis/jthread")
+      (synopsis "C++ class for a joining and cooperative interruptible thread")
+      (description
+       "This package provides a reference implementation of @code{std::jthread},
+a cooperatively interruptible thread that is joined upon destruction.")
+      (license license:cc-by4.0))))
 
 (define-public tomlplusplus
   (package
@@ -1790,6 +1991,66 @@ Google's C++ code base.")
           ((#:configure-flags flags)
            #~(cons* "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
                     (delete "-DBUILD_SHARED_LIBS=ON" #$flags)))))))))
+
+(define-public miniaudio
+  (package
+    (name "miniaudio")
+    (version "0.11.22")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mackron/miniaudio")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pjaiq71x24n9983vkhjxrsbraa24053h727db22b1rb2xyfrzm3"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'build)
+          (delete 'configure)
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "tests/_build"
+                  (let ((tests '("conversion" "filtering" "generation")))
+                    (mkdir "bin")
+                    ;; Compile tests
+                    (for-each (lambda (test)
+                                (invoke "gcc"
+                                        (string-append "../" test "/" test
+                                                       ".c")
+                                        "-o"
+                                        (string-append "bin/" test)
+                                        "-ldl"
+                                        "-lm"
+                                        "-lpthread"
+                                        "-Wall"
+                                        "-Wextra"
+                                        "-Wpedantic")
+                                (let ((bin (string-append "./bin/" test)))
+                                  (if (string= test "filtering")
+                                      ;; NOTE: the 'filtering' test
+                                      ;; requires an input file.
+                                      (invoke bin bin)
+                                      (invoke bin))))
+                              tests))))))
+          (replace 'install
+            (lambda _
+              (install-file "miniaudio.h"
+                            (string-append #$output "/include"))
+              (copy-recursively "extras"
+                                (string-append #$output
+                                               "/include/extras/")))))))
+    (home-page "https://miniaud.io")
+    (synopsis "Audio playback and capture library for C and C++")
+    (description
+     "Miniaudio is an audio playback and capture library for C and C++.  It is
+made up of a single source file and has no external dependencies.")
+    (license license:expat)))
 
 (define-public abseil-cpp-cxxstd17
   (abseil-cpp-for-c++-standard abseil-cpp 17))  ;XXX: the default with GCC 11?
@@ -3464,6 +3725,33 @@ std::variant (formerly boost::variant) for C++11/14.")
      "MPark.Variant provides the C++17 std::variant for C++11/14/17.  It is
 based on the implementation of std::variant in libc++.")
     (license license:boost1.0)))
+
+(define-public nativefiledialog-extended
+  (package
+    (name "nativefiledialog-extended")
+    (version "1.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/btzy/nativefiledialog-extended")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15l0jy3v4p6rgg9dk8zr80lqp51s32ii62cm4s90400ragdgh10v"))))
+    (build-system cmake-build-system)
+    (arguments
+     '(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")))
+    (native-inputs (list pkg-config))
+    (inputs (list gtk+))
+    (home-page "https://github.com/btzy/nativefiledialog-extended")
+    (synopsis "Native file dialog library with C and C++ bindings")
+    (description
+     "This package provides a library that portably invokes native file open,
+folder select and file save dialogs.  It allows the specification of a default
+file name and location, as well as filters with friendly names (such as
+\"source files\" or \"image files\") where supported.")
+    (license license:zlib)))
 
 (define-public tsl-hopscotch-map
   (package

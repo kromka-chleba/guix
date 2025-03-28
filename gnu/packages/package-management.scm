@@ -179,8 +179,8 @@
   ;; Note: the 'update-guix-package.scm' script expects this definition to
   ;; start precisely like this.
   (let ((version "1.4.0")
-        (commit "5058b40aba825ab6e7b9e518dd1147d1e35fd7de")
-        (revision 34))
+        (commit "a9239a769c5611f12061c9a895e4e218b3445e2f")
+        (revision 35))
     (package
       (name "guix")
 
@@ -196,7 +196,7 @@
                       (commit commit)))
                 (sha256
                  (base32
-                  "04vk4lslcd6h22yj5pxvb1pdyyxd8421gjfyvyb1bl3xn7c77246"))
+                  "0iy2s500dx7yhzvzz7zch5nsj71vcz0cd1rxvw3icvqlgbpj1alc"))
                 (file-name (string-append "guix-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1556,8 +1556,8 @@ environments.")
                   "0k9zkdyyzir3fvlbcfcqy17k28b51i20rpbjwlx2i1mwd2pw9cxc")))))))
 
 (define-public guix-build-coordinator
-  (let ((commit "bacdd64432f3b2f04fb07c99fc83bcd4067e7e09")
-        (revision "124"))
+  (let ((commit "4cf3b589651cb8dd80b826f42859b6364b4b0e38")
+        (revision "125"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1568,7 +1568,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0bb5pjbi5bx650vmpxf5ginswkr1s0aqx8cif82asxwhjn5nqz6g"))
+                  "15wmx14xrdqkz4i6ijl8mb2c2s0bx8x4850kln8b5dqj4r8qn561"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments

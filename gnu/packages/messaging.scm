@@ -42,7 +42,7 @@
 ;;; Copyright © 2023 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2024 Carlo Zancanaro <carlo@zancanaro.id.au>
 ;;; Copyright © 2024 Wilko Meyer <w@wmeyer.eu>
-;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024, 2025 Igor Goryachev <igor@goryachev.org>
 ;;; Copyright © 2024 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;;
@@ -1160,13 +1160,13 @@ simultaneously and therefore appear under the same nickname on IRC.")
 (define-public python-nbxmpp
   (package
     (name "python-nbxmpp")
-    (version "5.0.3")
+    (version "5.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "nbxmpp" version))
        (sha256
-         (base32 "1swzbdl1zr34jynhsm1f401h5hdn9p6vw9vxa7vx0gd3ifkmiz7w"))))
+         (base32 "04fnc743d523gb38mm1inii80agmpb9r6hvn3f8ygnj3yq7s2vhn"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1198,7 +1198,7 @@ of xmpppy.")
 (define-public gajim
   (package
     (name "gajim")
-    (version "1.9.3")
+    (version "1.9.5")
     (source
      (origin
        (method url-fetch)
@@ -1206,7 +1206,7 @@ of xmpppy.")
                            (version-major+minor version)
                            "/gajim-" version ".tar.gz"))
        (sha256
-         (base32 "10rz8pd43a9308kj6csixsmvdc6ccnqkw83adc5cggh1798b45ag"))
+         (base32 "0g2nhy6ypj4jbz216sgiy37spq34bwa0ydn2g73fp9qnxfq4vpvz"))
        (patches
          (search-patches "gajim-honour-GAJIM_PLUGIN_PATH.patch"))))
     (build-system python-build-system)
@@ -1226,8 +1226,7 @@ of xmpppy.")
                        'generate-gdk-pixbuf-loaders-cache-file))
           (add-before 'build 'build-metadata
             (lambda _
-              (invoke "./pep517build/build_metadata.py"
-                      "-o" "dist/metadata")))
+              (invoke "./make.py" "build")))
           ;; TODO: Change to pyproject-build-system once it supports
           ;; in-tree build backends.
           (replace 'build
@@ -1241,7 +1240,7 @@ of xmpppy.")
                      (find-files "dist" "\\.whl$"))))
           (add-after 'install 'install-metadata
             (lambda _
-              (invoke "./pep517build/install_metadata.py" "dist/metadata"
+              (invoke "./make.py" "install"
                       (string-append "--prefix=" #$output))))
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)

@@ -91,7 +91,7 @@
 ;;; Copyright © 2020 Diego N. Barbato <dnbarbato@posteo.de>
 ;;; Copyright © 2020 Liliana Marie Prikler <liliana.prikler@gmail.com>
 ;;; Copyright © 2019 Kristian Trandem <kristian@devup.no>
-;;; Copyright © 2020, 2021, 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2020, 2021, 2024, 2025 Zheng Junjie <z572@z572.online>
 ;;; Copyright © 2020 EuAndreh <eu@euandre.org>
 ;;; Copyright © 2021, 2022 Morgan Smith <Morgan.J.Smith@outlook.com>
 ;;; Copyright © 2021-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
@@ -583,6 +583,67 @@ arbitrary sequences. Included metrics are Levenshtein, Hamming, Jaccard, and
 Sorensen distance, plus some bonuses.  All distance computations are
 implemented in pure Python, and most of them are also implemented in C.")
     (license license:gpl2+)))
+
+(define-public python-flake8-class-newline
+  (package
+    (name "python-flake8-class-newline")
+    (version "1.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "flake8-class-newline" version))
+       (sha256
+        (base32 "1w8z88asz90jm1msz06vi7dj0da8sfw5ajyvabfv7f4fr0iljk2i"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-flake8))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/AlexanderVanEck/flake8-class-newline")
+    (synopsis "Flake8 lint for newline after class definitions")
+    (description "This package provides a flake8 extension to lint for newline
+after class definitions.")
+    (license license:expat)))
+
+(define-public python-flake8-docstrings
+  (package
+    (name "python-flake8-docstrings")
+    (version "1.7.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "flake8_docstrings" version))
+       (sha256
+        (base32 "1bs1m5kqw25sn68f06571q5s3aaxd06mv7k952bqdrhnvi4cg32c"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-flake8 python-pydocstyle))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/pycqa/flake8-docstrings")
+    (synopsis "Extension for flake8 which uses pydocstyle to check docstrings")
+    (description
+     "This package provides a extension for flake8 which uses pydocstyle to
+check docstrings.")
+    (license license:expat)))
+
+(define-public python-flake8-import-order
+  (package
+    (name "python-flake8-import-order")
+    (version "0.18.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "flake8-import-order" version))
+       (sha256
+        (base32 "03lh1n98lx8ncrr6n8cv5qj3birvqyqbpfhisw4hqgnsjbw42fg2"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-pycodestyle python-setuptools))
+    (native-inputs (list python-setuptools python-wheel python-pytest
+                         python-pylama python-flake8))
+    (home-page "https://github.com/PyCQA/flake8-import-order")
+    (synopsis
+     "Flake8 and pylama plugin that checks the ordering of import statements")
+    (description
+     "This package provieds a flake8 and pylama plugin that checks the ordering
+of import statements.")
+    (license license:lgpl3)))
 
 (define-public python-flexcache
   (package
@@ -9606,9 +9667,10 @@ include_dirs = ~:*~a/include~%"
                                      `(" and not test_identityless_reduction_huge_array"
                                        " and not (TestKind and test_all)")
                                    '())
-                              ;; This test fails when building from aarch64-linux.
+                              ;; These tests fail when building from aarch64-linux.
                               #$@(if (target-arm32?)
-                                   `(" and not test_features")
+                                   `(" and not test_features"
+                                     " and not test_unary_spurious_fpexception")
                                    '())
                               ;; These tests seem to fail on machines without
                               ;; an FPU is still under investigation upstream.

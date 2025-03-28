@@ -3013,6 +3013,29 @@ replacement.")
 programs.")
     (license license:gpl3+)))
 
+(define-public emacs-lean4-mode
+  (package
+    (name "emacs-lean4-mode")
+    (version "1.1.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/leanprover-community/lean4-mode.git")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1i4l614n0hs02y0a4xfnzc4xkilkp6bzx28pys4jkp96vp2ivf0c"))))
+    (build-system emacs-build-system)
+    ;; TODO: Just emacs-magit-section instead of emacs-magit would be enough.
+    (propagated-inputs
+     (list emacs-compat emacs-lsp-mode emacs-dash emacs-magit))
+    (synopsis "Lean 4 major mode for Emacs")
+    (description "This package provides a major mode for the Lean theorem
+prover, version 4.")
+    (home-page "https://lean-lang.org/")
+    (license license:asl2.0)))
+
 (define-public emacs-dante
   (package
     (name "emacs-dante")
@@ -6542,6 +6565,54 @@ restore the saved place.")
 doc-view and for pdf-view), for example to be able to store links to a page
 in a PDF into an org file.")
       (home-page "https://github.com/fuxialexander/org-pdftools")
+      (license license:gpl3+))))
+
+(define-public emacs-sage-shell-mode
+  (let ((commit "4291700e981a2105d55fa56382ba25046d3d268d")
+        (revision "1"))
+    (package
+      (name "emacs-sage-shell-mode")
+      (version (git-version "0.3" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/sagemath/sage-shell-mode")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1dch7cwwslffgnzp1djlhz6a792ci42p4bvazxd9lqzhzal0rsbb"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list #:phases
+             #~(modify-phases %standard-phases
+                 ;; Fix duplicate tests in test file.
+                 (add-before 'check 'remove-duplicate-test
+                   (lambda _
+                     (ert-number-tests "test/sage-shell-mode-test.el"
+                                       "sage-shell:parse-state-func-call-1")))
+                 ;; The test below is meant to be called from a CI environment
+                 ;; and can be ignored.
+                 (add-before 'check 'skip-failing-test
+                   (lambda _
+                     (substitute* "test/sage-shell-mode-test.el"
+                       (("\\(ert-deftest sage-shell:development-version-test .*"
+                         all)
+                        (string-append all "(skip-unless nil)\n"))))))
+             ;; The "test" command from the Makefile rebuilds everything.  Run
+             ;; the tests at a lower level.
+             #:test-command #~(list "emacs" "-Q" "-batch"
+                                    "-L" "."
+                                    "-l" "test/sage-shell-mode-test.el"
+                                    "-f" "ert-run-tests-batch-and-exit")))
+      (propagated-inputs (list emacs-deferred))
+      (home-page "https://github.com/sagemath/sage-shell-mode")
+      (synopsis "Emacs front-end for SageMath")
+      (description
+       "Sage Shell mode provides an Emacs front-end for SageMath.  It can run
+the Sage terminal inside Emacs, and allows editing @file{.sage} source files
+with a dedicated major mode and sending their contents directly to that
+terminal.")
       (license license:gpl3+))))
 
 (define-public emacs-sakura-theme
@@ -22265,6 +22336,27 @@ hidden.")
 using ERT.  It assumes a certain test structure setup and can therefore make
 running tests easier.")
     (license license:gpl3+)))
+
+(define-public emacs-doctest
+  (let ((commit "0620ab6283a4e4302761ac415354b0b2b889dcda")
+        (revision "0"))
+    (package
+      (name "emacs-doctest")
+      (version (git-version "0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/ag91/doctest.git")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1g759f1ypw00vqbbcxa8yxf51bdmlrfdxybgjf4fmzzhvfbcpc4d"))))
+      (build-system emacs-build-system)
+      (synopsis "emacs-doctest")
+      (description "This package provides doctests for emacs elisp.")
+      (home-page "https://github.com/ag91/doctest")
+      (license license:gpl3+))))
 
 (define-public emacs-xtest
   (package
