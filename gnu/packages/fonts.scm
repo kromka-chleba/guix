@@ -2417,23 +2417,28 @@ weights and five widths in both Roman and Italic, plus variable fonts.")
 (define-public font-sarasa-gothic
   (package
     (name "font-sarasa-gothic")
-    (version "1.0.27")
+    (version "1.0.29")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/be5invis/Sarasa-Gothic"
-                           "/releases/download/v" version
-                           "/Sarasa-TTC-" version ".7z"))
+                           "/releases/download/v"
+                           version
+                           "/Sarasa-TTC-"
+                           version
+                           ".7z"))
        (sha256
-        (base32 "19k11nl6sib8ms82jvvv23543p4xdzybgfflz2jxjim55w9d1v4y"))))
+        (base32 "1y82wp3rgm1xnn92f0jppgiqjsimdy83ljyh5q9dybzx3fp0x8w7"))))
     (build-system font-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'unpack
-                    (lambda* (#:key source #:allow-other-keys)
-                      (mkdir "source")
-                      (chdir "source")
-                      (invoke "7z" "x" source))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'unpack
+            (lambda* (#:key source #:allow-other-keys)
+              (mkdir "source")
+              (chdir "source")
+              (invoke "7z" "x" source))))))
     (native-inputs (list p7zip))
     (home-page "https://github.com/be5invis/Sarasa-Gothic")
     (license license:silofl1.1)
@@ -2559,49 +2564,46 @@ emphasis while still being readable.")
     (license license:silofl1.1)))
 
 (define-public font-openmoji
-  (let ((commit "93f059dfb68401d49beaef7a3e09b80072b51a1f")
-        (revision "1"))
-   (package
+  (package
     (name "font-openmoji")
-    (version (git-version "14.0.0" revision commit))
+    (version "15.1.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/hfg-gmuend/openmoji/")
-             (commit commit)))
+             (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "16w4lg2y6qzb45j08l7cdwprjhprsm11jsm6nxzxwy2wzykd7gxk"))))
+        (base32 "1iil5jmkkqrqgq06q3gvgv7j1bq8499q3h2340prwlfi2sqcqzlk"))))
     (build-system font-build-system)
-    (arguments (list #:modules `((ice-9 ftw)
-                                 (guix build font-build-system)
-                                 (guix build utils))
-                     #:phases
-                     #~(modify-phases %standard-phases
-                         (add-after 'unpack 'chdir
-                           (lambda _ (chdir "font")))
-                         (add-after 'chdir 'strip-alternative-variants
-                           (lambda _
-                             (let ((keep '("OpenMoji-black-glyf"
-                                           "OpenMoji-color-glyf_colr_0"
-                                           "."
-                                           "..")))
-                               (for-each (lambda (f)
-                                           (unless (member f keep)
-                                             (delete-file-recursively f)))
-                                         (scandir ".")))))
-                         (add-before 'install-license-files 'chdir-back
-                           (lambda _ (chdir ".."))))))
-    (native-inputs
-     (list unzip))
+    (arguments
+     (list
+      #:modules `((ice-9 ftw)
+                  (guix build font-build-system)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "font")))
+          (add-after 'chdir 'strip-alternative-variants
+            (lambda _
+              (let ((keep '("OpenMoji-black-glyf" "OpenMoji-color-glyf_colr_0"
+                            "." "..")))
+                (for-each (lambda (f)
+                            (unless (member f keep)
+                              (delete-file-recursively f)))
+                          (scandir ".")))))
+          (add-before 'install-license-files 'chdir-back
+            (lambda _
+              (chdir ".."))))))
     (home-page "https://openmoji.org")
     (synopsis "Font for rendering emoji characters")
     (description
      "This package provides the OpenMoji font in both color and black
 variants.")
-    (license license:cc-by-sa4.0))))
+    (license license:cc-by-sa4.0)))
 
 (define-public font-dosis
   (package
@@ -2789,7 +2791,7 @@ files (TTF).")
 (define-public font-monaspace
   (package
     (name "font-monaspace")
-    (version "1.101")
+    (version "1.200")
     (source
      (origin
        (method git-fetch)
@@ -2799,7 +2801,7 @@ files (TTF).")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "00bpzzpwz5m20ap0c1gy0rf99pc76g8lk6jr0wh7xs8fjazq7lf1"))))
+         "0llhn40mbi67slkb9y3g16165v6hayczr11kygpz0zx6azg3m1lv"))))
     (build-system font-build-system)
     (outputs '("out" "ttf" "woff"))
     (home-page "https://monaspace.githubnext.com")

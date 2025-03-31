@@ -9,6 +9,7 @@
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2021, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2025 Lukas Gradl <lgradl@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -42,6 +43,7 @@
   #:use-module (gnu packages image)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages networking)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages photo)
@@ -529,14 +531,14 @@ should only be used as part of the Guix cups-pk-helper service.")
 (define-public hplip
   (package
     (name "hplip")
-    (version "3.23.12")
+    (version "3.24.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://sourceforge/hplip/hplip/" version
                                   "/hplip-" version ".tar.gz"))
               (sha256
                (base32
-                "1vb9irqsm3d4c2qdr4h6ia940x65bb99h4x31mgxn7dkvv42lv57"))
+                "1yzil1fn9ib2hxmqh9in0apmmznvln0xahlxvyny59ck321l6xjx"))
               (patches (search-patches "hplip-usb-timeout.patch"))
               (modules '((guix build utils)))
               (snippet
@@ -579,7 +581,6 @@ should only be used as part of the Guix cups-pk-helper service.")
                   ((guix build python-build-system) #:prefix python:))
       #:configure-flags
       #~(list "--disable-imageProcessor-build"
-              "--disable-network-build"
               (string-append "--prefix=" #$output)
               (string-append "--sysconfdir=" #$output "/etc")
               (string-append "LDFLAGS=-Wl,-rpath=" #$output "/lib")
@@ -690,6 +691,9 @@ should only be used as part of the Guix cups-pk-helper service.")
            python-pyqt
            python-wrapper
            sane-backends-minimal
+           net-snmp
+           openssl
+           avahi
            zlib))
     (home-page "https://developers.hp.com/hp-linux-imaging-and-printing")
     (synopsis "HP printer drivers")
@@ -709,16 +713,23 @@ should only be used as part of the Guix cups-pk-helper service.")
         ;; Produce a "light build", meaning that only the printer (CUPS) and
         ;; scanner (SANE) support gets built, without all the 'hp-*'
         ;; command-line tools.
-        #~(cons "--enable-lite-build"
-                (delete "--enable-qt5" #$cf)))
+        #~(cons* "--enable-lite-build"
+                 "--disable-network-build"
+                 ;; The flag "--enable-lite-build" is incompatible with
+                 ;; "--enable-network-build" inherited from hplip, so we need
+                 ;; to override it with "--disable-network-build".
+                 (delete "--enable-qt5" #$cf)))
        ((#:phases phases)
         ;; The 'wrap-binaries' is not needed here since the 'hp-*' programs
         ;; are not installed.
         #~(alist-delete 'wrap-binaries #$phases))))
-    (inputs (remove (match-lambda
-                      ((label . _)
-                       (string-prefix? "python" label)))
-                    (package-inputs hplip)))
+    (inputs
+     (list cups-minimal
+           dbus
+           libjpeg-turbo
+           libusb
+           sane-backends-minimal
+           zlib))
     (synopsis "GUI-less version of hplip")))
 
 (define-public foomatic-filters

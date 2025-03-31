@@ -1602,10 +1602,10 @@ extraction, and lookup for applications on the desktop.")
               ;; Allow the "Preview" button in the keyboard layout
               ;; selection dialog to display the layout.
               (substitute* "gnome-initial-setup/pages/keyboard/cc-input-chooser.c"
-                (("\"gkbd-keyboard-display")
+                (("\"tecla")
                  (string-append "\"" (search-input-file
                                       inputs
-                                      "bin/gkbd-keyboard-display")))))))))
+                                      "bin/tecla")))))))))
     (native-inputs
      (list gettext-minimal
            `(,glib "bin")
@@ -1624,7 +1624,6 @@ extraction, and lookup for applications on the desktop.")
            json-glib
            mit-krb5
            libadwaita
-           libgnomekbd
            libgweather4
            libnma
            libpwquality
@@ -1633,6 +1632,7 @@ extraction, and lookup for applications on the desktop.")
            packagekit
            polkit
            rest-next
+           tecla
            upower
            webkitgtk))
     (synopsis "Initial setup wizard for GNOME desktop")
@@ -9443,10 +9443,6 @@ Libadwaita.")
               (substitute* "tests/datetime/test-endianess.c"
                 (("/usr/share/locale")
                  (search-input-directory inputs "share/locale")))
-              (substitute* "panels/system/region/cc-region-page.c"
-                (("\"gkbd-keyboard-display")
-                 (string-append "\"" (search-input-file
-                                      inputs "bin/gkbd-keyboard-display"))))
               (substitute* '("panels/network/net-device-bluetooth.c"
                              "panels/network/net-device-mobile.c"
                              "panels/network/connection-editor/net-connection-editor.c")
@@ -9591,14 +9587,13 @@ properties, screen resolution, and other GNOME parameters.")
             (add-before 'configure 'record-absolute-file-names
               (lambda* (#:key inputs #:allow-other-keys)
                 (let ((ibus-daemon (search-input-file inputs "bin/ibus-daemon"))
-                      (gkbd-keyboard-display
-                       (search-input-file inputs "bin/gkbd-keyboard-display")))
+                      (tecla (search-input-file inputs "bin/tecla")))
                   (substitute* "js/misc/ibusManager.js"
                     (("'ibus-daemon'")
                      (string-append "'" ibus-daemon "'")))
                   (substitute* "js/ui/status/keyboard.js"
-                    (("'gkbd-keyboard-display'")
-                     (string-append "'" gkbd-keyboard-display "'"))))))
+                    (("'tecla'")
+                     (string-append "'" tecla "'"))))))
             (add-before 'check 'pre-check
               (lambda* (#:key inputs #:allow-other-keys)
                 ;; Tests require a running X server.
@@ -9710,7 +9705,6 @@ printf '~a is deprecated.  Use the \"gnome-extensions\" CLI or \
            ibus
            libcanberra
            libcroco
-           libgnomekbd                  ;for gkbd-keyboard-display
            libgweather4
            libnma
            libsoup
@@ -9722,6 +9716,7 @@ printf '~a is deprecated.  Use the \"gnome-extensions\" CLI or \
            pulseaudio
            python-pygobject
            startup-notification
+           tecla                        ;for keyboard previews
            telepathy-logger
            upower
            ;; XXX: These requirements were added in 3.24, but no mention in NEWS.

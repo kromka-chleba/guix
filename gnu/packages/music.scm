@@ -5630,7 +5630,7 @@ studio.")
 (define-public gsequencer
   (package
     (name "gsequencer")
-    (version "6.16.8")
+    (version "7.6.18")
     (source
      (origin
        (method git-fetch)
@@ -5639,7 +5639,7 @@ studio.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qp78j6gicm4ixkx5ihn2lilw3a2863y05zvw8w5gigyc2zmbqpp"))))
+        (base32 "003am834cr2wyj83967x6wqlay7vx2dgq8avskxvklw03p13vsvl"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:phases
@@ -8119,6 +8119,84 @@ tries to match each block with one in its brain to play in realtime.")
      "Le Biniou is a music visualization & VJing tool.  It creates live
 visuals based on audio performances or existing tracks.")
     (license license:gpl2+)))
+
+(define-public firefly-synth
+  (package
+   (name "firefly-synth")
+   (version "1.9.9")
+   (source
+    (origin
+     (method git-fetch)
+     ;; TODO: unbundle Submodule 'lib/JUCE' (https://github.com/sjoerdvankreel/JUCE.git) registered for path 'lib/JUCE'
+     ;; TODO: unbundle Submodule 'lib/MTS-ESP' (https://github.com/sjoerdvankreel/MTS-ESP.git) registered for path 'lib/MTS-ESP'
+     ;; TODO: unbundle Submodule 'lib/clap' (https://github.com/sjoerdvankreel/clap.git) registered for path 'lib/clap'
+     ;; TODO: unbundle Submodule 'lib/clap-helpers' (https://github.com/sjoerdvankreel/clap-helpers.git) registered for path 'lib/clap-helpers'
+     ;; TODO: unbundle Submodule 'lib/readerwriterqueue' (https://github.com/sjoerdvankreel/readerwriterqueue.git) registered for path 'lib/readerwriterqueue'
+     ;; TODO: unbundle Submodule 'lib/sse2neon' (https://github.com/sjoerdvankreel/sse2neon) registered for path 'lib/sse2neon'
+     ;; TODO: unbundle Submodule 'lib/vst3/base' (https://github.com/sjoerdvankreel/vst3_base.git) registered for path 'lib/vst3/base'
+     ;; TODO: unbundle Submodule 'lib/vst3/cmake' (https://github.com/sjoerdvankreel/vst3_cmake.git) registered for path 'lib/vst3/cmake'
+     ;; TODO: unbundle Submodule 'lib/vst3/pluginterfaces' (https://github.com/sjoerdvankreel/vst3_pluginterfaces.git) registered for path 'lib/vst3/pluginterfaces'
+     ;; TODO: unbundle Submodule 'lib/vst3/public.sdk' (https://github.com/sjoerdvankreel/vst3_public_sdk.git) registered for path 'lib/vst3/public.sdk'
+     (uri (git-reference
+           (url "https://github.com/sjoerdvankreel/firefly-synth")
+           (recursive? #t)
+           (commit (string-append "v" version))))
+     (sha256
+      (base32 "1gkrmq942i3gsd7r3ilnz2rs3xxb4sv5kq36f9gdasrxxz65wyg8"))
+     (file-name (git-file-name name version))))
+   (build-system cmake-build-system)
+   (arguments
+    (list
+     #:tests? #f ;; No test target
+     #:build-type "Release"
+     #:phases
+     #~(modify-phases %standard-phases
+                      (add-after 'install 'plugin-base-ref-gen
+                                 (lambda* (#:key outputs #:allow-other-keys)
+                                          (let* ((out (assoc-ref outputs "out")))
+                                            (with-directory-excursion
+                                             "../source/dist/Release/linux"
+                                             (system*
+                                              "./plugin_base.ref_gen"
+                                              "firefly_synth_1.vst3/Contents/x86_64-linux/firefly_synth_1.so"
+                                              "../../../param_reference.html")))))
+                      (add-after 'plugin-base-ref-gen 'copy-plugin-artefacts
+                                 (lambda* (#:key inputs outputs #:allow-other-keys)
+                                          (let* ((out (assoc-ref outputs "out"))
+                                                 (src (assoc-ref inputs "source"))
+                                                 (clap (string-append out "/lib/clap"))
+                                                 (vst3 (string-append out "/lib/vst3")))
+                                            ;; Make clap and vst3 directories
+                                            (mkdir-p clap)
+                                            (mkdir-p vst3)
+                                            (with-directory-excursion
+                                             "../source/dist/Release/linux"
+                                             ;; Install clap.
+                                             (copy-recursively
+                                              "firefly_synth_1.clap"
+                                              (string-append clap "/firefly_synth_1.clap"))
+                                             (copy-recursively
+                                              "firefly_synth_fx_1.clap"
+                                              (string-append clap "/firefly_synth_fx_1.clap"))
+                                             ;; Install vst3.
+                                             (copy-recursively
+                                              "firefly_synth_1.vst3"
+                                              (string-append vst3 "/firefly_synth_1.vst3"))
+                                             (copy-recursively
+                                              "firefly_synth_fx_1.vst3"
+                                              (string-append vst3 "/firefly_synth_fx_1.vst3")))))))))
+   (inputs (list libxrandr
+                 libxinerama
+                 libxcursor
+                 freetype
+                 fontconfig
+                 mesa
+                 alsa-lib))
+   (native-inputs (list pkg-config))
+   (home-page "https://github.com/sjoerdvankreel/firefly-synth")
+   (synopsis "Semi-modular synthesizer and FX plugin, VST3 and CLAP")
+   (description "A semi-modular software synthesizer and fx plugin")
+   (license license:gpl3)))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances

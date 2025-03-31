@@ -4542,14 +4542,14 @@ cables.")
 (define-public lldpd
   (package
     (name "lldpd")
-    (version "1.0.17")
+    (version "1.0.19")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://media.luffy.cx/files/lldpd/lldpd-"
                            version ".tar.gz"))
        (sha256
-        (base32 "1ki7c7ffys42s2wy5c94qriicgwx0wl9bm83xxkclasx2izifhwk"))
+        (base32 "0zwr1brzq41r6ji1gnqgnlg5sy0980w5n18xj3d3hlay7lbg6zgq"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -4571,7 +4571,7 @@ cables.")
      (list libevent libxml2 openssl readline))
     (native-inputs
      (list pkg-config))
-    (home-page "https://vincentbernat.github.io/lldpd/")
+    (home-page "https://lldpd.github.io/")
     (synopsis "Locate neighbors of your network equipment")
     (description
      "The @dfn{Link Layer Discovery Protocol} (LLDP) is an industry standard
@@ -4595,25 +4595,23 @@ an implementation of LLDP.  It also supports some proprietary protocols.")
          "15kqaimwb2y8wvzpn73021bvay9mz1gqqfc40gk4hj6f84nz34h1"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags (list (string-append "CC=" ,(cc-for-target)))
+     (list #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))
        #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         ;; No tests available.
-         (delete 'check)
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((outdir (assoc-ref outputs "out"))
-                    (bindir (string-append outdir "/bin"))
-                    (mandir (string-append outdir "/share/man/man1"))
-                    (docdir (string-append outdir "/share/doc/hashcash-" ,version)))
-               ;; Install manually, as we don't need the `sha1' binary
-               (install-file "hashcash" bindir)
-               (install-file "hashcash.1" mandir)
-               (install-file "README" docdir)
-               (install-file "LICENSE" docdir)
-               (install-file "CHANGELOG" docdir)
-               #t))))))
+       #~(modify-phases %standard-phases
+           (delete 'configure)
+           ;; No tests available.
+           (delete 'check)
+           (replace 'install
+             (lambda* (#:key outputs #:allow-other-keys)
+               (let ((bindir (string-append #$output "/bin"))
+                     (mandir (string-append #$output "/share/man/man1"))
+                     (docdir (string-append #$output "/share/doc/hashcash-" #$version)))
+                 ;; Install manually, as we don't need the `sha1' binary
+                 (install-file "hashcash" bindir)
+                 (install-file "hashcash.1" mandir)
+                 (install-file "README" docdir)
+                 (install-file "LICENSE" docdir)
+                 (install-file "CHANGELOG" docdir)))))))
     (home-page "https://www.hashcash.org/")
     (synopsis "Denial-of-service countermeasure")
     (description "Hashcash is a proof-of-work algorithm, which has been used
@@ -4795,7 +4793,7 @@ IPv6 Internet connectivity - it also works over IPv4.")
 (define-public yggtray
   (package
     (name "yggtray")
-    (version "0.1.7")
+    (version "0.1.9")
     (source
      (origin
        (method git-fetch)
@@ -4804,7 +4802,7 @@ IPv6 Internet connectivity - it also works over IPv4.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0q20dh6l1qbyd9iim82yv16gsknan0blp8z47xdxsva0ypjb2hl2"))))
+        (base32 "1mp3vbq3r2n478v51qq4bzprml12yhl1n6gk3jv7wrjdfa395m46"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -4921,7 +4919,7 @@ layers.")
 (define-public netdiscover
   (package
    (name "netdiscover")
-   (version "0.10")
+   (version "0.11")
    (source
     (origin
       (method git-fetch)
@@ -4929,7 +4927,7 @@ layers.")
             (url "https://github.com/netdiscover-scanner/netdiscover")
             (commit version)))
       (sha256
-       (base32 "1ljkj280qja9rz0zwkilsa4051fdxsygjqhfch0wpkxxa5zx3prx"))
+       (base32 "1jk61b75jjjhj21hif6cdgvf6khcb98p7zbmbg9im8m9bsz3lhrd"))
       (file-name (string-append "netdiscover-" version))))
    (arguments
     `(#:tests? #f))                     ; no tests

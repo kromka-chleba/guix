@@ -155,6 +155,7 @@
 ;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>
 ;;; Copyright © 2025 Skylar Hill <stellarskylark@posteo.net>
 ;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
+;;; Copyright © 2025 Lee Thompson <lee.p.thomp@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3771,6 +3772,33 @@ provides basic supports for syntax highlighting and indentation.")
 reformat the current buffer using a command-line program, together with an
 optional minor mode which can apply this command automatically on save.")
     (license license:gpl3+)))
+
+(define-public emacs-rescript-mode
+  (let ((commit "b9dda43cc52cd4a9b384c59fb0cc7a11f0bad230")
+        (revision "0"))
+    (package
+      (name "emacs-rescript-mode")
+      (version (git-version "0.1.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/jjlee/rescript-mode")
+                      (commit commit)))
+                (sha256
+                 (base32
+                  "00pjn683zl5rcmwf86gs4ikxzz82d3rpmicpxhgy2m2xyrfxpz89"))
+                (file-name (git-file-name name version))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #t
+        #:test-command #~(list "ert-runner")))
+      (native-inputs
+       (list emacs-ert-runner))
+      (home-page "https://github.com/jjlee/rescript-mode")
+      (synopsis "Major mode for editing ReScript")
+      (description "This package provides a major mode for editing ReScript source code.")
+      (license license:gpl3))))
 
 (define-public emacs-language-id
   (package
@@ -13626,7 +13654,7 @@ interface.")
 (define-public emacs-orderless
   (package
     (name "emacs-orderless")
-    (version "1.3")
+    (version "1.4")
     (source
      (origin
        (method git-fetch)
@@ -13634,7 +13662,7 @@ interface.")
              (url "https://github.com/oantolin/orderless")
              (commit version)))
        (sha256
-        (base32 "0w7vrhqg3klr0zxnijmfgfgr5nf6z3cmlrbw3qz9y7z2p2ll5w8m"))
+        (base32 "1la91fk322n600h4wnavx7a6rdc44mz4v4gg1fb3cpwjsw746sl8"))
        (file-name (git-file-name name version))))
     (build-system emacs-build-system)
     (arguments
@@ -14003,7 +14031,7 @@ expansion and overwriting the marked region with a new snippet completion.")
 (define-public emacs-marginalia
   (package
     (name "emacs-marginalia")
-    (version "1.8")
+    (version "2.0")
     (source
      (origin
        (method git-fetch)
@@ -14012,7 +14040,7 @@ expansion and overwriting the marked region with a new snippet completion.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "12kg0zd1zw2rc3pxi655gh37bxbbkpmdb05yi77rdccl8gh9jwry"))))
+        (base32 "00dzckksfzvwjdy3v1g71nvkxnnpw2bmh8bmhf56qn3nzfj2yr89"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -17294,6 +17322,45 @@ serialization format.  As YAML and Python share the fact that indentation
 determines structure, this mode provides indentation and indentation command
 behavior very similar to that of Python mode.")
     (license license:gpl3+)))
+
+(define-public emacs-yari
+  (let ((revision "0")
+        (commit "de61285ceb21f56c29f4be12e2e65b2aa2bccf56"))
+    (package
+      (name "emacs-yari")
+      (version (git-version "0.8" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/hron/yari.el")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0sik21rifw0q1rw4wrffnnwynsmgrv6w323gz3fw89cz6n8kqsgn"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #t
+        #:test-command #~(list "ert-runner")
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'set-program-names
+              (lambda* (#:key inputs #:allow-other-keys)
+                (emacs-substitute-variables "yari.el"
+                  ("yari-ri-program-name"
+                   (search-input-file inputs "/bin/ri"))
+                  ("yari-ruby-program-name"
+                   (search-input-file inputs "/bin/ruby"))))))))
+      (native-inputs (list emacs-ert-runner))
+      (inputs (list ruby))
+      (home-page "https://github.com/hron/yari.el")
+      (synopsis "Yet Another RI interface for Emacs")
+      (description
+       "This package provides an Emacs frontend to Ruby's @code{ri}
+documentation tool, and offers lookup and completion.  The main
+function you should use as interface to @code{ri} is @samp{M-x yari}.")
+      (license license:gpl3+))))
 
 (define-public emacs-gitlab-ci-mode
   (package
@@ -22765,19 +22832,20 @@ or @code{treemacs}, but leveraging @code{Dired} to do the job of display.")
 (define-public emacs-dirvish
   (package
     (name "emacs-dirvish")
-    (version "2.1.0")
+    (version "2.2.7")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/alexluigit/dirvish")
-                    (commit "2.1.0")))
+                    (commit version)))
               (sha256
                (base32
-                "01mihv8p8ljdw19n0cqhaixyk8ic58zz2r8qhwy7900xpyn3b91w"))
+                "13y066sj6ax8czlfp6vy2da310q988vij933wvw31frihwd2v200"))
               (file-name (git-file-name name version))))
     (build-system emacs-build-system)
     (arguments
      (list
+      #:tests? #f ; no actual tests
       #:phases
       #~(modify-phases %standard-phases
           ;; Move the extensions source files to the top level, which
@@ -24720,7 +24788,7 @@ the format.")
 (define-public emacs-nov-el
   (package
     (name "emacs-nov-el")
-    (version "0.4.0")
+    (version "0.5.0")
     (source
      (origin
        (method git-fetch)
@@ -24729,42 +24797,23 @@ the format.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "10507fdfx02wb3j7g34w4ii8rgnjbmriq63ir6x1agf38s3i9p52"))))
+        (base32 "1s1ar3c9819mzalybp0pi6pzzwwnihal7pjyin2804h1gbappli8"))))
     (build-system emacs-build-system)
     (arguments
      (list
-      #:emacs emacs                    ;need libxml
+      #:tests? #f ; no actual tests
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'embed-path-to-unzip
-            (lambda _
-              (substitute* "nov.el"
-                (("\\(executable-find \"unzip\"\\)")
-                 (string-append "\"" (which "unzip") "\""))))))))
-    (propagated-inputs
-     (list emacs-dash emacs-esxml))
-    (inputs
-     (list unzip))
+            (lambda* (#:key inputs #:allow-other-keys)
+              (emacs-substitute-variables "nov.el"
+                ("nov-unzip-program" (search-input-file inputs "/bin/unzip"))))))))
+    (propagated-inputs (list emacs-esxml))
+    (inputs (list unzip))
     (home-page "https://depp.brause.cc/nov.el/")
     (synopsis "Major mode for reading EPUBs in Emacs")
-    (description "@code{nov.el} provides a major mode for reading EPUB
-documents.
-
-Features:
-
-@itemize
-@item Basic navigation (jump to TOC, previous/next chapter)
-@item Remembering and restoring the last read position
-@item Jump to next chapter when scrolling beyond end
-@item Renders EPUB2 (@code{.ncx}) and EPUB3 (@code{<nav>}) TOCs
-@item Hyperlinks to internal and external targets
-@item Supports textual and image documents
-@item View source of document files
-@item Metadata display
-@item Image rescaling
-@end itemize
-")
+    (description
+     "@code{nov.el} provides a major mode for reading EPUB documents.")
     (license license:gpl3+)))
 
 (define-public epipe
@@ -28965,11 +29014,12 @@ interactive loop.")
     (license license:gpl3+)))
 
 (define-public emacs-eros
-  (let ((commit "dd8910279226259e100dab798b073a52f9b4233a")
-        (revision "2"))
+  (let ((commit "a9a92bdc6be0521a6a06eb464be55ed61946639c")
+        (revision "0"))
     (package
       (name "emacs-eros")
-      (version (git-version "0.0.1" revision commit))
+      ;; No tag or release, version taken from `eros.el'.
+      (version (git-version "0.1.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -28978,12 +29028,16 @@ interactive loop.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32
-           "08chj3a0lw4ygi2sv7wj0i6ihfbi8jhylr8p92inif8b88r6wg3k"))))
+          (base32 "04nkqsvh8c988hc3ajigs206ad64204qdhhqzdvm3k7m7qiiwga8"))))
       (build-system emacs-build-system)
+      (arguments
+       ;; No tests found in source
+       (list
+        #:tests? #f))
       (home-page "https://github.com/xiongtx/eros")
       (synopsis "Evaluation result overlays")
-      (description "@code{eros} provides evaluation result overlays.")
+      (description "@code{eros} provides result overlays for evaluating Emacs
+Lisp.")
       (license license:gpl3+))))
 
 (define-public emacs-geiser-eros
@@ -30118,7 +30172,7 @@ image, rotate it, save modified images, and more.")
 (define-public emacs-package-lint
   (package
     (name "emacs-package-lint")
-    (version "0.24")
+    (version "0.25")
     (source
      (origin
        (method git-fetch)
@@ -30128,7 +30182,7 @@ image, rotate it, save modified images, and more.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0qbzhpmwsgrp6z541jc1cy7jqr7ipdindwfji210279v2w6yrj1p"))))
+         "1fvi79pwlvvdakcmvf6jv9ba400lqfjsdcshg2q4rnj5v1a797pn"))))
     (arguments
      (list #:include #~(cons "^data/" %default-include)))
     (build-system emacs-build-system)
@@ -33759,7 +33813,7 @@ processes for Emacs.")
 (define-public emacs-treemacs
   (package
     (name "emacs-treemacs")
-    (version "3.1")
+    (version "3.2")
     (source
      (origin
        (method git-fetch)
@@ -33768,11 +33822,10 @@ processes for Emacs.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1rs0l0k9fd8xav627944jfm518yillcmjbdrkzjw3xq1wx80pn95"))))
+        (base32 "0z8pc7y8p32vhlv5ibr11mrd8r8fk09dfgsj7a63d48r992p7gih"))))
     (build-system emacs-build-system)
     (arguments
      (list
-      #:tests? #t
       #:test-command #~(list "make" "-C" "../.." "test")
       #:phases
       #~(modify-phases %standard-phases
@@ -42878,6 +42931,9 @@ Emacs.")
          (sha256
           (base32 "0sl3s5bfqmicpg4hp2k6qznrgj71dx0lz3dv2jyd48ys67m9x4dx"))))
       (build-system emacs-build-system)
+      ;;there are no tests
+      (arguments
+       (list #:tests? #f))
       (home-page "https://github.com/gmlarumbe/fpga")
       (synopsis "Emacs fpga & asic utilities")
       (description

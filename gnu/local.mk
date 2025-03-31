@@ -1906,7 +1906,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/nhc98-c-update.patch			\
   %D%/packages/patches/nix-dont-build-html-doc.diff		\
   %D%/packages/patches/nfs4-acl-tools-0.3.7-fixpaths.patch	\
-  %D%/packages/patches/ngircd-handle-zombies.patch		\
   %D%/packages/patches/network-manager-plugin-path.patch	\
   %D%/packages/patches/newlib-getentropy.patch			\
   %D%/packages/patches/nginx-socket-cloexec.patch		\
@@ -1923,6 +1922,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/nyacc-binary-literals.patch		\
   %D%/packages/patches/obs-modules-location.patch		\
   %D%/packages/patches/ocaml-multiple-definitions.patch		\
+  %D%/packages/patches/ogre-next-add-riscv64-support.patch		\
   %D%/packages/patches/ocaml-4.07-dynamically-allocate-signal-stack.patch	\
   %D%/packages/patches/ocaml-4.09-dynamically-allocate-signal-stack.patch	\
   %D%/packages/patches/ocaml-4.09-multiple-definitions.patch	\

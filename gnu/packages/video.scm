@@ -2341,13 +2341,13 @@ videoformats depend on the configuration flags of ffmpeg.")
 (define-public ffmpeg-progress-yield
   (package
     (name "ffmpeg-progress-yield")
-    (version "0.7.8")
+    (version "0.11.3")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "ffmpeg-progress-yield" version))
+              (uri (pypi-uri "ffmpeg_progress_yield" version))
               (sha256
                (base32
-                "07j6m8p8z8ybl75h0d4xzjl1pvkfzr0i73siysqcgrrahdgsxrls"))))
+                "14kmlvslnkd60c3v50ifzm46n26vaadwymxwh2br5pz1zqcn89pb"))))
     (build-system pyproject-build-system)
     (arguments
      ;; Not sure if the test file actually does anything.
@@ -2365,7 +2365,7 @@ videoformats depend on the configuration flags of ffmpeg.")
                                 `("PATH" ":" prefix
                                   (,(search-input-file inputs ffm))))))))))
     (inputs (list bash-minimal ffmpeg))
-    (native-inputs (list python-setuptools python-wheel))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/slhck/ffmpeg-progress-yield")
     (synopsis "Run an ffmpeg command with progress")
     (description "This package allows an ffmpeg command to run with progress.
@@ -2375,13 +2375,13 @@ It is usually a complement to @code{ffmpeg-normalize}.")
 (define-public ffmpeg-normalize
   (package
     (name "ffmpeg-normalize")
-    (version "1.31.1")
+    (version "1.31.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "ffmpeg_normalize" version))
               (sha256
                (base32
-                "0b1vfipr0a40q1xm61f3nbi24kxs6a97j34dl5f8by5g68h19z71"))))
+                "0989vb2wr70x2s662zh5lva1j1z9g0zv7b3b35fyyrh93865iza4"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases
@@ -3169,7 +3169,7 @@ YouTube.com and many more sites.")
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2025.02.19")
+    (version "2025.03.26")
     (source
      (origin
        (method git-fetch)
@@ -3181,7 +3181,7 @@ YouTube.com and many more sites.")
        (snippet '(substitute* "pyproject.toml"
                    (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "10xgvvrsvhajrjfq512hjfg7kfcab4cbnhnl5lm6ispgpbv03n52"))))
+        (base32 "0a29jdmwnbqfr34ilfm74hrvh33l4iv11ls2fm64kbjp6pp9z22d"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:tests? ,(not (%current-target-system))
@@ -6086,7 +6086,7 @@ transitions, and effects and then export your film to many common formats.")
 (define-public shotcut
   (package
     (name "shotcut")
-    (version "25.01.25")
+    (version "25.03.29")
     (source
      (origin
        (method git-fetch)
@@ -6095,26 +6095,26 @@ transitions, and effects and then export your film to many common formats.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cxwa1gzjb5y0640wmdssdjny5wr4r70a6nih65zsqgv223ydfb2"))))
+        (base32 "114h7g1ambj3b91f54yrwsg02pcdh0b6npg2w84qympib0f30ck6"))))
     (build-system qt-build-system)
     (arguments
      (list
       #:tests? #f                      ;there are no tests
-       #:phases
-       #~(modify-phases %standard-phases
-         (add-after 'unpack 'patch-executable-paths
-           (lambda _
-             ;; Shotcut expects ffmpeg and melt executables in the shotcut
-             ;; directory.  Use full store paths.
-             (let ((ffmpeg #$(this-package-input "ffmpeg"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-executable-paths
+            (lambda _
+              ;; Shotcut expects ffmpeg and melt executables in the shotcut
+              ;; directory.  Use full store paths.
+              (let ((ffmpeg #$(this-package-input "ffmpeg"))
                     (mlt #$(this-package-input "mlt")))
-               (substitute* "src/jobs/ffmpegjob.cpp"
-                 (("\"ffmpeg\"") (string-append "\"" ffmpeg "/bin/ffmpeg\"")))
-               (substitute* "src/jobs/meltjob.cpp"
-                 (("\"melt\"") (string-append "\"" mlt "/bin/melt\""))
-                 (("\"melt-7\"") (string-append "\"" mlt "/bin/melt-7\""))))))
-         (add-after 'install 'wrap-executable
-           (lambda _
+                (substitute* "src/jobs/ffmpegjob.cpp"
+                  (("\"ffmpeg\"") (string-append "\"" ffmpeg "/bin/ffmpeg\"")))
+                (substitute* "src/jobs/meltjob.cpp"
+                  (("\"melt\"") (string-append "\"" mlt "/bin/melt\""))
+                  (("\"melt-7\"") (string-append "\"" mlt "/bin/melt-7\""))))))
+          (add-after 'install 'wrap-executable
+            (lambda _
              (let ((frei0r #$(this-package-input "frei0r-plugins"))
                     (jack #$(this-package-input "jack"))
                     (ladspa #$(this-package-input "ladspa"))
