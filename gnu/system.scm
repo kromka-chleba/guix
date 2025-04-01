@@ -1140,6 +1140,11 @@ do
 done
 unset GUIX_PROFILE
 
+# Set up extra environment variables for Guix Home.
+HOME_ENVIRONMENT=\"$HOME/.guix-home\"
+[ -f \"$HOME_ENVIRONMENT/setup-environment\" ] && . \"$HOME_ENVIRONMENT/setup-environment\"
+unset HOME_ENVIRONMENT
+
 # Prepend search paths not in a profile.
 export PATH=/run/privileged/bin:$PATH
 export XCURSOR_PATH=\"$HOME/.icons:$XCURSOR_PATH\"

@@ -89,7 +89,11 @@ really know what you do."))
        "shell-profile"
        "\
 HOME_ENVIRONMENT=$HOME/.guix-home
-. $HOME_ENVIRONMENT/setup-environment
+# Skip if already sourced.
+case $INFOPATH in
+  *$HOME_ENVIRONMENT/profile/share/info*) ;;
+  *) . \"$HOME_ENVIRONMENT/setup-environment\" ;;
+esac
 $HOME_ENVIRONMENT/on-first-login
 unset HOME_ENVIRONMENT\n"
        (serialize-configuration

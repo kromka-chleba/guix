@@ -280,7 +280,11 @@ exported."
 # ~/.profile does)
 GUIX_PROFILE=\"$HOME_ENVIRONMENT/profile\"
 PROFILE_FILE=\"$GUIX_PROFILE/etc/profile\"
-[ -f $PROFILE_FILE ] && . $PROFILE_FILE
+# Skip if already initialized.
+case $INFOPATH in
+  *$GUIX_PROFILE/share/info*) ;;
+  *) [ -f \"$PROFILE_FILE\" ] && . \"$PROFILE_FILE\" ;;
+esac
 
 case $GUIX_LOCPATH in
   *$GUIX_PROFILE/lib/locale*) ;;
