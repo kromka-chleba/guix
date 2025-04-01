@@ -1066,16 +1066,9 @@ the /etc directory."
         ;; Startup file for POSIX-compliant login shells, which set system-wide
         ;; environment variables.
         (profile    (mixed-text-file "profile"  "\
-# Crucial variables that could be missing in the profiles' 'etc/profile'
-# because they would require combining both profiles.
-# FIXME: See <http://bugs.gnu.org/20255>.
-export MANPATH=$HOME/.guix-profile/share/man:/run/current-system/profile/share/man
-export INFOPATH=$HOME/.guix-profile/share/info:/run/current-system/profile/share/info
-export XDG_DATA_DIRS=$HOME/.guix-profile/share:/run/current-system/profile/share
-export XDG_CONFIG_DIRS=$HOME/.guix-profile/etc/xdg:/run/current-system/profile/etc/xdg
-
-# Make sure libXcursor finds cursors installed into user or system profiles.  See <http://bugs.gnu.org/24445>
-export XCURSOR_PATH=$HOME/.icons:$HOME/.guix-profile/share/icons:/run/current-system/profile/share/icons
+# Set the umask, notably for users logging in via 'lsh'.
+# See <http://bugs.gnu.org/22650>.
+umask 022
 
 # Ignore the default value of 'PATH'.
 unset PATH
@@ -1095,33 +1088,61 @@ for GUIX_PROFILE in \"/run/current-system/profile\" \\
                     \"$HOME/.guix-profile\"        \\
                     \"$HOME/.config/guix/current\"
 do
-  if [ -f \"$GUIX_PROFILE/etc/profile\" ]
-  then
+  if [ -f \"$GUIX_PROFILE/etc/profile\" ]; then
     . \"$GUIX_PROFILE/etc/profile\"
-  else
-    # At least define this one so that basic things just work
-    # when the user installs their first package.
-    export PATH=\"$GUIX_PROFILE/bin:$PATH\"
+    if [ ! \"$GUIX_PROFILE\" = \"$HOME/.config/guix/current\" ]; then
+      # Crucial variables that could be missing in the profiles' 'etc/profile'
+      # because they would require combining both profiles.
+      # FIXME: See <http://bugs.gnu.org/20255>.
+      case $XDG_DATA_DIRS in
+        *$GUIX_PROFILE/share*) ;;
+        *) export XDG_DATA_DIRS=\"$GUIX_PROFILE/share${XDG_DATA_DIRS:+:}$XDG_DATA_DIRS\" ;;
+      esac
+      case $XDG_CONFIG_DIRS in
+        *$GUIX_PROFILE/etc/xdg*) ;;
+        *) export XDG_CONFIG_DIRS=\"$GUIX_PROFILE/etc/xdg${XDG_CONFIG_DIRS:+:}$XDG_CONFIG_DIRS\" ;;
+      esac
+      # Make sure libXcursor finds cursors installed into user or system profiles.
+      case $XCURSOR_PATH in
+        *$GUIX_PROFILE/share/icons*) ;;
+        *) export XCURSOR_PATH=\"$GUIX_PROFILE/share/icons${XCURSOR_PATH:+:}$XCURSOR_PATH\" ;;
+      esac
+      # Allow Hunspell-based applications (IceCat, LibreOffice, etc.) to find
+      # dictionaries.
+      case $DICPATH in
+        *$GUIX_PROFILE/share/hunspell*) ;;
+        *) export DICPATH=\"$GUIX_PROFILE/share/hunspell${DICPATH:+:}$DICPATH\" ;;
+      esac
+      # Allow GStreamer-based applications to find plugins.
+      case $GST_PLUGIN_PATH in
+        *$GUIX_PROFILE/lib/gstreamer-1.0*) ;;
+        *) export GST_PLUGIN_PATH=\"$GUIX_PROFILE/lib/gstreamer-1.0${GST_PLUGIN_PATH:+:}$GST_PLUGIN_PATH\" ;;
+      esac
+    fi
   fi
+  # Make basic things just work when the user installs their first package.
+  case $PATH in
+    *$GUIX_PROFILE/bin*) ;;
+    *) export PATH=\"$GUIX_PROFILE/bin${PATH:+:}$PATH\" ;;
+  esac
+  # When INFOPATH is unset, add a trailing colon so Emacs searches
+  # 'Info-default-directory-list'.
+  case $INFOPATH in
+    *$GUIX_PROFILE/share/info*) ;;
+    *) export INFOPATH=\"$GUIX_PROFILE/share/info:$INFOPATH\" ;;
+  esac
+  # When MANPATH is unset, add a trailing colon so the system default search
+  # path is used.
+  case $MANPATH in
+    *$GUIX_PROFILE/share/man*) ;;
+    *) export MANPATH=\"$GUIX_PROFILE/share/man:$MANPATH\" ;;
+  esac
 done
 unset GUIX_PROFILE
 
-# Prepend privileged programs.
+# Prepend search paths not in a profile.
 export PATH=/run/privileged/bin:$PATH
-
-# Arrange so that ~/.config/guix/current/share/info comes first.
-export INFOPATH=\"$HOME/.config/guix/current/share/info:$INFOPATH\"
-
-# Set the umask, notably for users logging in via 'lsh'.
-# See <http://bugs.gnu.org/22650>.
-umask 022
-
-# Allow Hunspell-based applications (IceCat, LibreOffice, etc.) to
-# find dictionaries.
-export DICPATH=\"$HOME/.guix-profile/share/hunspell:/run/current-system/profile/share/hunspell\"
-
-# Allow GStreamer-based applications to find plugins.
-export GST_PLUGIN_PATH=\"$HOME/.guix-profile/lib/gstreamer-1.0\"
+export XCURSOR_PATH=\"$HOME/.icons:$XCURSOR_PATH\"
 
 for i in /etc/profile.d/*.sh; do
     if [ -r \"$i\" ]; then
