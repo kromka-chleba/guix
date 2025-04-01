@@ -1080,38 +1080,31 @@ export XCURSOR_PATH=$HOME/.icons:$HOME/.guix-profile/share/icons:/run/current-sy
 # Ignore the default value of 'PATH'.
 unset PATH
 
-# Load the system profile's settings.
-GUIX_PROFILE=/run/current-system/profile ; \\
-. /run/current-system/profile/etc/profile
-
 # Since 'lshd' does not use pam_env, /etc/environment must be explicitly
 # loaded when someone logs in via SSH.  See <http://bugs.gnu.org/22175>.
-# We need 'PATH' to be defined here, for 'cat' and 'cut'.  Do this before
-# reading the user's 'etc/profile' to allow variables to be overridden.
 if [ -f /etc/environment -a -n \"$SSH_CLIENT\" \\
      -a -z \"$LINUX_MODULE_DIRECTORY\" ]
 then
   . /etc/environment
-  export `cat /etc/environment | cut -d= -f1`
+  export `/run/current-system/profile/bin/cut -d= -f1 < /etc/environment`
 fi
 
-# Arrange so that ~/.config/guix/current comes first,
-# and guix-home comes before guix-profile.
-for profile in \"$HOME/.guix-profile\"        \\
-               \"$HOME/.guix-home/profile\"   \\
-               \"$HOME/.config/guix/current\"
+# Set up environment for all default profiles.
+for GUIX_PROFILE in \"/run/current-system/profile\" \\
+                    \"$HOME/.guix-home/profile\"   \\
+                    \"$HOME/.guix-profile\"        \\
+                    \"$HOME/.config/guix/current\"
 do
-  if [ -f \"$profile/etc/profile\" ]
+  if [ -f \"$GUIX_PROFILE/etc/profile\" ]
   then
-    # Load the user profile's settings.
-    GUIX_PROFILE=\"$profile\" ; \\
-    . \"$profile/etc/profile\"
+    . \"$GUIX_PROFILE/etc/profile\"
   else
     # At least define this one so that basic things just work
     # when the user installs their first package.
-    export PATH=\"$profile/bin:$PATH\"
+    export PATH=\"$GUIX_PROFILE/bin:$PATH\"
   fi
 done
+unset GUIX_PROFILE
 
 # Prepend privileged programs.
 export PATH=/run/privileged/bin:$PATH
