@@ -31,14 +31,14 @@
 (define-public skalibs
   (package
     (name "skalibs")
-    (version "2.13.1.1")
+    (version "2.14.3.0")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "https://skarnet.org/software/skalibs/skalibs-"
                           version ".tar.gz"))
       (sha256
-       (base32 "0cwy37cc92409dsmj8c8whpnnqd9g375myxlp52aqzwzg6ms2wmj"))))
+       (base32 "09y4cqq92n0cdmzx196bymlkvyf8n8iwdkkal4phd6xhr5caajm1"))))
     (build-system gnu-build-system)
     (arguments
      '(#:tests? #f                      ; no tests exist
@@ -66,21 +66,18 @@ and file system operations.  It is used by all skarnet.org software.")
 (define-public execline
   (package
     (name "execline")
-    (version "2.9.3.0")
+    (version "2.9.6.1")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "https://skarnet.org/software/execline/execline-"
                           version ".tar.gz"))
       (sha256
-       (base32 "1393xka069n3rvc3dlg6c3ckzl1qgqkhvhlcxv6igl9216kpy0n8"))))
+       (base32 "1jp5y3w2db9d7yp17pcsvny656z0w2rywn9s9fnb2kfyy9i9v4bn"))))
     (build-system gnu-build-system)
     (inputs (list bash-minimal skalibs))
     (arguments
      '(#:configure-flags (list
-                          (string-append "--with-lib="
-                                         (assoc-ref %build-inputs "skalibs")
-                                         "/lib/skalibs")
                           (string-append "--with-sysdeps="
                                          (assoc-ref %build-inputs "skalibs")
                                          "/lib/skalibs/sysdeps"))
@@ -114,24 +111,18 @@ complexity.")))
 (define-public s6
   (package
    (name "s6")
-   (version "2.11.3.2")
+   (version "2.13.1.0")
    (source
     (origin
      (method url-fetch)
      (uri (string-append "https://skarnet.org/software/s6/s6-"
                          version ".tar.gz"))
      (sha256
-      (base32 "0x6zjc3126fjhj8accyxgrw7r7ysrb7d13dfs87bxzzhsa5165kw"))))
+      (base32 "0znfwb9yx12lyz5kaqylr4iy1ifnxc82vc670jpv0z4mab7i81mz"))))
    (build-system gnu-build-system)
    (inputs (list skalibs execline))
    (arguments
     `(#:configure-flags (list
-                        (string-append "--with-lib="
-                                       (assoc-ref %build-inputs "skalibs")
-                                       "/lib/skalibs")
-                        (string-append "--with-lib="
-                                       (assoc-ref %build-inputs "execline")
-                                       "/lib/execline")
                         (string-append "--with-sysdeps="
                                        (assoc-ref %build-inputs "skalibs")
                                        "/lib/skalibs/sysdeps"))
@@ -158,21 +149,18 @@ functionality with a very small amount of code.")))
 (define-public s6-dns
   (package
    (name "s6-dns")
-   (version "2.3.5.5")
+   (version "2.4.0.0")
    (source
     (origin
      (method url-fetch)
      (uri (string-append "https://skarnet.org/software/s6-dns/s6-dns-"
                          version ".tar.gz"))
      (sha256
-      (base32 "1s0yzrzpjgbf1d0s4qxq5g2sgcm6skq3sphbm1qq1hr5a5frp5sn"))))
+      (base32 "1r6yw796lmdnz62wwqzjfmx7b5xyc292l7nwd2v2bb22k2fb8yjd"))))
     (build-system gnu-build-system)
     (inputs (list skalibs))
     (arguments
      '(#:configure-flags (list
-                          (string-append "--with-lib="
-                                         (assoc-ref %build-inputs "skalibs")
-                                         "/lib/skalibs")
                           (string-append "--with-sysdeps="
                                          (assoc-ref %build-inputs "skalibs")
                                          "/lib/skalibs/sysdeps"))
@@ -187,30 +175,18 @@ as an alternative to the BIND, djbdns or other DNS clients.")))
 (define-public s6-networking
   (package
    (name "s6-networking")
-   (version "2.5.1.3")
+   (version "2.7.0.4")
    (source
     (origin
      (method url-fetch)
      (uri (string-append "https://skarnet.org/software/s6-networking/"
                          "s6-networking-" version ".tar.gz"))
      (sha256
-      (base32 "0xz98pzgx6kc9v1dka04gzw5f3rwww42c07liym0r7pzb74l77m0"))))
+      (base32 "0r89b6pq50rzdipqk0la96pyw5a68ni6i9fh175zcn2gh86bgg9i"))))
     (build-system gnu-build-system)
     (inputs (list skalibs execline s6 s6-dns))
     (arguments
      '(#:configure-flags (list
-                          (string-append "--with-lib="
-                                         (assoc-ref %build-inputs "skalibs")
-                                         "/lib/skalibs")
-                          (string-append "--with-lib="
-                                         (assoc-ref %build-inputs "execline")
-                                         "/lib/execline")
-                          (string-append "--with-lib="
-                                         (assoc-ref %build-inputs "s6")
-                                         "/lib/s6")
-                          (string-append "--with-lib="
-                                         (assoc-ref %build-inputs "s6-dns")
-                                         "/lib/s6-dns")
                           (string-append "--with-sysdeps="
                                          (assoc-ref %build-inputs "skalibs")
                                          "/lib/skalibs/sysdeps"))
@@ -227,27 +203,18 @@ clock synchronization.")))
 (define-public s6-rc
   (package
    (name "s6-rc")
-   (version "0.5.4.1")
+   (version "0.5.5.0")
    (source
     (origin
      (method url-fetch)
      (uri (string-append "https://skarnet.org/software/s6-rc/s6-rc-"
                          version ".tar.gz"))
      (sha256
-      (base32 "1xjqc6vqqny8g47whgibjlas7f6szka372jrz5f308slgjmqq9np"))))
+      (base32 "00fzn9vxmspds8hspz9spg0am9k91cl2bysr1ai61smcsfwg3df3"))))
     (build-system gnu-build-system)
     (inputs (list skalibs execline s6))
     (arguments
      '(#:configure-flags (list
-                          (string-append "--with-lib="
-                                         (assoc-ref %build-inputs "skalibs")
-                                         "/lib/skalibs")
-                          (string-append "--with-lib="
-                                         (assoc-ref %build-inputs "execline")
-                                         "/lib/execline")
-                          (string-append "--with-lib="
-                                         (assoc-ref %build-inputs "s6")
-                                         "/lib/s6")
                           (string-append "--with-sysdeps="
                                          (assoc-ref %build-inputs "skalibs")
                                          "/lib/skalibs/sysdeps"))
@@ -266,7 +233,7 @@ environment.")))
 (define-public s6-portable-utils
   (package
    (name "s6-portable-utils")
-   (version "2.3.0.2")
+   (version "2.3.0.4")
    (source
     (origin
      (method url-fetch)
@@ -274,14 +241,11 @@ environment.")))
            "https://skarnet.org/software/s6-portable-utils/s6-portable-utils-"
            version ".tar.gz"))
      (sha256
-      (base32 "1s6iqjz2mfq3rakqj3cwidjsbpkjcdjfah60m86na4ph6j8jc547"))))
+      (base32 "023bj28ix7mmsdwfgjj9fh9slycd7zjfq7r4sczfz0cir2v8gvld"))))
     (build-system gnu-build-system)
     (inputs (list skalibs))
     (arguments
      '(#:configure-flags (list
-                          (string-append "--with-lib="
-                                         (assoc-ref %build-inputs "skalibs")
-                                         "/lib/skalibs")
                           (string-append "--with-sysdeps="
                                          (assoc-ref %build-inputs "skalibs")
                                          "/lib/skalibs/sysdeps"))
@@ -298,7 +262,7 @@ systems and other constrained environments, but they work everywhere.")))
 (define-public s6-linux-init
   (package
    (name "s6-linux-init")
-   (version "1.1.1.0")
+   (version "1.1.2.1")
    (source
     (origin
      (method url-fetch)
@@ -306,7 +270,7 @@ systems and other constrained environments, but they work everywhere.")))
            "https://skarnet.org/software/s6-linux-init/s6-linux-init-"
            version ".tar.gz"))
      (sha256
-      (base32 "1vm8aqlh8jkqrm3irhf53vvylxqizpqvjg3yb9z00yb568skyj5d"))))
+      (base32 "0c35jr09d6jrnsbm2ijfcjnc94ylz0adf7bj52hlfzwv495027lp"))))
     (build-system gnu-build-system)
     (inputs
      (list execline s6 skalibs))
@@ -314,15 +278,6 @@ systems and other constrained environments, but they work everywhere.")))
      '(#:configure-flags
        (list
         "--disable-static"
-        (string-append "--with-lib="
-                       (assoc-ref %build-inputs "skalibs")
-                       "/lib/skalibs")
-        (string-append "--with-lib="
-                       (assoc-ref %build-inputs "execline")
-                       "/lib/execline")
-        (string-append "--with-lib="
-                       (assoc-ref %build-inputs "s6")
-                       "/lib/s6")
         (string-append "--with-sysdeps="
                        (assoc-ref %build-inputs "skalibs")
                        "/lib/skalibs/sysdeps"))
@@ -342,7 +297,7 @@ all the details.")))
 (define-public s6-linux-utils
   (package
    (name "s6-linux-utils")
-   (version "2.6.1.2")
+   (version "2.6.2.1")
    (source
     (origin
      (method url-fetch)
@@ -350,14 +305,11 @@ all the details.")))
            "https://skarnet.org/software/s6-linux-utils/s6-linux-utils-"
            version ".tar.gz"))
      (sha256
-      (base32 "1ncwkm5cpc0y6iysc5q64mk0pfvxnn7ihia1a137xrrdg1fxqqyq"))))
+      (base32 "0d6jkyfp8d8ifs4dhicdidamvbdmk5r1qa3218jajv6kjir1cpwi"))))
     (build-system gnu-build-system)
     (inputs (list skalibs))
     (arguments
      '(#:configure-flags (list
-                          (string-append "--with-lib="
-                                         (assoc-ref %build-inputs "skalibs")
-                                         "/lib/skalibs")
                           (string-append "--with-sysdeps="
                                          (assoc-ref %build-inputs "skalibs")
                                          "/lib/skalibs/sysdeps"))

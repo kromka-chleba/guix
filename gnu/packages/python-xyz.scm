@@ -561,6 +561,43 @@ using NumPy-like idioms.")
 line drawing algorithm}.")
     (license license:expat)))
 
+(define-public python-crc
+  (package
+    (name "python-crc")
+    (version "7.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Nicoretti/crc/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1b9164z6v3ng5s8564a0gjdzqws6zf5aqvk6mnzw7ysk6d5rbb9r"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-poetry-core
+           python-pytest
+           python-wheel))
+    (home-page "https://nicoretti.github.io/crc/")
+    (synopsis "Pure Python CRC library")
+    (description
+     "This library computes and verifies @acronym{Cyclic Redundancy Check,
+CRC} checksums, using predefined and custom CRC configurations.
+
+Configurations:
+@table @asis
+@item CRC8
+  CCITT AUTOSAR SAEJ1850 SAEJ1850_ZERO BLUETOOTH MAXIM-DOW
+@item CRC16
+  XMODEM GSM PROFIBUS MODBUS IBM-3740 KERMIT
+@item CRC32
+  CRC32 AUTOSAR BZIP2 POSIX
+@item CRC64
+  CRC64
+@end table")
+    (license license:bsd-2)))
+
 (define-public python-distance
   (package
     (name "python-distance")
@@ -803,6 +840,93 @@ edit distance algorithm for Python in Cython for high performance.")
 AutoCad format which can encode single line fonts.  This format is used for
 many CNC and laser operations.")
     (license license:expat)))
+
+(define-public python-simplify-polyline
+  (package
+    (name "python-simplify-polyline")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "simplify_polyline" version))
+       (sha256
+        (base32 "08f6bvwbg04z19pirq4ynsiq89yhbzqh9g6zbnp9fvdnmics7hgw"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy))
+    (home-page "https://github.com/ShayHill/simplify_polyline")
+    (synopsis "Simplify an open or closed polyline")
+    (description
+     "This package implements functionality to work with plyline.
+Features:
+@itemize
+@item Visvalingham-Whyatt - removes the smallest triangles formed by
+three consecutive points in a polyline or polygon
+@item Douglas-Peucker - gives a better representation of the convex hull
+@end itemize")
+    (license license:expat)))
+
+(define-public python-streamtracer
+  (package
+    (name "python-streamtracer")
+    (version "2.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "streamtracer" version))
+       (sha256
+        (base32 "01ncr8q58xkz2dydjdg4a0c3kv4mpd6j1lzj4p0cmpg7jdi24cmr"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:imported-modules `(,@%cargo-build-system-modules
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build cargo-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'build 'build-python-module
+            (assoc-ref py:%standard-phases 'build))
+          (add-after 'build-python-module 'install-python-module
+            (assoc-ref py:%standard-phases 'install))
+          (add-after 'install-python-module 'add-install-to-pythonpath
+            (assoc-ref py:%standard-phases 'add-install-to-pythonpath))
+          (add-after 'check 'check-python-module
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion #$output
+                  (invoke "pytest" "-vv"))))))
+      #:cargo-inputs
+      `(("rust-ndarray" ,rust-ndarray-0.16)
+        ("rust-numpy" ,rust-numpy-0.22)
+        ("rust-num-derive" ,rust-num-derive-0.4)
+        ("rust-num-traits" ,rust-num-traits-0.2)
+        ("rust-rayon-1" ,rust-rayon-1))
+      #:cargo-development-inputs
+      `(("rust-float-eq" ,rust-float-eq-1)
+        ("rust-pyo3" ,rust-pyo3-0.22))
+      #:install-source? #false))
+    (native-inputs
+     (list maturin
+           python-pytest
+           python-pytest-doctestplus
+           python-wrapper))
+    (propagated-inputs
+     (list python-numpy
+           python-packaging))
+    (home-page "https://github.com/sunpy/streamtracer")
+    (synopsis "Rapid streamline tracing in Python")
+    (description
+     "streamtracer is a Python package for rapid streamline tracing on
+regularly spaced grids.  The actual streamline tracing is done at a low level
+in Rust, with a nice Python API provided on top.")
+    (license license:gpl3+)))
 
 (define-public python-takethetime
   (package

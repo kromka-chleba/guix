@@ -1154,7 +1154,7 @@ utilities to ease adding new glyphs to the font.")
 (define-public font-google-noto
   (package
     (name "font-google-noto")
-    (version "2025.01.01")
+    (version "2025.04.01")
     (source
      (origin
        (method git-fetch)
@@ -1163,7 +1163,7 @@ utilities to ease adding new glyphs to the font.")
              (commit (string-append "noto-monthly-release-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vplwq079dlymbbc4lvvydxpf8hxvjdihvrj2464gzii37n7b7nv"))))
+        (base32 "0mfxikyzk6d7av02bnzykliggasy23lnz6z07bfr3mlv2plwy7f5"))))
     (build-system font-build-system)
     (arguments
      (list
@@ -1210,7 +1210,7 @@ source, unhinted and hinted variants are always available."
               (with-directory-excursion "fonts"
                 (for-each install-font (scan-directory "."))))))))
     (outputs '("out" "ttf"))
-    (home-page "https://www.google.com/get/noto/")
+    (home-page "https://fonts.google.com/noto")
     (synopsis "Fonts to cover all languages")
     (description "Google Noto Fonts is a family of fonts designed to support
 all languages with a consistent look and aesthetic.  Its goal is to properly
@@ -3764,7 +3764,7 @@ and readability.  This package bundles those icons into a font.")
 (define-public font-lxgw-wenkai
   (package
     (name "font-lxgw-wenkai")
-    (version "1.501")
+    (version "1.511")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -3772,7 +3772,7 @@ and readability.  This package bundles those icons into a font.")
                     version "/lxgw-wenkai-v" version ".tar.gz"))
               (sha256
                (base32
-                "04lqlnyd8d85b11fbk60vf4ycd8n0qvcvwkk0ih3bkc967ln047c"))))
+                "1q3fdxnvn9xk6ifxrq2j3bg59hk13cl81dzgksxnmg9z7jhwd0bh"))))
     (build-system font-build-system)
     (home-page "https://lxgw.github.io/2021/01/28/Klee-Simpchin/")
     (synopsis "Simplified Chinese Imitation Song typeface")
@@ -3787,7 +3787,7 @@ within GB 2312, standard glyphs for Mainland China is used.")
   (package
     (inherit font-lxgw-wenkai)
     (name "font-lxgw-wenkai-tc")
-    (version "1.501")
+    (version "1.511")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -3795,7 +3795,7 @@ within GB 2312, standard glyphs for Mainland China is used.")
                     version "/lxgw-wenkai-tc-v" version ".tar.gz"))
               (sha256
                (base32
-                "0a5b3dim1y6wqr7m4ds98ki9zg96qsm698aphsxzdn2fck0nay8s"))))
+                "0hijm0jhzbzg8rlc2hic032m9qmhm5i48jn12spc6mrkmhvqwxyr"))))
     (home-page "https://github.com/lxgw/LxgwWenKaitc")
     (synopsis "Traditional Chinese Imitation Song typeface")
     (description

@@ -3213,7 +3213,7 @@ orienteering sport.")
     (license license:gpl3+)))
 
 (define-public grass
-  (let* ((version "7.8.8")
+  (let* ((version "8.4.1")
          (majorminor (string-join (list-head (string-split version #\.) 2) ""))
          (grassxx (string-append "grass" majorminor)))
     (package
@@ -3225,8 +3225,79 @@ orienteering sport.")
          (uri (string-append "https://grass.osgeo.org/" grassxx
                              "/source/grass-" version ".tar.gz"))
          (sha256
-          (base32 "1gpfbppfajc8d6b9alw9fdzgaa83w26kl6fff1395bc9gal215ms"))))
+          (base32 "0r08vdi1s0mpa033bqbc9kc3116qm53bmx2k7l8dgg69wxkwyzfi"))))
       (build-system gnu-build-system)
+      (arguments
+       (list
+        #:tests? #f                    ; No tests
+        #:modules `((guix build gnu-build-system)
+                    ((guix build python-build-system) #:prefix python:)
+                    (guix build utils))
+        #:imported-modules `(,@%default-gnu-imported-modules
+                             (guix build python-build-system))
+        #:configure-flags
+        #~(list "--with-blas"
+                "--with-bzlib"
+                (string-append
+                 "--with-freetype-includes="
+                 (search-input-directory %build-inputs "/include/freetype2"))
+                (string-append
+                 "--with-freetype-libs="
+                 (dirname
+                  (search-input-file %build-inputs "/lib/libfreetype.so")))
+                "--with-geos"
+                "--with-lapack"
+                "--with-mysql"
+                (string-append
+                 "--with-mysql-includes="
+                 (search-input-directory %build-inputs "/include/mysql"))
+                (string-append
+                 "--with-mysql-libs="
+                 (dirname
+                  (search-input-file %build-inputs "/lib/libmariadb.so")))
+                "--with-netcdf"
+                "--with-postgres"
+                (string-append
+                 "--with-proj-share="
+                 (search-input-directory %build-inputs "/share/proj"))
+                "--with-pthread"
+                "--with-readline"
+                "--with-sqlite"
+                "--with-wxwidgets"
+                (string-append
+                 "SHELL="
+                 (search-input-file %build-inputs "/bin/bash"))
+                (string-append
+                 "CONFIG_SHELL="
+                 (search-input-file %build-inputs "/bin/bash"))
+                (string-append "LDFLAGS=-Wl,-rpath -Wl,"
+                               #$output "/" #$grassxx "/lib"))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-lapack
+              (lambda _
+                (substitute* "./configure"
+                  (("-lblas") "-lopenblas")
+                  (("-llapack") "-lopenblas"))))
+            (add-after 'install 'install-links
+              (lambda _
+                ;; Put links for includes and libraries in the standard places.
+                (let ((dir (string-append #$output "/" #$grassxx)))
+                  (symlink (string-append dir "/include")
+                           (string-append #$output "/include"))
+                  (symlink (string-append dir "/lib")
+                           (string-append #$output "/lib")))))
+            (add-after 'install-links 'python:wrap
+              (assoc-ref python:%standard-phases 'wrap))
+            (add-after 'python:wrap 'wrap-with-python-interpreter
+              (lambda _
+                  (wrap-program (string-append #$output "/bin/grass")
+                    `("GRASS_PYTHON" = (,(which "python3")))))))))
+      (native-inputs
+       (list bash-minimal
+             bison
+             flex
+             pkg-config))
       (inputs
        (list bash-minimal
              bzip2
@@ -3238,16 +3309,19 @@ orienteering sport.")
              glu
              libpng
              libtiff
+             libxml2 ;marked as required by pdal
              mesa
              `(,mariadb "dev")
              `(,mariadb "lib")
              netcdf
              openblas
+             pdal
              perl
              postgresql
              proj
              python
              python-dateutil
+             python-matplotlib
              python-numpy
              python-wxpython
              readline
@@ -3255,80 +3329,6 @@ orienteering sport.")
              wxwidgets
              zlib
              `(,zstd "lib")))
-      (native-inputs
-       (list bash-minimal
-             bison
-             flex
-             pkg-config))
-      (arguments
-       `(#:tests? #f                    ; No tests
-         #:modules ((guix build gnu-build-system)
-                    ((guix build python-build-system) #:prefix python:)
-                    (guix build utils))
-         #:imported-modules (,@%default-gnu-imported-modules
-                             (guix build python-build-system))
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'fix-lapack
-             (lambda _
-               (substitute* "./configure"
-                 (("-lblas") "-lopenblas")
-                 (("-llapack") "-lopenblas"))))
-           (replace 'configure
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (let ((shell (search-input-file inputs "/bin/bash")))
-                 (setenv "SHELL" shell)
-                 (setenv "CONFIG_SHELL" shell)
-                 (setenv "LDFLAGS" (string-append "-Wl,-rpath -Wl,"
-                                                  (assoc-ref outputs "out")
-                                                  "/" ,grassxx "/lib")))
-               (invoke "./configure"
-                       (string-append "--prefix="
-                                      (assoc-ref outputs "out"))
-                       "--with-blas"
-                       "--with-bzlib"
-                       (string-append
-                        "--with-freetype-includes="
-                        (search-input-directory inputs "/include/freetype2"))
-                       (string-append
-                        "--with-freetype-libs="
-                        (dirname
-                         (search-input-file inputs "/lib/libfreetype.so")))
-                       "--with-geos"
-                       "--with-lapack"
-                       "--with-mysql"
-                       (string-append
-                        "--with-mysql-includes="
-                        (search-input-directory inputs "/include/mysql"))
-                       (string-append
-                        "--with-mysql-libs="
-                        (dirname
-                         (search-input-file inputs "/lib/libmariadb.so")))
-                       "--with-netcdf"
-                       "--with-postgres"
-                       (string-append
-                        "--with-proj-share="
-                        (search-input-directory inputs "/share/proj"))
-                       "--with-pthread"
-                       "--with-readline"
-                       "--with-sqlite"
-                       "--with-wxwidgets")))
-           (add-after 'install 'install-links
-             (lambda* (#:key outputs #:allow-other-keys)
-               ;; Put links for includes and libraries in the standard places.
-               (let* ((out (assoc-ref outputs "out"))
-                      (dir (string-append out "/" ,grassxx)))
-                 (symlink (string-append dir "/include")
-                          (string-append out "/include"))
-                 (symlink (string-append dir "/lib")
-                          (string-append out "/lib")))))
-           (add-after 'install-links 'python:wrap
-             (assoc-ref python:%standard-phases 'wrap))
-           (add-after 'python:wrap 'wrap-with-python-interpreter
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let ((out (assoc-ref outputs "out")))
-                 (wrap-program (string-append out "/bin/" ,grassxx)
-                   `("GRASS_PYTHON" = (,(which "python3"))))))))))
       (synopsis "GRASS Geographic Information System")
       (description
        "GRASS (Geographic Resources Analysis Support System), is a Geographic

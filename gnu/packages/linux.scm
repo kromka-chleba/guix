@@ -513,7 +513,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.13-version "6.13.8")
+(define-public linux-libre-6.13-version "6.13.9")
 (define-public linux-libre-6.13-gnu-revision "gnu")
 (define deblob-scripts-6.13
   (linux-libre-deblob-scripts
@@ -523,7 +523,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1a6ri9awza8nf7cdabp09dk327cx0dw8q3rhm016a578kb4ihviq")))
 (define-public linux-libre-6.13-pristine-source
   (let ((version linux-libre-6.13-version)
-        (hash (base32 "1fqsfnam0ca2lyqgi9vh7x6xa24yjk6ym6z85bn6nrrxsxczm6i5")))
+        (hash (base32 "1ci78x5dfjm3nlv4m2j02wl7ax82l47xwnr4k6j9n4dn53qa7rsk")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.13)))
@@ -532,7 +532,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.20")
+(define-public linux-libre-6.12-version "6.12.21")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -542,12 +542,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0p2jla4faz634jin9pz6a0cfpaz4jvy5bx6cmyk8dbsmhnx4h149")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "1ivakcj0gi191687zagl1qfsip0567p1pk3yy1s2xf0agfq8j3i3")))
+        (hash (base32 "1iyn8qif6xfz04z698ib2dvmam54pyxzsign8sbdj9505sdf66lx")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.84")
+(define-public linux-libre-6.6-version "6.6.85")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -557,12 +557,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "12897yw71dz859nv13nzh6pp5j497l8ps0ddgpbbynm72bny1fy5")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "19vvq558vs2ivj4l6kmyha30a94fh42wmijsghsdnq8salhhglkz")))
+        (hash (base32 "0abmgc5rg7hx18ykwsl6xl72gzaf3wbn5bkvh4kcsa1lrbscrfjy")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.131")
+(define-public linux-libre-6.1-version "6.1.132")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -572,7 +572,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "10vkgkki08h8cbymmglvn2nkzx8lsqxpaciw6c2d57952q4byw8f")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "05jvvv3khadvfgdrv43fcrnm606jk4064a7qivkvnk1vc08gbjj4")))
+        (hash (base32 "1l5vrc8an6h0fcnfmqb6pmal686imxbllcvlkqah19fg7wnv3dyx")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
@@ -3094,7 +3094,7 @@ module.")
 (define-public e2fsprogs
   (package
     (name "e2fsprogs")
-    (version "1.47.0")
+    (version "1.47.1")
     (source (origin
              (method url-fetch)
              (uri (string-append
@@ -3103,7 +3103,7 @@ module.")
                    "e2fsprogs-" version ".tar.xz"))
              (sha256
               (base32
-               "1nymjw801lmlr5y6bg1zv9jsip5dkyxqislbdzpir4mx5czzajhl"))))
+               "1lg0k5fh41nl0ldbh76hwdx3g5kqzqyc245vljy88wnlgw2dqcss"))))
     (build-system gnu-build-system)
     (inputs (list `(,util-linux "lib")))
     (native-inputs (list pkg-config
@@ -6733,7 +6733,7 @@ and copy/paste text in the console and in xterm.")
 (define-public btrfs-progs
   (package
     (name "btrfs-progs")
-    (version "6.3.3")
+    (version "6.13")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kernel.org/linux/kernel/"
@@ -6741,7 +6741,7 @@ and copy/paste text in the console and in xterm.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0vmrjn3dcmka9rj5b81ag9jwprzyicx05h1ccj0x0w02fqah1qsb"))))
+                "16pffd6wf1pmdw9rgasyq2qf59y6xh764cml2c0gi5552w8z5cv5"))))
     (build-system gnu-build-system)
     (outputs '("out" "static")) ;static versions of the binaries in "out"
     (arguments
@@ -6802,7 +6802,7 @@ and copy/paste text in the console and in xterm.")
       ;; For building documentation.  Since python-sphinx requires Rust, add
       ;; it conditionally depending on such support.
       (if (supported-package? python-sphinx)
-          (list python-sphinx)
+          (list python-wrapper python-sphinx python-sphinx-rtd-theme)
           '())
       (list pkg-config
             acl                                   ;for tests

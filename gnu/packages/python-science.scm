@@ -174,6 +174,39 @@ scientific codes by steering the implementation towards usability and
 maintainability.")
     (license license:bsd-3)))
 
+(define-public python-algopy
+  (package
+    (name "python-algopy")
+    (version "0.6.0") ; the higher versions requir NumPy 2+ stack
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "algopy" version))
+       (sha256
+        (base32 "1vjrzzxa3gvyh2zvm1vwg0s6a7dv23rihgdvgyj1vqniyymp91nq"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy
+           python-scipy))
+    (home-page "https://pythonhosted.org/algopy")
+    (synopsis "Algorithmic Differentation in Python")
+    (description
+     "AlgoPy provides a functionality to differentiate functions implemented
+as computer programs by using Algorithmic Differentiation (AD) techniques in
+the forward and reverse mode.
+
+The forward mode propagates univariate Taylor polynomials of arbitrary order.
+Hence it is also possible to use AlgoPy to evaluate higher-order derivative
+tensors.  The reverse mode is also known as backpropagation and can be found
+in similar form in tools like PyTorch.  Speciality of AlgoPy is the
+possibility to differentiate functions that contain matrix functions as
++,-,*,/, dot, solve, qr, eigh, cholesky.")
+    (license license:bsd-3)))
+
 (define-public python-cmocean
   (package
     (name "python-cmocean")
@@ -325,6 +358,50 @@ Features:
 @item crop-resistant hashing
 @end itemize")
     (license license:bsd-2)))
+
+(define-public python-numdifftools
+  (package
+    (name "python-numdifftools")
+    (version "0.9.41")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "numdifftools" version))
+       (sha256
+        (base32 "1d49wd5jqnl0500jyws0vb7nv4dy4bb5ml4z9qx1n8867k6hbxsf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "--pyargs" "numdifftools")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "setup.py"
+                ;; We can run tests without deprecated pytest-runner.
+                (("setup_requires.*") "")))))))
+    (native-inputs
+     (list python-algopy
+           python-line-profiler
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-statsmodels
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy
+           python-scipy))
+    (home-page "https://github.com/pbrod/numdifftools")
+    (synopsis "Solves automatic numerical differentiation problems")
+    (description
+     "This package implements a functionality to solve automatic numerical
+differentiation problems in one or more variables.  Finite differences are
+used in an adaptive manner, coupled with a Richardson extrapolation
+methodology to provide a maximally accurate result.  The user can configure
+many options like; changing the order of the method or the extrapolation, even
+allowing the user to specify whether complex-step, central, forward or
+backward differences are used.")
+    (license license:bsd-3)))
 
 (define-public python-osqp
   (package

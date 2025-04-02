@@ -344,7 +344,7 @@ moment, supported SPICE files are:
 (define-public calcmysky
   (package
     (name "calcmysky")
-    (version "0.3.3")
+    (version "0.3.4")
     (source
      (origin
        (method git-fetch)
@@ -353,7 +353,7 @@ moment, supported SPICE files are:
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0njsapy3qlyg3y0p5a849xydzhnzk4p5s0s37zxw9k5nnaf4vinp"))))
+        (base32 "0blp1w1bghskfi0ysds51r2a7nvvjc9yqp5nlf8l3gciig97nhdg"))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags
@@ -401,7 +401,7 @@ rendering of the atmosphere model and examine its properties.
 (define-public casacore
   (package
     (name "casacore")
-    (version "3.6.1")
+    (version "3.7.1")
     (source
      (origin
        (method git-fetch)
@@ -410,7 +410,7 @@ rendering of the atmosphere model and examine its properties.
              (commit (string-append "v" version))))
        (sha256
         (base32
-         "0ja0ss1cjfx9j2pnmqzr51ipxrfij7i2c4bq4nqkgaxfk5q447i5"))
+         "14imw15cbxgnn75hp7aq4fymljg8m1gidihxn93ni9sacd416f7b"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
@@ -499,24 +499,29 @@ made to get a better separation of core libraries and applications.
 (define-public ccfits
   (package
     (name "ccfits")
-    (version "2.6")
+    (version "2.7")
     (source
      (origin
        (method url-fetch)
        (uri (string-append
-             "https://heasarc.gsfc.nasa.gov/docs/software/fitsio/ccfits/"
+             "https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/ccfits/"
              "CCfits-" version ".tar.gz"))
        (sha256
-        (base32 "04l6na8vr5xadz3rbx62as79x1ch4994vbb625kx0dz5czdkkd1b"))))
+        (base32 "06mhvvdsaqvk3cc309gv6zd4lcxm5q5aialaq0n77gzczv94cdgn"))))
     (build-system cmake-build-system)
-    (inputs (list cfitsio))
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=ON"
+              "-DTESTS=ON")))
+    (inputs (list cfitsio zlib))
     (home-page "https://heasarc.gsfc.nasa.gov/docs/software/fitsio/ccfits/")
     (synopsis "C++ interface to the CFITSIO")
     (description
      "CCfits is an object oriented interface to the cfitsio library.  It is
-designed to make the capabilities of cfitsio available to programmers working in
-C++.  It is written in ANSI C++ and implemented using the C++ Standard Library
-with namespaces, exception handling, and member template functions.")
+designed to make the capabilities of cfitsio available to programmers working
+in C++.  It is written in ANSI C++ and implemented using the C++ Standard
+Library with namespaces, exception handling, and member template functions.")
     (license (license:non-copyleft "file://License.txt"
                                    "See License.txt in the distribution."))))
 
@@ -603,7 +608,7 @@ accurately in real time at any rate desired.")
 (define-public cfitsio
   (package
     (name "cfitsio")
-    (version "4.5.0")
+    (version "4.6.0")
     (source
      (origin
        (method url-fetch)
@@ -611,7 +616,7 @@ accurately in real time at any rate desired.")
              "https://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/"
              "cfitsio-" version ".tar.gz"))
        (sha256
-        (base32 "02ff4xsc4r6vam4m4nmp426bpl7klbx6nn5ajgj6452w6v1lz1g4"))))
+        (base32 "1rykn2bnr9dfc1x2g4170s2yvl7xy6vy0ji92by31xbc9vdjydvw"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -964,7 +969,7 @@ dynamic library for the C language implementation of HEALPix.")
 (define-public imppg
   (package
     (name "imppg")
-    (version "1.9.2-beta")
+    (version "2.0.0")
     (source
      (origin
        (method git-fetch)
@@ -973,12 +978,15 @@ dynamic library for the C language implementation of HEALPix.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "13kqvl9ay4x0ia7iikxbhg96pp46f1awr382p05gxdvsxksq900v"))))
+        (base32 "0cq7syrcclf1ykaxpjv73a30g4m8fbnqdphfs13932i0a7vgkaid"))))
     (build-system cmake-build-system)
     (arguments
      (list
-      ;; See <https://github.com/GreatAttractor/imppg/issues/28>.
-      #:tests? (target-x86-64?)))
+      ;; Tests fail on i686 see:
+      ;; <https://github.com/GreatAttractor/imppg/issues/28>;
+      ;; Tests hang on any architectures see:
+      ;; <https://github.com/GreatAttractor/imppg/issues/34>.
+      #:tests? #f))
     (native-inputs
      (list boost pkg-config))
     (inputs
@@ -2200,6 +2208,38 @@ much of the core functionality and some common tools needed for performing
 astronomy and astrophysics.")
     (license license:bsd-3)))
 
+(define-public python-astropy-iers-data
+  (package
+    (name "python-astropy-iers-data")
+    (version "0.2025.3.17.0.34.53")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "astropy_iers_data" version))
+       (sha256
+        (base32 "0a7a548za7rppsggcnj8njjqq4ajlhrx27qql32jlxzl986havv4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; no tests
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (home-page "https://docs.astropy.org/en/latest/utils/iers.html")
+    (synopsis "IERS Earth Rotation and Leap Second tables for Astropy core")
+    (description
+     "The @code{iers} package provides access to the tables provided by the
+@acronym{International Earth Rotation and Reference Systems, IERS} service, in
+particular the
+@url{https://www.iers.org/IERS/EN/DataProducts/EarthOrientationData/eop.html,
+Earth Orientation data} allowing interpolation of published UT1-UTC and polar
+motion values for given times.  The UT1-UTC values are used in
+@url{https://docs.astropy.org/en/latest/time/index.html#astropy-time, Time and
+Dates (astropy.time)} to provide UT1 values, and the polar motions are used in
+@code{astropy.coordinates} to determine Earth orientation for
+celestial-to-terrestrial coordinate transformations.")
+    (license license:bsd-3)))
+
 ;; A bare minimal package, mainly to use in tests and reduce closure
 ;; size. Tests are left out in the main package to slim down native-inputs.
 (define-public python-astropy-minimal
@@ -2560,35 +2600,67 @@ cosmological parameters e.g. redshift or luminosity-distance.")
 (define-public python-crds
   (package
     (name "python-crds")
-    (version "12.0.9")
+    (version "12.1.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "crds" version))
        (sha256
-        (base32 "0cf6pr6lixqhmvig9ajhh68yd1ri7dninamakvs728mjd5nswmw3"))))
+        (base32 "1h4il1gpk3219lskd17vfa5wpbpj2mhacv2yv9v4v33kwzfjb5w7"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; XXX: Tests require Internet access to https://hst-crds.stsci.edu and
-      ;; additional test data. See:
-      ;; https://github.com/spacetelescope/crds/blob/master/setup_test_cache
-      #:tests? #f))
+      #:test-flags
+      ;; XXX: Tests require a complex set up and test data, try to run some
+      ;; minimal portion of unit tests to persist package comparability during
+      ;; updates.
+      #~(map
+         (lambda (ignore) (format #f "--ignore=~a" ignore))
+         ;; Introduce cycle: python-crds -> python-stdatamodels -> python-crds
+         (list "test/bestrefs/test_bestrefs.py"
+               ;; Network is required to access <https://hst-crds.stsci.edu>.
+               "test/bestrefs/"
+               "test/submit/"
+               ;; XXX: Excluding test files which tests fail the most, maybe
+               ;; find a way how to enable/fix them.
+               "test/certify/test_certify.py"
+               "test/core/test_cmdline.py"
+               "test/core/test_heavy_client.py"
+               "test/core/test_reftypes.py"
+               "test/core/test_rmap.py"
+               "test/core/test_substitutions.py"
+               "test/misc/test_check_archive.py"
+               "test/misc/test_synphot.py"
+               "test/refactoring/test_refactor.py"
+               "test/roman/test_roman.py"
+               "test/test_bad_files.py"
+               "test/test_build6.py"
+               "test/test_diff.py"
+               "test/test_list.py"
+               "test/test_matches.py"
+               "test/test_rowdiff.py"
+               "test/test_sync.py"))))
+    (native-inputs
+     (list python-mock
+           python-pytest
+           python-pytest-astropy
+           python-pytest-doctestplus
+           python-setuptools
+           python-setuptools-scm
+           python-stsynphot
+           python-wheel))
     (propagated-inputs
      (list python-asdf
            python-astropy
+           python-beautifulsoup4
            python-boto3
            python-filelock
            python-numpy
            python-parsley
            python-pysynphot
+           python-requests
            python-roman-datamodels
-           python-stsynphot
-           python-requests))
-    (native-inputs
-     (list python-setuptools
-           python-setuptools-scm
-           python-wheel))
+           python-stsynphot))
     (home-page "https://hst-crds.stsci.edu")
     (synopsis "Calibration Reference Data System for HST and JWST")
     (description
@@ -2824,6 +2896,37 @@ tools for astronomers.")
      "This package provides a cython-optimized implementations of empirical dust
 exitinction laws found in the literature.")
     (license license:expat)))
+
+(define-public python-fitsblender
+  (package
+    (name "python-fitsblender")
+    (version "0.4.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "fitsblender" version))
+       (sha256
+        (base32 "1ba1374axaxh3dzzpii6q05z4jcrfp7yjk1wsfm2gzmxalnp0f6r"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-astropy
+           python-numpy
+           python-stsci-tools))
+    (home-page "https://github.com/spacetelescope/fitsblender")
+    (synopsis "Aggregate values in FITS headers")
+    (description
+     "This package supports the creation of a combined header for a FITS file
+based on the contents of the headers of a set of input FITS images.  A rules
+file defines what keywords will be present in the combined output header as
+well as how the output value will be determined from the set of values from
+all the input image headers.")
+    (license license:bsd-3)))
 
 (define-public python-fitsio
   (package
@@ -3094,7 +3197,7 @@ across many files.")
 (define-public python-glue-qt
   (package
     (name "python-glue-qt")
-    (version "0.3.2")
+    (version "0.3.3")
     (source
      (origin
        (method git-fetch) ; no fresh release PyPI
@@ -3103,12 +3206,10 @@ across many files.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1zh25y8c98lzsnha4pxm17s6bkkab97rzw9zaik8asrxhc0kgypd"))))
+        (base32 "14qzxszpzjz57bl75ybj8jlx73cd8lsgbb8id9gx4anq9sydzgqj"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; Broken upstram, see <https://github.com/glue-viz/glue-qt/issues/23>.
-      #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'set-env-version
@@ -3520,16 +3621,50 @@ on:
 @end itemize")
     (license license:bsd-2)))
 
+(define-public python-naima
+  (package
+    (name "python-naima")
+    (version "0.10.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "naima" version))
+       (sha256
+        (base32 "1lng2prl2kzzpgrkj11hl53cvqdh0gpk8cdqkvcg08k3bivzk8q8"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-astropy
+           python-corner
+           python-emcee
+           python-h5py
+           python-matplotlib
+           python-pyyaml
+           python-scipy))
+    (home-page "http://github.com/zblz/naima")
+    (synopsis "Derivation of non-thermal particle distributions through MCMC spectral fitting")
+    (description
+     "This package implement functionality for computation of non-thermal
+radiation from relativistic particle populations.  It includes tools to
+perform MCMC fitting of radiative models to X-ray, GeV, and TeV spectra using
+@code{emcee}, an affine-invariant ensemble sampler for Markov Chain Monte
+Carlo.")
+    (license license:bsd-3)))
+
 (define-public python-pixell
   (package
     (name "python-pixell")
-    (version "0.28.0")
+    (version "0.28.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pixell" version))
        (sha256
-        (base32 "11xd0ld329vr3spg5nzszn0bxzahnvkrh2akkd7qff33ndf75hkk"))))
+        (base32 "1li6gcplqi1az9hf6kl1gsykdrrf62wra91n17r97s041hj70n3a"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list gfortran
@@ -4047,13 +4182,13 @@ but has evolved to support other missions as well.")
 (define-public python-specreduce
   (package
     (name "python-specreduce")
-    (version "1.4.1")
+    (version "1.5.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "specreduce" version))
        (sha256
-        (base32 "14ba4ws2z3kpw007f3hpslgp5i6dx082xhql4aim7j82211gpj6s"))))
+        (base32 "0lx2v6wp5lrn9n7b6i15ib3a2rwndjhrm70h2r9mmx7vx44d9sd2"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4095,13 +4230,13 @@ instruments.")
 (define-public python-sunkit-image
   (package
     (name "python-sunkit-image")
-    (version "0.6.0")
+    (version "0.6.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sunkit_image" version))
        (sha256
-        (base32 "0gdbg3g8jxcgkwd34ls6342zj90m6ncas4f655q9dh79lqy7hhm8"))))
+        (base32 "0x8w87vwdr78vcq0zha2y7xyfy16amc5aym4v8127xvphq1ff4v3"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4119,7 +4254,6 @@ instruments.")
               (setenv "HOME" "/tmp"))))))
     (native-inputs
      (list python-dask
-           python-pytest
            python-pytest-astropy
            python-pytest-mpl
            python-pytest-xdist
@@ -4176,38 +4310,6 @@ instruments.")
     (home-page "https://github.com/astropy/astropy-healpix")
     (synopsis "HEALPix for Astropy")
     (description "This package provides HEALPix to the Astropy project.")
-    (license license:bsd-3)))
-
-(define-public python-astropy-iers-data
-  (package
-    (name "python-astropy-iers-data")
-    (version "0.2025.2.17.0.34.13")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "astropy_iers_data" version))
-       (sha256
-        (base32 "0q390s0by2szq82lligwgpbmvmdwi0jyxp0sh51kzrijg928bdil"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list #:tests? #f)) ; no tests
-    (native-inputs
-     (list python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    (home-page "https://docs.astropy.org/en/latest/utils/iers.html")
-    (synopsis "IERS Earth Rotation and Leap Second tables for Astropy core")
-    (description
-     "The @code{iers} package provides access to the tables provided by the
-@acronym{International Earth Rotation and Reference Systems, IERS} service, in
-particular the
-@url{https://www.iers.org/IERS/EN/DataProducts/EarthOrientationData/eop.html,
-Earth Orientation data} allowing interpolation of published UT1-UTC and polar
-motion values for given times.  The UT1-UTC values are used in
-@url{https://docs.astropy.org/en/latest/time/index.html#astropy-time, Time and
-Dates (astropy.time)} to provide UT1 values, and the polar motions are used in
-@code{astropy.coordinates} to determine Earth orientation for
-celestial-to-terrestrial coordinate transformations.")
     (license license:bsd-3)))
 
 (define-public python-astroplan
@@ -4327,26 +4429,29 @@ constraints (i.e., altitude, airmass, moon separation/illumination, etc.)
                   (apply invoke "pytest" "-v" test-flags))))))))
     (native-inputs
      (list nss-certs-for-test
-           python-astropy-healpix
            python-matplotlib
-           ;; python-mocpy : Not packed yet, optional
            python-pytest-astropy
            python-pytest-dependency
-           python-regions
+           python-pytest-doctestplus
            python-setuptools
            python-wheel))
     (propagated-inputs
      (list python-astropy
+           python-astropy-healpix
            python-beautifulsoup4
+           python-boto3
            python-html5lib
            python-keyring
+           ;; python-mocpy : Not packed yet, optional and Rust is required
            python-numpy
            python-pyvo
+           python-regions
            python-requests))
     (home-page "https://astroquery.readthedocs.io/en/latest/index.html")
     (synopsis "Access online astronomical data resources")
-    (description "Astroquery is a package that contains a collection of tools
-to access online Astronomical data.  Each web service has its own sub-package.")
+    (description
+     "Astroquery is a package that contains a collection of tools to access
+online Astronomical data.  Each web service has its own sub-package.")
     (license license:bsd-3)))
 
 (define-public python-astroscrappy
@@ -4668,31 +4773,30 @@ astronomical tables
 (define-public python-mpl-animators
   (package
     (name "python-mpl-animators")
-    (version "1.2.0")
+    (version "1.2.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "mpl_animators" version))
        (sha256
-        (base32 "0xxzwxp2zss2s5ci6d349nfdc4hcbm10pqmf5zf14yn66plc1r4k"))))
+        (base32 "1jscdgx1ynqvidh0kc6jxhjlp7lxhilwnp5pb6ddi7nb10as90kz"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
-         (add-before 'check 'set-home
-           (lambda _
-             ;; Relax matplotlib warning: ... because the default path
-             ;; (/homeless-shelter/.config/matplotlib) is not a writable
-             ;; directory ...
-             (setenv "HOME" "/tmp"))))))
+          (add-before 'check 'set-home
+            (lambda _
+              ;; Relax matplotlib warning: ... because the default path
+              ;; (/homeless-shelter/.config/matplotlib) is not a writable
+              ;; directory ...
+              (setenv "HOME" "/tmp"))))))
     (native-inputs
      (list python-pytest
            python-pytest-doctestplus
            python-pytest-mpl
-           python-pytest-xdist
            python-setuptools
-           python-setuptools-scm
+           python-setuptools-scm-next
            python-wheel))
     (propagated-inputs
      (list python-astropy
@@ -4703,40 +4807,6 @@ astronomical tables
     (description
      "The @code{mpl_animators} package provides a set of classes which allow
 the easy construction of interactive matplotlib widget based animations.")
-    (license license:bsd-3)))
-
-(define-public python-naima
-  (package
-    (name "python-naima")
-    (version "0.10.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "naima" version))
-       (sha256
-        (base32 "1lng2prl2kzzpgrkj11hl53cvqdh0gpk8cdqkvcg08k3bivzk8q8"))))
-    (build-system pyproject-build-system)
-    (native-inputs
-     (list python-pytest
-           python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    (propagated-inputs
-     (list python-astropy
-           python-corner
-           python-emcee
-           python-h5py
-           python-matplotlib
-           python-pyyaml
-           python-scipy))
-    (home-page "http://github.com/zblz/naima")
-    (synopsis "Derivation of non-thermal particle distributions through MCMC spectral fitting")
-    (description
-     "This package implement functionality for computation of non-thermal
-radiation from relativistic particle populations.  It includes tools to
-perform MCMC fitting of radiative models to X-ray, GeV, and TeV spectra using
-@code{emcee}, an affine-invariant ensemble sampler for Markov Chain Monte
-Carlo.")
     (license license:bsd-3)))
 
 (define-public python-ndcube
@@ -5074,49 +5144,6 @@ interest, and which require portability between platforms or ease of scripting."
 Virtual observatory (VO) using Python.")
     (license license:bsd-3)))
 
-(define-public python-regions
-  (package
-    (name "python-regions")
-    (version "0.10")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "regions" version))
-       (sha256
-        (base32 "10cswrknj3qh9i1daynlx4ild66lwcyra5rs03h8s9j4l275274n"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      #~(list "--numprocesses" (number->string (parallel-job-count)))
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? test-flags #:allow-other-keys)
-              (with-directory-excursion #$output
-                (apply invoke "pytest" "-vv" test-flags)))))))
-    (propagated-inputs
-     (list python-astropy
-           python-h5py
-           python-matplotlib
-           python-numpy
-           python-scipy
-           python-shapely))
-    (native-inputs
-     (list python-cython-3
-           python-extension-helpers
-           python-pytest-arraydiff
-           python-pytest-astropy
-           python-pytest-runner
-           python-pytest-xdist
-           python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    (home-page "https://github.com/astropy/regions")
-    (synopsis "Package for region handling")
-    (description "Regions is an Astropy package for region handling.")
-    (license license:bsd-3)))
-
 (define-public python-regularizepsf
   (package
     (name "python-regularizepsf")
@@ -5256,99 +5283,16 @@ less than the 1–3 km/day by which satellites themselves deviate from the ideal
 orbits described in TLE files.")
     (license license:expat)))
 
-(define-public python-sunpy
-  (package
-    (name "python-sunpy")
-    (version "6.0.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "sunpy" version))
-       (sha256
-        (base32 "1x659wal84m00czkjjkvkawxivgc5d43m71m3q817zmpjkin7bma"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      #~(list "--numprocesses" (number->string (parallel-job-count))
-              ;; Requires SpicePy not packed in Guix yet.
-              "--ignore=sunpy/coordinates/tests/test_spice.py")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-requirements
-            (lambda _
-              (substitute* "pyproject.toml"
-                ;; packaging>=23.0
-                ((">=23.0") ">=21.3")
-                ;; numpy>=1.23.5
-                ((">=1.23.5") ">=1.23.2"))))
-          (add-before 'install 'writable-compiler
-            (lambda _
-              (make-file-writable "sunpy/_compiler.c")))
-          (add-before 'check 'prepare-test-environment
-            (lambda _
-              (setenv "HOME" "/tmp")
-              (call-with-output-file "pytest.ini"
-                (lambda (port)
-                  (format port "[pytest]
-python_files = test_*.py"))))))))
-    (native-inputs
-     (list opencv ; For tests, includes OpenCV-Python
-           python-aiohttp
-           python-extension-helpers
-           python-hvpy
-           python-jplephem
-           ;; python-mplcairo ; Not packed yet in Guix
-           python-packaging
-           python-pytest-astropy
-           python-pytest-mock
-           python-pytest-mpl
-           python-pytest-xdist
-           python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    (propagated-inputs
-     (list parfive
-           python-asdf
-           python-asdf-astropy
-           python-astropy
-           python-beautifulsoup4
-           python-cdflib
-           python-dask
-           python-dateutil
-           python-drms
-           python-glymur
-           python-h5netcdf
-           python-h5py
-           python-hypothesis
-           python-matplotlib
-           python-mpl-animators
-           python-numpy
-           python-pandas
-           python-pyerfa
-           python-reproject
-           python-scikit-image
-           python-scipy
-           ;; python-spiceypy ; Not packed yet in Guix, long journey.
-           python-tqdm
-           python-zeep))
-    (home-page "https://sunpy.org")
-    (synopsis "Python library for Solar Physics")
-    (description
-     "SunPy is package for solar physics and is meant to be a free alternative to the
-SolarSoft data analysis environment.")
-    (license license:bsd-2)))
-
 (define-public python-sunpy-soar
   (package
     (name "python-sunpy-soar")
-    (version "1.11.0")
+    (version "1.11.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sunpy_soar" version))
        (sha256
-        (base32 "015pc6m7bdmgyw2inmjv84fgsjj8x90f91gphyv9ql4xn6yspnc2"))))
+        (base32 "04zdfxb0y7m94lna6bikdc4rwa8n11wh42jyha0fxc604xhy2b3l"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -5390,6 +5334,7 @@ SolarSoft data analysis environment.")
            python-pytest-doctestplus
            python-responses
            python-setuptools
+           python-setuptools-scm-next
            python-wheel))
     (propagated-inputs
      (list python-astropy
@@ -5746,46 +5691,6 @@ replicate core behaviour of the IRAF's
 task}.")
     (license license:bsd-3)))
 
-(define-public python-stsci-stimage
-  (package
-    (name "python-stsci-stimage")
-    (version "0.2.10")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "stsci_stimage" version))
-              (sha256
-               (base32
-                "02qzblw11kfdw9rp2m26zbzlzl3w0dnrhncn383a3sw3dwjn9lpf"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:build-backend "setuptools.build_meta"
-      #:test-flags #~(list "test_c")
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; Test steps are taken from GitHub Actions, see
-          ;; <https://github.com/spacetelescope/stsci.stimage/issues/27>
-          (add-before 'check 'waf-configure-build
-            (lambda _
-              (copy-file (string-append
-                          #$(this-package-native-input "python-waf") "/bin/waf")
-                         "waf")
-              (invoke "python" "waf" "configure" "build"))))))
-    (native-inputs
-     (list python-pytest
-           python-setuptools
-           python-setuptools-scm
-           python-waf
-           python-wheel))
-    (propagated-inputs
-     (list python-numpy))
-    (home-page "https://stscistimage.readthedocs.io/en/latest/")
-    (synopsis "STScI image processing")
-    (description
-     "This package provides an astronomical Python package with image
-processing functions: @code{xyxymatch}, @code{geomap}.")
-    (license license:bsd-3)))
-
 (define-public python-stcal
   (package
     (name "python-stcal")
@@ -5911,13 +5816,13 @@ implemented in the @acronym{JWST, James Webb Space Telescope} and
 (define-public python-stpipe
   (package
     (name "python-stpipe")
-    (version "0.8.0")
+    (version "0.8.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "stpipe" version))
        (sha256
-        (base32 "1883gbn9dy3f53423rka55r828ml38dsqdamn2bgf2w5xf6cp7dg"))
+        (base32 "1bvdcyhqnk10ks60hcdh8javgva23y9rxqsk69frdij39ainb872"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -5931,14 +5836,15 @@ implemented in the @acronym{JWST, James Webb Space Telescope} and
     (native-inputs
      (list python-pytest
            python-pytest-doctestplus
-           python-pytest-openfiles
-           python-setuptools-scm
            python-setuptools
+           python-setuptools-scm
            python-wheel))
     (propagated-inputs
      (list python-asdf
            python-astropy
            python-crds
+           python-importlib-metadata
+           python-pyyaml
            python-stdatamodels))
     (home-page "https://github.com/spacetelescope/stpipe")
     (synopsis "Framework for calibration pipeline software")
@@ -6184,7 +6090,7 @@ Features:
 (define-public python-pysat
   (package
     (name "python-pysat")
-    (version "3.2.1")
+    (version "3.2.2")
     (source
      (origin
        (method git-fetch) ; no tests data in the PyPI tarball
@@ -6193,7 +6099,7 @@ Features:
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xsxj66ybh7q3n68nlasz23x8lsdamny92r960gipzk8xmwwzmcw"))))
+        (base32 "0gm71zafigwc94s37wqyl86yjabpq6wx9izwxag74wg1ynhqyvf0"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -6737,6 +6643,119 @@ System (WCS) tags.  Users should not need to install this directly; instead,
 install an implementation package such as gwcs.")
     (license license:bsd-3)))
 
+(define-public python-pint-pulsar
+  (package
+    (name "python-pint-pulsar")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch) ; no tests data in the PyPI tarball
+       (uri (git-reference
+             (url "https://github.com/nanograv/PINT")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0i8vznjgbdhrfv6kcq33zvsn6q40r29sscy8fmk13vx2zfwl8nf0"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; Tests failing with assertion on not correct precision
+                    ;; or missing data files.
+                    (list "not test_astropy_observatory"
+                          "test_copy_wideband_fitter_object"
+                          "test_IERS_B_builtin_agree_with_IERS_Auto_dX"
+                          "test_astropy_observatory"
+                          "test_time_construction_jds_exact[tdb]"
+                          "test_copy_toa_object"
+                          "test_copy_residuals"
+                          "test_copy_fitter_object")
+                    " and not ")
+              ;; XXX: The most of the tests require additional data, select
+              ;; files where they may run without it and check how to enable
+              ;; more.
+              "tests/test_Galactic.py"
+              "tests/test_all_component_and_model_builder.py"
+              "tests/test_astrometry.py"
+              "tests/test_astropy_observatory.py"
+              "tests/test_astropy_times.py"
+              "tests/test_astropy_version.py"
+              "tests/test_binary_generic.py"
+              "tests/test_binconvert.py"
+              "tests/test_compare.py"
+              "tests/test_compare_model.py"
+              "tests/test_compare_model_ecl_vs_icrs.py"
+              "tests/test_convert_parfile.py"
+              "tests/test_copy.py"
+              "tests/test_covariance_matrix.py"
+              "tests/test_datafiles.py"
+              "tests/test_derived_quantities.py"
+              "tests/test_derivedparams.py"
+              "tests/test_dmxrange_add_sub.py"
+              "tests/test_erfautils.py"
+              "tests/test_eventstats.py"
+              "tests/test_funcpar.py"
+              "tests/test_kepler.py"
+              "tests/test_leapsec.py"
+              "tests/test_model_manual.py"
+              "tests/test_numpy.py"
+              "tests/test_observatory_envar.py"
+              "tests/test_observatory_metadata.py"
+              "tests/test_parfile.py"
+              "tests/test_parunits.py"
+              "tests/test_pb.py"
+              "tests/test_phase.py"
+              "tests/test_pickle.py"
+              "tests/test_plk_widget.py"
+              "tests/test_plot_utils.py"
+              "tests/test_plrednoise.py"
+              "tests/test_pmtransform_units.py"
+              "tests/test_precision.py"
+              "tests/test_prefix_param_inheritance.py"
+              "tests/test_priors.py"
+              "tests/test_process_parfile.py"
+              "tests/test_pulsar_mjd.py"
+              "tests/test_pulsar_position.py"
+              "tests/test_reduced_precision.py"
+              "tests/test_satobs.py"
+              "tests/test_t2binary2pint.py"
+              "tests/test_tcb2tdb.py"
+              "tests/test_templates.py"
+              "tests/test_variety_parfiles.py"
+              "tests/test_version.py")))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-versioneer
+           python-wheel))
+    (propagated-inputs
+     (list python-astropy
+           python-corner
+           python-emcee
+           python-jplephem
+           python-loguru
+           python-matplotlib
+           python-nestle
+           python-numdifftools
+           python-numpy
+           python-pyerfa
+           python-scipy
+           python-uncertainties))
+    (home-page "https://github.com/nanograv/PINT")
+    (synopsis "Software for high-precision pulsar timing")
+    (description
+     "PINT is not TEMPO3 - package providing a Pulsar Timing, written in
+Python from scratch.
+Features:
+@itemize
+@item a robust system to produce high-precision timing results that is
+completely independent of TEMPO and Tempo2
+@item a system that is easy to extend and modify due to a good design
+and the use of a modern programming language, techniques, and libraries
+@end itemize")
+    (license license:bsd-3)))
+
 (define-public python-rad
   (package
     (name "python-rad")
@@ -6820,16 +6839,18 @@ channels
 (define-public python-radiospectra
   (package
     (name "python-radiospectra")
-    (version "0.6.0")
+    (version "0.6.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "radiospectra" version))
        (sha256
-        (base32 "1mqdh90hpq7sc9lybmc7y33g84vswf7w0r5hs57rf3a9hzfxad90"))))
+        (base32 "14p4hp9yncyjsrbys0yjq7jbj0n9wf0x5sy67kilqrw14d1xvzch"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count)))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'check 'set-home-env
@@ -6837,22 +6858,70 @@ channels
               ;; Tests require HOME to be set.
               ;;  Permission denied: '/homeless-shelter'
               (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-astropy
+           python-pytest-doctestplus
+           python-pytest-xdist
+           python-setuptools
+           python-setuptools-scm
+           python-sunpy-soar
+           python-wheel))
     (propagated-inputs
      (list python-cdflib
            python-matplotlib
            python-numpy
            python-scipy
            python-sunpy))
-    (native-inputs
-     (list python-pytest-astropy
-           python-setuptools-scm
-           python-sunpy-soar))
     (home-page "https://docs.sunpy.org/projects/radiospectra")
     (synopsis "Support for radio spectra on solar physics")
     (description
      "@code{radiospectra} provides support for some type of radio spectra in
 solar physics.")
     (license license:bsd-2)))
+
+(define-public python-regions
+  (package
+    (name "python-regions")
+    (version "0.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "regions" version))
+       (sha256
+        (base32 "10cswrknj3qh9i1daynlx4ild66lwcyra5rs03h8s9j4l275274n"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (with-directory-excursion #$output
+                (apply invoke "pytest" "-vv" test-flags)))))))
+    (propagated-inputs
+     (list python-astropy
+           python-h5py
+           python-matplotlib
+           python-numpy
+           python-scipy
+           python-shapely))
+    (native-inputs
+     (list python-cython-3
+           python-extension-helpers
+           python-pytest-arraydiff
+           python-pytest-astropy
+           python-pytest-runner
+           python-pytest-xdist
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (home-page "https://github.com/astropy/regions")
+    (synopsis "Package for region handling")
+    (description "Regions is an Astropy package for region handling.")
+    (license license:bsd-3)))
 
 (define-public python-roman-datamodels
   (package
@@ -6907,7 +6976,7 @@ pipelines.")
 (define-public python-skyfield
   (package
     (name "python-skyfield")
-    (version "1.49")
+    (version "1.52")
     (source
      (origin
        (method git-fetch) ; PyPI tarball lacks test data
@@ -6916,7 +6985,7 @@ pipelines.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1rk71lzy8w28f2kzhxb3pyndncrj91jay43nvqlrlzjxi2rbg7ix"))))
+        (base32 "08gg94fb4h5gjsywzy539h9znyghbi0rqnfsnajhwf5vq8wwhbzq"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -6946,6 +7015,329 @@ pipelines.")
      "Skyfield computes positions for the stars, planets, and satellites in
 orbit around the Earth.")
     (license license:expat)))
+
+(define-public python-stsci-skypac
+  (package
+    (name "python-stsci-skypac")
+    (version "1.0.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "stsci_skypac" version))
+       (sha256
+        (base32 "0amfknfxzrmia0d8x83i9h2v5760ynvfgfs0kzpb1ib0vyaci671"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; no tests in PyPI or git
+    (native-inputs
+     (list python-setuptools
+           python-setuptools-scm-next
+           python-wheel))
+    (propagated-inputs
+     (list python-astropy
+           python-numpy
+           python-spherical-geometry
+           python-stsci-imagestats
+           python-stsci-tools
+           python-stwcs))
+    (home-page "https://stsci-skypac.readthedocs.io/en/latest")
+    (synopsis "Sky matching on image mosaic")
+    (description
+     "This package implements a functionality to match sky on image mosaic.")
+    (license license:bsd-3)))
+
+(define-public python-stsci-stimage
+  (package
+    (name "python-stsci-stimage")
+    (version "0.2.10")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "stsci_stimage" version))
+              (sha256
+               (base32
+                "02qzblw11kfdw9rp2m26zbzlzl3w0dnrhncn383a3sw3dwjn9lpf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:build-backend "setuptools.build_meta"
+      #:test-flags #~(list "test_c")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Test steps are taken from GitHub Actions, see
+          ;; <https://github.com/spacetelescope/stsci.stimage/issues/27>
+          (add-before 'check 'waf-configure-build
+            (lambda _
+              (copy-file (string-append
+                          #$(this-package-native-input "python-waf") "/bin/waf")
+                         "waf")
+              (invoke "python" "waf" "configure" "build"))))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-waf
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy))
+    (home-page "https://stscistimage.readthedocs.io/en/latest/")
+    (synopsis "STScI image processing")
+    (description
+     "This package provides an astronomical Python package with image
+processing functions: @code{xyxymatch}, @code{geomap}.")
+    (license license:bsd-3)))
+
+(define-public python-stsci-tools
+  (package
+    (name "python-stsci-tools")
+    (version "4.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "stsci_tools" version))
+       (sha256
+        (base32 "180x3fmp020p4imc39ajs5qs6iimd8ld5bly3g9mm4psqbp8nyw9"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k"
+              ;; Two tests fail with error: RuntimeError: Problem during:
+              ;; takes_time(), exitcode: 1. Check log.
+              (string-append "not test_launch_and_wait[None-spawn]"
+                             " and not test_launch_and_wait[None-forkserver]"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (delete-file "conftest.py"))))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-astropy-header
+           python-pytest-doctestplus
+           python-setuptools
+           python-setuptools-scm-next
+           python-wheel))
+    (propagated-inputs
+     (list python-astropy
+           python-numpy
+           python-packaging))
+    (home-page "https://stscitools.readthedocs.io/en/latest")
+    (synopsis "Collection of STScI utility functions")
+    (description
+     "This package provides a collection of @acronym{Space Telescope Science
+Institute, STScI} utility functions.")
+    (license license:bsd-3)))
+
+(define-public python-stwcs
+  (package
+    (name "python-stwcs")
+    (version "1.7.3") ; any newer version requires NumPy 2+
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "stwcs" version))
+       (sha256
+        (base32 "12114hx27mgwcwcyz7lghm78g6pbg8j40189lcfi22zsk47fxv11"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; XXX: Test requiring network access to download data
+                    ;; from <mast.stsci.edu>, check if the test data may be
+                    ;; obtained programmatically.
+                    (list "not test1SciExt"
+                          "testAllExt"
+                          "testHletFromSimpleFITS"
+                          "testHletFromString"
+                          "testSciExtList"
+                          "testSciExtNumList"
+                          "testWrongD2IMModel"
+                          "testWrongNPOLModel"
+                          "testWrongSIPModel"
+                          "test_add_radesys"
+                          "test_apply_as_alternate_method"
+                          "test_apply_as_primary_method"
+                          "test_apply_d2im"
+                          "test_db_connection"
+                          "test_default"
+                          "test_new_obs"
+                          "test_no_HDRNAME_no_WCSNAME"
+                          "test_outwcs"
+                          "test_pipeline_sci1"
+                          "test_pipeline_sci2"
+                          "test_remove_d2im_distortion"
+                          "test_remove_npol_distortion"
+                          "test_remove_npol_distortion_hdulist"
+                          "test_repeate"
+                          "test_repeated_updatewcs_use_db"
+                          "test_restore_headerlet"
+                          "test_simple_sci1"
+                          "test_simple_sci2"
+                          "test_update_d2im_distortion"
+                          "test_update_legacy_file"
+                          "test_update_stis_asn"
+                          "test_update_waiver_wfpc2")
+                    " and not "))))
+    (native-inputs
+     (list nss-certs-for-test
+           python-pytest
+           python-setuptools
+           python-setuptools-scm-next
+           python-wheel))
+    (propagated-inputs
+     (list python-astropy
+           python-lxml
+           python-numpy
+           python-requests
+           python-stsci-tools))
+    (home-page "https://stwcs.readthedocs.io/en/latest/")
+    (synopsis "WCS based distortion models and coordinate transformation")
+    (description
+     "STWCS provides support for WCS distortion models and coordinate
+transformation for the imaging instruments on the @acronym{Hubble Space
+Telescope, HST}).")
+    (license license:bsd-3)))
+
+(define-public python-sunkit-magex
+  (package
+    (name "python-sunkit-magex")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "sunkit_magex" version))
+       (sha256
+        (base32 "1jx1nvb6addnsmafq1s0wrxlcpk0p2hcp6b8ldw0q3sz2dzfpcb0"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k"
+              (string-join
+               ;; Some issue with presision in this test.
+               (list "not test_adapt_map"
+                     ;; NotImplementedError: is_full_sun_synoptic_map is only
+                     ;; implemented for ['CEA', 'CAR'] projections and not
+                     "test_car_reproject")
+               " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            ;; FileNotFoundError: [Errno 2] No such file or directory:
+            ;; '/homeless-shelter/.config'
+            (lambda _
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-arraydiff
+           python-pytest-doctestplus
+           python-reproject
+           python-setuptools
+           python-setuptools-scm
+           python-streamtracer
+           python-sympy
+           python-wheel))
+    (propagated-inputs
+     (list python-astropy
+           python-numpy
+           python-scikit-image
+           python-scipy
+           python-sunpy))
+    (home-page "https://docs.sunpy.org/projects/sunkit-magex")
+    (synopsis "Solar Magnetic field Extrapolation")
+    (description
+     "This package provides a set of tools for the modelling of magnetic field
+data.  It is a SunPy affiliated package and is built on top of @code{sunpy}
+and @code{astropy}.")
+    ;; This project is Copyright (c) The SunPy Community and licensed under
+    ;; the terms of the GNU GPL v3+ license.  This package is based upon the
+    ;; Openastronomy packaging guide which is licensed under the BSD 3-clause
+    ;; license. See the licenses folder for more information.
+    (license (list license:gpl3+ license:bsd-3))))
+
+(define-public python-sunpy
+  (package
+    (name "python-sunpy")
+    (version "6.0.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "sunpy" version))
+       (sha256
+        (base32 "1x659wal84m00czkjjkvkawxivgc5d43m71m3q817zmpjkin7bma"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              ;; Requires SpicePy not packed in Guix yet.
+              "--ignore=sunpy/coordinates/tests/test_spice.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "pyproject.toml"
+                ;; packaging>=23.0
+                ((">=23.0") ">=21.3")
+                ;; numpy>=1.23.5
+                ((">=1.23.5") ">=1.23.2"))))
+          (add-before 'install 'writable-compiler
+            (lambda _
+              (make-file-writable "sunpy/_compiler.c")))
+          (add-before 'check 'prepare-test-environment
+            (lambda _
+              (setenv "HOME" "/tmp")
+              (call-with-output-file "pytest.ini"
+                (lambda (port)
+                  (format port "[pytest]
+python_files = test_*.py"))))))))
+    (native-inputs
+     (list opencv ; For tests, includes OpenCV-Python
+           python-aiohttp
+           python-extension-helpers
+           python-hvpy
+           python-jplephem
+           ;; python-mplcairo ; Not packed yet in Guix
+           python-packaging
+           python-pytest-astropy
+           python-pytest-mock
+           python-pytest-mpl
+           python-pytest-xdist
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list parfive
+           python-asdf
+           python-asdf-astropy
+           python-astropy
+           python-beautifulsoup4
+           python-cdflib
+           python-dask
+           python-dateutil
+           python-drms
+           python-glymur
+           python-h5netcdf
+           python-h5py
+           python-hypothesis
+           python-matplotlib
+           python-mpl-animators
+           python-numpy
+           python-pandas
+           python-pyerfa
+           python-reproject
+           python-scikit-image
+           python-scipy
+           ;; python-spiceypy ; Not packed yet in Guix, long journey.
+           python-tqdm
+           python-zeep))
+    (home-page "https://sunpy.org")
+    (synopsis "Python library for Solar Physics")
+    (description
+     "SunPy is package for solar physics and is meant to be a free alternative to the
+SolarSoft data analysis environment.")
+    (license license:bsd-2)))
 
 (define-public python-tweakwcs
   (package
@@ -6994,13 +7386,13 @@ between image and reference catalogs.  Currently only aligning images with
 (define-public python-viresclient
   (package
     (name "python-viresclient")
-    (version "0.12.2")
+    (version "0.12.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "viresclient" version))
        (sha256
-        (base32 "1x1xgs6fs7rmhqs6f32x173gsz1mlrcpji0rf307x232lyav7wds"))))
+        (base32 "1vx1pk8sglr0xd8z4hg675s105m26x3k75mpc4bsdxryfjvmawh4"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-flit-core
@@ -7944,6 +8336,72 @@ Moon position, etc.")
     (description
      "SWarp is a program that resamples and co-adds together FITS images using
 any arbitrary astrometric projection defined in the WCS standard.")
+    (license license:gpl3+)))
+
+(define-public tempo
+  (package
+    (name "tempo")
+    (version "13.103")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://sourceforge/tempo/tempo-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "1ghml56sd7rhwymrlqlvj3g12hjyqvk2sjl08rqlf5y7dwdp0nvl"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     (list gfortran))
+    (home-page "https://github.com/nanograv/tempo")
+    (synopsis "Pulsar timing data analysis program")
+    (description
+     "Tempo analyzes pulsar timing data.  Pulse times of arrival (TOAs),
+pulsar model parameters, and coded instructions are read from one or more
+input files.  The TOAs are fitted by a pulse timing model incorporating
+transformation to the solar-system barycenter, pulsar rotation and spin-down
+and, where necessary, one of several binary models.  Program output includes
+parameter values and uncertainties, residual pulse arrival times, chi-squared
+statistics, and the covariance matrix of the model.  In prediction
+mode,ephemerides of pulse phase behavior (in the form of polynomial
+expansions) are calculated from input timing models.")
+    (license license:gpl2+)))
+
+(define-public tempo2
+  (package
+    (name "tempo2")
+    (version "2025.02.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://bitbucket.org/psrsoft/tempo2")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06494q0zff1qj813y70r014ifm60cminhk7lisy4by022mr6wd3k"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-pathes
+            (lambda _
+              (substitute* (list "bootstrap" "plugin/make_build_settings.sh")
+                (("/bin/bash") (which "bash"))
+                (("/bin/echo") "echo")))))))
+    (native-inputs
+     (list autoconf
+           automake
+           gfortran
+           libtool
+           pkg-config))
+    (home-page "https://bitbucket.org/psrsoft/tempo2")
+    (synopsis "High precision pulsar timing tool")
+    (description
+     "Tempo2 is a pulsar timing package, based on the old FORTRAN TEMPO code
+to address some shortcomings in that code for high precision pulsar timing.
+See related paper
+@url{https://ui.adsabs.harvard.edu/abs/2006MNRAS.369..655H/abstract}.")
     (license license:gpl3+)))
 
 (define-public unsio

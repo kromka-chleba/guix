@@ -67,6 +67,7 @@
 ;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
 ;;; Copyright © 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2025 Luca Cirrottola <luca.cirrottola@inria.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1813,7 +1814,6 @@ extremely large and complex data collections.")
     (license (license:x11-style
               "https://www.hdfgroup.org/ftp/HDF5/current/src/unpacked/COPYING"))))
 
-;; When updating this package, please also update hdf-java.
 (define-public hdf5-1.10
   (package
     (inherit hdf5-1.8)
@@ -1834,7 +1834,8 @@ extremely large and complex data collections.")
         (base32 "14gih7kmjx4h3lc7pg4fwcl28hf1qqkf2x7rljpxqvzkjrqbxi00"))
        (patches (search-patches "hdf5-config-date.patch"))))))
 
-(define-public hdf5-1.14
+;; When updating this package, please also update hdf-java.
+(define-public hdf5
   (package
     (inherit hdf5-1.8)
     (version "1.14.3")
@@ -1872,15 +1873,11 @@ extremely large and complex data collections.")
                   (("@UNAME_INFO@")
                    "Linux"))))))))))
 
-(define-public hdf5
-  ;; Default version of HDF5.
-  hdf5-1.10)
-
 ;; Keep this in sync with the current hdf5 package.
 (define-public hdf-java
   (package
     (name "hdf-java")
-    (version "1.10.9")
+    (version "1.14.3")
     (source
      (origin
        (method git-fetch)
@@ -1892,7 +1889,7 @@ extremely large and complex data collections.")
                                      version)))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1sjdcnafvzsy99vqhybkps8rnwmxb6fsvmkw89wb2mrrp4vi5z9v"))
+        (base32 "0lw9f62zxyjiv7vx9nvnashjj39i44j8d626i7b788zkxw58csvs"))
        (modules '((guix build utils)))
        (snippet     ; Make sure we don't use the bundled sources and binaries.
         '(for-each delete-file
@@ -1921,9 +1918,9 @@ extremely large and complex data collections.")
                       inputs "/lib/m2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar")))
                 (substitute* (append (find-files "java" "Makefile.am")
                                      (find-files "java" "Makefile.in"))
-                  (("\\$\\(top_srcdir\\)/java/lib/ext/slf4j-simple-1.7.33.jar")
+                  (("\\$\\(top_srcdir\\)/java/lib/ext/slf4j-simple-2.0.6.jar")
                    simple)
-                  (("\\$\\(top_srcdir\\)/java/lib/slf4j-api-1.7.33.jar")
+                  (("\\$\\(top_srcdir\\)/java/lib/slf4j-api-2.0.6.jar")
                    api)
                   (("\\$\\(top_srcdir\\)/java/lib/junit.jar")
                    junit)
@@ -1944,9 +1941,9 @@ extremely large and complex data collections.")
                    junit)
                   (("\"\\$BLDLIBDIR\"/hamcrest-core.jar")
                    hamcrest)
-                  (("\"\\$BLDLIBDIR\"/slf4j-api-1.7.33.jar")
+                  (("\"\\$BLDLIBDIR\"/slf4j-api-2.0.6.jar")
                    api)
-                  (("\"\\$BLDLIBDIR\"/slf4j-simple-1.7.33.jar")
+                  (("\"\\$BLDLIBDIR\"/slf4j-simple-2.0.6.jar")
                    simple)
                   (("/usr/bin/test")
                    (search-input-file inputs "/bin/test"))
@@ -1967,7 +1964,7 @@ extremely large and complex data collections.")
            java-slf4j-api
            libjpeg-turbo
            zlib))
-    (home-page "https://support.hdfgroup.org/products/java")
+    (home-page "https://www.hdfgroup.org")
     (synopsis "Java interface for the HDF4 and HDF5 libraries")
     (description "Java HDF Interface (JHI) and Java HDF5 Interface (JHI5) use
 the Java Native Interface to wrap the HDF4 and HDF5 libraries, which are
@@ -1976,7 +1973,7 @@ implemented in C.")
     ;; BSD-style license:
     (license (license:x11-style
               "https://support.hdfgroup.org/ftp/HDF5/hdf-java\
-/current/src/unpacked/COPYING"))))
+/current/src/unpacked/COPYING.html"))))
 
 (define-public hdf-eos2
   (package
@@ -2041,7 +2038,7 @@ System (Grid, Point and Swath).")
      (list autoconf automake gfortran libtool))
     (build-system gnu-build-system)
     (inputs
-     (list hdf5-1.14 zlib gctp))
+     (list hdf5 zlib gctp))
     (arguments
      (list
       #:configure-flags ''("--enable-install-include" "--enable-shared"
@@ -2076,13 +2073,13 @@ Swath).")
     (license (license:non-copyleft home-page))))
 
 (define-public hdf5-parallel-openmpi
-  (package/inherit hdf5-1.14                      ;use the latest
+  (package/inherit hdf5
     (name "hdf5-parallel-openmpi")
     (inputs
      `(("mpi" ,openmpi)
        ,@(package-inputs hdf5)))
     (arguments
-     (substitute-keyword-arguments (package-arguments hdf5-1.14)
+     (substitute-keyword-arguments (package-arguments hdf5)
        ((#:configure-flags flags)
         #~(cons "--enable-parallel"
                 (delete "--enable-cxx"
@@ -3662,7 +3659,10 @@ September 2004}")
       #:test-target "test"
       #:parallel-build? #f             ; build is parallel by default
       #:configure-flags
-      #~(list "--with-mpi=0"
+      #~(list "COPTFLAGS=-g -O3"
+              "CXXOPTFLAGS=-g -O3"
+              "FOPTFLAGS=-g -O3"
+              "--with-mpi=0"
               "--with-openmp=1"
               "--with-openblas=1"
               (string-append "--with-openblas-dir="
@@ -4168,7 +4168,7 @@ programming language.")
 (define-public python-ducc0
   (package
     (name "python-ducc0")
-    (version "0.36.0")
+    (version "0.37.1")
     (source
      (origin
        (method git-fetch)
@@ -4178,21 +4178,26 @@ programming language.")
                       "ducc0_" (string-replace-substring version "." "_")))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1pfj7k5s3d237r7diqrd7cgvf8p5zms6pp64nfdildx49kwggwab"))))
+        (base32 "0pckbip2ffmiwm73wrpvif3gy0a09v9b9kbyallp520l6l69n4k8"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags #~(list "python/test")
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              "python/test")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'set-env
             (lambda _
               (setenv "DUCC0_OPTIMIZATION" "portable-strip"))))))
     (native-inputs
-     (list pybind11
+     (list cmake-minimal
+           pybind11
+           python-nanobind
            python-pytest
-           python-setuptools
-           python-wheel))
+           python-pytest-xdist
+           python-scikit-build-core
+           python-setuptools))
     (propagated-inputs
      (list python-numpy))
     (home-page "https://gitlab.mpcdf.mpg.de/mtr/ducc")
@@ -10630,7 +10635,7 @@ computation is supported via MPI.")
                   curl
                   fftw
                   gettext-minimal
-                  hdf5-1.14
+                  hdf5
                   libarchive
                   libx11
                   libxml2
