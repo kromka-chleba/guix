@@ -798,12 +798,12 @@ do
     *) export MANPATH="$GUIX_PROFILE/share/man:$MANPATH" ;;
   esac
 done
-
-# NOTE: Guix Home handles its own profile initialization in ~/.profile. See
-# info '(guix) Configuring the Shell'.
-
-# Clean up after ourselves.
 unset GUIX_PROFILE
+
+# Set up extra environment variables for Guix Home.
+HOME_ENVIRONMENT=$HOME/.guix-home
+[ -f "$HOME_ENVIRONMENT/setup-environment" ] && . "$HOME_ENVIRONMENT/setup-environment"
+unset HOME_ENVIRONMENT
 EOF
 }
 
