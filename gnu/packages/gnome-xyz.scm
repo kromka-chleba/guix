@@ -204,7 +204,7 @@ simple and consistent.")
 (define-public papirus-icon-theme
   (package
     (name "papirus-icon-theme")
-    (version "20230104")
+    (version "20250201")
     (source
      (origin
        (method git-fetch)
@@ -212,31 +212,39 @@ simple and consistent.")
              (url "https://github.com/PapirusDevelopmentTeam/papirus-icon-theme")
              (commit version)))
        (sha256
-        (base32 "1x40gdqyw0gj389by6904g5a64r72by544k3nlyiamjhg2zmpx97"))
+        (base32 "1sbzmfcmbsa57grq0jy17mmagdsg95qr2v75zpqlp53jpjq74v53"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     '(#:tests? #f                      ; no test suite
-       #:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'bootstrap)
-         (delete 'configure)
-         (delete 'build)
-         (add-before 'install 'halve-inode-consumption
-           ;; This package uses over 100K inodes, which is a lot.  We can easily
-           ;; halve that number by using (hard) links, to no ill effect.
-           ;; See <https://logs.guix.gnu.org/guix/2023-01-31.log#171227>.
-           ;; However, the source checkout will still use the full amount!
-           (lambda _
-             (let ((symlink? (lambda (_ stat)
-                               (eq? 'symlink (stat:type stat)))))
-               (for-each (lambda (file)
-                           (let ((target (canonicalize-path file)))
-                             (when (eq? 'regular (stat:type (stat target)))
-                               (delete-file file)
-                               (link target file))))
-                         (find-files "." symlink?))))))))
+     (list
+      #:tests? #f                       ; no test suite
+      #:make-flags #~(list "CP_OPTS=--preserve=links"
+                           (string-append "PREFIX=" (assoc-ref %outputs "out")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'bootstrap)
+          (delete 'configure)
+          (delete 'build)
+          (add-before 'install 'halve-inode-consumption
+            ;; This package uses over 100K inodes, which is a lot.  We can easily
+            ;; halve that number by using (hard) links, to no ill effect.
+            ;; See <https://logs.guix.gnu.org/guix/2023-01-31.log#171227>.
+            ;; However, the source checkout will still use the full amount!
+            (lambda _
+              (let ((symlink? (lambda (_ stat)
+                                (eq? 'symlink (stat:type stat)))))
+                (for-each (lambda (file)
+                            (let ((target (canonicalize-path file)))
+                              (when (eq? 'regular (stat:type (stat target)))
+                                (delete-file file)
+                                (link target file))))
+                          (find-files "." symlink?)))))
+           (add-before 'install 'remove-executable-bit
+             (lambda _
+               (let ((file? (lambda (_ stat)
+                              (eq? 'regular (stat:type stat)))))
+                 (for-each (lambda (file) (chmod file #o644))
+                           (find-files "." file?))))))))
     (native-inputs
      (list `(,gtk+ "bin")))
     (home-page "https://git.io/papirus-icon-theme")
@@ -248,7 +256,7 @@ and a few extra features.")
 (define-public qogir-icon-theme
   (package
     (name "qogir-icon-theme")
-    (version "2023.06.05")
+    (version "2025.02.15")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -260,7 +268,7 @@ and a few extra features.")
                           (("gtk-update-icon-cache") "true")))
               (sha256
                (base32
-                "1kn8b9zdamxbfbs7b9qpx53hmjw2l40sxpjw93axb1dqy81yc8da"))))
+                "08qcphdp49ciyr294fgk9i1s3h6svx5bdzfglikb20jzh5d167hj"))))
     (build-system copy-build-system)
     (arguments
      (list #:phases

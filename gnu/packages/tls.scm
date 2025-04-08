@@ -1155,7 +1155,7 @@ derived from Mozilla's collection.")
   (package
     (name "s2n")
     ;; Update only when updating aws-crt-cpp.
-    (version "1.5.1")
+    (version "1.5.15")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1164,7 +1164,7 @@ derived from Mozilla's collection.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0cw8f846zvjgdwaqadnhdb0cxksx4jd9x4nan9x02xz2w5hcqw04"))))
+                "0b8ym4ns56fa5pkrvsm5kghh8mii0q0kc1mz2plg1ypm5zny02kw"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -1220,7 +1220,7 @@ ciphers such as ChaCha20, Curve25519, NTRU, and Blake2b.")
   (package
     (name "aws-lc")
     ;; Update only when updating aws-crt-cpp.
-    (version "1.34.2")
+    (version "1.49.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1229,8 +1229,9 @@ ciphers such as ChaCha20, Curve25519, NTRU, and Blake2b.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "075a5z3qck0wqb7k2im8k7vj7rqn7r7v1j0i18l6k2n5pi52wypa"))))
+                "1403l9xdidym2gp6l9qhxcsv0bhg205p322rf45v8jysf76jsxl2"))))
     (build-system cmake-build-system)
+    (native-inputs (list perl))
     (arguments
      '(#:test-target "run_minimal_tests"
        #:configure-flags

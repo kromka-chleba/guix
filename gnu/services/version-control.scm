@@ -5,6 +5,7 @@
 ;;; Copyright © 2017 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2018 Christopher Baines <mail@cbaines.net>
 ;;; Copyright © 2021 Julien Lepiller <julien@lepiller.eu>
+;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -52,6 +53,7 @@
             gitolite-configuration-user
             gitolite-configuration-rc-file
             gitolite-configuration-admin-pubkey
+            gitolite-configuration-admin-name
 
             <gitolite-rc-file>
             gitolite-rc-file
@@ -59,8 +61,21 @@
             gitolite-rc-file-umask
             gitolite-rc-file-unsafe-pattern
             gitolite-rc-file-git-config-keys
+            gitolite-rc-file-log-extra
+            gitolite-rc-file-host-name
             gitolite-rc-file-roles
             gitolite-rc-file-enable
+            gitolite-rc-file-extra-content
+            gitolite-rc-file-default-enable
+
+            <gitolite-git-configuration>
+            gitolite-git-configuration
+            gitolite-git-configuration?
+            gitolite-git-configuration-name
+            gitolite-git-configuration-email
+            gitolite-git-configuration-default-branch
+            gitolite-git-configuration-receive-fsck-objects
+            gitolite-git-configuration-extra-content
 
             gitolite-service-type
 
@@ -240,6 +255,17 @@ access to exported repositories under @file{/srv/git}."
 ;;; Gitolite
 ;;;
 
+(define gitolite-rc-file-default-enable
+  '("help"
+    "desc"
+    "info"
+    "perms"
+    "writable"
+    "ssh-authkeys"
+    "git-config"
+    "daemon"
+    "gitweb"))
+
 (define-record-type* <gitolite-rc-file>
   gitolite-rc-file make-gitolite-rc-file
   gitolite-rc-file?
@@ -251,49 +277,91 @@ access to exported repositories under @file{/srv/git}."
                    (default #f))
   (git-config-keys gitolite-rc-file-git-config-keys
                    (default ""))
+  (log-extra       gitolite-rc-file-log-extra
+                   (default #f))
+  (host-name       gitolite-rc-file-host-name
+                   (default #f))
   (roles           gitolite-rc-file-roles
                    (default '(("READERS" . 1)
                               ("WRITERS" . 1))))
   (enable          gitolite-rc-file-enable
-                   (default '("help"
-                              "desc"
-                              "info"
-                              "perms"
-                              "writable"
-                              "ssh-authkeys"
-                              "git-config"
-                              "daemon"
-                              "gitweb"))))
+                   (default gitolite-rc-file-default-enable))
+  (extra-content   gitolite-rc-extra-content
+                   (default "")))
 
 (define-gexp-compiler (gitolite-rc-file-compiler
                        (file <gitolite-rc-file>) system target)
-  (match file
-    (($ <gitolite-rc-file> umask local-code unsafe-pattern git-config-keys roles enable)
-     (apply text-file* "gitolite.rc"
-      `("%RC = (\n"
-        "    UMASK => " ,(format #f "~4,'0o" umask) ",\n"
-        "    GIT_CONFIG_KEYS => '" ,git-config-keys "',\n"
-        ,(if local-code
-             (simple-format #f "    LOCAL_CODE => \"~A\",\n" local-code)
-             "")
-        "    ROLES => {\n"
-        ,@(map (match-lambda
-                 ((role . value)
-                  (simple-format #f "        ~A => ~A,\n" role value)))
-               roles)
-        "    },\n"
-        "\n"
-        "    ENABLE => [\n"
-        ,@(map (lambda (value)
-                 (simple-format #f "        '~A',\n" value))
-               enable)
-        "    ],\n"
-        ");\n"
-        "\n"
-        ,(if unsafe-pattern
-             (string-append "$UNSAFE_PATT = qr(" unsafe-pattern ");")
-             "")
-        "1;\n")))))
+  (match-record file <gitolite-rc-file>
+                ( umask local-code unsafe-pattern git-config-keys log-extra
+                  host-name roles enable extra-content)
+    (apply text-file* "gitolite.rc"
+           `("%RC = (\n"
+             "    UMASK => " ,(format #f "~4,'0o" umask) ",\n"
+             "    GIT_CONFIG_KEYS => '" ,git-config-keys "',\n"
+             ,(if local-code
+                  (simple-format #f "    LOCAL_CODE => \"~A\",\n" local-code)
+                  "")
+             ,(if log-extra
+                  "    LOG_EXTRA => 1,\n"
+                  "")
+             ,(if host-name
+                  (simple-format #f "    HOSTNAME => \"~A\",\n" host-name)
+                  "")
+             "    ROLES => {\n"
+             ,@(map (match-lambda
+                      ((role . value)
+                       (simple-format #f "        ~A => ~A,\n" role value)))
+                    roles)
+             "    },\n"
+             "\n"
+             "    ENABLE => [\n"
+             ,@(map (lambda (value)
+                      (simple-format #f "        '~A',\n" value))
+                    enable)
+             "    ],\n"
+             ,extra-content "\n"
+             ");\n"
+             "\n"
+             ,(if unsafe-pattern
+                  (string-append "$UNSAFE_PATT = qr(" unsafe-pattern ");")
+                  "")
+             "1;\n"
+             "# Local variables:\n"
+             "# mode: perl\n"
+             "# End:\n"
+             "# vim: set syn=perl:\n"))))
+
+(define-record-type* <gitolite-git-configuration>
+  gitolite-git-configuration make-gitolite-git-configuration
+  gitolite-git-configuration?
+  (name                 gitolite-git-configuration-name
+                        (default "GNU Guix"))
+  (email                gitolite-git-configuration-email
+                        (default "guix@localhost"))
+  (default-branch       gitolite-git-configuration-default-branch
+                        (default #f))
+  (receive-fsck-objects gitolite-git-configuration-receive-fsck-objects
+                        (default #f))
+  (extra-content        gitolite-git-configuration-extra-content
+                        (default "")))
+
+(define-gexp-compiler (gitolite-git-configuration-compiler
+                       (config <gitolite-git-configuration>) system target)
+  (match-record config <gitolite-git-configuration>
+                (name email default-branch receive-fsck-objects extra-content)
+    (apply text-file* "gitconfig"
+           `("[user]\n"
+             "name  = " ,name  "\n"
+             "email = " ,email "\n"
+             ,@(if default-branch
+                   `("[init]\n"
+                     "defaultBranch = " ,default-branch "\n")
+                   '())
+             ,@(if receive-fsck-objects
+                   `("[receive]\n"
+                     "fsckObjects = true\n")
+                   '())
+             ,extra-content "\n"))))
 
 (define-record-type* <gitolite-configuration>
   gitolite-configuration make-gitolite-configuration
@@ -308,93 +376,97 @@ access to exported repositories under @file{/srv/git}."
                   (default "/var/lib/gitolite"))
   (rc-file        gitolite-configuration-rc-file
                   (default (gitolite-rc-file)))
-  (admin-pubkey   gitolite-configuration-admin-pubkey))
+  (git-config     gitolite-configuration-git-config
+                  (default (gitolite-git-configuration)))
+  (admin-pubkey   gitolite-configuration-admin-pubkey)
+  (admin-name     gitolite-configuration-admin-name
+                  (default #f)))
 
-(define gitolite-accounts
-  (match-lambda
-    (($ <gitolite-configuration> package user group home-directory
-                                 rc-file admin-pubkey)
-     ;; User group and account to run Gitolite.
-     (list (user-group (name group) (system? #t))
-           (user-account
-            (name user)
-            (group group)
-            (system? #t)
-            (comment "Gitolite user")
-            (home-directory home-directory))))))
+(define (gitolite-accounts config)
+  (match-record config <gitolite-configuration>
+                (user group home-directory)
+    ;; User group and account to run Gitolite.
+    (list (user-group
+           (name group)
+           (system? #t))
+          (user-account
+           (name user)
+           (group group)
+           (system? #t)
+           (comment "Gitolite user")
+           (home-directory home-directory)))))
 
-(define gitolite-activation
-  (match-lambda
-    (($ <gitolite-configuration> package user group home
-                                 rc-file admin-pubkey)
-     #~(begin
-         (use-modules (ice-9 match)
-                      (guix build utils))
+(define (gitolite-activation config)
+  (match-record config <gitolite-configuration>
+                ( package user group home-directory rc-file admin-pubkey
+                  admin-name git-config)
+    #~(begin
+        (use-modules (ice-9 match)
+                     (guix build utils))
 
-         (let* ((user-info (getpwnam #$user))
-                (admin-pubkey #$admin-pubkey)
-                (pubkey-file (string-append
-                              #$home "/"
-                              (basename
-                               (strip-store-file-name admin-pubkey))))
-                (rc-file #$(string-append home "/.gitolite.rc")))
+        (let* ((user-info (getpwnam #$user))
+               (admin-pubkey #$admin-pubkey)
+               (pubkey-file (if #$admin-name
+                                (string-append #$admin-name ".pub")
+                                (string-append
+                                 #$home-directory "/"
+                                 (basename
+                                  (strip-store-file-name admin-pubkey)))))
+               (rc-file #$(string-append home-directory "/.gitolite.rc")))
 
-           ;; activate-users+groups in (gnu build activation) sets the
-           ;; permission flags of home directories to #o700 and mentions that
-           ;; services needing looser permissions should chmod it during
-           ;; service activation.  We also want the git group to be able to
-           ;; read from the gitolite home directory, so a chmod'ing we will
-           ;; go!
-           (chmod #$home #o750)
+          ;; activate-users+groups in (gnu build activation) sets the
+          ;; permission flags of home directories to #o700 and mentions that
+          ;; services needing looser permissions should chmod it during
+          ;; service activation.  We also want the git group to be able to
+          ;; read from the gitolite home directory, so a chmod'ing we will
+          ;; go!
+          (chmod #$home-directory #o750)
 
-           (simple-format #t "guix: gitolite: installing ~A\n" #$rc-file)
-           (copy-file #$rc-file rc-file)
-           ;; ensure gitolite's user can read the configuration
-           (chown rc-file
-                  (passwd:uid user-info)
-                  (passwd:gid user-info))
+          (simple-format #t "guix: gitolite: installing ~A\n" #$rc-file)
+          (copy-file #$rc-file rc-file)
+          ;; ensure gitolite's user can read the configuration
+          (chown rc-file
+                 (passwd:uid user-info)
+                 (passwd:gid user-info))
 
-           ;; The key must be writable, so copy it from the store
-           (copy-file admin-pubkey pubkey-file)
+          ;; The key must be writable, so copy it from the store
+          (copy-file admin-pubkey pubkey-file)
 
-           (chmod pubkey-file #o500)
-           (chown pubkey-file
-                  (passwd:uid user-info)
-                  (passwd:gid user-info))
+          (chmod pubkey-file #o500)
+          (chown pubkey-file
+                 (passwd:uid user-info)
+                 (passwd:gid user-info))
 
-           ;; Set the git configuration, to avoid gitolite trying to use
-           ;; the hostname command, as the network might not be up yet
-           (with-output-to-file #$(string-append home "/.gitconfig")
-             (lambda ()
-               (display "[user]
-        name = GNU Guix
-        email = guix@localhost
-")))
-           ;; Run Gitolite setup, as this updates the hooks and include the
-           ;; admin pubkey if specified. The admin pubkey is required for
-           ;; initial setup, and will replace the previous key if run after
-           ;; initial setup
-           (match (primitive-fork)
-             (0
-              ;; Exit with a non-zero status code if an exception is thrown.
-              (dynamic-wind
-                (const #t)
-                (lambda ()
-                  (setenv "HOME" (passwd:dir user-info))
-                  (setenv "USER" #$user)
-                  (setgid (passwd:gid user-info))
-                  (setuid (passwd:uid user-info))
-                  (primitive-exit
-                   (system* #$(file-append package "/bin/gitolite")
-                            "setup"
-                            "-m" "gitolite setup by GNU Guix"
-                            "-pk" pubkey-file)))
-                (lambda ()
-                  (primitive-exit 1))))
-             (pid (waitpid pid)))
+          ;; Set the git configuration, to avoid gitolite trying to use
+          ;; the hostname command, as the network might not be up yet
+          (copy-file #$git-config
+                     #$(string-append home-directory "/.gitconfig"))
 
-           (when (file-exists? pubkey-file)
-             (delete-file pubkey-file)))))))
+          ;; Run Gitolite setup, as this updates the hooks and include the
+          ;; admin pubkey if specified. The admin pubkey is required for
+          ;; initial setup, and will replace the previous key if run after
+          ;; initial setup
+          (match (primitive-fork)
+            (0
+             ;; Exit with a non-zero status code if an exception is thrown.
+             (dynamic-wind
+               (const #t)
+               (lambda ()
+                 (setenv "HOME" (passwd:dir user-info))
+                 (setenv "USER" #$user)
+                 (setgid (passwd:gid user-info))
+                 (setuid (passwd:uid user-info))
+                 (primitive-exit
+                  (system* #$(file-append package "/bin/gitolite")
+                           "setup"
+                           "-m" "gitolite setup by GNU Guix"
+                           "-pk" pubkey-file)))
+               (lambda ()
+                 (primitive-exit 1))))
+            (pid (waitpid pid)))
+
+          (when (file-exists? pubkey-file)
+            (delete-file pubkey-file))))))
 
 (define gitolite-service-type
   (service-type
@@ -403,15 +475,7 @@ access to exported repositories under @file{/srv/git}."
     (list (service-extension activation-service-type
                              gitolite-activation)
           (service-extension account-service-type
-                             gitolite-accounts)
-          (service-extension profile-service-type
-                             ;; The Gitolite package in Guix uses
-                             ;; gitolite-shell in the authorized_keys file, so
-                             ;; gitolite-shell needs to be on the PATH for
-                             ;; gitolite to work.
-                             (lambda (config)
-                               (list
-                                (gitolite-configuration-package config))))))
+                             gitolite-accounts)))
    (description
     "Set up @command{gitolite}, a Git hosting tool providing access over SSH.
 By default, the @code{git} user is used, but this is configurable.

@@ -41114,6 +41114,55 @@ lexer.")
     (description "This package provides MAC address types.")
     (license (list license:asl2.0 license:expat))))
 
+(define-public rust-macro-rules-attribute-proc-macro-0.2
+  (package
+    (name "rust-macro-rules-attribute-proc-macro")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "macro_rules_attribute-proc_macro" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0s45j4zm0a5d041g3vcbanvr76p331dfjb7gw9qdmh0w8mnqbpdq"))))
+    (build-system cargo-build-system)
+    (home-page
+     "https://github.com/danielhenrymantilla/macro_rules_attribute-rs")
+    (synopsis "Use declarative macros in Rust")
+    (description
+     "This package provides the ability to use Rust declarative macros as
+proc_macro attributes or derives.  This package provides implementation
+details to @code{rust-macro-rules-attribute}.")
+    (license license:expat)))
+
+(define-public rust-macro-rules-attribute-0.2
+  (package
+    (name "rust-macro-rules-attribute")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "macro_rules_attribute" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "04waa4qm28adwnxsxhx9135ki68mwkikr6m5pi5xhcy0gcgjg0la"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-macro-rules-attribute-proc-macro"
+         ,rust-macro-rules-attribute-proc-macro-0.2)
+        ("rust-paste" ,rust-paste-1))
+       #:cargo-development-inputs
+       (("rust-once-cell" ,rust-once-cell-1)
+        ("rust-pin-project-lite" ,rust-pin-project-lite-0.2)
+        ("rust-serde" ,rust-serde-1))))
+    (home-page "https://crates.io/crates/macro_rules_attribute")
+    (synopsis "Use declarative macros in Rust")
+    (description
+     "This package provides the ability to use Rust declarative macros as
+proc_macro attributes or derives.")
+    (license license:expat)))
+
 (define-public rust-macrotest-1
   (package
     (name "rust-macrotest")
@@ -43702,6 +43751,55 @@ possible over the OS abstractions.")
     (description
       "Chaining APIs for both self -> Self and &mut self methods.")
     (license license:expat)))
+
+(define-public rust-monostate-0.1
+  (package
+    (name "rust-monostate")
+    (version "0.1.11")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "monostate" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0xchz8cs990g7g5f8jjybjnyi9xnhykiq44gl97p5rbh3hgjm347"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-monostate-impl" ,rust-monostate-impl-0.1)
+        ("rust-serde" ,rust-serde-1))
+       #:cargo-development-inputs
+       (("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1))))
+    (home-page "https://github.com/dtolnay/monostate")
+    (synopsis "Type that deserializes only from one specific value")
+    (description
+     "This package provides a Rust type that deserializes only from one
+specific value.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-monostate-impl-0.1
+  (package
+    (name "rust-monostate-impl")
+    (version "0.1.11")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "monostate-impl" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1km6kc6yxvpsxciaj02zar8cx1sq142s6jn6saqn77h7165dd1pn"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-proc-macro2" ,rust-proc-macro2-1)
+        ("rust-quote" ,rust-quote-1)
+        ("rust-syn" ,rust-syn-2))))
+    (home-page "https://github.com/dtolnay/monostate")
+    (synopsis "Implementation detail of the monostate crate")
+    (description
+     "This package provides implementation details of the monostate crate.")
+    (license (list license:expat license:asl2.0))))
 
 (define-public rust-more-asserts-0.3
   (package
@@ -48964,6 +49062,41 @@ giga, kibi.")
     (description
      "This package provides PyO3-based Rust bindings of the @code{NumPy}
 C-API.")
+    (license license:bsd-2)))
+
+(define-public rust-numpy-0.21
+  (package
+    (name "rust-numpy")
+    (version "0.21.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "numpy" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1x1p5x7lwfc5nsccwj98sln5vx3g3n8sbgm5fmfmy5rpr8rhf5zc"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-half" ,rust-half-2)
+        ("rust-libc" ,rust-libc-0.2)
+        ("rust-nalgebra" ,rust-nalgebra-0.32)
+        ("rust-ndarray" ,rust-ndarray-0.13)
+        ("rust-num-complex" ,rust-num-complex-0.2)
+        ("rust-num-integer" ,rust-num-integer-0.1)
+        ("rust-num-traits" ,rust-num-traits-0.2)
+        ("rust-pyo3" ,rust-pyo3-0.21)
+        ("rust-rustc-hash" ,rust-rustc-hash-1))
+       #:cargo-development-inputs
+       (("rust-nalgebra" ,rust-nalgebra-0.32)
+        ("rust-pyo3" ,rust-pyo3-0.21))))
+    (native-inputs (list python-minimal
+                         (@ (gnu packages python-xyz) python-numpy)))
+    (home-page "https://github.com/PyO3/rust-numpy")
+    (synopsis "Rust bindings for the NumPy C-API")
+    (description
+     "This package provides @code{PyO3-based} Rust bindings of the
+@code{NumPy} C-API.")
     (license license:bsd-2)))
 
 (define-public rust-numtoa-0.2
@@ -63235,6 +63368,29 @@ Rust.")
        ("rust-futures" ,rust-futures-0.1)
        ("rust-rand" ,rust-rand-0.3)
        ("rust-rustc-serialize" ,rust-rustc-serialize-0.3))))))
+
+(define-public rust-rayon-cond-0.3
+  (package
+    (name "rust-rayon-cond")
+    (version "0.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "rayon-cond" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1ybxppq84p3q60h9rng9j3dm79f6970hn4wljyf31lpgan5m77q5"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-either" ,rust-either-1)
+                       ("rust-itertools" ,rust-itertools-0.11)
+                       ("rust-rayon" ,rust-rayon-1))))
+    (home-page "https://github.com/cuviper/rayon-cond")
+    (synopsis "Experimental iterator wrapper")
+    (description
+     "This package provides a Rust experimental iterator wrapper that is
+conditionally parallel or serial.")
+    (license (list license:asl2.0 license:expat))))
 
 (define-public rust-rayon-core-1
   (package
@@ -89095,6 +89251,28 @@ breaking algorithm in Rust.")
      "This crate provides functions for normalization of Unicode strings,
 including Canonical and Compatible Decomposition and Recomposition, as
 described in Unicode Standard Annex #15.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-unicode-normalization-alignments-0.1
+  (package
+    (name "rust-unicode-normalization-alignments")
+    (version "0.1.12")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "unicode-normalization-alignments" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1pk2f3arh3qvdsmrsiri0gr5y5vqpk2gv1yjin0njvh4zbj17xj3"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-smallvec" ,rust-smallvec-1))))
+    (home-page "https://github.com/n1t0/unicode-normalization")
+    (synopsis "Normalize Unicode strings ")
+    (description
+     "This crate provides functions for normalization of Unicode strings, including
+Canonical and Compatible Decomposition and Recomposition, as described in
+Unicode Standard Annex #15.")
     (license (list license:expat license:asl2.0))))
 
 (define-public rust-unicode-reverse-1

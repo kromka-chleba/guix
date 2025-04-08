@@ -1547,7 +1547,7 @@ the 'showing the effect of'-style of operation.")
 (define-public valeronoi
   (package
     (name "valeronoi")
-    (version "0.2.0")
+    (version "0.2.2")
     (source
      (origin
        (method git-fetch)
@@ -1556,7 +1556,7 @@ the 'showing the effect of'-style of operation.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qkhrqkjsmm0h1bxf2ihkqfhdr18xx5x1i2ds1mla13zm0bw2570"))
+        (base32 "1f9sh3v66z3sam4cfnqiivimpcmmqlf81apglkkla3lni94db9g4"))
        (snippet #~(begin
                     (use-modules (guix build utils))
                     (delete-file-recursively "3rdparty")
@@ -1684,15 +1684,15 @@ replacement for the OpenDWG libraries.")
 (define-public minicom
   (package
     (name "minicom")
-    (version "2.9")
+    (version "2.10")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://salsa.debian.org/minicom-team/minicom.git")
-             (commit (string-append "v" version))))
+             (commit version)))
        (sha256
-        (base32 "18k0hiljsiq80x93c3qrd1cmcjjvsk1ymin03vncjp1v35xn8248"))
+        (base32 "0sxbyf1li3lsrvkjpn04xz6ywa42ggfc1fhdrmsibfkhqja9abn0"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -1715,7 +1715,7 @@ replacement for the OpenDWG libraries.")
     (native-inputs
      (list autoconf-2.71 automake gettext-minimal pkg-config))
     (inputs
-     (list ncurses))
+     (list ncurses/tinfo))
     (home-page "https://salsa.debian.org/minicom-team/minicom")
     (synopsis "Serial terminal emulator")
     (description "@code{minicom} is a serial terminal emulator.")

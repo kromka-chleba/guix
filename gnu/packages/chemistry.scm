@@ -6,7 +6,7 @@
 ;;; Copyright © 2020 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2021 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2022, 2023, 2024 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2022, 2023, 2024, 2025 David Elsing <david.elsing@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -146,68 +146,66 @@ powerful plugin architecture.")
   (package
     (name "inchi")
     ;; Update the inchi-doc native input when updating inchi.
-    (version "1.06")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://www.inchi-trust.org/download/"
-                                  (string-join (string-split version #\.) "")
-                                  "/INCHI-1-SRC.zip"))
-              (sha256
-               (base32
-                "1zbygqn0443p0gxwr4kx3m1bkqaj8x9hrpch3s41py7jq08f6x28"))
-              (file-name (string-append name "-" version ".zip"))))
+    (version "1.07.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/IUPAC-InChI/InChI")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0r32f6i5d8ir96ic3nvqb5lywxrznwrkk6hnz1q0a4bgsw5pmk0n"))
+       (modules '((guix build utils)))
+       (snippet '(delete-file-recursively "INCHI-1-BIN"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:tests? #f ; no check target
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure) ; no configure script
-         (add-before 'build 'chdir-to-build-directory
-           (lambda _ (chdir "INCHI_EXE/inchi-1/gcc") #t))
-         (add-after 'build 'build-library
-           (lambda _
-             (chdir "../../../INCHI_API/libinchi/gcc")
-             (invoke "make")))
-         (replace 'install
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin"))
-                    (doc (string-append out "/share/doc/inchi"))
-                    (include-dir (string-append out "/include/inchi"))
-                    (lib (string-append out "/lib/inchi"))
-                    (inchi-doc (assoc-ref inputs "inchi-doc"))
-                    (unzip (search-input-file inputs "/bin/unzip")))
-               (chdir "../../..")
-               ;; Install binary.
-               (with-directory-excursion "INCHI_EXE/bin/Linux"
-                 (rename-file "inchi-1" "inchi")
-                 (install-file "inchi" bin))
-               ;; Install libraries.
-               (with-directory-excursion "INCHI_API/bin/Linux"
-                 (for-each (lambda (file)
-                             (install-file file lib))
-                           (find-files "." "libinchi\\.so\\.1\\.*")))
-               ;; Install header files.
-               (with-directory-excursion "INCHI_BASE/src"
-                 (for-each (lambda (file)
-                             (install-file file include-dir))
-                           (find-files "." "\\.h$")))
-               ;; Install documentation.
-               (mkdir-p doc)
-               (invoke unzip "-j" "-d" doc inchi-doc)
-               #t))))))
-    (native-inputs
-     `(("unzip" ,unzip)
-       ("inchi-doc"
-        ,(origin
-           (method url-fetch)
-           (uri (string-append "http://www.inchi-trust.org/download/"
-                                  (string-join (string-split version #\.) "")
-                                  "/INCHI-1-DOC.zip"))
-           (sha256
-            (base32
-             "1kyda09i9p89xfq90ninwi7w13k1w3ljpl4gqdhpfhi5g8fgxx7f"))
-           (file-name (string-append name "-" version ".zip"))))))
+     (list
+      #:tests? #f ; no check target
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure) ; no configure script
+          (add-after 'unpack 'chdir-to-build-directory
+            (lambda _ (chdir "INCHI-1-SRC/INCHI_EXE/inchi-1/gcc")))
+          (add-after 'build 'build-library
+            (lambda* (#:key parallel-build? #:allow-other-keys)
+              (chdir "../../../INCHI_API/libinchi/gcc")
+              (invoke "make" "-j" (if parallel-build?
+                                      (number->string (parallel-job-count))
+                                      "1"))))
+          (replace 'install
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let* ((bin (string-append #$output "/bin"))
+                     (doc (string-append #$output "/share/doc/inchi"))
+                     (include-dir (string-append #$output "/include/inchi"))
+                     (lib (string-append #$output "/lib/inchi")))
+                (chdir "../../..")
+                ;; Install binary.
+                (with-directory-excursion "INCHI_EXE/bin/Linux"
+                  (rename-file "inchi-1" "inchi")
+                  (install-file "inchi" bin))
+                ;; Install library.
+                (with-directory-excursion "INCHI_API/bin/Linux"
+                  (let ((libname (basename
+                                  (car
+                                   (find-files "." "libinchi\\.so\\.1\\.*")))))
+                    (install-file libname lib)
+                    (with-directory-excursion lib
+                      (symlink libname "libinchi.so.1")
+                      (symlink "libinchi.so.1" "libinchi.so"))))
+                ;; Install header files.
+                (with-directory-excursion "INCHI_BASE/src"
+                  (for-each (lambda (file)
+                              (install-file file include-dir))
+                            (find-files "." "\\.h$")))
+                ;; Install documentation.
+                (with-directory-excursion "../INCHI-1-DOC"
+                  (for-each
+                   (lambda (file)
+                     (install-file file doc))
+                   (find-files "." "\\.pdf$")))))))))
+    (native-inputs (list unzip))
     (home-page "https://www.inchi-trust.org")
     (synopsis "Utility for manipulating machine-readable chemical structures")
     (description
@@ -216,9 +214,7 @@ chemical structures into machine-readable strings of information.  InChIs are
 unique to the compound they describe and can encode absolute stereochemistry
 making chemicals and chemistry machine-readable and discoverable.  A simple
 analogy is that InChI is the bar-code for chemistry and chemical structures.")
-    (license (license:non-copyleft
-              "file://LICENCE"
-              "See LICENCE in the distribution."))))
+    (license license:expat)))
 
 (define-public libmsym
   (package
@@ -817,7 +813,7 @@ emphasis on quality rather than speed.")
 (define-public yaehmop
   (package
     (name "yaehmop")
-    (version "2023.03.1")
+    (version "2024.03.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -826,7 +822,7 @@ emphasis on quality rather than speed.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "18xnxqn8i7vswy3iffapfh9q2iimpnd23ps45hn4xxbs6dqgzprb"))
+                "1wy38cfqfs203p1k3qqsizzlpvasldjcfxmlng54y5mxzw97n55f"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -1070,10 +1066,56 @@ unique ring families, relevant cycles, the smallest set of smallest rings and
 other ring topology descriptions.")
     (license license:bsd-3)))
 
+(define-public pubchem-align3d
+  (let ((commit "daefab3dd0c90ca56da9d3d5e375fe4d651e6be3")
+        (revision "0"))
+    (package
+      (name "pubchem-align3d")
+      (version (git-version "0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/ncbi/pubchem-align3d")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1nj1zz5nvn5h3dyj66zi11mmvmzpq3b8y51fld9bkxnsmk17h05m"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:tests? #f ; circular dependency with rdkit
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            (replace 'build
+              (lambda _
+                (invoke "g++"
+                        "-o" "libpubchem-align3d.so"
+                        "-O2" "-g" "-fPIC" "-shared"
+                        "shape_functions1.cpp" "shape_functions2.cpp"
+                        "shape_neighbor.cpp")))
+            (replace 'install
+              (lambda _
+                (for-each
+                 (lambda (file)
+                   (install-file
+                    file
+                    (string-append #$output "/include/pubchem-align3d")))
+                 (find-files "." "\\.hpp"))
+                (install-file "libpubchem-align3d.so"
+                              (string-append #$output "/lib")))))))
+      (home-page "https://github.com/ncbi/pubchem-align3d")
+      (synopsis "C++ library for aligning small molecules")
+      (description "This is a generic C++ library that can be used to rapidly
+align two small molecules in 3D space, with shape - and optionally color -
+Tanimoto scoring.")
+      (license license:public-domain))))
+
 (define-public rdkit
   (package
     (name "rdkit")
-    (version "2023.09.4")
+    (version "2024.09.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1084,7 +1126,7 @@ other ring topology descriptions.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1lgcgijlzzwpfxndsdlx13npdfk7hcii11zg25cvpmzhbpn6vyn8"))
+                "0nagqy5c9b86ip8qr1rnvby235am1zyc4sqm0z7wphbb70cqazxg"))
               (patches
                (search-patches "rdkit-unbundle-external-dependencies.patch"))
               (modules '((guix build utils)))
@@ -1182,10 +1224,16 @@ other ring topology descriptions.")
                             "graphmoltestPickler" "pyPartialCharges"
                             "substructLibraryTest" "pyFeatures"
                             "pythonTestDirML" "pythonTestDirChem"
+                            "pyRealValueVect" "pyDiscreteValueVect"
+                            "pickleTestsCatch"
                             ;; Catching Python exception fails
                             "pyRanker"
                             ;; Flaky test depending on floating point rounding
                             "testConrec"
+                            ;; Expensive test which may time out
+                            "pySynthonSpaceSearch"
+                            ;; Circular import
+                            "pythonSourceTests"
                             ) "|")
                          ")")))))))))
     (inputs
@@ -1196,18 +1244,20 @@ other ring topology descriptions.")
            freetype
            inchi
            maeparser
+           pubchem-align3d
            python
            ringdecomposerlib
            sqlite
            yaehmop))
     (native-inputs
      (list bison
-           boost
+           boost-numpy
            catch2-3
            eigen
            flex
            freesasa
            pkg-config
+           python-pytest
            rapidjson
            tar))
     (propagated-inputs

@@ -359,7 +359,7 @@ asdf-build-system."
   (team 'go
         #:name "Go team"
         #:scope (list "gnu/packages/configuration-management.scm"
-                      "gnu/packages/golang(-.+|)\\.scm$"
+                      (make-regexp* "gnu/packages/golang(-.+|)\\.scm$")
                       "gnu/packages/syncthing.scm"
                       "gnu/packages/terraform.scm"
                       "guix/build-system/go.scm"
@@ -860,6 +860,10 @@ GLib/GIO, GTK, GStreamer and Webkit."
 (define-member (person "Greg Hogan"
                        "code@greghogan.com")
   c++)
+
+(define-member (person "Hilton Chain"
+                       "hako@ultrarare.space")
+  emacs home localization mozilla rust zig)
 
 (define (find-team name)
   (or (hash-ref %teams (string->symbol name))

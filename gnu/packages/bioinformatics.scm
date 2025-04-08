@@ -141,6 +141,7 @@
   #:use-module (gnu packages perl)
   #:use-module (gnu packages perl-check)
   #:use-module (gnu packages perl-web)
+  #:use-module (gnu packages perl6)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages popt)
   #:use-module (gnu packages protobuf)
@@ -22367,7 +22368,7 @@ sequences to accelerate the alignment process.")
 (define-public vcflib
   (package
     (name "vcflib")
-    (version "1.0.9")
+    (version "1.0.12")
     (source
      (origin
        (method git-fetch)
@@ -22376,7 +22377,7 @@ sequences to accelerate the alignment process.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0cmznzq7hl5vr504ww262rwz5lfdfrca5ksbcvwh3cgp44fiwykv"))
+        (base32 "1llqnbgx4ybb77cp5k3cs0y7n4p8ma6b3sj10iarpg5r6a5gps5a"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -22393,9 +22394,10 @@ sequences to accelerate the alignment process.")
                (string-append "${FASTAHACK_LIBRARIES} "
                               "${WFA2_LIBRARIES} "
                               "${SMITHWATERMAN_LIBRARIES} "
-                              text)))
+                              text))
+              (("install\\(TARGETS \\$\\{WFALIB\\}.*") ""))
             (substitute* (find-files "." "\\.(h|c)(pp)?$")
-              (("\"SmithWatermanGotoh.h\"") "<smithwaterman/SmithWatermanGotoh.h>")
+              (("SmithWatermanGotoh.h") "smithwaterman/SmithWatermanGotoh.h")
               (("\"convert.h\"") "<smithwaterman/convert.h>")
               (("\"disorder.h\"") "<smithwaterman/disorder.h>")
               (("\"wavefront/wfa.hpp\"") "<wavefront/wfa.hpp>")
@@ -22421,8 +22423,7 @@ sequences to accelerate the alignment process.")
        ;; This package builds against the .o files so we need to extract the source.
        ("filevercmp-src" ,(package-source filevercmp))
        ("fsom-src" ,(package-source fsom))
-       ("intervaltree-src" ,(package-source intervaltree))
-       ("multichoose-src" ,(package-source multichoose))))
+       ("intervaltree-src" ,(package-source intervaltree))))
     (arguments
      (list
       #:configure-flags
@@ -22463,8 +22464,7 @@ sequences to accelerate the alignment process.")
                 (and
                  (unpack "filevercmp-src" "contrib/filevercmp")
                  (unpack "fsom-src" "contrib/fsom")
-                 (unpack "intervaltree-src" "contrib/intervaltree")
-                 (unpack "multichoose-src" "contrib/multichoose"))
+                 (unpack "intervaltree-src" "contrib/intervaltree"))
 
                 ;; This is needed for downstream packages to allow building
                 ;; with GCC 11+.
@@ -22504,76 +22504,62 @@ manipulations on VCF files.")
 (define-public freebayes
   (package
     (name "freebayes")
-    (version "1.3.7")
+    (version "1.3.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/freebayes/freebayes")
-                    (commit (string-append "v" version))))
+                    (commit (string-append "v" version))
+                    (recursive? #true)))
               (file-name (git-file-name name version))
               (sha256
-               (base32 "163nd1xkq547za80khlys4qkgal64f3sgl6ap3yvik68r0rgyisv"))))
+               (base32 "18i8xv5cx4n9924f4gqjk2sg3vi437nh7ssy99ng8ajschgaw1m2"))))
     (build-system meson-build-system)
     (inputs
-     (list fastahack htslib smithwaterman tabixpp vcflib))
+     (list bzip2 fastahack htslib smithwaterman tabixpp vcflib xz))
     (native-inputs
-     `(("bash-tap" ,bash-tap)
-       ("bc" ,bc)
-       ("grep" ,grep)   ; Built with perl support.
-       ("parallel" ,parallel)
-       ("perl" ,perl)
-       ("pkg-config" ,pkg-config)
-       ("python" ,python)
-       ("samtools" ,samtools)
-       ("simde" ,simde)
-       ;; This submodule is needed to run the tests.
-       ("test-simple-bash-src"
-        ,(origin
-           (method git-fetch)
-           (uri (git-reference
-                 (url "https://github.com/ingydotnet/test-simple-bash/")
-                 (commit "124673ff204b01c8e96b7fc9f9b32ee35d898acc")))
-           (file-name "test-simple-bash-src-checkout")
-           (sha256
-            (base32 "043plp6z0x9yf7mdpky1fw7zcpwn1p47px95w9mh16603zqqqpga"))))))
+     (list bc
+           grep                         ; Built with perl support.
+           parallel
+           perl
+           perl6-tap-harness
+           pkg-config
+           python
+           samtools
+           simde))
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
+     (list
+      #:phases
+      `(modify-phases %standard-phases
          (add-after 'unpack 'patch-source
            (lambda* (#:key inputs #:allow-other-keys)
-             (let ((bash-tap (assoc-ref inputs "bash-tap")))
-               (substitute* (find-files "test/t")
-                 (("BASH_TAP_ROOT=bash-tap")
-                  (string-append "BASH_TAP_ROOT=" bash-tap "/bin"))
-                 (("bash-tap/bash-tap-bootstrap")
-                  (string-append bash-tap "/bin/bash-tap-bootstrap"))
-                 (("source.*bash-tap-bootstrap")
-                  (string-append "source " bash-tap "/bin/bash-tap-bootstrap")))
-               (substitute* '("src/BedReader.cpp"
-                              "src/BedReader.h")
-                 (("../intervaltree/IntervalTree.h") "IntervalTree.h"))
-               ;; We don't have Perl support in grep -E.
-               (substitute* '("test/t/01_call_variants.t"
-                              "test/t/01b_call_variants.t")
-                 (("grep -P") "grep -E")
-                 (("\\\\t") "	"))
-               (substitute* "meson.build"
-                 ;; Our pkg-config file is vcflib.pc
-                 (("libvcflib") "vcflib")
-                 (("vcflib_inc,") "")))))
-         (add-after 'unpack 'unpack-submodule-sources
-           (lambda* (#:key inputs #:allow-other-keys)
-             (mkdir-p "test/test-simple-bash")
-             (copy-recursively (assoc-ref inputs "test-simple-bash-src")
-                               "test/test-simple-bash")))
-        ;; The slow tests take longer than the specified timeout.
-        ,@(if (any (cute string=? <> (%current-system))
-                   '("armhf-linux" "aarch64-linux"))
-            '((replace 'check
-                (lambda* (#:key tests? #:allow-other-keys)
-                  (when tests?
-                    (invoke "meson" "test" "--timeout-multiplier" "5")))))
-            '()))))
+             (setenv "CPLUS_INCLUDE_PATH"
+                     (string-append (getcwd) "/contrib/multichoose:"
+                                    (getenv "CPLUS_INCLUDE_PATH")))
+             (substitute* '("src/BedReader.cpp"
+                            "src/BedReader.h")
+               (("intervaltree/IntervalTree.h") "vcflib/IntervalTree.h")
+               (("<IntervalTree.h>") "<vcflib/IntervalTree.h>"))
+             (substitute* '("src/AlleleParser.h"
+                            "src/ResultData.h")
+               (("Variant.h") "vcflib/Variant.h"))
+             (substitute* (find-files "." "\\.(h|c)(pp)?$")
+               (("\"multichoose.h\"") "<vcflib/multichoose.h>")
+               (("\"convert.h\"") "<smithwaterman/convert.h>")
+               (("\"split.h\"") "<fastahack/split.h>")
+               (("\"join.h\"") "<vcflib/join.h>"))
+             (substitute* "meson.build"
+               ;; Our pkg-config file is vcflib.pc
+               (("libvcflib") "vcflib")
+               (("vcflib_inc,") ""))))
+         ;; The slow tests take longer than the specified timeout.
+         ,@(if (any (cute string=? <> (%current-system))
+                    '("armhf-linux" "aarch64-linux"))
+               '((replace 'check
+                   (lambda* (#:key tests? #:allow-other-keys)
+                     (when tests?
+                       (invoke "meson" "test" "--timeout-multiplier" "5")))))
+               '()))))
     (home-page "https://github.com/freebayes/freebayes")
     (synopsis "Haplotype-based variant detector")
     (description "FreeBayes is a Bayesian genetic variant detector designed to

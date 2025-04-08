@@ -1133,7 +1133,7 @@ similar to live activity monitoring provided with NGINX plus.")
 (define-public lighttpd
   (package
     (name "lighttpd")
-    (version "1.4.77")
+    (version "1.4.78")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.lighttpd.net/lighttpd/"
@@ -1141,7 +1141,7 @@ similar to live activity monitoring provided with NGINX plus.")
                                   "lighttpd-" version ".tar.xz"))
               (sha256
                (base32
-                "1kk22mzh2p34nrwnm8q57xgm4riavmgxh0rd8nvdhrr2zbdspbxc"))))
+                "0giavficc2yjl53cdbc7pd50wjyx0k1y32gs3kyfkjbmpkl3j1rw"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -6825,7 +6825,9 @@ deployments.")
                  (substitute* "bin/varnishd/mgt/mgt_shmem.c"
                    (("rm -rf") (string-append rm " -rf")))
                  (substitute* "bin/varnishtest/vtc_main.c"
-                   (("/bin/rm") rm)))
+                   (("/bin/rm") rm))
+                 (substitute* "bin/varnishd/mgt/mgt_main.c"
+                   (("rm -rf") (string-append rm " -rf"))))
                (substitute* "bin/varnishtest/tests/u00000.vtc"
                  (("/bin/echo") (which "echo")))))
            (add-after 'unpack 'remove-failing-tests

@@ -64,6 +64,7 @@
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
+;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1405,6 +1406,20 @@ write native speed custom Git applications in any language with bindings.")
                                arg))
                          #$flags))))))
 
+(define-public libgit2-1.9
+  (package
+    (inherit libgit2-1.8)
+    (version "1.9.0")
+    (source (origin
+              (inherit (package-source libgit2-1.8))
+              (uri (git-reference
+                    (url "https://github.com/libgit2/libgit2")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name "libgit2" version))
+              (sha256
+               (base32
+                "06ajn5i5l1209z7x7jxcpw68ph0a6g3q67bmx0jm381rr8cb4zdz"))))))
+
 (define-public libgit2-1.6
   (package
     (inherit libgit2)
@@ -2365,11 +2380,10 @@ wrappers, to be used for optional gitolite extensions."
                       (string-append
                        " " (search-input-file inputs "bin/grep") " ")))
 
-                   ;; Avoid references to the store in authorized_keys.
-                   ;; This works because gitolite-shell is in the PATH.
                    (substitute* "src/triggers/post-compile/ssh-authkeys"
                      (("\\$glshell \\$user")
-                      "gitolite-shell $user"))))
+                      (string-append
+                       #$output "/bin/gitolite-shell $user")))))
                (add-before 'install 'patch-source
                  (lambda* (#:key inputs #:allow-other-keys)
                    ;; Gitolite uses cat to test the readability of the

@@ -8,6 +8,7 @@
 ;;; Copyright © 2021 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2022 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 André Batista <nandre@riseup.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -90,8 +91,8 @@
   #:use-module (gnu packages assembly))
 
 (define-public crossguid
-  (let ((commit "fef89a4174a7bf8cd99fa9154864ce9e8e3bf989")
-        (revision "2"))
+  (let ((commit "ca1bf4b810e2d188d04cb6286f957008ee1b7681")
+        (revision "3"))
     (package
       (name "crossguid")
       (version (string-append "0.0-" revision "." (string-take commit 7)))
@@ -104,31 +105,10 @@
                 (file-name (string-append name "-" version "-checkout"))
                 (sha256
                  (base32
-                  "1blrkc7zcqrqcr5msvhyhm98s2jvm9hr0isqs4288q2r4mdnrfq0"))))
-      (build-system gnu-build-system)
+                  "1x3jc4q6di79x3nlx36394s03yv1j1j5k0x6zljyk5iq78y4mfyz"))))
+      (build-system cmake-build-system)
       (arguments
-       '(#:phases
-         (modify-phases %standard-phases
-           (delete 'configure)          ; no configure script
-           (replace 'build
-             (lambda _
-               (invoke "g++" "-c" "guid.cpp" "-o" "guid.o"
-                        "-DGUID_LIBUUID")
-               (invoke "ar" "rvs" "libcrossguid.a" "guid.o")))
-           (replace 'check
-             (lambda _
-               (invoke "g++" "-c" "test.cpp" "-o" "test.o")
-               (invoke "g++" "-c" "testmain.cpp" "-o" "testmain.o")
-               (invoke "g++" "test.o" "guid.o" "testmain.o"
-                       "-o" "test" "-luuid")
-               (invoke (string-append (getcwd) "/test"))))
-           (replace 'install
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let ((out (assoc-ref outputs "out")))
-                 (install-file "guid.h" (string-append out "/include"))
-                 (install-file "libcrossguid.a"
-                               (string-append out "/lib"))
-                 #t))))))
+       '(#:tests? #f))
       (inputs
        `(("libuuid" ,util-linux "lib")))
       (synopsis "Lightweight universal identifier library")
@@ -142,7 +122,7 @@ generator library for C++.")
 ;; of the standard build process. To make things easier, we bootstrap
 ;; and patch shebangs here, so we don't have to worry about it later.
 (define libdvdnav/kodi
-  (let ((commit "6.0.0-Leia-Alpha-3"))
+  (let ((commit "6.1.1"))
     (package
       (name "libdvdnav-bootstrapped")
       (version commit)
@@ -154,7 +134,7 @@ generator library for C++.")
                 (file-name (string-append name "-" version "-checkout"))
                 (sha256
                  (base32
-                  "0qwlf4lgahxqxk1r2pzl866mi03pbp7l1fc0rk522sc0ak2s9jhb"))))
+                  "190wp4czs4594496vc6ifswg24wijd7c1z0whdkjdaf26rff5xha"))))
       (build-system gnu-build-system)
       (arguments
        '(#:tests? #f
@@ -177,7 +157,7 @@ generator library for C++.")
       (license license:gpl2+))))
 
 (define libdvdread/kodi
-  (let ((commit "6.0.0-Leia-Alpha-3"))
+  (let ((commit "6.1.3"))
     (package
       (name "libdvdread-bootstrapped")
       (version commit)
@@ -189,7 +169,7 @@ generator library for C++.")
                 (file-name (string-append name "-" version "-checkout"))
                 (sha256
                  (base32
-                  "1xxn01mhkdnp10cqdr357wx77vyzfb5glqpqyg8m0skyi75aii59"))))
+                  "0by70r55575xa9rl8dp8594lxhm475splslvafskqid30n9cpq8h"))))
       (build-system gnu-build-system)
       (arguments
        '(#:tests? #f
@@ -212,7 +192,7 @@ generator library for C++.")
       (license (list license:gpl2+ license:lgpl2.1+)))))
 
 (define libdvdcss/kodi
-  (let ((commit "1.4.2-Leia-Beta-5"))
+  (let ((commit "1.4.3"))
     (package
       (name "libdvdcss-bootstrapped")
       (version commit)
@@ -224,7 +204,7 @@ generator library for C++.")
                 (file-name (string-append name "-" version "-checkout"))
                 (sha256
                  (base32
-                  "0j41ydzx0imaix069s3z07xqw9q95k7llh06fc27dcn6f7b8ydyl"))))
+                  "1xvs3vhdjjrm019rk907bd4lw7jh3wb7rh88zqd3xv8iq3apbcg6"))))
       (build-system gnu-build-system)
       (arguments
        '(#:tests? #f
@@ -277,31 +257,31 @@ secondary errors.")
 (define-public kodi
   (package
     (name "kodi")
-    (version "19.5")
+    (version "21.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/xbmc/xbmc")
-                    (commit (string-append version "-Matrix"))))
+                    (commit (string-append version "-Omega"))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1pfd1ajivr865h0fkpbv778626c4czrvq8650bzqv9aqzh8f36my"))
-              (patches (search-patches "kodi-set-libcurl-ssl-parameters.patch"
-                                       "kodi-mesa-eglchromium.patch"))
+                "1kq35hn7fl8fhsv5xvqb7snsh9lbzix56pafqz8flgc5mrrckm25"))
+              (patches (search-patches "kodi-set-libcurl-ssl-parameters.patch"))
               (modules '((guix build utils)))
               (snippet
                '(begin
                   (use-modules (guix build utils))
                   (for-each delete-file-recursively
                             '("project/BuildDependencies/"
-                              "tools/codegenerator/groovy/commons-lang-2.6.jar"
-                              "tools/codegenerator/groovy/groovy-all-2.4.4.jar"
                               ;; Purge these sources:
                               ;; "tools/depend/native/JsonSchemaBuilder"
                               ;; "tools/depend/native/TexturePacker"
                               ;; "lib/libUPnP"
                               "lib/libUPnP/Neptune/ThirdParty"
+                              "lib/libUPnP/Platinum/ThirdParty"
+                              "lib/win32"
+                              "tools/android/packaging/gradle/wrapper/gradle-wrapper.jar"
                               "project/Win32BuildSetup/tools/7z"))))))
     (build-system cmake-build-system)
     (arguments
@@ -342,21 +322,45 @@ secondary errors.")
                 "COMMAND groovy")
                (("ARGS \\$\\{JAVA_OPEN_OPTS\\} -cp \"\\$\\{classpath\\}\" groovy.ui.GroovyMain")
                 "ARGS -cp \"${classpath}\" ")
-               (("classpath \\$\\{GROOVY_DIR\\}/groovy-all-\\$\\{GROOVY_VER\\}.jar")
-                "classpath ")
-               (("\\$\\{GROOVY_DIR\\}/commons-lang-\\$\\{COMMONS_VER\\}.jar")
-                (search-input-file inputs "/share/java/commons-lang-2.6.jar"))
+               (("classpath \\$\\{groovy_SOURCE_DIR\\}")
+                (string-append "classpath " (assoc-ref inputs "groovy")))
+               (("\\$\\{apache-commons-lang_SOURCE_DIR\\}")
+                (dirname
+                 (search-input-file
+                  inputs
+                  "/lib/m2/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar")))
+               (("\\$\\{apache-commons-text_SOURCE_DIR\\}")
+                (dirname
+                 (search-input-file
+                  inputs
+                  "/lib/m2/org/apache/commons/commons-text/1.9/commons-text-1.9.jar")))
+               (("FetchContent_MakeAvailable\\(groovy\\)")
+                (string-append "set(groovy_SOURCE_DIR " (assoc-ref inputs "groovy") ")"))
+               (("FetchContent_MakeAvailable\\(apache-commons-lang\\)")
+                (string-append "set(apache-commons-lang_SOURCE_DIR "
+                               (assoc-ref inputs "java-commons-lang3")
+                               "/lib/m2/org/apache/commons/commons-lang3/3.12.0)"))
+               (("FetchContent_MakeAvailable\\(apache-commons-text\\)")
+                (string-append "set(apache-commons-text_SOURCE_DIR "
+                               (assoc-ref inputs "java-commons-text")
+                               "/lib/m2/org/apache/commons/commons-text/1.9)"))
                (("^set\\(GROOVY_VER.*")
                 (string-append "set(GROOVY_VER 3.0.5)\n")))
 
              ;; Prevent the build scripts from calling autoreconf in the
              ;; build stage.  Otherwise, it would undo the bootstrapping
              ;; and shebang patching that we worked so hard for.
-             (substitute* "cmake/modules/FindLibDvd.cmake"
+             (substitute* "cmake/modules/FindLibDvdCSS.cmake"
                ;; The libdvd* sources that we bootstrapped separately are
                ;; unpacked in the build phase. This is our best opportunity
                ;; to make them writable before the build process starts.
-               (("autoreconf -vif") "chmod -R u+w ."))
+               (("\\$\\{AUTORECONF\\} -vif") "chmod -R u+w ."))
+
+             (substitute* "cmake/modules/FindLibDvdNav.cmake"
+               (("\\$\\{AUTORECONF\\} -vif") "chmod -R u+w ."))
+
+             (substitute* "cmake/modules/FindLibDvdRead.cmake"
+               (("\\$\\{AUTORECONF\\} -vif") "chmod -R u+w ."))
 
              (substitute* "xbmc/platform/posix/PosixTimezone.cpp"
                (("/usr/share/zoneinfo")
@@ -374,9 +378,7 @@ secondary errors.")
                (("TEST_F\\(TestSystemInfo, GetOsPrettyNameWithVersion\\)")
                 "TEST_F(TestSystemInfo, DISABLED_GetOsPrettyNameWithVersion)")
                (("TEST_F\\(TestSystemInfo, GetOsName\\)")
-                "TEST_F(TestSystemInfo, DISABLED_GetOsName)")
-               (("TEST_F\\(TestSystemInfo, GetOsVersion\\)")
-                "TEST_F(TestSystemInfo, DISABLED_GetOsVersion)"))
+                "TEST_F(TestSystemInfo, DISABLED_GetOsName)"))
              (substitute* "xbmc/utils/test/TestCPUInfo.cpp"
                (("TEST_F\\(TestCPUInfo, GetCPUFrequency\\)")
                 "TEST_F(TestCPUInfo, DISABLED_GetCPUFrequency)"))
@@ -384,7 +386,10 @@ secondary errors.")
                (("TEST_F\\(TestDateTime, TmOperators\\)")
                 "TEST_F(TestDateTime, DISABLED_TmOperators)")
                (("TEST_F\\(TestDateTime, GetAsTm\\)")
-                "TEST_F(TestDateTime, DISABLED_GetAsTm)"))))
+                "TEST_F(TestDateTime, DISABLED_GetAsTm)"))
+             (substitute* "xbmc/network/test/TestNetwork.cpp"
+               (("TEST_F\\(TestNetwork, PingHost\\)")
+                "TEST_F(TestNetwork, DISABLED_PingHost)"))))
          (add-before 'build 'set-build-environment
            (lambda _
              ;; Some bundled build scripts fall back to /bin/sh
@@ -404,7 +409,8 @@ secondary errors.")
            googletest
            groovy
            openjdk9                     ;like groovy
-           java-commons-lang
+           java-commons-lang3
+           java-commons-text
            libdvdcss/kodi
            libdvdnav/kodi
            libdvdread/kodi
@@ -421,7 +427,7 @@ secondary errors.")
            dcadec
            dbus
            eudev
-           ffmpeg-4
+           ffmpeg
            flac
            flatbuffers
            fmt
@@ -450,6 +456,7 @@ secondary errors.")
            libpng
            libssh
            libtiff
+           libudfread
            libva
            libvorbis
            libxcrypt
@@ -470,6 +477,7 @@ secondary errors.")
            sqlite
            taglib
            tinyxml
+           tinyxml2
            tzdata
            util-linux
            zip

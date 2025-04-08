@@ -64,6 +64,7 @@
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2023 Santiago Payà Miralta <santiagopim@gmail.com>
+;;; Copyright © 2025 Kurome <hunt31999@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -204,27 +205,28 @@ glyphset has also been extended, supporting now a wider number of languages.")
 (define-public font-ibm-plex
   (package
     (name "font-ibm-plex")
-    (version "6.4.0")
+    (version "6.4.2")
     ;; We prefer git-fetch since it lets us get the opentype, truetype and web
     ;; fonts all in one download. The zip archive releases separate the
     ;; opentype, truetype and web fonts into three separate archives.
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/IBM/plex")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "00zbwwcwmq8bv9lvsy5r2an8jf4x0cqzw03i7fgjcmbh0h8a48kl"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/IBM/plex")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00lzbm1b7zbx5q3p0s8fh9q9zj6z4k01fn7n177iybh9xn4jgx0p"))))
     (build-system font-build-system)
     (outputs '("out" "ttf" "woff"))
     (home-page "https://github.com/IBM/plex")
     (synopsis "IBM Plex typeface")
-    (description "This package provides the Plex font family.  It comes in a
-Sans, Serif, Mono and Sans Condensed, all with roman and true italics.  The
-fonts have been designed to work well in user interface (UI) environments as
-well as other mediums.")
+    (description
+     "This package provides the Plex font family.  It comes in a Sans, Serif,
+Mono and Sans Condensed, all with roman and true italics.  The fonts have been
+designed to work well in user interface (UI) environments as well as other
+mediums.")
     (license license:silofl1.1)))
 
 (define-public font-lilex
@@ -246,6 +248,33 @@ well as other mediums.")
     (description "Lilex is a modern programming font containing a set of
 ligatures for common programming multi-character combinations.")
     (license license:silofl1.1)))
+
+(define-public font-lisnoti
+  (let ((commit "9adec42aa352918bfb399c4f0b273f191b922836")
+        (revision "1"))
+    (package
+      (name "font-lisnoti")
+      (version (git-version "0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/Lisnoti/Lisnoti")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0agy7l2qjmdxvw52bbmnfxqxc5n7l76pq5ha4zg1c1fk8vnkapk7"))))
+      (build-system font-build-system)
+      (home-page "https://github.com/Lisnoti/Lisnoti")
+      (synopsis "Proportional sans serif font for general use and code")
+      (description
+       "Lisnoti is a proportional sans serif font derived from Noto's sans
+serif fonts and is intended for both general use and for writing
+computer code, including in a maths and science context.
+
+Lisnoti is available in regular, italic, bold and bold-italic
+variants.")
+      (license license:silofl1.1))))
 
 (define-public font-inconsolata
   (package
@@ -671,11 +700,11 @@ The unified Libertinus family consists of:
     (license license:silofl1.1)))
 
 (define-public font-libre-franklin
-  (let ((commit "bfc61d6e403771c2e90aa6e0bd54975633974fb2")
-        (revision "0"))
+  (let ((commit "0022627ebb2a582327569ee45af5d0d9ef31dfea")
+        (revision "1"))
     (package
       (name "font-libre-franklin")
-      (version (git-version "1.015" revision commit))
+      (version (git-version "1.502" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -684,9 +713,19 @@ The unified Libertinus family consists of:
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32
-           "07rm9fkhm8ckxpaj0zixl4vgzmj6bj4xzbaqm5hngdjds1bjv1ls"))))
+          (base32 "1kfipv9vfivgn1789b9yc6r0l31r6l02nz06icw99zvmfcjbpzf0"))))
       (build-system font-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; To avoid installing legacy fonts
+            (add-before 'install 'chdir
+              (lambda _
+                (chdir "fonts")))
+            (add-after 'install 'chdir-back
+              (lambda _
+                (chdir ".."))))))
       (home-page "https://fonts.google.com/specimen/Libre+Franklin")
       (synopsis "Font family based on Franklin Gothic")
       (description
@@ -2387,7 +2426,7 @@ programming.  Iosevka is completely generated from its source code.")
 (define-public font-junicode
   (package
     (name "font-junicode")
-    (version "2.003")
+    (version "2.211")
     (source
      (origin
        (method git-fetch)
@@ -2396,11 +2435,12 @@ programming.  Iosevka is completely generated from its source code.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1qg1qwk294p2hgq2gbyhfwwdas1xbkfz3csxf5jz4xqiskn4skgl"))))
+        (base32 "0nk6fgby5sp6035p542pfk2fgjir36vk315mj5z5xf7rafy13jhb"))))
     (build-system font-build-system)
     (home-page "https://github.com/psb1558/Junicode-font")
     (synopsis "Unicode font for medievalists, linguists, and others")
-    (description "The Junicode font was developed for students and scholars of
+    (description
+     "The Junicode font was developed for students and scholars of
 medieval Europe, but its large glyph repertoire also makes it useful as a
 general-purpose font.  Its visual design is based on the typography used by
 Oxford University Press in the late 17th and early 18th centuries.  The font
@@ -2515,7 +2555,7 @@ monospace, slab-serif fonts.")
 (define-public font-google-material-design-icons
   (package
     (name "font-google-material-design-icons")
-    (version "3.0.1")
+    (version "4.0.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2524,7 +2564,7 @@ monospace, slab-serif fonts.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "17q5brcqyyc8gbjdgpv38p89s60cwxjlwy2ljnrvas5cj0s62np0"))))
+                "0c8ah9rj82a1y0jgi5j0hszn7ndv4jb5kxmikv71alqq69xd8zn1"))))
     (build-system font-build-system)
     (home-page "https://google.github.io/material-design-icons")
     (synopsis "Icon font of Google Material Design icons")
@@ -3737,8 +3777,8 @@ characters necessary to display Taiwanese and Hakka.")
               "https://www.freedesktop.org/wiki/Arphic_Public_License/"))))
 
 (define-public font-atui-feather
-  (let ((version "0")
-        (commit "c51fe7cedbcf2cbf4f1b993cef5d8def612dec1d")
+  (let ((version "1.1.0")               ;from package.json
+        (commit "2ac71612ee85b3d1e9e1248cec0a777234315253")
         (revision "1"))
     (package
       (name "font-atui-feather")
@@ -3751,7 +3791,7 @@ characters necessary to display Taiwanese and Hakka.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0hk12bjlsh0j6kd0sz3nwax259afdi6dxws4x88yz5ssxic1ng2j"))))
+                  "0fnj5rh6z3ymny4cywha04x15i52r3h8ds87nx0lhqhfw6y8g02v"))))
       (build-system font-build-system)
       (home-page "https://at-ui.github.io/feather-font/")
       (synopsis "Iconfont version of Feather")
@@ -3867,7 +3907,7 @@ Mainland China.")
 (define-public font-chiron-sung-hk
   (package
     (name "font-chiron-sung-hk")
-    (version "1.016")
+    (version "1.017")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3876,7 +3916,7 @@ Mainland China.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0kznkhf05yd3bxm4mxp1sa74vxw8vxabr71n5lzr10hynn0z1xnq"))))
+                "1pg0zh4gajn699am26j4ldpsa51bafn7n0jc5s4v6sslixj3ccwg"))))
     (build-system font-build-system)
     (arguments
      (list #:phases
@@ -3905,7 +3945,7 @@ prevalent typefaces in Traditional Chinese regions.")
   (package
     (inherit font-chiron-sung-hk)
     (name "font-chiron-hei-hk")
-    (version "2.522")
+    (version "2.524")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3914,7 +3954,7 @@ prevalent typefaces in Traditional Chinese regions.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0s1wdq9m7y3ygdzzvcgjwp5a6724fpllq6y1i66gb9yjmxkjj3v6"))))
+                "077f50yjcf5slr2jzrdampwcrlaswvdnin5iwnirzsms3x9vsm69"))))
     (synopsis "Traditional Chinese Gothic typeface")
     (description
      "Chiron Hei HK is a Traditional Chinese Gothic typeface based on the Hong
@@ -3961,16 +4001,16 @@ Spleen also has support for Powerline symbols out of the box.")
 (define-public font-stix-two
   (package
     (name "font-stix-two")
-    (version "2.13b171")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/stipub/stixfonts")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "17d5a4fk4dz4kraprhxs9q46cbwakfwz06a0qy9zf5nwp4g6fq2d"))))
+    (version "2.14")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/stipub/stixfonts")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02wy9n49nzyvhc55jjmpxrv7hh6ncxv31liniqjgjn7vp68fj40n"))))
     (build-system font-build-system)
     (home-page "https://www.stixfonts.org/")
     (synopsis

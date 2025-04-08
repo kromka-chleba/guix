@@ -56,7 +56,7 @@
 # Copyright © 2022 Alex Griffin <a@ajgrf.com>
 # Copyright © 2022 ( <paren@disroot.org>
 # Copyright © 2022 jgart <jgart@dismail.de>
-# Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
+# Copyright © 2023-2025 Zheng Junjie <z572@z572.online>
 # Copyright © 2023 Ivana Drazovic <iv.dra@hotmail.com>
 # Copyright © 2023 Andy Tai <atai@atai.org>
 # Copyright © 2023 B. Wilson <elaexuotee@wilsonb.com>
@@ -1031,7 +1031,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/avidemux-install-to-lib.patch		\
   %D%/packages/patches/awesome-reproducible-png.patch		\
   %D%/packages/patches/awesome-4.3-fno-common.patch		\
-  %D%/packages/patches/aws-c-auth-install-private-headers.patch	\
   %D%/packages/patches/azr3.patch				\
   %D%/packages/patches/azr3-remove-lash.patch			\
   %D%/packages/patches/barony-fix-textures.patch		\
@@ -1703,7 +1702,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/kobodeluxe-midicon-segmentation-fault.patch	\
   %D%/packages/patches/kobodeluxe-graphics-window-signed-char.patch	\
   %D%/packages/patches/kodi-set-libcurl-ssl-parameters.patch		\
-  %D%/packages/patches/kodi-mesa-eglchromium.patch		\
   %D%/packages/patches/krita-bump-sip-abi-version-to-12.8.patch	\
   %D%/packages/patches/kvmfr-linux-module-fix-build.patch	\
   %D%/packages/patches/kwin-unwrap-executable-name-for-dot-desktop-search.patch\
@@ -1819,6 +1817,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/lua-pkgconfig.patch                      \
   %D%/packages/patches/lua51-liblua-so.patch                    \
   %D%/packages/patches/lua51-pkgconfig.patch                    \
+  %D%/packages/patches/luajit-add-riscv64-support.patch         \
   %D%/packages/patches/lua-liblua-so.patch                      \
   %D%/packages/patches/lua-5.4-pkgconfig.patch			\
   %D%/packages/patches/lua-5.4-liblua-so.patch			\
@@ -2342,6 +2341,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/u-boot-nintendo-nes-serial.patch		\
   %D%/packages/patches/u-boot-rockchip-inno-usb.patch		\
   %D%/packages/patches/ucx-tcp-iface-ioctl.patch		\
+  %D%/packages/patches/uftrace-fix-tests.patch			\
   %D%/packages/patches/ultrastar-deluxe-no-freesans.patch		\
   %D%/packages/patches/ungoogled-chromium-extension-search-path.patch	\
   %D%/packages/patches/ungoogled-chromium-ffmpeg-compat.patch	\

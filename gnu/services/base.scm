@@ -2061,97 +2061,103 @@ proxy of 'guix-daemon'...~%")
                   (define discover?
                     (or (getenv "discover") #$discover?))
 
-                  (mkdir-p "/var/guix")
+                  (define daemon-command
+                    (cons* #$(file-append guix "/bin/guix-daemon")
+                           "--build-users-group" #$build-group
+                           "--max-silent-time"
+                           #$(number->string max-silent-time)
+                           "--timeout" #$(number->string timeout)
+                           "--log-compression"
+                           #$(symbol->string log-compression)
+                           #$@(if use-substitutes?
+                                  '()
+                                  '("--no-substitutes"))
+                           (string-append "--discover="
+                                          (if discover? "yes" "no"))
+                           "--substitute-urls" #$(string-join substitute-urls)
+                           #$@extra-options
+
+                           #$@(if chroot?
+                                  '()
+                                  '("--disable-chroot"))
+                           ;; Add CHROOT-DIRECTORIES and all their dependencies
+                           ;; (if these are store items) to the chroot.
+                           (append-map
+                            (lambda (file)
+                              (append-map (lambda (directory)
+                                            (list "--chroot-directory"
+                                                  directory))
+                                          (call-with-input-file file
+                                            read)))
+                            '#$(map references-file
+                                    chroot-directories))))
+
+                  (define environment-variables
+                    (append (list #$@(if tmpdir
+                                         (list (string-append "TMPDIR=" tmpdir))
+                                         '())
+
+                                  ;; Make sure we run in a UTF-8 locale so that
+                                  ;; 'guix offload' correctly restores nars
+                                  ;; that contain UTF-8 file names such as
+                                  ;; 'nss-certs'.  See
+                                  ;; <https://bugs.gnu.org/32942>.
+                                  (string-append "GUIX_LOCPATH="
+                                                 #$locales "/lib/locale")
+                                  "LC_ALL=en_US.utf8"
+                                  ;; Make 'tar' and 'gzip' available so
+                                  ;; that 'guix perform-download' can use
+                                  ;; them when downloading from Software
+                                  ;; Heritage via '(guix swh)'.
+                                  (string-append "PATH="
+                                                 #$(file-append tar "/bin") ":"
+                                                 #$(file-append gzip "/bin")))
+                            (if proxy
+                                (list (string-append "http_proxy=" proxy)
+                                      (string-append "https_proxy=" proxy))
+                                '())
+                            '#$environment))
+
                   ;; Ensure that a fresh directory is used, in case the old
                   ;; one was more permissive and processes have a file
                   ;; descriptor referencing it hanging around, ready to use
                   ;; with openat.
                   (false-if-exception
                    (delete-file-recursively "/var/guix/daemon-socket"))
-                  (let ((perms #$(logand socket-directory-permissions
-                                         (lognot #o022))))
-                    (mkdir "/var/guix/daemon-socket" perms)
-                    ;; Override umask
-                    (chmod "/var/guix/daemon-socket" perms))
 
-                  (let* ((user #$socket-directory-user)
-                         (uid (if user (passwd:uid (getpwnam user)) -1))
-                         (group #$socket-directory-group)
-                         (gid (if group (group:gid (getgrnam group)) -1)))
-                    (chown "/var/guix/daemon-socket" uid gid))
-
-                  ;; Start the guix-daemon from a container, when supported,
-                  ;; to solve an installation issue. See the comment below for
-                  ;; more details.
-                  (fork+exec-command/container
-                   (cons* #$(file-append guix "/bin/guix-daemon")
-                          "--build-users-group" #$build-group
-                          "--max-silent-time"
-                          #$(number->string max-silent-time)
-                          "--timeout" #$(number->string timeout)
-                          "--log-compression"
-                          #$(symbol->string log-compression)
-                          #$@(if use-substitutes?
-                                 '()
-                                 '("--no-substitutes"))
-                          (string-append "--discover="
-                                         (if discover? "yes" "no"))
-                          "--substitute-urls" #$(string-join substitute-urls)
-                          #$@extra-options
-
-                          #$@(if chroot?
-                                 '()
-                                 '("--disable-chroot"))
-                          ;; Add CHROOT-DIRECTORIES and all their dependencies
-                          ;; (if these are store items) to the chroot.
-                          (append-map
-                           (lambda (file)
-                             (append-map (lambda (directory)
-                                           (list "--chroot-directory"
-                                                 directory))
-                                         (call-with-input-file file
-                                           read)))
-                           '#$(map references-file
-                                   chroot-directories)))
-
-                   ;; When running the installer, we need guix-daemon to
-                   ;; operate from within the same MNT namespace as the
-                   ;; installation container. In that case only, enter the
-                   ;; namespace of the process PID passed as start argument.
-                   ;; Otherwise, for symmetry purposes enter the caller
-                   ;; namespaces which is a no-op.
-                   #:pid (match args
-                           ((pid) (string->number pid))
-                           (else (getpid)))
-
-                   #:environment-variables
-                   (append (list #$@(if tmpdir
-                                        (list (string-append "TMPDIR=" tmpdir))
-                                        '())
-
-                                 ;; Make sure we run in a UTF-8 locale so that
-                                 ;; 'guix offload' correctly restores nars
-                                 ;; that contain UTF-8 file names such as
-                                 ;; 'nss-certs'.  See
-                                 ;; <https://bugs.gnu.org/32942>.
-                                 (string-append "GUIX_LOCPATH="
-                                                #$locales "/lib/locale")
-                                 "LC_ALL=en_US.utf8"
-                                 ;; Make 'tar' and 'gzip' available so
-                                 ;; that 'guix perform-download' can use
-                                 ;; them when downloading from Software
-                                 ;; Heritage via '(guix swh)'.
-                                 (string-append "PATH="
-                                                #$(file-append tar "/bin") ":"
-                                                #$(file-append gzip "/bin")))
-                           (if proxy
-                               (list (string-append "http_proxy=" proxy)
-                                     (string-append "https_proxy=" proxy))
-                               '())
-                           '#$environment)
-
-                   #:log-file #$log-file))))
-           (stop #~(make-kill-destructor))))))
+                  (match args
+                    (((= string->number (? integer? pid)))
+                     ;; Start the guix-daemon in the same mnt namespace as
+                     ;; PID.  This is necessary when running the installer.
+                     ;; Assume /var/guix/daemon-socket was created by a
+                     ;; previous 'start' call without arguments.
+                     (fork+exec-command/container
+                      daemon-command
+                      #:pid pid
+                      #:environment-variables environment-variables
+                      #:log-file #$log-file))
+                    (()
+                     ;; Default to socket activation.
+                     (let ((socket (endpoint
+                                    (make-socket-address
+                                     AF_UNIX
+                                     "/var/guix/daemon-socket/socket")
+                                    #:name "socket"
+                                    #:socket-owner
+                                    (or #$socket-directory-user 0)
+                                    #:socket-group
+                                    (or #$socket-directory-group 0)
+                                    #:socket-directory-permissions
+                                    #$socket-directory-permissions)))
+                       ((make-systemd-constructor daemon-command
+                                                  (list socket)
+                                                  #:environment-variables
+                                                  environment-variables
+                                                  #:log-file #$log-file))))))))
+           (stop #~(lambda (value)
+                     (if (or (process? value) (integer? value))
+                         ((make-kill-destructor) value)
+                         ((make-systemd-destructor) value))))))))
 
 (define (guix-accounts config)
   "Return the user accounts and user groups for CONFIG."

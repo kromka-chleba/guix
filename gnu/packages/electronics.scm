@@ -69,16 +69,18 @@
 (define-public libserialport
   (package
     (name "libserialport")
-    (version "0.1.1")
+    (version "0.1.2")
     (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "http://sigrok.org/download/source/libserialport/libserialport-"
-                    version ".tar.gz"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "git://sigrok.org/libserialport")
+                    (commit (string-append name "-" version))))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "17ajlwgvyyrap8z7f16zcs59pksvncwbmd3mzf98wj7zqgczjaja"))))
+                "0dn10gmm3rwdsiw1psaczb9m52x6cfkfrbywm4f5y8fsmghh7dsy"))))
     (build-system gnu-build-system)
+    (native-inputs (list autoconf automake libtool))
     (home-page "https://sigrok.org/wiki/Libserialport")
     (synopsis "Library for using serial ports")
     (description "Libserialport is a minimal shared library written in C that is intended
@@ -160,8 +162,8 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
       (license license:gpl2+))))
 
 (define-public libsigrok
-  (let ((commit "a7e919a3a6b7fd511acbe1a280536b76c70c28d2")
-        (revision "1"))
+  (let ((commit "f06f788118191d19fdbbb37046d3bd5cec91adb1")
+        (revision "2"))
     (package
       (name "libsigrok")
       (version (git-version "0.5.2" revision commit))
@@ -172,7 +174,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
                (url "git://sigrok.org/libsigrok")
                (commit commit)))
          (sha256
-          (base32 "0km3fyv5s2byrm4zpbss2527ynhw4nb67imnbawwic2a6zh9jiyc"))
+          (base32 "1ahgpa0gaa4fl8c6frpgamvgxg0fisfwlqddr5x25456vkk2i9zi"))
          (file-name (git-file-name name version))))
       (outputs '("out" "doc"))
       (arguments
@@ -436,7 +438,7 @@ support for ESD sources.")
 (define-public m8c
   (package
     (name "m8c")
-    (version "1.7.0")
+    (version "1.7.10")
     (source
      (origin
        (method git-fetch)
@@ -445,7 +447,7 @@ support for ESD sources.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wsknqgya2vkalbjq6rvmknsdk4lrqkn0z5rpjf4pd5vxgr8qryb"))))
+        (base32 "18bx6jf0jbgnd6cfydh4iknh25rrpyc8awma4a1hkia57fyjy2gi"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -475,21 +477,19 @@ which allows one to install the M8 firmware on any Teensy.")
 
 (define-public minipro
   ;; Information needed to fix Makefile
-   (let* ((commit "c181c2cf1619d00a520627d475e3fadb1eea5dac")
-         (commit-short (substring commit 0 8))
-         (date "2022-09-10 21:44:06 -0700"))
+  (let* ((date "2024-09-20 20:55:06 -0700"))
     (package
       (name "minipro")
-      (version "0.6")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://gitlab.com/DavidGriffith/minipro.git")
-                      (commit version)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "03xgmvvsxmqrz7blg7cqk0pb9ynhlq6v6jfl532zmjdzp5p3h10d"))))
+      (version "0.7.2")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://gitlab.com/DavidGriffith/minipro.git")
+               (commit version)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1a7sbbs1byngkh3bh0dxwxk1iw1dx0kvp946y2lxb8rm6b7hwqym"))))
       (native-inputs (list pkg-config which))
       (inputs (list libusb))
       (build-system gnu-build-system)
@@ -506,9 +506,7 @@ which allows one to install the M8 firmware on any Teensy.")
                   (("GIT_BRANCH = .*")
                    (string-append "GIT_BRANCH = \"master\"\n"))
                   (("GIT_HASH = .*")
-                   (string-append "GIT_HASH = \"" #$commit "\"\n"))
-                  (("GIT_HASH_SHORT = .*")
-                   (string-append "GIT_HASH_SHORT = \"" #$commit-short "\"\n"))
+                   (string-append "GIT_HASH = \"" #$version "\"\n"))
                   (("GIT_DATE = .*")
                    (string-append "GIT_DATE = \"" #$date "\"\n"))))))
         #:make-flags

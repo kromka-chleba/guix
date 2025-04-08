@@ -17,7 +17,7 @@
 ;;; Copyright © 2020 Edouard Klein <edk@beaver-labs.com>
 ;;; Copyright © 2020, 2021, 2022, 2023, 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
-;;; Copyright © 2022, 2023 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2022, 2023, 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2022 Kiran Shila <me@kiranshila.com>
 ;;; Copyright © 2022 Wiktor Zelazny <wzelazny@vurv.cz>
 ;;; Copyright © 2023 zamfofex <zamfofex@twdb.moe>
@@ -53,6 +53,7 @@
   #:use-module (guix utils)
   #:use-module (guix download)
   #:use-module (guix svn-download)
+  #:use-module (guix build-system cargo)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
@@ -78,6 +79,11 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages cran)
+  #:use-module (gnu packages crates-check)
+  #:use-module (gnu packages crates-crypto)
+  #:use-module (gnu packages crates-io)
+  #:use-module (gnu packages crates-tls)
+  #:use-module (gnu packages crates-web)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages dejagnu)
   #:use-module (gnu packages documentation)
@@ -1297,6 +1303,134 @@ and not test_wmt22_references")
 and reproducible BLEU, chrF, and TER scores for natural language processing.")
     (license license:asl2.0)))
 
+(define-public rust-safetensors
+  (package
+    (name "rust-safetensors")
+    (version "0.4.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "safetensors" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1fbx56wikqcvqb4y0ym0cys68lj0v3cpanhsy5i13fkz5jr7dvcc"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1))
+       #:cargo-development-inputs
+       (("rust-criterion" ,rust-criterion-0.5)
+        ("rust-memmap2" ,rust-memmap2-0.9)
+        ("rust-proptest" ,rust-proptest-1))))
+    (home-page "https://github.com/huggingface/safetensors")
+    (synopsis "Simple and safe way to store and distribute tensors")
+    (description
+     "This package provides a fast (zero-copy) and safe (dedicated) format for
+storing tensors safely, named safetensors.  They aim to be safer than their
+@code{PyTorch} counterparts.")
+    (license license:asl2.0)))
+
+(define-public python-safetensors
+  (package
+    (name "python-safetensors")
+    (version "0.4.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "safetensors" version))
+       (sha256
+        (base32 "1hhiwy67jarm70l0k26fs1cjhzkgzrh79q14bklj2yp0qi8gr19g"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)))
+       (snippet
+        #~(begin                        ;Only keep bindings.
+            (for-each
+             (lambda (file)
+               (unless (member file '("." ".." "bindings" "PKG-INFO"))
+                 (delete-file-recursively file)))
+             (scandir "."))
+            (for-each
+             (lambda (file)
+               (unless (member file '("." ".."))
+                 (rename-file (string-append "bindings/python/" file)
+                              file)))
+             (scandir "bindings/python"))))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cargo-build-system)
+                  (guix build utils)
+                  (ice-9 regex)
+                  (ice-9 textual-ports)
+                  (srfi srfi-26))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack-rust-crates 'inject-safetensors
+            (lambda _
+              (substitute* "Cargo.toml"
+                (("\\[dependencies\\]")
+                 (format #f "[dependencies]~%safetensors = ~s"
+                         #$(package-version rust-safetensors))))
+              (call-with-input-file "Cargo.toml"
+                (lambda (port)
+                  (let* ((content (get-string-all port))
+                         (top-match (string-match
+                                     "\\[dependencies.safetensors"
+                                     content)))
+                    (call-with-output-file "Cargo.toml"
+                      (cut display (match:prefix top-match) <>)))))))
+          (add-before 'check 'install-rust-library
+            (lambda _
+              (copy-file "target/release/libsafetensors_rust.so"
+                         "py_src/safetensors/_safetensors_rust.so")))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "PYTHONPATH" (string-append (getcwd) "/py_src"))
+                (invoke "python3"
+                        "-m" "pytest"
+                        "-n" "auto"
+                        "--dist=loadfile"
+                        "-s" "-v" "./tests/"
+                        ;; Missing jax and tensorflow dependency
+                        "--ignore=./tests/test_flax_comparison.py"
+                        "--ignore=./tests/test_tf_comparison.py"))))
+          (add-after 'install 'install-python
+            (lambda _
+              (let* ((pversion #$(version-major+minor
+                                  (package-version python)))
+                     (lib (string-append #$output "/lib/python" pversion
+                                         "/site-packages/"))
+                     (info (string-append lib "safetensors-"
+                                          #$(package-version this-package)
+                                          ".dist-info")))
+                (mkdir-p info)
+                (copy-file "PKG-INFO" (string-append info "/METADATA"))
+                (copy-recursively
+                 "py_src/safetensors"
+                 (string-append lib "safetensors"))))))
+      #:cargo-inputs
+      `(("rust-pyo3" ,rust-pyo3-0.21)
+        ("rust-memmap2" ,rust-memmap2-0.9)
+        ("rust-safetensors" ,rust-safetensors)
+        ("rust-serde-json" ,rust-serde-json-1))))
+    (inputs
+     (list rust-safetensors))
+    (native-inputs
+     (list python-h5py
+           python-minimal
+           python-numpy
+           python-pytest
+           python-pytest-xdist
+           python-pytorch))
+    (home-page "https://huggingface.co/docs/safetensors")
+    (synopsis "Simple and safe way to store and distribute tensors")
+    (description "This package provides a fast (zero-copy) and safe
+(dedicated) format for storing tensors safely.  This package builds upon
+@code{rust-safetensors} and provides Python bindings.")
+    (license license:asl2.0)))
+
 (define-public python-sentencepiece
   (package
     (name "python-sentencepiece")
@@ -1314,6 +1448,61 @@ and reproducible BLEU, chrF, and TER scores for natural language processing.")
     (synopsis "SentencePiece python wrapper")
     (description "This package provides a Python wrapper for the SentencePiece
 unsupervised text tokenizer.")
+    (license license:asl2.0)))
+
+(define-public python-sentence-transformers
+  (package
+    (name "python-sentence-transformers")
+    (version "3.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "sentence_transformers" version))
+       (sha256
+        (base32 "1xmzbyrlp6wa7adf42n67c544db17nz95b10ri603lf4gi9jqgca"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      '(list
+        ;; Missing fixture / train or test data.
+        ;; Requires internet access.
+        "--ignore=tests/test_sentence_transformer.py"
+        "--ignore=tests/test_train_stsb.py"
+        "--ignore=tests/test_compute_embeddings.py"
+        "--ignore=tests/test_cross_encoder.py"
+        "--ignore=tests/test_model_card_data.py"
+        "--ignore=tests/test_multi_process.py"
+        "--ignore=tests/test_pretrained_stsb.py"
+        "-k" (string-append
+              "not test_LabelAccuracyEvaluator"
+              " and not test_ParaphraseMiningEvaluator"
+              " and not test_cmnrl_same_grad"
+              " and not test_paraphrase_mining"
+              " and not test_simple_encode"))))
+    (propagated-inputs (list python-huggingface-hub
+                             python-numpy
+                             python-pillow
+                             python-pytorch
+                             python-scikit-learn
+                             python-scipy
+                             python-tqdm
+                             python-transformers))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://www.SBERT.net")
+    (synopsis "Multilingual text embeddings")
+    (description "This framework provides an easy method to compute dense
+vector representations for sentences, paragraphs, and images.  The models are
+based on transformer networks like BERT / RoBERTa / XLM-RoBERTa and achieve
+state-of-the-art performance in various tasks.  Text is embedded in vector
+space such that similar text are closer and can efficiently be found using
+cosine similarity.
+
+This package provides easy access to pretrained models for more than 100
+languages, fine-tuned for various use-cases.
+
+Further, this framework allows an easy fine-tuning of custom embeddings
+models, to achieve maximal performance on your specific task.")
     (license license:asl2.0)))
 
 (define-public python-spacy-legacy
@@ -5830,6 +6019,333 @@ Models.
 definite approximations of Optimal Transport (Wasserstein) distances.
 @end itemize")
     (license license:expat)))
+
+(define-public rust-esaxx-rs-0.1
+  (package
+    (name "rust-esaxx-rs")
+    (version "0.1.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "esaxx-rs" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1rm6vm5yr7s3n5ly7k9x9j6ra5p2l2ld151gnaya8x03qcwf05yq"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs (("rust-cc" ,rust-cc-1))))
+    (home-page "https://github.com/Narsil/esaxx-rs")
+    (synopsis "Wrapper for sentencepiece's esaxxx library")
+    (description
+     "This package provides a wrapper around sentencepiece's esaxxx library.")
+    (license license:asl2.0)))
+
+(define-public rust-spm-precompiled-0.1
+  (package
+    (name "rust-spm-precompiled")
+    (version "0.1.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "spm_precompiled" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "09pkdk2abr8xf4pb9kq3rk80dgziq6vzfk7aywv3diik82f6jlaq"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-inputs
+       (("rust-base64" ,rust-base64-0.13)
+        ("rust-nom" ,rust-nom-7)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-unicode-segmentation" ,rust-unicode-segmentation-1))))
+    (home-page "https://github.com/huggingface/spm_precompiled")
+    (synopsis "Emulate sentencepiece's DoubleArray")
+    (description
+     "This crate aims to emulate
+@url{https://github.com/google/sentencepiece,sentencepiece}
+Dart::@code{DoubleArray} struct and it's Normalizer.  This crate is highly
+specialized and not intended for general use.")
+    (license license:asl2.0)))
+
+(define-public rust-hf-hub-0.3
+  (package
+    (name "rust-hf-hub")
+    (version "0.3.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "hf-hub" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0cnpivy9fn62lm1fw85kmg3ryvrx8drq63c96vq94gabawshcy1b"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:tests? #f  ; require network connection
+       #:cargo-inputs
+       (("rust-dirs" ,rust-dirs-5)
+        ("rust-futures" ,rust-futures-0.3)
+        ("rust-indicatif" ,rust-indicatif-0.17)
+        ("rust-log" ,rust-log-0.4)
+        ("rust-native-tls" ,rust-native-tls-0.2)
+        ("rust-num-cpus" ,rust-num-cpus-1)
+        ("rust-rand" ,rust-rand-0.8)
+        ("rust-reqwest" ,rust-reqwest-0.11)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1)
+        ("rust-thiserror" ,rust-thiserror-1)
+        ("rust-tokio" ,rust-tokio-1)
+        ("rust-ureq" ,rust-ureq-2))
+       #:cargo-development-inputs
+       (("rust-hex-literal" ,rust-hex-literal-0.4)
+        ("rust-sha2" ,rust-sha2-0.10)
+        ("rust-tokio-test" ,rust-tokio-test-0.4))))
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list openssl))
+    (home-page "https://github.com/huggingface/hf-hub")
+    (synopsis "Interact with HuggingFace in Rust")
+    (description
+     "This crates aims ease the interaction with
+@url{https://huggingface.co/,huggingface}.  It aims to be compatible with
+@url{https://github.com/huggingface/huggingface_hub/,huggingface_hub}
+python package, but only implements a smaller subset of functions.")
+    (license license:asl2.0)))
+
+(define-public rust-tokenizers
+  (package
+    (name "rust-tokenizers")
+    (version "0.19.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "tokenizers" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1zg6ffpllygijb5bh227m9p4lrhf0pjkysky68kddwrsvp8zl075"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(substitute* "Cargo.toml"
+            (("0.1.12") ; rust-monostate requires a rust-syn-2 update
+             "0.1.11")
+            (("version = \"6.4\"")  ; rust-onig
+             "version = \"6.1.1\"")))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:tests? #f  ; tests are relying on missing data.
+      #:cargo-inputs
+      `(("rust-aho-corasick" ,rust-aho-corasick-1)
+        ("rust-derive-builder" ,rust-derive-builder-0.20)
+        ("rust-esaxx-rs" ,rust-esaxx-rs-0.1)
+        ("rust-fancy-regex" ,rust-fancy-regex-0.13)
+        ("rust-getrandom" ,rust-getrandom-0.2)
+        ("rust-hf-hub" ,rust-hf-hub-0.3)
+        ("rust-indicatif" ,rust-indicatif-0.17)
+        ("rust-itertools" ,rust-itertools-0.12)
+        ("rust-lazy-static" ,rust-lazy-static-1)
+        ("rust-log" ,rust-log-0.4)
+        ("rust-macro-rules-attribute" ,rust-macro-rules-attribute-0.2)
+        ("rust-monostate" ,rust-monostate-0.1)
+        ("rust-onig" ,rust-onig-6)
+        ("rust-paste" ,rust-paste-1)
+        ("rust-rand" ,rust-rand-0.8)
+        ("rust-rayon" ,rust-rayon-1)
+        ("rust-rayon-cond" ,rust-rayon-cond-0.3)
+        ("rust-regex" ,rust-regex-1)
+        ("rust-regex-syntax" ,rust-regex-syntax-0.8)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1)
+        ("rust-spm-precompiled" ,rust-spm-precompiled-0.1)
+        ("rust-thiserror" ,rust-thiserror-1)
+        ("rust-unicode-normalization-alignments" ,rust-unicode-normalization-alignments-0.1)
+        ("rust-unicode-segmentation" ,rust-unicode-segmentation-1)
+        ("rust-unicode-categories" ,rust-unicode-categories-0.1))
+      #:cargo-development-inputs
+      `(("rust-assert-approx-eq" ,rust-assert-approx-eq-1)
+        ("rust-criterion" ,rust-criterion-0.5)
+        ("rust-tempfile" ,rust-tempfile-3))))
+    (home-page "https://github.com/huggingface/tokenizers")
+    (synopsis "Implementation of various popular tokenizers")
+    (description
+     "This package provides a Rust implementation of today's most used
+tokenizers, with a focus on performances and versatility.")
+    (license license:asl2.0)))
+
+(define-public python-tokenizers
+  (package
+    (name "python-tokenizers")
+    (version "0.19.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "tokenizers" version))
+       (sha256
+        (base32 "1qw8mjp0q9w7j1raq1rvcbfw38000kbqpwscf9mvxzfh1rlfcngf"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)))
+       (snippet
+        #~(begin  ;; Only keeping bindings.
+            (for-each (lambda (file)
+                        (unless (member file '("." ".." "bindings" "PKG-INFO"))
+                          (delete-file-recursively file)))
+                      (scandir "."))
+            (for-each (lambda (file)
+                        (unless (member file '("." ".."))
+                          (rename-file (string-append "bindings/python/" file) file)))
+                      (scandir "bindings/python"))
+            (delete-file-recursively ".cargo")))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:cargo-test-flags ''("--no-default-features")
+      #:imported-modules `(,@%cargo-build-system-modules
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build cargo-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils)
+                  (ice-9 regex)
+                  (ice-9 textual-ports))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack-rust-crates 'inject-tokenizers
+            (lambda _
+              (substitute* "Cargo.toml"
+                (("\\[dependencies\\]")
+                 (format #f "
+[dev-dependencies]
+tempfile = ~s
+pyo3 = { version = ~s, features = [\"auto-initialize\"] }
+
+[dependencies]
+tokenizers = ~s"
+                         #$(package-version rust-tempfile-3)
+                         #$(package-version rust-pyo3-0.21)
+                         #$(package-version rust-tokenizers))))
+              (let ((file-path "Cargo.toml"))
+                (call-with-input-file file-path
+                  (lambda (port)
+                    (let* ((content (get-string-all port))
+                           (top-match (string-match
+                                       "\\[dependencies.tokenizers" content)))
+                      (call-with-output-file file-path
+                        (lambda (out)
+                          (format out "~a" (match:prefix top-match))))))))))
+          (add-after 'patch-cargo-checksums 'loosen-requirements
+            (lambda _
+              (substitute* "Cargo.toml"
+                (("version = \"6.4\"")
+                 (format #f "version = ~s"
+                         #$(package-version rust-onig-6))))))
+          (add-after 'check 'python-check
+            (lambda _
+              (copy-file "target/release/libtokenizers.so"
+                         "py_src/tokenizers/tokenizers.so")
+              (invoke "python3"
+                      "-c" (format #f
+                                   "import sys; sys.path.append(\"~a/py_src\")"
+                                   (getcwd))
+                      "-m" "pytest"
+                      "-s" "-v" "./tests/")))
+          (add-after 'install 'install-python
+            (lambda _
+              (let* ((pversion #$(version-major+minor (package-version python)))
+                     (lib (string-append #$output "/lib/python" pversion
+                                         "/site-packages/"))
+                     (info (string-append lib "tokenizers-"
+                                        #$(package-version this-package)
+                                        ".dist-info")))
+                (mkdir-p info)
+                (copy-file "PKG-INFO" (string-append info "/METADATA"))
+                (copy-recursively
+                 "py_src/tokenizers"
+                 (string-append lib "tokenizers"))))))
+      #:cargo-inputs
+      `(("rust-rayon" ,rust-rayon-1)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1)
+        ("rust-libc" ,rust-libc-0.2)
+        ("rust-env-logger" ,rust-env-logger-0.11)
+        ("rust-pyo3" ,rust-pyo3-0.21)
+        ("rust-numpy" ,rust-numpy-0.21)
+        ("rust-ndarray" ,rust-ndarray-0.15)
+        ("rust-onig" ,rust-onig-6)
+        ("rust-itertools" ,rust-itertools-0.12)
+        ("rust-tokenizers" ,rust-tokenizers))
+      #:cargo-development-inputs
+      `(("rust-tempfile" ,rust-tempfile-3))))
+    (native-inputs
+     (list python-minimal python-pytest))
+    (home-page "https://huggingface.co/docs/tokenizers")
+    (synopsis "Implementation of various popular tokenizers")
+    (description
+     "This package provides bindings to a Rust implementation of the most used
+tokenizers, @code{rust-tokenizers}.")
+    (license license:asl2.0)))
+
+(define-public python-transformers
+  (package
+    (name "python-transformers")
+    (version "4.44.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "transformers" version))
+       (sha256
+        (base32 "09h84wqqk2bgi4vr9d1m3dsliard99l53n96wic405gfjb61gain"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; Missing inputs.
+     (list #:test-flags
+           '(list "--ignore=tests/test_modeling_tf_common.py"
+                  "--ignore=tests/test_configuration_common.py"
+                  "--ignore=tests/test_pipeline_mixin.py"
+                  "--ignore=tests/test_sequence_feature_extraction_common.py")))
+    ;; The imported package contains ~60 more inputs, but they don't seem
+    ;; necessary to build a minimal version of the package.
+    (propagated-inputs
+     (list python-filelock
+           python-huggingface-hub
+           python-numpy
+           python-pytorch
+           python-pyyaml
+           python-regex
+           python-requests
+           python-safetensors
+           python-tokenizers
+           python-tqdm))
+    (native-inputs
+     (list python-parameterized-next
+           python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/huggingface/transformers")
+    (synopsis "Machine Learning for PyTorch and TensorFlow")
+    (description
+     "This package provides easy download of thousands of pretrained models to
+perform tasks on different modalities such as text, vision, and audio.
+
+These models can be applied on:
+@itemize
+@item Text, for tasks like text classification, information extraction,
+question answering, summarization, translation, and text generation, in over
+100 languages.
+@item Images, for tasks like image classification, object detection, and
+segmentation.
+@item Audio, for tasks like speech recognition and audio classification.
+@end itemize
+
+Transformer models can also perform tasks on several modalities combined, such
+as table question answering, optical character recognition, information
+extraction from scanned documents, video classification, and visual question
+answering.
+
+This package provides APIs to quickly download and use those pretrained models
+on a given text, fine-tune them on your own datasets and then share them with
+the community.  At the same time, each Python module defining an architecture
+is fully standalone and can be modified to enable quick research experiments.
+
+Transformers is backed by the three most popular deep learning libraries —
+Jax, PyTorch and TensorFlow — with a seamless integration between them.")
+    (license license:asl2.0)))
 
 (define-public python-hmmlearn
   (package

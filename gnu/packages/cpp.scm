@@ -44,6 +44,7 @@
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
+;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2268,7 +2269,7 @@ to be useful for building network-based applications.")
     ;; Update only when updating aws-sdk-cpp, and when updating also update
     ;; versions of library dependencies linked from from
     ;; https://github.com/awslabs/aws-crt-cpp/tree/{aws-crt-cpp commit}/crt
-    (version "0.28.2")
+    (version "0.32.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2277,7 +2278,7 @@ to be useful for building network-based applications.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1jnj5q6jcw1nh74yzdbi99x338lc3v2wjlgvjnzclla4p66pi712"))))
+                "1xakyki8sxn6pxmmmf41n3wl0qsgsags0wvj74jmhfln4g2c4qy9"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -2306,7 +2307,7 @@ aws-c-http, aws-c-io, aws-c-mqtt, aws-checksums, and s2n.")
     (name "aws-sdk-cpp")
     ; When updating also check for a tagged update to aws-crt-cpp from
     ; https://github.com/aws/aws-sdk-cpp/tree/main/crt
-    (version "1.11.402")
+    (version "1.11.538")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2315,7 +2316,7 @@ aws-c-http, aws-c-io, aws-c-mqtt, aws-checksums, and s2n.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "016jzz01c8mf5v732rk8gglmvpa8lf5c5r7jndvbp6gn6nlvnplx"))))
+                "1h7wsya0wi38m3gdyjcfwsg574sqz9cidirhhz9rf1ss2bkkm6w7"))))
     (build-system cmake-build-system)
     (arguments
      '(;; Tests are run during the build phase.
@@ -3173,7 +3174,7 @@ CRC32C algorithm, which is specified in RFC 3720, section 12.1.")
 (define-public fast-float
   (package
     (name "fast-float")
-    (version "6.1.6")
+    (version "8.0.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3182,7 +3183,7 @@ CRC32C algorithm, which is specified in RFC 3720, section 12.1.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1y6mj2rw0dr89ddhk33gj1l76dfk4ai00kx9i22i6rjr0qylqhih"))))
+                "19x1yklf641yrpad6lk4cq3jmird10d5ig8hicm3p9lxh92k78cl"))))
     (build-system cmake-build-system)
     (arguments
      (list
