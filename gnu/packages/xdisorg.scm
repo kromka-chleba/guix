@@ -64,7 +64,7 @@
 ;;; Copyright © 2022 Mehmet Tekman <mtekman89@gmail.com>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Igor Goryachev <igor@goryachev.org>
-;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Spencer Peters <spencerpeters@protonmail.com>
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
@@ -3559,7 +3559,7 @@ using @command{dmenu}.")
 (define-public fuzzel
   (package
     (name "fuzzel")
-    (version "1.11.1")
+    (version "1.12.0")
     (home-page "https://codeberg.org/dnkl/fuzzel")
     (source (origin
               (method git-fetch)
@@ -3567,16 +3567,19 @@ using @command{dmenu}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0dz451sjzglznkq9jmmcqm2m5y9kj1nx5zrdln56nmnbyyy4gkhl"))
-              (patches
-                (search-patches "fuzzel-fix-gcc-error.patch"))))
+                "0hsw98v499bz2nxvlw3ykq5qyyad3ci5a7x723r3cl84brabqrp3"))))
     (build-system meson-build-system)
     (arguments
      (list #:build-type "release"
            #:configure-flags #~(list "-Denable-cairo=enabled"
                                      "-Dpng-backend=libpng"
                                      "-Dsvg-backend=librsvg")))
-    (native-inputs (list pkg-config scdoc tllist))
+    (native-inputs (append (list pkg-config scdoc tllist)
+                           (if (%current-target-system)
+                               ;; for wayland-scanner
+                               (list pkg-config-for-build
+                                     wayland)
+                               (list))))
     (inputs (list cairo
                   fcft
                   fontconfig
@@ -4168,37 +4171,6 @@ on the screen and which then writes out the necessary C code for it.")
                          (append mesa)))
     (synopsis
      "GUI toolkit for X based on the X11 Xlib library, with OpenGL support")))
-
-(define-public show-me-the-key
-  (package
-    (name "show-me-the-key")
-    (version "1.8.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/AlynxZhou/showmethekey/")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256 (base32
-                       "1gvrri6kfywxk8hfchc66r6fpwlrcai2j227ib33w6503cx66rl9"))))
-    (build-system meson-build-system)
-    (inputs (list libevdev
-                  libinput
-                  gtk
-                  json-glib-minimal
-                  cairo
-                  pango
-                  libxkbcommon
-                  polkit))
-    (native-inputs (list `(,glib "bin") ; for glib-compile-resources
-                         `(,gtk  "bin") ; for gtk-update-icon-cache
-                         pkg-config))
-    (home-page "https://github.com/AlynxZhou/showmethekey")
-    (synopsis "Screencast tool to display pressed keys")
-    (description "Show Me the Key is a screencast tool to display your keys
-and works under both Xorg and Wayland (via @code{libinput}), inspired by
-@code{python-screenkey}.")
-    (license license:asl2.0)))
 
 (define-public xxkb
   (package

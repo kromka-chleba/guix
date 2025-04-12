@@ -21453,7 +21453,9 @@ The file name of the input log file to process.  The service creates a
 FIFO of this name.  The web server should write its logs to this FIFO.
 
 @item @code{output}
-The file name of the processed log file.
+The file name of the processed log file.  This file is subject to log
+rotation @i{via} the Shepherd's log rotation service (@pxref{Log
+Rotation}).
 @end table
 
 The following optional settings may be provided:
@@ -29216,6 +29218,10 @@ File-like object of the OpenSMTPD configuration file to use.  By default
 it listens on the loopback network interface, and allows for mail from
 users and daemons on the local machine, as well as permitting email to
 remote servers.  Run @command{man smtpd.conf} for more information.
+
+@item @code{log-file} (default: @code{"/var/log/mail.log"})
+The file location for the OpenSMTPD log file.  Logging occurs in the
+foreground via the Shepherd, i.e. OpenSMTPD does not detach.
 
 @item @code{setgid-commands?} (default: @code{#t})
 Make the following commands setgid to @code{smtpq} so they can be

@@ -1905,7 +1905,7 @@ before interacting with non-free LLMs.")
 (define-public emacs-magit
   (package
     (name "emacs-magit")
-    (version "4.3.1")
+    (version "4.3.2")
     (source
      (origin
        (method git-fetch)
@@ -1914,15 +1914,12 @@ before interacting with non-free LLMs.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "07harzpyqrskx4xslj4xa1w1d0sza13zw5z0nam9kagi72cklvjv"))))
+        (base32 "0k15p39r5jikin86r5wsf5z9jsaica01f4s4sbwczikjjpfpq9r8"))))
     (build-system emacs-build-system)
     (arguments
      (list
       #:tests? #t
-      #:test-command #~(list "make" "test")
-      #:exclude #~(cons* "magit-libgit.el"
-                         "magit-libgit-pkg.el"
-                         %default-exclude)
+      #:test-command #~(list "make" "-C" ".." "test")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'build-info-manual
@@ -1930,48 +1927,20 @@ before interacting with non-free LLMs.")
               (invoke "make" "info")
               ;; Copy info files to the lisp directory, which acts as
               ;; the root of the project for the emacs-build-system.
-              (for-each (lambda (f)
-                          (install-file f "lisp"))
-                        (find-files "docs" "\\.info$"))))
-          (add-after 'build-info-manual 'set-magit-version
+              (rename-file "docs/magit.info" "lisp/magit.info")))
+          (add-after 'build-info-manual 'chdir-lisp
             (lambda _
-              (make-file-writable "lisp/magit.el")
-              (emacs-substitute-variables "lisp/magit.el"
-                ("magit-version" #$version))))
-          (add-after 'set-magit-version 'patch-exec-paths
+              (chdir "lisp")))
+          (add-after 'chdir-lisp 'patch-version-executables
             (lambda* (#:key inputs #:allow-other-keys)
-              (for-each make-file-writable
-                        (list "lisp/magit-git.el" "lisp/magit-sequence.el"))
-              (emacs-substitute-variables "lisp/magit-git.el"
+              (emacs-substitute-variables "magit.el"
+                ("magit-version" #$version))
+              (emacs-substitute-variables "magit-git.el"
                 ("magit-git-executable"
                  (search-input-file inputs "/bin/git")))
-              (emacs-substitute-variables "lisp/magit-sequence.el"
+              (emacs-substitute-variables "magit-sequence.el"
                 ("magit-perl-executable"
-                 (search-input-file inputs "/bin/perl")))))
-          (add-before 'check 'configure-git
-            (lambda _
-              ;; Otherwise some tests fail with error "unable to auto-detect
-              ;; email address".
-              (setenv "HOME" (getcwd))
-              (invoke "git" "config" "--global" "user.name" "toto")
-              (invoke "git" "config" "--global" "user.email"
-                      "toto@toto.com")))
-          (replace 'expand-load-path
-            (lambda args
-              (with-directory-excursion "lisp"
-                (apply (assoc-ref %standard-phases 'expand-load-path) args))))
-          (replace 'make-autoloads
-            (lambda args
-              (with-directory-excursion "lisp"
-                (apply (assoc-ref %standard-phases 'make-autoloads) args))))
-          (replace 'install
-            (lambda args
-              (with-directory-excursion "lisp"
-                (apply (assoc-ref %standard-phases 'install) args))))
-          (replace 'build
-            (lambda args
-              (with-directory-excursion "lisp"
-                (apply (assoc-ref %standard-phases 'build) args)))))))
+                 (search-input-file inputs "/bin/perl"))))))))
     (native-inputs
      (list texinfo))
     (inputs
@@ -5714,7 +5683,7 @@ be regarded as @code{emacs-company-quickhelp} for @code{emacs-corfu}.")
 (define-public emacs-cape
   (package
     (name "emacs-cape")
-    (version "1.9")
+    (version "2.0")
     (source
      (origin
        (method git-fetch)
@@ -5723,21 +5692,19 @@ be regarded as @code{emacs-company-quickhelp} for @code{emacs-corfu}.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0pcgxv011z0gl0g38yh2dr09sx17pwpbvydz2dzvm730k9lbyikh"))))
+        (base32 "0wm0y982zrfzzbdizpvr39c55bhp9y7l7w1sp8ps1b4ijbmgd0r9"))))
     (build-system emacs-build-system)
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'install 'makeinfo
+          (add-after 'unpack 'makeinfo
             (lambda _
               (invoke "emacs"
                       "--batch"
                       "--eval=(require 'ox-texinfo)"
                       "--eval=(find-file \"README.org\")"
-                      "--eval=(org-texinfo-export-to-info)")
-              (install-file "cape.info"
-                            (string-append #$output "/share/info")))))))
+                      "--eval=(org-texinfo-export-to-info)"))))))
     (native-inputs (list texinfo))
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/minad/cape")
@@ -10252,7 +10219,7 @@ files which are intended to be packages.")
 (define-public emacs-el-job
   (package
     (name "emacs-el-job")
-    (version "2.1.0")
+    (version "2.4.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -10261,7 +10228,7 @@ files which are intended to be packages.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "07mxarvwafnkxmylzk26x7fgscnyn2xph02sahdxww38lik9spsj"))))
+                "09zipgg52zh7kfamnslbrrghs2sndkwj0kcmbb8mxwmx5k5zi62d"))))
     (build-system emacs-build-system)
     (arguments
      (list #:tests? #true
@@ -12550,7 +12517,7 @@ sgml/html integration, and indentation (working with sgml).")
 (define-public emacs-jinx
   (package
     (name "emacs-jinx")
-    (version "1.12")
+    (version "2.1")
     (source
      (origin
        (method git-fetch)
@@ -12560,10 +12527,11 @@ sgml/html integration, and indentation (working with sgml).")
          (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1cxnxwbxfq29793r6f8pvvw2mb9mj7pa7g7z5k46abplkq65ds3g"))))
+        (base32 "1kfxx9657zn4sy463gxwsqqh4bcdxxaf3x7jkgasl4v18mrvid1i"))))
     (build-system emacs-build-system)
     (arguments
      (list
+      #:tests? #f ; no tests
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'expand-load-path 'build-jinx-mod
@@ -12581,7 +12549,6 @@ sgml/html integration, and indentation (working with sgml).")
           (add-after 'build-jinx-mod 'patch-path-to-jinx-mod
             (lambda _
               (let ((file "jinx.el"))
-                (make-file-writable file)
                 (emacs-substitute-sexps file
                   ("\"Compile and load dynamic module.\""
                    `(module-load
@@ -12590,14 +12557,10 @@ sgml/html integration, and indentation (working with sgml).")
           (add-after 'install 'install-jinx-mod
             (lambda _
               (install-file "jinx-mod.so"
-                            (string-append #$output "/lib/emacs"))))
-          (add-after 'install 'install-info
-            (lambda _
-              (install-file "jinx.info"
-                            (string-append #$output "/share/info")))))))
+                            (string-append #$output "/lib/emacs")))))))
     (inputs (list enchant))
     (propagated-inputs (list emacs-compat))
-    (native-inputs (list emacs-compat enchant pkg-config texinfo))
+    (native-inputs (list pkg-config texinfo))
     (home-page "https://github.com/minad/jinx")
     (synopsis "Emacs spell checker based on Enchant library")
     (description "Jinx is a just-in-time spell-checker for Emacs
@@ -15955,12 +15918,11 @@ E-Prime forbids the use of the \"to be\" form to strengthen your writing.")
       (license license:gpl3+))))
 
 (define-public emacs-julia-mode
-  ;; Last release was in March 2020.
-  (let ((commit "7a8c868e0d3e51ba4a2c621ee22ca9599e0e4bbb")
+  (let ((commit "7fc071eb2c383d44be6d61ea6cef73b0cc8ef9b7")
         (revision "0"))
     (package
       (name "emacs-julia-mode")
-      (version (git-version "0.4" revision commit))
+      (version (git-version "1.0.2" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -15970,24 +15932,16 @@ E-Prime forbids the use of the \"to be\" form to strengthen your writing.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "0xwd4kq69ray6bk8hwjxnqf7myc3mn36chc2l9jn7a0x1f8x6k10"))))
+           "1dfls9ggn192xblfyjrbxi007hg4yd25s2cl8zh0v40akpqclhqc"))))
       (build-system emacs-build-system)
       (arguments
        (list
+        #:include
+        #~(cons* "^make-julia-latexsubs\\.jl" %default-include)
         #:tests? #t
         #:test-command #~(list "emacs" "--batch"
                                "-l" "julia-mode-tests.el"
-                               "-f" "ert-run-tests-batch-and-exit")
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-before 'check 'fix-test
-              (lambda _
-                (substitute* "julia-mode-tests.el"
-                  ;; The test started failing with Emacs 29; see
-                  ;; <https://github.com/JuliaEditorSupport/julia-emacs/issues/199>
-                  ;; and discrepancy reported <https://issues.guix.gnu.org/66763>.
-                  (("julia--test-end-of-defun-nested-2.*" all)
-                   (string-append all "  :expected-result :failed\n"))))))))
+                               "-f" "ert-run-tests-batch-and-exit")))
       (home-page "https://github.com/JuliaEditorSupport/julia-emacs")
       (synopsis "Major mode for Julia")
       (description "This Emacs package provides a mode for the Julia
@@ -26359,7 +26313,7 @@ files to be expanded upon opening them.")
 (define-public emacs-parsebib
   (package
     (name "emacs-parsebib")
-    (version "6.6")
+    (version "6.7")
     (source
      (origin
        (method git-fetch)
@@ -26368,7 +26322,7 @@ files to be expanded upon opening them.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gh8bv6q9041q0b9spw7glj3lfvkj8yl743b4xc1y5mjj8alb466"))))
+        (base32 "180lvlq6xfri1lag85s6478x8cv4iccj6qk2rag9nm19yrhxfh7a"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/joostkremers/parsebib")
     (synopsis "Library for parsing @file{.bib} files")
@@ -30478,21 +30432,21 @@ organized into a dashboard, by simply writing an org file.")
       (license license:gpl3+))))
 
 (define-public emacs-pinentry
-  (let ((commit "dcc9ba03252ee5d39e03bba31b420e0708c3ba0c")
-        (revision "1"))
+  (let ((commit "0079964a1dde954ccb2ce8a28613d8020c549a36")
+        (revision "2"))
     (package
       (name "emacs-pinentry")
       (version (git-version "0.1" revision commit))
       (source
        (origin
-         (method url-fetch)
-         (uri (string-append
-               "http://git.savannah.gnu.org/cgit/emacs/elpa.git/plain"
-               "/packages/pinentry/pinentry.el?id=" commit))
-         (file-name (string-append "pinentry.el"))
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://git.savannah.gnu.org/git/emacs/elpa.git")
+               (commit commit)))
+         (file-name (git-file-name name version))
          (sha256
           (base32
-           "1lf30q6r8nz5cjzclbb9bbymsk2y75nskvb55hnjdv93gr3j0sik"))))
+           "1i8wgy7i7095008hk9pa600c8871j9v1fzj2fzb2khy6szchvjyy"))))
       (build-system emacs-build-system)
       (propagated-inputs
        (list gnupg))
@@ -37151,8 +37105,8 @@ federated microblogging social network.")
     (license license:gpl3+)))
 
 (define-public emacs-fedi
-  (let ((commit "8f0afbb5cd264033f10ba58158a5e1f3737b16d4")
-        (revision "0"))
+  (let ((commit "e53f4d61cab19a4037f8594daaa247db4ca6c116")
+        (revision "1"))
     (package
       (name "emacs-fedi")
       (version (git-version "0.2" revision commit))
@@ -37164,8 +37118,9 @@ federated microblogging social network.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0lmjqwq0nrimcqs3j9cadl2yz0nvg250vy2l6czg2648x6fdvcc6"))))
+          (base32 "02z5nhv1hr9713b2blfymrb8hckss5ghhr07mjz572a8xdy3rqq8"))))
       (build-system emacs-build-system)
+      (arguments (list #:tests? #f)) ; no tests
       (propagated-inputs (list emacs-markdown-mode))
       (home-page "https://codeberg.org/martianh/fedi.el")
       (synopsis "Library to make writing clients for APIs easier")
@@ -37195,27 +37150,26 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
     (license license:gpl3+)))
 
 (define-public emacs-fj
-  (let ((commit "c2684eab1cdd745dbc5af6cd5abacd9822099662")
-        (revision "0"))
-    (package
-      (name "emacs-fj")
-      (version (git-version "0.3" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://codeberg.org/martianh/fj.el")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "05kx1h7r4g7x58k849m4h57a7lmcbhhm40qivn39mxfjx4ckn6n9"))))
-      (build-system emacs-build-system)
-      (propagated-inputs (list emacs-fedi emacs-magit emacs-tp))
-      (home-page "https://codeberg.org/martianh/fj.el")
-      (synopsis "Client for Forgejo instances")
-      (description
-       "Fj contains basic functions for interacting with a Forgejo instance.")
-      (license license:gpl3+))))
+  (package
+    (name "emacs-fj")
+    (version "0.6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/martianh/fj.el")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1j4gl8wf9l9pnhz12b0ij2piz02ql23r8c7d3226yb7bsp4b3vdd"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f)) ; no tests
+    (propagated-inputs (list emacs-fedi emacs-magit emacs-tp))
+    (home-page "https://codeberg.org/martianh/fj.el")
+    (synopsis "Client for Forgejo instances")
+    (description
+     "Fj contains basic functions for interacting with a Forgejo instance.")
+    (license license:gpl3+)))
 
 (define-public emacs-ebdb-i18n-chn
   (package
@@ -40188,8 +40142,8 @@ go directly to where they belong.")
       (license license:gpl3+))))
 
 (define-public emacs-org-roam
-  (let ((commit "0b9fcbc97b65b349826e63bad89ca121a08fd2be")
-        (revision "1"))
+  (let ((commit "046822b512ffecdee7d110f73dd3a511802ca590")
+        (revision "2"))
     (package
       (name "emacs-org-roam")
       (version (git-version "2.2.2" revision commit))
@@ -40201,7 +40155,7 @@ go directly to where they belong.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "04vqwrsb71jdb66fkahmxwvx8cssgqamrradbdgp3ygf8alwc7ml"))))
+          (base32 "0jbj48glh0r6fkb0lk1xb9067x2myp3krkw2byycijwdq1nlqzv2"))))
       (build-system emacs-build-system)
       (arguments
        (list
@@ -40225,12 +40179,10 @@ go directly to where they belong.")
               (lambda* (#:key outputs #:allow-other-keys)
                 (install-file "doc/images/org-ref-citelink.png"
                               (string-append #$output "/share/info/images"))))
-            (add-after 'install-image 'make-info
-              (lambda* (#:key outputs #:allow-other-keys)
-                (with-directory-excursion "doc"
-                  (invoke "makeinfo" "-o" "org-roam.info" "org-roam.texi")
-                  (install-file "org-roam.info"
-                                (string-append #$output "/share/info"))))))))
+            (add-after 'unpack 'make-info
+              (lambda _
+                (invoke "make" "-C" "doc" "info")
+                (copy-file "doc/org-roam.info" "org-roam.info"))))))
       (inputs
        (list graphviz))
       (native-inputs
@@ -40238,10 +40190,7 @@ go directly to where they belong.")
       (propagated-inputs
        (list emacs-dash
              emacs-emacsql
-             emacs-f
-             emacs-magit
-             emacs-org
-             emacs-s))
+             emacs-magit))
       (home-page "https://github.com/org-roam/org-roam/")
       (synopsis "Non-hierarchical note-taking with Org mode")
       (description "Emacs Org Roam is a solution for taking non-hierarchical
@@ -42857,21 +42806,32 @@ projects.")
 (define-public emacs-vundo
   (package
     (name "emacs-vundo")
-    (version "2.3.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://elpa.gnu.org/packages/vundo-"
-                                  version ".tar"))
-              (sha256
-               (base32
-                "165y277fi0vp9301hy3pqgfnf160k29n8vri0zyq8a3vz3f8lqrl"))))
+    (version "2.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/casouri/vundo/")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "034ynwfk374i27vvfpr13n3qw02ihm0189m8frxfqdbd3hismjkb"))))
     (build-system emacs-build-system)
-    (home-page "https://github.com/casouri/vundo")
+    (arguments
+     (list
+      #:tests? #true
+      #:test-command #~(list "emacs" "-Q" "--batch"
+                             "-l" "vundo.el"
+                             "-l" "test/vundo-test.el"
+                             "-f" "ert-run-tests-batch-and-exit")))
+    (home-page "https://github.com/casouri/vundo/")
     (synopsis "Visualize the undo tree")
     (description
-     "Vundo (visual undo) displays the undo history as a tree and lets you move in the
-tree to go back to previous buffer states.  To use vundo, type @kbd{M-x vundo RET} in
-the buffer you want to undo.  An undo tree buffer should pop up.")
+     "Vundo (visual undo) displays the undo history as a tree and lets you
+move in the tree to go back to previous buffer states.  To use vundo, type
+@kbd{M-x vundo RET} in the buffer you want to undo.  An undo tree buffer
+should pop up.")
     (license license:gpl3+)))
 
 (define-public emacs-hare-mode

@@ -93,6 +93,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system trivial)
+  #:use-module (guix build-system copy)
   #:use-module (gnu packages)
   #:use-module (gnu packages c)
   #:use-module (gnu packages base)
@@ -111,10 +112,11 @@
   #:use-module (gnu packages xorg))
 
 (define-public font-arapey
-  (let ((commit  "28fa45c7f31afe62f577b0b857570ab0326b9113"))
+  (let ((commit  "28fa45c7f31afe62f577b0b857570ab0326b9113")
+        (revision "1"))
     (package
       (name "font-arapey")
-      (version "0.0.1")
+      (version (git-version "0.0.1" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -477,8 +479,8 @@ The Lato 2.010 family supports more than 100 Latin-based languages, over
     (license license:silofl1.1)))
 
 (define-public font-carlito
-  (let ((commit "64cab86c9b602088697294736b86f2831f3f44be")
-        (revision "0"))
+  (let ((commit "3a810cab78ebd6e2e4eed42af9e8453c4f9b850a")
+        (revision "1"))
     (package
       (name "font-carlito")
       (version (git-version "0.0.0" revision commit))
@@ -490,7 +492,7 @@ The Lato 2.010 family supports more than 100 Latin-based languages, over
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "02wy8vs5m4whm5apl3p6cpz0qa9jwjj9qi219zjspiszha2ivssz"))))
+          (base32 "1qf3zdpbmx3ylamka82nqxjpm3qjfm0nca2yzzsxmvg7krjyz12k"))))
       (build-system font-build-system)
       (home-page "https://github.com/googlefonts/carlito")
       (synopsis "Free alternative to Calibri")
@@ -795,46 +797,47 @@ for long periods of working with computers (8 or more hours per day).")
 (define-public font-adobe-source-han-sans
   (package
     (name "font-adobe-source-han-sans")
-    (version "1.004")
+    (version "2.004")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                     (url "https://github.com/adobe-fonts/source-han-sans")
-                     (commit (string-append version "R"))))
+                    (url "https://github.com/adobe-fonts/source-han-sans")
+                    (commit (string-append version "R"))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0zm884d8fp5gvirq324050kqv7am9khyqhs9kk4r4rr3jzn61jpk"))))
-    (outputs '("out"                 ; OpenType/CFF Collection (OTC), 121 MiB.
-               "cn" "jp" "kr" "tw")) ; Region-specific Subset OpenType/CFF.
-    (build-system trivial-build-system)
+                "0sgfvdigq9vdmf8wizapy8wcyzqrqj8il9sx1xzfm20qy376qvbf"))))
+    (outputs '("out"                   ; OpenType/CFF Collection (OTC), 112 MiB.
+               "cn" "hk" "jp" "kr" "tw")) ; Region-specific Subset OpenType/CFF.
+    (build-system copy-build-system)
     (arguments
-     `(#:modules ((guix build utils))
-       #:builder
-       (begin
-         (use-modules (guix build utils))
-         (let ((install-opentype-fonts
-                (lambda (fonts-dir out)
-                  (copy-recursively fonts-dir
-                                    (string-append (assoc-ref %outputs out)
-                                                   "/share/fonts/opentype")))))
-           (chdir (assoc-ref %build-inputs "source"))
-           (install-opentype-fonts "OTC" "out")
-           (install-opentype-fonts "SubsetOTF/CN" "cn")
-           (install-opentype-fonts "SubsetOTF/JP" "jp")
-           (install-opentype-fonts "SubsetOTF/KR" "kr")
-           (install-opentype-fonts "SubsetOTF/TW" "tw")
-           (for-each delete-file (find-files %output "\\.zip$"))
-           #t))))
+     (list
+      #:install-plan
+      #~'(("SubsetOTF/CN" "share/fonts/opentype" #:output "cn")
+          ("SubsetOTF/HK" "share/fonts/opentype" #:output "hk")
+          ("SubsetOTF/JP" "share/fonts/opentype" #:output "jp")
+          ("SubsetOTF/KR" "share/fonts/opentype" #:output "kr")
+          ("SubsetOTF/TW" "share/fonts/opentype" #:output "tw"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-otc
+            (lambda _
+              (let ((destination-directory
+                     (string-append #$output "/share/fonts/opentype")))
+                (mkdir-p destination-directory)
+                (invoke "unzip" "SuperOTC/SourceHanSans.ttc.zip"
+                        "-d" destination-directory)))))))
+    (native-inputs (list unzip))
     (home-page "https://github.com/adobe-fonts/source-han-sans")
     (synopsis "Pan-CJK fonts")
     (description
      "Source Han Sans is a sans serif Pan-CJK font family that is offered in
-seven weights: ExtraLight, Light, Normal, Regular, Medium, Bold, and Heavy.
-And in several OpenType/CFF-based deployment configurations to accommodate
-various system requirements or limitations.  As the name suggests, Pan-CJK
-fonts are intended to support the characters necessary to render or display
-text in Simplified Chinese, Traditional Chinese, Japanese, and Korean.")
+seven weights: ExtraLight, Light, Normal, Regular, Medium, Bold, and Heavy.  And
+in several OpenType/CFF-based deployment configurations to accommodate various
+system requirements or limitations.  As the name suggests, Pan-CJK fonts are
+intended to support the characters necessary to render or display text in
+Simplified Chinese, Traditional Chinese (Taiwan, Hong Kong), Japanese, and
+Korean.")
     (license license:silofl1.1)))
 
 (define-public font-cns11643
@@ -1572,21 +1575,21 @@ Powerline support.")
 (define-public font-adobe-source-code-pro
   (package
     (name "font-adobe-source-code-pro")
-    (version "2.032R-ro-1.052R-it-1.012R-VAR")
+    (version "2.042R-u-1.062R-i-1.026R-vf")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/adobe-fonts/source-code-pro")
              (commit (regexp-substitute/global
-                      ;; The upstream tag uses "/" between the roman and italic
-                      ;; versions, so substitute our "-" separator here.
-                      #f "((R-ro)|(R-it))(-)" version
-                      'pre 1 "/" 'post
-                      ))))
+                      ;; The upstream tag uses "/" among its upright, italic and
+                      ;; variable versions, so substitute our "-" separator
+                      ;; here.
+                      #f "((R-u)|(R-i))(-)" version
+                      'pre 1 "/" 'post))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1lqchm8z0ah5y675ycmciqvr8y1v1gcj22ysfs443gm291vy0z4v"))))
+        (base32 "0mir6yi5i0h1kk6fr8dsqmv4m8cwrbldadpy7rnlyvkd26wdqpiy"))))
     (build-system font-build-system)
     (home-page "https://github.com/adobe-fonts/source-code-pro")
     (synopsis
@@ -1599,18 +1602,18 @@ designed to work well in user interface environments.")
 (define-public font-adobe-source-sans-pro
   (package
     (name "font-adobe-source-sans-pro")
-    (version "3.046R")
+    (version "3.052")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/adobe-fonts/source-sans-pro")
-             (commit version)))
+             (url "https://github.com/adobe-fonts/source-sans")
+             (commit (string-append version "R"))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01dnhyfffnlyjzyh40x2z728qpc4i0jvrcxdcjfm17zrwhmw84lw"))))
+        (base32 "06s0xn49x454c9zbrawcm4b672qpaqah3glmh2jn3m2jyv5xhdnb"))))
     (build-system font-build-system)
-    (home-page "https://github.com/adobe-fonts/source-sans-pro")
+    (home-page "https://github.com/adobe-fonts/source-sans")
     (synopsis
      "Sans serif font family for user interface environments")
     (description
@@ -2517,32 +2520,33 @@ and stylistic alternates.")
     (license license:silofl1.1)))
 
 (define-public font-go
-  (let ((commit "f03a046406d4d7fbfd4ed29f554da8f6114049fc")
-        (revision "1"))
+  (let ((commit "41969df76e82aeec85fa3821b1e24955ea993001")
+        (revision "2"))
     (package
       (name "font-go")
-      (version (string-append "20170330-" revision "." (string-take commit 7)))
-      (source (origin
-                (file-name (string-append "go-image-" version "-checkout"))
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://go.googlesource.com/image")
-                      (commit commit)))
-                (sha256
-                 (base32
-                  "1aq6mnjayks55gd9ahavk6jfydlq5lm4xm0xk4pd5sqa74p5p74d"))))
+      (version (git-version "2.010" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://go.googlesource.com/image")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1z7lxkb84ca013ys0pr1bma2zdfzrvqip4yl6s941iyby0xfiyws"))))
       (build-system font-build-system)
       (arguments
-       `(#:license-file-regexp "^(LICENSE|PATENTS)$"
-         #:phases
-         (modify-phases %standard-phases
-           (add-before 'install 'chdir
-             (lambda _
-               (chdir "font/gofont/ttfs")
-               #t))
-           (add-before 'install-license-files 'enter-license-directory
-             (lambda _
-               (chdir "../../.."))))))
+       (list
+        #:license-file-regexp "^(LICENSE|PATENTS)$"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'install 'chdir
+              (lambda _
+                (chdir "font/gofont/ttfs")
+                #t))
+            (add-before 'install-license-files 'enter-license-directory
+              (lambda _
+                (chdir "../../.."))))))
       (home-page "https://go.dev/blog/go-fonts")
       (synopsis "The Go font family")
       (description

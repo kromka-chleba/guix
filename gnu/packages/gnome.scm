@@ -7357,7 +7357,7 @@ almost all of them.")
 (define-public epiphany
   (package
     (name "epiphany")
-    (version "46.5")
+    (version "48.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/epiphany/"
@@ -7365,7 +7365,7 @@ almost all of them.")
                                   "epiphany-" version ".tar.xz"))
               (sha256
                (base32
-                "04b377baj8sqr7lhbkirpazmlzn2v2n0wi4z32zik183bphxmixr"))))
+                "102zq0p18nxjf8mnsqqalsf8f0m31mvir41ncj8v00xdzggzdlf9"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -8184,13 +8184,23 @@ to display dialog boxes from the commandline and shell scripts.")
                   ;; The 'sync' variant of the X11 test fails for unknown reason
                   ;; (see: https://gitlab.gnome.org/GNOME/mutter/-/issues/3910).
                   (("foreach mode: \\['', 'sync'\\]")
-                   "foreach mode: ['']"))
+                   "foreach mode: []")
+                  ;; Many (all?) stacking tests are susceptible to fail
+                  ;; non-deterministically under high load (see:
+                  ;; https://gitlab.gnome.org/GNOME/mutter/-/issues/4035).
+                  (("foreach stacking_test: stacking_tests")
+                   "foreach stacking_test: []"))
                 (substitute* "clutter/conform/meson.build"
                   ;; TODO: Re-instate the gesture test in a 47+ release.
                   ;; The conform/gesture test fails non-deterministically on
                   ;; some machines (see:
                   ;; https://gitlab.gnome.org/GNOME/mutter/-/issues/3521#note_2385427).
-                  ((".*'gesture',.*") "")))))
+                  ((".*'gesture',.*") "")
+
+                  ;; The 'event-delivery' test fails non-deterministically
+                  ;; (see:
+                  ;; https://gitlab.gnome.org/GNOME/mutter/-/issues/4035#note_2402672).
+                  ((".*'event-delivery',.*") "")))))
           (replace 'check
             (lambda* (#:key tests? test-options parallel-tests?
                       #:allow-other-keys)
@@ -8233,14 +8243,10 @@ to display dialog boxes from the commandline and shell scripts.")
     (native-inputs
      (list desktop-file-utils           ;for update-desktop-database
            `(,glib "bin")               ;for glib-compile-schemas, etc.
+           gettext-minimal
            gobject-introspection
-           intltool
            pkg-config
            xvfb-run
-           ;; For git build
-           autoconf
-           automake
-           libtool
            wayland-protocols
            ;; For tests.
            ;; Warnings are configured to be fatal during the tests; add an icon
@@ -8297,8 +8303,7 @@ to display dialog boxes from the commandline and shell scripts.")
            sysprof
            upower
            xkeyboard-config
-           xorg-server-xwayland
-           zenity))
+           xorg-server-xwayland))
     (synopsis "Window and compositing manager")
     (home-page "https://www.gnome.org")
     (description
@@ -9421,7 +9426,7 @@ Libadwaita.")
 (define-public gnome-control-center
   (package
     (name "gnome-control-center")
-    (version "46.6")
+    (version "46.8")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -9429,7 +9434,7 @@ Libadwaita.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "18wlnywsb429spl71qan6yiqpgqgqw48jbsx14abffgkfgsa4wfs"))))
+                "0q4frcgq3466f9f12p7s63371msngwhf71lpj1dy6hj25wgagl0s"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -9534,7 +9539,7 @@ properties, screen resolution, and other GNOME parameters.")
 (define-public gnome-shell
   (package
     (name "gnome-shell")
-    (version "46.7")
+    (version "46.10")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -9542,7 +9547,7 @@ properties, screen resolution, and other GNOME parameters.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0n19160ab6chcnxmwwv4m0kfz856n7851dv4ck0p08mfp39wzwhw"))))
+                "1dmpv6n05r7ryl4rq39755bv3f1x50kxk049phnlsyfxfn7m1jcs"))))
     (build-system meson-build-system)
     (arguments
      (let ((disallowed-references
@@ -10056,7 +10061,7 @@ shared object databases, search tools and indexing.")
 (define-public nautilus
   (package
     (name "nautilus")
-    (version "46.2")
+    (version "46.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -10064,7 +10069,7 @@ shared object databases, search tools and indexing.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1ykir908hz9b8c2mih15angaiv0dl8r85mhqd5zl9qxr368cks3f"))
+                "0kb21wjvz9nb6sq29hqpzbrcxfhiiznzszj387gwjvgcyph4ipxh"))
               (patches
                (search-patches "nautilus-extension-search-path.patch"))))
     (build-system meson-build-system)
@@ -11143,7 +11148,7 @@ GNOME Shell appearance and extension, etc.")
 (define-public gnome-shell-extensions
   (package
     (name "gnome-shell-extensions")
-    (version "46.2")
+    (version "46.5")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -11151,7 +11156,7 @@ GNOME Shell appearance and extension, etc.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0vyqqzqdd69sgarzpahxfj056rcm0hlk9hd52pr5y4i5d79fjhnl"))))
+                "06fcy79wgr3zyqgp6c433a6yfirv808zrhk50nss6mdgxqgd4cnv"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -11354,7 +11359,7 @@ handling the startup notification side.")
 (define-public gnome-calculator
   (package
     (name "gnome-calculator")
-    (version "46.1")
+    (version "46.2")
     (source
      (origin
        (method url-fetch)
@@ -11363,7 +11368,7 @@ handling the startup notification side.")
                            name "-" version ".tar.xz"))
        (sha256
         (base32
-         "0iw2cqcak5hmz83565hmarc92y2id0zciw7k5h98c049fc57adid"))))
+         "0jvv2gfg2g4x9wrllijg08m7idwgbg5x83gp4469s9cbhd1vycfn"))))
     (build-system meson-build-system)
     (arguments
      (list

@@ -513,7 +513,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.13-version "6.13.9")
+(define-public linux-libre-6.13-version "6.13.10")
 (define-public linux-libre-6.13-gnu-revision "gnu")
 (define deblob-scripts-6.13
   (linux-libre-deblob-scripts
@@ -523,7 +523,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1a6ri9awza8nf7cdabp09dk327cx0dw8q3rhm016a578kb4ihviq")))
 (define-public linux-libre-6.13-pristine-source
   (let ((version linux-libre-6.13-version)
-        (hash (base32 "1ci78x5dfjm3nlv4m2j02wl7ax82l47xwnr4k6j9n4dn53qa7rsk")))
+        (hash (base32 "08kpzbysnabyjn76nk8f3zqxlsw45wkhw5vafrgr43vj3v1zrwjp")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.13)))
@@ -532,7 +532,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.21")
+(define-public linux-libre-6.12-version "6.12.22")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -542,12 +542,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0p2jla4faz634jin9pz6a0cfpaz4jvy5bx6cmyk8dbsmhnx4h149")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "1iyn8qif6xfz04z698ib2dvmam54pyxzsign8sbdj9505sdf66lx")))
+        (hash (base32 "0dkk6d9ml44q2kr7wd8px8iy3lwgyb2qmbhq4f6sg1crnh580j5b")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.85")
+(define-public linux-libre-6.6-version "6.6.86")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -557,12 +557,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "12897yw71dz859nv13nzh6pp5j497l8ps0ddgpbbynm72bny1fy5")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "0abmgc5rg7hx18ykwsl6xl72gzaf3wbn5bkvh4kcsa1lrbscrfjy")))
+        (hash (base32 "0s1yy429g70iry559hsfv3plf787bik3kkd0mpx3a1z44dsavqs9")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.132")
+(define-public linux-libre-6.1-version "6.1.133")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -572,7 +572,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "10vkgkki08h8cbymmglvn2nkzx8lsqxpaciw6c2d57952q4byw8f")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "1l5vrc8an6h0fcnfmqb6pmal686imxbllcvlkqah19fg7wnv3dyx")))
+        (hash (base32 "0w5yb9y0jxrqh1wyajs33mpkcix4752acwra8jbg498r7yprzdcp")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
@@ -901,6 +901,8 @@ ARCH and optionally VARIANT, or #f if there is no such configuration."
     ("CONFIG_PROC_PID_CPUSET" . #t)
     ;; Allow disk encryption by default
     ("CONFIG_DM_CRYPT" . m)
+    ;; Allow fscrypt filesystem encryption by default
+    ("CONFIG_FS_ENCRYPTION" . #t)
     ;; Support zram on all kernel configs
     ("CONFIG_ZSWAP" . #t)
     ("CONFIG_ZSMALLOC" . #t)
@@ -3161,12 +3163,7 @@ module.")
                                (chmod file #o666))
                              archives)))))
            ,@(if (system-hurd?)
-                 '((add-after 'unpack 'set-PATH_MAX
-                     (lambda _
-                       ;; Shamelessly introduce an arbitrary limit.
-                       (substitute* "misc/tune2fs.c"
-                         (("PATH_MAX") "4096"))))
-                   (add-after 'unpack 'skip-tests
+                 '((add-after 'unpack 'skip-tests
                      (lambda _
                        (with-directory-excursion "tests"
                          (for-each
@@ -4900,12 +4897,14 @@ to the in-kernel OOM killer.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1f6lz57igi7iw2ls3fpzgw42bfznam4nf9368h7x8yf1mb737yxz"))
-              (patches (search-patches "eudev-rules-directory.patch"))
-              (modules '((guix build utils)))))
+                "1f6lz57igi7iw2ls3fpzgw42bfznam4nf9368h7x8yf1mb737yxz"))))
     (build-system gnu-build-system)
     (arguments
      (list
+      ;; The binary should be built to look for its rules under
+      ;; /etc/udev/rules.d, which is where the udev-shepherd-service keeps
+      ;; them.
+      #:make-flags #~(list "udevrulesdir=/etc/udev/rules.d")
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'bootstrap 'patch-file-names
@@ -4949,7 +4948,20 @@ to the in-kernel OOM killer.")
                 ;; such that Libtool looks for it in the usual places.
                 (substitute* (string-append #$output "/lib/libudev.la")
                   (("old_library=.*")
-                   "old_library=''\n"))))))
+                   "old_library=''\n")))))
+          (replace 'install
+            (lambda* (#:key make-flags #:allow-other-keys #:rest args)
+              ;; Although the runtime udevrulesdir is set to
+              ;; /etc/udev/rules.d, the package should provide its default
+              ;; rules under $libdir/udev/rules.d.
+              (let* ((default-udev-rules.d (string-append #$output
+                                                          "/lib/udev/rules.d"))
+                     (make-flags (cons (string-append "udevrulesdir="
+                                                      default-udev-rules.d)
+                                       (delete "udevrulesdir=/etc/udev/rules.d"
+                                               make-flags))))
+                (apply (assoc-ref %standard-phases 'install)
+                       `(,@args #:make-flags ,make-flags))))))
       #:configure-flags
       #~(list "--enable-manpages"
               ;; By default, autoconf uses $prefix/etc. The udev-service-type
@@ -4957,9 +4969,9 @@ to the in-kernel OOM killer.")
               ;; descriptions.
               "--sysconfdir=/etc")))
     (native-search-paths
-      (list (search-path-specification
-              (variable "UDEV_HWDB_PATH")
-              (files '("lib/udev/hwdb.d")))))
+     (list (search-path-specification
+            (variable "UDEV_HWDB_PATH")
+            (files '("lib/udev/hwdb.d")))))
     (native-inputs
      (list autoconf
            automake
@@ -4977,7 +4989,7 @@ to the in-kernel OOM killer.")
      ;; When linked against libblkid, eudev can populate /dev/disk/by-label
      ;; and similar; it also installs the '60-persistent-storage.rules' file,
      ;; which contains the rules to do that.
-     (list `(,util-linux "lib") ;for blkid
+     (list `(,util-linux "lib")         ;for blkid
            kmod))
     (outputs '("out" "static"))
     (home-page "https://github.com/eudev-project/eudev")

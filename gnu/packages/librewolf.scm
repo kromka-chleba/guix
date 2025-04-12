@@ -5,7 +5,7 @@
 ;;; Copyright © 2015 Sou Bunnbu <iyzsong@gmail.com>
 ;;; Copyright © 2016, 2017, 2018, 2019 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
-;;; Copyright © 2017 Clément Lassieur <clement@lassieur.org>
+;;; Copyright © 2017, 2025 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2017, 2018 Nikita <nikita@n0.is>
 ;;; Copyright © 2017, 2018 ng0 <gillmann@infotropique.org>
 ;;; Copyright © 2017, 2018, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
@@ -206,72 +206,60 @@
 ;; Update this id with every update to its release date.
 ;; It's used for cache validation and therefore can lead to strange bugs.
 ;; ex: date '+%Y%m%d%H%M%S'
-(define %librewolf-build-id "20250327215540")
+(define %librewolf-build-id "20250405165830")
 
 (define-public librewolf
   (package
     (name "librewolf")
-    (version "136.0.4-1")
+    (version "137.0.1-1")
     (source
      (make-librewolf-source
       #:version version
-      #:firefox-hash "0hn2ywyacgg8n47qz1q2l8bf32mszj3vnpkl6kag3wmqqbhvja2a"
-      #:librewolf-hash "045il4xrji2zh1scx3aiy6hx6jv098232aycda6bhsh27szbsrfa"
+      #:firefox-hash "1r0b5vfhqkw5vgf7bb0ylcw4vlg9mpfj96n8whfppj8r5rhah788"
+      #:librewolf-hash "0yry4k44wifi9h25h49krm05jbrs6bg9pa4vszv8af8dv5qm2bz0"
       #:l10n firefox-l10n))
     (build-system gnu-build-system)
     (arguments
      (list
-      #:configure-flags #~(let ((clang #$(this-package-native-input "clang")))
-                            `("--enable-application=browser"
+      #:configure-flags
+      #~(let ((clang #$(this-package-native-input "clang")))
+          ;; Configuration.
+          `("--enable-jemalloc"
+            "--enable-system-pixman"
+            "--with-system-ffi"
+            "--with-system-icu"
+            "--with-system-jpeg"
+            "--with-system-libevent"
+            "--with-system-libvpx"
+            "--with-system-nspr"
+            "--with-system-nss"
+            "--with-system-png"
+            "--with-system-webp"
+            "--with-system-zlib"
+            "--without-wasm-sandboxed-libraries"
 
-                              ;; Configuration
-                              "--without-wasm-sandboxed-libraries"
-                              "--with-system-jpeg"
-                              "--with-system-zlib"
-                              "--with-system-png"
-                              "--with-system-webp"
-                              "--with-system-icu"
-                              "--with-system-libvpx"
-                              "--with-system-libevent"
-                              "--with-system-ffi"
-                              "--enable-system-pixman"
-                              "--enable-jemalloc"
+            ,(string-append "--with-clang-path=" clang
+                            "/bin/clang")
+            ,(string-append "--with-libclang-path=" clang
+                            "/lib")
 
-                              ;; see https://bugs.gnu.org/32833
-                              "--with-system-nspr"
-                              "--with-system-nss"
+            ;; Distribution
+            "--with-distribution-id=org.guix"
 
-                              ,(string-append "--with-clang-path=" clang
-                                              "/bin/clang")
-                              ,(string-append "--with-libclang-path=" clang
-                                              "/lib")
+            ;; Features
+            "--enable-pulseaudio"
 
-                              ;; Distribution
-                              "--with-distribution-id=org.guix"
-                              "--with-app-name=librewolf"
-                              "--with-app-basename=LibreWolf"
-                              "--with-branding=browser/branding/librewolf"
+            ;; switch only available on x86, whereas EME is not supported on
+            ;; other targets
+            ,@(if #$(target-x86?) '("--disable-eme") '())
 
-                              ;; Features
-                              "--disable-tests"
-                              "--disable-updater"
-                              "--enable-pulseaudio"
-                              "--disable-crashreporter"
-                              "--allow-addon-sideload"
-                              "--with-unsigned-addon-scopes=app,system"
-
-                              ;; switch only available on x86, whereas EME
-                              ;; is not supported on other targets
-                              ,@(if #$(target-x86?) '("--disable-eme") '())
-
-                              ;; Build details
-                              "--disable-debug"
-                              "--enable-rust-simd"
-                              "--enable-release"
-                              "--enable-optimize"
-                              "--enable-strip"
-                              "--enable-hardening"
-                              "--disable-elf-hack"))
+            ;; Build details
+            "--disable-elf-hack"
+            ;; Don't attempt to download toolchains.  Upstream enables this,
+            ;; adding the flag ensures we don't use network in the build
+            ;; environment.
+            "--disable-bootstrap"
+            "--enable-strip"))
       #:imported-modules %cargo-utils-modules
       #:modules `((ice-9 regex)
                   (ice-9 string-fun)
@@ -287,26 +275,25 @@
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-preferences
             (lambda* (#:key inputs #:allow-other-keys)
-              (let ((port (open-file "browser/app/profile/firefox.js"
-                                     "a")))
-                (define (write-setting key value)
-                  (format port "~%pref(\"~a\", ~a);~%" key value)
-                  (format #t
-                          "fix-preferences: setting value of ~a to ~a~%" key
-                          value))
+              (call-with-port (open-file "browser/app/profile/firefox.js" "a")
+                (lambda (port)
+                  (define (write-setting key value)
+                    (format port "~%pref(\"~a\", ~a);~%" key value)
+                    (format #t
+                            "fix-preferences: setting value of ~a to ~a~%" key
+                            value))
 
-                ;; We should allow the sandbox to read the store directory,
-                ;; because the sandbox has access to /usr on FHS distros.
-                (write-setting
-                 "security.sandbox.content.read_path_whitelist"
-                 (string-append "\""
-                                (%store-directory) "/\""))
+                  ;; We should allow the sandbox to read the store directory,
+                  ;; because the sandbox has access to /usr on FHS distros.
+                  (write-setting
+                   "security.sandbox.content.read_path_whitelist"
+                   (string-append "\""
+                                  (%store-directory) "/\""))
 
-                ;; XDG settings should be managed by Guix.
-                (write-setting "browser.shell.checkDefaultBrowser"
-                               "false")
-                (close-port port))))
-          (add-after 'fix-preferences 'fix-ffmpeg-runtime-linker
+                  ;; XDG settings should be managed by Guix.
+                  (write-setting "browser.shell.checkDefaultBrowser"
+                                 "false")))))
+          (add-after 'unpack 'fix-ffmpeg-runtime-linker
             (lambda* (#:key inputs #:allow-other-keys)
               (let* ((ffmpeg (assoc-ref inputs "ffmpeg"))
                      (libavcodec (string-append ffmpeg
@@ -322,6 +309,43 @@
               (substitute* "lw/librewolf.cfg"
                 (("defaultPref\\(\"browser\\.ml\\.")
                  "lockPref(\"browser.ml."))))
+          (add-after 'unpack 'expand-extension-scope
+            (lambda* _
+                ;; Required for Guix packaged extensions
+                ;; SCOPE_PROFILE=1, SCOPE_APPLICATION=4, SCOPE_SYSTEM=8
+                ;; Default is 5.
+                (substitute* "lw/librewolf.cfg"
+                  (("defaultPref\\(\"extensions.enabledScopes\", 5\\)")
+                   "defaultPref(\"extensions.enabledScopes\", 13)"))))
+          (add-after 'unpack 'use-mozzarella
+            (lambda _
+              (substitute*
+                  "toolkit/locales/en-US/toolkit/about/aboutAddons.ftl"
+                (("addons.mozilla.org")
+                 "gnuzilla.gnu.org"))
+              (call-with-port (open-file "lw/librewolf.cfg" "a")
+                (lambda (port)
+                  ;; Add-ons panel (see settings.js in Icecat source).
+                  (for-each
+                   (lambda (pref)
+                     (format port
+                             "defaultPref(~s, ~s);~%"
+                             (car pref)
+                             (cdr pref)))
+                   `(("extensions.getAddons.search.browseURL"
+                      ,(string-append
+                        "https://gnuzilla.gnu.org/mozzarella/"
+                        "search.php?q=%TERMS%"))
+                     ("extensions.getAddons.get.url" .
+                      "https://gnuzilla.gnu.org/mozzarella")
+                     ("extensions.getAddons.link.url" .
+                      "https://gnuzilla.gnu.org/mozzarella")
+                     ("extensions.getAddons.discovery.api_url" .
+                      "https://gnuzilla.gnu.org/mozzarella")
+                     ("extensions.getAddons.langpacks.url" .
+                      "https://gnuzilla.gnu.org/mozzarella")
+                     ("lightweightThemes.getMoreURL" .
+                      "https://gnuzilla.gnu.org/mozzarella")))))))
           (add-after 'patch-source-shebangs 'patch-cargo-checksums
             (lambda _
               (use-modules (guix build cargo-utils))
@@ -447,41 +471,15 @@
                         (getcwd))
                 (format #t "configure flags: ~s~%" flags)
 
-                (define write-flags
-                  (lambda flags
-                    (display (string-join (map (cut string-append
-                                                    "ac_add_options " <>)
-                                               flags) "\n"))
-                    (display "\n")))
-                (with-output-to-file mozconfig
-                  (lambda ()
-                    (apply write-flags flags)
-                    ;; The following option unsets Telemetry
-                    ;; Reporting. With the Addons Fiasco,
-                    ;; Mozilla was found to be collecting
-                    ;; user's data, including saved passwords
-                    ;; and web form data, without users
-                    ;; consent. Mozilla was also found
-                    ;; shipping updates to systems without
-                    ;; the user's knowledge or permission.
-                    ;; As a result of this, use the following
-                    ;; command to permanently disable
-                    ;; telemetry reporting.
-                    (display "unset MOZ_TELEMETRY_REPORTING\n")
-                    (display "mk_add_options MOZ_CRASHREPORTER=0\n")
-                    (display "mk_add_options MOZ_DATA_REPORTING=0\n")
-                    (display
-                     "mk_add_options MOZ_SERVICES_HEALTHREPORT=0")
-                    (display
-                     "mk_add_options MOZ_TELEMETRY_REPORTING=0")))
+                (call-with-port (open-file mozconfig "a")
+                  (lambda (port)
+                    (format port "~%## Guix-specific options ##~%~%")
+                    (for-each
+                     (lambda (flag) (format port "ac_add_options ~a\n" flag))
+                     flags)
+                    (display "\n" port)))
                 (setenv "MOZCONFIG" mozconfig))
               (invoke "./mach" "configure")))
-          (add-before 'build 'fix-addons-placeholder
-            (lambda _
-              (substitute* 
-                  "toolkit/locales/en-US/toolkit/about/aboutAddons.ftl"
-                (("addons.mozilla.org")
-                 "gnuzilla.gnu.org"))))
           (replace 'build
             (lambda* (#:key (make-flags '())
                       (parallel-build? #t) #:allow-other-keys)
@@ -533,44 +531,6 @@
                             '("mesa" "pciutils"))))
                 (wrap-program (car (find-files lib "^glxtest$"))
                   `("LD_LIBRARY_PATH" prefix ,libs)))))
-          (add-after 'install 'patch-config
-            (lambda* (#:key inputs #:allow-other-keys)
-              (let ((lib (string-append #$output "/lib/librewolf"))
-                    (config-file "librewolf.cfg"))
-
-                ;; Required for Guix packaged extensions
-                ;; SCOPE_PROFILE=1, SCOPE_APPLICATION=4, SCOPE_SYSTEM=8
-                ;; Default is 5.
-                (substitute* (in-vicinity lib config-file)
-                  (("defaultPref\\(\"extensions.enabledScopes\", 5\\)")
-                   "defaultPref(\"extensions.enabledScopes\", 13)"))
-                ;; Use Mozzarella addons repo.
-                (call-with-port
-                    (open-file
-                     (in-vicinity lib config-file)
-                     "a")
-                  (lambda (port)
-                    ;; Add-ons panel (see settings.js in Icecat source).
-                    (for-each
-                     (lambda (pref)
-                       (format port
-                               "defaultPref(~s, ~s);~%"
-                               (car pref)
-                               (cdr pref)))
-                     `(("extensions.getAddons.search.browseURL"
-                        ,(string-append
-                          "https://gnuzilla.gnu.org/mozzarella/"
-                          "search.php?q=%TERMS%"))
-                       ("extensions.getAddons.get.url" .
-                        "https://gnuzilla.gnu.org/mozzarella")
-                       ("extensions.getAddons.link.url" .
-                        "https://gnuzilla.gnu.org/mozzarella")
-                       ("extensions.getAddons.discovery.api_url" .
-                        "https://gnuzilla.gnu.org/mozzarella")
-                       ("extensions.getAddons.langpacks.url" .
-                        "https://gnuzilla.gnu.org/mozzarella")
-                       ("lightweightThemes.getMoreURL" .
-                        "https://gnuzilla.gnu.org/mozzarella"))))))))
           (add-after 'install 'wrap-program
             (lambda* (#:key inputs outputs #:allow-other-keys)
               ;; The following two functions are from Guix's icecat package in
@@ -665,7 +625,12 @@
                                                       "/default" size ".png")
                                        (string-append dest
                                                       "/librewolf.png"))))
-                          '("16" "32" "48" "64" "128"))))))
+                          '("16" "32" "48" "64" "128")))))
+          ;; Make sure ICECAT_SYSTEM_DIR is set to avoid issues with Native
+          ;; Messaging and non-guix add-ons.
+          (add-after 'install-icons 'mkdir-lib-icecat
+            (lambda _
+              (mkdir-p (string-append #$output "/lib/icecat")))))
 
       ;; Test will significantly increase build time but with little rewards.
       #:tests? #f

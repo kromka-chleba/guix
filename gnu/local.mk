@@ -1215,7 +1215,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/elm-ghc9.2.patch	\
   %D%/packages/patches/elm-offline-package-registry.patch	\
   %D%/packages/patches/elm-reactor-static-files.patch		\
-  %D%/packages/patches/elogind-fix-rpath.patch			\
   %D%/packages/patches/emacs-all-the-icons-remove-duplicate-rs.patch	\
   %D%/packages/patches/emacs-deferred-fix-number-of-arguments.patch	\
   %D%/packages/patches/emacs-elpy-dup-test-name.patch		\
@@ -1252,7 +1251,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/erlang-man-path.patch			\
   %D%/packages/patches/esmini-use-pkgconfig.patch		\
   %D%/packages/patches/esmtp-add-lesmtp.patch		\
-  %D%/packages/patches/eudev-rules-directory.patch		\
   %D%/packages/patches/exercism-disable-self-update.patch	\
   %D%/packages/patches/expat-CVE-2024-45490.patch	\
   %D%/packages/patches/expat-CVE-2024-45491.patch	\
@@ -1335,7 +1333,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/fulcrum-1.9.1-unbundled-libraries.patch	\
   %D%/packages/patches/fuse-glibc-2.34.patch			\
   %D%/packages/patches/fuse-overlapping-headers.patch		\
-  %D%/packages/patches/fuzzel-fix-gcc-error.patch		\
   %D%/packages/patches/fuzzylite-relative-path-in-tests.patch	\
   %D%/packages/patches/fuzzylite-use-catch2.patch		\
   %D%/packages/patches/fuzzylite-soften-float-equality.patch	\
@@ -1494,6 +1491,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/glibc-2.29-git-updates.patch     	\
   %D%/packages/patches/glibc-2.29-supported-locales.patch     	\
   %D%/packages/patches/glibc-supported-locales.patch     	\
+  %D%/packages/patches/gmime-disable-tests.patch		\
   %D%/packages/patches/gmp-arm-asm-nothumb.patch		\
   %D%/packages/patches/gmp-faulty-test.patch			\
   %D%/packages/patches/gnome-2048-fix-positional-argument.patch	\
@@ -2412,7 +2410,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/webrtc-audio-processing-x86-no-sse.patch	\
   %D%/packages/patches/webrtc-for-telegram-desktop-unbundle-libsrtp.patch \
   %D%/packages/patches/websocketpp-fix-for-cmake-3.15.patch	\
-  %D%/packages/patches/whisper-cpp-enable-tests.patch           \
   %D%/packages/patches/wmctrl-64-fix.patch			\
   %D%/packages/patches/wmfire-dont-inline-draw-fire.patch	\
   %D%/packages/patches/wmfire-update-for-new-gdk-versions.patch	\

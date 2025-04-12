@@ -673,7 +673,8 @@ file systems, as well as corresponding @file{/etc/fstab} entries.")))
                              (lambda (seed)
                                (put-bytevector seed buf)))
                            (umask previous-umask))
-                         #t)))))
+                         )))
+                   #f))
          (modules `((rnrs bytevectors)
                     (rnrs io ports)
                     ,@%default-modules)))))
@@ -2561,10 +2562,6 @@ item of PACKAGES."
                          (list udevd)
                          #:environment-variables
                          (cons*
-                          ;; The first one is for udev, the second one for
-                          ;; eudev.
-                          "UDEV_CONFIG_FILE=/etc/udev/udev.conf"
-                          "EUDEV_RULES_DIRECTORY=/etc/udev/rules.d"
                           (string-append "LINUX_MODULE_DIRECTORY="
                                          (getenv "LINUX_MODULE_DIRECTORY"))
                           (default-environment-variables)))))
