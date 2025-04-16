@@ -900,6 +900,7 @@ dictionaries.  HexChat can be extended with multiple addons.")
               (sha256
                (base32
                 "1f27qa2xg8xwdyij2n5aimdyp24za09rc0f9q5rjwpnx341qi5v8"))))
+    (outputs '("out" "debug"))
     (build-system gnu-build-system)
     ;; Needed for the test suite.
     (native-inputs (list procps expect inetutils openssl))
@@ -3461,14 +3462,22 @@ notifications.")
        (uri (string-append "https://git.causal.agency/pounce/snapshot/pounce-"
                            version ".tar.gz"))
        (sha256
-        (base32 "0kk0jrfiwfaybr0i5xih3b0yd4i6v3bz866a7xal1j8wddalbwlp"))))
+        (base32 "0kk0jrfiwfaybr0i5xih3b0yd4i6v3bz866a7xal1j8wddalbwlp"))
+       (patches (search-patches "pounce-readable-checks.patch"))))
+    (outputs '("out" "debug"))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ;there are no tests
-       #:make-flags
-       (list
-        (string-append "CC=" ,(cc-for-target))
-        (string-append "PREFIX=" %output))))
+     (list
+      #:tests? #f                       ;there are no tests
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'configure 'pre-configure
+                     (lambda _
+                       ;; The build system is peculiar and sets environment
+                       ;; variables such as CFLAGS itself, which must not be
+                       ;; overridden via Make flags.
+                       (setenv "CC" #$(cc-for-target))
+                       (setenv "CFLAGS" "-g") ;for debug symbols
+                       (setenv "PREFIX" #$output))))))
     (native-inputs
      (list pkg-config universal-ctags))
     (inputs

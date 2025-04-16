@@ -489,6 +489,51 @@ There are many more ways to organize and display your bookmarks.  I recommend
 reading the extensive documentation about BookmarkPlus on the Emacs Wiki.")
     (license license:gpl3+)))
 
+(define-public emacs-bqn-mode
+  (package
+    (name "emacs-bqn-mode")
+    ;; upstream releases are tagged by date
+    (version "2024-09-10")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/museoa/bqn-mode/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0a4whlx8065c15nfyqy8176mwysnc13z4q7mmdfnf6skdnvi2pk6"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:tests? #f ;No tests found in source
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; `bqn-comint-bring' in `bqn-mode.el' uses the macro
+          ;; `thread-last', defined in `subr-x.el' but not autoloaded.
+          ;; `emacs-build-system' will happily byte-compile `bqn-mode.el'
+          ;; but interactively calling `bqn-comint-bring' will cause an
+          ;; error.  An explicit call to `(require 'subr-x)' remedies the
+          ;; issue until it is fixed upstream.
+          (add-after 'unpack 'require-subr-x
+            (lambda _
+              (emacs-batch-edit-file "bqn-mode.el"
+                                     '(progn (goto-char (point-min))
+                                             (re-search-forward
+                                              "(require 'pulse)")
+                                             (forward-line)
+                                             (insert "(require 'subr-x)\n")
+                                             (basic-save-buffer))))))))
+    (propagated-inputs (list emacs-compat))
+    (synopsis "Emacs major mode for the BQN programming language")
+    (description
+     "This package provides a major mode for editing and executing BQN code.
+It can be used to interactively evaluate BQN code in buffer or can be used to
+launch BQN REPL sessions.  For evaluating BQN code or spawning interpreters an
+executable implementation is required such as @code{cbqn} or @code{dbqn}.")
+    (home-page "https://github.com/museoa/bqn-mode/")
+    (license license:gpl3)))
+
 (define-public emacs-cfrs
   (package
     (name "emacs-cfrs")
@@ -4089,14 +4134,16 @@ podcasts) in Emacs.")
 (define emacs-emms-print-metadata
   (package
     (name "emacs-emms-print-metadata")
-    (version "21")
+    (version "22")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://elpa.gnu.org/packages/"
-                           "emms-" version ".tar"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.savannah.gnu.org/git/emms/")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "188rij39qqaya7hk0p05ygcw5vlha7qd6pm4ws6nfw7g0nv1rbcc"))))
+        (base32 "0s89r9fr79kv864zydqgkv2fdwxa0n84w5b40v87rj5hlya0kx6v"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -4129,8 +4176,23 @@ light user interface.")
     (name "emacs-emms")
     (build-system emacs-build-system)
     (arguments
-     `(#:phases
+     `(#:tests? #t
+       #:test-command
+       (list "emacs" "-Q" "--batch"
+             "--eval=(cd \"test/\")"
+             "-l" "emms-tests.el"
+             "-l" "emms-info-native-tests.el"
+             "-l" "emms-info-native-ogg-tests.el"
+             "-l" "emms-info-native-mp3-tests.el"
+             "-l" "emms-info-native-flac-tests.el"
+             "-l" "emms-info-native-vorbis-tests.el"
+             "-f" "ert-run-tests-batch-and-exit")
+       #:phases
        (modify-phases %standard-phases
+         (add-before 'install 'make-info
+           (lambda _
+             (invoke "make" "-C" "doc" "all")
+             (rename-file "doc/emms.info" "emms.info")))
          (add-after 'unpack 'set-external-programs
            ;; Specify the absolute file names of the various programs
            ;; so that everything works out-of-the-box. (tinytag missing)
@@ -4174,6 +4236,7 @@ light user interface.")
                   (string-append "\"" vorbiscomment "\"")))
                (substitute* "emms-info-exiftool.el"
                  (("\"exiftool\"") (string-append "\"" exiftool "\"")))))))))
+    (native-inputs (list texinfo))
     (inputs
      (list emacs-emms-print-metadata
            alsa-utils
@@ -19689,7 +19752,7 @@ you to deal with multiple log levels.")
 (define-public emacs-denote
   (package
     (name "emacs-denote")
-    (version "3.1.0")
+    (version "4.0.0")
     (source
      (origin
        (method git-fetch)
@@ -19698,7 +19761,7 @@ you to deal with multiple log levels.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0g9ciqgkipm6ag5nvyvaz0wc51hpk0wh2wwiqaybdfhzja8bbqx6"))))
+        (base32 "1np3hyqcw6p5ajx102ng5nyc5gp1is88vk6803gf5alfbw0fzvj4"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -23225,7 +23288,7 @@ which avoids some of the issues with using Emacs’s built-in Url library.")
 (define-public emacs-plz-media-type
   (package
     (name "emacs-plz-media-type")
-    (version "0.2.3")
+    (version "0.2.4")
     (source
      (origin
        (method git-fetch)
@@ -23234,7 +23297,7 @@ which avoids some of the issues with using Emacs’s built-in Url library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0s04ai1gcdc7blyrznaqbdh47vjaa8n49xzhi5s9nym1nm537n1w"))))
+        (base32 "1g9j12p8ifkp2k0lss5nx3mr1nfjsakj4d3mcq9gvzgj7qg8aw2d"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-plz))
     (arguments (list #:tests? #f))
@@ -24079,15 +24142,16 @@ want to use it.")
 (define-public emacs-track-changes
   (package
     (name "emacs-track-changes")
-    (version "1.2")
+    (version "1.4")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://elpa.gnu.org/packages/track-changes-"
                            version ".tar"))
        (sha256
-        (base32 "0al6a1xjs6p2pn6z976pnmfqz2x5xcz99b5gkdzz90ywbn7018m4"))))
+        (base32 "0ygc53dm144ld4f7ig1fh1z345gnkrin7q108kj9d4dhgp8f2381"))))
     (build-system emacs-build-system)
+    (arguments (list #:tests? #f)) ; no tests
     (home-page "https://elpa.gnu.org/packages/track-changes.html")
     (synopsis "Abstraction library which handles accumulating file changes")
     (description

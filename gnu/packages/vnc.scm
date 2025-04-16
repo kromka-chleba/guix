@@ -682,7 +682,7 @@ easily implement VNC server or client functionality in your program.")
 (define-public neatvnc
   (package
     (name "neatvnc")
-    (version "0.8.0")
+    (version "0.9.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -691,7 +691,7 @@ easily implement VNC server or client functionality in your program.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "07vjagx14yiqgaiba24xvb3qbiznlfab23c14arx225y0rlw82h4"))))
+                "09vafk99zmrbrb5mxr1sqb21rvggbr69kx7rwqf2g6dxk07p1mqg"))))
     (build-system meson-build-system)
     (native-inputs (list pkg-config))
     (inputs
@@ -705,7 +705,7 @@ authentication, SSH tunneling, and ZRLE or Tight encoding.")
 (define-public wayvnc
   (package
     (name "wayvnc")
-    (version "0.8.0")
+    (version "0.9.1")
     (source
      (origin
        (method git-fetch)
@@ -714,7 +714,7 @@ authentication, SSH tunneling, and ZRLE or Tight encoding.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1k02i70v8niqvadzfrki8q6wiymcfdqanc9zlmzdslw2bpdhqq90"))))
+        (base32 "1brnzwabnrhjblcfymwxsg4z58pzdnlql1mgsmijp0kw5n8770rc"))))
     (build-system meson-build-system)
     (native-inputs
      (append (if (%current-target-system)

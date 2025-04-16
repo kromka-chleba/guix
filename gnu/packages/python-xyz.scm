@@ -3675,13 +3675,13 @@ and a list of words that are easier to remember for humans (the
 (define-public python-bitarray
   (package
     (name "python-bitarray")
-    (version "2.8.1")
+    (version "3.3.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "bitarray" version))
               (sha256
                (base32
-                "1wy80bmhg33bpzn28g1n7s8r8f4drj7pcl4m2qb5sql8bbryx376"))))
+                "0ib35sxk46kw2adgikmy4vn9climr0dz99pqf2mia2idcyd232cc"))))
     (build-system python-build-system)
     (arguments
      (list #:phases
@@ -3705,6 +3705,17 @@ useful when bit level access to binary files is required, such as portable
 bitmap image files.  Also, when dealing with compressed data which uses
 variable bit length encoding, you may find this module useful.")
     (license license:psfl)))
+
+(define-public python-bitarray-2
+  (package
+    (inherit python-bitarray)
+    (version "2.8.1")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "bitarray" version))
+              (sha256
+               (base32
+                "1wy80bmhg33bpzn28g1n7s8r8f4drj7pcl4m2qb5sql8bbryx376"))))))
 
 (define-public python-boolean.py
   (package
@@ -7265,14 +7276,14 @@ e.g. filters, callbacks and errbacks can all be promises.")
 (define-public python-crossenv
   (package
     (name "python-crossenv")
-    (version "1.3.0")
+    (version "1.5.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "crossenv" version))
        (sha256
         (base32
-         "07rv4650n19740ixmnsf4qbxyqlgi7f5m1cy8cq0gl01q3r6hps4"))))
+         "0f9x3f506pl45ip1nm3fx8gzwm1hr7w1b0bib4kg74zph7jmz72x"))))
     (build-system python-build-system)
     (arguments
      (list #:tests? #f)) ; tests not distributed on pypi
@@ -33367,29 +33378,6 @@ sequences.")
 prevent debuggers and other applications from inspecting the memory within
 your process.")
     (license license:expat)))
-
-(define-public python-gcovr
-  (package
-    (name "python-gcovr")
-    (version "4.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "gcovr" version))
-       (sha256
-        (base32
-          "0gyady7x3v3l9fm1zan0idaggqqcm31y7g5vxk7h05p5h7f39bjs"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-lxml python-jinja2))
-    (home-page "https://gcovr.com/")
-    (synopsis "Utility for generating code coverage results")
-    (description
-      "Gcovr provides a utility for managing the use of the GNU gcov
-utility and generating summarized code coverage results.  It is inspired
-by the Python coverage.py package, which provides a similar utility for
-Python.")
-    (license license:bsd-3)))
 
 (define-public python-owslib
   (package

@@ -80,6 +80,7 @@
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2025 Tomáš Čech <sleep_walker@gnu.org>
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2025 Junker <dk@junkeria.club>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2871,6 +2872,53 @@ control module for StumpWM.")
 mouse control mode for StumpWM.")
     (license (list license:gpl2+ license:gpl3+ license:bsd-2))))
 
+(define-public sbcl-stumpwm-stump-nm
+  (package
+    (inherit stumpwm-contrib)
+    (name "sbcl-stumpwm-stump-nm")
+    (arguments
+     '(#:asd-systems '("stump-nm")
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'chdir
+           (lambda _ (chdir "util/stump-nm"))))))
+    (home-page "https://github.com/stumpwm/stumpwm-contrib")
+    (inputs (list stumpwm
+                  sbcl-babel
+                  sbcl-alexandria
+                  sbcl-dbus))
+    (synopsis "StumpWM NetworkManager integration")
+    (description "This module allows you to manage your Wi-Fi networks and VPN
+connections from within StumpWM itself.  It is intentionally pretty bare-bones in
+features, in that it allows you to enable/disable connections, and no more.  It is
+not a replacement for nmtui and/or nmcli.")
+    (license license:gpl3+)))
+
+(define-public sbcl-stumpwm-tomato
+  (package
+    (name "sbcl-stumpwm-tomato")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Junker/stumpwm-tomato")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qq11spvhrcq74gh0dw0p4859ai2mqzbxa45gjbf599kmcybp1pa"))))
+    (build-system asdf-build-system/sbcl)
+    (inputs (list stumpwm))
+    (arguments
+     '(#:asd-systems '("tomato")
+       #:tests? #f))
+    (home-page "https://github.com/Junker/stumpwm-tomato")
+    (synopsis "Advanced Pomodoro timer module for StumpWM")
+    (description
+     "This package provides an advanced Pomodoro timer module for StumpWM.")
+    (license license:gpl3+)))
+
 (define-public sbcl-stumpwm-ttf-fonts
   (package
     (inherit stumpwm-contrib)
@@ -2906,6 +2954,37 @@ rendering.")
     (description "This package provides an interface which integrates
 password-store into StumpWM.")
     (license (list license:gpl2+ license:gpl3+ license:bsd-2))))
+
+(define-public sbcl-stumpwm-rofi
+  (package
+    (name "sbcl-stumpwm-rofi")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Junker/stumpwm-rofi")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1s0sri19rv6dshwm49djgbfc0zajl63gr1rg8xl762chlj28h1ir"))))
+    (build-system asdf-build-system/sbcl)
+    (inputs (list stumpwm rofi))
+    (arguments
+     '(#:asd-systems '("rofi")
+       #:tests? #f
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'fix-rofi-path
+           (lambda* (#:key inputs #:allow-other-keys)
+             (substitute* "rofi.lisp"
+               (("rofi -dmenu")
+                (string-append (search-input-file inputs "/bin/rofi")
+                               " -dmenu"))))))))
+    (home-page "https://github.com/Junker/stumpwm-rofi")
+    (synopsis "Rofi module for StumpWM")
+    (description "This package provides Rofi integration for StumpWM.")
+    (license license:gpl3+)))
 
 (define-public sbcl-stumpwm-globalwindows
   (package

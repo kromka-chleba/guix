@@ -2,6 +2,7 @@
 ;;; Copyright © 2019, 2020 Timothy Sample <samplet@ngyro.com>
 ;;; Copyright © 2021 Lars-Dominik Braun <lars@6xq.net>
 ;;; Copyright © 2020, 2023, 2024 Jelle Licht <jlicht@fsfe.org>
+;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -33,6 +34,7 @@
   #:use-module (ice-9 regex)
   #:use-module (json)
   #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-2)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-41)
   #:use-module (srfi srfi-9)
@@ -103,7 +105,17 @@
               (match (assoc "type" alist)
                 ((_ . (? string? type))
                  (spdx-string->license type))
-                (_ #f)))))
+                (_ #f)))
+             ((? vector? vector)
+              (match (filter-map
+                      (match-lambda
+                        ((? string? str) (spdx-string->license str))
+                        (_ #f))
+                      (vector->list vector))
+                ((license rest ...)
+                 (cons* license rest))
+                ((license)
+                 license)))))
   (description package-revision-description             ;string
                "description" empty-or-string)
   (dist package-revision-dist "dist" json->dist))       ;dist
@@ -158,11 +170,11 @@
         (sort svs semver>?)))
 
 (define* (resolve-package name #:optional (svr *semver-range-any*))
-  (let ((meta (lookup-meta-package* name)))
-    (and meta
-         (let* ((version (semver-latest (or (meta-package-versions meta) '()) svr))
-                (pkg (meta-package-package meta version)))
-           pkg))))
+  (and-let*
+      ((meta (lookup-meta-package* name))
+       (version (semver-latest (or (meta-package-versions meta) '()) svr))
+       (pkg (meta-package-package meta version)))
+    pkg))
 
 
 ;;;
@@ -196,68 +208,66 @@
       (($ <versioned-package> name version)
        (resolve-package name (string->semver-range version)))))
 
-  (if (package-revision? npm-package)
-      (let ((name (package-revision-name npm-package))
-            (version (package-revision-version npm-package))
-            (home-page (package-revision-home-page npm-package))
-            (dependencies (package-revision-dependencies npm-package))
-            (dev-dependencies (package-revision-dev-dependencies npm-package))
-            (peer-dependencies (package-revision-peer-dependencies npm-package))
-            (license (package-revision-license npm-package))
-            (description (package-revision-description npm-package))
-            (dist (package-revision-dist npm-package)))
-        (let* ((name (npm-name->name name))
-               (url (dist-tarball dist))
-               (home-page (if (string? home-page)
-                              home-page
-                              (string-append %default-page "/" (uri-encode name))))
-               (synopsis description)
-               (resolved-deps (map resolve-spec
-                                   (append dependencies peer-dependencies)))
-               (peer-names (map versioned-package-name peer-dependencies))
-               ;; lset-difference for treating peer-dependencies as dependencies,
-               ;; which leads to dependency cycles.  lset-union for treating them as
-               ;; (ignored) dev-dependencies, which leads to broken packages.
-               (dev-names
-                (lset-union string=
-                            (map versioned-package-name dev-dependencies)
-                            peer-names))
-               (extra-phases
-                (match dev-names
-                  (() '())
-                  ((dev-names ...)
-                   `((add-after 'patch-dependencies 'delete-dev-dependencies
-                       (lambda _
-                         (delete-dependencies '(,@(reverse dev-names))))))))))
-          (values
-           `(package
-              (name ,name)
-              (version ,(semver->string (package-revision-version npm-package)))
-              (source (origin
-                        (method url-fetch)
-                        (uri ,url)
-                        (sha256 (base32 ,(hash-url url)))))
-              (build-system node-build-system)
-              (arguments
-               (list
-                #:tests? #f
-                #:phases
-                #~(modify-phases %standard-phases
-                    (delete 'build)
-                    ,@extra-phases)))
-              ,@(match dependencies
-                  (() '())
-                  ((dependencies ...)
-                   `((inputs
-                      (list ,@(map package-revision->symbol resolved-deps))))))
-              (home-page ,home-page)
-              (synopsis ,synopsis)
-              (description ,description)
-              (license ,license))
-           (map (match-lambda (($ <package-revision> name version)
-                               (list name (semver->string version))))
-                resolved-deps))))
-      (values #f '())))
+  (match npm-package
+    (($ <package-revision>
+        name version home-page dependencies dev-dependencies
+        peer-dependencies license description dist)
+     (let* ((name (npm-name->name name))
+            (url (dist-tarball dist))
+            (home-page (if (string? home-page)
+                           home-page
+                           (string-append %default-page "/" (uri-encode name))))
+            (synopsis description)
+            (resolved-deps (map resolve-spec
+                                (append dependencies peer-dependencies)))
+            (peer-names (map versioned-package-name peer-dependencies))
+            ;; lset-difference for treating peer-dependencies as dependencies,
+            ;; which leads to dependency cycles.  lset-union for treating them as
+            ;; (ignored) dev-dependencies, which leads to broken packages.
+            (dev-names
+             (lset-union string=
+                         (map versioned-package-name dev-dependencies)
+                         peer-names))
+            (extra-phases
+             (match dev-names
+               (() '())
+               ((dev-names ...)
+                `((add-after 'patch-dependencies 'delete-dev-dependencies
+                    (lambda _
+                      (modify-json
+                       (delete-dependencies '(,@(reverse dev-names)))))))))))
+       (values
+        `(package
+           (name ,name)
+           (version ,(semver->string (package-revision-version npm-package)))
+           (source (origin
+                     (method url-fetch)
+                     (uri ,url)
+                     (sha256 (base32 ,(hash-url url)))))
+           (build-system node-build-system)
+           (arguments
+            (list
+             #:tests? #f
+             #:phases
+             #~(modify-phases %standard-phases
+                 (delete 'build)
+                 ,@extra-phases)))
+           ,@(match dependencies
+               (() '())
+               ((dependencies ...)
+                `((inputs
+                   (list ,@(map package-revision->symbol resolved-deps))))))
+           (home-page ,home-page)
+           (synopsis ,synopsis)
+           (description ,description)
+           (license ,(if (list? license)
+                         `(list ,@license)
+                         license)))
+        (map (match-lambda (($ <package-revision> name version)
+                            (list name (semver->string version))))
+             resolved-deps))))
+    (_
+     (values #f '()))))
 
 
 ;;;

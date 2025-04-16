@@ -13,6 +13,7 @@
 ;;; Copyright © 2021, 2022 Philip McGrath <philip@philipmcgrath.com>
 ;;; Copyright © 2022 Hilton Chain <hako@ultrarare.space>
 ;;; Copyright © 2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2024 Daniel Khodabakhsh <d.khodabakhsh@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -373,7 +374,7 @@ devices.")
        (modify-phases %standard-phases
          (add-after 'patch-dependencies 'delete-dependencies
            (lambda args
-             (delete-dependencies '("tap")))))))
+             (modify-json (delete-dependencies '("tap"))))))))
     (home-page "https://github.com/npm/node-semver")
     (properties '((hidden? . #t)))
     (synopsis "Parses semantic versions strings")
@@ -404,11 +405,12 @@ devices.")
        (modify-phases %standard-phases
          (add-after 'patch-dependencies 'delete-dependencies
            (lambda args
-             (delete-dependencies '("eslint"
-                                    "expect.js"
-                                    "husky"
-                                    "lint-staged"
-                                    "mocha")))))))
+             (modify-json (delete-dependencies
+                           '("eslint"
+                             "expect.js"
+                             "husky"
+                             "lint-staged"
+                             "mocha"))))))))
     (home-page "https://github.com/zeit/ms#readme")
     (properties '((hidden? . #t)))
     (synopsis "Tiny millisecond conversion utility")
@@ -438,7 +440,7 @@ formats to milliseconds.")
        (modify-phases %standard-phases
          (add-after 'patch-dependencies 'delete-dependencies
            (lambda args
-             (delete-dependencies `("chai" "mocha")))))))
+             (modify-json (delete-dependencies `("chai" "mocha"))))))))
     (home-page "https://github.com/darkskyapp/binary-search#readme")
     (properties '((hidden? . #t)))
     (synopsis "Tiny binary search function with comparators")
@@ -467,17 +469,18 @@ formats to milliseconds.")
        (modify-phases %standard-phases
          (add-after 'patch-dependencies 'delete-dependencies
            (lambda args
-             (delete-dependencies `("brfs"
-                                    "browserify"
-                                    "coveralls"
-                                    "istanbul"
-                                    "karma"
-                                    "karma-browserify"
-                                    "karma-chrome-launcher"
-                                    "karma-mocha"
-                                    "mocha"
-                                    "mocha-lcov-reporter"
-                                    "xo")))))))
+             (modify-json (delete-dependencies
+                           `("brfs"
+                             "browserify"
+                             "coveralls"
+                             "istanbul"
+                             "karma"
+                             "karma-browserify"
+                             "karma-chrome-launcher"
+                             "karma-mocha"
+                             "mocha"
+                             "mocha-lcov-reporter"
+                             "xo"))))))))
     (inputs (list node-ms-bootstrap))
     (home-page "https://github.com/visionmedia/debug#readme")
     (properties '((hidden? . #t)))
@@ -533,12 +536,13 @@ Node.js and web browsers.")
        (modify-phases %standard-phases
          (add-after 'patch-dependencies 'delete-dependencies
            (lambda _
-             (delete-dependencies `("@types/mocha"
-                                    "@types/node"
-                                    "mocha"
-                                    "ts-node"
-                                    "tslint"
-                                    "typescript"))))
+             (modify-json (delete-dependencies
+                           `("@types/mocha"
+                             "@types/node"
+                             "mocha"
+                             "ts-node"
+                             "tslint"
+                             "typescript")))))
          (replace 'build
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((esbuild (search-input-file inputs "/bin/esbuild")))
@@ -594,13 +598,14 @@ Node.js and web browsers.")
        (modify-phases %standard-phases
          (add-after 'patch-dependencies 'delete-dependencies
            (lambda args
-             (delete-dependencies `("@types/debug"
-                                    "@types/mocha"
-                                    "@types/node"
-                                    "mocha"
-                                    "ts-node"
-                                    "tslint"
-                                    "typescript"))))
+             (modify-json (delete-dependencies
+                           `("@types/debug"
+                             "@types/mocha"
+                             "@types/node"
+                             "mocha"
+                             "ts-node"
+                             "tslint"
+                             "typescript")))))
          (replace 'build
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((esbuild (search-input-file inputs "/bin/esbuild")))
@@ -655,15 +660,16 @@ Node.js and web browsers.")
        (modify-phases %standard-phases
          (add-after 'patch-dependencies 'delete-dependencies
            (lambda args
-             (delete-dependencies `("@types/debug"
-                                    "@types/mocha"
-                                    "@types/node"
-                                    "esm"
-                                    "llparse-test-fixture"
-                                    "mocha"
-                                    "ts-node"
-                                    "tslint"
-                                    "typescript"))))
+             (modify-json (delete-dependencies
+                           `("@types/debug"
+                             "@types/mocha"
+                             "@types/node"
+                             "esm"
+                             "llparse-test-fixture"
+                             "mocha"
+                             "ts-node"
+                             "tslint"
+                             "typescript")))))
          (replace 'build
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((esbuild (search-input-file inputs "/bin/esbuild")))
@@ -757,14 +763,14 @@ source files.")
 (define-public node-lts
   (package
     (inherit node-bootstrap)
-    (version "22.12.0")
+    (version "22.14.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nodejs.org/dist/v" version
                                   "/node-v" version ".tar.gz"))
               (sha256
                (base32
-                "1qrcn9hm85bmh81ircaa0vmxrqmiip1iwczvpsyn9sdn0b0ffmri"))
+                "12msprh604s6qdsgwymxw4kl8ivaldbaydf4v37lbp02aznk2kkc"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -781,11 +787,7 @@ source files.")
                               "deps/nghttp2"
                               "deps/ngtcp2"
                               "deps/uv"
-                              "deps/zlib"))
-                  (substitute* "Makefile"
-                    ;; Remove references to bundled software.
-                    (("deps/uv/uv.gyp") "")
-                    (("deps/zlib/zlib.gyp") ""))))))
+                              "deps/zlib"))))))
     (arguments
      (substitute-keyword-arguments (package-arguments node-bootstrap)
        ((#:configure-flags configure-flags)
@@ -885,7 +887,9 @@ source files.")
                ;; https://github.com/nodejs/node/issues/45906
                ;; This test depends on 64-bit time_t so skipping on 32-bit systems.
                ,@(if (not (target-64bit?))
-                     '((delete-file "test/parallel/test-fs-utimes-y2K38.js"))
+                     '((delete-file "test/parallel/test-fs-utimes-y2K38.js")
+
+                       (delete-file "test/parallel/test-debugger-heap-profiler.js"))
                      '())
 
                ;; These tests have an expiry date: they depend on the validity of
@@ -903,6 +907,14 @@ source files.")
                            "test/parallel/test-process-initgroups.js"
                            "test/parallel/test-process-setgroups.js"
                            "test/parallel/test-process-uid-gid.js"))))
+           (add-after 'delete-problematic-tests 'patch-problematic-tests
+             (lambda _
+               ;; XXX: These tests seem to not work by default
+               (substitute*
+                   '("test/parallel/test-http2-premature-close.js"
+                     "test/parallel/test-http2-invalid-last-stream-id.js")
+                 (("client\\.connect\\(address\\)")
+                  "client.connect(address.port)"))))
            (add-after 'delete-problematic-tests 'replace-llhttp-sources
              (lambda* (#:key inputs #:allow-other-keys)
                ;; Replace pre-generated llhttp sources

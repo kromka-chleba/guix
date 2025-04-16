@@ -1910,12 +1910,12 @@ Google's C++ code base.")
          ((#:configure-flags flags)
           #~(cons* "-DCMAKE_CXX_STANDARD=11" #$flags)))))))
 
-(define-public abseil-cpp-20220623.1
+(define-public abseil-cpp-20220623
   (let ((base abseil-cpp-20200923.3))
     (package
       (inherit base)
       (name "abseil-cpp")
-      (version "20220623.1")
+      (version "20220623.2")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -1924,7 +1924,7 @@ Google's C++ code base.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0vxh2a74g4s45yr8kdjqnzl64k10qdlc0hbnn987a4cnwdj4bp9r"))
+                  "1cmchfcqp85yp5hc3i47xv3i14v0f2wd5h2jblvcjjmjyhji1bwr"))
                 (patches
                  (search-patches "abseil-cpp-20220623.1-no-kepsilon-i686.patch"))))
       (arguments
@@ -1934,11 +1934,11 @@ Google's C++ code base.")
                   (delete "-DABSL_RUN_TESTS=ON" ,flags))))))))
 
 (define-public abseil-cpp
-  (let ((base abseil-cpp-20220623.1))
+  (let ((base abseil-cpp-20220623))
     (package
       (inherit base)
       (name "abseil-cpp")
-      (version "20240722.0")
+      (version "20250127.1")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
@@ -1947,7 +1947,7 @@ Google's C++ code base.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1pmrigimzic2k3ix3l81j2jpfgjgbajz0qbc5s57zljr2w7fjn77"))
+                  "0r2j360csym12jlgmcy92rgwdmng63shchxvfmln3j5402lv0g21"))
                 (patches
                  (search-patches "abseil-cpp-20220623.1-no-kepsilon-i686.patch"))))
       (arguments
@@ -2057,7 +2057,7 @@ made up of a single source file and has no external dependencies.")
   (abseil-cpp-for-c++-standard abseil-cpp 17))  ;XXX: the default with GCC 11?
 
 (define-public abseil-cpp-cxxstd11
-  (abseil-cpp-for-c++-standard abseil-cpp-20220623.1 11)) ;last version on C++11
+  (abseil-cpp-for-c++-standard abseil-cpp-20220623 11)) ;last version on C++11
 
 (define-public static-abseil-cpp
   (make-static-abseil-cpp abseil-cpp))
@@ -2269,7 +2269,7 @@ to be useful for building network-based applications.")
     ;; Update only when updating aws-sdk-cpp, and when updating also update
     ;; versions of library dependencies linked from from
     ;; https://github.com/awslabs/aws-crt-cpp/tree/{aws-crt-cpp commit}/crt
-    (version "0.32.2")
+    (version "0.32.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2278,7 +2278,7 @@ to be useful for building network-based applications.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1xakyki8sxn6pxmmmf41n3wl0qsgsags0wvj74jmhfln4g2c4qy9"))))
+                "0hl62qngg3qcm4dykv89bm2sn5wn8p1ik0vb79d7djq3r1bblzks"))))
     (build-system cmake-build-system)
     (arguments
      '(#:configure-flags
@@ -2307,7 +2307,7 @@ aws-c-http, aws-c-io, aws-c-mqtt, aws-checksums, and s2n.")
     (name "aws-sdk-cpp")
     ; When updating also check for a tagged update to aws-crt-cpp from
     ; https://github.com/aws/aws-sdk-cpp/tree/main/crt
-    (version "1.11.538")
+    (version "1.11.541")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2316,7 +2316,7 @@ aws-c-http, aws-c-io, aws-c-mqtt, aws-checksums, and s2n.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1h7wsya0wi38m3gdyjcfwsg574sqz9cidirhhz9rf1ss2bkkm6w7"))))
+                "0lvsskwpniip1m75w00aqa3ic1337r2c6a6brvgs6ff2qqi27cdg"))))
     (build-system cmake-build-system)
     (arguments
      '(;; Tests are run during the build phase.

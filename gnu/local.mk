@@ -1145,7 +1145,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/corefx-mono-5.4.0-patches.patch		\
   %D%/packages/patches/corefx-mono-pre-5.8.0-patches.patch	\
   %D%/packages/patches/coreutils-gnulib-tests.patch		\
-  %D%/packages/patches/cppcheck-disable-char-signedness-test.patch	\
+  %D%/packages/patches/cppcheck-fix-basedir-test.patch	\
   %D%/packages/patches/cppdap-add-CPPDAP_USE_EXTERNAL_GTEST_PACKAGE.patch\
   %D%/packages/patches/cpulimit-with-glib-2.32.patch		\
   %D%/packages/patches/crawl-upgrade-saves.patch		\
@@ -1500,6 +1500,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/gnome-dictionary-meson-i18n.patch	\
   %D%/packages/patches/gnome-online-miners-tracker-3.patch	\
   %D%/packages/patches/gnome-settings-daemon-gc.patch		\
+  %D%/packages/patches/gnome-settings-daemon-screensaver-error.patch	\
   %D%/packages/patches/gnome-session-support-elogind.patch	\
   %D%/packages/patches/gnome-tweaks-search-paths.patch		\
   %D%/packages/patches/gnulib-bootstrap.patch			\
@@ -1997,6 +1998,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/plasp-include-iostream.patch \
   %D%/packages/patches/pocketfft-cpp-prefer-preprocessor-if.patch			\
   %D%/packages/patches/pokerth-boost.patch			\
+  %D%/packages/patches/pounce-readable-checks.patch             \
   %D%/packages/patches/ppsspp-disable-upgrade-and-gold.patch		\
   %D%/packages/patches/procps-strtod-test.patch                 \
   %D%/packages/patches/prusa-slicer-fix-tests.patch		\

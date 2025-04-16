@@ -681,21 +681,22 @@ kilobytes of RAM.")
               (sha256
                (base32
                 "1r518q11qwx9zr1niqjh4ci63x1s51gx6g8f3p3xzhxcy1aik12d"))))
+    (outputs (list "out" "debug"))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags
-       (list
-        ;; Do as if 'getentropy' were missing: Linux kernels before 3.17 lack its
-        ;; underlying 'getrandom' system call and ENOSYS isn't properly handled.
-        ;; See <https://lists.gnu.org/archive/html/guix-devel/2017-04/msg00235.html>.
-        "ac_cv_func_getentropy=no"
-        ;; FIXME It's using it's own bundled certificate, instead it should
-        ;; behave like OpenSSL by using environment variables.
-        (string-append "--with-openssldir=" (assoc-ref %outputs "out")
-                       "/share/libressl-"
-                       ,(package-version this-package))
-        ;; Provide a TLS-enabled netcat.
-        "--enable-nc")))
+     (list
+      #:configure-flags
+      #~(list
+         ;; Do as if 'getentropy' were missing: Linux kernels before 3.17 lack its
+         ;; underlying 'getrandom' system call and ENOSYS isn't properly handled.
+         ;; See <https://lists.gnu.org/archive/html/guix-devel/2017-04/msg00235.html>.
+         "ac_cv_func_getentropy=no"
+         ;; FIXME It's using it's own bundled certificate, instead it should
+         ;; behave like OpenSSL by using environment variables.
+         (string-append "--with-openssldir=" #$output
+                        "/share/libressl-"  #$(package-version this-package))
+         ;; Provide a TLS-enabled netcat.
+         "--enable-nc")))
     (properties
      `((release-monitoring-url . "https://ftp.openbsd.org/pub/OpenBSD/LibreSSL/")))
     (home-page "https://www.libressl.org/")
@@ -708,8 +709,8 @@ netcat implementation that supports TLS.")
     ;; non-copyleft licenses.
     (license (list license:openssl
                    (license:non-copyleft
-                     "file://COPYING"
-                     "See COPYING in the distribution.")))))
+                    "file://COPYING"
+                    "See COPYING in the distribution.")))))
 
 (define-public python-acme
   (package
@@ -1220,7 +1221,7 @@ ciphers such as ChaCha20, Curve25519, NTRU, and Blake2b.")
   (package
     (name "aws-lc")
     ;; Update only when updating aws-crt-cpp.
-    (version "1.49.1")
+    (version "1.48.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1229,7 +1230,7 @@ ciphers such as ChaCha20, Curve25519, NTRU, and Blake2b.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1403l9xdidym2gp6l9qhxcsv0bhg205p322rf45v8jysf76jsxl2"))))
+                "1hgfsl3plpiljasvxxdhz37n5lc6j819djq3nlf59pw4fivfy6mv"))))
     (build-system cmake-build-system)
     (native-inputs (list perl))
     (arguments

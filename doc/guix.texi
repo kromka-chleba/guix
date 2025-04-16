@@ -27267,11 +27267,20 @@ reporting bugs.
 The base directory as a G-expression (@pxref{G-Expressions}) that
 contains the configuration files of the speaker models.
 
+@item @code{group} (default: @code{"speakersafetyd"}) (type: string)
+The group to run the Speaker Safety Daemon as.
+
+@item @code{log-file} (default: @code{"/var/log/speakersafetyd.log"}) (type: string)
+The file name to the Speaker Safety Daemon log file.
+
 @item @code{maximum-gain-reduction} (default: @code{7}) (type: integer)
 Maximum gain reduction before panicking, useful for debugging.
 
 @item @code{speakersafetyd} (default: @code{speakersafetyd}) (type: file-like)
 The Speaker Safety Daemon package to use.
+
+@item @code{user} (default: @code{"speakersafetyd"}) (type: string)
+The user to run the Speaker Safety Daemon as.
 
 @end table
 @end deftp
@@ -30407,13 +30416,16 @@ The @code{ngircd} package to use.
 @item @code{debug?} (default: @code{#f}) (type: boolean)
 Turn on debugging messages.
 
+@item @code{shepherd-requirement} (default: @code{(user-processes)}) (type: list-of-symbols)
+Shepherd requirements the service should depend on.
+
 @item @code{global} (type: ngircd-global)
 A ngircd-global record object used to specify global options.
 
 @item @code{limits} (type: maybe-ngircd-limits)
 The ngircd-limits record object used to specify limits options.
 
-@item @code{options} (type: maybe-ngircd-options)
+@item @code{options} (type: ngircd-options)
 The ngircd-options record object used to specify optional features and
 configuration options.
 
@@ -30489,9 +30501,8 @@ Global password or all users needed to connect to the server.  By
 default, no password is required.  PAM must be disabled for this option
 to have an effect.
 
-@item @code{pid-file} (type: maybe-string)
+@item @code{pid-file} (default: @code{"/run/ngircd/ngircd.pid"}) (type: string)
 The file name where the PID of ngIRCd should be written after it starts.
-By default, no PID file is created.
 
 @item @code{ports} (default: @code{(6667)}) (type: list-of-ports)
 Port number(s) on which the server should listen for @emph{unencrypted}
@@ -30613,7 +30624,7 @@ Set to @code{#t} to enable calls to the PAM library at runtime; all
 users connecting without password are allowed to connect, all passwords
 given will fail.  Users identified without PAM are registered with a
 tilde (@samp{~}) prepended to their user name.  This defaults to
-@code{#f} in Guix because the service runs as a unpriveleged user and
+@code{#f} in Guix because the service runs as an unprivileged user and
 thus cannot authenticate other users via the @code{pam_unix} PAM module.
 
 @item @code{pam-is-optional?} (default: @code{#f}) (type: maybe-boolean)
@@ -30735,7 +30746,15 @@ Set to @code{#t} to disable automatic connection even if the port value
 is specified.
 
 @item @code{ssl-connect?} (default: @code{#f}) (type: maybe-boolean)
-Connect to the remote server using TLS/SSL.
+Set to @code{#t} to enforce the use of TLS to connect to the remote
+server.
+
+@item @code{ssl-verify?} (default: @code{#t}) (type: maybe-boolean)
+Set to @code{#f} to disable the verification of the TLS certificate
+presented by the remote server.  This can be useful if the remote server
+uses a self-signed certificate.  Beware that this degrades security by
+enabling man-in-the-middle attacks, as the @emph{remote site is not
+verified at all}.
 
 @end table
 

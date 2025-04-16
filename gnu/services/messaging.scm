@@ -68,6 +68,7 @@
             ngircd-configuration?
             ngircd-configuration-ngircd
             ngircd-configuration-debug?
+            ngircd-configuration-shepherd-requirement
             ngircd-configuration-global
             ngircd-configuration-limits
             ngircd-configuration-options
@@ -140,6 +141,7 @@
             ngircd-server-group
             ngircd-server-passive?
             ngircd-server-ssl-connect?
+            ngircd-server-ssl-verify?
             ngircd-channel
             ngircd-channel?
             ngircd-channel-name
@@ -1122,9 +1124,8 @@ is only used to inform clients.")
 no password is required.  PAM must be disabled for this option to have an
 effect.")
   (pid-file
-   maybe-string
-   "The file name where the PID of ngIRCd should be written after it starts.
-By default, no PID file is created.")
+   (string "/run/ngircd/ngircd.pid")
+   "The file name where the PID of ngIRCd should be written after it starts.")
   (ports
    (list-of-ports (list 6667))
    "Port number(s) on which the server should listen for @emph{unencrypted}
@@ -1237,7 +1238,7 @@ this if you have ircd-irc2 servers in your IRC network.")
 connecting without password are allowed to connect, all passwords given will
 fail.  Users identified without PAM are registered with a tilde (@samp{~})
 prepended to their user name.  This defaults to @code{#f} in Guix because the
-service runs as a unpriveleged user and thus cannot authenticate other users
+service runs as an unprivileged user and thus cannot authenticate other users
 via the @code{pam_unix} PAM module.")
   (pam-is-optional?
    (maybe-boolean #f)
@@ -1356,7 +1357,14 @@ connections (passive, which is the default).")
 specified.")
   (ssl-connect?
    (maybe-boolean #f)
-   "Connect to the remote server using TLS/SSL.")
+   "Set to @code{#t} to enforce the use of TLS to connect to the remote
+server.")
+  (ssl-verify?
+   (maybe-boolean #t)
+   "Set to @code{#f} to disable the verification of the TLS certificate
+presented by the remote server.  This can be useful if the remote server uses
+a self-signed certificate.  Beware that this degrades security by enabling
+man-in-the-middle attacks, as the @emph{remote site is not verified at all}.")
   (prefix ngircd-))
 
 (define list-of-ngircd-servers?
@@ -1415,16 +1423,20 @@ for different users.  Refer to @samp{man 5 ngircd.conf} for more details.")
    (boolean #f)
    "Turn on debugging messages."
    (serializer empty-serializer))
+  (shepherd-requirement
+   (list-of-symbols '(user-processes))
+   "Shepherd requirements the service should depend on."
+   (serializer empty-serializer))
   (global
-   ;; Always use a ngircd-global default to ensure the default addresses
-   ;; listened to are known (used to compute the socket endpoints).
+   ;; Always use a ngircd-global default to ensure 'pid-file' is defined.
    (ngircd-global (ngircd-global))
    "A ngircd-global record object used to specify global options.")
   (limits
    maybe-ngircd-limits
    "The ngircd-limits record object used to specify limits options.")
+  ;; Always use a ngircd-options default to ensure PAM is disabled by default.
   (options
-   maybe-ngircd-options
+   (ngircd-options (ngircd-options))
    "The ngircd-options record object used to specify optional features and
 configuration options.")
   (ssl
@@ -1512,6 +1524,7 @@ wrapper for the 'ngircd' command."
   (let* ((ngircd.conf (serialize-ngircd-configuration config))
          (user group (ngircd-user+group config))
          (global (ngircd-configuration-global config))
+         (pid-file (ngircd-global-pid-file global))
          (help-file (ngircd-global-help-file global))
          (motd-file (ngircd-global-motd-file global))
          (ssl (ngircd-configuration-ssl config))
@@ -1529,7 +1542,11 @@ wrapper for the 'ngircd' command."
              (writable? #t))
             (file-system-mapping
              (source ngircd.conf)
-             (target source)))
+             (target source))
+            (file-system-mapping
+             (source (string-append (dirname pid-file)))
+             (target source)
+             (writable? #t)))
       (if (maybe-value-set? help-file)
           (list (file-system-mapping
                  (source help-file)
@@ -1578,48 +1595,45 @@ wrapper for the 'ngircd' command."
      #:user user
      #:group group
      ;; ngircd wants to look up users in /etc/passwd so run in the global user
-     ;; namespace.
-     #:namespaces (fold delq %namespaces '(net user)))))
+     ;; namespace.  Also preserve the PID namespaces otherwise the PID file
+     ;; would contain an unrelated PID number and confuse Shepherd.
+     #:namespaces (fold delq %namespaces '(net pid user)))))
 
 (define (ngircd-shepherd-service config)
   (match-record config <ngircd-configuration>
-                (ngircd debug? global ssl)
+                (debug? global shepherd-requirement ssl)
     (let* ((ngircd.conf (serialize-ngircd-configuration config))
-           (ngircd (file-append ngircd "/sbin/ngircd"))
-           (addresses (ngircd-global-listen global))
-           (ports* (ngircd-global-ports global))
-           (ports (if (and (maybe-value-set? ssl)
-                           (maybe-value-set? (ngircd-ssl-ports ssl)))
-                      (append ports* (ngircd-ssl-ports ssl))
-                      ports*)))
+           (pid-file (ngircd-global-pid-file global)))
       (list (shepherd-service
              (provision '(ngircd))
-             (requirement '(user-processes networking syslogd))
+             (requirement shepherd-requirement)
              (modules (cons '(srfi srfi-1) %default-modules))
              (actions (list (shepherd-configuration-action ngircd.conf)))
-             (start #~(make-systemd-constructor
+             ;; Sadly, 'make-systemd-constructor' doesn't work with TLS
+             ;; connections, which hang up (see:
+             ;; https://github.com/ngircd/ngircd/issues/330).
+             (start #~(make-forkexec-constructor
                        (append (list #$(ngircd-wrapper config)
                                      "--nodaemon"
                                      "--config" #$ngircd.conf)
                                (if #$debug?
                                    '("--debug")
                                    '()))
-                       ;; Compute endpoints for each listen addresses/ports
-                       ;; combinations.
-                       (append-map
-                        (lambda (port)
-                          (map (lambda (addr)
-                                 (endpoint
-                                  (addrinfo:addr
-                                   (car (getaddrinfo
-                                         addr
-                                         (number->string port)
-                                         (logior AI_NUMERICHOST
-                                                 AI_NUMERICSERV))))))
-                               (list #$@addresses)))
-                        (list #$@ports))
+                       #:pid-file #$pid-file
                        #:log-file "/var/log/ngircd.log"))
-             (stop  #~(make-systemd-destructor)))))))
+             (stop  #~(make-kill-destructor)))))))
+
+(define (ngircd-activation config)
+  (let* ((pid-file (ngircd-global-pid-file
+                    (ngircd-configuration-global config)))
+         (user _ (ngircd-user+group config)))
+    #~(begin
+        (use-modules (guix build utils)
+                     (ice-9 match))
+        (define pw (match #$user
+                     ((? number?) (getpwuid #$user))
+                     ((? string?) (getpwnam #$user))))
+        (mkdir-p/perms #$(dirname pid-file) pw #o755))))
 
 (define ngircd-service-type
   (service-type
@@ -1630,7 +1644,9 @@ wrapper for the 'ngircd' command."
           (service-extension profile-service-type
                              (compose list ngircd-configuration-ngircd))
           (service-extension account-service-type
-                             ngircd-account)))
+                             ngircd-account)
+          (service-extension activation-service-type
+                             ngircd-activation)))
    (default-value (ngircd-configuration))
    (description
     "Run @url{https://ngircd.barton.de/, ngIRCd}, a lightweight @acronym{IRC,

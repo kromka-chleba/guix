@@ -335,7 +335,7 @@ buffers.")
      (modify-inputs (package-propagated-inputs gegl)
        (replace "babl" babl-0.1.96)))))
 
-(define-public gimp
+(define-public gimp-2
   (package
     (name "gimp")
     (version "2.10.38")
@@ -421,10 +421,10 @@ as well as specialized ones.  It features a highly customizable interface
 that is extensible via a plugin system.")
     (license license:gpl3+))) ; some files are lgplv3
 
-(define-public gimp-next
+(define-public gimp-3
   (package
-    (inherit gimp)
-    (name "gimp-next")
+    (inherit gimp-2)
+    (name "gimp")
     (version "3.0.0")
     (source
      (origin
@@ -454,16 +454,32 @@ that is extensible via a plugin system.")
                  (lambda _
                    (mkdir-p (string-append #$output:doc "/share"))
                    (rename-file (string-append #$output "/share/doc")
-                                (string-append #$output:doc "/share/doc")))))))
-    (inputs (modify-inputs (package-inputs gimp)
+                                (string-append #$output:doc "/share/doc"))))
+               (add-after 'install 'wrap
+                 (lambda* _
+                   (for-each
+                    (lambda (prog)
+                      (wrap-program prog
+                        `("GI_TYPELIB_PATH" suffix
+                          (,(getenv "GI_TYPELIB_PATH")))
+                        `("GUIX_PYTHONPATH" suffix
+                          (,(getenv "GUIX_PYTHONPATH")))))
+                    (find-files (string-append #$output "/bin")
+                                (lambda (_ stat)
+                                  (eq? 'regular (stat:type stat))))))))))
+    (inputs (modify-inputs (package-inputs gimp-2)
               (replace "gtk+" gtk+)
               (prepend libxmu libxt)
               (prepend python python-pygobject gjs)
               (prepend libxslt)))
-    (native-inputs (modify-inputs (package-native-inputs gimp)
+    (native-inputs (modify-inputs (package-native-inputs gimp-2)
                      (prepend appstream-glib
                               gi-docgen
                               libarchive)))))
+
+(define-public gimp gimp-3)
+(define-public gimp-next
+  (deprecated-package "gimp-next" gimp-3))
 
 (define-public gimp-fourier
   (package
