@@ -834,7 +834,7 @@ type system, elevating types to first-class status.")
 (define-public guile-git
   (package
     (name "guile-git")
-    (version "0.9.0")
+    (version "0.10.0")
     (home-page "https://gitlab.com/guile-git/guile-git.git")
     (source (origin
               (method git-fetch)
@@ -844,7 +844,7 @@ type system, elevating types to first-class status.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1x3zap2ifrfljwijwnf560r2nx4m4xl8gxs3cvf129a1al1nhl4l"))))
+                "01scznpg7356ygdlgn1f2892bwg6fsvp37hbmsk4gsg0g49aj4la"))))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags '("GUILE_AUTO_COMPILE=0")       ; to prevent guild warnings
@@ -873,7 +873,7 @@ type system, elevating types to first-class status.")
     (native-inputs
      (list pkg-config autoconf automake texinfo guile-3.0 guile-bytestructures))
     (inputs
-     (list guile-3.0 libgit2-1.8))
+     (list guile-3.0 libgit2-1.9))
     (propagated-inputs
      (list guile-bytestructures))
     (synopsis "Guile bindings for libgit2")

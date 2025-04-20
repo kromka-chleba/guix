@@ -80,39 +80,39 @@
   #:use-module (gnu packages version-control))
 
 (define-public abc
- (let ((commit "d5e1a5d445f68bdb4895bb735b9568e5f4738c13")
-       (revision "4"))
-  (package
-    (name "abc")
-    (version (git-version "0.0" revision commit))
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/berkeley-abc/abc")
-                    (commit commit)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0b3qdljcr7dznqr3zxihx9vp6ng6a6pnaqhasblc03rnpp83y1w4"))))
-    (build-system gnu-build-system)
-    (inputs
-     (list readline))
-    (arguments
-     (list #:license-file-regexp "copyright.txt"
-           #:tests? #f ; no tests
-           #:phases
-           #~(modify-phases %standard-phases
-               (delete 'configure)
-               (replace 'install
-                 (lambda _
-                   (install-file "abc" (string-append #$output "/bin")))))))
-    (home-page "https://people.eecs.berkeley.edu/~alanmi/abc/")
-    (synopsis "Sequential logic synthesis and formal verification")
-    (description "ABC is a program for sequential logic synthesis and
+  (let ((commit "d2714035145bd237097c509c23fc9e24b0fa933b")
+        (revision "5"))
+    (package
+      (name "abc")
+      (version (git-version "0.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/berkeley-abc/abc")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "10qjw6mbzwg2lgsscw759xrghqq2mvv0xcalpymngnjhpg9qznqk"))))
+      (build-system gnu-build-system)
+      (inputs
+       (list readline))
+      (arguments
+       (list #:license-file-regexp "copyright.txt"
+             #:tests? #f ; no tests
+             #:phases
+             #~(modify-phases %standard-phases
+                 (delete 'configure)
+                 (replace 'install
+                   (lambda _
+                     (install-file "abc" (string-append #$output "/bin")))))))
+      (home-page "https://people.eecs.berkeley.edu/~alanmi/abc/")
+      (synopsis "Sequential logic synthesis and formal verification")
+      (description "ABC is a program for sequential logic synthesis and
 formal verification.")
-    (license
-     (license:non-copyleft
-      "https://people.eecs.berkeley.edu/~alanmi/abc/copyright.htm")))))
+      (license
+       (license:non-copyleft
+        "https://people.eecs.berkeley.edu/~alanmi/abc/copyright.htm")))))
 
 (define-public iverilog
   (package
@@ -157,7 +157,7 @@ For synthesis, the compiler generates netlists in the desired format.")
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.51")
+    (version "0.52")
     (source
      (origin
        (method git-fetch)
@@ -165,7 +165,7 @@ For synthesis, the compiler generates netlists in the desired format.")
              (url "https://github.com/YosysHQ/yosys")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "091acyz3bs20shsbavqnd11n0jcx3fqal4rfg6gdf314bx6nrydm"))
+        (base32 "1wf7z3fwfy00kng8hmdjy8zpj4hqqznjjk6wha10ij0sy1y1fwhm"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -595,21 +595,22 @@ using different abstraction levels.")
 (define-public verilator
   (package
     (name "verilator")
-    (version "5.028")
+    (version "5.034")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/verilator/verilator")
+             (url "https://github.com/verilator/verilator/")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1q9facgfdwwmf2ax65aznhqmk8qfisq9k5p8wrxrw6qqy38vl0k2"))))
+        (base32 "14alpa2z4fqbbsyx67dz50nqcvfis8pha84545h28xmglrzm13yn"))))
     (native-inputs
      (list autoconf
            automake
            bison
            flex
+           help2man
            gettext-minimal
            python
            ;; And a couple of extras for the test suite:
@@ -617,7 +618,7 @@ using different abstraction levels.")
            gdb/pinned
            which))
     (inputs
-     (list help2man perl python systemc))
+     (list perl python systemc))
     (build-system gnu-build-system)
     (arguments
      '(#:phases
@@ -636,22 +637,13 @@ using different abstraction levels.")
                (lambda ()
                  (display "set auto-load safe-path /"))))))
        #:test-target "test"))
-    ;; #error "Something failed during ./configure as config_build.h is incomplete.
-    ;; Perhaps you used autoreconf, don't." -- so we won't. ^^
-    (home-page "https://www.veripool.org/projects/verilator/")
-    (synopsis "Fast Verilog/SystemVerilog simulator")
+    (home-page "https://www.veripool.org/verilator/")
+    (synopsis "Verilog/SystemVerilog simulator")
     (description
-     "Verilator is invoked with parameters similar to GCC or Synopsys’s VCS.
-It ``Verilates'' the specified Verilog or SystemVerilog code by reading it,
+     "Verilator transforms the specified Verilog or SystemVerilog code by reading it,
 performing lint checks, and optionally inserting assertion checks and
 coverage-analysis points.  It outputs single- or multi-threaded @file{.cpp}
-and @file{.h} files, the ``Verilated'' code.
-
-The user writes a little C++/SystemC wrapper file, which instantiates the
-Verilated model of the user’s top level module.  These C++/SystemC files are
-then compiled by a C++ compiler (GCC/Clang/etc.).  The resulting executable
-performs the design simulation.  Verilator also supports linking its generated
-libraries, optionally encrypted, into other simulators.")
+and @file{.h} files.")
     (license license:lgpl3)))
 
 (define-public fftgen

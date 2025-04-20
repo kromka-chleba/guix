@@ -199,7 +199,7 @@
 (define-public duckdb
   (package
     (name "duckdb")
-    (version "1.1.1")
+    (version "1.1.3")
     (source
       (origin
        (method git-fetch)
@@ -209,7 +209,7 @@
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0s2zmrr7m0wb0gmspjcqpyglv8s0zx78k4283abm560ql87bgx30"))
+         "1b57r4x1lnkdiv0f8r0wyhbil61l9gp1ipr37i12s0x6dv19lxi2"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -218,8 +218,9 @@
               (("set\\(DUCKDB_VERSION \"[^\"]*\"")
                (string-append "set(DUCKDB_VERSION \"v" #$version "-dev0\"")))))))
     (arguments
-     `(#:configure-flags
-       (list "-DBUILD_EXTENSIONS=autocomplete;fts;icu;json;parquet;tpch;")))
+     (list
+      #:configure-flags
+      '(list "-DBUILD_EXTENSIONS=autocomplete;fts;icu;json;parquet;tpch;")))
     (build-system cmake-build-system)
     (home-page "https://duckdb.org")
     (synopsis "In-process SQL OLAP database management system")
@@ -3370,20 +3371,24 @@ coroutine-specific markup.")
 (define-public python-asyncpg
   (package
     (name "python-asyncpg")
-    (version "0.25.0")
+    (version "0.30.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "asyncpg" version))
        (sha256
-        (base32 "0h1573lp4607nppflnnjrhn7yrfy6i54cm98gi4qbcikjykfdy33"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-typing-extensions))
+        (base32 "0lf8xbrsb2ycpqx1vzlb05p48g5sh9zq24a8yh17cw5nia9fjlf5"))))
+    (build-system pyproject-build-system)
     (native-inputs
      (list postgresql
            python-cython
            python-pytest
-           python-uvloop))
+           python-uvloop
+           python-distro
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-async-timeout))
     (home-page "https://github.com/MagicStack/asyncpg")
     (synopsis "Fast PostgreSQL database client library for Python")
     (description "@code{asyncpg} is a database interface library designed
@@ -4573,7 +4578,11 @@ reasonable substitute.")
                      "test_tfunction_load_delete"
                      "test_tfunction_list"
                      ;; AssertionError: assert 3 == 2
-                     "test_acl_list")
+                     "test_acl_list"
+                     ;; XXX: This test occasionally fails on i686-linux
+                     #$@(if (target-x86-32?)
+                            '("test_geopos")
+                            '()))
                     " and not "))
       #:phases
       #~(modify-phases %standard-phases
@@ -4607,7 +4616,7 @@ reasonable substitute.")
 (define-public python-rq
   (package
     (name "python-rq")
-    (version "1.11.1")
+    (version "2.3.1")
     (source
      (origin
        (method git-fetch)
@@ -4616,24 +4625,20 @@ reasonable substitute.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0dnjm2s036l4j4ypq0h903vh132dp2wiwjrn8jicz1nw829dqpzf"))))
-    (build-system python-build-system)
+        (base32 "1w9aqvbvh1mfpgng0mdcskxl5y3ybcqqai5dnwgvg18am0xxhya6"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (add-before 'check 'start-redis
-                    (lambda _
-                      (invoke "redis-server" "--daemonize" "yes")))
-                  (replace 'check
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let ((out (assoc-ref outputs "out")))
-                        ;; Drop test that needs the SDK for Sentry.io.
-                        (delete-file "tests/test_sentry.py")
-                        ;; Ensure 'rq' and 'rqworker' ends up on PATH.
-                        (setenv "PATH" (string-append out "/bin:"
-                                                      (getenv "PATH")))
-                        (invoke "pytest" "-vv")))))))
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'start-redis
+                     (lambda _
+                       (invoke "redis-server" "--daemonize" "yes"))))))
     (native-inputs
-     (list python-mock python-psutil python-pytest redis))
+     (list python-hatchling
+           python-mock
+           python-psutil
+           python-pytest
+           redis))
     (propagated-inputs
      (list python-click python-redis))
     (home-page "https://python-rq.org/")
@@ -4647,7 +4652,7 @@ is designed to have a low barrier to entry.")
 (define-public python-rq-scheduler
   (package
     (name "python-rq-scheduler")
-    (version "0.10.0")
+    (version "0.14")
     (home-page "https://github.com/rq/rq-scheduler")
     (source (origin
               (method git-fetch)
@@ -4657,21 +4662,30 @@ is designed to have a low barrier to entry.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xg6yazqs5kbr2ayvhvljs1h5vgx5k5dds613fmhswln7gglf9hk"))))
-    (build-system python-build-system)
+                "09fh9m2vcl1jndq35xp1x0j8ih009r71qmhn2pkl93fykrqfavyn"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (add-before 'check 'start-redis
-                    (lambda _
-                      (invoke "redis-server" "--daemonize" "yes")))
-                  (replace 'check
-                    (lambda _
-                      (substitute* "run_tests.py"
-                        (("/usr/bin/env")
-                         (which "env")))
-                      (invoke "./run_tests.py"))))))
+     (list
+      #:test-flags
+      #~(list "-k" (string-append "not test_cron"
+                                  " and not test_job_creation_with"
+                                  " and not test_job_with_crontab"))
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'start-redis
+                     (lambda _
+                       (invoke "redis-server" "--daemonize" "yes")))
+                   (add-after 'unpack 'loosen-requirements
+                     (lambda _
+                       (substitute* "setup.py"
+                         (("crontab>=[0-9.]*")
+                          "python-crontab")))))))
     (native-inputs
-     (list redis which))
+     (list python-crontab
+           python-freezegun
+           python-pytest
+           python-setuptools
+           python-wheel
+           redis))
     (propagated-inputs
      (list python-croniter python-rq))
     (synopsis "Job scheduling capabilities for RQ (Redis Queue)")
@@ -4723,14 +4737,15 @@ provides support for parsing, splitting and formatting SQL statements.")
 (define-public python-sql
   (package
     (name "python-sql")
-    (version "1.3.0")
+    (version "1.5.2")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "python-sql" version))
+       (uri (pypi-uri "python_sql" version))
        (sha256
-        (base32 "0xnimfzlxj1ddrb5xj3s4gaii278a0gpxrvwmdmrdxgjfdi3lq4x"))))
-    (build-system python-build-system)
+        (base32 "0dnd0vai9z1fjkppv2xv2f4vlwwz0dqa137f39mrbjw744vm4pvk"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://python-sql.tryton.org/")
     (synopsis "Library to write SQL queries in a pythonic way")
     (description "@code{python-sql} is a library to write SQL queries, that
@@ -4849,7 +4864,7 @@ with integrated support for finding required rows quickly.")
 (define-public apache-arrow
   (package
     (name "apache-arrow")
-    (version "17.0.0")
+    (version "19.0.1")
     (source
      (origin
        (method git-fetch)
@@ -4859,7 +4874,7 @@ with integrated support for finding required rows quickly.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "11yzhqdvvcq8k4dhcfnwhc0hl0a2k09gyijln00zbglajk7ihfsk"))))
+         "0l7nc12ykh6b9pcf20mvs4xsk9cyz7a45sdfs08rhilrhd8g10dn"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -4888,6 +4903,9 @@ with integrated support for finding required rows quickly.")
               ;; is unfortunate because jemalloc increases performance:
               ;; https://arrow.apache.org/blog/2018/07/20/jemalloc/.
               "-DARROW_JEMALLOC=OFF"
+              ;; System mimalloc is not suported and must be bundled:
+              ;; https://github.com/apache/arrow/issues/42211.
+              "-DARROW_MIMALLOC=OFF"
 
               ;; The CMake option ARROW_DEPENDENCY_SOURCE is a global
               ;; option that instructs the build system how to resolve
@@ -5233,7 +5251,7 @@ algorithm implementations.")
     (build-system python-build-system)
     (arguments
      (list
-      ;; XXX: Test data is distributed sepratly in
+      ;; XXX: Test data is distributed separately in
       ;; <https://github.com/apache/arrow-testing> 39MiB and requires
       ;; additional steps to be implemented, see
       ;; <https://github.com/apache/arrow/blob/main/ci/scripts/python_build.sh>.
@@ -5355,7 +5373,7 @@ other traditional Python scientific computing packages.")
 (define-public python-fastparquet
   (package
     (name "python-fastparquet")
-    (version "2024.2.0")
+    (version "2024.11.0")
     (source
      (origin
        ;; Fastparquet uses setuptools-scm to find the current version. This
@@ -5368,7 +5386,7 @@ other traditional Python scientific computing packages.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0f32dj1xvd11l0siznqd33dpjlhg9siylcjcfkcdlqfcy45jfj3v"))))
+        (base32 "0dhmyag06d073g1q58npbcikr9hjd6jgf05721gkl6m1gsprv7hq"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -5394,6 +5412,13 @@ other traditional Python scientific computing packages.")
             ;; Cython extensions need to be built for the check phase.
             (lambda _
               (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (native-inputs
+     (list python-cython
+           python-pytest
+           python-pytest-xdist
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs
      (list python-cramjam
            python-fsspec
@@ -5401,11 +5426,6 @@ other traditional Python scientific computing packages.")
            python-numpy
            python-packaging
            python-pandas))
-    (native-inputs
-     (list python-cython
-           python-pytest-runner
-           python-pytest-xdist
-           python-setuptools-scm))
     (home-page "https://github.com/dask/fastparquet")
     (synopsis "Python implementation of the Parquet file format")
     (description

@@ -142,6 +142,7 @@
   #:use-module (gnu packages gawk)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
+  #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gperf)
@@ -184,6 +185,7 @@
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages textutils)
   #:use-module (gnu packages time)
+  #:use-module (gnu packages vulkan)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xml)
@@ -2011,7 +2013,10 @@ XDG-Output for wlclock to work.")
            libxkbcommon
            mesa
            pixman
+           lcms
            libseat
+           vulkan-headers
+           vulkan-loader
            wayland
            wayland-protocols
            xcb-util-errors
@@ -2019,6 +2024,7 @@ XDG-Output for wlclock to work.")
            xorg-server-xwayland))
     (native-inputs
      (cons*
+       glslang
        hwdata
        pkg-config
        wayland

@@ -8,7 +8,7 @@
 ;;; Copyright © 2017, 2023 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2017, 2018 Nikita <nikita@n0.is>
 ;;; Copyright © 2017, 2018, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
-;;; Copyright © 2018, 2020 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2018, 2020, 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2019 Ivan Petkov <ivanppetkov@gmail.com>
 ;;; Copyright © 2020, 2024 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
@@ -142,6 +142,14 @@
          "--with-intl-api")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'python-3.11-compatibility
+            (lambda _
+              (substitute* '("python/mozbuild/mozpack/files.py"
+                             "python/mozbuild/mozbuild/util.py"
+                             "python/mozbuild/mozbuild/action/process_define_files.py"
+                             "python/mozbuild/mozbuild/backend/base.py"
+                             "python/mozbuild/mozbuild/preprocessor.py")
+                (("\"rU\"") "\"r\""))))
           (add-after 'patch-source-shebangs 'patch-cargo-checksums
             (lambda _
               (let ((null-hash
@@ -185,6 +193,10 @@
                                          "non262/regress/regress-422348.js")
                             (("mips64") "mips64|riscv64")))
                        #~())
+
+                ;; FIXME: An one-hour difference is produced after DST
+                ;; starting in the timezone the test suite uses.
+                (delete-file "non262/Date/15.9.5.7.js")
 
                 ;; The test suite expects a lightly patched ICU.  Disable tests
                 ;; that do not work with the system version.  See
@@ -256,22 +268,6 @@ fractional-second-digits-append-item.js")
 in C/C++.")
     (license license:mpl2.0))) ; and others for some files
 
-(define-public mozjs-102
-  (package
-    (inherit mozjs)
-    (name "mozjs")
-    (version "102.2.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://ftp.mozilla.org/pub/firefox"
-                                  "/releases/" version "esr/source/firefox-"
-                                  version "esr.source.tar.xz"))
-              (sha256
-               (base32
-                "1zwpgis7py1bf8p88pz3mpai6a02qrdb8ww2fa9kxxdl9b8r2k81"))))
-    (inputs (modify-inputs (package-inputs mozjs)
-              (replace "icu4c" icu4c-71)))))
-
 (define-public mozjs-78
   (package
     (inherit mozjs)
@@ -290,6 +286,15 @@ in C/C++.")
      (substitute-keyword-arguments (package-arguments mozjs)
        ((#:phases phases)
         #~(modify-phases #$phases
+            (add-after 'unpack 'python-3.11-compatibility
+              (lambda _
+                (substitute* '("python/mozbuild/mozpack/files.py"
+                               "python/mozbuild/mozbuild/util.py"
+                               "python/mozbuild/mozbuild/action/process_define_files.py"
+                               "python/mozbuild/mozbuild/backend/base.py"
+                               "python/mozbuild/mozbuild/preprocessor.py"
+                               "python/mozbuild/mozbuild/virtualenv.py")
+                  (("'rU'") "'r'"))))
             (add-after 'unpack 'patch-for-python-3.10
               (lambda _
                 ;; Some classes were moved from collections to collections.abc
@@ -1662,7 +1667,7 @@ their corresponding VERSION, SOURCE and LOCALES variables."
                 (setenv "MACH_BUILD_PYTHON_NATIVE_PACKAGE_SOURCE" "system")
                 (setenv "GUIX_PYTHONPATH"
                         (string-append (getcwd)
-                                       "/obj/_virtualenvs/build/lib/python3.10/site-packages"))
+                                       "/obj/_virtualenvs/build/lib/python3.11/site-packages"))
                 (setenv "BUILD_BACKENDS" "FasterMake,RecursiveMake")))
             (replace 'build             ;build and install data files
               (lambda* (#:key outputs #:allow-other-keys)

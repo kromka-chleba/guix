@@ -59,6 +59,7 @@
 ;;; Copyright © 2025 Ashvith Shetty <ashvithshetty0010@zohomail.in>
 ;;; Copyright © 2025 Jussi Timperi <jussi.timperi@iki.fi>
 ;;; Copyright © 2025 45mg <45mg.writes@gmail.com>
+;;; Copyright © 2025 Daniel Ziltener <dziltener@lyrion.ch>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -10110,7 +10111,6 @@ Printf/Sprintf etc.")
        (sha256
         (base32 "0z7cgj8gl69271d0ag4f4yjbsvbrnfibc96cs01spqf5krv2rzjc"))
        (file-name (git-file-name name version))))
-    (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/logrusorgru/aurora/v3"))))
@@ -10129,10 +10129,9 @@ Printf/Sprintf etc.")
        (sha256
         (base32 "0a4w4p0sl5hwa9fridk7s023sjcis8qf1k8fm3g5qar58vxzlh9w"))
        (file-name (git-file-name name version))))
-    (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/logrusorgru/aurora/v3"))
+      #:import-path "github.com/logrusorgru/aurora/v4"))
     (native-inputs
      (list go-github-com-stretchr-testify))))
 

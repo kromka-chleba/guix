@@ -46,6 +46,7 @@
 ;;; Copyright © 2024 Nik Gaffney <nik@fo.am>
 ;;; Copyright © 2024 Grigory Shepelev <shegeley@gmail.com>
 ;;; Copyright © 2025 Junker <dk@junkeria.club>
+;;; Copyright © 2025 Simen Endsjø <contact@simendsjo.me>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -5700,7 +5701,7 @@ Common Lisp.")
 (define-public sbcl-cl-fast-ecs
   (package
     (name "sbcl-cl-fast-ecs")
-    (version "0.2.2")
+    (version "0.7.1")
     (source
      (origin
        (method git-fetch)
@@ -5709,12 +5710,17 @@ Common Lisp.")
              (commit version)))
        (file-name (git-file-name "cl-fast-ecs" version))
        (sha256
-        (base32 "00nw5nwzcz8x1x1lycmjik8pcqzxrl896j0xjjl33rjljsmj45sx"))))
+        (base32 "068xc4ncxc9crg8b9x4abv1l8biq89d2fxm1i4m3jrbfx4adiqr5"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs
-     (list sbcl-chlorophyll sbcl-cl-mock sbcl-parachute))
+     (list graphviz-minimal
+           sbcl-cl-mock
+           sbcl-parachute))
     (inputs
-     (list sbcl-alexandria sbcl-trivial-garbage))
+     (list sbcl-alexandria
+           sbcl-closer-mop
+           sbcl-global-vars
+           sbcl-trivial-adjust-simple-array))
     (home-page "https://lockie.gitlab.io/cl-fast-ecs/")
     (synopsis "Blazingly fast Entity-Component-System microframework")
     (description
@@ -5732,7 +5738,11 @@ built at runtime.")
   (sbcl-package->cl-source-package sbcl-cl-fast-ecs))
 
 (define-public ecl-cl-fast-ecs
-  (sbcl-package->ecl-package sbcl-cl-fast-ecs))
+  (package
+    (inherit (sbcl-package->ecl-package sbcl-cl-fast-ecs))
+    (arguments
+     ;; FIXME: Calling some subprocesses during tests fails.
+     (list #:tests? #f))))
 
 (define-public sbcl-cl-fastcgi
   (let ((commit "de8b49b26de9863996ec18db28af8ab7e8ac4e20")
@@ -30115,6 +30125,39 @@ be faster and more extensible than Optima.")
 
 (define-public ecl-trivia
   (sbcl-package->ecl-package sbcl-trivia))
+
+(define-public sbcl-trivial-adjust-simple-array
+  (let ((commit "393d4041410db584d49c17d9d959fca7aeb76dfc")
+        (revision "0"))
+    (package
+      (name "sbcl-trivial-adjust-simple-array")
+      ;; It's currently at 0.0.1, but so is the other commits
+      (version (git-version "0.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://gitlab.com/lockie/trivial-adjust-simple-array")
+               (commit commit)))
+         (file-name (git-file-name "cl-trivial-adjust-simple-array" commit))
+         (sha256
+          (base32 "1mxsng80x3m4cf65vfd1q5fx9nlzqckfc7axwvf9fh156rdhhr3p"))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs
+       (list sbcl-alexandria
+             sbcl-parachute))
+      (home-page "https://gitlab.com/lockie/trivial-adjust-simple-array")
+      (synopsis "Tiny utility to change the size of a simple array")
+      (description
+       "This Common Lisp library provides a tiny utility to change the size of
+a simple-array ensuring that the resulting array is still a simple-array.")
+      (license license:expat))))
+
+(define-public cl-trivial-adjust-simple-array
+  (sbcl-package->cl-source-package sbcl-trivial-adjust-simple-array))
+
+(define-public ecl-trivial-adjust-simple-array
+  (sbcl-package->ecl-package sbcl-trivial-adjust-simple-array))
 
 (define-public sbcl-trivial-arguments
   (let ((commit "ecd84ed9cf9ef8f1e873d7409e6bd04979372aa7")
