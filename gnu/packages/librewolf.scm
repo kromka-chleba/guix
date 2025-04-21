@@ -117,14 +117,14 @@
 (define computed-origin-method (@@ (guix packages) computed-origin-method))
 
 (define firefox-l10n
-  (let ((commit "24e2602d2221646fbbe92e908bed0d605acd2e8a"))
+  (let ((commit "11220b79b5f69e3004bf51829ae432c2c617107e"))
     (origin
       (method git-fetch)
       (uri (git-reference
             (url "https://github.com/mozilla-l10n/firefox-l10n.git")
             (commit commit)))
       (file-name (git-file-name "firefox-l10n" commit))
-      (sha256 (base32 "1xnldwgldls07m5hmm9wnln6g2vcar5w4k4918qkmakldaw6ang0")))))
+      (sha256 (base32 "0zryicbw498xz3y51bx4ysk70mppyjbcza0v104nhlmvyxynmfqy")))))
 
 (define* (make-librewolf-source #:key version firefox-hash librewolf-hash l10n)
   (let* ((ff-src (firefox-source-origin
@@ -192,7 +192,8 @@
       (patches
        (search-patches
         "torbrowser-compare-paths.patch"
-        "librewolf-use-system-wide-dir.patch")))))
+        "librewolf-use-system-wide-dir.patch"
+        "librewolf-add-store-to-rdd-allowlist.patch")))))
 
 ;;; Define the versions of rust needed to build firefox, trying to match
 ;;; upstream.  See table at [0], `Uses' column for the specific version.
@@ -255,11 +256,11 @@
 
             ;; Build details
             "--disable-elf-hack"
+            "--enable-strip"
             ;; Don't attempt to download toolchains.  Upstream enables this,
             ;; adding the flag ensures we don't use network in the build
             ;; environment.
-            "--disable-bootstrap"
-            "--enable-strip"))
+            "--disable-bootstrap"))
       #:imported-modules %cargo-utils-modules
       #:modules `((ice-9 regex)
                   (ice-9 string-fun)
@@ -273,26 +274,6 @@
                   ,@%default-gnu-imported-modules)
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-preferences
-            (lambda* (#:key inputs #:allow-other-keys)
-              (call-with-port (open-file "browser/app/profile/firefox.js" "a")
-                (lambda (port)
-                  (define (write-setting key value)
-                    (format port "~%pref(\"~a\", ~a);~%" key value)
-                    (format #t
-                            "fix-preferences: setting value of ~a to ~a~%" key
-                            value))
-
-                  ;; We should allow the sandbox to read the store directory,
-                  ;; because the sandbox has access to /usr on FHS distros.
-                  (write-setting
-                   "security.sandbox.content.read_path_whitelist"
-                   (string-append "\""
-                                  (%store-directory) "/\""))
-
-                  ;; XDG settings should be managed by Guix.
-                  (write-setting "browser.shell.checkDefaultBrowser"
-                                 "false")))))
           (add-after 'unpack 'fix-ffmpeg-runtime-linker
             (lambda* (#:key inputs #:allow-other-keys)
               (let* ((ffmpeg (assoc-ref inputs "ffmpeg"))
@@ -485,11 +466,11 @@
                       (parallel-build? #t) #:allow-other-keys)
               (apply invoke "./mach" "build"
                      ;; mach will use parallel build if possible by default
-                     `(,@(if parallel-build?
-                             `(,(string-append
-                                 "-j" (number->string (parallel-job-count))))
-                             '("-j1"))
-                       ,@make-flags))))
+                     (string-append
+                      "-j" (if parallel-build?
+                               (number->string (parallel-job-count))
+                               "1"))
+                     make-flags)))
           (add-after 'build 'neutralise-store-references
             (lambda _
               ;; Mangle the store references to compilers &
@@ -561,28 +542,11 @@
                               "pulseaudio"
                               "libpciaccess")))
 
-                     ;; VA-API is run in the RDD (Remote Data Decoder) sandbox
-                     ;; and must be explicitly given access to files it needs.
-                     ;; Rather than adding the whole store (as Nix had
-                     ;; upstream do, see
-                     ;; <https://github.com/NixOS/nixpkgs/pull/165964> and
-                     ;; linked upstream patches), we can just follow the
-                     ;; runpaths of the needed libraries to add everything to
-                     ;; LD_LIBRARY_PATH.  These will then be accessible in the
-                     ;; RDD sandbox.
-                     (rdd-whitelist
-                      (map (cut string-append <> "/")
-                           (delete-duplicates
-                            (append-map runpaths-of-input
-                                        '("mesa"
-                                          "ffmpeg"
-                                          "libpciaccess")))))
                      (gtk-share (string-append (assoc-ref inputs
                                                           "gtk+")
                                                "/share")))
                 (wrap-program (car (find-files lib "^librewolf$"))
-                  `("LD_LIBRARY_PATH" prefix
-                    (,@libs ,@rdd-whitelist))
+                  `("LD_LIBRARY_PATH" prefix ,libs)
                   `("XDG_DATA_DIRS" prefix
                     (,gtk-share))
                   `("MOZ_LEGACY_PROFILES" =

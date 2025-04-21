@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2016-2020, 2022, 2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2016-2020, 2022, 2024-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2018 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Marius Bakke <marius@gnu.org>
@@ -63,7 +63,8 @@
 
             %hello-dependencies-manifest
             guix-daemon-test-cases
-            %test-guix-daemon))
+            %test-guix-daemon
+            %test-guix-daemon-unprivileged))
 
 (define %simple-os
   (simple-operating-system))
@@ -994,6 +995,10 @@ non-ASCII names from /tmp.")
 ;;; Build daemon.
 ;;;
 
+(define %daemon-os
+  (operating-system-with-console-syslog
+   (simple-operating-system)))
+
 (define (manifest-entry-without-grafts entry)
   "Return ENTRY with grafts disabled on its contents."
   (manifest-entry
@@ -1117,7 +1122,7 @@ test."
                               (system-error-errno args)))
                          #$marionette))))
 
-(define (run-guix-daemon-test os)
+(define (run-guix-daemon-test os name)
   (define test-image
     (image (operating-system os)
            (format 'compressed-qcow2)
@@ -1153,11 +1158,18 @@ test."
           (test-runner-current (system-test-runner #$output))
           (test-begin "guix-daemon")
 
+          (test-assert "guix-service is running"
+            ;; Wait for 'guix-daemon' to be up.
+            (marionette-eval '(begin
+                                (use-modules (gnu services herd))
+                                (start-service 'guix-daemon))
+                             marionette))
+
           #$(guix-daemon-test-cases #~marionette)
 
           (test-end))))
 
-  (gexp->derivation "guix-daemon-test" test))
+  (gexp->derivation name test))
 
 (define %test-guix-daemon
   (system-test
@@ -1168,7 +1180,7 @@ test."
     (let ((os (marionette-operating-system
                (operating-system
                  (inherit (operating-system-with-gc-roots
-                           %simple-os
+                           %daemon-os
                            (list (profile
                                   (name "hello-build-dependencies")
                                   (content %hello-dependencies-manifest)))))
@@ -1179,4 +1191,34 @@ test."
                               %base-user-accounts)))
                #:imported-modules '((gnu services herd)
                                     (guix combinators)))))
-      (run-guix-daemon-test os)))))
+      (run-guix-daemon-test os "guix-daemon-test")))))
+
+(define %test-guix-daemon-unprivileged
+  (system-test
+   (name "guix-daemon-unprivileged")
+   (description
+    "Test 'guix-daemon' behavior on a multi-user system, where 'guix-daemon'
+runs unprivileged.")
+   (value
+    (let ((os (marionette-operating-system
+               (let ((base (operating-system-with-gc-roots
+                            %daemon-os
+                            (list (profile
+                                   (name "hello-build-dependencies")
+                                   (content %hello-dependencies-manifest))))))
+                 (operating-system
+                   (inherit base)
+                   (kernel-arguments '("console=ttyS0"))
+                   (users (cons (user-account
+                                 (name "user")
+                                 (group "users"))
+                                %base-user-accounts))
+                   (services
+                    (modify-services (operating-system-user-services base)
+                      (guix-service-type
+                       config => (guix-configuration
+                                  (inherit config)
+                                  (privileged? #f)))))))
+               #:imported-modules '((gnu services herd)
+                                    (guix combinators)))))
+      (run-guix-daemon-test os "guix-daemon-unprivileged-test")))))

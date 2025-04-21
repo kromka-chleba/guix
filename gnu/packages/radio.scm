@@ -16,6 +16,7 @@
 ;;; Copyright © 2023, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2024 Andy Tai <atai@atai.org>
 ;;; Copyright © 2024 Noisytoot <ron@noisytoot.org>
+;;; Copyright © 2025 Rutherther <rutherther@ditigal.xyz>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -49,6 +50,7 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
@@ -56,6 +58,7 @@
   #:use-module (gnu packages databases)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages engineering)
+  #:use-module (gnu packages flex)
   #:use-module (gnu packages fltk)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gd)
@@ -189,6 +192,102 @@ useful in modems implemented with @dfn{digital signal processing} (DSP).")
 error correction.  It also includes a compatibility layer so that it can be
 used as a drop-in substitute for @code{libfec}.")
       (license license:bsd-3))))
+
+(define-public libiio
+  (package
+    (name "libiio")
+    (version "0.26")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/analogdevicesinc/libiio")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18cmaszfmn6kaa9gi26kkgjk506xqb8zsd4bq6yp8hzxr1qldfly"))))
+    (arguments
+     (list
+      #:tests? #f
+      #:configure-flags
+      #~(list
+         (string-append "-DPKG_CONFIG_EXECUTABLE="
+                        (search-input-file
+                         %build-inputs
+                         (string-append "/bin/" #$(pkg-config-for-target))))
+         (string-append "-DUDEV_RULES_INSTALL_DIR="
+                        #$output "/lib/udev/rules.d")
+         "-DOSX_PACKAGE=off"
+         "-DOSX_FRAMEWORK=off"
+         (string-append "-DPython_EXECUTABLE="
+                        (search-input-file %build-inputs "/bin/python3"))
+         "-DPYTHON_BINDINGS=on")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch
+            (lambda _
+              (substitute* "bindings/python/iio.py"
+                (("_iiolib = \"iio\"")
+                 (string-append "_iiolib = \"" #$output "/lib/libiio.so\""))
+                (("find_library\\(_iiolib\\)") "_iiolib"))
+              ;; Libiio is not installed at the time of the build. The check
+              ;; is unnecessary, to do it the upstream way, we would have to
+              ;; configure, build, install without the bindings first, and then
+              ;; second time with the bindings...
+              (substitute* "bindings/python/setup.py.cmakein"
+                (("self._check_libiio_installed()") "")))))))
+    (native-inputs
+     (list pkg-config
+           flex
+           bison
+           python))
+    (inputs
+     (list avahi
+           libaio
+           libxml2
+           libusb))
+    (build-system cmake-build-system)
+    (license (list license:lgpl2.1
+                   license:gpl2))
+    (home-page "https://github.com/analogdevicesinc/libiio")
+    (synopsis "Library for interfacing with Linux IIO devices")
+    (description
+     "Libiio is used to interface to the Linux Industrial Input/Output (IIO)
+Subsystem.  The Linux IIO subsystem is intended to provide support for devices
+that in some sense are analog to digital or digital to analog converters
+(ADCs, DACs).  This includes, but is not limited to ADCs, Accelerometers,
+Gyros, IMUs, Capacitance to Digital Converters (CDCs), Pressure Sensors,
+Color, Light and Proximity Sensors, Temperature Sensors, Magnetometers, DACs,
+DDS (Direct Digital Synthesis), PLLs (Phase Locked Loops),
+Variable/Programmable Gain Amplifiers (VGA, PGA), and RF transceivers.  You can
+use libiio natively on an embedded Linux target (local mode), or use libiio to
+communicate remotely to that same target from a host Linux, Windows or MAC
+over USB or Ethernet or Serial.")))
+
+(define-public libad9361
+  (package
+    (name "libad9361")
+    (version "0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/analogdevicesinc/libad9361-iio")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1inv39xfg8gqz1v7k1n2a7p9zzlb6gq98gcnnpdcr9fa5alvmvpm"))))
+    (inputs
+     (list libiio))
+    (build-system cmake-build-system)
+    (license license:lgpl2.1+)
+    (home-page "https://github.com/analogdevicesinc/libad9361-iio")
+    (synopsis
+     "IIO AD9361 library for filter design and handling, multi-chip sync, etc.")
+    (description
+     "This is a simple library used for userspace, which manages multi-chip
+sync (on platforms (FMCOMMS5) where multiple AD9361 devices are use) and can
+create AD9361 specific FIR filters on the fly.")))
 
 (define-public liquid-dsp
   (package
@@ -2701,6 +2800,7 @@ voice formats.")
            hamlib
            hidapi
            libdab
+           libiio
            libusb
            mbelib
            opencv
@@ -2741,7 +2841,9 @@ voice formats.")
                 (string-append "-DSGP4_DIR="
                                #$(this-package-input "sgp4"))
                 (string-append "-DSOAPYSDR_DIR="
-                               #$(this-package-input "soapysdr")))
+                               #$(this-package-input "soapysdr"))
+                (string-append "-DIIO_DIR="
+                               #$(this-package-input "libiio")))
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'fix-unrecognized-compiler-option
@@ -2800,6 +2902,8 @@ various hardware.")
              glfw
              hackrf
              jack-2
+             libad9361
+             libiio
              libusb
              pulseaudio
              rtaudio
@@ -2810,7 +2914,7 @@ various hardware.")
       (arguments
        (list #:tests? #f ; No test suite.
              #:configure-flags #~(list "-DOPT_BUILD_BLADERF_SOURCE=ON"
-                                       "-DOPT_BUILD_PLUTOSDR_SOURCE=OFF"
+                                       "-DOPT_BUILD_PLUTOSDR_SOURCE=ON"
                                        "-DOPT_BUILD_M17_DECODER=ON")
              #:phases
              #~(modify-phases %standard-phases

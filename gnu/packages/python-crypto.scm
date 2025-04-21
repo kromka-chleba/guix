@@ -19,7 +19,7 @@
 ;;; Copyright © 2018, 2021 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2018 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2018 Nam Nguyen <namn@berkeley.edu>
-;;; Copyright © 2019 Guillaume Le Vaillant <glv@posteo.net>
+;;; Copyright © 2019, 2025 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2019 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2020 Alexandros Theodotou <alex@zrythm.org>
 ;;; Copyright © 2020 Justus Winter <justus@sequoia-pgp.org>
@@ -232,20 +232,24 @@ making them easy to handle and incorporate into other protocols.")
 (define-public python-kerberos
   (package
     (name "python-kerberos")
-    (version "1.3.0")
+    (version "1.3.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "kerberos" version))
        (sha256
-        (base32
-         "19663qxmma0i8bfbjc2iwy5hgq0g4pfb75r023v5dps68zfvffgh"))))
-    (build-system python-build-system)
+        (base32 "0b0a8rrwgfjrslz3jd3r5l7vr7jx5bc17sq0dbwn002f58a4dl6d"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; No tests in PyPI, provided in Git but all of them require networking.
+     (list #:tests? #f))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (inputs
      (list mit-krb5))
     (home-page "https://github.com/apple/ccs-pykerberos")
-    (synopsis
-     "Python Kerberos library used by CalendarServer")
+    (synopsis "Python Kerberos library used by CalendarServer")
     (description
      "This Python package is a high-level wrapper for Kerberos (GSSAPI)
 operations.  The goal is to avoid having to build a module that wraps the
@@ -295,41 +299,33 @@ password storage.")
     ;; "MIT" and PSF dual license
     (license license:x11)))
 
-(define-public python-keyrings.alt
+(define-public python-keyrings-alt
   (package
-    (name "python-keyrings.alt")
-    (version "3.4.0")
+    (name "python-keyrings-alt")
+    (version "5.0.2")
     (source
       (origin
         (method url-fetch)
-        (uri (pypi-uri "keyrings.alt" version))
+        (uri (pypi-uri "keyrings_alt" version))
         (sha256
-         (base32
-          "0gdjdqpq2hf770p6iwi891mil0vbsdhvy88x0v8b2w4y4b28lcli"))
-        (modules '((guix build utils)))
-        (snippet
-         '(begin
-            (delete-file "keyrings/alt/_win_crypto.py")
-            ;; Rely on python-keyring>20:
-            ;; https://github.com/jaraco/keyrings.alt/issues/33
-            (substitute* '("keyrings/alt/tests/test_Gnome.py"
-                           "keyrings/alt/tests/test_Google.py"
-                           "keyrings/alt/tests/test_Windows.py"
-                           "keyrings/alt/tests/test_file.py"
-                           "keyrings/alt/tests/test_pyfs.py")
-              (("keyring.tests.test_backend") "keyring.testing.backend")
-              (("keyring.tests.util") "keyring.testing.util"))
-            #t))))
-    (build-system python-build-system)
+         (base32 "1yv9gnmkw6kpsjgnid0k1qcd49n9csqcvf02cl88bcf8knz7w2cg"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-keyring python-pytest python-setuptools-scm))
+     (list python-keyring
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-jaraco-classes
+           python-jaraco-context))
     (home-page "https://github.com/jaraco/keyrings.alt")
     (synopsis "Alternate keyring implementations")
-    (description "Keyrings in this package may have security risks or other
-implications.  These backends were extracted from the main keyring project to
-make them available for those who wish to employ them, but are discouraged for
-general production use.  Include this module and use its backends at your own
-risk.")
+    (description
+     "Keyrings in this package may have security risks or other implications.
+These backends were extracted from the main keyring project to make them
+available for those who wish to employ them, but are discouraged for general
+production use.  Include this module and use its backends at your own risk.")
     (license license:expat)))
 
 (define-public python-blake3
@@ -1358,11 +1354,16 @@ with state-tracking and configuration abstractions.")
          "0lipygpzhwzzsq2k5imb1jgkmj8y4khxdwhzadjs3bd56g6bmkx9"))))
     (build-system python-build-system)
     (native-inputs
-     (list python-pytest python-pytest-runner))
+     (list python-cython python-pytest python-pytest-runner))
     (inputs
      (list keyutils))
     (arguments
-     '(#:tests? #f))
+     (list #:tests? #f
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'build 'regenerate-c-file
+                 (lambda _
+                   (invoke "cython" "keyutils/_keyutils.pyx"))))))
     (home-page "https://github.com/sassoftware/python-keyutils")
     (synopsis "Python bindings for keyutils")
     (description
