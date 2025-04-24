@@ -5139,6 +5139,21 @@ supports url redirection and retries, and also gzip and deflate decoding.")
      (list python-hatchling
            python-hatch-vcs))))
 
+(define-public python-urllib3-1.25
+  (package
+    (inherit python-urllib3)
+    (version "1.25.19")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "urllib3" version))
+       (sha256
+        (base32
+         "09rmjqm5syhhc8fx3v06h3yv6cqy0b1081jg8wm5grpwpr72j61h"))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))))
+
 (define-public python-urllib3-1.26
   (package
     (inherit python-urllib3)
@@ -10605,6 +10620,22 @@ and FastAPI.")
        (sha256
         (base32 "1byyg7b2ixpr8hc849a6dd0qn5daxqawz6lb3php8lrmsb1n5cc3"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               ;; XXX: chirp expects suds instead of suds_community
+               (add-after 'install 'add-custom-dist-info
+                 (lambda _
+                   (for-each
+                    (lambda (dir)
+                      (with-directory-excursion (dirname dir)
+                        (symlink
+                         (basename dir)
+                         (string-append "suds-" #$version ".dist-info"))))
+                    (find-files #$output
+                                (lambda (file stat)
+                                  (string-suffix? ".dist-info" file))
+                                #:directories? #t)))))))
     (native-inputs
      (list python-pytest
            python-setuptools

@@ -1,11 +1,14 @@
 ;;; GNU Guix --- Functional package management for GNU
+;;; Copyright © 2015 Cyril Roelandt <tipecaml@gmail.com>
+;;; Copyright © 2017 Muriithi Frederick Muriuki <fredmanglis@gmail.com>
+;;; Copyright © 2018, 2020, 2022 Marius Bakke <marius@gnu.org>
+;;; Copyright © 2018-2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019, 2021-2025 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019, 2020, 2021 Efraim Flashner <efraim@flashner.co.il>
-;;; Copyright © 2019, 2020, 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019-2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2019, 2021 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2020, 2022 Julien Lepiller <julien@lepiller.eu>
-;;; Copyright © 2020, 2022 Marius Bakke <marius@gnu.org>
+;;; Copyright © 2020 Matthew James Kraai <kraai@ftbfs.org>
 ;;; Copyright © 2020 Edouard Klein <edk@beaver-labs.com>
 ;;; Copyright © 2020, 2021 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
@@ -25,6 +28,7 @@
 ;;; Copyright © 2024 Markku Korkeala <markku.korkeala@iki.fi>
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2025 Florent Pruvost <florent.pruvost@inria.fr>
+;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -289,6 +293,53 @@ Avocado machine readable outputs this one is streamlined (per test results).
 @end table")
     (license license:gpl2)))            ;some files are under GPLv2 only
 
+(define-public python-bandit
+  (package
+    (name "python-bandit")
+    (version "1.8.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "bandit" version))
+       (sha256
+        (base32 "0fhr0rsvh44ix31dwxjw8aj0wklj95368djwk0i98c2dcpmpp17m"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Two tets fail.
+      #~(list "--exclude-regex" "test_no_arguments|test_help_arg")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; TODO: Implement in pypproject-build-system's  test-backends.
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (apply invoke "stestr" "run" test-flags)))))))
+    (native-inputs
+     (list python-beautifulsoup4
+           python-fixtures
+           python-setuptools
+           python-stestr
+           python-testscenarios
+           python-testtools
+           python-wheel))
+    (propagated-inputs
+     (list python-gitpython
+           python-jschema-to-python
+           python-pyyaml
+           python-rich
+           python-sarif-om
+           python-stevedore))
+    (home-page "https://github.com/PyCQA/bandit")
+    (synopsis "Security oriented static analyser for python code")
+    (description
+     "Bandit is a tool designed to find common security issues in Python code.
+To do this Bandit processes each file, builds an AST from it, and runs
+appropriate plugins against the AST nodes.  Once Bandit has finished scanning
+all the files it generates a report.")
+    (license license:asl2.0)))
+
 (define-public python-beartype
   (package
     (name "python-beartype")
@@ -488,6 +539,32 @@ counterexamples for you.")
     (description
      "This package provides a tag-expression parser for Cucumber and
 @command{behave}.")
+    (license license:expat)))
+
+(define-public python-ddt
+  (package
+    (name "python-ddt")
+    (version "1.7.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ddt" version))
+       (sha256
+        (base32 "0jz0lglz5z5clsbralbpmd1hxs4ndb6ls7lvl7216c4nhfqdc5fj"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-aiounittest
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-pyyaml))
+    (home-page "https://github.com/datadriventests/ddt")
+    (synopsis "Data-Driven Tests")
+    (description
+     "Data-Driven Tests (@dfn{DDT}) allow you to multiply one test case by
+running it with different test data, and make it appear as multiple test
+cases.")
     (license license:expat)))
 
 (define-public python-doc8
@@ -701,6 +778,48 @@ Functions exposed by the standard library’s @code{time}, @code{datetime} and
     (description "This package provides a library for replying fake data to
 Python software under test, when they make an HTTP query.")
     (license license:asl2.0)))
+
+(define-public python-hypothesmith
+  (package
+    (name "python-hypothesmith")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hypothesmith" version))
+       (sha256
+        (base32 "08kr9p6hjm3ys87k1k3l79cmf936qbhn21ab8zadsvnp0gyv7dqg"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k"
+              (string-append
+               ;; XXX: hypothesis.errors.Unsatisfiable
+               "not test_source_code_from_libcst_node_type[MatchSingleton]"
+               ;; XXX: Python/Black versions not as expected.
+               " and not test_black_autoformatter_from_grammar"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-lark-dependency
+            (lambda _
+              (substitute* "setup.py"
+                (("lark-parser>=[0-9.]*") "lark")))))))
+    (propagated-inputs
+     (list python-hypothesis python-lark python-libcst-minimal))
+    (native-inputs
+     (list python-black
+           python-parso
+           python-pytest
+           python-pytest-cov
+           python-setuptools
+           python-wheel))
+    (home-page "https://github.com/Zac-HD/hypothesmith")
+    (synopsis "Strategies for generating Python programs")
+    (description
+     "This package contains hypothesis strategies for generating Python
+programs, something like CSmith, a random generator of C programs.")
+    (license license:mpl2.0)))
 
 (define-public python-icontract
   (package
@@ -2807,25 +2926,22 @@ support and @code{subtests} fixture.")
   (package
     (name "python-pytest-tornado")
     (version "0.8.1")
-    (source (origin
-              (method git-fetch)        ;no tests in pypi archive
-              (uri (git-reference
-                    (url "https://github.com/eugeniy/pytest-tornado")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "05hgq1m9g35kpc01im7ci1wd85xi1rdxnyms9izjg65c9976zn6x"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-vv")))))))
-    (propagated-inputs (list python-pytest python-setuptools python-tornado))
+    (source
+     (origin
+       (method git-fetch)        ;no tests in pypi archive
+       (uri (git-reference
+             (url "https://github.com/eugeniy/pytest-tornado")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05hgq1m9g35kpc01im7ci1wd85xi1rdxnyms9izjg65c9976zn6x"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-wheel))
+    (propagated-inputs
+     (list python-pytest
+           python-setuptools
+           python-tornado))
     (home-page "https://github.com/eugeniy/pytest-tornado")
     (synopsis "Pytest plugin to ease testing tornado applications")
     (description
@@ -3153,34 +3269,52 @@ manipulating JSON Object.  You can manipulate your JSON object using JSONPath")
 (define-public python-stestr
   (package
     (name "python-stestr")
-    (version "3.2.1")
+    ;; XXX: The latest version needs flit-core=>3.12.
+    (version "4.1.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "stestr" version))
        (sha256
-        (base32
-         "1kg9gfdr4bj2m7s1r44z530a0ba4p17j4jlhcn1xha0j8jmyfgn2"))))
-    (build-system python-build-system)
+        (base32 "12p96kzanzzssr6z4hq6k62pdbsql4mf369ms69c4qyfxrlw6qaz"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f))                    ;to avoid circular dependencies
+     (list
+      #:test-flags
+      ;; Two tets fail.
+      #~(list "--exclude-regex" (string-join
+                                 (list "test_initialise_expands_user_directory"
+                                       "test_open_expands_user_directory")
+                                 "|"))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; TODO: Implement in pypproject-build-system's  test-backends.
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (let ((stestr (string-append #$output "/bin/stestr")))
+                  (apply invoke stestr "run" test-flags))))))))
     (native-inputs
-     (list python-pbr))
+     (list python-ddt
+           python-iso8601
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-cliff
            python-fixtures
-           python-future
            python-pyyaml
            python-subunit
            python-testtools
+           python-tomlkit
            python-voluptuous))
     (home-page "https://stestr.readthedocs.io/en/latest/")
     (synopsis "Parallel Python test runner")
-    (description "This package provides the @command{stestr} command, a
-parallel Python test runner built around @code{subunit}.  It is designed to
-execute @code{unittest} test suites using multiple processes to split up
-execution of a test suite.  It will also store a history of all test runs to
-help in debugging failures and optimizing the scheduler to improve speed.")
+    (description
+     "This package provides the @command{stestr} command, a parallel Python
+test runner built around @code{subunit}.  It is designed to execute
+@code{unittest} test suites using multiple processes to split up execution of
+a test suite.  It will also store a history of all test runs to help in
+debugging failures and optimizing the scheduler to improve speed.")
     (license license:asl2.0)))
 
 (define-public python-sybil

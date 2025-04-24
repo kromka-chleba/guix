@@ -16,6 +16,7 @@
 ;;; Copyright © 2021, 2022, 2024 Justin Veilleux <terramorpha@cock.li>
 ;;; Copyright © 2021 Attila Lendvai <attila@lendvai.name>
 ;;; Copyright © 2021 Charles Jackson <charles.b.jackson@protonmail.com>
+;;; Copyright © 2021 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2022 Eric Bavier <bavier@posteo.net>
 ;;; Copyright © 2022 Sughosha <sughosha@proton.me>
 ;;; Copyright © 2022 Denis 'GNUtoo' Carikli <GNUtoo@cyberdimension.org>
@@ -23,6 +24,7 @@
 ;;; Copyright © 2023 Eidvilas Markevičius <markeviciuseidvilas@gmail.com>
 ;;; Copyright © 2025 aurtzy <aurtzy@gmail.com>
 ;;; Copyright © 2025 Ashvith Shetty <ashvithshetty0010@zohomail.in>
+;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -52,6 +54,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (gnu packages)
   #:use-module (gnu packages acl)
+  #:use-module (gnu packages aidc)
   #:use-module (gnu packages attr)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages backup)
@@ -61,18 +64,22 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gettext)
+  #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages ibus)
+  #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages inkscape)
   #:use-module (gnu packages image)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages pcre)
+  #:use-module (gnu packages photo)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages ssh)
+  #:use-module (gnu packages textutils)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages ruby)
   #:use-module (gnu packages web)
@@ -434,7 +441,7 @@ cursor set.  This project aims at improving the cursor experience.")
            pango
            python-freetype-py
            python-jinja2
-           python-lark-parser
+           python-lark
            python-numpy
            python-pycairo
            python-pyglm
@@ -452,10 +459,6 @@ cursor set.  This project aims at improving the cursor experience.")
                   (ice-9 match))
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'build 'adjust-lark-requirement
-            (lambda _
-              (substitute* "setup.py"
-                (("lark") "lark-parser"))))
           (add-after 'install 'install-more
             (lambda _
               (let* ((datadir (string-append #$output "/share"))
@@ -1545,6 +1548,82 @@ variants.")
                    license:lgpl2.1         ; Some style sheets.
                    license:cc-by-sa4.0)))) ; Some icons
 
+(define-public libmegapixels
+  (package
+    (name "libmegapixels")
+    (version "0.2.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.com/megapixels-org/libmegapixels")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "06q6igyf5m6nd75jlihvr6f5hf0q2b2vb2dcjw91f65c6db5q9jk"))))
+    (build-system meson-build-system)
+    (native-inputs (list pkg-config))
+    (inputs (list libconfig))
+    (home-page "https://gitlab.com/megapixels-org/libmegapixels")
+    (synopsis "Library for the Megapixels application")
+    (description "This package provides a device abstraction library for the
+Megapixels application.")
+    (license license:gpl3+)))
+
+(define-public megapixels
+  (package
+    (name "megapixels")
+    (version "1.8.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/megapixels-org/Megapixels")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "006gpkfgwp8gzn5ryvxgh1s9rq9a6fgy4rz4q23k5nxvcf1g8yk5"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'patch-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((paths (map
+                            (lambda (p)
+                              (string-append (assoc-ref inputs p) "/bin"))
+                            '("coreutils"
+                              "imagemagick"
+                              "libraw"
+                              "perl-image-exiftool"))))
+                (wrap-program
+                    (string-append #$output "/share/megapixels/postprocess.sh")
+                  `("PATH" prefix ,paths))))))))
+    (native-inputs
+     (list desktop-file-utils           ;for update-desktop-database
+           `(,glib "bin")               ;glib-compile-schemas, etc.
+           `(,gtk "bin")                ;for gtk-update-icon-cache
+           pkg-config))
+    (inputs
+     (list bash-minimal
+           coreutils-minimal
+           feedbackd
+           gtk
+           imagemagick
+           libepoxy
+           libtiff
+           libraw
+           perl-image-exiftool
+           zbar))
+    (synopsis "Camera application for mobile devices")
+    (description "This package provides a camera application for mobile
+devices that captures a five frames burst of raw frames that are later
+post-processed and saved as JPEG files.")
+    (home-page "https://gitlab.com/megapixels-org/Megapixels")
+    (license license:gpl3+)))
+
 (define-public postmarketos-theme
   (package
     (name "postmarketos-theme")
@@ -1568,6 +1647,66 @@ on Adwaita but replaces the standard blue highlights in the theme with
 postmarketOS green.  There's also the oled and paper variants of the theme
 that are completely black and completely white.")
     (license license:lgpl2.0+)))
+
+(define-public postmarketos-tweaks
+  (package
+    (name "postmarketos-tweaks")
+    (version "0.13.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/postmarketOS/postmarketos-tweaks")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "020blf2v588q9g5zq8imcii7iykca7v5an6if6bf9p4fd3yh7ar8"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:imported-modules `(,@%meson-build-system-modules
+                           (guix build python-build-system))
+      #:modules '((guix build meson-build-system)
+                  ((guix build python-build-system) #:prefix python:)
+                  (guix build utils))
+      #:glib-or-gtk? #t
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-install-dir
+            (lambda* _
+              (substitute* "data/meson.build"
+                (("/etc/init.d") (string-append %output "/etc/init.d")))))
+          (add-after 'glib-or-gtk-wrap 'python-and-gi-wrap
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let ((bin (string-append #$output "/bin/")))
+                (for-each
+                 (lambda (program)
+                   (wrap-program (string-append bin program)
+                     `("GUIX_PYTHONPATH" =
+                       (,(getenv "GUIX_PYTHONPATH")
+                        ,(python:site-packages inputs outputs)))
+                     `("GI_TYPELIB_PATH" = (,(getenv "GI_TYPELIB_PATH")))))
+                 (list "pmos-tweaks" "pmos-tweakd" "pk-tweaks-action")))))
+          (add-after 'glib-or-gtk-wrap 'python-wrap
+            (assoc-ref python:%standard-phases 'wrap)))))
+    (native-inputs
+     (list desktop-file-utils           ;for update-desktop-database
+           `(,gtk+ "bin")               ;for gtk-update-icon-cache
+           `(,glib "bin")               ;glib-compile-schemas, etc.
+           pkg-config))
+    (inputs
+     (list bash-minimal
+           gtk+
+           libhandy
+           python
+           python-pygobject
+           python-pyyaml))
+    (home-page "https://gitlab.com/postmarketOS/postmarketos-tweaks")
+    (synopsis "Settings configuration utility for postmarketOS")
+    (description "postmarketOS tweaks is an application for tweaking settings
+on desktop environments supported by postmarketOS.")
+    (license license:lgpl3+)))
 
 (define-public eiciel
   (package

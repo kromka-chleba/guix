@@ -1621,6 +1621,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/irrlicht-link-against-needed-libs.patch	\
   %D%/packages/patches/isl-0.11.1-aarch64-support.patch	\
   %D%/packages/patches/itk-snap-alt-glibc-compat.patch		\
+  %D%/packages/patches/jamesdsp-fix-bulid-on-pipewire-1.4.0.patch\
   %D%/packages/patches/jami-enable-testing.patch		\
   %D%/packages/patches/jami-libjami-headers-search.patch	\
   %D%/packages/patches/jami-qwindowkit.patch			\
@@ -1853,6 +1854,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/mercurial-hg-extension-path.patch	\
   %D%/packages/patches/mhash-keygen-test-segfault.patch		\
   %D%/packages/patches/mia-fix-boost-headers.patch		\
+  %D%/packages/patches/mia-gcc11.patch				\
+  %D%/packages/patches/mia-openexr3.patch			\
   %D%/packages/patches/mia-vtk9.patch				\
   %D%/packages/patches/mia-vtk92.patch				\
   %D%/packages/patches/mia-vtk-version.patch			\

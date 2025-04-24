@@ -8343,7 +8343,7 @@ Microsoft Exchange, Last.fm, IMAP/SMTP, Jabber, SIP and Kerberos.")
 (define-public evolution-data-server
   (package
     (name "evolution-data-server")
-    (version "3.54.3")
+    (version "3.56.1")
     (source
      (origin
        (method url-fetch)
@@ -8351,7 +8351,7 @@ Microsoft Exchange, Last.fm, IMAP/SMTP, Jabber, SIP and Kerberos.")
                            (version-major+minor version) "/"
                            name "-" version ".tar.xz"))
        (sha256
-        (base32 "1l5qgjshgy1zw9d2r5m0a12n9y9985n7zs2mj7pzihawxqwdq22i"))))
+        (base32 "0dy141vy50s15jz6h8pfkf66zmsa76apsqscg6az5yd3gl1w0v34"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -10838,7 +10838,7 @@ desktop.  It supports world clock, stop watch, alarms, and count down timer.")
 (define-public gnome-calendar
   (package
     (name "gnome-calendar")
-    (version "46.1")
+    (version "47.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/" name "/"
@@ -10846,7 +10846,7 @@ desktop.  It supports world clock, stop watch, alarms, and count down timer.")
                                   name "-" version ".tar.xz"))
               (sha256
                (base32
-                "15q8c70mis5inllrw9k6nlscazicajvmx98bd4h7nnxxi9xzyqcq"))))
+                "0xhynp8jxydbwln2sjax4pxfllvdb78hkqh73s1dq4jd3hzk20rv"))))
     (build-system meson-build-system)
     (arguments
      `(#:glib-or-gtk? #t

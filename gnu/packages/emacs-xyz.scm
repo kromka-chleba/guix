@@ -19786,6 +19786,66 @@ reference to any other metadata.  Denote basically streamlines the creation of
 such files while providing facilities to link between them.")
     (license license:gpl3+)))
 
+(define-public emacs-denote-journal
+  (package
+    (name "emacs-denote-journal")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/denote-journal-"
+                           version ".tar"))
+       (sha256
+        (base32 "0922hjzah7nz49z3q3qyq06n77yqxd7mxiw7fmawavjh920dv3fq"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-denote))
+    (home-page "https://github.com/protesilaos/denote-journal")
+    (synopsis "Convenience functions for daily journaling with Denote")
+    (description "The denote-journal package makes it easier to use Denote for
+journaling.  While it is possible to use the generic @code{denote} command
+(and related) to maintain a journal, this package defines extra functionality
+to streamline the journaling workflow.")
+    (license license:gpl3+)))
+
+(define-public emacs-denote-markdown
+  (package
+    (name "emacs-denote-markdown")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/denote-markdown-"
+                           version ".tar"))
+       (sha256
+        (base32 "0ic8kqfw56xsm9s0rlq7cgnh0dzjsbbcx7kdk55dggpvxv67jj62"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-denote))
+    (home-page "https://github.com/protesilaos/denote-markdown")
+    (synopsis "Extensions that better integrate Denote with Markdown")
+    (description "This package provides some convenience functions to better
+integrate Markdown with Denote.")
+    (license license:gpl3+)))
+
+(define-public emacs-denote-silo
+  (package
+    (name "emacs-denote-silo")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/denote-silo-"
+                           version ".tar"))
+       (sha256
+        (base32 "1jxr52npjiwisambwav6rasndjdxhll8x278q8cr7giq71am7c8b"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-denote))
+    (home-page "https://github.com/protesilaos/denote-silo")
+    (synopsis "Convenience functions for using Denote in multiple silos")
+    (description "The denote-silo package makes it easier to work with
+multiple silos.  A silo is a localised denote-directory that is not connected
+to the default/global denote-directory and other silos.")
+    (license license:gpl3+)))
+
 (define-public emacs-denote-menu
   (package
     (name "emacs-denote-menu")
@@ -19804,6 +19864,46 @@ such files while providing facilities to link between them.")
     (description "This package provides an interface for viewing your
 Denote files that goes beyond using the standard Dired Emacs command to
 view your Denote directory.")
+    (license license:gpl3+)))
+
+(define-public emacs-denote-org
+  (package
+    (name "emacs-denote-org")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/denote-org-" version
+                           ".tar"))
+       (sha256
+        (base32 "0nwyyzx96d5k6dw4jb8bvni9fjr1plip57mdsyabrha19p6n282d"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-denote))
+    (home-page "https://github.com/protesilaos/denote-org")
+    (synopsis "Denote extensions for Org mode")
+    (description "This package contains extra features that better integrate
+Denote with Org mode.")
+    (license license:gpl3+)))
+
+(define-public emacs-denote-sequence
+  (package
+    (name "emacs-denote-sequence")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://elpa.gnu.org/packages/denote-sequence-"
+                           version ".tar"))
+       (sha256
+        (base32 "06s2k555in897rpr2iabzv29dr79lm6fkpjp3yssidr9irxymf0h"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-denote))
+    (home-page "https://github.com/protesilaos/denote-sequence")
+    (synopsis "Sequence notes or Folgezettel with Denote")
+    (description "This package provides an optional extension to denote for
+naming files with a sequencing scheme.  The idea is to establish hiearchical
+relationships between files, such that the contents of one logically follow or
+complement those of another.")
     (license license:gpl3+)))
 
 (define-public emacs-denote-explore

@@ -5155,84 +5155,98 @@ of @code{xmlfile}.")
     (license license:expat)))
 
 (define-public python-omero-py
-  (package
-    (name "python-omero-py")
-    (version "5.13.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/ome/omero-py")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0n94v5dpmh873hjqd9k9ky85iab4xh37ibmi13rqpclv01ibvvxa"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      '(list "-m" "not broken" "-rf" "test" "-s"
-             ;; TestImport tries to download Java things; TestSessions
-             ;; and TestBuildQuery require networking.
-             "-k" "not TestImport and not TestSessions and not TestBuildQuery")
-      #:modules '((guix build pyproject-build-system)
-                  (guix build utils)
-                  (ice-9 match)
-                  (srfi srfi-1)
-                  (srfi srfi-26))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'find-artifacts
-            (lambda* (#:key inputs #:allow-other-keys)
-              (let ((zip-file
-                     (match inputs
-                       (((labels . files) ...)
-                        (find (cut string-suffix? "omero-blitz-5.5.5-python.zip" <>)
-                              files)))))
-                (setenv "ZIP_FILE"
-                        (or zip-file (error "failed to find artifact file"))))))
-          ;; Some tests need this, such as TestTempFileManager
-          (add-after 'build 'set-HOME
-            (lambda _ (setenv "HOME" "/tmp")))
-          ;; The sanity check mistakes omero_model_TypeAnnotationI.py for a
-          ;; module to load.
-          (delete 'sanity-check)
-          ;; The argument parser is picky and interprets the "-real" part as
-          ;; the first argument.
-          (add-after 'wrap 'rename-executable
-            (lambda _
-              (with-directory-excursion (string-append #$output "/bin")
-                (rename-file ".omero-real" ".omero")
-                (substitute* "omero"
-                  (("bin/.omero-real") "bin/.omero"))))))))
-    (propagated-inputs
-     (list python-appdirs
-           python-future
-           python-numpy
-           python-pillow
-           python-pyyaml
-           python-requests
-           python-tables
-           python-zeroc-ice-3.6))
-    (native-inputs
-     (list python-mox3
-           python-pytest
-           python-pytest-rerunfailures
-           python-pytest-xdist
-           python-setuptools
-           python-wheel
-           unzip
-           (origin
-             (method url-fetch)
-             (uri "https://artifacts.openmicroscopy.org/artifactory/\
-ome.releases/org/openmicroscopy/omero-blitz/5.5.5/omero-blitz-5.5.5-python.zip")
-             (sha256
-              (base32 "0wyja1zv19c1r3m31gsp555jzj3cg2v2pl00zlybpw3qd36yffwc")))))
-    (home-page "https://github.com/ome/omero-py")
-    (synopsis "Python bindings to the OMERO.blitz server")
-    (description "This package provides Python bindings to the OMERO.blitz
+  (let ((omero-blitz-version "5.8.2"))
+    (package
+      (name "python-omero-py")
+      (version "5.20.0")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ome/omero-py")
+               (commit (string-append "v" version))))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "02zsw1p35n6lkqh410qpgw7c4467dkbg0hxly3gjqrwdh349j47g"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        ;; #:tests? #f
+        #:test-flags
+        #~(list
+           "-m" "not broken" "-rf" "test" "-s"
+           ;; XXX: Failing collection because of Numpy compatibility.
+           "--ignore=test/unit/tablestest/test_hdfstorage.py"
+           "--ignore=test/unit/tablestest/test_servants.py"
+           ;; TestImport tries to download Java things; TestSessions
+           ;; and TestBuildQuery require networking.
+           "-k" "not TestImport and not TestSessions and not TestBuildQuery")
+        #:modules '((guix build pyproject-build-system)
+                    (guix build utils)
+                    (ice-9 match)
+                    (srfi srfi-1)
+                    (srfi srfi-26))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'find-artifacts
+              (lambda* (#:key inputs #:allow-other-keys)
+                (let ((zip-file
+                       (match inputs
+                         (((labels . files) ...)
+                          (find (cut string-suffix?
+                                     (string-append "omero-blitz-"
+                                                    #$omero-blitz-version
+                                                    "-python.zip")
+                                     <>)
+                                files)))))
+                  (setenv "ZIP_FILE"
+                          (or zip-file (error "failed to find artifact file"))))))
+            ;; Some tests need this, such as TestTempFileManager
+            (add-after 'build 'set-HOME
+              (lambda _ (setenv "HOME" "/tmp")))
+            ;; The sanity check mistakes omero_model_TypeAnnotationI.py for a
+            ;; module to load.
+            (delete 'sanity-check)
+            ;; The argument parser is picky and interprets the "-real" part as
+            ;; the first argument.
+            (add-after 'wrap 'rename-executable
+              (lambda _
+                (with-directory-excursion (string-append #$output "/bin")
+                  (rename-file ".omero-real" ".omero")
+                  (substitute* "omero"
+                    (("bin/.omero-real") "bin/.omero"))))))))
+      (propagated-inputs
+       (list python-appdirs
+             python-future
+             python-numpy-2
+             python-pillow
+             python-pyyaml
+             python-requests
+             python-tables
+             python-zeroc-ice-3.6))
+      (native-inputs
+       (list python-portalocker
+             python-pytest
+             python-pytest-mock
+             python-pytest-rerunfailures
+             python-pytest-xdist
+             python-setuptools
+             python-wheel
+             unzip
+             (origin
+               (method url-fetch)
+               (uri (format #f "\
+https://artifacts.openmicroscopy.org/artifactory/ome.releases/org/\
+openmicroscopy/omero-blitz/~a/omero-blitz-~a-python.zip"
+                            omero-blitz-version
+                            omero-blitz-version))
+               (sha256
+                (base32 "1nb17xmx6n7i5vkcw661iq42yfgc3i0gmhz3x8iwcrhp8pajzm3l")))))
+      (home-page "https://github.com/ome/omero-py")
+      (synopsis "Python bindings to the OMERO.blitz server")
+      (description "This package provides Python bindings to the OMERO.blitz
 server.")
-    (license license:gpl2)))
+      (license license:gpl2))))
 
 (define-public python-openpyxl
   (package
@@ -13737,15 +13751,14 @@ away.")
   (hidden-package
    (package
      (name "python-ipyparallel-bootstrap")
-     (version "8.2.1")
+     (version "9.0.1")
      (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "ipyparallel" version))
         (sha256
-         (base32
-          "0wiwfd7870zbmczzn96jqxxjf2zcbcaxnsl1ddn8hspwa8y4frzj"))))
-     (build-system python-build-system)
+         (base32 "177jk2g8srsddgyb4djbyci93v766vzrnqzzpd7ski804anjqn9f"))))
+     (build-system pyproject-build-system)
      (arguments
       (list
        #:tests? #f
@@ -13753,6 +13766,8 @@ away.")
                     ;; The python-ipykernel is normally propagated but is
                     ;; removed from this package to break the cycle.
                     (delete 'sanity-check))))
+     (native-inputs
+      (list python-hatchling))
      (propagated-inputs
       (list python-dateutil
             python-decorator
@@ -13768,9 +13783,9 @@ away.")
      (home-page "https://ipython.org/")
      (synopsis "Interactive Parallel Computing with IPython")
      (description
-      "@code{ipyparallel} is a Python package and collection of CLI scripts for
-controlling clusters for Jupyter.  @code{ipyparallel} contains the following
-CLI scripts:
+      "@code{ipyparallel} is a Python package and collection of CLI scripts
+for controlling clusters for Jupyter.  @code{ipyparallel} contains the
+following CLI scripts:
 @enumerate
 @item ipcluster - start/stop a cluster
 @item ipcontroller - start a scheduler
@@ -13783,19 +13798,14 @@ CLI scripts:
     (inherit python-ipyparallel-bootstrap)
     (name "python-ipyparallel")
     (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda _
-              (invoke "pytest" "-vv"))))))
+     (list #:test-flags #~(list "--pyargs" "ipyparallel")))
     (native-inputs
-     (list python-ipython
-           python-pytest
-           python-pytest-asyncio
-           python-pytest-cov
-           python-pytest-tornado
-           python-testpath))
+     (modify-inputs (package-native-inputs python-ipyparallel-bootstrap)
+       (append python-ipython
+               python-pytest
+               python-pytest-asyncio
+               python-pytest-tornado
+               python-testpath)))
     (propagated-inputs
      (modify-inputs (package-propagated-inputs python-ipyparallel-bootstrap)
        (replace "python-jupyter-client-bootstrap" python-jupyter-client)
@@ -17523,64 +17533,10 @@ list format (also known as ASCII plist), written in Cython.")
   wrappers and decorator functions.")
     (license license:bsd-2)))
 
-(define-public python-commentjson
-  (package
-    (name "python-commentjson")
-    (version "0.9.0")
-    (source (origin
-              ;; The PyPI release is missing some test files.
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/vaidik/commentjson")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "01iscgrc6bkyrxbzmf46csbf9c0n7g6dygdmxs3fq8fkzrrciybl"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:modules ((guix build python-build-system)
-                  (guix build utils)
-                  (ice-9 ftw)
-                  (ice-9 textual-ports))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'relax-requirements
-           (lambda _
-             (substitute* "setup.py"
-               (("lark-parser>=0.7.1,<0.8.0")
-                "lark-parser>=0.7.1"))))
-         (add-after 'unpack 'delete-unspported-tests
-           ;; Some tests rely on the 'test' module of Python itself,
-           ;; which is not available with the Python package in Guix;
-           ;; remove them.
-           (lambda _
-             ;; XXX: Copied from (guix build dub-build-system).
-             (define (grep string file-name)
-               (string-contains (call-with-input-file file-name get-string-all)
-                                string))
-
-             (with-directory-excursion "commentjson/tests/test_json"
-               (let* ((dot? (lambda (x) (member x '("." ".."))))
-                      (test-files (scandir "." (negate dot?))))
-                 (for-each delete-file
-                           (filter (lambda (f) (grep "from test." f))
-                                   test-files)))))))))
-    (propagated-inputs
-     (list python-lark-parser))
-    (native-inputs
-     (list python-six))
-    (home-page "https://github.com/vaidik/commentjson")
-    (synopsis "Python library for adding comments to JSON files")
-    (description "Comment JSON is a Python package that helps you create JSON
-files with Python and JavaScript style inline comments.  Its API is very
-similar to the Python standard library's @code{json} module.")
-    (license license:expat)))
-
 (define-public python-resolvelib
   (package
     (name "python-resolvelib")
-    (version "1.1.0b1")
+    (version "1.1.0")
     (source
      (origin
        ;; Tests are missing from the PyPI release.
@@ -17590,16 +17546,18 @@ similar to the Python standard library's @code{json} module.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0y0b4qd1aai50w33szz34kqj8ls42k9shkpp3lvy0jrvzgackp9p"))))
+        (base32 "0pw99897mm2y7pa2g35z0f7vcmgh42xglz5szbrvigczvwa605sh"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list python-commentjson python-packaging python-pytest
-           python-setuptools python-wheel))
+     (list python-packaging
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/sarugaku/resolvelib")
     (synopsis "Abstract dependencies resolver")
-    (description "The ResolveLib library provides a @code{Resolver} class that
-includes dependency resolution logic.")
+    (description
+     "The ResolveLib library provides a @code{Resolver} class that includes
+dependency resolution logic.")
     (license license:isc)))
 
 (define-public python-commonmark
@@ -23619,17 +23577,18 @@ in @file{pyproject.toml}-based projects.  It provides basic functionality to
 write tooling that generates distribution files from Python projects.")
     (license license:expat)))
 
-(define-public python-lark-parser
+(define-public python-lark
   (package
-    (name "python-lark-parser")
-    (version "0.9.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "lark-parser" version))
-              (sha256
-               (base32
-                "1kd61asrb3h9spgsj4bslfbgp8q4271sw3hblk6f2vbbblv8jxcy"))))
-    (build-system python-build-system)
+    (name "python-lark")
+    (version "1.2.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "lark" version))
+       (sha256
+        (base32 "107d1w24b3ln4zwsw4yvkfhff6bk5n3cpvlgbbqww5ndc80pv06a"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/lark-parser/lark")
     (synopsis "Multi-language parser for Python")
     (description
@@ -25964,32 +25923,6 @@ console.")
      replacement to more full-featured frameworks (such as curses or urwid), but as
      a tool to quickly create nice-looking screens in your terminal window.  You
      can even create animations with the cursor controls.")
-    (license license:expat)))
-
-(define-public python-ddt
-  (package
-    (name "python-ddt")
-    (version "1.7.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "ddt" version))
-       (sha256
-        (base32 "0jz0lglz5z5clsbralbpmd1hxs4ndb6ls7lvl7216c4nhfqdc5fj"))))
-    (build-system pyproject-build-system)
-    (native-inputs
-     (list python-aiounittest
-           python-pytest
-           python-setuptools
-           python-wheel))
-    (propagated-inputs
-     (list python-pyyaml))
-    (home-page "https://github.com/datadriventests/ddt")
-    (synopsis "Data-Driven Tests")
-    (description
-     "Data-Driven Tests (@dfn{DDT}) allow you to multiply one test case by
-running it with different test data, and make it appear as multiple test
-cases.")
     (license license:expat)))
 
 (define-public python-pycountry
@@ -36213,7 +36146,7 @@ CMake.")
 (define-public python-screenkey
   (package
     (name "python-screenkey")
-    (version "1.4")
+    (version "1.5")
     (source
      (origin
        (method git-fetch)
@@ -36223,21 +36156,19 @@ CMake.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1rfngmkh01g5192pi04r1fm7vsz6hg9k3qd313sn9rl9xkjgp11l"))))
+         "0j719kld4dr85d9lxn0d0b6156mcy09jm7arssfp2n3j6hmjssci"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'fix-dlopen-paths
-          (lambda* (#:key inputs outputs #:allow-other-keys)
-            (let* ((x11 (assoc-ref inputs "libx11"))
-                   (xtst (assoc-ref inputs "libxtst")))
-              (substitute* "Screenkey/xlib.py"
-                           (("libX11.so.6")
-                            (string-append x11 "/lib/libX11.so.6")))
-              (substitute* "Screenkey/xlib.py"
-                           (("libXtst.so.6")
-                            (string-append xtst "/lib/libXtst.so.6"))))))
+          (lambda* (#:key inputs  #:allow-other-keys)
+            (substitute* "Screenkey/xlib.py"
+              (("libX11.so.6")
+               (search-input-file inputs "lib/libX11.so.6")))
+            (substitute* "Screenkey/xlib.py"
+              (("libXtst.so.6")
+               (search-input-file inputs "lib/libXtst.so.6")))))
           (add-after 'install 'wrap-screenkey
             (lambda* (#:key outputs #:allow-other-keys)
               (wrap-program
@@ -36247,15 +36178,16 @@ CMake.")
                   ":" prefix (,(getenv "GI_TYPELIB_PATH")))))))))
     (inputs
      (list bash-minimal
-           python-distutils-extra
-           python-tokenize-rt
+           gtk+
            libx11
            libxtst
-           gtk+
-           python-pygobject
+           python-babel
+           python-dbus-python
+           python-distutils-extra
            python-pycairo
+           python-pygobject
            python-setuptools-git
-           python-babel))
+           python-tokenize-rt))
     (home-page "https://www.thregr.org/~wavexx/software/screenkey/")
     (synopsis
       "Screencast tool to display pressed keys")
@@ -40611,7 +40543,10 @@ write text fast, and for various text generation, statistics, and modeling tasks
               (uri (pypi-uri "zeroc-ice" version))
               (sha256
                (base32
-                "0mikjfvq26kh8asnn9v55z41pap4c5ypymqnwwi4xkavc3mzyda2"))))))
+                "0mikjfvq26kh8asnn9v55z41pap4c5ypymqnwwi4xkavc3mzyda2"))
+              (patches
+               (search-patches
+                "python-zeroc-ice-3.6.5-python-3.11-support.patch"))))))
 
 (define-public python-whenever
   (package

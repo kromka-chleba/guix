@@ -52,34 +52,6 @@
   #:use-module (guix packages)
   #:use-module (srfi srfi-1))
 
-(define-public python-bandit
-  (package
-    (name "python-bandit")
-    (version "1.7.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "bandit" version))
-       (sha256
-        (base32
-         "1lkvf5ffdqa9504mm5fd9vvq0q5wdyqbkm32i4rswys1fg2shqrd"))))
-    (build-system python-build-system)
-    (arguments
-     ;; The tests are disabled to avoid a circular dependency with
-     ;; python-stestr.
-     `(#:tests? #f))
-    (propagated-inputs
-     (list python-gitpython python-pyyaml python-six python-stevedore))
-    (native-inputs
-     (list python-pbr))
-    (home-page "https://github.com/PyCQA/bandit")
-    (synopsis "Security oriented static analyser for python code")
-    (description "Bandit is a tool designed to find common security issues in
-Python code.  To do this Bandit processes each file, builds an AST from it,
-and runs appropriate plugins against the AST nodes.  Once Bandit has finished
-scanning all the files it generates a report.")
-    (license asl2.0)))
-
 (define-public python-cliff
   (package
     (name "python-cliff")
