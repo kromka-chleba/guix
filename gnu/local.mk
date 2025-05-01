@@ -1053,7 +1053,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/bsd-games-number.c-and-test.patch	\
   %D%/packages/patches/bsd-games-prevent-name-collisions.patch	\
   %D%/packages/patches/bsd-games-stdio.h.patch			\
-  %D%/packages/patches/btop-fix-segfault-on-intel-gpus.patch	\
   %D%/packages/patches/beancount-disable-googleapis-fonts.patch	\
   %D%/packages/patches/beignet-correct-file-names.patch		\
   %D%/packages/patches/bidiv-update-fribidi.patch		\
@@ -1136,6 +1135,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/collectd-5.11.0-noinstallvar.patch		\
   %D%/packages/patches/combinatorial-blas-awpm.patch		\
   %D%/packages/patches/combinatorial-blas-io-fix.patch		\
+  %D%/packages/patches/compsize-fix-btrfs-progs-compatibility.patch	\
   %D%/packages/patches/containerd-create-pid-file.patch	\
   %D%/packages/patches/converseen-hide-updates-checks.patch	\
   %D%/packages/patches/converseen-hide-non-free-pointers.patch	\
@@ -1216,6 +1216,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/elm-offline-package-registry.patch	\
   %D%/packages/patches/elm-reactor-static-files.patch		\
   %D%/packages/patches/emacs-all-the-icons-remove-duplicate-rs.patch	\
+  %D%/packages/patches/emacs-bash-completion-preserve-exit-code.patch	\
+  %D%/packages/patches/emacs-bash-completion-preserve-ps1.patch	\
   %D%/packages/patches/emacs-deferred-fix-number-of-arguments.patch	\
   %D%/packages/patches/emacs-elpy-dup-test-name.patch		\
   %D%/packages/patches/emacs-disable-jit-compilation.patch			\
@@ -1573,6 +1575,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/hdf4-reproducibility.patch 		\
   %D%/packages/patches/hdf4-shared-fortran.patch 		\
   %D%/packages/patches/hdf5-config-date.patch			\
+  %D%/packages/patches/hdf5-config-dependencies.patch		\
   %D%/packages/patches/hdf-eos2-build-shared.patch 		\
   %D%/packages/patches/hdf-eos2-remove-gctp.patch		\
   %D%/packages/patches/hdf-eos2-fortrantests.patch		\
@@ -1680,6 +1683,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/lightdm-vnc-color-depth.patch		\
   %D%/packages/patches/lightdm-vncserver-check.patch		\
   %D%/packages/patches/localed-xorg-keyboard.patch		\
+  %D%/packages/patches/kaldi-ignore-failing-test.patch		\
+  %D%/packages/patches/kaldi-openblas-0.3.29-compatibility.patch	\
   %D%/packages/patches/kcontacts-incorrect-country-name.patch	\
   %D%/packages/patches/kde-cli-tools-delay-mime-db.patch	\
   %D%/packages/patches/kdiagram-Fix-missing-link-libraries.patch \
@@ -1765,6 +1770,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libsecret-fix-test-paths.patch		\
   %D%/packages/patches/libsepol-versioned-docbook.patch		\
   %D%/packages/patches/libskk-fix-invalid-escape.patch		\
+  %D%/packages/patches/libssh-openssh-banner.patch		\
   %D%/packages/patches/libtar-CVE-2013-4420.patch 		\
   %D%/packages/patches/libtar-CVE-2021-33643-CVE-2021-33644.patch	\
   %D%/packages/patches/libtar-CVE-2021-33645-CVE-2021-33646.patch	\
@@ -1845,7 +1851,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libmhash-hmac-fix-uaf.patch		\
   %D%/packages/patches/libmodbus-disable-networking-test.patch \
   %D%/packages/patches/lib-tl-for-telegram-memcpy.patch	\
-  %D%/packages/patches/llama-cpp-vulkan-optional.patch	\
   %D%/packages/patches/llhttp-ponyfill-object-fromentries.patch	\
   %D%/packages/patches/lvm2-no-systemd.patch    		\
   %D%/packages/patches/maturin-no-cross-compile.patch		\
@@ -2123,7 +2128,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-fixtures-remove-monkeypatch-test.patch	\
   %D%/packages/patches/python-hiredis-use-system-hiredis.patch	\
   %D%/packages/patches/python-online-judge-api-client-tests.patch \
-  %D%/packages/patches/python-pdoc3-tests.patch			\
   %D%/packages/patches/python-peachpy-determinism.patch	\
   %D%/packages/patches/python-pep8-stdlib-tokenize-compat.patch \
   %D%/packages/patches/python-piexif-fix-tests-with-pillow-7.2.patch	\
@@ -2249,6 +2253,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/scilab-better-compiler-detection.patch	\
   %D%/packages/patches/scilab-tbx_build_help.patch		\
   %D%/packages/patches/scons-test-environment.patch		\
+  %D%/packages/patches/scotch-cmake-remove-metis.patch		\
   %D%/packages/patches/screen-hurd-path-max.patch		\
   %D%/packages/patches/scsh-nonstring-search-path.patch	\
   %D%/packages/patches/seed-webkit.patch			\

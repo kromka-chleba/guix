@@ -1136,13 +1136,13 @@ Companion to Applied Regression, Third Edition, Sage.")
 (define-public r-cards
   (package
     (name "r-cards")
-    (version "0.4.0")
+    (version "0.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "cards" version))
        (sha256
-        (base32 "1bspjyxwj1dcjdrgrbh7qkskviwf78ifzhn8kihjpqypsyy1plad"))))
+        (base32 "1g41i4nqkgzb1sv2f9hy06h0m2hmlcpqgc2ssjm2l7dcbgy5534f"))))
     (properties
      `((upstream-name . "cards")
        ;; Do not create dependency cycle.
@@ -9535,6 +9535,16 @@ Applied Statistics with S\" (4th edition, 2002) by Venables and Ripley.")
        ;; Needed for vignettes.
        (updater-extra-native-inputs . ("r-mass"))))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      (if (or (target-x86-32?) (target-arm32?))
+          '(modify-phases %standard-phases
+             (add-after 'unpack 'disable-bad-tests
+               (lambda _
+                 ;; Some of these tests fail on 32 bit architectures.
+                 (delete-file "tests/matprod.R"))))
+          '%standard-phases)))
     (propagated-inputs
      (list r-lattice))
     (native-inputs (list r-codetools r-mass r-sfsmisc r-sparsem))

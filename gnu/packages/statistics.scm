@@ -124,21 +124,20 @@
     (version "2.0.1")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://gnu/pspp/pspp-"
-                          version ".tar.gz"))
-      (sha256
-       (base32
-        "002c08rxym056mn7a73jwjmcazqd4gh5j1cyml603y4ckvqb1nwf"))))
+       (method url-fetch)
+       (uri (string-append "mirror://gnu/pspp/pspp-" version ".tar.gz"))
+       (sha256
+        (base32
+         "002c08rxym056mn7a73jwjmcazqd4gh5j1cyml603y4ckvqb1nwf"))))
     (build-system gnu-build-system)
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
                (add-after 'unpack 'patch-test-suite
-		 (lambda _
-		   (substitute* "tests/output/tex.at"
-		     (("AT_CHECK\\(\\[LC_ALL=C.UTF-8 pspp")
-		      "AT_CHECK([LC_ALL=en_US.UTF-8 pspp"))))
+                 (lambda _
+                   (substitute* "tests/output/tex.at"
+                     (("AT_CHECK\\(\\[LC_ALL=C.UTF-8 pspp")
+                      "AT_CHECK([LC_ALL=en_US.UTF-8 pspp"))))
                (add-before 'check 'prepare-tests
                  ;; Prevent irrelevant errors that cause test output mismatches:
                  ;; ‘Fontconfig error: No writable cache directories’
@@ -3092,14 +3091,14 @@ files into/from Pandas DataFrames.  It is a wrapper around the C library
       (name "xlispstat")
       (version (git-version "3.52.23" revision commit))
       (source (origin
-	        (method git-fetch)
-	        (uri (git-reference
-		      (url "https://github.com/jhbadger/xlispstat.git")
-		      (commit commit)))
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/jhbadger/xlispstat.git")
+                      (commit commit)))
                 (file-name (git-file-name name version))
-	        (sha256
-	         (base32
-	          "1p0cmgy19kbkxia139cb5w9dnkp2cdqp5n3baag6cq3prn3n71mf"))))
+                (sha256
+                 (base32
+                  "1p0cmgy19kbkxia139cb5w9dnkp2cdqp5n3baag6cq3prn3n71mf"))))
       (build-system gnu-build-system)
       (arguments
        `(#:parallel-build? #f   ; Parallel builds are not supported
@@ -3329,11 +3328,24 @@ statistical summary in arrays and enumerables.")
          "1hg6wrg3jcac71zn4gknni1wrn38wa86ka3sgp2bndz59mx6sr2s"))))
     (build-system pyproject-build-system)
     (arguments
-     (list #:test-flags
-           #~(list "-k" (string-append
-                         "not test_pillai"
-                         " and not test_estimate_with_cache_no_llm_calls"
-                         " and not test_estimate_with_orientations"))))
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
+              "-k" (string-join
+                    ;; AssertionError: False is not true
+                    (list "not test_query_evidence"
+                          ;; ValueError: Experimental support for categorical
+                          ;; data is not implemented for current tree method
+                          ;; yet.
+                          "test_pillai"
+                          "test_estimate_with_cache_no_llm_calls"
+                          "test_estimate_with_orientations"
+                          ;; _flapack.error: (liwork>=max(1,10*n)||liwork==-1)
+                          ;; failed for 10th keyword liwork: dsyevr:liwork=1
+                          "test_estimate"
+                          "test_score_bnlearn"
+                          "test_score_manual")
+                    " and not "))))
     (propagated-inputs (list python-daft
                              python-joblib
                              python-networkx
@@ -3349,13 +3361,14 @@ statistical summary in arrays and enumerables.")
     (native-inputs (list python-mock
                          python-pyro-ppl
                          python-pytest
+                         python-pytest-xdist
                          python-setuptools
                          python-wheel
                          python-xgboost))
     (home-page "https://github.com/pgmpy/pgmpy")
     (synopsis "Probabilistic Graphical Models library")
-    (description "This package provides a library for Probabilistic
-Graphical Models.  It can be used for learning (Structure and Parameter),
-inference (Probabilistic and Causal), and simulations in Bayesian
-Networks.")
+    (description
+     "This package provides a library for Probabilistic Graphical Models.  It
+can be used for learning (Structure and Parameter), inference (Probabilistic
+and Causal), and simulations in Bayesian Networks.")
     (license license:expat)))

@@ -1195,7 +1195,7 @@ provides an integration with GitHub and GitLab.")
 (define-public got
   (package
     (name "got")
-    (version "0.110")
+    (version "0.111")
     (source (origin
               (method url-fetch)
               (uri
@@ -1204,7 +1204,7 @@ provides an integration with GitHub and GitLab.")
                 version ".tar.gz"))
               (sha256
                (base32
-                "0a8xcqqw09bddzgqqg1mrwqp36fqsf2zfvz7lqv55y770l9f8d9n"))))
+                "1kkqv2lrd6wwjgsb02bgw5nqlkxrq90rdbzv486xs057j5pgg5nh"))))
     (inputs
      (list libevent
            `(,util-linux "lib")
@@ -2624,7 +2624,7 @@ execution of any hook written in any language before every commit.")
 (define-public mercurial
   (package
     (name "mercurial")
-    (version "6.7.2")
+    (version "6.9.5")
     (source (origin
              (method url-fetch)
              (uri (string-append "https://www.mercurial-scm.org/"
@@ -2632,7 +2632,7 @@ execution of any hook written in any language before every commit.")
              (patches (search-patches "mercurial-hg-extension-path.patch"))
              (sha256
               (base32
-               "01nqvp3cvidlz9z5vm05vpq81r6x10jwwfcaz0gw9anz0l60f8hw"))))
+               "1zb5rjqs5z0y900hml0v4wsmv59cdhi50a8kcbjxdp79z7p2mwnk"))))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags
@@ -2656,6 +2656,11 @@ execution of any hook written in any language before every commit.")
                            ;; `which hg`' and fails because there is no hg on
                            ;; PATH from before (that's why we are building it!)?
                            "test-hghave.t"
+
+                           ;; This test is missing a debug line
+                           ;; mmapping $TESTTMP/a/.hg/store/00changelog.i (no-pure !)
+                           ;; but the relevant output is correct.
+                           "test-revlog-mmapindex.t"
 
                            ;; This test creates a shebang spanning multiple
                            ;; lines which is difficult to substitute.  It

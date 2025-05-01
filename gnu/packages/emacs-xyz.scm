@@ -157,6 +157,7 @@
 ;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;; Copyright © 2025 Lee Thompson <lee.p.thomp@gmail.com>
 ;;; Copyright @ 2025 Amy Pillow <amypillow@lavache.com>
+;;; Copyright © 2025 Kurome <hunt31999@gmail.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -11578,6 +11579,25 @@ from the standard @code{query-replace} tool.  The provided commands prompt for
 substitute text and perform the substitution outright.")
     (license license:gpl3+)))
 
+(define-public emacs-sudoku
+  (package
+    (name "emacs-sudoku")
+    (version "20191015.1315")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/zevlg/sudoku.el.git")
+             (commit "b1924fd244a5fa284de9d67b66fbd69164b37318")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19i3rrz4qnc9i845j0bbmps69372rry7gadcyj06gvq2hf9dy3nh"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/zevlg/sudoku.el")
+    (synopsis "Simple sudoku game in Emacs")
+    (description "This package provides a simple sudoku game in Emacs.")
+    (license license:gpl3+)))
+
 (define-public emacs-typo
   (package
     (name "emacs-typo")
@@ -12338,6 +12358,31 @@ generates it as a string.  Please see the homepage for usage examples.")
     (description
      "This package provides completion in Python buffers and also helps find
 the locations of docstrings, arguments, and functions.")
+    (license license:gpl3+)))
+
+(define-public emacs-jira
+  (package
+    (name "emacs-jira")
+    (version "0.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/unmonoqueteclea/jira.el")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zg7qx05i92xpsa43y9gsxbn08gmzng88dvkva7y70zvrzx58zz2"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f)) ; no tests
+    (propagated-inputs (list emacs-magit
+                             emacs-request
+                             emacs-tablist
+                             emacs-transient))
+    (home-page "https://github.com/unmonoqueteclea/jira.el")
+    (synopsis "Emacs Interface to Jira")
+    (description "This package allows you to visualuze and manipulate Jira
+issues from Emacs.")
     (license license:gpl3+)))
 
 (define-public emacs-company-jedi
@@ -24356,7 +24401,10 @@ Slack client.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0664dihdfvrbxqxy00fw0skdg454njm673ip54qrgkh38vyv5432"))))
+        (base32 "0664dihdfvrbxqxy00fw0skdg454njm673ip54qrgkh38vyv5432"))
+       (patches
+        (search-patches "emacs-bash-completion-preserve-ps1.patch"
+                        "emacs-bash-completion-preserve-exit-code.patch"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -25895,6 +25943,32 @@ literate-programming upside-down in that the default mode is the
 programming-mode, and special action has to be taken to switch to the
 text-mode (i.e. Org-mode).")
       (license license:gpl3+))))
+
+(define-public emacs-outli
+  (package
+    (name "emacs-outli")
+    (version "0.2.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/jdtsmith/outli")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "01q37gbfc0mal3ha2x5a1axdcd2c0d55imav4w0cfzs3sm48azvs"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ; no tests
+    (home-page "https://github.com/jdtsmith/outli")
+    (synopsis "Simple and stylish comment-based outliner for Emacs")
+    (description "This package provides @code{outli-mode}, a minimal and elegant
+outliner for Emacs that enhances @code{outline-minor-mode} with configurable
+heading syntax, styled headings, and org-mode-inspired navigation and structure
+editing.  It supports comment-based headers with customizable stems and repeat
+characters, styled overlines and backgrounds, tab-based visibility toggling,
+org-style speed keys for headline manipulation, and imenu integration for fast
+navigation.")
+    (license license:gpl3+)))
 
 (define-public emacs-outshine
   (let ((commit "bf1eed10dd7a89b63d0fc014944033db397c1e23")
@@ -29362,6 +29436,26 @@ tries to commit changes to a file after every save.
 
 When @code{gac-automatically-push-p} is non-nil, it also tries to push to the
 current upstream.")
+    (license license:gpl3+)))
+
+(define-public emacs-smooth-scroll
+  (package
+    (name "emacs-smooth-scroll")
+    (version "1.3")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/k-talo/smooth-scroll.el")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0d2qzpgh486cp0aa12ky1np1i49d0gskvldfw627v55qsm6ql9ll"))))
+    (build-system emacs-build-system)
+    (home-page "https://github.com/k-talo/smooth-scroll.el")
+    (synopsis "Minor mode for smooth and in-place scrolling in Emacs")
+    (description "This package provides the @code{smooth-scroll-mode} minor mode
+ for Emacs, enabling smooth and in-place scrolling functionality.")
     (license license:gpl3+)))
 
 (define-public emacs-scroll-on-drag

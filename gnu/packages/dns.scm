@@ -22,7 +22,7 @@
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2023 Hilton Chain <hako@ultrarare.space>
 ;;; Copyright © 2024 John Kehayias <john.kehayias@protonmail.com>
-;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -636,14 +636,14 @@ BIND and djbdns---whilst using relatively little memory.")
 (define-public unbound
   (package
     (name "unbound")
-    (version "1.22.0")
+    (version "1.23.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.unbound.net/downloads/unbound-"
                            version ".tar.gz"))
        (sha256
-        (base32 "0hrx3d5qvn2wq55a6aamyr22viajs66iajdpxln5ns6mypg1ppf5"))))
+        (base32 "1f1vl0sygkx6rv1mz6zw6mdmymp5dnjkgqkyysrxf5jkhzrxb6wm"))))
     (build-system gnu-build-system)
     (outputs '("out" "python"))
     (native-inputs
@@ -845,7 +845,7 @@ Extensions} (DNSSEC).")
 (define-public knot
   (package
     (name "knot")
-    (version "3.4.2")
+    (version "3.4.6")
     (source
      (origin
        (method git-fetch)
@@ -854,7 +854,7 @@ Extensions} (DNSSEC).")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gvkwxy8jq017vmnd14wvnm5b6ql7ahrjp71gkbplz560h3kknpw"))
+        (base32 "0chdlzasng3q3ss4yfppf8fbkkiqllqz4p6s8a6jgwhcbiylmmdi"))
        (patches
         (search-patches "knot-remove-runtime-deps.patch"))
        (modules '((guix build utils)))

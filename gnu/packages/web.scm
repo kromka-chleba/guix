@@ -381,7 +381,7 @@ one.")
 (define-public miniflux
   (package
     (name "miniflux")
-    (version "2.2.5")
+    (version "2.2.8")
     (source
      (origin
        (method git-fetch)
@@ -390,7 +390,7 @@ one.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0yx0q47ah7ikri6s9zy9d55gaidmpzd1v5rlkvcyjzwxn6wa88cg"))))
+        (base32 "0ynhx8bzbgq6qznsxga34wmh8lpd8xhnff7hy51xsnk52maqf3h1"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -3632,14 +3632,14 @@ which can be used to parse directory listings.")
 (define-public perl-finance-quote
   (package
    (name "perl-finance-quote")
-   (version "1.64")
+   (version "1.65")
    (source
     (origin
       (method url-fetch)
       (uri (string-append "https://cpan.metacpan.org/authors/id/B/BP/BPSCHUCK/"
                           "Finance-Quote-" version ".tar.gz"))
       (sha256
-       (base32 "06swiq3c8cdv73nq53wshdvcxzwf2cbiay12dvjjr4as86a7r005"))))
+       (base32 "0603zricynb6n9kq7agsb03v4idlqy0rdc1nq2knzbf9l9jljyhb"))))
    (build-system perl-build-system)
    (native-inputs
      (list perl-test-harness

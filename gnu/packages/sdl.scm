@@ -151,7 +151,7 @@ hardware.")
   (package
     (inherit sdl2)
     (name "sdl3")
-    (version "3.2.8")
+    (version "3.2.10")
     (source
      (origin
        (method url-fetch)
@@ -160,7 +160,7 @@ hardware.")
                            version "/SDL3-" version ".tar.gz"))
        (sha256
         (base32
-         "00yv0273fvljp916kjvcmr60bl97pd95xdpjrn77dpk1nfmqyf0k"))))
+         "1q0ksmg1h0xfjpgbshslxc5a2b2flcm7n5lwiq4v8vf6vssffyzq"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -188,6 +188,7 @@ hardware.")
            libxcursor                   ;enables X11 cursor support
            libxkbcommon
            libxrandr
+           mesa                         ;required by wayland
            pipewire
            pulseaudio
            wayland))
@@ -199,6 +200,46 @@ hardware.")
            libdecor
            vulkan-loader
            wayland-protocols))))
+
+(define-public sdl2-compat
+  (package
+    (name "sdl2-compat")
+    (version "2.32.54")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/libsdl-org/sdl2-compat")
+                    (commit (string-append "release-" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0ijpx62b9syypxxnwvggz4l5fmrgln95ka180am9g2hgyqkqlj5n"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'qualify-libsdl3
+                 (lambda _
+                   (substitute* "src/sdl2_compat.c"
+                     (("libSDL3[.]so[.]0")
+                      (string-append #$(this-package-input "sdl3")
+                                     "/lib/libSDL3.so.0")))))
+               (add-after 'install 'install-sdl2.pc
+                 (lambda _
+                   (let ((pcdir (string-append #$output
+                                               "/lib/pkgconfig")))
+                     (symlink (string-append pcdir "/sdl2-compat.pc")
+                              (string-append pcdir "/sdl2.pc"))))))))
+    (inputs (list sdl3))
+    (propagated-inputs (list libx11))   ;required by SDL_syswm.h
+    (synopsis "Compatibility layer for the SDL2 game development library")
+    (description "Simple DirectMedia Layer is a cross-platform development library
+designed to provide low level access to audio, keyboard, mouse, joystick, and
+graphics hardware.  This package is a compatibility layer; it provides a binary and
+source compatible API for programs written against SDL2, but it uses SDL3 behind the
+scenes.")
+    (home-page "https://libsdl.org/")
+    (license license:zlib)))
 
 (define-public sdl12-compat
   (package

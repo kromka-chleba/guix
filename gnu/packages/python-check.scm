@@ -28,6 +28,7 @@
 ;;; Copyright © 2024 Markku Korkeala <markku.korkeala@iki.fi>
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
 ;;; Copyright © 2025 Florent Pruvost <florent.pruvost@inria.fr>
+;;; Copyright © 2025 Matthew Elwin <elwin@northwestern.edu>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -649,6 +650,87 @@ valid Python syntax that are likely to be commented out code.")
 the initial expected value of a test can be automatically set by running the
 test itself.")
       (license license:expat))))
+
+(define-public python-flake8-builtins
+  (package
+    (name "python-flake8-builtins")
+    (version "2.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "flake8_builtins" version))
+       (sha256
+        (base32 "19psav7pnqy3m5g4z1zah4ksbnk9bzx1jbbibs631xg44gc3vamx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags #~(list "run_tests.py")))
+    (native-inputs
+     (list python-hatchling
+           python-pytest))
+    (propagated-inputs
+     (list python-flake8))
+    (home-page "https://github.com/gforcada/flake8-builtins")
+    (synopsis "Check for python builtins being used as variables or parameters")
+    (description
+     "This package implements a functionality to check for python builtins
+being used as variables or parameters.")
+    (license license:gpl2)))
+
+(define-public python-flake8-comprehensions
+  (package
+    (name "python-flake8-comprehensions")
+    (version "3.16.0")
+    (source
+     (origin
+       (method git-fetch) ;; no tests in the PyPI tarball
+       (uri (git-reference
+             (url "https://github.com/adamchainz/flake8-comprehensions")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0w49k9hv77s5kq60j8j3pbvq7d79rfldqmghlqvn1xxkdkra1v7q"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-pytest-flake8-path
+           python-pytest-randomly
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-flake8))
+    (home-page "https://github.com/adamchainz/flake8-comprehensions")
+    (synopsis "List, set and dict comprehensions")
+    (description
+     "This package provides a flake8 plugin to help you write better
+list/set/dict comprehensions.")
+    (license license:expat)))
+
+(define-public python-flake8-deprecated
+  (package
+    (name "python-flake8-deprecated")
+    (version "2.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "flake8_deprecated" version))
+       (sha256
+        (base32 "18iazzh2l42fcjmkqdwncsl1h2s6sbi26vz4m0gmd80w3l0cm5pf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "run_tests.py")))
+    (native-inputs
+     (list python-hatchling
+           python-pytest))
+    (propagated-inputs
+     (list python-flake8))
+    (home-page "https://github.com/gforcada/flake8-deprecated")
+    (synopsis "Warns about deprecated method calls in Python")
+    (description
+     "This flake8 plugin helps you keep up with method deprecations by
+providing hints about what deprecated methods should be replaced with.")
+    (license license:gpl2)))
 
 (define-public python-gcovr
   (package
@@ -2093,6 +2175,32 @@ testing framework.")
      "This package provides a pytest plugin for efficiently checking PEP8
 compliance.")
     (license license:bsd-3)))
+
+(define-public python-pytest-flake8-path
+  (package
+    (name "python-pytest-flake8-path")
+    (version "1.6.0")
+    (source
+     (origin
+       (method git-fetch)               ;no tests in PyPI archive
+       (uri (git-reference
+             (url "https://github.com/adamchainz/pytest-flake8-path")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1k1lv34jmfirdwa2dpiim8803b6krqy3m7k2knc39fgmzbd6yc8z"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-flake8
+           python-pytest))
+    (home-page "https://github.com/adamchainz/pytest-flake8-path")
+    (synopsis "Pytest fixture for testing flake8 plugins")
+    (description
+     "This package provides a pytest fixture for testing flake8 plugins.")
+    (license license:expat)))
 
 (define-public python-pytest-flakefinder
   (package

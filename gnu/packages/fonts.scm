@@ -65,6 +65,7 @@
 ;;; Copyright © 2024 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2023 Santiago Payà Miralta <santiagopim@gmail.com>
 ;;; Copyright © 2025 Kurome <hunt31999@gmail.com>
+;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -901,6 +902,68 @@ system requirements or limitations.  As the name suggests, Pan-CJK fonts are
 intended to support the characters necessary to render or display text in
 Simplified Chinese, Traditional Chinese (Taiwan, Hong Kong), Japanese, and
 Korean.")
+    (license license:silofl1.1)))
+
+(define-public font-adobe-source-han-mono
+  (package
+    (name "font-adobe-source-han-mono")
+    (version "1.002")
+    (source
+     (origin
+       ;; SuperOTC (all variations in one file) is not in the repository.
+       (method url-fetch)
+       (uri (string-append
+             "https://github.com/adobe-fonts/source-han-mono/releases/download/"
+             version "/SourceHanMono.ttc"))
+       (sha256
+        (base32 "1haqffkcgz0cc24y8rc9bg36v8x9hdl8fdl3xc8qz14hvr42868c"))))
+    (build-system font-build-system)
+    (home-page
+     "https://ccjktype.fonts.adobe.com/2019/05/source-han-mono-v1001.html")
+    (synopsis "Pan-CJK monospaced font family based on Source Han Sans and
+Source Code Pro")
+    (description
+     "This package provides Source Han Mono, a Pan-CJK monospaced
+font family derived from Source Han Sans and Source Code Pro.  Distributed as an
+OpenType/CFF Collection (OTC), it includes 70 font instances covering seven
+weights, five languages, and two styles.")
+    (license license:silofl1.1)))
+
+(define-public font-adobe-source-han-code-jp
+  (package
+    (name "font-adobe-source-han-code-jp")
+    (version "2.012")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/adobe-fonts/source-han-code-jp")
+             (commit (string-append version "R"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "090q34h01ij77c7n9i6sbyfkyzdg90cwfy83z0ixc4wsy3bvycwn"))))
+    (build-system font-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Install Only OTC (OpenType Collection), which contains all variations
+          ;; within a single file.
+          (add-before 'install 'chdir
+            (lambda _
+              (chdir "OTC")))
+          (add-after 'install 'chdir-back
+            (lambda _
+              (chdir ".."))))))
+    (home-page
+     "https://ccjktype.fonts.adobe.com/2015/06/source-han-code-jp.html")
+    (synopsis "Monospaced font for mixed Latin and Japanese text")
+    (description "This package provides Source Han Code JP, a derivative of
+Source Han Sans that replaces its proportional Latin glyphs with fixed-width
+667-unit glyphs from Source Code Pro.  The Latin glyphs are scaled to match the
+Japanese kana and kanji, making the font suitable for use in programming,
+terminal applications, and user interfaces that involve both Latin and Japanese
+text.")
     (license license:silofl1.1)))
 
 (define-public font-cns11643
@@ -2476,7 +2539,7 @@ programming.  Iosevka is completely generated from its source code.")
 (define-public font-aporetic
   (package
     (name "font-aporetic")
-    (version "1.1.0")
+    (version "1.2.0")
     (source
      (origin
        (method git-fetch)
@@ -2485,7 +2548,7 @@ programming.  Iosevka is completely generated from its source code.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0cihagy7vhw5pqznbihwv3pgb516i94iqfnvfm73njrx1a4dalz6"))))
+        (base32 "1bb7js8lxa4f5kcjjvn587m4hd92qkydr5dbcjmimq2r8mimn75j"))))
     (build-system font-build-system)
     (home-page "https://github.com/protesilaos/aporetic")
     (synopsis "Customised build of the Iosevka typeface")
@@ -3551,6 +3614,146 @@ languages, it contains Japanese characters, including Kana glyphs and more
 than 5,300 Kanji glyphs, as well major international phonetic symbols,
 operators and special symbols.")
     (license (license:non-copyleft "file:///LICENSE_E"))))
+
+(define-public font-takao
+  (package
+    (name "font-takao")
+    (version "00303.01")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://launchpad.net/takao-fonts/trunk/15.03/+download/TakaoFonts_"
+             version
+             ".tar.xz"))
+       (sha256
+        (base32 "0bsmqczi6inwmygy4cq7h1abzghzl1yfxfxffzib7b39mir1z1z9"))))
+    (build-system font-build-system)
+    (home-page "https://launchpad.net/takao-fonts")
+    (synopsis "Community-maintained derivatives of IPA Fonts")
+    (description
+     "This package provides the Takao Fonts, which are community-developed
+derivatives of the IPA Fonts.  The project aims to ensure the continued
+maintenance of high-quality Japanese outline fonts by the community.  Based on
+the original fonts developed by the Information-technology Promotion Agency,
+Japan (IPA).  These fonts are particularly suitable for use in community-driven
+operating systems and embedded software where timely updates and quality
+assurance are essential.")
+    (license license:ipa)))
+
+(define-public font-koruri
+  ;; Source: https://github.com/Koruri/Scripts
+  (package
+    (name "font-koruri")
+    (version "20210720")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Koruri/Koruri")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yadd6rcyf940c441zr1m90srhz9xjsak281bvn6p6br7nsm9gyc"))))
+    (build-system font-build-system)
+    (home-page "https://koruri.github.io/")
+    (synopsis "Japanese TrueType font obtained by mixing M+ FONTS and Open Sans")
+    (description
+     "This package provides the Koruri font, a Japanese TrueType font composed
+of Open Sans and OSDN’s M+ 1p.  It is designed with an emphasis on readability
+in texts containing mixed alphanumeric characters and in user interfaces of
+computer software.")
+    (license license:asl2.0)))
+
+(define-public font-hachimarupop
+  (let ((commit "67d96c274032f5a2e1d33c1ec53498fde9110079")
+        (revision "0"))
+    (package
+      (name "font-hachimarupop")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (commit commit)
+               (url "https://github.com/noriokanisawa/HachiMaruPop")))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0xkd2nvcxh9xmfp1hjqknvy1v2z8ch7svjyzpg313lkj6p4shnbg"))))
+      (build-system font-build-system)
+      (home-page "https://github.com/noriokanisawa/HachiMaruPop")
+      (synopsis "Cute Japanese font")
+      (description
+       "This package provides a charming Japanese font that combines the
+circular letter style popular among young Japanese girls in the 1970s and 1980s
+with contemporary round-character aesthetics.  The font reflects the energetic
+trend of the era, when the circular script was so widespread that some schools
+banned its use.  This font pushes the roundness to its limit while capturing the
+spirit of both past and present styles.")
+      (license license:silofl1.1))))
+
+(define-public font-sazanami
+  (package
+    (name "font-sazanami")
+    (version "20040629")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://web.archive.org/web/20060619202616/"
+             "https://osdn.dl.sourceforge.jp/efont/10087/sazanami-"
+             version
+             ".tar.bz2"))
+       (sha256
+        (base32 "1dznxg5shdrn818j4wm6p98n6jik5xd3b5sdinzzp8x9f0pwwrrl"))))
+    (build-system font-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'install-license-files
+            (lambda _
+              (let ((doc-dir (string-append #$output "/share/doc/"
+                                            #$name "-" #$version)))
+                (mkdir-p doc-dir)
+                (invoke "iconv" "-f" "EUC-JP" "-t" "UTF-8" "README"
+                        "-o" (string-append doc-dir "/README"))))))))
+    (native-inputs (list glibc))
+    (home-page (string-append
+                "https://web.archive.org/web/20190601135410/"
+                "http://wiki.fdiary.net/font/?sazanami"))
+    (synopsis "Japanese TrueType fonts")
+    (description
+     "This package provides the Sazanami font, a Japanese font created by
+combining a font automatically generated by CLWFK, a derivative of the Wada
+Laboratory Font Kit, with an existing free bitmap font.")
+    (license (license:non-copyleft "file://README"))))
+
+(define-public font-kochi-substitute
+  (package
+    (name "font-kochi-substitute")
+    (version "20030809")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://web.archive.org/web/20050329001754/"
+             "http://osdn.dl.sourceforge.jp/efont/5411/kochi-substitute-"
+             version
+             ".tar.bz2"))
+       (sha256
+        (base32 "130l4g6nhg6bjdcjmk56c04l9wdk2cby1rad5izbycw8acj9pmpl"))))
+    (build-system font-build-system)
+    (home-page (string-append
+                "https://web.archive.org/web/20150421193819/"
+                "http://en.sourceforge.jp/projects/efont/"))
+    (synopsis "Japanese font, free replacement for MS Gothic and MS Mincho")
+    (description
+     "This package provides the Kochi Gothic and Kochi Mincho fonts, developed
+by Yasuyuki Furukawa as free alternatives to proprietary fonts such as MS Gothic
+and MS Mincho.")
+    (license (license:non-copyleft
+              "https://fedoraproject.org/wiki/Licensing:Wadalab"))))
 
 (define-public font-catamaran
   (let ((commit "7559b4906f9c9148fb22c6f89508c3053a78a296")

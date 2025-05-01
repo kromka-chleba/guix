@@ -1500,28 +1500,31 @@ plugins are provided.")
 (define-public calf
   (package
     (name "calf")
-    (version "0.90.3")
+    (version "0.90.6")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "https://calf-studio-gear.org/files/calf-"
-                                  version ".tar.gz"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/calf-studio-gear/calf")
+                    (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "17x4hylgq4dn9qycsdacfxy64f5cv57n2qgkvsdp524gnqzw4az3"))))
-    (build-system gnu-build-system)
+                "0p4zqzr7spy3jjsmy6h7n5lsyqqyh23bswk1r3kims50b102xhxd"))))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #false)) ;there is no test target
     (inputs
      (list fluidsynth
            expat
            glib
            gtk+-2
            cairo
-           jack-1
+           jack-2
            lv2
            ladspa
            fftw))
     (native-inputs
      (list pkg-config))
-    (home-page "http://calf.sourceforge.net/")
+    (home-page "https://calf-studio-gear.org/")
     (synopsis "Audio plug-in pack for LV2 and JACK environments")
     (description
      "Calf Studio Gear is an audio plug-in pack for LV2 and JACK environments.
@@ -3327,6 +3330,31 @@ player-like clients.")
     (inputs
      (list liblo))
     (home-page "http://das.nasophon.de/pyliblo/")
+    (synopsis "Python bindings for liblo")
+    (description
+     "Pyliblo is a Python wrapper for the liblo Open Sound Control (OSC)
+library.  It supports almost the complete functionality of liblo, allowing you
+to send and receive OSC messages using a nice and simple Python API.  Also
+included are the command line utilities @code{send_osc} and @code{dump_osc}.")
+    (license license:lgpl2.1+)))
+
+(define-public python-pyliblo3
+  (package
+    (name "python-pyliblo3")
+    (version "0.16.3")
+    (source (origin
+             (method git-fetch)
+             (uri (git-reference
+                   (url "https://github.com/gesellkammer/pyliblo3")
+                   (commit (string-append "v" version))))
+             (file-name (git-file-name name version))
+             (sha256
+              (base32
+               "1rr2m8jxa5yxyb3pw6h93kvdxg7x0m6sxxxvgn34vq8k8mg1kz21"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-cython python-setuptools python-wheel))
+    (inputs (list liblo))
+    (home-page "https://github.com/gesellkammer/pyliblo3")
     (synopsis "Python bindings for liblo")
     (description
      "Pyliblo is a Python wrapper for the liblo Open Sound Control (OSC)
@@ -6897,6 +6925,68 @@ framework.  It provides a visual interface to audio and video connections
 managed by PipeWire.")
     (home-page "https://gitlab.freedesktop.org/rncbc/qpwgraph")
     (license license:gpl2)))
+
+(define-public raysession
+  (package
+    (name "raysession")
+    (version "0.14.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Houston4444/RaySession")
+             (commit (string-append "v" version))
+             (recursive? #true)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1m44n6p192i5cvbj98jkmp4ywmm2bjzdbbipaa9xgg07x0jz1mcr"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #false                   ;no test target
+      #:make-flags #~(list (string-append "PREFIX=" #$output))
+      #:modules '((guix build gnu-build-system) (guix build qt-utils)
+                  (guix build utils))
+      #:imported-modules (cons '(guix build qt-utils)
+                               %default-gnu-imported-modules)
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'patch-build-system
+            (lambda _
+              (substitute* "Makefile"
+                (("\\$\\(DESTDIR\\)/etc/xdg")
+                 "$(PREFIX)/etc/xdg"))))
+          (add-after 'install 'wrap-scripts
+            (lambda* (#:key inputs #:allow-other-keys)
+              (with-directory-excursion (string-append #$output "/share/raysession/src/bin")
+                (for-each (lambda (script)
+                            (wrap-script script
+                              #:guile (search-input-file inputs "bin/guile")
+                              `("PYTHONPATH" ":" prefix
+                                (,(string-append #$output "/share/raysession/src/gui")
+                                 ,(string-append #$output "/share/raysession/src/daemon")
+                                 ,(string-append #$output "/share/raysession/src/control")
+                                 ,(getenv "GUIX_PYTHONPATH")))))
+                          '("raysession"
+                            "ray_control"
+                            "ray-daemon"
+                            "ray-proxy")))))
+          (add-after 'wrap-scripts 'wrap-qt
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (wrap-all-qt-programs #:outputs outputs #:inputs inputs))))))
+    (native-inputs (list qtbase-5 qttools-5 which))
+    (inputs
+     (list guile-3.0 jack-2 pipewire python-pyliblo3 python-pyqt python-wrapper))
+    (home-page "https://github.com/Houston4444/RaySession")
+    (synopsis "Audio session manager")
+    (description "RaySession is a session manager for audio programs such as
+Ardour, Carla, QTractor, Guitarix, Patroneo, Jack Mixer, etc.  The principle
+is to load together audio programs, then be able to save or close all
+documents together.  Its main purpose is to manage NSM compatible programs,
+but it also helps for other programs.  It offers a patchbay for visualizing
+and editing connections.")
+    (license license:gpl2+)))
 
 (define-public streamripper
   (package

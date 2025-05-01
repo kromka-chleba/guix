@@ -72,7 +72,9 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages ruby)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages sphinx)
@@ -467,31 +469,40 @@ simulator trace files (@dfn{FST}).")
     (license (list license:gpl2+ license:expat license:tcl/tk))))
 
 (define-public python-migen
-  (package
-    (name "python-migen")
-    (version "0.9.2")
-    (source
-     (origin
-       ;; Tests fail in the PyPI tarball due to missing files.
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/m-labs/migen")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1kq11if64zj84gv4w1q7l16fp17xjxl2wv5hc9dibr1z3m1gy67l"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-colorama))
-    (home-page "https://m-labs.hk/gateware/migen/")
-    (synopsis "Python toolbox for building complex digital hardware")
-    (description
-     "Migen FHDL is a Python library that replaces the event-driven
-paradigm of Verilog and VHDL with the notions of combinatorial and
-synchronous statements, has arithmetic rules that make integers always
-behave like mathematical integers, and allows the design's logic to be
-constructed by a Python program.")
-    (license license:bsd-2)))
+  ;; XXX: The latest version tag (0.9.2) was placed in 2019, there are latest
+  ;; changes supporting Python 3.11 on master branch, see
+  ;; <https://github.com/m-labs/migen/issues/259>.
+  (let ((commit "2828df54594673653a641ab551caf6c6b1bfeee5")
+        (revision "0"))
+    (package
+      (name "python-migen")
+      (version (git-version "0.9.2" revision commit))
+      (source
+       (origin
+         ;; Tests fail in the PyPI tarball due to missing files.
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/m-labs/migen")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0my2jwrb64n39dfcipiw9s2cbg1r4s6zh4ybf4dwid9hk86fi6hs"))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-pytest
+             python-setuptools
+             python-wheel))
+      (propagated-inputs
+       (list python-colorama))
+      (home-page "https://m-labs.hk/gateware/migen/")
+      (synopsis "Python toolbox for building complex digital hardware")
+      (description
+       "Migen FHDL is a Python library that replaces the event-driven paradigm
+of Verilog and VHDL with the notions of combinatorial and synchronous
+statements, has arithmetic rules that make integers always behave like
+mathematical integers, and allows the design's logic to be constructed by a
+Python program.")
+      (license license:bsd-2))))
 
 (define-public python-myhdl
   (package
@@ -514,7 +525,7 @@ a hardware description and verification language.")
 (define-public python-vunit
   (package
     (name "python-vunit")
-    (version "4.7.0")
+    (version "5.0.0-dev.5") ;v4.7.0 dates back from 2 years ago.
     (source
      (origin
        (method git-fetch)
@@ -524,17 +535,32 @@ a hardware description and verification language.")
              (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0s7j5bykbv34wgnxy5cl4zp6g0caidvzs8pd9yxjq341543xkjwm"))))
-    (build-system python-build-system)
+        (base32 "1sfnl1l6bgaqa8c2sk8k8f232bnq2drjg6rg7jvscmyz18yfih0b"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:tests? #f))                ;XXX: requires setuptools_scm >= 2.0.0, <3
-    (propagated-inputs (list python python-colorama))
+     (list
+      #:test-flags
+      ;; Skip lint tests which require python-pycodestyle, python-pylint and
+      ;; python-mypy to reduce closoure size; some lint test fails, see
+      ;; <https://github.com/VUnit/vunit/issues/1111>.
+      ;;
+      ;; XXX: Acceptance tests take 10+ minutes to complete, hang on
+      ;; "test_external_run_scripts.py" and fail eventually, consider to
+      ;; improve them; ignore for now.
+      #~(list "tests/unit")))
+    (native-inputs
+     (list nvc
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-colorama))
     (home-page "https://vunit.github.io")
     (synopsis "Unit testing framework for VHDL/SystemVerilog")
     (description
      "VUnit features the functionality needed to realize continuous and
 automated testing of HDL code.")
-
     ;; According to 'LICENSE.rst', VUnit itself is under MPL but two
     ;; subdirectories are under ASL.
     (license (list license:mpl2.0 license:asl2.0))))
@@ -542,7 +568,7 @@ automated testing of HDL code.")
 (define-public nvc
   (package
     (name "nvc")
-    (version "1.15.2")
+    (version "1.16.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -551,12 +577,11 @@ automated testing of HDL code.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1r6ba5jw4ja0hv366686d8haakm57h3fl95w81hda8haq6g0dj0q"))))
+                "1hi1mqhjbj7r3wcdkjr6yazwpc7y9lqc0b8bj4ikfgdfsmakm3s4"))))
     (build-system gnu-build-system)
     (arguments
      (list #:out-of-source? #t
-           #:configure-flags #~(list "--enable-vhpi" "--enable-tcl" "--enable-gcov"
-                                     "--enable-llvm")
+           #:configure-flags #~(list "--enable-tcl" "--enable-llvm")
            #:phases #~(modify-phases %standard-phases
                         (add-after 'unpack 'clean-up
                           (lambda _
@@ -564,16 +589,17 @@ automated testing of HDL code.")
     (native-inputs
      (list automake
            autoconf
+           check ; for the tests
            flex
            gettext-minimal
            libtool
            pkg-config
-           which
-           check)) ; for the tests
+           python
+           ruby
+           which))
     (inputs
-     (list elfutils
+     (list libffi
            llvm
-           libffi
            readline
            tcl
            `(,zstd "lib")))

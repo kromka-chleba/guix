@@ -80,7 +80,7 @@
 ;;; Copyright © 2020 Josh Holland <josh@inv.alid.pw>
 ;;; Copyright © 2020 Yuval Kogman <nothingmuch@woobling.org>
 ;;; Copyright © 2020, 2022 Michael Rohleder <mike@rohleder.de>
-;;; Copyright © 2020, 2021, 2022, 2023, 2024 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020, 2021, 2022, 2023, 2024, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Guy Fleury Iteriteka <gfleury@disroot.org>
 ;;; Copyright © 2020 Hendursaga <hendursaga@yahoo.com>
 ;;; Copyright © 2020 Malte Frank Gerdes <malte.f.gerdes@gmail.com>
@@ -1181,8 +1181,14 @@ Jupytext are:
        (sha256
         (base32 "0jp4zkm0idfdsrq3jzb52iqfkh6xzm7sacz1sa34ffnkyqdk3xzh"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-portalocker))
-    (native-inputs (list python-hatchling python-pytest))
+    (arguments
+     (list
+      ;; XXX: Tests are broken, no new version fixing them yet.
+      #:tests? #f))
+    (native-inputs
+     (list python-hatchling))
+    (propagated-inputs
+     (list python-portalocker))
     (home-page "https://github.com/Preston-Landers/concurrent-log-handler")
     (synopsis
      "Additional log handler for Python's standard @code{logging} package")
@@ -2900,7 +2906,7 @@ configuration file.")
 (define-public python-pytooling
   (package
     (name "python-pytooling")
-    (version "8.2.0")
+    (version "8.4.1")
     (source
      (origin
        (method git-fetch)
@@ -2909,11 +2915,29 @@ configuration file.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1w4am69n07dhim6ddxm9k30hr5zjbxd84rgqp54mppp8fmh7iyq9"))))
+        (base32 "18psdd7033zknvw0hs93dryp39k9bjj5b9zza83wvyhjxvdwn05d"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f)) ; requires recent versions of mypy and lxml
-    (native-inputs (list python-setuptools python-wheel))
+     (list
+      ;; Tests do not support linux-i686 system: Exception: Unknown
+      ;; architecture 'linux-i686' for a native Linux.
+      #:tests? (not (or (%current-target-system)
+                             (target-x86-32?)))
+      #:test-flags
+      #~(list "tests/unit"
+              "-k" (string-join
+                    ;; Tests checking in /usr/bin and /usr/bin/git paths.
+                    (list "not test_BinaryDirectory"
+                          "test_ExecutablePath"
+                          "test_VersionFlag")
+                    " and not "))))
+    (native-inputs
+     (list git-minimal/pinned
+           python-colorama
+           python-pytest
+           python-ruamel.yaml
+           python-setuptools
+           python-wheel))
     (home-page "https://pytooling.github.io/pyTooling/")
     (synopsis "Miscellaneous Python tools")
     (description
@@ -3771,38 +3795,51 @@ compositions like @code{XOR} and @code{NAND} are emulated on top of them.
 Expressions are constructed from parsed strings or directly in Python.")
     (license license:bsd-2)))
 
-(define-public python-hdf4
+(define-public python-pyhdf
   (package
-   (name "python-hdf4")
-   (version "0.9.2")
-   (source
-    (origin
-      (method url-fetch)
-      (uri (pypi-uri name version))
-      (sha256
-       (base32
-        "00sxppysk3w620g1jdskjzkybvpf8dkpzjfj3wlw5khpzw1g0hq5"))))
-   (build-system pyproject-build-system)
-   (arguments
-    (list
-     #:phases
-     '(modify-phases %standard-phases
-        (add-before 'check 'build-extensions
-          (lambda _
-            ;; Extensions have to be built before running the tests.
-            (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-   (native-inputs (list python-pytest python-setuptools python-wheel))
-   (propagated-inputs (list python-numpy))
+    (name "python-pyhdf")
+    (version "0.11.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyhdf" version))
+       (sha256
+        (base32 "0nlcz7p3mcqa0s161iqnnfgwgx0np8rhz8p924g5hlcn1bfy6vcz"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "--pyargs" "pyhdf")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'check 'run-example-tests
+            (lambda _
+              (invoke "python" "examples/runall.py"))))))
+    (native-inputs
+     (list python-numpy
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
    (inputs
-    (list hdf4 libjpeg-turbo zlib))
-   (home-page "https://github.com/fhs/python-hdf4")
-   (synopsis "Python interface to the NCSA HDF4 library")
-   (description
-    "Python-HDF4 is a python wrapper around the NCSA HDF version 4 library,
+    (list hdf4
+          libjpeg-turbo
+          zlib))
+    (propagated-inputs
+     (list python-numpy))
+    (home-page "https://github.com/fhs/pyhdf")
+    (synopsis "Python interface to the NCSA HDF4 library")
+    (description
+     "PYHDF4 is a python wrapper around the NCSA HDF version 4 library,
 which implements the SD (Scientific Dataset), VS (Vdata) and V (Vgroup) API’s.
-NetCDF files can also be read and modified.  Python-HDF4 is a fork of
-@url{http://hdfeos.org/software/pyhdf.php,pyhdf}.")
-   (license license:expat)))
+NetCDF files can also be read and modified.  It is a successor of Python-HDF4
+which is a fork of @url{http://hdfeos.org/software/pyhdf.php,pyhdf}.")
+    (license license:expat)))
+
+;; Version 0.9.x was called python-hdf4 in PyPI because at that time upstream
+;; didn't have access to the pyhdf package in PyPI. For version 0.10.0 and
+;; onward, please install pyhdf instead of python-hdf4.
+(define-public python-hdf4
+  (deprecated-package "python-hdf4" python-pyhdf))
 
 (define-public python-h5netcdf
   (package
@@ -3850,7 +3887,7 @@ library.")
                       (setenv "HDF5_DIR"
                               (assoc-ref inputs "hdf5")))))))
     (propagated-inputs (list python-six python-numpy))
-    (inputs (list hdf5-1.10))
+    (inputs (list hdf5))
     (native-inputs (list pkg-config python-cython python-ipython
                          python-pkgconfig python-pytest))
     (home-page "https://www.h5py.org/")
@@ -3864,28 +3901,40 @@ concepts.")
     (license license:bsd-3)))
 
 (define-public python-hdf5storage
-  (package
-    (name "python-hdf5storage")
-    (version "0.1.19")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "hdf5storage" version))
-       (sha256
-        (base32 "11pgxsqap9l7jsf52649q9mpj8a0w6p9im929lpr9s26ynnnn6ks"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-h5py python-numpy))
-    (native-inputs (list python-nose python-setuptools python-wheel))
-    (home-page "https://github.com/frejanordsiek/hdf5storage")
-    (synopsis "Read and write Python data types from and to HDF5 files")
-    (description
-     "This Python package provides high-level utilities to read and write a
+  ;; Use the latest commit containing compatability with Pytest and Python
+  ;; 3.11, see <https://github.com/frejanordsiek/hdf5storage/issues/135>.
+  (let ((commit "7ee2a96de134b44beaa79c3a11c559f9ac87c5a6")
+        (revision "0"))
+    (package
+      (name "python-hdf5storage")
+      (version (git-version "0.1.19" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/frejanordsiek/hdf5storage")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0xq0rg8vwk35yc3jvv2fyf7bl189viq0fywch53g57hxrahv5k02"))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-pytest
+             python-setuptools
+             python-wheel))
+      (propagated-inputs
+       (list python-h5py
+             python-numpy))
+      (home-page "https://github.com/frejanordsiek/hdf5storage")
+      (synopsis "Read and write Python data types from and to HDF5 files")
+      (description
+       "This Python package provides high-level utilities to read and write a
 variety of Python types from and to @acronym{HDF5, Hierarchical Data Format}
 formatted files.  This package also provides support for MATLAB MAT v7.3
 formatted files, which are HDF5 files with a different extension and some
 extra metadata.  Because HDF5 and MAT files might need to be read from
 untrusted sources, pickling is avoided in this package.")
-    (license license:bsd-2)))
+      (license license:bsd-2))))
 
 (define-public python-hjson
   ;; Using commit from master branch as the PyPI version does not contain
@@ -7354,34 +7403,41 @@ modules.  It creates a special virtual environment such that @command{pip} or
 work on your part.")
     (license license:expat)))
 
+;; XXX: No new release since 2021, no updates on default branch since 2023, no
+;; users in Guix; consider to remove if it keeps failing to build.
 (define-public python-virtualenv-clone
   (package
     (name "python-virtualenv-clone")
     (version "0.5.7")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/edwardgeorge/virtualenv-clone")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0p0d1y3axvjfnxlgwjx2374gikc8bmc82g0m7yashihbikh7pcxa"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/edwardgeorge/virtualenv-clone")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0p0d1y3axvjfnxlgwjx2374gikc8bmc82g0m7yashihbikh7pcxa"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (replace 'check
-                          (lambda* (#:key tests? #:allow-other-keys)
-                            (when tests?
-                              (delete-file "tox.ini")
-                              (invoke "pytest" "-vvv" "tests")))))))
-    (native-inputs (list python-pytest
-                         python-tox
-                         python-virtualenv
-                         python-coverage
-                         python-wheel
-                         python-tomli
-                         python-hypothesis))
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; UnicodeDecodeError: 'utf-8' codec can't decode byte
+                    ;; 0xba in position 10: invalid start byte
+                    (list "not test_clone_contents"
+                          ;;  AssertionError: All versions were skipped.
+                          "test_clone_syspath"
+                          "test_clone_version"
+                          "test_virtualenv_syspath"
+                          "test_virtualenv_versions")
+                    " and not "))))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-tomli
+           python-virtualenv
+           python-wheel))
     (home-page "https://github.com/edwardgeorge/virtualenv-clone")
     (synopsis "Clone a non-relocatable virtualenv cleanly")
     (description
@@ -9935,7 +9991,7 @@ capabilities.")
   (package
     (inherit python-numpy)
     (name "python-numpy")
-    (version "2.2.2")
+    (version "2.2.5")
     (source
      (origin
        (method url-fetch)
@@ -9943,22 +9999,26 @@ capabilities.")
              "https://github.com/numpy/numpy/releases/download/v"
              version "/numpy-" version ".tar.gz"))
        (sha256
-        (base32
-         "13sdvwiqn85vw1dn1k1nd5ihadv82zhqm615imrqgmil33v0csgd"))))
+        (base32 "14f28cpmw3z8sk4lp5pylrk58220fclqnbkprfqr3n8cd2adkh59"))))
     (arguments
      (list
-      ;; TODO: Tests fail on setup, there is some issue with vendored-meson.
-      #:tests? #f 
       #:modules '((guix build utils)
                   (guix build pyproject-build-system)
                   (ice-9 format))
+      #:test-flags
+      #~(list "-m" "not slow"
+              "--numprocesses" (number->string (min 8 (parallel-job-count))))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-executable-paths
             (lambda _
               (substitute* "numpy/distutils/exec_command.py"
                 (("'/bin/sh'")
-                 (format #f "~s" (which "bash"))))))
+                 (format #f "~s" (which "bash"))))
+              (substitute* "numpy/meson.build"
+                ;; Relay on python from the PATH instead of full reference
+                ;; stored in built wheel.
+                (("'py.full_path\\(\\)'") "'python'"))))
           (add-before 'build 'parallelize-build
             (lambda _
               (setenv "OMP_NUM_THREAD"
@@ -9985,7 +10045,12 @@ capabilities.")
                           "[openblas]
 libraries = openblas
 library_dirs = ~a/lib
-include_dirs = ~:*~a/include~%" #$(this-package-input "openblas")))))))))
+include_dirs = ~:*~a/include~%" #$(this-package-input "openblas"))))))
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion #$output
+                  (apply invoke "pytest" test-flags))))))))
     (native-inputs
      (list gfortran
            meson-python
@@ -12427,6 +12492,50 @@ files.  It implements generator functions for reading and writing data to and
 from FFMPEG, reliably terminating the process when done.")
    (license license:bsd-2)))
 
+(define-public python-imageio-freeimage
+  (package
+    (name "python-imageio-freeimage")
+    (version "0.1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "imageio_freeimage" version))
+       (sha256
+        (base32 "1la0iv3617m52dnidhhrdaz9dpnlfqs7b83550d3jkjavv30md72"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f ; tests need internet and are not distributed in PyPI
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; imageio_freeimage expects a copy of the library in its source
+          ;; tree.  Changing this would require hacky substitutions.
+          (add-after 'install 'freeimage-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let* ((pylib (string-append #$output "/lib/python"
+                                           #$(version-major+minor
+                                              (package-version python))
+                                           "/site-packages"))
+                     (iofi (string-append pylib "/imageio_freeimage")))
+                (mkdir-p (string-append iofi "/_lib"))
+                (symlink (search-input-file inputs "lib/libfreeimage.so")
+                         (string-append iofi "/_lib/libfreeimage.so"))))))))
+    (native-inputs (list python-poetry-core python-requests python-setuptools
+                         python-wheel))
+    (inputs (list freeimage))
+    (propagated-inputs (list python-imageio))
+    (home-page "https://github.com/imageio/imageio-freeimage")
+    (synopsis "Plugin for ImageIO that wraps the FreeImage library")
+    (description
+     "This package provides a plugin for @code{ImageIO} that wraps the
+@code{FreeImage} library.")
+    ;; As a derivative work of FreeImage, imageio_freeimage is licensed under
+    ;; GPLv2 or GPLv3, and the FreeImage Public License (FIPL).
+    ;; For more information, see the LICENSE file.
+    (license
+     (list license:gpl2 license:gpl3
+           (license:non-copyleft "https://spdx.org/licenses/FreeImage.html")))))
+
 (define-public python-imageio
   (package
     (name "python-imageio")
@@ -12441,28 +12550,18 @@ from FFMPEG, reliably terminating the process when done.")
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags #~(list "-m" "not needs_internet")
+      #:test-flags #~(list "-m" "not needs_internet"
+                           ;; This attempts to load libGL.so (provided by mesa)
+                           ;; at the Python store path (sys.base_prefix?).
+                           "-k" "not test_findlib2"
+                           "--ignore" "tests/test_freeimage.py")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-source
             (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* "imageio/plugins/_freeimage.py"
-                (("os\\.getenv\\(\"IMAGEIO_FREEIMAGE_LIB\".*\\)" all)
-                 (string-append
-                  "(" all " or \""
-                  (search-input-file inputs "lib/libfreeimage.so")
-                  "\")")))
               (substitute* "imageio/core/util.py"
                 (("\"/var/tmp\"")
-                 "os.getenv(\"TMPDIR\", \"/tmp\")"))))
-          (add-after 'unpack 'fix-failing-tests
-            (lambda _
-              (substitute* "tests/test_core.py"
-                (("(core\\.load_lib)\\((\\[gllib\\], \\[\\])\\)"
-                  all fun args)
-                 (string-append "raises(ValueError, " fun ", " args ")")))
-              (delete-file "tests/test_freeimage.py"))))))
-    (inputs (list freeimage))
+                 "os.getenv(\"TMPDIR\", \"/tmp\")")))))))
     (propagated-inputs
      (list python-imageio-ffmpeg python-numpy python-pillow python-tifffile))
     (native-inputs
@@ -14233,18 +14332,26 @@ installing @code{kernelspec}s for use with Jupyter frontends.")
 (define-public python-pari-jupyter
   (package
     (name "python-pari-jupyter")
-    (version "1.4.1")
+    (version "1.4.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pari-jupyter" version))
        (sha256
-        (base32
-         "1ikqvv335qfrhmlji0iclci6pnm2c3fvnxf031jr1d68j79g6ypd"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))          ;no test suite
+        (base32 "178v8y3sj3lh3y8i7krbmjqvmv7549bg535fqq1q6axr0lfjknbw"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; there are no proper tests
+    (native-inputs
+     (list python-cython
+           python-jupyter-kernel-test
+           python-setuptools
+           python-wheel))
     (inputs
-     (list pari-gp readline python-ipykernel))
+     (list pari-gp
+           readline))
+    (propagated-inputs
+     (list python-ipykernel))
     (home-page "https://github.com/sagemath/pari-jupyter")
     (synopsis "Jupyter kernel for PARI/GP")
     (description "The package provides a PARI/GP kernel for Jupyter.")
@@ -14839,19 +14946,33 @@ parsing (browser/HTTP) user agent strings.")
     (name "python-pydbus")
     (version "0.6.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "pydbus" version))
-        (sha256
-          (base32 "0b0gipvz7vcfa9ddmwq2jrx16d4apb0hdnl5q4i3h8jlzwp1c1s2"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-pygobject))
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pydbus" version))
+       (sha256
+        (base32 "0b0gipvz7vcfa9ddmwq2jrx16d4apb0hdnl5q4i3h8jlzwp1c1s2"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f ; no tests in PyPI, git tests require running DBus
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'fix-comparability-with-pygobject
+                 (lambda _
+                   (substitute* "pydbus/_inspect3.py"
+                     (("getargspec")
+                      "getfullargspec")))))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-pygobject))
     (home-page "https://github.com/LEW21/pydbus")
     (synopsis "Pythonic D-Bus library")
-    (description "Pydbus provides a pythonic interface to the D-Bus
-message bus system.  Pydbus can be used to access remote objects and
-also for object publication.  It is based on PyGI, the Python GObject
-Introspection bindings, which is the recommended way to use GLib from Python.")
+    (description
+     "Pydbus provides a pythonic interface to the D-Bus message bus system.
+Pydbus can be used to access remote objects and also for object publication.
+It is based on PyGI, the Python GObject Introspection bindings, which is the
+recommended way to use GLib from Python.")
     (license license:lgpl2.1+)))
 
 (define-public python-dbus
@@ -19561,39 +19682,6 @@ Jupyter kernels such as IJulia and IRKernel.")
      (modify-inputs (package-propagated-inputs python-jupyter-console)
        (delete "python-ipython")))))
 
-(define-public python-qtconsole
-  (package
-    (name "python-qtconsole")
-    (version "5.3.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "qtconsole" version))
-       (sha256
-        (base32 "09anp8g7vqi8z8wyi2lv21a2frd2dyhyrzvcrk2anijyqzyj0dcf"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'pre-check
-           (lambda _
-             (setenv "QT_QPA_PLATFORM" "offscreen")
-             (setenv "HOME" "/tmp")
-             ;; FIXME: skip a failing test.
-             (substitute* "qtconsole/tests/test_jupyter_widget.py"
-               (("def test_other_output") "def _test_other_output")))))))
-    (propagated-inputs
-     (list python-ipykernel python-ipython-genutils python-jupyter-client
-           python-jupyter-core python-pygments python-pyqt
-           python-pyzmq python-qtpy python-traitlets))
-    (native-inputs
-     (list python-flaky python-pytest python-pytest-qt))
-    (home-page "https://jupyter.org")
-    (synopsis "Jupyter Qt console")
-    (description "This package provides a Qt-based console for Jupyter with
-support for rich media output.")
-    (license license:bsd-3)))
-
 (define-public python-jsbeautifier
   (package
     (name "python-jsbeautifier")
@@ -19928,7 +20016,7 @@ config files.")
 (define-public python-omegaconf
   (package
     (name "python-omegaconf")
-    (version "2.2.3")
+    (version "2.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -19944,7 +20032,7 @@ config files.")
                              (("str\\(build_dir / \"bin\" / \"antlr.*\"\\),") ""))))
               (sha256
                (base32
-                "00rw1rkjycn0jdg3jmar6jdxb1pcb21jclm5g1921s9z8f5ii5dh"))))
+                "0cpkkzda919f24y9s04mi15v9zksvln95ics8cr31rcpi2wbh5j3"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases
@@ -19957,11 +20045,17 @@ config files.")
                    ;; Ignore deprecation warnings.
                    (substitute* "pyproject.toml"
                      (("-Werror") "")))))))
-    (propagated-inputs (list java-antlr4-runtime-python
-                             python-pydevd
-                             python-pyyaml))
-    (native-inputs (list icedtea antlr4 python-pytest python-pytest-mock
-                         python-setuptools python-wheel))
+    (native-inputs
+     (list icedtea
+           antlr4
+           python-pytest
+           python-pytest-mock
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list java-antlr4-runtime-python
+           python-pydevd
+           python-pyyaml))
     (home-page "https://github.com/omry/omegaconf")
     (synopsis "Flexible configuration system")
     (description "OmegaConf is a hierarchical configuration system and
@@ -21678,42 +21772,6 @@ ISO 8859, etc.).")
     (description "AnyQt is a PyQt4/PyQt5 compatibility layer.")
     (license license:gpl3)))
 
-(define-public python-pyqtgraph
-  (package
-    (name "python-pyqtgraph")
-    (version "0.13.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pyqtgraph" version))
-       (sha256
-        (base32 "1kiazyc8mqyx0479qdcvdclzq0g1hpp93dyq8444w1f72628s42q"))))
-    (build-system pyproject-build-system)
-    (arguments
-     ;; This test fails.  It suggests to disable assert rewriting in Pytest,
-     ;; but it still doesn't pass.
-     (list #:test-flags #~'("-k" "not test_reload")
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-before 'check 'set-qpa
-                 (lambda _
-                   (setenv "QT_QPA_PLATFORM" "offscreen"))))))
-    (native-inputs
-     (list python-pytest python-pytest-cov python-pytest-xdist
-           python-setuptools python-wheel))
-    (inputs
-     (list qtbase-5))
-    (propagated-inputs
-     (list python-h5py python-numpy python-pyopengl python-scipy
-           python-pyqt))
-    (home-page "https://www.pyqtgraph.org")
-    (synopsis "Scientific graphics and GUI library for Python")
-    (description
-     "PyQtGraph is a Pure-python graphics library for PyQt5, PyQt6, PySide2
-and PySide6.  It is intended for use in mathematics, scientific or engineering
-applications.")
-    (license license:expat)))
-
 (define-public python-qasync
   (package
     (name "python-qasync")
@@ -22803,7 +22861,8 @@ format.")
               (when tests?
                 (with-directory-excursion #$output
                   (setenv "HOME" (getcwd))
-                  (invoke "python3" "-m" "twisted.trial" "twisted"))))))))
+                  (invoke "python3" "-m" "twisted.trial" "twisted")
+                  (delete-file-recursively "_trial_temp"))))))))
     (propagated-inputs
      (list python-attrs
            python-automat
@@ -27730,92 +27789,6 @@ compatible with the standard @code{re} module, but offers additional
 functionality like full case-folding for case-insensitive matches in Unicode.")
      (license license:psfl)))
 
-(define-public python-pyopengl
-  (package
-    (name "python-pyopengl")
-    (version "3.1.6")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "PyOpenGL" version))
-       (sha256
-        (base32
-         "09syrsfrcknr1k2wmj05gfd5d0dyjfxzbipzbd0agv9775vwi9lf"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      #~(list "-k" (string-join
-                    ;; XXX: Check why these test fail.
-                    (list "not test_get_read_fb_binding"
-                          "test_get_version"
-                          "test_glCallLists_twice2"
-                          "test_lookupint"
-                          "test_pointers")
-                    " and not "))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'build 'fix-paths
-            (lambda _
-              (substitute* '("OpenGL/platform/ctypesloader.py")
-                (("filenames_to_try = \\[\\]") "filenames_to_try = [name]"))
-              (substitute* '("OpenGL/platform/glx.py"
-                             "OpenGL/platform/egl.py"
-                             "OpenGL/platform/osmesa.py"
-                             "OpenGL/platform/darwin.py"
-                             "tests/check_glut_load.py")
-                (("'GLU'")
-                 (format #f "'~a/~a'" #$(this-package-input "glu")
-                         "lib/libGLU.so"))
-                (("'glut',")
-                 (format #f "'~a/~a'," #$(this-package-input "freeglut")
-                         "lib/libglut.so"))
-                (("'(GL|EGL|GLESv1_CM|GLESv2|OSMesa)'" all gl-library)
-                 (format #f "'~a/~a'" #$(this-package-input "mesa")
-                         (string-append "lib/lib" gl-library ".so"))))
-              ;; Not providing libgle. It seems to be very old.
-              )))))
-    (native-inputs
-     (list python-pytest
-           python-setuptools
-           python-pygame
-           python-wheel))
-    (inputs
-     (list freeglut
-           glu
-           mesa))
-    (home-page "https://pyopengl.sourceforge.net")
-    (synopsis "Standard OpenGL bindings for Python")
-    (description
-     "PyOpenGL is the most common cross platform Python binding to OpenGL and
-related APIs.  The binding is created using the standard @code{ctypes}
-library.")
-    (license license:bsd-3)))
-
-(define-public python-pyopengl-accelerate
-  (package
-    (inherit python-pyopengl)
-    (name "python-pyopengl-accelerate")
-    (version "3.1.6")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "PyOpenGL-accelerate" version))
-       (sha256
-        (base32
-         "1hydrpdn4p4z6mlczcg1y4s0z8si3rs6zq8x4ql558pcaq1312md"))))
-    (inputs
-     (list mesa python-numpy)) ; for cython module
-                                        ; numpy_formathandler, thus not propagated
-    (arguments
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'fix-paths))))
-    (synopsis "Acceleration code for PyOpenGL")
-    (description
-     "This is the Cython-coded accelerator module for PyOpenGL.")))
-
 (define-public python-rencode
   (package
    (name "python-rencode")
@@ -28667,7 +28640,7 @@ files, and Makefiles.")
 (define-public python-whatever
   (package
     (name "python-whatever")
-    (version "0.6")
+    (version "0.7")
     (source
      (origin
        (method git-fetch)
@@ -28676,7 +28649,7 @@ files, and Makefiles.")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1q7ajgqjfivxqsqgnhp4lc4p6jxyh4zprcsdbpd6dw54inaf0av5"))))
+        (base32 "1x5b4r3fppp208v52hn8inf2988w4llbkw9kvfc3w81dhmrf5fvq"))))
     (build-system pyproject-build-system)
     (native-inputs
      (list python-pytest python-setuptools python-wheel))
@@ -28875,42 +28848,6 @@ files (also known as changelogs) for a project.")
 source bytes using the UTF-8 encoding and then rewrites Python 3.6 style
 @code{f} strings.")
     (license license:expat)))
-
-;; TODO: https://github.com/python/typed_ast/issues/179
-(define-public python-typed-ast
-  (package
-    (name "python-typed-ast")
-    (version "1.5.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/python/typed_ast")
-             (commit version)))
-       (sha256
-        (base32 "1xfcs5246c8v5600aaa8zs7ii4sxb62q6r3sb2fgazyjx97wrxd9"))
-       (file-name (git-file-name name version))))
-    (build-system python-build-system)
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "pytest" "-vv")))))))
-    (native-inputs (list python-pytest))
-    (home-page "https://github.com/python/typed_ast")
-    (synopsis "Fork of Python @code{ast} modules with type comment support")
-    (description "This package provides a parser similar to the standard
-@code{ast} library.  Unlike @code{ast}, the parsers in @code{typed_ast}
-include PEP 484 type comments and are independent of the version of Python
-under which they are run.  The @code{typed_ast} parsers produce the standard
-Python AST (plus type comments), and are both fast and correct, as they are
-based on the CPython 2.7 and 3.7 parsers.")
-    ;; See the file "LICENSE" for the details.
-    (license (list license:psfl
-                   license:asl2.0
-                   license:expat))))    ;ast27/Parser/spark.py
 
 (define-public python-typer
   (package
@@ -35205,26 +35142,25 @@ module patches @code{asyncio} to allow nested use of @code{asyncio.run} and
     (name "python-simpervisor")
     (version "1.0.0")
     (source
-      (origin
-        ;; Tests not included in release.
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/yuvipanda/simpervisor")
-               (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "0drvqxbr6fpydb4d7z5dhn97d578gf39sd8cawyl6ksf1f4y8yzg"))))
+     (origin
+       ;; Tests not included in release.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/yuvipanda/simpervisor")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0drvqxbr6fpydb4d7z5dhn97d578gf39sd8cawyl6ksf1f4y8yzg"))))
     (build-system pyproject-build-system)
     (arguments
-     (list
-      #:test-flags '(list "-n" (number->string (parallel-job-count)))))
+     ;; See <https://github.com/jupyterhub/simpervisor/issues/57>
+     (list #:test-flags #~(list "--deselect=tests/test_ready.py::test_ready")))
     (native-inputs
      (list python-aiohttp
            python-hatchling
            python-psutil
            python-pytest
-           python-pytest-asyncio
-           python-pytest-xdist))
+           python-pytest-asyncio))
     (home-page "https://github.com/yuvipanda/simpervisor")
     (synopsis "Simple async process supervisor")
     (description
@@ -38083,19 +38019,22 @@ keyboard-friendly package.")
 (define-public python-pdoc3
   (package
     (name "python-pdoc3")
-    (version "0.10.0")
+    (version "0.11.6")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pdoc3" version))
        (sha256
-        (base32 "1dz4hw10ngidzg9cjvflc8nlrwrjbb3ijhmaw4w6f039p6yff8jz"))
-       (patches
-        (search-patches "python-pdoc3-tests.patch"))))
-    (build-system python-build-system)
+        (base32 "11z318lnvd7nxkpw2556hh6hvid6gi8mxgv4zf8x2m57hx5yi98y"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-setuptools-git python-setuptools-scm))
-    (propagated-inputs (list python-mako python-markdown))
+     (list python-setuptools-git
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-mako
+           python-markdown))
     (home-page "https://pdoc3.github.io/pdoc/")
     (synopsis "Auto-generate API documentation for Python projects")
     (description

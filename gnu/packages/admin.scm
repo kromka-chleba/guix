@@ -935,7 +935,7 @@ console.")
 (define-public btop
   (package
     (name "btop")
-    (version "1.4.0")
+    (version "1.4.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -944,9 +944,7 @@ console.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0vgw6hwqh6zbzrvrn3i0xwi9ykm1qdvhqcyz3mjakd7w303lx603"))
-              (patches
-               (search-patches "btop-fix-segfault-on-intel-gpus.patch"))))
+                "08g4gbqc12is23nhrhqc5fhqicxs7dvy3alhyl66h6v35x7209vc"))))
     (build-system gnu-build-system)
     (native-inputs (list lowdown))
     (arguments
@@ -1591,14 +1589,14 @@ recursive runs on the generated subnets.  (also IPv6)
 (define-public prips
   (package
     (name "prips")
-    (version "1.2.0")
+    (version "1.2.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://devel.ringlet.net/files/sys/"
                            name "/" name "-" version ".tar.xz"))
        (sha256
-        (base32 "1m29hfmrch4rmb408jz7yfbx2a9mkk0gjxla7h5hv8qrlsjxha6y"))))
+        (base32 "1cm0hmd4wz5k683fqa6a2f9m2ky8j8q0kdrknrl9y3ga36x11mzr"))))
     (build-system gnu-build-system)
     (arguments
      (list #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))
@@ -2764,16 +2762,16 @@ module slots, and the list of I/O ports (e.g. serial, parallel, USB).")
 (define-public acpica
   (package
     (name "acpica")
-    (version "20240827")
+    (version "2025_04_04")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/acpica/acpica")
-             (commit (string-append "version-" version))))
+             (commit (string-append "R" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0dzrdhdgmmr6kqm95avvhr295kj8xi6iwm510lfwaylxzh34ln26"))))
+        (base32 "0ihya8k5w9xv2q0vmsp5syf3xihwmv3jxczw5j94fkzdkp52xlzr"))))
     (build-system gnu-build-system)
     (native-inputs (list flex bison))
     (arguments
@@ -4487,7 +4485,7 @@ becomes gUwUix.")
 (define-public screenfetch
   (package
     (name "screenfetch")
-    (version "3.9.1")
+    (version "3.9.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4496,7 +4494,7 @@ becomes gUwUix.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "04l8aqr474pb115nagn9f6y48jw92n1qfszgw7dbhgl4mpn95lcr"))))
+                "0fly580235wmrqxgpf2mlblj587q05mikpsgaw1qq7z1nl44rmjh"))))
     (build-system trivial-build-system)
     (arguments
      `(#:modules ((guix build utils))
@@ -4676,14 +4674,14 @@ system distribution, akin to many similar tools.")
 (define-public nnn
   (package
     (name "nnn")
-    (version "5.0")
+    (version "5.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/jarun/nnn/releases/download/v"
                            version "/nnn-v" version ".tar.gz"))
        (sha256
-        (base32 "084m08fcnpjd8gdfvvmgz558lmc29wj7dxg23m98fdmvhp3dd0ms"))))
+        (base32 "0igc119c1cicravlsh0p715rn7fc0cqjxnhplqw0cbm2xv3g32n8"))))
     (build-system gnu-build-system)
     (inputs
      (list ncurses readline))
@@ -6770,7 +6768,7 @@ backup directories or just finding duplicate files.")
 (define-public sshguard
   (package
     (name "sshguard")
-    (version "2.4.3")
+    (version "2.5.1")
     (source
      (origin
        (method git-fetch)
@@ -6779,7 +6777,7 @@ backup directories or just finding duplicate files.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1dkijr287zpwdz1bjdchxzmwf1sk6vzpkycz1skm25lkaba6nd9r"))))
+        (base32 "1wpxvqwk4k40liq6x5ada6zy77mnp319zz1w0cs2wyq3a5ilpnvr"))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake bison flex python-docutils))

@@ -2353,28 +2353,33 @@ Encryption} (JOSE) Web Standards.")
     (license license:expat)))
 
 (define-public python-pyscss
-  (package
-    (name "python-pyscss")
-    (version "1.4.0")
-    (source
-     (origin
-       (method git-fetch)               ; no tests in PyPI release
-       (uri (git-reference
-             (url "https://github.com/Kronuz/pyScss")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1vinddg8sbh3v9n1r1wmvjx6ydk8xp7scbvhb3csl4y9xz7vhk6g"))))
-    (build-system pyproject-build-system)
-    (native-inputs
-     (list python-pytest python-pytest-cov python-setuptools python-wheel))
-    (inputs
-     (list pcre))
-    (home-page "https://github.com/Kronuz/pyScss")
-    (synopsis "Scss compiler for Python")
-    (description "@code{pyScss} is a compiler for Sass, a superset language of
+  ;; XXX: no fresh release supporting Python 3.11, use the latest commit, see
+  ;; <https://github.com/Kronuz/pyScss/issues/428>.
+  (let ((commit "73559d047706ccd4593cf6aa092de71f35164723")
+        (revision "0"))
+    (package
+      (name "python-pyscss")
+      (version (git-version "1.4.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)               ; no tests in PyPI release
+         (uri (git-reference
+               (url "https://github.com/Kronuz/pyScss")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "00msypxf5dm57gyfp3jxvjinigi4km84v33w83635pms9li2k3y7"))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-pytest python-pytest-cov python-setuptools python-wheel))
+      (inputs
+       (list pcre))
+      (home-page "https://github.com/Kronuz/pyScss")
+      (synopsis "Scss compiler for Python")
+      (description
+       "@code{pyScss} is a compiler for Sass, a superset language of
 CSS3 that adds programming capabilities and some other syntactic sugar.")
-    (license license:expat)))
+      (license license:expat))))
 
 (define-public python-jsonpickle
   (package
@@ -3896,38 +3901,43 @@ configuration-intensive applications.")
 (define-public python-zodb
   (package
     (name "python-zodb")
-    (version "5.8.1")
+    (version "6.0.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "ZODB" version))
+       (uri (pypi-uri "zodb" version))
        (sha256
-        (base32 "1pv4w8mnx6j4xvkcjbkh99pv8ljby7g9f7zjq7zhdmk06sykmiy6"))))
+        (base32 "02cmvf8j2nin5z26wvy2vq2k9mj12hqrr4276lj3w4jj32p0zxw9"))))
     (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (if tests?
-                          (begin
-                            ;; This test does not work after installing the
-                            ;; package, since it expects the ZODB source code
-                            ;; to reside in the src/ directory.
-                            (delete-file-recursively
-                             "src/ZODB/tests/testdocumentation.py")
-                            (invoke "zope-testrunner" "-vv" "--test-path=src"
-                                    "--all"))
-                          (format #t "test suite not run~%")))))))
-    (propagated-inputs (list python-btrees
-                             python-persistent
-                             python-zconfig
-                             python-six
-                             python-transaction
-                             python-zc-lockfile
-                             python-zodbpickle
-                             python-zope-interface))
-    (native-inputs (list python-manuel python-zope-testing
-                         python-zope-testrunner))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (if tests?
+                  (begin
+                    ;; This test does not work after installing the
+                    ;; package, since it expects the ZODB source code
+                    ;; to reside in the src/ directory.
+                    (delete-file-recursively
+                     "src/ZODB/tests/testdocumentation.py")
+                    (invoke "zope-testrunner" "-vv" "--test-path=src"
+                            "--all"))
+                  (format #t "test suite not run~%")))))))
+    (native-inputs
+     (list python-manuel
+           python-wheel
+           python-zope-testing
+           python-zope-testrunner))
+    (propagated-inputs
+     (list python-btrees
+           python-persistent
+           python-transaction
+           python-zc-lockfile
+           python-zconfig
+           python-zodbpickle
+           python-zope-interface))
     (home-page "http://zodb-docs.readthedocs.io")
     (synopsis "Object-oriented database for Python")
     (description

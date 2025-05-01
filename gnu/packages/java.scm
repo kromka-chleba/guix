@@ -13,7 +13,7 @@
 ;;; Copyright © 2019, 2020, 2021 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
 ;;; Copyright © 2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020 Raghav Gururajan <raghavgururajan@disroot.org>
-;;; Copyright © 2020, 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020, 2022, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2021 Mike Gerwitz <mtg@gnu.org>
 ;;; Copyright © 2021 Pierre Langlois <pierre.langlois@gmx.com>
@@ -1793,8 +1793,40 @@ blacklisted.certs.pem"
                (substitute* "src/java.base/share/data/blockedcertsconverter/blocked.certs.pem"
                  (("^#!.*") "#! java BlockedCertsConverter SHA-256\n"))))))))))
 
+(define-public openjdk22
+  (make-openjdk
+   openjdk21 "22.0.2"
+   "1nj414yj6v9qrlm48yv5llr4jmgj9g20v6zsd39xrdx4x4x4p3b6"
+   (arguments
+    (substitute-keyword-arguments (package-arguments base)
+      ((#:phases phases)
+       #~(modify-phases #$phases
+           (add-after 'unpack 'do-not-disable-new-dtags
+             (lambda _
+               ;; Our validate-runpath phases checks for RUNPATH, not RPATH.
+               (substitute* "make/autoconf/flags-cflags.m4"
+                 ((" -Wl,--disable-new-dtags") ""))))))))))
+
+(define-public openjdk23
+  (make-openjdk
+   openjdk22 "23.0.2"
+   "0kxllznzhgqfn8b97krg2yp1ag41g4phmgqahrvzafd2bq6zclnf"
+   (source (origin
+             (inherit (package-source base))
+             ;; The 'openjdk-21-fix-rpath.patch' no longer applies, and it
+             ;; appears not needed anymore.  The
+             ;; 'openjdk-15-xcursor-no-dynamic.patch' doesn't apply anymore;
+             ;; the fix should be pursued in libx11 (see:
+             ;; https://issues.guix.gnu.org/54654)
+             (patches '())))))
+
+(define-public openjdk24
+  (make-openjdk
+   openjdk23 "24.0.1"
+   "0h6sbzbjyqg85iml41pswdh2z3d7h2hhb0sd5yll37r1mj5lsxmx"))
+
 ;;; Convenience alias to point to the latest version of OpenJDK.
-(define-public openjdk openjdk21)
+(define-public openjdk openjdk24)
 
 
 ;; This version of JBR is here in order to be able to build custom

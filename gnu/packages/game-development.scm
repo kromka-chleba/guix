@@ -73,6 +73,7 @@
   #:use-module (gnu packages assembly)
   #:use-module (gnu packages audio)
   #:use-module (gnu packages autotools)
+  #:use-module (gnu packages backup)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages bison)
@@ -1311,40 +1312,6 @@ package is the Nuklear bindings for LÖVE created by Kevin Harrison.")
     (home-page "https://github.com/keharriso/love-nuklear/")
     (license license:expat)))
 
-(define-public allegro-4
-  (package
-    (name "allegro")
-    (version "4.4.3.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/liballeg/allegro5/"
-                                  "releases/download/" version "/allegro-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "1m6lz35nk07dli26kkwz3wa50jsrxs1kb6w1nj14a911l34xn6gc"))))
-    (build-system cmake-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-build-system
-           (lambda _
-             ;; Build addons as shared libraries.  Trying to set ADDON_LINKAGE
-             ;; via a command line option doesn't work because it is
-             ;; unconditionally clobbered in the build script.
-             (substitute* '("CMakeLists.txt")
-               (("ADDON_LINKAGE STATIC")
-                "ADDON_LINKAGE SHARED")))))))
-    (inputs
-     (list glu libpng libvorbis mesa zlib))
-    (synopsis "Game programming library")
-    (description "Allegro is a library mainly aimed at video game and
-multimedia programming.  It handles common, low-level tasks such as creating
-windows, accepting user input, loading data, drawing images, playing sounds,
-etc.")
-    (home-page "https://liballeg.org")
-    (license license:giftware)))
-
 (define-public allegro
   (package
     (name "allegro")
@@ -1386,69 +1353,10 @@ etc.")
     (home-page "https://liballeg.org")
     (license license:bsd-3)))
 
-(define-public aseprite
-  (package
-    (name "aseprite")
-    (version "1.1.7") ; After 1.1.7 the source is no longer distributed under the GPL.
-    ;; TODO: Unbundle third party software.
-    (source (origin
-              (method url-fetch/zipbomb)
-              (uri (string-append "https://github.com/aseprite/aseprite"
-                                  "/releases/download/v" version
-                                  "/Aseprite-v" version "-Source.zip"))
-              (sha256
-               (base32
-                "1plss4i1lfxcznv9p0pip1bkhj7ipw7jlhsh5avd6dzw079l4nvv"))))
-    (build-system cmake-build-system)
-    (arguments
-     '(#:configure-flags
-       ;; Use shared libraries instead of building bundled source.
-       (list "-DWITH_WEBP_SUPPORT=1"
-             "-DUSE_SHARED_CURL=1"
-             "-DUSE_SHARED_GIFLIB=1"
-             "-DUSE_SHARED_JPEGLIB=1"
-             "-DUSE_SHARED_ZLIB=1"
-             "-DUSE_SHARED_LIBPNG=1"
-             "-DUSE_SHARED_LIBLOADPNG=1"
-             "-DUSE_SHARED_LIBWEBP=1"
-             "-DUSE_SHARED_TINYXML=1"
-             "-DUSE_SHARED_PIXMAN=1"
-             "-DUSE_SHARED_FREETYPE=1"
-             "-DUSE_SHARED_ALLEGRO4=1"
-             "-DENABLE_UPDATER=0" ; no auto-updates
-             (string-append "-DFREETYPE_INCLUDE_DIR="
-                            (assoc-ref %build-inputs "freetype")
-                            "/include/freetype2"))))
-    (native-inputs
-     (list pkg-config))
-    ;; TODO: Use a patched Allegro 4 that supports window resizing.  This
-    ;; patched version is bundled with Aseprite, but the patches should be
-    ;; extracted and applied on top of a standalone Allegro 4 package.
-    (inputs
-     `(("allegro" ,allegro-4)
-       ("curl" ,curl)
-       ("freetype" ,freetype)
-       ("giflib" ,giflib)
-       ("libjpeg" ,libjpeg-turbo)
-       ("libpng" ,libpng)
-       ("libwebp" ,libwebp)
-       ("libx11" ,libx11)
-       ("libxext" ,libxext)
-       ("libxxf86vm" ,libxxf86vm)
-       ("pixman" ,pixman)
-       ("tinyxml" ,tinyxml)
-       ("zlib" ,zlib)))
-    (synopsis "Animated sprite editor and pixel art tool")
-    (description "Aseprite is a tool for creating 2D pixel art for video
-games.  In addition to basic pixel editing features, Aseprite can assist in
-the creation of animations, tiled graphics, texture atlases, and more.")
-    (home-page "https://www.aseprite.org/")
-    (license license:gpl2+)))
-
 (define-public libresprite
   (package
     (name "libresprite")
-    (version "1.0")
+    (version "1.1")
     ;; TODO: Unbundle third party software.
     ;; - duktape is bundled inside the project but it's hard to unbundle:
     ;;   there are many differences from a version to the next and it is not
@@ -1462,34 +1370,34 @@ the creation of animations, tiled graphics, texture atlases, and more.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0djbjjh21ahlxzh0b0jp4mpfycam8h9157i4wbxkd618fraadhbp"))))
+                "0i1g730khnb8xj56c07x0b0ni6sx4n8vp3w13yazqx9anj23y856"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:configure-flags
-       (list "-DWITH_WEBP_SUPPORT=1"
-             "-DWITH_DESKTOP_INTEGRATION=1")
-       ;; Tests are unmaintained
-       #:tests? #f))
-    (native-inputs
-     `(("pkg-config" ,pkg-config)))
+     (list #:configure-flags
+           #~(list "-DWITH_WEBP_SUPPORT=1"
+                   "-DWITH_DESKTOP_INTEGRATION=1")
+           ;; Tests are unmaintained
+           #:tests? #f))
+    (native-inputs (list pkg-config))
     (inputs
-     `(("curl" ,curl)
-       ("freetype" ,freetype)
-       ("giflib" ,giflib)
-       ("googletest" ,googletest)
-       ("libjpeg" ,libjpeg-turbo)
-       ("libpng" ,libpng)
-       ("libwebp" ,libwebp)
-       ("libx11" ,libx11)
-       ("libxext" ,libxext)
-       ("libxxf86dga" ,libxxf86dga)
-       ("libxxf86vm" ,libxxf86vm)
-       ("lua" ,lua)                     ; Optional
-       ("pixman" ,pixman)
-       ("sdl2" ,sdl2)
-       ("sdl2-image" ,sdl2-image)
-       ("tinyxml" ,tinyxml)
-       ("zlib" ,zlib)))
+     (list curl
+           freetype
+           giflib
+           googletest
+           libarchive
+           libjpeg-turbo
+           libpng
+           libwebp
+           libx11
+           libxext
+           libxxf86dga
+           libxxf86vm
+           lua  ;optional
+           pixman
+           sdl2
+           sdl2-image
+           tinyxml2
+           zlib))
     (synopsis "Animated sprite editor and pixel art tool")
     (description "LibreSprite is a tool for creating 2D pixel art for video
 games.  In addition to basic pixel editing features, it can assist in the
@@ -2403,7 +2311,7 @@ scripted in a Python-like language.")
 (define-public godot
   (package
     (name "godot")
-    (version "4.4")
+    (version "4.4.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2412,7 +2320,7 @@ scripted in a Python-like language.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1la1sk6v3scpgvv7gpqxbmh6vybz5v67jbl19ks07i50g8bpiswx"))
+                "0fdq69jisrvihmdir2pg6wf4mfqgqg3c0szc58mgci2lqlm4l684"))
               (modules '((guix build utils)
                          (ice-9 ftw)
                          (srfi srfi-1)))

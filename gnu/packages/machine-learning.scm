@@ -85,6 +85,7 @@
   #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crates-tls)
   #:use-module (gnu packages crates-web)
+  #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages dejagnu)
   #:use-module (gnu packages documentation)
@@ -642,7 +643,7 @@ Performance is achieved by using the LLVM JIT compiler.")
   (deprecated-package "guile-aiscm-next" guile-aiscm))
 
 (define-public llama-cpp
-  (let ((tag "b4549"))
+  (let ((tag "b5013"))
     (package
       (name "llama-cpp")
       (version (string-append "0.0.0-" tag))
@@ -650,19 +651,19 @@ Performance is achieved by using the LLVM JIT compiler.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/ggerganov/llama.cpp")
+               (url "https://github.com/ggml-org/llama.cpp")
                (commit tag)))
          (file-name (git-file-name name tag))
          (sha256
-          (base32 "1xf2579q0r8nv06kj8padi6w9cv30w58vdys65nq8yzm3dy452a1"))
-         (patches
-          (search-patches "llama-cpp-vulkan-optional.patch"))))
+          (base32 "0s73dz871x53dr366lkzq19f677bwgma2ri8m5vhbfa9p8yp4p3r"))))
       (build-system cmake-build-system)
       (arguments
        (list
         #:configure-flags
-        #~(list "-DBUILD_SHARED_LIBS=ON"
+        #~(list #$(string-append "-DGGML_BUILD_NUMBER=" tag)
+                "-DBUILD_SHARED_LIBS=ON"
                 "-DGGML_VULKAN=ON"
+                "-DLLAMA_CURL=ON"
                 "-DGGML_BLAS=ON"
                 "-DGGML_BLAS_VENDOR=OpenBLAS"
                 (string-append "-DBLAS_INCLUDE_DIRS="
@@ -692,32 +693,17 @@ Performance is achieved by using the LLVM JIT compiler.")
                 (substitute* "ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
                  (("\"/bin/sh\"")
                   (string-append "\"" (search-input-file inputs "/bin/sh") "\"")))))
-            (add-after 'unpack 'disable-unrunable-tests
+            (add-after 'unpack 'fix-tests
               (lambda _
                 ;; test-eval-callback downloads ML model from network, cannot
                 ;; run in Guix build environment
                 (substitute* '("examples/eval-callback/CMakeLists.txt")
                   (("COMMAND llama-eval-callback")
-                   "COMMAND true llama-eval-callback"))))
-            (add-before 'install 'install-python-scripts
-              (lambda _
-                (let ((bin (string-append #$output "/bin/")))
-                  (define (make-script script)
-                    (let ((suffix (if (string-suffix? ".py" script) "" ".py")))
-                      (call-with-input-file
-                          (string-append "../source/" script suffix)
-                        (lambda (input)
-                          (call-with-output-file (string-append bin script)
-                            (lambda (output)
-                              (format output "#!~a/bin/python3\n~a"
-                                      #$(this-package-input "python")
-                                      (get-string-all input))))))
-                      (chmod (string-append bin script) #o555)))
-                  (mkdir-p bin)
-                  (make-script "convert_hf_to_gguf")
-                  (make-script "convert_llama_ggml_to_gguf")
-                  (make-script "convert_hf_to_gguf_update.py"))))
-            (add-after 'install-python-scripts 'wrap-python-scripts
+                   "COMMAND true llama-eval-callback"))
+                ;; Help it find the test files it needs
+                (substitute* "tests/test-chat.cpp"
+                  (("\"\\.\\./\"") "\"../source/\""))))
+            (add-after 'install 'wrap-python-scripts
               (assoc-ref python:%standard-phases 'wrap))
             (add-after 'install 'remove-tests
               (lambda* (#:key outputs #:allow-other-keys)
@@ -725,12 +711,13 @@ Performance is achieved by using the LLVM JIT compiler.")
                                        (string-append (assoc-ref outputs "out")
                                                       "/bin")
                                        "^test-")))))))
-      (inputs (list python vulkan-headers vulkan-loader))
-      (native-inputs (list pkg-config shaderc bash))
+      (inputs (list curl glslang python python-gguf
+                    vulkan-headers vulkan-loader))
+      (native-inputs (list pkg-config shaderc bash-minimal))
       (propagated-inputs
        (list python-numpy python-pytorch python-sentencepiece openblas))
       (properties '((tunable? . #true))) ;use AVX512, FMA, etc. when available
-      (home-page "https://github.com/ggerganov/llama.cpp")
+      (home-page "https://github.com/ggml-org/llama.cpp")
       (synopsis "Port of Facebook's LLaMA model in C/C++")
       (description "This package provides a port to Facebook's LLaMA collection
 of foundation language models.  It requires models parameters to be downloaded
@@ -1020,14 +1007,14 @@ matrices.")
 (define-public openfst
   (package
     (name "openfst")
-    (version "1.8.2")
+    (version "1.8.4")
     (source (origin
               (method url-fetch)
-              (uri (string-append "http://www.openfst.org/twiki/pub/FST/"
+              (uri (string-append "https://www.openfst.org/twiki/pub/FST/"
                                   "FstDownload/openfst-" version ".tar.gz"))
               (sha256
                (base32
-                "0hlbdmjjf1jgsvi3d2hwni5lz3l9a5bzj6ijpbawa8a7cbrpp66y"))))
+                "05l057mx1cmbm2jm99mrg75qgz4ca5r78n002mkpxl4j7mpvpsx8"))))
     (build-system gnu-build-system)
     (arguments '(#:configure-flags '("--enable-ngram-fsts")))
     (home-page "https://www.openfst.org")
@@ -1035,21 +1022,6 @@ matrices.")
     (description "OpenFst is a library for constructing, combining,
 optimizing, and searching weighted finite-state transducers (FSTs).")
     (license license:asl2.0)))
-
-;; This is a temporary addition to bypass upstream issues with the kaldi
-;; package.
-(define-public openfst-1.7.3
-  (package (inherit openfst)
-    (version "1.7.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://www.openfst.org/twiki/pub/FST/"
-                                  "FstDownload/openfst-" version ".tar.gz"))
-              (sha256
-               (base32
-                "038a60w7y8qnbxmcrsim9rafz9mihsny8xv50jpzlr7rl166pp5q"))))
-    (arguments '(#:configure-flags '("--enable-ngram-fsts" "CXXFLAGS=-std=c++14")
-                 #:make-flags '("CXXFLAGS=-std=c++14")))))
 
 (define openfst-for-vosk
   (package
@@ -1611,154 +1583,6 @@ recognition, text classification and more, multi-task learning with pretrained
 transformers like BERT, as well as a production-ready training system and easy
 model packaging, deployment and workflow management.")
     (license license:expat)))
-
-(define-public shogun
-  (package
-    (name "shogun")
-    (version "6.1.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append
-             "ftp://shogun-toolbox.org/shogun/releases/"
-             (version-major+minor version)
-             "/sources/shogun-" version ".tar.bz2"))
-       (sha256
-        (base32
-         "1rn9skm3nw6hr7mr3lgp2gfqhi7ii0lyxck7qmqnf8avq349s5jp"))
-       (modules '((guix build utils)
-                  (ice-9 rdelim)))
-       (snippet
-        '(begin
-           ;; Remove non-free sources and files referencing them
-           (for-each delete-file
-                     (find-files "src/shogun/classifier/svm/"
-                                 "SVMLight\\.(cpp|h)"))
-           (for-each delete-file
-                     (find-files "examples/undocumented/libshogun/"
-                                 (string-append
-                                  "(classifier_.*svmlight.*|"
-                                  "evaluation_cross_validation_locked_comparison).cpp")))
-           ;; Remove non-free functions.
-           (define (delete-ifdefs file)
-             (with-atomic-file-replacement file
-               (lambda (in out)
-                 (let loop ((line (read-line in 'concat))
-                            (skipping? #f))
-                   (if (eof-object? line)
-                       #t
-                       (let ((skip-next?
-                              (or (and skipping?
-                                       (not (string-prefix?
-                                             "#endif //USE_SVMLIGHT" line)))
-                                  (string-prefix?
-                                   "#ifdef USE_SVMLIGHT" line))))
-                         (when (or (not skipping?)
-                                   (and skipping? (not skip-next?)))
-                           (display line out))
-                         (loop (read-line in 'concat) skip-next?)))))))
-           (for-each delete-ifdefs
-                     (append
-                      (find-files "src/shogun/classifier/mkl"
-                                  "^MKLClassification\\.cpp")
-                      (find-files "src/shogun/classifier/svm"
-                                  "^SVMLightOneClass\\.(cpp|h)")
-                      (find-files "src/shogun/multiclass"
-                                  "^ScatterSVM\\.(cpp|h)")
-                      (find-files "src/shogun/kernel/"
-                                  "^(Kernel|CombinedKernel|ProductKernel)\\.(cpp|h)")
-                      (find-files "src/shogun/regression/svr"
-                                  "^(MKLRegression|SVRLight)\\.(cpp|h)")
-                      (find-files "src/shogun/transfer/domain_adaptation"
-                                  "^DomainAdaptationSVM\\.(cpp|h)")))
-           #t))))
-    (build-system cmake-build-system)
-    (arguments
-     '(#:tests? #f ;no check target
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'delete-broken-symlinks
-           (lambda _
-             (for-each delete-file '("applications/arts/data"
-                                     "applications/asp/data"
-                                     "applications/easysvm/data"
-                                     "applications/msplicer/data"
-                                     "applications/ocr/data"
-                                     "examples/meta/data"
-                                     "examples/undocumented/data"))
-             #t))
-         (add-after 'unpack 'change-R-target-path
-           (lambda* (#:key outputs #:allow-other-keys)
-             (substitute* '("src/interfaces/r/CMakeLists.txt"
-                            "examples/meta/r/CMakeLists.txt")
-               (("\\$\\{R_COMPONENT_LIB_PATH\\}")
-                (string-append (assoc-ref outputs "out")
-                               "/lib/R/library/")))
-             #t))
-         (add-after 'unpack 'fix-octave-modules
-           (lambda* (#:key outputs #:allow-other-keys)
-             (substitute* "src/interfaces/octave/CMakeLists.txt"
-               (("^include_directories\\(\\$\\{OCTAVE_INCLUDE_DIRS\\}")
-                "include_directories(${OCTAVE_INCLUDE_DIRS} ${OCTAVE_INCLUDE_DIRS}/octave")
-               ;; change target directory
-               (("\\$\\{OCTAVE_OCT_LOCAL_API_FILE_DIR\\}")
-                (string-append (assoc-ref outputs "out")
-                               "/share/octave/packages")))
-             (substitute* '("src/interfaces/octave/swig_typemaps.i"
-                            "src/interfaces/octave/sg_print_functions.cpp")
-               ;; "octave/config.h" and "octave/oct-obj.h" deprecated in Octave.
-               (("octave/config\\.h") "octave/octave-config.h")
-               (("octave/oct-obj.h") "octave/ovl.h"))
-             #t))
-         (add-after 'unpack 'move-rxcpp
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((rxcpp-dir "shogun/third-party/rxcpp"))
-               (mkdir-p rxcpp-dir)
-               (install-file (assoc-ref inputs "rxcpp") rxcpp-dir)
-               #t)))
-         (add-before 'build 'set-HOME
-           ;; $HOME needs to be set at some point during the build phase
-           (lambda _ (setenv "HOME" "/tmp") #t)))
-       #:configure-flags
-       (list "-DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE"
-             "-DUSE_SVMLIGHT=OFF" ;disable proprietary SVMLIGHT
-             "-DBUILD_META_EXAMPLES=OFF" ;requires unpackaged ctags
-             ;;"-DINTERFACE_JAVA=ON" ;requires unpackaged jblas
-             ;;"-DINTERFACE_RUBY=ON" ;requires unpackaged ruby-narray
-             ;;"-DINTERFACE_PERL=ON" ;"FindPerlLibs" does not exist
-             ;;"-DINTERFACE_LUA=ON"  ;fails because lua doesn't build pkgconfig file
-             "-DINTERFACE_OCTAVE=ON"
-             "-DINTERFACE_PYTHON=ON"
-             "-DINTERFACE_R=ON")))
-    (inputs
-     `(("python" ,python)
-       ("numpy" ,python-numpy)
-       ("r-minimal" ,r-minimal)
-       ("octave" ,octave-cli)
-       ("swig" ,swig)
-       ("eigen" ,eigen)
-       ("hdf5" ,hdf5)
-       ("atlas" ,atlas)
-       ("arpack" ,arpack-ng)
-       ("openblas" ,openblas)
-       ("glpk" ,glpk)
-       ("libxml2" ,libxml2)
-       ("lzo" ,lzo)
-       ("zlib" ,zlib)))
-    (native-inputs
-     (list pkg-config rxcpp))
-    ;; Non-portable SSE instructions are used so building fails on platforms
-    ;; other than x86_64.
-    (supported-systems '("x86_64-linux"))
-    (home-page "https://shogun-toolbox.org/")
-    (synopsis "Machine learning toolbox")
-    (description
-     "The Shogun Machine learning toolbox provides a wide range of unified and
-efficient Machine Learning (ML) methods.  The toolbox seamlessly
-combines multiple data representations, algorithm classes, and general purpose
-tools.  This enables both rapid prototyping of data pipelines and extensibility
-in terms of new algorithms.")
-    (license license:gpl3+)))
 
 (define-public onnx
   (package
@@ -2932,9 +2756,8 @@ PyTrees.")
 
 ;; There have been no proper releases yet.
 (define-public kaldi
-  (let ((commit "be22248e3a166d9ec52c78dac945f471e7c3a8aa")
-        (revision "1")
-        (openfst openfst-1.7.3)) ;; Temporary bypass for upstream issues
+  (let ((commit "01aadd7c19372e3eacadec88caabd86162f33d69")
+        (revision "2"))
     (package
       (name "kaldi")
       (version (git-version "0" revision commit))
@@ -2946,81 +2769,85 @@ PyTrees.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1wkxz3p0h68mxbg41i1wygir2r4rraxbb4672xkkvvs85r6c8r8i"))))
+                  "08l31g256wl81fsrm1dvi0d2rq2vk5zq7ihbbiw7hp51iwg2miif"))
+                (patches
+                 (search-patches "kaldi-openblas-0.3.29-compatibility.patch"
+                                 "kaldi-ignore-failing-test.patch"))))
       (build-system gnu-build-system)
       (arguments
-       `(#:test-target "test"
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'chdir
-             (lambda _ (chdir "src")))
-           (replace 'configure
-             (lambda* (#:key build system inputs outputs #:allow-other-keys)
-               (when (not (or (string-prefix? "x86_64" system)
-                              (string-prefix? "i686" system)))
-                 (substitute* "makefiles/linux_openblas.mk"
-                   (("-msse -msse2") "")))
-               (substitute* "makefiles/default_rules.mk"
-                 (("/bin/bash") (which "bash")))
-               (substitute* "Makefile"
-                 (("ext_depend: check_portaudio")
-                  "ext_depend:"))
-               (substitute* '("online/Makefile"
-                              "onlinebin/Makefile"
-                              "gst-plugin/Makefile")
-                 (("../../tools/portaudio/install")
-                  (assoc-ref inputs "portaudio")))
-               (substitute* "matrix/Makefile"     ;temporary test bypass
-                 (("matrix-lib-test sparse-matrix-test") ""))
+       (list
+        #:test-target "test"
+        #:configure-flags
+        (let ((fst (this-package-input "openfst")))
+          #~(list "--use-cuda=no"
+                  "--shared"
+                  (string-append "--openblas-root="
+                                 #$(this-package-input "openblas"))
+                  (string-append "--fst-root=" #$fst)
+                  (string-append "--fst-version=" #$(package-version fst))))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _ (chdir "src")))
+            (replace 'configure
+              (lambda* (#:key build system inputs configure-flags
+                        #:allow-other-keys)
+                (when (not (or (string-prefix? "x86_64" system)
+                               (string-prefix? "i686" system)))
+                  (substitute* "makefiles/linux_openblas.mk"
+                    (("-msse -msse2") "")))
+                (substitute* "makefiles/default_rules.mk"
+                  (("/bin/bash") (which "bash")))
+                (substitute* "Makefile"
+                  (("ext_depend: check_portaudio")
+                   "ext_depend:"))
+                (substitute* '("online/Makefile"
+                               "onlinebin/Makefile"
+                               "gst-plugin/Makefile")
+                  (("../../tools/portaudio/install")
+                   (assoc-ref inputs "portaudio")))
+                (substitute* "matrix/Makefile"     ;temporary test bypass
+                  (("matrix-lib-test sparse-matrix-test") ""))
 
-               ;; This `configure' script doesn't support variables passed as
-               ;; arguments, nor does it support "prefix".
-               (let ((out (assoc-ref outputs "out"))
-                     (openblas (assoc-ref inputs "openblas"))
-                     (openfst (assoc-ref inputs "openfst")))
-                 (substitute* "configure"
-                   (("check_for_slow_expf;") "")
-                   ;; This affects the RPATH and also serves as the installation
-                   ;; directory.
-                   (("KALDILIBDIR=`pwd`/lib")
-                    (string-append "KALDILIBDIR=" out "/lib")))
-                 (mkdir-p out) ; must exist
-                 (setenv "CONFIG_SHELL" (which "bash"))
-                 (setenv "OPENFST_VER" ,(package-version openfst))
-                 (invoke "./configure"
-                         "--use-cuda=no"
-                         "--shared"
-                         (string-append "--openblas-root=" openblas)
-                         (string-append "--fst-root=" openfst)))))
-           (add-after 'build 'build-ext-and-gstreamer-plugin
-             (lambda _
-               (invoke "make" "-C" "online" "depend")
-               (invoke "make" "-C" "online")
-               (invoke "make" "-C" "onlinebin" "depend")
-               (invoke "make" "-C" "onlinebin")
-               (invoke "make" "-C" "gst-plugin" "depend")
-               (invoke "make" "-C" "gst-plugin")))
-           ;; TODO: also install the executables.
-           (replace 'install
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (inc (string-append out "/include"))
-                      (lib (string-append out "/lib")))
-                 (mkdir-p lib)
-                 ;; The build phase installed symlinks to the actual
-                 ;; libraries.  Install the actual targets.
-                 (for-each (lambda (file)
-                             (let ((target (readlink file)))
-                               (delete-file file)
-                               (install-file target lib)))
-                           (find-files lib "\\.so"))
-                 ;; Install headers
-                 (for-each (lambda (file)
-                             (let ((target-dir (string-append inc "/" (dirname file))))
-                               (install-file file target-dir)))
-                           (find-files "." "\\.h"))
-                 (install-file "gst-plugin/libgstonlinegmmdecodefaster.so"
-                               (string-append lib "/gstreamer-1.0"))))))))
+                ;; This `configure' script doesn't support variables passed as
+                ;; arguments, nor does it support "prefix".
+                (substitute* "configure"
+                  (("check_for_slow_expf;") "")
+                  ;; This affects the RPATH and also serves as the installation
+                  ;; directory.
+                  (("KALDILIBDIR=`pwd`/lib")
+                   (string-append "KALDILIBDIR=" #$output "/lib")))
+                (mkdir-p #$output) ; must exist
+                (setenv "CONFIG_SHELL" (which "bash"))
+                (apply invoke "./configure" configure-flags)))
+            (add-after 'build 'build-ext-and-gstreamer-plugin
+              (lambda _
+                (invoke "make" "-C" "online" "depend")
+                (invoke "make" "-C" "online")
+                (invoke "make" "-C" "onlinebin" "depend")
+                (invoke "make" "-C" "onlinebin")
+                (invoke "make" "-C" "gst-plugin" "depend")
+                (invoke "make" "-C" "gst-plugin")))
+            ;; TODO: also install the executables.
+            (replace 'install
+              (lambda _
+                (let* ((inc (string-append #$output "/include"))
+                       (lib (string-append #$output "/lib")))
+                  (mkdir-p lib)
+                  ;; The build phase installed symlinks to the actual
+                  ;; libraries.  Install the actual targets.
+                  (for-each (lambda (file)
+                              (let ((target (readlink file)))
+                                (delete-file file)
+                                (install-file target lib)))
+                            (find-files lib "\\.so"))
+                  ;; Install headers
+                  (for-each (lambda (file)
+                              (let ((target-dir (string-append inc "/" (dirname file))))
+                                (install-file file target-dir)))
+                            (find-files "." "\\.h"))
+                  (install-file "gst-plugin/libgstonlinegmmdecodefaster.so"
+                                (string-append lib "/gstreamer-1.0"))))))))
       (inputs
        (list alsa-lib
              `(,gfortran "lib")
@@ -3044,8 +2871,9 @@ written in C++.")
       (license license:asl2.0))))
 
 (define kaldi-for-vosk
-  (let* ((commit "a25f216f5ce4eec5e45a6ab7651e20c9840a05cd")
-         (revision "0")
+  ;; Commit of branch "vosk"
+  (let* ((commit "bc5baf14231660bd50b7d05788865b4ac6c34481")
+         (revision "1")
          (openfst openfst-for-vosk))
     (package
       (inherit kaldi)
@@ -3059,7 +2887,9 @@ written in C++.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "16w90za8narkfi590cxj4p7vc1f5sdxc927g5hk6kh4l3mf6iisl"))))
+          (base32 "1y3d6918srr7cn5r72v5wvbdwz9p9j2bjw1x78sfis2r2k60lllw"))
+         (patches
+          (search-patches "kaldi-openblas-0.3.29-compatibility.patch"))))
       (inputs
        (list alsa-lib
              glib
@@ -3161,45 +2991,48 @@ written in C++.")
        (list
         #:tests? #f                    ; there are none
         #:make-flags
-        '(list (string-append "SHELL="
-                              (assoc-ref %build-inputs "bash") "/bin/bash")
-               (string-append "KALDI_ROOT="
-                              (assoc-ref %build-inputs "kaldi-src"))
-               (string-append "KALDILIBDIR="
-                              (assoc-ref %build-inputs "kaldi") "/lib")
-               "KALDI_FLAVOR=dynamic")
+        (let ((kaldi (this-package-input "kaldi"))
+              (bash (this-package-native-input "bash")))
+          #~(list (string-append "SHELL=" #$bash "/bin/bash")
+                  (string-append "KALDI_ROOT=" #$(package-source kaldi))
+                  (string-append "KALDILIBDIR=" #$kaldi "/lib")
+                  "KALDI_FLAVOR=dynamic"))
          #:phases
-         '(modify-phases %standard-phases
-            (add-after 'unpack 'chdir
-              (lambda _ (chdir "src")))
-            (replace 'configure
-              (lambda* (#:key inputs #:allow-other-keys)
-                (let ((glib (assoc-ref inputs "glib")))
-                  (setenv "CXXFLAGS" "-fPIC")
-                  (setenv "CPLUS_INCLUDE_PATH"
-                          (string-append glib "/include/glib-2.0:"
-                                         glib "/lib/glib-2.0/include:"
-                                         (assoc-ref inputs "gstreamer")
-                                         "/include/gstreamer-1.0:"
-                                         (getenv "CPLUS_INCLUDE_PATH"))))
-                (substitute* "Makefile"
-                  (("include \\$\\(KALDI_ROOT\\)/src/kaldi.mk") "")
-                  (("\\$\\(error Cannot find") "#"))))
-            (add-before 'build 'build-depend
-              (lambda* (#:key make-flags #:allow-other-keys)
-                (apply invoke "make" "depend" make-flags)))
-            (replace 'install
-              (lambda* (#:key outputs #:allow-other-keys)
-                (let* ((out (assoc-ref outputs "out"))
-                       (lib (string-append out "/lib/gstreamer-1.0")))
-                  (install-file "libgstkaldinnet2onlinedecoder.so" lib)))))))
+         #~(modify-phases %standard-phases
+             (add-after 'unpack 'chdir
+               (lambda _ (chdir "src")))
+             (replace 'configure
+               (lambda* (#:key inputs #:allow-other-keys)
+                 (let ((fst-version #$(package-version
+                                       (this-package-input "openfst"))))
+                   (setenv "CXXFLAGS"
+                           (string-append
+                            "-fPIC -DOPENFST_VER="
+                            (string-join (string-split fst-version #\.) "0")))
+                   (setenv "CPLUS_INCLUDE_PATH"
+                           (string-join
+                            (append (map (lambda (dir)
+                                           (search-input-directory inputs dir))
+                                         '("/include/glib-2.0"
+                                           "/lib/glib-2.0/include"
+                                           "/include/gstreamer-1.0"))
+                                    (list (getenv "CPLUS_INCLUDE_PATH")))
+                            ":")))
+                 (substitute* "Makefile"
+                   (("include \\$\\(KALDI_ROOT\\)/src/kaldi.mk") "")
+                   (("\\$\\(error Cannot find") "#"))))
+             (add-before 'build 'build-depend
+               (lambda* (#:key make-flags #:allow-other-keys)
+                 (apply invoke "make" "depend" make-flags)))
+             (replace 'install
+               (lambda _
+                 (install-file
+                  "libgstkaldinnet2onlinedecoder.so"
+                  (string-append #$output "/lib/gstreamer-1.0")))))))
       (inputs
-       (list glib gstreamer jansson openfst-1.7.3 kaldi))
+       (list glib gstreamer jansson openfst kaldi))
       (native-inputs
-       `(("bash" ,bash)
-         ("glib:bin" ,glib "bin")       ; glib-genmarshal
-         ("kaldi-src" ,(package-source kaldi))
-         ("pkg-config" ,pkg-config)))
+       (list bash `(,glib "bin") pkg-config))
       (home-page "https://kaldi-asr.org/")
       (synopsis "Gstreamer plugin for decoding speech")
       (description "This package provides a GStreamer plugin that wraps
@@ -3223,10 +3056,18 @@ automatically.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1iijq8jmgdxr7961inal1ggs496ymxradm51m4sqx8vl983x14y8"))))
+                  "1iijq8jmgdxr7961inal1ggs496ymxradm51m4sqx8vl983x14y8"))
+                ;; XXX: Tests are broken beyond repair and are mingled in the
+                ;; source directory.  Remove them to avoid installing them.
+                ;; See https://github.com/nicolas-graves/kaldi-gstreamer-server
+                ;; for a fork that tries to repair them, to no avail.
+                (snippet #~(for-each delete-file
+                                     '("kaldigstserver/test-buffer.py"
+                                       "kaldigstserver/decoder_test.py"
+                                       "kaldigstserver/decoder2_test.py")))))
       (build-system gnu-build-system)
       (arguments
-       `(#:tests? #f ; there are no tests that can be run automatically
+       `(#:tests? #f
          #:modules ((guix build utils)
                     (guix build gnu-build-system)
                     (srfi srfi-26))
@@ -3234,7 +3075,11 @@ automatically.")
          (modify-phases %standard-phases
            (delete 'configure)
            (replace 'build
-             (lambda* (#:key outputs #:allow-other-keys)
+             (lambda _
+               ;; Migrate to Glib.MainLoop.
+               (substitute* (find-files "kaldigstserver" "\\.py")
+                 (("GObject\\.threads_init\\(\\)") "")
+                 (("GObject") "GLib"))
                ;; Disable hash randomization to ensure the generated .pycs
                ;; are reproducible.
                (setenv "PYTHONHASHSEED" "0")
@@ -3242,10 +3087,6 @@ automatically.")
                  ;; See https://github.com/alumae/kaldi-gstreamer-server/issues/232
                  (substitute* "master_server.py"
                    (("\\.replace\\('\\\\.*") ")"))
-
-                 ;; This is a Python 2 file
-                 (delete-file "decoder_test.py")
-                 (delete-file "test-buffer.py")
 
                  (for-each (lambda (file)
                              (apply invoke
@@ -3273,19 +3114,18 @@ automatically.")
                  (let* ((server (string-append bin "/kaldi-gst-server"))
                         (client (string-append bin "/kaldi-gst-client"))
                         (worker (string-append bin "/kaldi-gst-worker"))
-                        (PYTHONPATH (getenv "GUIX_PYTHONPATH"))
-                        (GST_PLUGIN_PATH (string-append
-                                          (assoc-ref inputs "gst-kaldi-nnet2-online")
-                                          "/lib/gstreamer-1.0:${GST_PLUGIN_PATH}"))
                         (wrap (lambda (wrapper what)
                                 (with-output-to-file wrapper
                                   (lambda _
-                                    (format #t
-                                            "#!~a
+                                    (format #t "#!~a
 export GUIX_PYTHONPATH=~a
-export GST_PLUGIN_PATH=~a
-exec ~a ~a/~a \"$@\"~%"
-                                            (which "bash") PYTHONPATH GST_PLUGIN_PATH
+export GI_TYPELIB_PATH=~a:${GI_TYPELIB_PATH}
+export GST_PLUGIN_SYSTEM_PATH=~a:${GST_PLUGIN_SYSTEM_PATH}
+exec ~a ~a~a \"$@\"~%"
+                                            (which "bash")
+                                            (getenv "GUIX_PYTHONPATH")
+                                            (getenv "GI_TYPELIB_PATH")
+                                            (getenv "GST_PLUGIN_SYSTEM_PATH")
                                             (which "python") share what)))
                                 (chmod wrapper #o555))))
                    (for-each wrap
@@ -3294,7 +3134,11 @@ exec ~a ~a/~a \"$@\"~%"
                                    "client.py"
                                    "worker.py")))))))))
       (inputs
-       (list gst-kaldi-nnet2-online
+       (list gstreamer
+             gst-kaldi-nnet2-online
+             gst-plugins-base
+             gst-plugins-good
+             kaldi
              python-wrapper
              python-pygobject
              python-pyyaml
@@ -4873,7 +4717,7 @@ TensorFlow.js, PyTorch, and MediaPipe.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:cmake cmake-3.30
+      #:cmake cmake-next
       #:configure-flags
       ''("-DFBGEMM_LIBRARY_TYPE=shared")
       ;; Tests require AVX2 or AVX-512 instructions
@@ -6738,7 +6582,7 @@ linear algebra routines needed for structured matrices (or operators).")
          (kaldi kaldi-for-vosk))
     (package
       (name "vosk-api")
-      (version "0.3.43")
+      (version "0.3.50")
       (source
        (origin
          (method git-fetch)
@@ -6747,7 +6591,7 @@ linear algebra routines needed for structured matrices (or operators).")
                (commit (string-append "v" version))))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0xmp8i140c2hd3rj9dap8a2rnsvzb1k9hnqm12xzbaxrw73rkc29"))))
+          (base32 "0rm7c1n9iv4y9q6a860rqiy2bdawxjhbfd993lms1ly86vwyai8k"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -7148,24 +6992,35 @@ without dependencies, with
     (license license:expat)))
 
 (define-public python-gguf
-  (package
-    (name "python-gguf")
-    (version "0.6.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "gguf" version))
-       (sha256
-        (base32 "0rbyc2h3kpqnrvbyjvv8a69l577jv55a31l12jnw21m1lamjxqmj"))))
-    (build-system pyproject-build-system)
-    (arguments
-      (list #:tests? #false))
-    (inputs (list poetry python-pytest))
-    (propagated-inputs (list python-numpy))
-    (home-page "https://ggml.ai")
-    (synopsis "Read and write ML models in GGUF for GGML")
-    (description "A Python library for reading and writing GGUF & GGML format ML models.")
-    (license license:expat)))
+  ;; They didn't tag the commit
+  (let ((commit "69050a11be0ae3e01329f11371ecb6850bdaded5"))
+    (package
+      (name "python-gguf")
+      (version "0.16.0")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ggml-org/llama.cpp")
+               (commit commit)))
+         (file-name (git-file-name name commit))
+         (sha256
+          (base32 "1563mbrjykwpsbhghhzi4h1qv9qy74gq5vq4xhs58zk0jp20c7zz"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _
+                (chdir "gguf-py"))))))
+      (propagated-inputs (list python-numpy python-pyyaml python-sentencepiece
+                               python-tqdm))
+      (native-inputs (list python-poetry-core python-pytest))
+      (home-page "https://ggml.ai")
+      (synopsis "Read and write ML models in GGUF for GGML")
+      (description "A Python library for reading and writing GGUF & GGML format ML models.")
+      (license license:expat))))
 
 (define-public python-gymnasium
   (package

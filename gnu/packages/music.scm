@@ -131,7 +131,6 @@
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
-  #:use-module (gnu packages game-development)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
@@ -991,17 +990,6 @@ settings (aliasing, linear interpolation and cubic interpolation).")
     ;; license, a known free software license.
     ;; Therefore, the DUMB license may be considered a free software license.
     (license (license:fsf-free "file://LICENSE"))))
-
-(define-public dumb-allegro4
-  (package
-    (inherit dumb)
-    (name "dumb-allegro4")
-    (arguments
-     (substitute-keyword-arguments (package-arguments dumb)
-       ((#:configure-flags flags)
-        `(cons "-DBUILD_ALLEGRO4=ON" ,(delete "-DBUILD_ALLEGRO4=OFF" flags)))))
-    (inputs
-     (list allegro-4))))
 
 (define-public hydrogen
   (package
@@ -7726,22 +7714,13 @@ It is provided as an LV2 plugin and as a standalone Jack application.")
 (define-public a2jmidid
   (package
     (name "a2jmidid")
-    (version "9")
+    (version "12")
     (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/jackaudio/a2jmidid")
-                    (commit version)))
-              (modules '((guix build utils)))
-              (snippet
-               ;; Fix build for for riscv64-linux, same as:
-               ;;   https://github.com/jackaudio/a2jmidid/pull/18
-               '(substitute* "sigsegv.c"
-                  (("!defined[(]__aarch64__[)]")
-                   "!defined(__arch64__) && !defined(__riscv)")))
+              (method url-fetch)
+              (uri (string-append "https://dl.ladish.org/a2jmidid/a2jmidid-"
+                                  version ".tar.bz2"))
               (sha256
-               (base32 "1x6rcl3f4nklnx4p5jln9a7fpj9y7agjxs9rw7cccmwnski7pnsq"))
-              (file-name (git-file-name name version))))
+               (base32 "1m05kbxkfw992pl23vfbg4s4rlhailkh04fa7bjdhr39j32q4qjk"))))
     (arguments
      (list #:tests? #f      ; No tests.
            #:phases
@@ -7767,7 +7746,7 @@ It is provided as an LV2 plugin and as a standalone Jack application.")
     (description
      "@code{a2jmidid} is a daemon that implements automatic bridging of ALSA
 midi devices to JACK midi devices.")
-    (home-page "https://github.com/jackaudio/a2jmidid")
+    (home-page "https://a2jmidid.ladish.org/")
     (license license:gpl2)))
 
 (define-public opustags

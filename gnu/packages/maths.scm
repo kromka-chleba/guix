@@ -62,7 +62,7 @@
 ;;; Copyright © 2022 Roman Scherer <roman.scherer@burningswell.com>
 ;;; Copyright © 2023 Jake Leporte <jakeleporte@outlook.com>
 ;;; Copyright © 2023 Camilo Q.S. (Distopico) <distopico@riseup.net>
-;;; Copyright © 2023 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2023, 2025 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2024 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
 ;;; Copyright © 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
@@ -139,6 +139,7 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gd)
+  #:use-module (gnu packages geo)
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gperf)
@@ -1836,72 +1837,160 @@ extremely large and complex data collections.")
         (base32 "14gih7kmjx4h3lc7pg4fwcl28hf1qqkf2x7rljpxqvzkjrqbxi00"))
        (patches (search-patches "hdf5-config-date.patch"))))))
 
-;; When updating this package, please also update hdf-java.
 (define-public hdf5
   (package
-    (inherit hdf5-1.8)
-    (version "1.14.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (list (string-append "https://support.hdfgroup.org/ftp/HDF5/releases/"
-                                 "hdf5-" (version-major+minor version)
-                                 "/hdf5-" version "/src/hdf5-"
-                                 version ".tar.bz2")
-                  (string-append "https://support.hdfgroup.org/ftp/HDF5/"
-                                 "current"
-                                 (apply string-append
-                                        (take (string-split version #\.) 2))
-                                 "/src/hdf5-" version ".tar.bz2")))
-       (sha256
-        (base32 "05zr11y3bivfwrbvzbky1q2gjf6r7n92cvvdnh5jilbmxljg49cl"))
-       (patches (search-patches "hdf5-config-date.patch"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments hdf5-1.8)
-       ((#:phases phases #~%standard-phases)
-        #~(modify-phases #$phases
-            (add-after 'configure 'skip-version-test
-              (lambda _
-                ;; Skip test_check_version since the 'patch-settings' phase
-                ;; modifies the test reference.
-                (substitute* "test/test_check_version.sh.in"
-                  (("TESTING\\(\\).*" all)
-                   (string-append all "\nSKIP; exit 0\n")))))
-            (add-after 'patch-configure 'patch-configure-build-settings
-              (lambda _
-                (substitute* "src/H5build_settings.autotools.c.in"
-                  ;; Don't record the build-time kernel version to make the
-                  ;; library file reproducible.
-                  (("@UNAME_INFO@")
-                   "Linux"))))))))))
-
-;; Keep this in sync with the current hdf5 package.
-(define-public hdf-java
-  (package
-    (name "hdf-java")
-    (version "1.14.3")
+    (name "hdf5")
+    (version "1.14.6")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/HDFGroup/hdf5")
-             (commit (string-append "hdf5-"
-                                    (string-map
-                                     (lambda (c) (if (char=? c #\.) #\_ c))
-                                     version)))))
+             (commit (string-append "hdf5_" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lw9f62zxyjiv7vx9nvnashjj39i44j8d626i7b788zkxw58csvs"))
+        (base32
+         "1f7yv0xra465c3qy8c79fzddib653wzj5dsakb0bs02nwp3xm54q"))
        (modules '((guix build utils)))
-       (snippet     ; Make sure we don't use the bundled sources and binaries.
-        '(for-each delete-file
-                   (find-files "java/lib" "\\.jar$")))))
-    (build-system gnu-build-system)
+       (snippet
+        '(for-each
+          delete-file
+          (append
+           (find-files "." "Makefile\\.in$")
+           (find-files "java/lib" "\\.jar$")
+           (list "aclocal.m4"
+                 "bin/compile"
+                 "bin/config.guess"
+                 "bin/config.sub"
+                 "bin/depcomp"
+                 "bin/install-sh"
+                 "bin/ltmain.sh"
+                 "bin/missing"
+                 "bin/test-driver"
+                 "configure"
+                 "HDF5Examples/aclocal.m4"
+                 "HDF5Examples/compile"
+                 "HDF5Examples/configure"
+                 "HDF5Examples/depcomp"
+                 "HDF5Examples/missing"
+                 "HDF5Examples/test-driver"
+                 "hl/src/H5LTanalyze.c"
+                 "hl/src/H5LTparse.c"
+                 "hl/src/H5LTparse.h"
+                 "hl/tools/gif2h5/testfiles/ex_image2.h5"
+                 "hl/tools/gif2h5/testfiles/h52giftst.h5"
+                 "m4/ax_prog_doxygen.m4"
+                 "m4/libtool.m4"
+                 "m4/lt~obsolete.m4"
+                 "m4/ltoptions.m4"
+                 "m4/ltsugar.m4"
+                 "m4/ltversion.m4"
+                 "src/H5config.h.in"
+                 "src/H5Edefin.h"
+                 "src/H5Einit.h"
+                 "src/H5Epubgen.h"
+                 "src/H5Eterm.h"
+                 "src/H5overflow.h"
+                 "src/H5version.h"))))
+       (patches (search-patches "hdf5-config-dependencies.patch"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      ;; Some of the users, notably Flann, need the C++ interface.
+      #:configure-flags
+      #~(list
+         (string-append "-DHDF5_INSTALL_CMAKE_DIR=" #$output "/lib/cmake")
+         "-DHDF5_BUILD_CPP_LIB=ON"
+         "-DHDF5_BUILD_FORTRAN=ON"
+         ;; Build a thread-safe library.  Unfortunately, CMakeLists.txt
+         ;; invites you to either turn off C++, Fortran, and the high-level
+         ;; interface (HL), or to enable 'ALLOW_UNSUPPORTED'.  Debian
+         ;; packagers chose to pass '--enable-unsupported' to the 'configure'
+         ;; script and we follow their lead here.
+         "-DHDF5_ENABLE_THREADSAFE=ON"
+         "-DALLOW_UNSUPPORTED=ON"
+         "-DHDF5_BUILD_DOC=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; XXX: src/H5private.h includes <fenv.h> and fails to find the
+          ;; stdlib types when the gfortran header is used.  Remove gfortran
+          ;; from CPLUS_INCLUDE_PATH as a workaround.
+          (add-after 'set-paths 'hide-gfortran
+            (lambda _
+              (let ((gfortran #$(this-package-native-input "gfortran")))
+                (setenv "CPLUS_INCLUDE_PATH"
+                        (string-join
+                         (delete (string-append gfortran "/include/c++")
+                                 (string-split (getenv "CPLUS_INCLUDE_PATH") #\:))
+                         ":")))))
+          (add-after 'unpack 'make-gen-deterministic
+            (lambda _
+              (substitute* "bin/make_err"
+                (("keys %major" all)
+                 (string-append "sort " all))
+                (("while.*each \\(%section\\).*")
+                 (string-append
+                  "foreach $sect_name (sort keys %section) {\n"
+                  "        $sect_desc = $section{$sect_name};\n")))))
+          (add-after 'unpack 'generate-flexbison
+            (lambda _
+              (invoke "bash" "bin/genparser" "hl/src")))
+          (add-after 'unpack 'patch-trace-shebang
+            (lambda _
+              (for-each patch-shebang
+                        (find-files "bin" (lambda (file stat)
+                                            (executable-file? file))))))
+          ;; This is a known issue on i686, see
+          ;; https://github.com/HDFGroup/hdf5/issues/4926
+          (add-after 'unpack 'fix-fortran-i686-test
+            (lambda _
+              (substitute* "fortran/test/tH5R.F90"
+                (((string-append
+                   "CALL h5rget_obj_name_f\\(C_LOC\\(ref_ptr\\(2\\)\\),"
+                   " \"\", error, name_len=buf_size \\)"))
+                 (string-append
+                  "CALL h5rget_obj_name_f(C_LOC(ref_ptr(2)),"
+                  " \"xxxxxxxxxxxxxx\", error, name_len=buf_size)")))))
+          (add-after 'unpack 'generate-headers
+            (lambda _
+              (invoke "perl" "bin/make_err" "src/H5err.txt")
+              (invoke "perl" "bin/make_vers" "src/H5vers.txt")
+              (invoke "perl" "bin/make_overflow" "src/H5overflow.txt"))))))
+    (inputs (list libaec zlib))
+    (native-inputs
+     (list bison
+           doxygen
+           flex
+           gfortran
+           graphviz
+           ;; Needed to generate some headers and for tests
+           perl
+           which))
+    (home-page "https://www.hdfgroup.org")
+    (synopsis "Management suite for extremely large and complex data")
+    (description "HDF5 is a suite that makes possible the management of
+extremely large and complex data collections.")
+    (license (license:x11-style
+              "https://support.hdfgroup.org/ftp/HDF5/releases/COPYING.html"))))
+
+(define-public hdf5-java
+  (package
+    (name "hdf5-java")
+    (version (package-version hdf5))
+    (source (package-source hdf5))
+    (build-system cmake-build-system)
     (arguments
      (list
       #:configure-flags
-      #~(list "--enable-java"
-              "--disable-tools")
+      #~(list "-DHDF5_BUILD_JAVA=ON"
+              "-DHDF5_BUILD_TOOLS=OFF")
+      #:modules
+      '((guix build cmake-build-system)
+        ((guix build ant-build-system) #:prefix ant:)
+        (guix build utils))
+      #:imported-modules
+      `((guix build ant-build-system)
+        ,@%cmake-build-system-modules)
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'unbundle
@@ -1912,27 +2001,35 @@ extremely large and complex data collections.")
                     (api
                      (search-input-file
                       inputs "/lib/m2/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar"))
+                    (nop
+                     (search-input-file
+                      inputs "/lib/m2/org/slf4j/slf4j-nop/1.7.25/slf4j-nop-1.7.25.jar"))
                     (junit
                      (search-input-file
                       inputs "/lib/m2/junit/junit/4.12/junit-4.12.jar"))
                     (hamcrest
                      (search-input-file
                       inputs "/lib/m2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar")))
-                (substitute* (append (find-files "java" "Makefile.am")
-                                     (find-files "java" "Makefile.in"))
-                  (("\\$\\(top_srcdir\\)/java/lib/ext/slf4j-simple-2.0.6.jar")
-                   simple)
-                  (("\\$\\(top_srcdir\\)/java/lib/slf4j-api-2.0.6.jar")
-                   api)
-                  (("\\$\\(top_srcdir\\)/java/lib/junit.jar")
+                (substitute* "CMakeLists.txt"
+                  (("(set *\\(HDF5_JAVA_LOGGING_JAR ).*" _ orig)
+                   (string-append orig api ")\n"))
+                  (("(set *\\(HDF5_JAVA_LOGGING_NOP_JAR ).*" _ orig)
+                   (string-append orig nop ")\n"))
+                  (("(set *\\(HDF5_JAVA_LOGGING_SIMPLE_JAR ).*" _ orig)
+                   (string-append orig simple ")\n")))
+                ;; Do not install copies of external libraries
+                (substitute* "java/CMakeLists.txt"
+                  ((".*HDF5_JAVA_LOGGING.*_JAR.*") ""))
+                (substitute* "java/test/CMakeLists.txt"
+                  (("\\$\\{HDF5_JAVA_LIB_DIR\\}/junit\\.jar")
                    junit)
-                  (("\\$\\(top_srcdir\\)/java/lib/hamcrest-core.jar")
+                  (("\\$\\{HDF5_JAVA_LIB_DIR\\}/hamcrest-core\\.jar")
                    hamcrest))
                 (substitute* '("java/test/junit.sh.in"
-                               "java/examples/datatypes/JavaDatatypeExample.sh.in"
-                               "java/examples/datasets/JavaDatasetExample.sh.in"
-                               "java/examples/intro/JavaIntroExample.sh.in"
-                               "java/examples/groups/JavaGroupExample.sh.in")
+                               "HDF5Examples/JAVA/H5D/JavaDatasetExample.sh.in"
+                               "HDF5Examples/JAVA/H5G/JavaGroupExample.sh.in"
+                               "HDF5Examples/JAVA/H5T/JavaDatatypeExample.sh.in"
+                               "HDF5Examples/JAVA/TUTR/runExample.sh.in")
                   (("^LIST_JAR_TESTFILES=\"" m)
                    (string-append m hamcrest "\n"
                                   junit "\n"
@@ -1952,30 +2049,44 @@ extremely large and complex data collections.")
                   (("/usr/bin/uname")
                    (search-input-file inputs "/bin/uname")))
                 (substitute* (find-files "java/test/testfiles/" ".*\\.txt$")
-                  (("JUnit version 4.11")
-                   "JUnit version 4.12-SNAPSHOT"))))))))
+                  (("JUnit version 4.13.2")
+                   "JUnit version 4.12-SNAPSHOT")))))
+          (add-after 'unpack 'patch-trace-shebang
+            (lambda _
+              (for-each patch-shebang
+                        (find-files "bin" (lambda (file stat)
+                                            (executable-file? file))))))
+          (add-after 'unpack 'generate-flexbison
+            (lambda _
+              (invoke "bash" "bin/genparser" "hl/src")))
+          (add-after 'unpack 'generate-headers
+            (lambda _
+              (invoke "perl" "bin/make_err" "src/H5err.txt")
+              (invoke "perl" "bin/make_vers" "src/H5vers.txt")
+              (invoke "perl" "bin/make_overflow" "src/H5overflow.txt")))
+          (add-after 'install 'strip-jar-timestamps
+            (assoc-ref ant:%standard-phases 'strip-jar-timestamps)))))
     (native-inputs
-     (list `(,icedtea "jdk")
-           ;; For tests:
-           java-hamcrest-core
-           java-junit
-           java-slf4j-simple))
+     (modify-inputs (package-native-inputs hdf5)
+       (prepend `(,icedtea "jdk"))
+       (prepend java-hamcrest-core)
+       (prepend java-junit)
+       (prepend java-slf4j-nop)
+       (prepend java-slf4j-simple)
+       (prepend (@ (gnu packages compression) zip))
+       (delete "gfortran")))
     (inputs
-     (list hdf4
-           hdf5
-           java-slf4j-api
+     (list java-slf4j-api
            libjpeg-turbo
            zlib))
     (home-page "https://www.hdfgroup.org")
-    (synopsis "Java interface for the HDF4 and HDF5 libraries")
-    (description "Java HDF Interface (JHI) and Java HDF5 Interface (JHI5) use
-the Java Native Interface to wrap the HDF4 and HDF5 libraries, which are
-implemented in C.")
+    (synopsis "Java interface for the HDF5 library")
+    (description "The Java HDF5 Interface (JHI5) uses the Java Native
+Interface to wrap the HDF5 library, which is implemented in C.")
+    (license (package-license hdf5))))
 
-    ;; BSD-style license:
-    (license (license:x11-style
-              "https://support.hdfgroup.org/ftp/HDF5/hdf-java\
-/current/src/unpacked/COPYING.html"))))
+(define-public hdf-java
+  (deprecated-package "hdf-java" hdf5-java))
 
 (define-public hdf-eos2
   (package
@@ -2077,38 +2188,25 @@ Swath).")
 (define-public hdf5-parallel-openmpi
   (package/inherit hdf5
     (name "hdf5-parallel-openmpi")
-    (inputs
-     `(("mpi" ,openmpi)
-       ,@(package-inputs hdf5)))
+    (inputs (modify-inputs (package-inputs hdf5)
+              (prepend openmpi)))
     (arguments
      (substitute-keyword-arguments (package-arguments hdf5)
-       ((#:configure-flags flags)
-        #~(cons "--enable-parallel"
-                (delete "--enable-cxx"
-                        (delete "--enable-threadsafe" #$flags))))
+       ((#:configure-flags _ #f)
+        ''("-DHDF5_ENABLE_THREADSAFE=OFF"
+           "-DHDF5_ENABLE_PARALLEL=ON"
+           "-DHDF5_BUILD_CPP_LIB=OFF"
+           "-DHDF5_BUILD_DOC=ON"))
        ((#:phases phases)
         #~(modify-phases #$phases
             (add-after 'build 'mpi-setup
-              #$%openmpi-setup)
-            (add-before 'check 'patch-tests
-              (lambda _
-                ;; OpenMPI's mpirun will exit with non-zero status if it
-                ;; detects an "abnormal termination", i.e. any process not
-                ;; calling MPI_Finalize().  Since the test is explicitly
-                ;; avoiding MPI_Finalize so as not to have at_exit and thus
-                ;; H5C_flush_cache from being called, mpirun will always
-                ;; complain, so turn this test off.
-                (substitute* "testpar/Makefile"
-                  (("(^TEST_PROG_PARA.*)t_pflush1(.*)" front back)
-                   (string-append front back "\n")))
-                (substitute* "tools/test/h5diff/testph5diff.sh"
-                  (("/bin/sh") (which "sh")))))))))
+              #$%openmpi-setup)))))
     (synopsis "Management suite for data with parallel IO support")))
 
 (define-public hdf5-blosc
   (package
     (name "hdf5-blosc")
-    (version "1.0.0")
+    (version "1.0.1")
     (source
      (origin
        (method git-fetch)
@@ -2117,7 +2215,7 @@ Swath).")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1nj2bm1v6ymm3fmyvhbn6ih5fgdiapavlfghh1pvbmhw71cysyqs"))))
+        (base32 "0kq09w2mz8i735p3zfnsdqdvay0086ls0cb621ckfxq42pr3gkm4"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags
@@ -2135,33 +2233,13 @@ Swath).")
                (("ExternalProject_Add\\(project_blosc") "message("))
              #t)))))
     (inputs
-     (list c-blosc hdf5-1.10))
+     (list c-blosc hdf5))
     (home-page "https://github.com/Blosc/hdf5-blosc")
     (synopsis "Filter for HDF5 using the Blosc compressor")
     (description "This is a filter for HDF5 that uses the Blosc compressor; by
 installing this filter, you can read and write HDF5 files with
 Blosc-compressed datasets.")
     (license license:expat)))
-
-(define-public h5check
-  (package
-    (name "h5check")
-    (version "2.0.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://www.hdfgroup.org/ftp/HDF5/tools/"
-                           "h5check/src/h5check-" version ".tar.gz"))
-       (sha256
-        (base32
-         "1gm76jbwhz9adbxgn14zx8cj33dmjdr2g5xcy0m9c2gakp8w59kj"))))
-    (build-system gnu-build-system)
-    (inputs (list hdf5-1.8))                ;h5cc for tests
-    (home-page "https://www.hdfgroup.org/products/hdf5_tools/h5check.html")
-    (synopsis "HDF5 format checker")
-    (description "@code{h5check} is a validation tool for verifying that an
-HDF5 file is encoded according to the HDF File Format Specification.")
-    (license (license:x11-style "file://COPYING"))))
 
 (define-public itex2mml
   (package
@@ -2285,11 +2363,12 @@ similar to MATLAB, GNU Octave or SciPy.")
        (patches (search-patches "netcdf-date-time.patch"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list m4 doxygen graphviz))
+     (list doxygen graphviz m4))
     (inputs
      (list curl
            hdf4-alt
            hdf5
+           libaec
            libjpeg-turbo
            libxml2
            unzip
@@ -2378,7 +2457,7 @@ sharing of scientific data.")
                            "FFLAGS=-fallow-argument-mismatch")
        #:parallel-tests? #f))
     (inputs
-     (list netcdf))
+     (list libaec hdf5 netcdf))
     (native-inputs
      (list gfortran))
     (synopsis "Fortran interface for the netCDF library")
@@ -5190,7 +5269,7 @@ implemented in ANSI C, and MPI for communications.")
 (define-public scotch
   (package
     (name "scotch")
-    (version "7.0.4")
+    (version "7.0.7")
     (source
      (origin
        (method git-fetch)
@@ -5199,7 +5278,8 @@ implemented in ANSI C, and MPI for communications.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0rbc51albpd2923dkirpkj8rfkic6rsvwqqnv1mmsk391zhk3amr"))
+        (base32 "0r46bmnz9xjlgcb3vvlx3sg2qh4gfgga89vs4vlbzz3s4lj48g46"))
+       (patches (search-patches "scotch-cmake-remove-metis.patch"))
        (modules '((guix build utils)))
        (snippet
         #~(substitute* "src/libscotchmetis/library_parmetis.h"
@@ -5214,22 +5294,25 @@ implemented in ANSI C, and MPI for communications.")
      (list flex bison gfortran))
     (outputs '("out" "metis"))
     (arguments
-     `(#:configure-flags '("-DBUILD_SHARED_LIBS=YES" "-DINTSIZE=64"
-                           "-DBUILD_PTSCOTCH=OFF")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'install-metis
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out    (assoc-ref outputs "out"))
-                    (metis  (assoc-ref outputs "metis"))
-                    (prefix (string-length out)))
-               (for-each (lambda (file)
-                           (let ((target (string-append
-                                          metis
-                                          (string-drop file prefix))))
-                             (mkdir-p (dirname target))
-                             (rename-file file target)))
-                         (find-files out "metis"))))))))
+     (list #:configure-flags #~'("-DBUILD_SHARED_LIBS=YES" "-DINTSIZE=64"
+                                 "-DBUILD_PTSCOTCH=OFF")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'install-metis
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   ;; Move the METIS compatibility library to a separate output to
+                   ;; avoid a name clash on <metis.h>.
+                   (let* ((out (assoc-ref outputs "out"))
+                          (metis (assoc-ref outputs "metis"))
+                          (prefix (string-length out)))
+                     (for-each (lambda (file)
+                                 (let ((target
+                                        (string-append metis
+                                                       (string-drop file
+                                                                    prefix))))
+                                   (mkdir-p (dirname target))
+                                   (rename-file file target)))
+                               (find-files out "metis"))))))))
     (home-page "https://www.labri.fr/perso/pelegrin/scotch/")
     (properties
      `((release-monitoring-url
@@ -5253,9 +5336,8 @@ bio-chemistry.")
     (name "scotch32")
     (arguments
      (substitute-keyword-arguments (package-arguments scotch)
-       ((#:configure-flags flags ''())
-        ''("-DBUILD_SHARED_LIBS=YES" "-DBUILD_PTSCOTCH=OFF"
-           "-DINTSIZE=32"))))
+       ((#:configure-flags flags #~'())
+        #~'("-DBUILD_SHARED_LIBS=YES" "-DBUILD_PTSCOTCH=OFF" "-DINTSIZE=32"))))
     (synopsis
      "Programs and libraries for graph algorithms (32-bit integers)")))
 
@@ -5267,13 +5349,12 @@ bio-chemistry.")
      (list openmpi))                              ;headers include MPI headers
     (arguments
      (substitute-keyword-arguments (package-arguments scotch)
-       ((#:configure-flags flags ''())
-        ''("-DBUILD_SHARED_LIBS=YES" "-DBUILD_PTSCOTCH=ON"
-           "-DINTSIZE=64"))
-       ((#:phases phases '%standard-phases)
-        `(modify-phases ,phases
-           (add-before 'check 'mpi-setup
-             ,%openmpi-setup)))))
+       ((#:configure-flags flags #~'())
+        #~'("-DBUILD_SHARED_LIBS=YES" "-DBUILD_PTSCOTCH=ON" "-DINTSIZE=64"))
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (add-before 'check 'mpi-setup
+              #$%openmpi-setup)))))
     (synopsis "Programs and libraries for graph algorithms (with MPI)")))
 
 (define-public pt-scotch32
@@ -5284,22 +5365,10 @@ bio-chemistry.")
      (list openmpi))                     ;headers include MPI headers
     (arguments
      (substitute-keyword-arguments (package-arguments pt-scotch)
-       ((#:configure-flags flags ''())
-        ''("-DBUILD_SHARED_LIBS=YES" "-DBUILD_PTSCOTCH=ON"
-           "-DINTSIZE=32"))))
+       ((#:configure-flags flags #~'())
+        #~'("-DBUILD_SHARED_LIBS=YES" "-DBUILD_PTSCOTCH=ON" "-DINTSIZE=32"))))
     (synopsis
      "Programs and libraries for graph algorithms (with MPI and 32-bit integers)")))
-
-(define-public scotch-shared
-  ;; There used to be separate shared library variants while the default would
-  ;; provide .a files including PIC objects.  With the switch to CMake, .a
-  ;; files contain non-PIC objects, which breaks some users, and switching to
-  ;; shared libraries by default seems to make more sense, as discussed here:
-  ;; <https://issues.guix.gnu.org/47619#2>.
-  (deprecated-package "scotch-shared" scotch))
-
-(define-public pt-scotch-shared
-  (deprecated-package "pt-scotch-shared" pt-scotch))
 
 (define-public gklib
   (let ((commit "8bd6bad750b2b0d90800c632cf18e8ee93ad72d7")
@@ -7061,135 +7130,6 @@ This package contains all of the above-mentioned parts.
     ;; GPLv2+:
     ;;  GPUQREngine, RBio, SuiteSparse_GPURuntime, SuiteSparseQR, UMFPACK
     (license (list license:gpl2+ license:lgpl2.1+))))
-
-(define-public atlas
-  (package
-    (name "atlas")
-    (version "3.10.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/math-atlas/Stable/"
-                                  version "/atlas" version ".tar.bz2"))
-              (patches (search-patches "atlas-gfortran-compat.patch"))
-              (sha256
-               (base32
-                "1dyjlq3fiparvm8ypwk6rsmjzmnwk81l88gkishphpvc79ryp216"))))
-    (build-system gnu-build-system)
-    (home-page "https://math-atlas.sourceforge.net/")
-    (inputs `(("gfortran" ,gfortran)
-              ("lapack-tar" ,(package-source lapack))))
-    (outputs '("out" "doc"))
-    ;; For the moment we drop support for MIPS at it fails to compile. See
-    ;; https://lists.gnu.org/archive/html/guix-devel/2014-11/msg00516.html
-    (supported-systems (delete "mips64el-linux" %supported-systems))
-    (arguments
-     `(#:parallel-build? #f
-       #:parallel-tests? #f
-
-       ;; ATLAS tunes itself for the machine it is built on, as explained at
-       ;; <http://lists.gnu.org/archive/html/guix-devel/2014-10/msg00305.html>.
-       ;; For this reason, we want users to build it locally instead of using
-       ;; substitutes.
-       #:substitutable? #f
-
-       #:modules ((srfi srfi-26)
-                  (guix build gnu-build-system)
-                  (guix build utils))
-       #:configure-flags
-       `(;; Generate position independent code suitable for dynamic libraries
-         ;; and use WALL timer to get more accurate timing.
-         "-Fa" "alg" "-fPIC" "-D" "c" "-DWALL"
-         ;; Set word width.
-         "-b"
-         ,,(if (string-match "64" (%current-system))
-               "64"
-               "32")
-         ;; Disable parallel build as it gives errors: atlas_pthread.h is
-         ;; needed to compile C files before it is generated.
-         "-Ss" "pmake" "make -j 1"
-         ;; Probe is failing for MIPS.  We therefore define the system
-         ;; architecture explicitly by setting (-A) MACHINETYPE = 49
-         ;; 'MIPSR1xK' and (-V) ISA = 1 'none'.
-         ,,@(if (string-prefix? "mips" (%current-system))
-              (list "-A" "49" "-V" "1")
-              (list))
-         ;; Generate shared libraries.
-         "--shared"
-         ;; Build a full LAPACK library.
-         ,(string-append "--with-netlib-lapack-tarfile="
-                         (assoc-ref %build-inputs "lapack-tar")))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'install-doc
-           (lambda* (#:key outputs inputs #:allow-other-keys)
-             (let ((doc (string-append (assoc-ref outputs "doc")
-                                       "/share/doc/atlas")))
-               (mkdir-p doc)
-               (for-each (cut install-file <> doc)
-                         (find-files "../ATLAS/doc" ".*"))
-               #t)))
-         (add-after 'check 'check-pt
-           (lambda _ (invoke "make" "ptcheck")))
-         ;; Fix files required to run configure.
-         (add-before 'configure 'fix-/bin/sh
-           (lambda _
-             ;; Use `sh', not `/bin/sh'.
-             (substitute* (find-files "." "Makefile|configure|SpewMakeInc\\.c")
-               (("/bin/sh")
-                "sh"))
-             #t))
-         ;; Fix /bin/sh in generated make files.
-         (add-after 'configure 'fix-/bin/sh-in-generated-files
-           (lambda _
-             (substitute* (find-files "." "^[Mm]ake\\.inc.*")
-               (("/bin/sh")
-                "sh"))
-             #t))
-         ;; ATLAS configure program does not accepts the default flags
-         ;; passed by the 'gnu-build-system'.
-         (replace 'configure
-           (lambda* (#:key native-inputs inputs outputs
-                           (configure-flags '())
-                           #:allow-other-keys #:rest args)
-             (let* ((prefix     (assoc-ref outputs "out"))
-                    (bash       (or (and=> (assoc-ref
-                                            (or native-inputs inputs) "bash")
-                                           (cut string-append <> "/bin/bash"))
-                                    "/bin/sh"))
-                    (flags      `(,(string-append "--prefix=" prefix)
-                                  ,@configure-flags))
-                    (abs-srcdir (getcwd))
-                    (srcdir     (string-append "../" (basename abs-srcdir))))
-               (format #t "source directory: ~s (relative from build: ~s)~%"
-                       abs-srcdir srcdir)
-               (mkdir "../build")
-               (chdir "../build")
-               (format #t "build directory: ~s~%" (getcwd))
-               (format #t "configure flags: ~s~%" flags)
-               (apply invoke bash
-                      (string-append srcdir "/configure")
-                      flags)))))))
-    (synopsis "Automatically Tuned Linear Algebra Software")
-    (description
-     "ATLAS is an automatically tuned linear algebra software library
-providing C and Fortran77 interfaces to a portably efficient BLAS
-implementation, as well as a few routines from LAPACK.
-
-Optimization occurs at build time.  For this reason, the library is built on
-the machine where it is installed, without resorting to pre-built substitutes.
-
-Before building the library, CPU throttling should be disabled.  This can be
-done in the BIOS, or, on GNU/Linux, with the following command:
-
-@example
-# cpupower --governor performance
-@end example
-
-Failure to do so will result in a library with poor performance.")
-    ;; The test suite is notoriously lengthy and routinely exceeds the default
-    ;; timeout of 21600 seconds on the not unbeefy berlin build nodes.
-    (properties '((timeout . 86400)))        ; 1 day
-    (license license:bsd-3)))
 
 (define-public cglm
   (package
@@ -11196,4 +11136,26 @@ groups.  Documentation is available on
     (description "ExprTk is a C++ headers only library for mathematical
 expression parsing and evaluation.")
     (home-page "https://www.partow.net/programming/exprtk/index.html")
+    (license license:expat)))
+
+(define-public highs
+  (package
+    (name "highs")
+    (version "1.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ERGO-Code/HiGHS")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19q99nkk6r6k91gxp8a5rjil1399qyfgfc6jqlg2gd82vpcw8c8b"))))
+    (build-system cmake-build-system)
+    (home-page "https://highs.dev")
+    (synopsis "High performance software for linear optimization")
+    (description
+     "HiGHS provides serial and parallel solvers for large-scale sparse
+linear programming (LP), mixed-integer programming (MIP), and quadratic
+programming (QP) models")
     (license license:expat)))

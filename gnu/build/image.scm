@@ -178,7 +178,11 @@ ROOT directory to populate the image."
   (case format
     ((compressed-qcow2)
      (invoke "qemu-img" "convert" "-c" "-f" "raw"
-             "-O" "qcow2" image output))
+             ;; The maximum number of co-routines is 16.
+             "-m" (number->string (min 16 (parallel-job-count)))
+             "-O" "qcow2"
+             "-o" "compression_type=zstd"
+             image output))
     (else
      (copy-file image output))))
 

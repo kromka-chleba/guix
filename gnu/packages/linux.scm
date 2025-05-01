@@ -513,6 +513,21 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
+(define-public linux-libre-6.14-version "6.14.4")
+(define-public linux-libre-6.14-gnu-revision "gnu")
+(define deblob-scripts-6.14
+  (linux-libre-deblob-scripts
+   linux-libre-6.14-version
+   linux-libre-6.14-gnu-revision
+   (base32 "1r6p7wnf78i5fgdw1gc2ax8lqqizp58ms48b00xs82hcrkik1v5v")
+   (base32 "1wx8f0fx71sr506j655i7mr9xrc4fpw96d3fdgfivjsxlcrwfpnk")))
+(define-public linux-libre-6.14-pristine-source
+  (let ((version linux-libre-6.14-version)
+        (hash (base32 "0fak7y9dr5rxzmi4m545kz7pyk2c91dkj4k7i2jgnl80ga6z4lll")))
+   (make-linux-libre-source version
+                            (%upstream-linux-source version hash)
+                            deblob-scripts-6.14)))
+
 (define-public linux-libre-6.13-version "6.13.12")
 (define-public linux-libre-6.13-gnu-revision "gnu")
 (define deblob-scripts-6.13
@@ -532,47 +547,47 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.24")
+(define-public linux-libre-6.12-version "6.12.25")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
    linux-libre-6.12-version
    linux-libre-6.12-gnu-revision
-   (base32 "1d2v3608fxa1s7ncpkkzxa48g2qz4agrxx1kyww3fn8z66l8k4vj")
-   (base32 "0m7xfx2hmfgi1ylpi8gvfwh4mlgj1zwrdqs1aglslwva20gryqhi")))
+   (base32 "0qc1jcls65rz253g6f8rkfj1nc0ch9zv17y7d9il556rv78qfk0r")
+   (base32 "1an34mqv0p6fmb5c3wmw3yl16gm1m3qqhgr7ycz3ygp06pgaj8qy")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "078c2gs7f4gzxhc1jr42bfwrfi4yq5f84l7r2bfn05crnp0l4cb4")))
+        (hash (base32 "141visdf85iw011ncp77csmkahvn598lqvhi493a4g31dw7piby8")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.87")
+(define-public linux-libre-6.6-version "6.6.88")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
    linux-libre-6.6-version
    linux-libre-6.6-gnu-revision
-   (base32 "10vhj2rj8mpfnxh4yarpvj79bnnb3yk70s8qjxhhzb9ln6slh8gy")
-   (base32 "12897yw71dz859nv13nzh6pp5j497l8ps0ddgpbbynm72bny1fy5")))
+   (base32 "08cyffrw55h5canna6n9pv46rg6n79kzm5b7mvk4sqsvpsdljdj7")
+   (base32 "0xnhflca5rmxnxpywds6ixnipg2zsyb0wik3spir8j3cfjpqjw3b")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1iks6msk4cajyy0khyhrwsdl123hr81n67xzdnhlgg6dvb1famw9")))
+        (hash (base32 "0l0697dcfdjkl80c7x1nfvw3n6390nnbznlpfbg51sgp7sv8kpqr")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.134")
+(define-public linux-libre-6.1-version "6.1.135")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
    linux-libre-6.1-version
    linux-libre-6.1-gnu-revision
-   (base32 "0r9jg0aqsvkfdzqmm4r7knpqxvhq6asrdcrcw30z6w2y2wanrvxr")
-   (base32 "10vkgkki08h8cbymmglvn2nkzx8lsqxpaciw6c2d57952q4byw8f")))
+   (base32 "1qp8v5v15yq5122llp03xkl1315l32pb0rcyn63n2ff18z66270k")
+   (base32 "0lkgvf1y9qmh1z8ih13y3p1zv5wb3psfp0iizn9y7isscqm4056f")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "08xx0w5gz7w5hqsnpckmizi1zpg38iwfchj20163ivnxf3fhriv0")))
+        (hash (base32 "1fbyjprj65b1blb033lcy9y4bkh9jb7m06h6qph739wnzzhpmlg9")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
@@ -649,6 +664,11 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (inherit source)
     (patches (append (origin-patches source)
                      patches))))
+
+(define-public linux-libre-6.14-source
+  (source-with-patches linux-libre-6.14-pristine-source
+                       (list %boot-logo-patch
+                             %linux-libre-arm-export-__sync_icache_dcache-patch)))
 
 (define-public linux-libre-6.13-source
   (source-with-patches linux-libre-6.13-pristine-source
@@ -776,6 +796,11 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
     (description "Headers of the Linux-Libre kernel.")
     (license license:gpl2)))
 
+(define-public linux-libre-headers-6.14
+  (make-linux-libre-headers* linux-libre-6.14-version
+                             linux-libre-6.14-gnu-revision
+                             linux-libre-6.14-source))
+
 (define-public linux-libre-headers-6.13
   (make-linux-libre-headers* linux-libre-6.13-version
                              linux-libre-6.13-gnu-revision
@@ -826,7 +851,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; linux-libre-headers-latest points to the latest headers package
 ;; and should be used as a dependency for packages that depend on
 ;; the headers.
-(define-public linux-libre-headers-latest linux-libre-headers-6.13)
+(define-public linux-libre-headers-latest linux-libre-headers-6.14)
 
 
 ;;;
@@ -1152,6 +1177,14 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
 ;;;
 ;;; Generic kernel packages.
 ;;;
+
+(define-public linux-libre-6.14
+  (make-linux-libre* linux-libre-6.14-version
+                     linux-libre-6.14-gnu-revision
+                     linux-libre-6.14-source
+                     '("x86_64-linux" "i686-linux" "armhf-linux"
+                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
+                     #:configuration-file kernel-config))
 
 (define-public linux-libre-6.13
   (make-linux-libre* linux-libre-6.13-version
@@ -3096,7 +3129,7 @@ module.")
 (define-public e2fsprogs
   (package
     (name "e2fsprogs")
-    (version "1.47.1")
+    (version "1.47.2")
     (source (origin
              (method url-fetch)
              (uri (string-append
@@ -3105,7 +3138,7 @@ module.")
                    "e2fsprogs-" version ".tar.xz"))
              (sha256
               (base32
-               "1lg0k5fh41nl0ldbh76hwdx3g5kqzqyc245vljy88wnlgw2dqcss"))))
+               "0g76fhnyzr2awwybd6c16439l80r5dv4kbfaq7cr908fr9j2w908"))))
     (build-system gnu-build-system)
     (inputs (list `(,util-linux "lib")))
     (native-inputs (list pkg-config
@@ -6900,35 +6933,39 @@ blocks and random block placement.")
     (license license:gpl2+)))
 
 (define-public compsize
-  (package
-    (name "compsize")
-    (version "1.5")
-    (home-page "https://github.com/kilobyte/compsize")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url home-page)
-                    (commit (string-append "v" version))))
-              (sha256
-               (base32 "0vqnrwgpv6pc1yjl0g4gl71xyl6v0xl3pyqjanjpwps73c53azir"))
-              (file-name (git-file-name name version))))
-    (build-system gnu-build-system)
-    (inputs
-     (list btrfs-progs))
-    (arguments
-     `(#:tests? #f                      ; No tests.
-       #:make-flags
-       (list (string-append "CC=" ,(cc-for-target)))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (install-file "compsize" (string-append out "/bin"))
-               (install-file "compsize.8" (string-append out "/share/man/man8"))))))))
-    (synopsis "Find compression type/ratio on Btrfs files")
-    (description "@command{compsize} takes a list of files (given as
+  (let ((commit "d79eacf77abe3b799387bb8a4e07a18f1f1031e8")
+        (revision "0"))
+    (package
+      (name "compsize")
+      (version (git-version "1.5" revision commit))
+      (home-page "https://github.com/kilobyte/compsize")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url home-page)
+                      (commit commit)))
+                (sha256
+                 (base32 "02fvgy12m50rg1snp555a1kc3cm01g2imb81cih7ikhkbjbca0d7"))
+                (file-name (git-file-name name version))
+                (patches
+                 (search-patches "compsize-fix-btrfs-progs-compatibility.patch"))))
+      (build-system gnu-build-system)
+      (inputs
+       (list btrfs-progs))
+      (arguments
+       `(#:tests? #f                      ; No tests.
+         #:make-flags
+         (list (string-append "CC=" ,(cc-for-target)))
+         #:phases
+         (modify-phases %standard-phases
+           (delete 'configure)
+           (replace 'install
+             (lambda* (#:key outputs #:allow-other-keys)
+               (let ((out (assoc-ref outputs "out")))
+                 (install-file "compsize" (string-append out "/bin"))
+                 (install-file "compsize.8" (string-append out "/share/man/man8"))))))))
+      (synopsis "Find compression type/ratio on Btrfs files")
+      (description "@command{compsize} takes a list of files (given as
 arguments) on a Btrfs file system and measures used compression types and
 effective compression ratio, producing a report.
 
@@ -6941,7 +6978,7 @@ only a few bytes of a 1GB extent or reflink it a thousand times.  Thus, the
 uncompressed size will not match the number given by @command{tar} or
 @command{du}.  On the other hand, the space used should be accurate (although
 obviously it can be shared with files outside our set).")
-    (license license:gpl2+)))
+      (license license:gpl2+))))
 
 (define-public f2fs-tools
   (package

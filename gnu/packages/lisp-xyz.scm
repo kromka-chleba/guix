@@ -27740,11 +27740,11 @@ running into parallelism problems when having to change directory.")
   (sbcl-package->ecl-package sbcl-simple-inferiors))
 
 (define-public sbcl-simple-matrix
-  (let ((commit "6a95ac2fd03105cf1370caabe9527f65bfa51f70")
+  (let ((commit "9d022683dbe9d0d87d29ed1a42918515cf23024f")
         (revision "0"))
     (package
       (name "sbcl-simple-matrix")
-      (version (git-version "1.6" revision commit))
+      (version (git-version "2.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -27753,7 +27753,7 @@ running into parallelism problems when having to change directory.")
                (commit commit)))
          (file-name (git-file-name "cl-simple-matrix" version))
          (sha256
-          (base32 "0claz7j4qwnb3zfls6m355jj9252fd12v57yp1f7fzkg5rypj2pz"))))
+          (base32 "1nwlvahfrcvg1b05kjq69w1d9rnkn30zw7n2r1mvg69s97vdaswc"))))
       (build-system asdf-build-system/sbcl)
       (native-inputs (list sbcl-fiveam))
       (synopsis "Matrix library for Common Lisp")
@@ -28183,8 +28183,8 @@ definition.")
   (sbcl-package->ecl-package sbcl-slot-extra-options))
 
 (define-public sbcl-micros
-  (let ((commit "af94fe5d6688f67a092f604765fb706ebae44e99")
-        (revision "1"))
+  (let ((commit "7dc9b46d3aad13661468863dc21ea1b599890487")
+        (revision "2"))
     (package
       (name "sbcl-micros")
       (version (git-version "0.0.0" revision commit))
@@ -28195,7 +28195,7 @@ definition.")
                (url "https://github.com/lem-project/micros")
                (commit commit)))
          (sha256
-          (base32 "1xn85zif10qkwnw4a1s584whnyvmjwn5sik949v1pwxykhq96qjy"))
+          (base32 "1qj7p6snz67jr2js22mmlz2w8jc9yrf0jqi1jzj9nw3ws2kc7dqb"))
          (file-name (git-file-name "micros" version))))
       (build-system asdf-build-system/sbcl)
       (native-inputs (list sbcl-rove))
@@ -28209,10 +28209,8 @@ editor.")
 (define-public cl-micros
   (sbcl-package->cl-source-package sbcl-micros))
 
-;; TODO: Enable when the following issue is fixed:
-;; https://github.com/lem-project/micros/issues/17
-;; (define-public ecl-micros
-;;   (sbcl-package->ecl-package sbcl-micros))
+(define-public ecl-micros
+  (sbcl-package->ecl-package sbcl-micros))
 
 (define-public sbcl-slynk
   ;; Update together with emacs-sly.

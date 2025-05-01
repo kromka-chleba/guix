@@ -896,7 +896,7 @@ library for SIMD (Single Instruction, Multiple Data) with runtime dispatch.")
                 "14yfb8vl1bbldlv12cg3dhd6z9bdaxvlz7kx671dqpi9m8j3kd56"))))
     (build-system cmake-build-system)
     (native-inputs (list gcc-14 pkg-config))
-    (arguments (list #:cmake cmake-3.30))
+    (arguments (list #:cmake cmake-next))
     (inputs (list cairo
                   hyprutils
                   libjpeg-turbo
@@ -1158,7 +1158,7 @@ data transfer object.")
 (define-public nlohmann-json
   (package
     (name "nlohmann-json")
-    (version "3.11.2")
+    (version "3.12.0")
     (home-page "https://github.com/nlohmann/json")
     (source
      (origin
@@ -1166,7 +1166,7 @@ data transfer object.")
        (uri (git-reference (url home-page)
                            (commit (string-append "v" version))))
        (sha256
-        (base32 "0g6rfsbkvrxmacchz4kbr741yybj7mls3r4hgyfdd3pdbqhn2is9"))
+        (base32 "09nqq56ighr3lghhn3fs399lkllghz717j0xyp87x0giw86ayh3h"))
        (file-name (git-file-name name version))
        (modules '((guix build utils)))
        (snippet
@@ -2172,7 +2172,7 @@ algorithm called SAscan.")
 (define-public cxxopts
   (package
     (name "cxxopts")
-    (version "3.1.1")
+    (version "3.2.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2181,7 +2181,7 @@ algorithm called SAscan.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0d37qpsaq8ik7pl4vk8346vqcqyfzfbnpq8mhsa2gb2zf1lwr4wl"))))
+                "0cvpgp4p4nfwnivv0399hnm311xlrkwx0n5jnrw8aj7v1jipgqb8"))))
     (build-system cmake-build-system)
     (synopsis "Lightweight C++ command line option parser")
     (description
@@ -2657,8 +2657,8 @@ The library is based on Vatti's clipping algorithm.")
 Note: This package is a major update of the original clipper library."))))
 
 (define-public pcg-cpp
-  (let ((commit "ffd522e7188bef30a00c74dc7eb9de5faff90092")
-        (revision "2"))
+  (let ((commit "428802d1a5634f96bcd0705fab379ff0113bcf13")
+        (revision "3"))
     (package
       (name "pcg-cpp")
       (version (git-version "0.98.1" revision commit))
@@ -2670,7 +2670,7 @@ Note: This package is a major update of the original clipper library."))))
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0yxyqaphcc38zilpwpmssrl8ly1v6dimscqk2f4rcv1h22dinnqx"))))
+                  "0w4xb52b6glldkz1wnjc4r4m750m59yxp8jky71j3l4pvfbbj2m5"))))
       (build-system gnu-build-system)
       (arguments
        `(#:test-target "test"
