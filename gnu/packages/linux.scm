@@ -1202,11 +1202,11 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
 
-(define-public linux-libre-version         linux-libre-6.13-version)
-(define-public linux-libre-gnu-revision    linux-libre-6.13-gnu-revision)
-(define-public linux-libre-pristine-source linux-libre-6.13-pristine-source)
-(define-public linux-libre-source          linux-libre-6.13-source)
-(define-public linux-libre                 linux-libre-6.13)
+(define-public linux-libre-version         linux-libre-6.14-version)
+(define-public linux-libre-gnu-revision    linux-libre-6.14-gnu-revision)
+(define-public linux-libre-pristine-source linux-libre-6.14-pristine-source)
+(define-public linux-libre-source          linux-libre-6.14-source)
+(define-public linux-libre                 linux-libre-6.14)
 
 (define-public linux-libre-6.6
   (make-linux-libre* linux-libre-6.6-version
@@ -4923,6 +4923,7 @@ to the in-kernel OOM killer.")
   (package
     (name "eudev")
     (version "3.2.14")
+    (replacement eudev-fixed)
     (source (origin
               (method git-fetch)
               (uri (git-reference (url "https://github.com/eudev-project/eudev")
@@ -5031,6 +5032,17 @@ to the in-kernel OOM killer.")
 device nodes from /dev/, handles hotplug events and loads drivers at boot
 time.")
     (license license:gpl2+)))
+
+(define eudev-fixed
+  (package
+    (inherit eudev)
+    (source
+     (let ((base-source (package-source eudev)))
+       (origin
+         (inherit base-source)
+         (patches
+          (append (search-patches "eudev-removable-devices-polling.patch")
+                  (origin-patches base-source))))))))
 
 (define-public python-evdev
   (package

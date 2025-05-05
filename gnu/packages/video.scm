@@ -846,7 +846,7 @@ old-fashioned output methods with powerful ascii-art renderer.")
 (define-public celluloid
   (package
     (name "celluloid")
-    (version "0.26")
+    (version "0.28")
     (source
      (origin
        (method url-fetch)
@@ -854,7 +854,7 @@ old-fashioned output methods with powerful ascii-art renderer.")
                            "/releases/download/v" version
                            "/celluloid-" version ".tar.xz"))
        (sha256
-        (base32 "1pjxmvjjvw9k0kvhhqp4x73x6a0mslffsdil431q8m3iwasffwb1"))))
+        (base32 "0fjkgq80ryh2rjzjrp968b2jv1vhwd8461jmjqa3v1zzvzqgsdjv"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -2341,13 +2341,13 @@ videoformats depend on the configuration flags of ffmpeg.")
 (define-public ffmpeg-progress-yield
   (package
     (name "ffmpeg-progress-yield")
-    (version "0.11.3")
+    (version "0.12.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "ffmpeg_progress_yield" version))
               (sha256
                (base32
-                "14kmlvslnkd60c3v50ifzm46n26vaadwymxwh2br5pz1zqcn89pb"))))
+                "09xwd1cigm5qhn5jcy16iw1nfvjcvph72jmq1kq3yzxqz351ylwd"))))
     (build-system pyproject-build-system)
     (arguments
      ;; Not sure if the test file actually does anything.
@@ -2375,13 +2375,13 @@ It is usually a complement to @code{ffmpeg-normalize}.")
 (define-public ffmpeg-normalize
   (package
     (name "ffmpeg-normalize")
-    (version "1.31.2")
+    (version "1.31.3")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "ffmpeg_normalize" version))
               (sha256
                (base32
-                "0989vb2wr70x2s662zh5lva1j1z9g0zv7b3b35fyyrh93865iza4"))))
+                "1mi3w1k1fhmv5acybw4dwas0dx75f7d4dpl192ch1shp2m407v5i"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases
@@ -3900,10 +3900,6 @@ from sites like Twitch.tv and pipes them into a video player of choice.")
       #:tests? #f                       ;requires "Kwalify"
       #:phases
       #~(modify-phases %standard-phases
-          (add-before 'configure 'override-LDFLAGS
-            (lambda _
-              (setenv "LDFLAGS"
-                      (string-append "-Wl,-rpath=" #$output "/lib"))))
           (add-after 'install 'wrap-executable
             (lambda _
               (let* ((frei0r #$(this-package-input "frei0r-plugins"))
@@ -3956,34 +3952,6 @@ players, transcoders, web streamers and many more types of applications.  The
 functionality of the system is provided via an assortment of ready to use
 tools, XML authoring components, and an extensible plug-in based API.")
     (license license:lgpl2.1+)))
-
-(define-public mlt-6
-  (package
-    (inherit mlt)
-    (name "mlt")
-    (version "6.26.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/mltframework/mlt")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1gz79xvs5jrzqhwhfk0dqdd3xiavnjp4q957h7nb02rij32byb39"))))
-    (arguments
-     `(#:configure-flags
-       (list (string-append "-DGTK2_GDKCONFIG_INCLUDE_DIR="
-                            (assoc-ref %build-inputs "gtk+")
-                             "/lib/gtk-2.0/include")
-             (string-append "-DGTK2_GLIBCONFIG_INCLUDE_DIR="
-                            (assoc-ref %build-inputs "glib")
-                            "/lib/glib-2.0/include"))
-       ,@(package-arguments mlt)))
-    (inputs
-     (modify-inputs (package-inputs mlt)
-       (replace "ffmpeg" ffmpeg-4)
-       (replace "gtk+" gtk+-2)))))
 
 (define-public v4l-utils
   (package

@@ -218,20 +218,21 @@
 (define-public aide
   (package
     (name "aide")
-    (version "0.18.8")
+    (version "0.19")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/aide/aide/releases/download/v"
                            version "/aide-" version ".tar.gz"))
        (sha256
-        (base32 "0q1sp0vwrwbmw6ymw1kwd4i8walijwppa0dq61b2qzni6b32srhn"))))
+        (base32 "1r55mf4nl6ydb7zwzkz4689j9v9kaabz5gsrcgbrj4p09chs1yz7"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags #~(list "--with-posix-acl"
                                      "--with-selinux"
                                      "--with-xattr"
-                                     "--with-config-file=/etc/aide.conf")))
+                                     "--with-config-file=/etc/aide.conf"
+                                     "--without-fstype")))
     (native-inputs
      (list bison flex pkg-config))
     (inputs
@@ -239,8 +240,8 @@
            attr
            libgcrypt
            libgpg-error
-           libmhash
            libselinux
+           nettle
            pcre2
            `(,zlib "static")
            zlib))
@@ -297,6 +298,31 @@ services.")
     (license license:public-domain)
     (home-page "https://cr.yp.to/daemontools.html")))
 
+(define-public detox
+  (package
+    (name "detox")
+    (version "2.0.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/dharple/detox")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0qix3ipvj5sn66id57k6gzilnz4f19jgwn4d72hj1jzi3m9f9k1h"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     (list autoconf automake bison flex pkg-config))
+    (home-page "https://github.com/dharple/detox")
+    (synopsis "Clean up file names")
+    (description
+     "Detox is a program that renames files to make them easier to work with
+under Unix and related operating systems.  Spaces and various other unsafe
+characters (such as \"$\") get replaced with \"_\".  ISO 8859-1 (Latin-1)
+characters can be replaced as well, as can UTF-8 characters.")
+    (license license:bsd-3)))
+
 (define-public hetznercloud-cli
   (package
     (name "hetznercloud-cli")
@@ -342,6 +368,40 @@ services.")
      "This package provides the @code{hcloud} binary, a command-line interface
 for interacting with the @url{https://www.hetzner.com/,Hetzner Cloud}
 service.")
+    (license license:expat)))
+
+(define-public hungrycat
+  (package
+    (name "hungrycat")
+    (version "0.4.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "https://github.com/jwilk/hungrycat/"
+                                  "releases/download/" version "/"
+                                  "hungrycat-" version ".tar.gz"))
+              (sha256
+               (base32
+                "0xy9l4hky85h3rgdmqmhcnx0q1hq0brskr8lzw2lz6lh7pxlxmyw"))))
+    (build-system gnu-build-system)
+    (native-inputs
+     ;; For tests.
+     `(("python" ,python-wrapper)
+       ("python-nose" ,python-nose)
+       ("perl" ,perl)
+       ("perl-ipc-run" ,perl-ipc-run)))
+    (arguments
+     `(#:test-target "test"))
+    (synopsis "Single tool that combines @command{cat} & @command{rm}")
+    (description
+     "hungrycat prints the contents of a file to standard output, while
+simultaneously freeing the disk space it occupied.  It is useful if you need
+to process a large file, don't have enough space to store both the input and
+output files, and don't need the input file afterwards.
+While similar in principle to running @command{cat} immediately followed by
+@command{rm}, @command{hungrycat} actually frees blocks as soon as they are
+printed instead of after the entire file has been read, which is often too
+late.")
+    (home-page "https://jwilk.net/software/hungrycat")
     (license license:expat)))
 
 ;; This package uses su instead of sudo (because of SpaceFM).
@@ -1007,7 +1067,7 @@ on memory usage on GNU/Linux systems.")
 (define-public htop
   (package
     (name "htop")
-    (version "3.3.0")
+    (version "3.4.1")
     (source
      (origin
        (method git-fetch)
@@ -1015,7 +1075,7 @@ on memory usage on GNU/Linux systems.")
              (url "https://github.com/htop-dev/htop")
              (commit version)))
        (sha256
-        (base32 "0g2rpp9plblmd9khic2f06089hfh0iy521dqqnr3vkin6s9m0f58"))
+        (base32 "058y4a4mvx9m179dyr4wi8mlm6i4ybywshadaj4cvfn9fv0r0nkx"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (inputs
@@ -1918,7 +1978,7 @@ message.  These messages are required for IPv6 stateless autoconfiguration.")
 (define-public ndppd
   (package
     (name "ndppd")
-    (version "0.2.5")
+    (version "0.2.6")
     (source
      (origin
        (method git-fetch)
@@ -1927,7 +1987,7 @@ message.  These messages are required for IPv6 stateless autoconfiguration.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0niri5q9qyyyw5lmjpxk19pv3v4srjvmvyd5k6ks99mvqczjx9c0"))))
+        (base32 "1b0xda2cr4yq2pj8zch9gvfxqvz1n5rjl4nyqn70jyrincvsi8qn"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f ; There are no tests
@@ -2912,42 +2972,6 @@ metrics, verification of memory and computational operations, and considerably
 more stress mechanisms.")
     (license license:gpl2+)))
 
-(define-public detox
-  (package
-    (name "detox")
-    (version "1.4.5")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/dharple/detox")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "116bgpbkh3c96h6vq0880rmnpb5kbnnlvvkpsrcib6928bj8lfvi"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list autoconf automake flex))
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'delete-configure
-                    ;; The "configure" script is present, but otherwise the
-                    ;; project is not bootstrapped: missing install-sh and
-                    ;; Makefile.in, so delete it so the bootstrap phase will
-                    ;; take over.
-                    (lambda _ (delete-file "configure") #t))
-                  (replace 'check
-                    (lambda _
-                      (invoke "./tests/test.sh" "src/detox"))))))
-    (home-page "https://github.com/dharple/detox")
-    (synopsis "Clean up file names")
-    (description
-     "Detox is a program that renames files to make them easier to work with
-under Unix and related operating systems.  Spaces and various other unsafe
-characters (such as \"$\") get replaced with \"_\".  ISO 8859-1 (Latin-1)
-characters can be replaced as well, as can UTF-8 characters.")
-    (license license:bsd-3)))
-
 (define-public tree
   (package
     (name "tree")
@@ -3858,7 +3882,7 @@ throughput (in the same interval).")
 (define-public dool
   (package
     (name "dool")
-    (version "1.3.3")
+    (version "1.3.4")
     (source
      (origin
        (method git-fetch)
@@ -3867,7 +3891,7 @@ throughput (in the same interval).")
              (commit (string-append "v" version))))
        (file-name (git-file-name "dool" version))
        (sha256
-        (base32 "0y5y5c07hgj6v2nvimnwc8myx43li8ib40hdvz7q4q1pdqx3r0jl"))))
+        (base32 "11myxg4y4z0nr60cg0xi3r4akjypyjjg1mxbc4y2a6lg0pras9bv"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -4224,49 +4248,10 @@ in order to be able to find it.
 @end enumerate")
     (license license:gpl2+)))
 
-(define-public xfel
-  (package
-    (name "xfel")
-    (version "1.2.9")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://github.com/xboot/xfel.git")
-              (commit (string-append "v" version))))
-       (sha256
-         (base32 "0gs37w5zjfmyadm49hdalq6vr6gidc683agz3shncgj93x2hxx02"))
-       (file-name (git-file-name name version))))
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list libusb))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:tests? #f ; No tests exist
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-installation-target
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (substitute* "Makefile"
-                (("/usr/local") out)
-                (("/usr") out)
-                (("/etc/udev/rules.d")
-                 (string-append out "/lib/udev/rules.d"))
-                (("udevadm control --reload") ; next version will remove this
-                  "")))))
-         (delete 'configure))))
-    (home-page "https://github.com/xboot/xfel")
-    (synopsis "Remote debugging tool for Allwinner devices")
-    (description "This package contains a debugging tool for Allwinner devices
-(connects via USB OTG).")
-    (license license:expat)))
-
 (define-public sedsed
   (package
     (name "sedsed")
-    (version "1.1")
+    (version "2.0.0")
     (source
      (origin
        (method git-fetch)
@@ -4275,35 +4260,32 @@ in order to be able to find it.
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "05cl35mwljdb9ynbbsfa8zx6ig8r0xncbg2cir9vwn5manndjj18"))))
+        (base32 "0sy26d60j89fw4z2bfvc7zblb7r1ras5q7f06gaqfg2058z5wj8m"))))
     (build-system python-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-sed-in
-           (lambda _
-             (substitute* "sedsed.py"
-               (("sedbin = 'sed'")
-                (string-append "sedbin = '" (which "sed") "'")))
-             #t))
-         (delete 'build)
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin")))
-               ;; Just one file to copy around
-               (install-file "sedsed.py" bin)
-               #t)))
-         (add-after 'wrap 'symlink
-           ;; Create 'sedsed' symlink to "sedsed.py".
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin"))
-                    (sed (string-append bin "/sedsed"))
-                    (sedpy (string-append bin "/sedsed.py")))
-               (symlink sedpy sed)
-               #t))))))
+     (list #:tests? #f                      ; no tests
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-sed-in
+                 (lambda _
+                   (substitute* "sedsed.py"
+                     (("sedbin = 'sed'")
+                      (string-append "sedbin = '" (which "sed") "'")))))
+               (delete 'build)
+               (replace 'install
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (let* ((out (assoc-ref outputs "out"))
+                          (bin (string-append out "/bin")))
+                     ;; Just one file to copy around
+                     (install-file "sedsed.py" bin))))
+               (add-after 'wrap 'symlink
+                 ;; Create 'sedsed' symlink to "sedsed.py".
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (let* ((out (assoc-ref outputs "out"))
+                          (bin (string-append out "/bin"))
+                          (sed (string-append bin "/sedsed"))
+                          (sedpy (string-append bin "/sedsed.py")))
+                     (symlink sedpy sed)))))))
     (home-page "https://aurelio.net/projects/sedsed")
     (synopsis "Sed sed scripts")
     (description
@@ -4535,53 +4517,51 @@ everyone's screenshots nowadays.")
     (license license:gpl3)))
 
 (define-public ufetch
-  (let ((commit "12b68fa35510a063582d626ccd1abc48f301b6b1")
-        (revision "0"))
-    (package
-      (name "ufetch")
-      (version "0.3")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://gitlab.com/jschx/ufetch.git")
-                      (commit (string-append "v" version))))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0sv17zmvhp0vfdscs8yras7am10ah7rpfyfia608sx74k845bfyl"))))
-      (build-system trivial-build-system)
-      (inputs
-       `(("bash" ,bash)
-         ("tput" ,ncurses)))
-      (arguments
-       `(#:modules ((guix build utils))
-         #:builder
-         (begin
-           (use-modules (guix build utils))
-           (let* ((source (assoc-ref %build-inputs "source"))
-                  (output (assoc-ref %outputs "out"))
-                  (bindir (string-append output "/bin"))
-                  (docdir (string-append output "/share/doc/ufetch-" ,version))
-                  (tput   (search-input-file %build-inputs "/bin/tput")))
-             (install-file (string-append source "/LICENSE") docdir)
-             (setenv "PATH" (string-append (assoc-ref %build-inputs "bash") "/bin"))
-             (mkdir-p bindir)
-             (for-each (lambda (src)
-                         (let ((dst (string-append bindir "/" (basename src))))
-                           (copy-file src dst)
-                           (patch-shebang dst)
-                           (substitute* dst (("tput") tput))))
-                       (find-files source "ufetch-[[:alpha:]]*$"))
-             ;; Note: the `ufetch` we create below will only work if run under
-             ;; the Guix System.  I.e. a user trying to run `ufetch` on a
-             ;; foreign distro will not get great results.  The `screenfetch`
-             ;; program does actual runtime detection of the operating system,
-             ;; and would be a better choice in such a situation.
-             (symlink "ufetch-guix" (string-append bindir "/ufetch"))))))
-      (home-page "https://gitlab.com/jschx/ufetch")
-      (synopsis "Tiny system info")
-      (description "This package provides a tiny system info utility.")
-      (license license:expat))))
+  (package
+    (name "ufetch")
+    (version "0.4")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://gitlab.com/jschx/ufetch.git")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0858hq9lannyh4ipvrlk3syc576r2x6f6hr08n0hfsn3x3ndzjl9"))))
+    (build-system trivial-build-system)
+    (inputs
+     `(("bash" ,bash)
+       ("tput" ,ncurses)))
+    (arguments
+     `(#:modules ((guix build utils))
+       #:builder
+       (begin
+         (use-modules (guix build utils))
+         (let* ((source (assoc-ref %build-inputs "source"))
+                (output (assoc-ref %outputs "out"))
+                (bindir (string-append output "/bin"))
+                (docdir (string-append output "/share/doc/ufetch-" ,version))
+                (tput   (search-input-file %build-inputs "/bin/tput")))
+           (install-file (string-append source "/LICENSE") docdir)
+           (setenv "PATH" (string-append (assoc-ref %build-inputs "bash") "/bin"))
+           (mkdir-p bindir)
+           (for-each (lambda (src)
+                       (let ((dst (string-append bindir "/" (basename src))))
+                         (copy-file src dst)
+                         (patch-shebang dst)
+                         (substitute* dst (("tput") tput))))
+                     (find-files source "ufetch-[[:alpha:]]*$"))
+           ;; Note: the `ufetch` we create below will only work if run under
+           ;; the Guix System.  I.e. a user trying to run `ufetch` on a
+           ;; foreign distro will not get great results.  The `screenfetch`
+           ;; program does actual runtime detection of the operating system,
+           ;; and would be a better choice in such a situation.
+           (symlink "ufetch-guix" (string-append bindir "/ufetch"))))))
+    (home-page "https://gitlab.com/jschx/ufetch")
+    (synopsis "Tiny system info")
+    (description "This package provides a tiny system info utility.")
+    (license license:expat)))
 
 (define-public pfetch
   (let ((commit "a906ff89680c78cec9785f3ff49ca8b272a0f96b")
@@ -4624,7 +4604,7 @@ information tool.")
 (define-public fastfetch
   (package
     (name "fastfetch")
-    (version "2.36.1")
+    (version "2.42.0")
     (source
      (origin
        (method git-fetch)
@@ -4633,7 +4613,7 @@ information tool.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "13999l229v2awcl29y3fgijhg8hbk8i9gz6j31z7p9xhkrhn3y42"))
+        (base32 "09chw9rx4rqgd0f0am3ygm5a4lg1i0rsmxbw0kv3cfj1zgfmcn4y"))
        (modules '((guix build utils)))
        (snippet '(begin
                    (delete-file-recursively "src/3rdparty")))))
@@ -4776,7 +4756,7 @@ it sees on a network interface.  This is a fork of Steve Benson’s tcptrack.")
 (define-public masscan
   (package
     (name "masscan")
-    (version "1.0.5")
+    (version "1.3.2")
     (source
      (origin
        (method git-fetch)
@@ -4785,25 +4765,24 @@ it sees on a network interface.  This is a fork of Steve Benson’s tcptrack.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0q0c7bsf0pbl8napry1qyg0gl4pd8wn872h4mz9b56dx4rx90vqg"))))
+        (base32 "1y0ka1y01afmzcad8rw4jgkmlc17yccc30wk8xldj00hdbz84wcs"))))
     (build-system gnu-build-system)
     (inputs
      (list libpcap))
     (arguments
-     `(#:test-target "regress"
-       #:make-flags
-       (list (string-append "CC=" ,(cc-for-target))
-             (string-append "PREFIX=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)            ; no ./configure script
-         (add-after 'unpack 'patch-path
-           (lambda* (#:key outputs inputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (pcap (assoc-ref inputs "libpcap")))
-               (substitute* "src/rawsock-pcap.c"
-                 (("libpcap.so") (string-append pcap "/lib/libpcap.so")))
-               #t))))))
+     (list #:test-target "regress"
+           #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target))
+                   (string-append "PREFIX=" #$output))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)            ; no ./configure script
+               (add-after 'unpack 'patch-path
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (let ((pcap (assoc-ref inputs "libpcap")))
+                     (substitute* "src/stub-pcap.c"
+                       (("libpcap.so")
+                        (string-append pcap "/lib/libpcap.so")))))))))
     (synopsis "TCP port scanner")
     (description "MASSCAN is an asynchronous TCP port scanner.  It can detect
 open ports, and also complete the TCP connection and interact with the remote
@@ -4812,38 +4791,6 @@ application, collecting the information received.")
     ;; 'src/siphash24.c' is the SipHash reference implementation, which
     ;; bears a CC0 Public Domain Dedication.
     (license license:agpl3+)))
-
-(define-public hungrycat
-  (package
-    (name "hungrycat")
-    (version "0.4.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://github.com/jwilk/hungrycat/"
-                                  "releases/download/" version "/"
-                                  "hungrycat-" version ".tar.gz"))
-              (sha256
-               (base32
-                "03fc1zsrf99lvxa7b4ps6pbi43304wbxh1f6ci4q0vkal370yfwh"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     ;; For tests.
-     `(("python" ,python-wrapper)
-       ("python-nose" ,python-nose)))
-    (arguments
-     `(#:test-target "test"))
-    (synopsis "Single tool that combines @command{cat} & @command{rm}")
-    (description
-     "hungrycat prints the contents of a file to standard output, while
-simultaneously freeing the disk space it occupied.  It is useful if you need
-to process a large file, don't have enough space to store both the input and
-output files, and don't need the input file afterwards.
-While similar in principle to running @command{cat} immediately followed by
-@command{rm}, @command{hungrycat} actually frees blocks as soon as they are
-printed instead of after the entire file has been read, which is often too
-late.")
-    (home-page "https://jwilk.net/software/hungrycat")
-    (license license:expat)))
 
 (define-public launchmon
   (package
@@ -5036,16 +4983,16 @@ support forum.  It runs with the @code{/exec} command in most IRC clients.")
 (define-public pscircle
   (package
     (name "pscircle")
-    (version "1.3.1")
+    (version "1.4.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://gitlab.com/mildlyparallel/pscircle.git")
+             (url "https://gitlab.com/mildlyparallel/pscircle")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1sm99423hh90kr4wdjqi9sdrrpk65j2vz2hzj65zcxfxyr6khjci"))))
+        (base32 "0vdllrv2hxw71zhi1xrchkqvq0si4xas1qcsbqmgld8wvc2d19kf"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config))
@@ -5130,7 +5077,7 @@ cache of unix and unix-like systems.")
 (define-public solaar
   (package
     (name "solaar")
-    (version "1.1.13")
+    (version "1.1.14")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5139,7 +5086,7 @@ cache of unix and unix-like systems.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1fz3qgjx3ygr4clgh7iryxgvvjy510rgy8ixr2xld2wr0xa6p0mi"))))
+                "000700waw4z6ab40naycapjgqz8yvz9ny1px94ni4pwf8f3kh0vh"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -5156,6 +5103,7 @@ cache of unix and unix-like systems.")
            ;; For GUI.
            python-pyyaml
            python-psutil
+           python-typing-extensions
            python-xlib
            gtk+
            python-pygobject))
@@ -5551,19 +5499,14 @@ Netgear devices.")
 (define-public atop
   (package
     (name "atop")
-    (version "2.11.0")
+    (version "2.11.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.atoptool.nl/download/atop-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "083fckjn2s3276fqyjb3rcwqrws7qc3fgk1f82zzgzrfc1kcd54v"))
-              (snippet
-               ;; The 'mkdate' script generates a new 'versdate.h' header
-               ;; containing the build date.  That makes builds
-               ;; non-reproducible so remove it.
-               #~(delete-file "mkdate"))))
+                "0m2ij25byrw7sn61pqjdpclmlmwlk2217hbdcvsvd273z5whyrbp"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -6867,4 +6810,44 @@ several firewall backends.")
 communicate with which other processes.  It provides more usable versions
 of ps, top and pstree.")
     (home-page "https://github.com/walles/px")
+    (license license:expat)))
+
+(define-public xfel
+  (package
+    (name "xfel")
+    (version "1.3.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/xboot/xfel")
+              (commit (string-append "v" version))))
+       (sha256
+        (base32 "15xlqkj7lf3xszgfyci32lrwdjhqmmm9clmwlp1qn6hywal3d2p4"))
+       (file-name (git-file-name name version))))
+    (native-inputs
+     (list pkg-config))
+    (inputs
+     (list libusb))
+    (build-system gnu-build-system)
+    (arguments
+     (list #:tests? #f ; No tests exist
+           #:make-flags #~(list "PREFIX="
+                                (string-append "DESTDIR=" #$output))
+           #:phases
+           #~(modify-phases %standard-phases
+               (delete 'configure)
+               (add-after 'unpack 'patch-makefile
+                 (lambda _
+                   (substitute* "Makefile"
+                     (("/usr/local")
+                      #$output)
+                     (("/usr/share")
+                      (string-append #$output "/share/"))
+                     (("/etc/udev/rules.d")
+                      (string-append #$output "/lib/udev/rules.d"))))))))
+    (home-page "https://github.com/xboot/xfel")
+    (synopsis "Remote debugging tool for Allwinner devices")
+    (description "This package contains a debugging tool for Allwinner devices
+(connects via USB OTG).")
     (license license:expat)))

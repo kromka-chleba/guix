@@ -1,7 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015 Cyril Roelandt <tipecaml@gmail.com>
+;;; Copyright © 2016, 2018, 2019, 2020, 2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2017 Muriithi Frederick Muriuki <fredmanglis@gmail.com>
-;;; Copyright © 2018, 2020, 2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2018-2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019, 2021-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2019, 2020, 2021 Efraim Flashner <efraim@flashner.co.il>
@@ -23,7 +23,7 @@
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
 ;;; Copyright © 2024-2025 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Navid Afkhami <navid.afkhami@mdc-berlin.de>
-;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2024, 2025 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2024 Eric Bavier <bavier@posteo.net>
 ;;; Copyright © 2024 Markku Korkeala <markku.korkeala@iki.fi>
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
@@ -57,6 +57,7 @@
   #:use-module (gnu packages docker)
   #:use-module (gnu packages jupyter)
   #:use-module (gnu packages maths)
+  #:use-module (gnu packages mpi)
   #:use-module (gnu packages openstack)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages python-build)
@@ -444,6 +445,65 @@ analysing code quality.")
 This package provides seamless integration with coverage.py (and thus pytest,
 nosetests, etc...) in Python projects.")
     (license license:expat)))
+
+(define-public python-cram
+  (package
+    (name "python-cram")
+    (version "0.7")
+    (home-page "https://bitheap.org/cram/")
+    (source (origin
+              (method url-fetch)
+              (uri (list (string-append home-page "cram-"
+                                        version ".tar.gz")
+                         (pypi-uri "cram" version)))
+              (sha256
+               (base32
+                "0bvz6fwdi55rkrz3f50zsy35gvvwhlppki2yml5bj5ffy9d499vx"))))
+    (arguments
+     '(#:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'patch-source
+           (lambda _
+             (substitute* (find-files "cram" ".*\\.py$")
+               ;; Replace default shell path.
+               (("/bin/sh") (which "sh")))
+             (substitute* (find-files "tests" ".*\\.t$")
+               (("md5") "md5sum")
+               (("/bin/bash") (which "bash"))
+               (("/bin/sh") (which "sh")))
+             (substitute* "cram/_test.py"
+               ;; This hack works around a bug triggered by substituting
+               ;; the /bin/sh paths. "tests/usage.t" compares the output of
+               ;; "cram -h", which breaks the output at 80 characters. This
+               ;; causes the line showing the default shell to break into two
+               ;; lines, but the test expects a single line...
+               (("env\\['COLUMNS'\\] = '80'")
+                "env['COLUMNS'] = '160'"))
+
+             (substitute* "Makefile"
+               ;; Recent versions of python-coverage have caused the test
+               ;; coverage to decrease (as of version 0.7).  Allow that.
+               (("--fail-under=100")
+                "--fail-under=90"))
+
+             #t))
+         (replace 'check
+           ;; The test phase uses the built library and executable.
+           (lambda* (#:key inputs outputs #:allow-other-keys)
+             (add-installed-pythonpath inputs outputs)
+             (setenv "PATH" (string-append (getenv "PATH") ":"
+                                           (assoc-ref outputs "out") "/bin"))
+             (invoke "make" "test"))))))
+    (build-system python-build-system)
+    (native-inputs
+     (list python-coverage python-setuptools python-wheel which))
+    (synopsis "Simple testing framework for command line applications")
+    (description
+     "Cram is a functional testing framework for command line applications.
+Cram tests look like snippets of interactive shell sessions.  Cram runs each
+command and compares the command output in the test with the command’s actual
+output.")
+    (license license:gpl2+)))
 
 (define-public python-crosshair
   (package
@@ -2446,6 +2506,33 @@ framework and makes it easy to undo any monkey patching.  The fixtures are:
 @end itemize")
     (license license:expat)))
 
+(define-public python-pytest-mpi
+  (package
+    (name "python-pytest-mpi")
+    (version "0.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest-mpi" version))
+       (sha256
+        (base32 "1a954cai5lr327np5f38mg8gw91p4akx8m2z416wvwzq24swvcq9"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; See <https://github.com/aragilar/pytest-mpi/issues/4>.
+     (list #:test-flags #~(list "-p" "pytester")))
+    (native-inputs
+     (list openmpi
+           python-pytest
+           python-setuptools
+           python-sybil
+           python-wheel))
+    (home-page "https://pytest-mpi.readthedocs.io")
+    (synopsis "Pytest plugin to collect information from tests")
+    (description
+     "@code{pytest_mpi} is a plugin for pytest providing some useful tools
+when running tests under MPI, and testing MPI-related code.")
+    (license license:bsd-3)))
+
 (define-public python-pytest-mpl
   (package
     (name "python-pytest-mpl")
@@ -3342,6 +3429,50 @@ manipulating JSON Object.  You can manipulate your JSON object using JSONPath")
     ;; This is free and unencumbered software released into the public domain.
     (license license:unlicense)))
 
+(define-public python-scspell3k
+  (let ((commit "df550351f255c572c1a74852d233c83bbfbd49fb")
+        (revision "0"))
+    (package
+      (name "python-scspell3k")
+      (version (git-version "2.3.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/myint/scspell")
+               (commit commit)))
+         (sha256
+          (base32 "0d7yhja9hrw4w7vm10h56hm1dqyhrnwia7wzc3ap9f15ldkkp9cs"))
+         (file-name (git-file-name name version))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-project-license
+              (lambda _
+                (substitute* "pyproject.toml"
+                  (("\"GPL-2.0-only\"")
+                   "{ text = \"GPL-2.0-only\" }"))))
+            (add-before 'check 'pre-check
+              (lambda _
+                (setenv "HOME" "/tmp")))
+            (add-after 'check 'run-cram-tests
+              (lambda _
+                (invoke "cram" "--indent=4" "--verbose" "./test.cram"))))))
+      (native-inputs
+       (list python-cram
+             python-pytest
+             python-setuptools
+             python-wheel))
+      (home-page "https://github.com/myint/scspell")
+      (synopsis "Conservative interactive spell checker for source code")
+      (description
+       "This package implements a spell checker for source code that does not
+try to be particularly smart and instead does the simplest thing that can
+possibly work.")
+      (license license:gpl2))))
+
 (define-public python-slotscheck
   (package
     (name "python-slotscheck")
@@ -3595,6 +3726,51 @@ different Python versions and interpreters, or run tests in each type of
 supported environment, or act as a frontend to continuous integration
 servers.")
     (license license:expat)))
+
+(define-public python-validate-pyproject
+  (package
+    (name "python-validate-pyproject")
+    (version "0.24.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "validate_pyproject" version))
+       (sha256
+        (base32 "0wbbksrfaxc2c7y305wjinkk4y1jxdnc0vzfbf79ipaa6m8zr0p1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; TODO: Full test suite requires schemas from
+      ;; <https://json.schemastore.org/pyproject.json> and obtained during CI
+      ;; just before running tests, figure out how to get schema files to
+      ;; cover all test cases, see <tools/cache_urls_for_tests.py> and
+      ;; <.github/workflows/ci.yml>.
+      #~(list "--ignore=tests/test_examples.py"
+              "--ignore=tests/test_pre_compile.py"
+              "-k" (string-join
+                    (list "not test_downloaded"
+                          "test_valid_download_only_once"
+                          "test_cache_open_url")
+                    " and not "))))
+    (native-inputs
+     (list python-pytest
+           python-packaging
+           python-pytest-cov
+           python-setuptools
+           python-setuptools-scm
+           python-trove-classifiers
+           python-wheel))
+    (propagated-inputs
+     (list python-fastjsonschema))
+    (home-page "https://github.com/abravalheri/validate-pyproject/")
+    (synopsis "Validation library for simple check on @code{pyproject.toml}")
+    (description
+     "Validation library and CLI tool for checking on @code{pyproject.toml}
+files using JSON Schema.")
+    (license (list license:mpl2.0
+                   license:expat
+                   license:bsd-3))))
 
 (define-public python-vcrpy
   (package

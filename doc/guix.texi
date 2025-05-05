@@ -138,6 +138,7 @@ Copyright @copyright{} 2024 45mg@*
 Copyright @copyright{} 2025 Sören Tempel@*
 Copyright @copyright{} 2025 Rostislav Svoboda@*
 Copyright @copyright{} 2025 Zacchaeus@*
+Copyright @copyright{} 2025 Sergio Pastor Pérez@*
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -297,6 +298,7 @@ Channels
 * Specifying Additional Channels::  Extending the package collection.
 * Using a Custom Guix Channel::  Using a customized Guix.
 * Replicating Guix::            Running the @emph{exact same} Guix.
+* Customizing the System-Wide Guix::  Default channels on Guix System.
 * Channel Authentication::      How Guix verifies what it fetches.
 * Channels with Substitutes::   Using channels with available substitutes.
 * Creating a Channel::          How to write your custom channel.
@@ -5373,7 +5375,7 @@ account security concerns and deal with authenticated updates.
 * Specifying Additional Channels::  Extending the package collection.
 * Using a Custom Guix Channel::  Using a customized Guix.
 * Replicating Guix::            Running the @emph{exact same} Guix.
-* Customizing the System-Wide Guix:: Default channels on Guix System.
+* Customizing the System-Wide Guix::  Default channels on Guix System.
 * Channel Authentication::      How Guix verifies what it fetches.
 * Channels with Substitutes::   Using channels with available substitutes.
 * Creating a Channel::          How to write your custom channel.
@@ -27135,6 +27137,46 @@ and ``passwd'' is with the value @code{passwd}.
 @end table
 @end deftp
 
+@defvar kwallet-service-type
+This is the type of the service that adds the
+@uref{https://invent.kde.org/plasma/kwallet-pam, KWallet keyring}.  Its
+value is a @code{kwallet-configuration} object (see below).  Note that,
+contrary to @code{gnome-desktop-service-type}, which includes the
+respective keyring for that service, @code{gnome-keyring-service-type},
+@code{plasma-desktop-service-type} does not include
+@code{kwallet-service-type}.
+
+This service adds the @code{kwallet-pam} package to the system profile
+and extends PAM with entries using @code{pam_kwallet5.so}.  It can
+unlock the user's login keyring or set their password with
+@command{passwd} at the time they log in.
+@end defvar
+
+@deftp {Data Type} kwallet-configuration
+Configuration record for the KWallet Keyring service.
+
+@table @asis
+@item @code{keyring} (default: @code{kwallet-pam})
+The KWallet keyring package to use.
+
+@item @code{pam-services}
+A list of @code{(@var{service} . @var{kind})} pairs denoting PAM
+services to extend, where @var{service} is the name of an existing
+service to extend and @var{kind} is one of @code{login} or @code{passwd}
+symbols.
+
+If @code{login} is given, it adds an optional
+@code{pam_kwallet5.so} to the auth block without arguments and to
+the session block with @code{auto_start}.  If @code{passwd} is given, it
+adds an optional @code{pam_kwallet5.so} to the password block
+without arguments.
+
+By default, it takes for value an alist associating the @code{"sddm"}
+key with the @code{'login} value, and the @code{"passwd"} key with the
+@code{'passwd} value.
+@end table
+@end deftp
+
 @defvar seatd-service-type
 @uref{https://sr.ht/~kennylevinsen/seatd/, seatd} is a minimal seat
 management daemon.
@@ -27745,9 +27787,10 @@ example:
 
 @lisp
 (service-extension postgresql-role-service-type
-                   (const (postgresql-role
-                           (name "alice")
-                           (create-database? #t))))
+                   (const (list
+                           (postgresql-role
+                            (name "alice")
+                            (create-database? #t)))))
 @end lisp
 @end defvar
 
@@ -27769,6 +27812,10 @@ The role permissions list.  Supported permissions are @code{bypassrls},
 
 @item @code{create-database?} (default: @code{#f})
 whether to create a database with the same name as the role.
+
+@item @code{password-file} (default: @code{#f})
+A string representing the path of a file that contains the password to be set
+for the role.
 
 @item @code{encoding} (default: @code{"UTF8"})
 The character set to use for storing text in the database.
@@ -27797,6 +27844,12 @@ The PostgreSQL host to connect to.
 
 @item @code{log} (default: @code{"/var/log/postgresql_roles.log"})
 File name of the log file.
+
+@item @code{shepherd-requirement} (default: @code{'(user-processes postgres)})
+
+The Shepherd services dependencies to use.  Add extra dependencies to
+@code{%default-postgresql-role-shepherd-requirement} to extend its
+value.
 
 @item @code{roles} (default: @code{'()})
 The initial PostgreSQL roles to create.
@@ -38927,6 +38980,7 @@ Its value must be a @code{libvirt-configuration}.
 
 @c Auto-generated with (configuration->documentation 'libvirt-configuration)
 @c %start of fragment
+
 @deftp {Data Type} libvirt-configuration
 Available @code{libvirt-configuration} fields are:
 
@@ -38935,7 +38989,7 @@ Available @code{libvirt-configuration} fields are:
 Libvirt package.
 
 @item @code{qemu} (default: @code{qemu}) (type: file-like)
-Qemu package.
+The QEMU package to use.
 
 @item @code{firmwares} (default: @code{(ovmf-x86-64)}) (type: list-of-file-likes)
 List of UEFI/BIOS firmware packages to make available.  Each firmware
@@ -38952,31 +39006,29 @@ Listen for unencrypted TCP connections on the public TCP/IP port.  must
 set @code{listen} for this to have any effect.  Using the TCP socket
 requires SASL authentication by default.  Only SASL mechanisms which
 support data encryption are allowed.  This is DIGEST_MD5 and GSSAPI
-(Kerberos5)
+(Kerberos5).
 
 @item @code{tls-port} (default: @code{"16514"}) (type: string)
 Port for accepting secure TLS connections This can be a port number, or
-service name
+service name.
 
 @item @code{tcp-port} (default: @code{"16509"}) (type: string)
 Port for accepting insecure TCP connections This can be a port number,
-or service name
+or service name.
 
 @item @code{listen-addr} (default: @code{"0.0.0.0"}) (type: string)
 IP address or hostname used for client connections.
 
 @item @code{mdns-adv?} (default: @code{#f}) (type: boolean)
-Flag toggling mDNS advertisement of the libvirt service.  Alternatively
-can disable for all services on a host by stopping the Avahi daemon.
+Flag toggling mDNS advertisement of the libvirt service.
 
 @item @code{mdns-name} (default: @code{"Virtualization Host terra"}) (type: string)
 Default mDNS advertisement name.  This must be unique on the immediate
 broadcast network.
 
 @item @code{unix-sock-group} (default: @code{"libvirt"}) (type: string)
-UNIX domain socket group ownership.  This can be used to allow a
-'trusted' set of users access to management capabilities without
-becoming root.
+UNIX domain socket group ownership.  This can be used to allow a trusted
+set of users access to management capabilities without becoming root.
 
 @item @code{unix-sock-ro-perms} (default: @code{"0777"}) (type: string)
 UNIX socket permissions for the R/O socket.  This is used for monitoring
@@ -38985,7 +39037,7 @@ VM status only.
 @item @code{unix-sock-rw-perms} (default: @code{"0770"}) (type: string)
 UNIX socket permissions for the R/W socket.  Default allows only root.
 If PolicyKit is enabled on the socket, the default will change to allow
-everyone (eg, 0777)
+everyone (e.g., @code{"0777"}).
 
 @item @code{unix-sock-admin-perms} (default: @code{"0777"}) (type: string)
 UNIX socket permissions for the admin socket.  Default allows only owner
@@ -38997,7 +39049,7 @@ The directory in which sockets will be found/created.
 
 @item @code{auth-unix-ro} (default: @code{"polkit"}) (type: string)
 Authentication scheme for UNIX read-only sockets.  By default socket
-permissions allow anyone to connect
+permissions allow anyone to connect.
 
 @item @code{auth-unix-rw} (default: @code{"polkit"}) (type: string)
 Authentication scheme for UNIX read-write sockets.  By default socket
@@ -39006,14 +39058,14 @@ libvirt, the default will be to use 'polkit' auth.
 
 @item @code{auth-tcp} (default: @code{"sasl"}) (type: string)
 Authentication scheme for TCP sockets.  If you don't enable SASL, then
-all TCP traffic is cleartext.  Don't do this outside of a dev/test
-scenario.
+all TCP traffic is cleartext.  Don't do this outside of a
+development/test scenario.
 
 @item @code{auth-tls} (default: @code{"none"}) (type: string)
 Authentication scheme for TLS sockets.  TLS sockets already have
 encryption provided by the TLS layer, and limited authentication is done
 by certificates.  It is possible to make use of any SASL authentication
-mechanism as well, by using 'sasl' for this option
+mechanism as well, by using @code{"sasl"} for this option
 
 @item @code{access-drivers} (default: @code{()}) (type: optional-list)
 API access control scheme.  By default an authenticated user is allowed
@@ -39036,8 +39088,9 @@ Certificate revocation list path.  If set to an empty string, then no
 CRL is loaded.
 
 @item @code{tls-no-sanity-cert} (default: @code{#f}) (type: boolean)
-Disable verification of our own server certificates.  When libvirtd
-starts it performs some sanity checks against its own certificates.
+Disable verification of our own server certificates.  When
+@command{libvirtd} starts it performs some sanity checks against its own
+certificates.
 
 @item @code{tls-no-verify-cert} (default: @code{#f}) (type: boolean)
 Disable verification of client certificates.  Client certificate
@@ -39053,7 +39106,7 @@ the SASL authentication mechanism.
 
 @item @code{tls-priority} (default: @code{"NORMAL"}) (type: string)
 Override the compile time default TLS priority string.  The default is
-usually "NORMAL" unless overridden at build time.  Only set this is it
+usually "NORMAL" unless overridden at build time.  Only set this if it
 is desired for libvirt to deviate from the global default settings.
 
 @item @code{max-clients} (default: @code{5000}) (type: integer)
@@ -39062,12 +39115,12 @@ sockets combined.
 
 @item @code{max-queued-clients} (default: @code{1000}) (type: integer)
 Maximum length of queue of connections waiting to be accepted by the
-daemon.  Note, that some protocols supporting retransmission may obey
+daemon.  Note, that some protocols supporting re-transmission may obey
 this so that a later reattempt at connection succeeds.
 
 @item @code{max-anonymous-clients} (default: @code{20}) (type: integer)
 Maximum length of queue of accepted but not yet authenticated clients.
-Set this to zero to turn this feature off
+Set this to zero to turn this feature off.
 
 @item @code{min-workers} (default: @code{5}) (type: integer)
 Number of workers to start up initially.
@@ -39075,8 +39128,8 @@ Number of workers to start up initially.
 @item @code{max-workers} (default: @code{20}) (type: integer)
 Maximum number of worker threads.  If the number of active clients
 exceeds @code{min-workers}, then more threads are spawned, up to
-max_workers limit.  Typically you'd want max_workers to equal maximum
-number of clients allowed.
+@code{max_workers} limit.  Typically you'd want @code{max_workers} to
+equal maximum number of clients allowed.
 
 @item @code{prio-workers} (default: @code{5}) (type: integer)
 Number of priority workers.  If all workers from above pool are stuck,
@@ -39107,74 +39160,47 @@ Same as @code{max-queued-clients} but for the admin interface.
 Same as @code{max-client-requests} but for the admin interface.
 
 @item @code{log-level} (default: @code{3}) (type: integer)
-Logging level.  4 errors, 3 warnings, 2 information, 1 debug.
+Semi-deprecated option for the logging level: using the
+@code{log-filters} option instead is recommend, as it provides finer
+control.  The log level can be set to @code{4} for errors, @code{3} for
+warnings, @code{2} for information or @code{1} for debug.  Note that
+since @code{log-filters} and @code{log-outputs} take precedence over
+this option, you will need to also adjust their logging levels to avoid
+filtering out messages.
 
 @item @code{log-filters} (default: @code{"3:remote 4:event"}) (type: string)
 Logging filters.  A filter allows selecting a different logging level
-for a given category of logs The format for a filter is one of:
-
-@itemize @bullet
-@item x:name
-@item x:+name
-@end itemize
-
-where @code{name} is a string which is matched against the category
-given in the @code{VIR_LOG_INIT()} at the top of each libvirt source
-file, e.g., "remote", "qemu", or "util.json" (the name in the filter can
+for a given category of logs.  The format for a filter is either
+@samp{@var{x}:@var{name}} or @samp{@var{x}:+@var{name}}, where name is a
+string which is matched against the category given in the
+@code{VIR_LOG_INIT()} at the top of each libvirt source file, e.g.,
+@samp{"remote"}, @samp{"qemu"}, or @samp{"util.json"}.  @var{name} can
 be a substring of the full category name, in order to match multiple
-similar categories), the optional "+" prefix tells libvirt to log stack
-trace for each message matching name, and @code{x} is the minimal level
-where matching messages should be logged:
-
-@itemize @bullet
-@item 1: DEBUG
-@item 2: INFO
-@item 3: WARNING
-@item 4: ERROR
-@end itemize
-
-Multiple filters can be defined in a single filters statement, they just
-need to be separated by spaces.
+similar categories.  The optional @samp{+} prefix tells libvirt to log
+stack traces for each message matching @var{name}.  @var{x} is the log
+level value used to filter the associated message category.  @var{x} can
+be set to @samp{4} for errors, @samp{3} for warnings, @samp{2} for
+information, or @samp{1} for debug.  Multiple filters can be defined in
+a single filters statement, as space-separated values.  Since
+@code{log-outputs} also include a level filter, you may need to also
+adjust its value to see all the filtered messages.
 
 @item @code{log-outputs} (default: @code{"3:syslog:libvirtd"}) (type: string)
 Logging outputs.  An output is one of the places to save logging
-information The format for an output can be:
-
-@table @code
-@item x:stderr
-output goes to stderr
-
-@item x:syslog:name
-use syslog for the output and use the given name as the ident
-
-@item x:file:file_path
-output to a file, with the given filepath
-
-@item x:journald
-output to journald logging system
-@end table
-
-In all case the x prefix is the minimal level, acting as a
-filter
-
-@itemize @bullet
-@item 1: DEBUG
-@item 2: INFO
-@item 3: WARNING
-@item 4: ERROR
-@end itemize
-
-Multiple outputs can be defined, they just need to be separated by
-spaces.
+information.  The format for an output has the form
+@code{"@var{x}:var@{output@}"}, where @var{output} can be @samp{stderr},
+@samp{syslog:@var{name}}, where @var{name} is the syslog @code{ident}
+value to use, or @samp{file:@var{file_name}}, where @var{file_name} is
+the file name of the file to output to.  @var{x} is the minimal level,
+which acts as a filter.  @var{x} can be set to @var{x} can be set to
+@samp{4} for errors, @samp{3} for warnings, @samp{2} for information, or
+@samp{1} for debug.  Multiple filters can be defined in a single filters
+statement, as space-separated values.
 
 @item @code{audit-level} (default: @code{1}) (type: integer)
-Allows usage of the auditing subsystem to be altered
-
-@itemize @bullet
-@item 0: disable all auditing
-@item 1: enable auditing, only if enabled on host
-@item 2: enable auditing, and exit if disabled on host.
-@end itemize
+Modify the behavior of the auditing subsystem.  @samp{0} disables all
+auditing, samp@{1@} enables auditing only if enabled on thehost and
+@samp{2} enables auditing but exits if it is disabled on the host.
 
 @item @code{audit-logging} (default: @code{#f}) (type: boolean)
 Send audit messages via libvirt logging infrastructure.
@@ -39183,31 +39209,26 @@ Send audit messages via libvirt logging infrastructure.
 Host UUID.  UUID must not have all digits be the same.
 
 @item @code{host-uuid-source} (default: @code{"smbios"}) (type: string)
-Source to read host UUID.
-
-@itemize @bullet
-@item @code{smbios}: fetch the UUID from @code{dmidecode -s system-uuid}
-@item @code{machine-id}: fetch the UUID from @code{/etc/machine-id}
-@end itemize
-
-If @code{dmidecode} does not provide a valid UUID a temporary UUID will
-be generated.
+Source to read host UUID.  Use @code{"smbios"} to fetch the UUID via
+@code{dmidecode -s system-uuid}, or @code{"machine-id"} to fetch the
+UUID from @code{/etc/machine-id}.  If @code{dmidecode} does not provide
+a valid UUID a temporary UUID will be generated.
 
 @item @code{keepalive-interval} (default: @code{5}) (type: integer)
 A keepalive message is sent to a client after @code{keepalive_interval}
 seconds of inactivity to check if the client is still responding.  If
-set to -1, libvirtd will never send keepalive requests; however clients
-can still send them and the daemon will send responses.
+set to @code{-1}, libvirtd won't send keepalive requests; however
+clients can still send them and the daemon will send responses.
 
 @item @code{keepalive-count} (default: @code{5}) (type: integer)
 Maximum number of keepalive messages that are allowed to be sent to the
 client without getting any response before the connection is considered
 broken.  In other words, the connection is automatically closed
-approximately after @code{keepalive_interval * (keepalive_count + 1)}
+approximately after @samp{keepalive_interval * (keepalive_count + 1)}
 seconds since the last message received from the client.  When
-@code{keepalive-count} is set to 0, connections will be automatically
-closed after @code{keepalive-interval} seconds of inactivity without
-sending any keepalive messages.
+@code{keepalive-count} is set to @code{0}, connections will be
+automatically closed after @code{keepalive-interval} seconds of
+inactivity without sending any keepalive messages.
 
 @item @code{admin-keepalive-interval} (default: @code{5}) (type: integer)
 Same as above but for admin interface.
@@ -39221,7 +39242,10 @@ for the configuration and its timeout option is set by default to 5
 seconds to avoid potential infinite waits blocking libvirt.
 
 @end table
+
 @end deftp
+
+
 @c %end of fragment
 
 @subsubheading Virtlog daemon
@@ -42615,6 +42639,11 @@ on Guix Home).  That way, the system configuration embeds declarations
 of the home environment of those users and can be used to deploy
 everything consistently at once, saving users the need to run
 @command{guix home reconfigure} independently.
+
+@command{guix home} can operate on the home environment configured for
+current user via this service, but its effect won't last beyond the next
+system activation.  This can be used for quick testing and may avoid the
+need of keeping a separate home configuration.
 
 @defvar guix-home-service-type
 Service type for the Guix Home service.  Its value must be a list of

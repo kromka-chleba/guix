@@ -15,7 +15,7 @@
 ;;; Copyright © 2019 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2020 Konrad Hinsen <konrad.hinsen@fastmail.net>
 ;;; Copyright © 2020 Edouard Klein <edk@beaver-labs.com>
-;;; Copyright © 2020, 2021, 2022, 2023, 2024 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020-2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022, 2023, 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2022 Kiran Shila <me@kiranshila.com>
@@ -2304,22 +2304,21 @@ to return meaningful clusters (if there are any).")
 (define-public python-pynndescent
   (package
     (name "python-pynndescent")
-    (version "0.5.11")
+    (version "0.5.13")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pynndescent" version))
        (sha256
-        (base32 "0l5dpdsk5vg7rpay81bncp04119hnl5z7zxjv63jrnm9spcwwi3g"))))
+        (base32 "1yq0k15964klz7135gpa7rcpixywzs4zxmcp8p4fw7haxv058hnp"))))
     (build-system pyproject-build-system)
     (native-inputs (list python-pytest python-setuptools python-wheel))
-    (propagated-inputs
-     (list python-importlib-metadata
-           python-joblib
-           python-llvmlite
-           python-numba
-           python-scikit-learn
-           python-scipy))
+    (propagated-inputs (list python-importlib-metadata
+                             python-joblib
+                             python-llvmlite
+                             python-numba
+                             python-scikit-learn
+                             python-scipy))
     (home-page "https://github.com/lmcinnes/pynndescent")
     (synopsis "Nearest neighbor descent for approximate nearest neighbors")
     (description
@@ -2330,35 +2329,36 @@ for k-neighbor-graph construction and approximate nearest neighbor search.")
 (define-public python-opentsne
   (package
     (name "python-opentsne")
-    (version "1.0.1")
+    (version "1.0.2")
     (source
      (origin
-       (method git-fetch) ; no tests in PyPI release
+       (method git-fetch) ;no tests in PyPI release
        (uri (git-reference
              (url "https://github.com/pavlin-policar/openTSNE")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xjp0l4rxk1s685skbx50m3m9hwlj78w74qwgswnkmkk6f7c8dsi"))))
-    (build-system python-build-system)
+        (base32 "1jn15h8b53z6ah47y51y8y4m0mk20xr6l2kd27ffr0hxswbifmkv"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         ;; Benchmarks require the 'macosko2015' data files.
-         (add-after 'unpack 'delete-benchmark
-           (lambda _ (delete-file-recursively "benchmarks")))
-         (add-after 'unpack 'skip-test
-           (lambda _ ;; TODO: figure out why this test fails.
-             (substitute* "tests/test_correctness.py"
-               (("def test_iris\\(self\\)") "def _test_iris(self)"))))
-         ;; Numba needs a writable dir to cache functions.
-         (add-before 'check 'set-numba-cache-dir
-           (lambda _ (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
-    (native-inputs (list python-cython))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Benchmarks require the 'macosko2015' data files.
+          (add-after 'unpack 'delete-benchmark
+            (lambda _
+              (delete-file-recursively "benchmarks")))
+          (add-before 'check 'preparations
+            (lambda _
+              ;; Numba needs a writable dir to cache functions.
+              (setenv "NUMBA_CACHE_DIR" "/tmp")
+              ;; Rebuild extensions to run tests.
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (native-inputs (list python-cython-3 python-pytest python-setuptools
+                         python-wheel))
     (inputs (list fftw))
-    (propagated-inputs
-     (list python-numpy python-pynndescent python-scikit-learn
-           python-scipy))
+    (propagated-inputs (list python-numpy python-pynndescent
+                             python-scikit-learn python-scipy))
     (home-page "https://github.com/pavlin-policar/openTSNE")
     (synopsis "Extensible, parallel implementations of t-SNE")
     (description
@@ -4342,7 +4342,7 @@ methodxs at scale on CPU or GPU.")
 (define-public python-umap-learn
   (package
     (name "python-umap-learn")
-    (version "0.5.6")
+    (version "0.5.8")
     (source
      (origin
        (method git-fetch)               ;no tests in pypi release
@@ -4351,8 +4351,7 @@ methodxs at scale on CPU or GPU.")
              (commit (string-append "release-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0rb0nx0zwi5gddiqil20ssqwb45a8w9fk65bnam001kp7vqjb9ky"))))
+        (base32 "0pdlb6qn9vnvabksiabxmcj30j8ff7526mz1qszrbdl5kh2sl7sm"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4376,9 +4375,10 @@ methodxs at scale on CPU or GPU.")
            python-tqdm))
     (home-page "https://github.com/lmcinnes/umap")
     (synopsis "Uniform Manifold Approximation and Projection")
-    (description "Uniform Manifold Approximation and Projection is a dimension
-reduction technique that can be used for visualization similarly to t-SNE, but
-also for general non-linear dimension reduction.")
+    (description
+     "Uniform Manifold Approximation and Projection is a dimension reduction
+technique that can be used for visualization similarly to t-SNE, but also for
+general non-linear dimension reduction.")
     (license license:bsd-3)))
 
 ;; Requires AVX2 on x86_64-linux.

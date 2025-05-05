@@ -63,6 +63,7 @@
   #:use-module (gnu packages digest)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages geo)
+  #:use-module (gnu packages graphviz)
   #:use-module (gnu packages image)
   #:use-module (gnu packages image-processing)
   #:use-module (gnu packages machine-learning)
@@ -694,13 +695,13 @@ genetic variation data.")
 (define-public python-scikit-build-core
   (package
     (name "python-scikit-build-core")
-    (version "0.10.7")
+    (version "0.11.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "scikit_build_core" version))
        (sha256
-        (base32 "1y64d8rl39banfwdkszyd4sbzp795q8lj66yxrz2l84mwygvbjq4"))))
+        (base32 "0baaava7jvc69r5j803vjxvf2cnx0f3gjhqalipp7l4d1cgwg3vp"))))
     (build-system pyproject-build-system)
     ;; Tests are aborted with the admonition: "setup.py install is
     ;; deprecated. Use build and pip and other standards-based tools."
@@ -910,6 +911,33 @@ logic, also known as grey logic.")
     (synopsis "Miscellaneous tools for scientific computing.")
     (description "This package provides miscellaneous tools for data analysis
 and scientific computing.")
+    (license license:bsd-3)))
+
+(define-public python-boost-histogram
+  (package
+    (name "python-boost-histogram")
+    (version "1.5.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "boost_histogram" version))
+       (sha256
+        (base32 "0p2f90p5jwlwrjz3hq2fzaifkmny33g2mpi89nnhi3w41f1jxr2i"))))
+    (build-system pyproject-build-system)
+    ;; This package bundles files from Boost::Histogram and doesn't provide
+    ;; a way to use a system library.
+    (propagated-inputs (list python-numpy))
+    (native-inputs (list cmake-minimal
+                         pybind11
+                         python-pytest
+                         python-pytest-benchmark
+                         python-scikit-build-core
+                         python-setuptools-scm))
+    (home-page "https://boost-histogram.readthedocs.io/en/latest/")
+    (synopsis "Python bindings for the Boost::Histogram library")
+    (description
+     "This package provides Python bindings for the Boost::Histogram library,
+one of the fastest libraries for histogramming.")
     (license license:bsd-3)))
 
 (define-public python-scikit-opt
@@ -1237,6 +1265,82 @@ its software deployment plugins.")
 Snakemake and its storage plugins.")
     (license license:expat)))
 
+(define-public python-uhi
+  (package
+    (name "python-uhi")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "uhi" version))
+       (sha256
+        (base32 "0753b7yw0zi06g4azafnk3w8i3q6js9i6wwg3pya464gygrbnncm"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-numpy))
+    (native-inputs (list python-boost-histogram
+                         python-fastjsonschema
+                         python-hatch-vcs
+                         python-hatchling
+                         python-pytest))
+    (home-page "https://github.com/scikit-hep/uhi")
+    (synopsis "Universal Histogram Interface")
+    (description "This is a package meant primarily for documenting histogram
+indexing and the PlottableHistogram Protocol and any future cross-library
+standards.  It also contains the code for the PlottableHistogram Protocol, to
+be used in type checking libraries wanting to conform to the protocol.  It is
+not usually a runtime dependency, but only a type checking, testing, and/or
+docs dependency in support of other libraries.")
+    (license license:bsd-3)))
+
+(define-public python-histoprint
+  (package
+    (name "python-histoprint")
+    (version "2.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "histoprint" version))
+       (sha256
+        (base32 "07d2lk64gwhjvw4wccvwks3j4ig7g99q627jjxz4ans5a29p5pz1"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-click python-numpy python-uhi))
+    (native-inputs (list python-awkward
+                         python-boost-histogram
+                         python-hatch-vcs
+                         python-hatchling
+                         python-pytest
+                         python-rich))
+    (home-page "https://github.com/scikit-hep/histoprint")
+    (synopsis "Pretty print histograms to the console")
+    (description "Histoprint uses a mix of terminal color codes and Unicode
+trickery (i.e. combining characters) to plot overlaying histograms.")
+    (license license:expat)))
+
+(define-public python-hist
+  (package
+    (name "python-hist")
+    (version "2.8.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hist" version))
+       (sha256
+        (base32 "17cd46c0ixq18fr2kgzam09w1sr4qkd9l6nsjdbl4vggw80ck9vx"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-boost-histogram
+                             python-histoprint
+                             python-numpy
+                             python-typing-extensions))
+    (native-inputs (list python-hatch-vcs
+                         python-hatchling
+                         python-pytest
+                         python-pytest-mpl))
+    (home-page "https://hist.readthedocs.io/en/latest/")
+    (synopsis "Hist classes and utilities")
+    (description
+     "Hist is an analyst-friendly front-end for @code{boost-histogram}.")
+    (license license:bsd-3)))
+
 (define-public python-tdda
   (package
     (name "python-tdda")
@@ -1282,6 +1386,117 @@ for the overall process of data analysis, through tools that perform
 reference testing, constraint discovery for data, automatic inference
 of regular expressions from text data and automatic test generation.")
     (license license:expat))) ; MIT License
+
+(define-public python-hepunits
+  (package
+    (name "python-hepunits")
+    (version "2.3.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hepunits" version))
+       (sha256
+        (base32 "1n1nf2rz2d86qzjmcwykbc16jzsqb45vs8lyksg98b3jd8nwsd4l"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-hatch-vcs python-hatchling python-pytest))
+    (home-page "https://github.com/scikit-hep/hepunits")
+    (synopsis "Units and constants in the HEP system of units")
+    (description "@code{hepunits} collects the most commonly used units and
+constants in the HEP System of Units, as derived from the basic units
+originally defined by the CLHEP project.")
+    (license license:bsd-3)))
+
+(define-public python-particle
+  (package
+    (name "python-particle")
+    (version "0.25.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "particle" version))
+       (sha256
+        (base32 "0as50k5hinxszsm6lnghnmx2cyjy77c0i2gvzf2q64g2x5b7xkvq"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-attrs
+                             python-hepunits
+                             python-typing-extensions))
+    (native-inputs (list python-hatch-vcs
+                         python-hatchling
+                         python-pandas
+                         python-pytest
+                         python-pytest-benchmark
+                         python-tabulate))
+    (home-page "https://github.com/scikit-hep/particle")
+    (synopsis "Extended PDG particle data and MC identification codes")
+    (description
+     "@code{Particle} provides a pythonic interface to the Particle Data Group
+(PDG) particle data tables and particle identification codes, with extended
+particle information and extra goodies.")
+    (license license:bsd-3)))
+
+(define-public python-decaylanguage
+  (package
+    (name "python-decaylanguage")
+    (version "0.18.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "decaylanguage" version))
+       (sha256
+        (base32 "0kc9i9k51kg2zv8dwywpigiipxzmyxpzb101imjsvv1licip7b8v"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; This file fails to be collected with "DeprecationWarning: setDaemon()
+      ;; is deprecated, set the daemon attribute instead".
+      #:test-flags #~(list "--ignore" "tests/test_convert.py")))
+    (propagated-inputs (list python-attrs
+                             python-graphviz
+                             python-hepunits
+                             python-lark
+                             python-numpy
+                             python-pandas
+                             python-particle
+                             python-plumbum))
+    (native-inputs (list python-hatch-vcs
+                         python-hatchling
+                         python-pytest))
+    (home-page "https://decaylanguage.readthedocs.io/en/latest/")
+    (synopsis "Language to describe, manipulate and convert particle decays")
+    (description "DecayLanguage implements a language to describe and convert
+particle decays between digital representations, effectively making it
+possible to interoperate several fitting programs.  Particular interest is
+given to programs dedicated to amplitude analyses.")
+    (license license:bsd-3)))
+
+(define-public python-vector
+  (package
+    (name "python-vector")
+    (version "1.6.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "vector" version))
+       (sha256
+        (base32 "1jhfgx54a6l1cz9as2wlwrph86f8s1882biaakx1cl31igdxjnbf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; This file requires python-papermill (not yet packaged).
+      #:test-flags #~(list "--ignore" "tests/test_notebooks.py")))
+    (propagated-inputs (list python-numpy python-packaging))
+    (native-inputs (list python-awkward
+                         python-hatch-vcs
+                         python-hatchling
+                         python-pytest
+                         python-sympy))
+    (home-page "https://github.com/scikit-hep/vector")
+    (synopsis "Arrays of 2D, 3D, and Lorentz vectors")
+    (description "Vector is a Python library for 2D and 3D spatial vectors, as
+well as 4D space-time vectors.  It is especially intended for performing
+geometric calculations on arrays of vectors, rather than one vector at a time
+in a Python @code{for} loop.")
+    (license license:bsd-3)))
 
 (define-public python-trimesh
   (package

@@ -747,7 +747,7 @@ the OpenCV-Python library.")
 (define-public vips
   (package
     (name "vips")
-    (version "8.15.3")
+    (version "8.16.1")
     (source
      (origin
        (method git-fetch)
@@ -756,19 +756,16 @@ the OpenCV-Python library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0nxzhs4gwhpm4j9hlca8s97xh1b1p1cawnwdc69rmxkrf714hlgj"))))
+        (base32 "0qy3vsh8mrkdbmdyfandydfp0miqqqiisqfagp1mnwd5xvwyqwm2"))))
     (build-system meson-build-system)
     (native-inputs
-     (list gobject-introspection pkg-config))
+     (list gobject-introspection `(,glib "bin") pkg-config))
     (inputs
+     (list glib hdf5 imagemagick poppler))
+    ;; Propagated to satisfy vips.pc.
+    (propagated-inputs
      (list expat
            fftw
-           giflib
-           glib
-           (list glib "bin")
-           hdf5
-           imagemagick
-           imath
            lcms
            libexif
            libgsf
@@ -779,12 +776,10 @@ the OpenCV-Python library.")
            libxml2
            libwebp
            matio
-           niftilib
            openexr
            orc
-           pango
-           poppler))
-    (home-page "https://libvips.github.io/libvips/")
+           pango))
+    (home-page "https://www.libvips.org/")
     (synopsis "Multithreaded image processing system with low memory needs")
     (description
      "VIPS is a demand-driven, horizontally threaded image processing library.
@@ -799,14 +794,14 @@ due to its architecture which automatically parallelises the image workflows.")
 (define-public gmic
   (package
     (name "gmic")
-    (version "3.5.3")
+    (version "3.5.4")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://gmic.eu/files/source/gmic_"
                            version ".tar.gz"))
        (sha256
-        (base32 "0hk4c1a8cwyc5zwb84asr0wafapq9aqkpw104v5c1iqd9nn7q6p9"))))
+        (base32 "1vxfap94vi53rf46c3w2vn0yrwfjr23ddjm23yq3yq00bjkilfky"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -878,47 +873,23 @@ including 2D color images.")
 (define-public nip2
   (package
     (name "nip2")
-    (version "8.7.1")
+    (version "8.9.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/libvips/nip2/releases/download/v"
                            version "/nip2-" version ".tar.gz" ))
        (sha256
-        (base32 "0l7n427njif53npqn02gfjjly8y3khbrkzqxp10j5vp9h97psgiw"))))
+        (base32 "1kbndn37m0cfjvrvw25b5if9d962r8v79q78i2lzm55r7zmjcpmp"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
-         ;; test_conv.ws keep failing so disabling for now.
-         (add-after 'unpack 'disable-test-conv
-           (lambda _
-             (delete-file "test/workspaces/test_conv.ws")
-             #t))
          (add-before 'check 'set-home
            (lambda _
-             (setenv "HOME" "/tmp") #t)))))
-    (inputs
-     (list vips
-           glib
-           libtiff
-           gtk+-2
-           libxml2
-           libexif
-           libjpeg-turbo ;required by vips.pc
-           (librsvg-for-system)
-           fftw
-           libgsf
-           imagemagick
-           orc
-           matio
-           lcms
-           libwebp
-           openexr-2
-           poppler
-           gsl))
-    (native-inputs
-     (list flex bison pkg-config))
+             (setenv "HOME" "/tmp"))))))
+    (inputs (list gsl gtk+-2 vips))
+    (native-inputs (list bison flex pkg-config))
     (home-page "https://github.com/libvips/nip2")
     (synopsis "Spreadsheet-like GUI for libvips")
     (description "This package provide a graphical user interface (GUI) for

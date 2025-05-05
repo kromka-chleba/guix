@@ -273,7 +273,7 @@ provided, as well as a framework to add new color models and data types.")
            libtiff
            libwebp
            maxflow
-           openexr-2
+           openexr
            pango
            poppler
            sdl2))
@@ -403,7 +403,7 @@ buffers.")
            libxpm                       ;optional, XPM support
            (librsvg-for-system)         ;optional, SVG support
            libxcursor                   ;optional, Mouse Cursor support
-           openexr-2                    ;optional, EXR support
+           openexr                      ;optional, EXR support
            openjpeg                     ;optional, JPEG 2000 support
            poppler                      ;optional, PDF support
            poppler-data))               ;optional, PDF support

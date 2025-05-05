@@ -3872,24 +3872,41 @@ library.")
 (define-public python-h5py
   (package
     (name "python-h5py")
-    (version "3.8.0")
+    (version "3.13.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "h5py" version))
        (sha256
-        (base32 "0pyr6z4h2xqbp49yx2i1401gl6yqh03h771zslwcy0201hpxiskg"))))
-    (build-system python-build-system)
+        (base32 "1hq5f5mnkv2138xsq7k7qncf6b7zc0cmm2fhhpd2603j31jy8w0q"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'fix-hdf5-paths
-                    (lambda* (#:key inputs #:allow-other-keys)
-                      (setenv "HDF5_DIR"
-                              (assoc-ref inputs "hdf5")))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-hdf5-paths
+            (lambda _
+              (setenv "HDF5_DIR" #$(this-package-input "hdf5"))))
+          ;; The tests only work after being installed.
+          (delete 'check)
+          (add-after 'install 'check
+            (lambda* (#:key inputs outputs tests? #:allow-other-keys)
+              (when tests?
+                (setenv "H5PY_TEST_CHECK_FILTERS" "1")
+                (with-directory-excursion (site-packages inputs outputs)
+                  (invoke "pytest" "-vv"))))))))
     (propagated-inputs (list python-six python-numpy))
     (inputs (list hdf5))
-    (native-inputs (list pkg-config python-cython python-ipython
-                         python-pkgconfig python-pytest))
+    (native-inputs
+     (list pkg-config
+           python-cython
+           python-ipython
+           python-pkgconfig
+           python-pytest
+           ;; Required to run tests, but the MPI tests are skipped anyway.
+           python-pytest-mpi
+           python-setuptools
+           python-wheel))
     (home-page "https://www.h5py.org/")
     (synopsis "Read and write HDF5 files from Python")
     (description
@@ -12583,56 +12600,27 @@ data, and scientific formats.")
 (define-public python-pyvips
   (package
     (name "python-pyvips")
-    (version "2.2.1")
+    (version "3.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pyvips" version))
+       (method git-fetch) ; PyPI does not include test helpers
+       (uri (git-reference
+             (url "https://github.com/libvips/pyvips")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1dfbwwvnnsk4g2kj1pw654z9jq3mb72l1m8ma29858jpn12vn7dm"))))
-    (build-system python-build-system)
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               ;; Maybe switch to API mode (i.e., build the C extension)?
-               ;; It is advertised as faster to start up and run.
-               ;; However, even with ‘pkg-config’ and ‘python-pkgconfig’ in
-               ;; ‘native-inputs’, the API mode build fails with:
-               ;;
-               ;;   Falling back to ABI mode. Details: unable to find pkg-config package "vips"
-               ;;
-               ;; The build doesn't actually fail without the below
-               ;; substitution, it's just slower because ‘setup.py’ tries
-               ;; (unsuccessfully) to download the Python ‘pkgconfig’ module.
-               (add-after 'unpack 'fix-build
-                 (lambda _
-                   (substitute* "setup.py"
-                     (("^( +setup_)API\\(\\)\n" _ prefix)
-                      (string-append prefix "ABI()\n")))))
-               (add-after 'unpack 'fix-paths
-                 (lambda _
-                   (substitute* "pyvips/__init__.py"
-                     (("^( +_vips_libname) = '(libvips.so.42)'"
-                       _ var libname)
-                      (format #f "~a = '~a/lib/~a'"
-                              var #$(this-package-input "vips") libname))
-                     (("^( +_gobject_libname) = '(libgobject-2.0.so.0)'"
-                       _ var libname)
-                      (format #f "~a = '~a/lib/~a'"
-                              var #$(this-package-input "glib") libname)))))
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "python" "setup.py" "test")))))))
+        (base32 "017x7i8ssghsdpncjfhk5shdq31784hb5xjalrxl918s86rjwakp"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-pyperf
+     (list pkg-config
+           python-pyperf
            python-pytest
-           python-pytest-flake8
-           python-pytest-runner))
+           python-setuptools
+           python-wheel))
     (inputs
      (list glib vips))
     (propagated-inputs
-     (list python-cffi))
+     (list python-cffi python-pkgconfig))
     (home-page "https://github.com/libvips/pyvips")
     (synopsis "Python bindings for VIPS")
     (description "The @code{pyvips} package provides Python bindings for VIPS,
@@ -17030,65 +17018,6 @@ functionalities with some extras.")
 pseudo terminal (pty), and interact with both the process and its pty.")
     (license license:isc)))
 
-(define-public python-cram
-  (package
-    (name "python-cram")
-    (version "0.7")
-    (home-page "https://bitheap.org/cram/")
-    (source (origin
-              (method url-fetch)
-              (uri (list (string-append home-page "cram-"
-                                        version ".tar.gz")
-                         (pypi-uri "cram" version)))
-              (sha256
-               (base32
-                "0bvz6fwdi55rkrz3f50zsy35gvvwhlppki2yml5bj5ffy9d499vx"))))
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-source
-           (lambda _
-             (substitute* (find-files "cram" ".*\\.py$")
-               ;; Replace default shell path.
-               (("/bin/sh") (which "sh")))
-             (substitute* (find-files "tests" ".*\\.t$")
-               (("md5") "md5sum")
-               (("/bin/bash") (which "bash"))
-               (("/bin/sh") (which "sh")))
-             (substitute* "cram/_test.py"
-               ;; This hack works around a bug triggered by substituting
-               ;; the /bin/sh paths. "tests/usage.t" compares the output of
-               ;; "cram -h", which breaks the output at 80 characters. This
-               ;; causes the line showing the default shell to break into two
-               ;; lines, but the test expects a single line...
-               (("env\\['COLUMNS'\\] = '80'")
-                "env['COLUMNS'] = '160'"))
-
-             (substitute* "Makefile"
-               ;; Recent versions of python-coverage have caused the test
-               ;; coverage to decrease (as of version 0.7).  Allow that.
-               (("--fail-under=100")
-                "--fail-under=90"))
-
-             #t))
-         (replace 'check
-           ;; The test phase uses the built library and executable.
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (add-installed-pythonpath inputs outputs)
-             (setenv "PATH" (string-append (getenv "PATH") ":"
-                                           (assoc-ref outputs "out") "/bin"))
-             (invoke "make" "test"))))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-coverage python-setuptools python-wheel which))
-    (synopsis "Simple testing framework for command line applications")
-    (description
-     "Cram is a functional testing framework for command line applications.
-Cram tests look like snippets of interactive shell sessions.  Cram runs each
-command and compares the command output in the test with the command’s actual
-output.")
-    (license license:gpl2+)))
-
 (define-public python-crccheck
   (package
     (name "python-crccheck")
@@ -20903,13 +20832,13 @@ document.")
 (define-public python-symengine
   (package
     (name "python-symengine")
-    (version "0.14.0")
+    (version "0.14.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "symengine" version))
        (sha256
-        (base32 "1np271qg2bnn32h52p0b102ybamjn9vaxpmsycx345zik327dp6r"))))
+        (base32 "1w7hwavbxgikljy9m3p89k3x2zdhv81h9bh330aw4wb3qm74p7jf"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -20923,7 +20852,7 @@ document.")
                     (invoke "nosetests" "-v" "symengine.tests"))
                   (format #t "test suite not run~%")))))))
     (native-inputs
-     (list cmake python-cython-3 python-nose))
+     (list cmake-minimal python-cython-3 python-nose))
     (inputs
      (list symengine))
     (home-page "https://github.com/symengine/symengine.py")
@@ -39346,9 +39275,8 @@ written in C.")
     (name "python-pyvips-for-python-scooby")
     (arguments
      (substitute-keyword-arguments (package-arguments python-pyvips)
-       ((#:phases phases)
+       ((#:phases phases '%standard-phases)
         #~(modify-phases #$phases
-            (delete 'fix-paths)
             ;; The checks won't succeed without VIPS.
             (delete 'check)
             (delete 'sanity-check)))))
