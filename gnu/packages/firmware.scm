@@ -2,7 +2,7 @@
 ;;; Copyright © 2014-2016, 2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2016 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2017 David Craven <david@craven.ch>
-;;; Copyright © 2017, 2018, 2022-2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2017, 2018, 2022-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2018, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2019 Mathieu Othacehe <m.othacehe@gmail.com>
@@ -1144,7 +1144,7 @@ Virtual Machines.  OVMF contains a sample UEFI firmware for QEMU and KVM.")
         (string=? (%current-system) (gnu-triplet->nix-system triplet))))
   (package
     (name (downstream-package-name "arm-trusted-firmware-" platform))
-    (version "2.12.1")
+    (version "2.12.2")
     (source
      (origin
        (method git-fetch)
@@ -1154,7 +1154,7 @@ Virtual Machines.  OVMF contains a sample UEFI firmware for QEMU and KVM.")
               (commit (string-append "lts-v" version))))
        (file-name (git-file-name "arm-trusted-firmware" version))
        (sha256
-        (base32 "1vngwbjghgsh5i02zq66nmbxxr2d4p93rirsvh5jrhbcdn0v5xf8"))
+        (base32 "01i40asy9dsbx4l5kbvsvi55bdf308nnraf8kfli5d4cx8pxqmrj"))
        (patches (search-patches "8mq-enable-imx_hab_handler.patch"
                                 "8mq-move-stack-to-ocram_s.patch"))
        (modules '((guix build utils)))
@@ -1207,7 +1207,12 @@ interface standards, such as:
                    license:bsd-2)))) ; libfdt
 
 (define-public arm-trusted-firmware-sun50i-a64
-  (make-arm-trusted-firmware "sun50i_a64"))
+  (let ((base (make-arm-trusted-firmware "sun50i_a64")))
+    (package
+      (inherit base)
+      (native-inputs (modify-inputs (package-native-inputs base)
+                       ;; Needs at least gcc-13.
+                       (prepend gcc-14))))))
 
 (define-public arm-trusted-firmware-sun50i-h616
   (make-arm-trusted-firmware "sun50i_h616"))

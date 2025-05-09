@@ -312,7 +312,7 @@ will name the threaded machine type unless THREADS? is provided as #f."
                            (list this-package
                                  `(,this-package "doc"))
                            (list stex-bootstrap
-                                 (texlive-updmap.cfg
+                                 (texlive-local-tree
                                   (list texlive-enumitem
                                         texlive-etoolbox))))
                      ,chez-nanopass-bootstrap
@@ -402,7 +402,9 @@ will name the threaded machine type unless THREADS? is provided as #f."
           (add-after 'configure 'configure-environment-variables
             (lambda args
               ;; mats/6.ms needs HOME to be set:
-              (setenv "HOME" "/tmp")))
+              (setenv "HOME" "/tmp")
+              ;; Writable TEXMFVAR is required to generate font shapes.
+              (setenv "TEXMFVAR" "/tmp")))
           (replace 'build
             ;; need to override target for cross-compilation
             ;; https://racket.discourse.group/t/950/19
@@ -728,7 +730,7 @@ package @code{cs-bootstrap} to bootstrap its initial version of Chez Scheme.")
        ;; though it would probably be easy to add.
        (propagated-inputs
         (list xorg-rgb
-              (texlive-updmap.cfg (list texlive-epsf))
+              (texlive-local-tree (list texlive-epsf))
               ghostscript
               netpbm))
        ;; Debian uses a versionless path for STEXLIB,
@@ -805,6 +807,7 @@ package @code{cs-bootstrap} to bootstrap its initial version of Chez Scheme.")
                         ;; the Makefile is referenced in the documentation
                         (copy-recursively "doc" doc-dir)
                         (install-file "ReadMe" doc-dir)
+                        (setenv "TEXMFVAR" "/tmp") ;for generating font shapes
                         (with-directory-excursion "doc"
                           (invoke "make")
                           (install-file "stex.html" doc-dir)
@@ -977,7 +980,7 @@ create compilers, making them easier to understand and maintain.")
       (native-inputs
        (list chez-scheme
              ghostscript
-             (texlive-updmap.cfg
+             (texlive-local-tree
               (list texlive-charter
                     texlive-context
                     texlive-cweb
@@ -1044,7 +1047,7 @@ programming in Scheme.")
       (native-inputs
        (list chez-scheme
              chez-web
-             (texlive-updmap.cfg)))
+             (texlive-local-tree)))
       (arguments
        (list
         #:tests? #f                     ; no tests

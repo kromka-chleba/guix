@@ -75,10 +75,16 @@ exists."
             (match (get-environment-variables)
               (((names . _) ...) names))))
 
+(define (remount-read-only mount-point)
+  (mount mount-point mount-point "none"
+         (logior MS_BIND MS_REMOUNT MS_RDONLY)))
+
 ;; The container setup procedure closely resembles that of the Docker
 ;; specification:
 ;; https://raw.githubusercontent.com/docker/libcontainer/master/SPEC.md
-(define* (mount-file-systems root mounts #:key mount-/sys? mount-/proc?)
+(define* (mount-file-systems root mounts #:key mount-/sys? mount-/proc?
+                             (populate-file-system (const #t))
+                             writable-root?)
   "Mount the essential file systems and the those in MOUNTS, a list of
 <file-system> objects, relative to ROOT; then make ROOT the new root directory
 for the process."
@@ -177,10 +183,16 @@ for the process."
     (chdir "/")
     (umount "real-root" MNT_DETACH)
     (rmdir "real-root")
-    (chmod "/" #o755)))
+    (populate-file-system)
+    (chmod "/" #o755)
+    (unless writable-root?
+      (remount-read-only "/"))))
 
 (define* (initialize-user-namespace pid host-uids
-                                    #:key (guest-uid 0) (guest-gid 0))
+                                    #:key
+                                    (host-uid (getuid))
+                                    (host-gid (getgid))
+                                    (guest-uid 0) (guest-gid 0))
   "Configure the user namespace for PID.  HOST-UIDS specifies the number of
 host user identifiers to map into the user namespace.  GUEST-UID and GUEST-GID
 specify the first UID (respectively GID) that host UIDs (respectively GIDs)
@@ -191,24 +203,21 @@ map to in the namespace."
   (define (scope file)
     (string-append proc-dir file))
 
-  (let ((uid (getuid))
-        (gid (getgid)))
-
-    ;; Only root can write to the gid map without first disabling the
-    ;; setgroups syscall.
-    (unless (and (zero? uid) (zero? gid))
-      (call-with-output-file (scope "/setgroups")
-        (lambda (port)
-          (display "deny" port))))
-
-    ;; Map the user/group that created the container to the root user
-    ;; within the container.
-    (call-with-output-file (scope "/uid_map")
+  ;; Only root can write to the gid map without first disabling the
+  ;; setgroups syscall.
+  (unless (and (zero? host-uid) (zero? host-gid))
+    (call-with-output-file (scope "/setgroups")
       (lambda (port)
-        (format port "~d ~d ~d" guest-uid uid host-uids)))
-    (call-with-output-file (scope "/gid_map")
-      (lambda (port)
-        (format port "~d ~d ~d" guest-gid gid host-uids)))))
+        (display "deny" port))))
+
+  ;; Map the user/group that created the container to the root user
+  ;; within the container.
+  (call-with-output-file (scope "/uid_map")
+    (lambda (port)
+      (format port "~d ~d ~d" guest-uid host-uid host-uids)))
+  (call-with-output-file (scope "/gid_map")
+    (lambda (port)
+      (format port "~d ~d ~d" guest-gid host-gid host-uids))))
 
 (define (namespaces->bit-mask namespaces)
   "Return the number suitable for the 'flags' argument of 'clone' that
@@ -226,12 +235,24 @@ corresponds to the symbols in NAMESPACES."
               namespaces)))
 
 (define* (run-container root mounts namespaces host-uids thunk
-                        #:key (guest-uid 0) (guest-gid 0))
+                        #:key (guest-uid 0) (guest-gid 0)
+                        (populate-file-system (const #t))
+                        (loopback-network? #t)
+                        (lock-mounts? #t)
+                        writable-root?)
   "Run THUNK in a new container process and return its PID.  ROOT specifies
 the root directory for the container.  MOUNTS is a list of <file-system>
 objects that specify file systems to mount inside the container.  NAMESPACES
 is a list of symbols that correspond to the possible Linux namespaces: mnt,
-ipc, uts, user, and net.
+ipc, uts, user, and net.  When LOCK-MOUNTS? is true, arrange so that none of
+MOUNTS can be unmounted or remounted individually from within THUNK.
+
+When LOOPBACK-NETWORK? is true and 'net is amount NAMESPACES, set up the
+loopback device (\"lo\") and a minimal /etc/hosts.
+
+When WRITABLE-ROOT? is false, remount the container's root as read-only before
+calling THUNK.  Call POPULATE-FILE-SYSTEM before the root is (potentially)
+made read-only.
 
 HOST-UIDS specifies the number of host user identifiers to map into the user
 namespace.  GUEST-UID and GUEST-GID specify the first UID (respectively GID)
@@ -258,13 +279,54 @@ that host UIDs (respectively GIDs) map to in the namespace."
                       (mount-file-systems root mounts
                                           #:mount-/proc? (memq 'pid namespaces)
                                           #:mount-/sys?  (memq 'net
-                                                               namespaces)))
+                                                               namespaces)
+                                          #:populate-file-system
+                                          (lambda ()
+                                            (populate-file-system)
+                                            (when (and (memq 'net namespaces)
+                                                       loopback-network?)
+                                              (set-network-interface-up "lo")
+
+                                              ;; When isolated from the
+                                              ;; network, provide a minimal
+                                              ;; /etc/hosts to resolve
+                                              ;; "localhost".
+                                              (mkdir-p "/etc")
+                                              (call-with-output-file "/etc/hosts"
+                                                (lambda (port)
+                                                  (display "127.0.0.1 localhost\n" port)
+                                                  (chmod port #o444)))))
+                                          #:writable-root?
+                                          (or writable-root?
+                                              (not (memq 'mnt namespaces)))))
                     (lambda args
                       ;; Forward the exception to the parent process.
                       ;; FIXME: SRFI-35 conditions and non-trivial objects
                       ;; cannot be 'read' so they shouldn't be written as is.
                       (write args child)
                       (primitive-exit 3))))
+
+                (when (and lock-mounts?
+                           (memq 'mnt namespaces)
+                           (memq 'user namespaces))
+                  ;; Create a new mount namespace owned by a new user
+                  ;; namespace to "lock" together previous mounts, such that
+                  ;; they cannot be unmounted or remounted separately--see
+                  ;; mount_namespaces(7).
+                  ;;
+                  ;; Note: at this point, the process is single-threaded (no
+                  ;; GC mark threads, no finalization thread, etc.) which is
+                  ;; why unshare(CLONE_NEWUSER) can be used.
+                  (let ((uid (getuid)) (gid (getgid)))
+                    (unshare (logior CLONE_NEWUSER CLONE_NEWNS))
+                    (when (file-exists? "/proc/self")
+                      (initialize-user-namespace (getpid)
+                                                 host-uids
+                                                 #:host-uid uid
+                                                 #:host-gid gid
+                                                 #:guest-uid guest-uid
+                                                 #:guest-gid guest-gid))))
+
                 ;; TODO: Manage capabilities.
                 (write 'ready child)
                 (close-port child)
@@ -327,8 +389,12 @@ if there are no child processes left."
 
 (define* (call-with-container mounts thunk #:key (namespaces %namespaces)
                               (host-uids 1) (guest-uid 0) (guest-gid 0)
+                              (lock-mounts? #t)
                               (relayed-signals (list SIGINT SIGTERM))
                               (child-is-pid1? #t)
+                              (populate-file-system (const #t))
+                              (loopback-network? #t)
+                              writable-root?
                               (process-spawned-hook (const #t)))
   "Run THUNK in a new container process and return its exit status; call
 PROCESS-SPAWNED-HOOK with the PID of the new process that has been spawned.
@@ -348,6 +414,13 @@ UIDs (respectively GIDs) map to in the namespace.
 
 RELAYED-SIGNALS is the list of signals that are \"relayed\" to the container
 process when caught by its parent.
+
+When LOOPBACK-NETWORK? is true and 'net is amount NAMESPACES, set up the
+loopback device (\"lo\") and a minimal /etc/hosts.
+
+When WRITABLE-ROOT? is false, remount the container's root as read-only before
+calling THUNK.  Call POPULATE-FILE-SYSTEM before the root is (potentially)
+made read-only.
 
 When CHILD-IS-PID1? is true, and if NAMESPACES contains 'pid', then the child
 process runs directly as PID 1.  As such, it is responsible for (1) installing
@@ -401,8 +474,12 @@ load path must be adjusted as needed."
   (call-with-temporary-directory
    (lambda (root)
      (let ((pid (run-container root mounts namespaces host-uids thunk*
+                               #:lock-mounts? lock-mounts?
                                #:guest-uid guest-uid
-                               #:guest-gid guest-gid)))
+                               #:guest-gid guest-gid
+                               #:populate-file-system populate-file-system
+                               #:loopback-network? loopback-network?
+                               #:writable-root? writable-root?)))
        (install-signal-handlers pid)
        (process-spawned-hook pid)
        (match (waitpid pid)
@@ -418,24 +495,35 @@ return the exit status, an integer as returned by 'waitpid'."
     (0
      (call-with-clean-exit
       (lambda ()
-        (for-each (lambda (ns)
-                    (let ((source (namespace-file (getpid) ns))
-                          (target (namespace-file pid ns)))
-                      ;; Joining the namespace that the process already
-                      ;; belongs to would throw an error so avoid that.
-                      ;; XXX: This /proc interface leads to TOCTTOU.
-                      (unless (string=? (readlink source) (readlink target))
-                        (call-with-input-file source
-                          (lambda (current-ns-port)
-                            (call-with-input-file target
-                              (lambda (new-ns-port)
-                                (setns (fileno new-ns-port) 0))))))))
-                  ;; It's important that the user namespace is joined first,
-                  ;; so that the user will have the privileges to join the
-                  ;; other namespaces.  Furthermore, it's important that the
-                  ;; mount namespace is joined last, otherwise the /proc mount
-                  ;; point would no longer be accessible.
-                  '("user" "ipc" "uts" "net" "pid" "mnt"))
+        ;; First, determine the user namespace that owns the pid namespace and
+        ;; join that user namespace (the assumption is that it also owns all
+        ;; the other namespaces).  It's important that the user namespace is
+        ;; joined first, so that the user will have the privileges to join the
+        ;; other namespaces.
+        (let* ((pid-ns (open-fdes (namespace-file pid "pid")
+                                  (logior O_CLOEXEC O_RDONLY)))
+               (user-ns (get-user-ns pid-ns)))
+          (close-fdes pid-ns)
+          (unless (equal? (stat user-ns)
+                          (stat (namespace-file (getpid) "user")))
+            (setns user-ns 0))
+          (close-fdes user-ns)
+
+          ;; Then join all the remaining namespaces.
+          (for-each (lambda (ns)
+                      (let ((source (namespace-file (getpid) ns))
+                            (target (namespace-file pid ns)))
+                        ;; Joining the namespace that the process already
+                        ;; belongs to would throw an error so avoid that.
+                        ;; XXX: This /proc interface leads to TOCTTOU.
+                        (unless (string=? (readlink source) (readlink target))
+                          (call-with-input-file target
+                            (lambda (new-ns-port)
+                              (setns (fileno new-ns-port) 0))))))
+                    ;; It's important that the mount namespace is joined last,
+                    ;; otherwise the /proc mount point would no longer be
+                    ;; accessible.
+                    '("ipc" "uts" "net" "pid" "mnt")))
         (purify-environment)
         (chdir "/")
 

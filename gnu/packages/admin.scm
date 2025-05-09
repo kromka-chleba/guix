@@ -6172,185 +6172,156 @@ alias cysdig=sudo csysdig --modern-bpf
 (define-public fail2ban
   (package
     (name "fail2ban")
-    (version "0.11.2")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/fail2ban/fail2ban")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "00d9q8m284q2wy6q462nipzszplfbvrs9fhgn0y3imwsc24kv1db"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  ;; Get rid of absolute file names.
-                  (substitute* "setup.py"
-                    (("/etc/fail2ban")
-                     "etc/fail2ban")
-                    (("/var/lib/fail2ban")
-                     "var/lib/fail2ban")
-                    (("\"/usr/bin/\"")
-                     "\"usr/bin/\"")
-                    (("\"/usr/lib/fail2ban/\"")
-                     "\"usr/lib/fail2ban/\"")
-                    (("'/usr/share/doc/fail2ban'")
-                     "'usr/share/doc/fail2ban'"))
-                  ;; disable tests performing unacceptable side-effects
-                  (let ((make-suite (lambda (t)
-                                      (string-append
-                                       "tests.addTest.unittest.makeSuite."
-                                       t ".."))))
-                    (substitute* "fail2ban/tests/utils.py"
-                      (((make-suite "actiontestcase.CommandActionTest"))
-                       "")
-                      (((make-suite "misctestcase.SetupTest"))
-                       "")
-                      (((make-suite
-                         "filtertestcase.DNSUtilsNetworkTests"))
-                       "")
-                      (((make-suite "filtertestcase.IgnoreIPDNS"))
-                       "")
-                      (((make-suite "filtertestcase.GetFailures"))
-                       "")
-                      (((make-suite
-                         "fail2banclienttestcase.Fail2banServerTest"))
-                       "")
-                      (((make-suite
-                         "servertestcase.ServerConfigReaderTests"))
-                       "")))))
-              (patches (search-patches
-                        "fail2ban-0.11.2_fix-setuptools-drop-2to3.patch"
-                        "fail2ban-python310-server-action.patch"
-                        "fail2ban-python310-server-actions.patch"
-                        "fail2ban-python310-server-jails.patch"
-                        "fail2ban-0.11.2_fix-test-suite.patch"
-                        "fail2ban-0.11.2_CVE-2021-32749.patch"
-                        "fail2ban-paths-guix-conf.patch"))))
-    (build-system python-build-system)
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/fail2ban/fail2ban")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lfakna6ad2xwz95sjxzkavipcsxiy7ybavkdkf9zzmspf2ws4yk"))
+       (modules '((guix build utils)))
+       (snippet #~(begin
+                    ;; Replacing those by our own paths-guix.conf
+                    (with-directory-excursion "config"
+                      (for-each delete-file
+                                '("paths-arch.conf" "paths-debian.conf"
+                                  "paths-fedora.conf" "paths-freebsd.conf"
+                                  "paths-opensuse.conf" "paths-osx.conf")))))
+       (patches (search-patches "fail2ban-paths-guix-conf.patch"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (add-before 'build 'invoke-2to3
-                    (lambda _
-                      (invoke "./fail2ban-2to3")))
-                  (add-before 'install 'fix-default-config
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (substitute* '("config/paths-common.conf"
-                                     "fail2ban/tests/utils.py"
-                                     "fail2ban/client/configreader.py"
-                                     "fail2ban/client/fail2bancmdline.py"
-                                     "fail2ban/client/fail2banregex.py")
-                        (("/etc/fail2ban")
-                         (string-append (assoc-ref outputs "out")
-                                        "/etc/fail2ban")))))
-                  (add-after 'fix-default-config 'set-action-dependencies
-                    (lambda* (#:key inputs #:allow-other-keys)
-                      ;; deleting things that are not feasible to fix
-                      ;; or won't be used any way
-                      (with-directory-excursion "config"
-                        (for-each delete-file
-                                  '("paths-arch.conf"
-                                    "paths-debian.conf"
-                                    "paths-fedora.conf"
-                                    "paths-freebsd.conf"
-                                    "paths-opensuse.conf"
-                                    "paths-osx.conf")))
-                      (with-directory-excursion "config/action.d"
-                        (for-each delete-file
-                                  '("apf.conf"
-                                    "bsd-ipfw.conf"
-                                    "dshield.conf"
-                                    "ipfilter.conf"
-                                    "ipfw.conf"
-                                    "firewallcmd-allports.conf"
-                                    "firewallcmd-common.conf"
-                                    "firewallcmd-ipset.conf"
-                                    "firewallcmd-multiport.conf"
-                                    "firewallcmd-new.conf"
-                                    "firewallcmd-rich-logging.conf"
-                                    "firewallcmd-rich-rules.conf"
-                                    "osx-afctl.conf"
-                                    "osx-ipfw.conf"
-                                    "pf.conf"
-                                    "nginx-block-map.conf"
-                                    "npf.conf"
-                                    "shorewall.conf"
-                                    "shorewall-ipset-proto6.conf"
-                                    "ufw.conf")))
-                      (let* ((lookup-cmd (lambda (i)
-                                           (search-input-file inputs i)))
-                             (bin (lambda (i)
-                                    (lookup-cmd (string-append "/bin/" i))))
-                             (sbin (lambda (i)
-                                     (lookup-cmd (string-append "/sbin/" i))))
-                             (ip (sbin "ip"))
-                             (sendmail (sbin "sendmail")))
-                        (substitute* (find-files "config/action.d" "\\.conf$")
-                          ;; TODO: deal with geoiplookup ..
-                          (("(awk|curl|dig|jq)" all cmd)
-                           (bin cmd))
-                          (("(cat|echo|grep|head|printf|wc) " all
-                            cmd)
-                           (string-append (bin cmd) " "))
-                          ((" (date|rm|sed|tail|touch|tr) " all
-                            cmd)
-                           (string-append " "
-                                          (bin cmd) " "))
-                          (("cut -d")
-                           (string-append (bin "cut") " -d"))
-                          (("`date`")
-                           (string-append "`"
-                                          (bin "date") "`"))
-                          (("id -")
-                           (string-append (bin "id") " -"))
-                          (("ip -([46]) addr" all ver)
-                           (string-append ip " -" ver " addr"))
-                          (("ip route")
-                           (string-append ip " route"))
-                          (("ipset ")
-                           (string-append (sbin "ipset") " "))
-                          (("(iptables|ip6tables) <" all cmd)
-                           (string-append (sbin cmd) " <"))
-                          (("/usr/bin/nsupdate")
-                           (bin "nsupdate"))
-                          (("mail -E")
-                           (string-append sendmail " -E"))
-                          (("nftables = nft")
-                           (string-append "nftables = " (sbin "nft")))
-                          (("perl -e")
-                           (string-append (bin "perl") " -e"))
-                          (("/usr/sbin/sendmail")
-                           sendmail)
-                          (("test -e")
-                           (string-append (bin "test") " -e"))
-                          (("_whois = whois")
-                           (string-append "_whois = " (bin "whois")))))
-                      (substitute* "config/jail.conf"
-                        (("before = paths-debian.conf")
-                         "before = paths-guix.conf"))))
-                  (add-after 'install 'copy-man-pages
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let* ((man (string-append (assoc-ref outputs "out")
-                                                 "/man"))
-                             (install-man (lambda (m)
-                                            (lambda (f)
-                                              (install-file (string-append f
-                                                             "." m)
-                                                            (string-append man
-                                                             "/man" m)))))
-                             (install-man1 (install-man "1"))
-                             (install-man5 (install-man "5")))
-                        (with-directory-excursion "man"
-                          (for-each install-man1
-                                    '("fail2ban"
-                                      "fail2ban-client"
-                                      "fail2ban-python"
-                                      "fail2ban-regex"
-                                      "fail2ban-server"
-                                      "fail2ban-testcases"))
-                          (for-each install-man5
-                                    '("jail.conf")))))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'avoid-external-binary-in-/bin
+            (lambda _
+              (delete-file "fail2ban/setup.py")
+              (substitute* '("bin/fail2ban-testcases" "setup.py")
+                ((".*updatePyExec.*")
+                 ""))))
+          (add-after 'unpack 'patch-setup.py
+            (lambda _
+              ;; Get rid of absolute file names.
+              (substitute* "setup.py"
+                (("/etc/fail2ban")
+                 "etc/fail2ban")
+                (("/var/lib/fail2ban")
+                 "var/lib/fail2ban")
+                (("\"/usr/bin/\"")
+                 "\"usr/bin/\"")
+                (("\"/usr/lib/fail2ban/\"")
+                 "\"usr/lib/fail2ban/\"")
+                (("'/usr/share/doc/fail2ban'")
+                 "'usr/share/doc/fail2ban'"))))
+          (add-after 'unpack 'disable-some-tests
+            (lambda _
+              (define (make-suite-regex tests)
+                (string-append "tests.addTest\\(loadTests\\(("
+                               (string-join tests "|")
+                               ")\\)\\)"))
+              ;; disable tests performing unacceptable side-effects
+              (substitute* "fail2ban/tests/utils.py"
+                (((make-suite-regex (list "actiontestcase.CommandActionTest"
+                                          "misctestcase.SetupTest"
+                                          "filtertestcase.DNSUtilsNetworkTests"
+                                          "filtertestcase.IgnoreIPDNS"
+                                          "filtertestcase.GetFailures"
+                                          "fail2banclienttestcase.Fail2banServerTest"
+                                          "servertestcase.ServerConfigReaderTests")))
+                 ""))))
+          (add-before 'build 'fix-default-config
+            (lambda _
+              (substitute* '("config/paths-common.conf"
+                             "fail2ban/tests/utils.py"
+                             "fail2ban/client/configreader.py"
+                             "fail2ban/client/fail2bancmdline.py"
+                             "fail2ban/client/fail2banregex.py")
+                (("/etc/fail2ban")
+                 (string-append #$output "/etc/fail2ban")))))
+          (add-after 'fix-default-config 'set-action-dependencies
+            (lambda* (#:key inputs #:allow-other-keys)
+              ;; deleting things that are not feasible to fix
+              ;; or won't be used any way
+              (with-directory-excursion "config/action.d"
+                (for-each delete-file
+                          '("apf.conf"
+                            "bsd-ipfw.conf"
+                            "dshield.conf"
+                            "ipfilter.conf"
+                            "ipfw.conf"
+                            "firewallcmd-allports.conf"
+                            "firewallcmd-common.conf"
+                            "firewallcmd-ipset.conf"
+                            "firewallcmd-multiport.conf"
+                            "firewallcmd-new.conf"
+                            "firewallcmd-rich-logging.conf"
+                            "firewallcmd-rich-rules.conf"
+                            "osx-afctl.conf"
+                            "osx-ipfw.conf"
+                            "pf.conf"
+                            "nginx-block-map.conf"
+                            "npf.conf"
+                            "shorewall.conf"
+                            "shorewall-ipset-proto6.conf"
+                            "ufw.conf")))
+              (define (lookup dir file)
+                (search-input-file inputs (string-append "/" dir "/" file)))
+
+              (substitute* (find-files "config/action.d" "\\.conf$")
+                ;; TODO: deal with geoiplookup ..
+                (("(awk|curl|dig|jq)" all cmd)
+                 (lookup "bin" cmd))
+                (("(cat|echo|grep|head|printf|wc) " all cmd)
+                 (string-append (lookup "bin" cmd) " "))
+                ((" (date|rm|sed|tail|touch|tr) " all cmd)
+                 (string-append " " (lookup "bin" cmd) " "))
+                (("cut -d")
+                 (string-append (lookup "bin" "cut") " -d"))
+                (("`date`")
+                 (string-append "`" (lookup "bin" "date") "`"))
+                (("id -")
+                 (string-append (lookup "bin" "id") " -"))
+                (("ip (route|-[46] addr)" all rest)
+                 (string-append (lookup "sbin" "ip") rest))
+                (("ipset ")
+                 (string-append (lookup "sbin" "ipset") " "))
+                (("(iptables|ip6tables) <" all cmd)
+                 (string-append (lookup "sbin" cmd) " <"))
+                (("/usr/bin/nsupdate")
+                 (lookup "bin" "nsupdate"))
+                (("mail -E")
+                 (string-append (lookup "sbin" "sendmail") " -E"))
+                (("nftables = nft")
+                 (string-append "nftables = " (lookup "sbin" "nft")))
+                (("perl -e")
+                 (string-append (lookup "bin" "perl") " -e"))
+                (("/usr/sbin/sendmail")
+                 (lookup "sbin" "sendmail"))
+                (("test -e")
+                 (string-append (lookup "bin" "test") " -e"))
+                (("_whois = whois")
+                 (string-append "_whois = " (lookup "bin" "whois"))))
+
+              (substitute* "config/jail.conf"
+                (("before = paths-debian\\.conf")
+                 "before = paths-guix.conf"))))
+          (add-after 'install 'copy-man-pages
+            (lambda _
+              (define (install-man m)
+                (lambda (f)
+                  (install-file (string-append f "." m)
+                                (string-append #$output "man/man" m))))
+
+              (with-directory-excursion "man"
+                (for-each (install-man "1")
+                          '("fail2ban" "fail2ban-client" "fail2ban-python"
+                            "fail2ban-regex" "fail2ban-server"
+                            "fail2ban-testcases"))
+                ((install-man "5") "jail.conf")))))))
+    (native-inputs (list python-setuptools python-wheel))
     (inputs (list gawk
                   coreutils-minimal
                   curl

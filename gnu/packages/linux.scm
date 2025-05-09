@@ -513,7 +513,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.14-version "6.14.4")
+(define-public linux-libre-6.14-version "6.14.5")
 (define-public linux-libre-6.14-gnu-revision "gnu")
 (define deblob-scripts-6.14
   (linux-libre-deblob-scripts
@@ -523,31 +523,16 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1wx8f0fx71sr506j655i7mr9xrc4fpw96d3fdgfivjsxlcrwfpnk")))
 (define-public linux-libre-6.14-pristine-source
   (let ((version linux-libre-6.14-version)
-        (hash (base32 "0fak7y9dr5rxzmi4m545kz7pyk2c91dkj4k7i2jgnl80ga6z4lll")))
+        (hash (base32 "02gl4hdxzijyyk57jsr85grdkxs2yi2gkvqa043kbamy5g2pw818")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.14)))
-
-(define-public linux-libre-6.13-version "6.13.12")
-(define-public linux-libre-6.13-gnu-revision "gnu")
-(define deblob-scripts-6.13
-  (linux-libre-deblob-scripts
-   linux-libre-6.13-version
-   linux-libre-6.13-gnu-revision
-   (base32 "0m8k0ms0kwc9jr9akzdk2ckriw8qrlx3b7isyqsc4rvdg4c41vrx")
-   (base32 "1c28ypn2bkba2kx28fx9cygzzj3hf1yg5kx5cj6l051dh71czbsh")))
-(define-public linux-libre-6.13-pristine-source
-  (let ((version linux-libre-6.13-version)
-        (hash (base32 "0hhj49k3ksjcp0dg5yiahqzryjfdpr9c1a9ph6j9slzmkikbn7v1")))
-   (make-linux-libre-source version
-                            (%upstream-linux-source version hash)
-                            deblob-scripts-6.13)))
 
 ;; The "longterm" kernels — the older releases with long-term upstream support.
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.25")
+(define-public linux-libre-6.12-version "6.12.26")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -557,12 +542,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1an34mqv0p6fmb5c3wmw3yl16gm1m3qqhgr7ycz3ygp06pgaj8qy")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "141visdf85iw011ncp77csmkahvn598lqvhi493a4g31dw7piby8")))
+        (hash (base32 "1jivbv08j43rn0dn7xmwxb178b305cyxbp82h71r6n22qwif4ba0")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.88")
+(define-public linux-libre-6.6-version "6.6.89")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -572,12 +557,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0xnhflca5rmxnxpywds6ixnipg2zsyb0wik3spir8j3cfjpqjw3b")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "0l0697dcfdjkl80c7x1nfvw3n6390nnbznlpfbg51sgp7sv8kpqr")))
+        (hash (base32 "005s3vf1fkcv3fady2ax9azyc4lj8p4flhn20h3srr38c39zf6n2")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.135")
+(define-public linux-libre-6.1-version "6.1.136")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -587,52 +572,52 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0lkgvf1y9qmh1z8ih13y3p1zv5wb3psfp0iizn9y7isscqm4056f")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "1fbyjprj65b1blb033lcy9y4bkh9jb7m06h6qph739wnzzhpmlg9")))
+        (hash (base32 "0wdhgaa578x7jhhq2p2g272gyb12818ifan4c5zan6npp6dhf756")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.180")
+(define-public linux-libre-5.15-version "5.15.181")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
    linux-libre-5.15-version
    linux-libre-5.15-gnu-revision
-   (base32 "18ac30kxg2mf2f6gk3p935hzhz2qs110jy4xwk21kblnnkskbxj8")
-   (base32 "1pbl08jzqh944z34bz25k2v7igsm3r89jbcg0hba3cvyybkkfc2g")))
+   (base32 "12jsdhhrak7l6c6sfpn38ddzzv4hyg18k5vga4lw7d45p319igwa")
+   (base32 "19cwqpvf6x02ivxwx36jkbccg3dcii1ynis34mjz3rn1wpg61s9a")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "0ffdy7zhp25z75n49j4rs8fs79icbmz1yy7k3xgcl2p6pfw6h7zm")))
+        (hash (base32 "0f6sc0wyd1gdx2kvbvp5sx6il780fdmjr4j0bcci1s7skrnl6iik")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
 
-(define-public linux-libre-5.10-version "5.10.236")
+(define-public linux-libre-5.10-version "5.10.237")
 (define-public linux-libre-5.10-gnu-revision "gnu1")
 (define deblob-scripts-5.10
   (linux-libre-deblob-scripts
    linux-libre-5.10-version
    linux-libre-5.10-gnu-revision
-   (base32 "1b33rkn32b923025iiz4xzxiy8y5ii9j5qk4021mg575890rl4ch")
-   (base32 "14jdl5rk3w7h97svl6j6ngbywj5qixmpv6ifhqkzjxpp07xngvs4")))
+   (base32 "1lg0sxfjn0hpcdfyqy2r5kchnjfyyx2xraxhmjhwwkpiwl9ph501")
+   (base32 "11liynz5vayms646gj0rjj8fmrqhv203mwsqs3sx9p8y84v50d4p")))
 (define-public linux-libre-5.10-pristine-source
   (let ((version linux-libre-5.10-version)
-        (hash (base32 "12gv03hbddwm4nl8xxdvdr983nbh2lzrl4jr9p5kmv9rgn7wr9bd")))
+        (hash (base32 "098gvqfaahabqqz64m5fwri57drwiz3006pr805sxw74w0vjgj0z")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.10)))
 
-(define-public linux-libre-5.4-version "5.4.292")
+(define-public linux-libre-5.4-version "5.4.293")
 (define-public linux-libre-5.4-gnu-revision "gnu1")
 (define deblob-scripts-5.4
   (linux-libre-deblob-scripts
    linux-libre-5.4-version
    linux-libre-5.4-gnu-revision
-   (base32 "0xg5cz82k2cb0ikxvwv1hp5c3h377jkb5sd6aszvsk7hnabhk62v")
-   (base32 "1q1wcslpwpwsnwzbddjdc0qv2h89492skyw2zsjyb4rpz41s66mg")))
+   (base32 "168ysrpcbfhm6s71l9w8ibjq2frjmiaixc2wbsq86gx2zw6zyb5p")
+   (base32 "0l7pwhgw9laxfypcpqlz411x3hybcw2269abh3lpcw96bgv5m1k2")))
 (define-public linux-libre-5.4-pristine-source
   (let ((version linux-libre-5.4-version)
-        (hash (base32 "11dy6zvxnripwr4lfg357wdl70kcg5ljs3wxhz2klqpas60gbjqb")))
+        (hash (base32 "0b9p8l6ndm75751f7s03rnxg7yg9c4pj9rb537lhsv6pqx096n1l")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.4)))
@@ -667,11 +652,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 
 (define-public linux-libre-6.14-source
   (source-with-patches linux-libre-6.14-pristine-source
-                       (list %boot-logo-patch
-                             %linux-libre-arm-export-__sync_icache_dcache-patch)))
-
-(define-public linux-libre-6.13-source
-  (source-with-patches linux-libre-6.13-pristine-source
                        (list %boot-logo-patch
                              %linux-libre-arm-export-__sync_icache_dcache-patch)))
 
@@ -800,11 +780,6 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
   (make-linux-libre-headers* linux-libre-6.14-version
                              linux-libre-6.14-gnu-revision
                              linux-libre-6.14-source))
-
-(define-public linux-libre-headers-6.13
-  (make-linux-libre-headers* linux-libre-6.13-version
-                             linux-libre-6.13-gnu-revision
-                             linux-libre-6.13-source))
 
 (define-public linux-libre-headers-6.12
   (make-linux-libre-headers* linux-libre-6.12-version
@@ -1186,13 +1161,11 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
 
-(define-public linux-libre-6.13
-  (make-linux-libre* linux-libre-6.13-version
-                     linux-libre-6.13-gnu-revision
-                     linux-libre-6.13-source
-                     '("x86_64-linux" "i686-linux" "armhf-linux"
-                       "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
-                     #:configuration-file kernel-config))
+(define-public linux-libre-version         linux-libre-6.14-version)
+(define-public linux-libre-gnu-revision    linux-libre-6.14-gnu-revision)
+(define-public linux-libre-pristine-source linux-libre-6.14-pristine-source)
+(define-public linux-libre-source          linux-libre-6.14-source)
+(define-public linux-libre                 linux-libre-6.14)
 
 (define-public linux-libre-6.12
   (make-linux-libre* linux-libre-6.12-version
@@ -1201,12 +1174,6 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                      '("x86_64-linux" "i686-linux" "armhf-linux"
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
-
-(define-public linux-libre-version         linux-libre-6.14-version)
-(define-public linux-libre-gnu-revision    linux-libre-6.14-gnu-revision)
-(define-public linux-libre-pristine-source linux-libre-6.14-pristine-source)
-(define-public linux-libre-source          linux-libre-6.14-source)
-(define-public linux-libre                 linux-libre-6.14)
 
 (define-public linux-libre-6.6
   (make-linux-libre* linux-libre-6.6-version
@@ -2269,47 +2236,49 @@ of a binary file.")
       (license license:gpl3))))
 
 (define-public ddcci-driver-linux
-  (package
-    (name "ddcci-driver-linux")
-    (version "0.4.5")
-    (source
-     (origin
-       (method git-fetch)
-       (uri
-        (git-reference
-         (url "https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux.git")
-         (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0j2bgzadrbcyf3k4zplv7p5yqb9pw2ca6wzkqjhhidaah2722vlf"))))
-    (build-system linux-module-build-system)
-    (arguments
-     (list #:tests? #f                  ; no tests
-           #:phases
-           #~(modify-phases %standard-phases
-               (replace 'build
-                 (lambda args
-                   (for-each
-                    (lambda (module)
-                      (with-directory-excursion module
-                        (apply (assoc-ref %standard-phases 'build) args)))
-                    '("ddcci" "ddcci-backlight"))))
-               (replace 'install
-                 (lambda args
-                   (for-each
-                    (lambda (module)
-                      (with-directory-excursion module
-                        (apply (assoc-ref %standard-phases 'install) args)))
-                    '("ddcci" "ddcci-backlight")))))))
-    (home-page "https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux")
-    (synopsis "Pair of Linux kernel drivers for DDC/CI monitors")
-    (description "This package provides two Linux kernel drivers, ddcci and
+  (let ((revision "0")
+        (commit "7f8f8e6c221a286d57a643c2909109a54e084eed"))
+    (package
+      (name "ddcci-driver-linux")
+      (version (git-version "0.4.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri
+          (git-reference
+           (url "https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux.git")
+           (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0sgldghd8n4qjm5nv9dgxjibj1hg4kkk1811wndf3vx3dacsmkl9"))))
+      (build-system linux-module-build-system)
+      (arguments
+       (list #:tests? #f                  ; no tests
+             #:phases
+             #~(modify-phases %standard-phases
+                 (replace 'build
+                   (lambda args
+                     (for-each
+                      (lambda (module)
+                        (with-directory-excursion module
+                          (apply (assoc-ref %standard-phases 'build) args)))
+                      '("ddcci" "ddcci-backlight"))))
+                 (replace 'install
+                   (lambda args
+                     (for-each
+                      (lambda (module)
+                        (with-directory-excursion module
+                          (apply (assoc-ref %standard-phases 'install) args)))
+                      '("ddcci" "ddcci-backlight")))))))
+      (home-page "https://gitlab.com/ddcci-driver-linux/ddcci-driver-linux")
+      (synopsis "Pair of Linux kernel drivers for DDC/CI monitors")
+      (description "This package provides two Linux kernel drivers, ddcci and
 ddcci-backlight, that allows the control of DDC/CI monitors through the sysfs
 interface.  The ddcci module creates a character device for each DDC/CI
 monitors in @file{/dev/bus/ddcci/[I²C busnumber]}.  While the ddcci-backlight
 module allows the control of the backlight level or luminance property when
 supported under @file{/sys/class/backlight/}.")
-    (license license:gpl2+)))
+      (license license:gpl2+))))
 
 (define-public v4l2loopback-linux-module
   (package
@@ -6790,7 +6759,7 @@ and copy/paste text in the console and in xterm.")
 (define-public btrfs-progs
   (package
     (name "btrfs-progs")
-    (version "6.13")
+    (version "6.14")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kernel.org/linux/kernel/"
@@ -6798,7 +6767,7 @@ and copy/paste text in the console and in xterm.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "16pffd6wf1pmdw9rgasyq2qf59y6xh764cml2c0gi5552w8z5cv5"))))
+                "189xgsgdzqqcwm7k1ga33cj107md07w630xd88f2jvmkzh2bhnnz"))))
     (build-system gnu-build-system)
     (outputs '("out" "static")) ;static versions of the binaries in "out"
     (arguments

@@ -213,8 +213,8 @@ info --version")
               (lset= eq?
                      (pk 'services services)
                      '(root
-                       shepherd
-                       #$@(operating-system-shepherd-service-names os)))))
+                          shepherd
+                        #$@(operating-system-shepherd-service-names os)))))
 
           (test-equal "libc honors /etc/localtime"
             -7200          ;CEST = GMT+2
@@ -227,7 +227,7 @@ info --version")
                marionette)))
 
           (test-equal "/var/log/messages is not world-readable"
-            #o640                                ;<https://bugs.gnu.org/40405>
+            #o640                       ;<https://bugs.gnu.org/40405>
             (begin
               (wait-for-file "/var/log/messages" marionette
                              #:read 'get-u8)
@@ -448,20 +448,20 @@ info --version")
                              marionette))
 
           (test-equal "nscd invalidate action"
-            '(#t)                                 ;one value, #t
+            '(#t)                       ;one value, #t
             (marionette-eval '(with-shepherd-action 'nscd ('invalidate "hosts")
                                                     result
-                                                    result)
+                                result)
                              marionette))
 
           ;; FIXME: The 'invalidate' action can't reliably obtain the exit
           ;; code of 'nscd' so skip this test.
           (test-skip 1)
           (test-equal "nscd invalidate action, wrong table"
-            '(#f)                                 ;one value, #f
+            '(#f)                       ;one value, #f
             (marionette-eval '(with-shepherd-action 'nscd ('invalidate "xyz")
                                                     result
-                                                    result)
+                                result)
                              marionette))
 
           (test-equal "host not found"
@@ -482,12 +482,12 @@ info --version")
                                 ;; Make sure the (guix …) modules are found.
                                 (eval-when (expand load eval)
                                   (set! %load-path
-                                    (append (map (lambda (package)
-                                                   (string-append package
-                                                                  "/share/guile/site/"
-                                                                  (effective-version)))
-                                                 '#$guix&co)
-                                            %load-path)))
+                                        (append (map (lambda (package)
+                                                       (string-append package
+                                                                      "/share/guile/site/"
+                                                                      (effective-version)))
+                                                     '#$guix&co)
+                                                %load-path)))
 
                                 (use-modules (srfi srfi-34) (guix store))
 
@@ -509,7 +509,7 @@ info --version")
                              marionette))
 
           (test-equal "guix-daemon set-http-proxy action"
-            '(#t)                                 ;one value, #t
+            '(#t)                       ;one value, #t
             (marionette-eval '(with-shepherd-action 'guix-daemon
                                   ('set-http-proxy "http://localhost:8118")
                                   result
@@ -517,7 +517,7 @@ info --version")
                              marionette))
 
           (test-equal "guix-daemon set-http-proxy action, clear"
-            '(#t)                                 ;one value, #t
+            '(#t)                       ;one value, #t
             (marionette-eval '(with-shepherd-action 'guix-daemon
                                   ('set-http-proxy)
                                   result
@@ -882,13 +882,13 @@ non-ASCII names from /tmp.")
 (define %activation-os
   ;; System with a new user/group, a setuid/setgid binary and an activation script
   (let* ((%hello-accounts
-           (list (user-group (name "hello") (system? #t))
-                 (user-account
-                  (name "hello")
-                  (group "hello")
-                  (system? #t)
-                  (comment "")
-                  (home-directory "/var/empty"))))
+          (list (user-group (name "hello") (system? #t))
+                (user-account
+                 (name "hello")
+                 (group "hello")
+                 (system? #t)
+                 (comment "")
+                 (home-directory "/var/empty"))))
          (%hello-privileged
           (list
            (privileged-program

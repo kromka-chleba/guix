@@ -113,6 +113,7 @@
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages networking)
+  #:use-module (gnu packages node)
   #:use-module (gnu packages noweb)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages package-management)
@@ -1657,7 +1658,18 @@ the Guile compiler tower to generate the DSL from AWS JSON specifications.")
     (build-system gnu-build-system)
     (arguments
      (list
-      #:make-flags #~(list "GUILE_AUTO_COMPILE=0")))
+      #:make-flags
+      #~(list "GUILE_AUTO_COMPILE=0")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-extension-path
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "module/ffi/mosquitto.scm"
+                (("list #f \"libmosquitto\"")
+                 (string-append
+                  "list #f \""
+                  (search-input-file inputs "/lib/libmosquitto.so")
+                  "\""))))))))
     (native-inputs (list guile-3.0 pkg-config))
     (inputs (list mosquitto))
     (home-page "https://github.com/mdjurfeldt/guile-mqtt")
@@ -4039,7 +4051,7 @@ from @code{tree-il}.")
 (define-public guile-hoot
   (package
     (name "guile-hoot")
-    (version "0.6.0")
+    (version "0.6.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://spritely.institute/files/releases"
@@ -4047,15 +4059,18 @@ from @code{tree-il}.")
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0miq9bv09xvzdrcvzdrca9vychsznpzi4jj87f5r1mwz0xxpvxjb"))))
+                "0bpcni900sh2rp8j8ixjs0cipmvgygh1srnli686vf12n61hw0kz"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:make-flags '("GUILE_AUTO_COMPILE=0"
-                      "WASM_HOST=hoot")))
+     '(#:make-flags '("GUILE_AUTO_COMPILE=0")))
     (native-inputs
-     (list autoconf automake pkg-config texinfo))
+     (list autoconf automake node pkg-config texinfo))
     (inputs
      (list guile-next))
+    (native-search-paths
+     (list (search-path-specification
+            (variable "HOOT_LOAD_PATH")
+            (files (list "share/guile-hoot/site")))))
     (synopsis "WebAssembly compiler backend for Guile")
     (description "Guile Hoot is a WebAssembly compiler backend for GNU Guile
 and standalone WASM toolchain.")
@@ -4734,7 +4749,7 @@ code terse and reduce the need for ad hoc lambdas.")
        ("perl" ,perl)
        ("pkg-config" ,pkg-config)
        ("texinfo" ,texinfo)
-       ("texlive" ,(texlive-updmap.cfg (list texlive-epsf)))))
+       ("texlive" ,(texlive-local-tree (list texlive-epsf)))))
     (inputs
      (list bash-minimal
            dbus-glib
@@ -5107,7 +5122,7 @@ feature-set, fully programmable in Guile Scheme.")
     (inputs
      (list vigra vigra-c guile-3.0))
     (native-inputs
-     (list (texlive-updmap.cfg
+     (list (texlive-local-tree
             (list texlive-booktabs
                   texlive-iwona
                   texlive-lm
@@ -5498,6 +5513,33 @@ environments, it is now used by programs like VLC media player, BlueZ,
 NetworkManager, Pulseaudio, systemd (including logind and resolved), Polkit,
 gnome-keyring, and many more.")
     (license license:expat)))
+
+(define-public guile-slugify
+  (package
+    (name "guile-slugify")
+    (version "0.1.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ayys/guile-slugify")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1xg6dhcnd6m5z9d7yzsa2vzdhzgifyk92gkfb6md8rbc8dilp2rh"))
+       (snippet #~(for-each delete-file
+                            '("guix.scm" "test.scm")))))
+    (build-system guile-build-system)
+    (native-inputs (list guile-3.0))
+    (home-page "https://github.com/ayys/guile-slugify")
+    (synopsis "Convert arbitrary string to URL-friendly identifier in Guile")
+    (description
+     "This package provides a procedure for converting strings into
+URL-friendly slugs.  A slug is a simplified version of a string, often used in
+URLs, that contains only lowercase letters, digits, and hyphens.  This package
+is inspired by the @code{slugify} function in the Django web framework.  It is
+useful for generating human-readable identifiers from arbitrary text.")
+    (license license:gpl3+)))
 
 (define-public guile-webutils
   (let ((commit "d309d65a85247e4f3cea63a17defd1e6d35d821f")

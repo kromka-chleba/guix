@@ -19,7 +19,7 @@
 ;;; Copyright © 2019, 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2019 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
-;;; Copyright © 2020, 2021 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2020, 2021, 2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2020 Raghav Gururajan <raghavgururajan@disroot.org>
 ;;; Copyright © 2020-2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2020 Gabriel Arazas <foo.dogsquared@gmail.com>
@@ -1944,30 +1944,6 @@ It supports sub-pixel resolutions and anti-aliasing.  It is also a library for
 rendering @acronym{SVG, Scalable Vector Graphics}.")
     (license license:gpl2+)))
 
-(define-public python-pastel
-  (package
-    (name "python-pastel")
-    (version "0.2.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pastel" version))
-       (sha256
-        (base32
-         "0dnaw44ss10i10z4ksy0xljknvjap7rb7g0b8p6yzm5x4g2my5a6"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _ (invoke "pytest" "pastel" "tests/"))))))
-    (native-inputs
-     (list python-pytest))
-    (home-page "https://github.com/sdispater/pastel")
-    (synopsis "Library to colorize strings in your terminal")
-    (description "Pastel is a simple library to help you colorize strings in
-your terminal.")
-    (license license:expat)))
-
 (define-public facedetect
   (let ((commit "5f9b9121001bce20f7d87537ff506fcc90df48ca")
         (revision "0"))
@@ -2933,7 +2909,7 @@ generated discrete signed distance field using the cubic spline kernel.
      (list doxygen graphviz
            ;; TODO: Fix failing LaTeX invocation (which results in equations
            ;; being inserted literally into PNGs rather than being typeset).
-           ;; (texlive-updmap.cfg)
+           ;; (texlive-local-tree)
 
            perl))                            ;used to generate Fortran headers
     (inputs

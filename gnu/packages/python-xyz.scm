@@ -49,13 +49,14 @@
 ;;; Copyright © 2018 Mathieu Lirzin <mthl@gnu.org>
 ;;; Copyright © 2018 Adam Massmann <massmannak@gmail.com>
 ;;; Copyright © 2016, 2018 Tomáš Čech <sleep_walker@gnu.org>
-;;; Copyright © 2018-2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2018-2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2018 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2018, 2019, 2021, 2023 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2018-2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2018 Luther Thompson <lutheroto@gmail.com>
 ;;; Copyright © 2018 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2015, 2018 Pjotr Prins <pjotr.guix@thebird.nl>
+;;; Copyright © 2019 tlecarrour@easter-eggs.com <tlecarrour@easter-eggs.com>
 ;;; Copyright © 2019, 2020 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2019 Sam <smbaines8@gmail.com>
 ;;; Copyright © 2019, 2023 Jack Hill <jackhill@jackhill.us>
@@ -208,7 +209,6 @@
   #:use-module (gnu packages digest)
   #:use-module (gnu packages django)
   #:use-module (gnu packages djvu)
-  #:use-module (gnu packages docker)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages elf)
   #:use-module (gnu packages emulators)
@@ -217,19 +217,15 @@
   #:use-module (gnu packages fonts)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
-  #:use-module (gnu packages game-development)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gdb)
   #:use-module (gnu packages geo)
   #:use-module (gnu packages ghostscript)
-  #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
-  #:use-module (gnu packages graphics)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gsasl)
-  #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile-xyz)
   #:use-module (gnu packages haskell-xyz)
@@ -279,14 +275,12 @@
   #:use-module (gnu packages regex)
   #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages scanner)
-  #:use-module (gnu packages sdl)
   #:use-module (gnu packages search)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages shells)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages statistics)
-  #:use-module (gnu packages swig)
   #:use-module (gnu packages tcl)
   #:use-module (gnu packages terminals)
   #:use-module (gnu packages tex)
@@ -792,6 +786,30 @@ comparison operators, as defined in the original
     (description
      "This package provides a functionality to view output of multiple
 processes, in parallel, in the console, with an interactive TUI.")
+    (license license:expat)))
+
+(define-public python-pastel
+  (package
+    (name "python-pastel")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pastel" version))
+       (sha256
+        (base32
+         "0dnaw44ss10i10z4ksy0xljknvjap7rb7g0b8p6yzm5x4g2my5a6"))))
+    (build-system python-build-system)
+    (arguments
+     `(#:phases (modify-phases %standard-phases
+                  (replace 'check
+                    (lambda _ (invoke "pytest" "pastel" "tests/"))))))
+    (native-inputs
+     (list python-pytest))
+    (home-page "https://github.com/sdispater/pastel")
+    (synopsis "Library to colorize strings in your terminal")
+    (description "Pastel is a simple library to help you colorize strings in
+your terminal.")
     (license license:expat)))
 
 (define-public python-pyxdameraulevenshtein
@@ -1679,31 +1697,6 @@ Python dictionaries and provides a syntax to access nested dictionaries values
 using a dot syntax, for example: @code{dictionary['deeply.nested.key']}.")
     (license license:expat)))
 
-(define-public python-adjusttext
-  (package
-    (name "python-adjusttext")
-    (version "0.8")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "adjustText" version))
-              (sha256
-               (base32
-                "05zf0xn7ab40dan213fwbp1z4rybih8dphf9mzb2ddmbafxq41mv"))))
-    (build-system pyproject-build-system)
-    (arguments (list #:tests? #false)) ;there are none
-    (propagated-inputs (list python-matplotlib python-numpy))
-    (native-inputs (list python-setuptools python-wheel))
-    (home-page "https://github.com/Phlya/adjustText")
-    (synopsis "Adjust text position in matplotlib plots to minimize overlaps")
-    (description
-     "Often when we want to label multiple points on a graph the text will
-start heavily overlapping with both other labels and data points.  This can be
-a major problem requiring manual solution.  However this can be largely
-automated by smart placing of the labels (difficult) or iterative adjustment
-of their positions to minimize overlaps (relatively easy).  This library
-implements the latter option to help with matplotlib graphs.")
-    (license license:expat)))
-
 (define-public python-affine
   (package
     (name "python-affine")
@@ -1726,25 +1719,27 @@ transformation of the plane.")
 
 (define-public python-argopt
   (package
-   (name "python-argopt")
-   (version "0.7.0")
-   (source (origin
-            (method url-fetch)
-            (uri (pypi-uri "argopt" version))
-            (sha256
-             (base32
-              "0ybs7kkp0cpl8zn1lvf7481xhssg1bbhh5la2cjzdm5yibashyxa"))))
-   (build-system python-build-system)
-   (native-inputs
-    (list python-coverage python-nose python-setuptools ; Won't build without this.
-          python-setuptools-scm))
-   (propagated-inputs
-    (list python-toml python-flake8))
-   (home-page "https://github.com/casperdcl/argopt")
-   (synopsis "Generate a command-line interface from a docstring")
-   (description "This package provides tools to define a command line interface
+    (name "python-argopt")
+    (version "0.9.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "argopt" version))
+       (sha256
+        (base32 "03kpzdz8ib3szq8dpbr63jv0za4rpwal9iwpr3xhyqpzyiwhcy19"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-pytest-timeout
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (home-page "https://github.com/casperdcl/argopt")
+    (synopsis "Generate a command-line interface from a docstring")
+    (description
+     "This package provides tools to define a command line interface
 from a docstring rather than the other way around.")
-   (license license:mpl2.0)))
+    (license license:mpl2.0)))
 
 (define-public python-array-api-compat
   (package
@@ -2599,7 +2594,11 @@ generator MkDocs.")
       '(list "--ignore=tests/conftest.py"
              "--ignore=tests/test_tools.py"
              "--ignore=tests/tree/test_regressor.py"
-             "--ignore=tests/ensemble/test_regressor.py")
+             "--ignore=tests/ensemble/test_regressor.py"
+             ;; All tests fail with error: AttributeError: 'super' object has
+             ;; no attribute '__sklearn_tags__'
+             "--ignore=tests/tree/test_classifier.py"
+             "--ignore=tests/ensemble/test_classifier.py")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-tests
@@ -7675,71 +7674,6 @@ any @file{.pug} source into different template languages: Django, Jinja2,
 Mako, and Tornado.")
     (license license:expat))) ;; MIT
 
-(define-public python-pysdl2
-  (package
-    (name "python-pysdl2")
-    (version "0.9.11")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "PySDL2" version))
-              (sha256
-               (base32
-                "19id1qswgcj4v4j5kn49shq1xxx3slhjpm0102w87mczsdbi1rck"))))
-    (build-system python-build-system)
-    (arguments
-      (list #:tests? #f ;; Requires /dev/dri, OpenGL module, etc.
-            #:phases
-            #~(modify-phases %standard-phases
-                (add-after 'unpack 'patch-paths
-                  (lambda* (#:key inputs #:allow-other-keys)
-                    (substitute* "sdl2/dll.py"
-                    ;; Disable pysdl2-dll. It can't be packaged on GNU Guix
-                    ;; as it duplicates an existing package (sdl2).
-                    (("prepath = os\\.getenv\\('PYSDL2_DLL_PATH'\\)")
-                     "prepath = \"system\"")
-                    (("^import sdl2dll$") "")
-                    (("postpath = os\\.getenv\\('PYSDL2_DLL_PATH'\\)")
-                     "postpath = \"system\"")
-                    (("DLL\\(.*, os\\.getenv\\(\"PYSDL2_DLL_PATH\"\\)\\)")
-                     (string-append
-                       "DLL(\"SDL2\", [\"SDL2\", \"SDL2-2.0\", \"SDL2-2.0.0\"], \""
-                       (dirname (search-input-file inputs "/lib/libSDL2.so"))
-                       "\")")))
-              (substitute* "sdl2/sdlimage.py"
-                (("os\\.getenv\\(\"PYSDL2_DLL_PATH\"\\)")
-                 (string-append
-                   "\""
-                   (dirname (search-input-file inputs "/lib/libSDL2_image.so"))
-                   "\"")))
-              (substitute* "sdl2/sdlgfx.py"
-                (("os\\.getenv\\(\"PYSDL2_DLL_PATH\"\\)")
-                 (string-append
-                   "\""
-                   (dirname (search-input-file inputs "/lib/libSDL2_gfx.so"))
-                   "\"")))
-              (substitute* "sdl2/sdlmixer.py"
-                (("os\\.getenv\\(\"PYSDL2_DLL_PATH\"\\)")
-                 (string-append
-                   "\""
-                   (dirname (search-input-file inputs "/lib/libSDL2_mixer.so"))
-                   "\"")))
-              (substitute* "sdl2/sdlttf.py"
-                (("os\\.getenv\\(\"PYSDL2_DLL_PATH\"\\)")
-                 (string-append
-                   "\""
-                   (dirname (search-input-file inputs "/lib/libSDL2_ttf.so"))
-                   "\""))))))))
-    (inputs
-      (list sdl2 sdl2-image sdl2-gfx sdl2-mixer sdl2-ttf))
-    (home-page "https://github.com/py-sdl/py-sdl2")
-    (synopsis "Python bindings around the SDL2 game development library")
-    (description "PySDL2 is a pure Python wrapper around the @code{SDL2},
-@code{SDL2_mixer}, @code{SDL2_image}, @code{SDL2_ttf}, and @code{SDL2_gfx}
-libraries.  Instead of relying on C code, it uses the built-in ctypes module
-to interface with SDL2, and provides simple Python classes and wrappers for
-common SDL2 functionality.")
-    (license license:cc0)))
-
 (define-public python-pystache
   (package
     (name "python-pystache")
@@ -10174,7 +10108,7 @@ include_dirs = ~:*~a/include~%" #$(this-package-input "openblas"))))))
            python-sphinx-design
            python-sphinx-panels
            texinfo
-           (texlive-updmap.cfg
+           (texlive-local-tree
             (list texlive-cbfonts
                   texlive-cm-super
                   texlive-expdlist
@@ -14221,130 +14155,6 @@ installing @code{kernelspec}s for use with Jupyter frontends.")
              python-ipykernel-bootstrap))
       (properties (alist-delete 'hidden? (package-properties base))))))
 
-(define-public python-ipykernel
-  (package
-    (name "python-ipykernel")
-    (version "6.29.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "ipykernel" version))
-       (sha256
-        (base32 "0p5g897pq6k9nr44ihlk4hp5s46zz8ih2xib1715lizrc000fi1x"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:modules '((guix build pyproject-build-system)
-                  (guix build utils)
-                  (ice-9 match))
-      #:test-flags
-      ;; XXX: probably not good that this fails
-      '(list "-k" "not test_copy_to_globals" "-Wignore::DeprecationWarning")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'relax-a-bit
-            (lambda _
-              ;; I'm sure nobody will notice.
-              (substitute* "pyproject.toml"
-                (("debugpy>=1.6.5") "debugpy>=1.6.0"))))
-          ;; The deprecation warnings break the tests.
-          (add-after 'unpack 'hide-deprecation-warnings
-            (lambda _
-              (substitute* "pyproject.toml"
-                (("\"ignore:There is no current event loop:DeprecationWarning\"" m)
-                 (string-append m ",
-\"ignore:the imp module is deprecated:DeprecationWarning\",
-\"ignore:pytest-asyncio detected an unclosed event loop:DeprecationWarning\",
-\"ignore:make_current is deprecated.*:DeprecationWarning\",
-\"ignore:zmq.eventloop.ioloop.*:DeprecationWarning\",
-\"ignore:zmq.tests.BaseZMQTestCase.*:DeprecationWarning\"")))))
-           (add-before 'check 'pre-check
-             (lambda _
-               ;; jupyter-core demands this be set.
-               (setenv "JUPYTER_PLATFORM_DIRS" "1")
-               (setenv "HOME" "/tmp")))
-          (add-after 'install 'set-python-file-name
-            (lambda* (#:key inputs #:allow-other-keys)
-              ;; Record the absolute file name of the 'python' executable in
-              ;; 'kernel.json'.
-              (substitute* (string-append #$output "/share/jupyter"
-                                          "/kernels/python3/kernel.json")
-                (("\"python\"")
-                 (format #f "~s" (search-input-file inputs
-                                                    "/bin/python3")))))))))
-    (propagated-inputs
-     (list python-comm
-           python-debugpy
-           python-ipython
-           python-jupyter-client
-           python-jupyter-core
-           python-matplotlib-inline
-           python-nest-asyncio
-           python-packaging
-           python-psutil
-           python-pyzmq
-           python-tornado-6
-           python-traitlets))
-    (inputs (list python))              ;for cross compilation
-    (native-inputs
-     (list python-flaky
-           python-hatchling
-           python-ipyparallel-bootstrap
-           python-pytest
-           python-pytest-asyncio
-           python-pytest-cov
-           python-pytest-timeout))
-    (home-page "https://ipython.org")
-    (synopsis "IPython Kernel for Jupyter")
-    (description "This package provides the IPython kernel for Jupyter.")
-    (license license:bsd-3)))
-
-;; Bootstrap variant of ipykernel, which uses the bootstrap jupyter-client to
-;; break the cycle between ipykernel and jupyter-client.
-(define-public python-ipykernel-bootstrap
-  (let ((parent python-ipykernel))
-    (hidden-package
-      (package
-        (inherit parent)
-        (name "python-ipykernel-bootstrap")
-        (arguments (list #:tests? #f
-                         ;; The package should normally propagate ipykernel,
-                         ;; left out here to break the cycle.
-                         #:phases #~(modify-phases %standard-phases
-                                      (delete 'sanity-check))))
-        (native-inputs (list python-hatchling))
-        (propagated-inputs
-         (modify-inputs (package-propagated-inputs parent)
-           (replace "python-jupyter-client" python-jupyter-client-bootstrap)))))))
-
-(define-public python-pari-jupyter
-  (package
-    (name "python-pari-jupyter")
-    (version "1.4.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pari-jupyter" version))
-       (sha256
-        (base32 "178v8y3sj3lh3y8i7krbmjqvmv7549bg535fqq1q6axr0lfjknbw"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list #:tests? #f)) ; there are no proper tests
-    (native-inputs
-     (list python-cython
-           python-jupyter-kernel-test
-           python-setuptools
-           python-wheel))
-    (inputs
-     (list pari-gp
-           readline))
-    (propagated-inputs
-     (list python-ipykernel))
-    (home-page "https://github.com/sagemath/pari-jupyter")
-    (synopsis "Jupyter kernel for PARI/GP")
-    (description "The package provides a PARI/GP kernel for Jupyter.")
-    (license license:gpl3+)))
-
 (define-public python-backcall
   (package
     (name "python-backcall")
@@ -14692,7 +14502,7 @@ computing.")
            python-sphinx
            python-sphinx-rtd-theme
            texinfo
-           (texlive-updmap.cfg
+           (texlive-local-tree
             (list texlive-latexmk
                   texlive-polyglossia
                   texlive-xetex
@@ -16363,37 +16173,6 @@ you do not want to store entirely on disk or on memory.")
     (description "This package provides a Python SDK for the Sentry
 application monitoring and error tracking software.")
     (license license:bsd-2)))
-
-(define-public python-pep8-naming
-  (package
-    (name "python-pep8-naming")
-    (version "0.14.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pep8-naming" version))
-       (sha256
-        (base32 "0dlapswhvzkkyw9gmjngc4rbzasdxnpxwj8mdkmmfmc7h2p2iwhy"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "python" "run_tests.py")))))))
-    (native-inputs
-     (list python-setuptools
-           python-wheel))
-    (propagated-inputs
-     (list python-flake8))
-    (home-page "https://github.com/PyCQA/pep8-naming")
-    (synopsis "Check PEP-8 naming conventions")
-    (description
-     "This package provides the @code{pep8-naming} Python module, a plugin for
-flake8 to check PEP-8 naming conventions.")
-    (license license:expat)))
 
 (define-public python-pep440
   (package
@@ -19341,8 +19120,9 @@ time.")
                                      (getenv "JUPYTER_PATH")))
               ;; jupyter-core demands this
               (setenv "JUPYTER_PLATFORM_DIRS" "1")
-              ;; Tests need a writable HOME.
-              (setenv "HOME" "/tmp"))))))
+              ;; Tests need writable HOME and TEXMFVAR.
+              (setenv "HOME" "/tmp")
+              (setenv "TEXMFVAR" "/tmp"))))))
     (inputs
      (list inkscape/pinned pandoc))
     (native-inputs
@@ -19352,7 +19132,28 @@ time.")
            ;; Adding ipywidgets would create a cycle.
            ;;python-ipywidgets
            python-pytest
-           python-pytest-xdist))
+           python-pytest-xdist
+           (texlive-local-tree
+            (list texlive-adjustbox
+                  texlive-booktabs
+                  texlive-caption
+                  texlive-enumitem
+                  texlive-eurosym
+                  texlive-fancyvrb
+                  texlive-float
+                  texlive-fontspec
+                  texlive-grffile
+                  texlive-jknapltx
+                  texlive-parskip
+                  texlive-pdfcol
+                  texlive-rsfs
+                  texlive-soul
+                  texlive-tcolorbox
+                  texlive-titling
+                  texlive-ulem
+                  texlive-unicode-math
+                  texlive-upquote
+                  texlive-xetex))))
     (propagated-inputs
      (list python-beautifulsoup4
            python-bleach
@@ -19395,7 +19196,6 @@ time.")
            texlive-lm
            texlive-lm-math
            texlive-mathpazo
-           texlive-ms
            texlive-parskip
            texlive-pdfcol
            texlive-pgf
@@ -19428,91 +19228,6 @@ convert an @code{.ipynb} notebook file into various static formats including:
 @item ReStructured Text (rst)
 @item executable script
 @end enumerate\n")
-    (license license:bsd-3)))
-
-(define-public python-notebook
-  (package
-    (name "python-notebook")
-    (version "6.5.7")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "notebook" version))
-              (sha256
-               (base32
-                "1r38fwr0r4xgkz8y27w3xyz2dk97ih5azba28jylyqxcvw8r1sq4"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      '(list "-k" (string-append
-                   ;; TODO: This tests fails because nbconvert does not
-                   ;; list "python" as a format.
-                   "not test_list_formats"
-                   ;; AssertionError: Lists differ:
-                   " and not test_disable"
-                   " and not test_enable"
-                   " and not test_merge_config"
-                   " and not test_load_ordered"
-                   " and not test_list_running_sock_servers"
-                   " and not test_run")
-        ;; These tests require a browser.
-        "--ignore=notebook/tests/selenium")
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'use-our-home-for-tests
-           (lambda _
-             ;; The 'get_patch_env' function in this file reads:
-             ;;   'HOME': cls.home_dir
-             ;; but for some reason, that definition of HOME is not what the
-             ;; GLib/GIO trash mechanism honors, which would cause test
-             ;; failures.  Instead, set 'HOME' here to an existing directory
-             ;; and let the tests honor it.
-             (substitute* "notebook/tests/launchnotebook.py"
-               (("'HOME': .*," all)
-                (string-append "# " all "\n")))
-             (setenv "HOME" (getcwd))))
-         ;; Because python-jsonschema has an old python-webcolor.  Remove this
-         ;; when python-team branch is merged.
-         (delete 'sanity-check)
-         (add-before 'check 'pre-check
-           (lambda _
-             ;; Interferes with test expectations.
-             (unsetenv "JUPYTER_CONFIG_PATH")
-             ;; Some tests do not expect all files to be installed in the
-             ;; same directory, but JUPYTER_PATH contains multiple entries.
-             (unsetenv "JUPYTER_PATH"))))))
-    (propagated-inputs
-     (list python-argon2-cffi
-           python-ipykernel
-           python-ipython-genutils
-           python-jinja2
-           python-jupyter-client
-           python-jupyter-core
-           python-nest-asyncio
-           python-nbclassic
-           python-nbconvert
-           python-nbformat
-           python-prometheus-client
-           python-pyzmq
-           python-send2trash
-           python-terminado
-           python-tornado-6
-           python-traitlets))
-    (native-inputs
-     (list python-coverage
-           python-jupyter-server
-           python-nbval
-           python-pytest
-           python-pytest-cov
-           python-requests
-           python-requests-unixsocket2
-           python-setuptools
-           python-wheel))
-    (home-page "https://jupyter.org/")
-    (synopsis "Web-based notebook environment for interactive computing")
-    (description
-     "The Jupyter HTML notebook is a web-based notebook environment for
-interactive computing.")
     (license license:bsd-3)))
 
 (define-public python-widgetsnbextension
@@ -19648,42 +19363,6 @@ Jupyter kernels such as IJulia and IRKernel.")
     (description "Beautify, unpack or deobfuscate JavaScript, leveraging
 popular online obfuscators.")
     (license license:expat)))
-
-(define-public jupyter
-  (package
-    (name "jupyter")
-    (version "1.0.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "jupyter" version))
-       (sha256
-        (base32
-         "0pwf3pminkzyzgx5kcplvvbvwrrzd3baa7lmh96f647k30rlpp6r"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:tests? #f                       ;there are none.
-      #:phases
-      ;; Because python-jsonschema has an old python-webcolor.  Remove this
-      ;; when python-team branch is merged.
-      '(modify-phases %standard-phases
-         (delete 'sanity-check))))
-    (propagated-inputs
-     (list python-ipykernel
-           python-ipywidgets
-           python-jupyter-console
-           python-nbconvert
-           python-notebook
-           python-qtconsole))
-    (home-page "https://jupyter.org")
-    (synopsis "Web application for interactive documents")
-    (description
-     "The Jupyter Notebook is a web application that allows you to create and
-share documents that contain live code, equations, visualizations and
-explanatory text.  Uses include: data cleaning and transformation, numerical
-simulation, statistical modeling, machine learning and much more.")
-    (license license:bsd-3)))
 
 (define-public python-chardet
   (package
@@ -24571,21 +24250,23 @@ UE9 and U12 LabJack data acquisition (DAQ) modules.")
 (define-public python-kivy-garden
   (package
     (name "python-kivy-garden")
-    (version "0.1.4")
+    (version "0.1.5")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "kivy-garden" version))
+       (method git-fetch)  ; source was removed from PyPI
+       (uri (git-reference
+             (url "https://github.com/kivy-garden/garden")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0wkcpr2zc1q5jb0bi7v2dgc0vs5h1y7j42mviyh764j2i0kz8mn2"))))
-    (build-system python-build-system)
+        (base32 "1pvjblaljrcmjkq6hsa89zkh9ggdval58d2lwzd69vlma8y03qy4"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (add-after 'install 'remove-bat-file
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let ((out (assoc-ref outputs "out")))
-                        (delete-file
-                         (string-append out "/bin/garden.bat"))))))))
+     (list
+      #:tests? #f)) ; no tests in PyPI or Git distributions
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-requests))
     (home-page "https://github.com/kivy-garden/garden")
@@ -24593,76 +24274,6 @@ UE9 and U12 LabJack data acquisition (DAQ) modules.")
     (description
      "This package provides the @command{garden} command to install packages
 for Kivy, the multitouch application platform.")
-    (license license:expat)))
-
-(define-public python-kivy
-  (package
-    (name "python-kivy")
-    (version "2.1.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "Kivy" version))
-       (file-name (string-append name "-" version ".tar.gz"))
-       (sha256
-        (base32
-         "1cq4djfn7h8560mvz94dydsldg2jpp5w9rby7nafgmbh7fxg65is"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f              ; Tests require many optional packages
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'patch-generated-file-shebangs 'set-sdl-paths
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "KIVY_SDL2_PATH"
-                     (search-input-directory inputs "/include/SDL2"))))
-         (add-before 'build 'set-home
-           (lambda _
-             ;; 'kivy/__init__.py' wants to create $HOME/.kivy.
-             (setenv "HOME" (getcwd)))))))
-    (native-inputs
-     (list pkg-config python-cython))
-    (inputs
-     (list gstreamer
-           mesa
-           (sdl-union (list sdl2 sdl2-image sdl2-mixer sdl2-ttf))
-           python-docutils
-           python-kivy-garden
-           python-pygments))
-    (home-page "https://kivy.org")
-    (synopsis "Multitouch application framework")
-    (description
-     "Kivy is a software library for rapid development of hardware-accelerated
-multitouch applications.")
-    (license license:expat)))
-
-(define-public python-kivymd
-  (package
-    (name "python-kivymd")
-    (version "0.104.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "kivymd" version))
-       (sha256
-        (base32 "04lwy6j0agrdwa4a6dl6qs97nx9ysmscmm8psvdzjpyj8aa1zg4p"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:tests? #f                                ;tests require network
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'sanity-check 'set-home
-           (lambda _
-             ;; 'kivy/__init__.py' wants to create $HOME/.kivy.
-             (setenv "HOME" (getcwd)))))))
-    (native-inputs (list python-docutils))
-    (propagated-inputs
-     (list python-kivy python-pillow python-pygments python-kivy-garden))
-    (home-page "https://github.com/kivymd/KivyMD")
-    (synopsis "Material Design compliant widgets for use with Kivy")
-    (description
-     "This package provides Kivy widgets that approximate Google's Material
-Design spec without sacrificing ease of use or application performance.")
     (license license:expat)))
 
 (define-public python-async-lru
@@ -24715,50 +24326,6 @@ completes.")
      "This package lets you run asynchronous workflows using
 pytest-fixtures-style dependency injection.")
     (license license:asl2.0)))
-
-(define-public python-asynckivy
-  (package
-    (name "python-asynckivy")
-    (version "0.5.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri
-        (pypi-uri "asynckivy" version))
-       (sha256
-        (base32 "0ivjvch8yn3k1ybfp7c1nm8mhc0ymg7d04mq54lly7yjvg0jvcni"))))
-    (build-system python-build-system)
-    (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (add-before 'check 'set-home
-             (lambda _
-               ;; 'kivy/__init__.py' wants to create $HOME/.kivy.
-               (setenv "HOME" (getcwd)))))))
-    (propagated-inputs (list python-kivy python-asyncgui))
-    (home-page "https://github.com/gottadiveintopython/asynckivy")
-    (synopsis "Async library for Kivy")
-    (description
-     "This package provides async versions of Kivy functions to avoid the
-callback-heavy mode of interaction typical in some Kivy applications.")
-    (license license:expat)))
-
-(define-public python-asyncgui
-  (package
-    (name "python-asyncgui")
-    (version "0.5.3")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "asyncgui" version))
-              (sha256
-               (base32
-                "0614130afg2qc1qq4p82piskvvx6lpjl4nlsakbjzdyd78xywnb7"))))
-    (build-system python-build-system)
-    (home-page "https://github.com/gottadiveintopython/asyncgui")
-    (synopsis "Enables async/await without an event loop")
-    (description "This package provides support for async/await applications
-without requiring an event loop, useful for creative responsive GUIs.")
-    (license license:expat)))
 
 (define-public python-binaryornot
   (package
@@ -33187,33 +32754,6 @@ content models.")
     (home-page "https://geopython.github.io/OWSLib/")
     (license license:bsd-3)))
 
-(define-public python-docusign-esign
-  (package
-    (name "python-docusign-esign")
-    (version "3.1.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "docusign_esign" version))
-              (sha256
-               (base32
-                "01f3h03vc97syjlmqyl7xa5j90pzgmwpspc5a0gra9saynnbkx37"))))
-    (build-system python-build-system)
-    ;; Testing requires undocumented setup changes, and so testing is disabled here.
-    (arguments `(#:tests? #f))
-    (propagated-inputs
-      (list python-certifi
-            python-six
-            python-dateutil
-            python-urllib3
-            python-pyjwt
-            python-cryptography
-            python-nose))
-    (synopsis "DocuSign Python Client")
-    (description "The Official DocuSign Python Client Library used to interact
- with the eSign REST API.  Send, sign, and approve documents using this client.")
-    (home-page "https://www.docusign.com/devcenter")
-    (license license:expat)))
-
 (define-public python-xattr
   (package
     (name "python-xattr")
@@ -34793,8 +34333,10 @@ By default it uses the open Python vulnerability database Safety DB.")
     ;; Ideally, we would supersede texlive-xpatch with texlive-regexpatch once
     ;; the missing etoolbox.sty file is added
     (native-inputs
-     (list (texlive-updmap.cfg
-            (list texlive-xpatch texlive-lm
+     (list (texlive-local-tree
+            (list texlive-etoolbox
+                  texlive-lm
+                  texlive-regexpatch
                   texlive-xcolor))
            python-pip
            python-poetry-core
@@ -35820,48 +35362,6 @@ implementations.")
      "@code{retry} is an easy to use retry decorator for Python.  It can be
 used to retry a function a given number of times.")
     (license license:asl2.0)))
-
-(define-public python-pivy
-  (package
-    (name "python-pivy")
-    (version "0.6.8")
-    (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-               (url "https://github.com/coin3d/pivy")
-               (commit version)))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32 "00l4r06dwmgn8h29nrl3g3yv33cfyizyylk28x1j95qyj36sggfb"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      ;; The test suite fails due to an import cycle between 'pivy' and '_coin'
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-cmake-include-dirs
-            (lambda _
-              ;; Patch buildsystem to respect Coin3D include directory
-              (substitute* "CMakeLists.txt"
-                (("\\$\\{SoQt_INCLUDE_DIRS}")
-                 "${Coin_INCLUDE_DIR};${SoQt_INCLUDE_DIRS}")))))))
-    (native-inputs
-      (list cmake swig))
-    (inputs
-      (list python-wrapper
-            qtbase-5
-            libxi
-            libice
-            glew
-            coin3d))
-    (home-page "https://github.com/coin3d/pivy")
-    (synopsis "Python bindings to Coin3D")
-    (description
-      "Pivy provides python bindings for Coin, a 3D graphics library with an
-Application Programming Interface based on the Open Inventor 2.1 API.")
-    (license license:isc)))
 
 (define-public python-crayons
   (package
@@ -37312,27 +36812,21 @@ pythonic way.")
 (define-public python-tablib
   (package
     (name "python-tablib")
-    (version "3.0.0")
+    (version "3.8.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "tablib" version))
        (sha256
-       (base32 "03f1z6jq6rf67gwhbm9ma4rydm8h447a5nh5lcs5l8jg8l4aqg7q"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (setenv "GUIX_PYTHONPATH"
-                       (string-append (getcwd) "/build/lib:"
-                                      (getenv "GUIX_PYTHONPATH")))
-               (invoke "pytest")))))))
+        (base32 "0ayv93q7kpii6z3n57i6b78mpr1ibwd70nvd981a05d7cpfbrn4l"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-pandas ;; required for test-suite
-           python-pytest python-pytest-cov python-setuptools-scm))
+     (list python-pandas
+           python-pytest
+           python-pytest-cov
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (propagated-inputs
      (list python-markuppy
            python-odfpy
@@ -37343,7 +36837,8 @@ pythonic way.")
            python-xlwt))
     (home-page "https://tablib.readthedocs.io")
     (synopsis "Format agnostic tabular data library")
-    (description "@code{tablib} is a format-agnostic tabular dataset library,
+    (description
+     "@code{tablib} is a format-agnostic tabular dataset library,
 written in Python.  Supported output formats are Excel (Sets + Books),
 JSON (Sets + Books), YAML (Sets + Books), HTML (Sets), Jira (Sets),
 TSV (Sets), ODS (Sets), CSV (Sets), and DBF (Sets).

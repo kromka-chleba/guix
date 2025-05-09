@@ -37,7 +37,7 @@
                 "0qf14d0n6k1dn9z0fdnx9qkhn4iq685xd443w7l7w54bm931p7dw"))))
     (build-system copy-build-system)
     (native-inputs
-     (list (texlive-updmap.cfg
+     (list (texlive-local-tree
             (list texlive-caption
                   texlive-endnotes
                   texlive-etoolbox
@@ -50,6 +50,9 @@
       #:install-plan #~'(("faif-2.0.pdf" "share/doc/faif/"))
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'writable-texmfvar
+            ;; Generating font shapes require a writable TEXMFVAR directory.
+            (lambda _ (setenv "TEXMFVAR" "/tmp")))
           (add-before 'install 'build
             (lambda _
               (invoke "pdflatex" "faif-2.0.tex"))))))

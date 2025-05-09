@@ -10,7 +10,7 @@
 ;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2017 nikita <nikita@n0.is>
 ;;; Copyright © 2017 Rodger Fox <thylakoid@openmailbox.org>
-;;; Copyright © 2017–2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2017–2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2017, 2018, 2019, 2021 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2017 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2017–2022 Tobias Geerinckx-Rice <me@tobias.gr>
@@ -1718,7 +1718,7 @@ and auto-mapping slices to MIDI note numbers.")
            rsync
            texinfo
            texi2html-1.82
-           (texlive-updmap.cfg
+           (texlive-local-tree
             (list texlive-cyrillic
                   texlive-epsf
                   texlive-fontinst
@@ -6503,7 +6503,7 @@ and reverb.")
 (define-public lsp-plugins
   (package
     (name "lsp-plugins")
-    (version "1.2.15")
+    (version "1.2.21")
     (source
       (origin
         (method url-fetch)
@@ -6511,7 +6511,7 @@ and reverb.")
                             "/releases/download/" version
                             "/lsp-plugins-src-" version ".tar.gz"))
         (sha256
-         (base32 "1bpkbmy8djz304rlsf9zp7bkyc874gnpfihkigqg4fj667x2xfcj"))))
+         (base32 "1n8jdvbkd8kgr50s8alw75g2k8202837k9sl3lvlbmkyap8a2bdf"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -6530,7 +6530,7 @@ and reverb.")
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
-                (invoke ".build/host/lsp-plugin-fw/lsp-plugins-test" "utest"))))
+                (invoke ".build/target/lsp-plugin-fw/lsp-plugins-test" "utest"))))
           (add-after 'install 'move-large-subdirs
             (lambda _
               (define (move-to-output output path)

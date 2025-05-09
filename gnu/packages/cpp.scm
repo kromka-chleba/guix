@@ -1279,7 +1279,7 @@ intuitive syntax and trivial integration.")
                   ;; NOTE: remove strict versioning.
                   (substitute* "styles.tex"
                     (("lst@CheckVersion\\{1.6\\}")
-                     "lst@CheckVersion{1.10}"))
+                     "lst@CheckVersion{1.10c}"))
                   (invoke "pdflatex" "std")
                   (invoke "pdflatex" "std")))) ;Rerun to update references.
             (replace 'install
@@ -1299,25 +1299,25 @@ intuitive syntax and trivial integration.")
                                             #$version ".pdf"))))))))
       (native-inputs
        (list perl
-             (texlive-updmap.cfg
-              (list texlive-ulem
-                    texlive-rsfs
-                    texlive-memoir
-                    texlive-substr
-                    texlive-xcolor
-                    texlive-isodate
+             (texlive-local-tree
+              (list texlive-booktabs
                     texlive-caption
-                    texlive-relsize
-                    texlive-extract
-                    texlive-xpatch
-                    texlive-xkeyval
-                    texlive-jknapltx
-                    texlive-booktabs
                     texlive-enumitem
                     texlive-etoolbox
+                    texlive-extract
+                    texlive-isodate
+                    texlive-jknapltx
                     texlive-listings
+                    texlive-memoir
                     texlive-microtype
-                    texlive-underscore))))
+                    texlive-relsize
+                    texlive-rsfs
+                    texlive-substr
+                    texlive-ulem
+                    texlive-underscore
+                    texlive-xcolor
+                    texlive-xkeyval
+                    texlive-xpatch))))
       (home-page "https://github.com/josuttis/jthread")
       (synopsis "C++ class for a joining and cooperative interruptible thread")
       (description

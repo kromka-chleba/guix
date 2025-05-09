@@ -886,6 +886,7 @@ emphasis on quality rather than speed.")
                   (("file=dihedral\\.eps")
                    "file=figs/dihedral.eps"))
                 (setenv "FORCE_SOURCE_DATE" "1")
+                (setenv "TEXMFVAR" "/tmp")
                 (invoke "latexmk" "-pdf" "bind_manual.tex"))))
           (add-after 'install 'install-eht-parms
             (lambda _
@@ -905,7 +906,7 @@ emphasis on quality rather than speed.")
     (inputs (list openblas))
     (native-inputs
      (list gfortran
-           (texlive-updmap.cfg
+           (texlive-local-tree
             (list texlive-epstopdf
                   texlive-latexmk))))
     (home-page "https://github.com/greglandrum/yaehmop")

@@ -91,6 +91,7 @@
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages java)
   #:use-module (gnu packages javascript)
+  #:use-module (gnu packages jupyter)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages machine-learning)
@@ -8693,7 +8694,7 @@ palettes, color maps, and tools to evaluate them.")
            texlive-was                  ; upgreek.sty
            texlive-xcolor
            texlive-xpatch
-           (texlive-updmap.cfg (list
+           (texlive-local-tree (list
                                 texlive-amsfonts
                                 texlive-times
                                 texlive-lm))))
@@ -33578,6 +33579,7 @@ Jupyter front-ends (e.g. Jupyter Notebook).  It is designed to be used from a
 running IRkernel session.")
     (license license:expat)))
 
+;; XXX: Maybe move to jupyter module.
 (define-public r-irkernel
   (package
     (name "r-irkernel")
@@ -45566,14 +45568,14 @@ including means, variances, intervals, and highest density regions.")
 (define-public r-posterior
   (package
     (name "r-posterior")
-    (version "1.6.0")
+    (version "1.6.1")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "posterior" version))
        (sha256
         (base32
-         "037l1cav2vglcd2pgp8n89apfpsb3822mhzmdsxf7a0mzcwjlq9l"))))
+         "16d7gfg8mfx89gz365a6cjc5zl0vs0wbr2gcn8n597sc7yyxf1z5"))))
     (properties `((upstream-name . "posterior")))
     (build-system r-build-system)
     (propagated-inputs
@@ -45587,7 +45589,7 @@ including means, variances, intervals, and highest density regions.")
            r-tibble
            r-vctrs))
     (native-inputs
-     (list r-knitr r-testthat))
+     (list r-dplyr r-ggplot2 r-knitr r-testthat r-tidyr))
     (home-page "https://mc-stan.org/posterior/")
     (synopsis "Tools for working with posterior distributions")
     (description
@@ -50726,7 +50728,7 @@ package online.")
            texlive-tools
            texlive-ulem
            texlive-upquote
-           (texlive-updmap.cfg (list texlive-lm))))
+           (texlive-local-tree (list texlive-lm))))
     (native-inputs (list r-testthat))
     (home-page "https://github.com/crsh/prereg")
     (synopsis

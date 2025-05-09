@@ -374,6 +374,9 @@ as.POSIXct(if (\"\" != Sys.getenv(\"SOURCE_DATE_EPOCH\")) {\
           (add-before 'check 'set-home
             ;; Some tests require that HOME be set.
             (lambda _ (setenv "HOME" "/tmp")))
+          (add-before 'build 'use-writable-texmfvar
+           ;; Use writable TEXMFVAR to generate fonts.
+           (lambda _ (setenv "TEXMFVAR" "/tmp")))
           (add-after 'build 'make-info
             (lambda _ (invoke "make" "info")))
           (add-after 'build 'install-info
@@ -414,7 +417,7 @@ as.POSIXct(if (\"\" != Sys.getenv(\"SOURCE_DATE_EPOCH\")) {\
            perl
            pkg-config
            texinfo                      ; for building HTML manuals
-           (texlive-updmap.cfg
+           (texlive-local-tree
             (list texlive-etoolbox
                   texlive-fancyvrb
                   texlive-inconsolata
@@ -2068,7 +2071,7 @@ character vector.")
      (list hevea
            perl
            swig
-           (texlive-updmap.cfg
+           (texlive-local-tree
             (list texlive-aeguill texlive-jknapltx))))
     (propagated-inputs
      (list r-lattice

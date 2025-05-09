@@ -2,7 +2,7 @@
 ;;; Copyright © 2017 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2021 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Thiago Jung Bauermann <bauermann@kolabnow.com>
-;;; Copyright © 2023, 2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2023-2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -91,11 +91,25 @@ runfile to replace.  If a file has no matching runfile, it is ignored."
         ((command-regexp _ command)
          (which command))))))
 
-(define* (set-texmfvar #:rest _)
-  "Set TEXMFVAR to a writable location."
-  ;; Default value is relative to $HOME, which is not set during build.  This
-  ;; location is used for generating font metrics or building documentation.
-  (setenv "TEXMFVAR" (string-append (getcwd) "/texmf-var")))
+(define* (enforce-source-date-epoch #:rest _)
+  "Toggle FORCE_SOURCE_DATE in order to make some Web2C binaries obey to
+SOURCE_DATE_EPOCH.
+
+This is only a part of the solution to make TeX Live reproducible as format
+generation also needs to be wrapped within a `faketime' call in the
+`create-formats' phase."
+  (setenv "FORCE_SOURCE_DATE" "1"))
+
+(define* (configure-texmf #:rest _)
+  "Ensure TEXMFVAR is writable and \"ls-R\" database is not required."
+  ;; Default TEXMFVAR value is relative to $HOME, which is not set during
+  ;; build.  This location is used for generating font metrics or building
+  ;; documentation.
+  (setenv "TEXMFVAR" (string-append (getcwd) "/texmf-var"))
+  ;; By default, a "ls-R" file must exist in TEXMFDIST.  However, it isn't
+  ;; generated in the TeX Live tree used to build a package.  Consequently,
+  ;; relax this requirement.
+  (setenv "TEXMF" "{$TEXMFSYSVAR,$TEXMFDIST}"))
 
 (define* (delete-drv-files #:rest _)
   "Delete pre-generated \".drv\" files in order to prevent build failures."
@@ -171,7 +185,8 @@ runfile to replace.  If a file has no matching runfile, it is ignored."
        (install-as-runfiles "build" "\\.tfm$"))
      local-sources)))
 
-(define* (create-formats #:key create-formats inputs #:allow-other-keys)
+(define* (create-formats
+          #:key create-formats native-inputs inputs #:allow-other-keys)
   (define (collect-locations inputs pred)
     (delete-duplicates
      (append-map (match-lambda
@@ -189,8 +204,21 @@ runfile to replace.  If a file has no matching runfile, it is ignored."
     (setenv "LUAINPUTS"
             (string-join (collect-locations inputs "\\.lua$") ":"))
     (mkdir-p "web2c")
-    (for-each (cut invoke "fmtutil-sys" "--byfmt" <> "--fmtdir=web2c")
-              create-formats)
+    ;; The ".fmt" format files contain timestamps.  Reset them.
+    ;;
+    ;; XXX: At the moment 32bit systems do not support "faketime" (see
+    ;; <https://issues.guix.gnu.org/72239>), so accept "datefudge" for them.
+    (let* ((inputs (or native-inputs inputs))
+           (command
+            (cond
+             ((assoc-ref inputs "libfaketime") "faketime")
+             ((assoc-ref inputs "datefudge") "datefudge")
+             (else
+              (error "Missing 'libfaketime' or 'datefudge' native input")))))
+      (for-each (cut invoke
+                     command "1970-01-01T00:00:00+00:00"
+                     "fmtutil-sys" "--byfmt" <> "--fmtdir=web2c")
+                create-formats))
     ;; Remove cruft.
     (for-each delete-file (find-files "web2c" "\\.log$"))))
 
@@ -214,8 +242,10 @@ runfile to replace.  If a file has no matching runfile, it is ignored."
                                                        f))))
                        build-targets))
           ((directory-exists? "source")
-           ;; Prioritize ".ins" files over ".dtx" files.  There's no
-           ;; scientific reasoning here; it just seems to work better.
+           ;; Prioritize ".ins" files over ".dtx" files.  The former only
+           ;; generate runfiles whereas the latter usually also rebuild
+           ;; documentation, which is not regenerated during the build process
+           ;; as it would introduce some bootstrapping issues.
            (match (find-files "source" "\\.ins$")
              (() (find-files "source" "\\.dtx$"))
              (files files)))
@@ -295,7 +325,8 @@ runfile to replace.  If a file has no matching runfile, it is ignored."
     (delete 'bootstrap)
     (delete 'configure)
     (add-after 'unpack 'patch-shell-scripts patch-shell-scripts)
-    (add-before 'build 'set-texmfvar set-texmfvar)
+    (add-before 'build 'enforce-source-date-epoch enforce-source-date-epoch)
+    (add-before 'build 'configure-texmf configure-texmf)
     (add-before 'build 'delete-drv-files delete-drv-files)
     (add-after 'delete-drv-files 'generate-font-metrics generate-font-metrics)
     (replace 'build build)

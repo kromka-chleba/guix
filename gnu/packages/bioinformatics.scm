@@ -7473,6 +7473,10 @@ data and settings.")
            ;; SOURCE_DATE_EPOCH
            (lambda _
              (setenv "FORCE_SOURCE_DATE" "1")))
+         (add-before 'build 'use-writable-texmfvar
+           ;; Use writable TEXMFVAR to generate fonts.
+           (lambda _
+             (setenv "TEXMFVAR" "/tmp")))
          (add-after 'unpack 'fix-latex-errors
            (lambda _
              (with-fluids ((%default-port-encoding #f))
@@ -7500,13 +7504,12 @@ data and settings.")
     (inputs
      (list boost cairo rmath-standalone))
     (native-inputs
-     (list (texlive-updmap.cfg
+     (list (texlive-local-tree
             (list texlive-doi
                   texlive-etoolbox
                   texlive-examplep
                   texlive-forloop
                   texlive-listofitems
-                  texlive-ms
                   texlive-natbib
                   texlive-pgf           ;tikz
                   texlive-readarray
@@ -16158,7 +16161,7 @@ programs for inferring phylogenies (evolutionary trees).")
      (list automake
            autoconf
            openmpi
-           (texlive-updmap.cfg
+           (texlive-local-tree
             (list texlive-caption
                   texlive-cite
                   texlive-fancyvrb
@@ -21353,7 +21356,7 @@ to an artifact/contaminant file.")
     (inputs
      (list openmpi zlib))
     (native-inputs
-     (list (texlive-updmap.cfg
+     (list (texlive-local-tree
             (list texlive-infwarerr
                   texlive-kvoptions
                   texlive-pdftexcmds))))

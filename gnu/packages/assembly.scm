@@ -103,6 +103,8 @@
                    #$output))))
             (add-after 'check 'build-doc
               (lambda* (#:key parallel-build? #:allow-other-keys)
+                ;; Generating font shapes require a writable TEXMFVAR.
+                (setenv "TEXMFVAR" "/tmp")
                 (invoke "make"
                         "-j" (if parallel-build?
                                  (number->string (parallel-job-count))
@@ -110,7 +112,7 @@
                         "docs"))))
         #:test-target "test"))
       (native-inputs
-       (list (texlive-updmap.cfg (list texlive-german texlive-hyperref))))
+       (list (texlive-local-tree (list texlive-german texlive-hyperref))))
       (outputs '("out" "doc"))
       (home-page "http://john.ccac.rwth-aachen.de:8000/as/")
       (synopsis

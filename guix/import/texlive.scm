@@ -117,6 +117,7 @@
    "xmltex"
    ;; Category 3.
    "biber"
+   "biber-ms"
    "context"
    "cluttex"
    "esptopdf"
@@ -669,7 +670,9 @@ at VERSION."
       (values
        `(package
           (name ,name)
-          (version ,(if empty-package? '%texlive-version version))
+          (version ,(if empty-package?
+                        '(package-version texlive-source)
+                        version))
           (source
            ,(and (not meta-package?)
                  `(origin
@@ -766,7 +769,7 @@ associated Guix package, or #f on failure.  Fetch metadata for a specific
 version whenever VERSION keyword is specified.  Otherwise, grab package latest
 release.  When DATABASE is provided, fetch metadata from there, ignoring
 VERSION."
-    (let ((version (or version (first (texlive-tags)))))
+    (let ((version (find-version (texlive-tags) version #t)))
       (tlpdb->package name version (or database (tlpdb/cached version))))))
 
 (define* (texlive-recursive-import name #:key repo version)
@@ -774,7 +777,7 @@ VERSION."
                     #:repo repo
                     #:version version
                     #:repo->guix-package texlive->guix-package
-                    #:guix-name downstream-package-name))
+                    #:guix-name (cut downstream-package-name "texlive-" <>)))
 
 ;;;
 ;;; Updates.

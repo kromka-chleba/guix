@@ -30,7 +30,7 @@
 ;;; Copyright © 2018 Eric Brown <brown@fastmail.com>
 ;;; Copyright © 2018, 2021, 2024 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2018 Amin Bandali <bandali@gnu.org>
-;;; Copyright © 2019, 2021-2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
+;;; Copyright © 2019, 2021-2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2019 Steve Sprang <scs@stevesprang.com>
 ;;; Copyright © 2019 Robert Smith <robertsmith@posteo.net>
 ;;; Copyright © 2020 Jakub Kądziołka <kuba@kadziolka.net>
@@ -1000,7 +1000,7 @@ digits of precision.")
      (list autoconf
            automake
            libtool
-           (texlive-updmap.cfg
+           (texlive-local-tree
             (list texlive-amsfonts
                   texlive-graphics
                   texlive-l3backend
@@ -1463,7 +1463,7 @@ giza instead of PGPLOT for the implementation, though.")
         (base32 "16ipf7m2c2v1cldp3kwxbjj6db6bzy0rkrpp4kzhh61a3866cnp8"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list pkg-config (texlive-updmap.cfg)))
+     (list pkg-config (texlive-local-tree)))
     (inputs
      (list cairo gd libcerf lua pango readline))
     (arguments
@@ -2193,8 +2193,11 @@ Swath).")
     (arguments
      (substitute-keyword-arguments (package-arguments hdf5)
        ((#:configure-flags _ #f)
-        ''("-DHDF5_ENABLE_THREADSAFE=OFF"
+        #~(list
+           (string-append "-DHDF5_INSTALL_CMAKE_DIR=" #$output "/lib/cmake")
+           "-DHDF5_ENABLE_THREADSAFE=OFF"
            "-DHDF5_ENABLE_PARALLEL=ON"
+           "-DHDF5_BUILD_FORTRAN=ON"
            "-DHDF5_BUILD_CPP_LIB=OFF"
            "-DHDF5_BUILD_DOC=ON"))
        ((#:phases phases)
@@ -2329,7 +2332,7 @@ the resulting text.")
     (inputs (list fftw lapack openblas))
     ;; FIXME: Even though the fonts are available dvips complains:
     ;; "Font cmmi10 not found; characters will be left blank."
-    (native-inputs (list (texlive-updmap.cfg) ghostscript doxygen))
+    (native-inputs (list (texlive-local-tree) ghostscript doxygen))
     (home-page "https://itpp.sourceforge.net")
     (synopsis "C++ library of maths, signal processing and communication classes")
     (description "IT++ is a C++ library of mathematical, signal processing and
@@ -3386,7 +3389,7 @@ script files.")
        ,@(package-inputs octave-cli)))
     (native-inputs
      `(("qttools-5" , qttools-5) ;for lrelease
-       ("texlive" ,(texlive-updmap.cfg (list texlive-epsf))) ; for texi2dvi
+       ("texlive" ,(texlive-local-tree (list texlive-epsf))) ; for texi2dvi
        ,@(package-native-inputs octave-cli)))
     (arguments
      (substitute-keyword-arguments (package-arguments octave-cli)
@@ -6283,6 +6286,8 @@ package contains a library with common configuration options.")
                                 "set(DUMMY\n")))))
           (add-after 'build 'build-doc
             (lambda _
+              ;; Generating font shapes require a writable TEXMFVAR directory.
+              (setenv "TEXMFVAR" "/tmp")
               (with-directory-excursion "../AMD/Doc"
                 (invoke "make"))))
           ;; Required for suitesparse-umfpack
@@ -6301,7 +6306,7 @@ package contains a library with common configuration options.")
                             (string-append #$output "/share/doc/"
                                            #$name "-" #$version)))))))
     (propagated-inputs (list suitesparse-config))
-    (native-inputs (list gfortran (texlive-updmap.cfg '())))
+    (native-inputs (list gfortran (texlive-local-tree '())))
     (home-page "https://people.engr.tamu.edu/davis/suitesparse.html")
     (synopsis "Sparse matrix ordering for Cholesky factorization")
     (description "AMD is a set of routines for ordering a sparse matrix prior
@@ -6364,6 +6369,8 @@ matrix into block upper triangular form.")
                                 "set(DUMMY\n")))))
           (add-after 'build 'build-doc
             (lambda _
+              ;; Generating font shapes require a writable TEXMFVAR directory.
+              (setenv "TEXMFVAR" "/tmp")
               (with-directory-excursion "../CAMD/Doc"
                 (invoke "make"))))
           (add-after 'install 'install-doc
@@ -6377,7 +6384,7 @@ matrix into block upper triangular form.")
                             (string-append #$output "/share/doc/"
                                            #$name "-" #$version)))))))
     (propagated-inputs (list suitesparse-config))
-    (native-inputs (list (texlive-updmap.cfg '())))
+    (native-inputs (list (texlive-local-tree '())))
     (home-page "https://people.engr.tamu.edu/davis/suitesparse.html")
     (synopsis "Sparse matrix ordering for Cholesky factorization with constraints")
     (description "CAMD is a set of routines for ordering a sparse matrix prior
@@ -6555,6 +6562,7 @@ target_link_libraries(CHOLMOD_static PRIVATE ${METIS_LIBRARY} ${GKLIB_LIBRARY})"
                 (("SuiteSparse_metis_METIS") "METIS"))))
           (add-after 'build 'build-doc
             (lambda _
+              (setenv "TEXMFVAR" "/tmp") ;for font shapes generation
               (with-directory-excursion "../CHOLMOD/Doc"
                 (invoke "make"))))
           (add-after 'install 'install-doc
@@ -6578,7 +6586,7 @@ target_link_libraries(CHOLMOD_static PRIVATE ${METIS_LIBRARY} ${GKLIB_LIBRARY})"
            suitesparse-ccolamd
            suitesparse-colamd))
     (propagated-inputs (list suitesparse-config))
-    (native-inputs (list (texlive-updmap.cfg '())))
+    (native-inputs (list (texlive-local-tree '())))
     (home-page "https://people.engr.tamu.edu/davis/suitesparse.html")
     (synopsis "Library for solving sparse symmetric positive definite linear
 equations")
@@ -6657,6 +6665,7 @@ direct methods on both real and complex matrices.")
               (substitute* "../KLU/Doc/Makefile"
                 (("\\.\\./\\.\\./BTF/Include/btf.h")
                  (string-append #$suitesparse-btf "/include/btf.h")))
+              (setenv "TEXMFVAR" "/tmp") ;for generating font shapes
               (with-directory-excursion "../KLU/Doc"
                 (invoke "make"))))
           (add-after 'install 'install-doc
@@ -6678,7 +6687,7 @@ direct methods on both real and complex matrices.")
      (list suitesparse-amd
            suitesparse-btf
            suitesparse-cholmod))
-    (native-inputs (list (texlive-updmap.cfg '())))
+    (native-inputs (list (texlive-local-tree '())))
     (home-page "https://people.engr.tamu.edu/davis/suitesparse.html")
     (synopsis "Routines for solving sparse linear problems with a LU factorization")
     (description "KLU is a method for computing the LU factorization of sparse
@@ -6716,6 +6725,7 @@ for real and complex matrices.")
               (substitute* "../LDL/Doc/Makefile"
                 (("\\.\\./\\.\\./BTF/Include/btf.h")
                  (string-append #$suitesparse-btf "/include/btf.h")))
+              (setenv "TEXMFVAR" "/tmp") ;for font shape generation
               (with-directory-excursion "../LDL/Doc"
                 (invoke "make"))))
           (add-after 'install 'install-doc
@@ -6730,7 +6740,7 @@ for real and complex matrices.")
                                            #$name "-" #$version)))))))
     (inputs (list suitesparse-amd))
     (propagated-inputs (list suitesparse-config))
-    (native-inputs (list (texlive-updmap.cfg '())))
+    (native-inputs (list (texlive-local-tree '())))
     (home-page "https://people.engr.tamu.edu/davis/suitesparse.html")
     (synopsis "LDL' factorization method for sparse, symmetric matrices")
     (description "This package contains a set of routines for computing the
@@ -6799,6 +6809,8 @@ for reading and writing sparse matrices in the Rutherford/Boeing format.")
                                 "set(DUMMY\n")))))
           (add-after 'build 'build-doc
             (lambda _
+              ;; A writable TEXMFVAR is required for building font shapes.
+              (setenv "TEXMFVAR" "/tmp")
               ;; XeLaTeX fails with .eps graphics
               (with-directory-excursion "../Mongoose/Doc"
                 (for-each
@@ -6821,7 +6833,7 @@ for reading and writing sparse matrices in the Rutherford/Boeing format.")
     (propagated-inputs (list suitesparse-config))
     (native-inputs
      (list texlive-epstopdf
-           (texlive-updmap.cfg
+           (texlive-local-tree
             (list texlive-algorithmicx
                   texlive-booktabs
                   texlive-lastpage
@@ -6880,6 +6892,7 @@ edge cuts using a coarsening and refinement framework.")
                   ")\nset(DUMMY\n")))))
           (add-after 'build 'build-doc
             (lambda _
+              (setenv "TEXMFVAR" "/tmp") ;for font shapes generation
               (with-directory-excursion "../SPEX/Doc"
                 (invoke "make"))))
           (add-after 'install 'install-doc
@@ -6890,7 +6903,7 @@ edge cuts using a coarsening and refinement framework.")
     (inputs (list suitesparse-amd suitesparse-colamd))
     (propagated-inputs (list gmp mpfr suitesparse-config))
     (native-inputs
-     (list (texlive-updmap.cfg
+     (list (texlive-local-tree
             (list texlive-paralist
                   texlive-comment
                   texlive-psfrag
@@ -6949,6 +6962,7 @@ LU factorization for solving unsymmetric sparse linear systems.")
                   ")\nset(DUMMY\n")))))
           (add-after 'build 'build-doc
             (lambda _
+              (setenv "TEXMFVAR" "/tmp") ;for generating font shapes
               (with-directory-excursion "../SPQR/Doc"
                 (invoke "make"))))
           (add-after 'install 'install-doc
@@ -6969,7 +6983,7 @@ LU factorization for solving unsymmetric sparse linear systems.")
                   suitesparse-config))
     (propagated-inputs (list suitesparse-cholmod))
     (native-inputs
-     (list (texlive-updmap.cfg
+     (list (texlive-local-tree
             (list texlive-epsf))))
     (home-page "https://people.engr.tamu.edu/davis/suitesparse.html")
     (synopsis "Sparse QR factorization method")
@@ -7010,6 +7024,7 @@ matrices.")
                   ")\nset(DUMMY\n")))))
           (add-after 'build 'build-doc
             (lambda _
+              (setenv "TEXMFVAR" "/tmp") ;for generating font shapes
               (with-directory-excursion "../UMFPACK/Doc"
                 (invoke "make"))))
           (add-after 'install 'install-doc
@@ -7035,7 +7050,7 @@ matrices.")
      (list suitesparse-amd
            suitesparse-config))
     (native-inputs
-     (list (texlive-updmap.cfg
+     (list (texlive-local-tree
             (list texlive-etoolbox
                   texlive-framed
                   texlive-mdframed
@@ -7733,9 +7748,10 @@ set.")
            python-breathe
            python-sphinx
            python-sphinx-rtd-theme
-           (texlive-updmap.cfg
+           (texlive-local-tree
             (list texlive-adjustbox
                   texlive-alphalph
+                  texlive-booktabs
                   texlive-capt-of
                   texlive-caption
                   texlive-changepage
@@ -7743,7 +7759,6 @@ set.")
                   texlive-courier
                   texlive-enumitem
                   texlive-etoc
-                  texlive-etoolbox
                   texlive-fancyvrb
                   texlive-float
                   texlive-fncychap
@@ -7801,7 +7816,7 @@ set.")
                                                 configure-flags)))))))
                (add-after 'build 'build-docs
                  (lambda _
-                   (setenv "HOME" (getcwd))
+                   (setenv "TEXMFVAR" "/tmp")
                    (invoke "make" "-C" "docs")))
                (replace 'check
                  (lambda* (#:key tests? #:allow-other-keys)

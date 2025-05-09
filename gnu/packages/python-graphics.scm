@@ -1,10 +1,16 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2020, 2023 Lars-Dominik Braun <lars@6xq.net>
 ;;; Copyright © 2021 Adam Kandur <kefironpremise@gmail.com>
+;;; Copyright © 2021 Ekaitz Zarraga <ekaitz@elenq.tech>
+;;; Copyright © 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2021 Morgan Smith <Morgan.J.Smith@outlook.com>
 ;;; Copyright © 2021, 2023 Daniel Meißner <daniel.meissner-i4k@ruhr-uni-bochum.de>
+;;; Copyright © 2022 Jean-Pierre De Jesus DIAZ <me@jeandudey.tech>
+;;; Copyright © 2022 Marius Bakke <marius@gnu.org>
+;;; Copyright © 2022 Ryan Prior <rprior@protonmail.com>
 ;;; Copyright © 2023 Adam Faiz <adam.faiz@disroot.org>
 ;;; Copyright © 2023 Simon Tournier <zimon.toutoune@gmail.com>
+;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Sisiutl <sisiutl@egregore.fun>
 ;;;
@@ -25,8 +31,8 @@
 
 (define-module (gnu packages python-graphics)
   #:use-module ((guix licenses) #:prefix license:)
-  #:use-module ((guix build-system python) #:select (pypi-uri))
   #:use-module (guix build-system pyproject)
+  #:use-module (guix build-system python)
   #:use-module (guix download)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -35,16 +41,25 @@
   #:use-module (gnu packages audio)
   #:use-module (gnu packages base)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages game-development)
   #:use-module (gnu packages gl)
+  #:use-module (gnu packages graphics)
+  #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages maths)
+  #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages pulseaudio)
+  #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
+  #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages qt)
+  #:use-module (gnu packages sdl)
   #:use-module (gnu packages simulation)
+  #:use-module (gnu packages swig)
   #:use-module (gnu packages video)
   #:use-module (gnu packages xorg))
 
@@ -57,6 +72,65 @@
 ;;;
 ;;; Code:
 
+(define-public python-asyncgui
+  (package
+    (name "python-asyncgui")
+    (version "0.8.0")
+    (source
+     (origin
+       (method git-fetch)               ; no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/asyncgui/asyncgui")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1b074msb580wify2wag3swm3s21x23kckxpw974y6dibsmrfr5n3"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-poetry-core
+           python-pytest))
+    (home-page "https://github.com/asyncgui/asyncgui")
+    (synopsis "Enables async/await without an event loop")
+    (description
+     "This package provides support for async/await applications without
+requiring an event loop, useful for creative responsive GUIs.")
+    (license license:expat)))
+
+(define-public python-asynckivy
+  (package
+    (name "python-asynckivy")
+    (version "0.8.1")
+    (source
+     (origin
+       (method git-fetch)               ; no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/asyncgui/asynckivy")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gjddv6d7bbjymvly2x5zaay1gyihls1c4bh7y1ppbvz15152lkj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-home
+            (lambda _
+              ;; 'kivy/__init__.py' wants to create $HOME/.kivy.
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-poetry-core
+           python-pytest))
+    (propagated-inputs
+     (list python-kivy
+           python-asyncgui))
+    (home-page "https://github.com/asyncgui/asynckivy")
+    (synopsis "Async library for Kivy")
+    (description
+     "This package provides async versions of Kivy functions to avoid the
+callback-heavy mode of interaction typical in some Kivy applications.")
+    (license license:expat)))
+
 (define-public python-glcontext
   (let (;; Upstream is known for abusing mutable tag, hence pinpoint the
         ;; relevant commit.
@@ -152,6 +226,169 @@ ModernGL on multiple platforms.")
      "This package provides Python bindings for @url{http://www.glfw.org/,
 GLFW} OpenGL application development library.")
     (license license:expat)))
+
+(define-public python-kivy
+  (package
+    (name "python-kivy")
+    (version "2.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "Kivy" version))
+       (sha256
+        (base32 "1ngrnkrp6xgfl4x32i2nv3bml13l8qwa87cwrymv9k826ng98cq8"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:tests? #f              ; Tests require many optional packages
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'patch-generated-file-shebangs 'set-sdl-paths
+           (lambda* (#:key inputs #:allow-other-keys)
+             (setenv "KIVY_SDL2_PATH"
+                     (search-input-directory inputs "/include/SDL2"))))
+         (add-before 'build 'set-home
+           (lambda _
+             ;; 'kivy/__init__.py' wants to create $HOME/.kivy.
+             (setenv "HOME" (getcwd)))))))
+    (native-inputs
+     (list pkg-config
+           python-cython
+           ;; Not packaged yet, for tests.
+           ;; python-kivy-deps-glew
+           ;; python-kivy-deps-glew-dev
+           ;; python-kivy-deps-gstreamer
+           ;; python-kivy-deps-gstreamer-dev
+           ;; python-kivy-deps-sdl2
+           ;; python-kivy-deps-sdl2-dev
+           python-packaging
+           python-setuptools
+           python-wheel))
+    (inputs
+     (list gstreamer
+           mesa
+           (sdl-union (list sdl2 sdl2-image sdl2-mixer sdl2-ttf))))
+    (propagated-inputs
+     (list python-docutils
+           python-filetype
+           python-kivy-garden
+           python-pygments
+           python-requests))
+    (home-page "https://kivy.org")
+    (synopsis "Multitouch application framework")
+    (description
+     "Kivy is a software library for rapid development of hardware-accelerated
+multitouch applications.")
+    (license license:expat)))
+
+(define-public python-kivymd
+  (package
+    (name "python-kivymd")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)               ; no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/kivymd/KivyMD")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1nprldcm54qybbwf7zlb32fkmz375j8i3k3g41d6ykc6vasq3w5j"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; <https://github.com/pyinstaller/pyinstaller> is not packaged yet in
+      ;; Guix.
+      #~(list "--ignore=kivymd/tests/pyinstaller"
+              "-k" (string-join
+                    ;; FIXME: Only some tests passed, the most fail with err:
+                    ;; ValueError: KivyMD: App object must be initialized
+                    ;; before loading root widget.
+                    (list "not test_backdrop_raw_app"
+                          "test_bottom_navigation_m3_style_raw_app"
+                          "test_card_m3_style_raw_app"
+                          "test_chip_raw_app"
+                          "test_imagelist_raw_app"
+                          "test_list_raw_app"
+                          "test_navigationdrawer_raw_app"
+                          "test_tab_raw_app"
+                          "test_textfield_raw_app")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-modules
+            (lambda _
+              (substitute* "setup.py"
+                ;; If excluded, sanity check fails with error:
+                ;; ModuleNotFoundError: No module named 'kivymd.tools.release'
+                (("\"kivymd.tools.release\"") ""))
+              ;; Check phase fails struggling to find tests module.
+              (with-output-to-file "kivymd/tests/__init__.py"
+                (lambda _ (display "")))))
+          (add-before 'check 'set-home
+            (lambda _
+              ;; FileNotFoundError: [Errno 2] No such file or directory:
+              ;; '/homeless-shelter/.kivy'
+              (setenv "HOME" "/tmp"))))))
+    (native-inputs
+     (list python-docutils
+           python-pytest
+           python-pytest-asyncio
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-kivy
+           python-pillow
+           python-pygments
+           python-kivy-garden))
+    (home-page "https://github.com/kivymd/KivyMD")
+    (synopsis "Material Design compliant widgets for use with Kivy")
+    (description
+     "This package provides Kivy widgets that approximate Google's Material
+Design spec without sacrificing ease of use or application performance.")
+    (license license:expat)))
+
+(define-public python-pivy
+  (package
+    (name "python-pivy")
+    (version "0.6.8")
+    (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+               (url "https://github.com/coin3d/pivy")
+               (commit version)))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "00l4r06dwmgn8h29nrl3g3yv33cfyizyylk28x1j95qyj36sggfb"))))
+    (build-system python-build-system)
+    (arguments
+     (list
+      ;; The test suite fails due to an import cycle between 'pivy' and '_coin'
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-cmake-include-dirs
+            (lambda _
+              ;; Patch buildsystem to respect Coin3D include directory
+              (substitute* "CMakeLists.txt"
+                (("\\$\\{SoQt_INCLUDE_DIRS}")
+                 "${Coin_INCLUDE_DIR};${SoQt_INCLUDE_DIRS}")))))))
+    (native-inputs
+      (list cmake swig))
+    (inputs
+      (list python-wrapper
+            qtbase-5
+            libxi
+            libice
+            glew
+            coin3d))
+    (home-page "https://github.com/coin3d/pivy")
+    (synopsis "Python bindings to Coin3D")
+    (description
+      "Pivy provides python bindings for Coin, a 3D graphics library with an
+Application Programming Interface based on the Open Inventor 2.1 API.")
+    (license license:isc)))
 
 (define-public python-pyglet
   (package
@@ -376,6 +613,66 @@ library.")
     (synopsis "Acceleration code for PyOpenGL")
     (description
      "This is the Cython-coded accelerator module for PyOpenGL.")))
+
+(define-public python-pysdl2
+  (package
+    (name "python-pysdl2")
+    (version "0.9.17")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pysdl2" version))
+       (sha256
+        (base32 "0axm6m3wj8x643zg65g60xdpaxanaqdilvp4yysks4pblh0yzij8"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f ;; Requires /dev/dri, OpenGL module, etc.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda _
+              (substitute* "sdl2/dll.py"
+                ;; Disable pysdl2-dll. It can't be packaged on GNU Guix
+                ;; as it duplicates an existing package (sdl2).
+                (("prepath = os\\.getenv\\('PYSDL2_DLL_PATH'\\)")
+                 "prepath = \"system\"")
+                (("^import sdl2dll$") "")
+                (("postpath = os\\.getenv\\('PYSDL2_DLL_PATH'\\)")
+                 "postpath = \"system\"")
+                (("DLL\\(.*, os\\.getenv\\(\"PYSDL2_DLL_PATH\"\\)\\)")
+                 (format #f "DLL('SDL2', ['SDL2', 'SDL2-2.0', 'SDL2-2.0.0'], '~a/lib')"
+                         #$(this-package-input "sdl2"))))
+              (substitute* "sdl2/sdlimage.py"
+                (("os\\.getenv\\(\"PYSDL2_DLL_PATH\"\\)")
+                 (format #f "'~a/~a'" #$(this-package-input "sdl2-image")
+                         "lib/libSDL2_image.so")))
+              (substitute* "sdl2/sdlgfx.py"
+                (("os\\.getenv\\(\"PYSDL2_DLL_PATH\"\\)")
+                 (format #f "'~a/~a'" #$(this-package-input "sdl2-gfx")
+                         "lib/libSDL2_gfx.so")))
+              (substitute* "sdl2/sdlmixer.py"
+                (("os\\.getenv\\(\"PYSDL2_DLL_PATH\"\\)")
+                 (format #f "'~a/~a'" #$(this-package-input "sdl2-mixer")
+                         "lib/libSDL2_mixer.so")))
+              (substitute* "sdl2/sdlttf.py"
+                (("os\\.getenv\\(\"PYSDL2_DLL_PATH\"\\)")
+                 (format #f "'~a/~a'" #$(this-package-input "sdl2-ttf")
+                         "lib/libSDL2_ttf.so"))))))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (inputs
+     (list sdl2 sdl2-image sdl2-gfx sdl2-mixer sdl2-ttf))
+    (home-page "https://github.com/py-sdl/py-sdl2")
+    (synopsis "Python bindings around the SDL2 game development library")
+    (description
+     "PySDL2 is a pure Python wrapper around the
+@code{SDL2},@code{SDL2_mixer}, @code{SDL2_image}, @code{SDL2_ttf}, and
+@code{SDL2_gfx} libraries.  Instead of relying on C code, it uses the built-in
+ctypes module to interface with SDL2, and provides simple Python classes and
+wrappers for common SDL2 functionality.")
+    (license license:cc0)))
 
 (define-public python-vispy
   (package

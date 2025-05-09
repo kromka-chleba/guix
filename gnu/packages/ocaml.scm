@@ -1453,10 +1453,13 @@ software engineering.")
                 "1fy4c1wb6xn9gxdabs25yajbzik3amifyr7nzd4d9vn6r3gll9sw"))))
     (build-system dune-build-system)
     (propagated-inputs (list lablgtk3 zlib))
-    (native-inputs (list ghostscript (texlive-updmap.cfg '()) hevea lynx which))
+    (native-inputs (list ghostscript (texlive-local-tree '()) hevea lynx which))
     (arguments
      `(#:phases
          (modify-phases %standard-phases
+           (add-before 'build 'writable-texmfvar
+             ;; Generating font shapes requires a writable TEXMFVAR.
+             (lambda _ (setenv "TEXMFVAR" "/tmp")))
            (add-after 'install 'install-doc
              (lambda* (#:key outputs #:allow-other-keys)
                (let ((doc (string-append (assoc-ref outputs "out")
@@ -9459,10 +9462,10 @@ SHA384, SHA512, Blake2b, Blake2s and RIPEMD160.")
           (add-after 'unpack 'patch-/bin/sh
             (lambda _
               (substitute* "configure" (("/bin/sh") (which "bash")))
-              ;; mktexfmt needs writable home directory.
-              (setenv "HOME" (getcwd)))))))
+              ;; mktexfmt needs writable TEXMFVAR directory.
+              (setenv "TEXMFVAR" "/tmp"))))))
     (native-inputs
-     (list (texlive-updmap.cfg
+     (list (texlive-local-tree
             (list texlive-infwarerr
                   texlive-kvoptions
                   texlive-pdftexcmds

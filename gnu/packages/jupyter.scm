@@ -1,10 +1,18 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2019, 2022 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2021-2025 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2014 Danny Milosavljevic <dannym@friendly-machines.com>
+;;; Copyright © 2016, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2016, 2019, 2021-2025 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2018 Pierre-Antoine Rouby <pierre-antoine.rouby@inria.fr>
+;;; Copyright © 2019, 2021-2023 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2019, 2022 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2021 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Hugo Lecomte <hugo.lecomte@inria.fr>
+;;; Copyright © 2021 Lars-Dominik Braun <lars@6xq.net>
+;;; Copyright © 2021 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
-;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2024-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -30,6 +38,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
+  #:use-module (gnu packages algebra)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
   #:use-module (gnu packages cpp)
@@ -47,6 +56,7 @@
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages rdf)
+  #:use-module (gnu packages readline)
   #:use-module (gnu packages time)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages tls)
@@ -54,6 +64,138 @@
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages xorg))
+
+(define-public jupyter
+  (package
+    (name "jupyter")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jupyter" version))
+       (sha256
+        (base32
+         "0pwf3pminkzyzgx5kcplvvbvwrrzd3baa7lmh96f647k30rlpp6r"))))
+    (build-system python-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;there are none.
+      #:phases
+      ;; Because python-jsonschema has an old python-webcolor.  Remove this
+      ;; when python-team branch is merged.
+      '(modify-phases %standard-phases
+         (delete 'sanity-check))))
+    (propagated-inputs
+     (list python-ipykernel
+           python-ipywidgets
+           python-jupyter-console
+           python-nbconvert
+           python-notebook
+           python-qtconsole))
+    (home-page "https://jupyter.org")
+    (synopsis "Web application for interactive documents")
+    (description
+     "The Jupyter Notebook is a web application that allows you to create and
+share documents that contain live code, equations, visualizations and
+explanatory text.  Uses include: data cleaning and transformation, numerical
+simulation, statistical modeling, machine learning and much more.")
+    (license license:bsd-3)))
+
+(define-public python-ipykernel
+  (package
+    (name "python-ipykernel")
+    (version "6.29.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ipykernel" version))
+       (sha256
+        (base32 "0p5g897pq6k9nr44ihlk4hp5s46zz8ih2xib1715lizrc000fi1x"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:modules '((guix build pyproject-build-system)
+                  (guix build utils)
+                  (ice-9 match))
+      #:test-flags
+      ;; XXX: probably not good that this fails
+      '(list "-k" "not test_copy_to_globals" "-Wignore::DeprecationWarning")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-a-bit
+            (lambda _
+              ;; I'm sure nobody will notice.
+              (substitute* "pyproject.toml"
+                (("debugpy>=1.6.5") "debugpy>=1.6.0"))))
+          ;; The deprecation warnings break the tests.
+          (add-after 'unpack 'hide-deprecation-warnings
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("\"ignore:There is no current event loop:DeprecationWarning\"" m)
+                 (string-append m ",
+\"ignore:the imp module is deprecated:DeprecationWarning\",
+\"ignore:pytest-asyncio detected an unclosed event loop:DeprecationWarning\",
+\"ignore:make_current is deprecated.*:DeprecationWarning\",
+\"ignore:zmq.eventloop.ioloop.*:DeprecationWarning\",
+\"ignore:zmq.tests.BaseZMQTestCase.*:DeprecationWarning\"")))))
+           (add-before 'check 'pre-check
+             (lambda _
+               ;; jupyter-core demands this be set.
+               (setenv "JUPYTER_PLATFORM_DIRS" "1")
+               (setenv "HOME" "/tmp")))
+          (add-after 'install 'set-python-file-name
+            (lambda* (#:key inputs #:allow-other-keys)
+              ;; Record the absolute file name of the 'python' executable in
+              ;; 'kernel.json'.
+              (substitute* (string-append #$output "/share/jupyter"
+                                          "/kernels/python3/kernel.json")
+                (("\"python\"")
+                 (format #f "~s" (search-input-file inputs
+                                                    "/bin/python3")))))))))
+    (propagated-inputs
+     (list python-comm
+           python-debugpy
+           python-ipython
+           python-jupyter-client
+           python-jupyter-core
+           python-matplotlib-inline
+           python-nest-asyncio
+           python-packaging
+           python-psutil
+           python-pyzmq
+           python-tornado-6
+           python-traitlets))
+    (inputs (list python))              ;for cross compilation
+    (native-inputs
+     (list python-flaky
+           python-hatchling
+           python-ipyparallel-bootstrap
+           python-pytest
+           python-pytest-asyncio
+           python-pytest-cov
+           python-pytest-timeout))
+    (home-page "https://ipython.org")
+    (synopsis "IPython Kernel for Jupyter")
+    (description "This package provides the IPython kernel for Jupyter.")
+    (license license:bsd-3)))
+
+;; Bootstrap variant of ipykernel, which uses the bootstrap jupyter-client to
+;; break the cycle between ipykernel and jupyter-client.
+(define-public python-ipykernel-bootstrap
+  (let ((parent python-ipykernel))
+    (hidden-package
+      (package
+        (inherit parent)
+        (name "python-ipykernel-bootstrap")
+        (arguments (list #:tests? #f
+                         ;; The package should normally propagate ipykernel,
+                         ;; left out here to break the cycle.
+                         #:phases #~(modify-phases %standard-phases
+                                      (delete 'sanity-check))))
+        (native-inputs (list python-hatchling))
+        (propagated-inputs
+         (modify-inputs (package-propagated-inputs parent)
+           (replace "python-jupyter-client" python-jupyter-client-bootstrap)))))))
 
 (define-public python-nbclassic
   (package
@@ -103,6 +245,91 @@ on top of the new Jupyter Server backend, it can coexist with other frontends
 like JupyterLab and Notebook 7 in the same installation.  NbClassic preserves
 the custom classic notebook experience under a new set of URL endpoints, under
 the namespace @code{/nbclassic/}.")
+    (license license:bsd-3)))
+
+(define-public python-notebook
+  (package
+    (name "python-notebook")
+    (version "6.5.7")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "notebook" version))
+              (sha256
+               (base32
+                "1r38fwr0r4xgkz8y27w3xyz2dk97ih5azba28jylyqxcvw8r1sq4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      '(list "-k" (string-append
+                   ;; TODO: This tests fails because nbconvert does not
+                   ;; list "python" as a format.
+                   "not test_list_formats"
+                   ;; AssertionError: Lists differ:
+                   " and not test_disable"
+                   " and not test_enable"
+                   " and not test_merge_config"
+                   " and not test_load_ordered"
+                   " and not test_list_running_sock_servers"
+                   " and not test_run")
+        ;; These tests require a browser.
+        "--ignore=notebook/tests/selenium")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'use-our-home-for-tests
+           (lambda _
+             ;; The 'get_patch_env' function in this file reads:
+             ;;   'HOME': cls.home_dir
+             ;; but for some reason, that definition of HOME is not what the
+             ;; GLib/GIO trash mechanism honors, which would cause test
+             ;; failures.  Instead, set 'HOME' here to an existing directory
+             ;; and let the tests honor it.
+             (substitute* "notebook/tests/launchnotebook.py"
+               (("'HOME': .*," all)
+                (string-append "# " all "\n")))
+             (setenv "HOME" (getcwd))))
+         ;; Because python-jsonschema has an old python-webcolor.  Remove this
+         ;; when python-team branch is merged.
+         (delete 'sanity-check)
+         (add-before 'check 'pre-check
+           (lambda _
+             ;; Interferes with test expectations.
+             (unsetenv "JUPYTER_CONFIG_PATH")
+             ;; Some tests do not expect all files to be installed in the
+             ;; same directory, but JUPYTER_PATH contains multiple entries.
+             (unsetenv "JUPYTER_PATH"))))))
+    (propagated-inputs
+     (list python-argon2-cffi
+           python-ipykernel
+           python-ipython-genutils
+           python-jinja2
+           python-jupyter-client
+           python-jupyter-core
+           python-nest-asyncio
+           python-nbclassic
+           python-nbconvert
+           python-nbformat
+           python-prometheus-client
+           python-pyzmq
+           python-send2trash
+           python-terminado
+           python-tornado-6
+           python-traitlets))
+    (native-inputs
+     (list python-coverage
+           python-jupyter-server
+           python-nbval
+           python-pytest
+           python-pytest-cov
+           python-requests
+           python-requests-unixsocket2
+           python-setuptools
+           python-wheel))
+    (home-page "https://jupyter.org/")
+    (synopsis "Web-based notebook environment for interactive computing")
+    (description
+     "The Jupyter HTML notebook is a web-based notebook environment for
+interactive computing.")
     (license license:bsd-3)))
 
 (define-public python-notebook-shim
@@ -271,6 +498,34 @@ tests kernels for successful code execution and conformance with the
 @uref{https://jupyter-client.readthedocs.io/en/latest/messaging.html, Jupyter
 Messaging Protocol}.")
     (license license:bsd-3)))
+
+(define-public python-pari-jupyter
+  (package
+    (name "python-pari-jupyter")
+    (version "1.4.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pari-jupyter" version))
+       (sha256
+        (base32 "178v8y3sj3lh3y8i7krbmjqvmv7549bg535fqq1q6axr0lfjknbw"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; there are no proper tests
+    (native-inputs
+     (list python-cython
+           python-jupyter-kernel-test
+           python-setuptools
+           python-wheel))
+    (inputs
+     (list pari-gp
+           readline))
+    (propagated-inputs
+     (list python-ipykernel))
+    (home-page "https://github.com/sagemath/pari-jupyter")
+    (synopsis "Jupyter kernel for PARI/GP")
+    (description "The package provides a PARI/GP kernel for Jupyter.")
+    (license license:gpl3+)))
 
 (define-public python-pytest-jupyter
   (package

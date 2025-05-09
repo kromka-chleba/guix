@@ -119,8 +119,9 @@
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages image)
-  #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages image-processing)
+  #:use-module (gnu packages imagemagick)
+  #:use-module (gnu packages jupyter)
   #:use-module (gnu packages kde-frameworks)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages libusb)
@@ -147,6 +148,7 @@
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-compression)
   #:use-module (gnu packages python-crypto)
+  #:use-module (gnu packages python-graphics)
   #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
@@ -693,11 +695,11 @@ featuring various improvements and bug fixes.")))
                                        "fastcap-mulGlobal.patch"))))
     (build-system gnu-build-system)
     (native-inputs
-     ;; FIXME: with (texlive-updmap.cfg) citation references are rendered as
+     ;; FIXME: with (texlive-local-tree) citation references are rendered as
      ;; question marks.  During the build warnings like these are printed:
      ;; LaTeX Warning: Citation `nabors91' on page 2 undefined on input line
      ;; 3.
-     `(("texlive" ,(texlive-updmap.cfg))
+     `(("texlive" ,(texlive-local-tree))
        ("ghostscript" ,ghostscript)))
     (arguments
      `(#:make-flags '("CC=gcc" "RM=rm" "SHELL=sh" "all")
@@ -747,7 +749,7 @@ featuring various improvements and bug fixes.")))
              #t))
          (add-before 'install 'make-pdf
            (lambda _
-             (setenv "HOME" "/tmp")     ; FIXME: for texlive font cache
+             (setenv "TEXMFVAR" "/tmp")     ;For texlive font cache
              (with-directory-excursion "doc"
                (and
                 (for-each (lambda (file)
