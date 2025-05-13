@@ -16,7 +16,7 @@
 ;;; Copyright © 2019 Jesse Gildersleve <jessejohngildersleve@protonmail.com>
 ;;; Copyright © 2019-2025 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2019 Brett Gilio <brettg@gnu.org>
-;;; Copyright © 2020, 2024 Konrad Hinsen <konrad.hinsen@fastmail.net>
+;;; Copyright © 2020, 2024, 2025 Konrad Hinsen <konrad.hinsen@fastmail.net>
 ;;; Copyright © 2020 Dimakis Dimakakos <me@bendersteed.tech>
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2020, 2021, 2022 Adam Kandur <rndd@tuta.io>
@@ -11850,7 +11850,14 @@ Closure Templates.")
   (sbcl-package->cl-source-package sbcl-closure-template))
 
 (define-public ecl-closure-template
-  (sbcl-package->ecl-package sbcl-closure-template))
+  (let ((pkg (sbcl-package->ecl-package sbcl-closure-template)))
+    (package
+      (inherit pkg)
+      ;; The test suite fails under ecl because the function
+      ;;    LIFT::GET-BACKTRACE-AS-STRING
+      ;; (from ecl-lift) is undefined. Lift's support for ecl
+      ;; seems to be incomplete.
+      (arguments (list #:tests? #false)))))
 
 (define-public sbcl-clsql
   (package
@@ -27739,7 +27746,7 @@ running into parallelism problems when having to change directory.")
 (define-public sbcl-simple-matrix
   (package
     (name "sbcl-simple-matrix")
-    (version "2.1")
+    (version "2.2")
     (source
      (origin
        (method git-fetch)
@@ -27748,7 +27755,7 @@ running into parallelism problems when having to change directory.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-simple-matrix" version))
        (sha256
-        (base32 "0zqzw5pbw57fq8kgf69c9a7ni2p708ia9sah2qczbf401h9d3b4i"))))
+        (base32 "1h46s1j7j11kg8ccjrh3w6srabsv9dibrb5iklqwb2msdrmy3ngz"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs (list sbcl-fiveam))
     (synopsis "Matrix library for Common Lisp")

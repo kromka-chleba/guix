@@ -20,15 +20,19 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
+  #:use-module (guix git-download)
   #:use-module (guix gexp)
+  #:use-module (guix utils)
   #:use-module (guix build-system perl)
   #:use-module (gnu packages)
+  #:use-module (gnu packages compression)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gd)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages perl)
-  #:use-module (gnu packages perl-check))
+  #:use-module (gnu packages perl-check)
+  #:use-module (gnu packages xorg))
 
 (define-public perl-math-cephes
   (package
@@ -143,6 +147,7 @@ using a list of (X, Y) pairs.")
                          perl-extutils-depends
                          perl-extutils-f77
                          gfortran
+                         sharutils
                          perl-file-which
                          perl-pod-parser
                          perl-test-deep
@@ -154,7 +159,6 @@ using a list of (X, Y) pairs.")
                              perl-inline-c
                              perl-list-moreutils
                              perl-opengl
-                             perl-pgplot
                              perl-pod-parser
                              perl-sys-sigaction
                              perl-termreadkey))
@@ -163,3 +167,110 @@ using a list of (X, Y) pairs.")
     (description "This package provides a library and simple REPL for the
 Perl Data Language.")
     (license license:perl-license)))
+
+;; The project has split out several packages.
+(define-public perl-pdl
+  (package
+    (inherit perl-pdl-2.019)
+    (name "perl-pdl")
+    (version "2.100")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/PDLPorters/pdl.git")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nkvjb4l8r2l2piz0s9jifpm0kr6g7fy9krky130s82vq8bz19sc"))
+       (patches
+        (search-patches "pdl-2.100-reproducibility.patch"))))
+    (build-system perl-build-system)
+    (arguments
+     (list
+       #:phases
+       #~(modify-phases %standard-phases
+         (add-after 'unpack 'patch-includes
+           (lambda* (#:key inputs #:allow-other-keys)
+             (substitute* "lib/PDL/Core/Dev.pm"
+              ;; This would cause an underflow (1 - 120 < 0)--so prevent it.
+              (("utime [$]mtime - 120, [$]mtime - 120, [$]pmfile; # so is out of date")
+               "utime $mtime - 1, $mtime - 1, $pmfile; # so is out of date")))))))
+    (inputs (list gd gsl mesa glu))
+    (native-inputs (list perl-capture-tiny ; for a test
+                         perl-devel-checklib
+                         perl-extutils-depends
+                         perl-extutils-f77
+                         gfortran
+                         perl-file-which
+                         perl-pod-parser
+                         perl-test-deep
+                         perl-test-exception
+                         perl-test-warn
+                         perl-text-balanced)) ; our perl is too old, so...
+    (propagated-inputs (list perl-file-map
+                             perl-file-which
+                             perl-inline
+                             perl-inline-c
+                             perl-list-moreutils
+                             perl-opengl
+                             perl-pod-parser
+                             perl-sys-sigaction
+                             perl-termreadkey))
+    (home-page "https://metacpan.org/release/PDL")
+    (synopsis "Perl Data Language")
+    (description "This package provides a library and simple REPL for the
+Perl Data Language.")
+    (license license:perl-license)))
+
+(define-public perl-pdl-graphics-trid
+  (package
+    (name "perl-pdl-graphics-trid")
+    (version "2.102")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/PDLPorters/PDL-Graphics-TriD.git")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0c66337l3dkw70mqgldbih1xkyg082lalmaldb9k5058hq4jhqzl"))))
+    (build-system perl-build-system)
+    (inputs
+     (list mesa))
+    (propagated-inputs
+     (list perl-pdl))
+    (synopsis "3D graphics in Perl Data Language")
+    (description "This package provides modules to do 3D graphics in PDL.")
+    (home-page "https://github.com/PDLPorters/")
+    (license license:perl-license)))
+
+(define-public perl-pgplot
+  (package
+    (name "perl-pgplot")
+    (version "2.35")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/PDLPorters/perl5-PGPLOT.git")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0i9bi52pwbi3qnalm288ihdlwsvn9wwi5rhmspqbna3pfqjhc29c"))))
+    (build-system perl-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+        (add-after 'unpack 'setenv
+         (lambda* (#:key inputs #:allow-other-keys)
+           (setenv "PGPLOT_DIR" (string-append (assoc-ref inputs "giza") "/lib")))))))
+    (inputs (list giza libx11))
+    (native-inputs (list perl-devel-checklib perl-extutils-f77 gfortran perl-pdl))
+    (home-page "https://metacpan.org/release/PGPLOT")
+    (synopsis "Scientific plotting library (using giza)")
+    (description "This package provides PGPLOT bindings for Perl.  It uses
+giza instead of PGPLOT for the implementation, though.")
+    ;; Since giza is GPL2+, so is this.
+    (license license:gpl2+)))

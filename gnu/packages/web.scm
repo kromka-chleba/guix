@@ -1901,7 +1901,7 @@ other systems that want to manipulate WebAssembly files.")
 (define-public wasm-micro-runtime
   (package
     (name "wasm-micro-runtime")
-    (version "1.2.3")
+    (version "2.2.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1910,7 +1910,7 @@ other systems that want to manipulate WebAssembly files.")
               (file-name (git-file-name "WAMR" version))
               (sha256
                (base32
-                "1s7r8vfxixf737jp12cf7as68fd63lrmqdxj7fiqdla2wk89ly3f"))))
+                "0nhhsvy4a9al4lnxdkmyy63a7qd0x33s5wpcsdvl93kj6klzc6a6"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -5379,7 +5379,7 @@ Cloud.")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://git.savannah.gnu.org/git/guix/data-service.git/")
+                      (url "https://codeberg.org/guix/data-service.git")
                       (commit commit)))
                 (file-name (git-file-name name version))
                 (sha256
@@ -7200,49 +7200,6 @@ message stream (in a web server that is per connection).")
     (description "@code{llparse} is a port of @code{http_parser} to
 @code{llparse} which aims making it more maintainable, verifiable and
 efficient where possible.")
-    (license license:expat)))
-
-(define-public python-httpretty
-  (package
-    (name "python-httpretty")
-    (version "1.1.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "httpretty" version))
-       (sha256
-        (base32 "0s1vjdaf3pk2xd0hvi5f7p3jm2rgwpbc734jdp9r50m1smfhxpi0"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'remove-rednose-dependency
-           (lambda _
-             (substitute* "setup.py"
-               (("'rednose'") ""))
-             (substitute* '("requirements.txt" "setup.cfg")
-               (("rednose.*") ""))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (setenv "EVENTLET_NO_GREENDNS" "YES")
-               (invoke "nosetests" "--exclude=(passthrough|streaming|httpretty_should_handle)")))))))
-    (native-inputs
-     (list nss-certs-for-test
-           python-coverage
-           python-eventlet
-           python-freezegun
-           python-httplib2
-           python-nose
-           python-pyparsing
-           python-requests
-           python-sure
-           python-tornado))
-    (home-page "https://httpretty.readthedocs.io")
-    (synopsis "HTTP client mock for Python")
-    (description "@code{httpretty} is a helper for faking web requests,
-inspired by Ruby's @code{fakeweb}.")
     (license license:expat)))
 
 (define-public jo

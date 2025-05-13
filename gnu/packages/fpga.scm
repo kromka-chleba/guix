@@ -12,6 +12,7 @@
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2025 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
+;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -32,6 +33,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix gexp)
   #:use-module (guix packages)
+  #:use-module (guix deprecation)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix utils)
@@ -123,7 +125,7 @@ formal verification.")
   (package
     (inherit abc)
     (name "abc-yosyshq")
-    (version "0.52")
+    (version "0.53")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -181,7 +183,7 @@ For synthesis, the compiler generates netlists in the desired format.")
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.52")
+    (version "0.53")
     (source
      (origin
        (method git-fetch)
@@ -189,7 +191,7 @@ For synthesis, the compiler generates netlists in the desired format.")
              (url "https://github.com/YosysHQ/yosys")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1wf7z3fwfy00kng8hmdjy8zpj4hqqznjjk6wha10ij0sy1y1fwhm"))
+        (base32 "01pcf20dpm0gjfzr9bvw4w7cgc390gqg3xfnir9d6x0nr8k6lljh"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -356,102 +358,97 @@ Lattice iCE40 FPGAs and providing simple tools for analyzing and creating bitstr
 files.")
       (license license:isc))))
 
-(define-public nextpnr-ice40
-  (let* ((version "0.7")
-         (tag (string-append "nextpnr-" version)))
-    (package
-      (name "nextpnr-ice40")
-      (version version)
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/YosysHQ/nextpnr")
-               (commit tag)
-               (recursive? #t)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32
-           "0sbhqscgmlk4q2207rsqsw99qx4fyrxx1hsd669lrk42gmk3s9lm"))
-         (modules '((guix build utils)))
-         (snippet
-          #~(begin
-              ;; Remove bundled source code for which Guix has packages.
-              ;; Note the bundled copies of json11 and python-console contain
-              ;; modifications, while QtPropertyBrowser appears to be
-              ;; abandoned and without an official source.
-              ;; fpga-interchange-schema is used only by the
-              ;; "fpga_interchange" architecture target, which this package
-              ;; doesn't build.
-              (with-directory-excursion "3rdparty"
-                (for-each delete-file-recursively
-                          '("googletest" "imgui" "pybind11" "qtimgui"
-                            "sanitizers-cmake")))
-
-              ;; Remove references to unbundled code and link against external
-              ;; libraries instead.
+(define-public nextpnr
+  (package
+    (name "nextpnr")
+    (version "0.8")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/YosysHQ/nextpnr/")
+             (commit (string-append "nextpnr-" version))
+             ;; XXX: Fetch some bundled libraries such as QtPropertyBrowser,
+             ;; json11 and python-console, which have custom modifications or
+             ;; no longer have their original upstream.
+             (recursive? #t)))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)
+                  (ice-9 ftw)
+                  (srfi srfi-26)))
+       (snippet
+        '(begin
+           ;; XXX: 'delete-all-but' is copied from the turbovnc package.
+           (define (delete-all-but directory . preserve)
+             (define (directory? x)
+               (and=> (stat x #f)
+                      (compose (cut eq? 'directory <>) stat:type)))
+             (with-directory-excursion directory
+               (let* ((pred
+                       (negate (cut member <> (append '("." "..") preserve))))
+                      (items (scandir "." pred)))
+                 (for-each (lambda (item)
+                             (if (directory? item)
+                                 (delete-file-recursively item)
+                                 (delete-file item)))
+                           items))))
+           (delete-all-but "3rdparty"
+                           ;; The following sources have all been patched, so
+                           ;; cannot easily be unbundled.
+                           "QtPropertyBrowser"
+                           "json11"
+                           "python-console"
+                           "oourafft")))
+       (patches (search-patches "nextpnr-gtest.patch"
+                                "nextpnr-imgui.patch"))
+       (sha256
+        (base32 "0p53a2gl89hf3hfwdxs6pykxyrk82j4lqpwd1fqia2y0c9r2gjlm"))))
+    (build-system qt-build-system)
+    (arguments
+     (list
+      #:cmake cmake                     ;CMake 3.25 or higher is required.
+      #:configure-flags
+      #~(list "-DARCH=generic;ice40"    ;TODO: enable more architectures?
+              "-DBUILD_GUI=ON"
+              "-DUSE_OPENMP=ON"
+              "-DBUILD_TESTS=ON"
+              (string-append "-DCURRENT_GIT_VERSION=nextpnr-" #$version)
+              (string-append "-DICESTORM_INSTALL_PREFIX="
+                             #$(this-package-input "icestorm"))
+              "-DUSE_IPO=OFF")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'unbundle-sanitizers-cmake
+            (lambda* (#:key inputs #:allow-other-keys)
               (substitute* "CMakeLists.txt"
-                (("^\\s+add_subdirectory\\(3rdparty/googletest.*") "")
-                (("^(\\s+target_link_libraries.*)( gtest_main\\))"
-                  _ prefix suffix)
-                 (string-append prefix " gtest" suffix)))
-              (substitute* "gui/CMakeLists.txt"
-                (("^\\s+../3rdparty/(qt)?imgui.*") "")
-                (("^(target_link_libraries.*)\\)" _ prefix)
-                 (string-append prefix " imgui qt_imgui_widgets)")))))))
-      (native-inputs
-       (list googletest sanitizers-cmake))
-      (inputs
-       (list boost
-             eigen
-             icestorm
-             imgui-1.86
-             pybind11
-             python
-             qtbase-5
-             qtwayland-5
-             qtimgui
-             yosys))
-      (build-system qt-build-system)
-      (arguments
-       (list
-        #:configure-flags
-        #~(list "-DARCH=ice40"
-                "-DBUILD_GUI=ON"
-                "-DBUILD_TESTS=ON"
-                (string-append "-DCURRENT_GIT_VERSION=" #$tag)
-                (string-append "-DICESTORM_INSTALL_PREFIX="
-                               #$(this-package-input "icestorm"))
-                "-DUSE_IPO=OFF")
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'unpack 'patch-source
-              (lambda* (#:key inputs #:allow-other-keys)
-                (substitute* "CMakeLists.txt"
-                  ;; Use the system sanitizers-cmake module.
-                  (("\\$\\{CMAKE_SOURCE_DIR\\}/3rdparty/sanitizers-cmake/cmake")
-                   (string-append
-                    #$(this-package-native-input "sanitizers-cmake")
-                    "/share/sanitizers-cmake/cmake")))
-                (substitute* "gui/CMakeLists.txt"
-                  ;; Compile with system imgui and qtimgui headers.
-                  (("^(target_include_directories.*)../3rdparty/imgui(.*)$"
-                    _ prefix suffix)
-                   (string-append prefix
-                                  (search-input-directory inputs
-                                                          "include/imgui")
-                                  suffix))
-                  (("^(target_include_directories.*)../3rdparty/qtimgui/(.*)$"
-                    _ prefix suffix)
-                   (string-append prefix
-                                  (search-input-directory inputs
-                                                          "include/qtimgui")
-                                  suffix))))))))
-      (synopsis "Place-and-Route tool for FPGAs")
-      (description "Nextpnr aims to be a vendor neutral, timing driven, FOSS
-FPGA place and route tool.")
-      (home-page "https://github.com/YosysHQ/nextpnr")
-      (license license:expat))))
+                ;; Use the system sanitizers-cmake module.  This is made
+                ;; necessary 'sanitizers-cmake' installing a FindPackage
+                ;; module but no CMake config file.
+                (("\\$\\{CMAKE_SOURCE_DIR}/3rdparty/sanitizers-cmake/cmake")
+                 (string-append
+                  #$(this-package-native-input "sanitizers-cmake")
+                  "/share/sanitizers-cmake/cmake"))))))))
+    (native-inputs
+     (list googletest
+           sanitizers-cmake))
+    (inputs
+     (list boost
+           corrosion
+           eigen
+           icestorm
+           pybind11
+           python
+           qtbase-5
+           qtwayland-5
+           qtimgui
+           yosys))
+    (synopsis "Place-and-Route tool for FPGAs")
+    (description "Nextpnr is a portable FPGA place and route tool.")
+    (home-page "https://github.com/YosysHQ/nextpnr/")
+    (license license:isc)))
+
+(define-public nextpnr-ice40
+  (deprecated-package "nextpnr-ice40" nextpnr))
 
 (define-public gtkwave
   (package
@@ -776,8 +773,8 @@ to an FPGA.")
     (license license:asl2.0)))
 
 (define-public python-hdlmake
-  (let ((commit "3cb248fdad601c579b59fd7c194402871209bc54")
-        (revision "0"))
+  (let ((commit "9338e3e7a8784e63d16496a3fa8234d9e5aa7621")
+        (revision "1"))
     (package
       (name "python-hdlmake")
       (version (git-version "3.3" revision commit))
@@ -785,17 +782,19 @@ to an FPGA.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://ohwr.org/project/hdl-make")
+               (url "https://gitlab.com/ohwr/project/hdl-make/")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "08ivnhxyp44agmifqb4pjbxj23p43qqcg73s2y2z1hqk2six3fdx"))))
+          (base32 "13d0zvpch0k758r2c2vq3vhd9nbydy01jnv2ddfvb6d3xpb4wzrj"))))
       (build-system pyproject-build-system)
-      (arguments
-       `(#:tests? #f))
-      (native-inputs (list python-setuptools python-wheel))
+      (arguments (list #:phases #~(modify-phases %standard-phases
+                                    (add-before 'check 'chdir
+                                      (lambda _
+                                        (chdir "testsuite"))))))
+      (native-inputs (list python-pytest python-setuptools python-wheel))
       (propagated-inputs (list python-six))
-      (home-page "https://ohwr.org/projects/hdl-make")
+      (home-page "https://gitlab.com/ohwr/project/hdl-make/")
       (synopsis "Generate multi-purpose makefiles for HDL projects")
       (description
        "Hdlmake helps manage and share @acronym{HDL, hardware description

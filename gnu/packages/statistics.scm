@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015-2024 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015 Vicente Vera Parra <vicentemvp@gmail.com>
 ;;; Copyright © 2016 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016, 2017, 2019, 2020, 2021 Efraim Flashner <efraim@flashner.co.il>
@@ -593,13 +593,13 @@ flexible and easy to set up.")
 (define-public r-r6
   (package
     (name "r-r6")
-    (version "2.5.1")
+    (version "2.6.1")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "R6" version))
               (sha256
                (base32
-                "0j5z0b0myzjyyykk310xsa9n2mcm9bz8yqbq4xgz2yzdq8lvv4ld"))))
+                "1d3k40gnms6458aprrjy899yhjv06lr0arag21zfn4mrn6lfpijr"))))
     (properties
      ;; We can't have r-testthat among the inputs here to avoid a dependency
      ;; cycle.
@@ -621,13 +621,13 @@ defined in different packages.")
 (define-public r-rlang
   (package
     (name "r-rlang")
-    (version "1.1.5")
+    (version "1.1.6")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "rlang" version))
               (sha256
                (base32
-                "1v8wq2y3zsq47n6k74m49r1i4yrlx01cf0gmvy4xz08x9wj9pncz"))))
+                "0c7kaw5lvk4vym67ki0511zbqbx5ca1k1k6y9rayq62fdy3lqm0q"))))
     (properties
      ;; We can't have r-testthat among the inputs here to avoid a dependency
      ;; cycle.
@@ -1453,13 +1453,13 @@ disk (or a connection).")
 (define-public r-rcpparmadillo
   (package
     (name "r-rcpparmadillo")
-    (version "14.2.3-1")
+    (version "14.4.2-1")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "RcppArmadillo" version))
               (sha256
                (base32
-                "1pr6a84h6c415ac43fadv77k3dazi8138q92gn7mj3qw7v2wn74k"))))
+                "1d6075xz3k8g0lm0y2kzylb5jwh04vm5flb4jlz89rrik6ddc68x"))))
     (properties `((upstream-name . "RcppArmadillo")))
     (build-system r-build-system)
     (propagated-inputs
@@ -1588,13 +1588,13 @@ engine (version 3.8.8.2) is included.")
 (define-public r-rcurl
   (package
     (name "r-rcurl")
-    (version "1.98-1.16")
+    (version "1.98-1.17")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "RCurl" version))
               (sha256
                (base32
-                "19qddkyasfwa61mj0r0m4wk2xhpsqxf2dikih0s1fdjr207c938s"))))
+                "0c30pkjhpdihif2y6ymafwhyjqwxnzyj7w0jpwc9w5hnq6k78667"))))
     (properties `((upstream-name . "RCurl")))
     (build-system r-build-system)
     (arguments
@@ -1631,14 +1631,14 @@ ldap, and also supports cookies, redirects, authentication, etc.")
 (define-public r-segmented
   (package
     (name "r-segmented")
-    (version "2.1-3")
+    (version "2.1-4")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "segmented" version))
        (sha256
         (base32
-         "0h3c6gnhy7242phidzia8ly1sa8x9xyspqlbbj0g9w4vxqby4bh7"))))
+         "1sziji3cs46admkawvxjl4idc7krnijf9amfk2fzbk8c3b4fglmb"))))
     (build-system r-build-system)
     (propagated-inputs (list r-mass r-nlme))
     (home-page "https://cran.r-project.org/web/packages/segmented")
@@ -2285,14 +2285,14 @@ regression methodology including model selections and multivariate statistics.")
 (define-public r-rrcov
   (package
     (name "r-rrcov")
-    (version "1.7-6")
+    (version "1.7-7")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "rrcov" version))
        (sha256
         (base32
-         "1pj8w4w4yd730qy7bl8h3z7d5xj05avnq0fbj2gnxrz489yc18mq"))))
+         "1xbhrpmb3bn4h83kr214jmhr0rx5mgjrf396iz70mnq3g425lbqb"))))
     (build-system r-build-system)
     (propagated-inputs
      (list r-lattice r-mvtnorm r-pcapp r-robustbase))
@@ -2453,23 +2453,25 @@ multivariate case.")
 (define-public r-tclust
   (package
     (name "r-tclust")
-    (version "2.0-5")
+    (version "2.1-0")
     (source
      (origin
        (method url-fetch)
        (uri (cran-uri "tclust" version))
        (sha256
         (base32
-         "1gx8avqpy5m69h5a3pxy23dwnvy5pbi2ih6sxacs4lmsahpivj0p"))))
+         "1vx9nbm20hclf54js2ip09h6fhqhkn0gq90a08hhn5b1n25gvvxk"))))
+    (properties
+     '((updater-extra-native-inputs . ("r-cluster" "r-mclust" "r-sn"))))
     (build-system r-build-system)
     ;; These are all suggested packages, not build dependencies.
     (propagated-inputs
      (list r-doparallel
-           r-ellipsis
            r-foreach
            r-mass
            r-rcpp
-           r-rcpparmadillo))
+           r-rcpparmadillo
+           r-rlang))
     (native-inputs (list r-cluster r-mclust r-sn))
     (home-page "https://cran.r-project.org/web/packages/tclust")
     (synopsis "Robust trimmed clustering")

@@ -113,6 +113,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/home/services/mail.scm			\
   %D%/home/services/media.scm			\
   %D%/home/services/messaging.scm		\
+  %D%/home/services/mpv.scm     		\
   %D%/home/services/music.scm			\
   %D%/home/services/pm.scm			\
   %D%/home/services/shells.scm			\
@@ -1666,6 +1667,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libgeotiff-fix-tests-with-proj-9.3.1.patch	\
   %D%/packages/patches/libgeotiff-fix-tests-on-i386.patch	\
   %D%/packages/patches/libguestfs-syms.patch            	\
+  %D%/packages/patches/libinfinity-renew-test-certificate.patch \
   %D%/packages/patches/libobjc2-unbundle-robin-map.patch	\
   %D%/packages/patches/libretro-dolphin-emu-data.patch		\
   %D%/packages/patches/librewolf-neuter-locale-download.patch	\
@@ -1905,6 +1907,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/netsurf-system-utf8proc.patch		\
   %D%/packages/patches/netsurf-y2038-tests.patch		\
   %D%/packages/patches/netsurf-longer-test-timeout.patch	\
+  %D%/packages/patches/nextpnr-gtest.patch			\
+  %D%/packages/patches/nextpnr-imgui.patch			\
   %D%/packages/patches/nhc98-c-update.patch			\
   %D%/packages/patches/nix-dont-build-html-doc.diff		\
   %D%/packages/patches/nfs4-acl-tools-0.3.7-fixpaths.patch	\
@@ -1996,6 +2000,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/password-store-tree-compat.patch		\
   %D%/packages/patches/pciutils-hurd64.patch			\
   %D%/packages/patches/pdl-2.019-glut-bitmap-fonts.patch	\
+  %D%/packages/patches/pdl-2.100-reproducibility.patch	\
   %D%/packages/patches/petri-foo-0.1.87-fix-recent-file-not-exist.patch			\
   %D%/packages/patches/plasma-framework-fix-KF5PlasmaMacros.cmake.patch \
   %D%/packages/patches/plasp-fix-normalization.patch \
@@ -2325,9 +2330,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/tla2tools-build-xml.patch		\
   %D%/packages/patches/tlf-support-hamlib-4.2+.patch		\
   %D%/packages/patches/tofi-32bit-compat.patch			\
-  %D%/packages/patches/torcs-glibc-default-source.patch		\
-  %D%/packages/patches/torcs-isnan.patch			\
-  %D%/packages/patches/torcs-nullptr.patch			\
   %D%/packages/patches/torbrowser-compare-paths.patch           \
   %D%/packages/patches/tpetra-remove-duplicate-using.patch	\
   %D%/packages/patches/transcode-ffmpeg.patch	\

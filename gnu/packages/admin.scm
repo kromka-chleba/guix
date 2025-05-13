@@ -995,7 +995,7 @@ console.")
 (define-public btop
   (package
     (name "btop")
-    (version "1.4.1")
+    (version "1.4.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1004,7 +1004,7 @@ console.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "08g4gbqc12is23nhrhqc5fhqicxs7dvy3alhyl66h6v35x7209vc"))))
+                "10g4m14cniw4blnazw0rs92fkgxhhri8zcvg3kcz2xgnc4day7g3"))))
     (build-system gnu-build-system)
     (native-inputs (list lowdown))
     (arguments
@@ -3495,7 +3495,7 @@ limits.")
                   qtquickcontrols2-5
                   qtsvg-5
                   qtwayland-5
-                  quazip
+                  quazip-5
                   spdlog
                   trompeloeil
                   units
@@ -3744,14 +3744,14 @@ rules is done with the @code{auditctl} utility.")
 (define-public nmap
   (package
     (name "nmap")
-    (version "7.93")
+    (version "7.96")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nmap.org/dist/nmap-" version
                                   ".tar.bz2"))
               (sha256
                (base32
-                "0lb6s4nmmicfnc221mzgx2w51dcd4b2dhx22pabcqnp2jd3zxg2m"))
+                "12lcvyzfl1hblbklcss44dr92fr86w0z1y1a90yilv5n5x7pmblq"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -3766,55 +3766,69 @@ rules is done with the @code{auditctl} utility.")
     (build-system gnu-build-system)
     (outputs '("out" "ndiff"))          ; TODO Add zenmap output
     (arguments
-     `(#:configure-flags '("--without-zenmap")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'configure 'patch-Makefile
-           (lambda _
-             (substitute* "Makefile"
-               ;; Do not attempt to build lua.
-               (("build-dnet build-lua") "build-dnet"))))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (define (make out . args)
-               (apply invoke "make"
-                      (string-append "prefix=" out)
-                      args))
-             (define (python-path dir)
-               (string-append dir "/lib/python"
-                              ,(version-major+minor
-                                 (package-version python))
-                              "/site-packages"))
-             (let ((out (assoc-ref outputs "out"))
-                   (ndiff (assoc-ref outputs "ndiff")))
-               (for-each mkdir-p (list out ndiff))
-               (make out
-                 "install-nmap"
-                 "install-nse"
-                 "install-ncat"
-                 "install-nping")
-               (make ndiff "install-ndiff")
-               (wrap-program (string-append ndiff "/bin/ndiff")
-                 `("GUIX_PYTHONPATH" prefix
-                   (,(python-path ndiff)))))))
-         ;; These are the tests that do not require network access.
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "make"
-                       "check-nse"
-                       "check-ndiff"
-                       "check-dns")))))
-       ;; Nmap can't cope with out-of-source building.
-       #:out-of-source? #f))
+     (list
+      #:configure-flags #~(list "--without-zenmap")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-Makefile.in
+            (lambda _
+              (substitute* "Makefile.in"
+                (("\\$\\(PYTHON\\) -m build \\$\\(NDIFFDIR\\)/")
+                 "$(PYTHON) -m build --wheel --no-isolation $(NDIFFDIR)/")
+                (("\\$\\(PYTHON\\) -m pip install \\$\\(NDIFFDIR\\).*")
+                 (string-append "pip"
+                                " --no-cache-dir"
+                                " --no-input"
+                                " install"
+                                " --no-build-isolation"
+                                " --no-deps"
+                                " --prefix"
+                                " $(prefix)"
+                                " $(NDIFFDIR)/\n")))))
+          (replace 'install
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (define (make out . args)
+                (apply invoke "make"
+                       (string-append "PYTHON="
+                                      (search-input-file inputs "/bin/python"))
+                       (string-append "CC=" #$(cc-for-target))
+                       (string-append "prefix=" out)
+                       args))
+              (define (python-path dir)
+                (string-append dir "/lib/python"
+                               #$(version-major+minor
+                                  (package-version python))
+                               "/site-packages"))
+              (let ((ndiff (assoc-ref outputs "ndiff")))
+                (for-each mkdir-p (list #$output ndiff))
+                (make #$output
+                  "install-nmap"
+                  "install-nse"
+                  "install-ncat"
+                  "install-nping")
+                (make ndiff "install-ndiff")
+                (wrap-program (string-append ndiff "/bin/ndiff")
+                  `("GUIX_PYTHONPATH" prefix
+                    (,(python-path ndiff)))))))
+          ;; These are the tests that do not require network access.
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "make"
+                        "check-nse"
+                        "check-ndiff")))))
+      ;; Nmap can't cope with out-of-source building.
+      #:out-of-source? #f))
+    (native-inputs (list python-pypa-build python-setuptools python-wheel))
     (inputs
      (list bash-minimal                 ;for wrap-program
            libpcap
-           lua
+           lua-5.4
            openssl-3.0
-           pcre
+           pcre2
            zlib                         ; for NSE compression
-           python-2))                   ; for ndiff
+           perl
+           python-wrapper))             ; for ndiff
     (home-page "https://nmap.org/")
     (synopsis "Network discovery and security auditing tool")
     (description
@@ -4689,7 +4703,7 @@ hard-coded.")
 (define-public thermald
   (package
     (name "thermald")
-    (version "2.5.3")
+    (version "2.5.9")
     (source
      (origin
       (method git-fetch)
@@ -4698,22 +4712,22 @@ hard-coded.")
              (commit (string-append "v" version))))
       (file-name (git-file-name name version))
       (sha256
-       (base32 "0hpk7pjlrnj62m5zdmih7gf3nihhyphyslh5xakdjb64cvx5z25d"))))
+       (base32 "07rnf5xy2y7nmhwfcdv0vd08x5l25hflnnrgirahrngbkp0zmny9"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags
-       (let ((out (assoc-ref %outputs "out")))
-         (list (string-append "--with-dbus-sys-dir="
-                              out "/etc/dbus-1/system.d")
-               "--localstatedir=/var"
-               "--disable-werror"))
+     (list
+      #:configure-flags
+      #~(list (string-append "--with-dbus-sys-dir="
+                             #$output "/etc/dbus-1/system.d")
+                "--localstatedir=/var"
+                "--disable-werror")
        #:make-flags
-       (list "V=1")                     ; log build commands
+       #~(list "V=1")                     ; log build commands
        #:phases
-       (modify-phases %standard-phases
-         (add-before 'bootstrap 'no-early-./configure
-           (lambda _
-             (setenv "NO_CONFIGURE" "yet"))))))
+       #~(modify-phases %standard-phases
+           (add-before 'bootstrap 'no-early-./configure
+             (lambda _
+               (setenv "NO_CONFIGURE" "yet"))))))
     (native-inputs
      (list autoconf
            autoconf-archive
@@ -5324,7 +5338,7 @@ elogind's uaccess feature.")
 (define-public jc
   (package
     (name "jc")
-    (version "1.25.4")
+    (version "1.25.5")
     (source
      (origin
        ;; The PyPI tarball lacks the test suite.
@@ -5334,7 +5348,7 @@ elogind's uaccess feature.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lb7608h3vaw5gqlaf1ryd84m2mirfl7gdnhzadrjlh6h8b3lkgp"))))
+        (base32 "16agzk47f1g72gni3lazqlcv7fs0nb2dwbagv6kxjbk36pm3mzmn"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases

@@ -237,6 +237,7 @@
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages image)
   #:use-module (gnu packages image-viewers)
+  #:use-module (gnu packages libffi)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages lisp)
@@ -353,6 +354,44 @@ buffer, a file on your disk, or a string from the kill ring.")
       (description
        "AC Ispell is an Ispell and Aspell completion source for Auto Complete.")
       (license license:gpl3+))))
+
+(define-public emacs-elisp-autofmt
+  (let ((commit "5b1fdc2761a80674123769ebf8a43fe312c0fa3f")
+        (revision "0"))
+    (package
+     (name "emacs-elisp-autofmt")
+     (version (git-version "0.0.0" revision commit))
+     (source
+      (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/ideasman42/emacs-elisp-autofmt")
+             (commit commit)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09wxrrqzccq3wv51n0blcln1zggmlm4fzrnj0svv8gir5q5g6l3h"))))
+     (build-system emacs-build-system)
+     (inputs (list python))
+     (arguments
+      (list
+       #:phases
+       #~(modify-phases %standard-phases
+           (add-after 'unpack 'patch-dependencies
+             (lambda* (#:key inputs #:allow-other-keys)
+               (substitute* "elisp-autofmt.el"
+                (("\"python\"")
+                 (string-append "\""
+                                (search-input-file inputs "/bin/python3")
+                                "\"")))))
+           (add-after 'install 'install-python-module
+             (lambda* (#:key inputs outputs #:allow-other-keys)
+               (let ((destination (elpa-directory (assoc-ref outputs "out"))))
+                 (install-file "elisp-autofmt.py" destination)
+                 (install-file "elisp-autofmt.overrides.json" destination)))))))
+     (home-page "https://codeberg.org/ideasman42/emacs-elisp-autofmt")
+     (synopsis "Auto-format Emacs lisp")
+     (description "This is a package to auto-format Emacs lisp.")
+     (license license:gpl3+))))
 
 (define-public emacs-ac-php
   (package
@@ -2221,8 +2260,8 @@ leveraging built-in functionality.")
       (license license:gpl3+))))
 
 (define-public emacs-fzf
-  (let ((commit "21912ebc7e1084aa88c9d8b7715e782a3978ed23")
-        (revision "0"))
+  (let ((commit "641aef33c88df3733f13d559bcb2acc548a4a0c3")
+        (revision "1"))
     (package
       (name "emacs-fzf")
       (version (git-version "0.2" revision commit))
@@ -2234,7 +2273,7 @@ leveraging built-in functionality.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0gdqjh8996hb06bnnyhi94k69mjfrzyfgq00a9s4wwagv28sqmkj"))))
+                  "1nyvam5jg4gih0x2rvwr4jn97lyhaic3adpdxpdfx682ckj1k2vp"))))
       (build-system emacs-build-system)
       (arguments
        (list
@@ -3079,6 +3118,15 @@ programs.")
                 "1i4l614n0hs02y0a4xfnzc4xkilkp6bzx28pys4jkp96vp2ivf0c"))))
     (build-system emacs-build-system)
     ;; TODO: Just emacs-magit-section instead of emacs-magit would be enough.
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-data
+            (lambda _
+              (let ((data (string-append (elpa-directory #$output) "/data")))
+                (mkdir-p data)
+                (copy-recursively "data" data)))))))
     (propagated-inputs
      (list emacs-compat emacs-lsp-mode emacs-dash emacs-magit))
     (synopsis "Lean 4 major mode for Emacs")
@@ -23235,6 +23283,58 @@ settings).")
     (description "This package contains a minor mode that can be toggled.  It
 fetches weather information based on your location or on a given location from
 @uref{https://wttr.in} and then displays it on the mode line.")
+    (license license:gpl3+)))
+
+(define-public emacs-ffi
+  (package
+    (name "emacs-ffi")
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/emacs-ffi/emacs-ffi")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05crpgscpbzkg4k0ylbfjz2wyw2r8lki8q9w2kmdpljsqrpdrwl0"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:tests? (not (%current-target-system))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-module-load
+            (lambda _
+              (make-file-writable "src/ffi.el")
+              (emacs-substitute-sexps "src/ffi.el"
+                ("(require 'ffi-module nil t)"
+                 `(module-load
+                   ,(string-append #$output "/lib/ffi-module.so"))))))
+          (add-before 'check 'build-emacs-module
+            (lambda _
+              ;; Compile the shared object file.
+              (invoke "make"
+                      #$(string-append "CC="
+                                       (cc-for-target)))
+              ;; Copy the build artifacts to root and let the install phase do
+              ;; its thing
+              (copy-recursively "build/lib" ".")
+              ;; Install the shared object file into /lib.
+              (install-file "build/lib/ffi-module.so"
+                            (string-append #$output "/lib"))))
+          (add-before 'install 'installinfo
+            (lambda _
+              (install-file "build/doc/emacs-ffi.info"
+                            (string-append #$output "/share/info")))))))
+    (inputs (list emacs-compat libltdl libffi))
+    (native-inputs (list texinfo))
+    (home-page "https://emacs-ffi.github.io/emacs-ffi/")
+    (synopsis "FFI for Emacs based on libffi")
+    (description
+     "This package provides an FFI for Emacs.  It is based on
+libffi and relies on the dynamic module support in order to be loaded into
+Emacs.  It is relatively full-featured, but for the time being low-level.")
     (license license:gpl3+)))
 
 (define-public emacs-free-keys

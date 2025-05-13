@@ -72,6 +72,8 @@
 ;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
 ;;; Copyright © 2024 Attila Lendvai <attila@lendvai.name>
 ;;; Copyright © 2025 Daniel Ziltener <dziltener@lyrion.ch>
+;;; Copyright © 2025 gemmaro <gemmaro.dev@gmail.com>
+;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -599,6 +601,63 @@ from the Python interpreter, or as a small part of a larger application.")
 resolution in a Python script without any changes to the hosts file or the use
 of a fake DNS resolver.")
     (license license:asl2.0)))
+
+(define-public python-httpretty
+  (package
+    (name "python-httpretty")
+    (version "1.1.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "httpretty" version))
+       (sha256
+        (base32 "0s1vjdaf3pk2xd0hvi5f7p3jm2rgwpbc734jdp9r50m1smfhxpi0"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Only run Unit tests.
+      #~(list "--ignore=tests/bugfixes"
+              "--ignore=tests/functional"
+              "--ignore=tests/pyopenssl"
+              "-k" (string-join
+                    ;; Tests pattern failing with one of these errors:
+                    ;; AttributeError: '(str|bool|bytes|list|tuple)' object
+                    ;; has no attribute 'should'
+                    ;; AttributeError: 'function' object has no attribute
+                    ;; 'when'
+                    ;; AttributeError: 'AssertionBuilder' object has no
+                    ;; attribute 'should_not'
+                    (list "not fake_socket_passes_through"
+                          "fakesock_socket"
+                          "request_parse_body_when"
+                          "test_Entry_class_normalizes_headers"
+                          "test_has_request"
+                          "test_httpretty_should_raise_proper"
+                          "test_parse_request_line_connect"
+                          "test_request_parse_querystring"
+                          "test_request_string_representation"
+                          "test_request_stubs_internals")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv"EVENTLET_NO_GREENDNS" "yes"))))))
+    (native-inputs
+     (list nss-certs-for-test
+           python-freezegun
+           python-mock
+           python-pytest
+           python-setuptools
+           python-sure
+           python-wheel))
+    (home-page "https://httpretty.readthedocs.io")
+    (synopsis "HTTP client mock for Python")
+    (description
+     "@code{httpretty} is a helper for faking web requests,inspired by Ruby's
+@code{fakeweb}.")
+    (license license:expat)))
 
 (define-public python-huggingface-hub
   (package
@@ -1152,6 +1211,78 @@ Its main features are:
 Callback Hell.
 @item Web-server has middlewares and pluggable routing.
 @end itemize")
+    (license license:asl2.0)))
+
+(define-public python-aiohttp-client-cache
+  (package
+    (name "python-aiohttp-client-cache")
+    (version "0.13.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "aiohttp_client_cache" version))
+       (sha256
+        (base32 "0lrq8fh94whvfmfr9ncfizq2ssa2fp1v1izd1y7f3gmd80ixcp6w"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Run unit tests only which not require networking or additional setup.
+      #~(list "--ignore=test/integration")))
+    (native-inputs
+     (list python-poetry-core
+           ;; TODO: Missing packages: pytest-clarity,
+           ;; nox-poetry, types-aiofiles.
+           python-async-timeout
+           python-brotli
+           python-faker
+           python-pytest
+           python-pytest-aiohttp
+           python-pytest-asyncio
+           python-pytest-cov
+           python-pytest-xdist))
+    (propagated-inputs
+     (list python-aiofiles
+           python-aiohttp
+           python-aiosqlite
+           python-attrs
+           python-itsdangerous
+           python-redis
+           python-url-normalize))
+    (home-page "https://github.com/requests-cache/aiohttp-client-cache")
+    (synopsis "Persistent cache for aiohttp requests")
+    (description
+     "This package is an asynchronous persistent caching library specifically
+designed for @samp{aiohttp} requests in Python.  With support for various
+storage backends, it offers flexibility in how and where the cache is stored.
+Please note that MongoDB and DynamoDB backends are not currently supported due
+to the absence of the @samp{motor} and @samp{aioboto3} package dependencies.")
+    (license license:expat)))
+
+(define-public python-aiohttp-cors
+  (package
+    (name "python-aiohttp-cors")
+    (version "0.8.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "aiohttp_cors" version))
+       (sha256
+        (base32 "00qlzc2y65bkl1a5f5v83mmjlrhzmx3a2ngq2pm3jjdnhk5zkb6c"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f)) ; network access is required to run tests
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-aiohttp))
+    (home-page "https://github.com/aio-libs/aiohttp-cors")
+    (synopsis "CORS support for aiohttp")
+    (description
+     "This library implements @acronym{CORS, Cross Origin Resource Sharing}
+support for aiohttp asyncio-powered asynchronous HTTP server.")
     (license license:asl2.0)))
 
 (define-public python-aiohttp-socks
@@ -2207,35 +2338,40 @@ HTTP servers, RESTful APIs, and web services.")
     (properties `((lint-hidden-cve . ("CVE-2019-10751"))))
     (license license:bsd-3)))
 
-(define-public parfive
+(define-public python-parfive
   (package
-    (name "parfive")
-    (version "2.1.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "parfive" version))
-              (sha256
-               (base32
-                "13nw2y7wjzj6w049av6ff4d0zxgbhkrgck0xyh676c114hcv8v6d"))))
+    (name "python-parfive")
+    (version "2.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "parfive" version))
+       (sha256
+        (base32 "16rf02jhjr9lij8s2gqmvs01vx8kiv9f2535dnnziqwqv14d21yy"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; Disable tests requiring network access.
       #:test-flags
-      #~(list "-k" (string-append
-                    "not test_ftp"
-                    " and not test_ftp_pasv_command"
-                    " and not test_ftp_http"))))
-    (propagated-inputs (list python-aiofiles python-aioftp python-aiohttp
-                             python-tqdm))
-    (native-inputs (list python-pytest
-                         python-pytest-asyncio
-                         python-pytest-cov
-                         python-pytest-localserver
-                         python-pytest-socket
-                         python-setuptools
-                         python-setuptools-scm
-                         python-wheel))
+      ;; Disable tests requiring network access.
+      #~(list "-k" (string-join
+                    (list "not test_ftp"
+                          "test_ftp_pasv_command"
+                          "test_ftp_http")
+                    " and not "))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-asyncio
+           python-pytest-cov
+           python-pytest-localserver
+           python-pytest-socket
+           python-setuptools
+           python-setuptools-scm-next
+           python-wheel))
+    (propagated-inputs
+     (list python-aiofiles
+           python-aioftp
+           python-aiohttp
+           python-tqdm))
     (home-page "https://parfive.readthedocs.io/")
     (synopsis "HTTP and FTP parallel file downloader")
     (description

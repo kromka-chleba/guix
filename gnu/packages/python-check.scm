@@ -22,6 +22,7 @@
 ;;; Copyright © 2022 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2022 Tomasz Jeneralczyk <tj@schwi.pl>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
+;;; Copyright © 2023 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2024-2025 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Navid Afkhami <navid.afkhami@mdc-berlin.de>
 ;;; Copyright © 2024, 2025 David Elsing <david.elsing@posteo.net>
@@ -31,6 +32,7 @@
 ;;; Copyright © 2025 Florent Pruvost <florent.pruvost@inria.fr>
 ;;; Copyright © 2025 Matthew Elwin <elwin@northwestern.edu>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2726,6 +2728,30 @@ for the @code{pytest} framework.")
 @command{pydocstyle}.")
     (license license:expat)))
 
+(define-public python-pytest-pylint
+  (package
+    (name "python-pytest-pylint")
+    (version "0.21.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest-pylint" version))
+       (sha256
+        (base32 "0gjm9qy1rsngvli042szqc45y0q5zk1crq28ja01iyjw3n74nxl8"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-pylint))
+    (home-page "https://github.com/carsongee/pytest-pylint")
+    (synopsis "Pytest plugin to check source code with Pylint")
+    (description
+     "This plugin allows running Pylint with Pytest and have configurable rule
+types (i.e. Convention, Warn, and Error) fail the build.")
+    (license license:expat)))
+
 (define-public python-pytest-qt
   (package
     (name "python-pytest-qt")
@@ -3587,6 +3613,41 @@ test runner built around @code{subunit}.  It is designed to execute
 a test suite.  It will also store a history of all test runs to help in
 debugging failures and optimizing the scheduler to improve speed.")
     (license license:asl2.0)))
+
+(define-public python-sure
+  ;; No release for 2y but the master branch has fresh changes, use the latest
+  ;; commit for now, see <https://github.com/gabrielfalcao/sure/issues/184>,
+  ;; <https://github.com/gabrielfalcao/sure/issues/182>.
+  (let ((commit "acf823a2e240a2efe93360316d3816e90366439a")
+        (revision "0"))
+    (package
+      (name "python-sure")
+      (version (git-version "2.0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/gabrielfalcao/sure")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "12qd3as4ixhwvf8ppx1dwhghda2kcb85ygd4x3ci9mbvkh25fs01"))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-mock
+             python-pytest
+             python-pytest-cov
+             python-setuptools
+             python-wheel))
+      (propagated-inputs
+       (list python-couleur))
+      (home-page "https://github.com/gabrielfalcao/sure")
+      (synopsis "Automated testing library in python for python")
+      (description
+       "Sure is a python library that leverages a DSL for writing
+assertions. Sure is heavily inspired by @code{RSpec Expectations} and
+@code{should.js}.")
+      (license license:gpl3+))))
 
 (define-public python-sybil
   (package

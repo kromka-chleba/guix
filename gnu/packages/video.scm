@@ -657,47 +657,6 @@ and mmsh protocols.")
     (home-page "https://sourceforge.net/projects/libmms/")
     (license license:lgpl2.1+)))
 
-(define-public libvideogfx
-  (package
-    (name "libvideogfx")
-    (version "1.0.9")
-    (source
-     (origin
-       (method git-fetch)
-       (uri
-        (git-reference
-         (url "https://github.com/farindk/libvideogfx")
-         (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "154b0j8cfg879pg08xcbwvbz8z9nrfnyj31i48vxir1psas70ynq"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-build-errors
-           (lambda _
-             (substitute* "libvideogfx/graphics/fileio/ffmpeg.cc"
-               (("av_close_input_file\\(")
-                "avformat_close_input(&"))
-             (substitute* "libvideogfx/graphics/fileio/png.cc"
-               (("is != NULL") "is.good()"))
-             #t)))))
-    (native-inputs
-     (list autoconf automake libtool pkg-config))
-    (inputs
-     `(("ffmpeg" ,ffmpeg-2.8)
-       ("jpeg" ,libjpeg-turbo)
-       ("png" ,libpng)
-       ("x11" ,libx11)
-       ("xext" ,libxext)))
-    (synopsis "Video processing library")
-    (description "LibVideoGfx is a C++ library for low-level video processing.
-It aims at speeding up the development process for image and video processing
-applications by providing high-level classes for commonly required tasks.")
-    (home-page "https://dirk-farin.net/software/libvideogfx/index.html")
-    (license license:lgpl2.1+)))
-
 (define-public libde265
   (package
     (name "libde265")
@@ -1962,57 +1921,6 @@ audio/video codec library.")
                   "--enable-libsvtav1")))))
     (inputs (modify-inputs (package-inputs ffmpeg-4)
               (delete "dav1d" "libaom" "rav1e" "srt")))))
-
-(define-public ffmpeg-2.8
-  (package
-    (inherit ffmpeg-3.4)
-    (version "2.8.22")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://ffmpeg.org/releases/ffmpeg-"
-                                  version ".tar.xz"))
-              (sha256
-               (base32
-                "0c8m4hhv2k5fybha908wzrpnf3wqkq52hayl658jq4bah0igdfqz"))
-              (patches (search-patches "ffmpeg-4-binutils-2.41.patch"))))
-    (arguments
-     `(#:tests? #f               ; XXX: Enable them later, if required
-       #:configure-flags
-       (list
-        "--disable-static"
-        "--enable-shared"
-        "--extra-cflags=-DFF_API_OLD_ENCODE_VIDEO -DFF_API_OLD_ENCODE_AUDIO")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs configure-flags #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (substitute* "configure"
-                 (("#! /bin/sh") (string-append "#!" (which "sh"))))
-                ;; configure does not work followed by "SHELL=..." and
-                ;; "CONFIG_SHELL=..."; set environment variables instead.
-               (setenv "SHELL" (which "bash"))
-               (setenv "CONFIG_SHELL" (which "bash"))
-               (apply invoke
-                      "./configure"
-                      (string-append "--prefix=" out)
-                      ;; Add $libdir to the RUNPATH of all the binaries.
-                      (string-append "--extra-ldflags=-Wl,-rpath="
-                                     out "/lib")
-                      configure-flags))))
-         (add-before
-             'check 'set-ld-library-path
-           (lambda _
-             ;; Allow $(top_builddir)/ffmpeg to find its dependencies when
-             ;; running tests.
-             (let* ((dso  (find-files "." "\\.so$"))
-                    (path (string-join (map dirname dso) ":")))
-               (format #t "setting LD_LIBRARY_PATH to ~s~%" path)
-               (setenv "LD_LIBRARY_PATH" path)))))))
-    ;; FFmpeg 2.8 does support libwebp, but we don't enable it while configuring
-    ;; the build, and we'd rather not add features to this old package anymore.
-    (inputs (modify-inputs (package-inputs ffmpeg-3.4)
-              (delete "libwebp")))))
 
 (define-public ffmpeg-for-stepmania
   (hidden-package

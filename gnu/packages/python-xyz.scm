@@ -553,6 +553,27 @@ using NumPy-like idioms.")
 line drawing algorithm}.")
     (license license:expat)))
 
+(define-public python-couleur
+  (package
+    (name "python-couleur")
+    (version "0.7.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "couleur" version))
+       (sha256
+        (base32 "1fk175k6l8isx43jmh7n7xyzb18ysdixzr74dxqqhpyd5sbsb5hy"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (home-page "https://github.com/gabrielfalcao/couleur")
+    (synopsis "ANSI terminal tool for Python")
+    (description
+     "This package provides an ANSI terminal tool for Python, colored shell
+and other handy fancy features.")
+    (license license:lgpl3+)))
+
 (define-public python-crc
   (package
     (name "python-crc")
@@ -22950,27 +22971,6 @@ useful to combine multiple data objects as one.")
 interfaces.")
     (license license:expat)))
 
-(define-public python-msgpack-python
-  (package
-    (name "python-msgpack-python")
-    (version "0.5.6")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "msgpack-python" version))
-       (sha256
-        (base32
-         "16wh8qgybmfh4pjp8vfv78mdlkxfmcasg78lzlnm6nslsfkci31p"))))
-    (build-system python-build-system)
-    (home-page "https://msgpack.org/")
-    (synopsis "Package to deserialize messages in MessagePack binary format")
-    (description
-     "MessagePack is an efficient binary serialization format.  It lets you
-exchange data among multiple languages like JSON.  But it's faster and
-smaller.  Small integers are encoded into a single byte, and typical short
-strings require only one extra byte in addition to the strings themselves.")
-    (license license:asl2.0)))
-
 (define-public python-cattrs
   (package
     (name "python-cattrs")
@@ -23078,25 +23078,34 @@ classes can also be supported by manually registering converters.")
        (method url-fetch)
        (uri (pypi-uri "cachy" version))
        (sha256
-        (base32
-         "1cb9naly8ampzlky7h74n5wj628l7jkpsh0c0jz0namlrvs82r8q"))))
-    (build-system python-build-system)
+        (base32 "1cb9naly8ampzlky7h74n5wj628l7jkpsh0c0jz0namlrvs82r8q"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             ;; Make it compatible with python-flexmock 0.12.
-             (substitute* (find-files "tests" "\\.py$")
-              (("from flexmock import flexmock, flexmock_teardown")
-               "from flexmock import flexmock; from flexmock._api import flexmock_teardown"))
-             (invoke "pifpaf" "run" "memcached" "--port" "11211" "--"
-                     "pytest"))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; Make it compatible with python-flexmock 0.12.
+                (substitute* (find-files "tests" "\\.py$")
+                  (("from flexmock import flexmock, flexmock_teardown")
+                   (string-append "from flexmock import flexmock\n"
+                                  "from flexmock._api import flexmock_teardown")))
+                (invoke "pifpaf" "run" "memcached" "--port" "11211" "--"
+                        "pytest")))))))
     (native-inputs
-     (list memcached python-fakeredis python-flexmock python-pifpaf
-           python-pytest))
+     (list memcached
+           python-fakeredis
+           python-flexmock
+           python-pifpaf
+           python-pytest
+           python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list python-memcached python-msgpack-python python-redis))
+     (list python-memcached
+           python-msgpack
+           python-redis))
     (home-page "https://github.com/sdispater/cachy")
     (synopsis "Simple yet effective caching library")
     (description
@@ -23778,28 +23787,6 @@ YAML-serialized data.")
     (synopsis "Custom YAML tag for environment variables")
     (description "This package provides a custom YAML tag for referencing
 environment variables in YAML files.")
-    (license license:expat)))
-
-(define-public python-backpack
-  (package
-    (name "python-backpack")
-    (version "0.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "backpack" version))
-       (sha256
-        (base32
-         "14rq1mvm0jda90lcx9gyyby9dvq4x3js2cmxvd6vl4686ixwyqh1"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-pytest python-nose python-toml))
-    (propagated-inputs
-     (list python-simplejson))
-    (home-page "https://github.com/sdispater/backpack")
-    (synopsis "Utilities for working with Python collections")
-    (description "Backpack provides some useful utilities for working with
-collections of data.")
     (license license:expat)))
 
 (define-public python-prompt-toolkit
@@ -25436,24 +25423,24 @@ console.")
 (define-public python-ansi2html
   (package
     (name "python-ansi2html")
-    (version "1.2.0")
+    (version "1.9.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "ansi2html" version))
        (sha256
-        (base32
-         "1wa00zffprb78w1mqq90dk47czz1knanys2a40zbw2vyapd5lp9y"))))
-    (build-system python-build-system)
+        (base32 "19f0ap4w66b35csmx4k97pnb9fkdfnmgliajn0kvhdsxaf3vylrl"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-mock python-nose))
-    (propagated-inputs
-     (list python-six))
+     (list python-mock
+           python-pytest
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/ralphbean/ansi2html")
     (synopsis "Convert ANSI-decorated console output to HTML")
     (description
      "@command{ansi2html} is a Python library and command line utility for
-     converting text with ANSI color codes to HTML or LaTeX.")
+converting text with ANSI color codes to HTML or LaTeX.")
     (license license:gpl3+)))
 
 (define-public python-easy-ansi
@@ -26552,39 +26539,6 @@ for more filetypes can be easily added by creating plugins for them.")
      "This package implements functionality of RGB/CIE1931 'xy' gammuts
 conversion: Gamut A, B, and C.")
     (license license:expat)))
-
-(define-public python-sure
-  (package
-    (name "python-sure")
-    (version "2.0.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "sure" version))
-       (sha256
-        (base32
-         "1jmrskj399idw1czx6dvy2zfaijnwi02b55vx979ixp7q2mnzz68"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'remove-rednose-dependency
-           (lambda _
-             (substitute* "setup.py"
-               (("'rednose'") ""))
-             (substitute* '("requirements.txt" "setup.cfg")
-               (("rednose.*") "")))))))
-    (propagated-inputs
-     (list python-mock python-six))
-    (native-inputs
-     (list python-nose))
-    (home-page "https://github.com/gabrielfalcao/sure")
-    (synopsis "Automated testing library in python for python")
-    (description
-     "Sure is a python library that leverages a DSL for writing assertions.
-     Sure is heavily inspired by @code{RSpec Expectations} and @code{should.js}.")
-    (license license:gpl3+)))
 
 (define-public python-misaka
   (package
@@ -30722,27 +30676,6 @@ module.")
 @url{https://www.wikidata.org/, Wikidata}.")
     (properties '((upstream-name . "Wikidata")))
     (license license:gpl3+)))
-
-(define-public python-doctest-ignore-unicode
-  (package
-    (name "python-doctest-ignore-unicode")
-    (version "0.1.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "doctest-ignore-unicode" version))
-       (sha256
-        (base32
-         "1m9aa4qnyj21lbq4sbvmv1vcz7zksss4rz37ddf2hxv4hk8b547w"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-nose))
-    (home-page "https://github.com/gnublade/doctest-ignore-unicode")
-    (synopsis "Ignore Unicode literal prefixes in doctests")
-    (description
-     "This package adds support for a flag to ignore Unicode literal prefixes
-in doctests.")
-    (license license:asl2.0)))
 
 (define-public python-attr
   (package
@@ -37636,7 +37569,7 @@ these linters: @code{pycodestlye}, @code{pyflakes}")
             python-pytest
             python-setuptools
             python-wheel))
-    (propagated-inputs
+    (inputs
       (list python-babel
             python-blinker
             python-dateutil
