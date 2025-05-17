@@ -99,6 +99,7 @@
   #:use-module (gnu packages digest)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages emacs-xyz)
   #:use-module (gnu packages file)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fontutils)
@@ -136,6 +137,7 @@
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages mpi)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages nettle)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages openkinect)
   #:use-module (gnu packages parallel)
@@ -2080,7 +2082,7 @@ bindings for Python, Java, OCaml and more.")
 (define-public python-platypush
   (package
     (name "python-platypush")
-    (version "1.3.5")
+    (version "1.3.6")
     (source
      (origin
        (method git-fetch)
@@ -2089,7 +2091,7 @@ bindings for Python, Java, OCaml and more.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1chd60r4misz2i368435yb6hhnm97v8kncjnchxj8mg3mglw9gy0"))))
+        (base32 "1957xkh7n5dhjb1kwhfpncfp6g1g6zgszwcrbj3l9h0gcrxlx8p0"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3184,8 +3186,8 @@ ontinuous-time and discret-time expressions.")
     (license license:lgpl2.1+)))
 
 (define-public openscad
-  (let ((commit "d1351d6282abfd239cdd0c657f755d8c4a123ff8")
-        (version "2025.05.02")
+  (let ((commit "72c9919d63116f8e711f3566ae34e9eb63a2d6e6")
+        (version "2025.05.08")
         (revision "0"))
     (package
       (name "openscad")
@@ -3198,7 +3200,7 @@ ontinuous-time and discret-time expressions.")
                (commit commit)
                (recursive? #t)))
          (sha256
-          (base32 "0cgls75dk9hjfym8rp0vpnnlz1fdawd746nnw3343gvhljqv36cn"))
+          (base32 "077x7s3z65mz6rnrzan3qn06045d2fkqnd6ss6ibw1fhlaypzfbf"))
          (file-name (git-file-name name version))))
       (build-system qt-build-system)
       (arguments
@@ -3211,6 +3213,7 @@ ontinuous-time and discret-time expressions.")
                 "-DENABLE_TESTS=OFF"
                 "-DEXPERIMENTAL=ON"
                 "-DSNAPSHOT=ON"
+                "-DENABLE_PYTHON=ON"
                 "-DUSE_BUILTIN_CLIPPER2=OFF"
                 (string-append "-DOPENSCAD_VERSION="
                                #$version)
@@ -3234,6 +3237,9 @@ ontinuous-time and discret-time expressions.")
       list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
       find_package(EGL REQUIRED)
       target_link_libraries(OpenSCAD PRIVATE EGL::EGL)")
+                  ;; <https://github.com/openscad/openscad/issues/5897>
+                  (("find_package\\(Nettle 3.4\\)")
+                   "find_package(Nettle 3.4 REQUIRED)")
                   ;; Use the system sanitizers-cmake module.
                   (("\\$\\{CMAKE_SOURCE_DIR\\}/submodules/sanitizers-cmake/cmake")
                    (string-append (assoc-ref inputs "sanitizers-cmake")
@@ -3261,7 +3267,12 @@ ontinuous-time and discret-time expressions.")
                     mesa ; or libglvnd if we had mesa-glvnd, too
                     mimalloc
                     mpfr
+                    nettle
                     opencsg
+                    python
+                    python-numpy
+                    python-pillow
+                    python-pip
                     qscintilla
                     qtbase-5
                     qtmultimedia-5
@@ -3280,9 +3291,6 @@ ontinuous-time and discret-time expressions.")
                            imagemagick
                            ghostscript
                            procps
-                           python-numpy
-                           python-pillow
-                           python
                            xorg-server-for-tests))
       (synopsis "Script-based 3D modeling application")
       (description
@@ -3307,27 +3315,42 @@ models in the STL and OFF file formats.")
       (home-page "https://openscad.org/")
       (license license:gpl2+))))
 
-
-
 (define-public emacs-scad-mode
   (package
-    (inherit openscad)
     (name "emacs-scad-mode")
-    (native-inputs '())
-    (inputs '())
+    (version "96.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/openscad/emacs-scad-mode")
+             (commit version)))
+       (sha256
+        (base32 "0vsidz3qws89z8blq5nng7mvzn3kj06lw9417aymhykyjgjn5f8m"))
+       (file-name (git-file-name name version))))
     (build-system emacs-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'chdir-elisp
-           ;; Elisp directory is not in root of the source.
-           (lambda _
-             (chdir "contrib")
-             #t)))))
-    (synopsis "Emacs major mode for editing editing OpenSCAD code")
-    (description "@code{scad-mode} provides an Emacs major mode for editing
-OpenSCAD code.  It supports syntax highlighting, indenting and refilling of
-comments.")))
+    (inputs (list emacs-compat))
+    (synopsis "Emacs mode to edit OpenSCAD files")
+    (description
+     "@code{scad-mode} provides an Emacs major mode for editing
+OpenSCAD code.  Features:
+@itemize
+@item Syntax highlighting
+@item
+Basic completion function (press @kbd{M-TAB})
+@item
+Preview rendered model in separate window (press @kbd{C-c C-c})
+@item
+Open buffer in OpenSCAD (press @kbd{C-c C-o})
+@item
+Export buffer with OpenSCAD (press @kbd{C-c C-e})
+@item
+Flymake support (enable flymake-mode in scad-mode buffers)
+@item
+Org Babel support (@code{scad} source blocks)
+@end itemize")
+    (home-page "https://openscad.org/")
+    (license license:gpl3+)))
 
 (define-public ondsel-solver
   (let ((commit "2e3659c4bce3e6885269e0cb3d640261b2a91108")

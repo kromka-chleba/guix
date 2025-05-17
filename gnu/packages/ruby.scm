@@ -280,7 +280,7 @@ a focus on simplicity and productivity.")
 (define-public ruby-3.3
   (package
     (inherit ruby-3.2)
-    (version "3.3.3")
+    (version "3.3.7")
     (source
      (origin
        (method url-fetch)
@@ -289,7 +289,7 @@ a focus on simplicity and productivity.")
                            "/ruby-" version ".tar.xz"))
        (sha256
         (base32
-         "07pwf3zkf7idl95agfjbv2lvamcp0spp0znqp9arb71ri19rkh43"))))))
+         "0wmdnqcmfa5mf961hzklvjic7vdpgrbl2ckhaafb1m0fbrhbrg2x"))))))
 
 (define-public ruby ruby-3.1)
 
@@ -10209,7 +10209,7 @@ Profiling multiple threads simultaneously is supported.
                 (("%x\\(git ls-files -z)")
                  "`git ls-files -z`")))))))
     (native-inputs (list ruby-rake-compiler ruby-rspec))
-    (inputs (list valgrind))
+    (inputs (list valgrind/pinned))
     (propagated-inputs (list ruby-nokogiri))
     (synopsis "Valgrind memcheck tool for Ruby")
     (description "The @code{ruby_memcheck} gem provides a sane way to use
@@ -11239,7 +11239,7 @@ used to create both network servers and clients.")
     (description
      "@code{ruby_engine} provides an RubyEngine class that can be used to
 check which implementation of Ruby is in use.  It can provide the interpreter
-name and provides query methods such as @{RubyEngine.mri?}.")
+name and provides query methods such as @code{RubyEngine.mri?}.")
     (home-page "https://github.com/janlelis/ruby_engine")
     (license license:expat)))
 
@@ -12153,7 +12153,7 @@ It has built-in support for the legacy @code{cookies.txt} and
      "Make HTTP requests with support for HTTPS, Cookies, authentication and more")
     (description
      "The @code{httpclient} ruby library provides functionality related to
-HTTP.  Compared to the @code{net/http} library, @{httpclient} also provides
+HTTP.  Compared to the @code{net/http} library, @code{httpclient} also provides
 Cookie, multithreading and authentication (digest, NTLM) support.
 
 Also provided is a @command{httpclient} command, which can perform HTTP

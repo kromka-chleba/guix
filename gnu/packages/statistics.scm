@@ -1541,13 +1541,13 @@ variety of formats.")
 (define-public r-rsqlite
   (package
     (name "r-rsqlite")
-    (version "2.3.9")
+    (version "2.3.11")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "RSQLite" version))
               (sha256
                (base32
-                "116029x7kykxy0wg4p1ln14x6w7wa16jdsnb8wmy6c4khdzlbsym"))))
+                "0n87p111wqkwc0hck8z9rcq8194pglrc3cb2s8y0h41bfsdj2siz"))))
     (properties
      '((upstream-name . "RSQLite")
        ;; These are not strictly necessary for running tests and adding them
@@ -1813,13 +1813,13 @@ want to migrate to S4.")
 (define-public r-r-oo
   (package
     (name "r-r-oo")
-    (version "1.27.0")
+    (version "1.27.1")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "R.oo" version))
               (sha256
                (base32
-                "1yb73m3fyl6sn6vf1jd64xh7np3g990v3cgyzjxjj9v7dm8824ni"))))
+                "1xbh8bcv6yiyy59pja78zvbcr7g28dmalw0j1swdh9zhq6f5kbsz"))))
     (properties `((upstream-name . "R.oo")))
     (build-system r-build-system)
     (propagated-inputs
@@ -1869,13 +1869,13 @@ developing R packages.")
 (define-public r-r-cache
   (package
     (name "r-r-cache")
-    (version "0.16.0")
+    (version "0.17.0")
     (source (origin
               (method url-fetch)
               (uri (cran-uri "R.cache" version))
               (sha256
                (base32
-                "14cja0d78mzipb94cwgdl00k5r7awjclzxl30c77j6jpc68l0lvq"))))
+                "089dh928a42q2ymf1cvan3rxrh4whal4zk6z5khmplgd28r9arg2"))))
     (properties `((upstream-name . "R.cache")))
     (build-system r-build-system)
     (arguments

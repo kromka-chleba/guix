@@ -27,6 +27,7 @@
   #:use-module (gnu system shadow)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages dns)
+  #:use-module (guix deprecation)
   #:use-module (guix packages)
   #:use-module (guix records)
   #:use-module (guix gexp)
@@ -54,6 +55,38 @@
 
             dnsmasq-service-type
             dnsmasq-configuration
+            dnsmasq-configuration-package
+            dnsmasq-configuration-shepherd-provision
+            dnsmasq-configuration-shepherd-requirement
+            dnsmasq-configuration-pid-file
+            dnsmasq-configuration-no-hosts?
+            dnsmasq-configuration-port
+            dnsmasq-configuration-local-service?
+            dnsmasq-configuration-listen-address
+            dnsmasq-configuration-resolv-file
+            dnsmasq-configuration-no-resolv?
+            dnsmasq-configuration-forward-private-reverse-lookup?
+            dnsmasq-configuration-query-servers-in-order?
+            dnsmasq-configuration-servers
+            dnsmasq-configuration-servers-file
+            dnsmasq-configuration-addresses
+            dnsmasq-configuration-cache-size
+            dnsmasq-configuration-negative-cache?
+            dnsmasq-configuration-cpe-id
+            dnsmasq-configuration-tftp-enable?
+            dnsmasq-configuration-tftp-no-fail?
+            dnsmasq-configuration-tftp-single-port?
+            dnsmasq-tftp-secure?
+            dnsmasq-tftp-max
+            dnsmasq-tftp-mtu
+            dnsmasq-tftp-no-blocksize?
+            dnsmasq-tftp-lowercase?
+            dnsmasq-tftp-port-range
+            dnsmasq-tftp-root
+            dnsmasq-tftp-unique-root
+            dnsmasq-configuration-conf-file
+            dnsmasq-configuration-conf-dir
+            dnsmasq-configuration-extra-options
 
             unbound-service-type
             unbound-configuration
@@ -742,17 +775,22 @@ cache.size = 100 * MB
   dnsmasq-configuration?
   (package          dnsmasq-configuration-package
                     (default dnsmasq))  ;file-like
-  (provision        dnsmasq-provision
-                    (default '(dnsmasq)))
+  (provision        dnsmasq-configuration-provision ; deprecated
+                    (default #f)
+                    (sanitize warn-deprecated-dnsmasq-configuration-provision))
+  (shepherd-provision           dnsmasq-configuration-shepherd-provision
+                                (default '(dnsmasq)))
+  (shepherd-requirement         dnsmasq-configuration-shepherd-requirement
+                                (default '(user-processes networking)))
   (no-hosts?        dnsmasq-configuration-no-hosts?
                     (default #f))       ;boolean
+  (pid-file         dnsmasq-configuration-pid-file
+                    (default "/run/dnsmasq.pid")) ;string
   (port             dnsmasq-configuration-port
                     (default 53))       ;integer
   (local-service?   dnsmasq-configuration-local-service?
                     (default #t))       ;boolean
   (listen-addresses dnsmasq-configuration-listen-address
-                    (default '()))      ;list of string
-  (extra-options    dnsmasq-configuration-extra-options
                     (default '()))      ;list of string
   (resolv-file      dnsmasq-configuration-resolv-file
                     (default "/etc/resolv.conf")) ;string
@@ -797,11 +835,28 @@ cache.size = 100 * MB
   (tftp-root        dnsmasq-tftp-root
                     (default "/var/empty,lo")) ;string
   (tftp-unique-root dnsmasq-tftp-unique-root
-                    (default #f)))      ;"" or "ip" or "mac"
+                    (default #f))       ;"" or "ip" or "mac"
+  (conf-file        dnsmasq-configuration-conf-file
+                    (default '()))      ;list of string|file-like
+  (conf-dir         dnsmasq-configuration-conf-dir
+                    (default #f))       ;string|file-like
+  (extra-options    dnsmasq-configuration-extra-options
+                    (default '())))     ;list of string
+
+(define (warn-deprecated-dnsmasq-configuration-provision value)
+  (when (pair? value)
+    (warn-about-deprecation
+     'provision #f
+     #:replacement 'shepherd-provision))
+  value)
 
 (define (dnsmasq-shepherd-service config)
   (match-record config <dnsmasq-configuration>
     (package
+     provision
+     shepherd-provision
+     shepherd-requirement
+     pid-file
      no-hosts?
      port local-service? listen-addresses
      resolv-file no-resolv?
@@ -813,16 +868,19 @@ cache.size = 100 * MB
      tftp-single-port? tftp-secure?
      tftp-max tftp-mtu tftp-no-blocksize?
      tftp-lowercase? tftp-port-range
-     tftp-root tftp-unique-root extra-options)
+     tftp-root tftp-unique-root
+     conf-file conf-dir extra-options)
     (shepherd-service
-     (provision (dnsmasq-provision config))
-     (requirement '(user-processes networking))
+     (provision (or provision shepherd-provision))
+     (requirement shepherd-requirement)
      (documentation "Run the dnsmasq DNS server.")
+     (actions (list (dnsmasq-service-reload-action config)
+                    (dnsmasq-service-stats-action config)))
      (start #~(make-forkexec-constructor
                (list
                 #$(file-append package "/sbin/dnsmasq")
                 "--keep-in-foreground"
-                "--pid-file=/run/dnsmasq.pid"
+                (string-append "--pid-file=" #$pid-file)
                 #$@(if no-hosts?
                        '("--no-hosts")
                         '())
@@ -893,8 +951,14 @@ cache.size = 100 * MB
                             (format #f "--tftp-unique-root=~a" tftp-unique-root)
                             (format #f "--tftp-unique-root")))
                        '())
+                #$@(map (lambda (conf-file)
+                          #~(string-append "--conf-file=" #$conf-file))
+                        conf-file)
+                #$@(if conf-dir
+                       (list #~(string-append "--conf-dir=" #$conf-dir))
+                       '())
                 #$@extra-options)
-               #:pid-file "/run/dnsmasq.pid"))
+               #:pid-file #$pid-file))
      (stop #~(make-kill-destructor)))))
 
 (define (dnsmasq-activation config)
@@ -902,6 +966,26 @@ cache.size = 100 * MB
       (use-modules (guix build utils))
       ;; create directory to store dnsmasq lease file
       (mkdir-p "/var/lib/misc")))
+
+(define (dnsmasq-service-reload-action config)
+  (match-record config <dnsmasq-configuration> ()
+    (shepherd-action
+     (name 'reload)
+     (documentation "Send a @code{SIGHUP} signal to @command{dnsmasq} to clear
+cache and reload hosts files.")
+     (procedure #~(lambda (running)
+                    (let ((pid (process-id running)))
+                      (kill pid SIGHUP)))))))
+
+(define (dnsmasq-service-stats-action config)
+  (match-record config <dnsmasq-configuration> ()
+    (shepherd-action
+     (name 'stats)
+     (documentation "Send a @code{SIGUSR1} to write statistics to the system
+log.")
+     (procedure #~(lambda (running)
+                    (let ((pid (process-id running)))
+                      (kill pid SIGUSR1)))))))
 
 (define dnsmasq-service-type
   (service-type

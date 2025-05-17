@@ -1263,7 +1263,7 @@ HostData=lib/qt5"
     (description "The @code{qt5compat} package includes application
 programming interfaces (APIs) from Qt 5 that were ported to Qt 6, to ease
 migration.  It provides for example the @code{GraphicalEffects} module that
-came with the @{qtgraphicaleffects} Qt 5 package.")
+came with the @code{qtgraphicaleffects} Qt 5 package.")
     (license (list license:gpl2+ license:lgpl3+)))) ;dual licensed
 
 (define-public qtsvg-5
@@ -3390,7 +3390,7 @@ linux/libcurl_wrapper.h")
            re2
            snappy
            eudev
-           valgrind
+           valgrind/pinned
            vulkan-headers
            xcb-util))
     (propagated-inputs
@@ -5609,7 +5609,7 @@ of the InventorXt GUI component toolkit.")
 (define-public hyprland-qtutils
   (package
     (name "hyprland-qtutils")
-    (version "0.1.3")
+    (version "0.1.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5618,7 +5618,7 @@ of the InventorXt GUI component toolkit.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "010p7b2asjb09vpr1jwjmvqzyd6dv2a9acl5jz0xdikbp1mwfvzn"))))
+                "122qz9zajd11by5cwfjbxv7ngrj1q10fi7f982r8hxpn9ms2ilyr"))))
     (build-system qt-build-system)
     (arguments
      (list #:tests? #f ;There are no tests.
@@ -6164,7 +6164,7 @@ including @i{fix-its} for automatic refactoring.")
             qtshadertools
             qtsvg
             yaml-cpp
-            valgrind
+            valgrind/pinned
             vulkan-loader
             `(,zstd "lib"))
       (if (supported-package? rust-rustc-demangle-capi-0.1)

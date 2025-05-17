@@ -239,7 +239,6 @@
   #:use-module (gnu packages kerberos)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages libffi)
-  #:use-module (gnu packages libidn)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages llvm)
@@ -2789,54 +2788,6 @@ library.")
      "This package provides a lazy-loading, fancy-sliceable iterable.  Think
 of it like a generator that is \"reusable\" and has a length.")
     (license license:bsd-3)))
-
-(define-public python-slixmpp
-  (package
-    (name "python-slixmpp")
-    (version "1.8.3")
-    (source
-     (origin
-       (method git-fetch)
-       (uri
-        (git-reference
-         (url "https://lab.louiz.org/poezio/slixmpp.git")
-         (commit
-          (string-append "slix-" version))))
-       (file-name
-        (git-file-name name version))
-       (sha256
-        (base32 "0cvr037qhf0fpby5dci6ckqngaly1mnjs2zpndwgmvr3dyvrd8l8"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch
-           (lambda _
-             (substitute* "setup.py"
-               (("'CC', 'cc'")
-                "'CC', 'gcc'"))
-             #t)))))
-    (native-inputs
-     `(("cython" ,python-cython)
-       ("gnupg" ,gnupg)
-       ("pkg-config" ,pkg-config)))
-    (propagated-inputs
-     (list python-aiodns
-           python-aiohttp
-           python-cryptography
-           python-defusedxml
-           python-emoji
-           python-pyasn1
-           python-pyasn1-modules))
-    (inputs
-     (list libidn python)) ; We are building a Python extension.
-    (synopsis "XMPP library without threads")
-    (description "Slixmpp is a XMPP library for Python 3.7+.  It is a fork of
-SleekXMPP.  Its goal is to only rewrite the core of the library (the low level
-socket handling, the timers, the events dispatching) in order to remove all
-threads.")
-    (home-page "https://lab.louiz.org/poezio/slixmpp")
-    (license license:expat)))
 
 (define-public python-tenacity
   (package
@@ -6896,7 +6847,7 @@ diff, and patch JSON and JSON-like structures in Python.")
     (propagated-inputs (list python-pyparsing))
     (home-page "https://github.com/shinichi-takii/ddlparse")
     (synopsis "Parses and converts DDL to BigQuery JSON schema")
-    (description "This package provides @{ddlparse}, a Python library to parse
+    (description "This package provides @code{ddlparse}, a Python library to parse
 and convert DDL to BigQuery JSON schema.")
     (license license:bsd-3)))
 
@@ -9560,7 +9511,7 @@ and integrated feature-set for programming Python effectively.")
     (home-page "https://github.com/wbolster/black-macchiato")
     (synopsis "Partial @code{python-black} formatting")
     (description
-     "This package is built on top the @{python-black} code formatter to
+     "This package is built on top the @code{python-black} code formatter to
 enable formatting of partial files.")
     (license license:bsd-3)))
 
@@ -16289,27 +16240,6 @@ file (e.g. @file{PKG-INFO}).")
 use of the Meson build system.")
     (license license:expat)))
 
-(define-public python-pyflakes
-  (package
-    (name "python-pyflakes")
-    (version "3.2.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pyflakes" version))
-       (sha256
-        (base32 "0gxgz0kg008pgmjk1dn8z3g00dfa9pc3f80pm6r1yqjly4zn0q8w"))))
-    (build-system pyproject-build-system)
-    (native-inputs
-     (list python-pytest
-           python-setuptools
-           python-wheel))
-    (home-page "https://github.com/PyCQA/pyflakes")
-    (synopsis "Passive checker of Python programs")
-    (description
-     "Pyflakes statically checks Python source code for common errors.")
-    (license license:expat)))
-
 (define-public python-mccabe
   (package
     (name "python-mccabe")
@@ -17007,7 +16937,7 @@ add functionality and customization to your projects with their own plugins.")
                          (invoke "make" "test")))))))
     (home-page "https://github.com/giampaolo/pysendfile")
     (synopsis "Python interface to sendfile(2)")
-    (description "The @{pysendfile} Python library provides an interface to
+    (description "The @code{pysendfile} Python library provides an interface to
 the @code{sendfile(2)} system call.")
     (license license:expat)))
 
@@ -39203,7 +39133,7 @@ and @code{bspatch4}.")
 (define-public python-mpv
   (package
     (name "python-mpv")
-    (version "1.0.7")
+    (version "1.0.8")
     (source
      (origin
        ;; python-mpv from pypi does not include the tests directory.
@@ -39213,7 +39143,7 @@ and @code{bspatch4}.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "102fajzrcgxapsanh0phlqmk9q2v95bvix6mrkg8rypv717idins"))))
+        (base32 "04azy5wa2n8pa21z6lz1p1p0vy7flaqm8ypy46jb77gig2g50xrh"))))
     (build-system pyproject-build-system)
     (arguments
      (list #:phases

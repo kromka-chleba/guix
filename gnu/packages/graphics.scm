@@ -2,7 +2,7 @@
 ;;; Copyright © 2015, 2016, 2021, 2022 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015 Tomáš Čech <sleep_walker@gnu.org>
 ;;; Copyright © 2016, 2019 Leo Famulari <leo@famulari.name>
-;;; Copyright © 2016, 2017, 2019, 2023 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2016, 2017, 2019, 2023, 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2016, 2018, 2021, 2023, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2017 Manolis Fragkiskos Ragkousis <manolis837@gmail.com>
@@ -94,6 +94,7 @@
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages jemalloc)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages libunwind)
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages logging)
@@ -394,6 +395,99 @@ such as status line help, and tooltips.  Tooltips may even be used for 3D
 objects!")
     (home-page "http://www.fox-toolkit.org")
     (license license:lgpl2.1+)))
+
+(define-public friction
+  (package
+    (name "friction")
+    (version "0.9.6.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/friction2d/friction")
+             (commit (string-append "v" version))
+             (recursive? #true)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1ndg9f4m3zmdn89llchfnc4dmhckms3cx8vm6pqr8fvd7w95ak37"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           (delete-file-recursively "src/engine/skia")
+           (delete-file-recursively "src/gperftools")))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #false ;there is no test target
+      #:configure-flags
+      '(list "-DCMAKE_CXX_COMPILER=clang++"
+             "-DCMAKE_C_COMPILER=clang")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'use-system-libraries
+            (lambda _
+              (substitute* "CMakeLists.txt"
+                (("add_subdirectory\\(src/engine\\)") "")
+                (("add_dependencies\\(frictioncore Engine\\)") "")
+                (("add_subdirectory\\(src/gperftools\\)") ""))
+              (substitute* "src/app/CMakeLists.txt"
+                (("\\$\\{GPERF_LIBRARIES\\}") "-ltcmalloc_and_profiler")
+                (("\\$\\{GPERF_INCLUDE_DIRS\\}")
+                 (string-append #$(this-package-input "gperftools") "/include")))
+              (substitute* "src/app/memorychecker.cpp"
+                (("../gperftools/include/") ""))
+              (substitute* '("src/app/CMakeLists.txt"
+                             "src/core/CMakeLists.txt"
+                             "src/ui/CMakeLists.txt")
+                (("\\$\\{CMAKE_CURRENT_BINARY_DIR\\}/../engine/skia")
+                 (string-append #$(this-package-input "skia") "/lib/"))
+                (("\\$\\{CMAKE_CURRENT_SOURCE_DIR\\}/../engine/skia")
+                 (string-append #$(this-package-input "skia") "/include/skia")))))
+          ;; Ensure that all required Qt plugins are found at runtime.
+          (add-after 'install 'wrap-executable
+            (lambda* (#:key inputs #:allow-other-keys)
+              (let ((qt '("qtbase" "qtdeclarative" "qtmultimedia")))
+                (wrap-program (string-append #$output "/bin/friction")
+                  `("QT_PLUGIN_PATH" ":" prefix
+                    ,(map (lambda (label)
+                            (string-append (assoc-ref inputs label)
+                                           "/lib/qt5/plugins/"))
+                          qt)))))))))
+    (inputs
+     (list expat
+           ffmpeg-for-friction ;version 4.2 is recommended; does not work with version 7+.
+           fontconfig
+           freetype
+           gperftools-for-friction
+           harfbuzz
+           icu4c
+           libjpeg-turbo
+           libpng
+           libunwind
+           libwebp
+           python
+           qscintilla
+           qtbase-5
+           qtdeclarative-5
+           qtmultimedia-5
+           skia-for-friction
+           zlib))
+    (native-inputs (list clang-15 llvm-15 pkg-config))
+    (home-page "https://friction.graphics")
+    (synopsis "Create vector and raster animations for web and video")
+    (description "Friction is a versatile motion graphics application that
+allows you to create vector and raster animations for web and video.
+
+Motion graphics has a wide variety of uses, including:
+
+@itemize
+@item Television and film: Title sequences, commercials, and visual effects
+@item Web design: Animated logos, banners, and interactive elements
+@item Social media: Animated posts and stories
+@item Presentations: Animated infographics and slideshows
+@end itemize
+")
+    (license license:gpl3+)))
 
 (define-public autotrace
   (package
@@ -2473,6 +2567,73 @@ It supports:
 @item subpixel text
 @end itemize")
   (license license:bsd-3))))
+
+(define-public skia-for-friction
+  (let ((version "112")
+        (revision "0")
+        (commit "c4284e9bdd1f794e1c72328924ad519fd0d736cf"))
+    (package
+      (inherit skia)
+      (name "skia")
+      (version (git-version version revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/friction2d/skia")
+                      (commit commit)
+                      (recursive? #true)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "15mbqz7kg23xgy46ijm8p5wnj4q8xipyr7ckwz8kpa5v3lxssyf3"))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments skia)
+         ;; gn/find_headers.py fails to decode some JSON, probably because of
+         ;; a warning.
+         ((#:tests? _ #false) #false)
+         ((#:phases phases)
+          #~(modify-phases #$phases
+              (replace 'configure
+                (lambda* (#:key inputs #:allow-other-keys)
+                  (substitute* "BUILD.gn"
+                    ;; Workaround a bug in the zlib third_party definition, that
+                    ;; fails the build even when zlib is found from the system.
+                    (("deps = \\[ \"//third_party/zlib\" ]")
+                     "deps = []")
+                    (("set_sources_assignment_filter\\(\\[\\]\\)") "")
+                    (("visibility = \\[ \":\\*\" \\]")
+                     "visibility = [ \"*\" ]"))
+                  (invoke "gn" "gen" "build"
+                          (string-append
+                           ;;
+                           "--args="
+                           "cc=\"gcc\" "              ;defaults to 'cc'
+                           "is_official_build=true "  ;to use system libraries
+                           "skia_use_system_zlib=true " ; use system zlib library
+                           "skia_use_system_expat=true "
+                           "skia_use_system_libjpeg_turbo=true "
+                           "skia_use_system_libpng=true "
+                           "skia_use_system_libwebp=true "
+                           "skia_use_system_icu=true "
+                           "skia_use_system_harfbuzz=true "
+                           "skia_use_system_freetype2=true "
+                           "skia_enable_pdf=false "
+                           "skia_enable_skottie=false "
+                           "skia_enable_tools=false "
+                           "skia_use_dng_sdk=false "
+
+                           ;; Specify where locate the harfbuzz and freetype
+                           ;; includes.
+                           (format #f "extra_cflags=[\"-I~a\",\"-I~a\"] "
+                                   (search-input-directory inputs
+                                                           "include/harfbuzz")
+                                   (search-input-directory inputs
+                                                           "include/freetype2"))
+                           ;; Otherwise the validate-runpath phase fails.
+                           "extra_ldflags=[\"-Wl,-rpath=" #$output "/lib\"] "
+                           ;; Wuffs is a google language that may improve performance
+                           ;; disabled while unpackaged
+                           "skia_use_wuffs=false ")))))))))))
 
 (define-public superfamiconv
   (package

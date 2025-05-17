@@ -224,6 +224,7 @@
   #:use-module (gnu packages networking)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages python-check)
   #:use-module (gnu packages telephony)
   #:use-module (gnu packages terminals)
   #:use-module (gnu packages tex)
@@ -2590,7 +2591,7 @@ Apprentice and Sourcerer.")
 (define-public emacs-suneater-theme
   (package
     (name "emacs-suneater-theme")
-    (version "2.5.2")
+    (version "2.5.3")
     (source
      (origin
        (method git-fetch)
@@ -2599,7 +2600,7 @@ Apprentice and Sourcerer.")
              (commit version)))
        (sha256
         (base32
-         "1501kj933717jw9prx03x1k8n520z7a268bl03m3m82qn5hjq0ad"))
+         "0l53709gfx70rqxp8n785bg5n4sdmblwsnbm8y4k7jj4i1sqiqpn"))
        (file-name (git-file-name name version))))
     (build-system emacs-build-system)
     (home-page "https://git.sr.ht/~plattfot/suneater-theme")
@@ -14658,7 +14659,7 @@ test tags.  It supports both interactive and non-interactive use.")
     (description
      "Provides functions which facilitate writing multi-file Emacs packages
 and running from the source tree without having to \"install\" code or fiddle
-with @{load-path}.
+with @code{load-path}.
 
 The main function, @code{load-relative}, loads an Emacs Lisp file relative to
 another (presumably currently running) Emacs Lisp file.")
@@ -16736,7 +16737,7 @@ feed subscriptions.")
              #t)))))
     (home-page "https://github.com/sigma/el-x")
     (synopsis "Emacs Lisp extensions")
-    (description "command@{emacs-el-x} defines the @code{dflet} macro to
+    (description "@command{emacs-el-x} defines the @code{dflet} macro to
 provide the historic behavior of @code{flet}, as well as
 @code{declare-function} stub for older Emacs.")
     (license license:gpl2+)))
@@ -26577,7 +26578,7 @@ files, allowing for actions to be performed based on search criteria.")
            emacs-s))
     (synopsis "Helm commands for @code{emacs-org-ql}")
     (description "This package provides @code{emacs-helm} commands for
-@{emacs-org-ql}, a Lispy query language for Org files, allowing for actions to
+@code{emacs-org-ql}, a Lispy query language for Org files, allowing for actions to
 be performed based on search criteria.")))
 
 (define-public emacs-bing-dict
@@ -42811,6 +42812,36 @@ and text properties.  The package styles headlines, keywords, tables and
 source blocks.")
     (license license:gpl3+)))
 
+(define-public emacs-org-modern-indent
+  (package
+    (name "emacs-org-modern-indent")
+    (version "0.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jdtsmith/org-modern-indent")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "09bg1shw06ddlxq678abr9q6g9wfc6b483xi0iwldxk4qbgzgpdj"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list #:tests? #false))            ;no tests
+    (propagated-inputs
+     ;; XXX: Bundled Org mode (as of Emacs 29.4) is too old; Org Modern
+     ;; Indent mode cannot work properly with it.
+     (list emacs-compat emacs-org))
+    (home-page "https://github.com/jdtsmith/org-modern-indent")
+    (synopsis "Modern block styling with Org Indent mode")
+    (description
+     "Org Modern mode cannot style various Org blocks properly when used in
+conjunction with Org Indent mode.  This small package approximately reproduces
+the block styling of Org Modern mode when using Org Indent mode.  It can be
+used with or without Org Modern mode.")
+    (license license:gpl3+)))
+
 (define-public emacs-org-margin
   (let* ((commit "4013b59ff829903a7ab86b95593be71aa5c9b87d")
          (revision "0"))
@@ -43064,7 +43095,7 @@ can bind a popon to a specific buffer to only show on that buffer.")
     (synopsis "LSP mode and Consult helping each other")
     (description
 "@code{emacs-consult-lsp} provides helpers for interactively selecting LSP
-workspace diagnostics, symbols, and file symbols from @{emacs-lsp-mode}
+workspace diagnostics, symbols, and file symbols from @code{emacs-lsp-mode}
 by leveraging @code{emacs-consult} APIs.")
     (license license:expat)))
 

@@ -513,7 +513,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.14-version "6.14.5")
+(define-public linux-libre-6.14-version "6.14.6")
 (define-public linux-libre-6.14-gnu-revision "gnu")
 (define deblob-scripts-6.14
   (linux-libre-deblob-scripts
@@ -523,7 +523,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1wx8f0fx71sr506j655i7mr9xrc4fpw96d3fdgfivjsxlcrwfpnk")))
 (define-public linux-libre-6.14-pristine-source
   (let ((version linux-libre-6.14-version)
-        (hash (base32 "02gl4hdxzijyyk57jsr85grdkxs2yi2gkvqa043kbamy5g2pw818")))
+        (hash (base32 "1acpjxscw5nvgp19jzd29zhl1c6wdzx0bxp4yy0hy8z2k0cpz091")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.14)))
@@ -532,7 +532,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.26")
+(define-public linux-libre-6.12-version "6.12.28")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -542,12 +542,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1an34mqv0p6fmb5c3wmw3yl16gm1m3qqhgr7ycz3ygp06pgaj8qy")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "1jivbv08j43rn0dn7xmwxb178b305cyxbp82h71r6n22qwif4ba0")))
+        (hash (base32 "07kpsl6lbsr0zw6p8bglgbchdrv1jivcwwnyh7vwzbk24lc9k878")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.89")
+(define-public linux-libre-6.6-version "6.6.90")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -557,37 +557,37 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0xnhflca5rmxnxpywds6ixnipg2zsyb0wik3spir8j3cfjpqjw3b")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "005s3vf1fkcv3fady2ax9azyc4lj8p4flhn20h3srr38c39zf6n2")))
+        (hash (base32 "0kh1ax0j0vl0n267cpij5lf170ab1fg0j6gjzvzc2a8ncx46g1gz")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.136")
+(define-public linux-libre-6.1-version "6.1.138")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
    linux-libre-6.1-version
    linux-libre-6.1-gnu-revision
-   (base32 "1qp8v5v15yq5122llp03xkl1315l32pb0rcyn63n2ff18z66270k")
+   (base32 "16b0c2wnfz35p6a0gkbazbydwblqg4y0iw5wq362zgn79rxasyga")
    (base32 "0lkgvf1y9qmh1z8ih13y3p1zv5wb3psfp0iizn9y7isscqm4056f")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "0wdhgaa578x7jhhq2p2g272gyb12818ifan4c5zan6npp6dhf756")))
+        (hash (base32 "04br4ln81skk4lgrgxqhpn2qjvkifi4bm360rfw9zfj9j2xsa6g3")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.181")
+(define-public linux-libre-5.15-version "5.15.182")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
    linux-libre-5.15-version
    linux-libre-5.15-gnu-revision
-   (base32 "12jsdhhrak7l6c6sfpn38ddzzv4hyg18k5vga4lw7d45p319igwa")
+   (base32 "1diav2baanmm26z1gh8qyfgwmw0pvws923rvnp637wal35wq9hkd")
    (base32 "19cwqpvf6x02ivxwx36jkbccg3dcii1ynis34mjz3rn1wpg61s9a")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "0f6sc0wyd1gdx2kvbvp5sx6il780fdmjr4j0bcci1s7skrnl6iik")))
+        (hash (base32 "07m3yrkqpmh4cmsmhz8i6da0h7xlprc7r4hb0xcy812s659zmaxn")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
@@ -4892,7 +4892,6 @@ to the in-kernel OOM killer.")
   (package
     (name "eudev")
     (version "3.2.14")
-    (replacement eudev-fixed)
     (source (origin
               (method git-fetch)
               (uri (git-reference (url "https://github.com/eudev-project/eudev")
@@ -5001,17 +5000,6 @@ to the in-kernel OOM killer.")
 device nodes from /dev/, handles hotplug events and loads drivers at boot
 time.")
     (license license:gpl2+)))
-
-(define eudev-fixed
-  (package
-    (inherit eudev)
-    (source
-     (let ((base-source (package-source eudev)))
-       (origin
-         (inherit base-source)
-         (patches
-          (append (search-patches "eudev-removable-devices-polling.patch")
-                  (origin-patches base-source))))))))
 
 (define-public python-evdev
   (package
@@ -6444,7 +6432,7 @@ arrays when needed.")
                       (string-append "-Wl,-rpath=" #$output "/lib")))))))
 
     (native-inputs
-     (list perl pkg-config valgrind
+     (list perl pkg-config valgrind/pinned
            ;; For tests.
            cmocka))
     (inputs
@@ -6589,7 +6577,7 @@ Bluetooth audio output devices like headphones or loudspeakers.")
 (define-public bluez
   (package
     (name "bluez")
-    (version "5.72")
+    (version "5.79")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -6597,7 +6585,7 @@ Bluetooth audio output devices like headphones or loudspeakers.")
                     version ".tar.xz"))
               (sha256
                (base32
-                "0vjk4ihywzv8k07bxq7clqgi2afrw54nfp0gcnxw35m98nipz7a9"))))
+                "12pal1m4xlr8k7kxb6isv5lbaca2wc5zcgy0907wfwcz78qaar21"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -6621,6 +6609,18 @@ Bluetooth audio output devices like headphones or loudspeakers.")
             (lambda _
               (substitute* "unit/test-gatt.c"
                 (("tester_init\\(&argc, &argv\\);") "return 77;"))))
+          (replace 'install
+            (lambda* (#:key make-flags #:allow-other-keys #:rest args)
+              ;; Override the sysconfdir and localstatedir locations only for
+              ;; the installation phase.  Otherwise, the installation fails when
+              ;; it tries to write to /etc/bluetooth and /var.
+              (define make-flags*
+                (append make-flags (list (string-append "sysconfdir="
+                                                        #$output "/etc")
+                                         (string-append "localstatedir="
+                                                        #$output "/var"))))
+              (apply (assoc-ref %standard-phases 'install)
+                     (append args (list #:make-flags make-flags*)))))
           (add-after 'install 'post-install
             (lambda* (#:key inputs outputs #:allow-other-keys)
               (let* ((servicedir (string-append #$output
@@ -10582,14 +10582,14 @@ platforms, it is not limited to resource-constrained systems.")
 (define-public kexec-tools
   (package
     (name "kexec-tools")
-    (version "2.0.26")
+    (version "2.0.30")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kernel.org/linux/utils/kernel"
                                   "/kexec/kexec-tools-" version ".tar.xz"))
               (sha256
                (base32
-                "1kbh8l67rbz0d3k6x7g5vj5ahg6f7lwvxcj1br8mrk818436mqvz"))))
+                "0khjha6qjgbg7v470mwv333k1i9aqggvs1z93nfhba17mykmz2kl"))))
     (build-system gnu-build-system)
     (arguments
      ;; There are no automated tests.

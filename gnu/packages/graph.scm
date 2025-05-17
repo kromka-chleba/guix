@@ -106,7 +106,7 @@ distributions in empirical data.  SIAM Review 51, 661-703 (2009)}).")
 (define-public igraph
   (package
     (name "igraph")
-    (version "0.10.7")
+    (version "0.10.15")
     (source
      (origin
        (method git-fetch)
@@ -114,7 +114,6 @@ distributions in empirical data.  SIAM Review 51, 661-703 (2009)}).")
              (url "https://github.com/igraph/igraph")
              (commit version)))
        (file-name (git-file-name name version))
-       (patches (search-patches "igraph-fix-varargs-integer-size.patch"))
        (modules '((guix build utils)
                   (ice-9 ftw)
                   (srfi srfi-26)))
@@ -136,7 +135,7 @@ distributions in empirical data.  SIAM Review 51, 661-703 (2009)}).")
                      (("add_sub.*vendor.*") ""))))
        (sha256
         (base32
-         "025f9c2jsawniqkig4l5z3v9aw3ipazmnlsf80b653mns5bvj1yn"))))
+         "0z9jqvl65j4z6brrjlfyykba2bs10az6dx6m8g41snlfnx21a82d"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -235,51 +234,46 @@ more.")
          "0z9jqvl65j4z6brrjlfyykba2bs10az6dx6m8g41snlfnx21a82d"))))))
 
 (define-public python-igraph
-  ;; Temporarily use a precise commit, as there was a mistake in the last
-  ;; release that was fixed by it (see:
-  ;; https://github.com/igraph/python-igraph/issues/632).
-  (let ((revision "0")
-        (commit "b6ebd8eb277fc1d0e33340a6624629a10c638992"))
-    (package
-      (inherit igraph)
-      (name "python-igraph")
-      (version (git-version "0.10.4" revision commit))
-      (source (origin
-                (method git-fetch)
-                ;; The PyPI archive lacks tests.
-                (uri (git-reference
-                      (url "https://github.com/igraph/python-igraph")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0dhrz5a6pi6vs94fm8q4nmkh6v1nmpw1sk482xls213zcbbh67hd"))))
-      (build-system pyproject-build-system)
-      (arguments
-       (list
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'unpack 'specify-libigraph-location
-              (lambda _
-                (let ((igraph #$(this-package-input "igraph")))
-                  (substitute* "setup.py"
-                    (("(LIBIGRAPH_FALLBACK_INCLUDE_DIRS = ).*" _ var)
-                     (string-append
-                      var (format #f "[~s]~%"
-                                  (string-append igraph "/include/igraph"))))
-                    (("(LIBIGRAPH_FALLBACK_LIBRARY_DIRS = ).*" _ var)
-                     (string-append
-                      var (format #f "[~s]~%"
-                                  (string-append igraph "/lib")))))))))))
-      (inputs (list igraph))
-      (propagated-inputs
-       (list python-texttable))
-      (native-inputs
-       (list python-pytest
-             python-setuptools
-             python-wheel))
-      (home-page "https://igraph.org/python/")
-      (synopsis "Python bindings for the igraph network analysis library"))))
+  (package
+    (inherit igraph)
+    (name "python-igraph")
+    (version "0.11.8")
+    (source (origin
+              (method git-fetch)
+              ;; The PyPI archive lacks tests.
+              (uri (git-reference
+                    (url "https://github.com/igraph/python-igraph")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1c73nypzm2apqqwzqxxhbh692h4ri2x8q4i8f7q2kwczz156v19k"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'specify-libigraph-location
+            (lambda _
+              (let ((igraph #$(this-package-input "igraph")))
+                (substitute* "setup.py"
+                  (("(LIBIGRAPH_FALLBACK_INCLUDE_DIRS = ).*" _ var)
+                   (string-append
+                    var (format #f "[~s]~%"
+                                (string-append igraph "/include/igraph"))))
+                  (("(LIBIGRAPH_FALLBACK_LIBRARY_DIRS = ).*" _ var)
+                   (string-append
+                    var (format #f "[~s]~%"
+                                (string-append igraph "/lib")))))))))))
+    (inputs (list igraph))
+    (propagated-inputs
+     (list python-texttable))
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (home-page "https://igraph.org/python/")
+    (synopsis "Python bindings for the igraph network analysis library")))
 
 (define-public r-rbiofabric
   (let ((commit "666c2ae8b0a537c006592d067fac6285f71890ac")
@@ -422,42 +416,6 @@ subplots, multiple-axes, polar charts, and bubble charts.")
 algorithm for community detection in large networks.")
     (license license:bsd-3)))
 
-(define-public python-vtraag-louvain
-  (package
-    (name "python-vtraag-louvain")
-    (version "0.8.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "louvain" version))
-              (sha256
-               (base32
-                "16l2zi4jwc3vpvpnz32jv7xy0g5087dp9y57wxplj1xa9r312x0i"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'do-not-use-bundled-igraph
-           (lambda _
-             (substitute* "setup.py"
-               (("self.external = False")
-                "self.external = True")
-               (("self.use_pkgconfig = False")
-                "self.use_pkgconfig = True")))))))
-    (inputs (list igraph))
-    (propagated-inputs (list python-igraph python-setuptools))
-    (native-inputs
-     (list pkg-config
-           python-ddt
-           python-setuptools-scm
-           python-wheel))
-    (home-page "https://github.com/vtraag/louvain")
-    (synopsis "Community detection in large networks")
-    (description
-     "Louvain is a general algorithm for methods of community detection in
-large networks.")
-    (license license:gpl3+)))
-
 (define-public python-graphtools
   (package
     (name "python-graphtools")
@@ -521,7 +479,7 @@ graphs in Python.")
 (define-public python-louvain-igraph
   (package
     (name "python-louvain-igraph")
-    (version "0.8.1")
+    (version "0.8.2")
     (source
      (origin
        (method git-fetch)
@@ -531,7 +489,7 @@ graphs in Python.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1j2ybihvvzggwjb9zvm829aqb5b94q10h8bw6v0h42xd9w75z9sv"))))
+         "1aab6rnsnssi6wib939zy4vdzz3s2gcwwingn2dfjrijk05zjapv"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -561,6 +519,9 @@ millions of nodes (as long as they can fit in memory).  The core function is
 @code{find_partition} which finds the optimal partition using the louvain
 algorithm for a number of different methods.")
     (license license:gpl3+)))
+
+(define-public python-vtraag-louvain
+  (deprecated-package "python-vtraag-louvain" python-louvain-igraph))
 
 (define-public python-pygsp
   (package
@@ -718,17 +679,50 @@ contains supporting code for evaluation and parameter tuning.")
 clustering of dense vectors.  This package provides Python bindings to the
 Faiss library.")))
 
+(define-public libleidenalg
+  (package
+    (name "libleidenalg")
+    (version "0.11.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/vtraag/libleidenalg")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0fqy79yrgnrifhyc2lys5jv84siq01ph6038qyz7qagl1yq5gdw8"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+       #:tests? #f                      ;tests are not included
+       #:phases
+       #~(modify-phases %standard-phases
+           (add-after 'unpack 'version-file
+             (lambda _
+               (let ((port (open-file "VERSION" "w")))
+                 (display #$version port)
+                 (close port)))))))
+    (inputs (list igraph))
+    (home-page "https://github.com/vtraag/libleidenalg")
+    (synopsis "Community detection in large networks")
+    (description "Leiden is a general algorithm for methods of community
+detection in large networks and is an extension of the Louvain algorithm.
+This package implements the Leiden algorithm in C++ and can be run on graphs
+of millions of nodes (as long as they can fit in memory).")
+    (license license:gpl3+)))
+
 (define-public python-leidenalg
   (package
     (name "python-leidenalg")
-    (version "0.9.1")
+    (version "0.10.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "leidenalg" version))
        (sha256
         (base32
-         "1wvmi6ca9kf8pbxg6b18n64h82wr9a6wcdazyn82pww0dwxzwp3y"))))
+         "0k1f35bmgff8vc5fcyqa2dqfa1x17rb0vqzwkdqlm0sr5fllfh8g"))))
     (build-system python-build-system)
     (arguments
      '(#:tests? #f                      ;tests are not included
@@ -745,19 +739,14 @@ Faiss library.")))
     (native-inputs
      (list pkg-config python-setuptools-scm))
     (inputs
-     (list igraph))
+     (list igraph libleidenalg))
     (propagated-inputs
      (list python-igraph))
     (home-page "https://github.com/vtraag/leidenalg")
     (synopsis "Community detection in large networks")
-    (description
-     "Leiden is a general algorithm for methods of community detection in
-large networks.  This package implements the Leiden algorithm in C++ and
-exposes it to Python.  Besides the relative flexibility of the implementation,
-it also scales well, and can be run on graphs of millions of nodes (as long as
-they can fit in memory).  The core function is @code{find_partition} which
-finds the optimal partition using the Leiden algorithm, which is an extension
-of the Louvain algorithm, for a number of different methods.")
+    (description "Leiden is a general algorithm for methods of community
+detection in large networks and is an extension of the Louvain algorithm. This
+packages provides a Python wrapper to the C++ implementation.")
     (license license:gpl3+)))
 
 (define-public edge-addition-planarity-suite

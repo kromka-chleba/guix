@@ -40,6 +40,7 @@
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system qt)
@@ -56,6 +57,7 @@
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages elf)
   #:use-module (gnu packages flex)
+  #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gawk)
   #:use-module (gnu packages gdb)
   #:use-module (gnu packages gettext)
@@ -358,6 +360,33 @@ Lattice iCE40 FPGAs and providing simple tools for analyzing and creating bitstr
 files.")
       (license license:isc))))
 
+(define-public libfst
+  ;; There are no release nor tags.
+  (let ((commit "6a52070cd62ec65c29832bc95e7db493504aa7ac")
+        (revision "0"))
+    (package
+      (name "libfst")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/gtkwave/libfst/")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0b1r660m5aib316jjl4nhs10y7vhhqy2mvxjip3ynahig3hpi46z"))))
+      (build-system meson-build-system)
+      (native-inputs (list gobject-introspection pkg-config))
+      (inputs (list bzip2))
+      (propagated-inputs (list zlib))  ;in Requires.private of libfst.pc
+      (synopsis "Fast Signal Trace (FST) format waveforms library")
+      (description "Libfst is a small library used to read and write
+@acronym{FST, Fast Signal Trace} format waveforms.")
+      (home-page "https://github.com/gtkwave/libfst/")
+      (license (list license:expat      ;libfst and fastlz-derived sources
+                     license:bsd-2))))) ;for lz4-derived sources
+
 (define-public nextpnr
   (package
     (name "nextpnr")
@@ -451,39 +480,40 @@ files.")
   (deprecated-package "nextpnr-ice40" nextpnr))
 
 (define-public gtkwave
-  (package
-    (name "gtkwave")
-    (version "3.3.121")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (list (string-append "mirror://sourceforge/gtkwave/"
-                                 "gtkwave-gtk3-" version "/"
-                                 "gtkwave-gtk3-" version ".tar.gz")
-                  (string-append "https://gtkwave.sourceforge.net/"
-                                 "gtkwave-" version ".tar.gz")))
-       (sha256
-        (base32 "0ikk49zyar5aiq7pg9whi4nfzq7xm8sz7bn3b6vaylkdimw4bajl"))))
-    (build-system glib-or-gtk-build-system)
-    (native-inputs
-     (list gperf pkg-config))
-    (inputs
-     (list gtk+ tcl tk))
-    (arguments
-     (list #:configure-flags
-           #~(list "--enable-gtk3"
-                   (string-append "--with-tcl="
-                    (assoc-ref %build-inputs "tcl")
-                    "/lib")
-                   (string-append "--with-tk="
-                                  (assoc-ref %build-inputs "tk")
-                                  "/lib"))))
-    (synopsis "Waveform viewer for FPGA simulator trace files")
-    (description "This package is a waveform viewer for FPGA
-simulator trace files (@dfn{FST}).")
-    (home-page "https://gtkwave.sourceforge.net/")
-    ;; Exception against free government use in tcl_np.c and tcl_np.h.
-    (license (list license:gpl2+ license:expat license:tcl/tk))))
+  ;; The last release is more than 2 years old, and there are improvements in
+  ;; the master branch, such as GTK 4 support: pick the latest commit that
+  ;; passes their CI.
+  (let ((commit "bb978d9d667d569b9153ffa34007e300302907dc")
+        (revision "0"))
+    (package
+      (name "gtkwave")
+      ;; The version string can be found in meson.build.
+      (version (git-version "3.4.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/gtkwave/gtkwave")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1nv27cpz5937cb6bkhpw8w0ji6hm9xr8f0znvfwzfl1fwwypf23y"))))
+      (build-system meson-build-system)
+      (arguments (list #:glib-or-gtk? #t))
+      (native-inputs (list desktop-file-utils
+                           flex
+                           `(,glib "bin") ;for glib-mkenums
+                           gobject-introspection
+                           gperf
+                           `(,gtk "bin")
+                           pkg-config))
+      (inputs (list gtk gtk+ libfst))
+      (synopsis "Waveform viewer for FPGA simulator trace files")
+      (description "This package is a waveform viewer for @acronym{FST, FPGA
+Simulator Trace} files.")
+      (home-page "https://github.com/gtkwave/gtkwave")
+      ;; Exception against free government use in tcl_np.c and tcl_np.h.
+      (license (list license:gpl2+ license:expat license:tcl/tk)))))
 
 (define-public python-migen
   ;; XXX: The latest version tag (0.9.2) was placed in 2019, there are latest

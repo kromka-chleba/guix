@@ -882,6 +882,47 @@ publish/subscribe, RPC-style request/reply, or service discovery.")
     (home-page "https://nng.nanomsg.org/")
     (license license:expat)))
 
+(define-public nng-1.10
+  (package
+    (inherit nng)
+    (name "nng")
+    (version "1.10.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nanomsg/nng")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "13nmz1p8qd12gyj7wm8fz1ccap47qh41sxz4jqdhj8gnd0kiy5h4"))))
+    (arguments
+     (list
+      #:configure-flags
+      '(list "-DNNG_ENABLE_COVERAGE=ON"
+             "-DNNG_ENABLE_TLS=ON"
+             "-DBUILD_SHARED_LIBS=ON")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'disable-failing-tests
+           (lambda _
+             ;; These tests require network access.
+             (substitute* "tests/CMakeLists.txt"
+               (("add_nng_test1\\(httpclient 60 NNG_SUPP_HTTP\\)") "")
+               (("add_nng_test\\(tls 60\\)") ""))
+             (substitute* "src/platform/CMakeLists.txt"
+               (("nng_test\\(platform_test\\)") "")
+               (("nng_test\\(resolver_test\\)") ""))
+             (substitute* "src/sp/transport/tcp/CMakeLists.txt"
+               (("nng_test\\(tcp_test\\)") ""))
+             (substitute* "src/sp/transport/ws/CMakeLists.txt"
+               (("nng_test_if\\(WS_ON ws_test\\)") ""))
+             (substitute* "src/supplemental/websocket/CMakeLists.txt"
+               (("nng_test\\(wssfile_test\\)") ""))
+             ;; expected Address invalid (15), got Try again (8)
+             (substitute* "src/sp/transport/tls/CMakeLists.txt"
+               (("nng_test_if\\(NNG_ENABLE_TLS tls_tran_test\\)") "")))))))))
+
 (define-public nanomsg
   (package
     (name "nanomsg")
@@ -4793,7 +4834,7 @@ IPv6 Internet connectivity - it also works over IPv4.")
 (define-public yggtray
   (package
     (name "yggtray")
-    (version "0.1.11")
+    (version "0.1.13")
     (source
      (origin
        (method git-fetch)
@@ -4802,7 +4843,7 @@ IPv6 Internet connectivity - it also works over IPv4.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0vid9j2fl7rh6hkzjg3vxq8dxvdjgcacbr41wlzfq7s7007dxpr9"))))
+        (base32 "1ivhhq25kz1di928icf361yf0k8lsf7wncf1f3fbch2gvivzm23a"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -4817,7 +4858,7 @@ IPv6 Internet connectivity - it also works over IPv4.")
                        (wrap-qt-program "yggtray"
                                         #:output #$output
                                         #:inputs inputs))))))
-    (native-inputs (list cmake-minimal doxygen))
+    (native-inputs (list cmake-minimal doxygen graphviz))
     (inputs (list bash-minimal qtbase-5 qttools-5 qtwayland-5 yggdrasil))
     (home-page "https://github.com/the-nexi/yggtray")
     (synopsis "Yggdrasil tray and control panel")

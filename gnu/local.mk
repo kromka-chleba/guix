@@ -1216,7 +1216,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/elm-ghc9.2.patch	\
   %D%/packages/patches/elm-offline-package-registry.patch	\
   %D%/packages/patches/elm-reactor-static-files.patch		\
-  %D%/packages/patches/eudev-removable-devices-polling.patch	\
   %D%/packages/patches/emacs-all-the-icons-remove-duplicate-rs.patch	\
   %D%/packages/patches/emacs-bash-completion-preserve-exit-code.patch	\
   %D%/packages/patches/emacs-bash-completion-preserve-ps1.patch	\
@@ -1609,7 +1608,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/id3lib-CVE-2007-4460.patch			\
   %D%/packages/patches/id3lib-UTF16-writing-bug.patch			\
   %D%/packages/patches/idris-test-ffi008.patch			\
-  %D%/packages/patches/igraph-fix-varargs-integer-size.patch	\
   %D%/packages/patches/ilmbase-fix-tests.patch			\
   %D%/packages/patches/indent-CVE-2024-0911.patch	\
   %D%/packages/patches/inferno-fix-crash.patch		\
@@ -1973,9 +1971,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/openssh-trust-guix-store-directory.patch	\
   %D%/packages/patches/openresolv-restartcmd-guix.patch	\
   %D%/packages/patches/openrgb-unbundle-hueplusplus.patch	\
-  %D%/packages/patches/openscad-fix-boost-join.patch		\
-  %D%/packages/patches/openscad-with-cgal-5.3.patch		\
-  %D%/packages/patches/openscad-with-cgal-5.4.patch		\
   %D%/packages/patches/opensles-add-license-file.patch			\
   %D%/packages/patches/openssl-1.1-c-rehash-in.patch		\
   %D%/packages/patches/openssl-3.0-c-rehash-in.patch		\
@@ -2415,7 +2410,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/webrtc-audio-processing-big-endian.patch	\
   %D%/packages/patches/webrtc-audio-processing-byte-order-pointer-size.patch \
   %D%/packages/patches/webrtc-audio-processing-x86-no-sse.patch	\
-  %D%/packages/patches/webrtc-for-telegram-desktop-unbundle-libsrtp.patch \
   %D%/packages/patches/websocketpp-fix-for-cmake-3.15.patch	\
   %D%/packages/patches/wmctrl-64-fix.patch			\
   %D%/packages/patches/wmfire-dont-inline-draw-fire.patch	\
