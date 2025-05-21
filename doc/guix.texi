@@ -466,6 +466,7 @@ Home Services
 * GPG: GNU Privacy Guard.       Setting up GPG and related tools.
 * Desktop: Desktop Home Services.  Services for graphical environments.
 * Guix: Guix Home Services.     Services for Guix.
+* Backup: Backup Home Services.   Services for backing up User's files.
 * Fonts: Fonts Home Services.   Services for managing User's fonts.
 * Sound: Sound Home Services.   Dealing with audio.
 * Mail: Mail Home Services.     Services for managing mail.
@@ -12672,11 +12673,13 @@ as in:
 This is the declarative counterpart of @code{text-file*}.
 @end deffn
 
-@deffn {Procedure} file-union name files
-Return a @code{<computed-file>} that builds a directory containing all of @var{files}.
-Each item in @var{files} must be a two-element list where the first element is the
-file name to use in the new directory, and the second element is a gexp
-denoting the target file.  Here's an example:
+@deffn {Procedure} file-union name files [#:dangling-symlinks? #f]
+Return a @code{<computed-file>} that builds a directory containing all
+of @var{files}.  Each item in @var{files} must be a two-element list
+where the first element is the file name to use in the new directory,
+and the second element is a gexp denoting the target file.
+@code{#:dangling-symlinks?} controls if gexps must lower to an existing
+file.  Here's an example:
 
 @lisp
 (file-union "etc"
@@ -12687,6 +12690,17 @@ denoting the target file.  Here's an example:
 @end lisp
 
 This yields an @code{etc} directory containing these two files.
+@end deffn
+
+@deffn {Procedure} symlink-to target
+Return a @code{<computed-file>} that is a symbolic link to target.
+Note, that the target does not need to exist at the build time.  One of
+uses is to put arbitrary symlinks into user's home:
+
+@lisp
+(service home-files-service-type
+  `(("Sync" ,(symlink-to "/storage/Sync"))))
+@end lisp
 @end deffn
 
 @deffn {Procedure} directory-union name things
@@ -15145,6 +15159,17 @@ prefixed version:
 $ guix refresh qtbase@@5 qtdeclarative@@5 --target-version=5
 gnu/packages/qt.scm:1472:13: qtdeclarative would be upgraded from 5.15.8 to 5.15.10
 gnu/packages/qt.scm:452:13: qtbase would be upgraded from 5.15.8 to 5.15.10
+@end example
+
+@cindex partial version specification, guix refresh
+A per-package equivalent to --target-version is made available by
+prefixing the version specification with the @samp{~} (tilde) character.
+For example:
+
+@example
+$ guix refresh bash=~5 guile=~3
+gnu/packages/guile.scm:354:13: guile would be upgraded from 3.0.9 to 3.0.10
+gnu/packages/bash.scm:150:15: bash would be upgraded from 5.1.16 to 5.2.37
 @end example
 
 Sometimes the upstream name differs from the package name used in Guix,
@@ -44895,7 +44920,8 @@ The group used for running the current job.
 @item @code{log-file} (type: maybe-string)
 The file system path to the log file for this job.  By default the file will
 have be @file{/var/log/restic-backup/@var{job-name}.log}, where @var{job-name} is the
-name defined in the @code{name} field.
+name defined in the @code{name} field.  For Guix Home services it defaults to
+@file{$XDG_STATE_HOME/shepherd/restic-backup/@var{job-name}.log}.
 
 @item @code{max-duration} (type: maybe-number)
 The maximum duration in seconds that a job may last.  Past
@@ -44922,8 +44948,10 @@ A string or a gexp representing the frequency of the backup.  Gexp must
 evaluate to @code{calendar-event} records or to strings.  Strings must contain
 Vixie cron date lines.
 
-@item @code{requirement} (default: @code{'()}) (type: list-of-symbols)
-The list of Shepherd services that this backup job depends upon.
+@item @code{requirement} (type: maybe-list-of-symbols)
+The list of Shepherd services that this backup job depends upon.  When unset it
+defaults to @code{'()}, for Guix Home.  Otherwise to
+@code{'(user-processes file-systems)}.
 
 @item @code{files} (default: @code{'()}) (type: list-of-lowerables)
 The list of files or directories to be backed up.  It must be a list of
@@ -44985,6 +45013,12 @@ This sets up the ReadyMedia daemon to serve files from the media folders
 specified in @code{media-directories}.  The @code{media-directories}
 field is mandatory.  All other fields (such as network ports and the
 server name) come with a predefined default and can be omitted.
+
+@quotation Note
+This service is also available for Guix Home, where it runs directly
+with your user privileges (@pxref{Miscellaneous Home Services,
+@code{home-readymedia-service-type}}).
+@end quotation
 
 @c %start of fragment
 
@@ -48824,6 +48858,7 @@ services)}.
 * GPG: GNU Privacy Guard.       Setting up GPG and related tools.
 * Desktop: Desktop Home Services.  Services for graphical environments.
 * Guix: Guix Home Services.     Services for Guix.
+* Backup: Backup Home Services.   Services for backing up User's files.
 * Fonts: Fonts Home Services.   Services for managing User's fonts.
 * Sound: Sound Home Services.   Dealing with audio.
 * Mail: Mail Home Services.     Services for managing mail.
@@ -50414,6 +50449,77 @@ A typical extension for adding a channel might look like this:
 @end lisp
 @end defvar
 
+@node Backup Home Services
+@subsection Backup Services
+
+The @code{(gnu home services backup)} module offers services for backing up
+file system trees.  For now, it provides the @code{home-restic-backup-service-type}.
+
+With @code{home-restic-backup-service-type}, you can periodically back up
+directories and files with @uref{https://restic.net/, Restic}, which
+supports end-to-end encryption and deduplication.  Consider the
+following configuration:
+
+@lisp
+(use-modules (gnu home services backup) ;for 'restic-backup-job', 'home-restic-backup-service-type'
+             (gnu packages sync)        ;for 'rclone'
+             @dots{})
+
+(home-environment
+
+  (packages (list rclone    ;for use by restic
+                  @dots{}))
+  (services
+    (list
+      @dots{}
+      (simple-service 'backup-jobs
+                      home-restic-backup-service-type
+                      (list (restic-backup-job
+                              (name "remote-ftp")
+                              (repository "rclone:remote-ftp:backup/restic")
+                              (password-file "/home/alice/.restic")
+                              ;; Every day at 23.
+                              (schedule "0 23 * * *")
+                              (files '("/home/alice/.restic"
+                                       "/home/alice/.config/rclone"
+                                       "/home/alice/Pictures"))))))))
+@end lisp
+
+In general it is preferrable to extend the @code{home-restic-backup-service-type},
+as shown in the example above.  This is because it takes care of wrapping everything
+with @code{for-home}, which enables the @code{home-restic-backup-service-type} and
+@code{restic-backup-service-type} to share the same codebase.
+
+For a custom configuration, wrap your @code{restic-backup-configuration} in
+@code{for-home}, as in this example:
+
+@lisp
+(use-modules (gnu services)             ;for 'for-home'
+             (gnu services backup)      ;for 'restic-backup-job' and 'restic-backup-configuration'
+             (gnu home services backup) ;for 'home-restic-backup-service-type'
+             (gnu packages sync)        ;for 'rclone'
+             @dots{})
+
+(home-environment
+
+  (packages (list rclone    ;for use by restic
+                  @dots{}))
+  (services
+    (list
+      @dots{}
+      (service home-restic-backup-service-type
+               (for-home
+                (restic-backup-configuration
+                 (jobs (list @dots{}))))))))
+@end lisp
+
+You can refer to @pxref{Miscellaneous Services,
+@code{restic-backup-service-type}} for details about
+@code{restic-backup-configuration} and @code{restic-backup-job}.
+The only difference is that the @code{home-restic-backup-service-type}
+will ignore the @code{user} and @code{group} field of
+@code{restic-backup-job}.
+
 @node Fonts Home Services
 @subsection Fonts Home Services
 
@@ -51692,6 +51798,8 @@ mouse bindings.
 This section lists services somewhat networking-related that you may use
 with Guix Home.
 
+@subheading Syncthing Service
+
 @cindex Syncthing, file synchronization service
 @cindex backup service, Syncthing
 The @code{(gnu home services syncthing)} module provides a service to
@@ -51793,6 +51901,43 @@ You may specify a custom configuration by providing a
          (for-home
           (dicod-configuration @dots{})))
 @end lisp
+
+@subheading ReadyMedia Service
+
+@cindex ReadyMedia, DLNA/UPnP Service
+The @code{(gnu home services upnp)} module provides a service to set up
+the @uref{https://minidlna.sourceforge.net/, ReadyMedia} @acronym{DLNA,
+Digital Living Network Alliance} @acronym{UPnP, Universal Plug and Play}
+media server.
+
+@defvar home-readymedia-service-type
+This is the service type for the @command{minidlnad} daemon; it is the
+Home counterpart of the @code{readymedia-service-type} system service
+(@pxref{Miscellaneous Services, @code{readymedia-service-type}}).  The value
+for this service type is a @code{readymedia-configuration}.
+@end defvar
+
+The service can be used with a @code{readymedia-configuration} wrapped in
+@code{for-home} like this:
+
+@lisp
+(service home-readymedia-service-type
+         (for-home
+          (readymedia-configuration
+            (media-directories
+             (list (readymedia-directory
+                     (path "/path/to/media/audio")
+                     (types '(A)))
+                   (readymedia-directory
+                     (path "/path/to/media/video")
+                     (types '(V)))
+                   (readymedia-directory
+                     (path "/path/to/media/misc")))))))
+@end lisp
+
+For details about @code{readymedia-configuration}, check out the
+documentation of the system service (@pxref{Miscellaneous Services,
+@code{readymedia-service-type}}).
 
 @node Invoking guix home
 @section Invoking @command{guix home}

@@ -103,6 +103,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/home.scm					\
   %D%/home/services.scm			\
   %D%/home/services/admin.scm			\
+  %D%/home/services/backup.scm			\
   %D%/home/services/desktop.scm			\
   %D%/home/services/dict.scm			\
   %D%/home/services/dotfiles.scm		\
@@ -123,6 +124,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/home/services/sway.scm			\
   %D%/home/services/syncthing.scm		\
   %D%/home/services/mcron.scm			\
+  %D%/home/services/upnp.scm			\
   %D%/home/services/utils.scm			\
   %D%/home/services/xdg.scm			\
   %D%/image.scm					\
@@ -1591,6 +1593,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/hurd-64bit.patch				\
   %D%/packages/patches/hurd-refcounts-assert.patch		\
   %D%/packages/patches/hurd-rumpdisk-no-hd.patch		\
+  %D%/packages/patches/hurd-socket-activation.patch		\
   %D%/packages/patches/hurd-startup.patch			\
   %D%/packages/patches/hwloc-1-test-btrfs.patch			\
   %D%/packages/patches/i7z-gcc-10.patch				\

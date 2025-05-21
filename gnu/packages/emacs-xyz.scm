@@ -299,6 +299,7 @@
   #:use-module (gnu packages erlang)
   #:use-module (gnu packages statistics)
   #:use-module (gnu packages libcanberra)
+  #:use-module (gnu packages telegram)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages text-editors)
   #:use-module (gnu packages virtualization)
@@ -10332,7 +10333,7 @@ files which are intended to be packages.")
 (define-public emacs-el-job
   (package
     (name "emacs-el-job")
-    (version "2.4.3")
+    (version "2.4.7")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -10341,7 +10342,7 @@ files which are intended to be packages.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "09zipgg52zh7kfamnslbrrghs2sndkwj0kcmbb8mxwmx5k5zi62d"))))
+                "0gspy2yvi7pyzvw73p49s42a3w104xlrwwvwykw93rf277kq4i6d"))))
     (build-system emacs-build-system)
     (arguments
      (list #:tests? #true
@@ -35377,27 +35378,39 @@ navigation controls.")
     (license (list license:gpl3+))))
 
 (define-public emacs-exwm-ss
-  (let ((commit "b11d3df7a50c39b4e1b92ef8a6685cf80b53912c")
-        (revision "1"))
-    (package
-      (name "emacs-exwm-ss")
-      (version (git-version "0.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://codeberg.org/emacs-weirdware/exwm-ss.git")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "045b0cjycf7nf52ap89w5dz16l1qyh940qxwvdi76v6al78amrap"))))
-      (build-system emacs-build-system)
-      (inputs (list emacs-exwm))
-      (home-page "https://codeberg.org/emacs-weirdware/exwm-ss")
-      (synopsis "Automatically inhibit screensaver activation in EXWM")
-      (description "This package provides a global minor mode to inhibit
+  (package
+    (name "emacs-exwm-ss")
+    (version "1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/emacs-weirdware/exwm-ss.git")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "0a550gph4pwdwd372migahhwcpgj1qi5w2scxai38a7yp22vqwsv"))))
+    (inputs
+     (list
+      emacs-exwm
+      xscreensaver
+      xset))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-program-references
+            (lambda* (#:key inputs #:allow-other-keys)
+              (emacs-substitute-variables "exwm-ss.el"
+                ("exwm-ss-xset-program"
+                 (search-input-file inputs "/bin/xset"))
+                ("exwm-ss-xscreensaver-command-program"
+                 (search-input-file inputs "/bin/xscreensaver-command"))))))))
+    (home-page "https://codeberg.org/emacs-weirdware/exwm-ss")
+    (synopsis "Automatically inhibit screensaver activation in EXWM")
+    (description "This package provides a global minor mode to inhibit
 screensaver activation in EXWM.")
-      (license (list license:gpl3+)))))
+    (license (list license:gpl3+))))
 
 (define-public emacs-ert-async
   (package
@@ -40588,7 +40601,7 @@ personal wiki.")
 (define-public emacs-org-node
   (package
     (name "emacs-org-node")
-    (version "2.4.1")
+    (version "2.4.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -40597,7 +40610,7 @@ personal wiki.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0yvc61ydz8c8wms5pwb14v67da7w4l3xvd5w4x83qf81d9f44w9v"))))
+                "03600cxy8dr2sd49d07v61izxpvdxgfyiangjzkbma4qdpbkmjgh"))))
     (build-system emacs-build-system)
     (arguments
      '(#:tests? #f ; fails

@@ -49,8 +49,8 @@
 
 (define-public libpotassco
   ;; No public release, update together with clasp
-  (let ((revision "2")
-        (commit "69b677f026c53d5a0a794db17691a1eb8bce8c6b"))
+  (let ((revision "3")
+        (commit "2eecf5f066fe1f77c9122547f7e07ba1e8c1dcdf"))
     (package
       (name "libpotassco")
       (version (git-version "0.0" revision commit))
@@ -68,7 +68,7 @@
                        (("\"catch.hpp\"") "<catch/catch.hpp>"))))
                 (sha256
                  (base32
-                  "1c69njg30dha1zy6j17gghjg3lgambz0pipxkgxadmrkvsb20z2k"))))
+                  "0l502qcpwnnpa84hg7vynicpqp3mvivw150jlywqdp1g1irwnh7j"))))
       (arguments
        `(#:configure-flags '("-DLIB_POTASSCO_BUILD_TESTS=on"
                              "-DLIB_POTASSCO_INSTALL_LIB=on"
@@ -106,7 +106,7 @@ between aspif and smodels format or to a human-readable text format.")
 (define-public clasp
   (package
     (name "clasp")
-    (version "3.3.10")
+    (version "3.4.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -116,7 +116,7 @@ between aspif and smodels format or to a human-readable text format.")
               (patches (search-patches "clasp-hide-event-ids.patch"))
               (sha256
                (base32
-                "0qap7rar8a5mkqz28n2hnvr4cfv5x0rh4zs3wdp919dw4d034chr"))))
+                "0sid9wks19h5slrpkm8qw0gsxlyq1g2vf4aznqapr777rws9d9b6"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags '("-DCLASP_BUILD_TESTS=on"
@@ -150,7 +150,7 @@ satisfiability checking (SAT).")
 (define-public clingo
   (package
     (name "clingo")
-    (version "5.7.1")
+    (version "5.8.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -166,7 +166,7 @@ satisfiability checking (SAT).")
                    (delete-file "libpyclingo/_clingo.c")))
               (sha256
                (base32
-                "1mxl3gwx55sf2ifcb92mfy989c50yqpnq0d0r2mxdqr0riy40hjb"))))
+                "08jpjz2fgq59d78xpwq03dxrdcxwzf5z6crqwn6qdarb0wcdc5sn"))))
     (build-system cmake-build-system)
     (arguments
      (list

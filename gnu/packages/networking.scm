@@ -926,7 +926,7 @@ publish/subscribe, RPC-style request/reply, or service discovery.")
 (define-public nanomsg
   (package
     (name "nanomsg")
-    (version "1.1.5")
+    (version "1.2.1")
     (source
      (origin
        (method git-fetch)
@@ -936,7 +936,7 @@ publish/subscribe, RPC-style request/reply, or service discovery.")
          (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01ddfzjlkf2dgijrmm3j3j8irccsnbgfvjcnwslsfaxnrmrq5s64"))))
+        (base32 "0dnnz054czajkdq60z5xw28iiv2qwqhigv9wj54388rk4ak0y3ya"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags
@@ -1932,14 +1932,14 @@ network frames.")
 (define-public fping
   (package
     (name "fping")
-    (version "5.2")
+    (version "5.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://fping.org/dist/fping-"
                            version ".tar.gz"))
        (sha256
-        (base32 "0bz4n0c4p5v8yh1fzvfvbbydpg4vy6krligpw5vbpc1zsw82ssd7"))))
+        (base32 "03hxj1acsqbzx5ajcz2c06ki5zaxvg1vz661vwx2w27a38ad0yym"))))
     (build-system gnu-build-system)
     (arguments '(#:configure-flags '("--enable-ipv6")))
     (home-page "https://fping.org/")
@@ -2634,14 +2634,14 @@ libproxy only have to specify which proxy to use.")
 (define-public proxychains-ng
   (package
     (name "proxychains-ng")
-    (version "4.16")
+    (version "4.17")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "http://ftp.barfooze.de/pub/sabotage/tarballs/"
                            "proxychains-ng-" version ".tar.xz"))
        (sha256
-        (base32 "04k80jbv1wcr7ccsa0qyly33syw275kvkvzyihwwqmsqk4yria9p"))))
+        (base32 "1y8640zn6p3gzyfn4c07dld3v8yyy3hcc9q62yj2rpxk9kvcgp9n"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f                      ; there are no tests
@@ -2802,7 +2802,7 @@ that block port 22.")
 (define-public iperf
   (package
     (name "iperf")
-    (version "3.18")
+    (version "3.19")
     (source
      (origin
        (method git-fetch)
@@ -2811,7 +2811,7 @@ that block port 22.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "147ggkc53mviwg7q83hpfn144clqa1g3kdfbqb5jcgn15n4nr9gk"))))
+        (base32 "0hddhjzcr6j5sbsb2dllhn4f7pazvh0h3zykalky5m1gnh1virgw"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -3665,7 +3665,7 @@ SNMP v3 using both IPv4 and IPv6.")
 (define-public ubridge
   (package
     (name "ubridge")
-    (version "0.9.18")
+    (version "0.9.19")
     (source
      (origin
        (method git-fetch)
@@ -3674,24 +3674,22 @@ SNMP v3 using both IPv4 and IPv6.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0jg66jhhpv4c9340fsdp64hf9h253i8r81fknxa0gq241ripp3jn"))))
+        (base32 "1hjn1zxjif6kp251gxlf4a5s2lnjgx78ls74ck6cqmkly4ndgp5s"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f                      ; no tests
-       #:make-flags
-       (list ,(string-append "CC=" (cc-for-target)))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)            ; no configure script
-         (add-before 'install 'set-bindir
-           (lambda* (#:key  inputs outputs #:allow-other-keys)
-             (let ((bin (string-append (assoc-ref outputs "out")
-                                       "/bin")))
-               (mkdir-p bin)
-               (substitute* "Makefile"
-                 (("\\$\\(BINDIR\\)") bin)
-                 (("\tsetcap cap_net.*$") "")))
-             #t)))))
+     (list
+      #:tests? #f                      ; no tests
+      #:make-flags #~(list (string-append "CC=" #$(cc-for-target)))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)            ; no configure script
+          (add-before 'install 'set-bindir
+            (lambda _
+              (let ((bin (string-append #$output "/bin")))
+                (mkdir-p bin)
+                (substitute* "Makefile"
+                  (("\\$\\(BINDIR\\)") bin)
+                  (("\tsetcap cap_net.*$") ""))))))))
     (inputs
      (list libpcap))
     (home-page "https://github.com/GNS3/ubridge/")
@@ -3704,7 +3702,7 @@ Ethernet and TAP interfaces is supported.  Packet capture is also supported.")
 (define-public hcxtools
   (package
     (name "hcxtools")
-    (version "6.2.7")
+    (version "6.3.5")
     (source
      (origin
        (method git-fetch)
@@ -3712,7 +3710,7 @@ Ethernet and TAP interfaces is supported.  Packet capture is also supported.")
              (url "https://github.com/ZerBea/hcxtools")
              (commit version)))
        (sha256
-        (base32 "0460dxbc04w60l3g06rk007yyb6qprgyii59y2zdki0vy7q63m8b"))
+        (base32 "0kmgl9q4iq0c5c8hlqmxnzz17nxplmzlnbi3h2q5vz75hn4ccmzi"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs (list pkg-config))
@@ -4457,23 +4455,22 @@ easy-to-understand binary values.")
         (base32 "1zsgn7w6l2zh2q0j6qaw8wsx981qcr536qlz1lgb3b5zqr66qama"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (delete 'bootstrap)            ;there is no configure.ac file
-         (delete 'configure)            ;there is no configure script
-         (delete 'check)                ;there are no tests
-         (replace 'build
-           (lambda _
-             (setenv "CC" "gcc")
-             (invoke "make" "tunctl")))
-         ;; TODO: Requires docbook-to-man (unrelated to docbook2x and
-         ;; docbook-utils) to generate man page from SGML.
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin")))
-               (install-file "tunctl" bin))
-             #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'bootstrap)            ;there is no configure.ac file
+          (delete 'configure)            ;there is no configure script
+          (delete 'check)                ;there are no tests
+          (replace 'build
+            (lambda _
+              (setenv "CC" "gcc")
+              (invoke "make" "tunctl")))
+          ;; TODO: Requires docbook-to-man (unrelated to docbook2x and
+          ;; docbook-utils) to generate man page from SGML.
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((bin (string-append #$output "/bin")))
+                (install-file "tunctl" bin)))))))
     (home-page "https://tunctl.sourceforge.net")
     (synopsis  "Utility to set up and maintain TUN/TAP network interfaces")
     (description "Tunctl is used to set up and maintain persistent TUN/TAP
@@ -4960,7 +4957,7 @@ layers.")
 (define-public netdiscover
   (package
    (name "netdiscover")
-   (version "0.11")
+   (version "0.20")
    (source
     (origin
       (method git-fetch)
@@ -4968,7 +4965,7 @@ layers.")
             (url "https://github.com/netdiscover-scanner/netdiscover")
             (commit version)))
       (sha256
-       (base32 "1jk61b75jjjhj21hif6cdgvf6khcb98p7zbmbg9im8m9bsz3lhrd"))
+       (base32 "0k0wdrp2phc38lq2fillfj5myjnq2czwx65s4vg8y5har0d7syr3"))
       (file-name (string-append "netdiscover-" version))))
    (arguments
     `(#:tests? #f))                     ; no tests

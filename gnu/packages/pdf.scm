@@ -862,14 +862,14 @@ and based on PDF specification 1.7.")
 (define-public mupdf
   (package
     (name "mupdf")
-    (version "1.25.2")
+    (version "1.26.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://mupdf.com/downloads/archive/"
                            "mupdf-" version "-source.tar.lz"))
        (sha256
-        (base32 "0lg45wp3ici2g2i49fmwa1k32bgkqqgl51nxnqqk0i8ilmdh8hnx"))
+        (base32 "1nncar9w0qdpwp4s00nazr7hbl2kpbp665a6gwpsmdz5d7j1hqz9"))
        (modules '((guix build utils)
                   (ice-9 ftw)
                   (srfi srfi-1)))
@@ -883,7 +883,8 @@ and based on PDF specification 1.7.")
                                          (cons* "." ".." keep))))))))
     (build-system gnu-build-system)
     (inputs
-     (list curl
+     (list brotli
+           curl
            libxrandr
            libxi
            freeglut                     ;for GL/gl.h
@@ -907,6 +908,7 @@ and based on PDF specification 1.7.")
       #~(list "verbose=yes"
               (string-append "CC=" #$(cc-for-target))
               "XCFLAGS=-fpic"
+              "USE_SYSTEM_BROTLI=yes"
               "USE_SYSTEM_FREETYPE=yes"
               "USE_SYSTEM_GUMBO=yes"
               "USE_SYSTEM_HARFBUZZ=yes"
@@ -921,7 +923,6 @@ and based on PDF specification 1.7.")
               "USE_SYSTEM_CURL=yes"
               "USE_SYSTEM_LEPTONICA=yes"
               "USE_SYSTEM_TESSERACT=yes"
-              "USE_SONAME=no"           ;install as libmupdf.so
               "shared=yes"
               (string-append "LDFLAGS=-Wl,-rpath=" #$output "/lib")
               (string-append "prefix=" #$output))
@@ -944,31 +945,6 @@ line tools for batch rendering @command{pdfdraw}, rewriting files
                    license:x11          ;thirdparty/lcms2
                    license:silofl1.1    ;resources/fonts/{han,noto,sil,urw}
                    license:asl2.0)))) ; resources/fonts/droid
-
-(define-public mupdf-1.24 ; Needed for sioyek
-  (package
-    (inherit mupdf)
-    (name "mupdf")
-    (version "1.24.7")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://mupdf.com/downloads/archive/"
-                           "mupdf-" version "-source.tar.lz"))
-       (sha256
-        (base32 "0hydmp8sdnkrkpqyysa6klkxbwv9awf1xc753r27gcj7ds7375fj"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-1)))
-       (snippet
-        ;; Remove bundled software.  Keep patched variants.
-        #~(with-directory-excursion "thirdparty"
-            (let ((keep '("README" "extract" "freeglut" "lcms2")))
-              (for-each delete-file-recursively
-                        (lset-difference string=?
-                                         (scandir ".")
-                                         (cons* "." ".." keep))))))))))
-
 
 (define-public qpdf
   (package
@@ -1821,7 +1797,7 @@ Keywords: html2pdf, htmltopdf")
            jbig2dec
            libjpeg-turbo
            mujs
-           mupdf-1.24
+           mupdf
            openjpeg
            qt3d-5
            qtbase-5

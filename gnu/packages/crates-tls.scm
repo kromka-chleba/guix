@@ -322,6 +322,30 @@
         ("rust-quote" ,rust-quote-1)
         ("rust-syn" ,rust-syn-1))))))
 
+(define-public rust-async-native-tls-0.5
+  (package
+    (name "rust-async-native-tls")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "async-native-tls" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1v2v82crqm4fgj1s32gik56m7cwx0ygqjdqc5pw9zrq7rxddqhwk"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-futures-util" ,rust-futures-util-0.3)
+                       ("rust-native-tls" ,rust-native-tls-0.2)
+                       ("rust-thiserror" ,rust-thiserror-1)
+                       ("rust-tokio" ,rust-tokio-1)
+                       ("rust-url" ,rust-url-2))))
+    (home-page "https://docs.rs/crate/async-native-tls/")
+    (synopsis "Native TLS using futures")
+    (description "Native TLS using futures.")
+    (license (list license:expat license:asl2.0))))
+
 (define-public rust-async-native-tls-0.3
   (package
     (name "rust-async-native-tls")
@@ -387,6 +411,35 @@
     (license (list license:expat license:asl2.0))))
 
 ;; TODO: Unbundle aws-lc-fips.
+(define-public rust-aws-lc-fips-sys-0.13
+  (package
+    (name "rust-aws-lc-fips-sys")
+    (version "0.13.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "aws-lc-fips-sys" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1lwvxslspq7pnwv4c7d01fyg1v65zgd6w2l7mr1ga69sg6xp97g9"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-bindgen" ,rust-bindgen-0.69)
+                       ("rust-cc" ,rust-cc-1)
+                       ("rust-cmake" ,rust-cmake-0.1)
+                       ("rust-dunce" ,rust-dunce-1)
+                       ("rust-fs-extra" ,rust-fs-extra-1)
+                       ("rust-regex" ,rust-regex-1))))
+    (home-page "https://github.com/aws/aws-lc-rs")
+    (synopsis
+     "AWS-LC is a general-purpose cryptographic library (FIPS version)")
+    (description
+     "AWS-LC is a general-purpose cryptographic library maintained by the AWS
+Cryptography team for AWS and their customers.  This is the FIPS validated
+version of AWS-LC.")
+    (license (list license:isc license:openssl license:asl2.0))))
+
 (define-public rust-aws-lc-fips-sys-0.12
   (package
     (name "rust-aws-lc-fips-sys")
@@ -462,6 +515,33 @@ version of AWS-LC.")
      "@code{aws-lc-rs} is a cryptographic library using AWS-LC for its
 cryptographic operations.  This library strives to be API-compatible with the
 popular Rust library named ring.")
+    (license (list license:isc license:openssl license:asl2.0))))
+
+(define-public rust-aws-lc-sys-0.29
+  (package
+    (name "rust-aws-lc-sys")
+    (version "0.29.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "aws-lc-sys" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0yfhmn3vcbfyg07ic2mn43i187pssi0sp6sn3fzf3vq5fxpdicb1"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-bindgen" ,rust-bindgen-0.69)
+                       ("rust-cc" ,rust-cc-1)
+                       ("rust-cmake" ,rust-cmake-0.1)
+                       ("rust-dunce" ,rust-dunce-1)
+                       ("rust-fs-extra" ,rust-fs-extra-1))))
+    (home-page "https://github.com/aws/aws-lc-rs")
+    (synopsis "AWS-LC is a general-purpose cryptographic library")
+    (description
+     "AWS-LC is a general-purpose cryptographic library maintained by the AWS
+Cryptography team for AWS and their customers.  It is based on code from the
+Google @code{BoringSSL} project and the @code{OpenSSL} project.")
     (license (list license:isc license:openssl license:asl2.0))))
 
 (define-public rust-aws-lc-sys-0.23
@@ -1927,6 +2007,29 @@ TLS certificates in rustls with the operating system verifier.")
      "This package provides the internal JVM support component of the
 rustls-platform-verifier crate.  You shouldn't depend on this directly.")
     (license (list license:expat license:asl2.0))))
+
+(define-public rust-rustls-webpki-0.103
+  (package
+    (name "rust-rustls-webpki")
+    (version "0.103.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "rustls-webpki" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0ddl9qxx94iyichk05r7l30d9dxfd35ybffhsxpsr9pppki2z9z4"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-aws-lc-rs" ,rust-aws-lc-rs-1)
+                       ("rust-ring" ,rust-ring-0.17)
+                       ("rust-rustls-pki-types" ,rust-rustls-pki-types-1)
+                       ("rust-untrusted" ,rust-untrusted-0.9))))
+    (home-page "https://github.com/rustls/webpki")
+    (synopsis "Web PKI X.509 Certificate Verification")
+    (description "Web PKI X.509 Certificate Verification.")
+    (license license:isc)))
 
 (define-public rust-rustls-webpki-0.102
   (package

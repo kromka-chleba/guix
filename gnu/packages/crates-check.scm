@@ -9,7 +9,7 @@
 ;;; Copyright © 2023 Steve George <steve@futurile.net>
 ;;; Copyright © 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2024 Aaron Covrig <aaron.covrig.us@ieee.org>
-;;; Copyright © 2024 Jordan Moore <lockbox@struct.foo>
+;;; Copyright © 2024, 2025 Jordan Moore <lockbox@struct.foo>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -36,7 +36,13 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix utils)
-  #:use-module (gnu packages crates-io))
+  #:use-module (gnu packages compression)
+  #:use-module (gnu packages crates-compression)
+  #:use-module (gnu packages crates-crypto)
+  #:use-module (gnu packages crates-io)
+  #:use-module (gnu packages crates-web)
+  #:use-module (gnu packages crates-windows)
+  #:use-module (gnu packages pkg-config))
 
 (define-public rust-criterion-0.5
   (package
@@ -533,6 +539,215 @@ criterion.")
      "This crate makes it even easier to use mocking by providing a way to
 select the mock struct at compile time.  Used with the Mockall crate.")
     (license (list license:expat license:asl2.0))))
+
+(define-public rust-nextest-filtering-0.12
+  (package
+    (name "rust-nextest-filtering")
+    (version "0.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "nextest-filtering" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1fz7w2qsmh98c246x16l9j5xypsj1nbc715wszajjkjiv7hbibvy"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-test-flags '("--" "--exact"
+                            ;; artifacts not packaged
+                            "--skip=test_binary_query"
+                            "--skip=test_expr_binary"
+                            "--skip=test_expr_binary_id_glob"
+                            "--skip=test_expr_deps"
+                            "--skip=test_expr_kind"
+                            "--skip=test_expr_kind_partial"
+                            "--skip=test_expr_package_contains"
+                            "--skip=test_expr_package_equal"
+                            "--skip=test_expr_package_regex"
+                            "--skip=test_expr_platform"
+                            "--skip=test_expr_rdeps"
+                            "--skip=test_expr_test"
+                            "--skip=test_expr_test_difference::with_and_not"
+                            "--skip=test_expr_test_difference::with_minus"
+                            "--skip=test_expr_test_intersect::with_ampersand"
+                            "--skip=test_expr_test_intersect::with_and"
+                            "--skip=test_expr_test_not"
+                            "--skip=test_expr_test_union::with_or"
+                            "--skip=test_expr_test_union::with_pipe"
+                            "--skip=test_expr_test_union::with_plus"
+                            "--skip=test_expr_with_no_matching_packages")
+       #:cargo-inputs
+       (("rust-globset" ,rust-globset-0.4)
+        ("rust-guppy" ,rust-guppy-0.17)
+        ("rust-miette" ,rust-miette-7)
+        ("rust-nextest-metadata" ,rust-nextest-metadata-0.12)
+        ("rust-nextest-workspace-hack" ,rust-nextest-workspace-hack-0.1)
+        ("rust-proptest" ,rust-proptest-1)
+        ("rust-recursion" ,rust-recursion-0.5)
+        ("rust-regex" ,rust-regex-1)
+        ("rust-regex-syntax" ,rust-regex-syntax-0.8)
+        ("rust-test-strategy" ,rust-test-strategy-0.4)
+        ("rust-thiserror" ,rust-thiserror-1)
+        ("rust-winnow" ,rust-winnow-0.6)
+        ("rust-xxhash-rust" ,rust-xxhash-rust-0.8))
+       #:cargo-development-inputs (("rust-test-case" ,rust-test-case-3))))
+    (home-page "https://github.com/nextest-rs/nextest")
+    (synopsis "Filtering DSL for cargo-nextest")
+    (description
+     "This package provides a filtering DSL for cargo-nextest.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-nextest-metadata-0.12
+  (package
+    (name "rust-nextest-metadata")
+    (version "0.12.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "nextest-metadata" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1cx6cdzbgmf5imjcb6vpm6xpdx5nrl3w079m0vm7la0chj21yn7d"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:cargo-test-flags '("--lib") ; doctests fail
+       #:cargo-inputs
+       (("rust-camino" ,rust-camino-1)
+        ("rust-nextest-workspace-hack" ,rust-nextest-workspace-hack-0.1)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1)
+        ("rust-smol-str" ,rust-smol-str-0.3)
+        ("rust-target-spec" ,rust-target-spec-3))
+       #:cargo-development-inputs (("rust-test-case" ,rust-test-case-3))))
+    (home-page "https://github.com/nextest-rs/nextest")
+    (synopsis "Structured access to nextest machine-readable output")
+    (description
+     "This package provides structured access to nextest
+machine-readable output.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-nextest-runner-0.70
+  (package
+    (name "rust-nextest-runner")
+    (version "0.70.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "nextest-runner" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1rg6hf8jbn82rv61m9f0yjjmz7bra8mgsilmidiq085sjsi7ymq4"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:tests? #f
+       #:cargo-inputs
+       (("rust-aho-corasick" ,rust-aho-corasick-1)
+        ("rust-async-scoped" ,rust-async-scoped-0.9)
+        ("rust-atomicwrites" ,rust-atomicwrites-0.4)
+        ("rust-bstr" ,rust-bstr-1)
+        ("rust-bytes" ,rust-bytes-1)
+        ("rust-camino" ,rust-camino-1)
+        ("rust-camino-tempfile" ,rust-camino-tempfile-1)
+        ("rust-cargo-metadata" ,rust-cargo-metadata-0.19)
+        ("rust-cfg-if" ,rust-cfg-if-1)
+        ("rust-chrono" ,rust-chrono-0.4)
+        ("rust-config" ,rust-config-0.14)
+        ("rust-console-subscriber" ,rust-console-subscriber-0.4)
+        ("rust-crossterm" ,rust-crossterm-0.28)
+        ("rust-debug-ignore" ,rust-debug-ignore-1)
+        ("rust-derive-where" ,rust-derive-where-1)
+        ("rust-duct" ,rust-duct-0.13)
+        ("rust-dunce" ,rust-dunce-1)
+        ("rust-future-queue" ,rust-future-queue-0.3)
+        ("rust-futures" ,rust-futures-0.3)
+        ("rust-guppy" ,rust-guppy-0.17)
+        ("rust-hex" ,rust-hex-0.4)
+        ("rust-home" ,rust-home-0.5)
+        ("rust-http" ,rust-http-1)
+        ("rust-humantime-serde" ,rust-humantime-serde-1)
+        ("rust-indent-write" ,rust-indent-write-2)
+        ("rust-indexmap" ,rust-indexmap-2)
+        ("rust-indicatif" ,rust-indicatif-0.17)
+        ("rust-is-ci" ,rust-is-ci-1)
+        ("rust-itertools" ,rust-itertools-0.13)
+        ("rust-libc" ,rust-libc-0.2)
+        ("rust-miette" ,rust-miette-7)
+        ("rust-mukti-metadata" ,rust-mukti-metadata-0.3)
+        ("rust-newtype-uuid" ,rust-newtype-uuid-1)
+        ("rust-nextest-filtering" ,rust-nextest-filtering-0.12)
+        ("rust-nextest-metadata" ,rust-nextest-metadata-0.12)
+        ("rust-nextest-workspace-hack" ,rust-nextest-workspace-hack-0.1)
+        ("rust-nix" ,rust-nix-0.29)
+        ("rust-once-cell" ,rust-once-cell-1)
+        ("rust-owo-colors" ,rust-owo-colors-4)
+        ("rust-pin-project-lite" ,rust-pin-project-lite-0.2)
+        ("rust-quick-junit" ,rust-quick-junit-0.5)
+        ("rust-rand" ,rust-rand-0.8)
+        ("rust-regex" ,rust-regex-1)
+        ("rust-self-update" ,rust-self-update-0.41)
+        ("rust-semver" ,rust-semver-1)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-ignored" ,rust-serde-ignored-0.1)
+        ("rust-serde-json" ,rust-serde-json-1)
+        ("rust-serde-path-to-error" ,rust-serde-path-to-error-0.1)
+        ("rust-sha2" ,rust-sha2-0.10)
+        ("rust-shell-words" ,rust-shell-words-1)
+        ("rust-smallvec" ,rust-smallvec-1)
+        ("rust-smol-str" ,rust-smol-str-0.3)
+        ("rust-strip-ansi-escapes" ,rust-strip-ansi-escapes-0.2)
+        ("rust-supports-unicode" ,rust-supports-unicode-3)
+        ("rust-swrite" ,rust-swrite-0.1)
+        ("rust-tar" ,rust-tar-0.4)
+        ("rust-target-spec" ,rust-target-spec-3)
+        ("rust-target-spec-miette" ,rust-target-spec-miette-0.4)
+        ("rust-thiserror" ,rust-thiserror-2)
+        ("rust-tokio" ,rust-tokio-1)
+        ("rust-tokio-stream" ,rust-tokio-stream-0.1)
+        ("rust-toml" ,rust-toml-0.8)
+        ("rust-toml-edit" ,rust-toml-edit-0.22)
+        ("rust-tracing" ,rust-tracing-0.1)
+        ("rust-tracing-subscriber" ,rust-tracing-subscriber-0.3)
+        ("rust-unicode-ident" ,rust-unicode-ident-1)
+        ("rust-unicode-normalization" ,rust-unicode-normalization-0.1)
+        ("rust-win32job" ,rust-win32job-2)
+        ("rust-windows-sys" ,rust-windows-sys-0.59)
+        ("rust-xxhash-rust" ,rust-xxhash-rust-0.8)
+        ("rust-zstd" ,rust-zstd-0.13))
+       #:cargo-development-inputs
+       (("rust-color-eyre" ,rust-color-eyre-0.6)
+        ("rust-indoc" ,rust-indoc-2)
+        ("rust-insta" ,rust-insta-1)
+        ("rust-maplit" ,rust-maplit-1)
+        ("rust-pathdiff" ,rust-pathdiff-0.2)
+        ("rust-pretty-assertions" ,rust-pretty-assertions-1)
+        ("rust-proptest" ,rust-proptest-1)
+        ("rust-test-case" ,rust-test-case-3)
+        ("rust-test-strategy" ,rust-test-strategy-0.4))))
+    (native-inputs (list pkg-config))
+    (inputs (list (list zstd "lib")))
+    (home-page "https://github.com/nextest-rs/nextest")
+    (synopsis "Core runner logic for cargo nextest")
+    (description
+     "This package provides core runner logic for cargo nextest.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-nextest-workspace-hack-0.1
+  (package
+    (name "rust-nextest-workspace-hack")
+    (version "0.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "nextest-workspace-hack" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1cxjiwja0idhd8as3drl2wgk5y7f84k2rrk67pbxk7kkk1m881nr"))))
+    (build-system cargo-build-system)
+    (home-page "https://github.com/nextest-rs/nextest")
+    (synopsis "workspace-hack package")
+    (description
+     "This package provides a workspace-hack package, managed by hakari.")
+    (license license:cc0)))
 
 (define-public rust-quickcheck-1
   (package

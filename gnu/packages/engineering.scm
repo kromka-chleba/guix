@@ -3329,7 +3329,7 @@ models in the STL and OFF file formats.")
         (base32 "0vsidz3qws89z8blq5nng7mvzn3kj06lw9417aymhykyjgjn5f8m"))
        (file-name (git-file-name name version))))
     (build-system emacs-build-system)
-    (inputs (list emacs-compat))
+    (propagated-inputs (list emacs-compat))
     (synopsis "Emacs mode to edit OpenSCAD files")
     (description
      "@code{scad-mode} provides an Emacs major mode for editing
@@ -3350,6 +3350,30 @@ Flymake support (enable flymake-mode in scad-mode buffers)
 Org Babel support (@code{scad} source blocks)
 @end itemize")
     (home-page "https://openscad.org/")
+    (license license:gpl3+)))
+
+(define-public emacs-scad-dbus
+  (package
+    (name "emacs-scad-dbus")
+    (version "0.1")
+    (properties '((release-tag-prefix . "^v")
+                  (release-tag-version-delimiter . ".")))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/lenbok/scad-dbus")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09p1icdiwq6r5clnqljg058vn84acyf33jwqpfjkkm0l5pbvcgn0"))))
+    (build-system emacs-build-system)
+    (propagated-inputs (list emacs-scad-mode emacs-hydra emacs-compat))
+    (synopsis "Control OpenSCAD from Emacs using D-Bus")
+    (description
+     "scad-dbus allows controlling @code{OpenSCAD} from within @code{Emacs} via
+D-Bus without having to switch programs or reach for the mouse.")
+    (home-page "https://github.com/lenbok/scad-dbus")
     (license license:gpl3+)))
 
 (define-public ondsel-solver
