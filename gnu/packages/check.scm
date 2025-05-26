@@ -91,7 +91,6 @@
   #:use-module (gnu packages gdb)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
-  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-xyz)
@@ -414,9 +413,9 @@ source code editors and IDEs.")
     (native-inputs
      (list go-github-com-docopt-docopt-go
            go-github-com-go-ini-ini
-           go-github-com-go-md2man
            go-github-com-olekukonko-tablewriter
-           go-github-com-stretchr-testify))
+           go-github-com-stretchr-testify
+           go-md2man))
     (home-page "https://github.com/mrtazz/checkmake")
     (synopsis "Linter and analyzer for @file{Makefile}")
     (description
@@ -1070,8 +1069,12 @@ has been designed to be fast, light and unintrusive.")
               ;; https://github.com/freebsd/kyua/issues/214).
               (substitute* "utils/Kyuafile"
                 ((".*atf_test_program.*stacktrace_test.*")
-                 "")))))))
-    (native-inputs (list autoconf automake gdb pkg-config))
+                 ""))))
+          (add-after 'install 'delete-installed-tests
+            (lambda _
+              ;; Delete 200 MiB of tests.
+              (delete-file-recursively (string-append #$output "/tests")))))))
+    (native-inputs (list autoconf automake gdb-minimal pkg-config))
     (inputs (list atf lutok sqlite))
     (home-page "https://github.com/freebsd/kyua")
     (synopsis "Testing framework for infrastructure software")

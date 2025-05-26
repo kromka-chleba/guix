@@ -135,7 +135,6 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
-  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-crypto)
@@ -3736,7 +3735,7 @@ packets from wireless devices for use with hashcat or John the Ripper.")
 (define-public hcxdumptool
   (package
     (name "hcxdumptool")
-    (version "6.0.6")
+    (version "6.3.5")
     (source
      (origin
        (method git-fetch)
@@ -3744,19 +3743,21 @@ packets from wireless devices for use with hashcat or John the Ripper.")
              (url "https://github.com/ZerBea/hcxdumptool")
              (commit version)))
        (sha256
-        (base32 "1b4d543y64ib92w9gcmiyjn5hz2vyjqmxk3f3yr1zk04fhw16gmf"))
+        (base32 "12q5qzni0ggk76wsprk68l8g07rrgv46xw4ycnpvbj9q71p2f3iw"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags
-       (list ,(string-append "CC=" (cc-for-target))
-             (string-append "INSTALLDIR=" (assoc-ref %outputs "out") "/bin"))
+     (list
+      #:make-flags
+      #~(list (string-append "CC=" #$(cc-for-target))
+              (string-append "DESTDIR=")
+              (string-append "PREFIX=" #$output))
        #:tests? #f                      ; no test suite
        #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))))
+       #~(modify-phases %standard-phases
+           (delete 'configure))))
     (inputs
-     (list openssl))
+     (list libpcap openssl))
     (home-page "https://github.com/ZerBea/hcxdumptool")
     (synopsis "Small tool to capture packets from wlan devices")
     (description
@@ -4122,7 +4123,7 @@ for interacting with an OpenDHT distributed network.")
 (define-public frrouting
   (package
     (name "frrouting")
-    (version "10.1.1")
+    (version "10.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4131,7 +4132,7 @@ for interacting with an OpenDHT distributed network.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "06gn2wgnd97fgzf7yd9v5fv8fanjw02cy0rx7kgq7x7gnzbg1yhn"))))
+                "1fv06z506l26jx9gz8dib6zn0rv2yvl7ihvm48d95jjmc7bldw53"))))
     (build-system gnu-build-system)
     (inputs
      (list c-ares json-c libcap libxcrypt libyang libelf protobuf-c readline))
@@ -4368,7 +4369,7 @@ module @code{batman-adv}, for Layer 2.")
 (define-public pagekite
   (package
     (name "pagekite")
-    (version "1.5.2.200725")
+    (version "1.5.2.201011")
     (source
      (origin
        (method git-fetch)
@@ -4377,7 +4378,7 @@ module @code{batman-adv}, for Layer 2.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0lig1i42bn9isw848vnml5qhcaa04x1dr2hb075bm0a3439kv3rr"))))
+        (base32 "1v14pafdd2nzd63kpf7aijpqf5dribxij3ynx5q1232y1ci4wf14"))))
     (build-system python-build-system)
     (arguments
      `(#:phases
@@ -4887,32 +4888,22 @@ daemon.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/slackhq/nebula"
       #:install-source? #f
-      ;; XXX: Pack missing packages for cmd/nebula-service
-      #:test-subdirs #~(list ".")
+      #:import-path "github.com/slackhq/nebula"
+      #:build-flags
+      #~(list (format #f "-ldflags=-X main.Build=~a" #$version))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'build
-            (lambda* (#:key import-path #:allow-other-keys)
-              ;; Suggested option to provide build time flags is not supported
-              ;; in Guix for go-build-system.
-              ;; -ldflags "-X main.Build=SOMEVERSION"
-              (substitute* (string-append "src/" import-path "/cmd/nebula/main.go")
-                (("Version: ")
-                 (string-append "Version: " #$version)))
-              ;; Build nebula and nebula-cert
-              (let* ((dir "github.com/slackhq/nebula")
-                     (nebula-cmd (string-append dir "/cmd/nebula"))
-                     (cert-cmd (string-append dir "/cmd/nebula-cert")))
-                (invoke "go" "build" nebula-cmd)
-                (invoke "go" "build" cert-cmd))))
-          (replace 'install
-            (lambda _
-              (let* ((out #$output)
-                     (bindir (string-append out "/bin")))
-                (install-file "nebula" bindir)
-                (install-file "nebula-cert" bindir)))))))
+            (lambda* (#:key import-path #:allow-other-keys #:rest arguments)
+              (for-each
+               (lambda (cmd)
+                 (apply (assoc-ref %standard-phases 'build)
+                        `(,@arguments #:import-path
+                          ,(string-append import-path "/cmd/" cmd))))
+               (list "nebula"
+                     "nebula-service"
+                     "nebula-cert")))))))
     (inputs
      (list go-dario-cat-mergo
            go-github-com-anmitsu-go-shlex
@@ -4941,8 +4932,7 @@ daemon.")
            go-golang-zx2c4-com-wireguard
            go-google-golang-org-protobuf
            go-gopkg-in-yaml-v2
-           ;go-gvisor-dev-gvisor  ; for nebula-service, not packed yet
-           ))
+           go-gvisor-dev-gvisor))
     (home-page "https://github.com/slackhq/nebula")
     (synopsis "Scalable, peer-to-peer overlay networking tool")
     (description
@@ -5066,7 +5056,7 @@ implementations.")
 (define-public vnstat
   (package
    (name "vnstat")
-   (version "2.12")
+   (version "2.13")
    (source
     (origin
       (method url-fetch)
@@ -5074,7 +5064,7 @@ implementations.")
                           version ".tar.gz"))
       (sha256
        (base32
-        "0li8dm081ym6jm7fhag2ccp8cqfs5sqhiwiimdzz9ihzzh96nf5p"))))
+        "11xilq1rhzazav9x7jhlvjcclqcyrx8sjak7qkxxvhqy5lqikzn9"))))
    (build-system gnu-build-system)
    (inputs (list sqlite gd))
    (native-inputs (list pkg-config check))
@@ -5137,16 +5127,16 @@ back to the servers which know the data.")
 (define-public dropwatch
   (package
     (name "dropwatch")
-    (version "1.5.4")
+    (version "1.5.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/nhorman/dropwatch.git")
+                    (url "https://github.com/nhorman/dropwatch")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1r653y7bx763fpxl1vrflx8bzcrbds98zk4z7yhfikjngrqn1f2d"))))
+                "1zpp52mw863km710ljbcrlqcmk9nwfswbwaa2q5wr79qdkad7dpv"))))
     (build-system gnu-build-system)
     ;; XXX: bfd support isn't finished.
     ;; https://github.com/nhorman/dropwatch/issues/76#issuecomment-1328345444

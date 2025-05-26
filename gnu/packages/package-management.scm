@@ -180,8 +180,8 @@
   ;; Note: the 'update-guix-package.scm' script expects this definition to
   ;; start precisely like this.
   (let ((version "1.4.0")
-        (commit "0772d36076d686895a43063cdaf18039b2e5d713")
-        (revision 36))
+        (commit "096dedd0bb13523002c814b001429c2f65b6f10d")
+        (revision 37))
     (package
       (name "guix")
 
@@ -193,11 +193,11 @@
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://git.savannah.gnu.org/git/guix.git")
+                      (url "https://git.guix.gnu.org/guix.git")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1vqzmjp2aml8y422ilirjrwg7p2dj7j907bsh1jcyvci5dzprhhl"))
+                  "1gm88mgcgpfaibzwy426szb7fvlz6zh17csjbqlz8lcjdz0a1wjx"))
                 (file-name (string-append "guix-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -233,8 +233,7 @@
                             ;; To avoid problems with the length of shebangs,
                             ;; choose a fixed-width and short directory name
                             ;; for tests.
-                            "ac_cv_guix_test_root=/tmp/guix-tests"
-                            ,@(if (target-hurd?) '("--with-courage") '()))
+                            "ac_cv_guix_test_root=/tmp/guix-tests")
          #:parallel-tests? #f         ;work around <http://bugs.gnu.org/21097>
 
          #:modules ((guix build gnu-build-system)
@@ -1600,8 +1599,8 @@ environments.")
                   "0k9zkdyyzir3fvlbcfcqy17k28b51i20rpbjwlx2i1mwd2pw9cxc")))))))
 
 (define-public guix-build-coordinator
-  (let ((commit "0d7fcc258557916f95093e648d77c0e7008091ce")
-        (revision "129"))
+  (let ((commit "7e347870d56eec532662909eceb3bc79ae7fff1d")
+        (revision "130"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1612,7 +1611,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0l88cdj6pjljd9y2rmx4il0jq7csq1sg7baczlzi46gm0hj07yra"))
+                  "05drlw3sxq83fxphq569wf0kzn3fhzw11zrc8njxxr88ksvfi04y"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1855,8 +1854,8 @@ in an isolated environment, in separate namespaces.")
     (license license:gpl3+)))
 
 (define-public nar-herder
-  (let ((commit "70df5af752ba9ed9dc414d011a1358babc5e40b1")
-        (revision "39"))
+  (let ((commit "586982fc7e9591351dffe1a234fa088a889d97fb")
+        (revision "40"))
     (package
       (name "nar-herder")
       (version (git-version "0" revision commit))
@@ -1867,7 +1866,7 @@ in an isolated environment, in separate namespaces.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1b2slw0963avh31xdb8g1zm6mcdvaya4js1ak53wvbzjwrrr2pv6"))
+                  "1sbjkh475dxphnm9v1s3mm3zi6q97n3j4p1khjcf3qvikw494sq7"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments

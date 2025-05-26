@@ -791,7 +791,7 @@ sudo pacman -S guix
 The Guix project also provides a shell script, @file{guix-install.sh},
 which automates the binary installation process without use of a foreign
 distro package
-manager@footnote{@uref{https://git.savannah.gnu.org/cgit/guix.git/plain/etc/guix-install.sh}}.
+manager@footnote{@uref{https://guix.gnu.org/install.sh}}.
 Use of @file{guix-install.sh} requires Bash, GnuPG, GNU@tie{}tar, wget,
 and Xz.
 
@@ -808,7 +808,7 @@ As root, run:
 
 @example
 # cd /tmp
-# wget https://git.savannah.gnu.org/cgit/guix.git/plain/etc/guix-install.sh
+# wget https://guix.gnu.org/install.sh
 # chmod +x guix-install.sh
 # ./guix-install.sh
 @end example
@@ -4615,19 +4615,19 @@ produced by @command{guix pull}, along with details about their provenance:
 $ guix pull -l
 Generation 1	Jun 10 2018 00:18:18
   guix 65956ad
-    repository URL: https://git.savannah.gnu.org/git/guix.git
+    repository URL: https://git.guix.gnu.org/guix.git
     branch: origin/master
     commit: 65956ad3526ba09e1f7a40722c96c6ef7c0936fe
 
 Generation 2	Jun 11 2018 11:02:49
   guix e0cc7f6
-    repository URL: https://git.savannah.gnu.org/git/guix.git
+    repository URL: https://git.guix.gnu.org/guix.git
     branch: origin/master
     commit: e0cc7f669bec22c37481dd03a7941c7d11a64f1d
 
 Generation 3	Jun 13 2018 23:31:07	(current)
   guix 844cc1c
-    repository URL: https://git.savannah.gnu.org/git/guix.git
+    repository URL: https://git.guix.gnu.org/guix.git
     branch: origin/master
     commit: 844cc1c8f394f03b404c5bb3aee086922373490c
 @end example
@@ -4983,7 +4983,7 @@ about, and you would look up the @code{guile-json} package in the inferior:
   ;; extract guile-json.
   (list (channel
          (name 'guix)
-         (url "https://git.savannah.gnu.org/git/guix.git")
+         (url "https://git.guix.gnu.org/guix.git")
          (commit
           "65956ad3526ba09e1f7a40722c96c6ef7c0936fe"))))
 
@@ -5088,7 +5088,7 @@ and commit IDs (@pxref{Channels}):
 $ guix describe
 Generation 10	Sep 03 2018 17:32:44	(current)
   guix e0fa68c
-    repository URL: https://git.savannah.gnu.org/git/guix.git
+    repository URL: https://git.guix.gnu.org/guix.git
     branch: master
     commit: e0fa68c7718fffd33d81af415279d6ddb518f727
 @end example
@@ -5108,7 +5108,7 @@ to return a list of channels instead of the human-readable description above:
 $ guix describe -f channels
 (list (channel
         (name 'guix)
-        (url "https://git.savannah.gnu.org/git/guix.git")
+        (url "https://git.guix.gnu.org/guix.git")
         (commit
           "e0fa68c7718fffd33d81af415279d6ddb518f727")
         (introduction
@@ -5419,7 +5419,7 @@ modules:
 $ guix describe
 Generation 19	Aug 27 2018 16:20:48
   guix d894ab8
-    repository URL: https://git.savannah.gnu.org/git/guix.git
+    repository URL: https://git.guix.gnu.org/guix.git
     branch: master
     commit: d894ab8e9bfabcefa6c49d9ba2e834dd5a73a300
   variant-packages dd3df5e
@@ -5491,7 +5491,7 @@ to these commits that looks like this:
 ;; Deploy specific commits of my channels of interest.
 (list (channel
        (name 'guix)
-       (url "https://git.savannah.gnu.org/git/guix.git")
+       (url "https://git.guix.gnu.org/guix.git")
        (commit "6298c3ffd9654d3231a6f25390b056483e8f407c"))
       (channel
        (name 'variant-packages)
@@ -22632,31 +22632,47 @@ objects}).
 @end deftp
 
 @cindex nftables
+@cindex firewall, nftables
 @defvar nftables-service-type
-This is the service type to set up a nftables configuration.  nftables is a
-netfilter project that aims to replace the existing iptables, ip6tables,
+This is the service type to set up a nftables configuration.  nftables
+is a netfilter project that aims to replace the iptables, ip6tables,
 arptables and ebtables framework.  It provides a new packet filtering
-framework, a new user-space utility @command{nft}, and a compatibility layer
-for iptables.  This service comes with a default ruleset
-@code{%default-nftables-ruleset} that rejecting all incoming connections
-except those to the ssh port 22.  To use it, simply write:
+framework, a new user-space utility @command{nft}, and a compatibility
+layer for iptables.  This service comes with a default ruleset,
+@code{%default-nftables-ruleset}, that rejects all incoming connections
+except those to the SSH port 22 (TCP).  To use it, simply write:
 
 @lisp
 (service nftables-service-type)
 @end lisp
 @end defvar
 
+@c %start of fragment
+
 @deftp {Data Type} nftables-configuration
-The data type representing the configuration of nftables.
+Available @code{nftables-configuration} fields are:
 
 @table @asis
-@item @code{package} (default: @code{nftables})
-The nftables package that provides @command{nft}.
-@item @code{ruleset} (default: @code{%default-nftables-ruleset})
-The nftables ruleset to use.  This may be any ``file-like'' object
-(@pxref{G-Expressions, file-like objects}).
+@item @code{package} (default: @code{nftables}) (type: file-like)
+The @code{nftables} package to use.
+
+@item @code{debug-levels} (type: maybe-list-of-debug-levels)
+A list of debug levels, for enabling debugging output.  Valid debug
+level values are the @samp{scanner}, @samp{parser}, @samp{eval},
+@samp{netlink}, @samp{mnl}, @samp{proto-ctx}, @samp{segtree} or
+@samp{all} symbols.
+
+@item @code{ruleset} (type: file-like)
+A file-like object containing the complete nftables ruleset.  The
+default ruleset rejects all incoming connections except those to TCP
+port 22, with connections from the loopback interface are allowed.
+
 @end table
+
 @end deftp
+
+
+@c %end of fragment
 
 @cindex NTP (Network Time Protocol), service
 @cindex ntpd, service for the Network Time Protocol daemon
@@ -34907,7 +34923,7 @@ The port on which to connect to the database.
 
 @cindex Mumi, Debbugs Web interface
 @cindex Debbugs, Mumi Web interface
-@uref{https://git.savannah.gnu.org/cgit/guix/mumi.git/, Mumi} is a
+@uref{https://codeberg.org/guix/mumi, Mumi} is a
 Web interface to the Debbugs bug tracker, by default for
 @uref{https://bugs.gnu.org, the GNU instance}.  Mumi is a Web server,
 but it also fetches and indexes mail retrieved from Debbugs.
@@ -47663,6 +47679,58 @@ In this example, the effect would be to add an @file{/etc/issue} file
 pointing to the given file.
 @end defvar
 
+@defvar etc-profile-d-service-type
+The type of the @file{/etc/profile.d} service.  This service is used to
+create files under @file{/etc/profile.d}.  It takes as value a list of
+file-like objects, as can be produced with @code{local-file},
+@code{plain-file}, etc.  Note that provided files whose file names do
+not end with @file{.sh} are @emph{not} added to @file{/etc/profile.d/}
+and are silently dropped.  Package objects can also be provided directly
+to have their @file{etc/profile.d/*.sh} prefixed files added.  A simple
+usage may look like:
+
+@example
+(simple-service 'my-important-profile-file etc-profile-d-service-type
+                (list (plain-file "youppi.sh" "HOW_IMPORTANT=very")))
+@end example
+@end defvar
+
+@defvar etc-bashrc-d-service-type
+The type of the @file{/etc/bashrc.d} service.  This service is used to
+create files under @file{/etc/bashrc.d}.  It takes as value a list of
+file-like objects, as can be produced with @code{local-file},
+@code{plain-file}, etc.  Note that provided files whose file names do
+not end with @file{.sh} are @emph{not} added to @file{/etc/profile.d/}
+and are silently dropped.  The default value is made available via the
+@var{%default-etc-bashrc-d-files} variable for users to extended.
+Package objects can also be provided directly to have their
+@file{etc/bashrc.d/*.sh} prefixed files added.  Since the service is
+part @code{%base-services}, it can be extended via @code{simple-service}
+like so:
+
+@example
+(use-package-modules gnome)     ;for the `vte' package
+
+(simple-service 'vte-integration etc-bashrc-d-service-type
+                (list (file-append vte "/etc/profile.d/vte.sh")))
+@end example
+@end defvar
+
+@defvar vte-integration-service-type
+This services adds the @file{/etc/bashrc.d/vte.sh} to your system, which
+improves the Bash and Zsh experience when using VTE-powered terminal
+emulators.  This causes for example the current directory to be
+displayed in the terminal emulator's tab title, and the current
+directory to be preserved when creating a new tab, among other features.
+The value of the service is the @code{vte} package to use.
+
+@example
+(use-package-modules gnome)     ;for the `vte' package
+
+(service vte-integration-service-type vte)
+@end example
+@end defvar
+
 @defvar privileged-program-service-type
 Type for the ``privileged-program service''.  This service collects lists of
 executable file names, passed as gexps, and adds them to the set of
@@ -49286,8 +49354,11 @@ Available @code{home-bash-configuration} fields are:
 The Bash package to use.
 
 @item @code{guix-defaults?} (default: @code{#t}) (type: boolean)
-Add sane defaults like reading @file{/etc/bashrc} and coloring the output of
-@command{ls} to the top of the @file{.bashrc} file.
+Add sane defaults like setting @env{PS1}, @env{SHELL}, and ensuring
+@file{/etc/profile} is sourced for non-interactive SSH shells.  If you
+use Guix System, is it safe to set this to @code{#f}, as in this case
+this is already taken care of by the globally installed
+@file{/etc/bashrc}.
 
 @item @code{environment-variables} (default: @code{'()}) (type: alist)
 Association list of environment variables to set for the Bash session.  The
@@ -49295,7 +49366,7 @@ rules for the @code{home-environment-variables-service-type} apply
 here (@pxref{Essential Home Services}).  The contents of this field will be
 added after the contents of the @code{bash-profile} field.
 
-@item @code{aliases} (default: @code{'()}) (type: alist)
+@item @code{aliases} (default: @code{%default-bash-aliases}) (type: alist)
 Association list of aliases to set for the Bash session.  The aliases
 will be defined after the contents of the @code{bashrc} field has been
 put in the @file{.bashrc} file.  The alias will automatically be quoted,

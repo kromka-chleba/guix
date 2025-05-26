@@ -52,6 +52,36 @@
 ;;; Libraries:
 ;;;
 
+(define-public go-contrib-go-opencensus-io-exporter-prometheus
+  (package
+    (name "go-contrib-go-opencensus-io-exporter-prometheus")
+    (version "0.4.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url
+              "https://github.com/census-ecosystem/opencensus-go-exporter-prometheus")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0n09d2nbng4bws9vi2ddq2ffv9hr0c3i9mif6fkjr4chyyyiy8ik"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "contrib.go.opencensus.io/exporter/prometheus"))
+    (propagated-inputs
+     (list go-github-com-google-go-cmp
+           go-github-com-prometheus-client-golang
+           go-github-com-prometheus-statsd-exporter
+           go-go-opencensus-io))
+    (home-page "https://github.com/census-ecosystem/opencensus-go-exporter-prometheus")
+    (synopsis "OpenCensus Go Prometheus Exporter")
+    (description
+     "Package prometheus contains a Prometheus exporter that supports
+exporting @code{OpenCensus} views as Prometheus metrics.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-mwitkow-go-conntrack
   (package
     (name "go-github-com-mwitkow-go-conntrack")
@@ -130,7 +160,7 @@ registry.")
 (define-public go-github-com-prometheus-client-golang
   (package
     (name "go-github-com-prometheus-client-golang")
-    (version "1.20.5")
+    (version "1.21.1")
     (source
      (origin
        (method git-fetch)
@@ -139,15 +169,13 @@ registry.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1q3n22p5ic22xzha6mffh0m0jzbxrkyjrcmnxsnanl61jwb4rkpw"))
+        (base32 "01946gv7ncjzd0536dx0523safcdnwy64m7pa8b54vrwzryrvb7p"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
             ;; Submodules with their own go.mod files and packaged separately:
             ;;
-            ;; - dagger
             ;; - .bingo - fake module
-            (delete-file-recursively "dagger")
             (delete-file-recursively ".bingo")))))
     (build-system go-build-system)
     (arguments
@@ -210,12 +238,8 @@ Prometheus metrics.")
     (build-system go-build-system)
     (arguments
      (list
-      #:import-path "github.com/prometheus/client_model"
-      #:tests? #f
-      #:phases
-      #~(modify-phases %standard-phases
-        ;; Source-only package
-        (delete 'build))))
+      #:skip-build? #t
+      #:import-path "github.com/prometheus/client_model"))
     (propagated-inputs
      (list go-github-com-golang-protobuf))
     (home-page "https://github.com/prometheus/client_model")
@@ -227,7 +251,7 @@ Prometheus metrics.")
 (define-public go-github-com-prometheus-common
   (package
     (name "go-github-com-prometheus-common")
-    (version "0.61.0")
+    (version "0.63.0")
     (source
      (origin
        (method git-fetch)
@@ -236,7 +260,7 @@ Prometheus metrics.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0wng61rzvh27s2rlaadvjbffwgpn74p1wjrz6insl57k1pg3cmcn"))
+        (base32 "0jf6wqx16zipp2dyjd6n4fdkp5i1hh4ranjcm5iph5rdvcry06m3"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -244,46 +268,36 @@ Prometheus metrics.")
             ;; separated packages:
             ;;
             ;; - github.com/prometheus/common/assets
-            ;; - github.com/prometheus/common/sigv4
-            (for-each delete-file-recursively
-                      (list "assets" "sigv4"))))))
+            (delete-file-recursively "assets")))))
     (build-system go-build-system)
     (arguments
      (list
+      #:skip-build? #t
       #:import-path "github.com/prometheus/common"
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; XXX: Workaround for go-build-system's lack of Go modules support.
-          (delete 'build)
-          (replace 'check
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go" "test" "-v"
-                          ;; Skipp, as it requires
-                          ;; <github.com/prometheus/client_golang/prometheus>,
-                          ;; which introduces cycle.
-                          ;; "./config/..."
+      #:test-subdirs
+      #~(list
+         ;; Skipp, as it requires
+         ;; <github.com/prometheus/client_golang/prometheus>, which introduces
+         ;; cycle.
+         ;; "./config/..."
 
-                          ;; Some tests fail on non x86_64 architecture:
-                          ;; Cannot use 9223372036 (untyped int constant) as int
-                          ;; value in ;; struct literal (overflows).
-                          ;; Cannot use math.MaxInt64
-                          ;; (untyped int constant 9223372036854775807) as int value
-                          ;; in argument to HumanizeTimestamp (overflows)
-                          #$@(if (target-x86-64?)
-                                 '("./helpers/...")
-                                 '())
-                          "./expfmt/..."
-                          "./model/..."
-                          "./promlog/..."
-                          "./route/..."
-                          "./server/..."))))))))
+         ;; Some tests fail on non x86_64 architecture: Cannot use 9223372036
+         ;; (untyped int constant) as int value in ;; struct literal
+         ;; (overflows).  Cannot use math.MaxInt64 (untyped int constant
+         ;; 9223372036854775807) as int value in argument to HumanizeTimestamp
+         ;; (overflows)
+         #$@(if (target-x86-64?)
+                '("./helpers/...")
+                '())
+         "./expfmt/..."
+         "./model/..."
+         "./promlog/..."
+         "./route/..."
+         "./server/...")))
     (native-inputs
      (list go-github-com-stretchr-testify))
     (propagated-inputs
      (list go-github-com-alecthomas-kingpin-v2
-           go-github-com-go-kit-log
            go-github-com-google-go-cmp
            go-github-com-julienschmidt-httprouter
            go-github-com-munnerz-goautoneg
@@ -294,10 +308,20 @@ Prometheus metrics.")
            go-google-golang-org-protobuf
            go-gopkg-in-yaml-v2))
     (home-page "https://github.com/prometheus/common")
-    (synopsis "Prometheus metrics")
+    (synopsis "Shared Prometheus Golang components")
     (description
-     "This package provides tools for reading and writing Prometheus
-metrics.")
+     "This package provides Go libraries that are shared across Prometheus
+components.
+
+@itemize
+@item @code{config} - common configuration structures
+@item @code{expfmt} - decoding and encoding for the exposition format
+@item @code{model} - shared data structures
+@item @code{promslog} - a logging wrapper around log/slog
+@item @code{route} - a routing wrapper around httprouter using context.Context
+@item @code{server} - common servers
+@item @code{version} version information and metrics
+@end itemize")
     (license license:asl2.0)))
 
 (define-public go-github-com-prometheus-common-assets
@@ -323,62 +347,6 @@ metrics.")
     (synopsis "Prometheus assets")
     (description
      "This package provides Prometheus assets.")
-    (license license:asl2.0)))
-
-(define-public go-github-com-prometheus-common-sigv4
-  (package
-    (name "go-github-com-prometheus-common-sigv4")
-    (version "0.1.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/prometheus/common")
-             (commit (go-version->git-ref version
-                                          #:subdir "sigv4"))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "08sdhxryl1jpy829qki8k2jy773xhrbr9wsk997pxhbbvl634gvb"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
-       (snippet
-        #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            ;; Consider to implement it as re-usable procedure in
-            ;; guix/build/utils or guix/build-system/go.
-            (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
-              (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
-            (delete-all-but "." "sigv4")))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:import-path "github.com/prometheus/common/sigv4"
-      #:unpack-path "github.com/prometheus/common"))
-    (native-inputs
-     (list go-github-com-stretchr-testify))
-    (propagated-inputs
-     (list go-github-com-aws-aws-sdk-go
-           go-github-com-prometheus-client-golang
-           go-github-com-prometheus-common
-           go-gopkg-in-yaml-v2))
-    (home-page "https://github.com/prometheus/common")
-    (synopsis "HTTP signed requests with Amazon's Signature Verification V4")
-    (description
-     "This package provides a @code{http.RoundTripper} that will sign requests
-using Amazon's Signature Verification V4 signing procedure, using credentials
-from the default AWS credential chain.")
     (license license:asl2.0)))
 
 (define-public go-github-com-prometheus-community-pro-bing
@@ -468,7 +436,7 @@ Protocol,ICMP} echo (ping) functionality.")
 (define-public go-github-com-prometheus-procfs
   (package
     (name "go-github-com-prometheus-procfs")
-    (version "0.15.1")
+    (version "0.16.0")
     (source
      (origin
        (method git-fetch)
@@ -477,7 +445,7 @@ Protocol,ICMP} echo (ping) functionality.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "116ns8k1yjdj9a2vq5czlpmafrhy0yw5y0bcm1qqbqnn57agg68m"))))
+        (base32 "0f692685zcssryd38bahmamd72iaiilngp92gl1s9177891f44gm"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -514,25 +482,37 @@ Protocol,ICMP} echo (ping) functionality.")
 kernel, and process metrics from the @file{/proc} pseudo file system.")
     (license license:asl2.0)))
 
-;; To make it compatible with node_exporter, see
-;; <https://github.com/prometheus/node_exporter/issues/3143>.
-(define-public go-github-com-prometheus-procfs-next
-  (let ((commit "24ab3d8d880d820115eef19f7b0c2c38fffd6a25")
-        (revision "0"))
-    (hidden-package
-     (package
-       (inherit go-github-com-prometheus-procfs)
-       (name "go-github-com-prometheus-procfs")
-       (version (git-version "0.15.2" revision commit))
-       (source
-        (origin
-          (method git-fetch)
-          (uri (git-reference
-                (url "https://github.com/prometheus/procfs")
-                (commit commit)))
-          (file-name (git-file-name name version))
-          (sha256
-           (base32 "0fv3f83q5wigbpl6mdpk4k7bj8jabc81rap0ym95l7rpw93cdlim"))))))))
+(define-public go-github-com-prometheus-sigv4
+  (package
+    (name "go-github-com-prometheus-sigv4")
+    (version "0.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/prometheus/sigv4")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yw37lw4x2l20l02i6yd4m4x948vgrfyaa0csl155rdyq3ynwa5w"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/prometheus/sigv4"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-aws-aws-sdk-go
+           go-github-com-prometheus-client-golang
+           go-github-com-prometheus-common
+           go-gopkg-in-yaml-v2))
+    (home-page "https://github.com/prometheus/sigv4")
+    (synopsis "HTTP signed requests with Amazon's Signature Verification V4")
+    (description
+     "sigv4 provides a @code{http.RoundTripper} that will sign requests using
+Amazon's Signature Verification V4 signing procedure, using credentials from
+the default AWS credential chain.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-prometheus-statsd-exporter
   (package

@@ -5962,13 +5962,13 @@ retrieval analyses, or similar technologies.")
 (define-public r-biocmake
   (package
     (name "r-biocmake")
-    (version "1.0.0")
+    (version "1.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "biocmake" version))
        (sha256
-        (base32 "136djx32fbny228jpmpqqa5r0dbzgyw4ymmi0wnpx34s4qgr6k2x"))))
+        (base32 "0ajcq62xcqc9kj8h236lkw67z72b5vkymhpn1vlspmhx005frcq3"))))
     (properties
      '((upstream-name . "biocmake")
        (updater-extra-propagated-inputs . ("cmake"))))
@@ -10984,13 +10984,13 @@ high distances can be flagged as potentially low-quality.")
 (define-public r-metabocoreutils
   (package
     (name "r-metabocoreutils")
-    (version "1.16.0")
+    (version "1.16.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "MetaboCoreUtils" version))
        (sha256
-        (base32 "1xx8jirj08b8f1f6y3i10gkh3i2n8anwd5r3d5jbzjm52cfasdy2"))))
+        (base32 "0r8p8d3glxd2g12l8z8fis5vzxaj9m0b3ybvij4ciwky4amxjnmc"))))
     (properties
      '((upstream-name . "MetaboCoreUtils")
        (updater-extra-native-inputs . ("r-robustbase"))
@@ -11604,14 +11604,14 @@ containers.")
 (define-public r-msnbase
   (package
     (name "r-msnbase")
-    (version "2.34.0")
+    (version "2.34.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "MSnbase" version))
        (sha256
         (base32
-         "19n60bzbjhyn1bn79x6329c5389ycm6ai7ipvqrspz1azrwzfa9x"))))
+         "00r4kpjf8y8l4jf4hjaxrcgzji2vbm0maqg2ybz5ifq9zk07mfhk"))))
     (properties
      `((upstream-name . "MSnbase")
        ;; Avoid dependency cycle.
@@ -16739,13 +16739,13 @@ multiplication.")
 (define-public r-scrapper
   (package
     (name "r-scrapper")
-    (version "1.2.0")
+    (version "1.2.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "scrapper" version))
        (sha256
-        (base32 "1jy0fajpcfxjpl8r3m229k4vhzhplziifqnzb181cahlglck10ls"))))
+        (base32 "186srh8lkr7xfy2alxgqd2gg5liqwxsdrnc88wcvh2iv71gqybv4"))))
     (properties
      '((upstream-name . "scrapper")
        (updater-ignored-native-inputs . ("r-rigraphlib"))
@@ -24356,14 +24356,14 @@ gene selection, testing relationships, and so on.")
 (define-public r-biocpkgtools
   (package
     (name "r-biocpkgtools")
-    (version "1.26.0")
+    (version "1.26.2")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "BiocPkgTools" version))
        (sha256
         (base32
-         "19h0yq9q4gjwsa6b44187ifl1v5m3r5828i5gqgggnlnl37z6q1a"))
+         "1zk3sw5vwgx1rl16s52cs8a3zmn1x95wsda1djiw8l4g45vnbjyz"))
        (snippet
         '(for-each delete-file
                    '("inst/htmlwidgets/lib/bioc_explore/bootstrap.min.js"
@@ -28442,14 +28442,14 @@ embeddings and functions to build new reference.")
 (define-public r-tximeta
   (package
     (name "r-tximeta")
-    (version "1.26.0")
+    (version "1.26.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "tximeta" version))
        (sha256
         (base32
-         "1h551lrrb04gww7j6db4399p086hk6igg1q7siqvc7p3l0mxw5bc"))))
+         "0za6x4il9qqyrb0rf57vb2qahqdra9snfql6canmpw2ixwhhgq6n"))))
     (properties `((upstream-name . "tximeta")))
     (build-system r-build-system)
     ;; Two tests fail because data files are not included.

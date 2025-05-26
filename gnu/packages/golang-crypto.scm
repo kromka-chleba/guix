@@ -19,11 +19,13 @@
 ;;; Copyright © 2023 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2023 Felix Lechner <felix.lechner@lease-up.com>
 ;;; Copyright © 2023 Jack Hill <jackhill@jackhill.us>
+;;; Copyright © 2023 Miguel Ángel Moreno <mail@migalmoreno.com>
+;;; Copyright © 2023 conses <contact@conses.eu>
 ;;; Copyright © 2023, 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
-;;; Copyright © 2024 Jesse Eisses <jesse@eisses.email>
-;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Jean Simard <woshilapin@tuziwo.info>
+;;; Copyright © 2024 Jesse Eisses <jesse@eisses.email>
 ;;; Copyright © 2024 Superfly Johnson <superfly.johnson@yahoo.com>
+;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2025 Roman Scherer <roman@burningswell.com>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
@@ -58,6 +60,7 @@
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages password-utils)
+  #:use-module (gnu packages security-token)
   #:use-module (gnu packages specifications))
 
 ;;; Commentary:
@@ -327,6 +330,83 @@ Go 1.20 @code{crypto/ecdh} standard package.")
       (description "This repository contains Go packages related to
 cryptographic standards that are not included in the Go standard library.")
       (license license:asl2.0))))
+
+;; XXX: Deprecated in upstream: This repository has been archived by the owner
+;; on Nov 10, 2020. It is now read-only.
+;; Consider to remove when nothing is depend on it.
+(define-public go-github-com-apparentlymart-go-openvpn-mgmt
+  (let ((commit "4d2ce95ae600ee04eeb020ee0997aabb82752210")
+        (revision "0"))
+    (package
+      (name "go-github-com-apparentlymart-go-openvpn-mgmt")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/apparentlymart/go-openvpn-mgmt")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1dn431jnswg5ns1ah10wswnw6wiv48zq21zr5xp1178l4waswj7k"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:skip-build? #t
+        #:import-path "github.com/apparentlymart/go-openvpn-mgmt"))
+      (home-page "https://github.com/apparentlymart/go-openvpn-mgmt")
+      (synopsis "Go client library for OpenVPN's management protocol")
+      (description
+       "Go-OpenVPN-Mgmt implements a client for the OpenVPN management
+interface.  It can be used to monitor and control an OpenVPN process running
+with its management port enabled.")
+      (license license:expat))))
+
+(define-public go-github-com-blanu-dust
+  (package
+    (name "go-github-com-blanu-dust")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/blanu/Dust")
+         (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1lya21w06ramq37af5hdiafbrv5k1csjm7k7m00v0bfxg3ni01bs"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            ;; Examples are all broken.
+            (delete-file-recursively "modelgen/examples")
+            ;; Fix module path in test file.
+            (substitute* "go/huffman/huffman_test.go"
+              (("github.com/blanu/Dust/go/DustModel/huffman")
+               "github.com/blanu/Dust/go/huffman"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/blanu/Dust"))
+    (propagated-inputs
+     (list go-github-com-operatorfoundation-ed25519
+           go-github-com-op-go-logging
+           go-golang-org-x-crypto))
+    (home-page "https://github.com/blanu/Dust")
+    (synopsis "Censorship-resistant internet transport protocol")
+    (description
+     "Dust is an Internet protocol designed to resist a number of attacks
+currently in active use to censor Internet communication.  While adherence to
+the theoretical maxims of cryptographic security is observed where possible,
+the focus of Dust is on real solutions to real attacks.")
+    (license
+     (list
+      ;; Skein.
+      license:bsd-2
+      ;; Others.
+      license:expat))))
 
 (define-public go-github-com-bradenhilton-cityhash
   (package
@@ -893,6 +973,35 @@ and encrypting JSON Web Tokens (JWT).  It relies only on the standard
 library.")
     (license license:expat)))
 
+(define-public go-github-com-elithrar-simple-scrypt
+  (package
+    (name "go-github-com-elithrar-simple-scrypt")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/elithrar/simple-scrypt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1xkyw6gdy9cxj7l20cmd97axcsbf0jmcfw94c4gyy1hnd4drszzf"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/elithrar/simple-scrypt"))
+    (propagated-inputs
+     (list go-golang-org-x-crypto))
+    (home-page "https://github.com/elithrar/simple-scrypt")
+    (synopsis "Generating, comparing and inspecting password hashes library")
+    (description
+     "Package scrypt provides a convenience wrapper around Go's existing
+@code{crypto/scrypt} package that makes it easier to securely derive strong
+keys from weak inputs (i.e.  user passwords).  The package provides password
+generation, constant-time comparison and parameter upgrading for scrypt
+derived keys.")
+    (license license:expat)))
+
 (define-public go-github-com-emersion-go-bcrypt
   (package
     (name "go-github-com-emersion-go-bcrypt")
@@ -1152,6 +1261,32 @@ intended to (eventually) be 1:1 with the TPM 2.0 spec
 @end itemize")
     (license license:asl2.0)))
 
+(define-public go-github-com-gsterjov-go-libsecret
+  (package
+    (name "go-github-com-gsterjov-go-libsecret")
+    (version "0.0.0-20161001094733-a6f4afe4910c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gsterjov/go-libsecret")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "09zaiadnll83vs22ib89agg7anj0blw5fywvmckxllsgif6ak6v7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gsterjov/go-libsecret"))
+    (propagated-inputs
+     (list go-github-com-godbus-dbus))
+    (home-page "https://github.com/gsterjov/go-libsecret")
+    (synopsis "Manage secrets via the @code{Secret Service} DBus API")
+    (description
+     "This native Go library manages secrets via the freedesktop.org
+@code{Secret Service} DBus interface.")
+    (license license:expat)))
+
 ;; It's not public for purpose, as it contains a lot of golang modules which
 ;; may be inherited from the single source, but the package itself does not
 ;; have to be installed directly or linked to other packages..
@@ -1184,45 +1319,58 @@ functions and functionality to test them.  It aggregates various Golang
 libraries.")
     (license license:expat)))
 
-;; TODO: Inherit from the go-github-com-gxed-hashland
 (define-public go-github-com-gxed-hashland-keccakpg
-  (let ((commit "d9f6b97f8db22dd1e090fd0bbbe98f09cc7dd0a8")
-        (revision "0"))
-    (package
-      (name "go-github-com-gxed-hashland-keccakpg")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/gxed/hashland")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1q23y4lacsz46k9gmgfw4iwwydw36j2601rbidmmswl94grpc386"))))
-      (build-system go-build-system)
-      (arguments
-       '(#:unpack-path "github.com/gxed/hashland"
-         #:import-path "github.com/gxed/hashland/keccakpg"))
-      (home-page "https://github.com/gxed/hashland")
-      (synopsis "Implements the Keccak (SHA-3) hash algorithm in Go")
-      (description "Package @command{keccak} implements the Keccak (SHA-3)
-hash algorithm.  See http://keccak.noekeon.org.")
-      (license license:expat))))
+  (package
+    (name "go-github-com-gxed-hashland-keccakpg")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gxed/hashland")
+             (commit (go-version->git-ref version
+                                          #:subdir "keccakpg"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1b921dh9i6zw7y8jfzwvrmdbhnwid12a5z1zjawslfq2vvsajwmm"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gxed/hashland/keccakpg"
+      #:unpack-path "github.com/gxed/hashland"))
+    (home-page "https://github.com/gxed/hashland")
+    (synopsis "Implements the Keccak (SHA-3) hash algorithm in Go")
+    (description
+     "Package @command{keccak} implements the Keccak (SHA-3) hash algorithm.
+See http://keccak.noekeon.org.")
+    (license license:expat)))
 
 (define-public go-github-com-gxed-hashland-murmur3
   (package
-    (inherit go-github-com-gxed-hashland)
     (name "go-github-com-gxed-hashland-murmur3")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gxed/hashland")
+             (commit (go-version->git-ref version
+                                          #:subdir "murmur3"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1b921dh9i6zw7y8jfzwvrmdbhnwid12a5z1zjawslfq2vvsajwmm"))))
+    (build-system go-build-system)
     (arguments
      (list
       #:import-path "github.com/gxed/hashland/murmur3"
       #:unpack-path "github.com/gxed/hashland"))
+    (home-page "https://github.com/gxed/hashland")
     (synopsis "Golang implementation of MurmurHash3 algorithm")
     (description
      "This package provides a native Go implementation of
 @url{https://en.wikipedia.org/wiki/MurmurHash, Austin Appleby's third
-MurmurHash} revision (aka MurmurHash3).")))
+MurmurHash} revision (aka MurmurHash3).")
+    (license license:bsd-3)))
 
 (define-public go-github-com-jcmturner-aescts-v2
   (package
@@ -1429,6 +1577,40 @@ library's internal ChaCha20 package.")
 the Go standard library's TLS 1.3 implementation.")
     (license license:bsd-3)))
 
+(define-public go-github-com-miekg-pkcs11
+  (package
+    (name "go-github-com-miekg-pkcs11")
+    (version "1.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/miekg/pkcs11")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1w403kmqxf8w25aap4901nrm7wj0wf95lrwwv1nvdjnwi8jjgapz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/miekg/pkcs11"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "SOFTHSM_LIB" (format #f "~a/lib/softhsm/libsofthsm2.so"
+                                            #$(this-package-native-input "softhsm"))))))))
+    (native-inputs
+     (list softhsm))
+    (home-page "https://github.com/miekg/pkcs11")
+    (synopsis "PKCS #11 wrapper for Golang")
+    (description
+     "This package provides an implementation of the
+@url{https://en.wikipedia.org/wiki/PKCS_11, PKCS#11} API.  It wraps the
+library closely, but uses Go idiom where it makes sense.  It has been tested
+with SoftHSM.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-minio-blake2b-simd
   (let ((commit "3f5f724cb5b182a5c278d6d3d55b40e7f8c2efb4")
         (revision "0"))
@@ -1460,10 +1642,37 @@ performance is obtained with AVX2 which gives roughly a 4X performance
 increase approaching hashing speeds of 1GB/sec on a single core.")
       (license license:asl2.0))))
 
+(define-public go-github-com-minio-crc64nvme
+  (package
+    (name "go-github-com-minio-crc64nvme")
+    (version "1.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/minio/crc64nvme")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hk0v474ligna49qh4rvwnqxv7w6ka5grdlb7fczh4kzhx80x536"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/minio/crc64nvme"))
+    (propagated-inputs (list go-github-com-klauspost-cpuid-v2))
+    (home-page "https://github.com/minio/crc64nvme")
+    (synopsis "CRC64 checksums using carryless-multiplication")
+    (description
+     "This package calculates CRC64 checksums using carryless-multiplication
+accelerated with SIMD instructions for both ARM and x86.  The code is based on
+the @code{https://github.com/awesomized/crc64fast-nvme.git, crc64fast-nvme}
+package in Rust.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-minio-highwayhash
   (package
     (name "go-github-com-minio-highwayhash")
-    (version "1.0.2")
+    (version "1.0.3")
     (source
      (origin
        (method git-fetch)
@@ -1472,7 +1681,7 @@ increase approaching hashing speeds of 1GB/sec on a single core.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1inrix7720273ccynxcyi7xsgc55cskxrw7gwn08qkmdj9xdxqai"))))
+        (base32 "14g2x266h8sxs0yynmcl2r2mnhx55rfzgykw4hygm7i1vpfrikg4"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "github.com/minio/highwayhash"))
@@ -1483,6 +1692,37 @@ increase approaching hashing speeds of 1GB/sec on a single core.")
      "This package implements the pseudo-random-function (PRF) HighwayHash.
 HighwayHash is a fast hash function designed to defend hash-flooding attacks
 or to authenticate short-lived messages.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-minio-md5-simd
+  (package
+    (name "go-github-com-minio-md5-simd")
+    (version "1.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/minio/md5-simd")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qj8ipifbdg3ppilyqj8zy68f72rmqy8flli1vch3fibrbw8vpd0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/minio/md5-simd"))
+    (propagated-inputs
+     (list go-github-com-klauspost-cpuid-v2))
+    (home-page "https://github.com/minio/md5-simd")
+    (synopsis "Accelerate MD5 computations in pure Golang")
+    (description
+     "This is a SIMD accelerated MD5 package, allowing up to either 8 (AVX2)
+or 16 (AVX512) independent MD5 sums to be calculated on a single CPU core.
+
+@code{md5-simd} integrates a similar mechanism as described in
+@code{minio/sha256-simd} for making it easy for clients to take advantages of
+the parallel nature of the MD5 calculation.  This will result in reduced
+overall CPU load.")
     (license license:asl2.0)))
 
 (define-public go-github-com-minio-sha256-simd
@@ -1591,7 +1831,7 @@ times faster decoding.")
 (define-public go-github-com-nats-io-jwt-v2
   (package
     (name "go-github-com-nats-io-jwt-v2")
-    (version "2.5.3")
+    (version "2.7.3")
     (source
      (origin
        (method git-fetch)
@@ -1600,7 +1840,7 @@ times faster decoding.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0wcqbfyd3b4qdspmf72cpsbi0y2a4b1qd0cv3qvhh17d1h1a6zib"))))
+        (base32 "09gfzhahm6wfnkaqm5yam8vd9y50rnyjxcl6mw3a9y4far1vpmvb"))))
     (build-system go-build-system)
     (arguments
      (list #:import-path "github.com/nats-io/jwt/v2"
@@ -1616,7 +1856,7 @@ JWT tokens.  Nkeys use Ed25519 to provide authentication of JWT claims.")
 (define-public go-github-com-nats-io-nkeys
   (package
     (name "go-github-com-nats-io-nkeys")
-    (version "0.4.7")
+    (version "0.4.10")
     (source
      (origin
        (method git-fetch)
@@ -1625,7 +1865,7 @@ JWT tokens.  Nkeys use Ed25519 to provide authentication of JWT claims.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0779m4nn6n0ql23wnk50ybddslvb84mwx036gf7yw6ckmm4yybxs"))))
+        (base32 "1max0dsjj92gfzc9g0dsnmk24y72drfhzkra3c1xnjwnw6lwha5x"))))
     (build-system go-build-system)
     (arguments
      '(#:import-path "github.com/nats-io/nkeys"))
@@ -1700,6 +1940,191 @@ non-cryptographic hash algorithm, working at speeds close to RAM limits.")
       (description "Package ed25519 implements the Ed25519 signature
 algorithm.")
       (license license:bsd-3))))
+
+;; XXX: Deprecated in upstream: This repository has been archived by the owner
+;; on May 1, 2024. It is now read-only.
+;; Consider to remove when nothing is depend on it.
+(define-public go-github-com-operatorfoundation-obfs4
+  (package
+    (name "go-github-com-operatorfoundation-obfs4")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/OperatorFoundation/obfs4")
+         (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0s730xagdxs66wfh65hb5v9a5h01q5ncic3pyij0a043scagizgr"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "github.com/OperatorFoundation/obfs4"
+      #:test-subdirs #~(list "common/..."
+                             "proxy_dialers/..."
+                             "transports/obfs4/...")))
+    (propagated-inputs
+     (list go-github-com-dchest-siphash
+           go-github-com-operatorfoundation-ed25519
+           go-github-com-willscott-goturn
+           go-golang-org-x-crypto
+           go-golang-org-x-net
+           go-torproject-org-pluggable-transports-goptlib))
+    (home-page "https://github.com/OperatorFoundation/obfs4")
+    (synopsis "Network obfourscator to scramble network traffic")
+    (description
+     "Obfs4 is a look-like nothing obfuscation protocol that incorporates
+ideas and concepts from Philipp Winter's ScrambleSuit protocol.
+
+The notable differences between ScrambleSuit and obfs4 are:
+@itemize
+@item The handshake always does a full key exchange (no such thing as a Session
+Ticket Handshake).
+@item The handshake uses the Tor Project's ntor handshake with public keys
+obfuscated via the Elligator 2 mapping.
+@item The link layer encryption uses NaCl secret boxes (Poly1305/XSalsa20).
+@end itemize")
+    (license license:bsd-2)))
+
+(define-public go-github-com-operatorfoundation-shapeshifter-ipc
+  (package
+    (name "go-github-com-operatorfoundation-shapeshifter-ipc")
+    (version "2.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/OperatorFoundation/shapeshifter-ipc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1q1fcnllg462nfca16s5mr0n2jh92x3hj946qnaqc682phjz04lg"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f ; all tests fail with error: undefined: Args.
+      #:import-path "github.com/OperatorFoundation/shapeshifter-ipc"))
+    (home-page "https://github.com/OperatorFoundation/shapeshifter-ipc")
+    (synopsis "Go implementation of the Pluggable Transports IPC protocol")
+    (description
+     "Shapeshifter-IPC is a library for Go implementing the IPC
+protocol from the Pluggable Transports 2.0 specification.")
+    (license license:expat)))
+
+(define-public go-github-com-operatorfoundation-shapeshifter-ipc-v3
+  (package
+    (inherit go-github-com-operatorfoundation-shapeshifter-ipc)
+    (name "go-github-com-operatorfoundation-shapeshifter-ipc-v3")
+    (version "3.0.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/OperatorFoundation/shapeshifter-ipc")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dvvls7v40krq26nzn2f1q55628i3zff4by1ib2wad9pyhb88rg0"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ; all tests fail with error: undefined: Args.
+      #:import-path "github.com/OperatorFoundation/shapeshifter-ipc/v3"
+      #:unpack-path "github.com/OperatorFoundation/shapeshifter-ipc"))))
+
+(define-public go-github-com-operatorfoundation-shapeshifter-transports
+  (package
+    (name "go-github-com-operatorfoundation-shapeshifter-transports")
+    (version "3.0.12")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/OperatorFoundation/shapeshifter-transports")
+         (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f1hzhk3q2fgqdg14zlg3z0s0ib1y9xwj89qnjk95b37zbgqjgsb"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; When parallel, tests fail with error: Failed to start listener:listen
+      ;; tcp 127.0.0.1:1235: bind: address already in use.
+      #:parallel-tests? #f
+      #:skip-build? #t
+      #:import-path "github.com/OperatorFoundation/shapeshifter-transports"
+      #:test-flags
+      #~(list "-skip" (string-join
+                  (list
+                   ;; Tests fail in "Optimizer" module.
+                   "TestObfs4Transport_Dial"
+                   "TestOptimizerObfs4Transport_Dial"
+                   "TestOptimizerTransportFirstDial"
+                   "TestOptimizerTransportRandomDial"
+                   "TestOptimizerTransportRotateDial"
+                   "TestOptimizerTransportTrackDial"
+                   "TestOptimizerTransportMinimizeDialDurationDial"
+                   ;; Tests fail in "Replicant" module.
+                   "TestMarshalConfigs"
+                   "TestMarshalConfigs"
+                   "TestMarshalSilverRandomEnumeratedConfigs"
+                   "TestFactoryMonotoneRandomEnumerated"
+                   ;; Tests fail in "meeklite" module.
+                   "TestMeeklite"
+                   "TestFactoryMeeklite"
+                   ;; Test fails in "meekserver/v2" module.
+                   "TestMeekServerListen2"
+                   ;; Test fails in "obfs4" module.
+                   "TestObfs4"
+                   "TestObfs4Factory"
+                  ;; Tests fail in "shadow" module.
+                  "TestShadow"
+                  "TestShadowTransport")
+                  "|"))
+      #:test-subdirs
+      #~(list
+         ;; All tests fail with error: invalid memory address or nil pointer
+         ;; dereference.
+         ;; "transports/Dust/..."
+         "transports/Optimizer/..."
+         "transports/Replicant/..."
+         "transports/meeklite/..."
+         ;; All tests fail with error:  misplaced +build comment.
+         ;; "transports/meekserver/v3/..."
+         "transports/meekserver/v2/..."
+         "transports/obfs2/..."
+         "transports/obfs4/..."
+         "transports/shadow/...")))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-aead-chacha20
+           go-github-com-blanu-dust
+           go-github-com-deckarep-golang-set
+           go-github-com-kataras-golog
+           go-github-com-mufti1-interconv
+           go-github-com-opentracing-opentracing-go
+           go-github-com-operatorfoundation-monolith-go-1.0.4
+           go-github-com-operatorfoundation-obfs4
+           go-github-com-operatorfoundation-shapeshifter-ipc
+           go-github-com-shadowsocks-go-shadowsocks2
+           go-golang-org-x-crypto
+           go-golang-org-x-net
+           go-torproject-org-pluggable-transports-goptlib))
+    (home-page "https://github.com/OperatorFoundation/shapeshifter-transports")
+    (synopsis "Go implementation of Pluggable Transports")
+    (description "Shapeshifter-Transports is a set of Pluggable Transports
+implementing the Go API from the Pluggable Transports 2.0 specification.
+Each transport implements a different method of shapeshifting network traffic.
+The goal is for application traffic to be sent over the network in a shapeshifted
+form that bypasses network filtering, allowing the application to work on
+networks where it would otherwise be blocked or heavily throttled.")
+    (license license:expat)))
 
 (define-public go-github-com-pion-randutil
   (package
@@ -2490,6 +2915,42 @@ obfuscated via the Elligator 2 mapping
 purpose of improving obfs4proxy's meek_lite transport.")
     (license license:bsd-3)))
 
+(define-public go-go-mau-fi-libsignal
+  (package
+    (name "go-go-mau-fi-libsignal")
+    (version "0.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             ;; Original project:
+             ;;   <https://github.com/RadicalApp/libsignal-protocol-go>
+             ;; The first fork:
+             ;;   <https://github.com/crossle/libsignal-protocol-go>
+             ;;
+             ;; It is the second fork as seen in
+             ;; <https://pkg.go.dev/go.mau.fi/libsignal>.
+             (url "https://github.com/tulir/libsignal-protocol-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pd2kijza7dr5nbgfw176ca1r3rmgpx8h22gqjp557awxqhw9lzr"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:import-path "go.mau.fi/libsignal"))
+    (propagated-inputs
+     (list go-filippo-io-edwards25519
+           go-golang-org-x-crypto
+           go-google-golang-org-protobuf))
+    (home-page "https://go.mau.fi/libsignal")
+    (synopsis "Go implementation of the Signal protocol for WhatsApp")
+    (description
+     "Libsignal-protocol-go is a Go implementation of the Signal Client
+Protocol.")
+    (license license:gpl3)))
+
 (define-public go-lukechampine-com-blake3
   (package
     (name "go-lukechampine-com-blake3")
@@ -2634,6 +3095,36 @@ tools."))))
      (string-append (package-description go-github-com-99designs-keyring)
                     "  This package provides an command line interface (CLI)
 tool."))))
+
+(define-public ssh-to-pgp
+  (package
+    (name "ssh-to-pgp")
+    (version "1.1.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Mic92/ssh-to-pgp")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1xaj6pnk5y2flnxm57j9bpdpll9vhg1rbjj4v3a7hn1gginxpprx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "github.com/Mic92/ssh-to-pgp"
+      ;; failed: No secret key
+      #:test-flags #~(list "-skip" "TestCli")))
+    (native-inputs
+     (list gnupg
+           go-github-com-protonmail-go-crypto
+           go-golang-org-x-crypto))
+    (home-page "https://github.com/Mic92/ssh-to-pgp")
+    (synopsis "Convert SSH RSA keys to GPG keys")
+    (description "This package provides @code{ssh-to-pgp}: a Go command line
++utility to convert SSH RSA keys to GPG keys.")
+    (license license:expat)))
 
 ;;;
 ;;; Avoid adding new packages to the end of this file. To reduce the chances

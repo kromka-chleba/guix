@@ -79,7 +79,9 @@
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages base)
+  #:use-module (gnu packages bison)
   #:use-module (gnu packages boost)
+  #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
@@ -92,6 +94,7 @@
   #:use-module (gnu packages emacs)
   #:use-module (gnu packages emacs-xyz)
   #:use-module (gnu packages dbm)
+  #:use-module (gnu packages flex)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
@@ -118,6 +121,7 @@
   #:use-module (gnu packages multiprecision)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages networking)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages popt)
@@ -2041,20 +2045,133 @@ define financial transaction records in a text file, read them in memory,
 generate a variety of reports from them, and provides a web interface.")
     (license license:gpl2)))
 
+(define-public beancount-3
+  (package
+    (name "beancount")
+    (version "3.1.0")
+    (source
+     (origin
+       (method git-fetch) ; Pypi archive doesn't contain the test suite.
+       (uri (git-reference
+             (url "https://github.com/beancount/beancount")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pzbhlsvch4n48rqkbff1v1rbk3gm05w0fbd2p97vdmrmlxaa33d"))
+       (modules '((guix build utils)))
+       (snippet #~(substitute* "pyproject.toml"
+                    (("regex >=2022.9.13")
+                     "regex >=2022.1.18")))))
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; run tests against the built library
+         "--pyargs" "beancount"
+         ;; disable tests supposed to run from the source repo
+         "-k" "not test_export_basic and not test_example_files")))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list bison
+           flex
+           gnupg
+           meson
+           ninja
+           python-meson-python
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-bottle
+           python-click
+           python-dateutil
+           python-regex))
+    (home-page "https://beancount.github.io/")
+    (synopsis "Command-line double-entry accounting tool")
+    (description
+     "Beancount is a double-entry bookkeeping computer language that lets you
+define financial transaction records in a text file, read them in memory,
+generate a variety of reports from them, and provides a web interface.")
+    (license license:gpl2)))
+
+(define-public beanquery
+  (package
+    (name "beanquery")
+    (version "0.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "beanquery" version))
+       (sha256
+        (base32 "0b6dhj9lcf3b347rsjb0k25qgsmqf9jnd0yizv3kad00745bawid"))
+       (modules '((guix build utils)))
+       (snippet #~(substitute* "pyproject.toml"
+                    (("tatsu-lts")
+                     "tatsu")))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list beancount-3
+           python-click
+           python-dateutil
+           python-tatsu))
+    (native-inputs (list python-setuptools python-wheel python-pytest))
+    (home-page "https://github.com/beancount/beanquery")
+    (synopsis "Interactive interpreter for the Beancount Query Language")
+    (description "A specialized SQL-like query client for Beancount ledger
+files.  It can run interactively or in batch mode.  By providing a specialized
+query engine that takes advantage of the structure of double-entry transactions,
+it can easily generate custom reports specific to accounting purposes.")
+    (license license:gpl2)))
+
+(define-public python-beangulp
+  (package
+    (name "python-beangulp")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch) ; Pypi archive doesn't contain the test suite.
+       (uri (git-reference
+             (url "https://github.com/beancount/beangulp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zlanw88dq7czgsdvqwz2fgxamyrfnx15ymv4d7fnjrj04glpg47"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list beancount-3
+           python-beautifulsoup4
+           python-chardet
+           python-petl
+           python-click
+           python-lxml
+           python-magic))
+    (native-inputs
+     (list python-setuptools
+           python-wheel
+           python-pytest))
+    (home-page "https://github.com/beancount/beangulp")
+    (synopsis "Library to facilitate importing data into a Beancount ledger.")
+    (description "A framework for importing transactions into a Beancount ledger
+from account statements and other documents and for managing documents.")
+    (license license:gpl2)))
+
 (define-public fava
   (package
     (name "fava")
-    (version "1.27")
+    (version "1.30.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "fava" version))
        (sha256
-        (base32 "0cw3pmyrknsw0h4w3v9vyk6wrii68zwkywsyyvjzyl2qz3xq8srk"))))
+        (base32 "110ah1xsapiabjssl6lzp0s7nl5ypszpmqndgfqw4pifpgzp3kdf"))))
     (build-system pyproject-build-system)
     (propagated-inputs
-     (list beancount
+     (list beancount-3
+           beanquery
            python-babel
+           python-anyio
+           python-beangulp
            python-cheroot
            python-click
            python-flask
@@ -2063,6 +2180,7 @@ generate a variety of reports from them, and provides a web interface.")
            python-markdown2
            python-ply
            python-simplejson
+           python-watchfiles
            python-werkzeug))
     (native-inputs
      (list python-babel
@@ -2383,7 +2501,7 @@ mining.")
 (define-public p2pool
   (package
     (name "p2pool")
-    (version "4.3")
+    (version "4.6")
     (source
      (origin
        (method git-fetch)
@@ -2392,12 +2510,11 @@ mining.")
              (commit (string-append "v" version))
              (recursive? #t)))
        (file-name (git-file-name name version))
-       (sha256 (base32 "1hfdhanbdfjxv2n355m6b9n0ihxgcdlgxgnsqz5f6q59957fcyiw"))
+       (sha256 (base32 "1qal9ilpyxds6nk2fgzfypk3y1qxh06f6lly3alawz385gf68fkv"))
        (modules '((guix build utils)))
        (snippet
         #~(for-each delete-file-recursively
-                    '("external/lib"
-                      "external/src/cppzmq"
+                    '("external/src/cppzmq"
                       "external/src/curl"
                       "external/src/libuv"
                       "external/src/libzmq"

@@ -1257,6 +1257,30 @@ provided to perform logging in the background.")
 attributes.")
     (license license:bsd-2)))
 
+(define-public python-logfury
+  (package
+    (name "python-logfury")
+    (version "1.0.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "logfury" version))
+       (sha256
+        (base32 "09kanw1iv61hgmd858xkc9kck8ia91qdyb954i4m7bdrxan5s2hk"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-testfixtures
+           python-wheel))
+    (home-page "https://github.com/reef-technologies/logfury/")
+    (synopsis "Logging of method calls for python libraries")
+    (description
+     "Logfury is a tool for python library maintainers.  It allows for
+responsible, low-boilerplate logging of method calls.")
+    (license license:bsd-3)))
+
 (define-public python-logzero
   (package
     (name "python-logzero")
@@ -5905,6 +5929,37 @@ the grammar rules works like a Python expression.  In particular, alternatives
 are evaluated in order, unlike table-driven parsers such as yacc, bison or PLY.
 Parsley is an implementation of OMeta, an object-oriented pattern-matching
 language.")
+    (license license:expat)))
+
+(define-public python-petl
+  (package
+    (name "python-petl")
+    (version "1.7.16")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "petl" version))
+       (sha256
+        (base32 "0ll7xcc9yrvrz9p9im6m8p69cwrqwmqx91px43hlbnjrv1jflbww"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-setuptools-scm python-wheel
+                         python-pytest))
+    (home-page "https://github.com/petl-developers/petl")
+    (synopsis "Framework for writing @acronym{ETL, Extract Transform Load} data
+processing pipelines.")
+    (description
+     "This package provides a library for extracting, transforming and loading
+tables of data.  It can read from and write to databases or files in multiple
+formats, including:
+@itemize @bullet
+@item python objects
+@item delimited files
+@item pickle files
+@item text/XML/JSON/HTML files
+@item python I/O streams
+@item Excel XLS/XLSX files
+@item HDF5 files
+@end itemize")
     (license license:expat)))
 
 (define-public python-polib
@@ -15154,277 +15209,6 @@ approach.")
     (description
      "This is a Python package for easy throttling with asyncio support.")
     (license license:expat)))
-
-(define-public snakemake-5
-  (package
-    (name "snakemake")
-    (version "5.32.2")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/snakemake/snakemake")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0nxp4z81vykv07kv2b6zrwk7ns8s10zqsb7vcignp8695yq3nlcm"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      '(list
-        ;; We have no TES support.
-        "--ignore=tests/test_tes.py"
-        ;; This test attempts to change S3 buckets on AWS and fails
-        ;; because there are no AWS credentials.
-        "--ignore=tests/test_tibanna.py"
-        ;; It's a similar story with this test, which requires access
-        ;; to the Google Storage service.
-        "--ignore=tests/test_google_lifesciences.py"
-        ;; Unclear failure.
-        "-k" "not test_lint[long_run-positive]")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'tabulate-compatibility
-            (lambda _
-              (substitute* "snakemake/dag.py"
-                (("\"job\": rule,")
-                 "\"job\": rule.name,"))))
-          (add-after 'unpack 'patch-version
-            (lambda _
-              (substitute* "setup.py"
-                (("version=versioneer.get_version\\(\\)")
-                 (format #f "version=~s" #$version)))
-              (substitute* '("snakemake/_version.py"
-                             "versioneer.py")
-                (("0\\+unknown") #$version))))
-          ;; For cluster execution Snakemake will call Python.  Since there is
-          ;; no suitable PYTHONPATH set, cluster execution will fail.  We fix
-          ;; this by calling the snakemake wrapper instead.
-          (add-after 'unpack 'call-wrapper-not-wrapped-snakemake
-            (lambda _
-              (substitute* "snakemake/executors/__init__.py"
-                (("\\{sys.executable\\} -m snakemake")
-                 (string-append #$output "/bin/snakemake")))))
-          (add-before 'check 'pre-check
-            (lambda _ (setenv "HOME" "/tmp"))))))
-    (propagated-inputs
-     (list python-appdirs
-           python-configargparse
-           python-datrie
-           python-docutils
-           python-gitpython
-           python-jinja2
-           python-jsonschema
-           python-nbformat
-           python-networkx
-           python-psutil
-           python-pulp
-           python-pyyaml
-           python-ratelimiter
-           python-requests
-           python-toposort
-           python-wrapt))
-    (native-inputs
-     (list git-minimal
-           python-wrapper
-           python-pytest
-           python-pandas
-           python-requests-mock
-           python-setuptools
-           python-wheel))
-    (home-page "https://snakemake.readthedocs.io")
-    (synopsis "Python-based execution environment for make-like workflows")
-    (description
-      "Snakemake aims to reduce the complexity of creating workflows by
-providing a clean and modern domain specific specification language (DSL) in
-Python style, together with a fast and comfortable execution environment.")
-    (license license:expat)))
-
-(define-public snakemake-6
-  (package
-    (inherit snakemake-5)
-    (name "snakemake")
-    (version "6.15.5")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/snakemake/snakemake")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "09yrpi9f86r9yvcm2dfjs5zy87c4j31bxama77kfd6y8yfrrjlai"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      '(list
-        ;; This test attempts to change S3 buckets on AWS and fails
-        ;; because there are no AWS credentials.
-        "--ignore=tests/test_tibanna.py"
-        ;; Unclear failure.
-        "-k" "not test_lint[long_run-positive]")
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; For cluster execution Snakemake will call Python.  Since there is
-          ;; no suitable GUIX_PYTHONPATH set, cluster execution will fail.  We
-          ;; fix this by calling the snakemake wrapper instead.
-
-          ;; XXX: There is another instance of sys.executable on line 692, but
-          ;; it is not clear how to patch it.
-          (add-after 'unpack 'call-wrapper-not-wrapped-snakemake
-            (lambda* (#:key outputs #:allow-other-keys)
-              (substitute* "snakemake/executors/__init__.py"
-                (("\\{sys.executable\\} -m snakemake")
-                 (string-append #$output "/bin/snakemake")))))
-          (add-after 'unpack 'tabulate-compatibility
-            (lambda _
-              (substitute* "snakemake/dag.py"
-                (("\"job\": rule,")
-                 "\"job\": rule.name,"))))
-          (add-after 'unpack 'patch-version
-            (lambda _
-              (substitute* "setup.py"
-                (("version=versioneer.get_version\\(\\)")
-                 (format #f "version=~s" #$version)))
-              (substitute* '("snakemake/_version.py"
-                             "versioneer.py")
-                (("0\\+unknown") #$version))))
-          (add-before 'check 'pre-check
-            (lambda _ (setenv "HOME" "/tmp"))))))
-    (propagated-inputs
-     (list python-appdirs
-           python-configargparse
-           python-connection-pool
-           python-datrie
-           python-docutils
-           python-filelock
-           python-gitpython
-           python-jinja2
-           python-jsonschema
-           python-nbformat
-           python-networkx
-           python-psutil
-           python-pulp
-           python-pyyaml
-           python-py-tes
-           python-ratelimiter
-           python-requests
-           python-smart-open
-           python-stopit
-           python-tabulate
-           python-toposort
-           python-wrapt))
-    (native-inputs
-     (list git-minimal
-           python-wrapper
-           python-pytest
-           python-pandas
-           python-requests-mock
-           python-setuptools
-           python-wheel))))
-
-(define-public snakemake-7
-  (package
-    (inherit snakemake-6)
-    (name "snakemake")
-    (version "7.32.4")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/snakemake/snakemake")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1d5hizai89k1glfqfkvf1ghj0l7wm8il6gl5pfwk2gkza87yka6d"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      ;; This test attempts to change S3 buckets on AWS and fails
-      ;; because there are no AWS credentials.
-      '(list "--ignore=tests/test_tibanna.py"
-             ;; It's a similar story with this test, which requires access to
-             ;; the Google Storage service.
-             "--ignore=tests/test_google_lifesciences.py"
-             "--ignore-glob=tests/test_conda_python_3_7_script/*"
-             ;; We don't have a slurm installation in the build environment
-             "--ignore=tests/test_slurm.py")
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; For cluster execution Snakemake will call Python.  Since there is
-          ;; no suitable GUIX_PYTHONPATH set, cluster execution will fail.  We
-          ;; fix this by calling the snakemake wrapper instead.
-          (add-after 'unpack 'call-wrapper-not-wrapped-snakemake
-            (lambda* (#:key outputs #:allow-other-keys)
-              (substitute* "snakemake/executors/__init__.py"
-                (("self\\.get_python_executable\\(\\),")
-                 "")
-                (("\"-m snakemake\"")
-                 (string-append "\"" #$output
-                                "/bin/snakemake" "\""))
-                ;; The snakemake command produced by format_job_exec contains
-                ;; references to /gnu/store.  Prior to patching above that's
-                ;; just a reference to Python; after patching it's a reference
-                ;; to the snakemake executable.
-                ;;
-                ;; In Tibanna execution mode Snakemake arranges for a certain
-                ;; Docker image to be deployed to AWS.  It then passes its own
-                ;; command line to Tibanna.  This is misguided because it only
-                ;; ever works if the local Snakemake command was run inside
-                ;; the same Docker image.  In the case of using Guix this is
-                ;; never correct, so we need to replace the store reference.
-                (("tibanna_args.command = command")
-                 (string-append
-                  "tibanna_args.command = command.replace('"
-                  #$output "/bin/snakemake', 'python3 -m snakemake')")))))
-          (add-after 'unpack 'patch-version
-            (lambda _
-              (substitute* "setup.py"
-                (("version=versioneer.get_version\\(\\)")
-                 (format #f "version=~s" #$version)))
-              (substitute* '("snakemake/_version.py"
-                             "versioneer.py")
-                (("0\\+unknown") #$version))))
-          (add-before 'check 'pre-check
-            (lambda _ (setenv "HOME" "/tmp"))))))
-    (propagated-inputs
-     (list python-appdirs
-           python-configargparse
-           python-connection-pool
-           python-datrie
-           python-docutils
-           python-filelock
-           python-gitpython
-           python-humanfriendly
-           python-jinja2
-           python-jsonschema
-           python-nbformat
-           python-networkx
-           python-psutil
-           python-pulp
-           python-pyyaml
-           python-py-tes
-           python-requests
-           python-retry
-           python-reretry
-           python-smart-open
-           python-stopit
-           python-tabulate
-           python-throttler
-           python-toposort
-           python-wrapt
-           python-yte))
-    (native-inputs
-     (list git-minimal
-           python-wrapper
-           python-pytest
-           python-pandas
-           python-requests-mock
-           python-setuptools
-           python-wheel))))
 
 (define-public python-pyqrcode
   (package

@@ -3443,7 +3443,7 @@ initialization methods.")
 (define-public sbcl-charje.loop
   (package
     (name "sbcl-charje.loop")
-    (version "0.0.1")
+    (version "1.0.0")
     (source
      (origin
        (method git-fetch)
@@ -3453,11 +3453,12 @@ initialization methods.")
        (file-name (git-file-name "cl-charje.loop" version))
        (sha256
         (base32
-         "13353ycjm4jyczlqxh5r7f7q8g679pyfx91w4hj9p6mp7paqsn16"))))
+         "07cyfs4qasrp376304aiavg318pmb4wvnk7ny7fggddd6imaw6k5"))))
     (build-system asdf-build-system/sbcl)
     (inputs
      (list sbcl-alexandria
            sbcl-binding-arrows
+           sbcl-cl-environments
            sbcl-parse-declarations))
     (home-page "https://git.sr.ht/~charje/loop")
     (synopsis "Loop abstraction for Common Lisp that is consistent for
@@ -3471,8 +3472,9 @@ operations are non-consing when possible.")
 (define-public cl-charje.loop
   (sbcl-package->cl-source-package sbcl-charje.loop))
 
-(define-public ecl-charje.loop
-  (sbcl-package->ecl-package sbcl-charje.loop))
+;; TODO: ECL is not currently supported.
+;; (define-public ecl-charje.loop
+;;   (sbcl-package->ecl-package sbcl-charje.loop))
 
 (define-public sbcl-chemboy
   (package
@@ -27746,7 +27748,7 @@ running into parallelism problems when having to change directory.")
 (define-public sbcl-simple-matrix
   (package
     (name "sbcl-simple-matrix")
-    (version "3.0")
+    (version "3.1")
     (source
      (origin
        (method git-fetch)
@@ -27755,7 +27757,7 @@ running into parallelism problems when having to change directory.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-simple-matrix" version))
        (sha256
-        (base32 "0iz0zlbn7j0zyw2w9kb7xr6zzwr23cn6y797gf3z8jwm2ccpjang"))))
+        (base32 "046n80j6m16m71fpd5m5cpia50xav02sppxs5vp5dl6iiy2a420p"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs (list sbcl-fiveam))
     (synopsis "Matrix library for Common Lisp")

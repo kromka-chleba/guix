@@ -768,7 +768,7 @@ variable defined below.  It requires guile-json to be installed."
            hunspell
            libnotify
            nspr
-           ;; UNBUNDLE-ME! nss  (pending upgrade of 'nss' to 3.90 or later)
+           nss
            shared-mime-info
            sqlite
            eudev
@@ -866,7 +866,7 @@ variable defined below.  It requires guile-json to be installed."
          ;; UNBUNDLE-ME! "--with-system-libvpx"
          "--with-system-icu"
          "--with-system-nspr"
-         ;; UNBUNDLE-ME! "--with-system-nss" ; pending upgrade of 'nss' to 3.90
+         "--with-system-nss"
 
          ;; UNBUNDLE-ME! "--with-system-harfbuzz"
          ;; UNBUNDLE-ME! "--with-system-graphite2"
@@ -1484,7 +1484,7 @@ ca495991b7852b855"))
                       "ac_add_options --with-system-jpeg\n"
                       "ac_add_options --with-system-libevent\n"
                       "ac_add_options --with-system-nspr\n"
-                      ; UNBUNDLE-ME! "ac_add_options --with-system-nss\n"
+                      "ac_add_options --with-system-nss\n"
                       "ac_add_options --with-system-zlib\n"
                       "ac_add_options --without-wasm-sandboxed-libraries\n"
                       "mk_add_options MOZ_MAKE_FLAGS=-j"
@@ -1583,7 +1583,7 @@ ca495991b7852b855"))
            mesa
            mit-krb5
            nspr
-           ;; UNBUNDLE-ME! nss  (pending upgrade of 'nss' to 3.90 or later)
+           nss
            pango
            pixman
            pulseaudio

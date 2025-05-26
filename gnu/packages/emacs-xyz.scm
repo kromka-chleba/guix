@@ -158,6 +158,7 @@
 ;;; Copyright © 2025 Lee Thompson <lee.p.thomp@gmail.com>
 ;;; Copyright @ 2025 Amy Pillow <amypillow@lavache.com>
 ;;; Copyright © 2025 Kurome <hunt31999@gmail.org>
+;;; Copyright © 2025 Anderson Torres <anderson.torres.8519@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -211,7 +212,6 @@
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages games)
   #:use-module (gnu packages gawk)
-  #:use-module (gnu packages golang)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages gnome)
@@ -1429,8 +1429,8 @@ when typing parentheses directly or commenting out code line by line.")
 
 (define-public emacs-puni
   ;; No tagged release upstream
-  (let ((commit "72e091ef30e0c9299dbcd0bc4669ab9bb8fb6e47")
-        (revision "2"))
+  (let ((commit "f430f5b0a14c608176e3376058eb380ab0824621")
+        (revision "3"))
     (package
       (name "emacs-puni")
       (version (git-version "0" revision commit))
@@ -1442,7 +1442,7 @@ when typing parentheses directly or commenting out code line by line.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1ns2r6nwakdnzjiq84qqzn85wwahc0k738awx9kxn9p0q2prpx5j"))))
+                  "0kvxll2yx4lh5x04cigdizncp2kbva1iidz9fjnbi8qqfm6pq5qq"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-with-editor))
       (home-page "https://github.com/AmaiKinono/puni")
@@ -6880,26 +6880,27 @@ next matching page.")
 (define-public emacs-dash
   (package
     (name "emacs-dash")
-    (version "2.19.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/magnars/dash.el")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0z6f8y1m9amhg427iz1d4xcyr6n0kj5w7kmiz134p320ixsdnzd8"))))
+    (version "2.20.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/magnars/dash.el")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "092kf61bi6dwl42yng69g3y55ni8afycqbpaqx9wzf8frx9myg6m"))))
     (build-system emacs-build-system)
     (arguments
-     (list #:tests? #t
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'disable-byte-compile-error-on-warn
-                 (lambda _
-                   (substitute* "Makefile"
-                     (("\\(setq byte-compile-error-on-warn t\\)")
-                      "(setq byte-compile-error-on-warn nil)")))))))
+     (list
+      #:tests? #t
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-byte-compile-error-on-warn
+            (lambda _
+              (substitute* "Makefile"
+                (("\\(setq byte-compile-error-on-warn t\\)")
+                 "(setq byte-compile-error-on-warn nil)")))))))
     (home-page "https://github.com/magnars/dash.el")
     (synopsis "Modern list library for Emacs")
     (description "This package provides a modern list API library for Emacs.")
@@ -10435,6 +10436,29 @@ respective @code{*Help*} buffers.")
 completion of relevant keywords.")
     (license license:expat)))
 
+(define-public emacs-dwim-shell-command
+  (package
+    (name "emacs-dwim-shell-command")
+    ;; This release is untagged, change commit below when updating.
+    (version "0.63.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/xenodium/dwim-shell-command")
+             (commit "dd742977abaa25991a8b0b8beff1ae9e4bb39fd6")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0b9nzla9gygljchdw04sr8c86h4sh52wqv644fzw5nmzvs9zkagj"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ;No tests.
+    (home-page "https://github.com/xenodium/dwim-shell-command")
+    (synopsis "Shell commands with @acronym{DWIM, do what I mean} behaviour")
+    (description
+     "This package provides @code{dwim-shell-command} as an opinionated,
+@acronym{DWIM, do what I mean} alternative to @code{shell-command}.")
+    (license license:gpl3+)))
+
 (define-public emacs-dvc
   (let ((revision "591")                ;no tags or official releases
         (guix-revision "1"))
@@ -10597,14 +10621,14 @@ source code using IPython.")
 (define-public emacs-ob-asymptote
   (package
     (name "emacs-ob-asymptote")
-    (version "1.0.1")
+    (version "1.0.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://elpa.gnu.org/packages/ob-asymptote-"
                            version ".tar"))
        (sha256
-        (base32 "0f1vpq691pna1p1lgqw2nzmdw25sjsmpcvgm2lj7n14kg7dizxal"))))
+        (base32 "0b9glzj3aq39rksb0bg4qvsnqknwjk7lbixapw9695hfr2l4hv02"))))
     (build-system emacs-build-system)
     (home-page "https://github.com/hurrja/ob-asymptote")
     (synopsis "Babel functions for Asymptote")
@@ -21156,7 +21180,7 @@ information via a consistent and well-integrated user interface.")
        (uri (string-append "https://elpa.gnu.org/packages/"
                            "adaptive-wrap-" version ".tar"))
        (sha256
-        (base32 "1gs1pqzywvvw4prj63vpj8abh8h14pjky11xfl23pgpk9l3ldrb0"))))
+        (base32 "1dz5mi21v2wqh969m3xggxbzq3qf78hps418rzl73bb57l837qp8"))))
     (build-system emacs-build-system)
     (home-page "https://elpa.gnu.org/packages/adaptive-wrap.html")
     (synopsis "Smart line-wrapping with wrap-prefix")
@@ -32048,11 +32072,11 @@ inserts it as an Org entry instead of displaying it in a new buffer.")
     (license license:gpl3+)))
 
 (define-public emacs-org-rss-publishing
-  (let ((commit "1b33dc252cfedfbb2107ea407266b168b71bebb1")
+  (let ((commit "7f7d1e0c2c777015b81362a3292a3c851b939913")
         (revision "0"))
     (package
       (name "emacs-org-rss-publishing")
-      (version (git-version "0.6" revision commit))
+      (version (git-version "0.8" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -32061,7 +32085,7 @@ inserts it as an Org entry instead of displaying it in a new buffer.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0axz3r8jw15imhfmbriljsiaxiiqhgrq77nad3kmmgpmvhhlk65f"))))
+          (base32 "067rk9wdz2cnrmzn1058knhz6p28an8ybbgkfgmr4z872f63r2yy"))))
       (build-system emacs-build-system)
       (arguments `(#:tests? #false)) ;no tests
       (home-page "https://git.sr.ht/~taingram/org-publish-rss")
@@ -35629,18 +35653,16 @@ support JSX syntax.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32
-           "0ha1qsz2p36pqa0sa2sp83lspbgx5lr7930qxnwd585liajzdd9x"))
-         (patches
-          (list
-           (origin
-             (method url-fetch)
-             (uri (string-append
-                   "https://github.com/gregsexton/origami.el"
-                   "/commit/" patch ".patch"))
-             (sha256
-              (base32
-               "0yia4dhqjzdidxd77s2ggg6mmj05jbsnwc35myzzhzh1zbq8mrfy")))))))
+          (base32 "0ha1qsz2p36pqa0sa2sp83lspbgx5lr7930qxnwd585liajzdd9x"))
+         (modules '((guix build utils)))
+         (snippet #~(substitute* (find-files "." "\\.el$")
+                      (("\\(require 'cl\\)")
+                       "(require 'cl-lib)")
+                      (("(destructuring-bind|remove-if)" all)
+                       (string-append "cl-" all))
+                      (("\\(face-attribute 'highlight :background\\)") "\
+(let ((color (face-attribute 'highlight :background)))
+  (and color (not (eq color 'unspecified)) color))")))))
       (build-system emacs-build-system)
       (propagated-inputs
        (list emacs-dash emacs-s))
@@ -42063,10 +42085,9 @@ and preferred services can easily be configured.")
           (base32 "06cznkqkm04zz5lqfb514aqvsr2p13arzysixv0ss0bqpvdq7cv7"))))
       (build-system emacs-build-system)
       (arguments
-       `(#:tests? #t
-         #:test-command
-         '("emacs" "--no-init-file" "--batch"
-           "--eval=(require 'ecukes)" "--eval=(ecukes)")))
+       (list #:test-command
+             #~(list "emacs" "--no-init-file" "--batch"
+                     "--eval=(require 'ecukes)" "--eval=(ecukes)")))
       (native-inputs
        (list emacs-ecukes emacs-espuds emacs-undercover openjdk9))
       (propagated-inputs

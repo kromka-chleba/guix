@@ -38,6 +38,7 @@
 ;;; Copyright © 2025 Ashvith Shetty <ashvithshetty0010@zohomail.in>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Marc Coquand <marc@coquand.email>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -232,8 +233,8 @@ intuitive, while also taking advantage of the capabilities of modern terminals."
       (license license:expat))))
 
 (define-public lem
-  (let ((commit "5fd512c8bab9de9a62709ac858fbb56337260cd5")
-        (revision "5"))
+  (let ((commit "96aec3ab957607e0ff35ff018d5e05ec4d52faa0")
+        (revision "6"))
     (package
       (name "lem")
       (version (git-version "2.2.0" revision commit))
@@ -244,7 +245,7 @@ intuitive, while also taking advantage of the capabilities of modern terminals."
                (url "https://github.com/lem-project/lem/")
                (commit commit)))
          (sha256
-          (base32 "0357k3a44xdlli05l9ayyddxncylf20bfb378lal1vnc8311cq7x"))
+          (base32 "1087s9vylx319mz7ld73f4h71gh62hw2f64a94dz9m25cqhsiq6d"))
          (file-name (git-file-name name version))
          (snippet
           #~(begin
@@ -457,7 +458,7 @@ competitive (as in keystroke count) with Vim.")
 (define-public kak-lsp
   (package
     (name "kak-lsp")
-    (version "18.1.1")
+    (version "18.1.3")
     (source
      (origin
        (method git-fetch)
@@ -465,7 +466,7 @@ competitive (as in keystroke count) with Vim.")
              (url "https://github.com/kak-lsp/kak-lsp")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
-       (sha256 "1dinxd3h0dllws1v28l1igvns94j91kifv1bxjds6859q22yhhpd")))
+       (sha256 "1wffw0whcjybjn7h1v83rjmga0qbzn0663ickfpx2l51wycz8c6s")))
     (build-system cargo-build-system)
     (arguments
      `(#:install-source? #f

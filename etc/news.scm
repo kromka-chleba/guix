@@ -37,10 +37,110 @@
 
 (channel-news
  (version 0)
+ (entry (commit "78d4b1e52c731502b29288ab6975bd9efa91392a")
+        (title
+         (en "New services for /etc/profile.d and /etc/bashrc.d")
+         (de "Neue Dienste für /etc/profile.d und /etc/bashrc.d"))
+        (body
+         (en "Two new services, @code{etc-profile-d-service-type} and
+@code{etc-bashrc-d-service-type}, can now be used to configure and extend your
+shell.  The services accept a list of file-like objects that must have the
+@file{.sh} file name extension.  @code{etc-bashrc-d-service-type} is now used
+instead of skeleton files to provision the Guix-provided Bash
+aliases (@file{/etc/bashrc.d/aliases.sh}).  It is also used to configure the
+@code{bash-completion} package, by provisioning
+@file{/etc/bashrc.d/bash_completion.sh}.  If your @code{operating-system}
+configuration does not include the @code{%base-services} or
+@code{%desktop-services}, you may want to add
+@code{(service etc-bashrc-d-service-type)} to your services, so Bash
+completion will continue working for new users.  See @samp{info \"(guix) Service
+Reference\"} for extra information and examples.")
+         (de "Zwei neue Dienste, @code{etc-profile-d-service-type} und
+@code{etc-bashrc-d-service-type}, können jetzt benutzt werden, um Ihre Shell zu
+konfigurieren und zu erweitern.  Die Dienste nehmen eine Liste dateiartiger
+Objekte entgegen, deren Dateinamen auf die Dateinamenserweiterung @file{.sh}
+enden müssen.  @code{etc-bashrc-d-service-type} wird jetzt anstelle von
+Skeleton-Dateien benutzt, um von Guix ausgelieferte Bash-Aliasse bereitzustellen
+(@file{/etc/bashrc.d/aliases.sh}). Mit ihm wird auch das
+@code{bash-completion}-Paket eingerichtet, indem
+@file{/etc/bashrc.d/bash_completion.sh} bereitgestellt wird.  Wenn Ihre
+Betriebssystemkonfiguration @code{%base-services} oder @code{%desktop-services}
+nicht beinhaltet, möchten Sie vielleicht
+@code{(service etc-bashrc-d-service-type)} in Ihre Dienstliste aufnehmen, damit
+Bash-Komplettierung weiterhin für neue Benutzer Befehle vervollständigt.  Siehe
+@samp{info \"(guix.de) Service-Referenz\"} für weitere Informationen und
+Beispiele.")))
+
+ (entry (commit "3b6e499d5e635e2189f1bf60279dbf5175c404bd")
+        (title
+         (en "Guix source code repository moved to Codeberg")
+         (de "Repository mit Guix’ Quellcode ist auf Codeberg umgezogen")
+         (fr "Dépôt de code source de Guix déplacé sur Codeberg"))
+        (body
+         (en "The canonical URL of the Guix repository is now
+@url{https://git.guix.gnu.org/guix.git}.
+
+No action is needed on your side: @command{guix pull} will now automatically
+fetch from the new URL, unless your @file{channels.scm} files refer to the
+former URL; in that case, you are encouraged to update it, though the former
+URL at @code{git.savannah.gnu.org} will remain valid for at least one
+year.
+
+It is now possible to report bugs and to propose changes using the issue and
+pull-request mechanisms at @url{https://codeberg.org/guix/guix}.  The
+@email{bug-guix@@gnu.org} and @email{guix-patches@@gnu.org} mailing lists
+remain available, including for new bugs and patches, until December 31st,
+2025.
+
+Guix Consensus Document (GCD) 002, which is the result of community
+consensus-building, documents the motivation, choices, and open issues of this
+migration to Codeberg:
+@url{https://codeberg.org/guix/guix-consensus-documents/src/branch/main/002-codeberg.md}.")
+         (de "Die kanonische URL von Guix’ Repository ist jetzt
+@url{https://git.guix.gnu.org/guix.git}.
+
+Sie müssen dazu nichts tun: @command{guix pull} wird jetzt automatisch Code von
+der neuen URL beziehen, außer wenn Ihre @file{channels.scm}-Dateien auf die alte
+URL verweisen.  In diesem Fall rufen wir Sie dazu auf, sie zu aktualisieren,
+obwohl die alte URL unter @code{git.savannah.gnu.org} noch mindestens ein Jahr
+gültig bleiben wird.
+
+Sie haben jetzt die Möglichkeit, den Pull-Request-Mechanismus unter
+@url{https://codeberg.org/guix/guix} zu nutzen, um Fehler zu melden und
+Änderungen vorzuschlagen.  Die Mailing-Listen @email{bug-guix@@gnu.org} und
+@email{guix-patches@@gnu.org} bleiben erhalten und Sie können bis zum 31.
+Dezember 2025 auch neue Fehlerberichte und Patches dorthin schicken.
+
+Im Guix Consensus Document (GCD) 002, das die Gemeinde im Konsens entschieden
+hat, ist dokumentiert, welche Motivation, Wahlmöglichkeiten und ungelöste
+Probleme den Umzug auf Codeberg begleiten:
+@url{https://codeberg.org/guix/guix-consensus-documents/src/branch/main/002-codeberg.md}.")
+         (fr "L'URL canonique du dépôt Guix est désormais
+@url{https://git.guix.gnu.org/guix.git}.
+
+Aucune action n'est nécessaire de votre part : @command{guix pull} va
+automatiquement télécharger depuis la nouvelle URL, à moins que vos fichiers
+@file{channels.scm} ne fassent référence à l'ancienne URL ; dans ce cas, vous
+êtes encouragé·e à les mettre à jour, bien que l'ancienne adresse
+@code{git.savannah.gnu.org} reste valide pour au moins un an.
+
+Il est maintenant possible de faire remonter des bugs et de proposer des
+changements @i{via} les mécanismes de bugs et de requête de fusion à
+@url{https://codeberg.org/guix/guix}.  Les listes de diffusion
+@email{bug-guix@@gnu.org} et @email{guix-patches@@gnu.org} restent
+disponibles, y compris pour des nouveaux bugs ou changements, jusqu'au 31
+décembre 2025.
+
+Le Guix Consensus Document (GCD) 002, qui est le résultat du consensus
+construit par la communauté, documente les motivations, les choix et les
+questions ouvertes relatives à cette migration sur Codeberg :
+@url{https://codeberg.org/guix/guix-consensus-documents/src/branch/main/002-codeberg.md}.")))
 
  (entry (commit "271a8fc2499135c3f0198bf69c9f2a60f1961bf1")
         (title
-         (en "@samp{guix refresh} can now target partial versions"))
+         (en "@samp{guix refresh} can now target partial versions")
+         (de "@samp{guix refresh} kann jetzt unvollständige Versionen als Ziel
+nehmen"))
         (body
          (en "While it had been possible for some time to use the
 @option{--target-version} to update to a partially defined version, this can

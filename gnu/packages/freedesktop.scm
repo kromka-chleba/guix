@@ -1466,7 +1466,7 @@ Python.")
 (define-public hyprland-protocols
   (package
     (name "hyprland-protocols")
-    (version "0.6.2")
+    (version "0.6.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1475,7 +1475,7 @@ Python.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "17044wvfgcj7sks1dvhsbycp3ls82g1wadi3hzd6n9bhpszrpzz6"))))
+                "0njqyl6vsqlb8dv4wdn5h34dk67yqzc99gvwa13j252cv3n0bpya"))))
     (build-system meson-build-system)
     (home-page "https://github.com/hyprwm/hyprland-protocols")
     (synopsis "Wayland protocol extensions for Hyprland")
@@ -1591,7 +1591,7 @@ protocol either in Wayland core, or some other protocol in wayland-protocols.")
   (package
     (inherit wayland-protocols)
     (name "wayland-protocols-next")
-    (version "1.42")
+    (version "1.43")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1600,7 +1600,7 @@ protocol either in Wayland core, or some other protocol in wayland-protocols.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1gx8788wgkl42x3fh4kwkfz2xy7n84slbjwqg9w5z2b7jjkwzrrq"))))))
+                "1pgjkc0gw11xb55kn8hf8adnmx3bkpgb4p0haylb2jh7irqhxhqd"))))))
 
 (define-public wayland-utils
   (package

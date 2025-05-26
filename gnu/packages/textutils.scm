@@ -1271,7 +1271,7 @@ formats (e.g. Bibtex, RIS, etc.) using a common XML intermediate.")
 (define-public goawk
   (package
     (name "goawk")
-    (version "1.29.0")
+    (version "1.29.1")
     (source
      (origin
        (method git-fetch)
@@ -1280,7 +1280,7 @@ formats (e.g. Bibtex, RIS, etc.) using a common XML intermediate.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11ha3wzpwl02g921vz5dvhblim7jf5wxd0gi4vn9jppxah1d5kgl"))))
+        (base32 "1dn4f8a8wp765v0112vmj2qq2brv7z2c8gr16rfpklxq5p4ml2rx"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -1496,7 +1496,7 @@ of a Unix terminal to HTML code.")
 (define-public vale
   (package
     (name "vale")
-    (version "3.9.4")
+    (version "3.9.5")
     (source
      (origin
        (method git-fetch)
@@ -1504,7 +1504,7 @@ of a Unix terminal to HTML code.")
              (url "https://github.com/errata-ai/vale")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "009gyrn2mi7bg10v6mqrr6c6ii5l2vbhs7mvh7g4xxgqhaqzpbhp"))
+        (base32 "119iiyh164rkj7jlghr2j1kbhc8k1bvfhsfvd972zs092fg7dh4p"))
        (file-name (git-file-name name version))))
     (build-system go-build-system)
     (arguments

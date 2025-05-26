@@ -5651,6 +5651,11 @@ not provide a way to change the headers on its own.")
            (add-after 'unpack 'run-hall
              (lambda _
                (setenv "HOME" "/tmp")   ; for ~/.hall
+               ;; Patch hall.scm.
+               (substitute* "hall.scm"
+                 (("\\(copyright '\\(2018\\)\\)")
+                  "(email \"alex@pompo.co\") (copyright (2018))"))
+               ;; Invoke hall.
                (invoke "hall" "build-system" "-x"))))))
       (native-inputs
        (list autoconf
@@ -6815,8 +6820,8 @@ is an attempt to combine both into something useful.")
       (license license:asl2.0))))
 
 (define-public guile-knots
-  (let ((commit "1dca6d755e910b67636b791242f0948356cf8c4d")
-        (revision "18"))
+  (let ((commit "cbafdb8668f33c7d3eabeebc60731df0d585636a")
+        (revision "20"))
     (package
     (name "guile-knots")
     (version (git-version "0" revision commit))
@@ -6827,7 +6832,7 @@ is an attempt to combine both into something useful.")
                     (commit commit)))
               (sha256
                (base32
-                "1ycczphiqqz39fm7cfga5q0aklny22a014y1v0b4jsq6jc00wydk"))
+                "06khwcjdqvkhyxknn7px1k0qvd6vmb943zgvxabm0bqk0rkp02ld"))
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs

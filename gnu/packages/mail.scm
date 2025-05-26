@@ -58,7 +58,7 @@
 ;;; Copyright © 2024 Benjamin Slade <slade@lambda-y.net>
 ;;; Copyright © 2024 Jean Simard <woshilapin@tuziwo.info>
 ;;; Copyright © 2024, 2025 Zheng Junjie <873216071@qq.com>
-;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
@@ -116,7 +116,6 @@
   #:use-module (gnu packages glib)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
-  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-crypto)
@@ -1311,7 +1310,7 @@ security functionality including PGP, S/MIME, SSH, and SSL.")
 (define-public mu
   (package
     (name "mu")
-    (version "1.12.9")
+    (version "1.12.11")
     (source
      (origin
        (method git-fetch)
@@ -1320,7 +1319,7 @@ security functionality including PGP, S/MIME, SSH, and SSL.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1jgphx4yd899zg8g0w065ml962jwj848hlc4svpzqxpsgg2bb8m3"))))
+        (base32 "1kvnm75q77g3l8vn6s0zh7ks7vdqs5d9hgc8i6qc367m2panz0mp"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config
@@ -3326,14 +3325,14 @@ from the Cyrus IMAP project.")
 (define-public opensmtpd
   (package
     (name "opensmtpd")
-    (version "7.6.0p1")
+    (version "7.7.0p0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.opensmtpd.org/archives/"
                            "opensmtpd-" version ".tar.gz"))
        (sha256
-        (base32 "15sa1vzh6rbl0c8fwl4kz5zrlarp8mxaw47q6wk3lrd6h9lq0z5j"))))
+        (base32 "0s1r93f9g8rpbd13v68arx1apgszjfm1knww2fzf9grcrshkv5dh"))))
     (build-system gnu-build-system)
     (inputs
      ;; OpenSMTPd bundled (a subset of) libasr and libtls, which we use.  See

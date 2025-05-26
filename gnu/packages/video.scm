@@ -154,7 +154,6 @@
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnunet)
   #:use-module (gnu packages gnupg)
-  #:use-module (gnu packages golang)
   #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages haskell-xyz)
@@ -3103,7 +3102,7 @@ YouTube.com and many more sites.")
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2025.04.30")
+    (version "2025.05.22")
     (source
      (origin
        (method git-fetch)
@@ -3115,7 +3114,7 @@ YouTube.com and many more sites.")
        (snippet '(substitute* "pyproject.toml"
                    (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "0qn1x2i0qpizsbh63nx0f09p62ilcbksnhiyc5qik4xykg6idhxy"))))
+        (base32 "0sgiwah8qcinc9idvn8garnmqd9rj07cjfndy7z1qvakczknw5q2"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:tests? ,(not (%current-target-system))
@@ -5212,7 +5211,7 @@ practically any type of media.")
 (define-public libmediainfo
   (package
     (name "libmediainfo")
-    (version "23.11")
+    (version "25.04")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://mediaarea.net/download/source/"
@@ -5220,7 +5219,7 @@ practically any type of media.")
                                   name "_" version ".tar.xz"))
               (sha256
                (base32
-                "0gc5brnwagdgaknkpyhkbpwc52q19vf5i3sayifhsg4yqzy58zhr"))))
+                "1cdvh4nsl2irwlkq39c3m26sl9lmmn5shp440fl7m05pkmyfsidd"))))
     ;; TODO add a Big Buck Bunny webm for tests.
     (native-inputs
      (list autoconf automake libtool pkg-config))
@@ -5275,7 +5274,7 @@ MPEG-2, MPEG-4, DVD (VOB)...
 (define-public mediainfo
   (package
     (name "mediainfo")
-    (version "23.11")
+    (version "25.04")
     (source (origin
               (method url-fetch)
               ;; Warning: This source has proved unreliable 1 time at least.
@@ -5286,7 +5285,7 @@ MPEG-2, MPEG-4, DVD (VOB)...
                                   name "_" version ".tar.xz"))
               (sha256
                (base32
-                "1hy9m2l94ymhpcrhlqqjpgl24lz33qm239pcdlic3z5zs6qb2740"))))
+                "1bikda1a9c6d04w8cnwc229x9x3sp2v63zm5mhxjscq4j7z569ab"))))
     (native-inputs
      (list autoconf automake libtool pkg-config))
     (inputs

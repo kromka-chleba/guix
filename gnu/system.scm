@@ -9,7 +9,7 @@
 ;;; Copyright © 2020 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2020, 2021 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2020 Florian Pelz <pelzflorian@pelzflorian.de>
-;;; Copyright © 2020, 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020, 2022, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2020, 2023 Janneke Nieuwenhuizen <jannek@gnu.org>
 ;;; Copyright © 2020, 2022, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
@@ -208,12 +208,21 @@ VERSION is the target version of the boot-parameters record."
   (let ((root (file-system-device->string root-device
                                           #:uuid-type 'dce)))
     (append
-     (if (string=? root "none")
-         '() ;  Ignore the case where the root is "none" (typically tmpfs).
-         ;; Note: Always use the DCE format because that's what
-         ;; (gnu build linux-boot) expects for the 'root'
-         ;; kernel command-line option.
-         (list (string-append (if version>0? "root=" "--root=") root)))
+     (cond
+      ((string=? root "tmpfs")
+       ;; Required when using tmpfs as root file system.
+       ;; TODO: Include file system information in boot parameters, so that we
+       ;; can detect tmpfs by file system type instead of device name here.
+       '("rootfstype=tmpfs"))
+      ((string=? root "none")
+       ;; Ignore unhandled cases where the root is "none".  This requires the
+       ;; user to set correct arguments.
+      '())
+      (else
+       ;; Note: Always use the DCE format because that's what
+       ;; (gnu build linux-boot) expects for the 'root'
+       ;; kernel command-line option.
+       (list (string-append (if version>0? "root=" "--root=") root))))
      (list #~(string-append (if #$version>0? "gnu.system=" "--system=") #$system)
            #~(string-append (if #$version>0? "gnu.load=" "--load=")
                             #$system "/boot")))))
@@ -960,7 +969,6 @@ of PROVENANCE-SERVICE-TYPE to its services."
         nvi
         man-db
         info-reader                     ;the standalone Info reader (no Perl)
-        bash-completion
         kbd
         ;; The 'sudo' command is already in %SETUID-PROGRAMS, but we also
         ;; want the other commands and the man pages (notably because
@@ -1122,27 +1130,25 @@ export DICPATH=\"$HOME/.guix-profile/share/hunspell:/run/current-system/profile/
 # Allow GStreamer-based applications to find plugins.
 export GST_PLUGIN_PATH=\"$HOME/.guix-profile/lib/gstreamer-1.0\"
 
-if [ -n \"$BASH_VERSION\" -a -f /etc/bashrc ]
-then
-  # Load Bash-specific initialization code.
-  . /etc/bashrc
+for i in /etc/profile.d/*.sh; do
+    if [ -r \"$i\" ]; then
+        if [ \"${-#*i}\" != \"$-\" ]; then
+            . \"$i\"
+        else
+            . \"$i\" >/dev/null
+        fi
+    fi
+done
+unset i
+
+if [ -n \"$BASH_VERSION\" -a -f /etc/bashrc ]; then
+  # Load Bash-specific initialization code, taking care to not source
+  # /etc/bashrc when invoked from a non-interactive SSH shell,
+  # to avoid recursion (/etc/bashrc also sources /etc/profile
+  # in the non-login, non-interactive SSH case).
+  [[ $- != *i* && -n $SSH_CLIENT ]] || source /etc/bashrc
 fi
-"))
-
-        (bashrc    (plain-file "bashrc" "\
-# Bash-specific initialization.
-
-# Provide a default prompt.  The user's ~/.bashrc can override it.
-PS1='\\u@\\h \\w${GUIX_ENVIRONMENT:+ [env]}\\$ '
-
-# The 'bash-completion' package.
-if [ -f /run/current-system/profile/etc/profile.d/bash_completion.sh ]
-then
-  # Bash-completion sources ~/.bash_completion.  It installs a dynamic
-  # completion loader that searches its own completion files as well
-  # as those in ~/.guix-profile and /run/current-system/profile.
-  source /run/current-system/profile/etc/profile.d/bash_completion.sh
-fi\n")))
+")))
     (service etc-service-type
      `(("os-release" ,os-release)
        ("services" ,(file-append net-base "/etc/services"))
@@ -1152,7 +1158,7 @@ fi\n")))
        ("issue" ,issue)
        ,@(if nsswitch `(("nsswitch.conf" ,nsswitch)) '())
        ("profile" ,profile)
-       ("bashrc" ,bashrc)
+       ("bashrc" ,%default-bashrc)
        ;; Write the operating-system-host-name to /etc/hostname to prevent
        ;; NetworkManager from changing the system's hostname when connecting
        ;; to certain networks.  Some discussion at

@@ -300,14 +300,14 @@
 (define-public httpd
   (package
     (name "httpd")
-    (version "2.4.58")
+    (version "2.4.63")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://apache/httpd/httpd-"
                                  version ".tar.bz2"))
              (sha256
               (base32
-               "1id45r2ccgkbjm9i998997ch32lvicpyynyx8x6aa4420wmdf5ps"))))
+               "1as69kwk53zmjn5wwkg6a5szsapc12h4jzfy92r68a4vp5m27z48"))))
     (build-system gnu-build-system)
     (native-inputs (list `(,pcre "bin")))       ;for 'pcre-config'
     (inputs (list apr apr-util libxcrypt openssl perl)) ; needed to run bin/apxs
@@ -1133,7 +1133,7 @@ similar to live activity monitoring provided with NGINX plus.")
 (define-public lighttpd
   (package
     (name "lighttpd")
-    (version "1.4.78")
+    (version "1.4.79")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.lighttpd.net/lighttpd/"
@@ -1141,7 +1141,7 @@ similar to live activity monitoring provided with NGINX plus.")
                                   "lighttpd-" version ".tar.xz"))
               (sha256
                (base32
-                "0giavficc2yjl53cdbc7pd50wjyx0k1y32gs3kyfkjbmpkl3j1rw"))))
+                "1gc4c352jlqqgxyrgz2f5s7li1vxpd15ykza3wnp125dncjsca9v"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -5382,8 +5382,8 @@ Cloud.")
     (license license:expat)))
 
 (define-public guix-data-service
-  (let ((commit "d60a8a44cbc0efdf1f9194295e22769818ac2a3a")
-        (revision "66"))
+  (let ((commit "dfbfc846d60195ae62526de13d0c662375c09b43")
+        (revision "68"))
     (package
       (name "guix-data-service")
       (version (string-append "0.0.1-" revision "." (string-take commit 7)))
@@ -5395,7 +5395,7 @@ Cloud.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1c9iyllkkrww9znqa7zfpm6104ga5mcv1qq0j2ykdg53qxykgxnn"))))
+                  "0mq04i1f9wlny6mmvn163i34573a32pq4acc966vqcvypa82q51v"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -5469,7 +5469,7 @@ Cloud.")
              guile-squee
              guile-lzlib))
       (native-inputs
-       (list (car (assoc-ref (package-native-inputs guix) "guile"))
+       (list (lookup-package-native-input guix "guile")
              autoconf
              automake
              emacs-minimal

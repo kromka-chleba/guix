@@ -914,7 +914,7 @@ utilities used across the hypr* ecosystem.")
 (define-public hyprlang
   (package
     (name "hyprlang")
-    (version "0.6.0")
+    (version "0.6.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -923,7 +923,7 @@ utilities used across the hypr* ecosystem.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "18f8vlg5ypw35gyi8gy0wqh5jvg1q67qywrb750bx8pk9gi1agx2"))))
+                "05p4nghkr0qpqjvcjrgxjqjwswmvg245hmhlcgdacpvdfmn38m4i"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -948,7 +948,7 @@ language used in Hyprland.")
 (define-public hyprutils
   (package
     (name "hyprutils")
-    (version "0.6.0")
+    (version "0.7.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -957,7 +957,7 @@ language used in Hyprland.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "11lvyd1inannmc6mdb8f4nx2h68ahwc9fi566jzh1wlvdh8h18pz"))))
+                "04vn5vxzxixfbyrvhhgrj1b2m7yhndbnv1y78v0q0i9kpmnvvlav"))))
     (build-system cmake-build-system)
     (arguments
      (list

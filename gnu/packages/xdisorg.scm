@@ -159,6 +159,7 @@
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages tcl)
   #:use-module (gnu packages terminals)
+  #:use-module (gnu packages video)
   #:use-module (gnu packages xml)
   #:use-module (gnu packages wm)
   #:use-module (gnu packages webkit)
@@ -2913,22 +2914,32 @@ temperature of the screen.")
 (define-public xsecurelock
   (package
     (name "xsecurelock")
-    (version "1.8.0")
+    (version "1.9.0")
     (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/google/xsecurelock/releases"
-                    "/download/v" version "/xsecurelock-" version ".tar.gz"))
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/google/xsecurelock")
+                    (commit (string-append "v" version))))
               (sha256
-               (base32 "1i7vhzysirr5kra15vd501b79k0jgs11lkb9ck3hx6vicxm204d3"))))
+               (base32
+                "0knafjzdzxjh2b1mrrxbcqvg76ia6vazv8shklb6ggp6kj5srxiq"))))
     (build-system gnu-build-system)
     (arguments
-     '(#:configure-flags
-       '("--with-pam-service-name=login"
+     (list
+      #:make-flags
+      #~(list (string-append "GIT_VERSION=v" #$(package-version this-package)))
+      #:configure-flags
+      #~(list
+         "--with-pam-service-name=login"
          "--with-xkb"
-         "--with-default-authproto-module=/run/privileged/bin/authproto_pam")))
+         "--with-default-authproto-module=/run/privileged/bin/authproto_pam"
+         (string-append "--with-mpv="
+                        #$(this-package-input "mpv") "/bin/mpv")
+         (string-append "--with-xscreensaver="
+                        #$(this-package-input "xscreensaver")
+                        "/libexec/xscreensaver"))))
     (native-inputs
-     (list pandoc pkg-config))
+     (list autoconf automake pandoc pkg-config))
     (inputs
      (list fontconfig
            libx11
@@ -2939,11 +2950,14 @@ temperature of the screen.")
            libxmu
            libxrandr
            libxscrnsaver
-           linux-pam))
+           linux-pam
+           mpv
+           xscreensaver))
     (home-page "https://github.com/google/xsecurelock")
     (synopsis "X11 screen lock utility with the primary goal of security")
-    (description "@code{xsecurelock} is an X11 screen locker which uses
-a modular design to avoid the usual pitfalls of screen locking utility design.
+    (description
+     "@code{xsecurelock} is an X11 screen locker which uses a modular design
+to avoid the usual pitfalls of screen locking utility design.
 
 As a consequence of this design, you shouldn't use the usual screen locker
 service with @code{xsecurelock}.  Instead, add a helper binary to your
@@ -3808,7 +3822,7 @@ This package is the fork of hsetroot by Hyriand.")
 (define-public hyprcursor
   (package
     (name "hyprcursor")
-    (version "0.1.11")
+    (version "0.1.12")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3817,7 +3831,7 @@ This package is the fork of hsetroot by Hyriand.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0k050802bpgdn1hnrfgadxs54hx0zak3y3jzbjnsb69i6ayydr1c"))))
+                "1blclwsk0p0990pk1ac9kvnlpafb6kh2knimb8bm25hqpr0xxy92"))))
     (build-system cmake-build-system)
     (arguments (list #:tests? #f))      ;TODO: No themes currently packaged.
     (native-inputs (list gcc-14 pkg-config))
@@ -3831,7 +3845,7 @@ This package is the fork of hsetroot by Hyriand.")
 (define-public hyprlock
   (package
    (name "hyprlock")
-   (version "0.7.0")
+   (version "0.8.2")
    (source
     (origin
      (method git-fetch)
@@ -3840,7 +3854,7 @@ This package is the fork of hsetroot by Hyriand.")
            (commit (string-append "v" version))))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "03ivr5nsjwiwvpdxpjnldwawy8sx8qgwhs57242xkb0zz0w0gvsk"))))
+      (base32 "1wrndp1bkyfp741mgvjflkbq4pvdlccrh6xaz41y1f9967j8magm"))))
    (build-system cmake-build-system)
    (arguments
     `(#:cmake ,cmake-next
@@ -3882,7 +3896,7 @@ GPU-accelerated screen locking utility.")
 (define-public hyprpaper
   (package
    (name "hyprpaper")
-   (version "0.7.4")
+   (version "0.7.5")
    (source (origin
             (method git-fetch)
             (uri (git-reference
@@ -3891,7 +3905,7 @@ GPU-accelerated screen locking utility.")
             (file-name (git-file-name name version))
             (sha256
              (base32
-              "151r6s04yy3digl3g6gs49xx41yv4xldmbnqr87gp5nz705hjsd6"))))
+              "0j3hbqfx40cjxkvaiqzfij8pgblg2hyv9lbbjjh4iahciwgh7623"))))
    (build-system cmake-build-system)
    (arguments
     `(#:tests? #f ;; no test
@@ -3920,7 +3934,7 @@ compositors, though.")
 (define-public hyprpicker
   (package
     (name "hyprpicker")
-    (version "0.4.2")
+    (version "0.4.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3929,7 +3943,7 @@ compositors, though.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1jnncnsrb8h3driryj27mnamh5fqs0sys6xmfwsyg4qx3dgb6s89"))))
+                "11sk2kkwqvahp0rf51mr7bax8n2ypqqgydi5hi53aagjsl4xxbdm"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f                  ;No tests.

@@ -49,7 +49,6 @@
   #:use-module (guix git-download)
   #:use-module (guix utils)
   #:use-module (gnu packages)
-  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-xyz))
 
@@ -147,6 +146,34 @@ value and call @code{t.Fatal()} if the assertion fails.")
     (description
      "This package provides a quick and easy string diffing functions based on
 github.com/sergi/go-diff, mainly for diffing strings in tests.")
+    (license license:expat)))
+
+;; XXX: Not maintained project: This repository has been archived by the owner
+;; on May 18, 2023. It is now read-only.  Consider to remove when nothing
+;; depends on it.
+(define-public go-github-com-benbjohnson-clock
+  (package
+    (name "go-github-com-benbjohnson-clock")
+    (version "1.3.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/benbjohnson/clock")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1p7n09pywqra21l981fbkma9vzsyf31pbvw6xg5r4hp8h8scf955"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/benbjohnson/clock"))
+    (home-page "https://github.com/benbjohnson/clock")
+    (synopsis "Small library for mocking time in Go")
+    (description
+     "@code{clock} is a small library for mocking time in Go.  It provides an
+interface around the standard library's @code{time} package so that the
+application can use the realtime clock while tests can use the mock clock.")
     (license license:expat)))
 
 (define-public go-github-com-bitfield-gotestdox
@@ -316,6 +343,33 @@ test (using testing.TB's @code{TempDir}) and with a few helper methods.")
      "A testing library for Go programs.")
     (license license:expat)))
 
+(define-public go-github-com-coder-quartz
+  (package
+    (name "go-github-com-coder-quartz")
+    (version "0.1.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/coder/quartz")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "08ghwy4i4h9shxchcly69pqprqqcs7pcvaprc7kjgghbvwbgr69k"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/coder/quartz"))
+    (home-page "https://github.com/coder/quartz")
+    (synopsis "Golang time testing library for writing deterministic unit tests")
+    (description
+     "Package quartz is a library for testing time related code.  It exports
+an interface Clock that mimics the standard library time package functions.
+In production, an implementation that calls thru to the standard library is
+used.  In testing, a Mock clock is used to precisely control and intercept
+time functions.")
+    (license license:cc0)))
+
 (define-public go-github-com-corpix-uarand
   (package
     (name "go-github-com-corpix-uarand")
@@ -340,6 +394,40 @@ test (using testing.TB's @code{TempDir}) and with a few helper methods.")
      "This package implements a functionality to generate random user-agent
 strings which may be used in mock tests.")
     (license license:unlicense)))
+
+(define-public go-github-com-data-dog-go-sqlmock
+  (package
+    (name "go-github-com-data-dog-go-sqlmock")
+    (version "1.5.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/DATA-DOG/go-sqlmock")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vpvdx9hwmx9gm27aq5r5219xpaxz0gy4q1iqskk4saz05bspn0f"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/DATA-DOG/go-sqlmock"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "examples")))))))
+    (propagated-inputs
+     (list go-github-com-kisielk-sqlstruct))
+    (home-page "https://github.com/DATA-DOG/go-sqlmock")
+    (synopsis "SQL driver mock for Golang")
+    (description
+     "Package sqlmock is a mock library implementing sql driver.  Which has
+one and only purpose - to simulate any sql driver behavior in tests, without
+needing a real database connection.  It helps to maintain correct
+@acronym{TDD, Test Driven Development} workflow.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-davecgh-go-spew
   (package
@@ -403,6 +491,40 @@ style).
 @url{https://users.cs.utah.edu/~regehr/papers/mintest.pdf, delta-minimization}
 test minimization algorithm.")
     (license license:bsd-2)))
+
+(define-public go-github-com-dvyukov-go-fuzz
+  (package
+    (name "go-github-com-dvyukov-go-fuzz")
+    (version "0.0.0-20240924070022-e577bee5275c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dvyukov/go-fuzz")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07ckgxxphv0157g6gyganrinynvw43c3mvizagjbjm3q2blymfh3"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (for-each delete-file-recursively
+                           (list "go-fuzz/vendor" "test/vendor"))))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:skip-build? #t
+      #:tests? #f
+      #:import-path "github.com/dvyukov/go-fuzz"))
+    (home-page "https://github.com/dvyukov/go-fuzz")
+    (synopsis "Randomized testing for Golang")
+    (description
+     "Go-fuzz is a coverage-guided
+@url{http://en.wikipedia.org/wiki/Fuzz_testing, fuzzing solution} for testing
+of Go packages.  Fuzzing is mainly applicable to packages that parse complex
+inputs (both text and binary), and is especially useful for hardening of
+systems that parse inputs from potentially malicious users (e.g. anything
+accepted over a network).")
+    (license license:asl2.0)))
 
 (define-public go-github-com-elgris-jsondiff
   (package
@@ -469,6 +591,33 @@ fgprof is designed for analyzing applications with mixed I/O and CPU
 workloads.  This kind of profiling is also known as wall-clock profiling.")
     (license license:expat)))
 
+(define-public go-github-com-filecoin-project-go-clock
+  (package
+    (name "go-github-com-filecoin-project-go-clock")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/filecoin-project/go-clock")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0rk2m07z42g9dxxda9a14caskc01pqfhpkcy5lf161lh8d8wf8g6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/filecoin-project/go-clock"))
+    (home-page "https://github.com/filecoin-project/go-clock")
+    (synopsis "Mocking time in Go")
+    (description
+     "Clock is a small library for mocking time in Go.  It provides an
+interface around the standard library's @url{https://pkg.go.dev/time, @code{
+time}} package so that the application can use the realtime clock while tests
+can use the mock clock.  This is a maintained fork of benbjohnson's
+@url{https://github.com/benbjohnson/clock, clock} package.")
+    (license license:expat)))
+
 ;; XXX: The project looks like abandoned, see
 ;; <https://github.com/frankban/quicktest/issues/172>, remove when nothing
 ;; depends on it.
@@ -504,6 +653,30 @@ workloads.  This kind of profiling is also known as wall-clock profiling.")
     (synopsis "Quick helpers for testing Go applications")
     (description
      "Package quicktest provides a collection of Go helpers for writing
+tests.")
+    (license license:expat)))
+
+(define-public go-github-com-gdey-tbltest
+  (package
+    (name "go-github-com-gdey-tbltest")
+    (version "0.0.0-20180914212833-1865222d591f")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gdey/tbltest")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14mfhhqd0qm0m9nhk02vrj31bjnspa7b0ijbmy0j3bhbkh66xbcs"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gdey/tbltest"))
+    (home-page "https://github.com/gdey/tbltest")
+    (synopsis "Table driven tests for Golang")
+    (description
+     "Package tbltest implements helper functions to help write table driven
 tests.")
     (license license:expat)))
 
@@ -1776,7 +1949,10 @@ execution when a test fails.")
                              "TestStackModeMultipleInvocationInheritance"
                              "TestStackModeMultipleInvocationInheritance2"
                              "TestStackModeMultipleInvocationInheritance3"
-                             "TestWatcher")
+                             "TestWatcher"
+                             #$@(if (target-arm?)
+                                    '("TestInfiniteLoopWithTrailingFail")
+                                    '()))
                        "|"))))
     (propagated-inputs
      (list go-github-com-jtolds-gls
@@ -2354,7 +2530,7 @@ built-in @code{testing} package, but can be used in other contexts too.")
 (define-public go-gotest-tools-v3
   (package
     (name "go-gotest-tools-v3")
-    (version "3.5.1")
+    (version "3.5.2")
     (source
      (origin
        (method git-fetch)
@@ -2363,7 +2539,7 @@ built-in @code{testing} package, but can be used in other contexts too.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1r5mc6slab6fj2si9nripl7fdq097s694gsn1gsxg2wj7605m5v4"))
+        (base32 "00kv9j55sgidyya8n0m11sp8ianqy7iknyqhi1qr0ck9mq9bnj1s"))
        (modules '((guix build utils)))
        (snippet
         #~(begin
@@ -2381,23 +2557,24 @@ built-in @code{testing} package, but can be used in other contexts too.")
                        ;; Most of these failing tests can't read test file
                        ;; maybe due to the symlink can't be resolved properly
                        ;; or have assertion not equal.
-                       (list "TestAssert_WithBinaryExpression_Failures"
-                             "TestAssertWithBool.*"
-                             "TestCheckFailure"
-                             "TestCheckEqualFailure"
-                             "TestCheck_MultipleFunctionsOnTheSameLine"
-                             "TestEqualFailure"
-                             "TestEqualFailure.*"
-                             "TestAssertFailureWithOfflineComparison"
-                             "TestErrorTypeFailure"
-                             "TestErrorIs"
-                             "TestEqual_WithGoldenUpdate"
-                             "TestMigrateFile.*"
-                             "TestMigrate_AssertAlready.*"
-                             "TestFormattedCallExprArg.*"
+                       (list "TestEqual_WithGoldenUpdate"
+                             "TestMigrateFileReplacesTestingT"
+                             "TestMigrateFileWithNamedCmpPackage"
+                             "TestMigrateFileWithCommentsOnAssert"
+                             "TestMigrateFileConvertNilToNilError"
+                             "TestMigrateFileConvertAssertNew"
+                             "TestMigrateFileWithExtraArgs"
+                             "TestMigrate_AssertAlreadyImported"
+                             "TestMigrate_AssertAlreadyImportedWithAlias"
+                             "TestWaitOnSocketWithTimeout"
                              "TestWaitOnSocketWithTimeout/connection_to_"
-                             "TestIfCondition"
-                             "TestIfCondition.*")
+                             ;; poll_test.go:113: assertion failed: string
+                             ;; "timeout hit after 10ms: first check never
+                             ;; completed" does not contain "assertion failed:
+                             ;; 3 (int) != 4 (int)"
+                             #$@(if (target-arm?)
+                                    '("TestWaitOn_WithCompare")
+                                    '()))
                        "|"))))
     (propagated-inputs
      (list go-github-com-google-go-cmp

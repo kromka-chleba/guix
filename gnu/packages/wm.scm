@@ -334,39 +334,43 @@ or musca).
     (license license:bsd-2)))
 
 (define-public hypridle
-  (package
-    (name "hypridle")
-    (version "0.1.5")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/hyprwm/hypridle")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1622iz8bl8mi7gj2sc2jq6z7622l7l2izj1l9ajwj2mxpwpkdhbs"))))
-    (build-system cmake-build-system)
-    (arguments (list #:tests? #f)) ;No tests.
-    (native-inputs (list gcc-14 pkg-config))
-    (inputs
-     (list hyprlang
-           hyprutils
-           sdbus-c++
-           wayland
-           wayland-protocols))
-    (home-page "https://github.com/hyprwm/hypridle")
-    (synopsis "Hyprland's idle daemon")
-    (description
-     "Hyprland's idle daemon, based on the @code{ext-idle-notify-v1} Wayland
-protocol.  Hypridle has support for D-Bus's loginctl
-commands (lock/unlock/before-sleep) and inhibit.")
-    (license license:bsd-3)))
+  ;; Go back to regular versioning on next release.
+  (let ((commit "4f1c165d3e340331de020b46b33a3edb2fd9d55e")
+        (revision "1"))
+    (package
+      (name "hypridle")
+      (version (git-version "0.1.6" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/hyprwm/hypridle")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1f75vfd5fv8zhd7hy7lg26wmlaslxqj2knf3zi6wnv21n63m3wa1"))))
+      (build-system cmake-build-system)
+      (arguments (list #:tests? #f)) ;No tests.
+      (native-inputs (list gcc-14 pkg-config))
+      (inputs
+       (list hyprland-protocols
+             hyprlang
+             hyprutils
+             hyprwayland-scanner
+             sdbus-c++
+             wayland
+             wayland-protocols))
+      (home-page "https://github.com/hyprwm/hypridle")
+      (synopsis "Hyprland's idle daemon")
+      (description "Hyprland's idle daemon, based on the
+@code{ext-idle-notify-v1} Wayland protocol.  Hypridle has support for D-Bus's
+loginctl commands (lock/unlock/before-sleep) and inhibit.")
+      (license license:bsd-3))))
 
 (define-public hyprland
   (package
     (name "hyprland")
-    (version "0.48.1")
+    (version "0.49.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/hyprwm/Hyprland"
@@ -383,7 +387,7 @@ commands (lock/unlock/before-sleep) and inhibit.")
                               "subprojects"))))
               (sha256
                (base32
-                "19ip27hzaj2j2idaz33ypcslawkp9v5vpjx1gcm6ypqsip1s01h1"))))
+                "0c2pvi9cdg6jv9wiz966q1sj8mjmxsgvcplsmfhhknpy7h2gp5px"))))
     (build-system cmake-build-system)
     (arguments
      (list #:cmake cmake-next
@@ -438,6 +442,7 @@ commands (lock/unlock/before-sleep) and inhibit.")
            udis86
            wayland
            wayland-protocols-next
+           linux-libre-headers-6.14
            xcb-util-errors
            xcb-util-wm
            xorg-server-xwayland))
@@ -2121,7 +2126,7 @@ region on the fly.
 (define-public wmenu
   (package
     (name "wmenu")
-    (version "0.1.9")
+    (version "0.2.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2130,7 +2135,7 @@ region on the fly.
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1f46v4zbywh7fsz5dgkhaa62lmv7gydybwr7qym37gg10jz42pjc"))))
+                "0nav1ydfwcj7x05vlzcjf7i2xgx93lkcmhqbb8cvni0zqpf80hi6"))))
     (build-system meson-build-system)
     (native-inputs (append (if (%current-target-system)
                                ;; for wayland-scanner

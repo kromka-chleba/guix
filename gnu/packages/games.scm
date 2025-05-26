@@ -76,6 +76,7 @@
 ;;; Copyright © 2022 Hendursaga <hendursaga@aol.com>
 ;;; Copyright © 2022 Parnikkapore <poomklao@yahoo.com>
 ;;; Copyright © 2022 Cairn <cairn@pm.me>
+;;; Copyright © 2022 Morgan Smith <Morgan.J.Smith@outlook.com>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2023 Florian Pelz <pelzflorian@pelzflorian.de>
 ;;; Copyright © 2023 Ivana Drazovic <iv.dra@hotmail.com>
@@ -184,6 +185,7 @@
   #:use-module (gnu packages libedit)
   #:use-module (gnu packages libidn)
   #:use-module (gnu packages libunwind)
+  #:use-module (gnu packages libusb)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages lisp)
   #:use-module (gnu packages llvm)
@@ -2686,6 +2688,38 @@ role, and your gender.")
       (license:fsdg-compatible
         "https://nethack.org/common/license.html"))))
 
+(define-public netpanzer
+  (package
+    (name "netpanzer")
+    (version "0.9.0-RC-7") ;0.8.7 was released 8 years ago
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/netpanzer/netpanzer")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1bc29cxjragbhgsg89sliyiqw289nd37wb1f9qarknir73ijnfac"))))
+    (build-system meson-build-system)
+    (arguments
+     (list #:tests? #f)) ;2/2 (trivial) tests fail, need filesystem access
+    (native-inputs (list pkg-config))
+    (inputs (list freetype
+                  lua
+                  physfs
+                  sdl2
+                  sdl2-mixer
+                  sdl2-ttf))
+    (home-page "https://github.com/netpanzer/netpanzer")
+    (synopsis "Online tactical warfare game")
+    (description
+     "NetPanzer is an online multiplayer tactical warfare game.  It is based
+on quick tactical action and unit management in real-time.  Battles progress
+constantly as destroyed players respawn with a set of new units.  Players can
+join or leave multiplayer games at any time.")
+    (license license:gpl2+)))
+
 (define-public pipewalker
   (package
     (name "pipewalker")
@@ -3255,6 +3289,87 @@ in mind.")
     (description
      "Solarus Quest Editor is a graphical user interface to create and
 modify quests for the Solarus engine.")))
+
+(define-public superfluous-returnz-data
+  (package
+    (name "superfluous-returnz-data")
+    (version "13")
+    (source
+      (origin
+        (method url-fetch)
+        (uri (string-append "https://download.ptilouk.net/superfluous-returnz-d"
+                             version "-data-only"
+                             ".zip"))
+        (sha256
+          (base32
+            "005p1kdm8g5vzf1isvxwiarpw0vciplxdcv9wl4bb47b1gxsh13k"))))
+    (build-system copy-build-system)
+    (native-inputs
+     (list unzip))
+    (arguments
+     (list #:install-plan
+           #~'(("." "."))))
+    (synopsis "Superfluous Returnz game data")
+    (description
+     "This package provides the game data, images, and music of the game
+Superfluous Returnz.")
+    (home-page "https://studios.ptilouk.net/superfluous-returnz/")
+    (license license:cc-by-sa4.0)))
+
+(define-public sosage
+  (package
+    (name "sosage")
+    (version "1.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://framagit.org/Gee/sosage")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xgk3r18aj9xvrrqr9qdrr6800hkv6lhfcnmm5z21g8kbfh9x4jm"))
+       (modules '((guix build utils)))
+       (snippet
+        #~(begin
+            (for-each delete-file (find-files "." "\\.jar$"))
+
+            ;; The files in 'Third_party' aren't actually bundled libraries,
+            ;; but are wrappers around the system libraries.
+            ;; Move them to the 'Utils' directory, to make that clear.
+            (for-each (lambda (file)
+                        (install-file file "include/Sosage/Utils"))
+                      (find-files "include/Sosage/Third_party" "\\.h$"))
+            (for-each (lambda (file)
+                        (install-file file "src/Sosage/Utils"))
+                      (find-files "src/Sosage/Third_party" "\\.cpp$"))
+            (for-each delete-file-recursively '("include/Sosage/Third_party"
+                                                "src/Sosage/Third_party"))
+            (substitute* (find-files ".")
+              (("Third_party") "Utils"))))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f ; no tests
+           #:configure-flags
+           #~(list
+              (string-append "-DSOSAGE_DATA_FOLDER="
+                             #$(this-package-input "superfluous-returnz-data")))))
+    (inputs
+     (list libyaml
+           lz4
+           sdl2
+           sdl2-mixer-x
+           sdl2-ttf
+           superfluous-returnz-data))
+    (synopsis "Superfluous Returnz 2D cartoon puzzle game")
+    (description
+     "Superfluous Returnz is a 2D puzzle game set in a colourful cartoon
+universe.  It takes place in the very quiet French village of Fochougny, an
+open world where players solve puzzles, find secret codes and talk to the
+village people to solve the mystery of the apple thief.  The game is licensed
+as Free Software and asks for a financial donation through the game site.")
+    (home-page "https://studios.ptilouk.net/superfluous-returnz/floss/")
+    (license license:expat)))
 
 (define-public superstarfighter
   (package
@@ -5121,6 +5236,60 @@ next campaign.")
     (synopsis "Dedicated @emph{Battle for Wesnoth} server")
     (description "This package contains a dedicated server for @emph{The
 Battle for Wesnoth}.")))
+
+(define-public wordwarvi
+  (package
+    (name "wordwarvi")
+    (version "1.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/smcameron/wordwarvi")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0f9xhm7267g27f2k1v4dylzvrfyhr9y60f5ypq5a5kiqrqykm245"))))
+    (build-system gnu-build-system)
+    (inputs (list alsa-lib gtk+-2 libvorbis portaudio))
+    (native-inputs (list pkg-config))
+    (arguments
+     (list
+      #:make-flags
+      #~(list "BINDIR=/bin"
+              (string-append "CC=" #$(cc-for-target))
+              (string-append "DATADIR=" #$output "")
+              (string-append "DESTDIR=" #$output) "PREFIX=")
+      #:tests? #f ;no tests
+      #:phases #~(modify-phases %standard-phases
+                   (delete 'configure)
+                   (add-after 'unpack 'fix-makefile
+                     (lambda _
+                       (substitute* "Makefile"
+                         (("/bin/rm")
+                          "rm")
+                         (("-DDATADIR=\\\\\"\\$\\{DATADIR\\}/\\\\\"")
+                          "-DDATADIR=\\\"${DESTDIR}/${DATADIR}/\\\"")))))))
+    (home-page "https://smcameron.github.io/wordwarvi/")
+    (synopsis "Arcade-style side scrolling space shooter")
+    (description
+     "In this game you pilot a combat space ship to rescue your lost \"vi\" .swp
+files avoiding OS defenses.  It contains several levels and the difficulty
+level is configurable on the command line.  It can be played with a keyboard
+or a joystick.  It is drawn mostly with lines, and supports various display
+modes.")
+    ;; For the code, most files are under GPLv2+, but since the ogg_to_pcm.c
+    ;; file is GPLv2 without 'any later version', we use 'gpl2' because of the
+    ;; ambiguity. For the sounds the licenses are declared in
+    ;; sounds/Attribution.txt and for aaaah_it_burns.ogg, it can be viewed with
+    ;; vorbiscomment -l.
+    (license (list license:gpl2 ;For the code
+                   ;; lucky-holiday-cornbread-stuffing-mono.ogg
+                   ;; lucky13-steve-mono-mix.ogg
+                   ;; aaaah_it_burns.ogg
+                   license:cc-by3.0
+                   ;; all other sounds are under cc-by-sa 3.0
+                   license:cc-by-sa3.0))))
 
 (define-public gamine
   (package
@@ -11292,6 +11461,39 @@ can be downloaded from @url{https://zero.sjeng.org/best-network}.")
 of the classic boardgame checkers (also known as draughts).")
     (license license:gpl2+)))
 
+(define-public xjump-sdl
+  (package
+    (name "xjump-sdl")
+    (version "3.0.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hugomg/xjump-sdl")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1macl4aq0zc93kbranzclqxh2jc40asn3bc8cpyywafzbxyha99y"))))
+    (build-system gnu-build-system)
+    (inputs (list sdl2))
+    (arguments
+     (list
+      #:tests? #f ;No tests.
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda* (#:key outputs #:allow-other-keys)
+              (invoke "./configure"
+                      (string-append "--prefix="
+                                     (assoc-ref outputs "out"))
+                      (string-append "CC="
+                                     #$(cc-for-target))))))))
+    (home-page "https://github.com/hugomg/xjump-sdl")
+    (synopsis "Falling tower game")
+    (description "This package provides a reimplementation of the classic
+Xjump game, using SDL instead of Xlib.")
+    (license license:gpl3)))
+
 (define-public xmoto
   (package
     (name "xmoto")
@@ -12745,6 +12947,120 @@ on the pitch of the voice and the rhythm of singing.")
      "Xmahjongg is a simple solitaire game.  The object is to remove all Mah
 Jongg tiles from the playing field by taking one matching pair at a time.")
     (license license:gpl2+)))
+
+(define-public sc-controller
+  (package
+    (name "sc-controller")
+    (version "0.4.8.9")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/Ryochan7/sc-controller")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1410yj6947yq43wwrj3cwllalalggzmd74sad70jd1niwj85yvna"
+                ))))
+    (build-system python-build-system)
+    (arguments
+     (list #:phases #~(modify-phases %standard-phases
+                        (delete 'sanity-check)
+                        (add-after 'unpack 'remove-bundled-libraries
+                          (lambda _
+                            (with-directory-excursion "scc/lib"
+                              (for-each delete-file
+                                        '("enum.py" "jsonencoder.py"
+                                          "libusb1.py" "usb1.py")))
+                            ;; libusb1 fixes
+                            (substitute* '("scc/uinput.py"
+                                           "scc/drivers/usb.py"
+                                           "scc/drivers/steamdeck.py"
+                                           "scc/drivers/sc_by_cable.py")
+                              (("scc\\.lib\\.libusb1")
+                               "libusb1")
+                              (("scc\\.lib\\.usb1")
+                               "usb1")
+                              (("from scc\\.lib import usb1")
+                               "import usb1"))
+                            ;; enum fixes
+                            (substitute* "scc/cemuhook_server.py"
+                              (("scc\\.lib\\.enum")
+                               "enum"))
+                            ;; simplejson fixes
+                            (substitute* "scc/profile.py"
+                              (("from scc\\.lib\\.jsonencoder")
+                               "from simplejson"))))
+                        (add-after 'unpack 'fix-paths
+                          (lambda _
+                            (substitute* "scc/lib/xwrappers.py"
+                              (("libXfixes.so")
+                               (string-append (assoc-ref %build-inputs
+                                                         "libxfixes")
+                                              "/lib/libXfixes.so"))
+                              (("libXext.so")
+                               (string-append (assoc-ref %build-inputs
+                                                         "libxext")
+                                              "/lib/libXext.so")))
+                            (substitute* "scc/lib/eudevmonitor.py"
+                              (("libudev.so")
+                               (string-append (assoc-ref %build-inputs "eudev")
+                                              "/lib/libudev.so")))
+                            (substitute* "scc/uinput.py"
+                              (("/usr/include")
+                               (string-append (assoc-ref %build-inputs
+                                                         "linux-libre-headers")
+                                              "/include")))
+                            (substitute* '("scc/gui/app.py"
+                                           "scc/osd/inputdisplay.py"
+                                           "scc/paths.py")
+                              (("/usr/share/scc")
+                               (string-append #$output "/share/scc")))))
+                        (add-after 'wrap 'gi-wrap
+                          (lambda _
+                            (for-each (lambda (prog)
+                                        (wrap-program (string-append #$output
+                                                                     "/bin/"
+                                                                     prog)
+                                          `("GI_TYPELIB_PATH" =
+                                            (,(getenv
+                                               "GI_TYPELIB_PATH")))))
+                                      '("sc-controller" "scc"
+                                        "scc-daemon"
+                                        "scc-osd-dialog"
+                                        "scc-osd-keyboard"
+                                        "scc-osd-launcher"
+                                        "scc-osd-menu"
+                                        "scc-osd-message"
+                                        "scc-osd-radial-menu"
+                                        "scc-osd-show-bindings")))))))
+    (inputs (list bash-minimal
+                  gtk+
+                  gtk-layer-shell
+                  eudev
+                  libxext
+                  libxfixes
+                  linux-libre-headers
+                  python-pycairo
+                  python-evdev
+                  python-libusb1
+                  python-pylibacl
+                  python-pygobject
+                  python-simplejson
+                  python-vdf
+                  zlib))
+    (home-page "https://github.com/Ryochan7/sc-controller")
+    (synopsis "Driver and configuration tool for game controllers")
+    (description
+     "Driver and configuration tool for game controllers such as
+the Steam Controller, Steam Deck, and Dual Shock 4.  Install the included udev
+rules to solve permissions issues.")
+    (license (list
+              ;; lib/enum.py, lib/usb1.py, and lib/libusb1.py are deleted but
+              ;; do have other licenses.
+              license:cc0 ; images/*, default_profiles/*, profile_examples/*, default_menus/*
+              license:zlib ; scripts/gamecontrollerdb.txt
+              license:gpl2)))) ; everything else
 
 (define-public steam-devices-udev-rules
   ;; Last release from 2019-04-10

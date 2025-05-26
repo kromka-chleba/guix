@@ -779,10 +779,12 @@ loading algorithms.")
     (build-system go-build-system)
     (arguments
      (list
+      #:skip-build? #t
       #:import-path "golang.org/x/net"
-      #:phases
-      #~(modify-phases %standard-phases
-          (delete 'build)))) ; no go files in project's root
+      #:test-flags
+      ;; Golang does not support "-race" on ARM, one test fails with error:
+      ;; ThreadSanitizer: unsupported VMA range.
+      #~(list #$@(if (target-arm?) '("-skip" "TestRace") '()))))
     (propagated-inputs
      (list go-golang-org-x-crypto
            go-golang-org-x-sys
@@ -866,6 +868,15 @@ cancellation for groups of goroutines working on subtasks of a common task
     (arguments
      (list
       #:skip-build? #t
+      #:test-flags
+      #~(list #$@(if (target-arm?)
+                     '("-skip" (string-join
+                                (list "TestParseOrigDstAddr/udp4"
+                                      "TestIoctlGetEthtoolDrvinfo"
+                                      "TestIoctlGetEthtoolTsInfo"
+                                      "TestRlimitAs")
+                                "|"))
+                     '()))
       #:import-path "golang.org/x/sys"))
     (home-page "https://go.googlesource.com/sys")
     (synopsis "Go support for low-level system interaction")
@@ -1240,6 +1251,37 @@ the @url{https://vuln.go.dev,Go Vulnerability Database}.")
      "This package holds the transition packages for the new Go 1.13 error
 values.")
     (license license:bsd-3)))
+
+(define-public go-google-golang-org-genproto-googleapis-rpc
+  ;; No release or verion tags, use the latest commit.
+  (let ((commit "e70fdf4c4cb4151b7aa3579ce8a3fb662bafe335")
+        (revision "0"))
+    (package
+      (name "go-google-golang-org-genproto-googleapis-rpc")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/googleapis/go-genproto")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0jf332yxgf1c6nj76b1p52907g786gynzd78g899m3vrfa45wswz"))))
+      (build-system go-build-system)
+      (arguments
+       (list
+        #:skip-build? #t
+        #:import-path "google.golang.org/genproto/googleapis/rpc"
+        #:unpack-path "google.golang.org/genproto"))
+      (propagated-inputs
+       (list go-google-golang-org-protobuf))
+      (home-page "https://google.golang.org/genproto")
+      (synopsis "Common types for gRPC API")
+      (description
+       "This package provides a @code{rpc} Google's API gRPC type derived from
+@code{google.golang.org/protobuf}.")
+      (license license:asl2.0))))
 
 (define-public go-google-golang-org-protobuf
   (package

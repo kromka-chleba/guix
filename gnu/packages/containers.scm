@@ -342,7 +342,7 @@ Layer-4 sockets.")
 (define-public cni-plugins
   (package
     (name "cni-plugins")
-    (version "1.6.1")
+    (version "1.7.1")
     (source
      (origin
        (method git-fetch)
@@ -350,12 +350,13 @@ Layer-4 sockets.")
              (url "https://github.com/containernetworking/plugins")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "164savm1iic5ax2xi4zgy9lm7wk8kjy22n4is463lj9rkbp4s6xn"))
+        (base32 "04acfjkc3z2yf85z0v1mlgj0fqy032dsklzik2g1cnz6ncw6jl2b"))
        (file-name (git-file-name name version))))
     (build-system go-build-system)
     (arguments
      `(#:unpack-path "github.com/containernetworking/plugins"
        #:tests? #f ; XXX: see stat /var/run below
+       #:go ,go-1.24
        #:phases (modify-phases %standard-phases
                   (replace 'build
                     (lambda _
@@ -364,7 +365,7 @@ Layer-4 sockets.")
                         (invoke "./build_linux.sh"))))
                   (replace 'check
                     (lambda* (#:key tests? #:allow-other-keys)
-                      ; only pkg/ns tests run without root
+                      ;; Only pkg/ns tests run without root.
                       (when tests?
                         (with-directory-excursion
                             "src/github.com/containernetworking/plugins/pkg/ns"
@@ -489,8 +490,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
       #~(list (string-append "CC=" #$(cc-for-target))
               (string-append "PREFIX=" #$output)
               (string-append "HELPER_BINARIES_DIR=" #$output "/_guix")
-              (string-append "GOMD2MAN="
-                             #$go-github-com-go-md2man "/bin/go-md2man")
+              (string-append "GOMD2MAN=" #$go-md2man "/bin/go-md2man")
               (string-append "BUILDFLAGS=-trimpath"))
       #:tests? #f                  ; /sys/fs/cgroup not set up in guix sandbox
       #:test-target "test"
@@ -575,7 +575,7 @@ Its main purpose is to support the key usage by @code{docker-init}:
            bats
            git-minimal/pinned
            go-1.22
-           go-github-com-go-md2man
+           go-md2man
            gnu-gettext ; for envsubst
            mandoc
            pkg-config
@@ -643,8 +643,7 @@ being rootless and not requiring any daemon to be running.")
       #:make-flags
       #~(list (string-append "CC=" #$(cc-for-target))
               (string-append "PREFIX=" #$output)
-              (string-append "GOMD2MAN="
-                             #$go-github-com-go-md2man "/bin/go-md2man"))
+              (string-append "GOMD2MAN=" #$go-md2man "/bin/go-md2man"))
       #:tests? #f                  ; /sys/fs/cgroup not set up in guix sandbox
       #:test-target "test-unit"
       #:phases
@@ -702,7 +701,7 @@ being rootless and not requiring any daemon to be running.")
     (native-inputs
      (list bats
            go-1.23
-           go-github-com-go-md2man
+           go-md2man
            pkg-config))
     (synopsis "Build @acronym{OCI, Open Container Initiative} images")
     (description

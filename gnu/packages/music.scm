@@ -5472,7 +5472,7 @@ includes LV2 plugins and a JACK standalone client.")
 (define-public musescore
   (package
     (name "musescore")
-    (version "4.4.4")
+    (version "4.5.2")
     (source
      (origin
        (method git-fetch)
@@ -5480,8 +5480,9 @@ includes LV2 plugins and a JACK standalone client.")
              (url "https://github.com/musescore/MuseScore")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
+       (patches (search-patches "musescore-fix-build.patch"))
        (sha256
-        (base32 "0cjp1sp50pwmrgvpxjxg849s0vsvk2vcb66ym617nvlj761h0ngz"))
+        (base32 "12lwv0gxd49dily2hwmadbw6c59h11sfm5751dpfnzzjvj3rydpn"))
        (modules '((guix build utils)))))
     (build-system qt-build-system)
     (arguments
@@ -6326,6 +6327,179 @@ discard.
 discard bad quality ones.
 @end itemize\n")
       (license license:expat))))
+
+;; demlo is only one user of this package, keep it next to it to prevent
+;; importing taglib module into golang-xyz.
+(define-public go-github-com-wtolson-go-taglib
+  (let ((commit "6e68349ff94ecea412de7e748cb5eaa26f472777")
+        (revision "0"))
+    (package
+      (name "go-github-com-wtolson-go-taglib")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url
+                "https://github.com/wtolson/go-taglib")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1cpjqnrviwflz150g78iir5ndrp3hh7a93zbp4dwbg6sb2q141p2"))))
+      (build-system go-build-system)
+      ;; From go-1.10 onward, "pkg" compiled libraries are not re-used, so
+      ;; when this package required as input for another one, it will have to
+      ;; be built again.  Thus its CGO requirements must be made available in
+      ;; the environment, that is, they must be propagated.
+      (propagated-inputs
+       (list pkg-config taglib))
+      (arguments
+       `(#:import-path "github.com/wtolson/go-taglib"
+         ;; Tests don't pass "vet" on Go since 1.11.  See
+         ;; https://github.com/wtolson/go-taglib/issues/12.
+         #:phases
+         (modify-phases %standard-phases
+           (replace 'check
+             (lambda* (#:key import-path #:allow-other-keys)
+               (invoke "go" "test"
+                       "-vet=off"
+                       import-path))))))
+      (home-page "https://github.com/wtolson/go-taglib")
+      (synopsis "Go wrapper for taglib")
+      (description "Go wrapper for taglib")
+      (license license:unlicense))))
+
+;; demlo is only one user of this package, keep it next to it to prevent
+;; importing lua module into golang-xyz.
+(define-public go-github-com-aarzilli-golua
+  (let ((commit "03fc4642d792b1f2bc5e7343b403cf490f8c501d")
+        (revision "0"))
+    (package
+      (name "go-github-com-aarzilli-golua")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url
+                "https://github.com/aarzilli/golua")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1d9hr29i36cza98afj3g6rs3l7xbkprwzz0blcxsr9dd7nak20di"))))
+      (build-system go-build-system)
+      ;; From go-1.10 onward, "pkg" compiled libraries are not re-used, so
+      ;; when this package required as input for another one, it will have to
+      ;; be built again.  Thus its CGO requirements must be made available in
+      ;; the environment, that is, they must be propagated.
+      (propagated-inputs
+       (list lua))
+      (arguments
+       `(#:unpack-path "github.com/aarzilli/golua"
+         #:import-path "github.com/aarzilli/golua/lua"
+         #:phases
+         (modify-phases %standard-phases
+           ;; While it's possible to fix the CGO_LDFLAGS with the "-tags"
+           ;; command line argument, go-1.10+ does not re-use the produced pkg
+           ;; for dependencies, which means we would need to propagate the
+           ;; same "-tags" argument to all golua referrers.  A substitution is
+           ;; more convenient here.  We also need to propagate the lua
+           ;; dependency to make it available to referrers.
+           (add-after 'unpack 'fix-lua-ldflags
+             (lambda _
+               (substitute* "src/github.com/aarzilli/golua/lua/lua.go"
+                 (("#cgo linux,!llua,!luaa LDFLAGS: -llua5.3")
+                  "#cgo linux,!llua,!luaa LDFLAGS: -llua")))))))
+      (home-page "https://github.com/aarzilli/golua")
+      (synopsis "Go Bindings for the Lua C API")
+      (description "This package provides @code{lua}, a Go module that can
+run a Lua virtual machine.")
+      (license license:expat))))
+
+;; demlo is only one user of this package, keep it next to it to prevent
+;; importing lua module into golang-xyz.
+(define-public go-github-com-stevedonovan-luar
+  (let ((commit "22d247e5366095f491cd83edf779ee99a78f5ead")
+        (revision "0"))
+    (package
+      (name "go-github-com-stevedonovan-luar")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url
+                "https://github.com/stevedonovan/luar")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1acjgw9cz1l0l9mzkyk7irz6cfk31wnxgbwa805fvm1rqcjzin2c"))))
+      (build-system go-build-system)
+      (native-inputs
+       (list go-github-com-aarzilli-golua))
+      (arguments
+       `(#:tests? #f                    ; Upstream tests are broken.
+         #:import-path "github.com/stevedonovan/luar"))
+      (home-page "https://github.com/stevedonovan/luar")
+      (synopsis "Lua reflection bindings for Go")
+      (description "Luar is designed to make using Lua from Go more
+convenient.  Go structs, slices and maps can be automatically converted to Lua
+tables and vice-versa.  The resulting conversion can either be a copy or a
+proxy.  In the latter case, any change made to the result will reflect on the
+source.
+
+Any Go function can be made available to Lua scripts, without having to write
+C-style wrappers.
+
+Luar support cyclic structures (lists, etc.).
+
+User-defined types can be made available to Lua as well: their exported
+methods can be called and usual operations such as indexing or arithmetic can
+be performed.")
+      (license license:expat))))
+
+;; demlo is only one user of this package, keep it next to it to prevent
+;; importing lua module into golang-xyz.
+(define-public go-gitlab-com-ambrevar-golua-unicode
+  (let ((commit "97ce517e7a1fe2407a90c317a9c74b173d396144")
+        (revision "0"))
+    (package
+      (name "go-gitlab-com-ambrevar-golua-unicode")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url
+                "https://gitlab.com/ambrevar/golua")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1izcp7p8nagjwqd13shb0020w7xhppib1a3glw2d1468bflhksnm"))))
+      (build-system go-build-system)
+      (native-inputs
+       (list lua go-github-com-aarzilli-golua))
+      (arguments
+       `(#:unpack-path "gitlab.com/ambrevar/golua"
+         #:import-path "gitlab.com/ambrevar/golua/unicode"
+         #:phases
+         (modify-phases %standard-phases
+           (replace 'check
+             (lambda* (#:key import-path #:allow-other-keys)
+               (setenv "USER" "homeless-dude")
+               (invoke "go" "test" import-path))))))
+      (home-page "https://gitlab.com/ambrevar/golua")
+      (synopsis "Add Unicode support to Golua")
+      (description "This extension to Arzilli's Golua adds Unicode support to
+all functions from the Lua string library.  Lua patterns are replaced by Go
+regexps.  This breaks compatibility with Lua, but Unicode support breaks it
+anyways and Go regexps are more powerful.")
+      (license license:expat))))
+
 
 (define-public fmit
   (package

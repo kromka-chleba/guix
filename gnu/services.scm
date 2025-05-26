@@ -9,6 +9,7 @@
 ;;; Copyright © 2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2023 Brian Cully <bjc@spork.org>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -26,6 +27,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu services)
+  #:use-module (guix derivations)
   #:use-module (guix gexp)
   #:use-module (guix monads)
   #:use-module (guix store)
@@ -45,6 +47,7 @@
   #:use-module (guix deprecation)
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages gnome)
   #:use-module (gnu packages hurd)
   #:use-module (gnu packages linux)
   #:use-module (gnu system privilege)
@@ -120,6 +123,10 @@
             special-files-service-type
             extra-special-file
             etc-service-type
+            etc-profile-d-service-type
+            etc-bashrc-d-service-type
+            %default-etc-bashrc-d-files
+            %default-bash-aliases
             etc-directory
             privileged-program-service-type
             setuid-program-service-type ; deprecated
@@ -132,6 +139,7 @@
             linux-builder-configuration-kernel
             linux-builder-configuration-modules
             linux-loadable-module-service-type
+            vte-integration-service-type
 
             %boot-service
             %activation-service
@@ -925,6 +933,114 @@ directory."
   "Return a new service of ETC-SERVICE-TYPE that populates /etc with FILES.
 FILES must be a list of name/file-like object pairs."
   (service etc-service-type files))
+
+(define (make-files->etc-directory name)
+  "Return a procedure that accept a list of FILES and compute a directory named NAME.
+The returned procedure FILES argument can be packages containing
+@file{etc/@var{name}.d/@var{x}.sh} scripts or single file-like objects of the
+@file{.sh} file extension.  The constructed procedure returns a list of
+two-elements list suitable for extending `etc-service-type'."
+  (lambda (files)
+    `((,name
+       ,(computed-file name
+         ;; This is specialized variant of `file-union'.
+         (with-imported-modules '((guix build utils))
+           #~(begin
+               (use-modules (guix build utils)
+                            (ice-9 ftw)
+                            (ice-9 match)
+                            (srfi srfi-1)
+                            (srfi srfi-26))
+
+               (define sh-files
+                 (append-map
+                  (lambda (f)
+                    (let* ((dir (format #f "~a/etc/~a" f #$name)))
+                      `(,@(if (file-exists? dir)
+                              (map (lambda (x)
+                                     (list x (string-append dir "/" x)))
+                                   (scandir dir
+                                            (cut string-suffix? ".sh" <>)))
+                              (if (string-suffix? ".sh" f)
+                                  (list (list (basename
+                                               (strip-store-file-name f)) f))
+                                  '())))))
+                  (list #$@files)))
+
+               (mkdir #$output)
+               (chdir #$output)
+
+               (map (match-lambda       ;XXX: adapted from file-union
+                      ((target source)
+                       ;; Stat the source to abort early if it does not exist.
+                       (stat source)
+                       (mkdir-p (dirname target))
+                       (symlink source target)))
+                    sh-files))))))))
+
+(define files->profile-d-directory
+  (make-files->etc-directory "profile.d"))
+
+(define etc-profile-d-service-type
+  (service-type
+   (name 'etc-profile-d)
+   (extensions (list (service-extension etc-service-type
+                                        files->profile-d-directory)))
+   (compose concatenate)
+   (extend append)
+   (default-value '())
+   (description "A service for populating @file{/etc/profile.d/} with POSIX
+scripts having the @file{.sh} file extension, to be sourced when users
+log in.")))
+
+(define files->bashrc-d-directory
+  (make-files->etc-directory "bashrc.d"))
+
+;;; Use an alist to be compatible with <home-bash-configuration>.
+(define %default-bash-aliases
+  '(("ls" . "ls -p --color=auto")
+    ("ll" . "ls -l")
+    ("grep" . "grep --color=auto")
+    ("ip" . "ip -color=auto")))
+
+;;; ... but avoid the full blown bash-serialize-aliases, which depends on
+;;; other 'guix home' definitions such as `shell-double-quote'.
+(define %default-bashrc-d-aliases
+  (plain-file "aliases.sh"
+              (string-join
+               (map (match-lambda
+                      ((alias . value)
+                       (format #f "~a=~s~%" alias value)))
+                    %default-bash-aliases)
+               "")))
+
+(define %default-etc-bashrc-d-files
+  (list (file-append bash-completion "/etc/profile.d/bash_completion.sh")
+        %default-bashrc-d-aliases))
+
+(define etc-bashrc-d-service-type
+  (service-type
+   (inherit etc-profile-d-service-type)
+   (name 'etc-bashrc-d)
+   (extensions (list (service-extension etc-service-type
+                                        files->bashrc-d-directory)))
+   (description "A service for populating @file{/etc/bashrc.d/} with Bash
+scripts having the @file{.sh} file extension, to be sourced by interactive
+Bash shells.")
+   (default-value %default-etc-bashrc-d-files)))
+
+(define vte-integration-service-type
+  (service-type
+   (name 'vte-integration)
+   (extensions
+    (list (service-extension etc-bashrc-d-service-type
+                             (lambda (vte)
+                               (list (file-append
+                                      vte "/etc/profile.d/vte.sh"))))))
+   (default-value vte)                  ;the vte package to use
+   (description "A service for adding the @file{/etc/bashrc.d/vte.sh} script
+to your system, which improves the Bash and Zsh experience when using
+VTE-powered terminal emulators.")))
 
 (define (privileged-program->activation-gexp programs)
   "Return an activation gexp for privileged-program from PROGRAMS."
