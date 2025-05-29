@@ -1822,6 +1822,38 @@ strategies, such as fixed delay, backoff delay, and random delay.")
               (delete-file-recursively
                (string-append "src/" import-path "/examples")))))))))
 
+(define-public go-github-com-axiomhq-hyperloglog
+  (package
+    (name "go-github-com-axiomhq-hyperloglog")
+    (version "0.2.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/axiomhq/hyperloglog")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1a37q1prgpp80a93yx7zxhcam8fznzxvfvz6likfixz0ans2lbav"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:import-path "github.com/axiomhq/hyperloglog"))
+    (propagated-inputs (list go-github-com-stretchr-testify
+                             go-github-com-kamstrup-intmap
+                             go-github-com-dgryski-go-metro
+                             go-github-com-davecgh-go-spew))
+    (home-page "https://github.com/axiomhq/hyperloglog")
+    (synopsis "Algorithm for approximating the number of distinct elements")
+    (description
+     "HyperLogLog is an improved version of
+@url{https://en.wikipedia.org/wiki/HyperLogLog,HyperLogLog} for the
+count-distinct problem, approximating the number of distinct elements in a
+multiset.  This implementation offers enhanced performance, flexibility, and
+simplicity while maintaining accuracy.")
+    (license license:expat)))
+
 (define-public go-github-com-aymanbagabas-go-osc52-v2
   (package
     (name "go-github-com-aymanbagabas-go-osc52-v2")
@@ -3818,6 +3850,34 @@ submodules:
 against various paths.  This is particularly useful when trying to filter
 files based on a .gitignore document.")
     (license license:expat)))
+
+(define-public go-github-com-dicedb-dicedb-go
+  (package
+    (name "go-github-com-dicedb-dicedb-go")
+    (version "1.0.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/DiceDB/dicedb-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "18hfymwvp0mdnw1ssxnh58wvg4ifbjq4yhxvzfnw1f70rnhv01y3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      ;; dicedb-go depends on dicedb for running tests
+      ;; but dicedb depends on dice-db, creating a cyclic depedency
+      #:tests? #f
+      #:import-path "github.com/dicedb/dicedb-go"))
+    (propagated-inputs (list go-github-com-google-uuid
+                             go-google-golang-org-protobuf))
+    (home-page "https://github.com/dicedb/dicedb-go")
+    (synopsis "SDK for @code{DiceDB}")
+    (description
+     "Go SDK for @url{https://github.com/dicedb/dice,@code{dicedb}}.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-creack-pty
   (package
@@ -9545,6 +9605,31 @@ ansi.")
 customized globally.")
     (license license:expat)))
 
+(define-public go-github-com-kamstrup-intmap
+  (package
+    (name "go-github-com-kamstrup-intmap")
+    (version "0.5.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/kamstrup/intmap")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1w9masbm9x2p4njxngr5sgqbjnwdwxv3f68yd3wgrrrjbfw5lh44"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:import-path "github.com/kamstrup/intmap"))
+    (home-page "https://github.com/kamstrup/intmap")
+    (synopsis "Fast hashmap with integer keys for Golang")
+    (description
+     "@code{intmap} is a fast hashmap implementation for Golang, specialized for maps with
+integer type keys.")
+    (license license:bsd-2)))
+
 ;; Some packages (Yggdrasil) need it to compile it's a tiny package and it's
 ;; easier to bundle it than to patch it out.
 (define-public go-github-com-kardianos-minwinsvc
@@ -11842,6 +11927,29 @@ unknown structures such as those decoded from JSON.")
 XML@code{PullParser}}, is a lightweight wrapper for Go's standard XML
 Decoder,tailored for developers who need fine-grained control over XML
 parsing.")
+    (license license:expat)))
+
+(define-public go-github-com-mmcloughlin-geohash
+  (package
+    (name "go-github-com-mmcloughlin-geohash")
+    (version "0.10.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mmcloughlin/geohash")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0q97mq70jp5336gmfyv2nj9xm3qgz48lkfy4cyfdsd2rpb7zms50"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/mmcloughlin/geohash"))
+    (home-page "https://github.com/mmcloughlin/geohash")
+    (synopsis "Geohash library for Golang")
+    (description
+     "@code{geohash} provides encoding and decoding of string and integer geohashes.")
     (license license:expat)))
 
 (define-public go-github-com-moby-sys-mountinfo
@@ -16693,6 +16801,31 @@ programming language.")
     (description
      "gocovmerge takes the results from multiple @command{go test -coverprofile} runs and
 merges them into one profile.")
+    (license license:bsd-2)))
+
+(define-public go-github-com-wangjia184-sortedset
+  (package
+    (name "go-github-com-wangjia184-sortedset")
+    (version "0.0.0-20220209072355-af6d6d227aa7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/wangjia184/sortedset")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "15y8n0m5s723jifh01487sp2jn067jiaizp8w4z965vbn066hh8n"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/wangjia184/sortedset"))
+    (home-page "https://github.com/wangjia184/sortedset")
+    (synopsis "Sorted Set in Golang")
+    (description
+     "Package sortedset provides the data-struct allowing a fast access the
+element in set by key or by score(order).  It is inspired by Sorted Set from
+Redis.")
     (license license:bsd-2)))
 
 (define-public go-github-com-warpfork-go-fsx

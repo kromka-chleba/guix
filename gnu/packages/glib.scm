@@ -9,7 +9,7 @@
 ;;; Copyright © 2017 Petter <petter@mykolab.ch>
 ;;; Copyright © 2018, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Alex Vong <alexvong1995@gmail.com>
-;;; Copyright © 2019, 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019-2023, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2019 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2019, 2020, 2021 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Nicolò Balzarotti <nicolo@nixo.xyz>
@@ -1144,7 +1144,7 @@ libffi projects to dynamically create Perl bindings for a wide variety of
 libraries.  Examples include gtk+, webkit, libsoup and many more.")
     (license license:lgpl2.1+)))
 
-(define telepathy-glib
+(define-public telepathy-glib
   (package
     (name "telepathy-glib")
     (version "0.24.2")
@@ -1162,19 +1162,6 @@ libraries.  Examples include gtk+, webkit, libsoup and many more.")
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags '("--enable-vala-bindings")
-
-       ;; '../tools/glib-*.py' generate files but the target dependencies are
-       ;; (presumably) not fully specified in the makefile, leading to
-       ;; parallel build errors like:
-       ;;
-       ;;   EOFError: EOF read where object expected
-       ;;   make[2]: *** [Makefile:1906: _gen/register-dbus-glib-marshallers-body.h] Error 1
-       #:parallel-build? #f
-       ;; When spawned in parallel, the dbus daemons may fail to shut down
-       ;; cleanly.  This issue appears to have been closed upstream due to low
-       ;; information, but still continues to haunt folks.  See also
-       ;; <https://gitlab.freedesktop.org/telepathy/telepathy-glib/-/issues/134>.
-       #:parallel-tests? #f
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'disable-failing-tests
@@ -1184,15 +1171,14 @@ libraries.  Examples include gtk+, webkit, libsoup and many more.")
              (substitute* "tests/dbus/Makefile.in"
                (("test-contacts\\$\\(EXEEXT\\)") "")
                (("test-file-transfer-channel\\$\\(EXEEXT\\)") "")
-               (("test-stream-tube\\$\\(EXEEXT\\)") ""))
-             #t)))))
+               (("test-stream-tube\\$\\(EXEEXT\\)") "")))))))
     (native-inputs
-     `(("glib" ,glib "bin") ; uses glib-mkenums
-       ("gobject-introspection" ,gobject-introspection)
-       ("pkg-config" ,pkg-config)
-       ("python" ,python-2)
-       ("vala" ,vala)
-       ("xsltproc" ,libxslt)))
+     (list `(,glib "bin") ; uses glib-mkenums
+           gobject-introspection
+           pkg-config
+           python-minimal-wrapper
+           vala
+           libxslt))
     (propagated-inputs
      ;; There are all in the Requires.private field of telepathy-glib.pc.
      (list dbus dbus-glib glib))

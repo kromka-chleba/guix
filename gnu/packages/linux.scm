@@ -513,7 +513,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.14-version "6.14.7")
+(define-public linux-libre-6.14-version "6.14.8")
 (define-public linux-libre-6.14-gnu-revision "gnu")
 (define deblob-scripts-6.14
   (linux-libre-deblob-scripts
@@ -523,7 +523,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "076x15yp1qjhvv81si3aj3n6ny4l6yl1rcj7f7l12rlbl9p64vl2")))
 (define-public linux-libre-6.14-pristine-source
   (let ((version linux-libre-6.14-version)
-        (hash (base32 "0wj9yl0ymzjx3ig0l3wdl5dqqiylvjk0j8adm5bnj23dq8mj04l1")))
+        (hash (base32 "0199maj3mk577wwaszbi0cl5a0afx1ynad896bmmg8vm636jxcb2")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.14)))
@@ -532,7 +532,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.29")
+(define-public linux-libre-6.12-version "6.12.30")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
@@ -542,12 +542,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1sqgg46xnjvk1dcz7j2f5fys43d7b5m3s4fj2hx3wrvd982n14k6")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "0k86nmmpg0jsx11w34vlj20cxpxavip4y5g7dp4bkk1q4dzfrcp8")))
+        (hash (base32 "0bpqkh64bj6nslbb43hj28lxmrxinrapwgh05q5wwh0yjx46l16z")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.91")
+(define-public linux-libre-6.6-version "6.6.92")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -557,12 +557,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0qi8hhgl9sk0q56qxaiabwpsw5m3dnxf4sga0yj2lhbnapl60pjj")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1x2lwaaqzlgszk41cy6k5j9dcbxxkca5xjaznb82r987ahbkv3fh")))
+        (hash (base32 "1v1pq9yzxrlaxx4y4cj5q3wska0jbv2inc7phqfw70fj88kai0hx")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.139")
+(define-public linux-libre-6.1-version "6.1.140")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -572,22 +572,22 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0kz3z4jjag5xjn5scp72is0f6ql550z6xixydc370qmvp8aswxix")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "064zzk7kwkq7i5160s0alzkz16pp89wcq07s9jhzhv4bxvgzyspn")))
+        (hash (base32 "0x7b856hxmli8qnkps9x62q8sca101v4sfwjqgivzxvprb5gjyap")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.183")
+(define-public linux-libre-5.15-version "5.15.184")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
    linux-libre-5.15-version
    linux-libre-5.15-gnu-revision
-   (base32 "1diav2baanmm26z1gh8qyfgwmw0pvws923rvnp637wal35wq9hkd")
-   (base32 "19cwqpvf6x02ivxwx36jkbccg3dcii1ynis34mjz3rn1wpg61s9a")))
+   (base32 "14dajb391lr4y2llvjihilmzwvrq4gjbgvrha7dvh6vv4jmbi28v")
+   (base32 "117nsj3n6nvlzbl86linz327qk5p516s9a8sc6ci79qwwz6a60im")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "1s4fqm83api3xk0b443b4bhgrx7bx6n8bchdpmzahqadk9i7yvyh")))
+        (hash (base32 "1nf1v89ikwi9philrw6h03hzb085mwz44lfxx71agp67vk39hglw")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
@@ -10549,35 +10549,43 @@ tools for managing PipeWire.")
          (delete "elogind"))))))
 
 (define-public ell
-  (package
-    (name "ell")
-    (version "0.71")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://git.kernel.org/pub/scm/libs/ell/ell.git")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "09s674lh2fafw7cpwldbi8cd89arbajgvhy9j5vgqg1kbn6xddwx"))))
-    (build-system gnu-build-system)
-    (arguments
-     ;; Tests launch dbus-daemon instances that all try to bind to
-     ;; "/tmp/ell-test-bus".  Thus, we need to run them sequentially.
-     '(#:parallel-tests? #f))
-    (inputs
-     (list dbus))
-    (native-inputs
-     (list autoconf automake libtool pkg-config procps))
-    (home-page "https://01.org/ell")
-    (synopsis "Embedded Linux Library")
-    (description "The Embedded Linux* Library (ELL) provides core, low-level
+  (let ((commit "4f77dca1f1cd19041a5a882ba02ad5a39cde3661")
+        (revision "1"))
+    (package
+      (name "ell")
+      (version (git-version "0.77" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://git.kernel.org/pub/scm/libs/ell/ell.git")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1ccxn9vdhn8miqhyxpj89hd9y8blz10q31qwvd6hbk2x214vgnk2"))
+                (modules '((guix build utils)))
+                (snippet
+                 #~(begin
+                     (substitute* "Makefile.am"
+                       ;; requires hwdb.bin
+                       (("unit/test-hwdb.*") ""))))))
+      (build-system gnu-build-system)
+      (arguments
+       ;; Tests launch dbus-daemon instances that all try to bind to
+       ;; "/tmp/ell-test-bus".  Thus, we need to run them sequentially.
+       '(#:parallel-tests? #f))
+      (inputs
+       (list dbus))
+      (native-inputs
+       (list autoconf automake libtool pkg-config procps))
+      (home-page "https://01.org/ell")
+      (synopsis "Embedded Linux Library")
+      (description "The Embedded Linux* Library (ELL) provides core, low-level
 functionality for system daemons.  It typically has no dependencies other than
 the Linux kernel, C standard library, and libdl (for dynamic linking).  While
 ELL is designed to be efficient and compact enough for use on embedded Linux
 platforms, it is not limited to resource-constrained systems.")
-    (license license:lgpl2.1+)))
+      (license license:lgpl2.1+))))
 
 (define-public kexec-tools
   (package

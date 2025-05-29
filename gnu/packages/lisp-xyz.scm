@@ -1917,21 +1917,21 @@ GNU libiconv, but completely written in Common Lisp.")
   (sbcl-package->ecl-package sbcl-babel))
 
 (define-public sbcl-binary-types
-  (let ((commit "9ec42042a50403961c08179a892ae3de725b1d7a"))
+  (let ((commit "a17caf8890f11fdc56f6ea3a21260bf0fb9c589c"))
     (package
       (name "sbcl-binary-types")
-      (version (git-version "1.2" "1" commit))
+      (version (git-version "1.2" "2" commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/frodef/binary-types/")
+               (url "https://github.com/Ferada/binary-types/")
                (commit commit)))
          (file-name (git-file-name "binary-types" version))
          (sha256
-          (base32 "0kp4xwblfxh7gmgqc38k9xzrqlcr0q1jm5167ma1pajdxd3182j8"))))
+          (base32 "1bh65p9vg2kgh4m8q1a4jiyncnp5prdzh0d0l4pzh3jvfhgbm0gh"))))
       (build-system asdf-build-system/sbcl)
-      (home-page "https://github.com/frodef/binary-types/")
+      (home-page "https://github.com/Ferada/binary-types/")
       (synopsis "Read and write binary records for Common Lisp")
       (description
        "Binary-types is a Common Lisp package for reading and writing binary
@@ -15593,10 +15593,11 @@ basic everyday functions and macros.")
   (sbcl-package->ecl-package sbcl-fare-utils))
 
 (define-public sbcl-fast-generic-functions
-  (let ((commit "9c307cd28af6453e45038ac3510de3123ff23743"))
+  (let ((commit "6e9d690ec08dacf9ab4e14aa39a084ef7c7edabb")
+        (revision "2"))
     (package
       (name "sbcl-fast-generic-functions")
-      (version (git-version "0.0.0" "1" commit))
+      (version (git-version "0.0.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -15605,9 +15606,7 @@ basic everyday functions and macros.")
                (commit commit)))
          (file-name (git-file-name "cl-fast-generic-functions" version))
          (sha256
-          (base32 "16hf9bi2p5s77p3m3aqsihcd9iicqjhhxxpsarjv93c41qs54yad"))
-         (patches
-          (search-patches "sbcl-fast-generic-functions-fix-sbcl-2.4.patch"))))
+          (base32 "1v2pwmhnyfvhx8hrl1zk2lm4k1a3kqglf696hnfx7zrpz9kwk15m"))))
       (build-system asdf-build-system/sbcl)
       (inputs
        (list sbcl-closer-mop
@@ -32449,8 +32448,8 @@ like-named macro that catches the SIGINT signal.")
   (sbcl-package->ecl-package sbcl-with-user-abort))
 
 (define-public sbcl-woo
-  (let ((commit "fba3567be95ed6e782d98a4c1477d3a74b8ad124")
-        (revision "1"))
+  (let ((commit "7f5219c55d49190f5ae17b123a8729b31c5d706e")
+        (revision "2"))
     (package
       (name "sbcl-woo")
       (version (git-version "0.12.0" revision commit))
@@ -32462,7 +32461,7 @@ like-named macro that catches the SIGINT signal.")
                (commit commit)))
          (file-name (git-file-name "woo" version))
          (sha256
-          (base32 "06f95x8s8v523gxmrkn9wwgw2pvc3bc66znbgrzhqb30y4aar5v5"))))
+          (base32 "0nhxlb1qhkl20vknm44gx0cq5cks33rcljczfhgbnmpkzrdpdrrl"))))
       (build-system asdf-build-system/sbcl)
       (arguments
        ;; FIXME: Tests fail because they try to compile clack-test:
@@ -32482,6 +32481,7 @@ like-named macro that catches the SIGINT signal.")
        (list sbcl-alexandria
              sbcl-bordeaux-threads
              sbcl-cffi
+             sbcl-cl+ssl
              sbcl-cl-speedy-queue ;; Required for ecl build
              sbcl-clack
              sbcl-fast-http
@@ -32492,6 +32492,7 @@ like-named macro that catches the SIGINT signal.")
              sbcl-smart-buffer
              sbcl-static-vectors
              sbcl-swap-bytes
+             sbcl-trivial-mimes
              sbcl-trivial-utf-8
              sbcl-vom))
       (home-page "https://github.com/fukamachi/woo")

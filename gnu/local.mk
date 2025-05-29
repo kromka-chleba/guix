@@ -1182,6 +1182,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/dee-vapi.patch			\
   %D%/packages/patches/dfu-programmer-fix-libusb.patch		\
   %D%/packages/patches/dhclient-script-resolvconf-support.patch \
+  %D%/packages/patches/dicedb-remove-init-from-config-subpkg.patch	\
   %D%/packages/patches/directfb-davinci-glibc-228-compat.patch	\
   %D%/packages/patches/dkimproxy-add-ipv6-support.patch		\
   %D%/packages/patches/docbook-utils-documentation-edits.patch	\
@@ -1787,6 +1788,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libutils-remove-damaging-includes.patch	\
   %D%/packages/patches/libvdpau-va-gl-unbundle.patch		\
   %D%/packages/patches/libvpx-CVE-2016-2818.patch		\
+  %D%/packages/patches/libvpx-CVE-2025-5262.patch		\
   %D%/packages/patches/libxcrypt-hurd64.patch			\
   %D%/packages/patches/libxml2-xpath0-Add-option-xpath0.patch	\
   %D%/packages/patches/libwpd-gcc-compat.patch			\
@@ -2244,7 +2246,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/sbcl-ciel-repl.patch			\
   %D%/packages/patches/sbcl-clml-fix-types.patch		\
   %D%/packages/patches/sbcl-eazy-gnuplot-skip-path-check.patch	\
-  %D%/packages/patches/sbcl-fast-generic-functions-fix-sbcl-2.4.patch	\
   %D%/packages/patches/sbcl-lack-fix-tests.patch		\
   %D%/packages/patches/sbcl-png-fix-sbcl-compatibility.patch	\
   %D%/packages/patches/sbcl-s-sysdeps-bt2.patch			\

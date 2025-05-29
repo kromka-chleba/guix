@@ -87,6 +87,14 @@
 (define mpv/string?
   string?)
 
+(define (serialize-mpv/file field-name value)
+  #~(string-append #$(symbol->string field-name)
+                   "="
+                   #$value
+                   "\n"))
+(define (mpv/file? value)
+  (or (file-like? value) (string? value)))
+
 (define (serialize-mpv/float field-name value)
   #~(string-append #$(symbol->string field-name)
                    "="
@@ -215,6 +223,14 @@
                    "\n"))
 (define (mpv/list-of-string? lst)
   (every mpv/string? lst))
+
+(define (serialize-mpv/list-of-file field-name lst)
+  #~(string-append #$(symbol->string field-name)
+                   "="
+                   (string-join '#$lst ",")
+                   "\n"))
+(define (mpv/list-of-file? lst)
+  (every mpv/file? lst))
 
 (define (serialize-mpv/list-of-key-value field-name lst)
   #~(string-append #$(symbol->string field-name)
@@ -378,8 +394,9 @@
   (<= val 10000))
 (define-opt ao-null-untimed? boolean)
 (define-opt ao-pcm-append? boolean)
-(define-opt ao-pcm-file string)
+(define-opt ao-pcm-file file)
 (define-opt ao-pcm-waveheader? boolean)
+(define-opt archive-exts list-of-string)
 (define-opt
   audio-backward-batch
   integer
@@ -413,8 +430,8 @@
   audio-file-auto
   enumeration
   (memq val '(no exact fuzzy all)))
-(define-opt audio-file-paths list-of-string)
-(define-opt audio-files list-of-string)
+(define-opt audio-file-paths list-of-file)
+(define-opt audio-files list-of-file)
 (define-opt audio-format audio-format)
 (define-opt audio-normalize-downmix? boolean)
 (define-opt audio-pitch-correction? boolean)
@@ -478,7 +495,7 @@
   blend-subtitles
   enumeration
   (memq val '(no yes video)))
-(define-opt bluray-device string)
+(define-opt bluray-device file)
 (define-opt border? boolean)
 (define-opt
   border-background
@@ -496,10 +513,14 @@
 (define-opt cache-on-disk? boolean)
 (define-opt cache-pause? boolean)
 (define-opt cache-pause-initial? boolean)
-(define-opt cache-pause-wait float (>= val 0))
+(define-opt
+  cache-pause-wait
+  float
+  (>= val 0)
+  (<= val 3.4028234663853e38))
 (define-opt cache-secs double (>= val 0))
 (define-opt cdda-cdtext? boolean)
-(define-opt cdda-device string)
+(define-opt cdda-device file)
 (define-opt
   cdda-overlap
   integer
@@ -530,7 +551,11 @@
   (>= val 0)
   (<= val 10000))
 (define-opt chapter-seek-threshold double)
-(define-opt chapters-file string)
+(define-opt chapters-file file)
+(define-opt
+  clipboard-backends
+  list-of-object-setting)
+(define-opt clipboard-monitor? boolean)
 (define-opt config? boolean)
 (define-opt
   container-fps-override
@@ -542,7 +567,7 @@
   (>= val -100)
   (<= val 100))
 (define-opt cookies? boolean)
-(define-opt cookies-file string)
+(define-opt cookies-file file)
 (define-opt
   corner-rounding
   float
@@ -554,7 +579,7 @@
   cover-art-auto
   enumeration
   (memq val '(no exact fuzzy all)))
-(define-opt cover-art-files list-of-string)
+(define-opt cover-art-files list-of-file)
 (define-opt cover-art-whitelist list-of-string)
 (define-opt
   cscale
@@ -683,7 +708,7 @@
   demuxer-backward-playback-step
   double
   (>= val 0))
-(define-opt demuxer-cache-dir string)
+(define-opt demuxer-cache-dir file)
 (define-opt
   demuxer-cache-unlink-files
   enumeration
@@ -737,6 +762,7 @@
   byte-size
   (>= val 0)
   (<= val 4.6116860184274e18))
+(define-opt demuxer-mkv-crop-compat? boolean)
 (define-opt
   demuxer-mkv-probe-start-time?
   boolean)
@@ -858,33 +884,6 @@
   drag-and-drop
   enumeration
   (memq val '(no auto replace append insert-next)))
-(define-opt drm-connector string)
-(define-opt drm-device string)
-(define-opt
-  drm-draw-plane
-  enumeration
-  (or (memq val '(primary overlay))
-      (and (integer? val)
-           (>= val 0)
-           (<= val 2147483647))))
-(define-opt drm-draw-surface-size window-size)
-(define-opt
-  drm-drmprime-video-plane
-  enumeration
-  (or (memq val '(primary overlay))
-      (and (integer? val)
-           (>= val 0)
-           (<= val 2147483647))))
-(define-opt
-  drm-format
-  enumeration
-  (memq val
-        '(xrgb8888 xrgb2101010 xbgr8888 xbgr2101010 yuyv)))
-(define-opt drm-mode string)
-(define-opt
-  drm-vrr-enabled
-  enumeration
-  (memq val '(no yes auto)))
 (define-opt
   dscale
   enumeration
@@ -972,27 +971,27 @@
   float
   (>= val 0)
   (<= val 1))
-(define-opt dump-stats string)
+(define-opt dump-stats file)
 (define-opt
   dvbin-card
   integer
   (>= val 0)
   (<= val 15))
 (define-opt dvbin-channel-switch-offset integer)
-(define-opt dvbin-file string)
+(define-opt dvbin-file file)
 (define-opt dvbin-full-transponder? boolean)
 (define-opt dvbin-prog string)
 (define-opt
   dvbin-timeout
-  integer
-  (>= val 1)
-  (<= val 30))
+  float
+  (>= val 0)
+  (<= val 3.4028234663853e38))
 (define-opt
   dvd-angle
   integer
   (>= val 1)
   (<= val 99))
-(define-opt dvd-device string)
+(define-opt dvd-device file)
 (define-opt dvd-speed integer)
 (define-opt
   edition
@@ -1019,7 +1018,7 @@
   end
   relative-time-or-percent-position)
 (define-opt error-diffusion string)
-(define-opt external-files list-of-string)
+(define-opt external-files list-of-file)
 (define-opt fbo-format string)
 (define-opt
   focus-on
@@ -1082,7 +1081,7 @@
   (memq val '(no yes weak)))
 (define-opt geometry window-geometry)
 (define-opt glsl-shader-opts list-of-key-value)
-(define-opt glsl-shaders list-of-string)
+(define-opt glsl-shaders list-of-file)
 (define-opt gpu-api list-of-object-setting)
 (define-opt gpu-context list-of-object-setting)
 (define-opt gpu-debug? boolean)
@@ -1092,7 +1091,7 @@
   (memq val '(auto yes no)))
 (define-opt gpu-hwdec-interop string)
 (define-opt gpu-shader-cache? boolean)
-(define-opt gpu-shader-cache-dir string)
+(define-opt gpu-shader-cache-dir file)
 (define-opt gpu-sw? boolean)
 (define-opt
   gpu-tex-pad-x
@@ -1163,16 +1162,23 @@
   (>= val 0)
   (<= val 256))
 (define-opt hwdec-image-format image-format)
+(define-opt
+  hwdec-software-fallback
+  enumeration
+  (or (memq val '(no yes))
+      (and (integer? val)
+           (>= val 1)
+           (<= val 2147483647))))
 (define-opt icc-3dlut-size string)
 (define-opt icc-cache? boolean)
-(define-opt icc-cache-dir string)
+(define-opt icc-cache-dir file)
 (define-opt
   icc-force-contrast
   enumeration
   (or (memq val '(no inf))
       (and (integer? val) (>= val 0) (<= val 1000000))))
 (define-opt icc-intent integer)
-(define-opt icc-profile string)
+(define-opt icc-profile file)
 (define-opt icc-profile-auto? boolean)
 (define-opt icc-use-luma? boolean)
 (define-opt
@@ -1187,13 +1193,13 @@
   double
   (>= val 0))
 (define-opt image-exts list-of-string)
-(define-opt image-lut string)
+(define-opt image-lut file)
 (define-opt
   image-lut-type
   enumeration
   (memq val '(auto native normalized conversion)))
 (define-opt image-subs-video-resolution? boolean)
-(define-opt include string)
+(define-opt include file)
 (define-opt
   index
   enumeration
@@ -1204,7 +1210,7 @@
 (define-opt input-builtin-bindings? boolean)
 (define-opt input-builtin-dragging? boolean)
 (define-opt input-commands list-of-string)
-(define-opt input-conf string)
+(define-opt input-conf file)
 (define-opt input-cursor? boolean)
 (define-opt input-cursor-passthrough? boolean)
 (define-opt input-default-bindings? boolean)
@@ -1214,8 +1220,9 @@
   (>= val 0)
   (<= val 1000))
 (define-opt input-dragging-deadzone integer)
+(define-opt input-ime? boolean)
 (define-opt input-ipc-client string)
-(define-opt input-ipc-server string)
+(define-opt input-ipc-server file)
 (define-opt
   input-key-fifo-size
   integer
@@ -1258,12 +1265,14 @@
   load-auto-profiles
   enumeration
   (memq val '(no yes auto)))
-(define-opt load-osd-console? boolean)
+(define-opt load-commands? boolean)
+(define-opt load-console? boolean)
+(define-opt load-positioning? boolean)
 (define-opt load-scripts? boolean)
 (define-opt load-select? boolean)
 (define-opt load-stats-overlay? boolean)
 (define-opt load-unsafe-playlists? boolean)
-(define-opt log-file string)
+(define-opt log-file file)
 (define-opt
   loop-file
   enumeration
@@ -1274,16 +1283,13 @@
   enumeration
   (or (memq val '(no inf yes force))
       (and (integer? val) (>= val 1) (<= val 10000))))
-(define-opt lut string)
+(define-opt lut file)
 (define-opt
   lut-type
   enumeration
   (memq val '(auto native normalized conversion)))
 (define-opt mc float (>= val 0) (<= val 100))
-(define-opt
-  media-controls
-  enumeration
-  (memq val '(no player yes)))
+(define-opt media-controls? boolean)
 (define-opt merge-files? boolean)
 (define-opt metadata-codepage string)
 (define-opt mf-fps double)
@@ -1338,7 +1344,7 @@
 (define-opt opengl-waitvsync? boolean)
 (define-opt orawts? boolean)
 (define-opt ordered-chapters? boolean)
-(define-opt ordered-chapters-files string)
+(define-opt ordered-chapters-files file)
 (define-opt oremove-metadata list-of-string)
 (define-opt osc? boolean)
 (define-opt
@@ -1366,6 +1372,20 @@
   float
   (>= val 0.1)
   (<= val 50))
+(define-opt
+  osd-bar-marker-min-size
+  float
+  (>= val 0)
+  (<= val 1000))
+(define-opt
+  osd-bar-marker-scale
+  float
+  (>= val 0)
+  (<= val 100))
+(define-opt
+  osd-bar-marker-style
+  enumeration
+  (memq val '(none triangle line)))
 (define-opt
   osd-bar-outline-size
   float
@@ -1403,7 +1423,7 @@
   float
   (>= val 1)
   (<= val 9000))
-(define-opt osd-fonts-dir string)
+(define-opt osd-fonts-dir file)
 (define-opt osd-fractions? boolean)
 (define-opt osd-italic? boolean)
 (define-opt
@@ -1449,6 +1469,8 @@
   (>= val 0)
   (<= val 100))
 (define-opt osd-scale-by-window? boolean)
+(define-opt osd-selected-color color)
+(define-opt osd-selected-outline-color color)
 (define-opt osd-shadow-offset float)
 (define-opt
   osd-spacing
@@ -1484,6 +1506,7 @@
   player-operation-mode
   enumeration
   (memq val '(cplayer pseudo-gui)))
+(define-opt playlist-exts list-of-string)
 (define-opt
   playlist-start
   enumeration
@@ -1533,6 +1556,7 @@
   (>= val -100)
   (<= val 100))
 (define-opt save-position-on-quit? boolean)
+(define-opt save-watch-history? boolean)
 (define-opt
   scale
   enumeration
@@ -1632,7 +1656,7 @@
   screenshot-avif-opts
   list-of-key-value)
 (define-opt screenshot-avif-pixfmt string)
-(define-opt screenshot-directory string)
+(define-opt screenshot-directory file)
 (define-opt
   screenshot-format
   enumeration
@@ -1681,7 +1705,7 @@
   (>= val 0)
   (<= val 100))
 (define-opt script-opts list-of-key-value)
-(define-opt scripts list-of-string)
+(define-opt scripts list-of-file)
 (define-opt
   secondary-sid
   enumeration
@@ -1744,7 +1768,7 @@
   byte-size
   (>= val 4096)
   (<= val 536870912))
-(define-opt stream-dump string)
+(define-opt stream-dump file)
 (define-opt stream-lavf-o list-of-key-value)
 (define-opt stream-record string)
 (define-opt stretch-dvd-subs? boolean)
@@ -1761,29 +1785,20 @@
   (memq val '(top center bottom)))
 (define-opt sub-ass? boolean)
 (define-opt sub-ass-force-margins? boolean)
-(define-opt
-  sub-ass-hinting
-  enumeration
-  (memq val '(none light normal native)))
 (define-opt sub-ass-justify? boolean)
-(define-opt
-  sub-ass-line-spacing
-  float
-  (>= val -1000)
-  (<= val 1000))
 (define-opt
   sub-ass-override
   enumeration
   (memq val '(no yes scale force strip)))
-(define-opt sub-ass-scale-with-window? boolean)
 (define-opt
-  sub-ass-shaper
-  enumeration
-  (memq val '(simple complex)))
+  sub-ass-prune-delay
+  double
+  (>= val -1))
+(define-opt sub-ass-scale-with-window? boolean)
 (define-opt
   sub-ass-style-overrides
   list-of-string)
-(define-opt sub-ass-styles string)
+(define-opt sub-ass-styles file)
 (define-opt
   sub-ass-use-video-data
   enumeration
@@ -1820,8 +1835,8 @@
 (define-opt sub-create-cc-track? boolean)
 (define-opt sub-delay float)
 (define-opt sub-demuxer string)
-(define-opt sub-file-paths list-of-string)
-(define-opt sub-files list-of-string)
+(define-opt sub-file-paths list-of-file)
+(define-opt sub-files list-of-file)
 (define-opt sub-filter-jsre list-of-string)
 (define-opt sub-filter-regex list-of-string)
 (define-opt sub-filter-regex-enable? boolean)
@@ -1841,7 +1856,7 @@
   float
   (>= val 1)
   (<= val 9000))
-(define-opt sub-fonts-dir string)
+(define-opt sub-fonts-dir file)
 (define-opt sub-forced-events-only? boolean)
 (define-opt sub-fps float)
 (define-opt
@@ -1850,12 +1865,21 @@
   (>= val 0)
   (<= val 3))
 (define-opt sub-gray? boolean)
+(define-opt
+  sub-hinting
+  enumeration
+  (memq val '(none light normal native)))
 (define-opt sub-italic? boolean)
 (define-opt
   sub-justify
   enumeration
   (memq val '(auto left center right)))
 (define-opt sub-lavc-o list-of-key-value)
+(define-opt
+  sub-line-spacing
+  float
+  (>= val -1000)
+  (<= val 1000))
 (define-opt
   sub-margin-x
   integer
@@ -1880,8 +1904,13 @@
   (>= val 0)
   (<= val 100))
 (define-opt sub-scale-by-window? boolean)
+(define-opt sub-scale-signs? boolean)
 (define-opt sub-scale-with-window? boolean)
 (define-opt sub-shadow-offset float)
+(define-opt
+  sub-shaper
+  enumeration
+  (memq val '(simple complex)))
 (define-opt
   sub-spacing
   float
@@ -1950,7 +1979,10 @@
           sinc
           lanczos
           spline)))
-(define-opt target-colorspace-hint? boolean)
+(define-opt
+  target-colorspace-hint
+  enumeration
+  (memq val '(auto no yes)))
 (define-opt
   target-contrast
   enumeration
@@ -1977,7 +2009,7 @@
                film-c
                aces-ap0
                aces-ap1)))
-(define-opt target-lut string)
+(define-opt target-lut file)
 (define-opt
   target-peak
   enumeration
@@ -2048,9 +2080,9 @@
 (define-opt terminal? boolean)
 (define-opt title string)
 (define-opt title-bar? boolean)
-(define-opt tls-ca-file string)
-(define-opt tls-cert-file string)
-(define-opt tls-key-file string)
+(define-opt tls-ca-file file)
+(define-opt tls-cert-file file)
+(define-opt tls-key-file file)
 (define-opt tls-verify? boolean)
 (define-opt
   tone-mapping
@@ -2193,13 +2225,6 @@
   enumeration
   (memq val
         '(none default nonref bidir nonkey all)))
-(define-opt
-  vd-lavc-software-fallback
-  enumeration
-  (or (memq val '(no yes))
-      (and (integer? val)
-           (>= val 1)
-           (<= val 2147483647))))
 (define-opt vd-lavc-threads integer (>= val 0))
 (define-opt vd-queue-enable? boolean)
 (define-opt
@@ -2231,11 +2256,11 @@
 (define-opt
   video-aspect-method
   enumeration
-  (memq val '(bitstream container)))
+  (memq val '(bitstream container ignore)))
 (define-opt
   video-aspect-override
   aspect
-  (>= val -1)
+  (>= val -2)
   (<= val 10))
 (define-opt
   video-backward-batch
@@ -2277,6 +2302,7 @@
   (memq val '(auto limited full)))
 (define-opt video-pan-x float)
 (define-opt video-pan-y float)
+(define-opt video-recenter? boolean)
 (define-opt
   video-reversal-buffer
   byte-size
@@ -2363,7 +2389,7 @@
   integer
   (>= val 1)
   (<= val 9))
-(define-opt vo-image-outdir string)
+(define-opt vo-image-outdir file)
 (define-opt
   vo-image-png-compression
   integer
@@ -2511,7 +2537,8 @@
   enumeration
   (memq val
         '(auto fifo fifo-relaxed mailbox immediate)))
-(define-opt watch-later-directory string)
+(define-opt watch-history-path file)
+(define-opt watch-later-directory file)
 (define-opt watch-later-options list-of-string)
 (define-opt wayland-app-id string)
 (define-opt
@@ -2533,6 +2560,10 @@
   integer
   (>= val 0)
   (<= val 2147483647))
+(define-opt
+  wayland-internal-vsync
+  enumeration
+  (memq val '(no auto yes)))
 (define-opt wayland-present? boolean)
 (define-opt wid integer64)
 (define-opt window-dragging? boolean)
