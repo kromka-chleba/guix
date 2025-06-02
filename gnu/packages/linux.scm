@@ -513,17 +513,17 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.14-version "6.14.8")
+(define-public linux-libre-6.14-version "6.14.9")
 (define-public linux-libre-6.14-gnu-revision "gnu")
 (define deblob-scripts-6.14
   (linux-libre-deblob-scripts
    linux-libre-6.14-version
    linux-libre-6.14-gnu-revision
-   (base32 "00b6axy07ykdxk4qy3dnx5mvhz2dvbf78qxax3zq81bg11wbfvay")
-   (base32 "076x15yp1qjhvv81si3aj3n6ny4l6yl1rcj7f7l12rlbl9p64vl2")))
+   (base32 "1c27l734pwxgdwhq0gzibaznh0695pqvl17vbddw6q5znm84a0s3")
+   (base32 "14vabccax7mq5gisshlnx2ljx3hr4jj106aw3s9qx5dxbjvr7qcw")))
 (define-public linux-libre-6.14-pristine-source
   (let ((version linux-libre-6.14-version)
-        (hash (base32 "0199maj3mk577wwaszbi0cl5a0afx1ynad896bmmg8vm636jxcb2")))
+        (hash (base32 "0qgkr69745al6nf4wicxq284xnsmxybh29r7hjh2b6bi6bhds31r")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.14)))
@@ -532,17 +532,17 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.30")
+(define-public linux-libre-6.12-version "6.12.31")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
    linux-libre-6.12-version
    linux-libre-6.12-gnu-revision
-   (base32 "0zqw2hw9f9vssqvizc0nlnp9m54a2inxg23gsf1wixhgc79wdhsi")
-   (base32 "1sqgg46xnjvk1dcz7j2f5fys43d7b5m3s4fj2hx3wrvd982n14k6")))
+   (base32 "0y6i9ifax1a8bxih3rr9xzy3mj61ssgx9yfsy6fh94mni6wl51gp")
+   (base32 "00hyshh3yx59yv9wxiw2hnjlksr60w1hklbv0462wwi7gjlk72xd")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "0bpqkh64bj6nslbb43hj28lxmrxinrapwgh05q5wwh0yjx46l16z")))
+        (hash (base32 "19sba8zak31gn89pzfa3kb9rv7y9z8kybvyikigamq7nblz5nk5h")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
@@ -1434,6 +1434,9 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                         ("CONFIG_CRYPTO_USER_API_RNG" . #true)
                         ("CONFIG_CRYPTO_USER_API_AEAD" . #true)
 
+                        ;; Fixes https://codeberg.org/guix/guix/issues/101
+                        ("CONFIG_KEY_DH_OPERATIONS" . #true)
+
                         ;; For connecting to ci.guix.gnu.org over VPN.
                         ("CONFIG_WIREGUARD" . m)
 
@@ -1598,6 +1601,12 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                                            ("CONFIG_VIDEO_ROCKCHIP_VDEC2" . m)
                                            ("CONFIG_ROCKCHIP_DW_HDMI_QP" . #true)
                                            ("CONFIG_ROCKCHIP_DW_MIPI_DSI" . #true)
+                                           ;; Fixes https://codeberg.org/guix/guix/issues/101
+                                           ("CONFIG_CRYPTO_USER_API_HASH" . #true)
+                                           ("CONFIG_CRYPTO_USER_API_SKCIPHER" . #true)
+                                           ("CONFIG_CRYPTO_USER_API_RNG" . #true)
+                                           ("CONFIG_CRYPTO_USER_API_AEAD" . #true)
+                                           ("CONFIG_KEY_DH_OPERATIONS" . #true)
                                            ;; Provide support for ath9k wireless
                                            ("CONFIG_ATH9K" . m)
                                            ("CONFIG_ATH9K_HTC" . m))

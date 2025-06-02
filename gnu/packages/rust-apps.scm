@@ -68,6 +68,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages build-tools)
+  #:use-module (gnu packages c)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crates-apple)
@@ -88,6 +89,7 @@
   #:use-module (gnu packages curl)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages emacs)
+  #:use-module (gnu packages engineering)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages haskell-xyz)
@@ -493,6 +495,35 @@ paging.")
 the terminal.")
     (license license:expat)))
 
+(define-public cargo-bloat
+  (package
+    (name "cargo-bloat")
+    (version "0.12.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "cargo-bloat" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0zhimclamvy4dggwnciras6w5ilc0wg0c0f7q8hq1qsmmf1w9qjn"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:install-source? #f
+       #:cargo-inputs (("rust-binfarce" ,rust-binfarce-0.2)
+                       ("rust-json" ,rust-json-0.12)
+                       ("rust-memmap2" ,rust-memmap2-0.9)
+                       ("rust-multimap" ,rust-multimap-0.10)
+                       ("rust-pdb" ,rust-pdb-0.8)
+                       ("rust-pico-args" ,rust-pico-args-0.5)
+                       ("rust-regex" ,rust-regex-1)
+                       ("rust-term-size" ,rust-term-size-0.3))))
+    (home-page "https://github.com/RazrFalcon/cargo-bloat")
+    (synopsis "Find out what takes most of the space in your executable")
+    (description
+     "This package provides a way to find out what takes most of the space
+in your executable.")
+    (license license:expat)))
+
 (define-public cargo-machete
   (package
     (name "cargo-machete")
@@ -538,6 +569,162 @@ the terminal.")
     (synopsis "Find unused dependencies in Cargo.toml")
     (description "@code{cargo-machete} finds unused dependencies in Cargo.toml.")
     (license (list license:expat license:asl2.0))))
+
+(define-public cargo-readme
+  (package
+    (name "cargo-readme")
+    (version "3.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/webern/cargo-readme.git")
+             (commit (string-append "v" version))))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1jwh2j4lw1hk08aflgk7pamnhdbrzr47dc0ipzczn48k6008fm8l"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:install-source? #f
+       #:cargo-inputs (("rust-clap" ,rust-clap-4)
+                       ("rust-lazy-static" ,rust-lazy-static-1)
+                       ("rust-percent-encoding" ,rust-percent-encoding-2)
+                       ("rust-regex" ,rust-regex-1)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-toml" ,rust-toml-0.8))
+       #:cargo-development-inputs (("rust-assert-cli" ,rust-assert-cli-0.6))
+       #:phases
+       (modify-phases %standard-phases
+         (add-before 'check 'fix-test-warnings
+           (lambda _
+             ;; Otherwise the test case will see the warning being emitted
+             ;; that "config" is deprecated.
+             (when (file-exists? ".cargo/config")
+               (rename-file ".cargo/config"
+                            ".cargo/config.toml")))))))
+    (home-page "https://github.com/webern/cargo-readme")
+    (synopsis
+     "Cargo subcommand to generate README.md content from doc comments")
+    (description
+     "This package provides a Cargo subcommand to generate README.md content from doc
+comments.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public cargo-remark
+  (package
+    (name "cargo-remark")
+    (version "0.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "cargo-remark" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0hfg3drsmyif7g8sqc40a5nzkzygqr9gqdajhaydh7dah2w8gkyq"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:install-source? #f
+       #:cargo-inputs (("rust-anyhow" ,rust-anyhow-1)
+                       ("rust-askama" ,rust-askama-0.12)
+                       ("rust-cargo-metadata" ,rust-cargo-metadata-0.15)
+                       ("rust-clap" ,rust-clap-4)
+                       ("rust-colored" ,rust-colored-2)
+                       ("rust-env-logger" ,rust-env-logger-0.10)
+                       ("rust-fxhash" ,rust-fxhash-0.2)
+                       ("rust-hashbrown" ,rust-hashbrown-0.13)
+                       ("rust-html-escape" ,rust-html-escape-0.2)
+                       ("rust-indicatif" ,rust-indicatif-0.17)
+                       ("rust-log" ,rust-log-0.4)
+                       ("rust-mimalloc" ,rust-mimalloc-0.1)
+                       ("rust-opener" ,rust-opener-0.6)
+                       ("rust-rayon" ,rust-rayon-1)
+                       ("rust-regex" ,rust-regex-1)
+                       ("rust-rust-embed" ,rust-rust-embed-6)
+                       ("rust-rustc-demangle" ,rust-rustc-demangle-0.1)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-serde-json" ,rust-serde-json-1)
+                       ("rust-serde-yaml" ,rust-serde-yaml-0.9))
+       #:cargo-development-inputs (("rust-insta" ,rust-insta-1)
+                                   ("rust-tempfile" ,rust-tempfile-3))))
+    (inputs
+     (list mimalloc))
+    (home-page "https://github.com/kobzol/cargo-remark")
+    (synopsis
+     "Cargo subcommand for displaying LLVM optimization remarks from compiling Rust programs")
+    (description
+     "This package provides a Cargo subcommand for displaying LLVM optimization remarks from
+compiling Rust programs.")
+    (license license:expat)))
+
+(define-public cargo-show-asm
+  (package
+    (name "cargo-show-asm")
+    (version "0.2.49")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "cargo-show-asm" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "01dg77r3jbbbvf5icl46l24vhw2x8q13nqw414aj77p95jk2gf2g"))))
+    (build-system cargo-build-system)
+    (inputs
+     (list capstone))
+    (arguments
+     `(#:install-source? #f
+       #:cargo-inputs (("rust-anyhow" ,rust-anyhow-1)
+                       ("rust-ar" ,rust-ar-0.9)
+                       ("rust-bpaf" ,rust-bpaf-0.9)
+                       ("rust-capstone" ,rust-capstone-0.13)
+                       ("rust-cargo-metadata" ,rust-cargo-metadata-0.19.2)
+                       ("rust-line-span" ,rust-line-span-0.1)
+                       ("rust-nom" ,rust-nom-7)
+                       ("rust-object" ,rust-object-0.36)
+                       ("rust-owo-colors" ,rust-owo-colors-4)
+                       ("rust-regex" ,rust-regex-1)
+                       ("rust-rustc-demangle" ,rust-rustc-demangle-0.1)
+                       ("rust-same-file" ,rust-same-file-1)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-supports-color" ,rust-supports-color-3))
+       #:cargo-development-inputs (("rust-bpaf" ,rust-bpaf-0.9))))
+    (home-page "https://github.com/pacak/cargo-show-asm")
+    (synopsis
+     "cargo subcommand that displays the generated assembly of Rust source code.")
+    (description
+     "This package provides a cargo subcommand that displays the generated assembly of
+Rust source code.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public cargo-with
+  (package
+    (name "cargo-with")
+    (version "0.3.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cbourjau/cargo-with.git")
+             (commit "2eb3cbd87f221f24e780b84306574541de38a1e4")))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "127ifblgp7v2vv8iafl88y1cjyskymqdi0nzsavnyab0x9jiskcr"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:install-source? #f
+       #:cargo-inputs (("rust-clap" ,rust-clap-2)
+                       ("rust-env-logger" ,rust-env-logger-0.6)
+                       ("rust-failure" ,rust-failure-0.1)
+                       ("rust-log" ,rust-log-0.4)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-serde-json" ,rust-serde-json-1)
+                       ("rust-void" ,rust-void-1))))
+    (home-page "https://github.com/cbourjau/cargo-with/")
+    (synopsis
+     "Cargo extension to run build artifacts through tools like `gdb`.")
+    (description
+     "This package provides a Cargo extension to run the build artifacts
+through tools like `gdb`.")
+    (license license:gpl3)))
 
 (define-public codeberg-cli
   (package
@@ -4995,3 +5182,70 @@ or existing object")
      "This package generates Podman Quadlet files from a Podman command,
 compose file, or existing object.")
     (license license:mpl2.0)))
+
+(define-public espflash
+  (package
+    (name "espflash")
+    (version "3.2.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/esp-rs/espflash.git")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0vmq3b66yinqypgzfpdivli2ipiyzingakxy84j31srzg70m7maz"))))
+    (build-system cargo-build-system)
+    (inputs
+     (list eudev))
+    (native-inputs
+     (list pkg-config))
+    (arguments
+     `(#:install-source? #f
+       #:cargo-inputs (("rust-addr2line" ,rust-addr2line-0.22)
+                       ("rust-base64" ,rust-base64-0.22)
+                       ("rust-bytemuck" ,rust-bytemuck-1)
+                       ("rust-cargo" ,rust-cargo)
+                       ("rust-cargo-metadata" ,rust-cargo-metadata-0.18)
+                       ("rust-clap" ,rust-clap-4)
+                       ("rust-clap-complete" ,rust-clap-complete-4)
+                       ("rust-comfy-table" ,rust-comfy-table-7)
+                       ("rust-crossterm" ,rust-crossterm-0.25)
+                       ("rust-ctrlc" ,rust-ctrlc-3)
+                       ("rust-defmt-decoder" ,rust-defmt-decoder-0.3)
+                       ("rust-defmt-parser" ,rust-defmt-parser-0.3)
+                       ("rust-dialoguer" ,rust-dialoguer-0.11)
+                       ("rust-directories" ,rust-directories-5)
+                       ("rust-env-logger" ,rust-env-logger-0.11)
+                       ("rust-esp-idf-part" ,rust-esp-idf-part-0.5)
+                       ("rust-flate2" ,rust-flate2-1)
+                       ("rust-hex" ,rust-hex-0.4)
+                       ("rust-indicatif" ,rust-indicatif-0.17)
+                       ("rust-lazy-static" ,rust-lazy-static-1)
+                       ("rust-libc" ,rust-libc-0.2)
+                       ("rust-log" ,rust-log-0.4)
+                       ("rust-md-5" ,rust-md-5-0.10)
+                       ("rust-miette" ,rust-miette-7)
+                       ("rust-parse-int" ,rust-parse-int-0.6)
+                       ("rust-regex" ,rust-regex-1)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-serialport" ,rust-serialport-4)
+                       ("rust-sha2" ,rust-sha2-0.10)
+                       ("rust-slip-codec" ,rust-slip-codec-0.4)
+                       ("rust-strum" ,rust-strum-0.26)
+                       ("rust-thiserror" ,rust-thiserror-1)
+                       ("rust-toml" ,rust-toml-0.8)
+                       ("rust-update-informer" ,rust-update-informer-1)
+                       ("rust-xmas-elf" ,rust-xmas-elf-0.9))
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'chdir
+           (lambda _
+             (delete-file "Cargo.lock")
+             (chdir "espflash"))))))
+    (home-page "https://github.com/esp-rs/espflash")
+    (synopsis "Command-line tool for flashing Espressif devices")
+    (description
+     "This package provides a command-line tool for flashing Espressif devices.")
+    (license (list license:expat license:asl2.0))))

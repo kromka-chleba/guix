@@ -151,18 +151,27 @@ and others.")
         (base32 "1al04jx72bxwqch1nv9lx536mb6pvj7pgnqzy6lm32q6xa114yr2"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags '("--with-os-name=Linux" ; uname -s
-                           "--with-os-version=") ; uname -r
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-source
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "Makefile.am"
-               ((".*LIBAVUTIL_LIBS.*") ""))
-             (substitute* "minidlna.c"
-               (("rm -rf")
-                (string-append
-                 (search-input-file inputs "/bin/rm") " -rf"))))))))
+     (list
+      #:configure-flags #~(list "--with-os-name=Linux" ; uname -s
+                                "--with-os-version=")  ; uname -r
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-source
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "Makefile.am"
+                ((".*LIBAVUTIL_LIBS.*") ""))
+              (substitute* "minidlna.c"
+                (("rm -rf")
+                 (string-append
+                  (search-input-file inputs "/bin/rm") " -rf")))
+              (substitute* "minidlnad.8"
+                (("/usr(/sbin/minidlnad)" _ path)
+                 (string-append #$output path)))))
+          (add-after 'install 'install-man-pages
+            (lambda _
+              (let ((man (string-append #$output "/share/man/man")))
+                (install-file "minidlnad.8" (string-append man "8"))
+                (install-file "minidlna.conf.5" (string-append man "5"))))))))
     (native-inputs (list autoconf automake gettext-minimal))
     (inputs
      (list coreutils-minimal

@@ -28,7 +28,7 @@
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2022 Yash Tiwari <yasht@mailbox.org>
 ;;; Copyright © 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
-;;; Copyright © 2022, 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2022, 2024, 2025 Zheng Junjie <z572@z572.online>
 ;;; Copyright © 2023 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2023 Simon South <simon@simonsouth.net>
 ;;; Copyright © 2024 Foundation Devices, Inc. <hello@foundation.xyz>
@@ -5713,9 +5713,12 @@ policy applications.")
         (base32
          "0mpkg9iyvzb6mxvhbi6zc052ids2r2nzpmjbljgpq6a2hja13vyr"))))
     (build-system qt-build-system)
-    (inputs (list qtbase-5))
     (arguments
-     (list #:configure-flags #~(list "-DKDSoap_TESTS=true")
+     (list #:qtbase qtbase
+           #:configure-flags
+           #~(list "-DKDSoap_TESTS=true"
+                   ;; remove when next version release.
+                   "-DKDSoap_QT6=true")
            #:phases
            #~(modify-phases %standard-phases
                (replace 'check
@@ -5731,14 +5734,7 @@ web server.")
     (license (list license:gpl2 license:gpl3))))
 
 (define-public kdsoap-qt6
-  (package
-    (inherit kdsoap)
-    (name "kdsoap-qt6")
-    (arguments (substitute-keyword-arguments (package-arguments kdsoap)
-                 ((#:configure-flags flags #~(list))
-                  #~(cons "-DKDSoap_QT6=true" #$flags))))
-    (inputs (modify-inputs (package-inputs kdsoap)
-              (replace "qtbase" qtbase)))))
+  (deprecated-package "kdsoap-qt6" kdsoap))
 
 (define-public libaccounts-qt
   (package
@@ -5888,13 +5884,12 @@ a secure way.")))
                (base32
                 "0k6saz5spys4a4p6ws0ayrjks2gqdqvz7zfmlhdpz5axha0gbqq4"))))
     (build-system qt-build-system)
-    (native-inputs (list doxygen pkg-config qtbase-5 qttools-5))
+    (native-inputs (list doxygen pkg-config qttools-5))
     (inputs (list dbus glib libaccounts-glib))
     (arguments
      (list #:tests? #f                  ; Figure out how to run tests
            #:phases
            #~(modify-phases %standard-phases
-               (delete 'validate-runpath)
                (replace 'configure
                  (lambda _
                    (substitute* "src/signond/signond.pro"
@@ -5913,7 +5908,9 @@ a secure way.")))
                                      #$output "/lib/signon")))
                    (invoke "qmake"
                            (string-append "PREFIX=" #$output)
-                           (string-append "LIBDIR=" #$output "/lib")))))))
+                           (string-append "LIBDIR=" #$output "/lib")
+                           (string-append "QMAKE_LFLAGS_RPATH=-Wl,-rpath,"
+                                          #$output "/lib -Wl,-rpath,")))))))
     (home-page "https://accounts-sso.gitlab.io/signond/index.html")
     (synopsis "Perform user authentication over D-Bus")
     (description "This package provides a D-Bus service which performs user
@@ -5938,7 +5935,6 @@ authentication on behalf of its clients.")
                  (base32
                   "13cgdf6hhi2z3c8sax79dwi7450n8h228kpyl2w5lx0xglb2savq"))))
       (native-inputs (modify-inputs (package-native-inputs signond)
-                       (delete "qtbase")
                        (replace "qttools" qttools)))
       (arguments
        (substitute-keyword-arguments (package-arguments signond)

@@ -31,7 +31,7 @@
 ;;; Copyright © 2017 Peter Mikkelsen <petermikkelsen10@gmail.com>
 ;;; Copyright © 2017–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2017 Mike Gerwitz <mtg@gnu.org>
-;;; Copyright © 2017-2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2017-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2018 Sohom Bhattacharjee <soham.bhattacharjee15@gmail.com>
 ;;; Copyright © 2018, 2019 Mathieu Lirzin <mthl@gnu.org>
 ;;; Copyright © 2018, 2019, 2020, 2021 Pierre Neidhardt <mail@ambrevar.xyz>
@@ -148,7 +148,7 @@
 ;;; Copyright © 2024, 2025 Spencer King <spencer.king@wustl.edu>
 ;;; Copyright © 2024 emma thompson <bigbookofbug@proton.me>
 ;;; Copyright © 2024-2025 Liam Hupfer <liam@hpfr.net>
-;;; Copyright © 2024 aurtzy <aurtzy@gmail.com>
+;;; Copyright © 2024-2025 aurtzy <aurtzy@gmail.com>
 ;;; Copyright © 2024 Olivier Rojon <o.rojon@posteo.net>
 ;;; Copyright © 2024 Divya Ranjan Pattanaik <divya@subvertising.org>
 ;;; Copyright © 2025 Arjan Adriaanse <arjan@adriaan.se>
@@ -159,6 +159,7 @@
 ;;; Copyright @ 2025 Amy Pillow <amypillow@lavache.com>
 ;;; Copyright © 2025 Kurome <hunt31999@gmail.org>
 ;;; Copyright © 2025 Anderson Torres <anderson.torres.8519@gmail.com>
+;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -212,6 +213,7 @@
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages games)
   #:use-module (gnu packages gawk)
+  #:use-module (gnu packages go-apps)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages gnome)
@@ -237,6 +239,7 @@
   #:use-module (gnu packages lesstif)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages image)
+  #:use-module (gnu packages image-processing)
   #:use-module (gnu packages image-viewers)
   #:use-module (gnu packages libffi)
   #:use-module (gnu packages linux)
@@ -1335,6 +1338,63 @@ outlines, manage all your contacts, your windows and frames, and search across
 buffers, directory trees, or the web.")
     (license license:gpl3+)))
 
+(define-public emacs-vline
+  (let ((commit "f5d7b5743dceca75b81c8c95287cd5b0341debf9")
+        (revision "0"))
+    (package
+      (name "emacs-vline")
+      (version (git-version "1.11" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/buzztaiki/vline")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "06qqpjaxsacslxb3f2bm790lwygbq6387n9ccn4v9vz9xlyn9dmi"))))
+      (build-system emacs-build-system)
+      (arguments
+       ;; No tests
+       (list #:tests? #f))
+      (home-page "https://github.com/buzztaiki/vline")
+      (synopsis "Column highlighting (vertical line displaying) mode")
+      (description
+       "@code{vline-mode} is a minor mode for highlighting column at cursor
+position.  It enhances text editing by visually indicating the vertical
+line.")
+      (license license:gpl2+))))
+
+(define-public emacs-xhair
+  (let ((commit "c7bd7c501c3545aa99dadac386c882fe7c5edd9c")
+        (revision "0"))
+    (package
+      (name "emacs-xhair")
+      ;; No tag, version comes from source code
+      (version (git-version "1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/Boruch-Baum/emacs-xhair")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "03m15lbspk73x59wvb77wgvnkrmrlq4w6kmnrr2i69jgafqh0421"))))
+      (build-system emacs-build-system)
+      (arguments
+       ;; No tests
+       (list #:tests? #f))
+      (propagated-inputs (list emacs-vline))
+      (home-page "https://github.com/Boruch-Baum/emacs-xhair")
+      (synopsis "Highlight the current line and column")
+      (description
+       "This package simultaneously applies @code{vline-mode} and
+@code{hl-line-mode}, with tweaks, to present @code{point} in highlighted
+cross-hairs, reporting the value of @code{point} as a message in the echo
+area.")
+      (license license:gpl3+))))
+
 (define-public emacs-vlf
   (package
     (name "emacs-vlf")
@@ -1708,6 +1768,45 @@ do manually if you wanted to keep the buffers of a project neatly isolated in
 separate, named tab groups.")
       (license license:gpl3+))))
 
+(define-public emacs-dicom
+  (package
+    (name "emacs-dicom")
+    (version "0.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/minad/dicom")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "02n5wagcznl5fhyfh222kklj4z90pfrqpzm7q97agyx8bynzwr2p"))))
+    (build-system emacs-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-dcmtk-executables
+            (lambda* (#:key inputs #:allow-other-keys)
+              (make-file-writable "dicom.el")
+              (let ((dcm2xml (search-input-file inputs "/bin/dcm2xml"))
+                    (dcmj2pnm (search-input-file inputs "/bin/dcmj2pnm")))
+                (substitute* "dicom.el"
+                  (("\"dcm2xml")
+                   (string-append "\"" dcm2xml))
+                  (("\"dcmj2pnm")
+                   (string-append "\"" dcmj2pnm)))))))))
+    (inputs (list dcmtk))
+    (propagated-inputs (list emacs-compat))
+    (home-page "https://github.com/minad/dicom")
+    (synopsis
+     "@acronym{DICOM, Digital Imaging and Communications in Medicine} viewer
+for Emacs")
+    (description
+     "This package adds the ability to view @acronym{DICOM, Digital Imaging
+and Communications in Medicine} files in Emacs.")
+    (license license:gpl3+)))
+
 (define-public emacs-discourse-mode
   (package
     (name "emacs-discourse-mode")
@@ -1734,7 +1833,7 @@ posts, and participate in discussions on Discourse, directly from Emacs.")
 (define-public emacs-disproject
   (package
     (name "emacs-disproject")
-    (version "2.0.0")
+    (version "2.1.0")
     (source
      (origin
        (method git-fetch)
@@ -1743,7 +1842,7 @@ posts, and participate in discussions on Discourse, directly from Emacs.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0550bfqbprbr9s36xgyrwdg2mrry28j5cbd7fms980ixn6a4vcx5"))))
+        (base32 "17691mi013pp1l39dmgzil6kq3nl0dqnqmwsba5j1j3dbfzm9i42"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-transient))
     (home-page "https://github.com/aurtzy/disproject")
@@ -6218,46 +6317,48 @@ current match, total matches and exit status.
       (license license:gpl3+))))
 
 (define-public emacs-go-mode
-  ;; XXX: Upstream did not tag last release.  The commit below matches version
-  ;; bump.
-  (let ((commit "3273fcece5d9ab7edd4f15b2d6bce61f4e5a0666"))
-    (package
-      (name "emacs-go-mode")
-      (version "1.6.0")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/dominikh/go-mode.el")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "00qzn136d8cl3szbi44xf3iiv75r6n1m7wwgldmzn4i5mpz8dbq7"))))
-      (arguments
-       (list
-        #:tests? #t
-        #:test-command #~(list "ert-runner")
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-before 'check 'fix-tests
-              ;; Two tests fail because they (wrongly) assume we run them from
-              ;; the "test" sub-directory.  Fix their expectations.
-              (lambda _
-                (let ((test-file "test/go-indentation-test.el"))
-                  (make-file-writable test-file)
-                  (substitute* test-file
-                    (("testdata/indentation_tests/" all)
-                     (string-append "test/" all)))
-                  (ert-number-tests "test/go-fill-paragraph-test.el"
-                                    "go--fill-paragraph-block-region")))))))
-      (build-system emacs-build-system)
-      (native-inputs (list emacs-ert-runner))
-      (home-page "https://github.com/dominikh/go-mode.el")
-      (synopsis "Go mode for Emacs")
-      (description
-       "This package provides go-mode, an Emacs mode for working with software
+  (package
+    (name "emacs-go-mode")
+    (version "1.6.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/dominikh/go-mode.el")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "00qzn136d8cl3szbi44xf3iiv75r6n1m7wwgldmzn4i5mpz8dbq7"))))
+    (arguments
+     (list
+      #:tests? #t
+      #:test-command #~(list "ert-runner")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-commands
+            (lambda* (#:key inputs #:allow-other-keys)
+              (emacs-substitute-variables "go-mode.el"
+                ("godef-command" (search-input-file inputs "bin/godef")))))
+          (add-before 'check 'fix-tests
+            ;; Two tests fail because they (wrongly) assume we run them from
+            ;; the "test" sub-directory.  Fix their expectations.
+            (lambda _
+              (let ((test-file "test/go-indentation-test.el"))
+                (make-file-writable test-file)
+                (substitute* test-file
+                  (("testdata/indentation_tests/" all)
+                   (string-append "test/" all)))
+                (ert-number-tests "test/go-fill-paragraph-test.el"
+                                  "go--fill-paragraph-block-region")))))))
+    (build-system emacs-build-system)
+    (native-inputs (list emacs-ert-runner))
+    (inputs (list godef))
+    (home-page "https://github.com/dominikh/go-mode.el")
+    (synopsis "Go mode for Emacs")
+    (description
+     "This package provides go-mode, an Emacs mode for working with software
 written in the Go programming language.")
-      (license license:bsd-3))))
+    (license license:bsd-3)))
 
 (define-public emacs-google-maps
   ;; There has been no new release tag since 2013.
@@ -40662,6 +40763,72 @@ org-roam")
 using org mode; faster than org-roam.")
     (license license:gpl3+)))
 
+(define-public emacs-org-mem-0.14
+  (package
+    (name "emacs-org-mem")
+    (version "0.14.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/meedstrom/org-mem/")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1wvgdb0kk1236xjhpm0bxsqhbwk1fzmwzmd6h622k453k8kxhacr"))))
+    (build-system emacs-build-system)
+    (propagated-inputs
+     (list emacs-el-job emacs-llama))
+    (synopsis "Org structure cache")
+    (description "This package provides a cache of metadata about the
+structure of all your Org files – headings, links and so on..")
+    (home-page "https://github.com/meedstrom/org-node/")
+    (license license:gpl3+)))
+
+(define-public emacs-org-node-3
+  (package
+    (name "emacs-org-node")
+    (version "3.4.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/meedstrom/org-node/")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "05sqrf96fs9yx9fw7mwl6y2376rwxk97jd4zdh74f9w56hkf5y6p"))))
+    (build-system emacs-build-system)
+    (arguments
+     '(#:tests? #f ; fails
+       #:test-command '("./makem.sh" "tests")
+       #:phases
+       (modify-phases %standard-phases
+         (add-after 'unpack 'dont-git
+           (lambda _
+             (substitute* "makem.sh"
+               (("^cd.*\"")
+                "")))))))
+    (propagated-inputs
+     (list emacs-llama
+           emacs-magit
+           emacs-org-mem-0.14))
+    ;; tests
+    (native-inputs
+     (list emacs-buttercup
+           emacs-dash
+           util-linux
+           grep
+           sed))
+    (home-page "https://github.com/meedstrom/org-node/")
+    (synopsis "Non-hierarchical note-taking with Org-mode, faster than
+org-roam")
+    (description "This package provides a notetaking system like Roam,
+using org mode; faster than org-roam.  This version of org-node has
+different configuration options to org-node 2 so you DO have to set
+it up again.")
+    (license license:gpl3+)))
+
 (define-public emacs-org-super-links
   (package
     (name "emacs-org-super-links")
@@ -43462,8 +43629,8 @@ latest Emacs.")
 
 (define-public emacs-flim-lb
   ;; No release since Nov 28, 2007.
-  (let ((commit "23bb29d70a13cada2eaab425ef80071564586a6d")
-        (revision "143"))
+  (let ((commit "774e40da2b7de769e79c782dc82f09026a69163f")
+        (revision "147"))
     (package
       (name "emacs-flim-lb")
       (version (git-version "1.14.9" revision commit))
@@ -43475,7 +43642,7 @@ latest Emacs.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "14ihl59sj829hycbw182byk4npmrsmhcgl98j5v7i81vmxdfrcm9"))))
+                  "0alc6vn9nrw1gbliampacx238jwihif4sfa96j3p2q2nkaqin0p0"))))
       (build-system emacs-build-system)
       (propagated-inputs (list emacs-apel-lb emacs-oauth2))
       (home-page "https://www.emacswiki.org/emacs/WanderLust")
@@ -43567,8 +43734,8 @@ EasyPG and latest Emacs.")
 
 (define-public emacs-wanderlust
   ;; No release since Jan 15, 2010.
-  (let ((commit "891e223673c2c550efbe411885af860c909f0120")
-        (revision "834"))
+  (let ((commit "d6dcbad228cd5cf39a918181da7c4c4ed934bd81")
+        (revision "846"))
     (package
       (name "emacs-wanderlust")
       (version (git-version "2.15.9" revision commit))
@@ -43589,7 +43756,7 @@ EasyPG and latest Emacs.")
                            (("package-user-dir") "NONE"))))
                 (sha256
                  (base32
-                  "0w00na53zz2nlf9wcq8d8gdi6cgwwj08gi6rfsn9h71pdi98hmxc"))))
+                  "0120rgq1zf254q39jswykqk2i69f7wq5m0b5b5x80w7wfj9405lg"))))
       (build-system emacs-build-system)
       (arguments
        (list #:phases

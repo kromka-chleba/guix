@@ -8998,3 +8998,99 @@ GUIs as desktop applications.")
     (description "This package provides HTTP mocking to test Rust
 applications.")
     (license (list license:expat license:asl2.0))))
+
+(define-public rust-askama-escape-0.10
+  (package
+    (name "rust-askama-escape")
+    (version "0.10.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "askama_escape" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0hg3rz0cma5f6385z7qmqw3jbir76jndwd5s7dqfk92v9gil75v1"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t))
+    (home-page "https://askama.readthedocs.io/")
+    (synopsis "HTML escaping, extracted from Askama")
+    (description "This package provides HTML escaping, extracted from Askama.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-askama-parser-0.2
+  (package
+    (name "rust-askama-parser")
+    (version "0.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "askama_parser" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "1h00vcnqq9qqlayx1ass4an458rk4lm3q88867cc7lb4dcf1dcdc"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-nom" ,rust-nom-7))))
+    (home-page "https://github.com/askama-rs/askama")
+    (synopsis "Parser for Askama templates")
+    (description "This package provides a parser for Askama templates.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-askama-derive-0.12
+  (package
+    (name "rust-askama-derive")
+    (version "0.12.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "askama_derive" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "10qxszzrwbabpd3jh6lvk3q1a81ryfba8bh75jb18irwn5n8vzhr"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-askama-parser" ,rust-askama-parser-0.2)
+                       ("rust-basic-toml" ,rust-basic-toml-0.1)
+                       ("rust-mime" ,rust-mime-0.3)
+                       ("rust-mime-guess" ,rust-mime-guess-2)
+                       ("rust-proc-macro2" ,rust-proc-macro2-1)
+                       ("rust-quote" ,rust-quote-1)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-syn" ,rust-syn-2))))
+    (home-page "https://github.com/askama-rs/askama")
+    (synopsis "Procedural macros for Askama")
+    (description "This package provides procedural macros for Askama.")
+    (license (list license:expat license:asl2.0))))
+
+(define-public rust-askama-0.12
+  (package
+    (name "rust-askama")
+    (version "0.12.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (crate-uri "askama" version))
+       (file-name (string-append name "-" version ".tar.gz"))
+       (sha256
+        (base32 "0a1cmp0f1b01zzbzzp81ppa6r754zpax5372aykswz5933gr345p"))))
+    (build-system cargo-build-system)
+    (arguments
+     `(#:skip-build? #t
+       #:cargo-inputs (("rust-askama-derive" ,rust-askama-derive-0.12)
+                       ("rust-askama-escape" ,rust-askama-escape-0.10)
+                       ("rust-comrak" ,rust-comrak-0.18)
+                       ("rust-humansize" ,rust-humansize-2)
+                       ("rust-num-traits" ,rust-num-traits-0.2)
+                       ("rust-percent-encoding" ,rust-percent-encoding-2)
+                       ("rust-serde" ,rust-serde-1)
+                       ("rust-serde-json" ,rust-serde-json-1)
+                       ("rust-serde-yaml" ,rust-serde-yaml-0.9))))
+    (home-page "https://askama.readthedocs.io/")
+    (synopsis "Type-safe, compiled Jinja-like templates for Rust")
+    (description
+     "This package provides type-safe, compiled Jinja-like templates for
+Rust.")
+    (license (list license:expat license:asl2.0))))

@@ -1652,15 +1652,16 @@ the Guile compiler tower to generate the DSL from AWS JSON specifications.")
 (define-public guile-mqtt
   (package
     (name "guile-mqtt")
-    (version "0.2.1")
+    (version "1.0.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/mdjurfeldt/" name
-                           "/releases/download/v" version
-                           "/" name "-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mdjurfeldt/guile-mqtt")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "16a3r6yk41yskwv4qbkrsi0f5rvc7aw2s5di74i8y89j1x9yp9zs"))))
+        (base32 "1lvxic93cyzhdq7gb22pfz5j5pf7b1pcv0ahblkan8jbhzpqxvm0"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -1668,15 +1669,23 @@ the Guile compiler tower to generate the DSL from AWS JSON specifications.")
       #~(list "GUILE_AUTO_COMPILE=0")
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-extension-path
+          (add-before 'build 'patch-extension-path
             (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* "module/ffi/mosquitto.scm"
-                (("list #f \"libmosquitto\"")
-                 (string-append
-                  "list #f \""
-                  (search-input-file inputs "/lib/libmosquitto.so")
-                  "\""))))))))
-    (native-inputs (list guile-3.0 pkg-config))
+              (setenv "HOME" "/tmp")
+              (with-directory-excursion "module"
+                (invoke "make" "ffi/mosquitto.scm")
+                (substitute* "ffi/mosquitto.scm"
+                  (("list #f \"libmosquitto\"")
+                   (string-append
+                    "list #f \""
+                    (search-input-file inputs "/lib/libmosquitto.so")
+                    "\"")))))))))
+    (native-inputs (list autoconf
+                         automake
+                         guile-3.0
+                         nyacc-2.01
+                         pkg-config
+                         texinfo))
     (inputs (list mosquitto))
     (home-page "https://github.com/mdjurfeldt/guile-mqtt")
     (synopsis "Guile bindings for the libmosquitto library")
@@ -3747,6 +3756,49 @@ is no support for parsing block and inline level HTML.")
     (inherit guile-commonmark)
     (name "guile2.0-commonmark")
     (inputs (list guile-2.0))))
+
+(define-public guile-sundown
+  (package
+    (name "guile-sundown")
+    (version "2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/Baleine/guile-sundown-3.git")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0dpc93l01zh9zri31baxr5zsfhv4r1hxfzxflijzisi7zs90j3vl"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:make-flags
+      #~(list (string-append "PREFIX="
+                             #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-extension-file-name
+            (lambda* (#:key outputs #:allow-other-keys)
+              (substitute* "sundown/markdown.scm"
+                (("\\(load-extension \"libsundown-guile\"(.*)\\)" _ init)
+                 (format #f
+                  "(load-extension \"~a/lib/guile/3.0/extensions/libsundown-guile\"~a)"
+                  (assoc-ref outputs "out") init)))))
+          (delete 'configure)
+          ;; No tests.
+          (delete 'check))))
+    (inputs (list guile-3.0))
+    (native-inputs (list guile-3.0 pkg-config))
+    (home-page "https://github.com/greghull/sundown-guile")
+    (synopsis "Markdown library for Guile based on Sundown")
+    (description
+     "guile-sundown is a library that renders Markdown as HTML.  It
+supports many Markdown extensions including tables.")
+    (license (list (license:non-copyleft
+                    "file://LICENSES/LicenseRef-lesser-curl.txt"
+                    "cURL license without advertising clause.")
+                   license:lgpl2.1+ license:expat license:cc0))))
 
 (define-public mcron
   (package

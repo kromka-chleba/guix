@@ -10043,6 +10043,62 @@ include_dirs = ~:*~a/include~%" #$(this-package-input "openblas"))))))
            python-typing-extensions
            python-wheel))))
 
+(define-public python-numpysane
+  (package
+    (name "python-numpysane")
+    (version "0.42")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/dkogan/numpysane.git")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0s38fm88bmq08j5qxfka1wyjs2r9s9arzd1c3c4ixa8k3pisnihr"))))
+    (build-system python-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (substitute* "Makefile.common.header"
+                    ;; numpy 2.0 has this--but we don't use numpy 2.0.
+                    (("pkg-config --cflags-only-I numpy")
+                     (string-append "echo -I"
+                                    (assoc-ref inputs "python-numpy")
+                                    "/lib/python"
+                                    #$(version-major+minor
+                                       (package-version python))
+                                    "/site-packages/numpy/core/include")))))
+               (replace 'check
+                 (lambda _
+                   (setenv "CC" #$(cc-for-target))
+                   (invoke "make" "check"))))))
+    (propagated-inputs
+     (list python-numpy))
+    (native-inputs
+     (list perl pkg-config))
+    (synopsis "More-reasonable core functionality for numpy")
+    (description "This package provides more-reasonable core functionality for numpy.
+
+A lot of numpysane functionality is inspired by PDL (Perl Data Language).
+
+numpysane has:
+@itemize
+@item easier broadcasting
+@item nicer array manipulation
+@item array concatenation
+@item manipulation of dimensions
+@item broadcast-aware inner product
+@item broadcast-aware outer product
+@item broadcast-aware 2-norm
+@item broadcast-aware matrix multiplication
+@end itemize
+")
+    (home-page "https://github.com/dkogan/numpysane")
+    (license license:lgpl2.0+)))
+
 (define-public python-numpy-documentation
   (package
     (inherit python-numpy)
@@ -10150,6 +10206,33 @@ include_dirs = ~:*~a/include~%" #$(this-package-input "openblas"))))))
     (synopsis "Documentation for the @code{python-numpy} package")
     (description "This package provides the complete NumPy documentation in
 the Texinfo, HTML, and PDF formats.")))
+
+(define-public python-numpy-stl
+  (package
+    (name "python-numpy-stl")
+    (version "3.2.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "numpy_stl" version))
+       (sha256
+        (base32 "0kgxhghl9j5caydb2a9g2n44zvffd94gb6abday0manxkkvw682s"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-cython
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy
+           python-utils))
+    (home-page "https://github.com/WoLpH/numpy-stl/")
+    (synopsis "Read, write and modify binary/ASCII STL files library")
+    (description
+     "Library to make reading, writing and modifying both binary and ascii STL
+files, file format native to the stereolithography CAD software created by 3D
+Systems, easy.")
+    (license license:bsd-3)))
 
 (define-public python-npx
   (package
@@ -39210,7 +39293,7 @@ platform using the ActivityPub protocol.")
 (define-public python-lief
   (package
     (name "python-lief")
-    (version "0.12.3")
+    (version "0.16.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -39219,19 +39302,19 @@ platform using the ActivityPub protocol.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "11i6hqmcjh56y554kqhl61698n9v66j2qk1c1g63mv2w07h2z661"))))
-    (build-system python-build-system)
-    (native-inputs (list cmake))
+                "1pq9nagrnkl1x943bqnpiyxmkd9vk99znfxiwqp6vf012b50bz2a"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list cmake-minimal
+                         ninja
+                         python-scikit-build-core
+                         python-pydantic-2))
     (arguments
      (list
       #:tests? #f                  ;needs network
       #:phases #~(modify-phases %standard-phases
-                   (replace 'build
+                   (add-before 'build 'change-directory
                      (lambda _
-                       (invoke
-                        "python" "setup.py" "--sdk" "build"
-                        (string-append
-                         "-j" (number->string (parallel-job-count)))))))))
+                       (chdir "api/python"))))))
     (home-page "https://github.com/lief-project/LIEF")
     (synopsis "Library to instrument executable formats")
     (description

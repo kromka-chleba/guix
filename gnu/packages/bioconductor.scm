@@ -3405,14 +3405,14 @@ the @code{HorvathMethylChip40} (Mammal40) array.")
 (define-public r-systempiperdata
   (package
     (name "r-systempiperdata")
-    (version "2.12.0")
+    (version "2.12.2")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "systemPipeRdata" version
                               'experiment))
        (sha256
-        (base32 "04xxwdcznxdhxhmn73b9njj0mrd5bn3bwznnx5wf3p5qkfdckl9g"))))
+        (base32 "12vxhm096gwy026gnh1ql1749gpxdsch70x3bc2a2pcnc74kk2hf"))))
     (properties `((upstream-name . "systemPipeRdata")))
     (build-system r-build-system)
     (propagated-inputs (list r-biocgenerics r-biostrings r-jsonlite r-remotes))
@@ -4462,13 +4462,13 @@ analysis, modelling, and visualization of spike-in controls.")
 (define-public r-ancombc
   (package
     (name "r-ancombc")
-    (version "2.10.0")
+    (version "2.10.1")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "ANCOMBC" version))
               (sha256
                (base32
-                "00ywqww9vhsxsx2y4ji8k3b9202f187a54nkafl6wa10yqqnvqcq"))))
+                "16cfr7q1ivksmajrfx5gv75z83aza443lw11as2nf8pbsfjwfgrf"))))
     (properties
      '((upstream-name . "ANCOMBC")
        (updater-extra-native-inputs . ("r-microbiome"))))
@@ -4637,13 +4637,13 @@ for use in Bioconductor’s AnnotationHub.")
 (define-public r-anvil
   (package
     (name "r-anvil")
-    (version "1.20.0")
+    (version "1.20.1")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "AnVIL" version))
               (sha256
                (base32
-                "1rwfp8hw7dziqlg3fj93kgdm96xirba0sv5cvjhfnnwx09ghpsmy"))))
+                "0sy545m0bp76kf34cwm06bfhagf4pcn3bb7d7xsyvnm7zb8p8kzl"))))
     (properties `((upstream-name . "AnVIL")))
     (build-system r-build-system)
     ;; Tests require Internet access.
@@ -9746,13 +9746,13 @@ alignments.")
 (define-public r-genomicdatacommons
   (package
     (name "r-genomicdatacommons")
-    (version "1.32.0")
+    (version "1.32.1")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "GenomicDataCommons" version))
               (sha256
                (base32
-                "07mpgsyi9gdb2jhkrdsxv09l1sncv214avpp68isdddk1mipk1w4"))))
+                "186z5mph396yj7wv0a5whcxdw3p9mqsyhl7r1wqdcdgvvfx72mys"))))
     (properties `((upstream-name . "GenomicDataCommons")))
     (build-system r-build-system)
     (arguments
@@ -10778,13 +10778,13 @@ Binomial data via estimation of latent structure in the natural parameter.")
 (define-public r-limma
   (package
     (name "r-limma")
-    (version "3.64.0")
+    (version "3.64.1")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "limma" version))
               (sha256
                (base32
-                "1c06l6g4c5p1h4nbgkvk31hhlgi8r0bjpgf4f8bgdx4ah9fncga5"))))
+                "0l20jfcny1mjn4wykaqxsgabsfwpidk4pxicnqflqwidhq9cxski"))))
     (properties
      '((updater-extra-native-inputs
         . ("r-go-db" "r-locfit" "r-mass" "r-org-hs-eg-db"))))
@@ -14258,13 +14258,13 @@ tools either included in speaq or available elsewhere on CRAN.")
 (define-public r-spectra
   (package
     (name "r-spectra")
-    (version "1.18.0")
+    (version "1.18.2")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "Spectra" version))
               (sha256
                (base32
-                "1nkvgrczagwg3z97c55dlixvl87sanalmx0nkpfxd94cc4jbh1d1"))))
+                "0j0d58ypqsrrd2k8zw5mhdhndib40y4sdblj6dgffvy06069wd3r"))))
     (properties
      '((upstream-name . "Spectra")
        ;; Avoid dependency cycle.
@@ -14543,14 +14543,14 @@ unmodeled, or latent sources of noise.")
 (define-public r-systempiper
   (package
     (name "r-systempiper")
-    (version "2.14.0")
+    (version "2.14.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "systemPipeR" version))
        (sha256
         (base32
-         "05zrcj46z3305hn6p2744w0ilsg7r2xxgm4y33pra0397ga43a13"))))
+         "0r9nnm47z3blb6haw98sdagvx7qg3ls9lc6gaji4jwnb61mnyqn9"))))
     (properties `((upstream-name . "systemPipeR")))
     (build-system r-build-system)
     ;; Tests fail because genWorkenvir fails to set up the environment.
@@ -24047,13 +24047,13 @@ monograph.")
 (define-public r-bioccheck
   (package
     (name "r-bioccheck")
-    (version "1.44.0")
+    (version "1.44.2")
     (source (origin
               (method url-fetch)
               (uri (bioconductor-uri "BiocCheck" version))
               (sha256
                (base32
-                "0bbp1srcrls1x3b9a2q0xvsrfig0sridx8lp2mrm2sc97mzlzw38"))))
+                "0i8ndbz3jjgr8p6z4lhk4c27w3f9psnbpxw678zw1cg3c7k33qln"))))
     (properties
      `((upstream-name . "BiocCheck")))
     (build-system r-build-system)
@@ -25087,13 +25087,13 @@ assays such as Hi-C.")
 (define-public r-h5mread
   (package
     (name "r-h5mread")
-    (version "1.0.0")
+    (version "1.0.1")
     (source
      (origin
        (method url-fetch)
        (uri (bioconductor-uri "h5mread" version))
        (sha256
-        (base32 "14cqk68qb3wsdyr40cdc4rg3g413m5zxccfkgc7s0x53klf9z2sn"))))
+        (base32 "1dknsj8margcyh1ypdsc1qfn27d2m2ckch3phdlfj7nq7r4szfq5"))))
     (properties
      '((upstream-name . "h5mread")
        ;; Avoid dependency cycle.
