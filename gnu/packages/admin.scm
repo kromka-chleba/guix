@@ -72,7 +72,7 @@
 ;;; Copyright © 2024 nathan <nathan_mail@nborghese.com>
 ;;; Copyright © 2024 Nikita Domnitskii <nikita@domnitskii.me>
 ;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
-;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2024 nik gaffney <nik@fo.am>
@@ -1917,7 +1917,7 @@ maintenance releases.")
 (define-public dhcpcd
   (package
     (name "dhcpcd")
-    (version "10.2.2")
+    (version "10.2.3")
     (source
      (origin
        (method git-fetch)
@@ -1926,7 +1926,7 @@ maintenance releases.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1s8m0ldrj7lwkbic4fvg7kcq7sll2lh4fivzv7xz9n2vgh3wrx1h"))))
+        (base32 "01bqs71s2gixsir1cpnk6sm4k9dpdkrgp1r8cpbac50d6hwlxln3"))))
     (inputs (list bash-minimal coreutils-minimal eudev sed))
     (build-system gnu-build-system)
     (arguments
@@ -6743,6 +6743,16 @@ backup directories or just finding duplicate files.")
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake bison flex python-docutils))
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               ;; patch sshguard to find configuration through
+               ;; environment variable
+               (add-after 'unpack 'patch-sshguard
+                 (lambda _
+                   (substitute* "src/sshguard.in"
+                     (("^config=.*$")
+                      "config=${SSHGUARD_CONFIG_FILE:-@sysconfdir@/sshguard.conf}\n")))))))
     (home-page "https://sshguard.net/")
     (synopsis "Daemon to blocks SSH brute-force attacks")
     (description

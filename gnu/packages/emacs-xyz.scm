@@ -12904,6 +12904,29 @@ noticeable performance improvement.")
 field values, and more within @code{haskell-cabal-mode}.")
       (license license:gpl3+))))
 
+(define-public emacs-rfc-mode
+  (package
+    (name "emacs-rfc-mode")
+    (version "1.4.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/galdor/rfc-mode")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0sym5pji4ba4jy79zfs7gb2n9kqa60ma4z622s0mz647g56z09f4"))))
+    (build-system emacs-build-system)
+    (arguments
+     ;; No tests
+     (list #:tests? #f))
+    (home-page "https://github.com/galdor/rfc-mode")
+    (synopsis "Emacs major mode to read and browse @acronym{RFC, Request for Comments} documents")
+    (description "The @code{rfc-mode} Emacs major mode is a browser and reader
+for @acronym{RFC, Request for Comments} documents.")
+    (license license:isc)))
+
 (define-public emacs-rfcview
   (package
     (name "emacs-rfcview")
@@ -23302,7 +23325,7 @@ or @code{treemacs}, but leveraging @code{Dired} to do the job of display.")
 (define-public emacs-dirvish
   (package
     (name "emacs-dirvish")
-    (version "2.2.7")
+    (version "2.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -23310,7 +23333,7 @@ or @code{treemacs}, but leveraging @code{Dired} to do the job of display.")
                     (commit version)))
               (sha256
                (base32
-                "13y066sj6ax8czlfp6vy2da310q988vij933wvw31frihwd2v200"))
+                "1x79j3xlvhrvigh38vqhfrzqvdnpzaivbxsjzfi0pnx00y8czs5q"))
               (file-name (git-file-name name version))))
     (build-system emacs-build-system)
     (arguments
@@ -23326,6 +23349,7 @@ or @code{treemacs}, but leveraging @code{Dired} to do the job of display.")
                 (for-each (lambda (f)
                             (rename-file f (basename f)))
                           el-files)))))))
+    (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/alexluigit/dirvish")
     (synopsis "Improved version of the Emacs package Dired")
     (description
@@ -37593,7 +37617,7 @@ time.")
 (define-public emacs-mastodon
   (package
     (name "emacs-mastodon")
-    (version "2.0.0")
+    (version "2.0.1")
     (source
      (origin
        (method git-fetch)
@@ -37602,7 +37626,7 @@ time.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1j4n6ipiahxk6v84dnsrcpzaqsd4v9q2mviqkznm189cp98h6zxk"))))
+        (base32 "1dvj51x17msyl5baa7sicshkndnbag0zcrakvm9w22gmqjhjimy5"))))
     (build-system emacs-build-system)
     (arguments
      (list

@@ -26,7 +26,7 @@
 ;;; Copyright © 2018, 2020-2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2018, 2020, 2021, 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2018 Pierre Neidhardt <mail@ambrevar.xyz>
-;;; Copyright © 2019, 2020, 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2019 Vasile Dumitrascu <va511e@yahoo.com>
 ;;; Copyright © 2019 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2019 Timotej Lazar <timotej.lazar@araneo.si>
@@ -1425,17 +1425,29 @@ transparently check connection attempts against an access control list.")
 (define-public zeromq
   (package
     (name "zeromq")
-    (version "4.3.4")
+    (version "4.3.5")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/zeromq/libzmq/releases"
                            "/download/v" version "/zeromq-" version ".tar.gz"))
        (sha256
-        (base32 "1rf3jmi36ms8jh2g5cvi253h43l6xdfq0r7mvp95va7mi4d014y5"))))
+        (base32 "0hxbpw9sk9g5ilxfnq3iki6nxjh3igk348z73y358ygi21cyylv6"))))
     (build-system gnu-build-system)
-    (arguments '(#:configure-flags '("--disable-static"
-                                     "--enable-drafts")))
+    (arguments
+     (list
+      #:configure-flags #~(list "--disable-static"
+                                "--enable-drafts")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'disable-problematic-tests
+            (lambda _
+              ;; Avoid the 'reconnect_stop_on_refused' test, which fails
+              ;; non-deterministically (see:
+              ;; https://github.com/zeromq/libzmq/issues/4793).
+              (substitute* "Makefile.in"
+                  (("@ENABLE_DRAFTS_TRUE@\ttests/test_reconnect_options.*")
+                   "")))))))
     (home-page "https://zeromq.org")
     (synopsis "Library for message-based applications")
     (description
@@ -4123,7 +4135,7 @@ for interacting with an OpenDHT distributed network.")
 (define-public frrouting
   (package
     (name "frrouting")
-    (version "10.3")
+    (version "10.3.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4132,7 +4144,7 @@ for interacting with an OpenDHT distributed network.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1fv06z506l26jx9gz8dib6zn0rv2yvl7ihvm48d95jjmc7bldw53"))))
+                "1shlxcmvz9ay83wdk2h23yzhqc79hh47v99kq70rymh1d35wr0p7"))))
     (build-system gnu-build-system)
     (inputs
      (list c-ares json-c libcap libxcrypt libyang libelf protobuf-c readline))

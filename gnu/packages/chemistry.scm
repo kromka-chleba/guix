@@ -73,7 +73,7 @@
 (define-public avogadrolibs
   (package
     (name "avogadrolibs")
-    (version "1.93.0")
+    (version "1.100.0")
     (source
      (origin
        (method git-fetch)
@@ -81,7 +81,7 @@
              (url "https://github.com/OpenChemistry/avogadrolibs")
              (commit version)))
        (sha256
-        (base32 "1xivga626n5acnmwmym8svl0pdri8hkp59czf04ri2zflnviyh39"))
+        (base32 "1l9bp3ba8yx9mk2in5v375jzi1w4y7l1xl37xqv869810drgjffc"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (native-inputs
@@ -91,18 +91,61 @@
            pkg-config
            pybind11))
     (inputs
-     (list glew
-           libarchive
-           libmsym
-           molequeue
-           python
-           spglib
-           qtbase-5))
+      `(("glew" ,glew)
+        ("libarchive" ,libarchive)
+        ("libmsym" ,libmsym)
+        ("molequeue" ,molequeue)
+        ("python" ,python)
+        ("spglib" ,spglib)
+        ("qtbase-5" ,qtbase-5)
+        ("qtsvg-5" ,qtsvg-5)
+        ("avogadro-molecules"
+          ,(origin
+            (method git-fetch)
+            (uri
+              (git-reference
+                (url "https://github.com/openchemistry/molecules")
+                (commit "8a37883")))
+            (file-name (git-file-name name version))
+            (sha256
+              (base32
+                "00mfx0bwmqazbiklrvaijjd5n4wa5lp3z73291ihm78q0v9dzhl4"))))
+        ("avogadro-crystals"
+          ,(origin
+            (method git-fetch)
+            (uri
+              (git-reference
+                (url "https://github.com/openchemistry/crystals")
+                (commit "28404bd")))
+            (file-name (git-file-name name version))
+            (sha256
+              (base32
+                "0kcz99q5nfl2v2qmm9cqnbb2c2qqzw79vsnv557i7x64bxsxrw1m"))))
+        ("avogadro-fragments"
+          ,(origin
+            (method git-fetch)
+            (uri
+              (git-reference
+                (url "https://github.com/openchemistry/fragments")
+                (commit "c4943b5")))
+            (file-name (git-file-name name version))
+            (sha256
+              (base32
+                "17l6qmkc25wb0nvic708l25fxiy89b3vfs0x5d40qcnn27bid32n"))))))
     (arguments
-     '(#:configure-flags (list "-DENABLE_TESTING=ON"
-                               (string-append "-DSPGLIB_INCLUDE_DIR="
-                                              (assoc-ref %build-inputs "spglib")
-                                              "/include"))))
+     (list
+      #:configure-flags #~(list "-DENABLE_TESTING=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'symlink
+            (lambda _
+              (begin
+                (symlink (assoc-ref %build-inputs "avogadro-molecules")
+                         "../molecules")
+                (symlink (assoc-ref %build-inputs "avogadro-crystals")
+                         "../crystals")
+                (symlink (assoc-ref %build-inputs "avogadro-fragments")
+                         "../fragments")))))))
     (home-page "https://www.openchemistry.org/projects/avogadro2/")
     (synopsis "Libraries for chemistry, bioinformatics, and related areas")
     (description
@@ -114,7 +157,7 @@ bioinformatics, materials science, and related areas.")
 (define-public avogadro2
   (package
     (name "avogadro2")
-    (version "1.93.0")
+    (version "1.100.0")
     (source
      (origin
        (method git-fetch)
@@ -122,17 +165,47 @@ bioinformatics, materials science, and related areas.")
              (url "https://github.com/OpenChemistry/avogadroapp")
              (commit version)))
        (sha256
-        (base32
-         "1z3pjlwja778a1dmvx9aqz2hlw5q9g3kqxhm9slz08452600jsv7"))
+        (base32 "19cd5aqvcw6xj0x1kmzmxl0vrnbhk5ymnl9p2p4d9504ma5k6aim"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (native-inputs
-     (list eigen pkg-config))
-    (inputs
-     (list avogadrolibs hdf5 molequeue qtbase-5))
+      `(("eigen" ,eigen)
+        ("pkg-config" ,pkg-config)
+        ("avogadro-i18n"
+         ,(origin
+           (method git-fetch)
+           (uri
+             (git-reference
+               (url "https://github.com/openchemistry/avogadro-i18n")
+               (commit "07bee85")))
+           (file-name (git-file-name name
+                                     version))
+           (sha256
+             (base32
+               "1vhjh0gilmm90269isrkvyzwwh1cj3bwcxls394psadw1a89mk14"))))))
+    (inputs (list avogadrolibs hdf5 molequeue openbabel qtbase-5 qtsvg-5))
     ;; TODO: Enable tests with "-DENABLE_TESTING" configure flag.
     (arguments
-     '(#:tests? #f))
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'symlink
+            (lambda _
+              (begin
+                (symlink (assoc-ref %build-inputs "avogadro-i18n")
+                         "../avogadro-i18n"))))
+          (add-after 'install 'wrap-program
+            (lambda _
+              (wrap-program (string-append #$output "/bin/avogadro2")
+                (list
+                  "PATH"
+                  'suffix
+                  (list (string-append #$openbabel "/bin")))
+                (list
+                  "QT_PLUGIN_PATH"
+                  'suffix
+                  (list (string-append #$qtsvg-5 "/lib/qt5/plugins")))))))))
     (home-page "https://www.openchemistry.org/projects/avogadro2/")
     (synopsis "Advanced molecule editor")
     (description
@@ -477,7 +550,7 @@ materials, biochemistry, or related areas.")
 (define-public spglib
   (package
     (name "spglib")
-    (version "1.16.0")
+    (version "2.5.0")
     (source
      (origin
        (method git-fetch)
@@ -485,26 +558,41 @@ materials, biochemistry, or related areas.")
              (url "https://github.com/spglib/spglib")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1kzc956m1pnazhz52vspqridlw72wd8x5l3dsilpdxl491aa2nws"))
+        (base32 "0x5igrqwx7r2shysmi9sqcjg4hpb7hba3ddlwg05z6c57a3ifbqc"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
-     '(#:test-target "check"
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-header-install-dir
-           (lambda _
-             ;; As of the writing of this package, CMake and GNU build systems
-             ;; install the header to two different location.  This patch makes
-             ;; the CMake build system's choice of header directory compatible
-             ;; with the GNU build system's choice and with what avogadrolibs
-             ;; expects.
-             ;; See https://github.com/spglib/spglib/issues/75 and the relevant
-             ;; part of https://github.com/OpenChemistry/avogadroapp/issues/97.
-             (substitute* "CMakeLists.txt"
-               (("\\$\\{CMAKE_INSTALL_INCLUDEDIR\\}" include-dir)
-                (string-append include-dir "/spglib")))
-             #t)))))
+     '(#:tests? #f ; tests want to clone a git repository, which won't work
+       #:configure-flags '("-DSPGLIB_WITH_TESTS=OFF")
+       #:phases (modify-phases %standard-phases
+                  (add-before 'configure 'patch-files (lambda _ (substitute* "CMakeLists.txt"
+                      (("include\\(cmake/DynamicVersion.cmake\\)")
+                       "")
+                      (("dynamic_version.*")
+                       "")
+                      (("PROJECT_PREFIX.*")
+                       "")
+                      (("FALLBACK_VERSION.*")
+                       "set (PROJECT_VERSION 2.5.0")
+                      (("\\$\\{PROJECT_VERSION_FULL\\}")
+                       "2.5.0")
+                      (("\\$\\{GIT_COMMIT\\}")
+                       "\"\""))
+                    (substitute* "src/CMakeLists.txt"
+                      ((".*Spglib_GitHash.*")
+                       ""))))
+                  (add-after 'unpack 'patch-header-install-dir
+                    (lambda _
+                      ;; As of the writing of this package, CMake and GNU build systems
+                      ;; install the header to two different location.  This patch makes
+                      ;; the CMake build system's choice of header directory compatible
+                      ;; with the GNU build system's choice and with what avogadrolibs
+                      ;; expects.
+                      ;; See https://github.com/spglib/spglib/issues/75 and the relevant
+                      ;; part of https://github.com/OpenChemistry/avogadroapp/issues/97.
+                      (substitute* "CMakeLists.txt"
+                        (("\\$\\{CMAKE_INSTALL_INCLUDEDIR\\}" include-dir)
+                         (string-append include-dir "/spglib"))))))))
     (home-page "https://spglib.github.io/spglib/index.html")
     (synopsis "Library for crystal symmetry search")
     (description "Spglib is a library for finding and handling crystal
