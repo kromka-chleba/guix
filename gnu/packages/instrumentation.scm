@@ -286,6 +286,32 @@ interactive SVGs out of traces genated from various tracing tools.  It comes
 with the script @command{flamegraph.pl} and many stackcollapse scripts.")
       (license license:cddl1.0))))
 
+(define-public jacquesctf
+  (let ((commit "f65127be0af2a4a3b36779f769e142e37d6a62ca")
+        (revision "0"))
+    (package
+      (name "jacquesctf")
+      (version (git-version "1.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/eepp/jacquesctf")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "07p4xflgp6vb5fa3m78p2lxxcvardnp1m8k7mq7lpradpcxwx4rj"))))
+      (build-system cmake-build-system)
+      (arguments `(#:tests? #f))
+      (inputs (list yactfr ncurses))
+      (native-inputs (list boost))
+      (home-page "https://github.com/eepp/jacquesctf")
+      (synopsis "CTF inspection tool")
+      (description "Like Jacques Cartier, Jacques CTF can explore the sea of
+bits of a @acronym{CTF, Common Trace Format} data stream file and discover
+unsuspected lands of problems within packets.")
+      (license license:expat))))
+
 (define-public libpatch
   (package
     (name "libpatch")
@@ -655,3 +681,33 @@ kind of commands and filters to help analysis of the program execution and
 performance.  It provides the command @command{uftrace}.  By default, it is
 bundled with python-3 and luajit that you can delete in a package variant.")
     (license license:gpl2)))
+
+(define-public yactfr
+  (let ((commit "796eaff018e2432ecc8f1f103101afafc9f38518")
+        (revision "0"))
+    (package
+      (name "yactfr")
+      (version (git-version "1.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/eepp/yactfr")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1p4nqsq689hr2srdvg59v9yfig2aaq9psdy6fhwnya0vszssyvn5"))))
+      (build-system cmake-build-system)
+      (arguments `(#:test-target "check"))
+      (native-inputs (list boost python-pytest))
+      (home-page "https://github.com/eepp/yactfr")
+      (synopsis "CTF reading library offering a C++14 API")
+      (description "While the @acronym{CTF, Common Trace Format} reading
+libraries focus on decoding and providing completed and ordered event record
+objects, the yactfr API offers a lower level of CTF processing.  Allowing
+iteration over individual element sequences to obtain elements: beginning/end
+of packet, beginning/end of event record, beggining/end of structure,
+individual data stream scalar values like fixed-length integers, fixed-length
+floating point numbers, and null-terminated strings, specific clock value
+update, known data stream ID, and the rest.")
+      (license license:expat))))

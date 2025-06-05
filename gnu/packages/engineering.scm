@@ -1892,7 +1892,7 @@ fully-vectorial and three-dimensional methods.")
 (define-public meep
   (package
     (name "meep")
-    (version "1.30.0")
+    (version "1.30.1")
     (source (origin
               (method url-fetch)
               (uri
@@ -1901,7 +1901,7 @@ fully-vectorial and three-dimensional methods.")
                 version "/meep-" version ".tar.gz"))
               (sha256
                (base32
-                "0fgbyg0b1g172ndi5cmmawd7j602g00hfr8waqjw3fa4s3zxgq09"))))
+                "1h80d7i7v06fxfdsa496b542dvr105c4v1n7pk8m3jssvbxvv2a0"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -1922,7 +1922,7 @@ fully-vectorial and three-dimensional methods.")
            mpb
            openblas
            zlib))
-    (home-page "http://ab-initio.mit.edu/wiki/index.php/Meep")
+    (home-page "https://meep.readthedocs.io/en/latest/")
     (synopsis "Finite-difference time-domain (FDTD) simulation software")
     (description
      "Meep is a finite-difference time-domain (FDTD) simulation software package
@@ -3118,7 +3118,7 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
 (define-public python-scikit-rf
   (package
     (name "python-scikit-rf")
-    (version "1.6.2")
+    (version "1.7.0")
     (source (origin
               (method git-fetch) ;PyPI misses some files required for tests
               (uri (git-reference
@@ -3126,7 +3126,7 @@ Newton-Raphson power flow solvers in the C++ library lightsim2grid, and the
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "0s339mw231jgml6wdi6zmvy93x58pv6fmk6xmpjpymdr4g36kk86"))
+                "148bfdbh0y69f5xhxb49jqvc6gabk0n4i0fl1j5f3fnm9vaypyis"))
               (file-name (git-file-name name version))))
     (build-system pyproject-build-system)
     (propagated-inputs (list python-numpy
@@ -3406,7 +3406,7 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
 (define-public freecad
   (package
     (name "freecad")
-    (version "1.0.0")
+    (version "1.0.1")
     (source
      (origin
        (method git-fetch)
@@ -3415,7 +3415,7 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0wwymcfgi0cybj7m6awflk8c7n6iy97lpgpfhfncx3zwvjrxv588"))
+        (base32 "0p3pa4w1xj7sgqk9vxdri8l3hbx0a8iz2pwn8gwjqlhc62z4hrg8"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -3429,9 +3429,8 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
      (list c++-gsl
            doxygen
            graphviz
-           qttools-5
+           qttools
            pkg-config
-           python-pyside-2-tools
            swig))
     (inputs
      (list bash-minimal
@@ -3465,16 +3464,16 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
            python-matplotlib
            python-pivy
            python-ply
-           python-pyside-2
+           python-pyside-6
            python-pyyaml
-           python-shiboken-2
+           python-shiboken-6
            python-wrapper
-           qtbase-5
-           qtdeclarative-5
-           qtsvg-5
-           qtwebchannel-5
-           qtwebengine-5
-           qtwayland-5
+           qtbase
+           qtdeclarative
+           qtsvg
+           qtwebchannel
+           qtwebengine
+           qtwayland
            qtx11extras
            qtxmlpatterns
            sqlite
@@ -3487,10 +3486,10 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
      `(#:tests? #f  ;; Project has tests, but they are a pain to build
        #:configure-flags
        ,#~(list
-           "-DBUILD_QT5=ON"
            "-DBUILD_FLAT_MESH:BOOL=ON"
            "-DBUILD_ENABLE_CXX_STD:STRING=C++17"
            "-DENABLE_DEVELOPER_TESTS=OFF"  ;; see the above: #:tests? comment
+           "-DFREECAD_QT_VERSION=6"  ;; Build with Qt6
            "-DFREECAD_USE_EXTERNAL_ONDSELSOLVER=ON"  ;; unbundle ondsel-solver
            ;; Do not try to install modules into system python
            "-DINSTALL_TO_SITEPACKAGES=OFF"
@@ -3507,7 +3506,7 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
                (wrap-program (string-append out "/bin/FreeCAD")
                  (list "GUIX_PYTHONPATH"
                        'prefix (list (getenv "GUIX_PYTHONPATH"))))))))))
-    (home-page "https://www.freecadweb.org/")
+    (home-page "https://www.freecad.org/")
     (synopsis "Your Own 3D Parametric Modeler")
     (description
      "FreeCAD is a general-purpose, feature-based, parametric 3D modeler for
