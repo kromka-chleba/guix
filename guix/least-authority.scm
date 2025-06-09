@@ -49,6 +49,7 @@
                                   (guest-gid 1000)
                                   (mappings '())
                                   (namespaces %namespaces)
+                                  capabilities
                                   (directory "/")
                                   (preserved-environment-variables
                                    %default-preserved-environment-variables))
@@ -63,7 +64,11 @@ is preserved; other environment variables are erased.
 
 When USER and GROUP are set and NAMESPACES does not include 'user, change UIDs
 and GIDs to these prior to executing PROGRAM.  This usually requires that the
-resulting wrapper be executed as root so it can call setgid(2) and setuid(2)."
+resulting wrapper be executed as root so it can call setgid(2) and setuid(2).
+
+CAPABILITIES can be provided via a list of capability names, e.g. '(cap_chown)
+or values, e.g. (list CAP_CHOWN).  These capabilities get set in the container
+process via capset(2)."
   (define code
     (with-imported-modules (source-module-closure
                             '((gnu system file-systems)
@@ -150,7 +155,7 @@ resulting wrapper be executed as root so it can call setgid(2) and setuid(2)."
 
              ;; Don't assume PROGRAM can behave as an init process.
              #:child-is-pid1? #f
-
+             #:capabilities '#$capabilities
              #:guest-uid #$guest-uid
              #:guest-gid #$guest-gid
              #:namespaces '#$namespaces)))))
