@@ -3332,6 +3332,18 @@ top, lsof, netstat, ifconfig, who, df, kill, free, nice, ionice, iostat,
 iotop, uptime, pidof, tty, taskset, pmap.")
     (license license:bsd-3)))
 
+(define-public python-psutil-7
+  (package
+    (inherit python-psutil)
+    (name "python-psutil")
+    (version "7.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "psutil" version))
+       (sha256
+        (base32 "0mn42p9pzh0wynhk9i18iyvp8h54hbcsyczajmjcpv4blgmw7sbv"))))))
+
 (define-public python-scapy
   (package
     (name "python-scapy")
@@ -14688,6 +14700,19 @@ adherence to RFC 6570, but adds a few extensions.")
      "Urwid is a curses-based UI/widget library for Python.  It includes many
 features useful for text console applications.")
     (license license:lgpl2.1+)))
+
+(define-public python-urwid-3
+  (package
+    (inherit python-urwid)
+    (name "python-urwid")
+    (version "3.0.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "urwid" version))
+       (sha256
+        (base32
+         "0y7bh77ad94i4i1nrdggrvk7vvl1fp2l6zm5lmwmgx3z3sx71jz7"))))))
 
 (define-public python-urwid-readline
   (package
@@ -34037,13 +34062,13 @@ By default it uses the open Python vulnerability database Safety DB.")
 (define-public python-pypandoc
   (package
     (name "python-pypandoc")
-    (version "1.14")
+    (version "1.15")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pypandoc" version))
        (sha256
-        (base32 "15x161bxr7hky7rvq0jlgf1kxg6vdf069487casmpyxry7slak3b"))))
+        (base32 "04yfja8p8flvpjakyw7n43jb1jm3863w043l7zb43bhjwzmvw9ga"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -36026,6 +36051,21 @@ mangled symbols, which can be used for directly extracting type information.")
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:test-flags
+      #~(list "-x"
+              "--dist" "load"
+              "-n" (number->string (parallel-job-count))
+              "-k"
+              ;; test_mips32_missing_offset_in_instructions fails
+              ;; with capstone 5 and passes with capstone 4. Might
+              ;; be a capstone regressions, needs investigation.
+              ;;
+              ;; test_concrete_memset is a non-deterministic benchmark.
+              ;; test_similarity_fauxware is flaky.
+              (string-append
+               "not test_mips32_missing_offset_in_instructions"
+               " and not test_concrete_memset"
+               " and not test_similarity_fauxware"))
       #:phases #~(modify-phases %standard-phases
                    (add-after 'unpack 'patch-tests
                      (lambda* (#:key inputs #:allow-other-keys)
@@ -36045,20 +36085,11 @@ mangled symbols, which can be used for directly extracting type information.")
                          (substitute* "tests/common.py"
                            (("\\[\"cc\"\\]")
                             "[\"gcc\"]")))))
-                   (replace 'check
-                     (lambda* (#:key inputs tests? #:allow-other-keys)
-                       (when tests?
-                         (copy-recursively #$(this-package-native-input "binaries")
-                                           "../binaries")
-                         (with-directory-excursion "tests"
-                           ;; test_mips32_missing_offset_in_instructions fails
-                           ;; with capstone 5 and passes with capstone 4. Might
-                           ;; be a capstone regressions, needs investigation.
-                           ;;
-                           ;; test_concrete_memset is a non-deterministic benchmark.
-                           (invoke "pytest" "-vv" "-x" "--dist" "loadfile"
-                                   "-k" "not test_mips32_missing_offset_in_instructions and not test_concrete_memset"
-                                   "-n" (number->string (parallel-job-count)))))))
+                   (add-before 'check 'check-setup
+                     (lambda _
+                       (copy-recursively
+                        #$(this-package-native-input "binaries")
+                        "../binaries")))
                    (add-before 'build 'set-cc
                      (lambda _
                        (setenv "CC" "gcc"))))))
@@ -36087,7 +36118,7 @@ mangled symbols, which can be used for directly extracting type information.")
                              python-sqlalchemy
                              python-sympy
                              python-unique-log-filter
-                             unicorn))
+                             unicorn-2.0))
     (native-inputs `(("python-pytest" ,python-pytest)
                      ("python-pytest-xdist" ,python-pytest-xdist)
                      ("python-setuptools" ,python-setuptools)

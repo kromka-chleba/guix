@@ -273,7 +273,7 @@ mediums.")
 (define-public font-lilex
   (package
     (name "font-lilex")
-    (version "2.510")
+    (version "2.600")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -282,7 +282,7 @@ mediums.")
                     "/Lilex.zip"))
               (sha256
                (base32
-                "0dq54qk4q1ymdqnp0skxdxzhx475g2gihzs8ijx0nffa29fwzn9g"))))
+                "0k0zh5d1nlknkjig16bxfx5g071h1cn3s7h63bkpm2cjjvgydk0v"))))
     (build-system font-build-system)
     (home-page "https://github.com/mishamyrt/Lilex")
     (synopsis "IBM Plex typeface with extended character sets and ligatures")
@@ -713,7 +713,7 @@ Biolinum is available in both Regular and Bold weights.")
 (define-public font-libertinus
   (package
     (name "font-libertinus")
-    (version "7.040")
+    (version "7.051")
     (source
      (origin
        (method url-fetch)
@@ -721,9 +721,9 @@ Biolinum is available in both Regular and Bold weights.")
                            "/download/v" version "/libertinus-" version
                            ".zip"))
        (sha256
-        (base32 "1xkj993hwkr49q63dd2dnkvdkm9sckxm3zjwhdxsxn21fi80ikic"))))
+        (base32 "14lc8zbhsgn3i6bqlwqzpq3ixbajqyy7m5msz1dc705kbjdy56sd"))))
     (build-system font-build-system)
-    (outputs '("out" "woff"))
+    (outputs '("out" "ttf" "woff"))
     (home-page "https://github.com/alerque/libertinus")
     (synopsis "Font family based on Linux Libertine")
     (description
@@ -1322,7 +1322,7 @@ utilities to ease adding new glyphs to the font.")
 (define-public font-google-noto
   (package
     (name "font-google-noto")
-    (version "2025.04.01")
+    (version "2025.06.01")
     (source
      (origin
        (method git-fetch)
@@ -1331,7 +1331,7 @@ utilities to ease adding new glyphs to the font.")
              (commit (string-append "noto-monthly-release-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0mfxikyzk6d7av02bnzykliggasy23lnz6z07bfr3mlv2plwy7f5"))))
+        (base32 "0afv8lw7h23lh8jhnyrs1cyjwwdixmxkpiww7p7mkshz74kcsmpa"))))
     (build-system font-build-system)
     (arguments
      (list
@@ -3243,64 +3243,50 @@ designed to work for programming in the Julia Programming Language and other
 text environments.")
     (license license:silofl1.1)))
 
-(define-public font-vazir
+(define-public font-vazirmatn
   (package
-    (name "font-vazir")
-    (version "22.1.0")
+    (name "font-vazirmatn")
+    (version "33.003")
     (source
      (origin
-       (method url-fetch/zipbomb)
-       (uri
-        (string-append "https://github.com/rastikerdar/vazir-font/"
-                       "releases/download/v" version
-                       "/vazir-font-v" version ".zip"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rastikerdar/vazirmatn")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0w3gwb5q33x5llw7cfs8qhaxr4ssg6rsx4b9day3993zn24xq031"))))
+        (base32 "0s2w6905iaqqaqrvm1vrsyqbhxxrw7pg2qzqpwp3vks5niz2sm8b"))))
     (build-system font-build-system)
-    (home-page "https://rastikerdar.github.io/vazir-font/")
-    (synopsis "Vazir Persian typeface")
+    (home-page "https://rastikerdar.github.io/vazirmatn/")
+    (synopsis "Persian/Arabic font")
     (description
-     "Vazir is a beautiful and elegant Persian typeface originally based on
-DejaVu, and comes in six variants: Thin, Light, Normal, Medium, Bold, and
-Black.  This package provides four versions of Vazir:
+     "Vazirmatn is a Persian/Arabic font project with the idea of a new simple
+and legible typeface suitable for web pages and applications.")
+    (license license:silofl1.1)))
 
-@itemize
-@item @code{Vazir}: The main version; includes Latin glyphs from Roboto.
-@item @code{Vazir-FD}: Like @code{Vazir}, but (always) uses Farsi digit glyphs
-instead of Latin ones.
-@item @code{Vazir-WOL}: Like @code{Vazir}, but without Roboto's Latin glyphs.
-@item @code{Vazir-FD-WOL}: Combination of @code{Vazir-FD} and @code{Vazir-WOL}:
-always uses Farsi digits, and does not include Latin glyphs from Roboto.
-@end itemize\n")
-    (license
-     ;; See https://github.com/rastikerdar/vazir-font/blob/master/LICENSE for
-     ;; details.
-     (list license:public-domain        ; the Vazir modifications to DejaVu
-                                        ; and the DejaVu modifications to...
-           (license:x11-style           ; ...the Bitstream Vera typeface
-            "file://LICENSE" "Bitstream Vera License")
-           license:asl2.0))))           ; Latin glyphs from Roboto
+;; https://github.com/rastikerdar/vazirmatn/blob/master/CHANGELOG.md#3200
+(define-public font-vazir
+  (deprecated-package "font-vazir" font-vazirmatn))
 
 (define-public font-victor-mono
   (package
    (name "font-victor-mono")
-   (version "1.5.3")
+   (version "1.5.6")
    (source (origin
             (method url-fetch/zipbomb)
             (uri (string-append
                        "https://github.com/rubjo/victor-mono/raw/v"
                        version
                        "/public/VictorMonoAll.zip"))
-            (sha256 "1axiwxz8l46cc60jfp2la8a9qpj866236lz3dc5l6m35r9as56l3")))
+            (sha256 "15llri92081xiwsks2agkiw9k3vjr2wfn960jwk20ync7fnpgcza")))
    (build-system font-build-system)
    (synopsis "Font with support for italics and ligatures")
-   (description "Victor Mono is an open-source monospaced font with
-optional semi-connected cursive italics and programming symbol ligatures.
-This package provides only TrueType files (TTF).
-It comes in seven weights and Roman, Italic and Oblique styles.")
+   (description
+    "Victor Mono is a monospaced font with optional semi-connected cursive
+italics and programming symbol ligatures.  It comes in seven weights and Roman,
+Italic and Oblique styles.")
    (home-page "https://rubjo.github.io/victor-mono/")
-   (license license:expat)))
+   (license license:silofl1.1)))
 
 (define-public font-dongle
   (let ((commit "f7127c4d2450e1cad20254ec692591347e2fc260")

@@ -71,6 +71,7 @@
 ;;; Copyright © 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Raven Hallsby <karl@hallsby.com>
 ;;; Copyright © 2025 Junker <dk@junkeria.club>"
+;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -7529,6 +7530,37 @@ Rust with GTK.  It currently supports the Gemini, Gopher and Finger
 protocols.")
     (license license:expat)))
 
+(define-public civetweb
+  (package
+    (name "civetweb")
+    (version "1.16")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/civetweb/civetweb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1rdajgr0243ma8sg7qn03v6f8pnbj9w2dghi751zrdg1d1zzjxkr"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=ON"
+              "-DCIVETWEB_ENABLE_CXX=ON"
+              "-DCIVETWEB_ENABLE_ZLIB=ON"
+              ;; The tests rely on downloading their fork of Check.
+              "-DCIVETWEB_BUILD_TESTING=OFF")))
+    (inputs (list zlib))
+    (home-page "https://github.com/civetweb/civetweb")
+    (synopsis "C/C++ embeddable web server")
+    (description
+     "CivetWeb is a web server with optional @acronym{CGI, Common Gateway
+Interface} and @acronym{SSL, Secure Sockets Layer} support.  It can be
+embedded into C/C++ applications or used as a standalone web server.")
+    (license license:expat)))
+
 (define-public clearsilver
   (package
     (name "clearsilver")
@@ -8738,7 +8770,7 @@ compressed JSON header blocks.
 (define-public nghttp3
   (package
     (name "nghttp3")
-    (version "1.9.0")
+    (version "1.10.1")
     (source
      (origin
        (method url-fetch)
@@ -8747,7 +8779,7 @@ compressed JSON header blocks.
                            "nghttp3-" version ".tar.gz"))
        (sha256
         (base32
-         "1gai6j4nlp79gf9p8qsid27s9qjz6irf0pqykr1qhizsbngaviyv"))))
+         "18lik57yb3zc5g17s18ymd268p037wly0hgvw6n9h48l09jqqv68"))))
     (build-system gnu-build-system)
     (native-inputs
      (list pkg-config))
