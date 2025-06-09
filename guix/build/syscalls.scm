@@ -10,7 +10,7 @@
 ;;; Copyright © 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2024 Noah Evans <noahevans256@gmail.com>
-;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -136,6 +136,10 @@
 
             set-thread-name
             thread-name
+            raise-ambient-cap
+            lower-ambient-cap
+            ambient-cap?
+            clear-ambient-caps
 
             CAP_CHOWN
             CAP_DAC_OVERRIDE
@@ -1631,9 +1635,15 @@ handler if the lock is already held by another process."
                       (list int unsigned-long unsigned-long
                             unsigned-long unsigned-long)))
 
-(define PR_SET_NAME 15)                           ;<linux/prctl.h>
+;;; Defined in <linux/prctl.h>.
+(define PR_CAP_AMBIENT_IS_SET  1)
+(define PR_CAP_AMBIENT_RAISE   2)
+(define PR_CAP_AMBIENT_LOWER   3)
+(define PR_CAP_AMBIENT_CLEAR_ALL 4)
+(define PR_SET_NAME 15)
 (define PR_GET_NAME 16)
 (define PR_SET_CHILD_SUBREAPER 36)
+(define PR_CAP_AMBIENT         47)
 
 (define (set-child-subreaper!)
   "Set the CHILD_SUBREAPER capability for the current process."
@@ -1680,6 +1690,24 @@ bytes."
   (if (string-contains %host-type "linux")
       thread-name/linux
       (const "")))
+
+;;; Ambient capabilities.
+(define (raise-ambient-cap cap)
+  "Raise CAP into the ambient set."
+  (%prctl PR_CAP_AMBIENT PR_CAP_AMBIENT_RAISE (cap-name->value cap) 0 0))
+
+(define (lower-ambient-cap cap)
+  "Remove CAP from ambient set."
+  (%prctl PR_CAP_AMBIENT PR_CAP_AMBIENT_LOWER (cap-name->value cap) 0 0))
+
+(define (ambient-cap? cap)
+  "Check if CAP is currently in the ambient set."
+  (not (zero? (%prctl PR_CAP_AMBIENT PR_CAP_AMBIENT_IS_SET
+                      (cap-name->value cap) 0 0))))
+
+(define (clear-ambient-caps!)
+  "Clear all capabilities from the ambient set."
+  (%prctl PR_CAP_AMBIENT PR_CAP_AMBIENT_CLEAR_ALL 0 0 0))
 
 
 ;;;
