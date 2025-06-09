@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2015 David Thompson <davet@gnu.org>
 ;;; Copyright © 2017-2019, 2022-2023, 2025 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -240,7 +241,8 @@ corresponds to the symbols in NAMESPACES."
                         (populate-file-system (const #t))
                         (loopback-network? #t)
                         (lock-mounts? #t)
-                        writable-root?)
+                        writable-root?
+                        capabilities)
   "Run THUNK in a new container process and return its PID.  ROOT specifies
 the root directory for the container.  MOUNTS is a list of <file-system>
 objects that specify file systems to mount inside the container.  NAMESPACES
@@ -257,7 +259,12 @@ made read-only.
 
 HOST-UIDS specifies the number of host user identifiers to map into the user
 namespace.  GUEST-UID and GUEST-GID specify the first UID (respectively GID)
-that host UIDs (respectively GIDs) map to in the namespace."
+that host UIDs (respectively GIDs) map to in the namespace.
+
+CAPABILITIES is a list of capability values (e.g., CAP_IPC_LOCK) or capability
+names, e.g. '(cap_ipc_lock) that will be enabled in the container.  The
+capabilities provided, if any, are added to the effective, permitted and
+inherited capability sets."
   ;; The parent process must initialize the user namespace for the child
   ;; before it can boot.  To negotiate this, a pipe is used such that the
   ;; child process blocks until the parent writes to it.
@@ -328,7 +335,10 @@ that host UIDs (respectively GIDs) map to in the namespace."
                                                  #:guest-uid guest-uid
                                                  #:guest-gid guest-gid))))
 
-                ;; TODO: Manage capabilities.
+                ;; Configure capabilities.
+                (when capabilities
+                  (capset capabilities capabilities capabilities))
+
                 (write 'ready child)
                 (close-port child)
                 (thunk))
@@ -406,7 +416,8 @@ if there are no child processes left."
                               (populate-file-system (const #t))
                               (loopback-network? #t)
                               writable-root?
-                              (process-spawned-hook (const #t)))
+                              (process-spawned-hook (const #t))
+                              capabilities)
   "Run THUNK in a new container process and return its exit status; call
 PROCESS-SPAWNED-HOOK with the PID of the new process that has been spawned.
 MOUNTS is a list of <file-system> objects that specify file systems to mount
@@ -438,6 +449,9 @@ process runs directly as PID 1.  As such, it is responsible for (1) installing
 signal handlers and (2) reaping terminated processes by calling 'waitpid'.
 When CHILD-IS-PID1? is false, a new intermediate process is created instead
 that takes this responsibility.
+
+CAPABILITIES may be a list of capabilities names (e.g., '(cap_chown)) or
+values (e.g., (list CAP_OWNER)) to pass to `run-container'.
 
 Note that if THUNK needs to load any additional Guile modules, the relevant
 module files must be present in one of the mappings in MOUNTS and the Guile
@@ -490,7 +504,8 @@ load path must be adjusted as needed."
                                #:guest-gid guest-gid
                                #:populate-file-system populate-file-system
                                #:loopback-network? loopback-network?
-                               #:writable-root? writable-root?)))
+                               #:writable-root? writable-root?
+                               #:capabilities capabilities)))
        (install-signal-handlers pid)
        (process-spawned-hook pid)
        (match (waitpid pid)

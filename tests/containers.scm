@@ -50,7 +50,8 @@
 (skip-if-unsupported)
 (test-assert "call-with-container, exit with 0 when there is no error"
   (zero?
-   (call-with-container '() (const #t) #:namespaces '(user))))
+   (call-with-container '() (const #t) #:namespaces '(user)
+                        #:capabilities '(cap_chown))))
 
 (skip-if-unsupported)
 (test-assert "call-with-container, user namespace"
