@@ -337,7 +337,8 @@ inherited capability sets."
 
                 ;; Configure capabilities.
                 (when capabilities
-                  (capset capabilities capabilities capabilities))
+                  (capset capabilities capabilities capabilities)
+                  (for-each raise-ambient-cap capabilities))
 
                 (write 'ready child)
                 (close-port child)
