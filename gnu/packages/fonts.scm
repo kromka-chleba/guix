@@ -2908,15 +2908,15 @@ for Inria, a public research institute in computer science and mathematics.")
 (define-public font-sil-gentium
   (package
     (name "font-sil-gentium")
-    (version "6.200")
+    (version "7.000")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "https://software.sil.org/downloads/r/gentium/GentiumPlus-"
+                    "https://software.sil.org/downloads/r/gentium/Gentium-"
                     version ".zip"))
               (sha256
                (base32
-                "0wxhsxv7xqsfbrywax0lcbmyfbrvrcm5g4c7a2v4j4cng4xi08cv"))))
+                "089y0hf7858gnkj4cgy6qpjq05p0dk9jb9v0c0sm2y527fb68gii"))))
     ;; Note: The zip file provides TTF files only, but the developer release,
     ;; which contains additional files, has a 'SOURCES.txt' file that says
     ;; that "the primary source files for the fonts are the fonts themselves".
@@ -2934,7 +2934,7 @@ italics shapes.  This package provides only TrueType files (TTF).")
 (define-public font-sil-andika
   (package
     (name "font-sil-andika")
-    (version "6.200")
+    (version "7.000")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2942,7 +2942,7 @@ italics shapes.  This package provides only TrueType files (TTF).")
                     version ".zip"))
               (sha256
                (base32
-                "0z7qvjlidn3m2k40mwnm3azf3wd8pi1yvy2q30p5vkyyzhipb6nc"))))
+                "0w60waq7hq6vkjlzlgl4wjmipgl357xgh3899chyba7l3sj6xfl8"))))
     ;; As for Gentium (see above), the TTF files are considered source.
     (build-system font-build-system)
     (synopsis "Sans serif font designed especially for literacy use")
@@ -2957,15 +2957,15 @@ confused with one another.  This package provides only TrueType files (TTF).")
 (define-public font-sil-charis
   (package
     (name "font-sil-charis")
-    (version "6.200")
+    (version "7.000")
     (source (origin
               (method url-fetch)
               (uri (string-append
-                    "https://software.sil.org/downloads/r/charis/CharisSIL-"
+                    "https://software.sil.org/downloads/r/charis/Charis-"
                     version ".zip"))
               (sha256
                (base32
-                "1pksr5wc9grdj75md4phr1a0gpjxk7xlmhv2nybsd2hbfrssl2ab"))))
+                "0rkn30fbrcrgfkj904y7fwxqfpkci0a1j7cvypw1mly50c9pn8z3"))))
     ;; As for Gentium (see above), the TTF files are considered source.
     (build-system font-build-system)
     (synopsis "Serif font for the Cyrillic and Latin alphabets")

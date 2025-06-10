@@ -2091,7 +2091,7 @@ before interacting with non-free LLMs.")
 (define-public emacs-magit
   (package
     (name "emacs-magit")
-    (version "4.3.2")
+    (version "4.3.6")
     (source
      (origin
        (method git-fetch)
@@ -2100,7 +2100,7 @@ before interacting with non-free LLMs.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0k15p39r5jikin86r5wsf5z9jsaica01f4s4sbwczikjjpfpq9r8"))))
+        (base32 "0gc6b1hclrpgyp2xccz980k2zg9ix6cyym11wxq6pjr8x8kl1j93"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -34868,7 +34868,7 @@ as Emacs Lisp.")
 (define-public emacs-transient
   (package
     (name "emacs-transient")
-    (version "0.8.7")
+    (version "0.9.1")
     (source
      (origin
        (method git-fetch)
@@ -34877,7 +34877,7 @@ as Emacs Lisp.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1p3l2j1jrs39j1arzhczwi1ndcqmj5wvbq0y88brk3srzkwj69dr"))))
+        (base32 "09fjb7cvlxjby1r2liqhp90naz0dcfc5m3d4578zyxzhayhpmc13"))))
     (build-system emacs-build-system)
     (arguments
      `(#:tests? #f ;no test suite
@@ -37702,7 +37702,7 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
 (define-public emacs-fj
   (package
     (name "emacs-fj")
-    (version "0.6")
+    (version "0.8")
     (source
      (origin
        (method git-fetch)
@@ -37711,7 +37711,7 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1j4gl8wf9l9pnhz12b0ij2piz02ql23r8c7d3226yb7bsp4b3vdd"))))
+        (base32 "0ijl8vxrddx715fad83j9a4kip35r90klzx7sv2nd4pv3s8d359g"))))
     (build-system emacs-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (propagated-inputs (list emacs-fedi emacs-magit emacs-tp))
