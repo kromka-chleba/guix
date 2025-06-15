@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2022, 2023, 2024 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2022, 2023, 2024, 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2013, 2015, 2017, 2018, 2021 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2016-2025 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2014, 2018 Mark H Weaver <mhw@netris.org>
@@ -337,7 +337,7 @@ GP2C, the GP to C compiler, translates GP scripts to PARI programs.")
 (define-public paritwine
   (package
     (name "paritwine")
-    (version "0.2.1")
+    (version "0.2.2")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -346,7 +346,7 @@ GP2C, the GP to C compiler, translates GP scripts to PARI programs.")
                     ".tar.gz"))
               (sha256
                (base32
-                "0xj948ngp9k2l1krwfcpzb4rxrvm2gy3r8w020lniz5hwbslagl7"))))
+                "0hkn18qkg4ssg1rg6k95ff7yvywacvhwqq9gj06wix4xb7nw4yzz"))))
     (build-system gnu-build-system)
     (propagated-inputs (list pari-gp
                              gmp
@@ -485,14 +485,14 @@ or text interfaces) or as a C++ library.")
 (define-public flint
   (package
    (name "flint")
-   (version "3.1.3")
+   (version "3.2.1")
    (source
     (origin
       (method url-fetch)
       (uri (string-append "https://flintlib.org/download/flint-"
                           version ".tar.gz"))
       (sha256
-       (base32 "1nmd7jb2hqg3sqv0dbqa5glpn24lli3gh9ghxzmkpsh7pgnfan9j"))))
+       (base32 "0gyjbkhwrmx2vgb1gailnmmzacl4aikzgi70dzmpf8lpfxny8yya"))))
    (build-system gnu-build-system)
    (inputs
     (list ntl))
@@ -527,7 +527,7 @@ fast arithmetic.")
 (define-public python-flint
   (package
     (name "python-flint")
-    (version "0.5.0")
+    (version "0.7.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -536,7 +536,7 @@ fast arithmetic.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "10370kqik6q6vdqrqv3gbznsyaxbgqb3rbrff4alpw0sqr5s07c7"))))
+                "09nsys2cajxsfh2c13nf98a2kwnm0msmab9f9zcjpkndj4ir453a"))))
     (build-system python-build-system)
     (native-inputs
      (list python-cython-3))
@@ -2148,7 +2148,7 @@ gnuplot program, if installed, to draw figures.")
 (define-public msolve
   (package
     (name "msolve")
-    (version "0.7.3")
+    (version "0.8.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2157,7 +2157,7 @@ gnuplot program, if installed, to draw figures.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1ipsdw5sk4d344ki4r5ma9vn8gyi8hrk0n951r0720wvgxkw920p"))))
+                "0jncyyaxq6s4vwjhcha04rmbiv6vxsamkn4g5ln2rr202af92jnj"))))
     (build-system gnu-build-system)
     (native-inputs (list autoconf automake libtool))
     (inputs (list flint gmp mpfr))

@@ -276,11 +276,13 @@ which allows one to install the M8 firmware on any Teensy.")
                    license:zlib))))
 
 (define-public minipro
-  ;; Information needed to fix Makefile
-  (let* ((date "2024-09-20 20:55:06 -0700"))
+  ;; When built from a Git repo, minipro expects GIT_DATE to be set to the
+  ;; value of `git show -s --format=%ci'.  When updating the package, run this
+  ;; in a checkout and put the value here.
+  (let* ((date "2025-04-13 21:54:38 -0700"))
     (package
       (name "minipro")
-      (version "0.7.2")
+      (version "0.7.3")
       (source
        (origin
          (method git-fetch)
@@ -289,9 +291,9 @@ which allows one to install the M8 firmware on any Teensy.")
                (commit version)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1a7sbbs1byngkh3bh0dxwxk1iw1dx0kvp946y2lxb8rm6b7hwqym"))))
+          (base32 "1525rn5h73xism16vmivd3cz93g8w76h24f0yvbpc35ydc3fkqf7"))))
       (native-inputs (list pkg-config which))
-      (inputs (list libusb))
+      (inputs (list libusb zlib))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -560,6 +562,52 @@ formats.")
     (description "PulseView is a Qt based logic analyzer, oscilloscope and MSO GUI
 for sigrok.")
     (license license:gpl3+)))
+
+(define-public python-cocotb
+  (package
+    (name "python-cocotb")
+    (version "1.9.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cocotb/cocotb")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "19mybnhqa2jz134jj8686310fniav5nldiq0y7kbgml81ppai87c"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Tests requiring a verilog simulator.
+      #~(list "-k" (string-join
+                    (list "not parallel_cocotb"
+                          "cocotb"
+                          "vhdl_libraries_multiple")
+                    " and not "))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Tests requiring a vhdl simulator.
+          (add-after 'check 'check-vhdl
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "SIM" "nvc")
+                (invoke "pytest" "-vv" "-k" "vhdl_libraries_multiple")))))))
+    (native-inputs
+     (list iverilog
+           nvc
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-find-libpython))
+    (home-page "https://github.com/cocotb/cocotb")
+    (synopsis "Library for writing HDL test benches in Python")
+    (description
+     "Coroutine based cosimulation test bench environment for verifying VHDL
+and Verilog RTL using Python.")
+    (license license:bsd-3)))
 
 (define-public python-edalize
   (package

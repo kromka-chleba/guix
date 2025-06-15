@@ -29,6 +29,8 @@
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024 Rick Huijzer <ikbenrickhuyzer@gmail.com>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 Mark Walker <mark.damon.walker@gmail.com>
+;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -243,6 +245,40 @@ in similar form in tools like PyTorch.  Speciality of AlgoPy is the
 possibility to differentiate functions that contain matrix functions as
 +,-,*,/, dot, solve, qr, eigh, cholesky.")
     (license license:bsd-3)))
+
+(define-public python-apted
+  ;; PyPI release lacks tests and there is no Git tag.
+  (let ((commit "828b3e3f4c053f7d35f0b55b0d5597e8041719ac")
+        (revision "0"))
+    (package
+      (name "python-apted")
+      (version (git-version "1.0.3" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/JoaoFelipe/apted")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1vw1sbn41cysmhr4ib58cw3hzs1xjxwb1d8r1yhrqgjk5q6ckjw7"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:test-flags
+        #~(list "--deselect=apted/tests/test_chained.py::test_factory"
+                "--deselect=apted/tests/test_correctness.py::test_factory"
+                "--deselect=apted/tests/test_per_edit_operation_correctness.py::test_factory")))
+      (native-inputs
+       (list python-pytest
+             python-setuptools
+             python-wheel))
+      (home-page "https://github.com/JoaoFelipe/apted")
+      (synopsis "Algorithm for the tree edit distance")
+      (description
+       "This is a Python implementation of the APTED algorithm,which
+supersedes the RTED algorithm for computing the tree edit distance.")
+      (license license:expat))))
 
 (define-public python-cmocean
   (package
@@ -552,6 +588,58 @@ quantities: the product of a numerical value and a unit of measurement.  It
 allows arithmetic operations between them and conversions from and to
 different units.")
     (license license:bsd-3)))
+
+(define-public python-pyzx
+  (package
+    (name "python-pyzx")
+    (version "0.9.0")
+    (source
+     (origin
+       (method git-fetch)        ; no tests in PyPI
+       (uri (git-reference
+             (url "https://github.com/zxcalc/pyzx")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+         (base32 "1bnmz08w1bmipir1wnn1k3fw64rply7891xns22qfj6yh0j1n6rj"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-flags
+                     #~(list
+                        ;; Ignore long running tests
+                        "--ignore=tests/long_test.py"
+                        "--ignore=tests/long_scalar_test.py")
+                     #:phases
+                     #~(modify-phases %standard-phases
+                         (add-before 'check 'pre-check
+                           (lambda* (#:key inputs outputs #:allow-other-keys)
+                             (setenv "HOME" "/tmp")
+                             ;; Matplotlib needs to be able to write its
+                             ;; configuration file somewhere.
+                             (setenv "MPLCONFIGDIR" "/tmp"))))))
+    (native-inputs (list python-pytest
+                         python-setuptools
+                         python-wheel))
+    (propagated-inputs (list python-ipywidgets
+                             python-lark
+                             python-numpy
+                             python-pyperclip
+                             python-tqdm))
+    (home-page "https://github.com/zxcalc/pyzx")
+    (synopsis "Quantum circuit rewriting and optimisation using the ZX-calculus")
+    (description
+     "PyZX is a Python tool implementing the theory of ZX-calculus for the
+creation, visualisation, and automated rewriting of large-scale quantum
+circuits.  PyZX currently allows you to:
+
+@itemize
+@item Read in quantum circuits in the file format of QASM, Quipper or Quantomatic;
+@item Rewrite circuits into a pseudo-normal form using the ZX-calculus;
+@item Extract new simplified circuits from these reduced graphs;
+@item Visualise the ZX-graphs and rewrites using either Matplotlib, Quantomatic
+or as a TikZ file for use in LaTeX documents;
+@item Output the optimised circuits in QASM, QC or QUIPPER format.
+@end itemize")
+    (license license:asl2.0)))
 
 (define-public python-qdldl
   (package

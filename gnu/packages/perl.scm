@@ -6,7 +6,7 @@
 ;;; Copyright © 2015 Eric Dvorsak <eric@dvorsak.fr>
 ;;; Copyright © 2016, 2018 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2016 Jochem Raat <jchmrt@riseup.net>
-;;; Copyright © 2016-2022, 2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016-2022, 2024, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Nikita <nikita@n0.is>
 ;;; Copyright © 2016 Alex Sassmannshausen <alex@pompo.co>
 ;;; Copyright © 2016, 2018, 2020, 2021 Roel Janssen <roel@gnu.org>
@@ -5359,7 +5359,7 @@ type.")
 (define-public perl-file-find-rule
   (package
     (name "perl-file-find-rule")
-    (version "0.34")
+    (version "0.35")
     (source
      (origin
        (method url-fetch)
@@ -5367,10 +5367,10 @@ type.")
                            "File-Find-Rule-" version ".tar.gz"))
        (sha256
         (base32
-         "1znachnhmi1w5pdqx8dzgfa892jb7x8ivrdy4pzjj7zb6g61cvvy"))))
+         "10hcrwx30g161fmwm08ydwj0s1dhn25ja0s8wwpasi3dk8l5dm9b"))))
     (build-system perl-build-system)
     (propagated-inputs
-     (list perl-text-glob perl-number-compare))
+     (list perl-number-compare perl-text-glob))
     (home-page "https://metacpan.org/release/File-Find-Rule")
     (synopsis "Alternative interface to File::Find")
     (description "File::Find::Rule is a friendlier interface to File::Find.
@@ -9288,6 +9288,24 @@ classes.")
     (description "Object::Signature is an abstract base class that you can
 inherit from in order to allow your objects to generate unique cryptographic
 signatures.")
+    (license (package-license perl))))
+
+(define-public perl-object-tiny
+  (package
+    (name "perl-object-tiny")
+    (version "1.09")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/E/ET/ETHER/Object-Tiny-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "1gf6r99ipll1an9044rl6hpkzgh49r70h336rvjv067f33fwq6bq"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/Object-Tiny")
+    (synopsis "Class building library for Perl")
+    (description "This is a minimalist Perl module for building simple classes
+with read-only accessors.")
     (license (package-license perl))))
 
 (define-public perl-ole-storage-lite

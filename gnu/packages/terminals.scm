@@ -878,14 +878,14 @@ eye-candy, customizable, and reasonably lightweight.")
                         (list wayland pkg-config-for-build)
                         '())
                     (list ncurses ;for 'tic'
-                          pkg-config scdoc wayland-protocols-next)))
+                          pkg-config scdoc wayland-protocols)))
     (native-search-paths
      ;; FIXME: This should only be located in 'ncurses'.  Nonetheless it is
      ;; provided for usability reasons.  See <https://bugs.gnu.org/22138>.
      (list (search-path-specification
             (variable "TERMINFO_DIRS")
             (files '("share/terminfo")))))
-    (inputs (list fcft libxkbcommon-1.8 wayland wayland-protocols-next))
+    (inputs (list fcft libxkbcommon-1.8 wayland wayland-protocols))
     (synopsis "Wayland-native terminal emulator")
     (description
      "@command{foot} is a terminal emulator for systems using the Wayland
@@ -990,10 +990,10 @@ minimalistic.")
       (home-page "https://www.uninformativ.de/git/xiate/file/README.html")
       (license license:expat))))
 
-(define-public go-github-com-junegunn-fzf
+(define-public fzf
   (package
-    (name "go-github-com-junegunn-fzf")
-    (version "0.60.2")
+    (name "fzf")
+    (version "0.62.0")
     (source
      (origin
        (method git-fetch)
@@ -1002,59 +1002,36 @@ minimalistic.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1c18h9326i8g9ksbfrpzrxpz8xlym2a35fpjsi7dn1dv6rr3jayn"))))
+        (base32 "1kwia7dmsaq08048h3s6avrczvca2mpd8sa3m4r1y28wjqjxmkbk"))))
     (build-system go-build-system)
     (arguments
-     `(#:import-path "github.com/junegunn/fzf"))
-    (inputs
-     (list go-github-com-charlievieth-fastwalk
-           go-github-com-gdamore-tcell-v2
-           go-github-com-junegunn-go-shellwords
-           go-github-com-mattn-go-isatty
-           go-github-com-rivo-uniseg
-           go-golang-org-x-sys
-           go-golang-org-x-term))
-    (home-page "https://github.com/junegunn/fzf")
-    (synopsis "Command-line fuzzy-finder")
-    (description "This package provides an interactive command-line filter
-usable with any list--including files, command history, processes and more.")
-    (license license:expat)))
-
-(define-public fzf
-  (package
-    (inherit go-github-com-junegunn-fzf)
-    (name "fzf")
-    (arguments
-     (ensure-keyword-arguments
-      (package-arguments go-github-com-junegunn-fzf)
-      `(#:install-source? #f
-        #:phases
-        (modify-phases %standard-phases
+     (list
+      #:install-source? #f
+      #:import-path "github.com/junegunn/fzf"
+      #:phases
+      #~(modify-phases %standard-phases
           (add-after 'install 'copy-binaries
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let ((out (assoc-ref outputs "out")))
-                (with-directory-excursion "src/github.com/junegunn/fzf"
-                  (install-file "bin/fzf-tmux"
-                                (string-append out "/bin"))))))
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (install-file "bin/fzf-tmux" (string-append #$output "/bin")))))
           (add-after 'copy-binaries 'wrap-programs
-            (lambda* (#:key outputs inputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
-                     (bin (string-append out "/bin"))
-                     (findutils (assoc-ref inputs "findutils"))
-                     (ncurses (assoc-ref inputs "ncurses")))
+            (lambda _
+              (let* ((bin (string-append #$output "/bin"))
+                     (findutils #$(this-package-input "findutils"))
+                     (ncurses #$(this-package-input "ncurses")))
                 (wrap-program (string-append bin "/fzf")
                   `("PATH" ":" prefix (,(string-append findutils "/bin"))))
                 (wrap-program (string-append bin "/fzf-tmux")
                   `("PATH" ":" prefix (,(string-append ncurses "/bin")))))))
           (add-after 'install 'install-completions
-            (lambda* (#:key outputs #:allow-other-keys)
-              (let* ((out (assoc-ref outputs "out"))
-                     (bash-completion (string-append out "/etc/bash_completion.d"))
+            (lambda* (#:key import-path #:allow-other-keys)
+              (let* ((bash-completion
+                      (string-append #$output "/etc/bash_completion.d"))
                      (fish-functions
-                       (string-append out "/share/fish/vendor_functions.d"))
-                     (zsh-completion (string-append out "/share/zsh/site-functions")))
-                (with-directory-excursion "src/github.com/junegunn/fzf"
+                      (string-append #$output "/share/fish/vendor_functions.d"))
+                     (zsh-completion
+                      (string-append #$output "/share/zsh/site-functions")))
+                (with-directory-excursion (string-append "src/" import-path)
                   (mkdir-p bash-completion)
                   (copy-file "shell/completion.bash"
                              (string-append bash-completion "/fzf"))
@@ -1063,12 +1040,24 @@ usable with any list--including files, command history, processes and more.")
                              (string-append fish-functions "/fzf_key_bindings.fish"))
                   (mkdir-p zsh-completion)
                   (copy-file "shell/completion.zsh"
-                             (string-append zsh-completion "/_fzf"))))))))))
+                             (string-append zsh-completion "/_fzf")))))))))
+    (native-inputs
+     (list go-github-com-charlievieth-fastwalk
+           go-github-com-gdamore-tcell-v2
+           go-github-com-junegunn-go-shellwords
+           go-github-com-mattn-go-isatty
+           go-github-com-rivo-uniseg
+           go-golang-org-x-sys
+           go-golang-org-x-term))
     (inputs
-     `(,@(package-inputs go-github-com-junegunn-fzf)
-       ("bash" ,bash-minimal) ; for wrap-program
-       ("findutils" ,findutils)
-       ("ncurses" ,ncurses)))))
+     (list bash-minimal
+           findutils
+           ncurses))
+    (home-page "https://github.com/junegunn/fzf")
+    (synopsis "Command-line fuzzy-finder")
+    (description "This package provides an interactive command-line filter
+usable with any list--including files, command history, processes and more.")
+    (license license:expat)))
 
 (define-public python-pyte
   (package
@@ -1319,7 +1308,7 @@ tmux.")
            ncurses ;; for tic command
            pkg-config
            python-sphinx
-           wayland-protocols))
+           wayland-protocols-1.42))
     (inputs
      (list fontconfig
            freetype

@@ -1,6 +1,7 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2018 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2020 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2025 aurtzy <aurtzy@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -18,6 +19,7 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages stb)
+  #:use-module (guix gexp)
   #:use-module (guix packages)
   #:use-module (guix git-download)
   #:use-module (guix build-system gnu)
@@ -44,25 +46,31 @@
                 (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (arguments
-       `(#:modules ((ice-9 ftw)
+       (list
+        #:modules `((ice-9 ftw)
                     (ice-9 regex)
                     (srfi srfi-26)
                     ,@%default-gnu-modules)
-         #:phases (modify-phases %standard-phases
-                    (delete 'configure)
-                    (delete 'build)
-                    (replace 'check
-                      (lambda _
-                        #f ; (invoke "make" "-C" "tests" "CC=gcc")
-                        ))
-                    (replace 'install
-                      (lambda* (#:key outputs #:allow-other-keys)
-                        (let ((out (assoc-ref outputs "out"))
-                              (files (make-regexp "\\.(c|h|md)$")))
-                          (for-each (lambda (file)
-                                      (install-file file out))
-                                    (scandir "." (cut regexp-exec files <>)))
-                          #t))))))
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure)
+            (delete 'build)
+            (replace 'check
+              (lambda _
+                #f                     ; (invoke "make" "-C" "tests" "CC=gcc")
+                ))
+            (replace 'install
+              (lambda _
+                (let* ((files-rx (make-regexp "\\.(c|h|md)$"))
+                       (include-file? (cut regexp-exec files-rx <>))
+                       (deprecated-output (string-append #$output "/deprecated")))
+                  (for-each (cut install-file <> #$output)
+                            (scandir "." include-file?))
+                  (mkdir-p deprecated-output)
+                  (with-directory-excursion "deprecated"
+                    (for-each (cut install-file <> deprecated-output)
+                              (scandir "." include-file?)))
+                  #t))))))
       (synopsis "Single file libraries for C/C++")
       (description
        "This package contains a variety of small independent libraries for
@@ -70,7 +78,7 @@ the C programming language.")
       ;; The user can choose either license.
       (license (list expat public-domain)))))
 
-(define (make-stb-header-package name version description)
+(define* (make-stb-header-package name version description #:key deprecated?)
   (package
     (inherit stb)
     (name name)
@@ -79,50 +87,65 @@ the C programming language.")
     (inputs (list stb))
     (build-system trivial-build-system)
     (arguments
-     `(#:modules ((guix build utils))
-       #:builder (begin
-                   (use-modules (guix build utils))
-                   (let ((stb (assoc-ref %build-inputs "stb"))
-                         (lib (string-join (string-split ,name #\-) "_"))
-                         (out (assoc-ref %outputs "out")))
-                     (install-file (string-append stb "/" lib ".h")
-                                   (string-append out "/include"))
-                     #t))))
+     (list
+      #:modules '((guix build utils))
+      #:builder
+      #~(begin
+          (use-modules (guix build utils))
+          (let ((headers-dir #$(file-append (this-package-input "stb")
+                                            (if deprecated? "/deprecated" "")))
+                (lib (string-join (string-split #$name #\-) "_"))
+                (out #$output))
+            (install-file (string-append headers-dir "/" lib ".h")
+                          (string-append out "/include"))
+            #t))))
     (description description)))
 
-;; TODO: These descriptions are not translatable!  They should be
-;; converted to macros as outlined in <https://bugs.gnu.org/32155>.
-(define-public stb-image
-  (make-stb-header-package
-   "stb-image" "2.30"
+(define-syntax define-stb-header-package
+  (syntax-rules (description)
+    ((_ symbol name version (description text) rest ...)
+     (define-public symbol
+       (make-stb-header-package name version text rest ...)))))
+
+(define-stb-header-package stb-image
+  "stb-image" "2.30"
+  (description
    "stb-image is a small and self-contained library for image loading or
 decoding from file or memory.  A variety of formats are supported."))
 
-(define-public stb-image-resize2
-  (make-stb-header-package
-   "stb-image-resize2" "2.12"
+(define-stb-header-package stb-image-resize
+  "stb-image-resize" "0.97"
+  (description
+   "stb-image-resize is a library that supports scaling and translation of
+images.  This library is deprecated; @code{stb-image-resize2} should be used
+instead.")
+  #:deprecated? #t)
+
+(define-stb-header-package stb-image-resize2
+  "stb-image-resize2" "2.12"
+  (description
    "stb-image-resize2 is a library that supports scaling and translation of
 images."))
 
-(define-public stb-image-write
-  (make-stb-header-package
-   "stb-image-write" "1.16"
+(define-stb-header-package stb-image-write
+  "stb-image-write" "1.16"
+  (description
    "stb-image-write is a small library for writing image files to the
 C@tie{}@code{stdio} interface."))
 
-(define-public stb-rect-pack
-  (make-stb-header-package
-   "stb-rect-pack" "1.01"
+(define-stb-header-package stb-rect-pack
+  "stb-rect-pack" "1.01"
+  (description
    "stb-rect-pack is a small rectangle packing library useful for, e.g., packing
 rectangular textures into an atlas.  It does not do rotation."))
 
-(define-public stb-sprintf
-  (make-stb-header-package
-   "stb-sprintf" "1.10"
+(define-stb-header-package stb-sprintf
+  "stb-sprintf" "1.10"
+  (description
    "stb-sprintf implements fast @code{sprintf}, @code{snprintf} for C/C++."))
 
-(define-public stb-truetype
-  (make-stb-header-package
-   "stb-truetype" "1.26"
+(define-stb-header-package stb-truetype
+  "stb-truetype" "1.26"
+  (description
    "stb-truetype is a library for parsing, decoding, and rasterizing
 characters from TrueType fonts."))

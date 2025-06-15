@@ -199,6 +199,7 @@
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages version-control)
+  #:use-module (gnu packages web)
   #:use-module (gnu packages wxwidgets)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xml)
@@ -1300,16 +1301,17 @@ provide LAPACK for someone who does not have access to a Fortran compiler.")
 (define-public scalapack
   (package
     (name "scalapack")
-    (version "2.1.0")
+    (version "2.2.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "http://www.netlib.org/scalapack/scalapack-"
-                           version ".tgz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Reference-ScaLAPACK/scalapack")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32
-         "19i0h9vdc3zsy58r6fy1vs2kz2l7amifkz0cf926j90xz1n23nb1"))
-       (patches (search-patches "scalapack-gcc-10-compilation.patch"))))
+         "0abs4j9iknd3qiyaj06gh00iyki71c2lzpmyv21ncv7f7vy1ccr8"))))
     (build-system cmake-build-system)
     (inputs
      `(("mpi" ,openmpi)
@@ -1319,14 +1321,13 @@ provide LAPACK for someone who does not have access to a Fortran compiler.")
      `(#:configure-flags `("-DBUILD_SHARED_LIBS:BOOL=YES")
        #:phases (modify-phases %standard-phases
                   (add-before 'check 'mpi-setup
-		    ,%openmpi-setup)
-                  (add-after 'unpack 'skip-faulty-test
+                    ,%openmpi-setup)
+                  (add-after 'unpack 'skip-faulty-tests
                     (lambda _
-                      ;; FIXME: Skip these two tests that fail to complete for
-                      ;; unknown reasons:
-                      ;; <https://github.com/Reference-ScaLAPACK/scalapack/issues/43>.
+                      ;; FIXME: Skip two tests that fail to complete.  See
+                      ;; <https://github.com/amd/scalapack/commit/d3b6248b26f615b118ff4d72a00b3028f59a47f6>.
                       (substitute* "TESTING/CMakeLists.txt"
-                        (("^add_test\\(x[sd]hseqr.*" all)
+                        (("^add_test\\(x[cz]heevr.*" all)
                          (string-append "# " all "\n"))))))))
     (home-page "https://www.netlib.org/scalapack/")
     (synopsis "Library for scalable numerical linear algebra")
@@ -10641,7 +10642,7 @@ computation is supported via MPI.")
 (define-public scilab
   (package
     (name "scilab")
-    (version "2025.0.0")
+    (version "2025.1.0")
     (source
      (origin
        (method git-fetch)
@@ -10651,7 +10652,7 @@ computation is supported via MPI.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1zn31mby7rwxsnkg91rp92ixhj785hw459krw9k2prs2cxqpn6j5"))
+         "1db23hla27lfrf1qvk3p4465qqizxb1a6qkjh4k6rzdxgvxdbxng"))
        (patches (search-patches "scilab-better-compiler-detection.patch"
                                 "scilab-tbx_build_help.patch"))
        (modules '((guix build utils)
@@ -10738,6 +10739,7 @@ computation is supported via MPI.")
                   matio
                   ocaml-num
                   openblas
+                  rapidjson
                   readline
                   suitesparse
                   tcl

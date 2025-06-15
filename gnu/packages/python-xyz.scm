@@ -100,7 +100,7 @@
 ;;; Copyright © 2021 LibreMiami <packaging-guix@libremiami.org>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
-;;; Copyright © 2021, 2023-2024 jgart <jgart@dismail.de>
+;;; Copyright © 2021, 2023-2025 jgart <jgart@dismail.de>
 ;;; Copyright © 2021 Danial Behzadi <dani.behzi@ubuntu.com>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2021 Hugo Lecomte <hugo.lecomte@inria.fr>
@@ -1110,6 +1110,27 @@ similar XML files, in the same way the @command{diff} utility does it.")
     (synopsis "Python bindings for the XML Security Library")
     (description "This package provides Python bindings for the XML Security
 Library.")
+    (license license:expat)))
+
+(define-public python-jaconv
+  (package
+    (name "python-jaconv")
+    (version "0.4.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "jaconv" version))
+       (sha256
+        (base32 "0qc1dx21vwlarhsg19l5rdjpjf7j7lamrcynaadf0xpj8yr79nij"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel python-nose))
+    (home-page "https://github.com/ikegami-yukino/jaconv")
+    (synopsis
+     "Pure-Python Japanese character interconverter for Hiragana, Katakana,
+Hankaku, Zenkaku")
+    (description
+     "jaconv (Japanese Converter) is interconverter for Hiragana, Katakana,
+Hankaku (half-width character) and Zenkaku (full-width character)")
     (license license:expat)))
 
 (define-public python-janus
@@ -2901,7 +2922,7 @@ configuration file.")
 (define-public python-pytooling
   (package
     (name "python-pytooling")
-    (version "8.4.7")
+    (version "8.5.0")
     (source
      (origin
        (method git-fetch)
@@ -2910,7 +2931,7 @@ configuration file.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "09w4harvh5kijgljd5hjx8iqfhw212xxr1l9lmckqz060860dg6z"))))
+        (base32 "1r4c7wyvqhpxdkfw9akff4ki4azbvamzs9mkb61005wx4qr3a1rr"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -7079,6 +7100,30 @@ something else) to Python data-types.")
         (base32
          "10zqvpaky51kgb8nd42bk7jwl8cn2zvayxjpdc1wwmpybj92x67s"))))))
 
+(define-public python-kconfiglib
+  (package
+    (name "python-kconfiglib")
+    (version "14.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "kconfiglib" version))
+       (sha256
+        (base32 "0g690bk789hsry34y4ahvly5c8w8imca90ss4njfqf7m2qicrlmy"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-wheel
+           `(,python "tk")))
+    (home-page "https://github.com/ulfalizer/Kconfiglib")
+    (synopsis
+     "Flexible Python library for parsing and creating Linux Kconfig files")
+    (description
+     "Kconfiglib is a Python implementation of a parser for Linux Kconfig files.
+It can be used as a Python library or as a standalone terminal or GUI menuconfig
+interface.")
+    (license license:isc)))
+
 (define-public python-kitchen
   (package
     (name "python-kitchen")
@@ -9952,7 +9997,8 @@ include_dirs = ~:*~a/include~%"
                               ;; https://github.com/numpy/numpy/issues/20635
                               #$@(if (target-riscv64?)
                                    `(" and not test_float"
-                                     " and not test_fpclass")
+                                     " and not test_fpclass"
+                                     " and not test_fp_noncontiguous")
                                    '())))))))))
     (native-inputs
      (list gfortran
@@ -24789,14 +24835,14 @@ JPEG2000 and GIF files in pure Python.")
 (define-public python-argcomplete
   (package
     (name "python-argcomplete")
-    (version "3.5.3")
+    (version "3.6.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "argcomplete" version))
        (sha256
         (base32
-         "14jkqmc4nhp1vxkiha7mv7zlvqiyzyjsfzbvihlvpbnqvq7gaay1"))))
+         "1pvavik22prqdyqid5s40zqab93kp85ash9wf7sg9xb7r0drnlfh"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -24811,8 +24857,11 @@ JPEG2000 and GIF files in pure Python.")
                   "def __disable_test_console_script"))
                (invoke "python3" "./test/test.py" "-v")))))))
     (native-inputs
-     (list python-pexpect
+     (list python-coverage
+           python-hatch-vcs
            python-hatchling
+           python-mypy
+           python-pexpect
            python-wheel
            tcsh
            fish
@@ -28791,6 +28840,36 @@ Its major feature is tracking the number of lines authored by each person for ev
 commit, but it also includes some other useful statistics.")
     (license license:asl2.0)))
 
+(define-public python-gitignore-parser
+  (package
+    (name "python-gitignore-parser")
+    (version "0.1.12")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mherrmann/gitignore_parser")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "00s8vvslnlbqnmkgnmc374mjzbsw7b167gh7wf5ygigd79cpnnxk"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Tests are missing in PyPI.
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "python" "-m" "unittest")))))))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/mherrmann/gitignore_parser")
+    (synopsis "Spec-compliant gitignore parser for Python")
+    (description
+     "This package provides a spec-compliant gitignore parser for Python.")
+    (license license:expat)))
+
 (define-public python-fusepy
   (package
     (name "python-fusepy")
@@ -31427,6 +31506,38 @@ structure.")
      "This package provides a parser, schema validator, and data binding tool
 for YAML and JSON.")
     (license license:expat)))
+
+(define-public python-pykakasi
+  (package
+    (name "python-pykakasi")
+    (version "2.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pykakasi" version))
+       (sha256
+        (base32 "18dhcw7myw5idajnfynjbvqxmyf9m0cygfwsavbbi7zmcf72l1gs"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-flags ''("-k" "not test_aozora")))
+    (propagated-inputs (list python-deprecated python-importlib-resources
+                             python-jaconv))
+    (native-inputs (list python-coverage
+                         python-py-cpuinfo
+                         python-pytest
+                         python-pytest-benchmark
+                         python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
+    (home-page "https://codeberg.org/miurahr/pykakasi")
+    (synopsis "Kana kanji simple inversion library")
+    (description
+       "pykakasi is a Python Natural Language Processing @acronym{NLP, Natural
+Language Processing} library to transliterate hiragana, katakana and
+kanji (Japanese text) into rōmaji (Latin/Roman alphabet).  It can handle
+characters in NFC form.
+
+Its algorithms are based on the kakasi library, which is written in C.")
+    (license license:gpl3+)))
 
 (define-public python-dbus-python
   (package

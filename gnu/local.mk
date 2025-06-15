@@ -1077,6 +1077,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/calibre-no-updates-dialog.patch		\
   %D%/packages/patches/calibre-remove-test-sqlite.patch		\
   %D%/packages/patches/calibre-remove-test-unrar.patch		\
+  %D%/packages/patches/calibre-remove-test-import-modules.patch	\
   %D%/packages/patches/calls-disable-application-test.patch	\
   %D%/packages/patches/calls-disable-sip-test.patch		\
   %D%/packages/patches/camlboot-dynamically-allocate-stack-signal.patch	\
@@ -1205,7 +1206,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/dovecot-trees-support-dovecot-2.3.patch	\
   %D%/packages/patches/dstat-fix-crash-when-specifying-delay.patch	\
   %D%/packages/patches/dstat-skip-devices-without-io.patch	\
-  %D%/packages/patches/dtc-meson-cell-overflow.patch		\
   %D%/packages/patches/duc-fix-test-sh.patch                    \
   %D%/packages/patches/dune-common-skip-failing-tests.patch	\
   %D%/packages/patches/durden-shadow-arcan.patch		\
@@ -1741,6 +1741,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libgda-skip-postgresql-tests.patch	\
   %D%/packages/patches/libgdata-fix-tests.patch	\
   %D%/packages/patches/libgit2-mtime-0.patch			\
+  %D%/packages/patches/libgit2-proxy-reconnection.patch		\
   %D%/packages/patches/libgit2-uninitialized-proxy-settings.patch	\
   %D%/packages/patches/libgnome-encoding.patch			\
   %D%/packages/patches/libgnomeui-utf8.patch			\
@@ -2147,11 +2148,15 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-pyan3-fix-absolute-path-bug.patch \
   %D%/packages/patches/python-pyan3-fix-positional-arguments.patch \
   %D%/packages/patches/python-pytorch-fix-codegen.patch		\
+  %D%/packages/patches/python-pytorch-fix-codegen-2.7.0.patch		\
   %D%/packages/patches/python-pytorch-for-r-torch-fix-codegen.patch \
   %D%/packages/patches/python-pytorch-for-r-torch-system-libraries.patch \
   %D%/packages/patches/python-pytorch-runpath.patch		\
+  %D%/packages/patches/python-pytorch-runpath-2.7.0.patch		\
   %D%/packages/patches/python-pytorch-system-libraries.patch	\
+  %D%/packages/patches/python-pytorch-system-libraries-2.7.0.patch	\
   %D%/packages/patches/python-pytorch-without-kineto.patch	\
+  %D%/packages/patches/python-pytorch-without-kineto-2.7.0.patch	\
   %D%/packages/patches/python-robotframework-sshlibrary-rf5-compat.patch \
   %D%/packages/patches/python-unittest2-python3-compat.patch	\
   %D%/packages/patches/python-unittest2-remove-argparse.patch	\
@@ -2253,7 +2258,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/sbcl-lack-fix-tests.patch		\
   %D%/packages/patches/sbcl-png-fix-sbcl-compatibility.patch	\
   %D%/packages/patches/sbcl-s-sysdeps-bt2.patch			\
-  %D%/packages/patches/scalapack-gcc-10-compilation.patch	\
   %D%/packages/patches/scheme48-tests.patch			\
   %D%/packages/patches/scilab-better-compiler-detection.patch	\
   %D%/packages/patches/scilab-tbx_build_help.patch		\

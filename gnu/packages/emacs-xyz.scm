@@ -673,7 +673,7 @@ e.g. emacs-geiser-guile for Guile.")
 (define-public emacs-gptel
   (package
     (name "emacs-gptel")
-    (version "0.9.8")
+    (version "0.9.8.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -682,7 +682,7 @@ e.g. emacs-geiser-guile for Guile.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1wjzv39pcg6lcmlw6yc4fdfln2cnshzaa0dxgkniq9dfznf7hnmd"))))
+                "0ix0k9dv91mbibwih1s5wzx9hj5nkr3cz799m6gb52vpwf9gixg7"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -690,13 +690,8 @@ e.g. emacs-geiser-guile for Guile.")
       #~(modify-phases %standard-phases
           (add-after 'unpack 'use-appropriate-curl
             (lambda* (#:key inputs #:allow-other-keys)
-              (substitute* "gptel-curl.el"
-                (("\"curl\"")
-                 (string-append "\""
-                                (search-input-file inputs "/bin/curl")
-                                "\"")))
               (emacs-substitute-variables "gptel.el"
-                ("gptel-use-curl" 't)))))))
+                ("gptel-use-curl" (search-input-file inputs "/bin/curl"))))))))
     (inputs (list curl))
     (propagated-inputs (list emacs-compat emacs-transient))
     (home-page "https://github.com/karthink/gptel")
@@ -3405,6 +3400,37 @@ provides an optional IDE-like error list.")
       (synopsis "Emacs plugin to read FictionBook2 ebooks")
       (description "FB2 Reader provides a major mode for reading
 FictionBook2 (@file{.fb2} and @file{.fb2.zip} files) ebooks.")
+      (license license:gpl3+))))
+
+(define-public emacs-flymake-clippy
+  (let ((commit "713b7e873d6b30dc0ded75d5d890d6847f2ea093")
+        (revision "0"))
+    (package
+      (name "emacs-flymake-clippy")
+      (version (git-version "1.1.0" revision commit))
+      (source
+       (origin
+         (uri (git-reference
+               (url "https://git.sr.ht/~mgmarlow/flymake-clippy")
+               (commit commit)))
+         (method git-fetch)
+         (sha256
+          (base32 "097yha74kabxzyf6zqdi94wxjs7zdsg38nxwz1w4w86wxlrq0ymg"))
+         (file-name (git-file-name name version))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:tests? #t
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (when tests?
+                  (invoke "make" "test")))))))
+      (synopsis "Flymake backend for Clippy")
+      (description "Emacs package for displaying Clippy lint diagnostics for
+Rust code.")
+      (home-page "https://git.sr.ht/~mgmarlow/flymake-clippy")
       (license license:gpl3+))))
 
 (define-public emacs-flymake-collection

@@ -70,6 +70,8 @@
 ;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 aurtzy <aurtzy@gmail.com>
+;;; Copyright © 2025 Formbi <formbi@protonmail.com>
+;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.ccom>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -154,6 +156,8 @@
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnunet)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages haskell-xyz)
@@ -3108,7 +3112,7 @@ YouTube.com and many more sites.")
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2025.05.22")
+    (version "2025.06.09")
     (source
      (origin
        (method git-fetch)
@@ -3120,7 +3124,7 @@ YouTube.com and many more sites.")
        (snippet '(substitute* "pyproject.toml"
                    (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "0sgiwah8qcinc9idvn8garnmqd9rj07cjfndy7z1qvakczknw5q2"))))
+        (base32 "0iv42r09y47bicx6w6r3lhpxh4p4lk1hl4pasif273shjiwh6pwp"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:tests? ,(not (%current-target-system))
@@ -3340,6 +3344,51 @@ Both command-line and GTK2 interface are available.")
     (description "ytcc is a command line tool to keep track of your favorite
 playlists.")
     (license license:gpl3+)))
+
+(define-public ytarchive
+  (package
+    (name "ytarchive")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Kethsar/ytarchive")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mx7w423rr6s4zvv65sbzl5rifj67rb0pzxjpi2y69l9p1vynmv3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:import-path "github.com/Kethsar/ytarchive"
+      #:embed-files #~(list "children" "nodes" "text")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap
+            (lambda _
+              (wrap-program (string-append #$output "/bin/ytarchive")
+                `("PATH" ":" prefix
+                  (,(string-append #$(this-package-input "ffmpeg")
+                                   "/bin/ffmpeg")))))))))
+    (native-inputs
+     (list go-github-com-alessio-shellescape
+           go-github-com-dannav-hhmmss
+           go-github-com-mattn-go-colorable
+           go-github-com-xhit-go-str2duration-v2
+           go-golang-org-x-net
+           go-golang-org-x-sys))
+    (inputs
+     (list ffmpeg))
+    (home-page "https://github.com/Kethsar/ytarchive")
+    (synopsis "Youtube livestream downloader")
+    (description
+     "Attempt to archive a given Youtube livestream from the start.  This is
+most useful for streams that have already started and you want to download,
+but can also be used to wait for a scheduled stream and start downloading as
+soon as it starts.")
+    (license license:expat)))
 
 (define-public libbluray
   (package
@@ -5123,7 +5172,7 @@ post-processing of video formats like MPEG2, H.264/AVC, and VC-1.")
 (define-public openh264
   (package
     (name "openh264")
-    (version "2.5.0")
+    (version "2.6.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5132,7 +5181,7 @@ post-processing of video formats like MPEG2, H.264/AVC, and VC-1.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1lkzidgb3835jjf3qd56avgb7ag4s6l4yvi2b3aacfqpzvh7vjib"))))
+                "1n2x74h1j2sbljkqa0d810gkp7p81al8nv8lzcm4l2hk22gjbzdm"))))
     (build-system gnu-build-system)
     (native-inputs
      (list nasm python))

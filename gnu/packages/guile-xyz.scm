@@ -2684,12 +2684,12 @@ capabilities.")
 (define-public guile-g-golf
   (package
     (name "guile-g-golf")
-    (version "0.8.1")
+    (version "0.8.2")
     (source
      (g-golf-source #:version version
                     #:hash
                     (content-hash
-                     "044iidjd24cjncvx510ai46is9jxni72iz8pxyi34g4p7gbbcbi7")))
+                     "10qxhbfdysh4mhw6rxr40lfq24m4smk37cpr4wvjf008s6w7f4nz")))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -4313,17 +4313,17 @@ structures.  This package re-uses the SRFI sample implementation.")
 (define-public guile-srfi-133
   (package
     (name "guile-srfi-133")
-    (version "0.0.1")
+    (version "1.0.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/scheme-requests-for-implementation/srfi-133")
-             (commit "db81a114cd3e23375f024baec15482614ec90453")))
+             (commit "4204de98b0945e7419975ed259803848de23cbf1")))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0a7srl72291yah0aj6rwddhj041v2spximhknjj7hczlparsrm7f"))))
+         "1arnjbcxa126mcmdnyhgkbsbfqknzal0ynrnbgvdcfl2kfz93ng9"))))
     (build-system guile-build-system)
     (arguments
      (list
@@ -4332,7 +4332,7 @@ structures.  This package re-uses the SRFI sample implementation.")
           (add-after 'unpack 'move-create-and-delete-files
             (lambda _
               (rename-file "vectors" "srfi")
-              (rename-file "srfi/vectors-test.scm" "srfi/srfi-test.scm")
+              (rename-file "srfi/vectors-test.scm" "tests/tests.scm")
               (rename-file "srfi/vectors-impl.scm" "srfi/srfi-impl.scm")
               (with-output-to-file "srfi/srfi-133.scm"
                 (lambda ()
@@ -4369,11 +4369,13 @@ structures.  This package re-uses the SRFI sample implementation.")
             vector->string string->vector))
 
 (include \"srfi-impl.scm\")")))
-              (for-each (lambda (filename)
-                          (delete-file filename))
-                        '("tests/run.scm"
+              (for-each delete-file
+                        '("srfi/vectors.scm"
                           "srfi/vectors.sld"
-                          "srfi/vectors.scm")))))))
+                          "tests/run.scm"))))
+          (add-after 'build 'check
+            (lambda _
+              (invoke "guile" "tests/tests.scm"))))))
     (native-inputs
      (list guile-3.0))
     (home-page "https://github.com/scheme-requests-for-implementation/srfi-133")
@@ -5366,6 +5368,38 @@ anything other than straight complex DFTs.")
 run SRFI 64 test suites.  It gives Automake insight into the individual
 tests being run, resulting clearer and more specific output.")
     (license license:gpl3+)))
+
+(define-public guile-uuid
+  (package
+    (name "guile-uuid")
+    (version "0.9.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/elb/guile-uuid.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0g508aajkyi513wbhm1rhs03ilnb701lwlrvppkmc0vynydlk9ws"))))
+    (arguments
+     (list #:phases #~(modify-phases %standard-phases
+                        (add-before 'build 'remove-unnecessary-file
+                          (lambda _
+                            (delete-file "run-tests.scm")
+                            (delete-file-recursively "tests"))))))
+    (build-system guile-build-system)
+    (native-inputs (list guile-3.0))
+    (propagated-inputs (list guile-gcrypt))
+    (home-page "https://codeberg.org/elb/guile-uuid")
+    (synopsis "UUID generation and manipulation library for Guile Scheme")
+    (description
+     "This package implements RFC 9562 UUIDs, and can generate versions
+1 and 3-8 from that specification.  It also provides parsing for UUIDs in
+standard hex-and-dash format of any variant and version.
+Conversion between binary and hex-and-dash string UUIDs is also included.")
+    (license license:gpl3+)))
+
 
 (define-public guile-semver
   (package
@@ -6587,6 +6621,36 @@ The resulting QR codes can be rendered to ASCII art strings or to PNG images (us
 @url{https://github.com/artyom-poptsov/guile-png, Guile-PNG} API.)")
     (home-page "https://github.com/artyom-poptsov/guile-qr-code")
     (license (list license:gpl3+ license:expat))))
+
+(define-public guile-hygguile
+  (package
+    (name "guile-hygguile")
+    (version "0.5.9")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/jjba23/hygguile.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01xixcay0qsbkmd47j46ky6cqn278ayb78sdf2cgq5fn3rbgigsc"))))
+    (build-system guile-build-system)
+    (native-inputs (list guile-3.0))
+    (arguments
+     (list
+      #:source-directory "src"))
+    (home-page "https://codeberg.org/jjba23/hygguile")
+    (synopsis "Web UI component library for Guile Scheme projects")
+    (description
+     "Hygguile is a library that allows you to create cozy web user-interfaces
+using Guile Scheme, by defining an expressive @acronym{DSL, domain-specific
+language}, and by leveraging the power of S-expressions, SXML and TailwindCSS.
+
+The project aims to provide reusable, professional-looking and accessible
+web components, whose names resemble the HTML counterparts, thus
+easing the learning curve, and reducing the cognitive load.")
+    (license license:lgpl3+)))
 
 (define-public guile-quickcheck
   (package

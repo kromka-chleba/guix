@@ -4513,8 +4513,8 @@ on quantized 8-bit tensors.")
 (define-public xnnpack
   ;; There's currently no tag on this repo.
   (let ((version "0.0")
-        (commit "08f1489fc815e8f121d4d2676c4863d2b51bfe73")
-        (revision "3"))
+        (commit "51a0103656eff6fc9bfd39a4597923c4b542c883")
+        (revision "4"))
     (package
       (name "xnnpack")
       (version (git-version version revision commit))
@@ -4526,7 +4526,7 @@ on quantized 8-bit tensors.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "00jjhz0nfggbdnqqvcznba03pcyy7gssd24yhhzjhincnz9qh8jr"))
+           "0j4smj8yaxw6r14caqn0dgb8j8mnsq34zp8ixxn11zmgbab306ly"))
          (modules '((guix build utils)
                     (ice-9 ftw)
                     (ice-9 textual-ports)
@@ -4548,7 +4548,7 @@ on quantized 8-bit tensors.")
                        (delete-file path))))
                  (scandir dir (negate (cut member <> '("." ".." "simd"))))))
               (cons*
-               "test" "bench" "eval" "models" "src/enums" "src/xnnpack"
+               "test" "bench/models" "src/enums" "src/xnnpack"
                "gen" "cmake/gen"
                (filter
                 identity
@@ -4625,7 +4625,7 @@ on quantized 8-bit tensors.")
                 ;; These need to run after the above scripts
                 (display "Remaining files\n")
                 (invoke "python3" "tools/update-microkernels.py")
-                (invoke "python3" "tools/update-microkernels.py" "-a")
+                ;; The -a flag is no longer supported in newer versions
                 (invoke "python3" "tools/generate-lut-norm-test.py"
                         "--spec" "test/u8-lut32norm.yaml"
                         "--output" "test/u8-lut32norm.cc")
@@ -4956,7 +4956,7 @@ PyTorch.")
         (base32
          "0hdpkhcjry22fjx2zg2r48v7f4ljrclzj0li2pgk76kvyblfbyvm"))))))
 
-(define %python-pytorch-version "2.5.1")
+(define %python-pytorch-version "2.7.0")
 
 (define %python-pytorch-src
   (origin
@@ -4967,14 +4967,14 @@ PyTorch.")
     (file-name (git-file-name "python-pytorch" %python-pytorch-version))
     (sha256
      (base32
-      "052cvagpmm9y7jspjpcyysx8yc5fhxnjl8rcz6nndis06v8dcj8s"))
-    (patches (search-patches "python-pytorch-system-libraries.patch"
-                             "python-pytorch-runpath.patch"
-                             "python-pytorch-without-kineto.patch"
+      "19prdpzx34n8y2q6wx9dn9vyms6zidjvfgh58d28rfcf5z7z5ra5"))
+    (patches (search-patches "python-pytorch-system-libraries-2.7.0.patch"
+                             "python-pytorch-runpath-2.7.0.patch"
+                             "python-pytorch-without-kineto-2.7.0.patch"
                              ;; Some autogeneration scripts depend on the
                              ;; compile PyTorch library. Therefore, we create
                              ;; dummy versions which are regenerated later.
-                             "python-pytorch-fix-codegen.patch"))
+                             "python-pytorch-fix-codegen-2.7.0.patch"))
     (modules '((guix build utils)))
     (snippet
      '(begin
@@ -5124,8 +5124,10 @@ PyTorch.")
           (add-before 'build 'use-system-libraries
             (lambda _
               (substitute* '("caffe2/serialize/crc.cc"
-                             "caffe2/serialize/inline_container.cc")
-                (("\"miniz\\.h\"") "<miniz/miniz.h>"))
+                             "caffe2/serialize/inline_container.cc"
+                             "torch/csrc/inductor/aoti_package/model_package_loader.cpp")
+                (("\"miniz\\.h\"") "<miniz/miniz.h>")
+                (("<miniz\\.h>") "<miniz/miniz.h>"))
               (substitute* "aten/src/ATen/native/vulkan/api/Allocator.h"
                 (("<include/vk_mem_alloc.h>")
                  "<vk_mem_alloc.h>"))
@@ -5162,6 +5164,12 @@ PyTorch.")
               (substitute* '("requirements.txt" "setup.py")
                 (("sympy==1\\.13\\.1")
                  "sympy>=1.13.1"))))
+          (add-after 'use-system-libraries 'skip-nccl-call
+            (lambda _
+              ;; Comment-out `checkout_nccl()` invokation in build_pytorch().
+              (substitute* "tools/build_pytorch_libs.py"
+                (("^[[:blank:]]*checkout_nccl\\(\\)" all)
+                 (string-append "# " all "  # Guix: use system NCCL\n")))))
           ;; PyTorch is still built with AVX2 and AVX-512 support selected at
           ;; runtime, but these dependencies require it (nnpack only for
           ;; x86_64).
@@ -5603,11 +5611,14 @@ Actions for the Lightning suite of libraries.")
     (arguments
      (list
       #:test-flags
-      '(list "-k"
-             ;; These two tests (out of more than 1000 tests) fail because of
-             ;; accuracy problems.
-             "not test_softmax_classification_batch_multi_target\
- and not test_softmax_classification_batch_zero_baseline")))
+      '(list "-k" (string-append
+                   ;; These two tests (out of more than 1000 tests) fail because of
+                   ;; accuracy problems.
+                   "not test_softmax_classification_batch_multi_target"
+                   " and not test_softmax_classification_batch_zero_baseline"
+                   ;; This test fails with PyTorch 2.7.0 due to stricter
+                   ;; torch.load weights_only behavior.
+                   " and not test_exp_sets_with_diffent_lengths"))))
     (propagated-inputs
      (list python-matplotlib python-numpy python-pytorch python-tqdm))
     (native-inputs (list jupyter
@@ -5841,7 +5852,7 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
 (define-public python-torchvision
   (package
     (name "python-torchvision")
-    (version "0.20.1")
+    (version "0.22.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -5851,7 +5862,7 @@ implementations and an easy-to-use API to create custom metrics.  It offers:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1hxcpg44bjnfzqwihzbnfgd0gpkhfgqrcg116mnvdn0fpbhf4yq5"))
+                "0hz6v8796vq8kinafzyq2v2wir5s3hykfn0rnlwx7qcsz62i3ggv"))
               (modules '((guix build utils)))
               (snippet
                '(begin

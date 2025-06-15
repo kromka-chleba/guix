@@ -38,24 +38,25 @@ exec $pre_inst_env_maybe guix repl -- "$0" "$@"
 
 ;;; Code:
 
-(use-modules (srfi srfi-1)
-             (srfi srfi-9)
-             (srfi srfi-26)
-             (srfi srfi-34)
-             (srfi srfi-35)
-             (srfi srfi-71)
-             (ice-9 format)
-             (ice-9 regex)
-             (ice-9 match)
-             (ice-9 rdelim)
-             (guix ui)
-             (git)
-             (json)
-             (web client)
-             (web request)
-             (web response)
-             (rnrs bytevectors)
-             (guix base64))
+(define-module (teams)
+  #:use-module (srfi srfi-1)
+  #:use-module (srfi srfi-9)
+  #:use-module (srfi srfi-26)
+  #:use-module (srfi srfi-34)
+  #:use-module (srfi srfi-35)
+  #:use-module (srfi srfi-71)
+  #:use-module (ice-9 format)
+  #:use-module (ice-9 regex)
+  #:use-module (ice-9 match)
+  #:use-module (ice-9 rdelim)
+  #:use-module (guix ui)
+  #:use-module (git)
+  #:use-module (json)
+  #:use-module (web client)
+  #:use-module (web request)
+  #:use-module (web response)
+  #:use-module (rnrs bytevectors)
+  #:use-module (guix base64))
 
 (define-record-type <regexp*>
   (%make-regexp* pat flag rx)
@@ -325,6 +326,19 @@ PARAMETERS."
        "members" user)
   => 204)
 
+(define-forgejo-request (repository-teams owner repository)
+  "Return the list of teams assigned to REPOSITORY of OWNER."
+  (GET "repos" owner repository "teams"
+       & '(("limit" . "100")))                    ;get up to 100 teams
+  => 200
+  (lambda (port)
+    (map json->forgejo-team (vector->list (json->scm port)))))
+
+(define-forgejo-request (add-repository-team owner repository team-name)
+  "Add TEAM-NAME as a team of OWNER's REPOSITORY."
+  (PUT "repos" owner repository "teams" team-name)
+  => 204)
+
 (define (team->forgejo-team team)
   "Return a Forgejo team derived from TEAM, a <team> record."
   (forgejo-team (team-id->forgejo-id (team-id team))
@@ -408,7 +422,24 @@ already exists.  Lookup team IDs among CURRENT-TEAMS."
                 (lambda (team)
                   (synchronize-team token team
                                     #:current-teams teams)))
-              teams)))
+              teams)
+
+    ;; Ensure all the teams are associated with the main repository.
+    (let ((repository-teams (repository-teams token
+                                              %codeberg-organization
+                                              "guix")))
+      (for-each (lambda (missing)
+                  (format (current-error-port)
+                          "adding team '~a' to '~a/guix'~%"
+                          (team-id missing) %codeberg-organization)
+                  (add-repository-team token %codeberg-organization "guix"
+                                       (team-id->forgejo-id
+                                        (team-id missing))))
+                (let ((names (map forgejo-team-name repository-teams)))
+                  (remove (lambda (team)
+                            (member (team-id->forgejo-id (team-id team))
+                                    names))
+                          teams))))))
 
 
 
@@ -1094,7 +1125,8 @@ the \"texlive\" importer."
   embedded)
 
 (define-member (person "Vagrant Cascadian"        ;XXX: duplicate
-                       "vagrant@reproducible-builds.org")
+                       "vagrant@reproducible-builds.org"
+                       "vagrantc")
   reproduciblebuilds)
 
 (define-member (person "Maxim Cournoyer"
@@ -1112,7 +1144,8 @@ the \"texlive\" importer."
   python lisp)
 
 (define-member (person "Gabriel Wicki"
-                       "gabriel@erlikon.ch")
+                       "gabriel@erlikon.ch"
+                       "gabber")
   audio documentation electronics embedded)
 
 (define-member (person "Ekaitz Zarraga"
@@ -1213,6 +1246,11 @@ the \"texlive\" importer."
 (define-member (person "Trevor Richards"
                        "trev@trevdev.ca")
   lisp emacs)
+
+(define-member (person "Konrad Hinsen"
+                       "guix@khinsen.fastmail.net"
+                       "khinsen")
+  lisp)
 
 
 (define (find-team name)
