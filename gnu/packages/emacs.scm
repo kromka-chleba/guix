@@ -98,10 +98,46 @@
       (srfi srfi-1)
       (ice-9 ftw))))
 
+(define* (emacs-ert-selector excluded-tests #:key run-nativecomp run-expensive run-unstable)
+  "Create an ERT selector that excludes tests."
+  (string-append
+   "(not (or "
+   (if run-nativecomp
+       ""
+       "(tag :nativecomp) ")
+   (if run-expensive
+       ""
+       "(tag :expensive-test) ")
+   (if run-unstable
+       ""
+       "(tag :unstable) ")
+   (string-join
+    (map
+     (lambda (test)
+       (string-append "\\\"" test "\\\""))
+     excluded-tests))
+   "))"))
+
+(define %selector
+  (emacs-ert-selector
+   '("bytecomp--fun-value-as-head"
+     "esh-util-test/path/get-remote"
+     "esh-var-test/path-var/preserve-across-hosts"
+     "ffap-tests--c-path"
+     "find-func-tests--locate-macro-generated-symbols"
+     "grep-tests--rgrep-abbreviate-properties-darwin"
+     "grep-tests--rgrep-abbreviate-properties-gnu-linux"
+     "grep-tests--rgrep-abbreviate-properties-windows-nt-dos-semantics"
+     "grep-tests--rgrep-abbreviate-properties-windows-nt-sh-semantics"
+     "info-xref-test-makeinfo"
+     "man-tests-find-header-file"
+     "tab-bar-tests-quit-restore-window"
+     "tramp-test48-remote-load-path")))
+
 (define-public emacs-minimal
   (package
     (name "emacs-minimal")
-    (version "29.4")
+    (version "30.1")
     ;; Note: When using (replacement …), ensure that comp-native-version-dir
     ;; stays the same across grafts.
     ;; Run `make check-system TESTS=emacs-native-comp' to ensure that grafts
@@ -112,7 +148,7 @@
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0dd2mh6maa7dc5f49qdzj7bi4hda4wfm1cvvgq560djcz537k2ds"))
+                "13qkdx515qv7m8b2mpd37p16frs0xgl7bw8xvv397bz6fspc3jkc"))
               (patches (search-patches "emacs-disable-jit-compilation.patch"
                                        "emacs-exec-path.patch"
                                        "emacs-fix-scheme-indent-function.patch"
@@ -136,10 +172,13 @@
                   (substitute* "net/tramp.el"
                     ;; Patch the line after "(defcustom tramp-remote-path".
                     (("\\(tramp-default-remote-path")
-                     (format #f "(tramp-default-remote-path ~s ~s ~s ~s "
-                             "~/.guix-profile/bin" "~/.guix-profile/sbin"
-                             "/run/current-system/profile/bin"
-                             "/run/current-system/profile/sbin")))
+                     (format
+                      #f "(tramp-default-remote-path ~s ~s ~s ~s ~s ~s ~s "
+                      "/run/privileged/bin"
+                      "~/.guix-profile/bin" "~/.guix-profile/sbin"
+                      "~/.guix-home/bin" "~/.guix-home/sbin"
+                      "/run/current-system/profile/bin"
+                      "/run/current-system/profile/sbin")))
 
                   ;; Make sure Man looks for C header files in the right
                   ;; places.
@@ -148,14 +187,15 @@
                      (string-join
                       (list line
                             "\"~/.guix-profile/include\""
-                            "\"/var/guix/profiles/system/profile/include\"")
+                            "\"~/.guix-home/include\""
+                            "\"/run/current-system/profile/include\"")
                       " ")))))))
     (build-system gnu-build-system)
     (arguments
      (list
-      #:tests? #f                       ; no check target
       #:modules (%emacs-modules build-system)
       #:configure-flags #~(list "--with-gnutls=no" "--disable-build-details")
+      #:make-flags #~(list (string-append "SELECTOR=" #$%selector))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'enable-elogind
@@ -173,7 +213,6 @@
                              "lisp/mail/feedmail.el"
                              "lisp/obsolete/pgg-pgp.el"
                              "lisp/obsolete/pgg-pgp5.el"
-                             "lisp/obsolete/terminal.el"
                              "lisp/org/ob-eval.el"
                              "lisp/textmodes/artist.el"
                              "lisp/progmodes/sh-script.el"
@@ -241,6 +280,13 @@
               (substitute* (find-files "." "^Makefile\\.in$")
                 (("/bin/pwd")
                  "pwd"))))
+          (add-after 'unpack 'fix-tests
+            (lambda* (#:key tests? inputs #:allow-other-keys)
+              (when tests?
+                (substitute* "test/src/process-tests.el"
+                  (("/bin//sh") (search-input-file inputs "bin/sh")))
+                (substitute* "test/lisp/eshell/em-script-tests.el"
+                  (("/usr/bin/env") (search-input-file inputs "bin/env"))))))
           (add-after 'install 'install-site-start
             ;; Use 'guix-emacs' in "site-start.el", which is used autoload the
             ;; Elisp packages found in EMACSLOADPATH.
@@ -477,6 +523,7 @@ editor (console only)")
                libx11
                libxft
                libxpm
+               libwebp
                pango
                poppler)))))
 
@@ -574,26 +621,27 @@ editor (with wide ints)" )
         #~(cons "--with-wide-int" #$flags))))))
 
 (define-public emacs-next-minimal
-  (let ((commit "881d593a9879f3355733f1b627af7cc0c12b429e")
-        (revision "0"))
-   (package
+  (let ((commit "9663c959c73d6cca0c56f833d80ff1d9e9708b70")
+        (revision "1"))
+  (package
     (inherit emacs-minimal)
     (name "emacs-next-minimal")
-    (version (git-version "30.0.92" revision commit))
+    (version (git-version "31.0.50" revision commit))
     (source
      (origin
+       (inherit (package-source emacs-minimal))
        (method git-fetch)
        (uri (git-reference
              (url "https://git.savannah.gnu.org/git/emacs.git")
              (commit commit)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0nj3a7wsl5piqf6a8wnmfyjbpxp2dwl0r48flv9q624jx4nxfr2p"))
+        (base32 "1a03j9zdn1fl181xcqsw4vg3v8a3sbv1r3d49ld6ysldvfkwiz39"))
        (patches
-        (search-patches "emacs-disable-jit-compilation.patch"
+        (search-patches "emacs-next-disable-jit-compilation.patch"
                         "emacs-next-exec-path.patch"
                         "emacs-fix-scheme-indent-function.patch"
-                        "emacs-next-native-comp-driver-options.patch"
+                        "emacs-native-comp-driver-options.patch"
                         "emacs-next-native-comp-fix-filenames.patch"
                         "emacs-native-comp-pin-packages.patch"
                         "emacs-pgtk-super-key-fix.patch")))))))
@@ -609,28 +657,7 @@ editor (with wide ints)" )
                                   (string-drop (package-name emacs)
                                                (string-length "emacs"))))))
     (version version)
-    (source source)
-    (arguments
-     (substitute-keyword-arguments (package-arguments emacs)
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            (replace 'validate-comp-integrity
-              (lambda* (#:key outputs #:allow-other-keys)
-                #$(cond
-                   ((%current-target-system)
-                    #~(display
-                       "Cannot validate native compilation on cross builds.\n"))
-                   ((member (%current-system) '("armhf-linux" "i686-linux"))
-                    #~(display "Integrity test is broken on 32 bit systems.\n"))
-                   (else
-                    #~(invoke
-                       (string-append (assoc-ref outputs "out") "/bin/emacs")
-                       "--batch"
-                       "--load"
-                       #$(local-file
-                          (search-auxiliary-file
-                           "emacs/comp-integrity-next.el"))
-                       "-f" "ert-run-tests-batch-and-exit")))))))))))
+    (source source)))
 
 (define-public emacs-next (emacs->emacs-next emacs))
 (define-public emacs-next-pgtk (emacs->emacs-next emacs-pgtk))
@@ -730,10 +757,6 @@ Started in 2014 as a GSOC project, Guile-Emacs was resurrected in 2024.")
                       ;; Likewise, we don't need to patch helper binaries
                       ;; like etags, ctags or ebrowse.
                       "^emacs(-[0-9]+(\\.[0-9]+)*)?$")))))
-              (add-after 'unpack 'help-patch-progam-file-names
-                (lambda _
-                  (call-with-output-file "lisp/obsolete/terminal.el"
-                    (lambda (port) (display port)))))
               (add-after 'configure 'touch-lisp/finder-inf.el
                 (lambda _
                   (call-with-output-file "lisp/finder-inf.el"

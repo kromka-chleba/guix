@@ -82,11 +82,12 @@
 
 (define* (emacs-build name inputs
                       #:key source
-                      (tests? #f)
+                      (tests? (not (%current-target-system)))
                       (parallel-tests? #t)
-                      (test-command ''("make" "check"))
+                      (test-command #f) ; inferred in emacs-build-system
                       (phases '%standard-phases)
                       (outputs '("out"))
+                      (lisp-directory #f)
                       (include (quote %default-include))
                       (exclude (quote %default-exclude))
                       (search-paths '())
@@ -95,7 +96,9 @@
                       (imported-modules %emacs-build-system-modules)
                       (modules '((guix build emacs-build-system)
                                  (guix build utils)
-                                 (guix build emacs-utils))))
+                                 (guix build emacs-utils)))
+                      allowed-references
+                      disallowed-references)
   "Build SOURCE using EMACS, and with INPUTS."
   (define builder
     (with-imported-modules imported-modules
@@ -103,6 +106,7 @@
           (use-modules #$@(sexp->gexp modules))
           (emacs-build #:name #$name
                        #:source #+source
+                       #:lisp-directory #$lisp-directory
                        #:system #$system
                        #:test-command #$test-command
                        #:tests? #$tests?
@@ -120,6 +124,8 @@
                                                   system #:graft? #f)))
     (gexp->derivation name builder
                       #:system system
+                      #:allowed-references allowed-references
+                      #:disallowed-references disallowed-references
                       #:guile-for-build guile)))
 
 (define emacs-build-system

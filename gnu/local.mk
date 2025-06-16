@@ -283,6 +283,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/elm.scm				\
   %D%/packages/embedded.scm			\
   %D%/packages/emacs.scm			\
+  %D%/packages/emacs-build.scm			\
   %D%/packages/emacs-xyz.scm			\
   %D%/packages/emulators.scm			\
   %D%/packages/enchant.scm			\
@@ -1230,6 +1231,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/emacs-eglot-x-fix-apply-text-edits.patch			\
   %D%/packages/patches/emacs-exec-path.patch			\
   %D%/packages/patches/emacs-fix-scheme-indent-function.patch	\
+  %D%/packages/patches/emacs-helpful-fix-signature.patch	\
   %D%/packages/patches/emacs-helpful-fix-tests.patch	\
   %D%/packages/patches/emacs-highlight-stages-add-gexp.patch	\
   %D%/packages/patches/emacs-json-reformat-fix-tests.patch	\
@@ -1238,8 +1240,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/emacs-native-comp-driver-options.patch   \
   %D%/packages/patches/emacs-native-comp-fix-filenames.patch   \
   %D%/packages/patches/emacs-native-comp-pin-packages.patch   \
+  %D%/packages/patches/emacs-next-disable-jit-compilation.patch			\
   %D%/packages/patches/emacs-next-exec-path.patch   \
-  %D%/packages/patches/emacs-next-native-comp-driver-options.patch   \
   %D%/packages/patches/emacs-next-native-comp-fix-filenames.patch   \
   %D%/packages/patches/emacs-pasp-mode-quote-file-names.patch  \
   %D%/packages/patches/emacs-pgtk-super-key-fix.patch	\
@@ -1838,6 +1840,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/mailutils-variable-lookup.patch		\
   %D%/packages/patches/mandoc-support-zstd-compression.patch	\
   %D%/packages/patches/make-impure-dirs.patch			\
+  %D%/packages/patches/makem-replace-git.patch			\
   %D%/packages/patches/mariadb-rocksdb-atomic-linking.patch	\
   %D%/packages/patches/marisa-fix-MARISA_WORD_SIZE.patch	\
   %D%/packages/patches/mathjax-disable-webpack.patch			\

@@ -3733,14 +3733,14 @@ rules is done with the @code{auditctl} utility.")
 (define-public nmap
   (package
     (name "nmap")
-    (version "7.96")
+    (version "7.97")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nmap.org/dist/nmap-" version
                                   ".tar.bz2"))
               (sha256
                (base32
-                "12lcvyzfl1hblbklcss44dr92fr86w0z1y1a90yilv5n5x7pmblq"))
+                "1h252sz1cqr0r440s7pxn9wwn1jffbrdvacnvmbw4w664mwz565g"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -5462,7 +5462,7 @@ entries, providing commands to add, remove, comment, and search.")
 (define-public nmrpflash
   (package
     (name "nmrpflash")
-    (version "0.9.21")
+    (version "0.9.25")
     (source
      (origin
        (method git-fetch)
@@ -5471,7 +5471,7 @@ entries, providing commands to add, remove, comment, and search.")
          (url "https://github.com/jclehner/nmrpflash")
          (commit (string-append "v" version))))
        (sha256
-        (base32 "183nvxqdn8klin5f14f4cv9vjymj0izy0qmj1l76igmlcq7ravwx"))
+        (base32 "0xqvj52m6rk0gma8saqvp8b4jms9hca8i1v2kb5hcd6miaqgx276"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -6726,7 +6726,7 @@ several firewall backends.")
 (define-public px
   (package
     (name "px")
-    (version "3.6.10")
+    (version "3.6.12")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -6735,7 +6735,7 @@ several firewall backends.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "15xkpmymf0g0mqhjc6mswymrqkilbys3mkhz1xk9lq3jilfhdm04"))))
+                "06jg6izya1k5gk71pygv8691fcaa6zfnzns57fjknnihz3c42pzw"))))
     (build-system python-build-system)
     (arguments
      (list #:phases

@@ -3060,7 +3060,7 @@ Java package that provides routines for various statistical distributions.")
                                    "ess--command-browser-unscoped-essr")))))
             (replace 'check
               (lambda* (#:key tests? #:allow-other-keys)
-                (when tests? (invoke "make" "test"))))))))
+                (when tests? (invoke "make" "-C" "test" "ess"))))))))
     (native-inputs (list perl r-roxygen2 texinfo))
     (inputs (list emacs-minimal r-minimal))
     (propagated-inputs (list emacs-julia-mode))
@@ -3086,6 +3086,10 @@ statistical analysis programs such as R, Julia, and JAGS.")
        (sha256
         (base32 "0a4wx73jkngw5nbq1fa4jfhba6bsmyn6vnsf887x3xhb5v3ykhsg"))))
     (build-system emacs-build-system)
+    (arguments
+     (list #:test-command
+           #~(list "emacs" "-Q" "-batch" "--load" "targets/melpa-init.el"
+                   "--load" "targets/test.el")))
     (propagated-inputs
      (list emacs-ess emacs-poly-noweb emacs-polymode-markdown
            emacs-polymode))
