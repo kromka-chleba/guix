@@ -26,6 +26,7 @@
 ;;; Copyright © 2023 Timo Wilken <guix@twilken.net>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
+;;; Copyright © 2025 Kjartan Oli Agustsson <kjartanoli@outlook.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -101,7 +102,7 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages rsync)
-  #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-check)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages ssh)
   #:use-module (gnu packages time)
@@ -531,9 +532,9 @@ errors.")
                            "download/v" version "/rdiff-backup-" version ".tar.gz"))
        (sha256
         (base32 "1ksqjkqadhxzp83zdfs80dvb494vn9q4anppnwxm3ikb4rbq6xyh"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-setuptools-scm))
+     (list python-setuptools-scm python-setuptools python-wheel))
     (inputs
      (list python python-pyaml librsync))
     (arguments
@@ -1221,8 +1222,8 @@ interactive mode.")
                                        "bin/mbuffer"
                                        "bin/ssh")))))))))
     (native-inputs
-     (if (supported-package? ruby-asciidoctor)
-         (list ruby-asciidoctor)
+     (if (supported-package? ruby-asciidoctor/minimal)
+         (list ruby-asciidoctor/minimal)
          '()))
     (inputs (list bash-minimal
                   btrfs-progs

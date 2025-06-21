@@ -11,6 +11,7 @@
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -41,7 +42,7 @@
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages readline)
-  #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-check)
   #:use-module (gnu packages time)
   #:use-module (gnu packages tls)
   #:use-module (guix build-system gnu)
@@ -57,7 +58,7 @@
 (define-public chrony
   (package
     (name "chrony")
-    (version "4.6.1")
+    (version "4.7")
     (source
      (origin
        (method git-fetch)
@@ -66,7 +67,7 @@
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "14z53iia83s25g9hpdh79j4gqi9lbp37nx1jcvxi8av3zlgzrz2p"))))
+        (base32 "0pqplqlfy1b05qkj7d5l954z7rdz5mbwr9d0hvsa7s6bwqsrl791"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -109,8 +110,8 @@
     (native-inputs
      (append (list bison
                    pkg-config)
-             (if (supported-package? ruby-asciidoctor)
-                 (list ruby-asciidoctor)
+             (if (supported-package? ruby-asciidoctor/minimal)
+                 (list ruby-asciidoctor/minimal)
                  '())))
     (inputs
      (list gnutls libcap libseccomp nettle))
@@ -212,7 +213,7 @@ computers over a network.")
                          pkg-config
                          pps-tools
                          python-waf
-                         ruby-asciidoctor))
+                         ruby-asciidoctor/minimal))
     (inputs (cons* gpsd openssl
                    ;; Build with POSIX capabilities and syscall filtering
                    ;; support on GNU/Linux, for extra security features.

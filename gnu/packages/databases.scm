@@ -162,6 +162,8 @@
   #:use-module (gnu packages regex)
   #:use-module (gnu packages rpc)
   #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-check)
+  #:use-module (gnu packages ruby-xyz)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages ssh)
@@ -492,7 +494,7 @@ database later.")
 (define-public dicedb
   (package
     (name "dicedb")
-    (version "1.0.3")
+    (version "1.0.10")
     (source
      (origin
        (method git-fetch)
@@ -501,7 +503,7 @@ database later.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "19hkr2sqb5vcyrxb17y8586aa9amw2nny2fia7yf2lshigg03va5"))
+        (base32 "1f9qsqmv41ikkrb5pfrh3b7cv3x82yzq7m3p2d3iml9azbmxvkyy"))
        (patches (search-patches "dicedb-remove-init-from-config-subpkg.patch"))))
     (build-system go-build-system)
     (arguments
@@ -510,11 +512,10 @@ database later.")
       #:install-source? #f
       #:import-path "github.com/dicedb/dice"
       #:build-flags
-      #~(list (format #f "-ldflags=-X config.DiceDBVersion=v~a"
+      #~(list (format #f "-ldflags=-X github.com/dicedb/dice/config.DiceDBVersion=v~a"
                       #$version))
       #:test-subdirs
-      #~(list "internal/auth/..."
-              ;; "internal/clientio/..." ; matched no packages
+      #~(list ;; "internal/auth/..." ; build failed
               "internal/cmd/..."
               "internal/comm/..."
               "internal/common/..."
@@ -527,56 +528,52 @@ database later.")
               "internal/object/..."
               "internal/observability/..."
               "internal/ops/..."
-              "internal/querymanager/..."
               "internal/regex/..."
               "internal/server/..."
               "internal/shard/..."
-              ;; "internal/sql/..." ; matched no packages
-              ;; "internal/store/..." ; build failed
+              "internal/shardmanager/..."
+              "internal/shardthread/..."
+              "internal/store/..."
+              "internal/types/..."
               "internal/wal/..."
-              "internal/watchmanager/..."
-              ;; "internal/worker/..." ; matched no packages
-              )
-      #:test-flags
-      #~(list "-skip"
-              (string-join (list "TestSessionIsActive" "TestSessionActivate"
-                                 "TestSessionValidate" "TestDEL") "|"))
+              "internal/watchmanager/...")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'remove-example
             (lambda* (#:key tests? import-path #:allow-other-keys)
               (with-directory-excursion (string-append "src/" import-path)
                 (delete-file-recursively "examples")))))))
-    (propagated-inputs (list go-google-golang-org-protobuf
-                             go-golang-org-x-crypto
-                             go-github-com-twmb-murmur3
-                             go-github-com-stretchr-testify
-                             go-github-com-spf13-viper
-                             go-github-com-spf13-pflag
-                             go-github-com-spf13-cobra
-                             go-github-com-rs-zerolog
-                             go-github-com-rs-xid
-                             go-github-com-ohler55-ojg
-                             go-github-com-mmcloughlin-geohash
-                             go-github-com-google-uuid
-                             go-github-com-google-go-cmp
-                             go-github-com-google-btree
-                             go-github-com-gobwas-glob
-                             go-github-com-dicedb-dicedb-go
-                             go-github-com-dgryski-go-farm
-                             go-github-com-cespare-xxhash-v2
-                             go-github-com-bytedance-sonic
-                             go-github-com-axiomhq-hyperloglog
-                             go-gotest-tools-v3))
+    (native-inputs
+     (list go-github-com-axiomhq-hyperloglog
+           go-github-com-bytedance-sonic
+           go-github-com-cespare-xxhash-v2
+           go-github-com-dgryski-go-farm
+           go-github-com-dicedb-dicedb-go
+           go-github-com-gobwas-glob
+           go-github-com-google-btree
+           go-github-com-google-go-cmp
+           go-github-com-google-uuid
+           go-github-com-mmcloughlin-geohash
+           go-github-com-ohler55-ojg
+           go-github-com-rs-xid
+           go-github-com-rs-zerolog
+           go-github-com-spf13-cobra
+           go-github-com-spf13-pflag
+           go-github-com-spf13-viper
+           go-github-com-stretchr-testify
+           go-github-com-twmb-murmur3
+           go-github-com-wangjia184-sortedset
+           go-golang-org-x-crypto
+           go-google-golang-org-protobuf
+           go-gotest-tools-v3))
     (home-page "https://github.com/dicedb/dice")
-    (synopsis
-     "Fast, reactive, in-memory database optimized for modern hardware")
+    (synopsis "Fast, reactive, in-memory database optimized for modern hardware")
     (description
-     "@code{dicedb} is a fast, reactive, in-memory database optimized
-for modern hardware.  Commonly used as a cache, it offers a familiar interface
-while enabling real-time data updates through query subscriptions.  It delivers
-higher throughput and lower median latencies, making it ideal for modern
-workloads.")
+     "@code{dicedb} is a fast, reactive, in-memory database optimized for
+modern hardware.  Commonly used as a cache, it offers a familiar interface
+while enabling real-time data updates through query subscriptions.  It
+delivers higher throughput and lower median latencies, making it ideal for
+modern workloads.")
     (license license:bsd-3)))
 
 (define-public leveldb

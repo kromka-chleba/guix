@@ -164,7 +164,7 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages rsync)
-  #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-check)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages text-editors)
@@ -1535,6 +1535,45 @@ Git, offering (optional) bidirectional integration with GitHub and GitLab
 issue management.")
       (home-page "https://github.com/dspinellis/git-issue")
       (license license:gpl3+))))
+
+(define-public git-credential-oauth
+  (package
+    (name "git-credential-oauth")
+    (version "0.15.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hickford/git-credential-oauth")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1fid6dl82val6miq61dm203y7k2kzccpmra43fngnqrr1p4hh2pl"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:install-source? #f
+      #:build-flags #~(list (string-append "-ldflags=-X main.version="
+                                           #$version))
+      #:import-path "github.com/hickford/git-credential-oauth"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-manpages
+            (lambda* (#:key import-path #:allow-other-keys)
+              (let ((man (string-append "src/" import-path
+                                        "/git-credential-oauth.1")))
+                (install-file man (string-append #$output "/share/man/man1"))))))))
+    (native-inputs
+     (list go-golang-org-x-oauth2))
+    (home-page "https://github.com/hickford/git-credential-oauth")
+    (synopsis "Git credential helper that securely authenticates using OAuth")
+    (description
+     "git-credential-oauth is a Git credential helper that securely
+authenticates to GitHub, GitLab, BitBucket, Gerrit, Gitea, and Forgejo using
+OAuth.  The first time you authenticate, the helper opens a browser window to
+the host.  Subsequent authentication within storage lifetime is
+non-interactive.")
+    (license license:asl2.0)))
 
 (define-public git-crypt
   (package
@@ -4163,8 +4202,8 @@ will reconstruct the object along its delta-base chain and return it.")
                    go-golang-org-x-sync
                    go-golang-org-x-sys)
              ;; make `ronn` available during build for man page generation
-             (if (supported-package? ruby-asciidoctor)
-                 (list ronn-ng ruby-asciidoctor)
+             (if (supported-package? ruby-asciidoctor/minimal)
+                 (list ronn-ng ruby-asciidoctor/minimal)
                  '())))
     (home-page "https://git-lfs.github.com/")
     (synopsis "Git extension for versioning large files")

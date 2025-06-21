@@ -1511,12 +1511,29 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
               license:gpl3
               license:x11))))
 
+(define %mnt-reform-revert-drm-rockchip-vop2-patch
+  (origin
+    (method url-fetch)
+    (uri (string-append
+          "https://source.mnt.re/vagrantc/reform-debian-packages/"
+          "-/raw/e4e6b0972dcbe21c83c0704a9f36d29e0657a9f2/linux/"
+          "patches6.12/rk3588-drm-revert/"
+          "0001-Revert-drm-rockchip-vop2-Improve-display-modes-handl.patch"))
+    (file-name "mnt-reform-revert-drm-rockchip-vop2.patch")
+    (sha256
+     (base32 "1h4cznxx0ix5bd7cfwxil0zrxmzqryha19l11ww6hd8bad1f9i7p"))))
+
 (define-public linux-libre-arm64-mnt-reform
   ;; Kernel for use on the MNT/Reform systems
   ;; https://mntre.com/reform.html
   (let ((base (make-linux-libre* linux-libre-6.12-version
                                  linux-libre-6.12-gnu-revision
-                                 linux-libre-6.12-source
+                                 (source-with-patches linux-libre-6.12-source
+                                                      ;; Revert upstream patch
+                                                      ;; that conflicts with
+                                                      ;; MNT/Reform patches
+                                                      (list
+                                                       %mnt-reform-revert-drm-rockchip-vop2-patch))
                                  '("aarch64-linux")
                                  #:extra-version "arm64-mnt-reform"
                                  #:extra-options
@@ -8263,50 +8280,47 @@ under OpenGL graphics workloads.")
     (license license:gpl3)))
 
 (define-public efivar
-  ;; XXX: 15622b7e5761f3dde3f0e42081380b2b41639a48 fixes compilation on i686.
-  ;; ca48d3964d26f5e3b38d73655f19b1836b16bd2d fixes cross-compilation.
-  (let ((commit "ca48d3964d26f5e3b38d73655f19b1836b16bd2d")
-        (revision "0"))
-    (package
-      (name "efivar")
-      (version (git-version "38" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/rhboot/efivar")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0zsab3hcv1v53cxwkvsk09ifnwhs48a6xa3kxlwvs87yxswspvi8"))))
-      (build-system gnu-build-system)
-      (arguments
-       (list
-        ;; Tests require a UEFI system and is not detected in the chroot.
-        #:tests? #f
-        #:make-flags #~(list (string-append "prefix="
-                                            #$output)
-                             (string-append "libdir="
-                                            #$output "/lib")
-                             (string-append "CC="
-                                            #$(cc-for-target)) "HOSTCC=gcc"
-                             (string-append "LDFLAGS=-Wl,-rpath="
-                                            #$output "/lib"))
-        #:phases #~(modify-phases %standard-phases
-                     (add-after 'unpack 'build-deterministically
-                       (lambda _
-                         (substitute* "src/include/defaults.mk"
-                           ;; Don't use -march=native.
-                           (("-march=native")
-                            ""))))
-                     (delete 'configure))))
-      (native-inputs (list mandoc pkg-config))
-      (inputs (list popt))
-      (home-page "https://github.com/rhboot/efivar")
-      (synopsis "Tool and library to manipulate EFI variables")
-      (description "This package provides a library and a command line
+  (package
+    (name "efivar")
+    (version "39")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/rhboot/efivar")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1zd9dghg1z2rrsazv3d9rj7nik6kdqz42jiak65pipz7mpjn9zdk"))
+              (patches (search-patches "efivar-fix-fprint-format.patch"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      ;; Tests require a UEFI system and is not detected in the chroot.
+      #:tests? #f
+      #:make-flags #~(list (string-append "prefix="
+                                          #$output)
+                           (string-append "libdir="
+                                          #$output "/lib")
+                           (string-append "CC="
+                                          #$(cc-for-target)) "HOSTCC=gcc"
+                                          (string-append "LDFLAGS=-Wl,-rpath="
+                                                         #$output "/lib"))
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'build-deterministically
+                     (lambda _
+                       (substitute* "src/include/defaults.mk"
+                         ;; Don't use -march=native.
+                         (("-march=native")
+                          ""))))
+                   (delete 'configure))))
+    (native-inputs (list mandoc pkg-config))
+    (inputs (list popt))
+    (home-page "https://github.com/rhboot/efivar")
+    (synopsis "Tool and library to manipulate EFI variables")
+    (description "This package provides a library and a command line
 interface to the variable facility of UEFI boot firmware.")
-      (license license:lgpl2.1+))))
+    (license license:lgpl2.1+)))
 
 (define-public efibootmgr
   (package

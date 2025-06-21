@@ -109,7 +109,8 @@
   #:use-module (gnu packages python-check)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
-  #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-check)
+  #:use-module (gnu packages ruby-xyz)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages ssh)
@@ -2238,7 +2239,7 @@ sandboxed desktop applications on GNU/Linux.")
 (define-public fpm
   (package
     (name "fpm")
-    (version "1.15.1")
+    (version "1.16.0")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -2247,8 +2248,7 @@ sandboxed desktop applications on GNU/Linux.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1m2zxf7wyk7psvm611yxs68hnwm0pyqilsmcq3x791hz7rvbg68w"))
-              (patches (search-patches "fpm-newer-clamp-fix.patch"))))
+                "0h4yw57y0p0x335767y058lbv46f6xjf3jvv49vxw5vfzzhqbl3c"))))
     (build-system ruby-build-system)
     (arguments
      (list #:phases

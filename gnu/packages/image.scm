@@ -2053,36 +2053,30 @@ custom formats for representing color values..")
   (package
     (name "gpick")
     (version "0.2.6")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/thezbyg/gpick")
-                    (commit (string-append name "-" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0nl89gca5nmbyycv5rl5bm6k7facapdk4pab9pl949aa3cjw9bk7"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/thezbyg/gpick")
+             (commit (string-append name "-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0nl89gca5nmbyycv5rl5bm6k7facapdk4pab9pl949aa3cjw9bk7"))))
     (build-system scons-build-system)
-    (native-inputs
-     `(("boost" ,boost)
-       ("gettext" ,gettext-minimal)
-       ("pkg-config" ,pkg-config)
-       ("ragel" ,ragel)))
-    (inputs
-     `(("expat" ,expat)
-       ("gtk2" ,gtk+-2)
-       ("lua" ,lua-5.2)))
     (arguments
-     `(#:tests? #f
-       #:scons ,scons-python2
-       #:scons-flags (list (string-append "DESTDIR=" %output))
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'fix-lua-reference
-           (lambda _
-             (substitute* "SConscript"
-               (("lua5.2") "lua-5.2"))
-             #t)))))
+     (list
+      #:tests? #f
+      #:scons-flags
+      #~(list (string-append "DESTDIR=" %output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'fix-lua-reference
+            (lambda _
+              (substitute* "SConscript"
+                (("lua5.2")
+                 "lua-5.2")))))))
+    (native-inputs (list boost gettext-minimal pkg-config ragel))
+    (inputs (list expat gtk+-2 lua-5.2))
     (home-page "http://www.gpick.org/")
     (synopsis "Color picker")
     (description "Gpick is an advanced color picker and palette editing tool.")
@@ -2924,4 +2918,31 @@ terminal imaging introduced by @acronym{DEC, Digital Equipment Corp.}.  Its
 data scheme is represented as a terminal-friendly escape sequence.  So if you
 want to view a SIXEL image file, all you have to do is @command{cat} it to
 your terminal.")
+    (license license:expat)))
+
+(define-public libyuv
+  (package
+    (name "libyuv")
+    (version "2021.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+	     (url "https://chromium.googlesource.com/libyuv/libyuv")
+	     (commit "4620f1705822fd6ab99939f43ce63099bd3d9ae0")))
+       (sha256
+	(base32 "17vdm2g5qvrby7xa3agiqwh7ips33dxg6sw18s3q2xkfil4xw3mm"))))
+    (build-system cmake-build-system)
+    (arguments (list #:tests? #f))
+    (home-page "https://chromium.googlesource.com/libyuv/libyuv/")
+    (synopsis "YUV scaling and conversion functionality")
+    (description "libyuv is an open source project that includes YUV scaling and
+conversion functionality. It can:
+@itemize
+@item Scale YUV to prepare content for compression, with point, bilinear or box
+filter.
+@item Convert to YUV from webcam formats for compression.
+@item Convert to RGB formats for rendering/effects.
+@item Rotate by 90/180/270 degrees to adjust for mobile devices in portrait mode.
+@end itemize")
     (license license:expat)))

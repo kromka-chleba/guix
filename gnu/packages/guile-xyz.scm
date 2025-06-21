@@ -54,6 +54,9 @@
 ;;; Copyright © 2024 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Florian Pelz <pelzflorian@pelzflorian.de>
+;;; Copyright © 2025 Libre en Communs <contact@a-lec.org>
+;;; Copyright © 2025 Noé Lopez <noelopez@free.fr>
+;;; Copyright © 2025 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -81,6 +84,7 @@
   #:use-module (gnu packages base)
   #:use-module (gnu packages bash)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages check)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages curl)
   #:use-module (gnu packages databases)
@@ -147,6 +151,7 @@
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system guile)
+  #:use-module (guix build-system meson)
   #:use-module (guix utils)
   #:use-module ((guix build utils) #:select (alist-replace))
   #:use-module (ice-9 match)
@@ -789,6 +794,109 @@ configuration file, and then reads and evaluates Guile expressions that
 you send to a FIFO file.")
     (license license:gpl3+)))
 
+(define-public guile-documenta
+  (package
+    (name "guile-documenta")
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/luis-felipe/guile-documenta")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jv8nd7hlrsg2v2p5wacs8x3rzmhxwcg83pjsrnwks346jvsfxnv"))))
+    (build-system guile-build-system)
+    (inputs
+     (list bash-minimal
+           guile-3.0))
+    (native-inputs
+     (list texinfo
+           guile-proba))
+    (propagated-inputs
+     (list guile-config
+           guile-lib))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'set-paths 'add-output-to-guile-load-paths
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (guile-version (target-guile-effective-version))
+                     (scm-path (string-append out
+                                              "/share/guile/site/"
+                                              guile-version))
+                     (go-path (string-append out
+                                             "/lib/guile/"
+                                             guile-version
+                                             "/site-ccache")))
+                (setenv "GUILE_LOAD_PATH"
+                        (string-append scm-path ":"
+                                       (getenv "GUILE_LOAD_PATH")))
+                (setenv "GUILE_LOAD_COMPILED_PATH"
+                        (string-append
+                         go-path ":"
+                         (getenv "GUILE_LOAD_COMPILED_PATH"))))))
+          (add-after 'build 'build-manual
+            (lambda _
+              (invoke "bash" "build-manual.sh")))
+          (add-after 'build 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "proba" "run" "tests"))))
+          (add-after 'check 'install-wrapped-script
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (bin-dir (string-append out "/bin"))
+                     (script (string-append bin-dir "/documenta")))
+                (mkdir-p bin-dir)
+                (copy-file "documenta.scm" script)
+                (chmod script #o555)
+                (wrap-program script
+                  `("GUILE_LOAD_PATH" prefix (,(getenv "GUILE_LOAD_PATH")))
+                  `("GUILE_LOAD_COMPILED_PATH" prefix
+                    (,(getenv "GUILE_LOAD_COMPILED_PATH"))))))))
+      #:scheme-file-regexp
+      #~(begin
+          (use-modules (ice-9 regex))
+          (lambda (file stat) (string-match "/documenta/.*\\.scm$" file)))))
+    (home-page "https://luis-felipe.gitlab.io/guile-documenta/")
+    (synopsis "Generate API documentation for Guile projects")
+    (description
+     "Guile Documentá is a command-line program and accompanying library to
+generate API documentation for GNU Guile projects.")
+    (license license:public-domain)))
+
+(define-public guile-dotenv
+  (package
+   (name "guile-dotenv")
+   (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/fishinthecalculator/dotenv.git")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0m5jg41cipnpl3w9vzwm50ah0haa2hcwwd7mri7kaa8pr9kfx64j"))))
+   (build-system gnu-build-system)
+   (native-inputs
+    (list autoconf
+          automake
+          gettext-minimal
+          pkg-config
+          texinfo))
+   (inputs (list guile-3.0))
+   (synopsis "Read environment variables specifications from @code{.env} files")
+   (description "This package provides a simple Guile interface to @code{.env}
+(or dotenv) files.  It implements parsing of files and setting environment
+variables from them.")
+   (home-page "https://codeberg.org/fishinthecalculator/dotenv")
+   (license license:gpl3+)))
+
 (define-public guile-dsv
   (package
     (name "guile-dsv")
@@ -1297,33 +1405,86 @@ order to provide IDE functionality for Guile Scheme.")
     (license license:expat)))
 
 (define-public guile-ares-rs
-  (package
-    (name "guile-ares-rs")
-    (version "0.9.5")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://git.sr.ht/~abcdw/guile-ares-rs")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "06fc5kbcniysqixadi54vv96hy8l4wx6hqcii134fkb1d93078lq"))))
-    (build-system guile-build-system)
-    (arguments
-     (list
-      #:source-directory "src/guile"))
-    ;; Remove guile-next dependency, when guile package get custom text port
-    (inputs `(("guile" ,guile-next)))
-    (propagated-inputs (list guile-fibers))
-    (home-page "https://git.sr.ht/~abcdw/guile-ares-rs")
-    (synopsis "Asynchronous Reliable Extensible Sleek RPC Server for Guile")
-    (description "Asynchronous Reliable Extensible Sleek RPC Server for
+  ;; Commit to support Guile 3.9 + guile-custom-ports
+  (let ((commit "6ccca2e21457c47917846e07c449d48c66b9420b")
+        (revision "0"))
+    (package
+      (name "guile-ares-rs")
+      (version (git-version "0.9.5" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://git.sr.ht/~abcdw/guile-ares-rs")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "04n42wn6jblhmcx5l43nl7nsy3s0qlsn09l4k9xwgw5hg9nkkmg7"))))
+      (build-system guile-build-system)
+      (arguments
+       (list
+        #:source-directory "src/guile"))
+      (inputs (list guile-3.0))
+      (propagated-inputs (list guile-fibers guile-custom-ports))
+      (home-page "https://git.sr.ht/~abcdw/guile-ares-rs")
+      (synopsis "Asynchronous Reliable Extensible Sleek RPC Server for Guile")
+      (description "Asynchronous Reliable Extensible Sleek RPC Server for
  Guile.  It's based on nREPL protocol and can be used for programmable
  interactions with a running guile processes, for implementing REPLs, IDEs,
  test runners or other tools.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
+
+(define-public guile-custom-ports
+  (package
+    (name "guile-custom-ports")
+    (version "1.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://codeberg.org/Baleine/guile-custom-ports.git")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0iyy3nvghn0y2nkqbml0763rsvnbf1qkz40wrgm0x1bsbpw0asjw"))))
+    (build-system meson-build-system)
+    (native-inputs (list guile-3.0
+                         pkg-config))
+    (inputs `(("guile-sources" ,(package-source guile-3.0))))
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append
+               "-Dlibguile_headers_dir=../guile-sources/libguile"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'unpack-guile
+            (lambda _
+              ((assoc-ref %standard-phases 'unpack)
+               #:source #$(this-package-input "guile-sources"))
+              (chdir "..")
+              (rename-file "guile-3.0.9" "guile-sources")))
+          (add-after 'unpack 'set-extension-path
+            (lambda _
+              (substitute* "module/ice-9/custom-ports.scm"
+                (("\\(load-extension.*")
+                 (string-append "(load-extension \"" #$output
+                                "/lib/libguile-custom-ports-3.0.so\"\n")))))
+          ;; We need to install the extension before building the Guile modules
+          ;; so that it is found at build time.  This can be removed once our
+          ;; guile package has the native-search-path for GUILE_EXTENSIONS_PATH.
+          (add-after 'configure 'build-and-install-extension
+            (lambda _
+              (invoke "meson" "compile" "guile-custom-ports-3.0")
+              (install-file "src/libguile-custom-ports-3.0.so"
+                            (string-append #$output "/lib"))))
+          (delete 'shrink-runpath))))
+    (home-page "https://codeberg.org/Baleine/guile-custom-ports")
+    (synopsis "Standalone custom ports for Guile before 3.10")
+    (description "guile-custom-port overrides Guile's port modules to bring the
+custom ports from Guile 3.10 to previous versions.")
+    (license license:lgpl3+)))
 
 (define-public guile-squee
   (let ((commit "9f2609563fc53466e46d37c8d8d2fbcfce67b2ba")
@@ -5405,17 +5566,22 @@ Conversion between binary and hex-and-dash string UUIDs is also included.")
 (define-public guile-semver
   (package
     (name "guile-semver")
-    (version "0.1.1")
+    (version "0.2.0")
     (source (origin
-              (method url-fetch)
-              (uri (string-append "https://files.ngyro.com/guile-semver/"
-                                  "guile-semver-" version ".tar.gz"))
-              (sha256
-               (base32
-                "109p4n39ln44cxvwdccf9kgb96qx54makvd2ir521ssz6wchjyag"))))
+                (method git-fetch)
+                ;; This fork contains support for MAJOR.MINOR.PATCH.REVISION .
+                ;; Changes were proposed upstream but there was no reaction.
+                ;; Switched from <https://git.ngyro.com/guile-semver>.
+                (uri (git-reference
+                      (url "https://codeberg.org/daym/guile-semver.git")
+                      (commit (string-append "v" version))))
+                (file-name (git-file-name "guile-semver" version))
+                (sha256
+                 (base32
+                  "1pb1fvm6myb3cdkqn18rhygzh8yhk3b5a8966ppwgg0d92xhxp1v"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list guile-3.0 pkg-config))
+     (list guile-3.0 pkg-config autoconf automake))
     (inputs
      (list guile-3.0))
     (home-page "https://ngyro.com/software/guile-semver.html")
@@ -6626,7 +6792,7 @@ The resulting QR codes can be rendered to ASCII art strings or to PNG images (us
 (define-public guile-hygguile
   (package
     (name "guile-hygguile")
-    (version "0.5.9")
+    (version "1.0.5")
     (source
      (origin
        (method git-fetch)
@@ -6635,7 +6801,7 @@ The resulting QR codes can be rendered to ASCII art strings or to PNG images (us
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01xixcay0qsbkmd47j46ky6cqn278ayb78sdf2cgq5fn3rbgigsc"))))
+        (base32 "0iwgbb2ym15l0iz91ycd7ikf42jnhdnzs786d9dc1p2d0fr2l962"))))
     (build-system guile-build-system)
     (native-inputs (list guile-3.0))
     (arguments

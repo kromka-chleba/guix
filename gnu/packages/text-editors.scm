@@ -121,7 +121,6 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages regex)
-  #:use-module (gnu packages ruby)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages slang)
   #:use-module (gnu packages sqlite)
@@ -1016,13 +1015,13 @@ OpenBSD team.")
 (define-public nano
   (package
     (name "nano")
-    (version "8.4")
+    (version "8.5")
     (source
      (origin
       (method url-fetch)
       (uri (string-append "mirror://gnu/nano/nano-" version ".tar.xz"))
       (sha256
-       (base32 "13b2iqmbx5vcyd0rnvvc9l8l79q6665r4xx6gvc28mnmpci95ljs"))))
+       (base32 "0sn2aikbqyvq5d46x7fkx33gaprjaj7jhhvdckwil54w6cfh22q0"))))
     (build-system gnu-build-system)
     (arguments
      (if (%current-target-system)

@@ -1,6 +1,8 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2020 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 David Thompson <davet@gnu.org>
+;;; Copyright © 2025 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -24,11 +26,14 @@
   #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (gnu packages)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
   #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages haskell-apps)
+  #:use-module (gnu packages python-check)
   #:use-module (gnu packages version-control))
 
 ;;; Commentary:
@@ -40,6 +45,58 @@
 ;;;
 ;;; Libraries:
 ;;;
+
+(define-public go-code-gitea-io-actions-proto-go-ping
+  (package
+    (name "go-code-gitea-io-actions-proto-go-ping")
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitea.com/gitea/actions-proto-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gdrsr7kx20nhp1r54xyrq4gcwxvyzv636bzmsrchikffhq773b6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "code.gitea.io/actions-proto-go/ping/v1"
+      #:unpack-path "code.gitea.io/actions-proto-go"))
+    (propagated-inputs (list go-google-golang-org-protobuf
+                             go-connectrpc-com-connect))
+    (home-page "https://code.gitea.io/actions-proto-go")
+    (synopsis "Helper for the Gitea Action runner")
+    (description
+     "This package provides a helper for the Gitea Action runer.")
+    (license license:expat)))
+
+(define-public go-code-gitea-io-actions-proto-go-runner
+  (package
+    (name "go-code-gitea-io-actions-proto-go-runner")
+    (version "0.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitea.com/gitea/actions-proto-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gdrsr7kx20nhp1r54xyrq4gcwxvyzv636bzmsrchikffhq773b6"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "code.gitea.io/actions-proto-go/runner/v1"
+      #:unpack-path "code.gitea.io/actions-proto-go"))
+    (propagated-inputs (list go-google-golang-org-protobuf
+                             go-connectrpc-com-connect))
+    (home-page "https://code.gitea.io/actions-proto-go")
+    (synopsis "Action runner for Gitea")
+    (description
+     "This package provides an Action runner for the Gitea forge.")
+    (license license:expat)))
 
 (define-public go-github-com-git-lfs-pktline
   (let ((commit "ca444d533ef1e474d0aab99cdbeed9b048d65241")
@@ -156,6 +213,175 @@ using the Git pkt-line format used in various Git operations.")
     (synopsis "Git implementation library")
     (description "This package provides a Git implementation library.")
     (license license:asl2.0)))
+
+;; TODO: Delete all node_modules in pkg/runner/testdata/actions.
+(define-public go-github-com-nektos-act
+  (package
+    (name "go-github-com-nektos-act")
+    (version "1.24.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://code.forgejo.org/forgejo/act.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fk5l44jycyzzlvxr0312ayns1rl15vl2kjc6nh726sjlghpa0d7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:import-path "github.com/nektos/act"
+      #:embed-files #~(list ".*\\.json")
+      #:test-flags
+      #~(list "-skip" (string-join
+                       ;; Network access is required.
+                       (list "TestArtifactFlow/GHSL-2023-004"
+                             "TestArtifactFlow/upload-and-download"
+                             "TestFindGitRemoteURL"
+                             "TestGitCloneExecutor"
+                             "TestGitFindRef"
+                             "TestHandler_gcCache"
+                             "TestImageExistsLocally"
+                             "TestHandler"
+                             "TestJobExecutor"
+                             ;; Running Docker is required.
+                             "TestDocker"
+                             ;; Something else...
+                             "TestActionCache"
+                             "TestInterpolate"
+                             "TestRunContext_EvalBool"
+                             "TestDryrunEvent"
+                             "TestEvaluateRunContext/toJSON"
+                             "TestEvaluateRunContext/toJson"
+                             "TestGetGitHubContext"
+                             "TestMaskValues"
+                             "TestRunActionInputs"
+                             "TestRunDifferentArchitecture"
+                             "TestRunEvent"
+                             "TestRunEventHostEnvironment"
+                             "TestRunEventPullRequest"
+                             "TestRunEventSecrets"
+                             "TestRunMatrixWithUserDefinedInclusions"
+                             "TestRunSkipped"
+                             "TestRunWithService"
+                             "TestSetupEnv"
+                             "TestStepActionRemotePreThroughActionToken")
+                       "|"))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; The buildkit dependency tree is *massive* and the only thing
+          ;; that's used is the dockerignore module, which is just an alias to
+          ;; github.com/moby/patternmatcher which this library already depends
+          ;; on!
+          (add-after 'unpack 'fix-dockerignore
+            (lambda _
+              (substitute* "src/github.com/nektos/act/pkg/container/docker_build.go"
+                (("\"github.com/moby/buildkit/frontend/dockerfile/dockerignore\"")
+                 "dockerignore \"github.com/moby/patternmatcher/ignorefile\"")))))))
+    (native-inputs
+     (list go-github-com-go-git-go-billy-v5
+           go-github-com-stretchr-testify
+           go-gotest-tools-v3))
+    (propagated-inputs
+     (list go-dario-cat-mergo
+           go-github-com-adrg-xdg
+           go-github-com-alecaivazis-survey-v2
+           go-github-com-andreaskoch-go-fswatch
+           go-github-com-creack-pty
+           go-github-com-distribution-reference
+           go-github-com-docker-cli
+           go-github-com-docker-distribution
+           go-github-com-docker-docker
+           go-github-com-docker-go-connections
+           go-github-com-go-git-go-git-v5
+           go-github-com-gobwas-glob
+           go-github-com-golang-jwt-jwt-v5
+           go-github-com-imdario-mergo
+           go-github-com-joho-godotenv
+           go-github-com-julienschmidt-httprouter
+           go-github-com-kballard-go-shellquote
+           go-github-com-masterminds-semver
+           go-github-com-mattn-go-isatty
+           go-github-com-moby-patternmatcher
+           go-github-com-opencontainers-image-spec
+           go-github-com-opencontainers-selinux
+           go-github-com-pkg-errors
+           go-github-com-rhysd-actionlint
+           go-github-com-sabhiram-go-gitignore
+           go-github-com-sirupsen-logrus
+           go-github-com-spf13-cobra
+           go-github-com-spf13-pflag
+           go-github-com-timshannon-bolthold
+           go-go-etcd-io-bbolt
+           go-golang-org-x-term
+           go-google-golang-org-protobuf
+           go-gopkg-in-yaml-v3))
+    (home-page "https://github.com/nektos/act")
+    (synopsis "Run GitHub Actions locally")
+    (description
+     "Helper tool to run @url{https://developer.github.com/actions/,GitHub
+Actions} locally.")
+    (license license:expat)))
+
+(define-public go-github-com-rhysd-actionlint
+  (package
+    (name "go-github-com-rhysd-actionlint")
+    (version "1.7.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/rhysd/actionlint")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0xbsrcvklxn0lppikabwrizav945jk85d0mz16zc3spxc80plrvn"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/rhysd/actionlint"
+      ;; Several tests try to download stuff from raw.githubusercontent.com;
+      ;; skip them.
+      #:test-flags #~(list "-skip"
+                           (string-join
+                            '("TestMain"          ;XXX: segfaults
+                              "TestUpdate"        ;XXX: segfaults
+                              "TestFetchRemoteYAML"
+                              "TestWriteOutdatedActionAsJSONL"
+                              "TestDetectNewRelease"
+                              "TestDetectNoRelease"
+                              "TestCouldNotFetch"
+                              "TestDetectErrorBadRequest"
+                              "TestFetchOK"
+                              "TestFetchError/not_found")
+                            "|"))))
+    (native-inputs
+     ;; Test dependencies.
+     (append
+      (list python-pyflakes)
+      (if (supported-package? shellcheck)
+          (list shellcheck)
+          '())))
+    (propagated-inputs
+     (list go-gopkg-in-yaml-v3
+           go-golang-org-x-sys
+           go-golang-org-x-sync
+           go-github-com-yuin-goldmark
+           go-github-com-robfig-cron-v3
+           go-github-com-mattn-go-shellwords
+           go-github-com-mattn-go-runewidth
+           go-github-com-mattn-go-colorable
+           go-github-com-google-go-cmp
+           go-github-com-fatih-color
+           go-github-com-bmatcuk-doublestar-v4))
+    (home-page "https://github.com/rhysd/actionlint")
+    (synopsis "Statically check GitHub Action workflow files")
+    (description
+     "Package @code{actionlint} is the implementation of actionlint linter.
+It's a static checker for GitHub Actions workflow files.")
+    (license license:expat)))
 
 (define-public go-github-com-xanzy-go-gitlab
   (package

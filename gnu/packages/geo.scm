@@ -1105,7 +1105,7 @@ projections and coordinate transformations library.")
         (sha256
           (base32
             "083120rqc4rrqzgmams0yjd8b1h4p5xm4n9fnxg064ymw3vx6yan"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -1139,7 +1139,11 @@ projections and coordinate transformations library.")
       (list gdal ; for gdal-config
             python-boto3
             python-cython
-            python-pytest python-pytest-cov python-pytz))
+            python-pytest
+            python-pytest-cov
+            python-pytz
+            python-setuptools
+            python-wheel))
     (home-page "https://github.com/Toblerity/Fiona")
     (synopsis
       "Fiona reads and writes spatial data files")
@@ -2020,13 +2024,13 @@ to create databases that are optimized for rendering/tile/map-services.")
 (define-public python-metpy
   (package
     (name "python-metpy")
-    (version "1.6.3")
+    (version "1.7.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "metpy" version))
               (sha256
                (base32
-                "0rh7lslwf79sgbf0933pz6mxchbrb0434pbdzqgzs1kjlsli9pr3"))))
+                "1r3adxf6knplp96s5jp65lahg9r096iaq5hdhzyqpkrmqwyy1mxa"))))
     (build-system pyproject-build-system)
     (arguments
      ;; Too many of the tests in the files below require online data.
@@ -2049,7 +2053,9 @@ to create databases that are optimized for rendering/tile/map-services.")
                     " and not test_zoom_xarray"
                     " and not test_parse_wpc_surface_bulletin"
                     " and not test_add_timestamp_xarray"
-                    " and not test_parse_wpc_surface_bulletin_highres"))
+                    " and not test_parse_wpc_surface_bulletin_highres"
+                    " and not test_find_peaks"
+                    " and not test_find_peaks_minima"))
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'fix-version-check
@@ -2387,7 +2393,7 @@ persisted.
 (define-public libmseed
   (package
     (name "libmseed")
-    (version "3.1.1")
+    (version "3.1.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2396,7 +2402,7 @@ persisted.
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "05sk2h19c7ja98s75b7hbn2cwnjc5l6dr59c23fgnaimmad2rfn7"))))
+                "1xswg62h8mqmgpkllyvj8zyw2sjks7pq2np820xca71ahc89aaiz"))))
     (build-system gnu-build-system)
     (arguments
      (list #:make-flags #~(list (string-append "CC=" #$(cc-for-target))

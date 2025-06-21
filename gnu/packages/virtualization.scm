@@ -149,6 +149,8 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-check)
+  #:use-module (gnu packages ruby-xyz)
   #:use-module (gnu packages rsync)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages selinux)
@@ -2480,7 +2482,7 @@ use it.")
                 "1bkzz3mj7kzsv6k0ii8w31cgkpiqw3wvmvv2c6rknsavqqnagb4g"))))
     (build-system ruby-build-system)
     ;; (native-inputs (list ruby-rubocop ruby-vagrant-spec-helper-basic))
-    (propagated-inputs (list ruby-coveralls ruby-serverspec ruby-dep))
+    (propagated-inputs (list ruby-coveralls ruby-serverspec))
     (arguments
      (list
       #:tests? #f  ;; tests require vagrant

@@ -1137,14 +1137,14 @@ control of your private keys, no previous conversation is compromised.")
 (define-public znc
   (package
     (name "znc")
-    (version "1.9.1")
+    (version "1.10.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://znc.in/releases/archive/znc-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0g2gi7207lydmm7zdq52ivw0vhvbnmhsybi89q5m3bcsw60cz9z8"))))
+                "06bb6c2nciwbknfschxd2fjkpigd6i0zgwl6jiz5lm7gcadssrdy"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags
@@ -1235,14 +1235,14 @@ of xmpppy.")
          (base32 "0g2nhy6ypj4jbz216sgiy37spq34bwa0ydn2g73fp9qnxfq4vpvz"))
        (patches
          (search-patches "gajim-honour-GAJIM_PLUGIN_PATH.patch"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:imported-modules
-      `(,@%python-build-system-modules
+      `(,@%pyproject-build-system-modules
         (guix build glib-or-gtk-build-system))
       #:modules
-      '((guix build python-build-system)
+      '((guix build pyproject-build-system)
         ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
         (guix build utils))
       #:phases
@@ -1253,17 +1253,6 @@ of xmpppy.")
           (add-before 'build 'build-metadata
             (lambda _
               (invoke "./make.py" "build")))
-          ;; TODO: Change to pyproject-build-system once it supports
-          ;; in-tree build backends.
-          (replace 'build
-            (lambda _
-              (invoke "python" "-m" "build" "--wheel" "--no-isolation"
-                      ".")))
-          (replace 'install
-            (lambda _
-              (apply invoke "pip" "--no-cache-dir" "--no-input"
-                     "install" "--no-deps" "--prefix" #$output
-                     (find-files "dist" "\\.whl$"))))
           (add-after 'install 'install-metadata
             (lambda _
               (invoke "./make.py" "install"
@@ -1278,13 +1267,13 @@ of xmpppy.")
                 (setenv "DBUS_FATAL_WARNINGS" "0")
                 (invoke "dbus-launch" "python" "-m" "unittest"
                         "discover" "-s" "test"))))
-          (add-after 'install 'glib-or-gtk-compile-schemas
+          (add-after 'wrap 'glib-or-gtk-compile-schemas
             (assoc-ref glib-or-gtk:%standard-phases
                        'glib-or-gtk-compile-schemas))
-          (add-after 'install 'glib-or-gtk-wrap
+          (add-after 'wrap 'glib-or-gtk-wrap
             (assoc-ref glib-or-gtk:%standard-phases
                        'glib-or-gtk-wrap))
-          (add-after 'install 'wrap-env
+          (add-after 'wrap 'wrap-env
             (lambda _
               (for-each
                (lambda (name)
@@ -1318,7 +1307,6 @@ of xmpppy.")
     (native-inputs
      (list gettext-minimal
            gobject-introspection
-           python-distutils-extra
            python-pypa-build
            python-setuptools
            xorg-server-for-tests))

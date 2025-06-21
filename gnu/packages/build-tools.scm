@@ -38,6 +38,7 @@
   #:use-module (guix utils)
   #:use-module (guix packages)
   #:use-module (guix gexp)
+  #:use-module (guix deprecation)
   #:use-module (guix download)
   #:use-module (guix git-download)
   #:use-module (guix build-system cmake)
@@ -522,13 +523,13 @@ other lower-level build files.")))
               (sha256
                (base32
                 "1h9653965bqf8zab4gbsilsmnhp6nxn5b5b9yvm6pf401qjx8n4x"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:modules (append %python-build-system-modules
+      #:modules (append %pyproject-build-system-modules
                         '((ice-9 ftw) (srfi srfi-26)))
       #:phases
-      #~(modify-phases (@ (guix build python-build-system) %standard-phases)
+      #~(modify-phases (@ (guix build pyproject-build-system) %standard-phases)
           (add-after 'unpack 'adjust-hard-coded-paths
             (lambda _
               (substitute* "SCons/Script/Main.py"
@@ -571,35 +572,29 @@ software.")
 (define-public scons-3
   (package
     (inherit scons)
-    (version "3.0.4")
-    (source (origin
-             (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/SCons/scons")
-                   (commit version)))
-             (file-name (git-file-name "scons" version))
-             (sha256
-              (base32
-               "1xy8jrwz87y589ihcld4hv7wn122sjbz914xn8h50ww77wbhk8hn"))))
+    (version "3.1.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/SCons/scons")
+             (commit version)))
+       (file-name (git-file-name "scons" version))
+       (sha256
+        (base32 "0q6xq2y280fci3kay1z6638v7sv5p43vs7lsl1rrkgmxpwvkhx8b"))))
     (arguments
-     `(#:use-setuptools? #f                ; still relies on distutils
-       #:tests? #f                         ; no 'python setup.py test' command
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'bootstrap
-           (lambda _
-             (substitute* "src/engine/SCons/compat/__init__.py"
-               (("sys.modules\\[new\\] = imp.load_module\\(old, \\*imp.find_module\\(old\\)\\)")
-                "sys.modules[new] = __import__(old)"))
-             (substitute* "src/engine/SCons/Platform/__init__.py"
-               (("mod = imp.load_module\\(full_name, file, path, desc\\)")
-                "mod = __import__(full_name)"))
-             (invoke "python" "bootstrap.py" "build/scons" "DEVELOPER=guix")
-             (chdir "build/scons")
-             #t)))))
-    (native-inputs '())))
+     (list
+      #:tests? #f                         ; no 'python setup.py test' command
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'bootstrap
+            (lambda _
+              (invoke "python" "bootstrap.py" "build/scons" "DEVELOPER=guix")
+              (chdir "build/scons"))))))
+    (native-inputs (list python-setuptools python-wheel))))
 
-(define-public scons-python2
+;; TODO Remove on the next python-team iteration.
+(define-deprecated/public scons-python2 scons
   (package
     (inherit (package-with-python2 scons-3))
     (name "scons-python2")))

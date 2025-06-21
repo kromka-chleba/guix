@@ -61,6 +61,7 @@
 ;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 Jelle Licht <jlicht@fsfe.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -168,6 +169,8 @@
   #:use-module (gnu packages readline)
   #:use-module (gnu packages regex)
   #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-check)
+  #:use-module (gnu packages ruby-xyz)
   #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages samba)
   #:use-module (gnu packages screen)
@@ -1074,7 +1077,7 @@ mailpack.  What can alterMIME do?
            gnupg
            ninja
            pkg-config
-           ronn
+           ronn-ng
            w3m
            xorg-server-for-tests))
     (inputs
@@ -1471,46 +1474,51 @@ Notmuch.")
     (license license:gpl3+)))
 
 (define-public notifymuch
-  (let
-      ((commit "9d4aaf54599282ce80643b38195ff501120807f0")
-       (revision "1"))
+  (let ((commit "9d4aaf54599282ce80643b38195ff501120807f0")
+        (revision "1"))
     (package
       (name "notifymuch")
-      (version (string-append "0.1-" revision "." (string-take commit 7)))
+      (version (git-version "0.1" revision commit))
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/kspi/notifymuch")
                (commit commit)))
+         (file-name (git-file-name name version))
          (sha256
-          (base32
-           "1lssr7iv43mp5v6nzrfbqlfzx8jcc7m636wlfyhhnd8ydd39n6k4"))
-         (file-name (string-append name "-" version "-checkout"))))
-      (build-system python-build-system)
-      (inputs
-       (list bash-minimal python-notmuch python-pygobject gobject-introspection
-             libnotify gtk+))
+          (base32 "1lssr7iv43mp5v6nzrfbqlfzx8jcc7m636wlfyhhnd8ydd39n6k4"))))
+      (build-system pyproject-build-system)
       (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (add-after 'install 'wrap-binary
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (bin (string-append out "/bin/notifymuch")))
-                 (wrap-program bin
-                   `("GUIX_PYTHONPATH" ":" prefix (,(getenv "GUIX_PYTHONPATH")))
-                   `("GI_TYPELIB_PATH" ":" prefix
-                     (,(getenv "GI_TYPELIB_PATH")
-                      ,(string-append out "/lib/girepository-1.0")))))
-               #t)))))
+       (list
+        #:tests? #f ; no tests provided
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'install 'wrap-binary
+              (lambda _
+                (wrap-program (string-append #$output "/bin/notifymuch")
+                  `("GUIX_PYTHONPATH" ":" prefix (,(getenv "GUIX_PYTHONPATH")))
+                  `("GI_TYPELIB_PATH" ":" prefix
+                    (,(getenv "GI_TYPELIB_PATH")
+                     ,(string-append #$output "/lib/girepository-1.0")))))))))
+      (native-inputs
+       (list python-setuptools
+             python-wheel))
+      (inputs
+       (list bash-minimal
+             gobject-introspection
+             gtk+
+             libnotify
+             python-notmuch
+             python-pygobject))
       (home-page "https://github.com/kspi/notifymuch")
       (synopsis "Displays notifications for changes in the notmuch email database")
-      (description "notifymuch displays desktop notifications for messages in
-the notmuch database.  The notifications are sent using libnotify to a
-notification daemon.  The query to find messages to send a notification about
-is configurable, and a notification for the same message will not be send
-within a configurable period (defaults to 48 hours).  To use notifymuch, run
+      (description
+       "notifymuch displays desktop notifications for messages in the notmuch
+database.  The notifications are sent using libnotify to a notification
+daemon.  The query to find messages to send a notification about is
+configurable, and a notification for the same message will not be send within
+a configurable period (defaults to 48 hours).  To use notifymuch, run
 @command{notifymuch} after new mail is indexed, this can be automated by
 invoking @command{notifymuch} from the post-new hook.")
       (license license:gpl3))))
@@ -1660,23 +1668,28 @@ useful for email address completion.")
     ;; Notmuch python bindings are now unavailable on pypi.  The
     ;; bindings are distributed via the notmuch release tarball.
     (source (package-source notmuch))
-    (build-system python-build-system)
-    (inputs (list notmuch))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f  ; no "test" target
-       #:phases
-       (modify-phases %standard-phases
-         ;; This python package lives in a subdirectory of the notmuch source
-         ;; tree, so chdir into it before building.
-         (add-after 'unpack 'enter-python-dir
-           (lambda _ (chdir "bindings/python") #t))
-         ;; Make sure the correct notmuch shared library gets loaded.
-         (add-before 'build 'set-libnotmuch-file-name
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((notmuch (assoc-ref inputs "notmuch")))
-               (substitute* "notmuch/globals.py"
-                 (("libnotmuch\\.so\\.")
-                  (string-append notmuch "/lib/libnotmuch.so.")))))))))
+     (list
+      #:tests? #f ; no tests provided
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; This python package lives in a subdirectory of the notmuch source
+          ;; tree, so chdir into it before building.
+          (add-after 'unpack 'enter-python-dir
+            (lambda _ (chdir "contrib/python-legacy") #t))
+          ;; Make sure the correct notmuch shared library gets loaded.
+          (add-before 'build 'set-libnotmuch-file-name
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "notmuch/globals.py"
+                (("libnotmuch\\.so\\.")
+                 (format #f "~a/lib/libnotmuch.so."
+                         #$(this-package-input "notmuch")))))))))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
+    (inputs
+     (list notmuch))
     (home-page (package-home-page notmuch))
     (synopsis "Python bindings of the Notmuch mail indexing library")
     (description
@@ -1904,7 +1917,7 @@ compresses it.")
 (define-public claws-mail
   (package
     (name "claws-mail")
-    (version "4.3.0")
+    (version "4.3.1")
     (source
      (origin
        (method url-fetch)
@@ -1912,7 +1925,8 @@ compresses it.")
         (string-append "https://www.claws-mail.org/releases/claws-mail-"
                        version ".tar.xz"))
        (sha256
-        (base32 "1q8wb2fh5fmbbyrvzdwkhxkzdbsvyk5w783z8qlg05mris41vp4m"))))
+        (base32
+          "19k8yii61n6j80riw6i8nzypygb0kv3b6npw5ljmiav7qw8g5bfq"))))
     (build-system glib-or-gtk-build-system)
     (arguments
      `(#:configure-flags
@@ -2433,14 +2447,14 @@ mailboxes.  Currently Maildir and IMAP are supported types.")
 (define-public perl-email-abstract
   (package
     (name "perl-email-abstract")
-    (version "3.009")
+    (version "3.010")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://cpan/authors/id/R/RJ/RJBS/"
                            "Email-Abstract-" version ".tar.gz"))
        (sha256
-        (base32 "1z01wbflg49nbgzl81x260cp8x6qr7xdpz3dkrg82m1fwa9742q4"))))
+        (base32 "1mky9g5azap650qpdlmgb81r6warr3psnhj9syczrjklb65zc4lc"))))
     (build-system perl-build-system)
     (propagated-inputs
      (list perl-email-simple perl-module-pluggable perl-mro-compat))
@@ -2453,26 +2467,33 @@ write simple, representation-independent mail handling code.")
 (define-public perl-email-address
   (package
     (name "perl-email-address")
-    (version "1.912")
+    (version "1.913")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://cpan/authors/id/R/RJ/RJBS/"
                            "Email-Address-" version ".tar.gz"))
        (sha256
-        (base32 "1vzr0vx4zsw4zbc9xdffc31wnkc1raqmyfiyws06fbyck197i8qg"))))
+        (base32
+          "1bx51i0w4r1z6z2ipkisz6irayldw4d3cbb4yz63bdgndlgm9yva"))))
     (build-system perl-build-system)
+    (native-inputs
+      (list
+            ;; dependency cycle if perl-email-mime is added
+            perl-pathtools
+            perl-test-simple
+            perl-time-hires))
     (home-page "https://metacpan.org/release/Email-Address")
     (synopsis "Email address parsing and creation")
     (description "Email::Address implements a regex-based RFC 2822 parser that
 locates email addresses in strings and returns a list of Email::Address
-objects found.  Alternatively you may construct objects manually.")
+objects found.  It is recommended to use Email::Address::XS instead.")
     (license license:perl-license)))
 
 (define-public perl-email-address-xs
   (package
     (name "perl-email-address-xs")
-    (version "1.04")
+    (version "1.05")
     (source
     (origin
       (method url-fetch)
@@ -2480,7 +2501,7 @@ objects found.  Alternatively you may construct objects manually.")
                           "Email-Address-XS-" version ".tar.gz"))
       (sha256
        (base32
-        "0gjrrl81z3sfwavgx5kwjd87gj44mlnbbqsm3dgdv1xllw26spwr"))))
+         "05palicpx8mwdfscv97dxmawmvi6dffjrljhrlvi08371pqvf40m"))))
     (build-system perl-build-system)
     (home-page "https://metacpan.org/release/Email-Address-XS")
     (synopsis "Parse and format RFC 5322 email addresses and groups")
@@ -2494,7 +2515,7 @@ from Dovecot IMAP server.")
 (define-public perl-email-date-format
   (package
     (name "perl-email-date-format")
-    (version "1.005")
+    (version "1.008")
     (source
      (origin
        (method url-fetch)
@@ -2502,7 +2523,7 @@ from Dovecot IMAP server.")
                            "Email-Date-Format-" version ".tar.gz"))
        (sha256
         (base32
-         "012ivfwpnbl3wr50f9c6f4azhdlxnm31pdn72528g79v61z6372p"))))
+          "0kwb4nycnhr8s87bk3a1cfjc3bkkqmbm4gq053qrlx48zy1pqas3"))))
     (build-system perl-build-system)
     (home-page "https://metacpan.org/release/Email-Date-Format")
     (synopsis "Produce RFC 2822 date strings")
@@ -2513,7 +2534,7 @@ from Dovecot IMAP server.")
 (define-public perl-email-messageid
   (package
     (name "perl-email-messageid")
-    (version "1.406")
+    (version "1.408")
     (source
      (origin
        (method url-fetch)
@@ -2521,7 +2542,7 @@ from Dovecot IMAP server.")
                            "Email-MessageID-" version ".tar.gz"))
        (sha256
         (base32
-         "1f22sdnfq169qw1l0lg7y74pmiam7j9v95bggjnf3q4mygdmshpc"))))
+          "0g34qmnz052d9536a0snjnn0pkdd6zxiihy7kagb7ixiy17mng8z"))))
     (build-system perl-build-system)
     (home-page "https://metacpan.org/release/Email-MessageID")
     (synopsis "Generate world unique message-ids")
@@ -2532,7 +2553,7 @@ identify a message uniquely.")
 (define-public perl-email-mime
   (package
     (name "perl-email-mime")
-    (version "1.946")
+    (version "1.954")
     (source
      (origin
        (method url-fetch)
@@ -2540,8 +2561,10 @@ identify a message uniquely.")
                            "Email-MIME-" version ".tar.gz"))
        (sha256
         (base32
-         "0z1k3i0lzp2k421gc8f3wq0jbqflkbw2xqd2k7n7pmv56417kvk8"))))
+          "1ly47kxcwhdjg9g54sj4xd0pdf0clxa9hk9mqpn5lr2v8c0rpmkd"))))
     (build-system perl-build-system)
+    (native-inputs
+      (list perl-email-address-xs))
     (propagated-inputs
      (list perl-email-address
            perl-email-messageid
@@ -2561,7 +2584,7 @@ message.  Headers are decoded from MIME encoding.")
 (define-public perl-email-mime-contenttype
   (package
     (name "perl-email-mime-contenttype")
-    (version "1.022")
+    (version "1.028")
     (source
      (origin
        (method url-fetch)
@@ -2569,10 +2592,12 @@ message.  Headers are decoded from MIME encoding.")
                            "Email-MIME-ContentType-" version ".tar.gz"))
        (sha256
         (base32
-         "042kxhs3bp1ab9z0mbr1wy21ld4lxd6v2a2mmrashqnsn2075fws"))))
+          "1i25h7sp1hwg064ikarwgh9l28qggqig4kgxwk1xcziz8d3055g7"))))
     (build-system perl-build-system)
     (native-inputs
      (list perl-capture-tiny))
+    (propagated-inputs
+      (list perl-text-unidecode))
     (home-page "https://metacpan.org/release/Email-MIME-ContentType")
     (synopsis "Parse MIME Content-Type headers")
     (description "Email::MIME::ContentType parses a MIME Content-Type
@@ -2582,7 +2607,7 @@ header.")
 (define-public perl-email-mime-encodings
   (package
     (name "perl-email-mime-encodings")
-    (version "1.315")
+    (version "1.317")
     (source
      (origin
        (method url-fetch)
@@ -2590,10 +2615,11 @@ header.")
                            "Email-MIME-Encodings-" version ".tar.gz"))
        (sha256
         (base32
-         "0p5b8g9gh35m8fqrpx60g4bp98rvwd02n5b0vm9wh7mk0xah8wac"))))
+          "1bqbxbmy5agch7dnwlk2c94a6gshm4cy86r4vb2085cx39kl36ja"))))
     (build-system perl-build-system)
     (native-inputs
-     (list perl-capture-tiny))
+     (list perl-capture-tiny
+           perl-mime-base64))
     (home-page "https://metacpan.org/release/Email-MIME-Encodings")
     (synopsis "Unified interface to MIME encoding and decoding")
     (description "This module wraps MIME::Base64 and MIME::QuotedPrint.")
@@ -2602,25 +2628,25 @@ header.")
 (define-public perl-email-sender
   (package
     (name "perl-email-sender")
-    (version "1.300035")
+    (version "2.601")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://cpan/authors/id/R/RJ/RJBS/"
                            "Email-Sender-" version ".tar.gz"))
        (sha256
-        (base32 "0yfssp3rqdx1dmgvnygarzgkpkhqm28r5sd0gh87ksk8yxndhjql"))))
+        (base32 "0380bm2rnkralqy34ym0pzz4s7id2xi5abln9h8aas59c8ypibfy"))))
     (build-system perl-build-system)
     (native-inputs
-     (list perl-capture-tiny))
+     (list perl-capture-tiny perl-test-mockobject perl-sub-override))
     (propagated-inputs
      (list perl-email-abstract
-           perl-email-address
+           perl-email-address-xs
            perl-email-simple
-           perl-list-moreutils
            perl-module-runtime
-           perl-moo
+           perl-moo-2
            perl-moox-types-mooselike
+           perl-scalar-list-utils
            perl-sub-exporter
            perl-throwable
            perl-try-tiny))
@@ -2633,7 +2659,7 @@ Email::Send library.")
 (define-public perl-email-simple
   (package
     (name "perl-email-simple")
-    (version "2.216")
+    (version "2.218")
     (source
      (origin
        (method url-fetch)
@@ -2641,7 +2667,7 @@ Email::Send library.")
                            "Email-Simple-" version ".tar.gz"))
        (sha256
         (base32
-         "1m4brbjvalyp5kjqslqv4155dzwg977shxin208i7lc8236n6pyq"))))
+          "0vf98xh37a9krdapmy7cz8pblsdid4dj2gm4kkdm77g9zml1vkid"))))
     (build-system perl-build-system)
     (propagated-inputs
      (list perl-email-date-format))
@@ -2895,7 +2921,7 @@ Authentication-Results header seen in the wild.")
 (define-public perl-mail-dkim
   (package
     (name "perl-mail-dkim")
-    (version "1.20230630")
+    (version "1.20240923")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -2904,7 +2930,7 @@ Authentication-Results header seen in the wild.")
                      ".tar.gz"))
               (sha256
                (base32
-                "1m6ka1smkcmv682pgqh7npg4fzdfcn1654bs068sqhqgl29rm80g"))))
+                 "1vi0vrkp8mfrg5pkzrr0mf79chyxh6c7a0b4mnvbq8sdvksldpj5"))))
     (build-system perl-build-system)
     (propagated-inputs
      (list perl-crypt-openssl-rsa
@@ -4161,19 +4187,26 @@ the use of a local MTA such as Sendmail.")
        (method url-fetch)
        (uri (pypi-uri "afew" version))
        (sha256
-        (base32
-         "0wpfqbqjlfb9z0hafvdhkm7qw56cr9kfy6n8vb0q42dwlghpz1ff"))))
-    (build-system python-build-system)
-    (inputs
-     (list notmuch python-chardet python-dkimpy python-notmuch))
+        (base32 "0wpfqbqjlfb9z0hafvdhkm7qw56cr9kfy6n8vb0q42dwlghpz1ff"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-freezegun python-setuptools-scm))
+     (list python-freezegun
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (inputs
+     (list notmuch
+           python-chardet
+           python-dkimpy
+           python-notmuch))
     (home-page "https://github.com/afewmail/afew")
     (synopsis "Initial tagging script for notmuch mail")
-    (description "afew is an initial tagging script for notmuch mail.  It
-provides automatic tagging each time new mail is registered with notmuch.  It
-can add tags based on email headers or Maildir folders and can handle spam and
-killed threads.")
+    (description
+     "afew is an initial tagging script for notmuch mail.  It provides
+automatic tagging each time new mail is registered with notmuch.  It can add
+tags based on email headers or Maildir folders and can handle spam and killed
+threads.")
     (license license:isc)))
 
 (define-public pan

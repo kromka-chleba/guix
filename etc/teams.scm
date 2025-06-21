@@ -447,7 +447,8 @@ already exists.  Lookup team IDs among CURRENT-TEAMS."
   (team 'audio
         #:name "Audio team"
         #:description "Audio related packages."
-        #:scope (list "gnu/packages/audio.scm")))
+        #:scope (list "gnu/packages/audio.scm"
+                      "gnu/packages/xiph.scm")))
 
 (define-team bootstrap
   (team 'bootstrap
@@ -1253,6 +1254,11 @@ the \"texlive\" importer."
                        "khinsen")
   lisp)
 
+(define-member (person "Vinicius Monego"
+                       "monego@posteo.net"
+                       "monego")
+  python science)
+
 
 (define (find-team name)
   (or (hash-ref %teams (string->symbol name))
@@ -1417,7 +1423,12 @@ and REV-END, two git revision strings."
   (string-join (map (lambda (scope)
                       (format #f "~50a @guix/~a"
                               (if (regexp*? scope)
-                                  (regexp*-pattern scope)
+                                  (let ((regexp (regexp*-pattern scope)))
+                                    ;; Caret may not match as expected in
+                                    ;; 'CODEOWNERS' so drop it.
+                                    (if (string-prefix? "^" regexp)
+                                        (string-drop regexp 1)
+                                        regexp))
                                   (regexp-quote scope))
                               (team-id->forgejo-id (team-id team))))
                     (team-scope team))

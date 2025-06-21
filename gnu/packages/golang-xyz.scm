@@ -63,6 +63,8 @@
 ;;; Copyright © 2025 45mg <45mg.writes@gmail.com>
 ;;; Copyright © 2025 Daniel Ziltener <dziltener@lyrion.ch>
 ;;; Copyright © 2025 Formbi <formbi@protonmail.com>
+;;; Copyright © 2025 David Thompson <davet@gnu.org>
+;;; Copyright © 2025 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -851,6 +853,41 @@ Distance}.")
 http://tartarus.org/~martin/PorterStemmer/index.html.")
     (license license:expat)))
 
+(define-public go-github-com-alecaivazis-survey-v2
+  (package
+    (name "go-github-com-alecaivazis-survey-v2")
+    (version "2.3.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/AlecAivazis/survey")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0l3wqphqvm0qxv33pj9f1r72z5fln99vg735fcigv8k513m2aw9l"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/AlecAivazis/survey/v2"))
+    (native-inputs
+     (list go-github-com-creack-pty
+           go-github-com-hinshun-vt10x
+           go-github-com-netflix-go-expect
+           go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-kballard-go-shellquote
+           go-github-com-mattn-go-isatty
+           go-github-com-mgutz-ansi
+           go-golang-org-x-term
+           go-golang-org-x-text))
+    (home-page "https://github.com/AlecAivazis/survey")
+    (synopsis "Interactive and accessible terminal prompts for Go")
+    (description
+     "This package provides a library for building interactive and accessible
+prompts on terminals supporting ANSI escape sequences.")
+    (license license:expat)))
+
 (define-public go-github-com-alecthomas-chroma
   (package
     (name "go-github-com-alecthomas-chroma")
@@ -1299,6 +1336,30 @@ JSONMarshal/JSONUnmarshal to store/reload the Bloom filter.")
     ;; <http://creativecommons.org/publicdomain/zero/1.0/>
     ;; Dual licence: MIT (Expat) and CC0 1.0 UNIVERSAL.
     (license license:expat)))
+
+(define-public go-github-com-andreaskoch-go-fswatch
+  (package
+    (name "go-github-com-andreaskoch-go-fswatch")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/andreaskoch/go-fswatch")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0caikz1bbb2g9w8hyk7qvwixsy8dvc2gism10927q2cc1100mlr2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/andreaskoch/go-fswatch"))
+    (home-page "https://github.com/andreaskoch/go-fswatch")
+    (synopsis "File system watch library")
+    (description
+     "fswatch is a go library for watching file system changes to @emph{does not}
+depend on inotify.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-anmitsu-go-shlex
   (package
@@ -1825,13 +1886,9 @@ stored in a Go struct.")
     (arguments
      (list
       #:import-path "github.com/avast/retry-go"
+      #:test-flags #~(list "-skip" "TestMaxDelay")
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'disable-failing-tests
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                (substitute* (find-files "." "\\_test.go$")
-                  (("TestMaxDelay") "OffTestMaxDelay")))))
           (add-after 'unpack 'remove-examples
             (lambda* (#:key import-path #:allow-other-keys)
               (delete-file-recursively
@@ -1860,19 +1917,9 @@ strategies, such as fixed delay, backoff delay, and random delay.")
        (sha256
         (base32 "01mwrzjh2y3xignkivx8kaghjs3gwb3z89zqgxjfaslslazc863b"))))
     (arguments
-     (list
-      #:import-path "github.com/avast/retry-go/v3"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'disable-failing-tests
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" import-path)
-                (substitute* (find-files "." "\\_test.go$")
-                  (("TestMaxDelay") "OffTestMaxDelay")))))
-          (add-after 'unpack 'remove-examples
-            (lambda* (#:key import-path #:allow-other-keys)
-              (delete-file-recursively
-               (string-append "src/" import-path "/examples")))))))))
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-avast-retry-go)
+       ((#:import-path _) "github.com/avast/retry-go/v3")))))
 
 (define-public go-github-com-avast-retry-go-v4
   (package
@@ -1889,14 +1936,9 @@ strategies, such as fixed delay, backoff delay, and random delay.")
        (sha256
         (base32 "09gs4wmkq7ragyf2xd0h6j8f9xqq66cwa95kwp5qdwz3wwv9xq1b"))))
     (arguments
-     (list
-      #:import-path "github.com/avast/retry-go/v4"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'remove-examples
-            (lambda* (#:key import-path #:allow-other-keys)
-              (delete-file-recursively
-               (string-append "src/" import-path "/examples")))))))))
+     (substitute-keyword-arguments
+         (package-arguments go-github-com-avast-retry-go)
+       ((#:import-path _) "github.com/avast/retry-go/v4")))))
 
 (define-public go-github-com-axiomhq-hyperloglog
   (package
@@ -3604,6 +3646,130 @@ cgroup uses the OCI runtime-spec found
            go-golang-org-x-sys
            go-google-golang-org-protobuf))))
 
+(define-public go-github-com-containerd-containerd
+  (package
+    (name "go-github-com-containerd-containerd")
+    (version "1.7.12")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/containerd/containerd")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jwrdiglhqxccmmiq33li3myrb409mvskvcghli411fs9r46lxm3"))
+       (snippet
+        #~(begin
+            (use-modules (guix build utils))
+            (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+
+    ;; For the forgejo-runner build, we only need the pkg/userns module which
+    ;; doesn't require the massive dependency tree for all of containerd, so
+    ;; we cheat and skip the build and avoid having to package a large number
+    ;; of additional dependencies.
+    (arguments
+     (list
+      #:import-path "github.com/containerd/containerd"
+      #:skip-build? #t
+      #:tests? #f))
+    ;; (propagated-inputs
+    ;;  (list go-tags-cncf-io-container-device-interface
+    ;;        go-k8s-io-utils
+    ;;        go-k8s-io-klog-v2
+    ;;        go-k8s-io-cri-api
+    ;;        go-k8s-io-component-base
+    ;;        go-k8s-io-client-go
+    ;;        go-k8s-io-apiserver
+    ;;        go-k8s-io-apimachinery
+    ;;        go-k8s-io-api
+    ;;        go-google-golang-org-protobuf
+    ;;        go-google-golang-org-grpc
+    ;;        go-google-golang-org-genproto-googleapis-rpc
+    ;;        go-google-golang-org-genproto
+    ;;        go-golang-org-x-sys
+    ;;        go-golang-org-x-sync
+    ;;        go-golang-org-x-net
+    ;;        go-go-opentelemetry-io-otel-trace
+    ;;        go-go-opentelemetry-io-otel-sdk
+    ;;        go-go-opentelemetry-io-otel-exporters-otlp-otlptrace-otlptracehttp
+    ;;        go-go-opentelemetry-io-otel-exporters-otlp-otlptrace-otlptracegrpc
+    ;;        go-go-opentelemetry-io-otel-exporters-otlp-otlptrace
+    ;;        go-go-opentelemetry-io-otel
+    ;;        go-go-opentelemetry-io-contrib-instrumentation-net-http-otelhttp
+    ;;        go-go-opentelemetry-io-contrib-instrumentation-google-golang-org-grpc-otelgrpc
+    ;;        go-go-etcd-io-bbolt
+    ;;        go-github-com-vishvananda-netlink
+    ;;        go-github-com-urfave-cli
+    ;;        go-github-com-tchap-go-patricia-v2
+    ;;        go-github-com-stretchr-testify
+    ;;        go-github-com-sirupsen-logrus
+    ;;        go-github-com-prometheus-client-golang
+    ;;        go-github-com-pelletier-go-toml
+    ;;        go-github-com-opencontainers-selinux
+    ;;        go-github-com-opencontainers-runtime-tools
+    ;;        go-github-com-opencontainers-runtime-spec
+    ;;        go-github-com-opencontainers-image-spec
+    ;;        go-github-com-opencontainers-go-digest
+    ;;        go-github-com-moby-sys-userns
+    ;;        go-github-com-moby-sys-user
+    ;;        go-github-com-moby-sys-symlink
+    ;;        go-github-com-moby-sys-signal
+    ;;        go-github-com-moby-sys-sequential
+    ;;        go-github-com-moby-sys-mountinfo
+    ;;        go-github-com-moby-locker
+    ;;        go-github-com-minio-sha256-simd
+    ;;        go-github-com-klauspost-compress
+    ;;        go-github-com-intel-goresctrl
+    ;;        go-github-com-grpc-ecosystem-go-grpc-prometheus
+    ;;        go-github-com-grpc-ecosystem-go-grpc-middleware
+    ;;        go-github-com-google-uuid
+    ;;        go-github-com-google-go-cmp
+    ;;        go-github-com-fsnotify-fsnotify
+    ;;        go-github-com-emicklei-go-restful-v3
+    ;;        go-github-com-docker-go-units
+    ;;        go-github-com-docker-go-metrics
+    ;;        go-github-com-docker-go-events
+    ;;        go-github-com-distribution-reference
+    ;;        go-github-com-davecgh-go-spew
+    ;;        go-github-com-coreos-go-systemd-v22
+    ;;        go-github-com-containernetworking-plugins
+    ;;        go-github-com-containernetworking-cni
+    ;;        go-github-com-containerd-zfs
+    ;;        go-github-com-containerd-typeurl-v2
+    ;;        go-github-com-containerd-ttrpc
+    ;;        go-github-com-containerd-platforms
+    ;;        go-github-com-containerd-nri
+    ;;        go-github-com-containerd-log
+    ;;        go-github-com-containerd-imgcrypt
+    ;;        go-github-com-containerd-go-runc
+    ;;        go-github-com-containerd-go-cni
+    ;;        go-github-com-containerd-fifo
+    ;;        go-github-com-containerd-errdefs
+    ;;        go-github-com-containerd-continuity
+    ;;        go-github-com-containerd-containerd-api
+    ;;        go-github-com-containerd-console
+    ;;        go-github-com-containerd-cgroups-v3
+    ;;        go-github-com-containerd-btrfs-v2
+    ;;        go-github-com-containerd-aufs
+    ;;        go-github-com-microsoft-hcsshim
+    ;;        go-github-com-microsoft-go-winio
+    ;;        go-github-com-adamkorcz-go-118-fuzz-build
+    ;;        go-github-com-adalogics-go-fuzz-headers
+    ;;        go-dario-cat-mergo))
+    (home-page "https://github.com/containerd/containerd")
+    (synopsis "Container runtime support daemon")
+    (description
+     "containerd is a container runtime with an emphasis on simplicity,
+robustness, and portability.  It is available as a daemon, which can manage
+the complete container lifecycle of its host system: image transfer and
+storage, container execution and supervision, low-level storage and network
+attachments, etc.")
+    (license license:asl2.0)
+    ;; Don't expose since it's a partial package.
+    (properties '((hidden? . #t)))))
+
 (define-public go-github-com-containerd-console
   (package
     (name "go-github-com-containerd-console")
@@ -4180,6 +4346,34 @@ Features:
 @item executable as a standalone language/REPL
 @item use cases: rules engine, state machine, data pipeline, transpiler
 @end itemize")
+    (license license:expat)))
+
+(define-public go-github-com-danieljoos-wincred
+  (package
+    (name "go-github-com-danieljoos-wincred")
+    (version "1.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/danieljoos/wincred")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cgf74srid92gzkd094mwp0jvakgi0a22a8hpl7v9w28a9d61bf3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/danieljoos/wincred"))
+    (propagated-inputs (list go-golang-org-x-sys
+                             go-github-com-stretchr-testify))
+    (home-page "https://github.com/danieljoos/wincred")
+    (synopsis "Go interface to Windows Credentials Management")
+    (description
+     "Package wincred provides primitives for accessing the Windows Credentials
+Management API. This includes functions for retrieval, listing and storage of
+credentials as well as Go structures for convenient access to the credential
+data.")
     (license license:expat)))
 
 (define-public go-github-com-dannav-hhmmss
@@ -4800,7 +4994,7 @@ on throughput and hit ratio performance.")
 (define-public go-github-com-dicedb-dicedb-go
   (package
     (name "go-github-com-dicedb-dicedb-go")
-    (version "1.0.3")
+    (version "1.0.11")
     (source
      (origin
        (method git-fetch)
@@ -4809,7 +5003,7 @@ on throughput and hit ratio performance.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18hfymwvp0mdnw1ssxnh58wvg4ifbjq4yhxvzfnw1f70rnhv01y3"))))
+        (base32 "14n3j88asnx52hy8ykg6xx2cpshcl5w5mlp5qvcjbgrrmw29c0s9"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -4846,6 +5040,32 @@ on throughput and hit ratio performance.")
     (description
      "This package provides a library for @acronym{BOM, Unicode Byte Order
 Mark} detection.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-distribution-reference
+  (package
+    (name "go-github-com-distribution-reference")
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/distribution/reference")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zj2lmmznlrxdrrfmdsx7fgrmi64bj1jqz6r0ar35qmkx8pjvgl2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/distribution/reference"))
+    (propagated-inputs (list go-github-com-opencontainers-go-digest))
+    (home-page "https://github.com/distribution/reference")
+    (synopsis "Handle references to container images held in registries")
+    (description
+     "Package reference provides a general type to represent any way of referencing
+images within the registry.  Its main purpose is to abstract tags and digests
+(content-addressable hash).")
     (license license:asl2.0)))
 
 (define-public go-github-com-disintegration-imaging
@@ -4973,6 +5193,40 @@ GNU extensions to the POSIX recommendations for command-line options}.  This
 is an actively maintained fork of @url{https://github.com/ogier/pflag}.")
     (license license:bsd-3)))
 
+(define-public go-github-com-docker-cli
+  (package
+    (name "go-github-com-docker-cli")
+    (version "25.0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/docker/cli")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gaz2pkivky94z8148aa27kdxn548j3r96xa3a9xfqpi6b1rhy27"))
+       (snippet
+        #~(begin
+            (use-modules (guix build utils))
+            (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/docker/cli"
+      #:embed-files #~(list ".*\\.json")
+      #:skip-build? #t
+      #:tests? #f))
+    (propagated-inputs (list go-github-com-mitchellh-mapstructure
+                             go-gopkg-in-yaml-v2
+                             go-github-com-google-shlex
+                             go-github-com-docker-docker-credential-helpers))
+    (home-page "https://github.com/docker/cli")
+    (synopsis "Docker command-line interface")
+    (description "This repository is the home of the Docker command-line
+interface (CLI).")
+    (license license:asl2.0)))
+
 (define-public go-github-com-docker-distribution
   (package
     (name "go-github-com-docker-distribution")
@@ -5015,6 +5269,75 @@ is an actively maintained fork of @url{https://github.com/ogier/pflag}.")
 store, and deliver content.  It contains Docker Registry 2.0 and libraries to
 interact with distribution components.")
     (license license:asl2.0)))
+
+(define-public go-github-com-docker-docker
+  (package
+    (name "go-github-com-docker-docker")
+    (version "25.0.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/moby/moby")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0852mrvs8602azqzx2zhb1xl0vs7baw8qfmkgrl625xm5hxrigvq"))
+       (snippet
+        #~(begin (use-modules (guix build utils))
+                 (delete-file-recursively "vendor")))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/docker/docker"
+      #:skip-build? #t
+      #:tests? #f))
+    (propagated-inputs (list go-github-com-docker-go-units
+                             go-github-com-containerd-containerd
+                             go-github-com-containerd-log
+                             go-github-com-gogo-protobuf
+                             go-go-opentelemetry-io-otel
+                             go-github-com-moby-sys-user
+                             go-github-com-moby-sys-userns
+                             go-github-com-moby-sys-sequential
+                             go-go-opentelemetry-io-contrib
+                             go-github-com-klauspost-compress
+                             go-github-com-moby-docker-image-spec))
+    (home-page "https://github.com/docker/docker")
+    (synopsis "The Moby Project")
+    (description
+     "Moby is an open-source project created by Docker to enable and accelerate
+software containerization.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-docker-docker-credential-helpers
+  (package
+    (name "go-github-com-docker-docker-credential-helpers")
+    (version "0.9.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/docker/docker-credential-helpers")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0y9chbmp70sjz88j4yy8p68f8n9x2rl9r4z25kd77s31cbdkg707"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/docker/docker-credential-helpers"
+      #:skip-build? #t
+      #:tests? #f))
+    (propagated-inputs (list go-github-com-keybase-go-keychain
+                             go-github-com-danieljoos-wincred))
+    (home-page "https://github.com/docker/docker-credential-helpers")
+    (synopsis
+     "Keep Docker login credentials safe by storing in platform keystores")
+    (description
+     "docker-credential-helpers is a suite of programs to use native stores to keep
+Docker credentials safe.")
+    (license license:expat)))
 
 (define-public go-github-com-docker-go-units
   (package
@@ -8215,6 +8538,32 @@ anniversaries.")
 @end itemize")
     (license license:bsd-3)))
 
+(define-public go-github-com-hinshun-vt10x
+  (package
+    (name "go-github-com-hinshun-vt10x")
+    (version "0.0.0-20220301184237-5011da428d02")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hinshun/vt10x")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0pzdwwbzxrsqjb8xfzmfpkyb1gbcszrrimr70cz75jjk2535r26b"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/hinshun/vt10x"))
+    (home-page "https://github.com/hinshun/vt10x")
+    (synopsis "vt10x terminal emulation backend")
+    (description
+     "Package terminal is a vt10x terminal emulation backend, influenced
+largely by st, rxvt, xterm, and iTerm as reference.  Use it for terminal
+muxing, a terminal emulation frontend, or wherever else you need terminal
+emulation.")
+    (license license:expat)))
+
 (define-public go-github-com-hodgesds-perf-utils
   (package
     (name "go-github-com-hodgesds-perf-utils")
@@ -10021,6 +10370,35 @@ Goroutine-safe connections)
 @end itemize")
     (license license:bsd-2)))
 
+(define-public go-github-com-keybase-go-keychain
+  (package
+    (name "go-github-com-keybase-go-keychain")
+    (version "0.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/keybase/go-keychain")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0gkd839h8xnfiv0g52hm4p9snrcfgrnczrqf5wxr61sgg2w8h3y1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/keybase/go-keychain"
+      ;; Test suite tries to talk to dbus.
+      #:tests? #f))
+    (propagated-inputs (list go-golang-org-x-crypto
+                             go-github-com-stretchr-testify
+                             go-github-com-keybase-dbus))
+    (home-page "https://github.com/keybase/go-keychain")
+    (synopsis "Go library to access the keychain")
+    (description
+     "This package provides a library for accessing the keychain, typically
+the @code{SecretService} D-Bus interface on GNU/Linux.")
+    (license license:expat)))
+
 (define-public go-github-com-keybase-go-ps
   (package
     (name "go-github-com-keybase-go-ps")
@@ -11266,6 +11644,30 @@ ways.  It is a Go implementation of some string manipulation libraries of Java
 Apache Commons.")
     (license license:asl2.0)))
 
+(define-public go-github-com-masterminds-semver
+  (package
+    (name "go-github-com-masterminds-semver")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Masterminds/semver")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1i169xscsxsh8lsw8bz2apnsqixld37xdnfh36i30xy5wnf0iwfx"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/Masterminds/semver"))
+    (home-page "https://github.com/Masterminds/semver")
+    (synopsis "@code{semver} helps to work with semantic versions")
+    (description
+     "Package semver provides the ability to work with
+@url{https://semver.org, Semantic Versions} in Go.")
+    (license license:expat)))
+
 (define-public go-github-com-masterminds-semver-v3
   (package
     (name "go-github-com-masterminds-semver-v3")
@@ -12052,6 +12454,32 @@ parsing.")
      "@code{geohash} provides encoding and decoding of string and integer geohashes.")
     (license license:expat)))
 
+(define-public go-github-com-moby-docker-image-spec
+  (package
+    (name "go-github-com-moby-docker-image-spec")
+    (version "1.3.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/moby/docker-image-spec")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06r6z8s0rvl66n626q41hmqgnnlpsqdblj32fjq3r0qsccp8s167"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/moby/docker-image-spec"
+      #:skip-build? #t
+      #:tests? #f))
+    (propagated-inputs (list go-github-com-opencontainers-image-spec))
+    (home-page "https://github.com/moby/docker-image-spec")
+    (synopsis "Docker Image Specification v1.")
+    (description
+     "This directory contains documents about Docker Image Specification v1.X.")
+    (license license:asl2.0)))
+
 (define-public go-github-com-moby-sys-mountinfo
   (package
     (name "go-github-com-moby-sys-mountinfo")
@@ -12083,6 +12511,84 @@ parsing.")
      "Package mountinfo provides a set of functions to retrieve information
 about OS mounts as seen by the current process is available from
 @code{/proc/self/mountinfo}.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-moby-patternmatcher
+  (package
+    (name "go-github-com-moby-patternmatcher")
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/moby/patternmatcher")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1s77wpsc6szr9qdpnpg9q65ibgjgj4b2d12hwf6wrwb39grcnbcz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/moby/patternmatcher"))
+    (home-page "https://github.com/moby/patternmatcher")
+    (synopsis "File name pattern matching")
+    (description
+     "This Go library provides facilities for pattern matching on file
+names.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-moby-sys-sequential
+  (package
+    (name "go-github-com-moby-sys-sequential")
+    (version "0.6.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/moby/sys")
+             (commit (go-version->git-ref version
+                                          #:subdir "sequential"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1i1phx1kk9qa4jf1i1nl23d3f6k9fn2w46274cl76cqw9hjqg868"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/moby/sys/sequential"
+      #:unpack-path "github.com/moby/sys"))
+    (propagated-inputs (list go-golang-org-x-sys))
+    (home-page "https://github.com/moby/sys")
+    (synopsis "Go bindings to the Windows sequential file interface")
+    (description
+     "Package sequential provides a set of functions for managing sequential files on
+Windows.")
+    (license license:asl2.0)))
+
+(define-public go-github-com-moby-sys-user
+  (package
+    (name "go-github-com-moby-sys-user")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/moby/sys")
+             (commit (go-version->git-ref version
+                                          #:subdir "user"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1clr9x412gr1cq3jxf9lxblh9pkf8c42gz57wr14miy0nqsimx7j"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/moby/sys/user"
+      #:unpack-path "github.com/moby/sys"))
+    (propagated-inputs (list go-golang-org-x-sys))
+    (home-page "https://github.com/moby/sys")
+    (synopsis "Unix user and group access from Go")
+    (description
+     "This Go library provides facilities to access @file{/etc/passwd} and
+related files.")
     (license license:asl2.0)))
 
 (define-public go-github-com-moby-sys-userns
@@ -12828,6 +13334,34 @@ very fast, and tries to be entropy pool friendly.")
      "Package strftime provides strftime/strptime compatible time formatting
 and parsing.")
     (license license:expat)))
+
+(define-public go-github-com-netflix-go-expect
+  (package
+    (name "go-github-com-netflix-go-expect")
+    (version "0.0.0-20220104043353-73e0943537d2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Netflix/go-expect")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zkvhnc4ii6ygvcsj54ng0kql26rnny7l3hy1w61g88mxjsww1b9"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/Netflix/go-expect"))
+    (propagated-inputs (list go-github-com-stretchr-testify
+                             go-github-com-creack-pty))
+    (home-page "https://github.com/Netflix/go-expect")
+    (synopsis "Control applications with an Expect-like interface in Go")
+    (description
+     "Package expect provides an expect-like interface to automate control of
+applications.  It is unlike expect in that it does not spawn or manage process
+lifecycle.  This package only focuses on expecting output and sending input
+through it's psuedoterminal.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-neurosnap-sentences
   (package
@@ -16302,6 +16836,35 @@ document.")
      "This package provides a code generation tool for creating methods to
 serialize and de-serialize Go data structures to and from data interchange
 format - @url{https://en.wikipedia.org/wiki/MessagePack,MessagePack}.")
+    (license license:expat)))
+
+(define-public go-github-com-timshannon-bolthold
+  (package
+    (name "go-github-com-timshannon-bolthold")
+    (version "0.0.0-20240314194003-30aac6950928")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/timshannon/bolthold")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "107r4nwhvpdp0n9b5fls1lw8z8qsiajiykkpjs7947nrbc07ij1j"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/timshannon/bolthold"
+      ;; Test suite fails.
+      #:tests? #f))
+    (propagated-inputs (list go-go-etcd-io-bbolt))
+    (home-page "https://github.com/timshannon/bolthold")
+    (synopsis "Indexing and querying on top of a Bold database")
+    (description
+     "Package bolthold is an indexing and querying layer on top of a Bolt
+database. The goal is to allow easy, persistent storage and retrieval of Go
+types.  BoltDB is an embedded key-value store, and bolthold servers a similar
+use case however with a higher level interface for common uses of BoltDB.")
     (license license:expat)))
 
 (define-public go-github-com-tklauser-go-sysconf
@@ -20230,6 +20793,38 @@ library.")
      (string-append (package-description go-github-com-alecthomas-chroma-v2)
                     "  This package provides an command line interface (CLI)
 tool."))))
+
+(define-public go-connectrpc-com-connect
+  (package
+    (name "go-connectrpc-com-connect")
+    (version "1.18.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/connectrpc/connect-go")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0a6rzp57srhyf66jri62gfsj4ndpfxgb9ln15qdpfwv0xvcffz63"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "connectrpc.com/connect"
+      ;; Needs additional dependencies..
+      #:tests? #f))
+    (propagated-inputs (list go-google-golang-org-protobuf
+                             go-golang-org-x-net
+                             go-github-com-google-go-cmp))
+    (home-page "https://connectrpc.com/connect")
+    (synopsis "@acronym{RPC, Remote procedure call} framework built on
+Protocol Buffers")
+    (description
+     "Package @code{connect} is a slim RPC framework built on Protocol Buffers
+and @code{net/http}.  In addition to supporting its own protocol, Connect
+handlers and clients are wire-compatible with gRPC and gRPC-Web, including
+streaming.")
+    (license license:asl2.0)))
 
 (define-public go-csv2table
   (package/inherit go-github-com-olekukonko-tablewriter

@@ -164,6 +164,7 @@
 ;;; Copyright © 2025 Dariqq <dariqq@posteo.net>
 ;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;; Copyright © 2025, Cayetano Santos <csantosb@inventati.org>
+;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -552,6 +553,29 @@ using NumPy-like idioms.")
 line drawing algorithm}.")
     (license license:expat)))
 
+(define-public python-calmjs-parse
+  (package
+    (name "python-calmjs-parse")
+    (version "1.3.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/calmjs/calmjs.parse/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "08dmi4chamk5dbdpvrc0nb09iybfhj3wqwxgffiqnkj7030qhqb8"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (propagated-inputs (list python-ply))
+    (home-page "https://github.com/calmjs/calmjs.parse/")
+    (synopsis "Parsers for ECMA standards")
+    (description
+     "@code{Calmjs-parse} is a collection of helper libraries for
+understanding ECMA script.")
+    (license license:expat)))
+
 (define-public python-couleur
   (package
     (name "python-couleur")
@@ -751,6 +775,52 @@ part of @url{https://github.com/hgrecco/pint, Pint}, the Python units
 package. ")
     (license license:bsd-3)))
 
+(define-public python-huey
+  (package
+    (name "python-huey")
+    (version "2.5.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/coleifer/huey")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "189sin0k9imiddm10xa5llql3953p1jv6dqgxm78hy18qrlbkz02"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-which
+            (lambda _
+              (substitute* "huey/tests/test_kt_huey.py"
+                (("^has_ktserver = sp.call\\(\\['which', 'ktserver'\\].*$")
+                 "has_ktserver = False"))))
+          (add-before 'check 'pre-check
+            (lambda _ (spawn "redis-server" '("redis-server")))))))
+    (native-inputs (list python-setuptools python-wheel redis tzdata-for-tests))
+    (propagated-inputs (list python-redis))
+    (home-page "https://huey.readthedocs.io")
+    (synopsis "Lightweight task queue for Python")
+    (description
+     "Huey is a lightweight task queue for Python applications.  Huey
+supports:
+@itemize
+@item Redis, SQLite, file-system, or in-memory storage
+@item multi-process, multi-thread or greenlet task execution models
+@item scheduling tasks to execute at a given time, or after a given delay
+@item scheduling recurring tasks, like a crontab
+@item automatically retrying tasks that fail
+@item task prioritization
+@item task result storage
+@item task expiration
+@item task locking
+@item task pipelines and chains
+@end itemize")
+    (license license:expat)))
+
 (define-public python-jsonpath-ng
   (package
     (name "python-jsonpath-ng")
@@ -853,6 +923,31 @@ your terminal.")
      "@code{pyxDamerauLevenshtein} implements the Damerau-Levenshtein (DL)
 edit distance algorithm for Python in Cython for high performance.")
     (license license:bsd-3)))
+
+(define-public python-senf
+  (package
+    (name "python-senf")
+    (version "1.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "senf" version))
+       (sha256
+        (base32 "1lcccdb4hrfksbr8vy4nljial85six1w39l5xlw16m4qx884anch"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      '(list "--deselect" "tests/test_api.py::test_getuserdir"
+             "--deselect" "tests/test_api.py::test_expanduser_user")))
+    (native-inputs (list python-setuptools python-wheel python-pytest))
+    (home-page "https://github.com/quodlibet/senf")
+    (synopsis "Text, bytes and paths conversion functions for Python")
+    (description "Senf introduces a new platform native string type called
+fsnative.  It adds functions to convert text, bytes and paths to and from that
+new type and helper functions to integrate it nicely with the Python
+stdlib.")
+    (license license:expat)))
 
 (define-public python-shxparser
   (package
@@ -11826,7 +11921,8 @@ used as the basis for third-party packaging tools.")
       (sha256
        (base32
         "0lx15kcbby9zisx33p2h5hgakgwh2bvh0ibag8z0px4j6ifhs41x"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://launchpad.net/python-distutils-extra/")
     (synopsis "Enhancements to Python's distutils")
     (description
@@ -14797,16 +14893,9 @@ features useful for text console applications.")
        (sha256
         (base32
          "0y9k86p31mlr9rwnrbljvfgl183r5j60yaj0r3scljn1m0mlg8qg"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "pytest" "-vv")))))))
+    (build-system pyproject-build-system)
     (propagated-inputs (list python-urwid))
-    (native-inputs (list python-pytest))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/rr-/urwid_readline")
     (synopsis "Text input widget for urwid that supports readline shortcuts")
     (description
@@ -16709,6 +16798,43 @@ functionalities with some extras.")
 pseudo terminal (pty), and interact with both the process and its pty.")
     (license license:isc)))
 
+(define-public python-configshell-fb
+  (package
+    (name "python-configshell-fb")
+    (version "1.1.30")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "configshell-fb" version))
+       ;; XXX: Snippet below is required because on v1.1.30 the source code
+       ;; has configshell_fb as softlink to configshell and guix
+       ;; pyproject-build-system doesn't work with symlinks very well.
+       ;; 
+       ;; This package is only used in spdk for now and it's crucial to keep
+       ;; it locked on version and keep the snipped for spdk to build
+       ;; successfully.
+       (snippet #~(begin
+                    (use-modules (guix build utils))
+                    (delete-file "setup.py")
+                    (delete-file-recursively "configshell_fb")
+                    (rename-file "configshell" "configshell_fb")))
+       (sha256
+        (base32 "1zkhf62qsfcbxwzlc62r6qx37wwyscppc469rlm45zy9lzmbgxj1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ;; this package has no tests
+    (native-inputs
+     (list python-setuptools
+           python-six
+           python-wheel))
+    (propagated-inputs
+     (list python-pyparsing))
+    (home-page "https://github.com/open-iscsi/configshell-fb")
+    (synopsis "Framework to implement simple but nice CLIs")
+    (description
+     "This package provides a framework to implement simple but nice CLIs.")
+    (license license:asl2.0)))
+
 (define-public python-crccheck
   (package
     (name "python-crccheck")
@@ -16826,13 +16952,14 @@ blocks or callables with two context managers and two decorators.")
   (package
     (name "python-timeout-decorator")
     (version "0.5.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "timeout-decorator" version))
-              (sha256
-               (base32
-                "1mxk2qyydhzncm93z08kvj5ssxq3fr2n7pkrrji28nqwvdc2ybva"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "timeout-decorator" version))
+       (sha256
+        (base32 "1mxk2qyydhzncm93z08kvj5ssxq3fr2n7pkrrji28nqwvdc2ybva"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/pnpnpn/timeout-decorator")
     (synopsis "Timeout decorator")
     (description "This package provides a decorator that raises an error
@@ -23837,11 +23964,9 @@ etc.")
        (uri (pypi-uri "entrypoint2" version))
        (sha256
         (base32 "1qyxq54r2fbh09ab5sffbxajy8arbk6czxz5lq3ccr9qrypw6w27"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:test-target "pytest"))
-    (native-inputs
-     (list python-easyprocess python-pytest python-pytest-runner))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-easyprocess python-pytest python-pytest-runner
+                         python-setuptools python-wheel))
     (home-page "https://github.com/ponty/entrypoint2")
     (synopsis "Command-line interface for Python modules")
     (description
@@ -25602,27 +25727,6 @@ instead of servers and network commands.")
     (description "Constantly is a Python library that provides symbolic
      constant support.  It includes collections and constants with text, numeric,
      and bit flag values.")
-    (license license:expat)))
-
-(define-public python-attrdict3
-  (package
-    (name "python-attrdict3")
-    (version "2.0.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "attrdict3" version))
-              (sha256
-               (base32
-                "1s2z6c9jam5azm746l49wsqsyi29zbbrknq1axsw230jl4f1fk00"))))
-    (build-system python-build-system)
-    ;; The package is no longer maintained and tests need some work.
-    (arguments '(#:tests? #f))
-    (propagated-inputs (list python-six))
-    (home-page "https://github.com/pirofti/AttrDict3")
-    (synopsis "Attribute-style access dictionaries")
-    (description
-     "This package provides mapping objects whose elements can be accessed
-both as keys and as attributes.")
     (license license:expat)))
 
 (define-public python-attrs
@@ -27662,27 +27766,21 @@ Time} values as well as an event scheduler.")
 (define-public python-semver
   (package
     (name "python-semver")
-    (version "2.9.0")
+    (version "3.0.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "semver" version))
        (sha256
-        (base32
-         "183kg1rhzz3hqizvphkd8hlbf1zxfx8737zhfkmqzxi71jmdw7pd"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      (delete-file "setup.cfg")
-                      (invoke "py.test"))))))
-    (native-inputs
-     (list python-pytest))
+        (base32 "00lnb1mpppgq041kwcbg405rqsi2mzl8dw1s0c8hmvd5hk2xiixg"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-pytest-cov python-setuptools
+                         python-wheel))
     (home-page "https://github.com/k-bx/python-semver")
     (synopsis "Python helper for Semantic Versioning")
-    (description "This package provides a Python library for
-@url{Semantic Versioning, http://semver.org/}.")
+    (description
+     "This package provides a Python library for @url{Semantic Versioning,
+http://semver.org/}.")
     (license license:bsd-3)))
 
 (define-public python-pyro4
@@ -29271,15 +29369,18 @@ identifying what the file is.")
        (method url-fetch)
        (uri (pypi-uri "tldextract" version))
        (sha256
-        (base32
-         "1wac4yvcpgqjvls770mfx165amvy7gr00nnd2w24bqqwyamj9kdd"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-pytest python-responses python-setuptools-scm))
-    (propagated-inputs
-     (list python-filelock python-idna python-requests python-requests-file))
-    (home-page
-     "https://github.com/john-kurkowski/tldextract")
+        (base32 "1wac4yvcpgqjvls770mfx165amvy7gr00nnd2w24bqqwyamj9kdd"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list nss-certs-for-test
+                         python-pytest
+                         python-pytest-mock
+                         python-responses
+                         python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
+    (propagated-inputs (list python-filelock python-idna python-requests
+                             python-requests-file))
+    (home-page "https://github.com/john-kurkowski/tldextract")
     (synopsis
      "Separate the TLD from the registered domain and subdomains of a URL")
     (description
@@ -30454,11 +30555,10 @@ on regular expressions.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1kqipkbdaw5s1xg0gi29awm03vp1x8dz24pjidgxagvkvrjpzhi7"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-six))
+        (base32 "1kqipkbdaw5s1xg0gi29awm03vp1x8dz24pjidgxagvkvrjpzhi7"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-six))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/rholder/retrying")
     (synopsis "Library for adding retry behavior")
     (description "Retrying is a general-purpose retrying library to simplify
@@ -35409,44 +35509,43 @@ CMake.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0j719kld4dr85d9lxn0d0b6156mcy09jm7arssfp2n3j6hmjssci"))))
-    (build-system python-build-system)
+        (base32 "0j719kld4dr85d9lxn0d0b6156mcy09jm7arssfp2n3j6hmjssci"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-dlopen-paths
-          (lambda* (#:key inputs  #:allow-other-keys)
-            (substitute* "Screenkey/xlib.py"
-              (("libX11.so.6")
-               (search-input-file inputs "lib/libX11.so.6")))
-            (substitute* "Screenkey/xlib.py"
-              (("libXtst.so.6")
-               (search-input-file inputs "lib/libXtst.so.6")))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-dlopen-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "Screenkey/xlib.py"
+                (("libX11.so.6")
+                 (search-input-file inputs "lib/libX11.so.6")))
+              (substitute* "Screenkey/xlib.py"
+                (("libXtst.so.6")
+                 (search-input-file inputs "lib/libXtst.so.6")))))
           (add-after 'install 'wrap-screenkey
-            (lambda* (#:key outputs #:allow-other-keys)
-              (wrap-program
-                  (string-append (assoc-ref outputs "out") "/bin/screenkey")
-                `("GUIX_PYTHONPATH" ":" prefix (,(getenv "GUIX_PYTHONPATH")))
-                `("GI_TYPELIB_PATH"
-                  ":" prefix (,(getenv "GI_TYPELIB_PATH")))))))))
-    (inputs
-     (list bash-minimal
-           gtk+
-           libx11
-           libxtst
-           python-babel
-           python-dbus-python
-           python-distutils-extra
-           python-pycairo
-           python-pygobject
-           python-setuptools-git
-           python-tokenize-rt))
+            (lambda _
+              (wrap-program (string-append #$output "/bin/screenkey")
+                `("GUIX_PYTHONPATH" ":" prefix
+                  (,(getenv "GUIX_PYTHONPATH")))
+                `("GI_TYPELIB_PATH" ":" prefix
+                  (,(getenv "GI_TYPELIB_PATH")))))))))
+    (inputs (list bash-minimal
+                  gtk+
+                  libx11
+                  libxtst
+                  python-babel
+                  python-dbus-python
+                  python-pycairo
+                  python-pygobject
+                  python-setuptools
+                  python-setuptools-git
+                  python-tokenize-rt
+                  python-wheel))
     (home-page "https://www.thregr.org/~wavexx/software/screenkey/")
-    (synopsis
-      "Screencast tool to display pressed keys")
+    (synopsis "Screencast tool to display pressed keys")
     (description
-      "Screenkey is a screencast tool to display your keys inspired by
+     "Screenkey is a screencast tool to display your keys inspired by
 Screenflick.")
     (license license:gpl3+)))
 

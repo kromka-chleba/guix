@@ -119,6 +119,7 @@
   #:use-module (gnu packages popt)
   #:use-module (gnu packages pretty-print)
   #:use-module (gnu packages pulseaudio)
+  #:use-module (gnu packages sdl)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages tex)
   #:use-module (gnu packages web)
@@ -128,7 +129,7 @@
   #:use-module (gnu packages xorg)
   ;; Using autoload to avoid a cycle.
   ;; Note that (gnu packages serialization) has #:use-module (gnu packages cpp)
-  #:autoload   (gnu packages serialization) (cereal)
+  #:autoload   (gnu packages serialization) (cereal jsoncpp)
   #:use-module (ice-9 match))
 
 (define-public argagg
@@ -169,6 +170,33 @@ frameworks like getopt, Boost program options, TCLAP, and others.  The goal is
 to achieve the majority of argument parsing needs in a simple manner with an
 easy to use API.")
       (license license:expat))))
+
+(define-public argpp
+  ;; XXX: Does not release anymore.
+  (let ((commit "9e1d54f8ed20af0aa5857e6653ab605b2ab63d5c")
+        (revision "0"))
+    (package
+      (name "argpp")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/Grumbel/argpp")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1izn9xfplhnqi9vs4w28dixqd2vy0n1n3asaa1751grg30bw0xxs"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:configure-flags
+        #~(list "-DBUILD_TESTS=ON")))
+      (native-inputs (list tinycmmc))
+      (home-page "https://github.com/Grumbel/argpp")
+      (synopsis "Argument parser for C++")
+      (description "This package provides a simple argument parser for C++.")
+      (license license:gpl3+))))
 
 (define-public asmjit
   (let ((commit "cfc9f813cc6ccda63cad872edb32b38e0662bedb")
@@ -3324,6 +3352,37 @@ computing Fast Fourier transformations.  It supports multidimensional arrays,
 different floating point sizes and complex transformations.")
       (license license:bsd-3))))
 
+(define-public priocpp
+  ;; XXX: No releases.
+  (let ((commit "214a0ff789d5c58e76d870fe2e75f98857991855")
+        (revision "0"))
+    (package
+      (name "priocpp")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/Grumbel/priocpp")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0ksrgajcwqvim5ymxikj26akza3sbhvx3kn4n9xib6r57131kq2m"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:configure-flags
+        #~(list "-DBUILD_TESTS=ON")))
+      (inputs (list fmt-8 logmich))
+      (native-inputs (list googletest pkg-config tinycmmc))
+      ;; XXX: CMake-built dependents currently require propagation.
+      (propagated-inputs (list jsoncpp sexp-cpp))
+      (home-page "https://github.com/Grumbel/priocpp")
+      (synopsis "Property input/output for C++")
+      (description
+       "This package provides simple property input/output utilities for C++.")
+      (license license:gpl3+))))
+
 (define-public sajson
   (let ((commit "ec644013e34f9984a3cc9ba568cab97a391db9cd")
         (revision "0"))
@@ -3842,6 +3901,34 @@ file name and location, as well as filters with friendly names (such as
 \"source files\" or \"image files\") where supported.")
     (license license:zlib)))
 
+(define-public sexp-cpp
+  ;; XXX: Does not release anymore.
+  (let ((commit "4d8096c223d2f469ca6e407e793d20980f6aba76")
+        (revision "0"))
+    (package
+      (name "sexp-cpp")
+      (version (git-version "0.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/lispparser/sexp-cpp")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1c79mp0d0b52k7bk0xlh9xmczd60v3f5jv5b240mm8r9z7gyk1vz"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:configure-flags
+        #~(list "-DBUILD_TESTS=ON")))
+      (native-inputs (list googletest tinycmmc))
+      (home-page "https://github.com/lispparser/sexp-cpp")
+      (synopsis "S-Expression parser for C++")
+      (description
+       "This package provides a simple S-Expression parser for C++.")
+      (license license:gpl3+))))
+
 (define-public string-view-lite
   (package
     (name "string-view-lite")
@@ -3861,6 +3948,33 @@ file name and location, as well as filters with friendly names (such as
     (description "This package provides a compatibility header-only library
 for C++17 string-view.")
     (license license:boost1.0)))
+
+(define-public strutcpp
+  ;; XXX: No releases.
+  (let ((commit "108ac9bb4993d661187ac7add0863abc7ff2531f")
+        (revision "0"))
+    (package
+      (name "strutcpp")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/Grumbel/strutcpp")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0m344qq3d57balzvc26fjx985nj2xwnfb1a7prkv3njj5lfcf127"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:configure-flags
+        #~(list "-DBUILD_TESTS=ON")))
+      (native-inputs (list googletest tinycmmc))
+      (home-page "https://github.com/Grumbel/strutcpp")
+      (synopsis "Collection of string utilities for C++")
+      (description "This package provides simple string utilities for C++.")
+      (license license:gpl3+))))
 
 (define-public tsl-hopscotch-map
   (package
@@ -3969,6 +4083,53 @@ a hash set which preserve the order of insertion.  It is intended for
 efficient ordered insertions and lookup, while sacrifing performance for
 ordered erase operations.")
     (license license:expat)))
+
+(define-public tinygettext
+  ;; XXX: Does not release anymore.
+  (let ((commit "ef4164639004d7de5bf8ab28ed0e85ea521b7c5e")
+        (revision "0"))
+    (package
+      (name "tinygettext")
+      (version (git-version "0.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tinygettext/tinygettext")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0a8l92nba33f3j2hk6ckrn9javmy2xbnsfkks1z740y3bj4sxzw9"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:configure-flags
+        #~(list "-DBUILD_TESTS=ON")
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda _
+                (substitute* "../source/test/test.sh"
+                  (("^\\.")
+                   (getcwd)))
+                (with-directory-excursion "../source/test"
+                  (invoke "bash" "test.sh")))))))
+      (native-inputs (list tinycmmc))
+      (home-page "https://github.com/tinygettext/tinygettext")
+      (synopsis "Simple gettext replacement")
+      (description
+       "This package provides a simple gettext replacement that works directly
+on @code{.po} files and doesn't need @code{.mo} files pre-generated.")
+      (license license:expat))))
+
+(define-public tinygettext-with-sdl2
+  (package/inherit tinygettext
+    (arguments
+     (substitute-keyword-arguments (package-arguments tinygettext)
+       ((#:configure-flags flags)
+        #~(list "-DTINYGETTEXT_WITH_SDL=ON" "-DBUILD_TESTS=ON"))))
+    (native-inputs (list pkg-config tinycmmc))
+    (inputs (list sdl2))))
 
 (define-public tl-optional
   (package

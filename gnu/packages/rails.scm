@@ -27,15 +27,18 @@
   #:use-module (guix git-download)
   #:use-module (guix packages)
   #:use-module (guix utils)
+  #:use-module (gnu packages)
   #:use-module (gnu packages base)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages node)
   #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-check)
+  #:use-module (gnu packages ruby-xyz)
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages version-control)
   #:use-module (guix build-system ruby))
 
-(define %ruby-rails-version "7.0.5.1")
+(define %ruby-rails-version "7.2.2.1")
 
 (define ruby-rails-monorepo
   (origin
@@ -46,7 +49,9 @@
     (file-name (git-file-name "ruby-rails" %ruby-rails-version))
     (sha256
      (base32
-      "0s16i73rqzlrx5icn848mf2nmblmgxk06wj9576dkadsb8pspv0l"))))
+      "09dmxi7f34bwkrizgm8vy1bjmkychmxrxvvw1xz3b3abxxslm05m"))
+    (patches
+     (search-patches "ruby-actionpack-remove-browser-tests.patch"))))
 
 (define-public ruby-activesupport
   (package
@@ -97,7 +102,6 @@
      (list memcached
            redis
            ruby-builder
-           ruby-connection-pool
            ruby-dalli
            ruby-hiredis
            ruby-libxml
@@ -107,9 +111,13 @@
            ruby-rexml
            tzdata-for-tests))
     (propagated-inputs
-     (list ruby-concurrent
+     (list ruby-benchmark
+           ruby-concurrent
+           ruby-connection-pool
            ruby-i18n
            ruby-minitest
+           ruby-msgpack
+           ruby-securerandom
            ruby-tzinfo
            ruby-tzinfo-data))
     (synopsis "Ruby on Rails utility library")
@@ -145,7 +153,7 @@ uniquely identify it.")
 (define-public ruby-spring
   (package
     (name "ruby-spring")
-    (version "4.1.1")
+    (version "4.2.0")
     (source
      (origin
        (method git-fetch)
@@ -155,7 +163,7 @@ uniquely identify it.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0p8hidxqnk8s1gfm1s1xb06gbbahdxjmzy6x3ybi25nkmdp0anb6"))))
+         "1n2c6y69asj3z447kbrc13qaqw12dm1qq886rannbpj5av3k5csy"))))
     (build-system ruby-build-system)
     (arguments
      (list #:test-target "test:unit"
@@ -165,6 +173,8 @@ uniquely identify it.")
                  (lambda _
                    (substitute* "spring.gemspec"
                      (("gem.add_development_dependency 'bump'") ""))
+                   (substitute* "Gemfile"
+                     (("gem \"bump\"") ""))
                    (substitute* "Rakefile"
                      (("require \\\"bump/tasks\\\"") "")))))))
     (native-inputs (list bundler ruby-activesupport))
@@ -330,6 +340,7 @@ serialization, internationalization, and testing.")
               (when tests?
                 ;; Avoid running the database tests, which require railties
                 ;; and/or database servers.
+                (setenv "ARCONN" "sqlite3")
                 (invoke "ruby" "-Itest" "test/cases/base_test.rb"))))
           (add-before 'check 'set-GEM_PATH
             (lambda _
@@ -344,7 +355,10 @@ serialization, internationalization, and testing.")
     (native-inputs
      (list tzdata-for-tests
            ruby-mini-portile-2))
-    (propagated-inputs (list ruby-activemodel ruby-activesupport ruby-sqlite3))
+    (propagated-inputs (list ruby-activemodel
+                             ruby-activesupport
+                             ruby-sqlite3
+                             ruby-timeout))
     (synopsis "Ruby library to connect to relational databases")
     (description
      "Active Record connects classes to relational database table to establish
@@ -355,7 +369,7 @@ an almost zero-configuration persistence layer for applications.")
 (define-public ruby-rspec-rails
   (package
     (name "ruby-rspec-rails")
-    (version "6.0.1")
+    (version "7.0.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -363,8 +377,7 @@ an almost zero-configuration persistence layer for applications.")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
-               (base32
-                "0wmrpwv2vgrwmby01pld6r6sdfa265lb6pd3fp2kifs40nn7ff6b"))))
+               (base32 "1ixm9h2sdd8varnkyxccxhp9dyr8fxk6q5ibrkrk2c83v2xa7bjc"))))
     (build-system ruby-build-system)
     (arguments
      (list
@@ -386,9 +399,14 @@ an almost zero-configuration persistence layer for applications.")
               (substitute* "Gemfile-rspec-dependencies"
                 ((", :git => \"https://github.com/rspec.*")
                  "\n"))
-              (substitute* "Gemfile-rails-dependencies"
-                (("gem 'puma', '< 6.0.0'")
-                 "gem 'puma', '>= 6.0.0'"))
+              (setenv "RAILS_VERSION" #$%ruby-rails-version)
+              (substitute* '("Gemfile-rails-dependencies"
+                             "example_app_generator/generate_app.rb")
+                (("'sqlite3', .*")
+                 (string-append
+                  "'sqlite3', '~> "
+                  #$(package-version
+                     (this-package-native-input "ruby-sqlite3")) "'")))
               (substitute* "rspec-rails.gemspec"
                 (("'aruba',    '~> 0.14.12'")
                  "'aruba',    '>= 0.14.12'")
@@ -401,6 +419,8 @@ an almost zero-configuration persistence layer for applications.")
                  "`find lib -type f |sort`"))))
           (add-before 'check 'patch-tests
             (lambda _
+              ;; Requires chrome or firefox.
+              (delete-file "spec/rspec/rails/example/system_example_group_spec.rb")
               (substitute* "spec/rspec/rails_spec.rb"
                 (("`git ls-files -z`")
                  "`find . -type f -not -regex '.*\\.gem$' -print0 | \
@@ -433,20 +453,20 @@ applications, in pace of the default Minitest testing library.")
 (define-public ruby-rails-html-sanitizer
   (package
     (name "ruby-rails-html-sanitizer")
-    (version "1.3.0")
+    (version "1.6.0")
     (source
      (origin
        (method url-fetch)
        (uri (rubygems-uri "rails-html-sanitizer" version))
        (sha256
         (base32
-         "1icpqmxbppl4ynzmn6dx7wdil5hhq6fz707m9ya6d86c7ys8sd4f"))))
+         "1pm4z853nyz1bhhqr7fzl44alnx4bjachcr6rh6qjj375sfz3sc6"))))
     (build-system ruby-build-system)
     (arguments
      '(;; No included tests
        #:tests? #f))
     (propagated-inputs
-     (list ruby-loofah))
+     (list ruby-loofah ruby-nokogiri))
     (synopsis "HTML sanitization for Rails applications")
     (description
      "This gem is used to handle HTML sanitization in Rails applications.  If
@@ -458,7 +478,7 @@ directly.")
 (define-public ruby-rails-dom-testing
   (package
    (name "ruby-rails-dom-testing")
-   (version "2.0.3")
+   (version "2.2.0")
    (source
     (origin
       (method git-fetch)
@@ -468,7 +488,7 @@ directly.")
       (file-name (git-file-name name version))
       (sha256
        (base32
-        "17vdh273cmmfpzy5m546dd13zqmimv54jjx0f7sl0zi5lwz0gnck"))))
+        "0ydzwdmssapp0x9gy19qy11b3f1yp56zc1kc971dajq9x7jl3jfa"))))
    (build-system ruby-build-system)
    (arguments
     (list
@@ -601,8 +621,30 @@ explicit cache control given to render")
 
                   (skip-tests "dispatch/system_testing/driver_test.rb"
                               ;; These tests require Firefox.
+                              "initializing the driver with a headless firefox"
                               "define extra capabilities using headless_firefox"
-                              "define extra capabilities using firefox")
+                              "define extra capabilities using firefox"
+                              ;; These tests require Chrome.
+                              "initializing the driver with a browser"
+                              "initializing the driver with a headless chrome"
+                              "define extra capabilities using headless_chrome"
+                              "define extra capabilities using chrome"
+                              ;; This test requires geckodriver.
+                              "does not define extra capabilities")
+
+                  ;; These depends on firefox or chrome.
+                  (delete-file "dispatch/system_testing/system_test_case_test.rb")
+                  (delete-file "dispatch/system_testing/screenshot_helper_test.rb")
+
+                  ;; Small translation errors.
+                  (skip-tests "abstract/translation_test.rb" "\
+test_translate_marks_translation_with_missing_nested_html_key_as_safe" "\
+test_translate_marks_translation_with_missing_html_key_as_safe")
+
+                  ;; IPSpoofAttackError
+                  (skip-tests "dispatch/request_test.rb"
+                              "remote ip spoof detection"
+                              "remote ip v6 spoof detection")
 
                   (skip-tests "dispatch/session/cache_store_test.rb"
                               ;; This test fails with: "NoMethodError:
@@ -622,7 +664,8 @@ explicit cache control given to render")
            ruby-rack-session
            ruby-rack-test
            ruby-rails-dom-testing
-           ruby-rails-html-sanitizer))
+           ruby-rails-html-sanitizer
+           ruby-useragent))
     (synopsis "Conventions for building and testing MVC web applications")
     (description
      "ActionPack provides conventions for building and testing MVC web
@@ -655,7 +698,9 @@ applications.  These work with any Rack-compatible server.")
             (lambda _
               ;; There are multiple client test failures (see:
               ;; https://github.com/rails/rails/issues/47617).
-              (delete-file "test/client_test.rb")))
+              (delete-file "test/client_test.rb")
+              ;; This requires yarn.
+              (delete-file "test/javascript_package_test.rb")))
           (add-before 'check 'start-redis
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
@@ -666,7 +711,8 @@ applications.  These work with any Rack-compatible server.")
            ruby-pg
            ruby-puma
            ruby-redis
-           ruby-websocket-client-simple))
+           ruby-websocket-client-simple
+           ruby-zeitwerk))
     (propagated-inputs
      (list ruby-actionpack
            ruby-activesupport
@@ -768,10 +814,7 @@ allowing files to be attached to ActiveRecord models.")
            ruby-activerecord
            ruby-activestorage
            ruby-activesupport
-           ruby-mail
-           ruby-net-imap
-           ruby-net-pop
-           ruby-net-smtp))
+           ruby-mail))
     (synopsis "Receive and process incoming emails in Rails applications")
     (description
      "ActionMailbox receives and processes incoming emails in Rails applications.")
@@ -798,9 +841,6 @@ allowing files to be attached to ActiveRecord models.")
            ruby-activejob
            ruby-activesupport
            ruby-mail
-           ruby-net-imap
-           ruby-net-pop
-           ruby-net-smtp
            ruby-rails-dom-testing))
     (synopsis "Work with emails using the controller/view pattern")
     (description
@@ -814,13 +854,13 @@ pattern.  Including support for multipart email and attachments.")
 (define ruby-ammeter-bootstrap
   (package
     (name "ruby-ammeter-bootstrap")
-    (version "1.1.5")
+    (version "1.1.7")
     (source (origin
               (method url-fetch)
               (uri (rubygems-uri "ammeter" version))
               (sha256
                (base32
-                "1bcslj6y3lgaknd9fpj32m1r4is7blyxygxzmwidq9cjwkrn4msh"))))
+                "1y8idnc7v0w82mmri17902ahn56x0wqcny496mmsg4n3vham702r"))))
     (build-system ruby-build-system)
     (arguments
      (list #:tests? #f
@@ -854,7 +894,7 @@ Rails generators.  An existing user is @code{rspec-rails}, which uses
 (define-public ruby-bootsnap
   (package
     (name "ruby-bootsnap")
-    (version "1.16.0")
+    (version "1.18.6")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -863,7 +903,7 @@ Rails generators.  An existing user is @code{rspec-rails}, which uses
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1gaih5v4jjndrkn0crrr5mxnwc3cd0f3i955n62ghk29zabvd7wf"))))
+                "1dd9qffwhfzd4lzv264mcvx3w8zw4inwywgarfjnwa31nfxwb1r2"))))
     (build-system ruby-build-system)
     (arguments
      (list
@@ -882,7 +922,7 @@ Rails generators.  An existing user is @code{rspec-rails}, which uses
               (substitute* "bootsnap.gemspec"
                 (("`git ls-files -z ext lib`")
                  "`find ext lib -type f -print0 | sort -z`")))))))
-    (native-inputs (list ruby-mocha-1 ruby-rake-compiler))
+    (native-inputs (list ruby-mocha ruby-rake-compiler))
     (propagated-inputs (list ruby-msgpack))
     (synopsis "Accelerator for large Ruby/Rails application")
     (description "Bootsnap is a library that plugs into Ruby, with optional
@@ -894,7 +934,7 @@ support for YAML, to optimize and cache expensive computations.")
 (define ruby-importmap-rails-bootstrap
   (package
     (name "ruby-importmap-rails-bootstrap")
-    (version "1.1.5")
+    (version "2.1.0")
     (source (origin
               (method git-fetch)        ;for tests
               (uri (git-reference
@@ -903,9 +943,18 @@ support for YAML, to optimize and cache expensive computations.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1d8pqqqrvsnm8rpr7qkpcxpscif61xymi509v1c62laadvhcmklg"))))
+                "1mv223davpm0z50i787yiy49fiakd8ay5slmimyrg5cl3cjrvzm9"))))
     (build-system ruby-build-system)
-    (arguments (list #:tests? #f))             ;avoid all extra dependencies
+    (arguments
+     (list #:tests? #f ;avoid all extra dependencies
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-rails-version
+                 (lambda _
+                   (substitute* (cons* "Appraisals"
+                                       (find-files "gemfiles" "\\.gemfile$"))
+                     (("7\\.1\\.0")
+                      #$%ruby-rails-version)))))))
     ;; Leave out ruby-railties, for bootstrapping purposes.
     (propagated-inputs (list ruby-actionpack))
     (synopsis "Tool to manage modern JavaScript in Rails")
@@ -925,10 +974,16 @@ already included in Rails.")
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-rails-version
+                 (lambda _
+                   (substitute* (cons* "Appraisals"
+                                       (find-files "gemfiles" "\\.gemfile$"))
+                     (("7\\.1\\.0")
+                      #$%ruby-rails-version))))
                (add-after 'extract-gemspec 'relax-requirements
                  (lambda _
-                   (delete-file "gemfiles/rails_7_propshaft.gemfile.lock")
-                   (substitute* "gemfiles/rails_7_propshaft.gemfile"
+                   (delete-file "gemfiles/rails_7_1_propshaft.gemfile.lock")
+                   (substitute* "gemfiles/rails_7_1_propshaft.gemfile"
                      ((".*gem \"byebug\".*") "")
                      ;; Remove appraisal, and add tzinfo-data, which needs to
                      ;; be in the Gemfile to become available.
@@ -939,21 +994,26 @@ already included in Rails.")
                      ((".*gem \"webdrivers\".*") ""))))
                (add-before 'check 'set-BUNDLE_GEMFILE
                  (lambda _
-                   ;; The default Gemfile is for Rails 6.
                    (setenv "BUNDLE_GEMFILE"
-                           "gemfiles/rails_7_propshaft.gemfile")))
+                           "gemfiles/rails_7_1_propshaft.gemfile")))
                (add-before 'check 'disable-problematic-tests
                  (lambda _
+                   ;; All bin/importmap invocation fail.
+                   ;; At least one requires networking.
+                   (delete-file "test/commands_test.rb")
+                   ;; Bundler, probably requires networking
+                   (delete-file "test/installer_test.rb")
                    ;; The integration tests require networking; disable them.
                    (delete-file "test/npm_integration_test.rb")
                    (delete-file "test/packager_integration_test.rb"))))))
     (native-inputs
-     (list ruby-capybara
+     (list git-minimal/pinned
+           ruby-capybara
            ruby-propshaft
            ruby-rails
            ruby-rexml
            ruby-selenium-webdriver
-           ruby-sqlite3
+           ruby-sqlite3-1.4
            ruby-stimulus-rails
            ruby-turbo-rails
            ruby-tzinfo
@@ -965,7 +1025,7 @@ already included in Rails.")
 (define-public ruby-marcel
   (package
     (name "ruby-marcel")
-    (version "1.0.2")
+    (version "1.0.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -974,7 +1034,7 @@ already included in Rails.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1i1x24afmn09n48fj4yz2pdm6vlfnq14gism0cgxsyqmlrvsxajn"))))
+                "08lfdzv7niy0wyh6lh4zp47li35shg8dyik02m9h9xfldxri5gjw"))))
     (build-system ruby-build-system)
     (arguments
      (list
@@ -1116,35 +1176,58 @@ previous options, like Sprockets.")
                 (with-directory-excursion "test"
                   ;; This test requires 'rails' and Bundler.
                   (delete-file "application/server_test.rb")
-                  ;; These tests are incompatible with MiniTest 5.17 (see:
-                  ;; https://github.com/rails/rails/issues/47657).
-                  (skip-tests "generators_test.rb"
-                              "test_invoke_with_config_values"
-                              "test_simple_invoke"
-                              "test_should_give_higher_preference_to_rails_generators"
-                              "test_nested_fallbacks_for_generators"
-                              "test_fallbacks_for_generators_on_invoke"
-                              "test_invoke_with_default_values"
-                              "test_invoke_with_nested_namespaces")
+                  ;; These depends on firefox or chrome.
+                  (delete-file "application/active_job_adapter_test.rb")
+                  (delete-file "application/system_test_case_test.rb")
                   ;; These tests requires the assets which we lack.
                   (delete-file "application/assets_test.rb")
                   (delete-file "railties/generators_test.rb")
                   (skip-tests "generators/shared_generator_tests.rb"
                               ;; This test checks that bin/rails has /usr/bin/env has a
                               ;; shebang and fails.
-                              "test_shebang_when_is_the_same_as_default_use_env")
+                              "test_shebang_when_is_the_same_as_default_use_env"
+                              "test_generated_files_have_no_rubocop_warnings")
                   (skip-tests "generators/app_generator_test.rb"
-                              ;; This test requires networking.
+                              ;; These tests requires networking.
+                              "test_app_update_create_new_framework_defaults"
+                              "test_app_update_does_not_change_config_target_version"
+                              "test_app_update_does_not_change_app_name_when_app_name_\
+is_hyphenated_name"
+                              "test_app_update_does_not_create_rack_cors"
+                              "test_app_update_does_not_generate_bootsnap_contents_\
+when_skip_bootsnap_is_given"
+                              "test_app_update_does_not_remove_rack_cors_if_already_present"
+                              "test_app_update_does_not_generate_manifest_config_\
+when_propshaft_is_used"
+                              "test_app_update_does_not_generate_action_cable_\
+contents_when_skip_action_cable_is_given"
+                              "test_app_update_preserves_propshaft"
+                              "test_app_update_preserves_skip_action_mailbox"
+                              "test_app_update_preserves_skip_action_text"
+                              "test_app_update_preserves_skip_system_test"
+                              "test_app_update_preserves_skip_test"
+                              "test_application_name_is_detected_if_it_exists_and_app_folder_renamed"
                               "test_template_from_url"
                               ;; This test requires Bundler.
                               "test_generation_use_original_bundle_environment"
-                              ;; This test requires assets.
+                              ;; This test requires Rubocop.
+                              "test_app_update_preserves_skip_rubocop"
+                              ;; These tests require assets.
                               "test_css_option_with_cssbundling_gem"
+                              "test_css_option_with_asset_pipeline_sass"
                               ;; These tests require the rails/command
                               ;; namespace provided by the 'ruby-rails'
                               ;; package, which depends on this one.
+                              "test_app_update_generates_public_folders"
+                              "test_app_update_preserves_skip_brakeman"
+                              "test_app_update_supports_pretend"
+                              "test_app_update_supports_skip"
                               "test_css_option_with_asset_pipeline_tailwind"
                               "test_hotwire")
+                  ;; These tests require Rubocop.
+                  (skip-tests "application/generators_test.rb"
+                              "generators with apply_rubocop_autocorrect_after_generate!"
+                              "generators with apply_rubocop_autocorrect_after_generate! and pretend")
                   (skip-tests
                    "generators/plugin_generator_test.rb"
                    ;; These tests require assets.
@@ -1158,10 +1241,11 @@ mountable_engine"
                    "test_generate_application_job_when_does_not_exist_in_mountable_engine"
                    "test_run_default"
                    ;; This test expects a /usr/bin/env shebang.
-                   "test_shebang")
-                  ;; The following generator tests require assets.
-                  (skip-tests "generators/plugin_test_runner_test.rb"
-                              "test_run_default")
+                   "test_shebang"
+                   ;; This test requires Bundler.
+                   "test_plugin_passes_generated_test")
+                  ;; The following tests require Gemfile or .bundle in their setup.
+                  (delete-file "generators/plugin_test_runner_test.rb")
                   (skip-tests
                    "generators/scaffold_controller_generator_test.rb"
                    "test_controller_tests_pass_by_default_inside_full_engine"
@@ -1175,9 +1259,8 @@ mountable_engine"
                    "test_scaffold_tests_pass_by_default_inside_full_engine"
                    "test_scaffold_tests_pass_by_default_inside_namespaced_\
 mountable_engine")
-                  (skip-tests "generators/test_runner_in_engine_test.rb"
-                              "test_run_default"
-                              "test_rerun_snippet_is_relative_path")
+                  ;; Tests in this file require Bundler.
+                  (delete-file "generators/test_runner_in_engine_test.rb")
                   ;; The actions_test tests depend on assets or the rails gem.
                   (delete-file "generators/actions_test.rb")
                   (skip-tests "engine/commands_test.rb"
@@ -1193,9 +1276,16 @@ mountable_engine")
                               "test_generated_scaffold_works_with_rails_test"
                               "test_load_fixtures_when_running_test_suites"
                               "test_run_in_parallel_with_unmarshable_exception"
-                              "test_run_in_parallel_with_unknown_object")
+                              "test_run_in_parallel_with_unknown_object"
+                              "test_system_tests_are_run_through_rake_test_when_given_in_TEST"
+                              "test_reset_sessions_before_rollback_on_system_tests"
+                              "test_reset_sessions_on_failed_system_test_screenshot"
+                              "test_parallel_testing_when_schema_is_not_up_to_date"
+                              "test_failed_system_test_screenshot_should_be_\
+taken_before_other_teardown")
                   (skip-tests
                    "application/test_test.rb"
+                   "schema for all the models is loaded when tests are run in eager load context"
                    "automatically synchronizes test schema after rollback"
                    "hooks for plugins"
                    "sql structure migrations when adding column to existing table"
@@ -1209,9 +1299,9 @@ mountable_engine")
                   (delete-file "application/rake/dbs_test.rb")
                   (delete-file "application/rake/migrations_test.rb")
                   (delete-file "application/rake/multi_dbs_test.rb")
-                  (skip-tests "engine/test_test.rb"
-                              "automatically synchronize test schema")
                   (skip-tests "isolation/abstract_unit.rb" "use_postgresql")
+                  ;; Requires rails gem.
+                  (delete-file "engine/test_test.rb")
                   (skip-tests "railties/engine_test.rb"
                               "active_storage:install task works within engine"
                               "active_storage:update task works within engine"
@@ -1224,21 +1314,23 @@ mountable_engine")
                               "setting priority for engines with config.railties_order")
                   ;; This test requires a database server or networking.
                   (delete-file "application/bin_setup_test.rb")
-                  (skip-tests "application/middleware/cache_test.rb"
-                              ;; This test produces "miss, store" instead of
-                              ;; "fresh".
-                              "test_cache_works_with_expires"
-                              ;; This one produces "miss" instead of "stale,
-                              ;; valid, store".
-                              "test_cache_works_with_etags"
-                              ;; Likewise.
-                              "test_cache_works_with_last_modified")
                   (skip-tests "application/initializers/frameworks_test.rb"
                               ;; These tests are either broken, or rely on
                               ;; database availability
                               "expire schema cache dump if the version can't be checked because the database is unhealthy"
                               "does not expire schema cache dump if check_schema_cache_dump_version is false and the database unhealthy"
-                              "does not expire schema cache dump if check_schema_cache_dump_version is false")))))
+                              "does not expire schema cache dump if check_schema_cache_dump_version is false")
+                  (skip-tests "commands/console_test.rb"
+                              "test_prompt_env_colorization"
+                              "test_reload_command_fires_preparation_and_cleanup_callbacks")
+                  (skip-tests "commands/credentials_test.rb"
+                              "edit command does not display save confirmation message if interrupted")
+                  (skip-tests "commands/encrypted_test.rb"
+                              "edit command does not display save confirmation message if interrupted")
+                  (skip-tests "commands/routes_test.rb"
+                              "rails routes with expanded option")
+                  (skip-tests "commands/server_test.rb"
+                              "test_served_url_when_server_prints_it")))))
           (add-before 'check 'set-paths
             (lambda _
               (setenv "PATH" (string-append (getenv "PATH") ":"
@@ -1268,14 +1360,15 @@ mountable_engine")
            ruby-pg
            ruby-selenium-webdriver
            ruby-sprockets-rails
-           ruby-webrick
            sqlite))
     (propagated-inputs
      (list ruby-actionpack
            ruby-activesupport
            ruby-method-source
+           ruby-rackup-1
            ruby-rake
            ruby-thor
+           ruby-webrick
            ruby-zeitwerk))
     (synopsis "Rails internals, including application bootup and generators")
     (description "@code{railties} provides the core Rails internals including
@@ -1440,7 +1533,7 @@ Stimulus can be used.")
     (propagated-inputs
      (list ruby-actionview ruby-activemodel ruby-arel ruby-skiptrace ruby-railties))
     (native-inputs
-     (list bundler ruby-rails ruby-mocha ruby-simplecov))
+     (list bundler ruby-bindex ruby-rails ruby-mocha ruby-simplecov))
     (synopsis "Debugging tool for your Ruby on Rails applications")
     (description
      "This package allows you to create an interactive Ruby session in your

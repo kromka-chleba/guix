@@ -48,7 +48,7 @@
 # Copyright © 2021 Andrew Tropin <andrew@trop.in>
 # Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
 # Copyright © 2022 Daniel Meißner <daniel.meissner-i4k@ruhr-uni-bochum.de>
-# Copyright © 2022, 2024 Remco van 't Veer <remco@remworks.net>
+# Copyright © 2022, 2024, 2025 Remco van 't Veer <remco@remworks.net>
 # Copyright © 2022, 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 # Copyright © 2022, 2023 John Kehayias <john.kehayias@protonmail.com>
 # Copyright © 2022 muradm <mail@muradm.net>
@@ -618,6 +618,8 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/rrdtool.scm			\
   %D%/packages/rsync.scm			\
   %D%/packages/ruby.scm				\
+  %D%/packages/ruby-check.scm				\
+  %D%/packages/ruby-xyz.scm				\
   %D%/packages/rush.scm				\
   %D%/packages/rust.scm				\
   %D%/packages/rust-apps.scm			\
@@ -1007,6 +1009,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/aoflagger-use-system-provided-pybind11.patch \
   %D%/packages/patches/apr-fix-atomics.patch			\
   %D%/packages/patches/apr-skip-getservbyname-test.patch	\
+  %D%/packages/patches/aria-maestosa-scons-python3.patch	\
   %D%/packages/patches/aria2-unbundle-wslay.patch		\
   %D%/packages/patches/ark-skip-xar-test.patch			\
   %D%/packages/patches/asli-use-system-libs.patch		\
@@ -1043,8 +1046,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/bash-completion-directories.patch	\
   %D%/packages/patches/bash-linux-pgrp-pipe.patch		\
   %D%/packages/patches/bastet-change-source-of-unordered_set.patch	\
-  %D%/packages/patches/bazaar-CVE-2017-14176.patch		\
-  %D%/packages/patches/bc-dc-build.patch			\
+  %D%/packages/patches/bc-fix-cross-compilation.patch		\
   %D%/packages/patches/bdb-5.3-atomics-on-gcc-9.patch		\
   %D%/packages/patches/biboumi-cmake-ignore-git.patch		\
   %D%/packages/patches/brightnessctl-elogind-support.patch	\
@@ -1070,6 +1072,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/bloomberg-bde-tools-fix-install-path.patch	\
   %D%/packages/patches/boolector-find-googletest.patch	\
   %D%/packages/patches/boost-fix-duplicate-definitions-bug.patch	\
+  %D%/packages/patches/btanks-scons-python.patch		\
+  %D%/packages/patches/btanks-sl08-python.patch			\
   %D%/packages/patches/byobu-writable-status.patch		\
   %D%/packages/patches/bubblewrap-fix-locale-in-tests.patch	\
   %D%/packages/patches/busybox-add-missing-sha-NI-guard.patch	\
@@ -1213,7 +1217,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/dvd+rw-tools-add-include.patch 		\
   %D%/packages/patches/dwarves-threading-reproducibility.patch	\
   %D%/packages/patches/dynaconf-unvendor-deps.patch		\
-  %D%/packages/patches/efivar-211.patch			\
+  %D%/packages/patches/efivar-fix-fprint-format.patch		\
   %D%/packages/patches/eigen-fix-strict-aliasing-bug.patch	\
   %D%/packages/patches/einstein-build.patch			\
   %D%/packages/patches/elfutils-tests-ptrace.patch		\
@@ -1231,6 +1235,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/emacs-eglot-x-fix-apply-text-edits.patch			\
   %D%/packages/patches/emacs-exec-path.patch			\
   %D%/packages/patches/emacs-fix-scheme-indent-function.patch	\
+  %D%/packages/patches/emacs-gnus-alias-reference-signature.patch	\
+  %D%/packages/patches/emacs-gnus-desktop-notify-fix-notifications.patch	\
+  %D%/packages/patches/emacs-gnus-desktop-notify-rescan.patch	\
   %D%/packages/patches/emacs-helpful-fix-signature.patch	\
   %D%/packages/patches/emacs-helpful-fix-tests.patch	\
   %D%/packages/patches/emacs-highlight-stages-add-gexp.patch	\
@@ -1321,7 +1328,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/fp16-system-libraries.patch		\
   %D%/packages/patches/fpc-reproducibility.patch		\
   %D%/packages/patches/fpc-glibc-2.34-compat.patch		\
-  %D%/packages/patches/fpm-newer-clamp-fix.patch		\
   %D%/packages/patches/freedict-tools-fix-determinism.patch	\
   %D%/packages/patches/freedink-engine-fix-sdl-hints.patch	\
   %D%/packages/patches/freeimage-libtiff-compat.patch		\
@@ -1926,6 +1932,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/newlib-getentropy.patch			\
   %D%/packages/patches/nginx-socket-cloexec.patch		\
   %D%/packages/patches/nickle-man-release-date.patch		\
+  %D%/packages/patches/nlopt_CMake-Assume-working-c-compiler-597.patch \
   %D%/packages/patches/nnpack-system-libraries.patch		\
   %D%/packages/patches/nsis-env-passthru.patch			\
   %D%/packages/patches/nss-getcwd-nonnull.patch			\
@@ -2044,8 +2051,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/qcodeeditor-qt6.patch			\
   %D%/packages/patches/qtdeclarative-5-disable-qmlcache.patch	\
   %D%/packages/patches/qtdeclarative-disable-qmlcache.patch	\
-  %D%/packages/patches/quodlibet-fix-invalid-glob.patch	\
-  %D%/packages/patches/quodlibet-fix-mtime-tests.patch		\
+  %D%/packages/patches/quodlibet-disable-bundled-packages.patch	\
   %D%/packages/patches/qucs-s-qucsator-rf-search.patch		\
   %D%/packages/patches/qxlsx-fix-include-directory.patch	\
   %D%/packages/patches/scn-fast-float-compat.patch		\
@@ -2222,13 +2228,18 @@ dist_patch_DATA =						\
   %D%/packages/patches/rocm-comgr-3.1.0-dependencies.patch 	\
   %D%/packages/patches/rocm-opencl-runtime-4.3-noclinfo.patch 	\
   %D%/packages/patches/rottlog-direntry.patch 			\
+  %D%/packages/patches/ruby-actionpack-remove-browser-tests.patch	\
+  %D%/packages/patches/ruby-asciidoctor-pdf-support-prawn-svg-0_36.patch	\
+  %D%/packages/patches/ruby-chunky-png-ruby-3-2-support.patch	\
   %D%/packages/patches/ruby-hiredis-use-system-hiredis.patch	\
   %D%/packages/patches/ruby-hydra-minimal-no-byebug.patch	\
   %D%/packages/patches/ruby-anystyle-data-immutable-install.patch	\
   %D%/packages/patches/ruby-anystyle-fix-dictionary-populate.patch	\
+  %D%/packages/patches/ruby-flores-fix-deprecations.patch	\
   %D%/packages/patches/ruby-latex-decode-fix-test.patch		\
   %D%/packages/patches/ruby-mustache-1.1.1-fix-race-condition-tests.patch \
   %D%/packages/patches/ruby-nokogiri.patch			\
+  %D%/packages/patches/ruby-pg-fix-connect-timeout.patch	\
   %D%/packages/patches/ruby-x25519-automatic-fallback-non-x86_64.patch \
   %D%/packages/patches/rust-1.64-fix-riscv64-bootstrap.patch	\
   %D%/packages/patches/rust-1.70-fix-rustix-build.patch	\

@@ -120,7 +120,7 @@
 ;;; Copyright © 2022 Thiago Jung Bauermann <bauermann@kolabnow.com>
 ;;; Copyright © 2022 Joeke de Graaf <joeke@posteo.net>
 ;;; Copyright © 2023, 2025 Simon Streit <simon@netpanic.org>
-;;; Copyright © 2023 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2023, 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2023 Ivan Vilata-i-Balaguer <ivan@selidor.net>
 ;;; Copyright © 2022 Demis Balbach <db@minikn.xyz>
 ;;; Copyright © 2020, 2021, 2022, 2023 Andrew Tropin <andrew@trop.in>
@@ -272,6 +272,8 @@
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages racket)
   #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-check)
+  #:use-module (gnu packages ruby-xyz)
   #:use-module (gnu packages rust)
   #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages scheme)
@@ -2376,6 +2378,31 @@ leveraging built-in functionality.")
       (description
        "This package provides an Emacs client for the @url{https://meyvn.org, Meyvn} build tool.")
       (license license:gpl3+))))
+
+(define-public emacs-affe
+  (package
+    (name "emacs-affe")
+    (version "0.9")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/minad/affe")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "166v7d120hbk6vczj1iam85xivk6wwpvga8m0vxgcii19issh5b3"))))
+    (build-system emacs-build-system)
+    (arguments (list #:tests? #f))      ; no tests
+    (propagated-inputs (list emacs-consult))
+    (home-page "https://github.com/minad/affe")
+    (synopsis "Asynchronous fuzzy finder for Emacs")
+    (description "This package provides Affe, an asynchronous fuzzy finder for
+GNU Emacs written in pure Emacs Lisp. It spawns an external producer process,
+such as @command{find} or @command{grep}, and filters the output asynchronously.
+The UI remains responsive, and results are shown via the Consult interface.
+Affe is experimental and best suited for small to medium projects.")
+    (license license:gpl3+)))
 
 (define-public emacs-fzf
   (let ((commit "641aef33c88df3733f13d559bcb2acc548a4a0c3")
@@ -6562,6 +6589,11 @@ returns multiple locations, a list is displayed to choose from.")
      (list
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'configure
+            (lambda* (#:key inputs #:allow-other-keys)
+              (emacs-substitute-variables "graphviz-dot-mode.el"
+                ("graphviz-dot-dot-program"
+                 (search-input-file inputs "/bin/dot")))))
           (add-before 'install 'make-info
             (lambda* (#:key inputs #:allow-other-keys)
               (with-directory-excursion "texinfo"
@@ -6580,6 +6612,7 @@ returns multiple locations, a list is displayed to choose from.")
                 (install-file "texinfo/graphviz-dot-mode.info.gz" info)))))))
     (native-inputs
      (list gzip texinfo))
+    (inputs (list graphviz))
     (propagated-inputs
      (list emacs-company))
     (home-page "http://ppareit.github.com/graphviz-dot-mode")
@@ -12406,16 +12439,16 @@ generates it as a string.  Please see the homepage for usage examples.")
 (define-public emacs-jedi
   (package
     (name "emacs-jedi")
-    (version "0.2.8")
+    (version "20250602.2107")
     (source (origin
               (method git-fetch)
               (uri (git-reference
                     (url "https://github.com/tkf/emacs-jedi/")
-                    (commit (string-append "v" version))))
+                    (commit "0a92f57dcfd76f1daf6d382d1e2eb437784a71e0")))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1bckxppfzd5gwn0aw4h86igb7igal9axqncq7j8zmflg7zppncf1"))))
+                "0d88nyr689b311abi4zbjifm0llnyd16h3riwkq11y0vjkp5i6vq"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -12431,11 +12464,18 @@ generates it as a string.  Please see the homepage for usage examples.")
           (add-after 'unpack 'avoid-server-installation-for-tests
             (lambda _
               (substitute* "Makefile"
+                ;; Disable tox since it's only configured for python 3.8 and
+                ;; python 3.9 by the project--that's ancient.
+                (("tox")
+                 "echo tox")
                 (("env: .*$")
                  (string-append "env: " #$output "/bin/jediepcserver\n")))))
           (add-after 'unpack 'ensure-no-mtimes-pre-1980
             (assoc-ref python:%standard-phases
                        'ensure-no-mtimes-pre-1980))
+          (add-before 'check 'setenv
+            (lambda _
+              (setenv "HOME" "/tmp")))
           (add-after 'ensure-no-mtimes-pre-1980 'relax-python-requirements
             (lambda _
               ;; Argparse should only be required for Python < 3.2
@@ -12446,7 +12486,10 @@ generates it as a string.  Please see the homepage for usage examples.")
             (assoc-ref python:%standard-phases 'add-install-to-pythonpath))
           (add-after 'python:add-install-to-pythonpath 'python:install
             ;; This is needed to get the Python-built 'jediepcserver' command.
-            (assoc-ref python:%standard-phases 'install))
+            (lambda args
+              (apply (assoc-ref python:%standard-phases 'install)
+                     #:use-setuptools? #t ; make reproducible
+                     args)))
           (add-after 'python:install 'python:wrap
             (assoc-ref python:%standard-phases 'wrap))
           (add-after 'python:wrap 'patch-jedi:server-command
@@ -12454,7 +12497,7 @@ generates it as a string.  Please see the homepage for usage examples.")
               (emacs-substitute-variables "jedi-core.el"
                 ("jedi:server-command"
                  `(list ,(search-input-file outputs "bin/jediepcserver")))))))))
-    (native-inputs (list emacs-mocker python-wrapper))
+    (native-inputs (list emacs-mocker python-wrapper python-tox))
     (inputs (list python-wrapper python-epc python-jedi)) ;wrapped
     (propagated-inputs
      (list emacs-auto-complete emacs-python-environment emacs-epc))
@@ -12504,6 +12547,8 @@ issues from Emacs.")
                (base32
                 "1ihqapp4dv92794rsgyq0rmhwika60cmradqd4bn9b72ss6plxs1"))))
     (build-system emacs-build-system)
+    (arguments
+     (list #:tests? #f)) ; no "check" target
     (propagated-inputs
      (list emacs-jedi emacs-company))
     (home-page "https://github.com/syohex/emacs-company-jedi")
@@ -19535,6 +19580,30 @@ components required by the produced @file{.tex} file.")
 receive little if no maintenance and there is no guaranty that they are
 compatible with the Org stable version.")
     (license license:gpl3+)))
+
+(define-public emacs-org-count-words
+  ;; No releases.
+  (let ((commit "df4f06905e3020106d6ceaada854ebd7f9a231d2")
+        (revision "0"))
+    (package
+      (name "emacs-org-count-words")
+      (version (git-version "0.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/Elilif/org-count-words.git")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "12yxgkqv33i8hcgc5z033fhrar5l937kpsi36v4jffw6lr3wrlbv"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/Elilif/org-count-words")
+      (synopsis "Word count in org-mode")
+      (description "This package calculates a precise word count in org-mode
+by excluding unwanted elements such as code blocks, options, and drawers.  The
+results are displayed on the modeline.")
+      (license license:gpl3+))))
 
 (define-public emacs-org-texlive-collection
   (package
@@ -37682,34 +37751,76 @@ An optional mode-line format can be enabled with @code{zerodark-setup-modeline-f
     (license license:gpl3+)))
 
 (define-public emacs-gnus-alias
-  (package
-    (name "emacs-gnus-alias")
-    (version "20150316")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/hexmode/gnus-alias")
-                    (commit "9447d3ccb4c0e75d0468899cccff7aa249657bac")))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1i278npayv3kfxxd1ypi9n83q5l402sbc1zkm11pf8g006ifqsp4"))))
-    (build-system emacs-build-system)
-    (home-page "https://melpa.org/#/gnus-alias")
-    (synopsis "Alternative to @code{gnus-posting-styles}")
-    (description "This Emacs add-on provides a simple mechanism to switch
-Identities when using a @code{message-mode} or a @code{message-mode} derived
-mode.  Identities can include @code{From} and @code{Organisation} headers,
+  ;; There are no release no tag.  Use the latest commit.
+  (let ((commit "cf1783a9294bc2f72bfafcaea288c159c4e3dee5")
+        (revision "0"))
+    (package
+      (name "emacs-gnus-alias")
+      ;; The version string is specified in gnus-alias.el.
+      (version (git-version "1.7.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/hexmode/gnus-alias")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0cs0cyi7hj7ga9aiqz4dafc07xrk3l5g9zzlbda9l90xbvyfssa0"))
+                (patches
+                 (search-patches "emacs-gnus-alias-reference-signature.patch"))))
+      (build-system emacs-build-system)
+      (home-page "https://github.com/hexmode/gnus-alias")
+      (synopsis "Alternative to @code{gnus-posting-styles}")
+    (description "Gnus-alias provides a simple mechanism to switch
+identities when using a @code{message-mode} or a @code{message-mode} derived
+mode.  Identities can include @code{From} and @code{Organization} headers,
 extra headers, body and signature.  Other features include:
-
 @itemize
-@item Switch Identities in a message buffer.
-@item Access original message to help determine Identity of the followup/reply
+@item Switch identities in a message buffer.
+@item Access original message to help determine identity of the followup/reply
 message.
 @item Act on a forwarded message as if it were a message being replied to.
 @item Start a new message with a given Identity pre-selected.
 @end itemize")
-    (license license:gpl2+)))
+      (license license:gpl2+))))
+
+(define-public emacs-gnus-desktop-notify
+  (package
+    (name "emacs-gnus-desktop-notify")
+    (version "20180623.1538")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.com/wavexx/gnus-desktop-notify.el.git")
+             (commit "24588a3e024b204d930480fdc8bca31426f4e846")))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "06gxqlhfrc9ykq8v7qhxsr4w8hwyv1jkrifpp0kqjhf7idv96010"))
+       (patches
+        (search-patches
+         "emacs-gnus-desktop-notify-fix-notifications.patch"
+         "emacs-gnus-desktop-notify-rescan.patch"))))
+    (build-system emacs-build-system)
+    (home-page
+     "http://www.thregr.org/~wavexx/software/gnus-desktop-notify.el/")
+    (synopsis "Gnus desktop notification global minor mode")
+    (description
+     "@code{gnus-desktop-notify} provides a simple mechanism to notify the
+user when new messages are received.  To get started, place the following
+configuration snippet in your @file{~/.gnus.el} configuration file:
+@lisp
+(require 'gnus-desktop-notify)
+(gnus-desktop-notify-mode)
+(gnus-demon-add-rescan)
+;; Alternatively, configure the period and idle times specifically, e.g.:
+;; (gnus-demon-add-handler 'gnus-demon-scan-news 10 1)
+@end lisp
+The above causes Gnus to scan all configured groups every two 2 hours when
+Emacs has been idle for 1 hour, with desktop notifications emitted for new
+messages received.")
+    (license license:gpl3+)))
 
 (define-public emacs-ox-epub
   (package
@@ -38061,7 +38172,7 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
 (define-public emacs-fj
   (package
     (name "emacs-fj")
-    (version "0.9")
+    (version "0.11")
     (source
      (origin
        (method git-fetch)
@@ -38070,7 +38181,7 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "121mwfw81bibwq055mz4m8h4yfvx646iymjkzgfnp4w7xlr6sm9k"))))
+        (base32 "0gq2rj8casbdcpxpvbrgf7yyy46w6l3a3s75h031ik5zyykkrqj2"))))
     (build-system emacs-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (propagated-inputs (list emacs-fedi emacs-magit emacs-tp))
@@ -39267,29 +39378,41 @@ replicate some of the features of the Doom modeline package.")
     (license license:gpl3+)))
 
 (define-public emacs-frames-only-mode
-  (package
-    (name "emacs-frames-only-mode")
-    (version "1.0.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/davidshepherd7/frames-only-mode")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0y0sdjixaxvywrlp2sw51wnczhk51q1svl5aghbk9rkxpwv9ys9v"))))
-    (build-system emacs-build-system)
-    (propagated-inputs
-     (list emacs-dash emacs-s))
-    (native-inputs (list emacs-ert-runner emacs-flycheck emacs-magit))
-    (home-page "https://github.com/davidshepherd7/frames-only-mode")
-    (synopsis "Use frames instead of Emacs windows")
-    (description
-     "This is an Emacs global minor mode to use Emacs frames instead of Emacs'
+  ;; Latest release is from 8 years ago.
+  (let ((commit "3c7d7d89398b999bac2d848c8c26d742572e8109")
+        (revision "0"))
+    (package
+      (name "emacs-frames-only-mode")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/davidshepherd7/frames-only-mode")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1rs01wiahqnz33x66mm4i7147jfjz75mx1q4mwjpds6yvir4mdkn"))))
+      (build-system emacs-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-before 'check 'fix-makefile
+              (lambda _
+                (substitute* "Makefile"
+                  (("cask") "")))))
+        #:test-command #~(list "make" "test-unit")))
+      (propagated-inputs
+       (list emacs-dash emacs-s))
+      (native-inputs (list emacs-flycheck emacs-magit emacs-validate))
+      (home-page "https://github.com/davidshepherd7/frames-only-mode")
+      (synopsis "Use frames instead of Emacs windows")
+      (description
+       "This is an Emacs global minor mode to use Emacs frames instead of Emacs'
 internal windowing system.  This combines particularly well with tiling window
 managers such as XMonad.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public emacs-modalka
   (package

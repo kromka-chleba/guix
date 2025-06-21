@@ -58,7 +58,7 @@
   #:use-module (gnu packages libusb)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages readline)
-  #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-xyz)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages curl)
@@ -507,7 +507,7 @@ MPRIS 2 support.")
 (define-public cantata
   (package
     (name "cantata")
-    (version "3.3.0")
+    (version "3.3.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -516,7 +516,7 @@ MPRIS 2 support.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "09nskgw9c6jhr647yv9irzjb2zibv1w8bwbpfgz0viibqn81f7bp"))))
+                "0x5bm8s9cl68ybdv37w65kjlxyz40s42ddyf0cv4351vxxiiyng2"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f)) ; No test suite

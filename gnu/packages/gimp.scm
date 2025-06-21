@@ -7,7 +7,7 @@
 ;;; Copyright © 2018 Thorsten Wilms <t_w_@freenet.de>
 ;;; Copyright © 2020 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
-;;; Copyright © 2021, 2022 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2021, 2022, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -41,28 +41,28 @@
   #:use-module (gnu packages backup)
   #:use-module (gnu packages base)
   #:use-module (gnu packages build-tools)
+  #:use-module (gnu packages compression)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
-  #:use-module (gnu packages graphviz)
-  #:use-module (gnu packages pkg-config)
+  #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages glib)
-  #:use-module (gnu packages gtk)
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages graphics)
+  #:use-module (gnu packages graphviz)
+  #:use-module (gnu packages gtk)
   #:use-module (gnu packages image)
-  #:use-module (gnu packages ghostscript)
-  #:use-module (gnu packages compression)
-  #:use-module (gnu packages xml)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages maths)
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages patchutils)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages photo)
+  #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages web)
+  #:use-module (gnu packages xml)
   #:use-module (gnu packages xorg))
 
 (define-public poly2tri-c
@@ -176,7 +176,7 @@ of a larger interface.")
 (define-public babl
   (package
     (name "babl")
-    (version "0.1.112")
+    (version "0.1.114")
     (source (origin
               (method url-fetch)
               (uri (list (string-append "https://download.gimp.org/pub/babl/"
@@ -190,7 +190,7 @@ of a larger interface.")
                                         "/babl-" version ".tar.xz")))
               (sha256
                (base32
-                "0yca08ay7jygj59bc6fi73pcipi1h6sams43rkzci1qp8a16csgv"))))
+                "11v48pnmsbbv9j1xh11gn8bx3lnhc96s6zxwncyp0iz4q637gfxw"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -224,7 +224,7 @@ provided, as well as a framework to add new color models and data types.")
 (define-public gegl
   (package
     (name "gegl")
-    (version "0.4.56")
+    (version "0.4.62")
     (source
      (origin
        (method url-fetch)
@@ -238,7 +238,7 @@ provided, as well as a framework to add new color models and data types.")
                                  (version-major+minor version)
                                  "/gegl-" version ".tar.xz")))
        (sha256
-        (base32 "0p6cscnjlpcv123rgkjj5ks43jxkbryiqh23aspcjnlv1ywn8jm0"))))
+        (base32 "0v2wa2a3vnz1g4z5h9s8ili5h5kzk95hxlcp0zlxkwgbf5img1sq"))))
     (build-system meson-build-system)
     (arguments
      `(#:phases
@@ -425,7 +425,7 @@ that is extensible via a plugin system.")
   (package
     (inherit gimp-2)
     (name "gimp")
-    (version "3.0.0")
+    (version "3.0.4")
     (source
      (origin
        (method url-fetch)
@@ -433,7 +433,7 @@ that is extensible via a plugin system.")
                            (version-major+minor version)
                            "/gimp-" version ".tar.xz"))
        (sha256
-        (base32 "081d3n88fcly67qmp0zf4a1b5r5vdj4gnj9cwp0cmn0vklywmwck"))))
+        (base32 "09dbxim6k7pjkk8lbjkw3r4zi0y0mxvc4jk5fmjk42dzfp12xalc"))))
     (build-system meson-build-system)
     (arguments
      (list #:modules `((ice-9 popen)
@@ -487,47 +487,21 @@ that is extensible via a plugin system.")
 (define-public gimp-fourier
   (package
     (name "gimp-fourier")
-    (version "0.4.3-2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://registry.gimp.org/files/fourier-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "1rpacyad678lqgxa3hh2n0zpg4azs8dpa8q079bqsl12812k9184"))))
+    (version "0.4.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://github.com/rpeyron/plugin-gimp-fourier/"
+                           "releases/download/v" version
+                           "/gimp-plugin-fourier-" version ".tar.gz"))
+       (sha256
+        (base32 "0c4z3hd2sk1s6sx0441p4li383riq1q33wj7ni7l2rwsr8x1s95s"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f ;no tests
-       #:phases
-       (modify-phases %standard-phases
-         ;; FIXME: The gegl package only installs "gegl-0.4.pc", but
-         ;; "gimp-2.0.pc" requires "gegl-0.3.pc", so we just copy it.
-         (replace 'configure
-           (lambda* (#:key inputs #:allow-other-keys)
-             (mkdir-p "tmppkgconfig")
-             (copy-file (search-input-file inputs
-                                           "/lib/pkgconfig/gegl-0.4.pc")
-                        "tmppkgconfig/gegl-0.3.pc")
-             (setenv "PKG_CONFIG_PATH"
-                     (string-append "tmppkgconfig:"
-                                    (or (getenv "PKG_CONFIG_PATH") "")))
-             #t))
-         (add-after 'unpack 'set-prefix
-           (lambda* (#:key outputs #:allow-other-keys)
-             ;; gimptool-2.0 does not allow us to install to any target
-             ;; directory.
-             (let ((target (string-append (assoc-ref outputs "out")
-                                          "/lib/gimp/"
-                                          (car (string-split ,(package-version gimp) #\.))
-                                          ".0/plug-ins")))
-               (substitute* "Makefile"
-                 (("\\$\\(PLUGIN_INSTALL\\) fourier")
-                  (string-append "cp fourier " target)))
-               (mkdir-p target))
-             #t)))))
+     `(#:tests? #f)) ;no tests
     (inputs
      (list fftw
-           gimp
+           gimp-2
            ;; needed by gimp-2.0.pc
            gdk-pixbuf
            gegl
@@ -618,7 +592,7 @@ MyPaint.")
   ;; “Edit->Preferences->Folders->Plug Ins”.
   (package
     (name "gimp-resynthesizer")
-    (version "2.0.3")
+    (version "3.0")
     (source
      (origin
        (method git-fetch)
@@ -627,48 +601,19 @@ MyPaint.")
               (commit (string-append "v" version))))
        (sha256
         (base32
-         "1jwc8bhhm21xhrgw56nzbma6fwg59gc8anlmyns7jdiw83y0zx3j"))
+         "1w0mp8bpwlk6p2gwg9zqvckzyfc16djgmzjc8x9zp2biai3vkz7w"))
        (file-name (git-file-name name version))))
-    (build-system gnu-build-system)
-    (arguments
-     `( ;; Turn off tests to avoid:
-       ;; make[1]: *** No rule to make target '../src/resynth-gui.c', needed by 'resynthesizer.pot'.  Stop.
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'set-env
-           (lambda _
-             (setenv "CONFIG_SHELL" (which "sh"))
-             #t))
-         (add-after 'configure 'set-prefix
-           ;; Install plugin under $prefix, not under GIMP's libdir.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((target (string-append (assoc-ref outputs "out")
-                                          "/lib/gimp/"
-                                          ,(version-major
-                                            (package-version gimp))
-                                          ".0")))
-               (substitute* (list "src/resynthesizer/Makefile"
-                                  "src/resynthesizer-gui/Makefile")
-                 (("GIMP_LIBDIR = .*")
-                  (string-append "GIMP_LIBDIR = " target "\n")))
-               (mkdir-p target)
-               #t))))))
+    (build-system meson-build-system)
     (native-inputs
-     ;; avoid ./autogen.sh: ./configure: /bin/sh: bad interpreter:
-     ;; No such file or directory
-     `(("autoconf" ,autoconf-wrapper)
-       ("automake" ,automake)
-       ("glib" ,glib "bin")                       ; glib-gettextize
-       ("intltool" ,intltool)
-       ("pkg-config" ,pkg-config)))
+     (list pkg-config))
     (inputs
-     (list gimp
-           gdk-pixbuf ; needed by gimp-2.0.pc
-           cairo
+     (list cairo
+           gdk-pixbuf
            gegl
-           gtk+-2 ; needed by gimpui-2.0.pc
-           glib))
+           gexiv2
+           gimp
+           gtk+
+           pango))
     (home-page "https://github.com/bootchk/resynthesizer")
     (synopsis "GIMP plugins for texture synthesis")
     (description

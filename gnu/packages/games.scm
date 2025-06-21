@@ -189,6 +189,7 @@
   #:use-module (gnu packages linux)
   #:use-module (gnu packages lisp)
   #:use-module (gnu packages llvm)
+  #:use-module (gnu packages logging)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages man)
   #:use-module (gnu packages maths)
@@ -217,7 +218,7 @@
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
-  #:use-module (gnu packages ruby)
+  #:use-module (gnu packages ruby-check)
   #:use-module (gnu packages shells)
   #:use-module (gnu packages sdl)
   #:use-module (gnu packages serialization)
@@ -3912,56 +3913,57 @@ fight Morgoth, the Lord of Darkness.")
     (license license:gpl2)))
 
 (define-public pingus
-  (package
-    (name "pingus")
-    (version "0.7.6")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-              (url "https://gitlab.com/pingus/pingus.git")
-              (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0wp06kcmknsnxz7bjnsndb8x062z7r23fb3yrnbfnj68qhz18y74"))
-       (patches (search-patches "pingus-boost-headers.patch"
-                                "pingus-sdl-libs-config.patch"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           (substitute* "src/pingus/screens/demo_session.cpp"
-             (("#include <iostream>")
-              ;; std::function moved to <functional> with C++ 11.
-              ;; Remove this for versions newer than 0.7.6.
-              "#include <iostream>\n#include <functional>"))
-           #t))))
-    (build-system gnu-build-system)
-    (native-inputs (list pkg-config scons-python2))
-    (inputs (list sdl
-                  sdl-image
-                  sdl-mixer
-                  mesa
-                  glu
-                  libpng
-                  boost))
-    (arguments
-     '(#:make-flags (list (string-append "PREFIX=" %output))
-       #:tests? #f                      ; no check target
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)))) ; no configure script
-    (home-page "https://pingus.seul.org/")
-    (synopsis "Lemmings clone")
-    (description
-     "Pingus is a free Lemmings-like puzzle game in which the player takes
+  ;; XXX: Does not release anymore.
+  (let ((commit "8c68e08b0b9530b0078a6e2972786f7accf0d0e6")
+        (revision "0"))
+    (package
+      (name "pingus")
+      (version (git-version "0.7.6" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/Pingus/pingus")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0cnjrma5wfsgjxzclzsk5rycllfh2ncsv2frqwhijwm2ggwcm3am"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        ;; XXX: tests build but are flagged as failing in pingus.nix
+        #:tests? #f
+        #:configure-flags #~(list "-DBUILD_TESTS=OFF")))
+      (native-inputs (list googletest pkg-config tinycmmc uitest))
+      (inputs (list argpp
+                    boost
+                    fmt-8
+                    geomcpp
+                    glm
+                    glu
+                    libpng
+                    libsigc++-2
+                    logmich
+                    mesa
+                    priocpp
+                    sdl2
+                    sdl2-image
+                    sdl2-mixer
+                    strutcpp
+                    tinygettext-with-sdl2
+                    wstsound
+                    xdgcpp))
+      (home-page "https://pingus.seul.org/")
+      (synopsis "Lemmings clone")
+      (description
+       "Pingus is a free Lemmings-like puzzle game in which the player takes
 command of a bunch of small animals and has to guide them through levels.
 Since the animals walk on their own, the player can only influence them by
 giving them commands, like build a bridge, dig a hole, or redirect all animals
 in the other direction.  Multiple such commands are necessary to reach the
 level's exit.  The game is presented in a 2D side view.")
-    ;; Some source files are under bsd-3 and gpl2+ licenses.
-    (license license:gpl3+)))
+      ;; Some source files are under bsd-3 and gpl2+ licenses.
+      (license license:gpl3+))))
 
 (define-public talkfilters
   (package
@@ -5028,6 +5030,88 @@ against each other or just trying to beat the computer; single-player mode is
 also available.")
     (license license:gpl3+)))
 
+(define ring-racers-data
+  (hidden-package
+   (package
+     (name "ring-racers-data")
+     (version "2.3")
+     (source
+      (origin
+        (method url-fetch/zipbomb)
+        (uri (string-append
+              "https://github.com/KartKrewDev/RingRacers/releases/download/v"
+              version "/Dr.Robotnik.s-Ring-Racers-v" version "-Assets.zip"))
+        (file-name (string-append name "-" version ".zip"))
+        (sha256
+         (base32 "0i6sq8c1vq7z5r5i1hana0v73xvj53696f2xwn37xicxds4d15wp"))))
+     (build-system copy-build-system)
+     (home-page "https://github.com/KartKrewDev/RingRacers/releases")
+     (synopsis "Data files for Ring Racers")
+     (description "This package contains data files for Ring Racers.")
+     (license license:gpl2+))))
+
+(define-public ring-racers
+  (package
+    (name "ring-racers")
+    (version "2.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.do.srb2.org/KartKrew/RingRacers")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "05lf799imbk0x3i2adaj0r84ck5yyrvzjvhs4k9dj7l4jg0x4sjz"))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   (with-directory-excursion "thirdparty"
+                     (delete-file-recursively "glm")
+                     (substitute* "CMakeLists.txt"
+                       (("add_subdirectory\\(glm\\)")
+                        "find_package(glm REQUIRED)")))
+                   (with-directory-excursion "src"
+                     (substitute* "CMakeLists.txt"
+                       (("glm::glm")
+                        "glm")))))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f ;There are no tests.
+      #:configure-flags
+      #~(list "-DCMAKE_C_FLAGS_RELWITHDEBINFO='-O3 -g -DNDEBUG'"
+              "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO='-O3 -g -DNDEBUG'")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'move-and-wrap-binary
+            ;; Install executable to $out/bin.
+            (lambda* (#:key inputs #:allow-other-keys)
+              (with-directory-excursion #$output
+                (mkdir "bin")
+                (rename-file "ringracers" "bin/ringracers")
+                (wrap-program "bin/ringracers"
+                  `("RINGRACERSWADDIR" =
+                    (,(assoc-ref inputs "ring-racers-data"))))))))))
+    (inputs (list glm
+                  libogg
+                  libpng
+                  libvorbis
+                  libvpx
+                  libyuv
+                  ring-racers-data
+                  sdl2
+                  zlib
+                  curl))
+    (home-page "https://kartkrew.org")
+    (synopsis "Technical kart racing game")
+    (description
+     "Dr. Robotnik's Ring Racers is a kart racing game drawing inspiration from
+``anti-gravity'' racers, fighting games, and traditional-style kart racing.
+Ring Racers is designed with an emphasis on player agency in the face of highly
+technical game-play challenges in both single-player and online multiplayer
+modes.")
+    (license license:gpl2+)))
+
 (define-public unknown-horizons
   (package
     (name "unknown-horizons")
@@ -5918,6 +6002,40 @@ logging, so games can be viewed again.")
 are only two levels to play with, but they are very addictive.")
     (license license:gpl2)))
 
+(define-public trackballs
+  (package
+    (name "trackballs")
+    (version "1.3.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/trackballs/trackballs")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vr35i5y93n155m20mvsri42r8k3hphpc8fmrv8wmfv6xqss5914"))))
+    (build-system cmake-build-system)
+    (native-inputs (list pkg-config
+                         gettext-minimal))
+    (inputs (list guile-2.2
+                  mesa
+                  sdl2
+                  sdl2-image
+                  sdl2-mixer
+                  sdl2-ttf
+                  zlib))
+    (arguments (list #:tests? #f))      ;No test suite.
+    (home-page "https://trackballs.github.io/")
+    (synopsis "Marble-rolling puzzle/skill game")
+    (description
+     "Trackballs is a simple game similar to the classic Amiga game @cite{Marble
+Madness}.  By steering a marble ball through a labyrinth filled with vicious
+hammers, pools of acid and other obstacles the player collects points.  When the
+ball reaches the destination it continues at the next, more difficult level -
+unless the time runs out.")
+    (license license:gpl2+)))
+
 (define-public pioneers
   (package
     (name "pioneers")
@@ -6351,7 +6469,7 @@ in-window at 640x480 resolution or fullscreen.")
                        "iV_DrawTextRotated(\"Press ESC to exit.\", "
                        "100, 100, 0.0f, font_regular);"))))))))
     (native-inputs (list asciidoc
-                     ruby-asciidoctor
+                     ruby-asciidoctor/minimal
                      gettext-minimal
                      pkg-config
                      unzip
@@ -8181,8 +8299,8 @@ at their peak of economic growth and military prowess.
              python-pylint
              python-pyyaml
              python-wrapper)
-       (if (supported-package? ruby-asciidoctor)
-           (list ruby-asciidoctor)
+       (if (supported-package? ruby-asciidoctor/minimal)
+           (list ruby-asciidoctor/minimal)
            '())))
     (home-page "https://gitlab.com/esr/open-adventure")
     (synopsis "Colossal Cave Adventure")
@@ -10150,76 +10268,79 @@ download and unpack them separately.")
        (uri (string-append "mirror://sourceforge/btanks/btanks-source/"
                            "btanks-" version ".tar.bz2"))
        (sha256
-        (base32
-         "0ha35kxc8xlbg74wsrbapfgxvcrwy6psjkqi7c6adxs55dmcxliz"))))
+        (base32 "0ha35kxc8xlbg74wsrbapfgxvcrwy6psjkqi7c6adxs55dmcxliz"))
+       (patches
+        (search-patches "btanks-scons-python.patch"
+                        "btanks-sl08-python.patch"))))
     (build-system scons-build-system)
     (arguments
-     `(#:tests? #f                      ; there are none
-       #:scons ,scons-python2
-       #:scons-flags (list (string-append "prefix=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'replace-removed-scons-syntax
-           (lambda _
-             (substitute* "SConstruct"
-               (("Options") "Variables")
-               (("opts.Add\\(BoolOption.*") "opts.Add('gcc_visibility', 'gcc visibility', 'true')")
-               (("opts.Add\\(EnumOption.*") "opts.Add('mode', 'build mode', 'release')"))
-             #t))
-         (add-after 'set-paths 'set-sdl-paths
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "CPATH"
-                     (string-append
-                      (search-input-directory inputs "/include/SDL")
-                      ":" (or (getenv "CPATH") "")))))
-         (add-after 'unpack 'fix-compilation-errors
-           (lambda _
-             (substitute* "mrt/base_file.h"
-               (("#include <string>" m)
-                (string-append m "\n#include <sys/types.h>")))
-             (substitute* '("engine/sl08/sl08.h"
-                            "engine/sl08/sl08.py")
-               (("signal = NULL") "signal = 0")
-               (("object\\(NULL\\)") "object(0)")
-               (("func\\(NULL\\)") "func(0)")
-               ((" connect\\(signal_ref\\)")
-                " this->connect(signal_ref)"))
-             (substitute* "math/range_list.h"
-               ((" lower_bound\\(value\\)")
-                " this->lower_bound(value)")
-               (("	erase\\(i\\)")
-                "	this->erase(i)"))
-             (substitute* "clunk/source.cpp"
-               (("using namespace clunk" m)
-                (string-append "# define pow10f(x) exp10f(x)\n" m)))
-             #t))
-         (add-after 'unpack 'find-lua
-           (lambda _
-             (substitute* "engine/SConscript"
-               (("lua5.1") "lua-5.1")
-               (("bt_libs.append\\(lua\\)")
-                "bt_libs.append(\"lua\")"))
-             #t)))))
-    (inputs
-     `(("expat" ,expat)
-       ("glu" ,glu)
-       ("libsmpeg" ,libsmpeg-with-sdl1)
-       ("libvorbis" ,libvorbis)
-       ("lua51" ,lua-5.1)
-       ("sdl" ,(sdl-union (list sdl
-                                sdl-mixer
-                                sdl-image
-                                sdl-ttf)))
-       ("zlib" ,zlib)))
-    (native-inputs
-     (list pkg-config zip))
+     (list
+      #:tests? #f ;there are none
+      #:scons-flags
+      #~(list (string-append "prefix=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'replace-removed-scons-syntax
+            (lambda _
+              (substitute* "SConstruct"
+                ;; XXX: Shorten CheckLibWithHeader.
+                (("\"xmmintrin\\.h\"")
+                 "'xmmintrin.h'")
+                (("(conf\\.CheckLibWithHeader\\(.*), \".*\\)" all check)
+                 (string-append check ")")))))
+          (add-after 'set-paths 'set-sdl-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "CPATH"
+                      (string-append (search-input-directory inputs
+                                                             "/include/SDL")
+                                     ":"
+                                     (or (getenv "CPATH") "")))))
+          (add-after 'unpack 'fix-compilation-errors
+            (lambda _
+              (substitute* "mrt/base_file.h"
+                (("#include <string>" m)
+                 (string-append m "\n#include <sys/types.h>")))
+              (substitute* '("engine/sl08/sl08.h" "engine/sl08/sl08.py")
+                (("signal = NULL")
+                 "signal = 0")
+                (("object\\(NULL\\)")
+                 "object(0)")
+                (("func\\(NULL\\)")
+                 "func(0)")
+                ((" connect\\(signal_ref\\)")
+                 " this->connect(signal_ref)"))
+              (substitute* "math/range_list.h"
+                ((" lower_bound\\(value\\)")
+                 " this->lower_bound(value)")
+                (("\terase\\(i\\)")
+                 "\tthis->erase(i)"))
+              (substitute* "clunk/source.cpp"
+                (("using namespace clunk" m)
+                 (string-append "# define pow10f(x) exp10f(x)\n" m)))))
+          (add-after 'unpack 'find-lua
+            (lambda _
+              (substitute* "engine/SConscript"
+                (("lua5.1")
+                 "lua-5.1")
+                (("bt_libs.append\\(lua\\)")
+                 "bt_libs.append(\"lua\")")))))))
+    (inputs (list expat
+                  glu
+                  libsmpeg-with-sdl1
+                  libvorbis
+                  lua-5.1
+                  python-wrapper
+                  (sdl-union (list sdl sdl-mixer sdl-image sdl-ttf))
+                  zlib))
+    (native-inputs (list pkg-config zip))
     (home-page "https://btanks.sourceforge.net")
     (synopsis "Multiplayer tank battle game")
-    (description "Battle Tanks (also known as \"btanks\") is a funny battle
-game, where you can choose one of three vehicles and eliminate your enemy
-using the whole arsenal of weapons.  It has original cartoon-like graphics and
-cool music, it’s fun and dynamic, it has several network modes for deathmatch
-and cooperative.")
+    (description
+     "Battle Tanks (also known as \"btanks\") is a funny battle game, where
+you can choose one of three vehicles and eliminate your enemy using the whole
+arsenal of weapons.  It has original cartoon-like graphics and cool music,
+it’s fun and dynamic, it has several network modes for deathmatch and
+cooperative.")
     ;; Some parts (e.g. mrt/b64.cpp) are LGPLv2.1+, but the whole package is
     ;; released under GPLv2 or later.  It comes with extra exceptions for the
     ;; developers.

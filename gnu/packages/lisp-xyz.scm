@@ -21378,16 +21378,16 @@ parsers.")
 (define-public sbcl-mcclim
   (package
     (name "sbcl-mcclim")
-    (version "0.9.8")
+    (version "0.9.9")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://codeberg.org/McCLIM/McCLIM")
-             (commit (string-append version "-yule"))))
+             (commit (string-append version "-ostara"))))
        (file-name (git-file-name "cl-mcclim" version))
        (sha256
-        (base32 "0gbi61jnnsz6fvhv18mf57jkq46bvcd0355vqdcnrni7xyi10sk8"))))
+        (base32 "0lf0af7c9kl2gzjm3j1p8z596iws86gn93ckhrba52ia5vz1iq4k"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs
      (list sbcl-fiveam pkg-config))
@@ -27747,7 +27747,7 @@ running into parallelism problems when having to change directory.")
 (define-public sbcl-simple-matrix
   (package
     (name "sbcl-simple-matrix")
-    (version "3.2")
+    (version "3.3")
     (source
      (origin
        (method git-fetch)
@@ -27756,7 +27756,7 @@ running into parallelism problems when having to change directory.")
              (commit (string-append "v" version))))
        (file-name (git-file-name "cl-simple-matrix" version))
        (sha256
-        (base32 "1cdvl4m41hmh1yvm06nwm0qf83x9abn6919x9qnzsfy66pvcb7p9"))))
+        (base32 "1ph3bfjrazqhlpyasyg3c1000ca6xlyj3gyrc5a56hl54s0q64v8"))))
     (build-system asdf-build-system/sbcl)
     (native-inputs (list sbcl-fiveam))
     (synopsis "Matrix library for Common Lisp")
@@ -33039,7 +33039,7 @@ files.")
 (define-public sbcl-zpb-ttf
   (package
     (name "sbcl-zpb-ttf")
-    (version "1.0.6")
+    (version "1.0.7")
     (source
      (origin
        (method git-fetch)
@@ -33048,7 +33048,7 @@ files.")
              (commit (string-append "release-" version))))
        (file-name (git-file-name "cl-zpb-ttf" version))
        (sha256
-        (base32 "043xga76jms7dipcwnyh8lkj3gx66cvrkwhc728hjaf7axarvcmv"))))
+        (base32 "04lph7i153zlswvpgg76fxazyswj8j0idqm4ysn8qmflb7xcvd78"))))
     (build-system asdf-build-system/sbcl)
     (home-page "https://github.com/xach/zpb-ttf")
     (synopsis "TrueType font file access for Common Lisp")

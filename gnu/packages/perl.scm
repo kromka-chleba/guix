@@ -4282,27 +4282,71 @@ arbitrary parameters.")
        (sha256
         (base32 "0s9w8ws2ckv0mbvns2irq4npmvj6chf6iyy3z0pspaz3izcfp1vw"))))
     (build-system perl-build-system)
+    (arguments
+      (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'install 'wrap-with-perl-libs
+              ;; Wrap the re.pl script with required libs to reduce runtime
+              ;; propagated-inputs
+              (lambda* (#:key inputs outputs #:allow-other-keys)
+                (let* ((bindir (string-append #$output "/bin"))
+                       (binaries (find-files bindir))
+                       (wrap.pl (lambda (scripts keys)
+                                  (for-each
+                                    (lambda (script)
+                                        (wrap-program script
+                                          `("PERL5LIB" ":" prefix
+                                             ,(cons*
+                                                (getenv "PERL5LIB")
+                                                (string-append #$output
+                                                               "/lib/perl5/site_perl")
+                                                (map
+                                                  (lambda (key)
+                                                    (string-append
+                                                      (assoc-ref inputs key)
+                                                      "/lib/perl5/site_perl"))
+                                                 keys)))))
+                                        scripts))))
+
+                        (wrap.pl binaries
+                               (list "perl-app-nopaste"
+                                     "perl-b-keywords"
+                                     "perl-data-dump-streamer"
+                                     "perl-data-dumper-concise"
+                                     "perl-file-next"
+                                     "perl-lexical-persistence"
+                                     "perl-module-refresh"
+                                     "perl-module-runtime"
+                                     "perl-moose"
+                                     "perl-moosex-getopt"
+                                     "perl-moosex-object-pluggable"
+                                     "perl-namespace-autoclean"
+                                     "perl-ppi"
+                                     "perl-ppi-xs"
+                                     "perl-sys-sigaction"
+                                     "perl-task-weaken"))))))))
     (native-inputs (list perl-test-fatal))
-    (propagated-inputs (list perl-app-nopaste
-                             perl-b-keywords
-                             perl-data-dump-streamer
-                             perl-data-dumper-concise
-                             perl-file-next
-                             perl-lexical-persistence
-                             perl-module-refresh
-                             perl-module-runtime
-                             perl-moose
-                             perl-moosex-getopt
-                             perl-moosex-object-pluggable
-                             perl-namespace-autoclean
-                             perl-ppi
-                             perl-ppi-xs
-                             perl-sys-sigaction
-                             perl-task-weaken))
+    (inputs (list bash-minimal
+                  perl-app-nopaste
+                  perl-b-keywords
+                  perl-data-dump-streamer
+                  perl-data-dumper-concise
+                  perl-file-next
+                  perl-lexical-persistence
+                  perl-module-refresh
+                  perl-module-runtime
+                  perl-moose
+                  perl-moosex-getopt
+                  perl-moosex-object-pluggable
+                  perl-namespace-autoclean
+                  perl-ppi
+                  perl-ppi-xs
+                  perl-sys-sigaction
+                  perl-task-weaken))
     (home-page "https://metacpan.org/release/Devel-REPL")
-    (synopsis "Modern Perl interactive shell.")
-    (description "@code{Devel::REPL} is a modern Perl interactive
-shell.")
+    (synopsis "Modern Perl interactive shell")
+    (description "@code{Devel::REPL} is a modern Perl interactive shell.")
     (license license:perl-license)))
 
 (define-public perl-devel-stacktrace
@@ -8101,30 +8145,29 @@ Moose and is optimised for rapid startup.")
   (package
     (inherit perl-moo)
     (name "perl-moo-2")
-    (version "2.003006")
+    (version "2.005005")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://cpan/authors/id/H/HA/HAARG/"
                            "Moo-" version ".tar.gz"))
        (sha256
-        (base32 "0wi4gyp5kn4lbags0hrax3c9jj9spxg4d11fbrdh0ican4m0kcmw"))))
+        (base32
+          "025iyjqyjw0p1is374bkhyispim90j0bf87jfdrx1blzci92jnpv"))))
+    (inputs
+      (list perl-class-method-modifiers
+            perl-scalar-list-utils))
     (propagated-inputs
      `(("perl-role-tiny" ,perl-role-tiny-2)
-       ("perl-sub-name" ,perl-sub-name)
        ("perl-sub-quote" ,perl-sub-quote)
-       ("perl-strictures" ,perl-strictures-2)
-       ,@(alist-delete "perl-strictures"
-                       (alist-delete "perl-role-tiny"
-                                     (package-propagated-inputs perl-moo)))))
+       ,@(alist-delete "perl-role-tiny"
+                                     (package-propagated-inputs perl-moo))))
     (arguments
      `(#:phases
        (modify-phases %standard-phases
          (add-before 'configure 'set-perl-search-path
            (lambda _
-             ;; Use perl-strictures for testing.
-             (setenv "MOO_FATAL_WARNINGS" "=1")
-             #t)))))))
+             (setenv "MOO_FATAL_WARNINGS" "=1"))))))))
 
 (define-public perl-moose
   (package
@@ -9940,6 +9983,7 @@ used for writing documentation for Perl and for Perl modules.")
                          perl-test-pod
                          perl-test-pod-coverage
                          perl-test-xpath))
+    (inputs (list bash-minimal))
     (propagated-inputs (list perl-html-parser ;for HTML::Entities
                              perl-object-tiny))
     (home-page "https://metacpan.org/release/Pod-Site")
@@ -10404,14 +10448,14 @@ and @code{deserialize_regexp}.")
 (define-public perl-role-tiny-2
   (package
     (inherit perl-role-tiny)
-    (version "2.001004")
+    (version "2.002004")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://cpan/authors/id/H/HA/HAARG/"
                            "Role-Tiny-" version ".tar.gz"))
        (sha256
-        (base32 "11qn516352yhi794www3ykwa9xv2gxpfnhn9jcn10x0ahl95gflj"))))))
+        (base32 "0i9b4jd4vd6w8nldyhk6y5zsiga4ari83afhaam86kwa2fgfxgfp"))))))
 
 (define-public perl-safe-hole
   (package
@@ -12508,7 +12552,7 @@ system.")
 (define-public perl-throwable
   (package
     (name "perl-throwable")
-    (version "0.200013")
+    (version "1.001")
     (source
      (origin
        (method url-fetch)
@@ -12516,12 +12560,16 @@ system.")
                            "Throwable-" version ".tar.gz"))
        (sha256
         (base32
-         "184gdcwxqwnkrx5md968v1ny70pq6blzpkihccm3bpdxnpgd11wr"))))
+          "0lacvvfv9znkj7dcs3c58g5fli9sm1bziv3fqln0zmq6gnfmxjyh"))))
     (build-system perl-build-system)
     (native-inputs
-     (list perl-devel-stacktrace))
+     (list perl-devel-stacktrace
+           perl-test-simple))
+    (inputs
+      (list perl-scalar-list-utils
+            perl-sub-quote))
     (propagated-inputs
-     (list perl-devel-stacktrace perl-module-runtime perl-moo))
+     (list perl-devel-stacktrace perl-module-runtime perl-moo-2))
     (home-page "https://metacpan.org/release/Throwable")
     (synopsis "Role for classes that can be thrown")
     (description "Throwable is a role for classes that are meant to be thrown

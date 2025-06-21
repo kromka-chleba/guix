@@ -7,6 +7,8 @@
 ;;; Copyright © 2018 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2022, 2024 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2023 David Pflug <david@pflug.io>
+;;; Copyright © 2025 David Thompson <davet@gnu.org>
+;;; Copyright © 2025 Ludovic Courtès <ludo@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -40,6 +42,11 @@
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages databases)
+  #:use-module (gnu packages golang)
+  #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-vcs)
+  #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages guile-xyz)
   #:use-module (gnu packages gnupg)
@@ -58,6 +65,7 @@
   #:use-module (gnu packages xml)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
+  #:use-module (guix build-system go)
   #:use-module ((guix search-paths) #:select ($SSL_CERT_DIR)))
 
 (define-public cuirass
@@ -289,3 +297,62 @@ Laminar encourages the use of existing tools such as bash and cron instead of
 reinventing them.")
     (home-page "https://laminar.ohwg.net/")
     (license l:gpl3+)))
+
+(define-public forgejo-runner
+  (package
+    (name "forgejo-runner")
+    (version "6.2.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://code.forgejo.org/forgejo/runner.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bdn1pk9ghbyd4i9hmk7rfhqdkz9l5w4wgrwiryg8qpwplb7j8mz"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:install-source? #f
+      #:import-path "gitea.com/gitea/act_runner"
+      #:embed-files #~(list ".*\\.json" ".*\\.js" ".*\\.sh")
+      #:test-flags
+      #~(list "-skip" (string-join
+                       (list
+                       ;; Should be true.
+                       "Test_ping"
+	               ;; panic: runtime error: invalid memory address or nil
+	               ;; pointer dereference.
+                        "Test_runCreateRunnerFile")
+                       "|"))
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'install 'rename-binary
+                     (lambda _
+                       (rename-file (string-append #$output "/bin/act_runner")
+                                    (string-append #$output "/bin/forgejo-runner")))))))
+    (native-inputs
+     (list go-code-gitea-io-actions-proto-go-ping
+           go-code-gitea-io-actions-proto-go-runner
+           go-connectrpc-com-connect
+           go-github-com-avast-retry-go
+           go-github-com-avast-retry-go-v4
+           go-github-com-google-uuid
+           go-github-com-joho-godotenv
+           go-github-com-mattn-go-isatty
+           go-github-com-nektos-act
+           go-github-com-sirupsen-logrus
+           go-github-com-spf13-cobra
+           go-golang-org-x-term
+           go-golang-org-x-time
+           go-google-golang-org-protobuf
+           go-gopkg-in-yaml-v3
+           go-gotest-tools-v3))
+    (home-page "https://code.forgejo.org/forgejo/runner")
+    (synopsis "Run continuous integration jobs for Forgejo")
+    (description
+     "Forgejo Runner is a daemon that connects to a Forgejo instance and runs
+jobs for continuous integration.")
+    (license l:expat)))
+

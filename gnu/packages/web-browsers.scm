@@ -23,6 +23,7 @@
 ;;; Copyright © 2021 Christopher Howard <christopher@librehacker.com>
 ;;; Copyright © 2023 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2025 Sergey Trofimov <sarg@sarg.org.ru>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -45,6 +46,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
   #:use-module (guix build-system meson)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -95,6 +97,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-crypto)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages qt)
@@ -539,7 +542,7 @@ interface.")
 (define-public qutebrowser
   (package
     (name "qutebrowser")
-    (version "3.5.0")
+    (version "3.5.1")
     (source
      (origin
        (method git-fetch)
@@ -548,10 +551,12 @@ interface.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "11ir4l4rq86nz2lqj2s31dwc9vm1dcjwqj5sh81c5bg52ccvbbm9"))))
-    (build-system python-build-system)
+        (base32 "0vbd6b5332nd7q9y94zjd1bwdr0gk6pgzvl1ygm274nk5plifdjs"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-attrs                 ; for tests
+     (list python-setuptools
+           python-wheel
+           python-attrs                      ; for tests
            asciidoc))
     (inputs
      (list bash-minimal

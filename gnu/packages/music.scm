@@ -46,7 +46,7 @@
 ;;; Copyright © 2021 Thomas Albers Raviola <thomas@thomaslabs.org>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022, 2023 Sughosha <sughosha@disroot.org>
-;;; Copyright © 2022 Remco van 't Veer <remco@remworks.net>
+;;; Copyright © 2022, 2025 Remco van 't Veer <remco@remworks.net>
 ;;; Copyright © 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Wamm K. D. <jaft.r@outlook.com>
 ;;; Copyright © 2022 Jose G Perez Taveras <josegpt27@gmail.com>
@@ -267,14 +267,14 @@ presented by the Linux kernel Focusrite Scarlett2 USB Protocol Mixer Driver.")
 (define-public audacious
   (package
     (name "audacious")
-    (version "4.3.1")
+    (version "4.4.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://distfiles.audacious-media-player.org/"
                            "audacious-" version ".tar.bz2"))
        (sha256
-        (base32 "0hi0njnw3q7kngmjk837ynagighrbz8a4wpf8bim2nsh85lf5sc5"))))
+        (base32 "01ahr6p7nvzj6mixahifcwv12s7h34sp09yq4023ffy9z029al1l"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -318,14 +318,14 @@ presented by the Linux kernel Focusrite Scarlett2 USB Protocol Mixer Driver.")
            (uri (string-append "https://distfiles.audacious-media-player.org/"
                                "audacious-plugins-" version ".tar.bz2"))
            (sha256
-            (base32 "19n8zpayakszm00bakfzagbbqci95dxv4h7j9ml2sfjqmzijdsid"))))
+            (base32 "1gfl33gsxn69cmxdfk4m3v0578wa29y6d33iza066cbb7dlr9x2h"))))
        ("gettext" ,gettext-minimal)
        ("glib:bin" ,glib "bin")         ; for gdbus-codegen
        ("pkg-config" ,pkg-config)))
     (inputs
      (list dbus
-           qtbase-5
-           qtmultimedia-5
+           qtbase
+           qtsvg
            ;; Plugin dependencies
            alsa-lib
            curl
@@ -386,52 +386,50 @@ more.")
   (package
     (name "aria-maestosa")
     (version "1.4.13")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/ariamaestosa/ariamaestosa/"
-                                  version "/AriaSrc-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "1cs3z6frx2ch7rm5ammx9p0rxcjrbj1vq14hvcbimpaw39rdsn3d"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://sourceforge/ariamaestosa/ariamaestosa/"
+                           version "/AriaSrc-" version ".tar.bz2"))
+       (sha256
+        (base32 "1cs3z6frx2ch7rm5ammx9p0rxcjrbj1vq14hvcbimpaw39rdsn3d"))
+       (patches
+        (search-patches "aria-maestosa-scons-python3.patch"))))
     (build-system scons-build-system)
     (arguments
-     `(#:tests? #f  ;no tests
-       #:scons-flags
-       (list (string-append "prefix=" (assoc-ref %outputs "out")))
-       #:scons ,scons-python2
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure)
-         (add-after 'unpack 'scons-propagate-environment
-           (lambda _
-             ;; By design, SCons does not, by default, propagate
-             ;; environment variables to subprocesses.  See:
-             ;; <http://comments.gmane.org/gmane.linux.distributions.nixos/4969>
-             ;; Here, we modify the SConstruct file to arrange for
-             ;; environment variables to be propagated.
-             (substitute* "SConstruct"
-               (("env = Environment\\(\\)")
-                "env = Environment(ENV=os.environ)")
-               ;; Scons errors out when copying subdirectories from Resources,
-               ;; so we move them instead.
-               (("Copy") "Move")
-               ;; We move the "score" and "Documentation" directories at once,
-               ;; so we have to ignore files contained therein.
-               (("if \".svn\" in file" line)
-                (string-append line
-                               " or \"score/\" in file"
-                               " or \"Documentation/\" in file")))
-             #t))
-         (add-after 'install 'fix-directory-permissions
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (chmod (string-append out "/share/Aria/Documentation") #o555)
-               (chmod (string-append out "/share/Aria/score") #o555)
-               #t))))))
-    (inputs
-     (list wxwidgets glib alsa-lib))
-    (native-inputs
-     (list pkg-config))
+     (list
+      #:tests? #f  ;no tests
+      #:scons-flags
+      #~(list (string-append "prefix=" (assoc-ref %outputs "out")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (add-after 'unpack 'scons-propagate-environment
+            (lambda _
+              ;; By design, SCons does not, by default, propagate
+              ;; environment variables to subprocesses.  See:
+              ;; <http://comments.gmane.org/gmane.linux.distributions.nixos/4969>
+              ;; Here, we modify the SConstruct file to arrange for
+              ;; environment variables to be propagated.
+              (substitute* "SConstruct"
+                (("env = Environment\\(\\)")
+                 "env = Environment(ENV=os.environ)")
+                ;; Scons errors out when copying subdirectories from Resources,
+                ;; so we move them instead.
+                (("Copy") "Move")
+                ;; We move the "score" and "Documentation" directories at once,
+                ;; so we have to ignore files contained therein.
+                (("if \".svn\" in file" line)
+                 (string-append line
+                                " or \"score/\" in file"
+                                " or \"Documentation/\" in file")))))
+          (add-after 'install 'fix-directory-permissions
+            (lambda _
+              (with-directory-excursion (string-append #$output "/share/Aria")
+                (chmod "Documentation" #o555)
+                (chmod "score" #o555)))))))
+    (inputs (list wxwidgets glib alsa-lib))
+    (native-inputs (list pkg-config))
     (home-page "https://ariamaestosa.sourceforge.net/")
     (synopsis "MIDI sequencer and editor")
     (description
@@ -1478,41 +1476,42 @@ engine (except effects) that can be used for layering or split patches.")
   (package
     (name "klick")
     (version "0.12.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://das.nasophon.de/download/klick-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "0hmcaywnwzjci3pp4xpvbijnnwvibz7gf9xzcdjbdca910y5728j"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "http://das.nasophon.de/download/klick-" version
+                           ".tar.gz"))
+       (sha256
+        (base32 "0hmcaywnwzjci3pp4xpvbijnnwvibz7gf9xzcdjbdca910y5728j"))))
     (build-system scons-build-system)
     (arguments
-     `(#:scons-flags (list (string-append "PREFIX=" %output))
-       #:scons ,scons-python2
-       #:tests? #f ; no "check" target
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'be-permissive
-           (lambda _
-             (substitute* "SConstruct"
-               (("'-Wall'") "'-Wall', '-fpermissive'"))
-             #t))
-         (add-after 'unpack 'replace-removed-scons-syntax
-           (lambda _
-             (substitute* "SConstruct"
-               (("BoolOption") "BoolVariable")
-               (("PathOption") "PathVariable")
-               (("Options") "Variables"))
-             #t)))))
-    (inputs
-     (list boost
-           jack-1
-           libsndfile
-           libsamplerate
-           liblo
-           rubberband))
-    (native-inputs
-     (list pkg-config))
+     (list
+      #:scons-flags
+      #~(list (string-append "PREFIX=" %output))
+      #:tests? #f ;no "check" target
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'be-permissive
+            (lambda _
+              (substitute* "SConstruct"
+                (("'-Wall'")
+                 "'-Wall', '-fpermissive'"))))
+          (add-after 'unpack 'replace-removed-scons-syntax
+            (lambda _
+              (substitute* "SConstruct"
+                (("BoolOption")
+                 "BoolVariable")
+                (("PathOption")
+                 "PathVariable")
+                (("Options")
+                 "Variables")))))))
+    (inputs (list boost
+                  jack-1
+                  libsndfile
+                  libsamplerate
+                  liblo
+                  rubberband))
+    (native-inputs (list pkg-config))
     (home-page "http://das.nasophon.de/klick/")
     (synopsis "Metronome for JACK")
     (description
@@ -2423,7 +2422,7 @@ a JACK session.")
 (define-public mixxx
   (package
     (name "mixxx")
-    (version "2.5.1")
+    (version "2.5.2")
     (source
      (origin
        (method git-fetch)
@@ -2432,7 +2431,7 @@ a JACK session.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0fn0qwmcdwp04z4wmgs8b9dwlxp67lw9dw8hph50z006qfnrgbmk"))
+        (base32 "08j0xaqxn01w7q72smlnvv7iq7p6jrjfg3dk5mkpg2l3fagkgabl"))
        (modules '((guix build utils)))
        (snippet
         ;; Delete libraries that we already have or don't need.
@@ -8034,7 +8033,7 @@ streaming audio server.")
 (define-public quodlibet
   (package
     (name "quodlibet")
-    (version "4.5.0")
+    (version "4.7.1")
     (source
      (origin
        (method git-fetch)
@@ -8042,10 +8041,13 @@ streaming audio server.")
              (url "https://github.com/quodlibet/quodlibet")
              (commit (string-append "release-" version))))
        (file-name (git-file-name name version))
-       (patches (search-patches "quodlibet-fix-invalid-glob.patch"
-                                "quodlibet-fix-mtime-tests.patch"))
        (sha256
-        (base32 "1i5k93k3bfp7hpcwkbr865mbj9jam3jv2a5k1bazcyp4f5vdrb0v"))))
+        (base32 "0nk2n4j0vm9ibrm3p9qwf5s0a4iwjkbvr6z23sc0v3rdxvaxrgf6"))
+
+       ;; Disable and remove bundled packages.
+       (patches (search-patches "quodlibet-disable-bundled-packages.patch"))
+       (modules '((guix build utils)))
+       (snippet '(delete-file-recursively "quodlibet/packages"))))
     (build-system python-build-system)
     (arguments
      (list
@@ -8064,10 +8066,8 @@ streaming audio server.")
               (if tests?
                   (invoke "xvfb-run" "pytest"
                           ;; needs network
-                          "--ignore=tests/test_browsers_iradio.py"
-                          ;; broken upstream
-                          "--disable-warnings"
-                          "--ignore=tests/quality/test_flake8.py")
+                          "--ignore=tests/plugin/test_covers.py"
+                          "--ignore=tests/test_browsers_iradio.py")
                   (format #t "test suite not run~%"))))
           (add-after 'install 'glib-or-gtk-wrap ; ensure icons loaded
             (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap))
@@ -8082,7 +8082,7 @@ streaming audio server.")
                      `("GI_TYPELIB_PATH" ":" = (,gi-typelib-path))
                      `("GST_PLUGIN_SYSTEM_PATH" ":" suffix (,gst-plugins-path))))
                  '("exfalso" "quodlibet"))))))))
-    (native-inputs (list xvfb-run gettext-minimal))
+    (native-inputs (list xvfb-run gettext-minimal python-pytest))
     (inputs
      (list adwaita-icon-theme
            bash-minimal
@@ -8098,7 +8098,7 @@ streaming audio server.")
            hicolor-icon-theme
            keybinder-3.0 ; keybindings outside of GNOME
            (librsvg-for-system)
-           libsoup-minimal-2
+           libsoup-minimal
            python
            python-cheetah
            python-dbus
@@ -8110,7 +8110,7 @@ streaming audio server.")
            python-pycairo
            python-pygobject
            python-pyinotify
-           python-pytest
+           python-senf
            python-sgmllib3k
            python-toml))
     (home-page "https://github.com/quodlibet/quodlibet")
