@@ -28,6 +28,7 @@
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 John Kehayias <john@guixotic.coop>
+;;; Copyright © 2025 Liam Hupfer <liam@hpfr.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -69,7 +70,7 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages glib)
-  #:use-module (gnu packages gnome)     ; for librsvg
+  #:use-module (gnu packages gnome)     ; for librsvg, dconf
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages image)
@@ -580,6 +581,11 @@ editor (console only)")
      (substitute-keyword-arguments (package-arguments emacs)
        ((#:configure-flags flags #~'())
         #~(cons* "--with-pgtk" #$flags))))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs emacs)
+       ;; libdconfsettings GIO module is necessary to read text-scaling-factor
+       ;; key from GSettings.
+       (prepend dconf)))
     (synopsis "Emacs text editor with @code{pgtk} frames")
     (description "This Emacs build implements graphical UI purely in terms
 of GTK.")))
