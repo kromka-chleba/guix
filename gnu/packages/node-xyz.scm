@@ -7,7 +7,7 @@
 ;;; Copyright © 2021 Dhruvin Gandhi <contact@dhruvin.dev>
 ;;; Copyright © 2022 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2023 Jelle Licht <jlicht@fsfe.org>
-;;; Copyright © 2024 Daniel Khodabakhsh <d.khodabakhsh@gmail.com>
+;;; Copyright © 2024, 2025 Daniel Khodabakhsh <d@niel.khodabakh.sh>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -25,9 +25,10 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages node-xyz)
+  #:use-module (gnu packages base) ; sed
   #:use-module (gnu packages sqlite)
   #:use-module (gnu packages python)
-  #:use-module (gnu packages web)
+  #:use-module (gnu packages web) ; node-esbuild
   #:use-module (guix build-system node)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -164,6 +165,91 @@ It is important to remember that @emph{other} Node.js interfaces such as
 ABI-stable across Node.js major versions.")
     (license license:expat)))
 
+(define-public node-ansi-styles
+  (package
+    (name "node-ansi-styles")
+    (version "3.2.1")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/chalk/ansi-styles")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "15b5ggrhxi2zw5qlhr2di1b7rmfyacrl4rf8j3ndf8iqkv9fijqd"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-color-convert))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'xo', 'ava', and 'tsd'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "ANSI escape codes for styling strings in the terminal")
+    (description "Library of ANSI escape codes to be used to style strings in terminals.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
+(define-public node-array-back
+  (package
+    (name "node-array-back")
+    (version "4.0.2")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/75lb/array-back")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "1xfg4yd155zhi0v2a26kvg3jghcim5xgpwsn4lhikisshmrmf93m"))
+      (modules '((guix build utils)))
+      (snippet #~(begin
+        (delete-file-recursively "dist")))))
+    (build-system node-build-system)
+    (native-inputs (list esbuild))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'esm-runner'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies))))
+        (replace 'build (lambda _
+          (invoke
+            "esbuild"
+            "index.mjs"
+            "--format=cjs"
+            "--outfile=dist/index.js"))))))
+    (synopsis "Isomorphic load-anywhere arrayify function")
+    (description "Takes any input and guarantees an array back.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
+(define-public node-balanced-match
+  (package
+    (name "node-balanced-match")
+    (version "1.0.2")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/juliangruber/balanced-match")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256 (base32 "0977r6hv9fyv6f8wvn31vcncxwhffnn05y0h4hmpkg8p2vs9ip0b"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; FIXME Tests require 'tape'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package
+          (lambda _
+            (modify-json
+              (delete-dev-dependencies)))))))
+    (synopsis "Match balanced character pairs, like { and }")
+    (description "Match balanced string pairs, like { and } or <b> and </b>. Supports\
+ regular expressions as well!")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
 (define-public node-bindings
   (package
     (name "node-bindings")
@@ -187,6 +273,31 @@ ABI-stable across Node.js major versions.")
     (synopsis "Locate native addons")
     (description "This package provides a helper module to locate native
 addons in a wide array of potential locations.")
+    (license license:expat)))
+
+(define-public node-brace-expansion
+  (package
+    (name "node-brace-expansion")
+    (version "2.0.1")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/juliangruber/brace-expansion")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256 (base32 "113banahmr00n1fnyswdsx2jgpfi05f4hn2gc5i8kka7hmj3b5g1"))))
+    (build-system node-build-system)
+    (inputs (list node-balanced-match))
+    (arguments (list
+      #:tests? #f ; FIXME Tests require 'tape'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package
+          (lambda _
+            (modify-json (delete-dev-dependencies)))))))
+    (synopsis "Brace expansion as known from sh/bash, in JavaScript")
+    (description "Return an array of all possible and valid expansions of str. If none\
+ are found, [str] is returned.")
+    (home-page (git-reference-url (origin-uri source)))
     (license license:expat)))
 
 (define-public node-buffer-crc32
@@ -216,6 +327,86 @@ addons in a wide array of potential locations.")
 and fancy character sets, signed or unsigned data and has tests, for Node.")
     (license license:expat)))
 
+(define-public node-buffer-from
+  (package
+    (name "node-buffer-from")
+    (version "1.1.2")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/LinusU/buffer-from")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256 (base32 "15x3iix1z2ggfq3gmnjnz809k02g0zbkf391g1if8s7d3q0r0w1b"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'standard'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "A ponyfill for Buffer.from")
+    (description "A ponyfill for Buffer.from, uses native implementation if available.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
+(define-public node-chalk
+  (package
+    (name "node-chalk")
+    (version "2.4.2")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/chalk/chalk")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "1isx2l8a11k5arz1p3kd7mbdb8kjr85l1axdm7yya57vwlkdkc2y"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-ansi-styles
+      node-supports-color
+      node-escape-string-regexp))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests reuire 'xo', 'c8', 'ava', and 'tsd'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Terminal string styling library")
+    (description "Chalk comes with an easy to use composable API where you just chain and\
+ nest the styles you want.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
+(define-public node-color-convert
+  (package
+    (name "node-color-convert")
+    (version "1.9.3")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/Qix-/color-convert")
+        (commit version)))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "0apgv8p1y9hs5z42wwrwrid62vfkfb89kh3a75s9lvqdbyh04390"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-color-name))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'xo' and 'tsd'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Plain color conversion functions")
+    (description "Color-convert is a color conversion library for JavaScript and node. It\
+ converts all ways between rgb, hsl, hsv, hwb, cmyk, ansi, ansi16, hex strings, and CSS\
+ keywords (will round to closest)")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
 (define-public node-color-name
   (package
     (name "node-color-name")
@@ -235,6 +426,35 @@ and fancy character sets, signed or unsigned data and has tests, for Node.")
     (synopsis "JSON with CSS color names")
     (description
      "This package provides a JSON list with color names and their values.")
+    (license license:expat)))
+
+(define-public node-command-line-usage
+  (package
+    (name "node-command-line-usage")
+    (version "6.1.3")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/75lb/command-line-usage")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "073blk28qdk1bl1l4jsd4a6fmwvl2jv4fi6kfcjykc8x6hkv84cx"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-chalk
+      node-typical
+      node-array-back
+      node-table-layout))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'test-runner'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Generates command-line usage information")
+    (description "A simple, data-driven module for creating a usage guide.")
+    (home-page (git-reference-url (origin-uri source)))
     (license license:expat)))
 
 (define-public node-crx3
@@ -324,6 +544,87 @@ with a module name as argument provides a function that writes debug output to
 a more fine-grained manner by binding the @env{DEBUG} variable.")
     (license license:expat)))
 
+(define-public node-deep-extend
+  (package
+    (name "node-deep-extend")
+    (version "0.6.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/unclechu/node-deep-extend")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "0r2r0wc1c9lq8gplis17pr220c7hk18sq12cipvsa7krb2lb4cpb"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'mocha'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Recursive object extending")
+    (description "Library which allows deeply merging two different objects.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
+(define-public node-dprint-formatter
+  (package
+    (name "node-dprint-formatter")
+    (version "0.4.1")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/dprint/js-formatter")
+        (commit version)))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "0ihdspyz7brx1rny2ind715z6rlzncslsigi3yr553xmk18iswm2"))))
+    (build-system node-build-system)
+    (native-inputs (list esbuild))
+    (arguments (list
+      #:modules '(
+        (guix build node-build-system)
+        (guix build utils)
+        (ice-9 match)
+        (json))
+      #:tests? #f ; FIXME: Tests require 'deno'.
+      #:phases #~(modify-phases %standard-phases
+        (delete 'patch-dependencies)
+        (delete 'configure)
+        (replace 'build (lambda _
+          (define output "output")
+          (mkdir output)
+          (delete-file "mod_test.ts")
+          (substitute* (list "mod.ts" "v3.ts" "v4.ts")
+            (("\\.ts") ""))
+          (install-file "LICENSE" output)
+          (install-file "README.md" output)
+          (chdir output)
+          (call-with-output-file
+            "package.json"
+            (lambda (out)
+              (scm->json
+                (list
+                  (cons "name" "@dprint/formatter")
+                  (cons "version" #$version)
+                  (cons "main" "./script/mod.js")
+                  (cons "module" "./esm/mod.js"))
+                out)))
+          (for-each
+            (match-lambda ((format outdir)
+              (invoke
+                "esbuild"
+                "../*.ts"
+                (string-append "--format=" format)
+                "--platform=node"
+                (string-append "--outdir=" outdir))))
+            (list (list "cjs" "script") (list "esm" "esm"))))))))
+    (synopsis "Wasm formatter for dprint plugins")
+    (description "A JS formatter which uses WASM plugins for dprint.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
 (define-public node-env-variable
   (package
     (name "node-env-variable")
@@ -345,6 +646,32 @@ a more fine-grained manner by binding the @env{DEBUG} variable.")
     (description "This package provides environment variables with
 @code{process.env}, @code{window.name}, @code{location.hash} and
 @code{localStorage} fallbacks.")
+    (license license:expat)))
+
+(define-public node-escape-string-regexp
+  (package
+    (name "node-escape-string-regexp")
+    (version "1.0.5")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/sindresorhus/escape-string-regexp")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "0iv0zd2r1mr3w966n023wqghcyaw37w3wl07is45hy74rrnq6z0v"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'xo' and 'ava'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Escape RegExp special characters")
+    (description "This library takes a string and escapes the regex characters such that\
+ the string can be inserted into a regex expression without triggering any special\
+ characters.")
+    (home-page (git-reference-url (origin-uri source)))
     (license license:expat)))
 
 (define-public node-far
@@ -376,6 +703,97 @@ a more fine-grained manner by binding the @env{DEBUG} variable.")
     (description "This package provides a simple test runner that finds and runs
 multiple node.js files, while providing useful information about output and exit
 codes.")
+    (license license:expat)))
+
+(define-public node-fast-xml-parser
+  (package
+    (name "node-fast-xml-parser")
+    (version "4.5.3")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/NaturalIntelligence/fast-xml-parser")
+        (commit "f8d4d427a31a52d4df82260ac1973d94ad73335b")))
+      (file-name (git-file-name name version))
+      (sha256 (base32 "1wc5mgihrgync0vj79gk7g367rssqhzmzxl41kdhhcya045bis85"))
+      (modules '((guix build utils)))
+      (snippet #~(begin
+        (delete-file-recursively "lib")))))
+    (build-system node-build-system)
+    (inputs (list node-strnum))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'nyc'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies))))
+        (replace 'build (lambda _
+          (define output "output")
+          (mkdir output)
+          (for-each
+            (lambda (file) (install-file file output))
+            (list "CHANGELOG.md" "LICENSE" "package.json" "README.md"))
+          (copy-recursively "src" (string-append output "/src"))
+          (chdir output))))))
+    (synopsis "Validate XML, Parse XML, Build XML without C/C++ based libraries")
+    (description "Validate XML, Parse XML to JS Object, or Build XML from JS Object\
+ without C/C++ based libraries and no callback.
+  * Validate XML data syntactically. Use detailed-xml-validator to verify business rules.
+  * Parse XML to JS Objectand vice versa
+  * Common JS, ESM, and browser compatible
+  * Faster than any other pure JS implementation.
+It can handle big files (tested up to 100mb). XML Entities, HTML entities, and DOCTYPE\
+ entites are supported. Unpaired tags (Eg <br> in HTML), stop nodes (Eg <script> in HTML)\
+ are supported. It can also preserve Order of tags in JS object")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
+(define-public node-fastest-levenshtein
+  (package
+    (name "node-fastest-levenshtein")
+    (version "1.0.16")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/ka-weihe/fastest-levenshtein")
+        (commit "03d621ba324d0f665b3b7f557429ca622560d9a3")))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "11hpi4ifix8pwx2a2sfj3s1gcwb5mxdrqgdcdppmkl6krv3sxx02"))))
+    (build-system node-build-system)
+    ; Use ESBuild because this package is used to build Typescript.
+    (native-inputs (list esbuild))
+    (arguments (list
+      #:modules '(
+        (guix build node-build-system)
+        (guix build utils)
+        (ice-9 match))
+      #:tests? #f ; FIXME: Tests require 'jest'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)
+            (delete-fields (list
+              "scripts.prepare"
+              "scripts.build")))))
+        (replace 'build (lambda _
+          (for-each
+            (match-lambda ((format outdir parameters)
+              (apply invoke (append
+                (list
+                  "esbuild"
+                  "mod.ts"
+                  (string-append "--format=" format)
+                  "--target=es2015"
+                  (string-append "--outdir=" outdir))
+                parameters))))
+            (list
+              (list "esm" "esm" (list "--sourcemap"))
+              (list "cjs" "." (list "--platform=node")))))))))
+    (synopsis "Fastest Levenshtein distance implementation in JS")
+    (description "Fastest JS/TS implemenation of Levenshtein distance.
+Measure the difference between two strings.")
+    (home-page (git-reference-url (origin-uri source)))
     (license license:expat)))
 
 (define-public node-file-uri-to-path
@@ -433,6 +851,64 @@ URI to a file path.  It accepts a @code{file:} URI and returns a file path
 suitable for use with the @code{fs} module functions.")
     (license license:expat)))
 
+(define-public node-glob
+  (package
+    (name "node-glob")
+    (version "10.1.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/isaacs/node-glob")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256 (base32 "19r0q9mxfbbma6z0iapf1jnccrz0hil69kihzbjjxzy9b7cgzmsd"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-minimatch
+      node-minipass-5
+      node-path-scurry))
+    ; Use ESBuild instead of tshy because this is used to build Typescript.
+    (native-inputs (list esbuild))
+    (arguments (list
+      #:modules '(
+        (guix build node-build-system)
+        (guix build utils)
+        (ice-9 match))
+      #:tests? #f ; FIXME: Tests require 'c8' and 'tap'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package
+          (lambda _
+            (modify-json
+              (delete-dev-dependencies)
+              (delete-fields (list
+                "scripts.prepare"))
+              (delete-dependencies (list
+                ; Not currently used in other packages, but if there are
+                ; issues we may need to add this in.
+                "fs.realpath")))))
+        (replace 'build
+          (lambda _
+            (define output "output")
+            (for-each
+              (match-lambda ((format directory)
+                (invoke
+                "esbuild"
+                "src/*.ts"
+                "--platform=node"
+                (string-append "--format=" format)
+                "--target=es2022"
+                "--sourcemap"
+                (string-append "--outdir=" output "/dist/" directory))))
+              (list (list "cjs" "cjs") (list "esm" "mjs")))
+            (for-each
+              (lambda (file) (install-file file output))
+              (list "LICENSE" "README.md" "package.json"))
+            (chdir output))))))
+    (synopsis "Match files using the patterns the shell uses")
+    (description "The most correct and second fastest glob implementation in JavaScript.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:isc)))
+
 (define-public node-global-gradle-clean
   (package
     (name "node-global-gradle-clean")
@@ -455,6 +931,74 @@ suitable for use with the @code{fs} module functions.")
      "Global Gradle Clean is a Node.js package used to clean all gradle
 projects under a given directory.  It uses the gradle wrapper to execute the
 clean task of each project.")
+    (license license:expat)))
+
+(define-public node-has-flag
+  (package
+    (name "node-has-flag")
+    (version "3.0.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/sindresorhus/has-flag")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "0wz3ihagci5nk2fawbw2pfprnqbhlvxi79ikvrn4kkhh3vfn85q2"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'xo' and 'ava'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Check if argv has a specific flag")
+    (description "Check if argv has a specific flag
+Correctly stops looking after an -- argument terminator.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
+(define-public node-hereby
+  (package
+    (name "node-hereby")
+    (version "1.11.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/jakebailey/hereby")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "0jdfrfvnz97nc2ly8ws98dwi05hcc6qs1p76xy0hjdf4r5yvirsj"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-command-line-usage
+      node-fastest-levenshtein
+      node-minimist
+      node-picocolors
+      node-pretty-ms))
+    ; Use ESBuild because this is used to build Typescript.
+    (native-inputs (list esbuild))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'ava'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies))))
+        (replace 'build (lambda _
+          (delete-file "tsconfig.json")
+          (delete-file-recursively "src/__tests__")
+          (invoke
+            "esbuild"
+            "src/**/*.ts"
+            "--platform=node"
+            "--format=esm"
+            "--sourcemap"
+            "--outdir=dist"))))))
+    (synopsis "Simple task runner")
+    (description "Tasks are defined in Herebyfile.mjs. Exported tasks are available to\
+ run at the CLI, with support for export default.")
+    (home-page (git-reference-url (origin-uri source)))
     (license license:expat)))
 
 (define-public node-ieee754
@@ -575,6 +1119,104 @@ It contains functions for colours as well as more complex formatting
 such as rainbows.")
     (license license:expat)))
 
+(define-public node-isexe
+  (package
+    (name "node-isexe")
+    (version "2.0.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/isaacs/isexe")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "18rh937j0m0jkzdxfdvvjv6nsdbrdqipnq7nvv1ab7b7rjyw5id3"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'tap'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Minimal module to check if a file is executable.")
+    (description "Minimal module to check if a file is executable, and a normal file.
+Uses fs.stat.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:isc)))
+
+(define-public node-jsonc-parser
+  (package
+    (name "node-jsonc-parser")
+    (version "3.3.1")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/microsoft/node-jsonc-parser")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "1pf3kxbx9v4h646hqfjw8r70y8vq9zl3l393nfcqzhm8z1skb3iy"))))
+    (build-system node-build-system)
+    (native-inputs (list esbuild))
+    (arguments (list
+      #:modules '(
+        (guix build node-build-system)
+        (guix build utils)
+        (ice-9 match))
+      #:tests? #f ; FIXME: Tests require 'mocha'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (delete-file-recursively "src/test")
+          (modify-json
+            (delete-dev-dependencies))))
+        (replace 'build (lambda _
+          (define output "output")
+          (define lib (string-append output "/lib"))
+          (mkdir-p lib)
+          (for-each
+            (match-lambda ((format directory parameters)
+              (apply invoke (append
+                (list
+                  "esbuild"
+                  "src/**/*.ts"
+                  "--platform=node"
+                  (string-append "--format=" format)
+                  "--target=es2020"
+                  (string-append "--outdir=" lib "/" directory))
+                parameters))))
+            (list
+              (list "cjs" "umd" (list "--global-name=jsoncParser"))
+              (list "esm" "esm" (list))))
+          (for-each
+            (lambda (file) (install-file file output))
+            (list
+              "CHANGELOG.md"
+              "LICENSE.md"
+              "package.json"
+              "README.md"
+              "SECURITY.md"))
+          (chdir output))))))
+    (synopsis "Scanner and parser for JSON with comments")
+    (description "JSONC is JSON with JavaScript style comments. This node module provides\
+ a scanner and fault tolerant parser that can process JSONC but is also useful for\
+ standard JSON.
+  * the scanner tokenizes the input string into tokens and token offsets
+  * the visit function implements a 'SAX' style parser with callbacks for the encountered\
+ properties and values.
+  * the parseTree function computes a hierarchical DOM with offsets representing the\
+ encountered properties and values.
+  * the parse function evaluates the JavaScript object represented by JSON string in a\
+ fault tolerant fashion.
+  * the getLocation API returns a location object that describes the property or value\
+ located at a given offset in a JSON document.
+  * the findNodeAtLocation API finds the node at a given location path in a JSON DOM.
+  * the format API computes edits to format a JSON document.
+  * the modify API computes edits to insert, remove or replace a property or value in a\
+ JSON document.
+  * the applyEdits API applies edits to a document.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
 (define-public node-long-stack-traces
   (package
     (name "node-long-stack-traces")
@@ -596,6 +1238,66 @@ such as rainbows.")
     (description "This package provides long stacktraces for V8 implemented in
 user-land JavaScript.")
     (license license:expat))) ; in README
+
+(define-public node-lru-cache
+  (package
+    (name "node-lru-cache")
+    (version "10.4.3")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/isaacs/node-lru-cache")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256 (base32 "1zqpm7d7czbqyymzgs4qadd0hiy6n290y6wwy1gwa46mmd1bxbr3"))))
+    (build-system node-build-system)
+    ; Use ESBuild instead of tshy because this is used to build Typescript.
+    (native-inputs (list esbuild))
+    (arguments (list
+      #:modules '(
+        (guix build node-build-system)
+        (guix build utils)
+        (ice-9 match))
+      #:tests? #f ; FIXME: Tests require 'tap'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'delete-dependencies
+          (lambda _
+            (modify-json
+              (delete-dev-dependencies)
+              (delete-fields (list
+                "scripts.prepare")))))
+        (replace 'build
+          (lambda _
+            (define output "output")
+            (for-each
+              (match-lambda ((format directory type)
+                (define target-output (string-append output "/dist/" directory))
+                (invoke
+                  "esbuild"
+                  "src/*.ts"
+                  "--platform=node"
+                  "--target=es2022"
+                  (string-append "--format=" format)
+                  "--jsx=transform"
+                  "--sourcemap"
+                  (string-append "--outdir=" target-output))
+                (with-output-to-file
+                  (string-append target-output "/package.json")
+                  (lambda _
+                    (display (string-append "{\"type\": \"" type "\"}"))))))
+              (list
+                (list "cjs" "commonjs" "commonjs")
+                (list "esm" "esm" "module")))
+            (for-each
+              (lambda (file) (install-file file output))
+              (list "LICENSE" "package.json" "README.md"))
+            (chdir output))))))
+    (synopsis "A fast cache that automatically deletes the least recently used items.")
+    (description "A cache object that deletes the least-recently-used items.
+Specify a max number of the most recently used items that you want to keep, and
+this cache will keep that many of the most recently accessed items.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:isc)))
 
 (define-public node-mersenne
   (package
@@ -620,32 +1322,193 @@ user-land JavaScript.")
 random number generator.")
     (license license:bsd-3)))
 
+(define-public node-minimatch
+  (package
+    (name "node-minimatch")
+    (version "9.0.5")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/isaacs/minimatch")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256 (base32 "1m9lr4nalzml8l6lz09jmk3nhqm7jf6lkyybvdg0ccqx74si7d44"))))
+    (build-system node-build-system)
+    (inputs (list node-brace-expansion))
+    ; Use ESBuild because this is used to build Typescript.
+    (native-inputs (list esbuild))
+    (arguments (list
+      #:modules '(
+        (guix build node-build-system)
+        (guix build utils)
+        (ice-9 match))
+      #:tests? #f ; FIXME: Tests require 'tap'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package
+          (lambda _
+            (modify-json
+              (delete-dev-dependencies)
+              (delete-fields (list
+                "scripts.prepare")))))
+        (replace 'build
+          (lambda _
+            (define output "output")
+            (for-each
+              (match-lambda ((format directory type)
+                (define target-output (string-append output "/dist/" directory))
+                (invoke
+                  "esbuild"
+                  "src/*.ts"
+                  "--platform=node"
+                  "--target=es2022"
+                  (string-append "--format=" format)
+                  "--jsx=transform"
+                  "--sourcemap"
+                  (string-append "--outdir=" target-output))
+                (with-output-to-file
+                  (string-append target-output "/package.json")
+                  (lambda _
+                    (display (string-append "{\"type\": \"" type "\"}"))))))
+              (list
+                (list "cjs" "commonjs" "commonjs")
+                (list "esm" "esm" "module")))
+            (for-each
+              (lambda (file) (install-file file output))
+              (list "LICENSE" "package.json" "README.md"))
+            (chdir output))))))
+    (synopsis "A glob matcher in javascript.")
+    (description "A minimal matching utility.
+This is the matching library used internally by npm.
+It works by converting glob expressions into JavaScript RegExp objects.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:isc)))
+
 (define-public node-minimist
   (package
     (name "node-minimist")
-    (version "1.2.6")
+    (version "1.2.8")
     (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/substack/minimist")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0mxj40mygbiy530wskc8l28wxb6fv3f8vrhpwjgprymhpgbaac7d"))))
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/minimistjs/minimist")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "027nxm7pkam89qxdybf7sd1k3h84njykhhxmzn1l6psmvrkwbqb7"))))
     (build-system node-build-system)
-    (arguments
-     '(#:tests? #f
-       #:phases (modify-phases %standard-phases
-                  (add-after 'patch-dependencies 'delete-dependencies
-                    (lambda _
-                      (modify-json (delete-dependencies
-                                    '("covert" "tap" "tape"))))))))
-    (home-page "https://github.com/substack/minimist")
+    (arguments (list
+      #:tests? #f
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
     (synopsis "Parse CLI arguments in Javascript")
-    (description "This package can scan for CLI flags and arguments in
-Javascript.")
+    (description "This package can scan for CLI flags and arguments in Javascript.")
+    (home-page (git-reference-url (origin-uri source)))
     (license license:expat)))
+
+(define-public node-minipass-5
+  (package
+    (name "node-minipass")
+    (version "5.0.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/isaacs/minipass")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256 (base32 "1xwxk9w290d0xsi9flzlrpdr4rwbq8q47d8hrzv27pzr2gf42nsz"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'tap'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package
+          (lambda _
+            (modify-json
+              (delete-dev-dependencies)
+              (delete-fields (list
+                "scripts.prepare")))))
+        (replace 'build
+          (lambda _
+            (define output "output")
+            (mkdir output)
+            (invoke "node" "./scripts/transpile-to-esm.js")
+            (for-each
+              (lambda (file) (install-file file output))
+              (list "index.js" "index.mjs" "LICENSE" "package.json" "README.md"))
+            (chdir output))))))
+    (synopsis "Minimal implementation of a PassThrough stream")
+    (description "A very minimal implementation of a PassThrough stream
+It's very fast for objects, strings, and buffers.
+Supports pipe()ing (including multi-pipe() and backpressure transmission), buffering\
+ data until either a data event handler or pipe() is added (so you don't lose the first\
+ chunk), and most other cases where PassThrough is a good idea.
+There is a read() method, but it's much more efficient to consume data from this stream\
+ via 'data' events or by calling pipe() into some other stream. Calling read() requires\
+ the buffer to be flattened in some cases, which requires copying memory.
+If you set objectMode: true in the options, then whatever is written will be emitted.\
+ Otherwise, it'll do a minimal amount of Buffer copying to ensure proper Streams\
+ semantics when read(n) is called.
+objectMode can only be set at instantiation. Attempting to write something other than a\
+ String or Buffer without having set objectMode in the options will throw an error.
+This is not a through or through2 stream. It doesn't transform the data, it just passes\
+ it right through. If you want to transform the data, extend the class, and override the\
+ write() method. Once you're done transforming the data however you want, call\
+ super.write() with the transform output.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:isc)))
+
+(define-public node-minipass-7
+  (package
+    (inherit node-minipass-5)
+    (version "7.1.2")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url (git-reference-url (origin-uri (package-source node-minipass-5))))
+        (commit (string-append "v" version))))
+      (file-name (git-file-name (package-name node-minipass-5) version))
+      (sha256 (base32 "0zqnnw9ibwm660md1pfqsiwbbpbizydiwjp4fr8niyzczxk66k1j"))))
+    ; Use ESBuild because this is used to build Typescript.
+    (native-inputs (list esbuild))
+    (arguments (list
+      #:modules '(
+        (guix build node-build-system)
+        (guix build utils)
+        (ice-9 match))
+      #:tests? #f ; FIXME: Tests require 'tap'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package
+          (lambda _
+            (modify-json
+              (delete-dev-dependencies)
+              (delete-fields (list
+                "scripts.prepare")))))
+        (replace 'build
+          (lambda _
+            (define output "output")
+            (for-each
+              (match-lambda ((format directory type)
+                (define target-output (string-append output "/dist/" directory))
+                (invoke
+                  "esbuild"
+                  "src/index.ts"
+                  "--platform=node"
+                  "--target=es2022"
+                  (string-append "--format=" format)
+                  "--jsx=transform"
+                  "--sourcemap"
+                  (string-append "--outdir=" target-output))
+                (with-output-to-file
+                  (string-append target-output "/package.json")
+                  (lambda _ (display (string-append "{\"type\": \"" type "\"}"))))))
+              (list
+                (list "cjs" "commonjs" "commonjs")
+                (list "esm" "esm" "module")))
+            (for-each
+              (lambda (file) (install-file file output))
+              (list "LICENSE" "package.json" "README.md"))
+            (chdir output))))))))
 
 (define-public node-ms
   (package
@@ -807,6 +1670,43 @@ if desired.")
 while being as light-weight and simple as possible.")
       (license license:expat))))
 
+(define-public node-parse-ms
+  (package
+    (name "node-parse-ms")
+    (version "3.0.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/sindresorhus/parse-ms")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "1chq6a4q2ycswkpz16bgm7853g6rh3w1j5dr7061x9h6xip3mphb"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'xo', 'ava', and 'tsd'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Parse milliseconds into an object")
+    (description "Usage
+import parseMilliseconds from 'parse-ms';
+parseMilliseconds(1337000001);
+/*
+{
+	days: 15,
+	hours: 11,
+	minutes: 23,
+	seconds: 20,
+	milliseconds: 1,
+	microseconds: 0,
+	nanoseconds: 0
+}
+*/")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
 (define-public node-path-key
   (package
     (name "node-path-key")
@@ -833,6 +1733,67 @@ while being as light-weight and simple as possible.")
     (synopsis "Cross-platform utility to compute the PATH environment variable key")
     (description "@code{path-key} provides an implementation to compute the
 particular cross-platform spellings of the PATH environment variable key.")
+    (license license:expat)))
+
+(define-public node-path-scurry
+  (package
+    (name "node-path-scurry")
+    (version "1.11.1")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/isaacs/path-scurry")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256 (base32 "1vbmzg2pwmm441d9clk69fpij33ns5mblncy0za1x5f7d04jjyi2"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-lru-cache
+      node-minipass-7))
+    ; Use ESBuild because this is used to build Typescript.
+    (native-inputs (list esbuild))
+    (arguments (list
+      #:modules '(
+        (guix build node-build-system)
+        (guix build utils)
+        (ice-9 match))
+      #:tests? #f ; FIXME: Tests require 'tap'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'delete-dependencies
+          (lambda _
+            (modify-json
+              (delete-dev-dependencies)
+              (delete-fields (list "scripts.prepare")))))
+        (replace 'build
+          (lambda _
+            (define output "output")
+            (for-each
+              (match-lambda ((format directory type)
+                (define target-output (string-append output "/dist/" directory))
+                (invoke
+                  "esbuild"
+                  "src/*.ts"
+                  "--platform=node"
+                  "--target=es2022"
+                  (string-append "--format=" format)
+                  "--jsx=transform"
+                  "--sourcemap"
+                  (string-append "--outdir=" target-output))
+                (with-output-to-file
+                  (string-append target-output "/package.json")
+                  (lambda _ (display (string-append "{\"type\": \"" type "\"}"))))))
+              (list
+                (list "cjs" "commonjs" "commonjs")
+                (list "esm" "esm" "module")))
+            (for-each
+              (lambda (file) (install-file file output))
+              (list "LICENSE.md" "package.json" "README.md"))
+            (chdir output))))))
+    (synopsis "Yet another file traversal library.")
+    (description "Extremely high performant utility for building tools that read\
+ the file system, minimizing filesystem and path string munging operations to\
+ the greatest degree possible..")
+    (home-page (git-reference-url (origin-uri source)))
     (license license:expat)))
 
 (define-public node-pbf
@@ -875,6 +1836,64 @@ structured data serialization.  Works both in Node and the browser.
 It supports lazy decoding and detailed customization of the reading/writing
 code.")
     (license license:bsd-3)))
+
+(define-public node-picocolors
+  (package
+    (name "node-picocolors")
+    (version "1.1.1")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/alexeyraspopov/picocolors")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "04g0rl3i08fsakadmls21nbyk5srz7qpmic6m8fjxglbf5mvnsq7"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; Test is broken, possibly by being run in guix build.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Small and fast ANSI colors terminal output formatting library")
+    (description "The tiniest and the fastest library for terminal output formatting with\
+ ANSI colors.
+  * No dependencies.
+  * 14 times smaller and 2 times faster than chalk.
+  * Used by popular tools like PostCSS, SVGO, Stylelint, and Browserslist.
+  * Node.js v6+ & browsers support. Support for both CJS and ESM projects.
+  * TypeScript type declarations included.
+  * NO_COLOR friendly.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:isc)))
+
+(define-public node-pretty-ms
+  (package
+    (name "node-pretty-ms")
+    (version "8.0.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/sindresorhus/pretty-ms")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "08pyb3lmkn1bn8icsi2r9jlkh24mzi39yr9k81p2hlgm46b8wiar"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-parse-ms))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'xo', 'ava', and 'tsd'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Milliseconds to humand readable string converter")
+    (description "Convert milliseconds to a human readable string:\
+ `1337000000` → `15d 11h 23m 20s`")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
 
 (define-public node-protocol-buffers-schema
   (package
@@ -951,6 +1970,35 @@ written in Javascript.")
     (description
      "@code{readable-stream} provides an implementation of Node.js core streams
 that behaves the same across different versions.")
+    (license license:expat)))
+
+(define-public node-reduce-flatten
+  (package
+    (name "node-reduce-flatten")
+    (version "2.0.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/75lb/reduce-flatten")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "0xw23djgi8agv06bbjc3x6wsca1xxnksbv7zd6cgxvmw15xqyb68"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'test-runner'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Flatten an array into the supplied array")
+    (description "Isomorphic map-reduce function to flatten an array into the supplied\
+ array.
+Example
+> numbers = [ 1, 2, [ 3, 4 ], 5 ]
+> numbers.reduce(flatten, [])
+[ 1, 2, 3, 4, 5 ]")
+    (home-page (git-reference-url (origin-uri source)))
     (license license:expat)))
 
 (define-public node-resolve-protobuf-schema
@@ -1407,6 +2455,94 @@ Node.js Stream API.  The stream is a duplex stream, allowing for reading and
 writing.  It has additional methods for managing the SerialPort
 connection.")))
 
+(define-public node-source-map
+  (package
+    (name "node-source-map")
+    (version "0.6.1")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/mozilla/source-map")
+        (commit version)))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "0q8qaddi05387y8f58q0xlj7fjxf4mkymmir7wd9c5imqqs378md"))
+      (modules '((guix build utils)))
+      (snippet #~(begin
+        (delete-file-recursively "dist")))))
+    (build-system node-build-system)
+    (native-inputs (list esbuild))
+    (arguments (list
+      #:modules '(
+        (guix build node-build-system)
+        (guix build utils)
+        (ice-9 match)
+        (json))
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)
+            (replace-fields (list (cons "scripts.test" "node test/run-tests.js"))))))
+        (replace 'build (lambda _
+          (for-each
+            (match-lambda ((name parameters)
+              (apply invoke (append
+                (list
+                  "esbuild"
+                  "source-map.js"
+                  "--bundle"
+                  "--format=iife"
+                  "--global-name=sourceMap"
+                  (string-append "--outfile=dist/source-map" name ".js"))
+                parameters))))
+            (list
+              (list "" (list))
+              (list ".min" (list "--sourcemap" "--minify")))))))))
+    (synopsis "Generates and consumes source maps")
+    (description "This is a library to generate and consume the source map format\
+ @uref{https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k\
+/edit, described here}.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:bsd-3)))
+
+(define-public node-source-map-support
+  (package
+    (name "node-source-map-support")
+    (version "0.5.21")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/evanw/node-source-map-support")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "1r03whfzy5f76wz4cf51gllxndxv9mk75p4aip6bxffv5p7apax3"))
+      (modules '((guix build utils)))
+      (snippet #~(begin
+        (delete-file "browser-source-map-support.js")))))
+    (build-system node-build-system)
+    (inputs (list
+      node-buffer-from
+      node-source-map))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'mocha'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)
+            ; Build only builds browser-source-map-support.js which we don't currently use
+            (delete-fields (list "scripts.build"))))))))
+    (synopsis "Fixes stack traces for files with source maps")
+    (description "This module provides source map support for stack traces in node via\
+ the V8 stack trace API. It uses the source-map module to replace the paths and line\
+ numbers of source-mapped files with their original paths and line numbers. The output\
+ mimics node's stack trace format with the goal of making every compile-to-JS language\
+ more of a first-class citizen. Source maps are completely general (not specific to any\
+ one language) so you can use source maps with multiple compile-to-JS languages in the\
+ same node process.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
 (define-public node-sqlite3
   (package
     (name "node-sqlite3")
@@ -1613,6 +2749,106 @@ strings so that the decoded string does not contain incomplete multibyte
 sequences.")
     (license license:expat)))
 
+; Beware of this package. Version 1.x is for CJS and 2.x for ESM, but they've
+; been publishing the 1.x version by hand, it's not checked into the repo.
+; Currently switching from ESM to CJS in this package definition.
+(define-public node-strnum
+  (package
+    (name "node-strnum")
+    (version "1.1.2")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/NaturalIntelligence/strnum")
+        (commit "6ed1b2fc39f169c35c2fc06ec89e7b7fd17fa0ce")))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "0ghi1j76fh6d572jwvh1zw8m9h8g480dj5snkpl7b0di30s8qbyi"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'jasmine'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)
+            (delete-fields (list "type"))
+            (replace-fields (list (cons "version" #$version))))))
+        (replace 'build (lambda _
+          (define problem-file "strnum.js")
+          (substitute* problem-file (("^export default ") ""))
+          (let ((problem-file-port (open-file problem-file "a")))
+            (display "\nmodule.exports = toNumber;" problem-file-port)
+            (close-port problem-file-port)))))))
+    (synopsis "Parse String to Number based on configuration")
+    (description "Javascript library that parses a string into a number.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
+(define-public node-supports-color
+  (package
+    (name "node-supports-color")
+    (version "5.5.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/chalk/supports-color")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "1wfwzxjh4q7wv8p8wjrhlcdljdydjpcydgdysy9y161xy6r99db9"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-has-flag))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'xo' and 'ava'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Detect whether a terminal supports color")
+    (description "Returns an Object with a stdout and stderr property for testing either\
+ streams. Each property is an Object, or false if color is not supported.
+
+The stdout/stderr objects specifies a level of support for color through a .level\
+ property and a corresponding flag:
+
+  * .level = 1 and .hasBasic = true: Basic color support (16 colors)
+  * .level = 2 and .has256 = true: 256 color support
+  * .level = 3 and .has16m = true: Truecolor support (16 million colors)")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
+(define-public node-table-layout
+  (package
+    (name "node-table-layout")
+    (version "1.0.2")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/75lb/table-layout")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "1k21p0ia995ax1biknalivq444jw9xy31bp52a5sq3rwlnzp0vbx"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-typical
+      node-array-back
+      node-wordwrapjs
+      node-deep-extend))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'test-runner'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Stylable text tables for handling ansi colour")
+    (description "Generates plain-text tables from JSON recordset input (array of\
+ objects). Useful for presenting text in column layout or data in table layout in\
+ text-based user interfaces.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
 (define-public node-tiddlywiki
   (package
     (name "node-tiddlywiki")
@@ -1650,6 +2886,220 @@ tablets.
 @end enumerate")
     (license license:bsd-3)))
 
+(define (node-types type version commit hash inputs)
+  (package
+    (name (string-append "node-types-" type))
+    (version version)
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/DefinitelyTyped/DefinitelyTyped")
+        (commit commit)))
+      (file-name (git-file-name name version))
+      (sha256 (base32 hash))))
+    (build-system node-build-system)
+    (inputs (force inputs))
+    (arguments (list
+      #:tests? #f ; Static files, no tests.
+      #:phases #~(modify-phases %standard-phases
+        (add-after 'unpack 'setup (lambda _
+          (chdir (string-append "types/" #$type))
+          (modify-json
+            (delete-dev-dependencies)
+            (replace-fields (list
+              (cons "version" #$version)))))))))
+    (synopsis (string-append "TypeScript definitions for " type))
+    (description (string-append "Typescript definition files (*.d.ts) for '" type "'."))
+    (home-page (string-append
+      (git-reference-url (origin-uri source)) "/tree/master/types/" type))
+    (license license:expat)))
+
+(define-public node-types-node
+  (node-types
+    "node"
+    "22.14.0" ; Match with version of node used
+    "1f6ca6ff73af20b951f5ea6ecbea6668eff1750f"
+    "05q0cj2b35z27fv1b00kr8ja5hj2dzl4shx1mwk0jg44z1cwkp0j"
+    (delay (list node-undici-types))))
+
+(define-public node-types-source-map-support
+  (node-types
+    "source-map-support"
+    "0.5.10"
+    "05766ab10a4987e93fdee7627f9fe9e7bc6d1a65"
+    "1p2kakd1mhcps5c19wl65w9gkafd13qdy9hszriak4xpad8a2nz7"
+    (delay (list node-source-map))))
+
+(define-public node-typescript
+  (package
+    (name "node-typescript")
+    (version "5.8.3")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/microsoft/TypeScript")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "1gzczfiz5zlrfvk73y4iwdnc7r8brs2cgyy3pv0b4979xxj66z7x"))))
+    (build-system node-build-system)
+    (native-inputs (list
+      node-dprint-formatter ; 0.x
+      node-esbuild ; 0.x
+      node-fast-xml-parser ; 4.x
+      node-glob ; 10.x
+      node-hereby ; 1.x
+      node-jsonc-parser
+      node-minimist ; 1.x
+      node-picocolors ; 1.x
+      node-source-map-support ; 0.x
+      node-types-node ; Match the version of node
+      node-types-source-map-support
+      node-which ; 3.x
+      sed))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'chai', 'mocha', and 'eslint'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dependencies (list
+              ; TODO @dprint/typescript needs a rust build but it's only required to
+              ; format the .d.ts files, however they're already somewhat formatted.
+              "@dprint/typescript"
+              "@esfx/canceltoken"
+              "@eslint/js"
+              "@octokit/rest"
+              "@types/chai"
+              "@types/diff"
+              "@types/minimist"
+              "@types/mocha"
+              "@types/ms"
+              "@types/which"
+              "@typescript-eslint/rule-tester"
+              "@typescript-eslint/type-utils"
+              "@typescript-eslint/utils"
+              "azure-devops-node-api"
+              "c8"
+              "chai"
+              "chokidar"
+              "diff"
+              "dprint"
+              "eslint"
+              "eslint-formatter-autolinkable-stylish"
+              "eslint-plugin-regexp"
+              "globals"
+              "knip"
+              "mocha"
+              "mocha-fivemat-progress-reporter"
+              "monocart-coverage-reports"
+              "ms"
+              "playwright"
+              "tslib"
+              "typescript"
+              "typescript-eslint")))
+
+          ; Remove imports of dependencies that are not used in building.
+          (substitute*
+            (list
+              "Herebyfile.mjs"
+              "scripts/build/tests.mjs"
+              "scripts/build/utils.mjs")
+            (("^import .* from \"(@esfx/canceltoken|chokidar|glob)\".*") ""))
+
+          ; Replace @esfx/canceltoken CancelError
+          (substitute* "scripts/build/utils.mjs"
+            (("CancelError\\(\\)")
+              "(function() {const error = new Error(\"Operation was canceled\");\
+error.name=\"CancelError\";return error})()"))
+
+          ; TODO: Once @dprint/typescript is added, remove these modifications
+          ; to format typescript.d.ts.
+          (define dtsBundler "scripts/dtsBundler.mjs")
+          (substitute* dtsBundler
+            (("^import .* from \"@dprint/typescript\".*") "")
+            (("^import .* from \"typescript\";")
+              "import * as ts from \"../built/local/typescript.js\";")
+            (("^const buffer =.*") "")
+            (("^const formatter =.*") ""))
+          (invoke "sed" "-i" "/^formatter/,/;/d" dtsBundler)
+          (invoke "sed" "-i"
+            "/^function dprint(/,/^}/c\\function dprint(contents) {return contents;}"
+            dtsBundler)))
+        (replace 'build (lambda _
+          ; First build tsc so it can be used in the rest of the build.
+          (invoke "hereby" "tsc" "--bundle" "--no-typecheck")
+          (invoke "hereby" "lkg" "--bundle" "--no-typecheck" "--built")))
+        (add-after 'check 'prepare-package (lambda _
+          (define output "output")
+          (mkdir output)
+          (for-each
+            (lambda (file) (install-file file output))
+            (list
+              "LICENSE.txt"
+              "package.json"
+              "README.md"
+              "SECURITY.md"
+              "ThirdPartyNoticeText.txt"))
+          (for-each
+            (lambda (dir) (copy-recursively dir (string-append output "/" dir)))
+            (list "bin" "lib"))
+          (chdir output))))))
+    (synopsis "TypeScript language for application scale JavaScript development")
+    (description "TypeScript is a language for application-scale JavaScript. TypeScript\
+ adds optional types to JavaScript that support tools for large-scale JavaScript\
+ applications for any browser, for any host, on any OS. TypeScript compiles to readable,\
+ standards-based JavaScript.")
+    (home-page "https://www.typescriptlang.org/")
+    (license license:expat)))
+
+(define-public node-typical
+  (package
+    (name "node-typical")
+    (version "5.2.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/75lb/typical")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "072fqdw7qrgh1cnri19z3rf702hh8p6agh3npkzwrywjmlnndfdm"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'test-runner'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Type-checking library for Javascript")
+    (description "Isomorphic, functional type-checking for Javascript.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:expat)))
+
+(define-public node-undici-types
+  (package
+    (name "node-undici-types")
+    (version "7.8.0")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/nodejs/undici")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name "node-undici" version))
+      (sha256
+        (base32 "044qy77m15m2pbk83pyyr6ql9imgmj4p8kdkn0v9qh9dnh5w6vdg"))))
+    (build-system node-build-system)
+    (arguments (list
+      #:tests? #f ; No tests.
+      #:phases #~(modify-phases %standard-phases
+        (add-after 'unpack 'setup (lambda _
+          (invoke "node" "scripts/generate-undici-types-package-json.js")
+          (chdir "types"))))))
+    (synopsis "Stand-alone types package for Undici")
+    (description "Typescript definition (d.ts) files for Undici.")
+    (home-page "https://undici.nodejs.org")
+    (license license:expat)))
+
 (define-public node-util-deprecate
   (package
     (name "node-util-deprecate")
@@ -1670,6 +3120,63 @@ tablets.
     (synopsis "Node.js `util.deprecate()` function with browser support")
     (description "This package provides the Node.js @code{util.deprecate()}
 function with browser support.")
+    (license license:expat)))
+
+(define-public node-which
+  (package
+    (name "node-which")
+    (version "3.0.1")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/npm/node-which")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "1ra5y2l02difjpvgh6la6g7jz782misn0n7d06miqlmvd26mldvk"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-isexe))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'tap'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Find the first instance of an executable in PATH")
+    (description "Like which(1) unix command. Find the first instance of an executable\
+ in the PATH.")
+    (home-page (git-reference-url (origin-uri source)))
+    (license license:isc)))
+
+(define-public node-wordwrapjs
+  (package
+    (name "node-wordwrapjs")
+    (version "4.0.1")
+    (source (origin
+      (method git-fetch)
+      (uri (git-reference
+        (url "https://github.com/75lb/wordwrapjs")
+        (commit (string-append "v" version))))
+      (file-name (git-file-name name version))
+      (sha256
+        (base32 "126rsbhn2dkxq4dy2p2ylwcjdipgk9mkqp47y5n4l5pjkhyv7lwr"))))
+    (build-system node-build-system)
+    (inputs (list
+      node-reduce-flatten
+      node-typical))
+    (arguments (list
+      #:tests? #f ; FIXME: Tests require 'test-runner'.
+      #:phases #~(modify-phases %standard-phases
+        (add-before 'patch-dependencies 'modify-package (lambda _
+          (modify-json
+            (delete-dev-dependencies)))))))
+    (synopsis "Word-wrapping library for javascript")
+    (description "Word wrapping, with a few features.
+  * force-break option
+  * wraps hypenated words
+  * multilingual - wraps any language that uses whitespace for word separation.")
+    (home-page (git-reference-url (origin-uri source)))
     (license license:expat)))
 
 (define-public node-wrappy
