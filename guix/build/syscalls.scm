@@ -10,6 +10,7 @@
 ;;; Copyright © 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2024 Noah Evans <noahevans256@gmail.com>
+;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -29,6 +30,7 @@
 (define-module (guix build syscalls)
   #:use-module (system foreign)
   #:use-module (system base target)
+  #:use-module ((rnrs base) #:select (assert))
   #:use-module (rnrs bytevectors)
   #:autoload   (ice-9 binary-ports) (get-bytevector-n)
   #:use-module (srfi srfi-1)
@@ -134,6 +136,50 @@
 
             set-thread-name
             thread-name
+
+            CAP_CHOWN
+            CAP_DAC_OVERRIDE
+            CAP_DAC_READ_SEARCH
+            CAP_FOWNER
+            CAP_FSETID
+            CAP_KILL
+            CAP_SETGID
+            CAP_SETUID
+            CAP_SETPCAP
+            CAP_LINUX_IMMUTABLE
+            CAP_NET_BIND_SERVICE
+            CAP_NET_BROADCAST
+            CAP_NET_ADMIN
+            CAP_NET_RAW
+            CAP_IPC_LOCK
+            CAP_IPC_OWNER
+            CAP_SYS_MODULE
+            CAP_SYS_RAWIO
+            CAP_SYS_CHROOT
+            CAP_SYS_PTRACE
+            CAP_SYS_PACCT
+            CAP_SYS_ADMIN
+            CAP_SYS_BOOT
+            CAP_SYS_NICE
+            CAP_SYS_RESOURCE
+            CAP_SYS_TIME
+            CAP_SYS_TTY_CONFIG
+            CAP_MKNOD
+            CAP_LEASE
+            CAP_AUDIT_WRITE
+            CAP_AUDIT_CONTROL
+            CAP_SETFCAP
+            CAP_MAC_OVERRIDE
+            CAP_MAC_ADMIN
+            CAP_SYSLOG
+            CAP_WAKE_ALARM
+            CAP_BLOCK_SUSPEND
+            CAP_AUDIT_READ
+            CAP_PERFMON
+            CAP_BPF
+            CAP_CHECKPOINT_RESTORE
+            capget
+            capset
 
             CLONE_CHILD_CLEARTID
             CLONE_CHILD_SETTID
@@ -1634,6 +1680,222 @@ bytes."
   (if (string-contains %host-type "linux")
       thread-name/linux
       (const "")))
+
+
+;;;
+;;; Capabilities.
+;;;
+(define-syntax define-capabilities
+  (lambda (x)
+    (syntax-case x ()
+      ((_ (name value) ...)
+       (with-syntax ((cap-valid? (datum->syntax x 'cap-valid?))
+                     (cap-name? (datum->syntax x 'cap-name?))
+                     (cap->name (datum->syntax x 'cap->name))
+                     (cap-name->value (datum->syntax x 'cap-name->value))
+                     (cap-name->lowercase (datum->syntax
+                                           x 'cap-name->lowercase))
+                     (cap-bit-mask->names (datum->syntax
+                                           x 'cap-bit-mask->names)))
+         #'(begin (define name value) ...
+                  (define (cap-name->lowercase x)
+                    (string->symbol (string-downcase (symbol->string x))))
+                  (define (cap-valid? x)
+                    (member x '(value ...)))
+                  (define (cap-name? x)
+                    (member x (append '(name ...)
+                                      (map cap-name->lowercase
+                                           '(name ...)))))
+                  (define (cap->name cap)
+                    "Return the name of a capability value, as a symbol."
+                    (match cap
+                      (value (cap-name->lowercase 'name)) ...
+                      (_ (error "invalid capability:" cap))))
+                  (define (cap-name->value s)
+                    "Given a capability name (a symbol), return its value."
+                    (cond
+                     ((eq? s (cap-name->lowercase 'name)) value) ...
+                     ((eq? s 'name) value) ...
+                     (else (error "invalid capability symbol:" s))))
+                  (define (cap-bit-mask->names bit-mask)
+                    "Return the names of capability encoded in BIT-MASK."
+                    (filter-map (lambda (v)
+                                  (and (logbit? v bit-mask)
+                                       (cap->name v)))
+                                '(value ...)))))))))
+
+(define _LINUX_CAPABILITY_VERSION_3 #x20080522) ;from <linux/capability.h>
+(define _LINUX_CAPABILITY_U32S_3 2)     ;two 32-bit segments = 64 capabilities
+
+(define-capabilities                    ;from <linux/capability.h>
+  (CAP_CHOWN              0)
+  (CAP_DAC_OVERRIDE       1)
+  (CAP_DAC_READ_SEARCH    2)
+  (CAP_FOWNER             3)
+  (CAP_FSETID             4)
+  (CAP_KILL               5)
+  (CAP_SETGID             6)
+  (CAP_SETUID             7)
+  (CAP_SETPCAP            8)
+  (CAP_LINUX_IMMUTABLE    9)
+  (CAP_NET_BIND_SERVICE   10)
+  (CAP_NET_BROADCAST      11)
+  (CAP_NET_ADMIN          12)
+  (CAP_NET_RAW            13)
+  (CAP_IPC_LOCK           14)
+  (CAP_IPC_OWNER          15)
+  (CAP_SYS_MODULE         16)
+  (CAP_SYS_RAWIO          17)
+  (CAP_SYS_CHROOT         18)
+  (CAP_SYS_PTRACE         19)
+  (CAP_SYS_PACCT          20)
+  (CAP_SYS_ADMIN          21)
+  (CAP_SYS_BOOT           22)
+  (CAP_SYS_NICE           23)
+  (CAP_SYS_RESOURCE       24)
+  (CAP_SYS_TIME           25)
+  (CAP_SYS_TTY_CONFIG     26)
+  (CAP_MKNOD              27)
+  (CAP_LEASE              28)
+  (CAP_AUDIT_WRITE        29)
+  (CAP_AUDIT_CONTROL      30)
+  (CAP_SETFCAP            31)
+  (CAP_MAC_OVERRIDE       32)
+  (CAP_MAC_ADMIN          33)
+  (CAP_SYSLOG             34)
+  (CAP_WAKE_ALARM         35)
+  (CAP_BLOCK_SUSPEND      36)
+  (CAP_AUDIT_READ         37)
+  (CAP_PERFMON            38)
+  (CAP_BPF                39)
+  (CAP_CHECKPOINT_RESTORE 40))
+
+(define (cap->array-index cap)
+  "Return the index where CAP should be encoded in a data array."
+  (quotient cap 32))
+
+(define (cap->bit-mask cap)
+  "Return the 32 bit mask for CAP."
+  (ash 1 (remainder cap 32)))
+
+;;; This is __user_cap_header_struct in <linux/capability.h>.
+(define-c-struct cap-user-header
+  sizeof-cap-user-header
+  list
+  read-cap-user-header
+  write-cap-user-header!
+  (version  uint32)                     ;e.g., _LINUX_CAPABILITY_VERSION_3
+  (pid      int))
+
+;;; This is __user_cap_data_struct in <linux/capability.h>.
+(define-c-struct cap-user-data
+  sizeof-cap-user-data
+  list
+  read-cap-user-data
+  write-cap-user-data!
+  (effective   uint32)
+  (permitted   uint32)
+  (inheritable uint32))
+
+(define* (make-cap-user-header #:key (version _LINUX_CAPABILITY_VERSION_3)
+                               (pid 0)) ;pid 0 = self
+  "Return a bytevector containing VERSION and PID.  Note: specifying the value
+of another process for PID is only valid for Linux kernels that do not have
+VFS capabilities support, per 'man 2 capget'; use with care."
+  (let ((bv (make-bytevector sizeof-cap-user-header)))
+    (write-cap-user-header! bv 0 version pid)
+    bv))
+
+(define* (make-cap-user-data #:key (effective 0) (permitted 0)
+                             (inheritable 0))
+  "Return a bytevector containing EFFECTIVE, PERMITTED and INHERITABLE values,
+numbers corresponding to encoded capabilities."
+  (let ((bv (make-bytevector sizeof-cap-user-data)))
+    (write-cap-user-data! bv 0 effective permitted inheritable)
+    bv))
+
+(define (data-array->cap-bit-masks data)
+  "Return three values, one for each capabilities: effective, permitted and
+inheritable, in their full bit mask forms, extracted from DATA, a bytevector
+representing an array of cap-user-data structures."
+  (let* ((size (bytevector-length data))
+         (count (/ size sizeof-cap-user-data)))
+    (assert (= _LINUX_CAPABILITY_U32S_3 count))
+    (let loop ((i 0) (effective 0) (permitted 0) (inheritable 0))
+      (if (= count i)
+          (values effective permitted inheritable)
+          (match (read-cap-user-data data (* i sizeof-cap-user-data))
+            ((eff perm inh)
+             (loop (1+ i)
+                   (logior effective (ash eff (* i 32)))
+                   (logior permitted (ash perm (* i 32)))
+                   (logior inheritable (ash inh (* i 32))))))))))
+
+(define (capabilities->data-array effective permitted inheritable)
+  "Return a bytevector representing an array of cap-user-data structures
+corresponding to the EFFECTIVE, PERMITTED and INHERITABLE capability values."
+  (let ((data (make-bytevector (* _LINUX_CAPABILITY_U32S_3
+                                  sizeof-cap-user-data))))
+    (do ((i 0 (1+ i)))
+        ((= i _LINUX_CAPABILITY_U32S_3))
+      (let ((effective* (filter (lambda (eff)
+                                  (= i (cap->array-index eff)))
+                                effective))
+            (permitted* (filter (lambda (perm)
+                                  (= i (cap->array-index perm)))
+                                permitted))
+            (inheritable* (filter (lambda (inh)
+                                    (= i (cap->array-index inh)))
+                                  inheritable)))
+        (write-cap-user-data!
+         data (* i sizeof-cap-user-data)
+         (apply logior 0 (map cap->bit-mask effective*))
+         (apply logior 0 (map cap->bit-mask permitted*))
+         (apply logior 0 (map cap->bit-mask inheritable*)))))
+    data))
+
+(define capget                          ;sys_capget in <linux/syscalls.h>
+  (let ((proc (syscall->procedure int "capget" '(* *))))
+    (lambda* (#:optional (pid 0))
+      "Return the capabilities of the current process as three values: the
+effective, the permitted and the inheritable capabilities."
+      (let ((cap-header (make-cap-user-header #:pid pid))
+            (data-array (make-bytevector (* 2 sizeof-cap-user-data))))
+        (let-values (((ret err) (proc (bytevector->pointer cap-header)
+                                      (bytevector->pointer data-array))))
+          (unless (zero? ret)
+            (throw 'system-error "capget" "~a"
+                   (list (strerror err))
+                   (list err)))
+          (let-values (((effective permitted inheritable)
+                        (data-array->cap-bit-masks data-array)))
+            (values (cap-bit-mask->names effective)
+                    (cap-bit-mask->names permitted)
+                    (cap-bit-mask->names inheritable))))))))
+
+(define capset                          ;sys_capset in <linux/syscalls.h>
+  (let ((proc (syscall->procedure int "capset" '(* *))))
+    (lambda (effective permitted inheritable)
+      "Set the capabilities listed in EFFECTIVE, PERMITTED and INHERITABLE.
+Capability names or values are both accepted."
+      (define (cap-name->value* x)
+        (match x
+          ((? cap-name? x) (cap-name->value x))
+          ((? cap-valid? x) x)
+          (_ (error "invalid capability" x))))
+      (let ((effective (map cap-name->value* effective))
+            (permitted (map cap-name->value* permitted))
+            (inheritable (map cap-name->value* inheritable)))
+        (let ((cap-header (make-cap-user-header))
+              (data-array (capabilities->data-array
+                           effective permitted inheritable)))
+          (let-values (((ret err)
+                        (proc (bytevector->pointer cap-header)
+                              (bytevector->pointer data-array))))
+            (unless (zero? ret)
+              (throw 'system-error "capset" "~a"
+                     (list (strerror err))
+                     (list err)))))))))
 
 
 ;;;

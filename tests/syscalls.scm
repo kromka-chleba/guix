@@ -3,6 +3,7 @@
 ;;; Copyright © 2015 David Thompson <davet@gnu.org>
 ;;; Copyright © 2020 Simon South <simon@simonsouth.net>
 ;;; Copyright © 2020 Mathieu Othacehe <m.othacehe@gmail.com>
+;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -700,6 +701,15 @@
     (lambda args
       (member (system-error-errno args)
               (list EPERM ENOSYS)))))
+
+(define cap-name?
+  (@@ (guix build syscalls) cap-name?))
+
+(test-assert "capget"
+  (let ((eff perm inh (capget)))
+    (and (every list? (list eff perm inh))
+         (every cap-name?
+                (append eff perm inh)))))
 
 (test-end)
 
