@@ -610,40 +610,67 @@ functionality tests, using the given KERNEL.")
       ;; XXX: Add call to 'virtualized-operating-system' to get the exact same
       ;; set of services as the OS produced by
       ;; 'system-qemu-image/shared-store-script'.
-      (run-basic-test (virtualized-operating-system os '())
-                      #~(list #$vm)
-                      name
-                      ;; Add extra tests for the etc-profile-d-service-type
-                      ;; and etc-bashrc-d-service-type services defined above.
-                      ;; Those tests cannot directly be part of the
-                      ;; run-basic-test procedure that is used in many other
-                      ;; locations.
-                      #:extra-tests
-                      (lambda (marionette)
-                        #~(begin
-                            (test-assert "/etc/profile.d is sourced"
-                              (zero?
-                               (marionette-eval '(system "
+      (run-basic-test
+       (virtualized-operating-system os '())
+       #~(list #$vm)
+       name
+       ;; Add extra tests for the etc-profile-d-service-type and
+       ;; etc-bashrc-d-service-type services defined above.  Those tests
+       ;; cannot directly be part of the run-basic-test procedure that is used
+       ;; in many other locations.
+       #:extra-tests
+       (lambda (marionette)
+         #~(begin
+             (test-assert "/etc/profile.d is sourced"
+               (zero?
+                (marionette-eval '(system "
 . /etc/profile
 set -e -x
 test -f /etc/profile.d/test_profile_d.sh
 test \"$PROFILE_D_OK\" = yes")
-                                                #$marionette)))
+                                 #$marionette)))
 
-                            (test-assert "/etc/bashrc.d is sourced"
-                              (zero?
-                               (marionette-eval
-                                '(system* "bash"
-                                          "-i" ;run interactively
-                                          #$(plain-file "test_bashrc_d.sh"
-                                                        "\
+             (test-assert "/etc/bashrc.d is sourced"
+               (zero?
+                (marionette-eval
+                 '(system* "bash"
+                           "-i"         ;run interactively
+                           #$(plain-file "test_bashrc_d.sh"
+                                         "\
 . /etc/bashrc
 set -e -x
 test -f /etc/bashrc.d/bash_completion.sh
 test -f /etc/bashrc.d/aliases.sh
 test -f /etc/bashrc.d/test_bashrc_d.sh
 test \"$BASHRC_D_OK\" = yes"))
-                                #$marionette))))))))))
+                 #$marionette)))
+             (test-equal "capset and capget system calls"
+               ;; Test that (guix build syscalls)'s capset and capget function
+               ;; correctly with the current kernel version.  Another reason
+               ;; to have this tested here instead of in tests/syscalls.scm is
+               ;; that 'capset' requires root privileges.
+               '(cap_chown)
+               (marionette-eval
+                '(begin
+                   (use-modules (guix build syscalls)
+                                (ice-9 match)
+                                (srfi srfi-71))
+                   (let ((orig-eff orig-perm orig-inh (capget)))
+                     (dynamic-wind
+                       (lambda () #f)   ;before
+                       (lambda ()
+                         ;; Note: We don't set the permitted capabilities, as
+                         ;; that would prevent restoring the original
+                         ;; effective and inheritable values.
+                         (capset '(cap_chown) orig-perm '(cap_chown))
+                         (let ((eff perm inh (capget)))
+                           (match (list eff perm inh)
+                             ((('cap_chown) _ ('cap_chown))
+                              '(cap_chown))
+                             (_ #f))))
+                       (lambda ()
+                         (capset orig-eff orig-perm orig-inh)))))
+                marionette)))))))))
 
 (define %test-basic-os
   (test-basic-os))
