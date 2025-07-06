@@ -43,7 +43,7 @@
 ;;; Copyright © 2020 Lars-Dominik Braun <ldb@leibniz-psychology.org>
 ;;; Copyright © 2020 Guy Fleury Iteriteka <gfleury@disroot.org>
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
-;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2021, 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2021, 2024 Greg Hogan <code@greghogan.com>
@@ -808,14 +808,31 @@ replacement for the @code{python-memcached} library.")
 (define-public litecli
  (package
   (name "litecli")
-  (version "1.9.0")
+  (version "1.15.0")
   (source
    (origin
      (method url-fetch)
      (uri (pypi-uri "litecli" version))
      (sha256
-      (base32 "1897divrdqlhl1p5jvvm29rg3d99f48s58na7hgdzm1x13x2rbr1"))))
-  (build-system python-build-system)
+      (base32 "0yfdafh21k8fls85rgyfn03xxn6x5hqcnmlq1v3jvmxjaxzrk19j"))))
+  (build-system pyproject-build-system)
+  (arguments
+   (list
+    ;; These tests depend on python-llm (not packaged)
+    #:test-flags #~(list "-k" (string-append
+                               "not test_refresh_called_once"
+                               " and not test_refresh_called_twice"
+                               " and not test_refresh_with_callbacks"
+                               " and not test_llm_command_known_subcommand"))
+    #:phases #~(modify-phases %standard-phases
+                 (add-after 'unpack 'relax-sqlparse
+                   (lambda _
+                     (substitute* "pyproject.toml"
+                       ;; Currently we have 0.4.3 and it is fine.  Remove this
+                       ;; line when sqlparse is updated.
+                       (("sqlparse>=0.4.4") "sqlparse")
+                       ;; Also remove python-pip from sanity-check.
+                       (("\"pip\",") "")))))))
   (propagated-inputs
    (list python-cli-helpers
          python-click
@@ -824,7 +841,7 @@ replacement for the @code{python-memcached} library.")
          python-pygments
          python-sqlparse))
   (native-inputs
-   (list python-mock python-pytest))
+   (list python-pytest python-setuptools python-wheel))
   (home-page "https://litecli.com")
   (synopsis "CLI for SQLite databases")
   (description
@@ -835,16 +852,23 @@ auto-completion and syntax highlighting.")
 (define-public python-pgspecial
   (package
     (name "python-pgspecial")
-    (version "1.13.0")
+    (version "2.2.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pgspecial" version))
        (sha256
-        (base32 "00ddkf565rjcxmfml1z4mmkns1aq8x5s5g85xmnz2scln42y4irq"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-click python-sqlparse python-psycopg2))
+        (base32 "17c4qjvi83b3im9fb00cdzzb24v5xis6y1625l9v0yzggg67yv6s"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest
+                         python-setuptools
+                         python-setuptools-scm
+                         python-wheel))
+    (propagated-inputs (list python-click
+                             python-configobj
+                             python-psycopg
+                             python-sqlparse
+                             python-typing-extensions))
     (home-page "https://github.com/dbcli/pgspecial")
     (synopsis
      "Python implementation of PostgreSQL meta commands (backslash commands)")
@@ -888,27 +912,30 @@ multi-thread access.")
 (define-public pgcli
   (package
     (name "pgcli")
-    (version "3.2.0")
+    (version "4.3.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pgcli" version))
        (sha256
-        (base32 "1dy6yzak696107pqv83296h0xhc3ahlfaydm80593gwn37krgpkc"))))
-    (build-system python-build-system)
+        (base32 "1vva1fi5sqrdvmx7jmdjmy8zwly22sbsj5lzy60s822m1iay2nkn"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; AttributeError: 'NoneType' object has no attribute 'kwargs'.
+     (list #:test-flags #~(list "-k" "not test_application_name_in_env")))
     (propagated-inputs
      (list python-cli-helpers
            python-click
            python-configobj
-           python-pendulum
            python-pgspecial
            python-prompt-toolkit
-           python-psycopg2
+           python-psycopg
            python-pygments
            python-setproctitle
-           python-sqlparse))
+           python-sqlparse
+           python-tzlocal))
     (native-inputs
-     (list python-ipython-sql))
+     (list python-pytest python-setuptools python-sshtunnel python-wheel))
     (home-page "https://www.pgcli.com")
     (synopsis "PostgreSQL CLI with autocompletion and syntax highlighting")
     (description

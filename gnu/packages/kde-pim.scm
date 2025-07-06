@@ -25,6 +25,7 @@
   #:use-module (guix gexp)
   #:use-module (guix download)
   #:use-module (guix gexp)
+  #:use-module (guix git-download)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix utils)
@@ -42,6 +43,7 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages kde)
   #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages markup)
   #:use-module (gnu packages openldap)
   #:use-module (gnu packages pdf)
   #:use-module (gnu packages pkg-config)
@@ -49,6 +51,7 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages search)
   #:use-module (gnu packages sqlite)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xml))
@@ -56,14 +59,14 @@
 (define-public akonadi
   (package
     (name "akonadi")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/akonadi-" version ".tar.xz"))
               (sha256
                (base32
-                "0ygxj2hhslg5frarwhmdqqhvd37kzcgm60krs979f378dkj6cyc8"))
+                "183158qrd19hk7jphhgd3wcm3vzyd117nqs3kzsqq7mabqzvj0z9"))
               (patches (search-patches "akonadi-paths.patch"
                                        "akonadi-timestamps.patch"
                                        "akonadi-not-relocatable.patch"))))
@@ -73,7 +76,8 @@
            extra-cmake-modules
            qttools
            shared-mime-info
-           pkg-config))
+           pkg-config
+           gcc-12))
     (inputs
      (list boost
            libaccounts-qt6
@@ -138,14 +142,14 @@ programs.")
 (define-public akonadi-calendar
   (package
     (name "akonadi-calendar")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/akonadi-calendar-" version ".tar.xz"))
        (sha256
-        (base32 "0nwl3jn7qqhs19ydxidjzh7vdll5s17pw4xaazmd3g7fg6mngnzh"))))
+        (base32 "1avdawfl46x1vf7sgwllgmywk1m28sxk3n002m68df2c7k8cb2hr"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -157,6 +161,7 @@ programs.")
            kcalutils
            kcodecs
            kcontacts
+           kcrash
            kdbusaddons
            kiconthemes
            kio
@@ -187,14 +192,14 @@ collection and item views.")
 (define-public akonadi-contacts
   (package
     (name "akonadi-contacts")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/akonadi-contacts-" version ".tar.xz"))
        (sha256
-        (base32 "1207dgilr5y4b3g3fk2ywyvb6mryq2xrpkhi6cyhgn8k84q201fn"))))
+        (base32 "1s1yyq9wrrm6670h8xjj5b020nirszckdpq55v4xqpgvcm4547sk"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -210,6 +215,7 @@ collection and item views.")
            kcontacts
            kcoreaddons
            kdbusaddons
+           kguiaddons
            ki18n
            kiconthemes
            kitemmodels
@@ -244,14 +250,14 @@ to list and filter contacts.")
 (define-public akonadi-mime
   (package
     (name "akonadi-mime")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/akonadi-mime-" version ".tar.xz"))
        (sha256
-        (base32 "1y6h53jfy77g7198cp5rfv0zabvfjg6fsw95wp4khcjvmm0qhzqm"))))
+        (base32 "0zvdszsa6axif4849bs2ic7ywgjn4s1lszqg2idx2amd9r5lfhd5"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules libxslt ;; xslt for generating interface descriptions
@@ -295,14 +301,14 @@ with emails through Akonadi easier.")
 (define-public akonadi-notes
   (package
     (name "akonadi-notes")
-    (version "24.05.2")
+    (version "24.08.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/akonadi-notes-" version ".tar.xz"))
        (sha256
-        (base32 "0cb1nbjlsx3lhz27ggrhmgrbgljhwrh7pssmx4jkljhahi57vwxa"))))
+        (base32 "1ppgdwjg9w4igwqf1b0b1xzbc1c4j3z67ha9381ncklpd227nxvq"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -321,14 +327,14 @@ wrapping notes into KMime::Message objects.")
 (define-public akonadi-search
   (package
     (name "akonadi-search")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/akonadi-search-" version ".tar.xz"))
        (sha256
-        (base32 "11lasaim65d37n0q8pyxnn0sqqq2liz6va951qc3bav8njigsny1"))))
+        (base32 "03kjm3s3zy2lb8qyazpsy5vys17dkbz2jj8hqj40b36w3f6fv55y"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules
@@ -377,17 +383,73 @@ Akonadi PIM data server.  It uses Xapian for indexing and querying.")
     (license ;; GPL for programs, LGPL for libraries
      (list license:gpl2+ license:lgpl2.0+))))
 
+(define-public akonadi-import-wizard
+  (package
+    (name "akonadi-import-wizard")
+    (version "24.12.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/akonadi-import-wizard-" version
+                           ".tar.xz"))
+       (sha256
+        (base32 "1gv2jxy1xc6b70jax320rvk68qmgz1wpnrbx6wlxg1dmrafhby4d"))))
+    (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
+    (native-inputs
+     (list extra-cmake-modules kdoctools))
+    (inputs
+     (list akonadi
+           akonadi-contacts
+           akonadi-mime
+           grantlee
+           grantleetheme
+           karchive
+           kauth
+           kconfig
+           kconfigwidgets
+           kcontacts
+           kcrash
+           kdbusaddons
+           kiconthemes
+           kidentitymanagement
+           kimap
+           kio
+           kitemmodels
+           kmailcommon
+           kmailimporter
+           kmailtransport
+           kmessagelib
+           kmime
+           kpimcommon
+           kpimtextedit
+           ktextaddons
+           ktextwidgets
+           kwallet
+           kxmlgui
+           libkdepim
+           libkleo
+           qtkeychain-qt6
+           qtwebengine))
+    (home-page "https://invent.kde.org/pim/akonadi-import-wizard")
+    (synopsis "Assistant to import external PIM data into Akonadi")
+    (description "Akonadi Data import Wizard is an assistant to import external
+PIM data into Akonadi for use in KDE PIM applications.")
+    (license
+     (list license:gpl2+ license:lgpl2.0+))))
+
 (define-public itinerary
   (package
     (name "itinerary")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1p05v9r1ipi465nmka8n2gs7npc6wdgfxzj7523plnja9kfa8bmb"))))
+                "0d2nckmi4j36k9nhp62zdjyb2fckzq3205fy221nxn8cnpi121ni"))))
     (build-system qt-build-system)
 
     (arguments
@@ -399,8 +461,8 @@ Akonadi PIM data server.  It uses Xapian for indexing and querying.")
                    ;; HACK: ecm_find_qmlmodule cann't find qmlmodule on other
                    ;; prefix, so we remove it require.
                    (substitute* "CMakeLists.txt"
-                     (("24.02 REQUIRED")
-                      "24.02")))))
+                     (("\\$\\{GEAR_MIN_VERSION\\} REQUIRED")
+                      "${GEAR_MIN_VERSION}")))))
            #:tests? #f)) ;Fails 20/27
     (native-inputs (list extra-cmake-modules python-minimal))
     (inputs (list karchive
@@ -426,6 +488,7 @@ Akonadi PIM data server.  It uses Xapian for indexing and querying.")
                   kwindowsystem
                   prison
                   qtdeclarative
+                  qtkeychain-qt6
                   qtpositioning
                   qtlocation
                   qtmultimedia
@@ -445,14 +508,14 @@ information.")
 (define-public kincidenceeditor
   (package
     (name "kincidenceeditor")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/incidenceeditor-" version ".tar.xz"))
        (sha256
-        (base32 "1kwqr6h2b5jlxkd52g4kdnk78v3xpzqy3d2rl582j7fkhnnsfk40"))))
+        (base32 "13knf50ds2shjps93v5z8dvh19cx820gfh2dk5wlpz3sdcmh5hw9"))))
     (properties `((upstream-name . "incidenceeditor")))
     (build-system qt-build-system)
     (native-inputs
@@ -473,6 +536,7 @@ information.")
            kdbusaddons
            kdiagram
            keventviews
+           kguiaddons
            ki18n
            kiconthemes
            kidentitymanagement
@@ -509,14 +573,14 @@ information.")
 (define-public kaddressbook
   (package
     (name "kaddressbook")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kaddressbook-" version ".tar.xz"))
        (sha256
-        (base32 "1g5qkg3m7djqrq28ypv998yp45kzldd3jss37ygdnbqwr5i4wjb8"))))
+        (base32 "0dy5ir5xb6mamc7xqqm6hi3mdgcs91d98rf29xmmh6yld1gg7dc2"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -539,6 +603,7 @@ information.")
            kimap
            kio
            kitemmodels
+           kldap
            kmime
            kontactinterface
            kparts
@@ -564,14 +629,14 @@ CalDAV server.")
 (define-public kaccounts-integration
   (package
     (name "kaccounts-integration")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "0dbv1yv6qq0rgjlczmky7fmwa3rspyssd6grdbgzyy3k0v35m1fi"))))
+                "1y19kb87wqf8w5b5yvnkykqkrri7djrb8gd39c734zq7ks5wjd67"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list kcmutils
@@ -594,14 +659,14 @@ management system and its Plasma integration components.")
 (define-public kaccounts-providers
   (package
     (name "kaccounts-providers")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/" name "-" version ".tar.xz"))
               (sha256
                (base32
-                "1mfidlhy8jh3ar9rpn39a52q6sfhc5f4yn30p2ihv9l7xi5r9vk0"))))
+                "1jaigpnclcmwm0az169mc7l2kic652prxcbs1k71c8b04frnw44c"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules intltool))
     (inputs (list kaccounts-integration
@@ -612,6 +677,7 @@ management system and its Plasma integration components.")
                   kio
                   libaccounts-qt6
                   qtwebengine
+                  qcoro-qt6
                   signond-qt6))
     (arguments (list #:qtbase qtbase))
     (home-page "https://invent.kde.org/network/kaccounts-providers")
@@ -623,14 +689,14 @@ KAccounts system.")
 (define-public kcalendarsupport
   (package
     (name "kcalendarsupport")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/calendarsupport-" version ".tar.xz"))
        (sha256
-        (base32 "0qih5p810h1860diqb9yszrv0arf63bd32x7rfizw6mhpkh20ryq"))))
+        (base32 "0xpxyqgnranf89ybkd8aqfrxk1szg0ryr0xdwgrjkgqfn0p2az7z"))))
     (properties `((upstream-name . "calendarsupport")))
     (build-system qt-build-system)
     (native-inputs
@@ -666,14 +732,14 @@ calendaring applications.")
 (define-public kcalutils
   (package
     (name "kcalutils")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kcalutils-" version ".tar.xz"))
        (sha256
-        (base32 "1hiygvhw9nmqsz7pca6za9as06m8l0wsv78ski6gcjwzpi7qh0vq"))))
+        (base32 "0iq5df6swl3k3vw7ak502z6v98732rig7k49x4xc63rya8xfw8gk"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules libxml2)) ;; xmllint required for tests
@@ -701,17 +767,113 @@ data")
 functions for accessing calendar data using the kcalcore API.")
     (license  license:lgpl2.0+)))
 
+(define-public kdepim-addons
+  (package
+    (name "kdepim-addons")
+    (version "24.12.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://kde/stable/release-service/" version
+                           "/src/kdepim-addons-" version ".tar.xz"))
+       (sha256
+        (base32 "1wm1bp41q1asd6wi5q305gjvgfjaa50l401k2nnn7gvdrz3y4fa6"))))
+    (build-system qt-build-system)
+    (arguments
+     (list #:qtbase qtbase
+           #:phases
+           #~(modify-phases %standard-phases
+               ;; TODO: Out of 156 tests, 10 fail and 2 get stuck.
+               ;; kdepim-addons-todoedittest and kdepim-addons-eventedittest
+               ;; get stuck. Do they require user input?
+               ;; eventdatavisitortest and pimeventsplugintest fail only in the
+               ;; check phase of guix build, but testing the same normally
+               ;; outside the guix build passes these two tests.
+               ;; messageviewer-dkimauthenticationverifiedserverdialogtest
+               ;; fails due to SEGFAULT.
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (setenv "HOME" "/tmp")
+                   (when tests?
+                     (invoke "dbus-launch" "ctest" "-E" "\
+(kdepim-addons-todoedittest|kdepim-addons-eventedittest\
+|enterpriseheaderstyleplugintest|fancyheaderstyleplugintest\
+|grantleeheaderstyleplugintest|messageviewerplugins-rendertest\
+|akonadi-sqlite-rendertest-akonadi|akonadi-sqlite-mailsenderjobtest\
+|akonadi-sqlite-gravatarupdatewidgettest|eventdatavisitortest\
+|pimeventsplugintest\
+|messageviewer-dkimauthenticationverifiedserverdialogtest)")))))))
+    (native-inputs
+     (list dbus extra-cmake-modules libxml2)) ;libxml2 for xmllint
+    (inputs
+     (list akonadi
+           akonadi-calendar
+           akonadi-contacts
+           akonadi-import-wizard
+           akonadi-mime
+           akonadi-notes
+           discount
+           grantlee
+           grantleetheme
+           kaddressbook
+           karchive
+           kcalendarcore
+           kcalendarsupport
+           kcalutils
+           kconfig
+           kcontacts
+           kdbusaddons
+           kdeclarative
+           keventviews
+           kguiaddons
+           kholidays
+           ki18n
+           kiconthemes
+           kidentitymanagement
+           kimap
+           kincidenceeditor
+           kio
+           kitemmodels
+           kitinerary
+           kldap
+           kmailcommon
+           kmailimporter
+           kmailtransport
+           kmessagelib
+           kmime
+           kparts
+           kpimcommon
+           kpimtextedit
+           kpkpass
+           ksyntaxhighlighting
+           ktextaddons
+           ktnef
+           kwallet
+           kxmlgui
+           libgravatar
+           libkdepim
+           libkleo
+           libksieve
+           prison
+           qtwebengine))
+    (home-page "https://invent.kde.org/pim/kdepim-addons")
+    (synopsis "Add-ons for KDE PIM applications")
+    (description "This package contains add-ons for KDE PIM applications such
+as KMail, KAddressBook etc.")
+    (license
+     (list license:gpl2+ license:lgpl2.0+))))
+
 (define-public kdepim-runtime
   (package
     (name "kdepim-runtime")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kdepim-runtime-" version ".tar.xz"))
        (sha256
-        (base32 "1jymvmiqbyl8qcff835sp6kw8w4lg4clm7p5cscfmcx6b9bg4w7l"))))
+        (base32 "0n7wdnx7zl9pykg75naai0g1b0m3ck20g61k0rqj9gx6dmfy468i"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules dbus kdoctools libxslt shared-mime-info))
@@ -778,11 +940,12 @@ functions for accessing calendar data using the kcalcore API.")
                             (when tests?
                               ;; FIXME: Atleast some appear to require network.
                               (invoke "dbus-launch" "ctest" "-E" "\
-(akonadi-sqlite-synctest|akonadi-sqlite-pop3test|storecompacttest\
-|akonadi-sqlite-ewstest|ewsmoveitemrequest_ut|ewsdeleteitemrequest_ut\
+(akonadi-sqlite-icalcategoriestotagsmigrationtest|akonadi-sqlite-synctest\
+|akonadi-sqlite-pop3test|storecompacttest|akonadi-sqlite-ewstest\
+|ewsmoveitemrequest_ut|ewsdeleteitemrequest_ut\
 |ewsgetitemrequest_ut|ewsunsubscriberequest_ut|ewssettings_ut\
-|templatemethodstest|akonadi-sqlite-serverbusytest|ewsattachment_ut|\\
-testmovecollectiontask)")))))))
+|templatemethodstest|akonadi-sqlite-serverbusytest|ewsattachment_ut\
+|testmovecollectiontask)")))))))
     (home-page "https://invent.kde.org/pim/kdepim-runtime")
     (synopsis "Runtime components for Akonadi KDE")
     (description "This package contains Akonadi agents written using KDE
@@ -797,14 +960,14 @@ package.")
 (define-public keventviews
   (package
     (name "keventviews")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/eventviews-" version ".tar.xz"))
        (sha256
-        (base32 "0kqkd8dqh8plmxngajr8266nad2sm7qf711h2jpiav753p0xas5z"))))
+        (base32 "11f2k7mszik3f05rn6gv7a6ihhdl8vb9g97ynqdbc8qvik2x8frq"))))
     (properties `((upstream-name . "eventviews")))
     (build-system qt-build-system)
     (native-inputs
@@ -847,14 +1010,14 @@ package.")
 (define-public kgpg
   (package
     (name "kgpg")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kgpg-" version ".tar.xz"))
        (sha256
-        (base32 "10zhxkhjsbn2pfhq40ym8qp39adfqhdvcg1rm9hvf8k1c91lzpxk"))))
+        (base32 "0rw6qm92jm0afi9p12dgqapzsmwa4jk83rwzxnnsvqfircsl7njb"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -910,14 +1073,14 @@ cryptography to the contents of the clipboard.")
 (define-public khealthcertificate
   (package
     (name "khealthcertificate")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/" version
                                   "/src/khealthcertificate-" version ".tar.xz"))
               (sha256
                (base32
-                "0600rz72dd3x7wwj82cyixnch3v0m4gva5kgf3y6rzjzlqjdpx57"))))
+                "1vxlq0gfpg9q58963zm8fb5vsp16aicfqp0xgzdj5ad2pk1zgrkm"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -948,14 +1111,14 @@ test and recovery certificates.")
 (define-public kidentitymanagement
   (package
     (name "kidentitymanagement")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kidentitymanagement-" version ".tar.xz"))
        (sha256
-        (base32 "026i17j6spl0937klzf9ch26cmj7rrp617yrdq7917cwp9i7ah04"))))
+        (base32 "1qyyps5xy8cij4zsk6jhgvjj4xcs10vd7i2si6a4l72vg8rwd3if"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -987,14 +1150,14 @@ test and recovery certificates.")
 (define-public kimap
   (package
     (name "kimap")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kimap-" version ".tar.xz"))
        (sha256
-        (base32 "1q4nxd31sjml31qicgpinf81rd8id71wm3kgx0v9byv7d0kysyqn"))))
+        (base32 "0rqbafm4af70lbl05xmnmr0dcs2fxn7xbck2mpa0yrkky5657gdh"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -1019,14 +1182,14 @@ easier to do so.")
 (define-public kitinerary
   (package
     (name "kitinerary")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/kitinerary-" version ".tar.xz"))
               (sha256
                (base32
-                "1c7dd85n1amyi9hdzfjlchcj156kfy64rw915bymcbvdy6y3m6ji"))))
+                "1fxrhhffkp5mw5i8pdaxj92ggs5zx7z8vgdarjqr1ml48sl1cv7a"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -1051,6 +1214,7 @@ easier to do so.")
                   openssl
                   poppler
                   qtdeclarative
+                  qtkeychain-qt6
                   libxml2
                   zlib
                   zxing-cpp))
@@ -1064,14 +1228,14 @@ model and itinerary extraction code.")
 (define-public kldap
   (package
     (name "kldap")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kldap-" version ".tar.xz"))
        (sha256
-        (base32 "1nhr18h7f4qm196jjg5aqyky7v7w8n7iy07kzdk638381sarcmyz"))))
+        (base32 "13yvxiff898r6lx2fv8722w5xm51lapwaqjk5max1znabhmnahvy"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1090,14 +1254,14 @@ protocol for querying and modifying directory services running over TCP/IP.")
 (define-public kleopatra
   (package
     (name "kleopatra")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kleopatra-" version ".tar.xz"))
        (sha256
-        (base32 "1jm0x73g2mfk6fc2m3smray8c9wddkk785aizxvq0yi4v52wydxb"))))
+        (base32 "02fp20aj45sr0r2hxbc28jnmllpqrpay3sn5gva1makf6r5vyy5q"))))
     (build-system qt-build-system)
     (native-inputs
      (list dbus extra-cmake-modules gnupg ;; TODO: Remove after gpgme uses fixed path
@@ -1112,6 +1276,7 @@ protocol for querying and modifying directory services running over TCP/IP.")
            kcoreaddons
            kcrash
            kdbusaddons
+           kguiaddons
            ki18n
            kio
            kiconthemes
@@ -1147,14 +1312,14 @@ and retrieving certificates from LDAP servers.")
 (define-public kmail
   (package
     (name "kmail")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kmail-" version ".tar.xz"))
        (sha256
-        (base32 "0g30a36pd86brxq3ln709jnq9xdyqm8jiwwbv8kh70mcdbpjcpk2"))))
+        (base32 "1cl6giblw0jwyxr7bk88gd8krqkd3xxryniyz2jbrqnkvbrml23n"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules dbus kdoctools))
@@ -1265,14 +1430,14 @@ manager from KDE.")
 (define-public kmail-account-wizard
   (package
     (name "kmail-account-wizard")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kmail-account-wizard-" version ".tar.xz"))
        (sha256
-        (base32 "0izjdajipca59zbsdir136qfyh61aynpb2h1bady6qs927l5ds1f"))))
+        (base32 "0v0pczbwv6ba5ly4s2x8jw6b300f6wprlikz8hmx0xrk0mnx4zqh"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules shared-mime-info))
@@ -1315,14 +1480,14 @@ KMail.")
 (define-public kmailcommon
   (package
     (name "kmailcommon")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/mailcommon-" version ".tar.xz"))
        (sha256
-        (base32 "0s23g08q5nx11vdpwxkqgzcs9xb6nycwsndfl6vpcnlbx10zsbfr"))))
+        (base32 "1jnq02ji9bqfk03idzf54ggzfwnpinivw35d56hjxpq41b0z9lhw"))))
     (properties `((upstream-name . "mailcommon")))
     (build-system qt-build-system)
     (native-inputs
@@ -1384,14 +1549,14 @@ dealing with email.")
 (define-public kmailimporter
   (package
     (name "kmailimporter")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/mailimporter-" version ".tar.xz"))
        (sha256
-        (base32 "0hjwz70ys2bi6l8c2anzc7mhcapcqsximrxh813sp36hqwsix52g"))))
+        (base32 "0l83ynsxbapcvjjzdlrfspfkg013w2c3hji1wcv97q8qpx4269j8"))))
     (properties `((upstream-name . "mailimporter")))
     (build-system qt-build-system)
     (native-inputs
@@ -1431,14 +1596,14 @@ e-mail client programs into KMail and KDE PIM.")
 (define-public kmailtransport
   (package
     (name "kmailtransport")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kmailtransport-" version ".tar.xz"))
        (sha256
-        (base32 "0ck6mr1zapk0ac96ffnps7pw5pzvb3d5v8lyjvv8acy3435j684z"))))
+        (base32 "1bwla6i318armzay0hbnmjl9fy49m5d2bybq07zs509rnmi5af2x"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -1474,14 +1639,14 @@ mail transport.")
 (define-public kmbox
   (package
     (name "kmbox")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kmbox-" version ".tar.xz"))
        (sha256
-        (base32 "0g2pg80n37miinfv69mz6hpvdhhbprdvgbkvzafspaj9bram9xrr"))))
+        (base32 "1z6rv3chc9y9ppy9jx1lj8nkl3wlcv8511p0zaarz9khsx413jns"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -1497,14 +1662,14 @@ using a Qt/KMime C++ API.")
 (define-public kmessagelib
   (package
     (name "kmessagelib")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/messagelib-" version ".tar.xz"))
        (sha256
-        (base32 "1m7mah1zqfn9r3jw1lg303kg023lgl77r6if5g4ifv3lsih52pgl"))))
+        (base32 "0v8yrl6j5325mwnhix43qp4s9jjny2437hns9sr5zq7ry4zfas73"))))
     (properties `((upstream-name . "messagelib")))
     (build-system qt-build-system)
     (native-inputs
@@ -1545,6 +1710,7 @@ using a Qt/KMime C++ API.")
            kwidgetsaddons
            kwindowsystem
            kxmlgui
+           openssl
            libgravatar
            qca-qt6
            qgpgme-qt6
@@ -1583,17 +1749,17 @@ kwebengineviewer.")
 (define-public kmime
   (package
     (name "kmime")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kmime-" version ".tar.xz"))
        (sha256
-        (base32 "19dnp955vii3vi1jaxgbsyabbb35iaqvhz9nnz392r3wz7f3hbyq"))))
+        (base32 "1x0ylkpfj75bh0av6k2dvjhrxh6p4701lvvnqmx726pa8cp9ziq6"))))
     (build-system qt-build-system)
     (native-inputs
-     (list extra-cmake-modules tzdata-for-tests))
+     (list extra-cmake-modules qttools tzdata-for-tests))
     (inputs
      (list kcodecs ki18n))
     (arguments
@@ -1693,14 +1859,14 @@ Features:
 (define-public kontactinterface
   (package
     (name "kontactinterface")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kontactinterface-" version ".tar.xz"))
        (sha256
-        (base32 "05g9mw29pi5z536pmxhavdispq5whgkx56iqqsdz8dy9rgjlm1bc"))))
+        (base32 "0n4dxnavd0rsa6qa9929sd7bjk9x58r11w5i1i6hsmg2f5zwf7wv"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -1722,14 +1888,14 @@ application \"Parts\" to be embedded as a Kontact component (or plugin).")
 (define-public korganizer
   (package
     (name "korganizer")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/korganizer-" version ".tar.xz"))
        (sha256
-        (base32 "10walf46h1cnyfcpkppybgzlfcn93rygwppb4jfi2rg24rka3i84"))))
+        (base32 "092ad5qw6jsvn7rf5gmkwcq5khlxr04lizdcflw70lnb7j4y7zpk"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules dbus qttools kdoctools tzdata-for-tests))
@@ -1808,44 +1974,51 @@ and exchanging calendar data, vCalendar and iCalendar.")
      (list license:gpl2+ license:lgpl2.0+ license:fdl1.2+))))
 
 (define-public kpeoplevcard
-  (package
-    (name "kpeoplevcard")
-    (version "0.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://kde/stable/kpeoplevcard/"
-                                  version "/kpeoplevcard-" version ".tar.xz"))
-              (sha256
-               (base32
-                "1hv3fq5k0pps1wdvq9r1zjnr0nxf8qc3vwsnzh9jpvdy79ddzrcd"))))
-    (build-system qt-build-system)
-    (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check-setup
-                    (lambda _
-                      (setenv "HOME" "/tmp"))))))
-    (native-inputs
-     (list extra-cmake-modules))
-    (inputs
-     (list kcontacts kpeople qtbase-5))
-    (home-page "https://invent.kde.org/pim/kpeoplevcard")
-    (synopsis "Expose vCard contacts to KPeople")
-    (description
-     "This plugins adds support for vCard (also known as @acronym{VCF,
+  (let ((commit "d4acaa3038f6b030d0d6390e628c39e9f8d87903")
+        (revision "0"))
+    ;; use unreleased commit for KF6 supports.
+    (package
+      (name "kpeoplevcard")
+      (version (git-version "0.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://invent.kde.org/pim/kpeoplevcard")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1wgpwxjb5zvhgzyq9zd8mp6r5cawjzlhk980drl05nr27a0q32vz"))))
+      (build-system qt-build-system)
+      (arguments
+       (list #:qtbase qtbase
+             #:configure-flags #~(list "-DQT_MAJOR_VERSION=6")
+             #:phases #~(modify-phases %standard-phases
+                          (replace 'check-setup
+                            (lambda _
+                              (setenv "HOME" "/tmp"))))))
+      (native-inputs
+       (list extra-cmake-modules))
+      (inputs
+       (list kcontacts kpeople))
+      (home-page "https://invent.kde.org/pim/kpeoplevcard")
+      (synopsis "Expose vCard contacts to KPeople")
+      (description
+       "This plugins adds support for vCard (also known as @acronym{VCF,
 Virtual Contact File}) files to the KPeople contact management library.")
-    (license license:lgpl2.1+)))
+      (license license:lgpl2.1+))))
 
 (define-public kpkpass
   (package
     (name "kpkpass")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/" version
                                   "/src/kpkpass-" version ".tar.xz"))
               (sha256
                (base32
-                "1cqpmag3n58nzcbyb1rkkvwx9lzff1l8nawbqz2g1gqk2diny0wx"))))
+                "1hrqzy8rc51sixkmkfl8zvqpynyv7zb8sfjlbxslnjrib9p9i2vx"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list karchive shared-mime-info))
@@ -1859,14 +2032,14 @@ pass files.")
 (define-public kpimcommon
   (package
     (name "kpimcommon")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/pimcommon-" version ".tar.xz"))
        (sha256
-        (base32 "0k7zakx1dd39997a9a3d6qmlzdc5alw5gny0xh7bncv0fpilvgyh"))))
+        (base32 "1fwxjdjixbn84flq9g95ig7z4csi08amsblr6rm1fr2lk8nazmg4"))))
     (properties `((upstream-name . "pimcommon")))
     (build-system qt-build-system)
     (native-inputs
@@ -1919,14 +2092,14 @@ pass files.")
 (define-public libgravatar
   (package
     (name "libgravatar")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/libgravatar-" version ".tar.xz"))
        (sha256
-        (base32 "0xk6i1rndhh58p20hx6473hc29njg03qcy7ymdvflr5lgr7qavwy"))))
+        (base32 "1grs2dnxlh1lb1mv47aggymawvc6lb7yjrnw1sqwbiwj8ign2p66"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list kconfig
@@ -1953,14 +2126,14 @@ unnecessary network operations.")
 (define-public kpimtextedit
   (package
     (name "kpimtextedit")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kpimtextedit-" version ".tar.xz"))
        (sha256
-        (base32 "1m91hnjiksji60ybvmvlcgayqrcplxfdj7qxknxwayiijvqiq22a"))))
+        (base32 "0xrlym88l2xsclcbmdl7jsphnf3z39hxgk0xdb6qjk719mi4w2lb"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules qttools))
@@ -1992,14 +2165,14 @@ text in the text edit to all kinds of markup, like HTML or BBCODE.")
 (define-public ksmtp
   (package
     (name "ksmtp")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ksmtp-" version ".tar.xz"))
        (sha256
-        (base32 "1v7kami1f75gin7293kk07imkdnmvf9bfn49fc6lzbb52im4nh4b"))))
+        (base32 "0kn4kh71kxjr8pgngdkm298xdzj3jbn44dyllvm582m035hm5nx4"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -2012,15 +2185,7 @@ text in the text edit to all kinds of markup, like HTML or BBCODE.")
            kio))
     (arguments
      (list #:qtbase qtbase
-           #:tests? #f ;; TODO: does not find sasl mechs
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'Use-KDE_INSTALL_TARGETS_DEFAULT_ARGS-when-installing
-                 (lambda _
-                   (substitute* "src/CMakeLists.txt"
-                     (("^(install\\(.* )\\$\\{KF5_INSTALL_TARGETS_DEFAULT_ARGS\\}\\)"
-                       _ prefix)
-                      (string-append prefix "${KDE_INSTALL_TARGETS_DEFAULT_ARGS})"))))))))
+           #:tests? #f)) ;; TODO: does not find sasl mechs
     (home-page "https://invent.kde.org/pim/ksmtp")
     (synopsis "Library for sending email through an SMTP server")
     (description "This library provides an API for handling SMTP
@@ -2031,14 +2196,14 @@ standard protocols for e-mail transmission.")
 (define-public ktnef
   (package
     (name "ktnef")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ktnef-" version ".tar.xz"))
        (sha256
-        (base32 "1v113fihnsn6iilk01rm8g68pm1gf1gdsvar2fiwhqsg48all588"))))
+        (base32 "1ylpmrzqgpkfdzmzgq9b1hvsvna6q0fvv1c9p9qxhnbaycyyg92g"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -2063,14 +2228,14 @@ and allows one to view/extract message formatted text in Rich Text Format.")
 (define-public libkdepim
   (package
     (name "libkdepim")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/libkdepim-" version ".tar.xz"))
        (sha256
-        (base32 "1k22qjxfm8msj8ipyz2p5qq0hx9q6p3qw42cp3bnbhiaamanmlq3"))))
+        (base32 "0f3lz2n2683zx0m13kd6k518idw1xfdj6v0371b1d57sz0bvgj3i"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules qttools))
@@ -2109,14 +2274,14 @@ and allows one to view/extract message formatted text in Rich Text Format.")
 (define-public libkgapi
   (package
     (name "libkgapi")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/libkgapi-" version ".tar.xz"))
        (sha256
-        (base32 "0j0rbzwcjq4wjrrk0vhkifa8ahmmrpfy039fpf3gy237k5ncj5y3"))))
+        (base32 "1k508grqzw60xjvjx8679ha8gsfvvvdyi9dn6xvz3zi34rhlqiim"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules qttools))
@@ -2144,14 +2309,14 @@ various Google services.")
 (define-public libkleo
   (package
     (name "libkleo")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/libkleo-" version ".tar.xz"))
        (sha256
-        (base32 "102yszx6smyf2vd068p6j0921fql5jlmsra3n62xam81smqlpgj0"))))
+        (base32 "1jajjq0gnymkfhviixjiz3x3b97pcdrgcs63x92sj1qncvs51yjp"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools qttools))
@@ -2182,7 +2347,7 @@ various Google services.")
               (when tests? ;; FIXME: These tests fail.
                 (invoke "ctest" "-E"
                         "(expirycheckertest|keyresolvercoretest|\
-newkeyapprovaldialogtest)")))))))
+newkeyapprovaldialogtest|keyparameterstest|keycachetest)")))))))
     (home-page "https://invent.kde.org/pim/libkleo")
     (synopsis "KDE PIM cryptographic library")
     (description "@code{libkleo} is a library for Kleopatra and other parts of
@@ -2193,7 +2358,7 @@ KDE using certificate-based crypto.")
 (define-public libksieve
   (package
     (name "libksieve")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
@@ -2201,7 +2366,7 @@ KDE using certificate-based crypto.")
                            "/src/libksieve-" version ".tar.xz"))
        (sha256
         (base32
-	 "1zsc84ylrylby28ypdg47kmf911dmi5hi6745wvjsrxcwnpqag37"))))
+	 "1syshv3i1qfs6mg8cds9jkpzgngkiy1i1l5p0qva2hvz6lp64kmk"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -2252,7 +2417,7 @@ is a Sieve parser and interpreter library for KDE.")
 (define-public merkuro
   (package
     (name "merkuro")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
@@ -2260,7 +2425,7 @@ is a Sieve parser and interpreter library for KDE.")
                                   ".tar.xz"))
               (sha256
                (base32
-                "0n6na806g4xlx66ay0vk3iw9xs1h48ya7l0zpa3nqikr1by79lfh"))))
+                "18sdf4nd0dl36d3wv4hl99d1by5871wdblc9d9z72kph4jgyyacm"))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
@@ -2273,45 +2438,47 @@ is a Sieve parser and interpreter library for KDE.")
                      (invoke "dbus-launch" "ctest")))))))
     (native-inputs (list dbus extra-cmake-modules))
     (inputs (list akonadi
+                  akonadi-calendar
                   akonadi-contacts
+                  akonadi-mime
                   akonadi-mime
                   breeze-icons
                   gpgme
                   grantleetheme
+                  kcalendarcore
+                  kcalendarsupport
+                  kcalutils
+                  kconfigwidgets
+                  kcontacts
+                  kcoreaddons
+                  kcrash
+                  kdbusaddons
+                  keventviews
+                  ki18n
+                  kiconthemes
+                  kidentitymanagement
+                  kimap
                   kio
                   kirigami
                   kirigami-addons
-                  kdbusaddons
-                  ki18n
-                  kimap
-                  kcalendarcore
-                  kcalendarsupport
-                  kconfigwidgets
-                  kwindowsystem
-                  kcoreaddons
-                  kcontacts
                   kitemmodels
                   kmailcommon
                   kmailtransport
                   kmessagelib
                   kmime
-                  kidentitymanagement
+                  knotifications
                   kpimcommon
                   kpimtextedit
                   ktextaddons
                   ktextwidgets
-                  akonadi-calendar
-                  akonadi-mime
-                  keventviews
-                  kcalutils
+                  kwindowsystem
                   kxmlgui
-                  kiconthemes
                   libkdepim
                   libkleo
                   mimetreeparser
+                  qqc2-desktop-style
                   qtdeclarative
                   qtsvg
-                  qqc2-desktop-style
                   qtwebengine))
     (home-page "https://apps.kde.org/kalendar/")
     (synopsis "Calendar application")
@@ -2325,14 +2492,14 @@ NOTE: plsase add akonadi and kdepim-runtime to system package.")
 (define-public mimetreeparser
   (package
     (name "mimetreeparser")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/mimetreeparser-" version ".tar.xz"))
        (sha256
-        (base32 "132slwaqlaxnbvkpqb9w4ak4mpkrvw6ln81nbka91c3ngcamfac9"))))
+        (base32 "0hpn8v2c6v5r2ydqha9xr28ki3ml9k3wf3lpra0i6q81bp4ainfi"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))

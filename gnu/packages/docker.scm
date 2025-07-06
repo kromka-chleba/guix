@@ -10,6 +10,7 @@
 ;;; Copyright © 2022 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -66,21 +67,35 @@
 (define-public python-docker
   (package
     (name "python-docker")
-    (version "5.0.3")
+    (version "7.1.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "docker" version))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/docker/docker-py")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "1yr7w8vmdis01myx26pqx7wcyz2cy1mfs421alppq3lpc9ms45nr"))))
-    (build-system python-build-system)
-    ;; TODO: Tests require a running Docker daemon.
-    (arguments '(#:tests? #f))
+        (base32 "1dd4p0xfv6vja4mgzwn2yfyna7vi7bc1pr5f59jg9yd4nxj96kmj"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Integration tests need a running Docker daemon.
+      #:test-flags #~(list "--ignore" "tests/integration")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'pretend-version
+            ;; The version string is usually derived via setuptools-scm,
+            ;; but without the git metadata available, the version string
+            ;; is set to '0.0.0'.
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
+                      #$(package-version this-package)))))))
+    (native-inputs (list python-hatch-vcs python-hatchling python-pytest))
     (inputs
-     (list python-requests python-six python-urllib3))
+     (list python-requests python-urllib3))
     (propagated-inputs
-     (list python-docker-pycreds python-paramiko ;adds SSH support
+     (list python-paramiko ;adds SSH support
            python-websocket-client))
     (home-page "https://github.com/docker/docker-py/")
     (synopsis "Python client for Docker")

@@ -1025,7 +1025,7 @@ console.")
 (define-public btop
   (package
     (name "btop")
-    (version "1.4.3")
+    (version "1.4.4")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1034,7 +1034,7 @@ console.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "10g4m14cniw4blnazw0rs92fkgxhhri8zcvg3kcz2xgnc4day7g3"))))
+                "1b918b86sw265kxg99d140z9qxrgv7qw461lnm843v89xj6m8zz0"))))
     (build-system gnu-build-system)
     (native-inputs (list lowdown))
     (arguments
@@ -2371,7 +2371,7 @@ system administrator.")
 (define-public sudo
   (package
     (name "sudo")
-    (version "1.9.16")
+    (version "1.9.17p1")
     (source (origin
               (method url-fetch)
               (uri
@@ -2381,7 +2381,7 @@ system administrator.")
                                     version ".tar.gz")))
               (sha256
                (base32
-                "0gd0pyycc3jnbgq5f8056fyc4a1ix257j2rxazy35dq6gxwlvn60"))
+                "0cjx8lkwlqz03psnaia07rz9mpyn5ilpixvqi9rrf8872ykpwq7z"))
               (modules '((guix build utils)))
               (snippet
                '(begin

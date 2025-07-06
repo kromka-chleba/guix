@@ -1,11 +1,12 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2015, 2016, 2020-2025 Ricardo Wurmus <rekado@elephly.net>
+;;; Copyright © 2015, 2016, 2018, 2020-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015 Federico Beffa <beffa@fbengineering.ch>
 ;;; Copyright © 2016 Ben Woodcroft <donttrustben@gmail.com>
 ;;; Copyright © 2016 Hartmut Goebel <h.goebel@crazy-compilers.com>
-;;; Copyright © 2016, 2022-2025 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2016, 2021-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016-2020, 2022 Marius Bakke <marius@gnu.org>
-;;; Copyright © 2019 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2018, 2019 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2018, 2022 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2019, 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2019 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2020 Pierre Langlois <pierre.langlois@gmx.com>
@@ -14,15 +15,17 @@
 ;;; Copyright © 2021 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2021 Paul Garlick <pgarlick@tourbillion-technology.com>
 ;;; Copyright © 2021 Arun Isaac <arunisaac@systemreboot.net>
+;;; Copyright © 2021 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2021, 2023 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2022 Malte Frank Gerdes <malte.f.gerdes@gmail.com>
 ;;; Copyright © 2021, 2022 Guillaume Le Vaillant <glv@posteo.net>
-;;; Copyright © 2022 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2022 Paul A. Patience <paul@apatience.com>
 ;;; Copyright © 2022 Wiktor Żelazny <wzelazny@vurv.cz>
 ;;; Copyright © 2022 Eric Bavier <bavier@posteo.net>
+;;; Copyright © 2022 kiasoc5 <kiasoc5@tutanota.com>
 ;;; Copyright © 2022, 2024 Antero Mejr <antero@mailbox.org>
 ;;; Copyright © 2022 jgart <jgart@dismail.de>
+;;; Copyright © 2022 Sarah Morgensen <iskarian@mgsn.dev>
 ;;; Copyright © 2023, 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 Marco Baggio <marco.baggio@mdc-berlin.de>
@@ -246,6 +249,23 @@ possibility to differentiate functions that contain matrix functions as
 +,-,*,/, dot, solve, qr, eigh, cholesky.")
     (license license:bsd-3)))
 
+(define-public python-aplus
+  (package
+    (name "python-aplus")
+    (version "0.11.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "aplus" version))
+       (sha256
+        (base32 "1rznc26nlp641rn8gpdngfp79a3fji38yavqakxi35mx2da04msg"))))
+    (build-system python-build-system)
+    (home-page "https://github.com/xogeny/aplus")
+    (synopsis "Promises/A+ for Python")
+    (description "This package is an implementation of the Promises/A+
+specification and test suite in Python.")
+    (license license:expat)))
+
 (define-public python-apted
   ;; PyPI release lacks tests and there is no Git tag.
   (let ((commit "828b3e3f4c053f7d35f0b55b0d5597e8041719ac")
@@ -280,6 +300,214 @@ possibility to differentiate functions that contain matrix functions as
 supersedes the RTED algorithm for computing the tree edit distance.")
       (license license:expat))))
 
+(define-public python-asap3
+  (package
+    (name "python-asap3")
+    (version "3.13.7")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "asap3" version))
+       (sha256
+        (base32 "0z6m9ybiy4fdnzlkfkvyxich18iwlwlgj1jd99fylyfwf8l160am"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-ase))
+    (native-inputs (list python-setuptools python-wheel which))
+    (home-page "https://wiki.fysik.dtu.dk/asap")
+    (synopsis "ASAP - classical potentials for Molecular Dynamics with ASE.")
+    (description "This package provides accelerated simulations and potentials
+of solids.")
+    (license license:lgpl3)))
+
+(define-public python-ase
+  (package
+    (name "python-ase")
+    (version "3.25.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ase" version))
+       (sha256
+        (base32 "1hk2r5042cs9shqv49w0jvf65wkyq74s6vc5drfz1275kz5ghk1p"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:test-flags
+           #~(list ;; DeprecationWarning.
+              "--deselect"
+              "ase/test/fio/test_espresso.py::test_pw_input_write_nested_flat"
+              ;; UserWarning.
+              "--deselect"
+              "ase/test/fio/test_espresso.py::TestConstraints::test_fix_scaled")))
+    (propagated-inputs (list python-matplotlib python-numpy python-scipy))
+    (native-inputs (list python-pytest python-pytest-xdist python-setuptools
+                         python-wheel))
+    (inputs (list spglib))
+    (home-page "https://wiki.fysik.dtu.dk/ase/")
+    (synopsis "Atomic Simulation Environment")
+    (description "This package provides a set of tools and Python modules for
+setting up, manipulating, running, visualizing and analyzing atomistic
+simulations.")
+    (license license:lgpl2.1+)))
+
+(define-public python-baycomp
+  (package
+    (name "python-baycomp")
+    (version "1.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "baycomp" version))
+       (sha256
+        (base32 "1v6s4mfr6xzjbv9a2v89hywm6fbv5nii0qczvcfjanvdn7bmmcij"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest python-setuptools python-wheel))
+    (propagated-inputs
+     (list python-matplotlib python-numpy python-scipy))
+    (home-page "https://github.com/janezd/baycomp")
+    (synopsis "Library for comparison of Bayesian classifiers")
+    (description
+     "Baycomp is a library for Bayesian comparison of classifiers.  Functions
+in the library compare two classifiers on one or on multiple data sets.  They
+compute three probabilities: the probability that the first classifier has
+higher scores than the second, the probability that differences are within the
+region of practical equivalence (rope), or that the second classifier has
+higher scores.")
+    (license license:expat)))
+
+(define-public python-boost-histogram
+  (package
+    (name "python-boost-histogram")
+    (version "1.5.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "boost_histogram" version))
+       (sha256
+        (base32 "0p2f90p5jwlwrjz3hq2fzaifkmny33g2mpi89nnhi3w41f1jxr2i"))))
+    (build-system pyproject-build-system)
+    ;; This package bundles files from Boost::Histogram and doesn't provide
+    ;; a way to use a system library.
+    (propagated-inputs (list python-numpy))
+    (native-inputs (list cmake-minimal
+                         pybind11
+                         python-pytest
+                         python-pytest-benchmark
+                         python-scikit-build-core
+                         python-setuptools-scm))
+    (home-page "https://boost-histogram.readthedocs.io/en/latest/")
+    (synopsis "Python bindings for the Boost::Histogram library")
+    (description
+     "This package provides Python bindings for the Boost::Histogram library,
+one of the fastest libraries for histogramming.")
+    (license license:bsd-3)))
+
+(define-public python-bottleneck
+  (package
+    (name "python-bottleneck")
+    (version "1.4.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "bottleneck" version))
+       (sha256
+        (base32 "1x29yj4yr12v646si63gkxj9b6lx1xk65536wqy4i9fyk4bqx3ps"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'rebuild-ext
+            (lambda _
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (native-inputs (list python-pytest
+                         python-setuptools
+                         python-wheel))
+    (propagated-inputs (list python-numpy))
+    (home-page "https://github.com/pydata/bottleneck")
+    (synopsis "Fast NumPy array functions written in C")
+    (description
+     "Bottleneck is a collection of fast, NaN-aware NumPy array functions
+written in C.")
+    (license license:bsd-2)))
+
+(define-public python-clarabel
+  (package
+    (name "python-clarabel")
+    (version "0.7.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "clarabel" version))
+       (sha256
+        (base32 "15k32ynvh45n9q905bxwamh5w5cia9bxzmwz69wbribmyhsv22m3"))
+       (patches
+        (search-patches "python-clarabel-blas.patch"))))
+    (build-system cargo-build-system)
+    (arguments
+     (list
+      #:imported-modules `(,@%cargo-build-system-modules
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build cargo-build-system)
+                  ((guix build pyproject-build-system) #:prefix py:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'build 'build-python-module
+            (assoc-ref py:%standard-phases 'build))
+          (add-after 'build-python-module 'install-python-module
+            (assoc-ref py:%standard-phases 'install)))
+      #:cargo-inputs
+      `(("rust-amd" ,rust-amd-0.2)
+        ("rust-blas" ,rust-blas-0.22)
+        ("rust-cfg-if" ,rust-cfg-if-1)
+        ("rust-derive-builder" ,rust-derive-builder-0.11)
+        ("rust-enum-dispatch" ,rust-enum-dispatch-0.3) ;0.3.8
+        ("rust-itertools" ,rust-itertools-0.11)
+        ("rust-lapack" ,rust-lapack-0.19)
+        ("rust-lazy-static" ,rust-lazy-static-1) ;1.4
+        ("rust-libc" ,rust-libc-0.2)
+        ("rust-num-derive" ,rust-num-derive-0.2)
+        ("rust-num-traits" ,rust-num-traits-0.2)
+        ("rust-pyo3" ,rust-pyo3-0.20)
+        ("rust-serde" ,rust-serde-1)
+        ("rust-serde-json" ,rust-serde-json-1)
+        ("rust-thiserror" ,rust-thiserror-1))
+      #:features '(list "python")
+      #:install-source? #false))
+    (inputs
+     (list maturin))
+    (native-inputs
+     (list python-wrapper))
+    (propagated-inputs (list python-numpy python-scipy))
+    (home-page "https://github.com/oxfordcontrol/Clarabel.rs")
+    (synopsis "Interior-point solver for convex conic optimisation problems")
+    (description "Clarabel.rs is a Rust implementation of an interior point
+numerical solver for convex optimization problems using a novel homogeneous
+embedding.")
+    (license license:asl2.0)))
+
+(define-public python-climin
+  (package
+    (name "python-climin")
+    (version "0.1a1")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "climin" version))
+              (sha256
+               (base32
+                "1wpjisd5zzi5yvjff02hnxn84822k8sdxvvd33lil2x79wdb36rv"))))
+    (build-system python-build-system)
+    (native-inputs (list python-nose))
+    (propagated-inputs (list python-numpydoc python-numpy python-scipy))
+    (home-page "https://github.com/BRML/climin")
+    (synopsis "Optimization for machine learning")
+    (description
+     "@command{climin} is a Python package for optimization,
+heavily biased to machine learning scenarios.  It works on top of
+@command{numpy} and (partially) @command{gnumpy}.")
+    (license license:bsd-3)))
+
 (define-public python-cmocean
   (package
     (name "python-cmocean")
@@ -306,6 +534,63 @@ supersedes the RTED algorithm for computing the tree edit distance.")
 variables.  Most of the colormaps started from @code{matplotlib} colormaps,
 but have now been adjusted using the viscm tool to be perceptually uniform.")
     (license license:expat)))
+
+(define-public python-corner
+  (package
+    (name "python-corner")
+    (version "2.2.2")
+    (source
+     (origin
+       (method git-fetch) ;no tests in PyPi archive
+       (uri (git-reference
+             (url "https://github.com/dfm/corner.py")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1i4dk4jxh0saysya2cnsfwlxwpldbdl174i9pwi4qj82av9jr2ii"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list
+         ;; XXX: Disable tests which failed with mismatched images, check why.
+         "-k" (string-append "not test_labels[png]"
+                             " and not test_title_quantiles[png]"
+                             " and not test_title_quantiles_default[png]"
+                             " and not test_title_quantiles_raises[png]"
+                             " and not test_bins[png]"
+                             " and not test_bins_log[png]"
+                             " and not test_titles1[png]"
+                             " and not test_titles2[png]"
+                             " and not test_pandas[png]"
+                             " and not test_tight[png]"
+                             " and not test_extended_overplotting[png]"
+                             " and not test_reverse_overplotting[png]"
+                             " and not test_arviz[png]"
+                             " and not test_range_fig_arg[png]"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'pretend-version
+            ;; XXX: Make sure you're either building from a fully intact git
+            ;; repository or PyPI tarballs. Most other sources (such as GitHub's
+            ;; tarballs, a git checkout without the .git folder) don't contain
+            ;; the necessary metadata and will not work.
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
+    (propagated-inputs
+     (list python-matplotlib))
+    (native-inputs
+     (list python-arviz python-pytest python-scipy python-setuptools-scm))
+    (home-page "http://corner.readthedocs.io/")
+    (synopsis "Make some beautiful corner plots")
+    (description
+     "This Python module uses @code{matplotlib} to visualize multidimensional
+samples using a scatterplot matrix. In these visualizations, each one- and
+two-dimensional projection of the sample is plotted to reveal covariances.
+corner was originally conceived to display the results of Markov Chain Monte
+Carlo simulations and the defaults are chosen with this application in mind but
+it can be used for displaying many qualitatively different samples.")
+    (license license:bsd-2)))
 
 (define-public python-cvxpy
   (package
@@ -336,6 +621,402 @@ but have now been adjusted using the viscm tool to be perceptually uniform.")
 optimization problems in Python.")
     (license license:asl2.0)))
 
+(define-public python-dask-expr
+  (package
+    (name "python-dask-expr")
+    (version "1.0.14")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dask/dask-expr")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0c2q8w8wl5d2hycbjp9vavkl5f36kaz390wxlis2d8d43jnqhf0d"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #false ;need python-distributed, which needs dask-expr.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'versioneer
+            (lambda _
+              ;; Our version of versioneer needs setup.cfg.  This is adapted
+              ;; from pyproject.toml.
+              (with-output-to-file "setup.cfg"
+                (lambda ()
+                  (display "\
+[versioneer]
+VCS = git
+style = pep440
+versionfile_source = dask_expr/_version.py
+versionfile_build = dask_expr/_version.py
+tag_prefix =
+parentdir_prefix = dask_expr-
+")))
+              (invoke "versioneer" "install")
+              (substitute* "setup.py"
+                (("versioneer.get_version\\(\\)")
+                 (string-append "\"" #$version "\""))))))))
+    (propagated-inputs (list python-pandas python-pyarrow))
+    (native-inputs
+     ;; We use python-dask/bootstrap so that python-dask can propagate this
+     ;; package without creating a mutually recursive dependency.
+     (list python-dask/bootstrap
+           python-pytest
+           python-setuptools
+           python-versioneer
+           python-wheel))
+    (home-page "https://github.com/dask/dask-expr")
+    (synopsis "Dask DataFrames with query optimization")
+    (description "This is a rewrite of Dask DataFrame that includes query
+optimization and generally improved organization.")
+    (license license:bsd-3)))
+
+(define-public python-decaylanguage
+  (package
+    (name "python-decaylanguage")
+    (version "0.18.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "decaylanguage" version))
+       (sha256
+        (base32 "0kc9i9k51kg2zv8dwywpigiipxzmyxpzb101imjsvv1licip7b8v"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; This file fails to be collected with "DeprecationWarning: setDaemon()
+      ;; is deprecated, set the daemon attribute instead".
+      #:test-flags #~(list "--ignore" "tests/test_convert.py")))
+    (propagated-inputs (list python-attrs
+                             python-graphviz
+                             python-hepunits
+                             python-lark
+                             python-numpy
+                             python-pandas
+                             python-particle
+                             python-plumbum))
+    (native-inputs (list python-hatch-vcs
+                         python-hatchling
+                         python-pytest))
+    (home-page "https://decaylanguage.readthedocs.io/en/latest/")
+    (synopsis "Language to describe, manipulate and convert particle decays")
+    (description "DecayLanguage implements a language to describe and convert
+particle decays between digital representations, effectively making it
+possible to interoperate several fitting programs.  Particular interest is
+given to programs dedicated to amplitude analyses.")
+    (license license:bsd-3)))
+
+(define-public python-deepdish
+  ;; XXX: The project may no longer be compatible with the version of NumPy
+  ;; packed in Guix (now 1.24.4), use the latest commit containing fixes.
+  ;; See: <https://github.com/uchicago-cs/deepdish/issues/50>.
+  ;; However, there is a maintained fork that appears to be a good
+  ;; replacement: https://github.com/portugueslab/flammkuchen.
+  (let ((commit "3f2dff7a03f1b31f6924b665ad5b8c299329c1cd")
+        (revision "0"))
+    (package
+      (name "python-deepdish")
+      (version (git-version "0.3.7" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/uchicago-cs/deepdish")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1n3r6z5zd18kdmzyg1gkm9lqi573szlxbls1ck5wjn4a14ar9fw3"))))
+      (arguments
+       ;; Disable few failing tests to pass the build.
+       (list
+        #:test-flags
+        #~(list "-k" (string-append "not test_pad"
+                                    " and not test_pad_repeat_border"
+                                    " and not test_pad_repeat_border_corner"
+                                    " and not test_pad_to_size"))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'dont-vendor-six
+              (lambda _
+                (delete-file "deepdish/six.py")
+                (substitute* "deepdish/io/hdf5io.py"
+                  (("from deepdish import six") "import six"))
+                (substitute* "deepdish/io/ls.py"
+                  (("from deepdish import io, six, __version__")
+                   "from deepdish import io, __version__
+import six
+")))))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-pytest
+             python-pandas
+             python-setuptools
+             python-wheel))
+      (propagated-inputs
+       (list python-numpy
+             python-scipy
+             python-six
+             python-tables))
+      (home-page "https://github.com/uchicago-cs/deepdish")
+      (synopsis "Python library for HDF5 file saving and loading")
+      (description
+       "Deepdish is a Python library to load and save HDF5 files.
+The primary feature of deepdish is its ability to save and load all kinds of
+data as HDF5.  It can save any Python data structure, offering the same ease
+of use as pickling or @code{numpy.save}, but with the language
+interoperability offered by HDF5.")
+      (license license:bsd-3))))
+
+(define-public python-distributed
+  (package
+    (name "python-distributed")
+    (version "2024.4.2")
+    (source
+     (origin
+       ;; The test files are not included in the archive on pypi
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dask/distributed")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0sy9mqa8qlxsagbz8xn304csrlxhxj4b6k84yrjxdcmkp9pkx166"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      '(list "-m"
+             (string-append "not slow"
+                            " and not flaky"
+                            " and not gpu"
+                            " and not ipython"
+                            " and not avoid_ci")
+             "-k"
+             (string-append
+              ;; These fail because they require network access,
+              ;; specifically access to 8.8.8.8.
+              "not "
+              (string-join
+               (list
+                "TestClientSecurityLoader.test_security_loader"
+                "test_BatchedSend"
+                "test_allowed_failures_config"
+                "test_async_context_manager"
+                "test_async_with"
+                "test_client_repr_closed_sync"
+                "test_client_is_quiet_cluster_close"
+                "test_close_closed"
+                "test_close_fast_without_active_handlers"
+                "test_close_grace_period_for_handlers"
+                "test_close_loop_sync"
+                "test_close_properly"
+                "test_close_twice"
+                "test_compression"
+                "test_connection_pool"
+                "test_connection_pool_close_while_connecting"
+                "test_connection_pool_detects_remote_close"
+                "test_connection_pool_outside_cancellation"
+                "test_connection_pool_remove"
+                "test_connection_pool_respects_limit"
+                "test_connection_pool_tls"
+                "test_counters"
+                "test_dashboard_host"
+                "test_dashboard_link_cluster"
+                "test_dashboard_link_inproc"
+                "test_deserialize_error"
+                "test_dont_override_default_get"
+                "test_ensure_no_new_clients"
+                "test_errors"
+                "test_fail_to_pickle_target_2"
+                "test_failure_doesnt_crash"
+                "test_file_descriptors_dont_leak"
+                "test_finished"
+                "test_freeze_batched_send"
+                "test_get_client_functions_spawn_clusters"
+                "test_host_uses_scheduler_protocol"
+                "test_identity_inproc"
+                "test_identity_tcp"
+                "test_large_packets_inproc"
+                "test_locked_comm_drop_in_replacement"
+                "test_locked_comm_intercept_read"
+                "test_locked_comm_intercept_write"
+                "test_messages_are_ordered_bsend"
+                "test_messages_are_ordered_raw"
+                "test_mixing_clients_different_scheduler"
+                "test_multiple_listeners"
+                "test_no_dangling_asyncio_tasks"
+                "test_plugin_exception"
+                "test_plugin_internal_exception"
+                "test_plugin_multiple_exceptions"
+                "test_ports"
+                "test_preload_import_time"
+                "test_preload_manager_sequence"
+                "test_queue_in_task"
+                "test_quiet_client_close"
+                "test_rebalance_sync"
+                "test_repr_localcluster"
+                "test_require_encryption"
+                "test_rpc_default"
+                "test_rpc_inproc"
+                "test_rpc_message_lifetime_default"
+                "test_rpc_message_lifetime_inproc"
+                "test_rpc_message_lifetime_tcp"
+                "test_rpc_serialization"
+                "test_rpc_tcp"
+                "test_rpc_tls"
+                "test_rpc_with_many_connections_inproc"
+                "test_rpc_with_many_connections_tcp"
+                "test_scheduler_file"
+                "test_security_dict_input_no_security"
+                "test_security_loader"
+                "test_security_loader_ignored_if_explicit_security_provided"
+                "test_security_loader_ignored_if_returns_none"
+                "test_send_after_stream_start"
+                "test_send_before_close"
+                "test_send_before_start"
+                "test_send_recv_args"
+                "test_send_recv_cancelled"
+                "test_sending_traffic_jam"
+                "test_serializers"
+                "test_server"
+                "test_server_comms_mark_active_handlers"
+                "test_shutdown"
+                "test_shutdown_localcluster"
+                "test_teardown_failure_doesnt_crash_scheduler"
+                "test_tell_workers_when_peers_have_left"
+                "test_threadpoolworkers_pick_correct_ioloop"
+                "test_tls_listen_connect"
+                "test_tls_temporary_credentials_functional"
+                "test_variable_in_task"
+                "test_worker_preload_text"
+                "test_worker_uses_same_host_as_nanny"
+                "test_nanny_timeout")   ; access to 127.0.0.1
+               " and not ")
+
+              ;; This seems to want to use 64GB of memory.
+              " and not test_computation_object_code_dask_compute"
+
+              ;; These fail because it doesn't find dask[distributed]
+              " and not test_quiet_close_process"
+
+              ;; There is no distributed.__git_revision__ property.
+              " and not test_git_revision"
+
+              ;; The system monitor did not return a dictionary containing
+              ;; "host_disk_io.read_bps".
+              " and not test_disk_config"
+
+              ;; These fail because the exception text format
+              ;; appears to have changed.
+              " and not test_exception_text"
+              " and not test_worker_bad_args"
+
+              ;; These time out
+              " and not test_nanny_timeout"
+
+              ;; These tests are rather flaky
+              " and not test_quiet_quit_when_cluster_leaves"
+              " and not multiple_clients_restart"
+              " and not test_steal_twice"
+              " and not test_task_groups_update_start_stop"
+              " and not test_web_preload"
+              " and not test_web_preload_worker"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'versioneer
+            (lambda _
+              ;; Our version of versioneer needs setup.cfg.  This is adapted
+              ;; from pyproject.toml.
+              (with-output-to-file "setup.cfg"
+                (lambda ()
+                  (display "\
+[versioneer]
+VCS = git
+style = pep440
+versionfile_source = distributed/_version.py
+versionfile_build = distributed/_version.py
+tag_prefix =
+parentdir_prefix = distributed-
+")))
+              (invoke "versioneer" "install")
+              (substitute* "setup.py"
+                (("versioneer.get_version\\(\\)")
+                 (string-append "\"" #$version "\"")))))
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              ;; This option is not supported by our version of pytest.
+              (substitute* "pyproject.toml"
+                (("--cov-config=pyproject.toml.*") ""))))
+          (add-after 'unpack 'fix-references
+            (lambda* (#:key outputs #:allow-other-keys)
+              (substitute* '("distributed/comm/tests/test_ucx_config.py"
+                             "distributed/tests/test_client.py"
+                             "distributed/tests/test_queues.py"
+                             "distributed/tests/test_variable.py"
+                             "distributed/cli/tests/test_tls_cli.py"
+                             "distributed/cli/tests/test_dask_spec.py"
+                             "distributed/cli/tests/test_dask_worker.py"
+                             "distributed/cli/tests/test_dask_scheduler.py")
+                (("\"dask-scheduler\"")
+                 (format #false "\"~a/bin/dask-scheduler\"" #$output))
+                (("\"dask-worker\"")
+                 (format #false "\"~a/bin/dask-worker\"" #$output)))))
+          (add-before 'check 'pre-check
+            (lambda _
+              (setenv "DISABLE_IPV6" "1")
+              ;; Disable job queueing
+              (setenv "DASK_DISTRIBUTED__SCHEDULER__WORKER_SATURATION" "inf")
+              ;; Do not use dask-expr
+              (setenv "DASK_DATAFRAME__QUERY_PLANNING" "False")
+              ;; The integration tests are all problematic to some
+              ;; degree.  They either require network access or some
+              ;; other setup.  We only run the tests in
+              ;; distributed/tests.
+              (for-each (lambda (dir)
+                          (delete-file-recursively
+                           (string-append "distributed/" dir "/tests")))
+                        (list "cli" "comm" "dashboard" "deploy" "diagnostics"
+                              "http" "http/scheduler" "http/worker"
+                              "protocol" "shuffle"))))
+          ;; We need to use "." here.
+          (replace 'check
+            (lambda* (#:key tests? test-flags #:allow-other-keys)
+              (when tests?
+                (apply invoke "python" "-m" "pytest" "." "-vv" test-flags)))))))
+    (propagated-inputs
+     (list python-click
+           python-cloudpickle
+           python-cryptography
+           python-dask
+           python-dask-expr
+           python-msgpack
+           python-psutil
+           python-pyyaml
+           python-setuptools
+           python-sortedcontainers
+           python-tblib
+           python-toolz
+           python-tornado-6
+           python-urllib3
+           python-zict))
+    (native-inputs
+     (list python-flaky
+           python-importlib-metadata
+           python-pytest
+           python-pytest-timeout
+           python-versioneer
+           python-wheel))
+    (home-page "https://distributed.dask.org")
+    (synopsis "Distributed scheduler for Dask")
+    (description "Dask.distributed is a lightweight library for distributed
+computing in Python.  It extends both the @code{concurrent.futures} and
+@code{dask} APIs to moderate sized clusters.")
+    (license license:bsd-3)))
+
 (define-public python-ecos
   (package
     (name "python-ecos")
@@ -359,6 +1040,64 @@ optimization problems in Python.")
      "This is the Python package for ECOS: Embedded Cone Solver.  ECOS is
 numerical software for solving convex second-order cone programs (SOCPs).")
     (license license:gpl3)))
+
+(define-public python-fast-histogram
+  (package
+    (name "python-fast-histogram")
+    (version "0.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "fast_histogram" version))
+       (sha256
+        (base32 "1sk9xa85cgm4sylzblwv3qr2dmm0ic06zkwxqa2xlazjiawp629r"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'build-extensions
+            (lambda _
+              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
+    (native-inputs
+     (list python-hypothesis
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy))
+    (home-page "https://github.com/astrofrog/fast-histogram")
+    (synopsis "Fast simple 1D and 2D histograms")
+    (description
+     "The fast-histogram mini-package aims to provide simple and fast
+histogram functions for regular bins that don't compromise on performance.  It
+doesn't do anything complicated - it just implements a simple histogram
+algorithm in C and keeps it simple.  The aim is to have functions that are
+fast but also robust and reliable.  The result is a 1D histogram function here
+that is 7-15x faster than @code{numpy.histogram}, and a 2D histogram function
+that is 20-25x faster than @code{numpy.histogram2d}.")
+    (license license:bsd-3)))
+
+(define-public python-fastcluster
+  (package
+    (name "python-fastcluster")
+    (version "1.2.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "fastcluster" version))
+       (sha256
+        (base32 "19labbgnq85p4r4jbli2p045lgh57larhi2g2anagfxnlzpqdf5a"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-numpy))
+    (native-inputs (list python-scipy python-setuptools python-wheel))
+    (home-page "https://danifold.net/fastcluster.html")
+    (synopsis "Fast hierarchical clustering routines for R and Python")
+    (description "The fastcluster package implements seven common hierarchical
+clustering schemes efficiently.  The package is made with two interfaces to
+standard software: R and Python.")
+    (license license:bsd-2)))
 
 (define-public python-formulaic
   (package
@@ -384,6 +1123,97 @@ numerical software for solving convex second-order cone programs (SOCPs).")
     (synopsis "Implementation of Wilkinson formulas")
     (description "Formulaic is a high-performance implementation of Wilkinson
 formulas for Python.")
+    (license license:expat)))
+
+(define-public python-geosketch
+  (package
+    (name "python-geosketch")
+    (version "1.2")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "geosketch" version))
+              (sha256
+               (base32
+                "0knch5h0p8xpm8bi3b5mxyaf1ywwimrsdmbnc1xr5icidcv9gzmv"))))
+    (build-system python-build-system)
+    (arguments '(#:tests? #false)) ;there are none
+    (propagated-inputs (list python-fbpca python-numpy python-scikit-learn))
+    (home-page "https://github.com/brianhie/geosketch")
+    (synopsis "Geometry-preserving random sampling")
+    (description "geosketch is a Python package that implements the geometric
+sketching algorithm described by Brian Hie, Hyunghoon Cho, Benjamin DeMeo,
+Bryan Bryson, and Bonnie Berger in \"Geometric sketching compactly summarizes
+the single-cell transcriptomic landscape\", Cell Systems (2019).  This package
+provides an example implementation of the algorithm as well as scripts
+necessary for reproducing the experiments in the paper.")
+    (license license:expat)))
+
+(define-public python-hepunits
+  (package
+    (name "python-hepunits")
+    (version "2.3.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hepunits" version))
+       (sha256
+        (base32 "1n1nf2rz2d86qzjmcwykbc16jzsqb45vs8lyksg98b3jd8nwsd4l"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-hatch-vcs python-hatchling python-pytest))
+    (home-page "https://github.com/scikit-hep/hepunits")
+    (synopsis "Units and constants in the HEP system of units")
+    (description "@code{hepunits} collects the most commonly used units and
+constants in the HEP System of Units, as derived from the basic units
+originally defined by the CLHEP project.")
+    (license license:bsd-3)))
+
+(define-public python-hist
+  (package
+    (name "python-hist")
+    (version "2.8.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "hist" version))
+       (sha256
+        (base32 "17cd46c0ixq18fr2kgzam09w1sr4qkd9l6nsjdbl4vggw80ck9vx"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-boost-histogram
+                             python-histoprint
+                             python-numpy
+                             python-typing-extensions))
+    (native-inputs (list python-hatch-vcs
+                         python-hatchling
+                         python-pytest
+                         python-pytest-mpl))
+    (home-page "https://hist.readthedocs.io/en/latest/")
+    (synopsis "Hist classes and utilities")
+    (description
+     "Hist is an analyst-friendly front-end for @code{boost-histogram}.")
+    (license license:bsd-3)))
+
+(define-public python-histoprint
+  (package
+    (name "python-histoprint")
+    (version "2.6.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "histoprint" version))
+       (sha256
+        (base32 "07d2lk64gwhjvw4wccvwks3j4ig7g99q627jjxz4ans5a29p5pz1"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-click python-numpy python-uhi))
+    (native-inputs (list python-awkward
+                         python-boost-histogram
+                         python-hatch-vcs
+                         python-hatchling
+                         python-pytest
+                         python-rich))
+    (home-page "https://github.com/scikit-hep/histoprint")
+    (synopsis "Pretty print histograms to the console")
+    (description "Histoprint uses a mix of terminal color codes and Unicode
+trickery (i.e. combining characters) to plot overlaying histograms.")
     (license license:expat)))
 
 (define-public python-imagehash
@@ -431,6 +1261,285 @@ Features:
 @item crop-resistant hashing
 @end itemize")
     (license license:bsd-2)))
+
+(define-public python-libneuroml
+  (package
+    (name "python-libneuroml")
+    (version "0.6.5")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/NeuralEnsemble/libNeuroML.git")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "04cfff9phm19x87p86xrkhd6wlpxvdwk3rf1c3qgyncfchws0sjh"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-numpy
+           python-setuptools
+           python-tables
+           python-wheel))
+    (propagated-inputs
+     (list python-lxml
+           python-natsort
+           python-networkx))
+    (home-page "https://libneuroml.readthedocs.org/en/latest/")
+    (synopsis
+     "Python library for working with NeuroML descriptions of neuronal models")
+    (description
+     "This package provides a Python library for working with NeuroML descriptions of
+neuronal models")
+    (license license:bsd-3)))
+
+(define-public python-meshzoo
+  (package
+    (name "python-meshzoo")
+    (version "0.9.4")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/diego-hayashi/meshzoo")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "107byfppbq16fqyp2hw7ydcvvahspzq0hzvlvzqg2zxi1aigbr68"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+      (list python-numpy))
+    (native-inputs (list python-flit-core python-matplotlib python-pytest))
+    (home-page "https://github.com/diego-hayashi/meshzoo")
+    (synopsis "Mesh generator for simple geometries")
+    (description
+      "@code{meshzoo} is a mesh generator for finite element or finite
+volume computations for simple domains like regular polygons, disks,
+spheres, cubes, etc.")
+    (license license:gpl3+)))
+
+(define-public python-modin
+  (package
+    (name "python-modin")
+    (version "0.32.0")
+    (source
+     (origin
+       ;; The archive on pypi does not include all required files.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/modin-project/modin")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1vb3iffgspryb6nvwiwdnypb922vkn2yvyzc1y0wwxcb0c0fl78d"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
+              ;; These four tests fail because an expected error is not raised.
+              "-k" "not test_binary_bad_broadcast")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'loosen-requirements
+           (lambda _
+             (substitute* "setup.py"
+               ;; Don't depend on a specific version of Pandas.
+               (("pandas==") "pandas>="))))
+         (replace 'check
+           (lambda* (#:key tests? test-flags #:allow-other-keys)
+             (when tests?
+               (setenv "MODIN_ENGINE" "dask")
+               (apply invoke "python" "-m" "pytest"
+                      "modin/tests/numpy" test-flags)
+               (setenv "MODIN_ENGINE" "python")
+               (apply invoke "python" "-m" "pytest"
+                      "modin/tests/numpy" test-flags)))))))
+    (propagated-inputs
+     (list python-cloudpickle
+           python-dask
+           python-distributed
+           python-numpy
+           python-packaging
+           python-pandas
+           python-s3fs))
+    (native-inputs
+     (list python-boto3
+           python-jinja2
+           python-lxml
+           python-matplotlib
+           python-msgpack
+           python-openpyxl
+           python-psutil
+           python-pyarrow
+           python-pytest
+           python-pytest-benchmark
+           python-pytest-cov
+           python-pytest-xdist
+           python-scipy
+           python-sqlalchemy
+           python-tables
+           python-tqdm
+           python-xarray
+           python-xlrd
+           python-wheel))
+    (home-page "https://github.com/modin-project/modin")
+    (synopsis "Make your pandas code run faster")
+    (description
+     "Modin uses Ray or Dask to provide an effortless way to speed up your
+pandas notebooks, scripts, and libraries.  Unlike other distributed DataFrame
+libraries, Modin provides seamless integration and compatibility with existing
+pandas code.")
+    (license license:asl2.0)))
+
+(define-public python-mpl-scatter-density
+  (package
+    (name "python-mpl-scatter-density")
+    (version "0.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "mpl_scatter_density" version))
+       (sha256
+        (base32 "0cynk1rk6k2xklgv69difphrz6id77x3xb58kbs4mc4q7z6bvfid"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; See <https://github.com/astrofrog/mpl-scatter-density/issues/42>.
+      #:test-flags #~(list "-k" "not test_default_dpi")))
+    (native-inputs
+     (list python-pytest
+           python-pytest-cov
+           python-pytest-mpl
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs
+     (list python-fast-histogram
+           python-matplotlib
+           python-numpy))
+    (home-page "https://github.com/astrofrog/mpl-scatter-density")
+    (synopsis "Matplotlib helpers to make density scatter plots")
+    (description
+     "This package provides functionality to make it easy to make scatter
+density maps, both for interactive and non-interactive use.")
+    (license license:bsd-2)))
+
+(define-public python-mpsplines
+  ;; No release on PyPI no git tag, use the latest commit.
+  (let ((commit "4967655fca8f4d0fc0685486c8ec2f1fe2f199d2")
+        (revision "0"))
+    (package
+      (name "python-mpsplines")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/jararias/mpsplines")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1wqfvjp1d6xzb07qnq72h76f0mx7za9pasgw3qp3ciaycmlkvdr3"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list #:tests? #f)) ; no tests provided
+      (native-inputs
+       (list python-setuptools
+             python-wheel))
+      (propagated-inputs
+       (list python-scipy
+             python-numpy
+             python-loguru))
+      (home-page "https://github.com/jararias/mpsplines")
+      (synopsis "Mean preserving interpolation with splines")
+      (description
+       "Thi package implements a functionality for mean-preserving
+interpolation of 1D data (for example, time series) with splines.")
+      (license license:bsd-3))))
+
+(define-public python-msgpack-numpy
+  (package
+    (name "python-msgpack-numpy")
+    (version "0.4.8")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "msgpack-numpy" version))
+       (sha256
+        (base32
+         "0sbfanbkfs6c77np4vz0ayrwnv99bpn5xgj5fnf2yhhk0lcd6ry6"))))
+    (build-system python-build-system)
+    (propagated-inputs
+     (list python-msgpack python-numpy))
+    (home-page "https://github.com/lebedov/msgpack-numpy")
+    (synopsis
+     "Numpy data serialization using msgpack")
+    (description
+     "This package provides encoding and decoding routines that enable the
+serialization and deserialization of numerical and array data types provided
+by numpy using the highly efficient @code{msgpack} format.  Serialization of
+Python's native complex data types is also supported.")
+    (license license:bsd-3)))
+
+(define-public python-ndindex
+  (package
+    (name "python-ndindex")
+    (version "1.7")                     ;newer versions require a newer numpy
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ndindex" version))
+       (sha256
+        (base32 "1lpgsagmgxzsas7g8yiv6wmyss8q57w92h70fn11rnpadsvx16xz"))))
+    (build-system pyproject-build-system)
+    (arguments (list #:test-flags #~(list "-c" "/dev/null"))) ;avoid coverage
+    (native-inputs
+     (list python-cython
+           python-numpy
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (home-page "https://quansight-labs.github.io/ndindex/")
+    (synopsis "Python library for manipulating indices of ndarrays")
+    (description "This package provides a Python library for manipulating
+indices of @code{ndarrays}.")
+    (license license:expat)))
+
+(define-public python-nibabel
+  (package
+    (name "python-nibabel")
+    (version "5.3.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "nibabel" version))
+       (sha256
+        (base32 "16snprwgp7qzp51j3mx0zdn7brvx6r14ankldi24ny0w7d8adp0b"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; AttributeError: 'dict' object has no attribute 'add'.
+      #:test-flags #~(list "-k" "not test_first and not test_second")))
+    (propagated-inputs (list python-importlib-resources python-numpy
+                             python-packaging python-typing-extensions))
+    (native-inputs (list python-hatch-vcs
+                         python-hatchling
+                         python-pytest
+                         python-pytest-httpserver
+                         python-pytest-xdist))
+    (home-page "https://nipy.org/nibabel/")
+    (synopsis "Read and write access to common neuroimaging file formats")
+    (description
+     "@code{nibabel} is a library that provides read and write access to
+common neuroimaging file formats, including: ANALYZE (plain, SPM99, SPM2
+and later), GIFTI, NIfTI1, NIfTI2, CIFTI-2, MINC1, MINC2, AFNI BRIK/HEAD,
+ECAT and Philips PAR/REC.  In addition, NiBabel also supports FreeSurfer’s
+MGH, geometry, annotation and morphometry files, and provides some limited
+support for DICOM.")
+    (license license:expat))) ; and other non-copyleft licenses
 
 (define-public python-numdifftools
   (package
@@ -490,6 +1599,81 @@ allowing the user to specify whether complex-step, central, forward or
 backward differences are used.")
     (license license:bsd-3)))
 
+(define-public python-numpoly
+  (package
+    (name "python-numpoly")
+    (version "1.2.11")
+    (source (origin
+              (method git-fetch) ;; PyPI is missing some Pytest fixtures
+              (uri (git-reference
+                    (url "https://github.com/jonathf/numpoly")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "01g21v91f4d66xd0bvap0n6d6485w2fnq1636gx6h2s42550rlbd"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-importlib-metadata python-numpy))
+    (native-inputs (list python-pytest python-setuptools python-sympy
+                         python-wheel))
+    (home-page "https://numpoly.readthedocs.io/en/master/")
+    (synopsis "Polynomials as a numpy datatype")
+    (description "Numpoly is a generic library for creating, manipulating and
+evaluating arrays of polynomials based on @code{numpy.ndarray objects}.")
+    ;; Tests fail with dtype mismatches on 32-bit architectures, suggesting
+    ;; that numpoly only supports 64 bit platforms.
+    (supported-systems '("x86_64-linux" "aarch64-linux" "powerpc64le-linux"))
+    (license license:bsd-2)))
+
+(define-public python-numpy-groupies
+  (package
+    (name "python-numpy-groupies")
+    (version "0.9.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "numpy_groupies" version))
+       (sha256
+        (base32 "000qz0z78rs3l6y0dd2vzvd2lx3mczm2762whwsdnhz6c35axdq1"))))
+    (build-system python-build-system)
+    (native-inputs
+     (list python-pytest
+           python-pytest-runner
+           python-numba
+           python-numpy))
+    (home-page "https://github.com/ml31415/numpy-groupies")
+    (synopsis "Tools for group-indexing operations: aggregated sum and more")
+    (description
+     "This package provides optimized tools for group-indexing operations:
+aggregated sum and more.")
+    (license license:bsd-3)))
+
+(define-public python-opt-einsum
+  (package
+    (name "python-opt-einsum")
+    (version "3.3.0")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "opt_einsum" version))
+              (sha256
+               (base32
+                "0jb5lia0q742d1713jk33vlj41y61sf52j6pgk7pvhxvfxglgxjr"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-numpy))
+    (native-inputs
+     (list python-pytest python-pytest-cov python-setuptools python-wheel))
+    (home-page "https://github.com/dgasmith/opt_einsum")
+    (synopsis "Optimizing numpys einsum function")
+    (description
+     "Optimized einsum can significantly reduce the overall execution time of
+einsum-like expressions by optimizing the expression's contraction order and
+dispatching many operations to canonical BLAS, cuBLAS, or other specialized
+routines.  Optimized einsum is agnostic to the backend and can handle NumPy,
+Dask, PyTorch, Tensorflow, CuPy, Sparse, Theano, JAX, and Autograd arrays as
+well as potentially any library which conforms to a standard API. See the
+documentation for more information.")
+    (license license:expat)))
+
 (define-public python-osqp
   (package
     (name "python-osqp")
@@ -547,6 +1731,34 @@ backward differences are used.")
 numerical optimization package.")
     (license license:asl2.0)))
 
+(define-public python-particle
+  (package
+    (name "python-particle")
+    (version "0.25.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "particle" version))
+       (sha256
+        (base32 "0as50k5hinxszsm6lnghnmx2cyjy77c0i2gvzf2q64g2x5b7xkvq"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-attrs
+                             python-hepunits
+                             python-typing-extensions))
+    (native-inputs (list python-hatch-vcs
+                         python-hatchling
+                         python-pandas
+                         python-pytest
+                         python-pytest-benchmark
+                         python-tabulate))
+    (home-page "https://github.com/scikit-hep/particle")
+    (synopsis "Extended PDG particle data and MC identification codes")
+    (description
+     "@code{Particle} provides a pythonic interface to the Particle Data Group
+(PDG) particle data tables and particle identification codes, with extended
+particle information and extra goodies.")
+    (license license:bsd-3)))
+
 (define-public python-pint
   (package
     (name "python-pint")
@@ -588,6 +1800,151 @@ quantities: the product of a numerical value and a unit of measurement.  It
 allows arithmetic operations between them and conversions from and to
 different units.")
     (license license:bsd-3)))
+
+(define-public python-pyamg
+  (package
+    (name "python-pyamg")
+    (version "5.0.1")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "pyamg" version))
+              (modules '((guix build utils)))
+              (snippet
+               ;; Delete autogenerated files, regenerate in a phase.
+               #~(begin
+                   (for-each
+                    (lambda (file)
+                      (delete-file (string-append "pyamg/amg_core/" file)))
+                    '("air_bind.cpp"
+                      "evolution_strength_bind.cpp"
+                      "graph_bind.cpp"
+                      "krylov_bind.cpp"
+                      "linalg_bind.cpp"
+                      "relaxation_bind.cpp"
+                      "ruge_stuben_bind.cpp"
+                      "smoothed_aggregation_bind.cpp"
+                      "tests/bind_examples_bind.cpp"))))
+              (sha256
+               (base32
+                "0l3dliwynxyjvbgpmi2k8jqvkkw6fc00c8w69h6swhrkfh0ql12z"))))
+    (arguments
+     (list
+      #:test-flags
+      ;; Test installed package in order to find C++ modules.
+      #~(list "--pyargs" "pyamg.tests")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Regenerate the autogenerated files.
+          (add-after 'unpack 'amg-core-bind-them
+            (lambda _
+              ;; bindthem.py heavily depends on location to produce *_bind.cpp
+              ;; file, make it available in tests as well.
+              (copy-file "pyamg/amg_core/bindthem.py"
+                         "pyamg/amg_core/tests/bindthem.py")
+              (with-directory-excursion "pyamg/amg_core"
+                (substitute* "bindthem.py"
+                  (("/usr/bin/env python3") (which "python3")))
+                (invoke "sh" "generate.sh"))
+              (with-directory-excursion "pyamg/amg_core/tests"
+                (invoke "python" "bindthem.py" "bind_examples.h")))))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list pybind11
+           python-cppheaderparser
+           python-pytest
+           python-pyyaml
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    (propagated-inputs (list python-numpy python-scipy))
+    (home-page "https://github.com/pyamg/pyamg")
+    (synopsis "Algebraic Multigrid Solvers in Python")
+    (description "PyAMG is a Python library of Algebraic Multigrid
+(AMG) solvers. It features implementations of:
+@itemize
+@item Ruge-Stuben (RS) or Classical AMG
+@item AMG based on Smoothed Aggregation (SA)
+@item Adaptive Smoothed Aggregation (αSA)
+@item Compatible Relaxation (CR)
+@item Krylov methods such as CG, GMRES, FGMRES, BiCGStab, MINRES, etc.
+@end itemize")
+    (license license:expat)))
+
+(define-public python-pyet
+  (package
+    (name "python-pyet")
+    (version "1.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pyet" version))
+       (sha256
+        (base32 "1dblsx0bv1g453hcx5vwij1zgankwgwvhwllqkn47k578h038xvy"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-mock
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-pandas
+           python-xarray))
+    (home-page "https://github.com/pyet-org/pyet")
+    (synopsis "Python package for evapotranspiration calculation")
+    (description
+     "This package provides a Python library for calculating
+Evapotranspiration using various standard methods.")
+    (license license:expat)))
+
+(define-public python-pynetdicom
+  (package
+    (name "python-pynetdicom")
+    (version "2.1.1")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "pynetdicom" version))
+              (sha256
+               (base32
+                "1smzrnc93nmv8jz4np9knas74a46b1nhb3hjpf8n9vfpxypgnwcn"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Tests takes about 10-15min to complete.
+      ;; Skip tests that require networking.
+      #~(list "-k" (string-append
+                    " not TestFindSCP"
+                    " and not TestQRGetServiceClass"
+                    " and not TestQRMoveServiceClass"
+                    " and not TestStoreSCP"
+                    " and not test_ae.py"
+                    " and not test_echoscp.py"
+                    " and not test_qrscp_echo.py"
+                    " and not test_storescp.py"
+                    " and not test_pr_level_patient"
+                    " and not test_pr_level_series"
+                    " and not test_scp_cancelled"))))
+    (native-inputs (list python-codespell
+                         python-coverage
+                         python-poetry-core
+                         python-pytest
+                         python-pytest-cov
+                         python-pytest-xdist
+                         python-sphinx
+                         python-sphinx-rtd-theme))
+    (propagated-inputs (list python-mypy
+                             python-numpydoc
+                             python-pydicom
+                             python-pyfakefs
+                             python-sqlalchemy))
+    (home-page "https://github.com/pydicom/pynetdicom")
+    (synopsis "Python implementation of the DICOM networking protocol")
+    (description
+     "@code{pynetdicom} is a Python package that implements the DICOM
+networking protocol.  It allows the easy creation of DICOM
+@acronym{SCUs,Service Class Users} and @acronym{SCPs,Service Class
+Providers}.")
+    (license license:expat)))
 
 (define-public python-pyzx
   (package
@@ -664,101 +2021,63 @@ or as a TikZ file for use in LaTeX documents;
 factorization routine for quasi-definite linear system.")
     (license license:asl2.0)))
 
-(define-public python-scipy
+(define-public python-ruffus
   (package
-    (name "python-scipy")
-    (version "1.12.0")
+    (name "python-ruffus")
+    (version "2.8.4")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "scipy" version))
+       (uri (pypi-uri "ruffus" version))
        (sha256
-        (base32 "18rn15wg3lp58z204fbjjhy0h79c53yg3c4qqs9h3liniamspxab"))))
-    (build-system pyproject-build-system)
+        (base32
+         "1ai673k1s94s8b6pyxai8mk17p6zvvyi87rl236fs6ls8mpdklvc"))))
+    (build-system python-build-system)
     (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                ;; Step out of the source directory to avoid interference.
-                (with-directory-excursion "/tmp"
-                  (invoke "python" "-c"
-                          (string-append
-                           "import scipy; scipy.test('fast', parallel="
-                           (number->string (parallel-job-count))
-                           ", verbose=2)"))))))
-          (add-after 'check 'install-doc
-            (lambda* (#:key outputs #:allow-other-keys)
-              ;; FIXME: Documentation cannot be built because it requires
-              ;; a newer version of pydata-sphinx-theme, which currently
-              ;; cannot build without internet access:
-              ;; <https://github.com/pydata/pydata-sphinx-theme/issues/628>.
-              ;; Keep the phase for easy testing.
-              (let ((sphinx-build (false-if-exception
-                                   (search-input-file input "bin/sphinx-build"))))
-                (if sphinx-build
-                    (let* ((doc (assoc-ref outputs "doc"))
-                           (data (string-append doc "/share"))
-                           (docdir (string-append
-                                    data "/doc/"
-                                    #$(package-name this-package) "-"
-                                    #$(package-version this-package)))
-                           (html (string-append docdir "/html")))
-                      (with-directory-excursion "doc"
-                        ;; Build doc.
-                        (invoke "make" "html"
-                                ;; Building the documentation takes a very long time.
-                                ;; Parallelize it.
-                                (string-append "SPHINXOPTS=-j"
-                                               (number->string (parallel-job-count))))
-                        ;; Install doc.
-                        (mkdir-p html)
-                        (copy-recursively "build/html" html)))
-                    (format #t "sphinx-build not found, skipping~%"))))))))
-    (propagated-inputs
-     (append
-       (if (supported-package? python-jupytext)  ; Depends on pandoc.
-           (list python-jupytext)
-           '())
-       (list python-matplotlib
-             python-mpmath
-             python-mypy
-             python-numpy
-             python-numpydoc
-             python-pydata-sphinx-theme
-             python-pydevtool
-             python-pythran
-             python-rich-click
-             python-sphinx
-             python-threadpoolctl
-             python-typing-extensions)))
-    (inputs (list openblas pybind11-2.10))
+     `(#:phases
+       (modify-phases %standard-phases
+         (delete 'check)
+         (add-after 'install 'check
+           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
+             (when tests?
+               (add-installed-pythonpath inputs outputs)
+               (with-directory-excursion "ruffus/test"
+                 (invoke "bash" "run_all_unit_tests3.cmd"))))))))
     (native-inputs
-     (list gfortran
-           ;; XXX: Adding gfortran shadows GCC headers, causing a compilation
-           ;; failure.  Somehow also providing GCC works around it ...
-           gcc
-           meson-python
-           pkg-config
-           python-click
-           python-cython-0.29.35
-           python-doit
-           python-hypothesis
-           python-pooch
-           python-pycodestyle
-           python-pydevtool
-           python-pytest
-           python-pytest-cov
-           python-pytest-timeout
-           python-pytest-xdist))
-    (home-page "https://scipy.org/")
-    (synopsis "The Scipy library provides efficient numerical routines")
-    (description "The SciPy library is one of the core packages that make up
-the SciPy stack.  It provides many user-friendly and efficient numerical
-routines such as routines for numerical integration and optimization.")
-    (license license:bsd-3)))
+     (list python-pytest))
+    (home-page "http://www.ruffus.org.uk")
+    (synopsis "Light-weight computational pipeline management")
+    (description
+     "Ruffus is designed to allow scientific and other analyses to be
+automated with the minimum of fuss and the least effort.")
+    (license license:expat)))
+
+(define-public python-salib
+  (package
+    (name "python-salib")
+    (version "1.4.7")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/SALib/SALib")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "18xfyzircsx2q2lmfc9lxb6xvkxicnc83qzghd7df1jsprr5ymch"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-matplotlib
+                             python-multiprocess
+                             python-numpy
+                             python-pandas
+                             python-scipy))
+    (native-inputs (list python-hatchling python-pytest python-pytest-cov))
+    (home-page "https://salib.readthedocs.io/en/latest/")
+    (synopsis "Tools for global sensitivity analysis")
+    (description "SALib provides tools for global sensitivity analysis.  It
+contains Sobol', Morris, FAST, DGSM, PAWN, HDMR, Moment Independent and
+fractional factorial methods.")
+    (license license:expat)))
 
 (define-public python-scikit-allel
   (package
@@ -1032,33 +2351,6 @@ logic, also known as grey logic.")
 and scientific computing.")
     (license license:bsd-3)))
 
-(define-public python-boost-histogram
-  (package
-    (name "python-boost-histogram")
-    (version "1.5.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "boost_histogram" version))
-       (sha256
-        (base32 "0p2f90p5jwlwrjz3hq2fzaifkmny33g2mpi89nnhi3w41f1jxr2i"))))
-    (build-system pyproject-build-system)
-    ;; This package bundles files from Boost::Histogram and doesn't provide
-    ;; a way to use a system library.
-    (propagated-inputs (list python-numpy))
-    (native-inputs (list cmake-minimal
-                         pybind11
-                         python-pytest
-                         python-pytest-benchmark
-                         python-scikit-build-core
-                         python-setuptools-scm))
-    (home-page "https://boost-histogram.readthedocs.io/en/latest/")
-    (synopsis "Python bindings for the Boost::Histogram library")
-    (description
-     "This package provides Python bindings for the Boost::Histogram library,
-one of the fastest libraries for histogramming.")
-    (license license:bsd-3)))
-
 (define-public python-scikit-opt
   (package
     (name "python-scikit-opt")
@@ -1217,6 +2509,121 @@ built on top of scikit-learn.  It allows doing survival analysis while
 utilizing the power of scikit-learn, e.g., for pre-processing or doing
 cross-validation.")
       (license license:gpl3+))))
+
+(define-public python-scipy
+  (package
+    (name "python-scipy")
+    (version "1.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "scipy" version))
+       (sha256
+        (base32 "18rn15wg3lp58z204fbjjhy0h79c53yg3c4qqs9h3liniamspxab"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; Step out of the source directory to avoid interference.
+                (with-directory-excursion "/tmp"
+                  (invoke "python" "-c"
+                          (string-append
+                           "import scipy; scipy.test('fast', parallel="
+                           (number->string (parallel-job-count))
+                           ", verbose=2)"))))))
+          (add-after 'check 'install-doc
+            (lambda* (#:key outputs #:allow-other-keys)
+              ;; FIXME: Documentation cannot be built because it requires
+              ;; a newer version of pydata-sphinx-theme, which currently
+              ;; cannot build without internet access:
+              ;; <https://github.com/pydata/pydata-sphinx-theme/issues/628>.
+              ;; Keep the phase for easy testing.
+              (let ((sphinx-build (false-if-exception
+                                   (search-input-file input "bin/sphinx-build"))))
+                (if sphinx-build
+                    (let* ((doc (assoc-ref outputs "doc"))
+                           (data (string-append doc "/share"))
+                           (docdir (string-append
+                                    data "/doc/"
+                                    #$(package-name this-package) "-"
+                                    #$(package-version this-package)))
+                           (html (string-append docdir "/html")))
+                      (with-directory-excursion "doc"
+                        ;; Build doc.
+                        (invoke "make" "html"
+                                ;; Building the documentation takes a very long time.
+                                ;; Parallelize it.
+                                (string-append "SPHINXOPTS=-j"
+                                               (number->string (parallel-job-count))))
+                        ;; Install doc.
+                        (mkdir-p html)
+                        (copy-recursively "build/html" html)))
+                    (format #t "sphinx-build not found, skipping~%"))))))))
+    (propagated-inputs
+     (append
+       (if (supported-package? python-jupytext)  ; Depends on pandoc.
+           (list python-jupytext)
+           '())
+       (list python-matplotlib
+             python-mpmath
+             python-mypy
+             python-numpy
+             python-numpydoc
+             python-pydata-sphinx-theme
+             python-pydevtool
+             python-pythran
+             python-rich-click
+             python-sphinx
+             python-threadpoolctl
+             python-typing-extensions)))
+    (inputs (list openblas pybind11-2.10))
+    (native-inputs
+     (list gfortran
+           ;; XXX: Adding gfortran shadows GCC headers, causing a compilation
+           ;; failure.  Somehow also providing GCC works around it ...
+           gcc
+           meson-python
+           pkg-config
+           python-click
+           python-cython-0.29.35
+           python-doit
+           python-hypothesis
+           python-pooch
+           python-pycodestyle
+           python-pydevtool
+           python-pytest
+           python-pytest-cov
+           python-pytest-timeout
+           python-pytest-xdist))
+    (home-page "https://scipy.org/")
+    (synopsis "The Scipy library provides efficient numerical routines")
+    (description "The SciPy library is one of the core packages that make up
+the SciPy stack.  It provides many user-friendly and efficient numerical
+routines such as routines for numerical integration and optimization.")
+    (license license:bsd-3)))
+
+(define-public python-simple-pid
+  (package
+    (name "python-simple-pid")
+    (version "2.0.1")
+    (source (origin
+              (method url-fetch)
+              (uri (pypi-uri "simple_pid" version))
+              (sha256
+               (base32
+                "17p9bgka5yv5lbnbk374yjccrlizm572wv3xb479072lahf7cwap"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/m-lundberg/simple-pid")
+    (synopsis "Easy to use PID controller")
+    (description "This package provides a simple and easy-to-use @acronym{PID,
+proportional-integral-derivative} controller.")
+    (license license:expat)))
 
 (define-public python-snakemake-interface-common
   (package
@@ -1384,82 +2791,6 @@ its software deployment plugins.")
 Snakemake and its storage plugins.")
     (license license:expat)))
 
-(define-public python-uhi
-  (package
-    (name "python-uhi")
-    (version "0.5.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "uhi" version))
-       (sha256
-        (base32 "0753b7yw0zi06g4azafnk3w8i3q6js9i6wwg3pya464gygrbnncm"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-numpy))
-    (native-inputs (list python-boost-histogram
-                         python-fastjsonschema
-                         python-hatch-vcs
-                         python-hatchling
-                         python-pytest))
-    (home-page "https://github.com/scikit-hep/uhi")
-    (synopsis "Universal Histogram Interface")
-    (description "This is a package meant primarily for documenting histogram
-indexing and the PlottableHistogram Protocol and any future cross-library
-standards.  It also contains the code for the PlottableHistogram Protocol, to
-be used in type checking libraries wanting to conform to the protocol.  It is
-not usually a runtime dependency, but only a type checking, testing, and/or
-docs dependency in support of other libraries.")
-    (license license:bsd-3)))
-
-(define-public python-histoprint
-  (package
-    (name "python-histoprint")
-    (version "2.6.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "histoprint" version))
-       (sha256
-        (base32 "07d2lk64gwhjvw4wccvwks3j4ig7g99q627jjxz4ans5a29p5pz1"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-click python-numpy python-uhi))
-    (native-inputs (list python-awkward
-                         python-boost-histogram
-                         python-hatch-vcs
-                         python-hatchling
-                         python-pytest
-                         python-rich))
-    (home-page "https://github.com/scikit-hep/histoprint")
-    (synopsis "Pretty print histograms to the console")
-    (description "Histoprint uses a mix of terminal color codes and Unicode
-trickery (i.e. combining characters) to plot overlaying histograms.")
-    (license license:expat)))
-
-(define-public python-hist
-  (package
-    (name "python-hist")
-    (version "2.8.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "hist" version))
-       (sha256
-        (base32 "17cd46c0ixq18fr2kgzam09w1sr4qkd9l6nsjdbl4vggw80ck9vx"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-boost-histogram
-                             python-histoprint
-                             python-numpy
-                             python-typing-extensions))
-    (native-inputs (list python-hatch-vcs
-                         python-hatchling
-                         python-pytest
-                         python-pytest-mpl))
-    (home-page "https://hist.readthedocs.io/en/latest/")
-    (synopsis "Hist classes and utilities")
-    (description
-     "Hist is an analyst-friendly front-end for @code{boost-histogram}.")
-    (license license:bsd-3)))
-
 (define-public python-tdda
   (package
     (name "python-tdda")
@@ -1506,115 +2837,43 @@ reference testing, constraint discovery for data, automatic inference
 of regular expressions from text data and automatic test generation.")
     (license license:expat))) ; MIT License
 
-(define-public python-hepunits
+(define-public python-traittypes
   (package
-    (name "python-hepunits")
-    (version "2.3.5")
+    (name "python-traittypes")
+    (version "0.2.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "hepunits" version))
+       (uri (pypi-uri "traittypes" version))
        (sha256
-        (base32 "1n1nf2rz2d86qzjmcwykbc16jzsqb45vs8lyksg98b3jd8nwsd4l"))))
-    (build-system pyproject-build-system)
-    (native-inputs (list python-hatch-vcs python-hatchling python-pytest))
-    (home-page "https://github.com/scikit-hep/hepunits")
-    (synopsis "Units and constants in the HEP system of units")
-    (description "@code{hepunits} collects the most commonly used units and
-constants in the HEP System of Units, as derived from the basic units
-originally defined by the CLHEP project.")
-    (license license:bsd-3)))
-
-(define-public python-particle
-  (package
-    (name "python-particle")
-    (version "0.25.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "particle" version))
-       (sha256
-        (base32 "0as50k5hinxszsm6lnghnmx2cyjy77c0i2gvzf2q64g2x5b7xkvq"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-attrs
-                             python-hepunits
-                             python-typing-extensions))
-    (native-inputs (list python-hatch-vcs
-                         python-hatchling
-                         python-pandas
-                         python-pytest
-                         python-pytest-benchmark
-                         python-tabulate))
-    (home-page "https://github.com/scikit-hep/particle")
-    (synopsis "Extended PDG particle data and MC identification codes")
-    (description
-     "@code{Particle} provides a pythonic interface to the Particle Data Group
-(PDG) particle data tables and particle identification codes, with extended
-particle information and extra goodies.")
-    (license license:bsd-3)))
-
-(define-public python-decaylanguage
-  (package
-    (name "python-decaylanguage")
-    (version "0.18.6")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "decaylanguage" version))
-       (sha256
-        (base32 "0kc9i9k51kg2zv8dwywpigiipxzmyxpzb101imjsvv1licip7b8v"))))
+        (base32 "1mlv93irdrgxrhnhq3ksi9585d55bpi4mv9dha4p8gkkjiia4vxy"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; This file fails to be collected with "DeprecationWarning: setDaemon()
-      ;; is deprecated, set the daemon attribute instead".
-      #:test-flags #~(list "--ignore" "tests/test_convert.py")))
-    (propagated-inputs (list python-attrs
-                             python-graphviz
-                             python-hepunits
-                             python-lark
-                             python-numpy
-                             python-pandas
-                             python-particle
-                             python-plumbum))
-    (native-inputs (list python-hatch-vcs
-                         python-hatchling
-                         python-pytest))
-    (home-page "https://decaylanguage.readthedocs.io/en/latest/")
-    (synopsis "Language to describe, manipulate and convert particle decays")
-    (description "DecayLanguage implements a language to describe and convert
-particle decays between digital representations, effectively making it
-possible to interoperate several fitting programs.  Particular interest is
-given to programs dedicated to amplitude analyses.")
-    (license license:bsd-3)))
-
-(define-public python-vector
-  (package
-    (name "python-vector")
-    (version "1.6.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "vector" version))
-       (sha256
-        (base32 "1jhfgx54a6l1cz9as2wlwrph86f8s1882biaakx1cl31igdxjnbf"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      ;; This file requires python-papermill (not yet packaged).
-      #:test-flags #~(list "--ignore" "tests/test_notebooks.py")))
-    (propagated-inputs (list python-numpy python-packaging))
-    (native-inputs (list python-awkward
-                         python-hatch-vcs
-                         python-hatchling
-                         python-pytest
-                         python-sympy))
-    (home-page "https://github.com/scikit-hep/vector")
-    (synopsis "Arrays of 2D, 3D, and Lorentz vectors")
-    (description "Vector is a Python library for 2D and 3D spatial vectors, as
-well as 4D space-time vectors.  It is especially intended for performing
-geometric calculations on arrays of vectors, rather than one vector at a time
-in a Python @code{for} loop.")
+      ;; This one test fails because it doesn't raise an expected exception.
+      #:test-flags '(list "-k" "not test_bad_values")
+      #:phases
+      '(modify-phases %standard-phases
+         (add-after 'unpack 'numpy-compatibility
+           (lambda _
+             (substitute* "traittypes/tests/test_traittypes.py"
+               (("np\\.int") "int")))))))
+    (propagated-inputs (list python-traitlets))
+    (native-inputs
+     (list python-numpy
+           python-pandas
+           python-nose
+           python-pytest
+           python-setuptools
+           python-xarray
+           python-wheel))
+    (home-page "https://github.com/jupyter-widgets/traittypes")
+    (synopsis "Trait types for NumPy, SciPy and friends")
+    (description "The goal of this package is to provide a reference
+implementation of trait types for common data structures used in the scipy
+stack such as numpy arrays or pandas and xarray data structures.  These are
+out of the scope of the main traitlets project but are a common requirement to
+build applications with traitlets in combination with the scipy stack.")
     (license license:bsd-3)))
 
 (define-public python-trimesh
@@ -1704,225 +2963,6 @@ manipulation and analysis, in the style of the Polygon object in the Shapely
 library.")
     (license license:expat)))
 
-(define-public python-meshzoo
-  (package
-    (name "python-meshzoo")
-    (version "0.9.4")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/diego-hayashi/meshzoo")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "107byfppbq16fqyp2hw7ydcvvahspzq0hzvlvzqg2zxi1aigbr68"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs
-      (list python-numpy))
-    (native-inputs (list python-flit-core python-matplotlib python-pytest))
-    (home-page "https://github.com/diego-hayashi/meshzoo")
-    (synopsis "Mesh generator for simple geometries")
-    (description
-      "@code{meshzoo} is a mesh generator for finite element or finite
-volume computations for simple domains like regular polygons, disks,
-spheres, cubes, etc.")
-    (license license:gpl3+)))
-
-(define-public python-mpl-scatter-density
-  (package
-    (name "python-mpl-scatter-density")
-    (version "0.8")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "mpl_scatter_density" version))
-       (sha256
-        (base32 "0cynk1rk6k2xklgv69difphrz6id77x3xb58kbs4mc4q7z6bvfid"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      ;; See <https://github.com/astrofrog/mpl-scatter-density/issues/42>.
-      #:test-flags #~(list "-k" "not test_default_dpi")))
-    (native-inputs
-     (list python-pytest
-           python-pytest-cov
-           python-pytest-mpl
-           python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    (propagated-inputs
-     (list python-fast-histogram
-           python-matplotlib
-           python-numpy))
-    (home-page "https://github.com/astrofrog/mpl-scatter-density")
-    (synopsis "Matplotlib helpers to make density scatter plots")
-    (description
-     "This package provides functionality to make it easy to make scatter
-density maps, both for interactive and non-interactive use.")
-    (license license:bsd-2)))
-
-(define-public python-mpsplines
-  ;; No release on PyPI no git tag, use the latest commit.
-  (let ((commit "4967655fca8f4d0fc0685486c8ec2f1fe2f199d2")
-        (revision "0"))
-    (package
-      (name "python-mpsplines")
-      (version (git-version "0.0.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/jararias/mpsplines")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1wqfvjp1d6xzb07qnq72h76f0mx7za9pasgw3qp3ciaycmlkvdr3"))))
-      (build-system pyproject-build-system)
-      (arguments
-       (list #:tests? #f)) ; no tests provided
-      (native-inputs
-       (list python-setuptools
-             python-wheel))
-      (propagated-inputs
-       (list python-scipy
-             python-numpy
-             python-loguru))
-      (home-page "https://github.com/jararias/mpsplines")
-      (synopsis "Mean preserving interpolation with splines")
-      (description
-       "Thi package implements a functionality for mean-preserving
-interpolation of 1D data (for example, time series) with splines.")
-      (license license:bsd-3))))
-
-(define-public python-pyamg
-  (package
-    (name "python-pyamg")
-    (version "5.0.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pyamg" version))
-              (modules '((guix build utils)))
-              (snippet
-               ;; Delete autogenerated files, regenerate in a phase.
-               #~(begin
-                   (for-each
-                    (lambda (file)
-                      (delete-file (string-append "pyamg/amg_core/" file)))
-                    '("air_bind.cpp"
-                      "evolution_strength_bind.cpp"
-                      "graph_bind.cpp"
-                      "krylov_bind.cpp"
-                      "linalg_bind.cpp"
-                      "relaxation_bind.cpp"
-                      "ruge_stuben_bind.cpp"
-                      "smoothed_aggregation_bind.cpp"
-                      "tests/bind_examples_bind.cpp"))))
-              (sha256
-               (base32
-                "0l3dliwynxyjvbgpmi2k8jqvkkw6fc00c8w69h6swhrkfh0ql12z"))))
-    (arguments
-     (list
-      #:test-flags
-      ;; Test installed package in order to find C++ modules.
-      #~(list "--pyargs" "pyamg.tests")
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; Regenerate the autogenerated files.
-          (add-after 'unpack 'amg-core-bind-them
-            (lambda _
-              ;; bindthem.py heavily depends on location to produce *_bind.cpp
-              ;; file, make it available in tests as well.
-              (copy-file "pyamg/amg_core/bindthem.py"
-                         "pyamg/amg_core/tests/bindthem.py")
-              (with-directory-excursion "pyamg/amg_core"
-                (substitute* "bindthem.py"
-                  (("/usr/bin/env python3") (which "python3")))
-                (invoke "sh" "generate.sh"))
-              (with-directory-excursion "pyamg/amg_core/tests"
-                (invoke "python" "bindthem.py" "bind_examples.h")))))))
-    (build-system pyproject-build-system)
-    (native-inputs
-     (list pybind11
-           python-cppheaderparser
-           python-pytest
-           python-pyyaml
-           python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    (propagated-inputs (list python-numpy python-scipy))
-    (home-page "https://github.com/pyamg/pyamg")
-    (synopsis "Algebraic Multigrid Solvers in Python")
-    (description "PyAMG is a Python library of Algebraic Multigrid
-(AMG) solvers. It features implementations of:
-@itemize
-@item Ruge-Stuben (RS) or Classical AMG
-@item AMG based on Smoothed Aggregation (SA)
-@item Adaptive Smoothed Aggregation (αSA)
-@item Compatible Relaxation (CR)
-@item Krylov methods such as CG, GMRES, FGMRES, BiCGStab, MINRES, etc.
-@end itemize")
-    (license license:expat)))
-
-(define-public python-pyet
-  (package
-    (name "python-pyet")
-    (version "1.3.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pyet" version))
-       (sha256
-        (base32 "1dblsx0bv1g453hcx5vwij1zgankwgwvhwllqkn47k578h038xvy"))))
-    (build-system pyproject-build-system)
-    (native-inputs
-     (list python-mock
-           python-pytest
-           python-setuptools
-           python-wheel))
-    (propagated-inputs
-     (list python-pandas
-           python-xarray))
-    (home-page "https://github.com/pyet-org/pyet")
-    (synopsis "Python package for evapotranspiration calculation")
-    (description
-     "This package provides a Python library for calculating
-Evapotranspiration using various standard methods.")
-    (license license:expat)))
-
-(define-public python-nibabel
-  (package
-    (name "python-nibabel")
-    (version "5.3.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "nibabel" version))
-       (sha256
-        (base32 "16snprwgp7qzp51j3mx0zdn7brvx6r14ankldi24ny0w7d8adp0b"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      ;; AttributeError: 'dict' object has no attribute 'add'.
-      #:test-flags #~(list "-k" "not test_first and not test_second")))
-    (propagated-inputs (list python-importlib-resources python-numpy
-                             python-packaging python-typing-extensions))
-    (native-inputs (list python-hatch-vcs
-                         python-hatchling
-                         python-pytest
-                         python-pytest-httpserver
-                         python-pytest-xdist))
-    (home-page "https://nipy.org/nibabel/")
-    (synopsis "Read and write access to common neuroimaging file formats")
-    (description
-     "@code{nibabel} is a library that provides read and write access to
-common neuroimaging file formats, including: ANALYZE (plain, SPM99, SPM2
-and later), GIFTI, NIfTI1, NIfTI2, CIFTI-2, MINC1, MINC2, AFNI BRIK/HEAD,
-ECAT and Philips PAR/REC.  In addition, NiBabel also supports FreeSurfer’s
-MGH, geometry, annotation and morphometry files, and provides some limited
-support for DICOM.")
-    (license license:expat))) ; and other non-copyleft licenses
-
 (define-public python-tspex
   (package
     (name "python-tspex")
@@ -1942,30 +2982,6 @@ support for DICOM.")
      "This package provides a Python package for calculating
 tissue-specificity metrics for gene expression.")
     (license license:gpl3+)))
-
-(define-public python-ndindex
-  (package
-    (name "python-ndindex")
-    (version "1.7")                     ;newer versions require a newer numpy
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "ndindex" version))
-       (sha256
-        (base32 "1lpgsagmgxzsas7g8yiv6wmyss8q57w92h70fn11rnpadsvx16xz"))))
-    (build-system pyproject-build-system)
-    (arguments (list #:test-flags #~(list "-c" "/dev/null"))) ;avoid coverage
-    (native-inputs
-     (list python-cython
-           python-numpy
-           python-pytest
-           python-setuptools
-           python-wheel))
-    (home-page "https://quansight-labs.github.io/ndindex/")
-    (synopsis "Python library for manipulating indices of ndarrays")
-    (description "This package provides a Python library for manipulating
-indices of @code{ndarrays}.")
-    (license license:expat)))
 
 (define-public python-pandas-1
   (package
@@ -2427,7 +3443,7 @@ production-critical data pipelines or reproducible research settings.  With
 (define-public python-pyjanitor
   (package
     (name "python-pyjanitor")
-    (version "0.27.0")
+    (version "0.31.0")
     (source
      (origin
        ;; The build requires the mkdocs directory for the description in
@@ -2438,7 +3454,7 @@ production-critical data pipelines or reproducible research settings.  With
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "04vsg189msv8frx4zhpcg61djl7wsfvibmz0zmiih4rvkgly2cdr"))))
+        (base32 "06y6fvydrsjqdpbd20icd194693x127qhb19fgw248jfjyg5ga44"))))
     (build-system pyproject-build-system)
     ;; Pyjanitor has an extensive test suite. For quick debugging, the tests
     ;; marked turtle can be skipped using "-m" "not turtle".
@@ -2449,22 +3465,16 @@ production-critical data pipelines or reproducible research settings.  With
                      ;; Tries to connect to the internet.
                      "-k" (string-append "not test_is_connected"
                                          ;; Test files are not included
-                                         " and not test_read_commandline_bad_cmd"
-                                         ;; This fails due to differences in accuracy
-                                         " and not test_jitter_results")
+                                         " and not test_read_commandline_bad_cmd")
                      ;; Test files are not included
                      "--ignore=tests/io/test_read_csvs.py"
+                     ;; Polars has not been packaged yet.
+                     "--ignore=tests/polars"
                      ;; PySpark has not been packaged yet.
                      "--ignore=tests/spark/functions/test_clean_names_spark.py"
                      "--ignore=tests/spark/functions/test_update_where_spark.py")
       #:phases
       #~(modify-phases %standard-phases
-          ;; Pandas 2.1.1 does not offer the BME frequency.
-          (add-after 'unpack 'pandas-compat
-            (lambda _
-              (substitute* '("tests/functions/test_select_rows.py"
-                             "tests/functions/test_select_columns.py")
-                (("freq=\"BME\"") "freq=\"BM\""))))
           (add-before 'check 'set-env-ci
             (lambda _
               ;; Some tests are skipped if the JANITOR_CI_MACHINE
@@ -2613,61 +3623,6 @@ Python module with the same interface, but (hopefully) faster.")
      "This package provides a Python package for time series classification.")
     (license license:bsd-3)))
 
-(define-public python-bottleneck
-  (package
-    (name "python-bottleneck")
-    (version "1.4.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "bottleneck" version))
-       (sha256
-        (base32 "1x29yj4yr12v646si63gkxj9b6lx1xk65536wqy4i9fyk4bqx3ps"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'check 'rebuild-ext
-            (lambda _
-              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (native-inputs (list python-pytest
-                         python-setuptools
-                         python-wheel))
-    (propagated-inputs (list python-numpy))
-    (home-page "https://github.com/pydata/bottleneck")
-    (synopsis "Fast NumPy array functions written in C")
-    (description
-     "Bottleneck is a collection of fast, NaN-aware NumPy array functions
-written in C.")
-    (license license:bsd-2)))
-
-(define-public python-numpoly
-  (package
-    (name "python-numpoly")
-    (version "1.2.11")
-    (source (origin
-              (method git-fetch) ;; PyPI is missing some Pytest fixtures
-              (uri (git-reference
-                    (url "https://github.com/jonathf/numpoly")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "01g21v91f4d66xd0bvap0n6d6485w2fnq1636gx6h2s42550rlbd"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-importlib-metadata python-numpy))
-    (native-inputs (list python-pytest python-setuptools python-sympy
-                         python-wheel))
-    (home-page "https://numpoly.readthedocs.io/en/master/")
-    (synopsis "Polynomials as a numpy datatype")
-    (description "Numpoly is a generic library for creating, manipulating and
-evaluating arrays of polynomials based on @code{numpy.ndarray objects}.")
-    ;; Tests fail with dtype mismatches on 32-bit architectures, suggesting
-    ;; that numpoly only supports 64 bit platforms.
-    (supported-systems '("x86_64-linux" "aarch64-linux" "powerpc64le-linux"))
-    (license license:bsd-2)))
-
 (define-public python-spin
   (package
   (name "python-spin")
@@ -2694,88 +3649,6 @@ changed, it made sense to abstract away the nuisance of having to re-learn
 them.")
   (license license:bsd-3)))
 
-(define-public python-baycomp
-  (package
-    (name "python-baycomp")
-    (version "1.0.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "baycomp" version))
-       (sha256
-        (base32 "1c1354a7b3g8slychjgyjxqdm8z40z9kviyl9n4g9kfpdg0p4d64"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-matplotlib python-numpy python-scipy))
-    (home-page "https://github.com/janezd/baycomp")
-    (synopsis "Library for comparison of Bayesian classifiers")
-    (description
-     "Baycomp is a library for Bayesian comparison of classifiers.  Functions
-in the library compare two classifiers on one or on multiple data sets.  They
-compute three probabilities: the probability that the first classifier has
-higher scores than the second, the probability that differences are within the
-region of practical equivalence (rope), or that the second classifier has
-higher scores.")
-    (license license:expat)))
-
-(define-public python-fast-histogram
-  (package
-    (name "python-fast-histogram")
-    (version "0.14")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "fast_histogram" version))
-       (sha256
-        (base32 "1sk9xa85cgm4sylzblwv3qr2dmm0ic06zkwxqa2xlazjiawp629r"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'check 'build-extensions
-            (lambda _
-              (invoke "python" "setup.py" "build_ext" "--inplace"))))))
-    (native-inputs
-     (list python-hypothesis
-           python-pytest
-           python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    (propagated-inputs
-     (list python-numpy))
-    (home-page "https://github.com/astrofrog/fast-histogram")
-    (synopsis "Fast simple 1D and 2D histograms")
-    (description
-     "The fast-histogram mini-package aims to provide simple and fast
-histogram functions for regular bins that don't compromise on performance.  It
-doesn't do anything complicated - it just implements a simple histogram
-algorithm in C and keeps it simple.  The aim is to have functions that are
-fast but also robust and reliable.  The result is a 1D histogram function here
-that is 7-15x faster than @code{numpy.histogram}, and a 2D histogram function
-that is 20-25x faster than @code{numpy.histogram2d}.")
-    (license license:bsd-3)))
-
-(define-public python-fastcluster
-  (package
-    (name "python-fastcluster")
-    (version "1.2.6")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "fastcluster" version))
-       (sha256
-        (base32 "19labbgnq85p4r4jbli2p045lgh57larhi2g2anagfxnlzpqdf5a"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-numpy))
-    (native-inputs (list python-scipy python-setuptools python-wheel))
-    (home-page "https://danifold.net/fastcluster.html")
-    (synopsis "Fast hierarchical clustering routines for R and Python")
-    (description "The fastcluster package implements seven common hierarchical
-clustering schemes efficiently.  The package is made with two interfaces to
-standard software: R and Python.")
-    (license license:bsd-2)))
-
 (define-public python-fbpca
   (package
     (name "python-fbpca")
@@ -2795,29 +3668,6 @@ standard software: R and Python.")
      "This package provides fast computations for @dfn{principal component
 analysis} (PCA), SVD, and eigendecompositions via randomized methods")
     (license license:bsd-3)))
-
-(define-public python-geosketch
-  (package
-    (name "python-geosketch")
-    (version "1.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "geosketch" version))
-              (sha256
-               (base32
-                "0knch5h0p8xpm8bi3b5mxyaf1ywwimrsdmbnc1xr5icidcv9gzmv"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #false)) ;there are none
-    (propagated-inputs (list python-fbpca python-numpy python-scikit-learn))
-    (home-page "https://github.com/brianhie/geosketch")
-    (synopsis "Geometry-preserving random sampling")
-    (description "geosketch is a Python package that implements the geometric
-sketching algorithm described by Brian Hie, Hyunghoon Cho, Benjamin DeMeo,
-Bryan Bryson, and Bonnie Berger in \"Geometric sketching compactly summarizes
-the single-cell transcriptomic landscape\", Cell Systems (2019).  This package
-provides an example implementation of the algorithm as well as scripts
-necessary for reproducing the experiments in the paper.")
-    (license license:expat)))
 
 (define-public python-einops
   (package
@@ -2859,6 +3709,254 @@ necessary for reproducing the experiments in the paper.")
      "Einops provides a set of tensor operations for NumPy and multiple deep
 learning frameworks.")
     (license license:expat)))
+
+(define-public python-uhi
+  (package
+    (name "python-uhi")
+    (version "0.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "uhi" version))
+       (sha256
+        (base32 "0753b7yw0zi06g4azafnk3w8i3q6js9i6wwg3pya464gygrbnncm"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-numpy))
+    (native-inputs (list python-boost-histogram
+                         python-fastjsonschema
+                         python-hatch-vcs
+                         python-hatchling
+                         python-pytest))
+    (home-page "https://github.com/scikit-hep/uhi")
+    (synopsis "Universal Histogram Interface")
+    (description "This is a package meant primarily for documenting histogram
+indexing and the PlottableHistogram Protocol and any future cross-library
+standards.  It also contains the code for the PlottableHistogram Protocol, to
+be used in type checking libraries wanting to conform to the protocol.  It is
+not usually a runtime dependency, but only a type checking, testing, and/or
+docs dependency in support of other libraries.")
+    (license license:bsd-3)))
+
+(define-public python-unyt
+  (package
+    (name "python-unyt")
+    (version "3.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "unyt" version))
+       (sha256
+        (base32 "0jrq2vhan2h280h6cw1sm5hys2nzmf19w4py64k3nrkc320z9mni"))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; This is a Numpy DeprecationWarning, remove it on next update.
+     (list #:test-flags ''("-k" "not test_h5_io")))
+    ;; Pint is optional, but we do not propagate it due to its size.
+    (native-inputs
+     (list python-pint
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
+    ;; Astropy is an optional import, but we do not include it as it creates a
+    ;; module cycle: astronomy->python-science->astronomy.
+    (propagated-inputs
+     (list python-h5py        ; optional import
+           python-matplotlib  ; optional import
+           python-numpy
+           python-sympy))
+    (home-page "https://unyt.readthedocs.io")
+    (synopsis "Library for working with data that has physical units")
+    (description
+     "@code{unyt} is a Python library working with data that has physical
+units.  It defines the @code{unyt.array.unyt_array} and
+@code{unyt.array.unyt_quantity} classes (subclasses of NumPy’s ndarray class)
+for handling arrays and scalars with units,respectively")
+    (license license:bsd-3)))
+
+(define-public python-upsetplot
+  (package
+    (name "python-upsetplot")
+    (version "0.9.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "UpSetPlot" version))
+       (sha256
+        (base32
+         "14l5gcj88cclkj1mf74bcy1pxq1hgsiy27fa3vxrsk32ik1nmdwm"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-matplotlib python-pandas))
+    (native-inputs
+     (list python-pytest-runner python-pytest-cov
+           python-setuptools python-wheel))
+    (home-page "https://upsetplot.readthedocs.io")
+    (synopsis "Draw UpSet plots with Pandas and Matplotlib")
+    (description
+     "This is a Python implementation of UpSet plots by Lex et al.
+UpSet plots are used to visualize set overlaps; like Venn diagrams but more
+readable.")
+    (license license:bsd-3)))
+
+(define-public python-vaex-core
+  (package
+    (name "python-vaex-core")
+    (version "4.18.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://www.github.com/maartenbreddels/vaex")
+             (commit (string-append "core-v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1sp096msbzgjlwi8c1ink2bp4pjff9pvikqz1y1li8d3in4gpgdr"))
+       (patches
+        (search-patches "python-vaex-core-fix-tsl-use.patch"))
+       (modules '((guix build utils)
+                  (ice-9 ftw)))
+       (snippet
+        #~(begin
+            ;; Delete everything except for vaex-core itself:
+            (define (delete-except exception)
+              (lambda (file)
+                (unless (member file `("." ".." ,exception))
+                  (delete-file-recursively file))))
+            (for-each (delete-except "packages") (scandir "."))
+            (with-directory-excursion "packages"
+              (for-each (delete-except "vaex-core") (scandir ".")))
+            (for-each (lambda (file)
+                        (unless (member file '("." ".."))
+                          (rename-file
+                           (string-append "packages/vaex-core/" file)
+                           file)))
+                      (scandir "packages/vaex-core"))
+            (delete-file-recursively "packages")
+            (delete-file-recursively "vendor")))))
+    (build-system pyproject-build-system)
+    (arguments
+     ;; require vaex.server and others, which require vaex-core.
+     (list #:tests? #false))
+    (inputs
+     (list boost pcre pybind11 string-view-lite tsl-hopscotch-map))
+    (propagated-inputs
+     (list python-aplus
+           python-blake3
+           python-click ;XXX for dask
+           python-cloudpickle
+           python-dask
+           python-filelock
+           python-frozendict
+           python-future
+           python-nest-asyncio
+           python-numpy
+           python-pandas
+           python-progressbar2
+           python-pyarrow
+           python-pydantic-2
+           python-pydantic-settings
+           python-pyyaml
+           python-requests
+           python-rich
+           python-six
+           python-tabulate))
+    (native-inputs
+     (list python-pytest python-cython-3 python-setuptools python-wheel))
+    (home-page "https://www.github.com/maartenbreddels/vaex")
+    (synopsis "Core of Vaex library for exploring tabular datasets")
+    (description "Vaex is a high performance Python library for lazy
+Out-of-Core DataFrames (similar to Pandas), to visualize and explore big
+tabular datasets.  This package provides the core modules of Vaex.")
+    (license license:expat)))
+
+(define-public python-vector
+  (package
+    (name "python-vector")
+    (version "1.6.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "vector" version))
+       (sha256
+        (base32 "1jhfgx54a6l1cz9as2wlwrph86f8s1882biaakx1cl31igdxjnbf"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; This file requires python-papermill (not yet packaged).
+      #:test-flags #~(list "--ignore" "tests/test_notebooks.py")))
+    (propagated-inputs (list python-numpy python-packaging))
+    (native-inputs (list python-awkward
+                         python-hatch-vcs
+                         python-hatchling
+                         python-pytest
+                         python-sympy))
+    (home-page "https://github.com/scikit-hep/vector")
+    (synopsis "Arrays of 2D, 3D, and Lorentz vectors")
+    (description "Vector is a Python library for 2D and 3D spatial vectors, as
+well as 4D space-time vectors.  It is especially intended for performing
+geometric calculations on arrays of vectors, rather than one vector at a time
+in a Python @code{for} loop.")
+    (license license:bsd-3)))
+
+(define-public python-vedo
+  (package
+    (name "python-vedo")
+    (version "2025.5.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/marcomusy/vedo")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0hrqyvcxxbc1wz0cnafc8rvsi5mj19kck4b6pmddh25rlhdcr5qb"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; XXX: The whole test suite depends on the data from
+      ;; <https://vedo.embl.es/examples> providing samples which need to be
+      ;; downloaded during tests, find the way how to enable it.
+      #:tests? #f
+      #:phases
+       #~(modify-phases %standard-phases
+         (add-after 'unpack 'relax-requirements
+           ;; vtk does not provide Python metadata.
+           ;;
+           ;; ...checking requirements: ERROR: vedo==2025.5.3
+           ;; DistributionNotFound(Requirement.parse('vtk'), {'vedo'})
+           (lambda _
+             (substitute* "pyproject.toml"
+               (("\"vtk\",") "")))))))
+    (native-inputs
+     (list pkg-config
+           python-pkgconfig
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-deprecated
+           python-matplotlib
+           python-numpy
+           python-pygments
+           vtk))
+    (home-page "https://github.com/marcomusy/vedo")
+    (synopsis
+     "Analysis and visualization of 3D objects and point clouds")
+    (description
+     "@code{vedo} is a fast and lightweight python module for
+scientific analysis and visualization.  The package provides a wide
+range of functionalities for working with three-dimensional meshes and
+point clouds.  It can also be used to generate high quality
+two-dimensional renderings such as scatter plots and histograms.
+@code{vedo} is based on @code{vtk} and @code{numpy}.")
+    ;; vedo is released under the Expat license.  Included fonts are
+    ;; covered by the OFL license and textures by the CC0 license.
+    ;; The earth images are in the public domain.
+    (license (list license:expat
+                   license:silofl1.1
+                   license:cc0
+                   license:public-domain))))
 
 (define-public python-xarray
   (package
@@ -3095,61 +4193,6 @@ efficiently evaluate mathematical expressions involving multi-dimensional
 arrays.  It is a fork of the Aesara library.")
     (license license:bsd-3)))
 
-(define-public python-msgpack-numpy
-  (package
-    (name "python-msgpack-numpy")
-    (version "0.4.8")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "msgpack-numpy" version))
-       (sha256
-        (base32
-         "0sbfanbkfs6c77np4vz0ayrwnv99bpn5xgj5fnf2yhhk0lcd6ry6"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-msgpack python-numpy))
-    (home-page "https://github.com/lebedov/msgpack-numpy")
-    (synopsis
-     "Numpy data serialization using msgpack")
-    (description
-     "This package provides encoding and decoding routines that enable the
-serialization and deserialization of numerical and array data types provided
-by numpy using the highly efficient @code{msgpack} format.  Serialization of
-Python's native complex data types is also supported.")
-    (license license:bsd-3)))
-
-(define-public python-ruffus
-  (package
-    (name "python-ruffus")
-    (version "2.8.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "ruffus" version))
-       (sha256
-        (base32
-         "1ai673k1s94s8b6pyxai8mk17p6zvvyi87rl236fs6ls8mpdklvc"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (delete 'check)
-         (add-after 'install 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (with-directory-excursion "ruffus/test"
-                 (invoke "bash" "run_all_unit_tests3.cmd"))))))))
-    (native-inputs
-     (list python-pytest))
-    (home-page "http://www.ruffus.org.uk")
-    (synopsis "Light-weight computational pipeline management")
-    (description
-     "Ruffus is designed to allow scientific and other analyses to be
-automated with the minimum of fuss and the least effort.")
-    (license license:expat)))
-
 (define-public python-scs
   (package
     (name "python-scs")
@@ -3203,139 +4246,20 @@ SCS (Splitting conic solver) library.")
 annotations on an existing boxplots and barplots generated by seaborn.")
     (license license:expat)))
 
-(define-public python-unyt
-  (package
-    (name "python-unyt")
-    (version "3.0.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "unyt" version))
-       (sha256
-        (base32 "0jrq2vhan2h280h6cw1sm5hys2nzmf19w4py64k3nrkc320z9mni"))))
-    (build-system pyproject-build-system)
-    (arguments
-     ;; This is a Numpy DeprecationWarning, remove it on next update.
-     (list #:test-flags ''("-k" "not test_h5_io")))
-    ;; Pint is optional, but we do not propagate it due to its size.
-    (native-inputs
-     (list python-pint
-           python-pytest
-           python-setuptools
-           python-setuptools-scm
-           python-wheel))
-    ;; Astropy is an optional import, but we do not include it as it creates a
-    ;; module cycle: astronomy->python-science->astronomy.
-    (propagated-inputs
-     (list python-h5py        ; optional import
-           python-matplotlib  ; optional import
-           python-numpy
-           python-sympy))
-    (home-page "https://unyt.readthedocs.io")
-    (synopsis "Library for working with data that has physical units")
-    (description
-     "@code{unyt} is a Python library working with data that has physical
-units.  It defines the @code{unyt.array.unyt_array} and
-@code{unyt.array.unyt_quantity} classes (subclasses of NumPy’s ndarray class)
-for handling arrays and scalars with units,respectively")
-    (license license:bsd-3)))
-
-(define-public python-upsetplot
-  (package
-    (name "python-upsetplot")
-    (version "0.9.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "UpSetPlot" version))
-       (sha256
-        (base32
-         "14l5gcj88cclkj1mf74bcy1pxq1hgsiy27fa3vxrsk32ik1nmdwm"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs
-     (list python-matplotlib python-pandas))
-    (native-inputs
-     (list python-pytest-runner python-pytest-cov
-           python-setuptools python-wheel))
-    (home-page "https://upsetplot.readthedocs.io")
-    (synopsis "Draw UpSet plots with Pandas and Matplotlib")
-    (description
-     "This is a Python implementation of UpSet plots by Lex et al.
-UpSet plots are used to visualize set overlaps; like Venn diagrams but more
-readable.")
-    (license license:bsd-3)))
-
-(define-public python-vedo
-  (package
-    (name "python-vedo")
-    (version "2025.5.3")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/marcomusy/vedo")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0hrqyvcxxbc1wz0cnafc8rvsi5mj19kck4b6pmddh25rlhdcr5qb"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      ;; XXX: The whole test suite depends on the data from
-      ;; <https://vedo.embl.es/examples> providing samples which need to be
-      ;; downloaded during tests, find the way how to enable it.
-      #:tests? #f
-      #:phases
-       #~(modify-phases %standard-phases
-         (add-after 'unpack 'relax-requirements
-           ;; vtk does not provide Python metadata.
-           ;;
-           ;; ...checking requirements: ERROR: vedo==2025.5.3
-           ;; DistributionNotFound(Requirement.parse('vtk'), {'vedo'})
-           (lambda _
-             (substitute* "pyproject.toml"
-               (("\"vtk\",") "")))))))
-    (native-inputs
-     (list pkg-config
-           python-pkgconfig
-           python-setuptools
-           python-wheel))
-    (propagated-inputs
-     (list python-deprecated
-           python-matplotlib
-           python-numpy
-           python-pygments
-           vtk))
-    (home-page "https://github.com/marcomusy/vedo")
-    (synopsis
-     "Analysis and visualization of 3D objects and point clouds")
-    (description
-     "@code{vedo} is a fast and lightweight python module for
-scientific analysis and visualization.  The package provides a wide
-range of functionalities for working with three-dimensional meshes and
-point clouds.  It can also be used to generate high quality
-two-dimensional renderings such as scatter plots and histograms.
-@code{vedo} is based on @code{vtk} and @code{numpy}.")
-    ;; vedo is released under the Expat license.  Included fonts are
-    ;; covered by the OFL license and textures by the CC0 license.
-    ;; The earth images are in the public domain.
-    (license (list license:expat
-                   license:silofl1.1
-                   license:cc0
-                   license:public-domain))))
-
 (define-public python-pandas-flavor
   (package
     (name "python-pandas-flavor")
-    (version "0.5.0")
+    (version "0.7.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pandas_flavor" version))
        (sha256
         (base32
-         "0473lkbdnsag3w5x65sxwjlyq0i7z938ssxqwn2cpcml282vksx1"))))
-    (build-system python-build-system)
+         "0zmgxnrxlvjgsr5f6yiwdn093kibb48zd16jkgy7l082d7wzjyv1"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest))
     (propagated-inputs
      (list python-lazy-loader python-packaging python-pandas python-xarray))
     (home-page "https://github.com/pyjanitor-devs/pandas_flavor")
@@ -3353,48 +4277,25 @@ of Pandas
 (define-public python-pingouin
   (package
     (name "python-pingouin")
-    (version "0.5.4")
+    (version "0.5.5")
     (source
-     ;; The PyPI tarball does not contain the tests.
      (origin
-       (method git-fetch)
+       (method git-fetch) ; no tests in PyPI tarball
        (uri (git-reference
              (url "https://github.com/raphaelvallat/pingouin")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1j3qkgvyc31604ddl952h4hwza7schg8kwkycmxvpvx7xjj7nn68"))))
+         "0i3yzdlj08di3mzi69ci57jm5myl123hp8c5vn1g35k77m4zpgvd"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags
-      ;; This one fails due to minor differences in accuracy
-      '(list "-k" "not test_logistic_regression")
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'loosen-requirements
-           (lambda _
-             (substitute* '("requirements.txt" "setup.py")
-               ;; Remove sklearn pinning since it works fine with 1.1.2:
-               ;; https://github.com/raphaelvallat/pingouin/pull/300
-               (("scikit-learn<1\\.1\\.0")
-                "scikit-learn"))))
-         ;; On loading, Pingouin uses the outdated package to check if a newer
-         ;; version is available on PyPI. This check adds an extra dependency
-         ;; and is irrelevant to Guix users. So, disable it.
-         (add-after 'unpack 'remove-outdated-check
-           (lambda _
-             (substitute* "setup.py"
-               (("\"outdated\",") ""))
-             (substitute* "pingouin/__init__.py"
-               (("^from outdated[^\n]*") "")
-               (("^warn_if_outdated[^\n]*") ""))))
-         (add-after 'unpack 'sklearn-compatibility
-           (lambda _
-             (substitute* "pingouin/regression.py"
-               (("kwargs\\[\"penalty\"\\] = \"none\"")
-                "kwargs[\"penalty\"] = None")))))))
+      ;; _flapack.error: (liwork>=max(1,10*n)||liwork==-1)
+      ;; failed for 10th keyword liwork: dsyevr:liwork=1
+      #:test-flags #~(list "-k" (string-append
+                                 "not test_box_m"
+                                 " and not test_linear_regression"))))
     (native-inputs
      (list python-pytest python-pytest-cov))
     (propagated-inputs
@@ -3432,403 +4333,107 @@ and more
 @end itemize")
     (license license:gpl3)))
 
-(define-public python-dask-expr
+(define-public python-plotly
   (package
-    (name "python-dask-expr")
-    (version "1.0.14")
+    (name "python-plotly")
+    (version "5.20.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/dask/dask-expr")
-             (commit (string-append "v" version))))
+              (url "https://github.com/plotly/plotly.py")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0c2q8w8wl5d2hycbjp9vavkl5f36kaz390wxlis2d8d43jnqhf0d"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:tests? #false ;need python-distributed, which needs dask-expr.
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'versioneer
-            (lambda _
-              ;; Our version of versioneer needs setup.cfg.  This is adapted
-              ;; from pyproject.toml.
-              (with-output-to-file "setup.cfg"
-                (lambda ()
-                  (display "\
-[versioneer]
-VCS = git
-style = pep440
-versionfile_source = dask_expr/_version.py
-versionfile_build = dask_expr/_version.py
-tag_prefix =
-parentdir_prefix = dask_expr-
-")))
-              (invoke "versioneer" "install")
-              (substitute* "setup.py"
-                (("versioneer.get_version\\(\\)")
-                 (string-append "\"" #$version "\""))))))))
-    (propagated-inputs (list python-pandas python-pyarrow))
-    (native-inputs
-     ;; We use python-dask/bootstrap so that python-dask can propagate this
-     ;; package without creating a mutually recursive dependency.
-     (list python-dask/bootstrap
-           python-pytest
-           python-setuptools
-           python-versioneer
-           python-wheel))
-    (home-page "https://github.com/dask/dask-expr")
-    (synopsis "Dask DataFrames with query optimization")
-    (description "This is a rewrite of Dask DataFrame that includes query
-optimization and generally improved organization.")
-    (license license:bsd-3)))
-
-(define-public python-distributed
-  (package
-    (name "python-distributed")
-    (version "2024.4.2")
-    (source
-     (origin
-       ;; The test files are not included in the archive on pypi
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/dask/distributed")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0sy9mqa8qlxsagbz8xn304csrlxhxj4b6k84yrjxdcmkp9pkx166"))))
+        (base32 "0i22sv8p3kl84nkldbv1253kld85rbwp2pdxivxn64wwflfpqvx6"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      '(list "-m"
-             (string-append "not slow"
-                            " and not flaky"
-                            " and not gpu"
-                            " and not ipython"
-                            " and not avoid_ci")
-             "-k"
-             (string-append
-              ;; These fail because they require network access,
-              ;; specifically access to 8.8.8.8.
-              "not "
-              (string-join
-               (list
-                "TestClientSecurityLoader.test_security_loader"
-                "test_BatchedSend"
-                "test_allowed_failures_config"
-                "test_async_context_manager"
-                "test_async_with"
-                "test_client_repr_closed_sync"
-                "test_client_is_quiet_cluster_close"
-                "test_close_closed"
-                "test_close_fast_without_active_handlers"
-                "test_close_grace_period_for_handlers"
-                "test_close_loop_sync"
-                "test_close_properly"
-                "test_close_twice"
-                "test_compression"
-                "test_connection_pool"
-                "test_connection_pool_close_while_connecting"
-                "test_connection_pool_detects_remote_close"
-                "test_connection_pool_outside_cancellation"
-                "test_connection_pool_remove"
-                "test_connection_pool_respects_limit"
-                "test_connection_pool_tls"
-                "test_counters"
-                "test_dashboard_host"
-                "test_dashboard_link_cluster"
-                "test_dashboard_link_inproc"
-                "test_deserialize_error"
-                "test_dont_override_default_get"
-                "test_ensure_no_new_clients"
-                "test_errors"
-                "test_fail_to_pickle_target_2"
-                "test_failure_doesnt_crash"
-                "test_file_descriptors_dont_leak"
-                "test_finished"
-                "test_freeze_batched_send"
-                "test_get_client_functions_spawn_clusters"
-                "test_host_uses_scheduler_protocol"
-                "test_identity_inproc"
-                "test_identity_tcp"
-                "test_large_packets_inproc"
-                "test_locked_comm_drop_in_replacement"
-                "test_locked_comm_intercept_read"
-                "test_locked_comm_intercept_write"
-                "test_messages_are_ordered_bsend"
-                "test_messages_are_ordered_raw"
-                "test_mixing_clients_different_scheduler"
-                "test_multiple_listeners"
-                "test_no_dangling_asyncio_tasks"
-                "test_plugin_exception"
-                "test_plugin_internal_exception"
-                "test_plugin_multiple_exceptions"
-                "test_ports"
-                "test_preload_import_time"
-                "test_preload_manager_sequence"
-                "test_queue_in_task"
-                "test_quiet_client_close"
-                "test_rebalance_sync"
-                "test_repr_localcluster"
-                "test_require_encryption"
-                "test_rpc_default"
-                "test_rpc_inproc"
-                "test_rpc_message_lifetime_default"
-                "test_rpc_message_lifetime_inproc"
-                "test_rpc_message_lifetime_tcp"
-                "test_rpc_serialization"
-                "test_rpc_tcp"
-                "test_rpc_tls"
-                "test_rpc_with_many_connections_inproc"
-                "test_rpc_with_many_connections_tcp"
-                "test_scheduler_file"
-                "test_security_dict_input_no_security"
-                "test_security_loader"
-                "test_security_loader_ignored_if_explicit_security_provided"
-                "test_security_loader_ignored_if_returns_none"
-                "test_send_after_stream_start"
-                "test_send_before_close"
-                "test_send_before_start"
-                "test_send_recv_args"
-                "test_send_recv_cancelled"
-                "test_sending_traffic_jam"
-                "test_serializers"
-                "test_server"
-                "test_server_comms_mark_active_handlers"
-                "test_shutdown"
-                "test_shutdown_localcluster"
-                "test_teardown_failure_doesnt_crash_scheduler"
-                "test_tell_workers_when_peers_have_left"
-                "test_threadpoolworkers_pick_correct_ioloop"
-                "test_tls_listen_connect"
-                "test_tls_temporary_credentials_functional"
-                "test_variable_in_task"
-                "test_worker_preload_text"
-                "test_worker_uses_same_host_as_nanny"
-                "test_nanny_timeout")   ; access to 127.0.0.1
-               " and not ")
-
-              ;; This seems to want to use 64GB of memory.
-              " and not test_computation_object_code_dask_compute"
-
-              ;; These fail because it doesn't find dask[distributed]
-              " and not test_quiet_close_process"
-
-              ;; There is no distributed.__git_revision__ property.
-              " and not test_git_revision"
-
-              ;; The system monitor did not return a dictionary containing
-              ;; "host_disk_io.read_bps".
-              " and not test_disk_config"
-
-              ;; These fail because the exception text format
-              ;; appears to have changed.
-              " and not test_exception_text"
-              " and not test_worker_bad_args"
-
-              ;; These time out
-              " and not test_nanny_timeout"
-
-              ;; These tests are rather flaky
-              " and not test_quiet_quit_when_cluster_leaves"
-              " and not multiple_clients_restart"
-              " and not test_steal_twice"
-              " and not test_task_groups_update_start_stop"
-              " and not test_web_preload"
-              " and not test_web_preload_worker"))
+      ;; 2658 passed, 18 skipped, 38 deselected, 574 warnings
+      #~(list "-k" (string-join
+                    ;; python-polars is not packaged yet.
+                    (list "not test_build_df_from_vaex_and_polars"
+                          "test_build_df_with_hover_data_from_vaex_and_polars"
+                          ;; ValueError
+                          "test_bytesio"
+                          "test_ensure_orca_ping_and_proc"
+                          "test_kaleido_engine_to_image_returns_bytes"
+                          "test_kaleido_fulljson"
+                          "test_latex_fig_to_image[eps]"
+                          "test_mimetype_combination"
+                          "test_orca_version_number"
+                          "test_pdf_renderer_show_override"
+                          "test_png_renderer_mimetype"
+                          "test_problematic_environment_variables[eps]"
+                          "test_server_timeout_shutdown"
+                          "test_simple_to_image[eps]"
+                          "test_svg_renderer_show"
+                          "test_to_image_default[eps]"
+                          "test_topojson_fig_to_image[eps]"
+                          "test_validate_orca"
+                          "test_write_image_string[eps]"
+                          "test_write_image_string_bad_extension_override"
+                          "test_write_image_string_format_inference[eps]"
+                          "test_write_image_writeable[eps]"
+                          ;; XXX: check why these tests fail
+                          "test_dependencies_not_imported"
+                          "test_external_server_url"
+                          "test_invalid_figure_json"
+                          "test_lazy_imports"
+                          "test_legend_dots"
+                          "test_linestyle"
+                          "test_orca_executable_path"
+                          "test_sanitize_json[auto]"
+                          "test_sanitize_json[json]"
+                          "test_scraper"
+                          "test_write_image_string_bad_extension_failure")
+                    " and not "))
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'versioneer
+          (add-before 'build 'skip-npm
+            ;; npm is not packaged so build without it
             (lambda _
-              ;; Our version of versioneer needs setup.cfg.  This is adapted
-              ;; from pyproject.toml.
-              (with-output-to-file "setup.cfg"
-                (lambda ()
-                  (display "\
-[versioneer]
-VCS = git
-style = pep440
-versionfile_source = distributed/_version.py
-versionfile_build = distributed/_version.py
-tag_prefix =
-parentdir_prefix = distributed-
-")))
-              (invoke "versioneer" "install")
-              (substitute* "setup.py"
-                (("versioneer.get_version\\(\\)")
-                 (string-append "\"" #$version "\"")))))
-          (add-after 'unpack 'fix-pytest-config
+              (setenv "SKIP_NPM" "T")))
+          (add-after 'unpack 'fix-version
+            ;; TODO: Versioneer in Guix gets its release version from the
+            ;; parent directory, but the plotly package is located inside a
+            ;; depth 3 subdirectory.  Try to use versioneer if possible.
             (lambda _
-              ;; This option is not supported by our version of pytest.
-              (substitute* "pyproject.toml"
-                (("--cov-config=pyproject.toml.*") ""))))
-          (add-after 'unpack 'fix-references
-            (lambda* (#:key outputs #:allow-other-keys)
-              (substitute* '("distributed/comm/tests/test_ucx_config.py"
-                             "distributed/tests/test_client.py"
-                             "distributed/tests/test_queues.py"
-                             "distributed/tests/test_variable.py"
-                             "distributed/cli/tests/test_tls_cli.py"
-                             "distributed/cli/tests/test_dask_spec.py"
-                             "distributed/cli/tests/test_dask_worker.py"
-                             "distributed/cli/tests/test_dask_scheduler.py")
-                (("\"dask-scheduler\"")
-                 (format #false "\"~a/bin/dask-scheduler\"" #$output))
-                (("\"dask-worker\"")
-                 (format #false "\"~a/bin/dask-worker\"" #$output)))))
-          (add-before 'check 'pre-check
+              (substitute* "packages/python/plotly/setup.py"
+                (("version=versioneer.get_version\\(),")
+                 (format #f "version=~s," #$version)))
+              (substitute* "packages/python/plotly/plotly/version.py"
+                (("__version__ = get_versions\\(\\)\\[\"version\"\\]")
+                 (format #f "__version__ = ~s" #$version)))))
+          (add-after 'fix-version 'chdir
             (lambda _
-              (setenv "DISABLE_IPV6" "1")
-              ;; Disable job queueing
-              (setenv "DASK_DISTRIBUTED__SCHEDULER__WORKER_SATURATION" "inf")
-              ;; Do not use dask-expr
-              (setenv "DASK_DATAFRAME__QUERY_PLANNING" "False")
-              ;; The integration tests are all problematic to some
-              ;; degree.  They either require network access or some
-              ;; other setup.  We only run the tests in
-              ;; distributed/tests.
-              (for-each (lambda (dir)
-                          (delete-file-recursively
-                           (string-append "distributed/" dir "/tests")))
-                        (list "cli" "comm" "dashboard" "deploy" "diagnostics"
-                              "http" "http/scheduler" "http/worker"
-                              "protocol" "shuffle"))))
-          ;; We need to use "." here.
-          (replace 'check
-            (lambda* (#:key tests? test-flags #:allow-other-keys)
-              (when tests?
-                (apply invoke "python" "-m" "pytest" "." "-vv" test-flags)))))))
-    (propagated-inputs
-     (list python-click
-           python-cloudpickle
-           python-cryptography
-           python-dask
-           python-dask-expr
-           python-msgpack
-           python-psutil
-           python-pyyaml
-           python-setuptools
-           python-sortedcontainers
-           python-tblib
-           python-toolz
-           python-tornado-6
-           python-urllib3
-           python-zict))
+              (chdir "packages/python/plotly"))))))
     (native-inputs
-     (list python-flaky
-           python-importlib-metadata
+     (list python-ipywidgets
            python-pytest
-           python-pytest-timeout
-           python-versioneer
-           python-wheel))
-    (home-page "https://distributed.dask.org")
-    (synopsis "Distributed scheduler for Dask")
-    (description "Dask.distributed is a lightweight library for distributed
-computing in Python.  It extends both the @code{concurrent.futures} and
-@code{dask} APIs to moderate sized clusters.")
-    (license license:bsd-3)))
-
-(define-public python-modin
-  (package
-    (name "python-modin")
-    (version "0.32.0")
-    (source
-     (origin
-       ;; The archive on pypi does not include all required files.
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/modin-project/modin")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1vb3iffgspryb6nvwiwdnypb922vkn2yvyzc1y0wwxcb0c0fl78d"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      #~(list "--numprocesses" (number->string (min 8 (parallel-job-count)))
-              ;; These four tests fail because an expected error is not raised.
-              "-k" "not test_binary_bad_broadcast")
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'loosen-requirements
-           (lambda _
-             (substitute* "setup.py"
-               ;; Don't depend on a specific version of Pandas.
-               (("pandas==") "pandas>="))))
-         (replace 'check
-           (lambda* (#:key tests? test-flags #:allow-other-keys)
-             (when tests?
-               (setenv "MODIN_ENGINE" "dask")
-               (apply invoke "python" "-m" "pytest"
-                      "modin/tests/numpy" test-flags)
-               (setenv "MODIN_ENGINE" "python")
-               (apply invoke "python" "-m" "pytest"
-                      "modin/tests/numpy" test-flags)))))))
+           python-setuptools
+           python-wheel
+           python-xarray))
     (propagated-inputs
-     (list python-cloudpickle
-           python-dask
-           python-distributed
-           python-numpy
-           python-packaging
+     (list python-ipython
            python-pandas
-           python-s3fs))
-    (native-inputs
-     (list python-boto3
-           python-jinja2
-           python-lxml
-           python-matplotlib
-           python-msgpack
-           python-openpyxl
-           python-psutil
-           python-pyarrow
-           python-pytest
-           python-pytest-benchmark
-           python-pytest-cov
-           python-pytest-xdist
-           python-scipy
-           python-sqlalchemy
-           python-tables
-           python-tqdm
-           python-xarray
-           python-xlrd
-           python-wheel))
-    (home-page "https://github.com/modin-project/modin")
-    (synopsis "Make your pandas code run faster")
+           python-pillow
+           ;; python-polars
+           python-requests
+           python-retrying
+           python-scikit-image
+           python-statsmodels
+           python-tenacity
+           python-vaex-core))
+    (home-page "https://plotly.com/python/")
+    (synopsis "Interactive plotting library for Python")
     (description
-     "Modin uses Ray or Dask to provide an effortless way to speed up your
-pandas notebooks, scripts, and libraries.  Unlike other distributed DataFrame
-libraries, Modin provides seamless integration and compatibility with existing
-pandas code.")
-    (license license:asl2.0)))
-
-(define-public python-numpy-groupies
-  (package
-    (name "python-numpy-groupies")
-    (version "0.9.14")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "numpy_groupies" version))
-       (sha256
-        (base32 "000qz0z78rs3l6y0dd2vzvd2lx3mczm2762whwsdnhz6c35axdq1"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-pytest
-           python-pytest-runner
-           python-numba
-           python-numpy))
-    (home-page "https://github.com/ml31415/numpy-groupies")
-    (synopsis "Tools for group-indexing operations: aggregated sum and more")
-    (description
-     "This package provides optimized tools for group-indexing operations:
-aggregated sum and more.")
-    (license license:bsd-3)))
+     "Plotly's Python graphing library makes interactive,publication-quality
+graphs online.  Examples of how to make line plots, scatter plots, area
+charts, bar charts, error bars, box plots, histograms, heatmaps, subplots,
+multiple-axes, polar charts, and bubble charts.")
+    (license license:expat)))
 
 (define-public python-plotnine
   (package
@@ -4128,196 +4733,6 @@ visual integration of spatially referenced datasets.")
 to do spectral analysis in Python.")
     (license license:expat)))
 
-(define-public python-traittypes
-  (package
-    (name "python-traittypes")
-    (version "0.2.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "traittypes" version))
-       (sha256
-        (base32 "1mlv93irdrgxrhnhq3ksi9585d55bpi4mv9dha4p8gkkjiia4vxy"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      ;; This one test fails because it doesn't raise an expected exception.
-      #:test-flags '(list "-k" "not test_bad_values")
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'numpy-compatibility
-           (lambda _
-             (substitute* "traittypes/tests/test_traittypes.py"
-               (("np\\.int") "int")))))))
-    (propagated-inputs (list python-traitlets))
-    (native-inputs
-     (list python-numpy
-           python-pandas
-           python-nose
-           python-pytest
-           python-setuptools
-           python-xarray
-           python-wheel))
-    (home-page "https://github.com/jupyter-widgets/traittypes")
-    (synopsis "Trait types for NumPy, SciPy and friends")
-    (description "The goal of this package is to provide a reference
-implementation of trait types for common data structures used in the scipy
-stack such as numpy arrays or pandas and xarray data structures.  These are
-out of the scope of the main traitlets project but are a common requirement to
-build applications with traitlets in combination with the scipy stack.")
-    (license license:bsd-3)))
-
-(define-public python-aplus
-  (package
-    (name "python-aplus")
-    (version "0.11.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "aplus" version))
-       (sha256
-        (base32 "1rznc26nlp641rn8gpdngfp79a3fji38yavqakxi35mx2da04msg"))))
-    (build-system python-build-system)
-    (home-page "https://github.com/xogeny/aplus")
-    (synopsis "Promises/A+ for Python")
-    (description "This package is an implementation of the Promises/A+
-specification and test suite in Python.")
-    (license license:expat)))
-
-(define-public python-clarabel
-  (package
-    (name "python-clarabel")
-    (version "0.7.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "clarabel" version))
-       (sha256
-        (base32 "15k32ynvh45n9q905bxwamh5w5cia9bxzmwz69wbribmyhsv22m3"))
-       (patches
-        (search-patches "python-clarabel-blas.patch"))))
-    (build-system cargo-build-system)
-    (arguments
-     (list
-      #:imported-modules `(,@%cargo-build-system-modules
-                           ,@%pyproject-build-system-modules)
-      #:modules '((guix build cargo-build-system)
-                  ((guix build pyproject-build-system) #:prefix py:)
-                  (guix build utils))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'build 'build-python-module
-            (assoc-ref py:%standard-phases 'build))
-          (add-after 'build-python-module 'install-python-module
-            (assoc-ref py:%standard-phases 'install)))
-      #:cargo-inputs
-      `(("rust-amd" ,rust-amd-0.2)
-        ("rust-blas" ,rust-blas-0.22)
-        ("rust-cfg-if" ,rust-cfg-if-1)
-        ("rust-derive-builder" ,rust-derive-builder-0.11)
-        ("rust-enum-dispatch" ,rust-enum-dispatch-0.3) ;0.3.8
-        ("rust-itertools" ,rust-itertools-0.11)
-        ("rust-lapack" ,rust-lapack-0.19)
-        ("rust-lazy-static" ,rust-lazy-static-1) ;1.4
-        ("rust-libc" ,rust-libc-0.2)
-        ("rust-num-derive" ,rust-num-derive-0.2)
-        ("rust-num-traits" ,rust-num-traits-0.2)
-        ("rust-pyo3" ,rust-pyo3-0.20)
-        ("rust-serde" ,rust-serde-1)
-        ("rust-serde-json" ,rust-serde-json-1)
-        ("rust-thiserror" ,rust-thiserror-1))
-      #:features '(list "python")
-      #:install-source? #false))
-    (inputs
-     (list maturin))
-    (native-inputs
-     (list python-wrapper))
-    (propagated-inputs (list python-numpy python-scipy))
-    (home-page "https://github.com/oxfordcontrol/Clarabel.rs")
-    (synopsis "Interior-point solver for convex conic optimisation problems")
-    (description "Clarabel.rs is a Rust implementation of an interior point
-numerical solver for convex optimization problems using a novel homogeneous
-embedding.")
-    (license license:asl2.0)))
-
-(define-public python-climin
-  (package
-    (name "python-climin")
-    (version "0.1a1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "climin" version))
-              (sha256
-               (base32
-                "1wpjisd5zzi5yvjff02hnxn84822k8sdxvvd33lil2x79wdb36rv"))))
-    (build-system python-build-system)
-    (native-inputs (list python-nose))
-    (propagated-inputs (list python-numpydoc python-numpy python-scipy))
-    (home-page "https://github.com/BRML/climin")
-    (synopsis "Optimization for machine learning")
-    (description
-     "@command{climin} is a Python package for optimization,
-heavily biased to machine learning scenarios.  It works on top of
-@command{numpy} and (partially) @command{gnumpy}.")
-    (license license:bsd-3)))
-
-(define-public python-corner
-  (package
-    (name "python-corner")
-    (version "2.2.2")
-    (source
-     (origin
-       (method git-fetch) ;no tests in PyPi archive
-       (uri (git-reference
-             (url "https://github.com/dfm/corner.py")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1i4dk4jxh0saysya2cnsfwlxwpldbdl174i9pwi4qj82av9jr2ii"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      #~(list
-         ;; XXX: Disable tests which failed with mismatched images, check why.
-         "-k" (string-append "not test_labels[png]"
-                             " and not test_title_quantiles[png]"
-                             " and not test_title_quantiles_default[png]"
-                             " and not test_title_quantiles_raises[png]"
-                             " and not test_bins[png]"
-                             " and not test_bins_log[png]"
-                             " and not test_titles1[png]"
-                             " and not test_titles2[png]"
-                             " and not test_pandas[png]"
-                             " and not test_tight[png]"
-                             " and not test_extended_overplotting[png]"
-                             " and not test_reverse_overplotting[png]"
-                             " and not test_arviz[png]"
-                             " and not test_range_fig_arg[png]"))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'build 'pretend-version
-            ;; XXX: Make sure you're either building from a fully intact git
-            ;; repository or PyPI tarballs. Most other sources (such as GitHub's
-            ;; tarballs, a git checkout without the .git folder) don't contain
-            ;; the necessary metadata and will not work.
-            (lambda _
-              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
-    (propagated-inputs
-     (list python-matplotlib))
-    (native-inputs
-     (list python-arviz python-pytest python-scipy python-setuptools-scm))
-    (home-page "http://corner.readthedocs.io/")
-    (synopsis "Make some beautiful corner plots")
-    (description
-     "This Python module uses @code{matplotlib} to visualize multidimensional
-samples using a scatterplot matrix. In these visualizations, each one- and
-two-dimensional projection of the sample is plotted to reveal covariances.
-corner was originally conceived to display the results of Markov Chain Monte
-Carlo simulations and the defaults are chosen with this application in mind but
-it can be used for displaying many qualitatively different samples.")
-    (license license:bsd-2)))
-
 (define-public python-paramz
   (package
     (name "python-paramz")
@@ -4477,91 +4892,6 @@ writing DICOM medical imaging data.  It can read, modify and write DICOM
 data.")
     (license license:expat)))
 
-(define-public python-deepdish
-  ;; XXX: The project may no longer be compatible with the version of NumPy
-  ;; packed in Guix (now 1.24.4), use the latest commit containing fixes.
-  ;; See: <https://github.com/uchicago-cs/deepdish/issues/50>.
-  ;; However, there is a maintained fork that appears to be a good
-  ;; replacement: https://github.com/portugueslab/flammkuchen.
-  (let ((commit "3f2dff7a03f1b31f6924b665ad5b8c299329c1cd")
-        (revision "0"))
-    (package
-      (name "python-deepdish")
-      (version (git-version "0.3.7" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/uchicago-cs/deepdish")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1n3r6z5zd18kdmzyg1gkm9lqi573szlxbls1ck5wjn4a14ar9fw3"))))
-      (arguments
-       ;; Disable few failing tests to pass the build.
-       (list
-        #:test-flags
-        #~(list "-k" (string-append "not test_pad"
-                                    " and not test_pad_repeat_border"
-                                    " and not test_pad_repeat_border_corner"
-                                    " and not test_pad_to_size"))
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'unpack 'dont-vendor-six
-              (lambda _
-                (delete-file "deepdish/six.py")
-                (substitute* "deepdish/io/hdf5io.py"
-                  (("from deepdish import six") "import six"))
-                (substitute* "deepdish/io/ls.py"
-                  (("from deepdish import io, six, __version__")
-                   "from deepdish import io, __version__
-import six
-")))))))
-      (build-system pyproject-build-system)
-      (native-inputs
-       (list python-pytest
-             python-pandas
-             python-setuptools
-             python-wheel))
-      (propagated-inputs
-       (list python-numpy
-             python-scipy
-             python-six
-             python-tables))
-      (home-page "https://github.com/uchicago-cs/deepdish")
-      (synopsis "Python library for HDF5 file saving and loading")
-      (description
-       "Deepdish is a Python library to load and save HDF5 files.
-The primary feature of deepdish is its ability to save and load all kinds of
-data as HDF5.  It can save any Python data structure, offering the same ease
-of use as pickling or @code{numpy.save}, but with the language
-interoperability offered by HDF5.")
-      (license license:bsd-3))))
-
-(define-public python-simple-pid
-  (package
-    (name "python-simple-pid")
-    (version "1.0.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "simple-pid" version))
-              (sha256
-               (base32
-                "094mz6rmfq1h0gpns5vlxb7xf9297hlkhndw7g9k95ziqfkv7mk0"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "python" "-m" "unittest" "discover" "tests/")))))))
-    (home-page "https://github.com/m-lundberg/simple-pid")
-    (synopsis "Easy to use PID controller")
-    (description "This package provides a simple and easy-to-use @acronym{PID,
-proportional-integral-derivative} controller.")
-    (license license:expat)))
-
 (define-public python-supersmoother
   (package
     (name "python-supersmoother")
@@ -4592,130 +4922,6 @@ Friedman's SuperSmoother} based in Python.  It makes use of numpy for fast
 numerical computation.")
     (license license:bsd-2)))
 
-(define-public python-opt-einsum
-  (package
-    (name "python-opt-einsum")
-    (version "3.3.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "opt_einsum" version))
-              (sha256
-               (base32
-                "0jb5lia0q742d1713jk33vlj41y61sf52j6pgk7pvhxvfxglgxjr"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-numpy))
-    (native-inputs
-     (list python-pytest python-pytest-cov python-setuptools python-wheel))
-    (home-page "https://github.com/dgasmith/opt_einsum")
-    (synopsis "Optimizing numpys einsum function")
-    (description
-     "Optimized einsum can significantly reduce the overall execution time of
-einsum-like expressions by optimizing the expression's contraction order and
-dispatching many operations to canonical BLAS, cuBLAS, or other specialized
-routines.  Optimized einsum is agnostic to the backend and can handle NumPy,
-Dask, PyTorch, Tensorflow, CuPy, Sparse, Theano, JAX, and Autograd arrays as
-well as potentially any library which conforms to a standard API. See the
-documentation for more information.")
-    (license license:expat)))
-
-(define-public python-vaex-core
-  (package
-    (name "python-vaex-core")
-    (version "4.18.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://www.github.com/maartenbreddels/vaex")
-             (commit (string-append "core-v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1sp096msbzgjlwi8c1ink2bp4pjff9pvikqz1y1li8d3in4gpgdr"))
-       (patches
-        (search-patches "python-vaex-core-fix-tsl-use.patch"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)))
-       (snippet
-        #~(begin
-            ;; Delete everything except for vaex-core itself:
-            (define (delete-except exception)
-              (lambda (file)
-                (unless (member file `("." ".." ,exception))
-                  (delete-file-recursively file))))
-            (for-each (delete-except "packages") (scandir "."))
-            (with-directory-excursion "packages"
-              (for-each (delete-except "vaex-core") (scandir ".")))
-            (for-each (lambda (file)
-                        (unless (member file '("." ".."))
-                          (rename-file
-                           (string-append "packages/vaex-core/" file)
-                           file)))
-                      (scandir "packages/vaex-core"))
-            (delete-file-recursively "packages")
-            (delete-file-recursively "vendor")))))
-    (build-system pyproject-build-system)
-    (arguments
-     ;; require vaex.server and others, which require vaex-core.
-     (list #:tests? #false))
-    (inputs
-     (list boost pcre pybind11 string-view-lite tsl-hopscotch-map))
-    (propagated-inputs
-     (list python-aplus
-           python-blake3
-           python-click ;XXX for dask
-           python-cloudpickle
-           python-dask
-           python-filelock
-           python-frozendict
-           python-future
-           python-nest-asyncio
-           python-numpy
-           python-pandas
-           python-progressbar2
-           python-pyarrow
-           python-pydantic-2
-           python-pydantic-settings
-           python-pyyaml
-           python-requests
-           python-rich
-           python-six
-           python-tabulate))
-    (native-inputs
-     (list python-pytest python-cython-3 python-setuptools python-wheel))
-    (home-page "https://www.github.com/maartenbreddels/vaex")
-    (synopsis "Core of Vaex library for exploring tabular datasets")
-    (description "Vaex is a high performance Python library for lazy
-Out-of-Core DataFrames (similar to Pandas), to visualize and explore big
-tabular datasets.  This package provides the core modules of Vaex.")
-    (license license:expat)))
-
-(define-public python-salib
-  (package
-    (name "python-salib")
-    (version "1.4.7")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/SALib/SALib")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "18xfyzircsx2q2lmfc9lxb6xvkxicnc83qzghd7df1jsprr5ymch"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-matplotlib
-                             python-multiprocess
-                             python-numpy
-                             python-pandas
-                             python-scipy))
-    (native-inputs (list python-hatchling python-pytest python-pytest-cov))
-    (home-page "https://salib.readthedocs.io/en/latest/")
-    (synopsis "Tools for global sensitivity analysis")
-    (description "SALib provides tools for global sensitivity analysis.  It
-contains Sobol', Morris, FAST, DGSM, PAWN, HDMR, Moment Independent and
-fractional factorial methods.")
-    (license license:expat)))
-
 (define-public python-pylems
   (package
     (name "python-pylems")
@@ -4735,56 +4941,6 @@ fractional factorial methods.")
      "A LEMS simulator written in Python which can be used to run
 NeuroML2 models.")
     (license license:lgpl3)))
-
-(define-public python-pynetdicom
-  (package
-    (name "python-pynetdicom")
-    (version "2.1.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pynetdicom" version))
-              (sha256
-               (base32
-                "1smzrnc93nmv8jz4np9knas74a46b1nhb3hjpf8n9vfpxypgnwcn"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      ;; Tests takes about 10-15min to complete.
-      ;; Skip tests that require networking.
-      #~(list "-k" (string-append
-                    " not TestFindSCP"
-                    " and not TestQRGetServiceClass"
-                    " and not TestQRMoveServiceClass"
-                    " and not TestStoreSCP"
-                    " and not test_ae.py"
-                    " and not test_echoscp.py"
-                    " and not test_qrscp_echo.py"
-                    " and not test_storescp.py"
-                    " and not test_pr_level_patient"
-                    " and not test_pr_level_series"
-                    " and not test_scp_cancelled"))))
-    (native-inputs (list python-codespell
-                         python-coverage
-                         python-poetry-core
-                         python-pytest
-                         python-pytest-cov
-                         python-pytest-xdist
-                         python-sphinx
-                         python-sphinx-rtd-theme))
-    (propagated-inputs (list python-mypy
-                             python-numpydoc
-                             python-pydicom
-                             python-pyfakefs
-                             python-sqlalchemy))
-    (home-page "https://github.com/pydicom/pynetdicom")
-    (synopsis "Python implementation of the DICOM networking protocol")
-    (description
-     "@code{pynetdicom} is a Python package that implements the DICOM
-networking protocol.  It allows the easy creation of DICOM
-@acronym{SCUs,Service Class Users} and @acronym{SCPs,Service Class
-Providers}.")
-    (license license:expat)))
 
 (define-public python-pynrrd
   (package
@@ -4891,87 +5047,6 @@ compagnies.")
 and PySide6.  It is intended for use in mathematics, scientific or engineering
 applications.")
     (license license:expat)))
-
-(define-public python-libneuroml
-  (package
-    (name "python-libneuroml")
-    (version "0.6.5")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/NeuralEnsemble/libNeuroML.git")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "04cfff9phm19x87p86xrkhd6wlpxvdwk3rf1c3qgyncfchws0sjh"))))
-    (build-system pyproject-build-system)
-    (native-inputs
-     (list python-pytest
-           python-numpy
-           python-setuptools
-           python-tables
-           python-wheel))
-    (propagated-inputs
-     (list python-lxml
-           python-natsort
-           python-networkx))
-    (home-page "https://libneuroml.readthedocs.org/en/latest/")
-    (synopsis
-     "Python library for working with NeuroML descriptions of neuronal models")
-    (description
-     "This package provides a Python library for working with NeuroML descriptions of
-neuronal models")
-    (license license:bsd-3)))
-
-(define-public python-ase
-  (package
-    (name "python-ase")
-    (version "3.25.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "ase" version))
-       (sha256
-        (base32 "1hk2r5042cs9shqv49w0jvf65wkyq74s6vc5drfz1275kz5ghk1p"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list #:test-flags
-           #~(list ;; DeprecationWarning.
-              "--deselect"
-              "ase/test/fio/test_espresso.py::test_pw_input_write_nested_flat"
-              ;; UserWarning.
-              "--deselect"
-              "ase/test/fio/test_espresso.py::TestConstraints::test_fix_scaled")))
-    (propagated-inputs (list python-matplotlib python-numpy python-scipy))
-    (native-inputs (list python-pytest python-pytest-xdist python-setuptools
-                         python-wheel))
-    (inputs (list spglib))
-    (home-page "https://wiki.fysik.dtu.dk/ase/")
-    (synopsis "Atomic Simulation Environment")
-    (description "This package provides a set of tools and Python modules for
-setting up, manipulating, running, visualizing and analyzing atomistic
-simulations.")
-    (license license:lgpl2.1+)))
-
-(define-public python-asap3
-  (package
-    (name "python-asap3")
-    (version "3.13.7")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "asap3" version))
-       (sha256
-        (base32 "0z6m9ybiy4fdnzlkfkvyxich18iwlwlgj1jd99fylyfwf8l160am"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs (list python-ase))
-    (native-inputs (list python-setuptools python-wheel which))
-    (home-page "https://wiki.fysik.dtu.dk/asap")
-    (synopsis "ASAP - classical potentials for Molecular Dynamics with ASE.")
-    (description "This package provides accelerated simulations and potentials
-of solids.")
-    (license license:lgpl3)))
 
 (define-public snakemake
   (package

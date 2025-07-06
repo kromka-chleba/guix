@@ -74,7 +74,8 @@
                          #:key
                          initialization
                          root-password
-                         desktop?)
+                         desktop?
+                         extra-tests)
   "Return a derivation called NAME that tests basic features of the OS started
 using COMMAND, a gexp that evaluates to a list of strings.  Compare some
 properties of running system to what's declared in OS, an <operating-system>.
@@ -85,7 +86,12 @@ inserted before the first test.  This is used to introduce an extra
 initialization step, such as entering a LUKS passphrase.
 
 When ROOT-PASSWORD is true, enter it as the root password when logging in.
-Otherwise assume that there is no password for root."
+Otherwise assume that there is no password for root.
+
+When EXTRA-TESTS is true, it must be a one-argument procedure that is
+passed a gexp denoting the marionette. It must then return a gexp that is
+inserted after the last test. This is meant as a way of extending the basic
+tests that are defined within this procedure."
   (define special-files
     (service-value
      (fold-services (operating-system-services os)
@@ -169,29 +175,6 @@ ls --version
 grep --version
 info --version")
                                     marionette)))
-
-          (test-assert "/etc/profile.d is sourced"
-            (zero? (marionette-eval '(system "
-. /etc/profile
-set -e -x
-test -f /etc/profile.d/test_profile_d.sh
-test \"$PROFILE_D_OK\" = yes")
-                                    marionette)))
-
-          (test-assert "/etc/bashrc.d is sourced"
-            (zero? (marionette-eval
-                    '(system* "bash"
-                              ;; Ensure Bash runs interactively.
-                              "--init-file"
-                              #$(plain-file "test_bashrc_d.sh"
-                                            "\
-. /etc/bashrc
-set -e -x
-test -f /etc/bashrc.d/bash_completion.sh
-test -f /etc/bashrc.d/aliases.sh
-test -f /etc/bashrc.d/test_bashrc_d.sh
-test \"$BASHRC_D_OK\" = yes"))
-                    marionette)))
 
           (test-equal "special files"
             '#$special-files
@@ -582,6 +565,9 @@ test \"$BASHRC_D_OK\" = yes"))
                   (compose string-trim-right get-string-all)))
              marionette))
 
+          #$(and extra-tests
+                 (extra-tests #~marionette))
+
           (test-end))))
 
   (gexp->derivation name test))
@@ -626,7 +612,38 @@ functionality tests, using the given KERNEL.")
       ;; 'system-qemu-image/shared-store-script'.
       (run-basic-test (virtualized-operating-system os '())
                       #~(list #$vm)
-                      name)))))
+                      name
+                      ;; Add extra tests for the etc-profile-d-service-type
+                      ;; and etc-bashrc-d-service-type services defined above.
+                      ;; Those tests cannot directly be part of the
+                      ;; run-basic-test procedure that is used in many other
+                      ;; locations.
+                      #:extra-tests
+                      (lambda (marionette)
+                        #~(begin
+                            (test-assert "/etc/profile.d is sourced"
+                              (zero?
+                               (marionette-eval '(system "
+. /etc/profile
+set -e -x
+test -f /etc/profile.d/test_profile_d.sh
+test \"$PROFILE_D_OK\" = yes")
+                                                #$marionette)))
+
+                            (test-assert "/etc/bashrc.d is sourced"
+                              (zero?
+                               (marionette-eval
+                                '(system* "bash"
+                                          "-i" ;run interactively
+                                          #$(plain-file "test_bashrc_d.sh"
+                                                        "\
+. /etc/bashrc
+set -e -x
+test -f /etc/bashrc.d/bash_completion.sh
+test -f /etc/bashrc.d/aliases.sh
+test -f /etc/bashrc.d/test_bashrc_d.sh
+test \"$BASHRC_D_OK\" = yes"))
+                                #$marionette))))))))))
 
 (define %test-basic-os
   (test-basic-os))

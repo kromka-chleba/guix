@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <sys/socket.h>
 
 #ifdef __APPLE__
 #include <sys/syscall.h>
@@ -59,6 +60,27 @@ string getEnv(const string & key, const string & def)
 {
     char * value = getenv(key.c_str());
     return value ? string(value) : def;
+}
+
+
+string findProgram(const string & program)
+{
+    if(program.empty()) return "";
+
+    if(program[0] == '/') return pathExists(program) ? program : "";
+
+    char *path_ = getenv("PATH");
+    if(path_ == NULL) return "";
+    string path = path_;
+
+    Strings dirs = tokenizeString<Strings>(path, ":");
+    for (const auto& i : dirs) {
+        if(i == "") continue;
+        string f = i + "/" + program;
+        if(pathExists(f)) return f;
+    }
+
+    return "";
 }
 
 
@@ -323,47 +345,73 @@ void writeLine(int fd, string s)
 }
 
 
-static void _deletePath(const Path & path, unsigned long long & bytesFreed, size_t linkThreshold)
+static void _deletePathAt(int fd, const Path & path, const Path & fullPath, unsigned long long & bytesFreed, size_t linkThreshold)
 {
     checkInterrupt();
 
-    printMsg(lvlVomit, format("%1%") % path);
+    printMsg(lvlVomit, format("%1%") % fullPath);
 
 #ifdef HAVE_STATX
 # define st_mode stx_mode
 # define st_size stx_size
 # define st_nlink stx_nlink
+#define fstatat(fd, path, stat, flags)           \
+    statx(fd, path, flags, STATX_SIZE | STATX_NLINK | STATX_MODE, stat)
+#define fstat(fd, stat)   \
+    statx(fd, "", AT_EMPTY_PATH, STATX_SIZE | STATX_NLINK | STATX_MODE, stat)
     struct statx st;
-    if (statx(AT_FDCWD, path.c_str(),
-	      AT_SYMLINK_NOFOLLOW,
-	      STATX_SIZE | STATX_NLINK | STATX_MODE, &st) == -1)
-	throw SysError(format("getting status of `%1%'") % path);
 #else
-    struct stat st = lstat(path);
+    struct stat st;
 #endif
+    if (fstatat(fd, path.c_str(), &st, AT_SYMLINK_NOFOLLOW))
+        throw SysError(format("getting status of `%1%'") % fullPath);
 
+    /* Note: if another process modifies what is at 'path' between now and
+       when we actually delete it, this may be inaccurate, but I know of no
+       way to check which file we actually deleted after the fact. */
     if (!S_ISDIR(st.st_mode) && st.st_nlink <= linkThreshold)
 	bytesFreed += st.st_size;
 
     if (S_ISDIR(st.st_mode)) {
-        /* Make the directory writable. */
-        if (!(st.st_mode & S_IWUSR)) {
-            if (chmod(path.c_str(), st.st_mode | S_IWUSR) == -1)
-                throw SysError(format("making `%1%' writable") % path);
-        }
+      /* Note: fds required scales with depth of directory nesting */
+      AutoCloseFD dirfd = openat(fd, path.c_str(),
+                                 O_RDONLY |
+                                 O_DIRECTORY |
+                                 O_NOFOLLOW |
+                                 O_CLOEXEC);
+      if(!dirfd.isOpen())
+        throw SysError(format("opening `%1%'") % fullPath);
 
-        for (auto & i : readDirectory(path))
-            _deletePath(path + "/" + i.name, bytesFreed, linkThreshold);
+      /* st.st_mode may currently be from a different file than what we
+         actually opened, get it straight from the file instead */
+      if(fstat(dirfd, &st))
+        throw SysError(format("re-getting status of `%1'") % fullPath);
+
+      /* Make the directory writable. */
+      if (!(st.st_mode & S_IWUSR)) {
+        if (fchmod(dirfd, st.st_mode | S_IWUSR) == -1)
+          throw SysError(format("making `%1%' writable") % fullPath);
+      }
+
+      for (auto & i : readDirectory(dirfd))
+        _deletePathAt(dirfd, i.name, path + "/" + i.name, bytesFreed, linkThreshold);
     }
 
     int ret;
-    ret = S_ISDIR(st.st_mode) ? rmdir(path.c_str()) : unlink(path.c_str());
+    ret = unlinkat(fd, path.c_str(), S_ISDIR(st.st_mode) ? AT_REMOVEDIR : 0 );
     if (ret == -1)
-        throw SysError(format("cannot unlink `%1%'") % path);
+        throw SysError(format("cannot unlink `%1%'") % fullPath);
 
 #undef st_mode
 #undef st_size
 #undef st_nlink
+#undef fstatat
+#undef fstat
+}
+
+static void _deletePath(const Path & path, unsigned long long & bytesFreed, size_t linkThreshold)
+{
+  _deletePathAt(AT_FDCWD, path, path, bytesFreed, linkThreshold);
 }
 
 
@@ -425,7 +473,8 @@ static void copyFileRecursively(int sourceroot, const Path &source,
 	if (sourceFd == -1) throw SysError(format("opening `%1%'") % source);
 
 	AutoCloseFD destinationFd = openat(destinationroot, destination.c_str(),
-					   O_CLOEXEC | O_CREAT | O_WRONLY | O_TRUNC,
+					   O_CLOEXEC | O_CREAT | O_WRONLY | O_TRUNC
+					   | O_NOFOLLOW | O_EXCL,
 					   st.st_mode);
 	if (destinationFd == -1) throw SysError(format("opening `%1%'") % source);
 
@@ -447,7 +496,8 @@ static void copyFileRecursively(int sourceroot, const Path &source,
 	    throw SysError(format("creating directory `%1%'") % destination);
 
 	AutoCloseFD destinationFd = openat(destinationroot, destination.c_str(),
-					   O_CLOEXEC | O_RDONLY | O_DIRECTORY);
+					   O_CLOEXEC | O_RDONLY | O_DIRECTORY
+					   | O_NOFOLLOW);
 	if (err != 0)
 	    throw SysError(format("opening directory `%1%'") % destination);
 
@@ -457,7 +507,7 @@ static void copyFileRecursively(int sourceroot, const Path &source,
 	    throw SysError(format("opening `%1%'") % source);
 
         if (deleteSource && !(st.st_mode & S_IWUSR)) {
-	    /* Ensure the directory writable so files within it can be
+	    /* Ensure the directory is writable so files within it can be
 	       deleted.  */
             if (fchmod(sourceFd, st.st_mode | S_IWUSR) == -1)
                 throw SysError(format("making `%1%' directory writable") % source);
@@ -698,6 +748,18 @@ string drainFD(int fd)
 }
 
 
+/* Wait on FD until MESSAGE has been read.  */
+void waitForMessage(int fd, const char *message)
+{
+    size_t size = strlen(message);
+    char str[size] = { '\0' };
+    readFull(fd, (unsigned char*)str, size);
+    if (strncmp(str, message, size) != 0)
+	throw Error(format("did not receive message '%1%' on file descriptor %2%")
+	    % message % fd);
+}
+
+
 
 //////////////////////////////////////////////////////////////////////
 
@@ -819,6 +881,67 @@ void Pipe::create()
 }
 
 
+void sendFD(int sock, int fd)
+{
+    ssize_t rc;
+    struct msghdr msg;
+    struct cmsghdr *cmsg;
+    char cmsgbuf[CMSG_SPACE(sizeof(fd))];
+    struct iovec iov;
+    char dummy = '\0';
+    memset(&msg, 0, sizeof(msg));
+    iov.iov_base = &dummy;
+    iov.iov_len = 1;
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = cmsgbuf;
+    msg.msg_controllen = sizeof(cmsgbuf);
+    cmsg = CMSG_FIRSTHDR(&msg);
+    cmsg->cmsg_level = SOL_SOCKET;
+    cmsg->cmsg_type = SCM_RIGHTS;
+    cmsg->cmsg_len = CMSG_LEN(sizeof(fd));
+    memcpy(CMSG_DATA(cmsg), &fd, sizeof(fd));
+    msg.msg_controllen = cmsg->cmsg_len;
+    do
+    {
+        rc = sendmsg(sock, &msg, 0);
+    } while(rc < 0 && errno == EINTR);
+    if(rc < 0)
+        throw SysError("sending fd");
+}
+
+
+int receiveFD(int sock)
+{
+    int fd;
+    ssize_t rc;
+    struct msghdr msg;
+    struct cmsghdr *cmsg;
+    char cmsgbuf[CMSG_SPACE(sizeof(fd))];
+    struct iovec iov;
+    char dummy = '\0';
+    memset(&msg, 0, sizeof(msg));
+    iov.iov_base = &dummy;
+    iov.iov_len = 1;
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = cmsgbuf;
+    msg.msg_controllen = sizeof(cmsgbuf);
+    do
+    {
+        rc = recvmsg(sock, &msg, 0);
+    } while(rc < 0 && errno == EINTR);
+    if (rc < 0)
+        throw SysError("receiving fd");
+    if (rc == 0)
+        throw Error("received EOF (empty message) while receiving fd");
+
+    cmsg = CMSG_FIRSTHDR(&msg);
+    if (cmsg == NULL || cmsg->cmsg_type != SCM_RIGHTS)
+        throw Error("received message without an fd");
+    memcpy(&fd, CMSG_DATA(cmsg), sizeof(fd));
+    return fd;
+}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -1114,6 +1237,13 @@ void closeOnExec(int fd)
         throw SysError("setting close-on-exec flag");
 }
 
+void keepOnExec(int fd)
+{
+    int prev;
+    if ((prev = fcntl(fd, F_GETFD, 0)) == -1 ||
+        fcntl(fd, F_SETFD, prev & ~FD_CLOEXEC) == -1)
+        throw SysError("clearing close-on-exec flag");
+}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -1254,6 +1384,24 @@ bool endOfList(std::istream & str)
         return true;
     }
     return false;
+}
+
+string decodeOctalEscaped(const string & s)
+{
+    string r;
+    for (string::const_iterator i = s.begin(); i != s.end(); ) {
+        if (*i != '\\') { r += *(i++); continue; }
+        unsigned char c = 0;
+        ++i;
+        for(int j = 0; j < 3; j++) {
+          if(i == s.end() || *i < '0' || *i >= '8')
+            throw Error("malformed octal escape");
+          c = c * 8 + (*i - '0');
+          ++i;
+        }
+        r += c;
+    }
+    return r;
 }
 
 

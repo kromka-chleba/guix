@@ -13,6 +13,8 @@
 ;;; Copyright © 2022 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Joeke de Graaf <joeke@posteo.net>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -62,6 +64,7 @@
   #:use-module (gnu packages video)               ;ffmpeg
   #:use-module (guix packages)
   #:use-module (guix download)
+  #:use-module (guix gexp)
   #:use-module (guix git-download)
   #:use-module (guix utils)
   #:use-module (guix build-system copy)
@@ -474,7 +477,15 @@ command-line tool as well as a C library, libmpg123.")
               (search-patches "mpg321-CVE-2019-14247.patch"
                               "mpg321-gcc-10.patch"))))
     (build-system gnu-build-system)
-    (arguments '(#:configure-flags '("--disable-alsa")))
+    (arguments
+     (list #:configure-flags
+           #~(list
+              ;; Relax gcc-14's strictness.
+              #$(string-append "CFLAGS=-g -O2"
+                               " -Wno-error=implicit-function-declaration"
+                               " -Wno-error=implicit-int"
+                               " -Wno-error=int-conversion")
+              "--disable-alsa")))
     (inputs
      `(("zlib" ,zlib)
        ("libmad" ,libmad)
@@ -621,20 +632,18 @@ compression format (.mpc files).")
 (define-public eyed3
   (package
     (name "eyed3")
-    (version "0.9.7")
+    (version "0.9.8")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "eyeD3" version))
+       (uri (pypi-uri "eyed3" version))
        (sha256
-        (base32 "03ygqns4ibq0nnbvdm1pk97nzyqrl76df2cl9w8lasipjf9qxcck"))))
-    (build-system python-build-system)
+        (base32 "00wqmy7x8g25h75ajc9vcd3nxny7a3k17h8qnpbvb9fmv13yz5m2"))))
+    (build-system pyproject-build-system)
     (arguments
      `(#:tests? #f))    ; the required test data contains copyrighted material
-    (propagated-inputs
-     (list python-deprecation
-           python-filetype
-           python-six))
+    (native-inputs (list python-setuptools python-wheel))
+    (propagated-inputs (list python-deprecation python-filetype))
     (synopsis "MP3 tag ID3 metadata editor")
     (description "eyeD3 is a Python tool for working with audio files,
 specifically mp3 files containing ID3 metadata (i.e. song info).  It provides a

@@ -35,6 +35,7 @@
 ;;; Copyright © 2024 Josep Bigorra <jjbigorra@gmail.com>
 ;;; Copyright © 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2024 Sughosha <sughosha@disroot.org>
+;;; Copyright © 2025 Brice Waegeneire <brice@waegenei.re>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3909,10 +3910,11 @@ system libraries.")
 
 (define-public single-application-qt5
   ;; Change in function signature, nheko requires at least this commit
-  (let ((commit "dc8042b5db58f36e06ba54f16f38b16c5eea9053"))
+  (let ((commit "dc8042b5db58f36e06ba54f16f38b16c5eea9053")
+        (revision "1"))
     (package
       (name "single-application-qt5")
-      (version (string-append "3.2.0-" (string-take commit 7)))
+      (version (git-version "3.2.0" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -3926,28 +3928,25 @@ system libraries.")
            "163aa2x2qb0h8w26si5ql833ilj427jjbdwlz1p2p8iaq6dh0vq1"))))
       (build-system cmake-build-system)
       (arguments
-       `(#:tests? #f                    ; no check target
-         ;; Projects can decide how to build this library.  You might need to
-         ;; override this flag (QApplication, QGuiApplication or
-         ;; QCoreApplication).
-         #:configure-flags '("-DQAPPLICATION_CLASS=QApplication")
-         #:phases
-         (modify-phases %standard-phases
-           ;; No install target, install things manually
-           (replace 'install
-             (lambda* (#:key inputs outputs source #:allow-other-keys)
-               (let* ((qt (assoc-ref inputs "qtbase"))
-                      (qt-version ,(version-major (package-version qtbase-5)))
-                      (out (assoc-ref outputs "out")))
-                 (install-file
-                  "libSingleApplication.a" (string-append out "/lib"))
-                 (for-each
-                  (lambda (file)
-                    (install-file
-                     (string-append source "/" file)
-                     (string-append out "/include")))
-                  '("SingleApplication"
-                    "singleapplication.h" "singleapplication_p.h"))))))))
+       (list
+        #:tests? #f                     ; no check target
+        ;; Projects can decide how to build this library.  You might need to
+        ;; override this flag (QApplication, QGuiApplication or
+        ;; QCoreApplication).
+        #:configure-flags #~(list "-DQAPPLICATION_CLASS=QApplication")
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; No install target, install things manually
+            (replace 'install
+              (lambda* (#:key source #:allow-other-keys)
+                (install-file
+                 "libSingleApplication.a" (string-append #$output "/lib"))
+                (for-each
+                 (lambda (file)
+                   (install-file (string-append source "/" file)
+                                 (string-append #$output "/include")))
+                 '("SingleApplication"
+                   "singleapplication.h" "singleapplication_p.h")))))))
       (inputs
        (list qtbase-5))
       (home-page "https://github.com/itay-grudev/SingleApplication")
@@ -3960,6 +3959,27 @@ instances.  It can (if enabled) spawn secondary (non-related to the primary)
 instances and can send data to the primary instance from secondary
 instances.")
       (license license:expat))))
+
+(define-public single-application
+  (package/inherit single-application-qt5
+    (name "single-application")
+    (version "3.5.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri
+        (git-reference
+         (url "https://github.com/itay-grudev/SingleApplication")
+         (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "069aww3aww6968hmipzfbj57a5vw6jxj1mr20nsb1yh98n5c01rv"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments single-application-qt5)
+       ((#:configure-flags flags)
+        #~(cons "-DQT_DEFAULT_MAJOR_VERSION=6" #$flags))))
+    (inputs (list qtbase))))
 
 (define-public pyotherside
   (package
@@ -4074,6 +4094,27 @@ module provides support functions to the automatically generated code.")
     ;; There is a choice between a python like license, gpl2 and gpl3.
     ;; For compatibility with pyqt, we need gpl3.
     (license license:gpl3)))
+
+;; FIXME Remove this package when not needed by qgis anymore
+;; This is a stopgap to build qgis@3.42.1 while waiting for the
+;; qt-team branch to be merged in master with python-pyqt5-sip@12.17.0.
+(define-public python-sip-6.8
+  (hidden-package
+   (package
+     (inherit python-sip)
+     (name "python-sip")
+     (version "6.8.6")
+     (source
+      (origin
+        (method url-fetch)
+        (uri (list (pypi-uri "sip" version)
+                   (string-append "https://www.riverbankcomputing.com/static/"
+                                  "Downloads/sip/" version
+                                  "/sip-" version ".tar.gz")))
+        (sha256
+         (base32
+          "0ykxq0607f2sdwbl5cxbp0y8pl14bsgzc9nhifpxbibfivj5kjbz"))
+        (patches (search-patches "python-sip-include-dirs.patch")))))))
 
 (define-public python-sip-4
   (package
@@ -4545,6 +4586,16 @@ This package provides the Python bindings.")))
     (synopsis "Union of PyQt and the Qscintilla extension")
     (description
      "This package contains the union of PyQt and the Qscintilla extension.")))
+
+;; FIXME Remove this procedure and its related package when qgis won't need them
+;; anymore
+(define python-sip-6.8-instead-of-python-sip
+  (package-input-rewriting `((,python-sip . ,python-sip-6.8))
+                           #:deep? #t))
+
+(define-public python-pyqt+qscintilla-with-python-sip-6.8
+  (hidden-package
+   (python-sip-6.8-instead-of-python-sip python-pyqt+qscintilla)))
 
 (define-public qtimgui
   (let ((commit "48d64a715b75dee24e398f7e5b0942c2ca329334")
@@ -5078,31 +5129,34 @@ Qt widgets.")
       (license license:lgpl3+))))
 
 (define-public qtcolorwidgets
-  (package
-    (name "qtcolorwidgets")
-    (version "2.2.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://gitlab.com/mattia.basaglia/Qt-Color-Widgets")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1fp7sr5a56bjp2abc6ng331q0bwvk6mf2nxdga81aj6cd9afs22q"))))
-    (build-system cmake-build-system)
-    (arguments '(#:tests? #f))          ;there are no tests
-    (native-inputs
-     (list qttools-5))
-    (inputs
-     (list qtbase-5))
-    (home-page "https://gitlab.com/mattia.basaglia/Qt-Color-Widgets")
-    (synopsis "Color management widgets")
-    (description "QtColorWidgets provides a Qt color dialog that is more
+  (let ((commit "8491078434b24cba295b5e41cc0d2a94c7049a5b")
+        (revision "1"))
+    (package
+      (name "qtcolorwidgets")
+      (version (git-version "2.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://gitlab.com/mattbas/Qt-Color-Widgets")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "1ixb2v5mjdszkxqq51knaj1pcivnihwlj9qlm9pxmvzl9qsvbcgg"))))
+      (build-system cmake-build-system)
+      (arguments
+       (list #:tests? #f ;there are no tests
+             #:configure-flags #~(list "-DQT_VERSION_MAJOR=6")))
+      (native-inputs (list qttools))
+      (inputs (list qtbase))
+      (home-page "https://gitlab.com/mattbas/Qt-Color-Widgets")
+      (synopsis "Color management widgets")
+      (description "QtColorWidgets provides a Qt color dialog that is more
 user-friendly than the default @code{QColorDialog} and several other
 color-related widgets.")
-    ;; Includes a license exception for combining with GPL2 code.
-    (license license:lgpl3+)))
+      ;; Includes a license exception for combining with GPL2 code.
+      (license license:lgpl3+))))
 
 (define-public qcustomplot
   (package

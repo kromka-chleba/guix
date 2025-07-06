@@ -797,7 +797,7 @@ you send to a FIFO file.")
 (define-public guile-documenta
   (package
     (name "guile-documenta")
-    (version "0.2.1")
+    (version "0.3.0")
     (source
      (origin
        (method git-fetch)
@@ -806,7 +806,7 @@ you send to a FIFO file.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1jv8nd7hlrsg2v2p5wacs8x3rzmhxwcg83pjsrnwks346jvsfxnv"))))
+        (base32 "0agqjd4vlgb95ckrxvmn5ghbjsm72akgmd9zf08plk8j02l238ak"))))
     (build-system guile-build-system)
     (inputs
      (list bash-minimal
@@ -1177,6 +1177,34 @@ is not available for Guile 2.0.")
       (native-inputs
        (modify-inputs (package-native-inputs guile-fibers)
          (replace "guile" guile-next))))))
+
+(define-public guile-kracht
+  (package
+    (name "guile-kracht")
+    (version "0.2.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/jjba23/kracht.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mcyi3a6vpqm4z01rcmv6fqhf7gayppa9yib76jqrihxv8w70m5g"))))
+    (build-system guile-build-system)
+    (native-inputs (list guile-3.0))
+    (arguments
+     (list
+      #:source-directory "src"))
+    (home-page "https://codeberg.org/jjba23/kracht")
+    (synopsis
+     "Utility methods and functionalities for Guile Scheme programming")
+    (description
+     "Kracht provides helpful and convenient functionalities that can help you
+develop more comfortably in your Guile Scheme project.  You can see it as a
+batteries-included addition to the (already great) standard library,
+complementing it, and helping developers write cleaner code.")
+    (license license:lgpl3+)))
 
 (define-public guile-filesystem
   (package
@@ -4450,7 +4478,7 @@ parameters, which  define* and lambda* special forms")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://inqlab.net/git/guile-srfi-128.git")
+             (url "https://codeberg.org/pukkamustard/guile-srfi-128.git")
              (commit (string-append "v" version))))
        (sha256
         (base32
@@ -4459,7 +4487,7 @@ parameters, which  define* and lambda* special forms")
     (build-system guile-build-system)
     (native-inputs
      (list guile-3.0))
-    (home-page "https://inqlab.net/git/guile-srfi-128.git")
+    (home-page "https://codeberg.org/pukkamustard/guile-srfi-128")
     (synopsis "SRFI 128 Comparators (reduced) port for Guile")
     (description
      "This package provides an implementation of SRFI 128 for Guile.
@@ -6455,7 +6483,7 @@ JWT.  Supported algorithms: HS256, HS384, HS512.")
       (origin
         (method git-fetch)
         (uri (git-reference
-               (url "https://inqlab.net/git/guile-sodium.git")
+               (url "https://codeberg.org/eris/guile-sodium.git")
                (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256 (base32 "189jsj87hycs57a54x0b9lifwvhr63nypb9vfxdrq7rwrpcvi5f8"))))
@@ -6470,7 +6498,7 @@ JWT.  Supported algorithms: HS256, HS384, HS512.")
      "This package provides Guile bindings to the libsodium cryptographic library
 which provides core cryptographic primitives needed to build higher-level
 tools.")
-    (home-page "https://inqlab.net/git/guile-sodium.git")
+    (home-page "https://codeberg.org/eris/guile-sodium")
     (license license:gpl3+)))
 
 (define-public guile-eris
@@ -7106,19 +7134,19 @@ is an attempt to combine both into something useful.")
       (license license:asl2.0))))
 
 (define-public guile-knots
-  (let ((commit "cbafdb8668f33c7d3eabeebc60731df0d585636a")
-        (revision "20"))
+  (let ((commit "0fa6737a39f866bdbffc11fd16348c5411c11a7c")
+        (revision "22"))
     (package
     (name "guile-knots")
     (version (git-version "0" revision commit))
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://git.cbaines.net/git/guile/knots")
+                    (url "https://forge.cbaines.net/cbaines/guile-knots.git")
                     (commit commit)))
               (sha256
                (base32
-                "06khwcjdqvkhyxknn7px1k0qvd6vmb943zgvxabm0bqk0rkp02ld"))
+                "1kgrs99c71i8l82p799ggacw9yqsl9aimb5ssb9nkfpjg7dk9nkg"))
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs
@@ -7132,7 +7160,7 @@ is an attempt to combine both into something useful.")
      (list guile-next))
     (propagated-inputs
      (list guile-fibers-next))
-    (home-page "https://git.cbaines.net/guile/knots")
+    (home-page "https://forge.cbaines.net/cbaines/guile-knots")
     (synopsis "Patterns and functionality to use with Guile Fibers")
     (description
      "Guile Knots is a collection of patterns and functionality that is useful

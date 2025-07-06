@@ -65,14 +65,14 @@
 (define-public audiocd-kio
   (package
     (name "audiocd-kio")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/audiocd-kio-" version ".tar.xz"))
        (sha256
-        (base32 "1ldw51wly4shk4c9a0lc6j8ax176bb9f1l5r5x6rcgwz1vncd3g4"))))
+        (base32 "143sj2nlmkdac3wjy2wcyj06a4gy3srhnp4g7ijk66nvgp11pgbs"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -350,7 +350,7 @@ This package is part of the KDE multimedia module.")
 (define-public kid3
   (package
     (name "kid3")
-    (version "3.9.5")
+    (version "3.9.6")
     (source
      (origin
        (method git-fetch)
@@ -359,7 +359,7 @@ This package is part of the KDE multimedia module.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "09pva85ffamjdr6m446jcvxjw8qyy7anmj1gz0fvn9ns3d1jgg46"))))
+        (base32 "1gklqbvpvdllgn7h0pnskd2zf98jfr2w93vq2nmabh8xs9fw2sks"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -410,17 +410,18 @@ variety of formats.")
 (define-public k3b
   (package
     (name "k3b")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/k3b-" version ".tar.xz"))
        (sha256
-        (base32 "11r6nda3djj9p918sx9bpipc1byg5mvgib4vyf0kpdpnh9bnhvcj"))))
+        (base32 "1sp34fs0w20622h0sm1w8zc74nqdz4rs6kzi9gak8d192xdrmji6"))))
     (build-system qt-build-system)
     (arguments
      (list
+      #:qtbase qtbase
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'set-absolute-library-paths
@@ -454,7 +455,7 @@ variety of formats.")
                           (string-append (assoc-ref inputs input) "/bin"))
                         '("cdrdao" "cdrtools" "dvd+rw-tools" "libburn" "sox")))))))))
     (native-inputs
-     (list extra-cmake-modules pkg-config kdoctools-5))
+     (list extra-cmake-modules pkg-config kdoctools))
     (inputs
      (list bash-minimal
            cdrdao
@@ -462,28 +463,29 @@ variety of formats.")
            dvd+rw-tools
            ffmpeg
            flac
-           karchive-5
-           kcmutils-5
-           kconfig-5
-           kcoreaddons-5
-           kfilemetadata-5
-           ki18n-5
-           kiconthemes-5
-           kio-5
-           kjobwidgets-5
-           knewstuff-5
-           knotifications-5
-           knotifyconfig-5
-           kservice-5
-           kwidgetsaddons-5
-           kxmlgui-5
+           karchive
+           kauth
+           kcmutils
+           kconfig
+           kcoreaddons
+           kfilemetadata
+           ki18n
+           kiconthemes
+           kio
+           kjobwidgets
+           knewstuff
+           knotifications
+           knotifyconfig
+           kservice
+           kwidgetsaddons
+           kxmlgui
            lame
            libburn
            libcdio-paranoia
            libdvdcss
            libdvdread
            ;; TODO: LibFuzzer
-           libkcddb-qt5
+           libkcddb
            libmad
            libmpcdec
            ;;("libmusicbrainz" ,libmusicbrainz) ; wants old version 2
@@ -492,7 +494,7 @@ variety of formats.")
            libvorbis
            breeze-icons ; default icon set
            shared-mime-info
-           solid-5
+           solid
            sox
            taglib
            zlib))
@@ -561,14 +563,14 @@ autoloading of subtitle files for use while playing video.")
 (define-public kamoso
   (package
     (name "kamoso")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kamoso-" version ".tar.xz"))
        (sha256
-        (base32 "1i2w2cmlfr9q4p405kycy2xqp8q5d6f1j3pwr5sbdhis3rm7vm4l"))))
+        (base32 "0p180rj23f7fv3mamx1jmvarp2fiah00p7ph1yirnnsv8m28gwf4"))))
     (build-system qt-build-system)
     (native-inputs
      (list
@@ -664,39 +666,39 @@ Its main features are:
 (define-public kmix
   (package
     (name "kmix")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kmix-" version ".tar.xz"))
        (sha256
-        (base32 "1ha0sil2vbpvgys7jkhav7j5g7drg57ypr8c9i3c8ndqwpsyxk3g"))))
+        (base32 "06zr9lfhjclaka4kcmh3zhnkh6rqd69zz9z5ypxymsnrnip42ma2"))))
     (build-system qt-build-system)
+    (arguments (list #:qtbase qtbase))
     (native-inputs
-     (list extra-cmake-modules kdoctools-5 pkg-config))
+     (list extra-cmake-modules kdoctools pkg-config))
     (inputs
      (list alsa-lib
            glib
-           kconfigwidgets-5
-           kcompletion-5
-           kconfig-5
-           kconfigwidgets-5
-           kcrash-5
-           kdbusaddons-5
-           kglobalaccel-5
-           ki18n-5
-           kiconthemes-5
-           knotifications-5
-           kwidgetsaddons-5
-           kwindowsystem-5
-           kxmlgui-5
+           kcompletion
+           kconfig
+           kconfigwidgets
+           kcrash
+           kdbusaddons
+           kglobalaccel
+           ki18n
+           kiconthemes
+           knotifications
+           kstatusnotifieritem
+           kwidgetsaddons
+           kwindowsystem
+           kxmlgui
            libcanberra
            breeze-icons ; default icon set
-           plasma-framework
+           libplasma
            pulseaudio
-           qtbase-5
-           solid-5))
+           solid))
     (home-page "https://apps.kde.org/kmix/")
     (synopsis "Volume control and mixer")
     (description "KMix is an audio device mixer, used to adjust volume, select
@@ -709,48 +711,48 @@ This package is part of the KDE multimedia module.")
 (define-public kwave
   (package
     (name "kwave")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kwave-" version ".tar.xz"))
        (sha256
-        (base32 "1g3gaxmchsf9c7zvx608wl41qs001vr1zm0cgnaim753446vb08f"))))
+        (base32 "0xkyfji6wfkm36796ijrkbm455fl2ppp9c1yvr1d8dawqrkxflaq"))))
     (build-system qt-build-system)
     (native-inputs
-     (list extra-cmake-modules (librsvg-for-system) pkg-config kdoctools-5
+     (list extra-cmake-modules (librsvg-for-system) pkg-config kdoctools
            tzdata-for-tests))
     (inputs
      (list alsa-lib
            audiofile
            flac
            id3lib
-           karchive-5
-           kcompletion-5
-           kconfig-5
-           kconfigwidgets-5
-           kcoreaddons-5
-           kcrash-5
-           kdbusaddons-5
-           ki18n-5
-           kiconthemes-5
-           kio-5
-           kservice-5
-           ktextwidgets-5
-           kwidgetsaddons-5
-           kxmlgui-5
+           karchive
+           kcompletion
+           kconfig
+           kconfigwidgets
+           kcoreaddons
+           kcrash
+           kdbusaddons
+           ki18n
+           kiconthemes
+           kio
+           kservice
+           ktextwidgets
+           kwidgetsaddons
+           kxmlgui
            libmad
            libsamplerate
            libvorbis
            opus
            breeze-icons ; default icon set
            pulseaudio
-           qtbase-5
-           qtmultimedia-5
+           qtmultimedia
            zlib))
     (arguments
      (list
+      #:qtbase qtbase
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'check 'set-TZDATA
@@ -793,14 +795,14 @@ Its features include:
 (define-public libkcddb
   (package
     (name "libkcddb")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/libkcddb-" version ".tar.xz"))
        (sha256
-        (base32 "0b2khcfm3jnc4iar0ljsq0z3dr3ak6jyaqnbgwj3yk2j05j0yc9n"))))
+        (base32 "19lf5figwnc7w811kqg3ih63p6mqbm846yq1blr6nrp4v8hwx18j"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -823,38 +825,17 @@ Its features include:
     (license ;; GPL for programs, LGPL for libraries, FDL for documentation
      (list license:gpl2+ license:lgpl2.0+ license:fdl1.2+))))
 
-(define-public libkcddb-qt5
-  (package
-    (inherit libkcddb)
-    (name "libkcddb-qt5")
-    (native-inputs
-     (list extra-cmake-modules kdoctools-5))
-    (inputs
-     (list kcodecs-5
-           kconfig-5
-           ki18n-5
-           kio-5
-           kcmutils-5
-           kwidgetsaddons-5
-           libmusicbrainz))
-    (arguments
-     (list
-      #:qtbase qtbase-5
-      #:configure-flags #~(list "-DQT_MAJOR_VERSION=5")
-      ;; Most tests require network
-      #:tests? #f))))
-
 (define-public libkcompactdisc
   (package
     (name "libkcompactdisc")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/libkcompactdisc-" version ".tar.xz"))
        (sha256
-        (base32 "1lh6vn5aqwlvnb7q29nwxqzb4i4ymd1gs0y1k0vf5czhywrr9gqm"))))
+        (base32 "07cl0wa2hrzaslxb31v7ykgjpchk5ms61fly6bx645jc1n8lhzfk"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))

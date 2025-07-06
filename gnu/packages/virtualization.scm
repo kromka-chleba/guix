@@ -1804,15 +1804,15 @@ virtualization library.")
                               "not test_disk and "
                               "not virt_clone"))))))))
     (native-inputs
-     (list cdrtools
-           cpio
+     (list cpio
            gettext-minimal
            `(,glib "bin")               ;glib-compile-schemas
            gobject-introspection
            `(,gtk+ "bin")               ;gtk-update-icon-cache
            pkg-config
            python-docutils              ;rst2ma
-           python-pytest))
+           python-pytest
+           xorriso))
     (inputs
      (list bash-minimal
            dconf
@@ -3367,12 +3367,12 @@ create_header"))))))))))
     (native-inputs
      (modify-inputs (package-native-inputs libguestfs-minimal)
        (prepend bash-completion
-                cdrtools
                 gobject-introspection
                 python
                 ruby
                 util-linux
-                vala)))
+                vala
+                xorriso)))
     (inputs
      (modify-inputs (package-inputs libguestfs-minimal)
        (prepend acl

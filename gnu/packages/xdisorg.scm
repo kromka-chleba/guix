@@ -41,7 +41,7 @@
 ;;; Copyright © 2020 Gabriel Arazas <foo.dogsquared@gmail.com>
 ;;; Copyright © 2020 James Smith <jsubuntuxp@disroot.org>
 ;;; Copyright © 2020 B. Wilson <elaexuotee@wilsonb.com>
-;;; Copyright © 2020, 2021, 2023, 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2020-2021, 2023-2025 Zheng Junjie <z572@z572.online>
 ;;; Copyright © 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021, 2022, 2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
@@ -93,6 +93,7 @@
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
+  #:use-module (guix build-system qt)
   #:use-module (guix build-system scons)
   #:use-module (guix download)
   #:use-module (guix gexp)
@@ -113,6 +114,7 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages crypto)
+  #:use-module (gnu packages curl)
   #:use-module (gnu packages datastructures)
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
@@ -462,7 +464,7 @@ and preserve leading and trailing whitespace.")
 (define-public copyq
   (package
     (name "copyq")
-    (version "8.0.0")
+    (version "10.0.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -471,23 +473,25 @@ and preserve leading and trailing whitespace.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "029s1pdp177fnrq5qrwjmd5pf1672l5jhq99is1lczrxi6bsf2qk"))))
-    (build-system cmake-build-system)
+                "0ppr0ijggs9km2m32rnlpn7h346a2iv2xmf2k6ky1n8alwkxczcl"))))
+    (build-system qt-build-system)
     (arguments
      (list
-      #:configure-flags #~(list "-DCMAKE_BUILD_TYPE=Release")
+      #:qtbase qtbase
+      #:configure-flags #~(list
+                           "-DWITH_QT6=ON"
+                           "-DCMAKE_BUILD_TYPE=Release")
       #:tests? #f)) ; Test suite is a rather manual process.
     (inputs
-     (list qtbase-5
-           qtscript
-           qtsvg-5
-           qtx11extras
-           qtdeclarative-5
-           qtwayland-5
+     (list libxkbcommon
+           qtsvg
+           qtdeclarative
+           qtwayland
            wayland
-           knotifications-5))
+           knotifications
+           kstatusnotifieritem))
     (native-inputs
-     (list extra-cmake-modules qttools-5))
+     (list extra-cmake-modules pkg-config qttools))
     (synopsis "Clipboard manager with advanced features")
     (description "CopyQ is clipboard manager with editing and scripting
 features.  CopyQ monitors system clipboard and saves its content in customized
@@ -828,6 +832,44 @@ options are given, the action applies to the focused window.")
 following the mouse.")
     (license license:x11)))
 
+(define-public bemoji
+  (package
+    (name "bemoji")
+    (version "0.4.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/marty-oehme/bemoji")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "030zlq4k32zdkpmzc9dkiz2l94z10z1qkk70a9mxc8yi9fij2z0x"))))
+    (build-system copy-build-system)
+    (inputs (list bash-minimal coreutils-minimal curl grep sed))
+    (arguments
+     (list
+      #:install-plan #~'(("bemoji" "bin/bemoji"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-program
+            (lambda _
+              (wrap-program (string-append #$output "/bin/bemoji")
+                `("PATH" prefix
+                  ,(search-path-as-list
+                    '("bin")
+                    '#$(map (lambda (input)
+                              (lookup-package-input this-package input))
+                            '("coreutils-minimal" "curl" "grep" "sed"))))))))))
+    (home-page "https://github.com/marty-oehme/bemoji")
+    (synopsis "Emoji picker for @code{dmenu}-like launchers")
+    (description
+     "Bemoji is an emoji picker for @code{dmenu}-like launchers
+(e.g. @code{bemenu}, @code{wofi}, @code{rofi}, @code{fuzzel}, etc.)  It will
+remember your favorite emojis and give you quick access to them via a separately
+installed clipboard tool (e.g. @command{wl-copy}, @code{xclip}, etc.), or a
+typing tool (@code{wtype}, @code{xdotool}, etc.), or via standard output.")
+    (license license:expat)))
 
 (define-public pixman
   (package
@@ -3717,7 +3759,7 @@ applications for Sway and other wlroots-based Wayland compositors.")
 (define-public dex
   (package
     (name "dex")
-    (version "0.9.0")
+    (version "0.10.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3725,15 +3767,19 @@ applications for Sway and other wlroots-based Wayland compositors.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "03aapcywnz4kl548cygpi25m8adwbmqlmwgxa66v4156ax9dqs86"))
+                "1d7fqy63i4q0mw316i5ws1sgdq3f7h3bsf3avvmy0nzshz7i5y6m"))
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags (list (string-append "PREFIX=" (assoc-ref %outputs "out")))
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'configure))
-       #:tests? #f))
+     (list
+      #:make-flags #~(list (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (delete 'configure)
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "./dex" "--test" "--verbose")))))))
     (inputs
      (list python))
     (native-inputs
@@ -3741,8 +3787,11 @@ applications for Sway and other wlroots-based Wayland compositors.")
     (home-page "https://github.com/jceb/dex")
     (synopsis "Execute DesktopEntry files")
     (description
-     "@command{dex}, @dfn{DesktopEntry Execution}, is a program to generate
-and execute @file{.desktop} files of the Application type.")
+     "@command{dex}, @dfn{DesktopEntry Execution}, is a program to generate and
+execute @file{.desktop} files of the Application type.  It is also an
+autostarter compliant with the XDG autostart specification.")
+    (properties
+     '((lint-hidden-cpe-vendors . ("samsung" "linuxfoundation"))))
     (license license:gpl3+)))
 
 (define-public sx
@@ -3840,6 +3889,44 @@ This package is the fork of hsetroot by Hyriand.")
     (synopsis "Cursor theme format")
     (description
      "This package provides Hyprland cursor format, library and utilities.")
+    (license license:bsd-3)))
+
+(define-public hyprsunset
+  (package
+    (name "hyprsunset")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/hyprwm/hyprsunset")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "110cw7nd6a0krsg6764hx2i45lc8n4b1iln3b8jz1x6pziw1qna9"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f)) ;No tests.
+    (native-inputs
+     (list gcc-14
+           pkg-config))
+    (inputs
+     (list hyprwayland-scanner
+           hyprutils
+           wayland
+           hyprland-protocols
+           wayland-protocols))
+    (home-page "https://wiki.hypr.land/Hypr-Ecosystem/hyprsunset/")
+    (synopsis "Blue-light filter for Hyprland")
+    (description
+     "This is a small utility to provide a blue light filter for your system.
+This method is preferred to screen shaders as it will not be captured via
+recording / screenshots.
+
+hyprsunset also provides a gamma filter, which can be used to adjust perceived
+display brightness on monitors that do not support software control, or to
+reduce percieved brightness below the monitor's minimum.")
     (license license:bsd-3)))
 
 (define-public hyprlock

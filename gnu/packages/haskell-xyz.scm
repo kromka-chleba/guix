@@ -5218,6 +5218,29 @@ template-haskell abstract syntax.")
 Vim.")
     (license license:bsd-3)))
 
+(define-public ghc-hcodecs
+  (package
+    (name "ghc-hcodecs")
+    (version "0.5.2")
+    (source (origin
+              (method url-fetch)
+              (uri (hackage-uri "HCodecs" version))
+              (sha256
+               (base32
+                "0gbspig721viwncsfg9m4qc9jbl9rz93ra74d5b1zw9pw7rhy5ji"))))
+    (build-system haskell-build-system)
+    (inputs (list ghc-fail
+                  ghc-random
+                  ghc-semigroups))
+    (native-inputs (list ghc-quickcheck))
+    (home-page "https://github.com/Mokosha/HCodecs")
+    (synopsis "Read, write and manipulate MIDI, WAVE and SoundFont2 multimedia files")
+    (description "This library provides functions to read, write and manipulate MIDI, WAVE
+and SoundFont2 multimedia files.  It is written entirely in Haskell (without any FFI).
+It uses efficient parsing and building combinators for binary data stored in ByteStrings
+(based on the one in binary package).")
+    (license license:bsd-3)))
+
 (define-public ghc-hex
   (package
     (name "ghc-hex")
@@ -15993,13 +16016,13 @@ highlighting and display the results in Brick-based interfaces.")
 (define-public ghc-git-lfs
   (package
     (name "ghc-git-lfs")
-    (version "1.2.0")
+    (version "1.2.5")
     (source
      (origin
        (method url-fetch)
        (uri (hackage-uri "git-lfs" version))
        (sha256
-        (base32 "1iv3s1c7gwmsima9z3rsphjligpnf7h3vc5c96zgq9b71cx81lba"))))
+        (base32 "1lzlz9v05iabpkw09bgxxv4nj5yk7a0vzg6rx0kr0qrsir8c3jh2"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "git-lfs")))
     (inputs (list ghc-http-client ghc-http-types ghc-aeson ghc-network-uri

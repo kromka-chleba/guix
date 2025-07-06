@@ -750,7 +750,10 @@ a local network link.")
        (uri (pypi-uri "SimpleSoapy" version))
        (sha256
         (base32 "0bh02m5zj82mp7sxpvwr24ylmrbp3p4r9q7psqcfnxl628w3b4hl"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-numpy soapysdr))
     (home-page "https://github.com/xmikos/simplesoapy")
@@ -770,7 +773,12 @@ library.")
        (uri (pypi-uri "soapy_power" version))
        (sha256
         (base32 "1rajmygcqvv5ph7yk65r4w581lfszrz0f48csvfmma1ami0lirdm"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f)) ; no tests in PyPI or Git
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (inputs
      (list python-numpy
            python-scipy
@@ -3225,7 +3233,7 @@ Caller-ID.")
 (define-public rfcat
   (package
     (name "rfcat")
-    (version "1.9.6")
+    (version "2.0.1")
     (source
      (origin
        (method git-fetch)
@@ -3234,8 +3242,11 @@ Caller-ID.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0zmgbgf1025ln2v6lc27dmkmwv8pxjgrmhmpk34rkkixhvnk69pf"))))
-    (build-system python-build-system)
+        (base32 "0wf7fh9af24v6yfn83d00f3km4g5afgi8s0h7922si6pn1anrm45"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (inputs
      (list python-future
            python-ipython
@@ -3318,10 +3329,38 @@ of devices than RTL-SDR.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "0wfqdcfip1kg5b5a8d01bip5nqvjhs2x8bgc9vwhghn6vk8pqxxg"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; FIXME: Find out how to fix these tests.
+      #~(list "--ignore=tests/test_continuous_modulator.py"
+              ;; This test causes a segmentation fault
+              "--ignore=tests/test_send_recv_dialog_gui.py"
+              ;; This test hangs forever
+              "--ignore=tests/test_spectrogram.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'configure-compiler
+            (lambda _
+              ;; Use gcc as compiler
+              (substitute* "src/urh/dev/native/ExtensionHelper.py"
+                (("compiler = ccompiler\\.new_compiler\\(\\)\n" all)
+                 (string-append
+                  all "    compiler.set_executables(compiler='gcc',"
+                  " compiler_so='gcc', linker_exe='gcc', linker_so='gcc -shared')\n")))))
+          (add-after 'build 'build-cythonext
+            (lambda _
+              (invoke "python" "src/urh/cythonext/build.py")))
+          (add-before 'check 'prepare-x
+            (lambda _
+              (system "Xvfb &")
+              (setenv "DISPLAY" ":0")
+              (setenv "HOME" "/tmp"))))))
     (native-inputs
      (list python-cython
            python-pytest
+           python-wheel
            xorg-server-for-tests))
     (inputs
      (list airspy
@@ -3334,37 +3373,6 @@ of devices than RTL-SDR.")
            python-pyaudio
            python-pyqt
            rtl-sdr))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'configure-compiler
-           (lambda _
-             ;; Use gcc as compiler
-             (substitute* "src/urh/dev/native/ExtensionHelper.py"
-               (("compiler = ccompiler\\.new_compiler\\(\\)\n" all)
-                (string-append
-                 all "    compiler.set_executables(compiler='gcc',"
-                 " compiler_so='gcc', linker_exe='gcc', linker_so='gcc -shared')\n")))))
-         (add-after 'unpack 'disable-some-tests
-           (lambda _
-             ;; FIXME
-             (for-each delete-file
-                       '("tests/test_continuous_modulator.py"
-                         ;; This test causes a segmentation fault
-                         "tests/test_send_recv_dialog_gui.py"
-                         ;; This test hangs forever
-                         "tests/test_spectrogram.py"))))
-         (add-after 'build 'build-cythonext
-           (lambda _
-             (invoke "python" "src/urh/cythonext/build.py")))
-         (replace 'check
-           (lambda* (#:key inputs tests? #:allow-other-keys)
-             (when tests?
-               (setenv "HOME" "/tmp")
-               (system (string-append (search-input-file inputs "/bin/Xvfb")
-                                     " :1 &"))
-               (setenv "DISPLAY" ":1")
-               (invoke "pytest")))))))
     (home-page "https://github.com/jopohl/urh")
     (synopsis "Wireless protocol investigation program")
     (description

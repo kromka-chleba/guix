@@ -16,7 +16,7 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
-(define-module (gnu packages go-apps)
+(define-module (gnu packages golang-apps)
   #:use-module (guix build-system go)
   #:use-module (guix gexp)
   #:use-module (guix git-download)
@@ -26,7 +26,21 @@
   #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz))
+
+;;; Commentary:
+;;;
+;;; Golang (Go) specific applications which are not inherited from their
+;;; source live here e.g linters, language servers, REPL implementations etc.
+;;;
+;;; If the <cmd/APP> is inherited from its source place it in corresponded
+;;; golang-*.scm file in the end after the section "Executables".
+;;;
+;;; Please: Try to add new variable in alphabetical order.
+;;;
+;;; Code:
+
 
 (define-public godef
   (package
@@ -57,6 +71,109 @@
     (synopsis "Print where symbols are defined in Go source code")
     (description "The @command{godef} command prints the source location of
 definitions in Go programs.")
+    (license license:bsd-3)))
+
+(define-public gomacro
+  (package
+    (name "gomacro")
+    (version "0.0.0-20240506194242-2ff796e3da10")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/cosmos72/gomacro")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17v3vlq5s5mxplzvs5d414shd2mqkfj3jwxzfgq6cnr9hgr4b9kc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/cosmos72/gomacro"
+      ;; There are some unexplained test failures (see:
+      ;; https://github.com/cosmos72/gomacro/issues/164), and even after
+      ;; disabling the problematic tests, the test suite exits uncleanly with
+      ;; an exit status of 1.
+      #:tests? #f
+      #:test-flags
+      #~(list "-skip" (string-join '("TestFiles/slow.input"
+                                     "TestFromReflect6")
+                                   "|"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'delete-problematic-tests
+            (lambda _
+              ;; Some test module(s) under go/types fail to build.
+              (for-each delete-file
+                        (find-files "src/github.com/cosmos72/gomacro/go/types"
+                                    "_test\\.go(\\.off)?$")))))))
+    (inputs (list go-golang-org-x-tools go-github-com-peterh-liner
+                  go-github-com-mattn-go-runewidth))
+    (home-page "https://github.com/cosmos72/gomacro")
+    (synopsis
+     "Interactive Go interpreter and debugger with generics and macros")
+    (description
+     "@command{gomacro} is an almost complete Go interpreter, implemented in
+pure Go.  It offers both an interactive REPL and a scripting mode, and does
+not require a Go toolchain at runtime (except in one very specific case:
+import of a 3rd party package at runtime).")
+    (license license:mpl2.0)))
+
+(define-public gopls
+  (package
+    (name "gopls")
+    ;; XXX: Starting from 0.14.0 gppls needs golang.org/x/telemetry, which
+    ;; needs to be discussed if it may be included in Guix.
+    (version "0.18.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://go.googlesource.com/tools")
+             (commit (go-version->git-ref version #:subdir "gopls"))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0s396bjwac1acrlpbp7k7xfyhmkykyxc08w6hirbdhlq8vg923p7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:install-source? #f
+      #:import-path "golang.org/x/tools/gopls"
+      #:unpack-path "golang.org/x/tools"
+      ;; XXX: No tests in project's root, limit to some of subdris, try to
+      ;; enable more.
+      #:test-subdirs
+      #~(list "internal/protocol/..."
+              "internal/util/..."
+              "internal/vulncheck/...")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'unpack 'override-tools
+            (lambda _
+              ;; XXX: Write a procedure deleting all but current module source
+              ;; to cover case with monorepo.
+              (delete-file-recursively "src/golang.org/x/tools"))))))
+    (native-inputs
+     (list go-github-com-google-go-cmp
+           go-github-com-jba-templatecheck
+           go-golang-org-x-mod
+           go-golang-org-x-sync
+           go-golang-org-x-sys
+           go-golang-org-x-telemetry
+           go-golang-org-x-text
+           go-golang-org-x-tools
+           go-golang-org-x-vuln
+           go-gopkg-in-yaml-v3
+           go-honnef-co-go-tools
+           go-mvdan-cc-gofumpt
+           go-mvdan-cc-xurls-v2))
+    (home-page "https://golang.org/x/tools/gopls")
+    (synopsis "Official language server for the Go language")
+    (description
+     "Pronounced ``Go please'', this is the official Go language server
+developed by the Go team.  It provides IDE features to any LSP-compatible
+editor.")
     (license license:bsd-3)))
 
 (define-public gore

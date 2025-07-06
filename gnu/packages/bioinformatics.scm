@@ -4707,47 +4707,46 @@ consensus sequences.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "10k88i1fcqchrrjv82rmylwvbwqfba0n51palhig9hsg71xs0dbi"))
+        (base32 "10k88i1fcqchrrjv82rmylwvbwqfba0n51palhig9hsg71xs0dbi"))
        ;; Delete bundled binary
        (snippet '(delete-file "libs/ccs"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'relax-requirements
-           (lambda _
-             (substitute* "setup.py"
-               (("'argparse[^']*',") "") ; only for python2
-               (("==") ">="))))
-         (add-before 'build 'build-libssw
-           (lambda _
-             (with-directory-excursion "libs/striped_smith_waterman"
-               (invoke "make" "libssw.so"))))
-         (add-before 'build 'fix-reference-to-ccs
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* "CIRI_long/pipeline.py"
-               (("'ccs -i")
-                (string-append "'"
-                               (assoc-ref inputs "circtools") "/bin/ccs"
-                               " -i")))
-             ;; yuck!
-             (substitute* "CIRI_long/main.py"
-               (("os.chmod\\(lib_path.*") "")))))))
-    (inputs
-     (list circtools
-           python-biopython
-           python-bwapy
-           python-levenshtein
-           python-mappy
-           python-numpy
-           python-pandas
-           python-pysam
-           python-pyspoa
-           python-scikit-learn
-           python-scipy))
-    (native-inputs
-     (list python-cython python-nose python-setuptools))
+     `(#:phases (modify-phases %standard-phases
+                  (add-after 'unpack 'relax-requirements
+                    (lambda _
+                      (substitute* "setup.py"
+                        (("'argparse[^']*',")
+                         "") ;only for python2
+                        (("==")
+                         ">="))))
+                  (add-before 'build 'build-libssw
+                    (lambda _
+                      (with-directory-excursion "libs/striped_smith_waterman"
+                        (invoke "make" "libssw.so"))))
+                  (add-before 'build 'fix-reference-to-ccs
+                    (lambda* (#:key inputs #:allow-other-keys)
+                      (substitute* "CIRI_long/pipeline.py"
+                        (("'ccs -i")
+                         (string-append "'"
+                                        (assoc-ref inputs "circtools")
+                                        "/bin/ccs" " -i")))
+                      ;; yuck!
+                      (substitute* "CIRI_long/main.py"
+                        (("os.chmod\\(lib_path.*")
+                         "")))))))
+    (inputs (list circtools
+                  python-biopython
+                  python-bwapy
+                  python-levenshtein
+                  python-mappy
+                  python-numpy
+                  python-pandas
+                  python-pysam
+                  python-pyspoa
+                  python-scikit-learn
+                  python-scipy))
+    (native-inputs (list python-cython python-nose python-setuptools))
     (home-page "https://ciri-cookbook.readthedocs.io/")
     (synopsis "Circular RNA identification for Nanopore sequencing")
     (description "CIRI-long is a package for circular RNA identification using
@@ -5943,58 +5942,65 @@ high-throughput sequencing data – with an emphasis on simplicity.")
   (package
     (name "tetoolkit")
     (version "2.2.1b")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/mhammell-laboratory/TEtranscripts")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1m3xsydakhdan9gp9mfdz7llka5g6ak91d0mbl1cmmxq9qs6an4y"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/mhammell-laboratory/TEtranscripts")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1m3xsydakhdan9gp9mfdz7llka5g6ak91d0mbl1cmmxq9qs6an4y"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'adjust-requirements
-           (lambda _
-             (substitute* "setup.py"
-               ;; This defunct dependency isn't required for Python 3 (see:
-               ;; https://github.com/mhammell-laboratory/TEtranscripts/issues/111).
-               ((".*'argparse'.*") ""))))
-         (add-after 'unpack 'patch-invocations
-           (lambda* (#:key inputs #:allow-other-keys)
-             (substitute* '("bin/TEtranscripts"
-                            "bin/TEcount")
-               (("'sort ")
-                (string-append "'" (search-input-file inputs "bin/sort") " "))
-               (("'rm -f ")
-                (string-append "'" (search-input-file inputs "bin/rm") " -f "))
-               (("'Rscript'")
-                (string-append "'" (search-input-file inputs "bin/Rscript")
-                               "'")))
-             (substitute* "TEToolkit/IO/ReadInputs.py"
-               (("BamToBED")
-                (search-input-file inputs "bin/bamToBed")))
-             (substitute* "TEToolkit/Normalization.py"
-               (("\"Rscript\"")
-                (string-append "\"" (search-input-file inputs "bin/Rscript")
-                               "\"")))))
-         (add-after 'install 'wrap-program
-           (lambda* (#:key outputs #:allow-other-keys)
-             ;; Make sure the executables find R packages.
-             (for-each (lambda (script)
-                         (wrap-program script
-                           `("R_LIBS_SITE" ":" = (,(getenv "R_LIBS_SITE")))))
-                       (list (search-input-file outputs "bin/TEtranscripts")
-                             (search-input-file outputs "bin/TEcount"))))))))
-    (inputs
-     (list bash-minimal
-           coreutils
-           bedtools
-           python-pysam
-           r-minimal
-           r-deseq2))
+     `(#:phases (modify-phases %standard-phases
+                  (add-after 'unpack 'adjust-requirements
+                    (lambda _
+                      (substitute* "setup.py"
+                        ;; This defunct dependency isn't required for Python 3 (see:
+                        ;; https://github.com/mhammell-laboratory/TEtranscripts/issues/111).
+                        ((".*'argparse'.*")
+                         ""))))
+                  (add-after 'unpack 'patch-invocations
+                    (lambda* (#:key inputs #:allow-other-keys)
+                      (substitute* '("bin/TEtranscripts" "bin/TEcount")
+                        (("'sort ")
+                         (string-append "'"
+                                        (search-input-file inputs "bin/sort")
+                                        " "))
+                        (("'rm -f ")
+                         (string-append "'"
+                                        (search-input-file inputs "bin/rm")
+                                        " -f "))
+                        (("'Rscript'")
+                         (string-append "'"
+                                        (search-input-file inputs
+                                                           "bin/Rscript") "'")))
+                      (substitute* "TEToolkit/IO/ReadInputs.py"
+                        (("BamToBED")
+                         (search-input-file inputs "bin/bamToBed")))
+                      (substitute* "TEToolkit/Normalization.py"
+                        (("\"Rscript\"")
+                         (string-append "\""
+                                        (search-input-file inputs
+                                                           "bin/Rscript") "\"")))))
+                  (add-after 'install 'wrap-program
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      ;; Make sure the executables find R packages.
+                      (for-each (lambda (script)
+                                  (wrap-program script
+                                    `("R_LIBS_SITE" ":" =
+                                      (,(getenv "R_LIBS_SITE")))))
+                                (list (search-input-file outputs
+                                                         "bin/TEtranscripts")
+                                      (search-input-file outputs "bin/TEcount"))))))))
+    (inputs (list bash-minimal
+                  coreutils
+                  bedtools
+                  python-pysam
+                  r-minimal
+                  r-deseq2))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/mhammell-laboratory/TEtranscripts")
     (synopsis "Transposable elements in differential enrichment analysis")
     (description
@@ -6080,67 +6086,64 @@ databases.")
   (package
     (name "clipper-peak")
     (version "2.0.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/YeoLab/clipper")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0508rgnfjk5ar5d1mjbjyrnarv4kw9ksq0m3jw2bmgabmb5v6ikk"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  ;; Delete pre-compiled files.
-                  (delete-file "clipper/src/peaks.so")))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/YeoLab/clipper")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0508rgnfjk5ar5d1mjbjyrnarv4kw9ksq0m3jw2bmgabmb5v6ikk"))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   ;; Delete pre-compiled files.
+                   (delete-file "clipper/src/peaks.so")))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #false
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'use-python3-for-cython
-           (lambda _
-             (substitute* "setup.py"
-               (("^setup")
-                "\
-peaks.cython_directives = {'language_level': '3'}
+     `(#:tests? #f
+       #:phases (modify-phases %standard-phases
+                  (add-after 'unpack 'use-python3-for-cython
+                    (lambda _
+                      (substitute* "setup.py"
+                        (("^setup")
+                         "peaks.cython_directives = {'language_level': '3'}
 readsToWiggle.cython_directives = {'language_level': '3'}
 setup"))))
-         (add-after 'unpack 'disable-nondeterministic-test
-           (lambda _
-             ;; This test fails/succeeds non-deterministically.
-             (substitute* "clipper/test/test_call_peak.py"
-               (("test_get_FDR_cutoff_mean") "_test_get_FDR_cutoff_mean"))))
-         ;; This doesn't work because "usage" is executed, and that calls
-         ;; exit(8).
-         (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               (with-directory-excursion "clipper/test"
-                 (invoke "python" "-m" "unittest")))))
-         ;; This is not a library
-         (delete 'sanity-check))))
-    (inputs
-     (list htseq
-           python-pybedtools
-           python-cython
-           python-scikit-learn
-           python-matplotlib
-           python-pandas
-           python-pysam
-           python-numpy
-           python-scipy))
-    (native-inputs
-     (list python-setuptools-git
-           python-mock ; for tests
-           python-nose ; for tests
-           python-pytz)) ; for tests
+                  (add-after 'unpack 'disable-nondeterministic-test
+                    (lambda _
+                      ;; This test fails/succeeds non-deterministically.
+                      (substitute* "clipper/test/test_call_peak.py"
+                        (("test_get_FDR_cutoff_mean")
+                         "_test_get_FDR_cutoff_mean"))))
+                  ;; This doesn't work because "usage" is executed, and that calls
+                  ;; exit(8).
+                  (replace 'check
+                    (lambda* (#:key tests? inputs outputs #:allow-other-keys)
+                      (when tests?
+                        (add-installed-pythonpath inputs outputs)
+                        (with-directory-excursion "clipper/test"
+                          (invoke "python" "-m" "unittest")))))
+                  ;; This is not a library
+                  (delete 'sanity-check))))
+    (inputs (list htseq
+                  python-pybedtools
+                  python-cython
+                  python-scikit-learn
+                  python-matplotlib
+                  python-pandas
+                  python-pysam
+                  python-numpy
+                  python-scipy))
+    (native-inputs (list python-setuptools-git
+                         python-setuptools
+                         python-wheel
+                         python-mock ;for tests
+                         python-nose ;for tests
+                         python-pytz)) ;for tests
     (home-page "https://github.com/YeoLab/clipper")
     (synopsis "CLIP peak enrichment recognition")
-    (description
-     "CLIPper is a tool to define peaks in CLIP-seq datasets.")
+    (description "CLIPper is a tool to define peaks in CLIP-seq datasets.")
     (license license:gpl2)))
 
 (define-public codingquarry
@@ -6211,24 +6214,23 @@ time.")
   (package
     (name "crossmap")
     (version "0.6.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "CrossMap" version))
-              (sha256
-               (base32
-                "0hqminh5wn1p3x481jbyc7gmncp5xc196hpvki7k25vzbryhwcix"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  ;; Delete compiled Python files.
-                  (for-each delete-file (find-files "." "\\.pyc$"))
-                  (delete-file-recursively ".eggs")))))
-    (build-system python-build-system)
-    (inputs
-     (list python-bx-python python-numpy python-pybigwig python-pysam
-           zlib))
-    (native-inputs
-     (list python-cython python-nose python-pyparsing))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "CrossMap" version))
+       (sha256
+        (base32 "0hqminh5wn1p3x481jbyc7gmncp5xc196hpvki7k25vzbryhwcix"))
+       (modules '((guix build utils)))
+       (snippet '(begin
+                   ;; Delete compiled Python files.
+                   (for-each delete-file
+                             (find-files "." "\\.pyc$"))
+                   (delete-file-recursively ".eggs")))))
+    (build-system pyproject-build-system)
+    (inputs (list python-bx-python python-numpy python-pybigwig python-pysam
+                  zlib))
+    (native-inputs (list python-cython python-nose python-pyparsing
+                         python-setuptools python-wheel))
     (home-page "https://crossmap.sourceforge.net/")
     (synopsis "Convert genome coordinates between assemblies")
     (description
@@ -8132,6 +8134,7 @@ target sequences from sampled subsequences.  Example applications include
 transcript-level RNA-Seq quantification, allele-specific/haplotype expression
 analysis (from RNA-Seq), transcription factor binding quantification in
 ChIP-Seq, and analysis of metagenomic data.")
+    (properties `((lint-hidden-cpe-vendors . ("openjsf" "qs_project"))))
     (license license:artistic2.0)))
 
 (define-public express-beta-diversity
@@ -10513,7 +10516,8 @@ program for nucleotide and protein sequences.")
        "MUSIC is an algorithm for identification of enriched regions at
 multiple scales in the read depth signals from ChIP-Seq experiments.")
       ;; See https://github.com/gersteinlab/MUSIC/issues/6
-      (license license:gpl2+))))
+      (license license:gpl2+)
+      (properties '((lint-hidden-cpe-vendors . ("apple")))))))
 
 (define-public newick-utils
   ;; There are no recent releases so we package from git.
@@ -11905,21 +11909,20 @@ sequence itself can be retrieved from these databases.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0lv3h5k2pn1pz35kz0wk5xmricxzy8qscs2y7nwh0k6x4pn0m0s5"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-biopython
-           python-intervaltree
-           python-joblib
-           python-pandas
-           python-pybedtools
-           python-pysam))
-    (native-inputs
-     (list python-cython python-pytest))
+        (base32 "0lv3h5k2pn1pz35kz0wk5xmricxzy8qscs2y7nwh0k6x4pn0m0s5"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-biopython
+                             python-intervaltree
+                             python-joblib
+                             python-pandas
+                             python-pybedtools
+                             python-pysam))
+    (native-inputs (list python-cython python-pytest python-setuptools
+                         python-wheel))
     (home-page "https://t-neumann.github.io/slamdunk/")
     (synopsis "Streamline SLAM-seq analysis with high sensitivity")
-    (description "SlamDunk is a fully automated tool for automated, robust,
+    (description
+     "SlamDunk is a fully automated tool for automated, robust,
 scalable and reproducible SLAMseq data analysis.  Diagnostic plotting features
 and a MultiQC plugin will make your SLAMseq data ready for immediate QA and
 interpretation.")
@@ -11966,38 +11969,38 @@ for Spatial Transcriptomics data.")
   (package
     (name "stpipeline")
     (version "1.8.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "stpipeline" version))
-              (sha256
-               (base32
-                "0har2g42fvaqpiz66lincy86aj1hvwzds26kxhxfamvyvv4721wk"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "stpipeline" version))
+       (sha256
+        (base32 "0har2g42fvaqpiz66lincy86aj1hvwzds26kxhxfamvyvv4721wk"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
-      #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'relax-requirements
-           (lambda _
-             (substitute* "requirements.txt"
-               (("argparse.*") "")))))))
-    (propagated-inputs
-     (list htseq
-           python-cython
-           python-invoke
-           python-numpy
-           python-pandas
-           python-pympler
-           python-pysam
-           python-regex
-           python-scikit-learn
-           python-scipy
-           python-seaborn
-           python-setuptools
-           python-sqlitedict
-           python-taggd
-           samtools
-           star))
+      #:phases '(modify-phases %standard-phases
+                  (add-after 'unpack 'relax-requirements
+                    (lambda _
+                      (substitute* "requirements.txt"
+                        (("argparse.*")
+                         "")))))))
+    (propagated-inputs (list htseq
+                             python-cython
+                             python-invoke
+                             python-numpy
+                             python-pandas
+                             python-pympler
+                             python-pysam
+                             python-regex
+                             python-scikit-learn
+                             python-scipy
+                             python-seaborn
+                             python-setuptools
+                             python-sqlitedict
+                             python-taggd
+                             samtools
+                             star))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/SpatialTranscriptomicsResearch/st_pipeline")
     (synopsis "Pipeline for spatial mapping of unique transcripts")
     (description
@@ -14521,31 +14524,31 @@ quality control are provided.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0cagawlzjwj3wam10lv64xgbfx4zcnzxi5sjpsdhq7rn4z24mzc2"))))
-    (build-system python-build-system)
+        (base32 "0cagawlzjwj3wam10lv64xgbfx4zcnzxi5sjpsdhq7rn4z24mzc2"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'relax-requirements
-           (lambda _
-             (substitute* "requirements.txt"
-               (("==") ">=")))))))
-    (inputs
-     (list python-cryptography
-           python-intervaltree
-           python-jsonschema
-           python-lxml
-           python-ndg-httpsclient
-           python-progressbar2
-           python-pyasn1
-           python-pyopenssl
-           python-pyyaml
-           python-requests
-           python-termcolor))
+     `(#:phases (modify-phases %standard-phases
+                  (add-after 'unpack 'relax-requirements
+                    (lambda _
+                      (substitute* "requirements.txt"
+                        (("==")
+                         ">=")))))))
+    (inputs (list python-cryptography
+                  python-intervaltree
+                  python-jsonschema
+                  python-lxml
+                  python-ndg-httpsclient
+                  python-progressbar2
+                  python-pyasn1
+                  python-pyopenssl
+                  python-pyyaml
+                  python-requests
+                  python-termcolor))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://gdc.nci.nih.gov/access-data/gdc-data-transfer-tool")
     (synopsis "GDC data transfer tool")
-    (description "The gdc-client provides several convenience functions over
+    (description
+     "The gdc-client provides several convenience functions over
 the GDC API which provides general download/upload via HTTPS.")
     (license license:asl2.0)))
 
@@ -20673,24 +20676,25 @@ matrices.")
   (package
     (name "python-scanorama")
     (version "1.7.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "scanorama" version))
-              (sha256
-               (base32
-                "0il7bf4c7vli2dm2jx7dskh3ymgv8nmk0y90jzgfrnqjzh250x5w"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-annoy
-           python-fbpca
-           python-geosketch
-           python-intervaltree
-           python-matplotlib
-           python-numpy
-           python-scikit-learn
-           python-scipy))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "scanorama" version))
+       (sha256
+        (base32 "0il7bf4c7vli2dm2jx7dskh3ymgv8nmk0y90jzgfrnqjzh250x5w"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-annoy
+                             python-fbpca
+                             python-geosketch
+                             python-intervaltree
+                             python-matplotlib
+                             python-numpy
+                             python-scikit-learn
+                             python-scipy))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/brianhie/scanorama")
-    (synopsis "Panoramic stitching of heterogeneous single cell transcriptomic data")
+    (synopsis
+     "Panoramic stitching of heterogeneous single cell transcriptomic data")
     (description
      "Scanorama enables batch-correction and integration of heterogeneous
 scRNA-seq datasets, which is described in the paper \"Efficient integration of
@@ -20849,9 +20853,11 @@ and intra-cell population structure.\" Baron et al. Cell Systems (2016)
          (file-name (git-file-name name version))
          (sha256
           (base32 "05ps43gig0d3ia9x5lj84lb00hbsl6ba9n7y7jz927npxbr2ym23"))))
-      (build-system python-build-system)
+      (build-system pyproject-build-system)
+      (native-inputs (list python-setuptools python-wheel python-pytest))
       (home-page "https://github.com/rrwick/porechop")
-      (synopsis "Finding, trimming or splitting adapters, in Oxford Nanopore reads")
+      (synopsis
+       "Finding, trimming or splitting adapters, in Oxford Nanopore reads")
       (description
        "The porechop package is a tool for finding and removing adapters from Oxford
 Nanopore reads.  Adapters on the ends of reads are trimmed off, and when a read
@@ -21294,14 +21300,12 @@ Torrent.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "0f3n7wcmxbnqiisgimhpa6p5chqpb1hj69i6rpg2hv2671i8nn68"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #false)) ; there are none
-    (propagated-inputs
-     (list python-numpy))
-    (inputs
-     (list fftw))
-    (native-inputs
-     (list python-cython))
+    (build-system pyproject-build-system)
+    (arguments
+     '(#:tests? #f)) ;there are none
+    (propagated-inputs (list python-numpy))
+    (inputs (list fftw))
+    (native-inputs (list python-cython python-setuptools python-wheel))
     (home-page "https://github.com/KlugerLab/pyFIt-SNE")
     (synopsis "FFT-accelerated Interpolation-based t-SNE")
     (description
@@ -21488,34 +21492,30 @@ deleted.")
        (method url-fetch)
        (uri (pypi-uri "velocyto" version))
        (sha256
-        (base32
-         "0fgygyzqgrq32dv6a00biq1p1cwi6kbl5iqblxq1kklj6b2mzmhs"))
+        (base32 "0fgygyzqgrq32dv6a00biq1p1cwi6kbl5iqblxq1kklj6b2mzmhs"))
        (modules '((guix build utils)))
        ;; Delete generated C files.
-       (snippet
-        '(for-each delete-file (find-files "." "\\.c")))))
-    (build-system python-build-system)
+       (snippet '(for-each delete-file
+                           (find-files "." "\\.c")))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         ;; Numba needs a writable dir to cache functions.
-         (add-before 'check 'set-numba-cache-dir
-           (lambda _
-             (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
-    (native-inputs
-     (list python-joblib))
-    (propagated-inputs
-     (list python-click
-           python-cython
-           python-h5py
-           python-loompy
-           python-matplotlib
-           python-numba
-           python-numpy
-           python-pandas
-           python-pysam
-           python-scikit-learn
-           python-scipy))
+     '(#:phases (modify-phases %standard-phases
+                  ;; Numba needs a writable dir to cache functions.
+                  (add-before 'check 'set-numba-cache-dir
+                    (lambda _
+                      (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
+    (native-inputs (list python-joblib python-setuptools python-wheel))
+    (propagated-inputs (list python-click
+                             python-cython
+                             python-h5py
+                             python-loompy
+                             python-matplotlib
+                             python-numba
+                             python-numpy
+                             python-pandas
+                             python-pysam
+                             python-scikit-learn
+                             python-scipy))
     (home-page "https://github.com/velocyto-team/velocyto.py")
     (synopsis "RNA velocity analysis for single cell RNA-seq data")
     (description
@@ -21637,19 +21637,17 @@ sequence for paired-ended data, for which this information is not available.")
        (method url-fetch)
        (uri (pypi-uri "checkm-genome" version))
        (sha256
-        (base32
-         "0i2nnki639hgjag17wlva2x0ymn37b4krqsf6akxddykhfbkdnkz"))))
-    (build-system python-build-system)
+        (base32 "0i2nnki639hgjag17wlva2x0ymn37b4krqsf6akxddykhfbkdnkz"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #f ; Some tests fail for unknown reasons.
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'set-HOME
-           (lambda _
-             (setenv "HOME" "/tmp"))))))
-    (inputs
-     (list python-dendropy python-matplotlib python-numpy python-pysam
-           python-scipy))
+     `(#:tests? #f ;Some tests fail for unknown reasons.
+       #:phases (modify-phases %standard-phases
+                  (add-before 'check 'set-HOME
+                    (lambda _
+                      (setenv "HOME" "/tmp"))))))
+    (inputs (list python-dendropy python-matplotlib python-numpy python-pysam
+                  python-scipy))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://ecogenomics.github.io/CheckM/")
     (synopsis "Assess the quality of putative genome bins")
     (description
@@ -22230,30 +22228,29 @@ single-cell RNA-seq data.")
        (method url-fetch)
        (uri (pypi-uri "ikarus" version))
        (sha256
-        (base32
-         "086czpvj4yafz4vrq5rx2gy0bj2l8nzwnkk0gw8qvy4w133xjysy"))))
-    (build-system python-build-system)
+        (base32 "086czpvj4yafz4vrq5rx2gy0bj2l8nzwnkk0gw8qvy4w133xjysy"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:tests? #false
-       #:phases
-       (modify-phases %standard-phases
-         ;; See https://github.com/BIMSBbioinfo/ikarus/issues/12
-         (add-after 'unpack 'fix-issue-12
-           (lambda _
-             (substitute* "ikarus/classifier.py"
-               (("pyscenic.genesig") "ctxcore.genesig"))))
-         ;; Numba needs a writable dir to cache functions.
-         (add-before 'check 'set-numba-cache-dir
-           (lambda _
-             (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
-    (propagated-inputs
-     (list python-numpy
-           python-pandas
-           python-scipy
-           python-scanpy
-           python-anndata
-           python-ctxcore ;because of issue 12
-           pyscenic))
+     `(#:tests? #f
+       #:phases (modify-phases %standard-phases
+                  ;; See https://github.com/BIMSBbioinfo/ikarus/issues/12
+                  (add-after 'unpack 'fix-issue-12
+                    (lambda _
+                      (substitute* "ikarus/classifier.py"
+                        (("pyscenic.genesig")
+                         "ctxcore.genesig"))))
+                  ;; Numba needs a writable dir to cache functions.
+                  (add-before 'check 'set-numba-cache-dir
+                    (lambda _
+                      (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
+    (propagated-inputs (list python-numpy
+                             python-pandas
+                             python-scipy
+                             python-scanpy
+                             python-anndata
+                             python-ctxcore ;because of issue 12
+                             pyscenic))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/BIMSBbioinfo/ikarus")
     (synopsis "Machine learning classifier of tumor cells")
     (description
@@ -22322,7 +22319,7 @@ effective when applied to the signal dataset.")
        (modules '((guix build utils)))
        (snippet
         '(delete-file-recursively "ont_fast5_api/vbz_plugin"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -22337,6 +22334,9 @@ effective when applied to the signal dataset.")
      (list vbz-compression))
     (propagated-inputs
      (list python-numpy python-h5py python-packaging python-progressbar33))
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (home-page "https://github.com/nanoporetech/ont_fast5_api")
     (synopsis "Interface to HDF5 files of the Oxford Nanopore fast5 file format")
     (description
@@ -22360,25 +22360,24 @@ and reflect the fast5 file schema, and tools to convert between
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32
-           "1im0bik2hxkcb7jzkcxp5nqb30hd8lfraxml6i5ik52j6z3qqln1"))))
-      (build-system python-build-system)
+          (base32 "1im0bik2hxkcb7jzkcxp5nqb30hd8lfraxml6i5ik52j6z3qqln1"))))
+      (build-system pyproject-build-system)
       (arguments
-       '(#:tests? #f         ; no tests included
-         #:phases
-         (modify-phases %standard-phases
-           (add-after 'unpack 'relax-requirements
-             (lambda _
-               (substitute* "setup.py"
-                 ((", <3.0") ""))))))) ; matplotlib
-      (inputs
-       (list python-matplotlib
-             python-networkx
-             python-numpy
-             python-pybigwig
-             python-biopython-1.73
-             python-scikit-learn
-             python-scipy))
+       '(#:tests? #f ;no tests included
+         #:phases (modify-phases %standard-phases
+                    (add-after 'unpack 'relax-requirements
+                      (lambda _
+                        (substitute* "setup.py"
+                          ((", <3.0")
+                           ""))))))) ;matplotlib
+      (inputs (list python-matplotlib
+                    python-networkx
+                    python-numpy
+                    python-pybigwig
+                    python-biopython-1.73
+                    python-scikit-learn
+                    python-scipy))
+      (native-inputs (list python-setuptools python-wheel))
       (home-page "https://github.com/phoenixding/tbsp/")
       (synopsis "SNP-based trajectory inference")
       (description
@@ -23709,21 +23708,22 @@ broadly useful for viral amplicon-based sequencing.")
     (name "python-pyliftover")
     (version "0.4")
     ;; The version of pypi does not include test data.
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/konstantint/pyliftover")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1j8jp9iynv2l3jv5pr0pn0p3azlama1bqg233piglzm6bqh3m2m3"))))
-    (build-system python-build-system)
-    (arguments `(#:tests? #false)) ; the tests access the web
-    (native-inputs
-     (list python-pytest))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/konstantint/pyliftover")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1j8jp9iynv2l3jv5pr0pn0p3azlama1bqg233piglzm6bqh3m2m3"))))
+    (build-system pyproject-build-system)
+    (arguments
+     `(#:tests? #f)) ;the tests access the web
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/konstantint/pyliftover")
-    (synopsis "Python implementation of UCSC liftOver genome coordinate conversion")
+    (synopsis
+     "Python implementation of UCSC liftOver genome coordinate conversion")
     (description
      "PyLiftover is a library for quick and easy conversion of genomic (point)
 coordinates between different assemblies.")
@@ -25008,14 +25008,15 @@ interest.")
   (package
     (name "python-vireosnp")
     (version "0.5.7")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "vireoSNP" version))
-              (sha256
-               (base32
-                "02ybhzivsxwnb1axlgbs63wni1j27xajnkl4jw1ps5vmsz2l4b0d"))))
-    (build-system python-build-system)
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "vireoSNP" version))
+       (sha256
+        (base32 "02ybhzivsxwnb1axlgbs63wni1j27xajnkl4jw1ps5vmsz2l4b0d"))))
+    (build-system pyproject-build-system)
     (propagated-inputs (list python-matplotlib python-numpy python-scipy))
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/huangyh09/vireoSNP")
     (synopsis "Deconvolution based on SNP for multiplexed scRNA-seq data")
     (description

@@ -79,14 +79,14 @@
 (define-public comedilib
   (package
     (name "comedilib")
-    (version "0.12.0")
+    (version "0.13.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.comedi.org/download/comedilib-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0wzh23iyix4xj211fsd8hwrdcjhg2w5jswk9kywb1gpd3h8afajj"))))
+                "0jdw5gp02d8q3p4ldjrc3zaw0v435kmn3c95pv094gyxj3pwhacm"))))
     (build-system gnu-build-system)
     (synopsis "Library for Comedi")
     (description "Comedilib is a user-space library that provides a
@@ -861,7 +861,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
 (define-public symbiyosys
   (package
     (name "symbiyosys")
-    (version "0.53")
+    (version "0.54")
     (source
      (origin
        (method git-fetch)
@@ -870,7 +870,7 @@ them usable as simple logic analyzer and/or oscilloscope hardware.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0caabl2r6gw8licykq79blzrkz0189b08d5czlrgm1jmnqmp1kfa"))))
+        (base32 "072j4i9d4wn56w8vzdwgqhwf0q0jswlyf6sa21qkw0drwawyg0hm"))))
     (build-system gnu-build-system)
     (arguments
      (list

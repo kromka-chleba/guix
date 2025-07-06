@@ -68,7 +68,7 @@
 ;;; Copyright © 2023, 2024 Jaeme Sifat <jaeme@runbox.com>
 ;;; Copyright © 2023 Josselin Poiret <dev@jpoiret.xyz>
 ;;; Copyright © 2024 Timotej Lazar <timotej.lazar@araneo.si>
-;;; Copyright © 2024 Ahmad Draidi <a.r.draidi@redscript.org>
+;;; Copyright © 2024-2025 Ahmad Draidi <a.r.draidi@redscript.org>
 ;;; Copyright © 2024 chris <chris@bumblehead.com>
 ;;; Copyright © 2024 Erik Eduardo Alonso Hernández <erik@erikeduardo.xyz>
 ;;; Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
@@ -80,7 +80,7 @@
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2025 Tomáš Čech <sleep_walker@gnu.org>
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
-;;; Copyright © 2025 Junker <dk@junkeria.club>
+;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -153,6 +153,7 @@
   #:use-module (gnu packages haskell-xyz)
   #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
+  #:use-module (gnu packages jemalloc)
   #:use-module (gnu packages libbsd)
   #:use-module (gnu packages libevent)
   #:use-module (gnu packages libffi)
@@ -166,6 +167,7 @@
   #:use-module (gnu packages mpd)
   #:use-module (gnu packages pciutils)
   #:use-module (gnu packages music)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages pantheon)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages perl)
@@ -180,6 +182,7 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages regex)
+  #:use-module (gnu packages rust-apps)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages suckless)
@@ -892,6 +895,67 @@ subscribe to events.")
 your own layouts, widgets, and built-in commands.")
     (license license:expat)))
 
+(define-public quickshell
+  (package
+    (name "quickshell")
+    (version "0.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.outfoxxed.me/quickshell/quickshell")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0s3d2mw133d11x1kwjf1krw0xfiidgc77vsz92n65zjdjb8kkl8d"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f ; tests are development-only for now
+      #:configure-flags
+      #~(list "-GNinja"
+              "-DCRASH_REPORTER=OFF" ; Breakpad is not packaged in Guix
+              "-DDISTRIBUTOR=\"GNU Guix\""
+              "-DDISTRIBUTOR_DEBUGINFO_AVAILABLE=NO")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'build (lambda _ (invoke "cmake" "--build" ".")))
+          (replace 'install (lambda _ (invoke "cmake" "--install" ".")))
+          (add-after 'install 'wrap-program
+            (lambda _
+              (wrap-program (string-append #$output "/bin/quickshell")
+                `("QML_IMPORT_PATH" ":" = (,(getenv "QML_IMPORT_PATH")))))))))
+    (native-inputs
+     (list gcc-14
+           ninja
+           pkg-config
+           qtshadertools
+           spirv-tools))
+    (inputs
+     (list bash-minimal
+           cli11
+           jemalloc
+           libdrm
+           libxcb
+           libxkbcommon
+           linux-pam
+           mesa
+           pipewire
+           qtbase
+           qtdeclarative
+           qtwayland
+           wayland
+           wayland-protocols))
+    (propagated-inputs
+     (list qtsvg))
+    (home-page "https://quickshell.outfoxxed.me")
+    (synopsis "QtQuick-based desktop shell toolkit")
+    (description
+     "Quickshell is a flexible QtQuick-based toolkit for creating and
+customizing toolbars, notification centers, and other desktop environment
+tools in a live programming environment.")
+    (license license:lgpl3)))
+
 (define-public quickswitch-i3
   (let ((commit "ed692b1e8f43b95bd907ced26238ce8ccb2ed28f")
         (revision "1")) ; Guix package revision
@@ -1039,7 +1103,7 @@ desktop environment.")
 (define-public icewm
   (package
     (name "icewm")
-    (version "3.7.5")
+    (version "3.8.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1048,7 +1112,7 @@ desktop environment.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1xwp4lrc8mqi3lxs0vkssm16s958k0i9qjxypygmrny7xw020qb0"))))
+                "0981hfic0i11hv9krl230adb1i2glxymv5ybg7ki25xi067w2xiw"))))
     (build-system cmake-build-system)
     (native-inputs (list pkg-config gettext-minimal))
     (inputs (list fontconfig
@@ -2313,6 +2377,32 @@ features, such as the ability to take a screenshot as the background image,
 display a clock or apply image manipulation techniques to the background image.")
     (home-page "https://github.com/jirutka/swaylock-effects")))
 
+(define-public shaderbg
+  ;; There is no official upstream version, so we will use the latest commit.
+  (let ((commit "027d4f87fd542c79d4276b521e39025477b6d03e")
+        (revision "0"))
+   (package
+    (name "shaderbg")
+    (version (git-version "0" revision commit))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://git.sr.ht/~mstoeckl/shaderbg")
+             (commit commit)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1qjidfczlw96jky6iszk28cn8slydwq1ry2k1l2dmsz7xd5mnyzw"))))
+    (build-system meson-build-system)
+    (native-inputs (list pkg-config
+                         wayland))      ;for wayland-scanner
+    (inputs (list egl-wayland mesa))
+    (home-page "https://git.sr.ht/~mstoeckl/shaderbg")
+    (synopsis "Use Shadertoy shaders as the desktop background")
+    (description "@code{shaderbg} lets you render shaders as wallpapers.  It
+works on Wayland compositors supporting the wlr-layer-shell protocol.")
+    (license license:gpl3+))))
+
 (define-public swaybg
   (package
     (name "swaybg")
@@ -2503,7 +2593,7 @@ compository, supporting the following features:
 (define-public waybar
   (package
     (name "waybar")
-    (version "0.12.0")
+    (version "0.13.0")
     (source
      (origin
        (method git-fetch)
@@ -2512,7 +2602,7 @@ compository, supporting the following features:
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0i9an3yxbsbgpkl4zvwmk2g6vaap8shxix5gid6vx8x6z9wgg52n"))))
+        (base32 "0bdwdyxgrfv1ffabf1n4wqq1wz20qig9j9w0k76nhzw979ha7x99"))))
     (build-system meson-build-system)
     (arguments
      (list #:configure-flags #~(list "--wrap-mode=nodownload")))
@@ -2600,6 +2690,52 @@ core/thread.")
     (synopsis "Utility to manage Wayland compositor outputs")
     (description "wlr-randr is a utility to manage outputs of a Wayland compositor.")
     (license license:expat))) ; MIT license
+
+(define-public wlopm
+  ;; Use latest commit, mainly for Makefile fix
+  (let ((commit "6a197ebc634a6bc33f8251679bbe15bdd77e2cae")
+        (revision "0"))
+    (package
+      (name "wlopm")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://git.sr.ht/~leon_plickat/wlopm")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (snippet
+          ;; Delete bundled wlr-protocols file
+          #~(delete-file "wlr-output-power-management-unstable-v1.xml"))
+         (sha256
+          (base32 "1zjlr97zyhbbi0vincxhwxszclgas539ixw9qpplpvf32zlcnjj3"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:tests? #f ;no tests
+        #:make-flags
+        #~(list (string-append "CC=" #$(cc-for-target))
+                (string-append "PREFIX=" #$output))
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure) ;no 'configure' script
+            (add-after 'unpack 'replace-bundled-wlr-protocols-file
+              (lambda _
+                (copy-file (string-append #$(this-package-native-input
+                                             "wlr-protocols")
+                                          "/share/wlr-protocols/unstable/"
+                                          "wlr-output-power-management-unstable-v1.xml")
+                           "wlr-output-power-management-unstable-v1.xml"))))))
+      (native-inputs (list wayland wlr-protocols))
+      (home-page "https://git.sr.ht/~leon_plickat/wlopm")
+      (synopsis "Utility to manage Wayland outputs power")
+      (description
+       "wlopm is a simple client implementing
+@code{zwlr-output-power-management-v1}, which allows clients to control power
+management modes of outputs that are currently part of the compositor space.
+This allows wlopm to power down outputs when the system is idle.")
+      (license license:gpl3))))
 
 (define-public mako
   (package

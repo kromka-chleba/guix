@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013, 2015 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2014-2023 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2014-2023, 2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014 Ian Denhardt <ian@zenhack.net>
 ;;; Copyright © 2014, 2016, 2020 Eric Bavier <bavier@posteo.net>
 ;;; Copyright © 2014, 2015 Federico Beffa <beffa@fbengineering.ch>
@@ -2445,6 +2445,11 @@ The gnome-about program helps find which version of GNOME is installed.")
             (lambda _
               (substitute* "meson-postinstall.sh"
                 (("update-desktop-database") (which "true")))))
+          (add-before 'configure 'relax-gcc-14-strictness
+            (lambda _
+              (setenv "CFLAGS"
+                      (string-append "-g -O2"
+                                     " -Wno-error=incompatible-pointer-types"))))
           (add-after 'install 'patch-thumbnailer
             (lambda* (#:key outputs #:allow-other-keys)
               (substitute*
@@ -8484,31 +8489,31 @@ Evolution (hence the name), but is now used by other packages as well.")
                 "0mfychh1q3dx0b96pjz9a9y112bm9yqyim40yykzxx1hppsdjhww"))))
     (build-system glib-or-gtk-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-before
-          'build 'pre-build
-          (lambda* (#:key outputs #:allow-other-keys)
-            (let ((out (assoc-ref outputs "out")))
-              ;; Use absolute shared library path in Caribou-1.0.typelib.
-              (substitute* "libcaribou/Makefile"
-                (("--shared-library=libcaribou.so")
-                 (string-append "--shared-library="
-                                out "/lib/libcaribou.so")))
-              #t)))
+     (list
+      #:configure-flags
+      ;; Relax gcc-14's strictness.
+      #~(list "CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types")
+      #:phases
+       #~(modify-phases %standard-phases
+           (add-before
+               'build 'pre-build
+             (lambda _
+               ;; Use absolute shared library path in Caribou-1.0.typelib.
+               (substitute* "libcaribou/Makefile"
+                 (("--shared-library=libcaribou.so")
+                  (string-append "--shared-library="
+                                 #$output "/lib/libcaribou.so")))))
          (add-after 'install 'wrap-programs
           (lambda* (#:key outputs #:allow-other-keys)
-            (let* ((out (assoc-ref outputs "out"))
-                   (python-path (getenv "GUIX_PYTHONPATH"))
-                   (gi-typelib-path (getenv "GI_TYPELIB_PATH")))
+            (let ((python-path (getenv "GUIX_PYTHONPATH"))
+                  (gi-typelib-path (getenv "GI_TYPELIB_PATH")))
               (for-each
                (lambda (prog)
                  (wrap-program prog
                    `("GUIX_PYTHONPATH"      ":" prefix (,python-path))
                    `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path))))
-               (list (string-append out "/bin/caribou-preferences")
-                     (string-append out "/libexec/antler-keyboard"))))
-            #t)))))
+               (list (string-append #$output "/bin/caribou-preferences")
+                     (string-append #$output "/libexec/antler-keyboard")))))))))
     (native-inputs
      `(("glib:bin" ,glib "bin") ; for glib-compile-schemas, etc.
        ("gobject-introspection" ,gobject-introspection)
@@ -8546,7 +8551,9 @@ users.")
                                         "NetworkManager/NetworkManager"))
                     (commit version)))
               (file-name (git-file-name name version))
-              (patches (search-patches "network-manager-plugin-path.patch"))
+              (patches (search-patches
+                        "network-manager-plugin-ownership.patch"
+                        "network-manager-plugin-path.patch"))
               (sha256
                (base32
                 "0fx3yvqrwc9fqphhwvchxls0lgizlz7bxww3riijlvx3pkypqbyr"))))
@@ -11171,7 +11178,13 @@ functionality and behavior.")
            (lambda _
              (substitute* "meson.build"
                (("gtk_update_icon_cache: true")
-                "gtk_update_icon_cache: false")))))))
+                "gtk_update_icon_cache: false"))))
+          (add-before 'configure 'relax-gcc-14-strictness
+            (lambda _
+              (setenv "CFLAGS"
+                      (string-append "-g -O2"
+                                     " -Wno-error=implicit-function-declaration"
+                                     " -Wno-error=incompatible-pointer-types")))))))
     (inputs
      (list bdb
            dbus-glib
@@ -11895,6 +11908,10 @@ photo-booth-like software, such as Cheese.")
                    (substitute* "meson.build"
                      (("gtk_update_icon_cache: true")
                       "gtk_update_icon_cache: false"))))
+               (add-before 'configure 'relax-gcc-14-strictness
+                 (lambda _
+                   (setenv "CFLAGS"
+                           "-g -O2 -Wno-error=incompatible-pointer-types")))
                (add-after 'install 'wrap-cheese
                  (lambda* (#:key inputs outputs #:allow-other-keys)
                    (wrap-program (search-input-file outputs "bin/cheese")

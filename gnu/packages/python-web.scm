@@ -38,7 +38,7 @@
 ;;; Copyright © 2020 Holger Peters <holger.peters@posteo.de>
 ;;; Copyright © 2020 Noisytoot <noisytoot@gmail.com>
 ;;; Copyright © 2020 Edouard Klein <edk@beaver-labs.com>
-;;; Copyright © 2020, 2021, 2022, 2023 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020, 2021, 2022, 2023, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Konrad Hinsen <konrad.hinsen@fastmail.net>
 ;;; Copyright © 2020, 2022, 2024 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2020 Raghav Gururajan <raghavgururajan@disroot.org>
@@ -150,6 +150,59 @@
   #:use-module (gnu packages xml)
   #:use-module (gnu packages)
   #:use-module (srfi srfi-1))
+
+(define-public python-aiocoap
+  (package
+    (name "python-aiocoap")
+    (version "0.4.14")
+    (source
+     (origin
+       (method git-fetch) ; tests miss data and module files in PyPI release
+       (uri (git-reference
+             (url "https://github.com/chrysn/aiocoap")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0yxvcg5llgmccv0a9hfm4nr7zxv9al4wh257m95a06g5c52v6hxz"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; OSError: [Errno 98] error while attempting to bind on address ('::1',
+      ;; 8683, 0, 0): address already in use
+      #~(list "--ignore=tests/test_server.py"
+              "-k" (string-join
+                    ;; TypeError: can only concatenate str (not "NoneType") to
+                    ;; str
+                    (list "not test_options"
+                          "test_uri_parser"
+                          "test_help"    ; returned non-zero exit status 1.
+                          "test_routing" ; address already in use
+                          "test_tls")
+                    " and not "))))
+    (native-inputs
+     (list openssl ;for tests/test_tls.py
+           python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list ;; python-cbor-diag
+           python-cbor2
+           python-cryptography
+           ;; python-dtlssocket
+           python-filelock
+           ;; python-ge25519
+           python-pygments
+           python-termcolor
+           python-websockets))
+    (home-page "https://github.com/chrysn/aiocoap")
+    (synopsis "Python CoAP library")
+    (description
+     "The aiocoap package is an implementation of @url{@acronym{CoAP, the
+Constrained Application Protocol}, http://coap.space/}.  It facilitates
+writing applications that talk to network enabled embedded
+@acronym{IoT,Internet of Things} devices.")
+    (license license:expat)))
 
 (define-public python-devpi-common
   (package
@@ -2742,22 +2795,34 @@ object graph to and from JSON.")
 (define-public python-mechanicalsoup
   (package
     (name "python-mechanicalsoup")
-    (version "1.0.0")
+    (version "1.4.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "MechanicalSoup" version))
+       (uri (pypi-uri "mechanicalsoup" version))
        (sha256
-        (base32 "01sddjxy3rznh63hnl5lbv1hhk6xyiviwmkiw4x7v4ap35fb3lrp"))))
-    (build-system python-build-system)
+        (base32 "0k1ac77ld6jyjm5fsr44399l5gmiwnz5w6s74i3qqx2scfbsgs6w"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; The following dependencies are not directly required, the developer
+      ;; only pinned versions because of vulnerabilities.  They also break
+      ;; sanity-check because it checks for a python-certifi version which is
+      ;; more recent than the one available in Guix.
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'relax-dependencies
+                     (lambda _
+                       (substitute* "requirements.txt"
+                         (("certifi.*") "")
+                         (("urllib3.*") "")))))))
     (propagated-inputs
-     (list python-beautifulsoup4 python-lxml python-requests python-six))
+     (list python-beautifulsoup4 python-lxml python-requests))
     (native-inputs
-     (list python-pytest-cov
+     (list python-pytest
+           python-pytest-cov
            python-pytest-flake8
            python-pytest-httpbin
            python-pytest-mock
-           python-pytest-runner
            python-requests-mock
            python-setuptools
            python-wheel))
@@ -3118,20 +3183,21 @@ the Misaka Markdown parser.")
 (define-public python-flask-session
   (package
     (name "python-flask-session")
-    (version "0.4.0")
+    (version "0.8.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "Flask-Session" version))
+       (uri (pypi-uri "flask_session" version))
        (sha256
         (base32
-         "0ihzlhdhss8f93p3njzva9rdm7kmhaakdlzz680wmi583wr59vf9"))))
-    (build-system python-build-system)
+         "1zs20zpq6gxz9gsccbd2jrrbbcfvh0x9z9741gkr8dhh07mlbq10"))))
+    (build-system pyproject-build-system)
     (arguments
      '(#:tests? #f)) ; Tests require the various storage backends to be present
+    (native-inputs (list python-flit-core))
     (propagated-inputs
-     (list python-cachelib python-flask))
-    (home-page "https://github.com/fengsp/flask-session")
+     (list python-cachelib python-flask python-msgspec))
+    (home-page "https://github.com/pallets-eco/flask-session")
     (synopsis "Adds server-side session support to your Flask application")
     (description
      "Flask-Session is an extension for Flask that adds support for
@@ -3882,26 +3948,16 @@ teams extension for python-openid.")
 (define-public python-priority
   (package
     (name "python-priority")
-    (version "1.3.0")
+    (version "2.0.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "priority" version))
        (sha256
-        (base32 "1gpzn9k9zgks0iw5wdmad9b4dry8haiz2sbp6gycpjkzdld9dhbb"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (add-installed-pythonpath inputs outputs)
-             (invoke "pytest" "-vv" "test" "-k"
-                     ;; This test exceeded the Hypothesis deadline.
-                     "not test_period_of_repetition"))))))
+        (base32 "1h0qpa949bxx7za95v1apwnngkrngi695cwx8wchn3cd3d7xarf9"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-hypothesis python-pytest python-pytest-cov
-           python-pytest-xdist))
+     (list python-pytest python-setuptools python-wheel))
     (home-page "https://python-hyper.org/projects/priority/en/latest/")
     (synopsis "Pure-Python implementation of the HTTP/2 priority tree")
     (description

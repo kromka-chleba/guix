@@ -8,7 +8,7 @@
 ;;; Copyright © 2019, 2020, 2021, 2022 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2021, 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2021 Charles Jackson <charles.b.jackson@protonmail.com>
-;;; Copyright © 2022 jgart <jgart@dismail.de>
+;;; Copyright © 2022, 2025 jgart <jgart@dismail.de>
 ;;; Copyright © 2022, 2023 André A. Gomes <andremegafone@gmail.com>
 ;;; Copyright © 2023 Cage <cage-dev@twistfold.it>
 ;;;
@@ -65,6 +65,9 @@
 (define-public ecl-1am
   (sbcl-package->ecl-package sbcl-1am))
 
+(define-public clasp-1am
+  (sbcl-package->clasp-package sbcl-1am))
+
 (define-public sbcl-2am
   (let ((commit "1d2fd21bbd8f26ec91b962705cab098dd7b5f11c")
         (revision "0"))
@@ -95,6 +98,9 @@ consists of: @code{test}, @code{is}, @code{signals}, @code{finishes},
 (define-public ecl-2am
   (sbcl-package->ecl-package sbcl-2am))
 
+(define-public clasp-2am
+  (sbcl-package->clasp-package sbcl-2am))
+
 (define-public sbcl-assertion-error
   (let ((commit "8eab692a990d4caa193a46bae99af3e13e717b86")
         (revision "1"))
@@ -120,6 +126,9 @@ minimal dependencies on DISSECT.")
 
 (define-public ecl-assertion-error
   (sbcl-package->ecl-package sbcl-assertion-error))
+
+(define-public clasp-assertion-error
+  (sbcl-package->clasp-package sbcl-assertion-error))
 
 (define-public cl-assertion-error
   (sbcl-package->cl-source-package sbcl-assertion-error))
@@ -322,6 +331,9 @@ of either regular or generic functions with mocks.")
 (define-public ecl-cl-quickcheck
   (sbcl-package->ecl-package sbcl-cl-quickcheck))
 
+(define-public clasp-cl-quickcheck
+  (sbcl-package->clasp-package sbcl-cl-quickcheck))
+
 (define-public sbcl-clunit
   (let ((commit "6f6d72873f0e1207f037470105969384f8380628")
         (revision "1"))
@@ -355,6 +367,9 @@ experience.")
 (define-public ecl-clunit
   (sbcl-package->ecl-package sbcl-clunit))
 
+(define-public clasp-clunit
+  (sbcl-package->clasp-package sbcl-clunit))
+
 (define-public sbcl-clunit2
   (let ((commit "dd654e199aa3cbbdbcb0c2d8e1d240745bff75e8")
         (revision "1"))
@@ -383,6 +398,9 @@ easy to use so that you can quickly start testing.")
 
 (define-public ecl-clunit2
   (sbcl-package->ecl-package sbcl-clunit2))
+
+(define-public clasp-clunit2
+  (sbcl-package->clasp-package sbcl-clunit2))
 
 (define-public sbcl-confidence
   (let ((commit "5cbc74715348e12e689afb2d459dcb216c640a44")
@@ -418,6 +436,9 @@ without a complicated setup, and with explicit functions and decisions.")
 (define-public cl-confidence
   (sbcl-package->cl-source-package sbcl-confidence))
 
+(define-public clasp-confidence
+  (sbcl-package->clasp-package sbcl-confidence))
+
 (define-public sbcl-eos
   (let ((commit "b4413bccc4d142cbe1bf49516c3a0a22c9d99243")
         (revision "2"))
@@ -447,6 +468,9 @@ that of Eos has not.  Thus, Eos is now deprecated in favor of FiveAM.")
 
 (define-public ecl-eos
   (sbcl-package->ecl-package sbcl-eos))
+
+(define-public clasp-eos
+  (sbcl-package->clasp-package sbcl-eos))
 
 (define-public sbcl-fiasco
   (let ((commit "bb47d2fef4eb24cc16badc1c9a73d73c3a7e18f5")
@@ -482,6 +506,9 @@ logical continuation of Stefil.  It focuses on interactive debugging.")
 
 (define-public ecl-fiasco
   (sbcl-package->ecl-package sbcl-fiasco))
+
+(define-public clasp-fiasco
+  (sbcl-package->clasp-package sbcl-fiasco))
 
 (define-public sbcl-fiveam
   (package
@@ -583,6 +610,9 @@ with a focus on interactive development.")
 (define-public ecl-hu.dwim.stefil
   (sbcl-package->ecl-package sbcl-hu.dwim.stefil))
 
+(define-public clasp-hu.dwim.stefil
+  (sbcl-package->clasp-package sbcl-hu.dwim.stefil))
+
 (define-public sbcl-kaputt
   (let ((commit "f26c9b0f8219fe61d86249198ef85174eecafc10")
         (revision "1"))
@@ -620,6 +650,9 @@ to make test code more informative.
 
 (define-public ecl-kaputt
   (sbcl-package->ecl-package sbcl-kaputt))
+
+(define-public clasp-kaputt
+  (sbcl-package->clasp-package sbcl-kaputt))
 
 (define-public cl-kaputt
   (sbcl-package->cl-source-package sbcl-kaputt))
@@ -693,6 +726,9 @@ testing.  It is an extension of the library written by Chris Riesbeck.")
 
 (define-public ecl-lisp-unit
   (sbcl-package->ecl-package sbcl-lisp-unit))
+
+(define-public clasp-lisp-unit
+  (sbcl-package->clasp-package sbcl-lisp-unit))
 
 (define-public sbcl-lisp-unit2
   ;; There is a cyclical dependency between symbol-munger and lisp-unit2.
@@ -794,6 +830,9 @@ Each test can contain a bunch of test forms that make up its body.")
 (define-public ecl-parachute
   (sbcl-package->ecl-package sbcl-parachute))
 
+(define-public clasp-parachute
+  (sbcl-package->clasp-package sbcl-parachute))
+
 (define-public sbcl-prove
   (let ((commit "5d71f02795b89e36f34e8c7d50e69b67ec6ca2de")
         (revision "2"))
@@ -870,6 +909,9 @@ tester module.")
 (define-public ecl-ptester
   (sbcl-package->ecl-package sbcl-ptester))
 
+(define-public clasp-ptester
+  (sbcl-package->clasp-package sbcl-ptester))
+
 (define-public sbcl-rove
   (let ((commit "6a5dfcdced42879a4eff2a529e7e8ce492fadf41")
         (revision "1"))
@@ -935,6 +977,9 @@ This is intended to be a successor of Prove.")
 
 (define-public ecl-rt
   (sbcl-package->ecl-package sbcl-rt))
+
+(define-public clasp-rt
+  (sbcl-package->clasp-package sbcl-rt))
 
 (define-public sbcl-should-test
   (let ((commit "48facb9f9c07aeceb71fc0c48ce17fd7d54a09d4")
@@ -1134,6 +1179,9 @@ parameterization.")
 (define-public ecl-unit-test
   (sbcl-package->ecl-package sbcl-unit-test))
 
+(define-public clasp-unit-test
+  (sbcl-package->clasp-package sbcl-unit-test))
+
 (define-public cl-unit-test
   (sbcl-package->cl-source-package sbcl-unit-test))
 
@@ -1181,6 +1229,9 @@ on the XPTest package by Craig Brozensky and the JUnit package by Kent Beck.")
 (define-public ecl-xlunit
   (sbcl-package->ecl-package sbcl-xlunit))
 
+(define-public clasp-xlunit
+  (sbcl-package->clasp-package sbcl-xlunit))
+
 (define-public sbcl-lisp-critic
   (let ((commit "ea19f82a168a6119ac1b10d0f457c01a7119602f")
         (revision "1"))
@@ -1209,3 +1260,6 @@ on the XPTest package by Craig Brozensky and the JUnit package by Kent Beck.")
 
 (define-public ecl-lisp-critic
   (sbcl-package->ecl-package sbcl-lisp-critic))
+
+(define-public clasp-lisp-critic
+  (sbcl-package->clasp-package sbcl-lisp-critic))

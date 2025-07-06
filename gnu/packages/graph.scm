@@ -11,6 +11,7 @@
 ;;; Copyright © 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2023 David Elsing <david.elsing@posteo.net>
+;;; Copyright © 2025 Mark Walker <mark.damon.walker@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -28,17 +29,17 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages graph)
-  #:use-module (guix download)
-  #:use-module (guix gexp)
-  #:use-module (guix git-download)
-  #:use-module (guix packages)
-  #:use-module (guix utils)
+  #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system r)
-  #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix download)
+  #:use-module (guix gexp)
+  #:use-module (guix git-download)
+  #:use-module (guix packages)
+  #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
@@ -74,6 +75,7 @@
   #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages qt)
   #:use-module (gnu packages statistics)
   #:use-module (gnu packages swig)
   #:use-module (gnu packages time)
@@ -301,98 +303,6 @@ represented by horizontal lines, and edges are represented by vertical
 lines.")
       (license license:expat))))
 
-(define-public python-plotly
-  (package
-    (name "python-plotly")
-    (version "5.20.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/plotly/plotly.py")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0i22sv8p3kl84nkldbv1253kld85rbwp2pdxivxn64wwflfpqvx6"))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'build 'skip-npm
-            ;; npm is not packaged so build without it
-            (lambda _
-              (setenv "SKIP_NPM" "T")))
-          (add-after 'unpack 'fix-version
-            ;; TODO: Versioneer in Guix gets its release version from the
-            ;; parent directory, but the plotly package is located inside a
-            ;; depth 3 subdirectory.  Try to use versioneer if possible.
-            (lambda _
-              (substitute* "packages/python/plotly/setup.py"
-                (("version=versioneer.get_version\\(),")
-                 (format #f "version=~s," #$version)))
-              (substitute* "packages/python/plotly/plotly/version.py"
-                (("__version__ = get_versions\\(\\)\\[\"version\"\\]")
-                 (format #f "__version__ = ~s" #$version)))))
-          (add-after 'fix-version 'chdir
-            (lambda _
-              (chdir "packages/python/plotly")))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "pytest" "-x" "plotly/tests/test_core")
-                (invoke "pytest" "-x" "plotly/tests/test_io")
-                ;; FIXME: Add optional dependencies and enable their tests.
-                ;; (invoke "pytest" "-x" "plotly/tests/test_optional")
-                (invoke "pytest" "_plotly_utils/tests")))))))
-    (native-inputs
-     (list python-ipywidgets python-pytest python-xarray))
-    (propagated-inputs
-     (list python-ipython
-           python-pandas
-           python-pillow
-           python-requests
-           python-retrying
-           python-six
-           python-tenacity
-           python-statsmodels))
-    (home-page "https://plotly.com/python/")
-    (synopsis "Interactive plotting library for Python")
-    (description "Plotly's Python graphing library makes interactive,
-publication-quality graphs online.  Examples of how to make line plots, scatter
-plots, area charts, bar charts, error bars, box plots, histograms, heatmaps,
-subplots, multiple-axes, polar charts, and bubble charts.")
-    (license license:expat)))
-
-(define-public python-plotly-2.4.1
-  (package (inherit python-plotly)
-    (version "2.4.1")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "plotly" version))
-        (sha256
-         (base32
-          "0s9gk2fl53x8wwncs3fwii1vzfngr0sskv15v3mpshqmrqfrk27m"))))
-   (native-inputs '())
-   (propagated-inputs
-    (list python-decorator
-          python-nbformat
-          python-pandas
-          python-pytz
-          python-requests
-          python-six))
-   (arguments
-    (list
-     #:tests? #false ;The tests are not distributed in the release
-     #:phases
-     '(modify-phases %standard-phases
-        (add-after 'unpack 'python-compatibility
-          (lambda _
-            (substitute* "plotly/grid_objs/grid_objs.py"
-              (("from collections import MutableSequence")
-               "from collections.abc import MutableSequence")))))))))
-
 (define-public python-louvain
   (package
     (name "python-louvain")
@@ -562,6 +472,43 @@ algorithm for a number of different methods.")
 graphs.")
     (license license:bsd-3)))
 
+(define-public qvge
+  (package
+    (name "qvge")
+    (version "0.7.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ArsMasiuk/qvge")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1mijb0yr71xh9cq43vflbhz6zp1qvhjmvzrs2pbxka63hqk60pfk"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "PREFIX=" #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda* (#:key (configure-flags '())
+                      #:allow-other-keys)
+              (chdir "src")
+              (apply invoke "qmake" "-r" configure-flags))))))
+    (inputs
+     (list qtbase-5
+           qtsvg-5
+           qtx11extras))
+    (home-page "https://arsmasiuk.github.io/qvge/")
+    (synopsis "Visual graph editor")
+    (description
+     "QVGE is a multiplatform graph editor written in C++/Qt.  Its main goal
+is to make possible visually edit two-dimensional graphs in a simple and
+intuitive way.")
+    (license license:expat)))
+
 (define-public faiss
   (package
     (name "faiss")
@@ -718,35 +665,39 @@ of millions of nodes (as long as they can fit in memory).")
     (version "0.10.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "leidenalg" version))
+       (method git-fetch)               ; no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/vtraag/leidenalg")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0k1f35bmgff8vc5fcyqa2dqfa1x17rb0vqzwkdqlm0sr5fllfh8g"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:tests? #f                      ;tests are not included
-       #:phases (modify-phases %standard-phases
-                  (add-after 'unpack 'fix-requirements
-                    (lambda _
-                      (substitute* "setup.py"
-                        (("self.external = False")
-                         "self.external = True")
-                        (("self.use_pkgconfig = False")
-                         "self.use_pkgconfig = True")
-                        (("python-igraph >=")
-                         "igraph >=")))))))
+        (base32 "0p46g8drpnsciphy3iagrkagzh8hi3l5xmdab00q9z812bwdb951"))))
+    (build-system pyproject-build-system)
+   (arguments
+    (list
+     #:phases
+     #~(modify-phases %standard-phases
+         (add-before 'build 'pretend-version
+           (lambda _
+             (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version))))))
     (native-inputs
-     (list pkg-config python-setuptools-scm))
+     (list pkg-config
+           python-ddt
+           python-pytest
+           python-setuptools
+           python-setuptools-scm
+           python-wheel))
     (inputs
-     (list igraph libleidenalg))
+     (list igraph
+           libleidenalg))
     (propagated-inputs
      (list python-igraph))
     (home-page "https://github.com/vtraag/leidenalg")
     (synopsis "Community detection in large networks")
-    (description "Leiden is a general algorithm for methods of community
-detection in large networks and is an extension of the Louvain algorithm. This
-packages provides a Python wrapper to the C++ implementation.")
+    (description
+     "Leiden is a general algorithm for methods of community detection in
+large networks and is an extension of the Louvain algorithm. This packages
+provides a Python wrapper to the C++ implementation.")
     (license license:gpl3+)))
 
 (define-public edge-addition-planarity-suite
@@ -875,17 +826,14 @@ transformed into common image formats for display or printing.")
                 "1bmck5fcihj9lr5kd8x624bdi9xhfc13pl4mwzv74jr5lz07kr6d"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:imported-modules (,@%default-gnu-imported-modules
-                           (guix build python-build-system))
-       #:modules (,@%default-gnu-modules
-                  ((guix build python-build-system) #:select (site-packages)))
-       ;; The build process peaks around 4GB/RAM per core.
-       #:parallel-build? #f
-       #:configure-flags
-       (list (string-append "--with-boost="
-                            (assoc-ref %build-inputs "boost"))
-             (string-append "--with-python-module-path="
-                            (site-packages %build-inputs %outputs)))))
+     (list
+      ;; The build process peaks around 4GB/RAM per core.
+      #:parallel-build? #f
+      #:configure-flags
+      #~(list (string-append "--with-boost=" #$(this-package-input "boost"))
+              (string-append "--with-python-module-path=" #$output "/lib/python"
+                             #$(version-major+minor (package-version python))
+                             "/site-packages"))))
     (native-inputs
      (list ncurses pkg-config))
     (inputs

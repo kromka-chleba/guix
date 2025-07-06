@@ -59,6 +59,7 @@
   #:use-module (gnu packages build-tools)
   #:use-module (gnu packages check)
   #:use-module (gnu packages compression)
+  #:use-module (gnu packages containers)
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages cpio)
   #:use-module (gnu packages cpp)
@@ -181,8 +182,8 @@
   ;; Note: the 'update-guix-package.scm' script expects this definition to
   ;; start precisely like this.
   (let ((version "1.4.0")
-        (commit "096dedd0bb13523002c814b001429c2f65b6f10d")
-        (revision 37))
+        (commit "95d88456844fc460fd1708c0fa1e04ab473af0ba")
+        (revision 39))
     (package
       (name "guix")
 
@@ -198,7 +199,7 @@
                       (commit commit)))
                 (sha256
                  (base32
-                  "1gm88mgcgpfaibzwy426szb7fvlz6zh17csjbqlz8lcjdz0a1wjx"))
+                  "0ghbnlq1g0r9srn6a6cxn28rxyd9icfgkrwzwd550ly0fanhy5xz"))
                 (file-name (string-append "guix-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -513,6 +514,9 @@ $(prefix)/etc/openrc\n")))
 
          ;; Some of the tests use "unshare" when it is available.
          ("util-linux" ,util-linux)
+         ,@(if (target-linux?)
+               `(("slirp4netns" ,slirp4netns))
+               '())
 
          ;; Many tests rely on the 'guile-bootstrap' package, which is why we
          ;; have it here.
@@ -999,19 +1003,19 @@ transactions from C or Python.")
     (license license:gpl2+)))
 
 (define-public bffe
-  (let ((commit "ec2cae0a12cb578a88846cde1980ea98e352b1db")
-        (revision "13"))
+  (let ((commit "2f9b1cb355e9a276903a721b48c77790841a91d6")
+        (revision "15"))
     (package
       (name "bffe")
       (version (git-version "0" revision commit))
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
-                      (url "https://git.cbaines.net/git/guix/bffe")
+                      (url "https://codeberg.org/guix/bffe.git")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0ifhf3hrwxr479lz5wk7n3mw9rzrwmj7is65daj26g24wjlxbick"))
+                  "0h1nzlj6k9yhhsc1an72876p19yf8kszs2h7xww5ldcjs8vwxn9c"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (native-inputs
@@ -1042,7 +1046,7 @@ transactions from C or Python.")
              guile-pfds
              guile-prometheus
              guile-lib))
-      (home-page "https://git.cbaines.net/guix/bffe")
+      (home-page "https://codeberg.org/guix/bffe.git")
       (synopsis "Build Farm Front-end for Guix")
       (description
        "The BFFE of Build Farm Front-end is an experimental frontend for Guix
@@ -1600,8 +1604,8 @@ environments.")
                   "0k9zkdyyzir3fvlbcfcqy17k28b51i20rpbjwlx2i1mwd2pw9cxc")))))))
 
 (define-public guix-build-coordinator
-  (let ((commit "7e347870d56eec532662909eceb3bc79ae7fff1d")
-        (revision "130"))
+  (let ((commit "89e6de99c4ff29c1ac36077ca2f263b47539f8cf")
+        (revision "131"))
     (package
       (name "guix-build-coordinator")
       (version (git-version "0" revision commit))
@@ -1612,7 +1616,7 @@ environments.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "05drlw3sxq83fxphq569wf0kzn3fhzw11zrc8njxxr88ksvfi04y"))
+                  "1ffa3bhg4nzif4gk26gydnw4jvm1gfidh3b6r1i36kydy3ms19fw"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments
@@ -1855,8 +1859,8 @@ in an isolated environment, in separate namespaces.")
     (license license:gpl3+)))
 
 (define-public nar-herder
-  (let ((commit "586982fc7e9591351dffe1a234fa088a889d97fb")
-        (revision "40"))
+  (let ((commit "8bfd36fe774aff71f9a33fd99e42d578a823750d")
+        (revision "41"))
     (package
       (name "nar-herder")
       (version (git-version "0" revision commit))
@@ -1867,7 +1871,7 @@ in an isolated environment, in separate namespaces.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1sbjkh475dxphnm9v1s3mm3zi6q97n3j4p1khjcf3qvikw494sq7"))
+                  "0wd8nj2ji28jvs4wgshhbipxballpfmmwbxx82nk4bypbdpdwd5a"))
                 (file-name (string-append name "-" version "-checkout"))))
       (build-system gnu-build-system)
       (arguments

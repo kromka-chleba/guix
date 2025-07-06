@@ -8,7 +8,7 @@
 ;;; Copyright © 2019, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019, 2021 Vagrant Cascadian <vagrant@debian.org>
 ;;; Copyright © 2019-2021 Martin Becze <mjbecze@riseup.net>
-;;; Copyright © 2019-2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2019-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2020 Alex Griffin <a@ajgrf.com>
 ;;; Copyright © 2020 Danny Milosavljevic <dannym@scratchpost.org>
 ;;; Copyright © 2020 Jack Hill <jackhill@jackhill.us>
@@ -2527,7 +2527,7 @@ strings into words like a POSIX or Windows shell would.")
 (define-public go-github-com-burntsushi-toml
   (package
     (name "go-github-com-burntsushi-toml")
-    (version "1.4.0")
+    (version "1.5.0")
     (source
      (origin
        (method git-fetch)
@@ -2536,7 +2536,7 @@ strings into words like a POSIX or Windows shell would.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1vk0s7pcn80hkx0lcyws509gqs42c8y1rppv05zxiqj0yn2zrjnx"))))
+        (base32 "075ay86gn99wlz26x7hp40s4lpc9r026pd2r0ap0pcrvb88inzy1"))))
     (build-system go-build-system)
     (arguments
      (list
@@ -4262,7 +4262,7 @@ metrics to Graphite.")
     (build-system go-build-system)
     (arguments
      (list
-      #:test-flags #~(list "-shuffle=on" "-v")
+      #:test-flags #~(list "-timeout=30m" "-shuffle=on" "-v")
       #:import-path "github.com/cyphar/filepath-securejoin"))
     (native-inputs
      (list go-github-com-stretchr-testify))
@@ -5770,6 +5770,33 @@ protocol buffers effectively guarantee the types of structured data, they
 cannot enforce semantic rules for values.  This plugin adds support to
 protoc-generated code to validate such constraints.")
     (license license:asl2.0)))
+
+(define-public go-github-com-ergochat-readline
+  (package
+    (name "go-github-com-ergochat-readline")
+    (version "0.1.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/ergochat/readline")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "16zyk1dzwix5l9iph61img6qn5kryq3kb03dk2lwmrwyr1xdsip3"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:import-path "github.com/ergochat/readline"))
+    (propagated-inputs (list go-golang-org-x-text go-golang-org-x-sys))
+    (home-page "https://github.com/ergochat/readline")
+    (synopsis "Readline implementation in pure Go")
+    (description
+     "This package provides a pure Go implementation of functionality
+comparable to @url{https://en.wikipedia.org/wiki/GNU_Readline, GNU Readline},
+i.e.  line editing and command history for simple TUI programs.")
+    (license license:expat)))
 
 (define-public go-github-com-erikgeiser-coninput
   (package
@@ -7493,6 +7520,40 @@ All the functionality of the built-in package still exists and is unchanged.
 This package contains a series of small enhancements and additions.")
     (license license:bsd-3)))
 
+(define-public go-github-com-gomarkdown-markdown
+  (package
+    (name "go-github-com-gomarkdown-markdown")
+    (version "0.0.0-20250311123330-531bef5e742b")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/gomarkdown/markdown")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lw38q8izwflfkqxpr89p0sbriqgbzr240mfzhba2fkk3365y3xs"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/gomarkdown/markdown"
+      #:test-flags #~(list "-skip" "TestRenderCodeBlock")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "examples"))))
+          (add-after 'check 'remove-testdata
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "testdata")))))))
+    (home-page "https://github.com/gomarkdown/markdown")
+    (synopsis "Markdown Parser and HTML Renderer for Go")
+    (description
+     "Package markdown implements markdown parser and HTML renderer.")
+    (license license:bsd-2)))
+
 (define-public go-github-com-gomodule-redigo
   (package
     (name "go-github-com-gomodule-redigo")
@@ -7909,6 +7970,31 @@ provides a buffered io.Writer that is flushed at a timed interval.")
     (description
      "This package can generate ASCII line graphs in Golang.")
     (license license:bsd-3)))
+
+(define-public go-github-com-h2non-parth
+  (package
+    (name "go-github-com-h2non-parth")
+    (version "2.0.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/h2non/parth")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1aj37m7z6wbi397g38jni54n3c7yy8nljc40ksy8am213lil5aqc"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/h2non/parth"))
+    (home-page "https://github.com/h2non/parth")
+    (synopsis "Path parsing library for segment unmarshaling and slicing")
+    (description
+     "The @code{parth} Go library provides path parsing for segment
+unmarshaling and slicing.  In other words, parth provides simple and flexible
+access to (URL) path parameters.")
+    (license license:expat)))
 
 (define-public go-github-com-hanwen-go-fuse
   (package
@@ -8755,6 +8841,62 @@ ABI}.")
      "This package provides a wrapper around go-yaml designed to enable a
 better way of handling YAML when marshaling to and from structs.")
     (license license:expat)))
+
+(define-public go-github-com-itchyny-astgen-go
+  (package
+    (name "go-github-com-itchyny-astgen-go")
+    (version "0.0.0-20250520171007-4331c963041e")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/itchyny/astgen-go")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "07hzzkczpwsnznwl46jdfqq77b4hjbcxsj1xa2qh8733yym10ap1"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.24
+      #:import-path "github.com/itchyny/astgen-go"))
+    (home-page "https://github.com/itchyny/astgen-go")
+    (synopsis "AST build for Golang @code{interface{}} => @code{ast.Node}")
+    (description "Build Go code from arbitrary value in Go.")
+    (license license:expat)))
+
+(define-public go-github-com-itchyny-go-flags
+  (package
+    (name "go-github-com-itchyny-go-flags")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/itchyny/go-flags")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0qfh7gn95aldlsigk72jl87npmwvx15kb7df1100d6j0nbakd8b5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/itchyny/go-flags"
+      ;; Test is time dependent and not reproducible.
+      ;; -.TH TestMan 1 "1 January 1970"
+      ;;  +.TH TestMan 1 "26 June 2025"
+      #:test-flags #~(list "-skip" "TestMan")))
+    (propagated-inputs
+     (list go-golang-org-x-sys))
+    (home-page "https://github.com/itchyny/go-flags")
+    (synopsis "Command line option parser for Golang")
+    (description
+     "Package flags provides an extensive command line option parser.  The
+flags package is similar in functionality to the go built-in flag package but
+provides more options and uses reflection to provide a convenient and succinct
+way of specifying command line options.  It's an alternative fork of
+https://github.com/jessevdk/go-flags.")
+    (license license:bsd-3)))
 
 (define-public go-github-com-itchyny-timefmt-go
   (package
@@ -9699,6 +9841,35 @@ functionality is similar to the go builtin @code{flag} package, but
 @code{flags} provides more options and uses reflection to provide a succinct
 way of specifying command line options.")
     (license license:bsd-3)))
+
+(define-public go-github-com-jiangxin-multi-log
+  (package
+    (name "go-github-com-jiangxin-multi-log")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/jiangxin/multi-log")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0im1i0dz5rcczfzxyvwqwvslv1mq6gbhlr5aw9s2fg7s29lcy179"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/jiangxin/multi-log"))
+    (native-inputs
+     (list go-github-com-stretchr-testify))
+    (propagated-inputs
+     (list go-github-com-sirupsen-logrus
+           go-golang-org-x-crypto))
+    (home-page "https://github.com/jiangxin/multi-log")
+    (synopsis "Simple logging library for Go")
+    (description
+     "Multi-log is based on logrus, and supports concurrently logging to two
+destinations: the console and a log file.")
+    (license license:expat)))
 
 (define-public go-github-com-jinzhu-copier
   (package
@@ -17567,6 +17738,41 @@ programming language.")
      "This package is a simple Golang implementation of tag parser.")
     (license license:bsd-2)))
 
+(define-public go-github-com-wader-gojq
+  ;; This is a modified fork only for fq.
+  (hidden-package
+   (package
+     (name "go-github-com-wader-gojq")
+     (version "0.12.1-0.20250208151254-0aa7b87b2c2b")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://github.com/wader/gojq")
+              (commit (go-version->git-ref version))))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "1byil5r5nzs6fx0si3ipanq1c8vcqbsr0rhyd5380vp7zr5j9cxl"))))
+     (build-system go-build-system)
+     (arguments
+      (list
+       #:import-path "github.com/wader/gojq"))
+     (native-inputs
+      (list go-github-com-google-go-cmp))
+     (propagated-inputs
+      (list go-github-com-itchyny-timefmt-go
+            go-github-com-mattn-go-isatty
+            go-github-com-mattn-go-runewidth
+            go-gopkg-in-yaml-v3))
+     (home-page "https://github.com/wader/gojq")
+     (synopsis "Pure Go implementation of jq")
+     (description
+      "Package gojq provides the parser and the interpreter of gojq.  Please refer to
+@url{https://github.com/itchyny/gojq#usage-as-a-library, Usage as a library} for
+introduction. It's fork of github.com/itchyny/gojq, see github.com/wader/gojq fq
+branc.")
+     (license license:expat))))
+
 (define-public go-github-com-wadey-gocovmerge
   (package
     (name "go-github-com-wadey-gocovmerge")
@@ -21170,63 +21376,6 @@ tool."))))
     (native-inputs (package-propagated-inputs go-mvdan-cc-gofumpt))
     (propagated-inputs '())
     (inputs '())))
-
-(define-public gopls
-  (package
-    (name "gopls")
-    ;; XXX: Starting from 0.14.0 gppls needs golang.org/x/telemetry, which
-    ;; needs to be discussed if it may be included in Guix.
-    (version "0.18.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://go.googlesource.com/tools")
-             (commit (go-version->git-ref version #:subdir "gopls"))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0s396bjwac1acrlpbp7k7xfyhmkykyxc08w6hirbdhlq8vg923p7"))))
-    (build-system go-build-system)
-    (arguments
-     (list
-      #:go go-1.23
-      #:install-source? #f
-      #:import-path "golang.org/x/tools/gopls"
-      #:unpack-path "golang.org/x/tools"
-      ;; XXX: No tests in project's root, limit to some of subdris, try to
-      ;; enable more.
-      #:test-subdirs
-      #~(list "internal/protocol/..."
-              "internal/util/..."
-              "internal/vulncheck/...")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'unpack 'override-tools
-            (lambda _
-              ;; XXX: Write a procedure deleting all but current module source
-              ;; to cover case with monorepo.
-              (delete-file-recursively "src/golang.org/x/tools"))))))
-    (native-inputs
-     (list go-github-com-google-go-cmp
-           go-github-com-jba-templatecheck
-           go-golang-org-x-mod
-           go-golang-org-x-sync
-           go-golang-org-x-sys
-           go-golang-org-x-telemetry
-           go-golang-org-x-text
-           go-golang-org-x-tools
-           go-golang-org-x-vuln
-           go-gopkg-in-yaml-v3
-           go-honnef-co-go-tools
-           go-mvdan-cc-gofumpt
-           go-mvdan-cc-xurls-v2))
-    (home-page "https://golang.org/x/tools/gopls")
-    (synopsis "Official language server for the Go language")
-    (description
-     "Pronounced ``Go please'', this is the official Go language server
-developed by the Go team.  It provides IDE features to any LSP-compatible
-editor.")
-    (license license:bsd-3)))
 
 (define-public misspell
   (package

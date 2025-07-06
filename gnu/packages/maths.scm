@@ -1583,6 +1583,69 @@ their deployment in massively parallel environments easy.")
     ;; Dual licensed, user choice.
     (license (list license:lgpl3+ license:gpl3+))))
 
+(define-public arccon
+  (package
+    (name "arccon")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/arcaneframework/framework")
+             (commit (string-append "arccon-v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zvj863plifp4rs3wzq5z18vh7z3bh7zy90cvn12b6n0jbpfdpg3"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'chdir-arccon
+            (lambda _
+              (chdir "arccon"))))))
+    (home-page "https://github.com/arcaneframework/framework")
+    (synopsis "Arcane Framework's CMake build libraries")
+    (description "Arccon is part of the Arcane framework, providing core
+functionality for the Arcane development platform.")
+    (license license:asl2.0)))
+
+(define-public arccore
+  (package
+    (name "arccore")
+    (version "2.5.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/arcaneframework/framework")
+             (commit (string-append "arccore-v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0cxqwhhs3zafiqnrjs28y60xg14jifg2xdycpr7l2291hyh6r7ra"))))
+    (build-system cmake-build-system)
+    (native-inputs (list arccon pkg-config googletest))
+    (inputs (list glib openmpi))
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=TRUE" "-DARCCORE_USE_MPI=TRUE"
+              "-DARCCORE_WANT_TEST=TRUE")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'configure 'chdir-arccore
+            (lambda _
+              (chdir "arccore"))))))
+    (home-page "https://github.com/arcaneframework/framework")
+    (synopsis "Arcane Framework's base functionalities for simulation code")
+    (description
+     "Arcane is a development environment for parallel numerical calculation
+code.  It supports the architectural aspects of a calculation code, such as data
+structures for meshing and parallelism, as well as more environment-related aspects
+such as dataset configuration.")
+    (license license:asl2.0)))
+
 (define-public gctp
   (package
     (name "gctp")
@@ -1893,7 +1956,7 @@ extremely large and complex data collections.")
       ;; Some of the users, notably Flann, need the C++ interface.
       #:configure-flags
       #~(list
-         (string-append "-DHDF5_INSTALL_CMAKE_DIR=" #$output "/lib/cmake")
+         "-DHDF5_INSTALL_CMAKE_DIR=lib/cmake"
          "-DHDF5_BUILD_CPP_LIB=ON"
          "-DHDF5_BUILD_FORTRAN=ON"
          ;; Build a thread-safe library.  Unfortunately, CMakeLists.txt
@@ -4912,18 +4975,15 @@ language understood by many solvers.")
 (define-public mumps
   (package
     (name "mumps")
-    (version "5.5.1")
+    (version "5.8.0")
     (source
      (origin
        (method url-fetch)
-       (uri (list (string-append "http://mumps.enseeiht.fr/MUMPS_"
-                                 version ".tar.gz")
-                  (string-append
-                   "https://ftp.mcs.anl.gov/pub/petsc/externalpackages"
-                   "/MUMPS_" version ".tar.gz")))
+       (uri (string-append "https://mumps-solver.org/MUMPS_" version
+                           ".tar.gz"))
        (sha256
         (base32
-         "05gs2i8b76m9flm1826fxpyfnwibjjawbmfza3ylrvj7zaag5gqs"))))
+         "18208d3klhv08p4kgbbp332wf11x0iyi7z4c7fcs0hwq3n5ynqnp"))))
     (build-system gnu-build-system)
     (inputs
      (list gfortran
@@ -4986,7 +5046,9 @@ OPTL          = -O2 -fopenmp $(PIC)
 OPTC          = -O2 -fopenmp $(PIC)
 LPORDDIR      = $(topdir)/PORD/lib
 IPORD         = -I$(topdir)/PORD/include
-LPORD         = $(LPORDDIR)/libpord.a
+LPORD         = -L$(LPORDDIR)  -lpord
+SONAME        = -soname
+SHARED_OPT    = -shared
 ORDERINGSF    = -Dpord~@[
 METISDIR      = ~a
 IMETIS        = -I$(METISDIR)/include
@@ -5059,7 +5121,7 @@ IORDERINGSC   = $(IPORD) $(IMETIS) $(ISCOTCH)"
                (when (file-exists? "libseq/libmpiseq.so")
                  (install-file "libseq/libmpiseq.so" libdir))
                #t))))))
-    (home-page "http://mumps.enseeiht.fr")
+    (home-page "https://mumps-solver.org")
     (synopsis "Multifrontal sparse direct solver")
     (description
      "MUMPS (MUltifrontal Massively Parallel sparse direct Solver) solves a

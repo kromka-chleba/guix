@@ -39,6 +39,7 @@
 ;;; Copyright © 2023-2024 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2023, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 chris <chris@bumblehead.com>
+;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -80,6 +81,7 @@
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages graphics)
   #:use-module (gnu packages gtk)
+  #:use-module (gnu packages guile)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages man)
@@ -113,6 +115,7 @@
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
+  #:use-module (guix build-system guile)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system python)
   #:use-module (guix build-system qt)
@@ -1364,6 +1367,57 @@ graphics image formats like PNG, BMP, JPEG, TIFF and others.")
     (license license:gpl2+)
     (home-page "https://freeimage.sourceforge.io/")))
 
+(define-public ggg
+  (package
+    (name "ggg")
+    (version "0.3.13")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/jjba23/ggg.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0l0pbnp2jqi25s5hcqh2dhbdhcig4zyjx2cxwijbb5nn5shrp1wj"))))
+    (arguments
+     `(#:source-directory "src"
+       #:phases (modify-phases %standard-phases
+                  (add-before 'build 'install-program-files
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      (let ((bin (string-append (assoc-ref outputs "out")
+                                                "/bin"))
+                            (share (string-append (assoc-ref outputs "out")
+                                                  "/share")))
+                        (mkdir-p (string-append share "/scripts"))
+                        (mkdir-p (string-append share "/resources"))
+                        (install-file "resources/help.txt"
+                                      (string-append share
+                                                     "/resources"))
+                        (copy-recursively "resources/svg-paths"
+                                          (string-append share
+                                           "/resources/svg-paths"))
+                        (install-file "scripts/ggg" bin)
+                        (install-file "scripts/log.sh"
+                                      (string-append share "/scripts/"))
+                        (chmod (string-append bin "/ggg") #o755)))))))
+    (build-system guile-build-system)
+    (native-inputs (list guile-3.0))
+    (inputs (list guile-3.0 bash-minimal))
+    (synopsis
+     "GGG is a SVG image generator for project and web badges")
+    (description
+     "GGG (Guile Glyph Generator) is a command-line utility
+that allows you to generate pretty images/badges which can be used for
+your projects, announcing tech used, sponsoring and appreciating
+other projects, distinguishing versions of things supported, etc.
+
+GGG is highly configurable, reads Scheme files where you define your tasks,
+and supports badges between one and three parts.  It leverages SVG generation
+from Lisp and S-expressions, building pixel perfect badges.")
+    (home-page "https://codeberg.org/jjba23/ggg")
+    (license license:agpl3+)))
+
 (define-public vigra
   (package
     (name "vigra")
@@ -2107,29 +2161,51 @@ parsing, viewing, modifying, and saving this metadata.")
     (license license:lgpl2.0+)))
 
 (define-public flameshot
-  (package
-    (name "flameshot")
-    (version "12.1.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/flameshot-org/flameshot")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "1p7gqs5vqzbddlgl38lbanchwb14m6lx8f2cn2c5p0vyqwvqqv52"))))
-    (build-system qt-build-system)
-    (native-inputs
-     (list qttools-5))
-    (inputs
-     (list qtbase-5 qtsvg-5))
-    (arguments
-     `(#:tests? #f))                    ;no tests
-    (home-page "https://github.com/flameshot-org/flameshot")
-    (synopsis "Powerful yet simple to use screenshot software")
-    (description "Flameshot is a screenshot program.
+  ;; Upstream switched to nightly builds, no release tags anymore.
+  (let ((commit "56019019999defbf722f43f87aaeae6596a12c0a")
+        (revision "1"))
+    (package
+      (name "flameshot")
+      (version (git-version "12.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/flameshot-org/flameshot")
+               (commit (string-append commit))))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32
+           "11y1x2pc0sdmz4dbrdl9d2i96sxi3v7bfjgcaqy2sc29zjjvynqx"))))
+      (build-system qt-build-system)
+      (arguments
+       (list
+        #:qtbase qtbase
+        #:tests? #f                     ;no tests
+        #:configure-flags
+        #~(list "-DFETCHCONTENT_FULLY_DISCONNECTED=ON"
+                "-DDISABLE_UPDATE_CHECKER=ON")
+        #:phases
+        #~ (modify-phases %standard-phases
+             (add-before 'configure 'add-singleapplication
+               (lambda* (#:key inputs #:allow-other-keys)
+                 (let ((dep (assoc-ref inputs "single-application")))
+                   (substitute* "CMakeLists.txt"
+                     (("^if\\(USE_SINGLEAPPLICATION\\)" all)
+                      (string-append
+                       all
+                       "\nadd_library(SingleApplication::SingleApplication"
+                       " SHARED IMPORTED)"
+                       "\nset_target_properties(SingleApplication::SingleApplication"
+                       " PROPERTIES"
+                       "\n   INTERFACE_INCLUDE_DIRECTORIES \"" dep "/include\""
+                       "\n   IMPORTED_LOCATION " dep "/lib/libSingleApplication.a"
+                       "\n)\n")))))))))
+      (native-inputs (list qttools))
+      (inputs (list single-application qtcolorwidgets qtsvg))
+      (home-page "https://github.com/flameshot-org/flameshot")
+      (synopsis "Powerful yet simple to use screenshot software")
+      (description "Flameshot is a screenshot program.
 Features:
 
 @itemize
@@ -2139,7 +2215,7 @@ Features:
 @item DBus interface.
 @item Upload to Imgur.
 @end itemize\n")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public swappy
   (package

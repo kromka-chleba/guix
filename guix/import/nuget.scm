@@ -7,6 +7,7 @@
 ;;; Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
 ;;; Copyright © 2022 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2025 Danny Milosavljevic <dannym@friendly-machines.com>
+;;; Copyright © 2025 Zheng Junjie <z572@z572.online>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -24,10 +25,12 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (guix import nuget)
+  #:use-module (ice-9 format)
   #:use-module (ice-9 match)
   #:use-module (ice-9 regex)
   #:use-module (ice-9 pretty-print)
-  #:use-module ((rnrs) #:select (open-bytevector-input-port put-bytevector))
+  #:use-module (ice-9 binary-ports)
+  #:use-module ((rnrs) #:select (put-bytevector))
   #:use-module ((sxml xpath) #:select (sxpath)) ; filter... grr
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-11)
@@ -38,6 +41,7 @@
   #:use-module (sxml simple)
   #:use-module (sxml match)
   #:use-module (web client)
+  #:use-module (web uri)
   #:use-module (json)
   #:use-module (semver)
   #:use-module (semver ranges)
@@ -47,8 +51,8 @@
   #:use-module (guix http-client)
   #:use-module (guix memoization)
   #:use-module (guix utils)
-  #:use-module ((guix import utils)
-                #:select (factorize-uri recursive-import flatten))
+  #:use-module (guix import utils)
+  #:use-module (guix import json)
   #:use-module (guix base32)
   #:use-module (guix build utils)
   #:use-module (guix git)
@@ -58,6 +62,13 @@
   #:use-module (guix http-client)
   #:export (nuget->guix-package
             nuget-recursive-import))
+
+;; copy from guix/import/pypi.scm
+(define non-empty-string-or-false
+  (match-lambda
+    ("" #f)
+    ((? string? str) str)
+    ((or 'null #f) #f)))
 
 ;;; See also <https://learn.microsoft.com/en-us/nuget/concepts/package-versioning?tabs=semver20sort>.
 ;;; Therefore, excluding prerelease and metadata labels, a version string is Major.Minor.Patch.Revision.
@@ -77,6 +88,7 @@
 (define %nuget-v3-package-versions-url "https://api.nuget.org/v3-flatcontainer/")
 (define %nuget-symbol-packages-url "https://globalcdn.nuget.org/symbol-packages/")
 
+(define %nuget-nuspec "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd")
 ;;; Version index https://api.nuget.org/v3-flatcontainer/{id-lower}/index.json
 ;;; nupkg download url https://api.nuget.org/v3-flatcontainer/{id-lower}/{version-lower}/{id-lower}.{version-lower}.nupkg
 ;;; nuspec url https://api.nuget.org/v3-flatcontainer/{id-lower}/{version-lower}/{id-lower}.nuspec
@@ -147,10 +159,9 @@ primitives suitable for the 'semver-range' constructor."
   creation and filtering to avoid type errors."
   (let* ((name-lower (string-downcase name))
          (versions-url (string-append %nuget-v3-package-versions-url name-lower "/index.json")))
-    (let-values (((response body) (http-get versions-url)))
-      (if body
-          (let* ((versions-json (json->scm (open-bytevector-input-port body)))
-                 (available-versions (vector->list (or (assoc-ref versions-json "versions")
+    (let ((versions-json (json-fetch versions-url)))
+      (if versions-json
+          (let* ((available-versions (vector->list (or (assoc-ref versions-json "versions")
                                                        #())))
                  (semver-range (nuget->semver-range range-str)))
             ;; Create a single, clean list of all valid semver objects first.
@@ -192,47 +203,44 @@ primitives suitable for the 'semver-range' constructor."
   correctly handling the paginated structure of the registration index."
   (let* ((name-lower (string-downcase name))
          (index-url (string-append %nuget-v3-registration-url name-lower "/index.json"))
-         (index-response index-body (http-get index-url)))
-      (if index-body
-          (let* ((index-json (json->scm (open-bytevector-input-port index-body)))
-                 ;; Get the list of page objects.
-                 (pages (vector->list (or (assoc-ref index-json "items")
-                                          #()))))
-            (let loop ((pages-to-check pages))
-              (if (null? pages-to-check)
-                  ;; If we've checked all pages and found nothing, fail.
-                  (begin
-                    (warning (G_ "Could not find catalog entry for ~a version ~a in any page.~%") name version)
-                    #f)
-                  (let* ((current-page (car pages-to-check))
-                         ;; Get the items for the current page. This may require another
-                         ;; network request if the items are not inlined.
-                         (page-items
-                          (or (and=> (assoc-ref current-page "items")
-                                     vector->list)
-                              (let-values (((page-response page-body)
-                                            (http-get (assoc-ref current-page "@id"))))
-                                (if page-body
-                                    (let ((page-json (json->scm (open-bytevector-input-port page-body))))
-                                      (vector->list (or (assoc-ref page-json "items")
-                                                        #())))
-                                    '())))))
-                    ;; Search for our specific version within THIS page's items.
-                    (let ((entry-in-page
-                           (find (lambda (item)
-                                   (and=>
-                                    (and=> (assoc-ref item "catalogEntry")
-                                           (cut assoc-ref <> "version"))
-                                    (lambda (v) (string=? v version)))) ; fixme semver equal
-                                 page-items)))
-                      (if entry-in-page
-                          ;; Found it! Return the catalogEntry object.
-                          (assoc-ref entry-in-page "catalogEntry")
-                          ;; Not in this page, recurse to the next page.
-                          (loop (cdr pages-to-check))))))))
-          (begin
-            (warning (G_ "Failed to fetch registration index for ~a~%") name)
-            #f))))
+         (index-json (json-fetch index-url)))
+    (if index-json
+        (let loop ((pages-to-check
+                    ;; Get the list of page objects.
+                    (vector->list (or (assoc-ref index-json "items")
+                                      #()))))
+          (if (null? pages-to-check)
+              ;; If we've checked all pages and found nothing, fail.
+              (begin
+                (warning (G_ "Could not find catalog entry for ~a version ~a in any page.~%") name version)
+                #f)
+              (let* ((current-page (car pages-to-check))
+                     ;; Get the items for the current page. This may require another
+                     ;; network request if the items are not inlined.
+                     (page-items
+                      (or (and=> (assoc-ref current-page "items")
+                                 vector->list)
+                          (let ((page-json (json-fetch (assoc-ref current-page "@id"))))
+                            (if page-json
+                                (vector->list (or (assoc-ref page-json "items")
+                                                  #()))
+                                '())))))
+                ;; Search for our specific version within THIS page's items.
+                (let ((entry-in-page
+                       (find (lambda (item)
+                               (and=>
+                                (and=> (assoc-ref item "catalogEntry")
+                                       (cut assoc-ref <> "version"))
+                                (lambda (v) (string=? v version)))) ; fixme semver equal
+                             page-items)))
+                  (if entry-in-page
+                      ;; Found it! Return the catalogEntry object.
+                      (assoc-ref entry-in-page "catalogEntry")
+                      ;; Not in this page, recurse to the next page.
+                      (loop (cdr pages-to-check)))))))
+        (begin
+          (warning (G_ "Failed to fetch registration index for ~a~%") name)
+          #f))))
 
 (define (car-safe lst)
   (if (null? lst)
@@ -244,28 +252,26 @@ primitives suitable for the 'semver-range' constructor."
 file using the system 'unzip' command, and parse it to find the repository URL
 and commit.  Returns an association list with 'url' and 'commit' keys on
 success, or #f on failure."
-  (let* ((name-lower (string-downcase package-name))
-         (snupkg-url (string-append %nuget-symbol-packages-url
-                                    name-lower "." version ".snupkg")))
+  (let* ((name (string-append (string-downcase package-name) "." version ".snupkg"))
+         (snupkg-url (string-append %nuget-symbol-packages-url name)))
     (format (current-error-port)
             "~%;; Source repository not found in NuGet catalog entry.~%;; ~
              Attempting to find it in symbol package: ~a~%"
             snupkg-url)
     (catch #t
       (lambda ()
-        (let-values (((response body)
-                      (http-get snupkg-url)))
-          (if (not body)
-              (begin
-                (warning (G_ "Failed to download: ~a~%") snupkg-url)
-                #f)
-              (call-with-temporary-directory
-               (lambda (dir)
-                 (let* ((archive-port (mkstemp "/tmp/myfile-XXXXXX"))
-                        (archive-file (port-filename archive-port)))
-                   (put-bytevector archive-port body)
-                   (force-output archive-port)
-                   (invoke "unzip" "-q" archive-file "-d" dir))
+        (guard (c ((http-get-error? c)
+                   (warning (G_ "Failed to download: ~a~%")
+                            (uri->string (http-get-error-uri c)))
+                   #f))
+          (let* ((port (http-fetch snupkg-url))
+                 (body (get-bytevector-all port)))
+            (call-with-temporary-directory
+             (lambda (dir)
+               (with-directory-excursion dir
+                 (call-with-output-file name
+                   (cut put-bytevector <> body))
+                 (invoke "unzip" "-q" name "-d" dir)
                  (let ((nuspec-files (find-files dir "\\.nuspec$")))
                    (chmod (car nuspec-files) #o400) ; some have 000 (example: flurl)
                    (if (null? nuspec-files)
@@ -274,37 +280,36 @@ success, or #f on failure."
                          #f)
                        (call-with-input-file (car nuspec-files)
                          (lambda (port)
-                           (let* ((sxml (xml->sxml port #:trim-whitespace? #t)))
+                           (let* ((sxml
+                                   (xml->sxml
+                                    port
+                                    #:trim-whitespace? #t
+                                    #:namespaces `((#f . ,%nuget-nuspec)))))
                              (car-safe
                               (filter-map
                                (lambda (node)
                                  (sxml-match node
-                                             [(http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd:repository
-                                               (@ . ,attrs-raw)
-                                               . ,_)
-                                              (let ((attrs (map (lambda (attr)
-                                                                  (cons (symbol->string (car attr))
-                                                                        (cadr attr)))
-                                                                attrs-raw)))
-                                                (if (or (assoc-ref attrs "url")
-                                                        (assoc-ref attrs "commit"))
-                                                    attrs
-                                                    #f))]
-                                             [,otherwise #f]))
-                               ((sxpath '(// http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd:metadata
-                                             http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd:repository))
-                                sxml)))))))))))))
+                                   ((repository
+                                     (@ . ,attrs-raw)
+                                     . ,_)
+                                    (let ((attrs (map (lambda (attr)
+                                                        (cons (symbol->string (car attr))
+                                                              (cadr attr)))
+                                                      attrs-raw)))
+                                      (if (or (assoc-ref attrs "url")
+                                              (assoc-ref attrs "commit"))
+                                          attrs
+                                          #f)))
+                                   (,otherwise #f)))
+                               ((sxpath '(// metadata repository))
+                                sxml))))))))))))))
       (lambda (key . args)
         (warning (G_ "Failed to fetch or process snupkg file: ~a (Reason: ~a ~s)~%")
                  snupkg-url key args)
         '()))))
 
 (define (nuget-name->guix-name name)
-  (string-downcase (string-append "dotnet-" (string-map (lambda (c)
-                                                          (if (char=? c #\.)
-                                                              #\-
-                                                              c))
-                                                        name))))
+  (string-append "dotnet-" (snake-case name)))
 
 (define nuget->guix-package
   (memoize
@@ -321,9 +326,12 @@ s-expression and a flat list of its dependency names (strings)."
                  (values #f '())
                  (let* ((name (assoc-ref entry "id"))
                         (guix-name (nuget-name->guix-name name))
-                        (description (assoc-ref entry "description"))
-                        (synopsis (or (assoc-ref entry "summary")
-                                      description))
+                        (description (beautify-description
+                                      (non-empty-string-or-false
+                                       (assoc-ref entry "description"))))
+                        (synopsis (beautify-synopsis
+                                   (non-empty-string-or-false
+                                    (assoc-ref entry "summary"))))
                         (home-page (or (assoc-ref entry "projectUrl")
                                        (string-append "https://www.nuget.org/packages/" name)))
                         (license (license-prefix (or (and=> (assoc-ref entry "licenseExpression")
@@ -363,17 +371,14 @@ s-expression and a flat list of its dependency names (strings)."
                                             (uri (git-reference
                                                   (url ,(assoc-ref repository "url"))
                                                   (commit ,(assoc-ref repository "commit"))))
-                                            (file-name (git-file-name ,guix-name ,resolved-version))
+                                            (file-name (git-file-name name version))
                                             (sha256 (base32 "0sjjj9z1dhilhpc8pq4154czrb79z9cm044jvn75kxcjv6v5l2m5")))
                                    `(origin (method url-fetch)
                                             (uri "FIXME: No source URL found.")
                                             (sha256 (base32 "0sjjj9z1dhilhpc8pq4154czrb79z9cm044jvn75kxcjv6v5l2m5")))))
                              (build-system mono-build-system)
-                             ,@(if (not (null? dependencies))
-                                   `((inputs
-                                      (list ,@(map (compose string->symbol nuget-name->guix-name)
-                                                   dependencies))))
-                                   '())
+                             ,@(maybe-inputs
+                                (map nuget-name->guix-name dependencies))
                              (home-page ,home-page)
                              (synopsis ,synopsis)
                              (description ,description)

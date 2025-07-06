@@ -65,6 +65,7 @@
   #:use-module (gnu packages video)
   #:use-module (gnu packages vim)
   #:use-module (gnu packages web)
+  #:use-module (gnu packages xml)
   #:use-module (guix build-system python)
   #:use-module (guix build-system pyproject)
   #:use-module (guix gexp)
@@ -77,7 +78,7 @@
 (define-public diffoscope
   (package
     (name "diffoscope")
-    (version "297")
+    (version "300")
     (source
      (origin
        (method git-fetch)
@@ -86,8 +87,8 @@
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17ziwnjlsajliky9fvjy6gb0zcyqsp5lk08qjafhfz1dskn08x2x"))))
-    (build-system python-build-system)
+        (base32 "0s08dyxdpb3mrrjziwvqbqgh4fxnnjpw551qv9s72mm49hwa1lyj"))))
+    (build-system pyproject-build-system)
     (arguments
      (list
       #:phases
@@ -163,11 +164,14 @@
     (native-inputs
      (append
       (list help2man
+            python-setuptools
+            python-wheel
 
             ;; Below are packages used for tests.
             binwalk
             python-pytest
             python-chardet
+            python-defusedxml
             python-h5py
             python-pypdf
             python-progressbar33
@@ -364,8 +368,8 @@ them in detail for later analysis.")
     (propagated-inputs
      (list python-requests))
     (native-inputs
-     (list gzip python-docutils))
-    (build-system python-build-system)
+     (list gzip python-docutils python-setuptools python-wheel))
+    (build-system pyproject-build-system)
     (home-page "https://try.diffoscope.org")
     (synopsis "Client for remote diffoscope service")
     (description "This is a client for the @url{https://try.diffoscope.org,

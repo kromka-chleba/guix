@@ -140,6 +140,7 @@ Copyright @copyright{} 2025 Rostislav Svoboda@*
 Copyright @copyright{} 2025 Zacchaeus@*
 Copyright @copyright{} 2025 Sergio Pastor Pérez@*
 Copyright @copyright{} 2024 Evgeny Pisemsky@*
+Copyright @copyright{} 2025 jgart@*
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -1701,6 +1702,12 @@ You may find it necessary, though, when support for Linux unprivileged
 user namespaces is missing (@pxref{Build Environment Setup}).  Use at
 your own risk!
 @end quotation
+
+@item --isolate-host-loopback
+Prevent fixed-output chroot builds from accessing the host loopback.
+When this is used, fixed-output builds will have their own loopback
+interface, and attempts to connect to 127.0.0.1 or ::1 will instead
+attempt to connect to its local loopback interface.
 
 @item --log-compression=@var{type}
 Compress build logs according to @var{type}, one of @code{gzip},
@@ -9427,6 +9434,7 @@ the libraries and header files are assumed to be host tools.
 @defvar asdf-build-system/source
 @defvarx asdf-build-system/sbcl
 @defvarx asdf-build-system/ecl
+@defvarx asdf-build-system/clasp
 
 These variables, exported by @code{(guix build-system asdf)}, implement
 build procedures for Common Lisp packages using
@@ -15855,11 +15863,29 @@ that Guix uses, as in this example:
                 (cpe-version . "2.3"))))
 @end lisp
 
+A CVE alert can be a false positive when its CPE name matches the one in
+Guix, while actually referring to a distinct product.  These alerts can
+be addressed by setting the correct CPE vendor, or when no vendors
+apply, by ignoring alerts from irrelevant vendors, as in these examples:
+
+@lisp
+(package
+  (name "halibut")
+  ;; @dots{}
+  (properties '((cpe-vendor . "halibut_project"))))
+
+(package
+  (name "cvs")
+  ;; @dots{}
+  (properties '((lint-hidden-cpe-vendors . ("jenkins"
+                                            "vendor2")))))
+@end lisp
+
 @c See <https://www.openwall.com/lists/oss-security/2017/03/15/3>.
-Some entries in the CVE database do not specify which version of a
-package they apply to, and would thus ``stick around'' forever.  Package
-developers who found CVE alerts and verified they can be ignored can
-declare them as in this example:
+Finally, some entries in the CVE database do not specify which version
+of a package they apply to, and would thus ``stick around'' forever.
+Package developers who found CVE alerts and verified they can be ignored
+can declare them as in this example:
 
 @lisp
 (package
@@ -37844,6 +37870,113 @@ Base URL to use for links to laminar itself.
 @end table
 @end deftp
 
+@subsubheading Forgejo Runner
+
+@cindex continuous integration, Forgejo
+@cindex Forgejo, continuous integration
+The @code{(gnu services ci)} also provides a service for
+@uref{https://code.forgejo.org/forgejo/runner, Forgejo Runner}, a daemon
+that connects to an instance of the @uref{https://forgejo.org, Forgejo
+code collaboration tool} and runs jobs for continuous integration.
+
+A minimal configuration mostly with default values that can be added to
+the @code{services} field of your operating system looks like this:
+
+@lisp
+(service forgejo-runner-service-type
+         (forgejo-runner-configuration
+          (name "my-runner")
+          (labels '("guix" "linux"))))
+@end lisp
+
+This provides a @code{forgejo-runner} Shepherd service.  That service
+will initially fail to start; you will have to manually @dfn{register}
+the runner against the Forgejo server by running a command like:
+
+@example
+herd register forgejo-runner @var{url} @var{token}
+@end example
+
+@noindent
+... where the arguments are as follows:
+
+@table @var
+@item url
+the URL of the Forgejo server---e.g.,
+@indicateurl{https://codeberg.org};
+@item token
+an access token
+@uref{https://forgejo.org/docs/latest/admin/runner-installation/#standard-registration,
+provided by the Forgejo server}.
+@end table
+
+Once registration has succeeded, you can start the runner:
+
+@example
+herd enable forgejo-runner
+herd start forgejo-runner
+@end example
+
+The runner then receives orders from the Forgejo server to execute
+@dfn{actions}.  Actions are commands and workflows specified by YAML
+files in the @file{.forgejo/workflows} directory of source code
+repositories---see @uref{https://forgejo.org/docs/v7.0/user/actions/,
+the Forgejo Action documentation} for more info.
+
+Note that at the moment @code{forgejo-runner-service-type} lets you run
+only one runner.  Details about the configuration of this service
+follow.
+
+@defvar forgejo-runner-service-type
+This is the service type for Forgejo Runner.  Its value must be a
+@code{forgejo-runner-configuration} record, documented below.
+@end defvar
+
+@deftp {Data Type} forgejo-runner-configuration
+This data type represents the configuration of an instance of
+@code{forgejo-runner-service-type}.  It contains the following fields:
+
+@table @asis
+@item @code{package} (default: @code{forgejo-runner})
+The Forgejo Runner package to use.
+
+@item @code{name} (default: @code{#~(gethostname)})
+Name of the runner as will be shown in the runner management interface
+of Forgejo.
+
+@item @code{labels} (default: @code{'("guix")})
+List of
+@uref{https://forgejo.org/docs/latest/admin/actions/#choosing-labels,
+labels} representing the type of environment the runner provides and
+that actions may refer to.
+
+@item @code{capacity} (default: @code{1})
+Number of tasks to be executed concurrently.
+
+@item @code{timeout} (default: @code{(* 3 3600)})
+Maximum duration of a job, in seconds.
+
+@item @code{fetch-timeout} (default: @code{5})
+Maximum duration for fetching the job from the Forgejo server, in
+seconds.
+
+@item @code{fetch-interval} (default: @code{2})
+Interval (in seconds) for fetching the job from the Forgejo server.
+
+@item @code{report-interval} (default: @code{1})
+Interval (in seconds) for reporting the job status and log to the
+Forgejo server.
+
+@item @code{data-directory} (default: @code{"/var/lib/forgejo-runner"})
+Directory where @command{forgejo-runner} will store persistent data such
+as its configuration and access token.
+
+@item @code{run-directory} (default: @code{"/var/run/forgejo-runner"})
+Directory where @command{forgejo-runner} stores cached data.
+
+@end table
+@end deftp
+
 @node Power Management Services
 @subsection Power Management Services
 
@@ -42687,8 +42820,7 @@ machine.
     (map (lambda (target)
            (cons "x86_64-linux" target))
          '("aarch64-linux-gnu"
-           "i586-pc-gnu")))
-   (build-priority (const 0))))
+           "i586-pc-gnu")))))
  #:web-server-args
  '(#:event-source "https://example.com"
    #:controller-args

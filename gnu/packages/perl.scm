@@ -28,7 +28,7 @@
 ;;; Copyright © 2020 Paul Garlick <pgarlick@tourbillion-technology.com>
 ;;; Copyright © 2020 Nicolas Goaziou <mail@nicolasgoaziou.fr>
 ;;; Copyright © 2020 Malte Frank Gerdes <malte.f.gerdes@gmail.com>
-;;; Copyright © 2021, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021, 2023, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Xinglu Chen <public@yoctocell.xyz>
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
@@ -4813,19 +4813,17 @@ errors are rethrown automatically.")
          "0x09mq0q745cxkw3xgr0h7dil7p1pdq3l5299kj3mk2ijkk2gwb6"))))
     (build-system perl-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-after 'install 'wrap-tinyrepl
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let* ((out (assoc-ref outputs "out")))
-                        (wrap-program (string-append out "/bin/tinyrepl")
-                          `("PERL5LIB" ":" prefix
-                            (,(getenv "PERL5LIB")
-                             ,(string-append out "/lib/perl5/site_perl"))))
-                        #t))))))
-    (inputs
-     `(("bash" ,bash-minimal))) ; for wrap-program
-    (propagated-inputs
-     (list perl-moo perl-strictures))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-tinyrepl
+            (lambda _
+              (wrap-program (string-append #$output "/bin/tinyrepl")
+                `("PERL5LIB" ":" prefix
+                  (,(getenv "PERL5LIB")
+                   ,(string-append #$output "/lib/perl5/site_perl")))))))))
+    (inputs (list bash-minimal perl-term-readline-gnu)) ;for wrap-program
+    (propagated-inputs (list perl-moo perl-strictures))
     (home-page "https://metacpan.org/release/Eval-WithLexicals")
     (synopsis "Lexical scope evaluation library for Perl")
     (description "The Eval::WithLexicals Perl library provides support for
@@ -5896,6 +5894,50 @@ defining functions and methods with parameter lists. At minimum this saves you
 from having to unpack @code{@@_} manually, but this module can do much more.")
     (license license:perl-license)))
 
+(define-public perl-future
+  (package
+    (name "perl-future")
+    (version "0.51")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/P/PE/PEVANS/Future-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "0dja5wf2c7rn548762syqjrb5bwz9c7xshkrdgyyq050hdry6g2n"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build perl-test2-suite))
+    (home-page "https://metacpan.org/release/Future")
+    (synopsis "Perl module for representing operations awaiting completions")
+    (description "This Perl module implements @code{Future}, an object
+representing an operation that is currently in progress, or has recently
+completed.  It can be used in a variety of ways to manage the flow of control,
+and data, through an asynchronous program.")
+    (license license:perl-license)))
+
+(define-public perl-future-queue
+  (package
+    (name "perl-future-queue")
+    (version "0.52")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/P/PE/PEVANS/Future-Queue-" version
+             ".tar.gz"))
+       (sha256
+        (base32 "01gfawx01mnzq6kd735w58qgk7pglyvmaqxcj92vdk2bcllsk3g9"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build perl-test2-suite))
+    (propagated-inputs (list perl-future))
+    (home-page "https://metacpan.org/release/Future-Queue")
+    (synopsis "FIFO queue of @code{Future} values")
+    (description "This Perl modules implements @code{Future::Queue}, a class
+providing a simple FIFO queue that stores arbitrary Perl values.  Values may
+be added into the queue using the @code{push} method, and retrieved from it
+using the @code{shift} method.")
+    (license license:perl-license)))
+
 (define-public perl-getopt-argvfile
   (package
     (name "perl-getopt-argvfile")
@@ -6396,6 +6438,32 @@ It also goes a bit into Perl C internals.")
 a single nifty object oriented interface to greatly simplify your everyday
 Perl IO idioms.  It exports a single function called io, which returns a new
 @code{IO::All} object.  And that object can do it all!")
+    (license license:perl-license)))
+
+(define-public perl-io-async
+  (package
+    (name "perl-io-async")
+    (version "0.804")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/P/PE/PEVANS/IO-Async-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "156475yl0zx9b8yy05yhzw39cn54jl8m5hkdkrpwsr41j4r58qch"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build perl-test-future-io-impl
+                         perl-test-metrics-any perl-test2-suite))
+    (propagated-inputs (list perl-future perl-struct-dumb))
+    (home-page "https://metacpan.org/release/IO-Async")
+    (synopsis "Modules for asynchronous event-driven programming in Perl")
+    (description "This collection of modules enables writing Perl programs
+that perform asynchronous input/output (IO) operations.  A typical program
+using them would consist of a single subclass of @code{IO::Async::Loop} to act
+as a container of other objects, which perform the actual IO work required by
+the program.  As well as IO handles, the loop also supports timers and signal
+handlers, and includes more higher-level functionality built on top of these
+basic parts.")
     (license license:perl-license)))
 
 (define-public perl-io-captureoutput
@@ -7583,6 +7651,27 @@ objects.  Unlike specialized tools, @code{Meta::Builder} makes no assumptions
 about what metrics you will care about.  @code{Meta::Builder} also makes it
 simple for others to extend your meta-object based tools by providing hooks
 for other packages to add metrics to your meta object.")
+    (license license:perl-license)))
+
+(define-public perl-metrics-any
+  (package
+    (name "perl-metrics-any")
+    (version "0.10")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/P/PE/PEVANS/Metrics-Any-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "16xrx0h9gfyj4ky9zvlg1gwm66343w36f6wspcbaa95gr3wss3m9"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build perl-test2-suite))
+    (home-page "https://metacpan.org/release/Metrics-Any")
+    (synopsis "Abstract collection of monitoring metrics")
+    (description "This Perl module provides a central location for modules to
+report monitoring metrics, such as counters of the number of times interesting
+events have happened, and programs to collect up and send those metrics to
+monitoring services.")
     (license license:perl-license)))
 
 (define-public perl-mime-base64
@@ -9818,7 +9907,7 @@ with file paths.")
 (define-public perl-pdf-api2
   (package
     (name "perl-pdf-api2")
-    (version "2.040")
+    (version "2.047")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -9826,7 +9915,7 @@ with file paths.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "0nlks4p33d08h0fiv6aivinalf9f9zdkgkxqvvbbvdkvyh4z29a9"))))
+                "0ffa3alqfvx1ssg7zpay4a5x0p1lwigjgr2d7s948y6pg6133ml4"))))
     (build-system perl-build-system)
     (native-inputs
      (list perl-test-exception perl-test-memory-cycle))
@@ -9887,6 +9976,67 @@ to the other justmodern languages that have a normal regular expression engine
 available.")
    (license (package-license perl))))
 
+(define-public pls
+  (package
+    (name "pls")
+    (version "0.905")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/M/MR/MREISNER/PLS-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "0a9f612wlz8x5zjpyk116jyfp81cl0g30ppyrg1iar61k4kvama5"))))
+    (build-system perl-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-pls
+            (lambda _
+              ;; This is to avoid having to propagate inputs.
+              (wrap-program (string-append #$output "/bin/pls")
+                `("PERL5LIB" ":" prefix
+                  (,(getenv "PERL5LIB")
+                   ,(string-append #$output "/lib/perl5/site_perl")))))))))
+    (inputs
+     (list bash-minimal                 ;for wrap-program
+           perl-critic
+           perl-future
+           perl-future-queue
+           perl-io-async
+           perl-json-xs
+           perl-path-tiny
+           perl-pod-markdown
+           perl-ppi
+           perl-ppr
+           perl-tidy
+           perl-uri))
+    (home-page "https://metacpan.org/release/PLS")
+    (synopsis "Perl language server")
+    (description "PLS is a Perl language server that implements a subset of
+the Language Server Protocol for the Perl language.  Features currently
+implemented are:
+@itemize
+@item Go to definition (for packages, subroutines, and variables)
+@item Listing all symbols in a document
+@item Hovering to show documentation
+@item Signature help (showing parameters for a function as you type)
+@item Formatting
+@item Range formatting
+@item Auto-completion
+@item Syntax checking
+@item Linting (using perlcritic)
+@item Sorting imports
+@end itemize
+
+To use this language with Emacs, you can configure Eglot like so:
+@lisp
+(add-hook 'perl-mode-hook 'eglot-ensure)
+(setq eglot-server-programs '((perl-mode . (\"pls\"))))
+@end lisp")
+    (license license:perl-license)))
+
 (define-public perl-pod-coverage
   (package
     (name "perl-pod-coverage")
@@ -9907,6 +10057,27 @@ available.")
     (description "This module provides a mechanism for determining if the pod
 for a given module is comprehensive.")
     (license (package-license perl))))
+
+(define-public perl-pod-markdown
+  (package
+    (name "perl-pod-markdown")
+    (version "3.400")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "mirror://cpan/authors/id/R/RW/RWSTAUNER/Pod-Markdown-" version
+             ".tar.gz"))
+       (sha256
+        (base32 "0hl4ky3y584lzff4gxv271qw7ymawda2lwnl8d722zafrndyj9m6"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-test-differences))
+    (propagated-inputs (list perl-html-parser perl-uri))
+    (home-page "https://metacpan.org/release/Pod-Markdown")
+    (synopsis "POD to Markdown converter")
+    (description "This module uses @code{Pod::Simple} to convert POD to
+Markdown.")
+    (license license:perl-license)))
 
 (define-public perl-pod-parser
   (package
@@ -10182,6 +10353,25 @@ in @code{PPIx::Utilities::Node}.")
 with @samp{PPI} documents.  The functions are organized into
 submodules, and may be imported from the appropriate submodules or via
 this module.")
+    (license license:perl-license)))
+
+(define-public perl-ppr
+  (package
+    (name "perl-ppr")
+    (version "0.001010")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/D/DC/DCONWAY/PPR-"
+                           version ".tar.gz"))
+       (sha256
+        (base32 "0vx6ciij5smsb9flbcyiirzzn6qqpaqr879hypc05mjbxj7q4fd3"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/PPR")
+    (synopsis "Pattern-based Perl recognizer")
+    (description "This module defines a single regex that will match
+syntactically valid Perl documents, or valid components (such as statements,
+expressions, blocks, strings, etc.)")
     (license license:perl-license)))
 
 (define-public perl-probe-perl
@@ -11212,6 +11402,28 @@ a functional interface.")
     (synopsis "String processing utility functions")
     (description "A @code{String::Util} module of small, handy functions for
 processing strings in various ways.")
+    (license license:perl-license)))
+
+(define-public perl-struct-dumb
+  (package
+    (name "perl-struct-dumb")
+    (version "0.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/P/PE/PEVANS/Struct-Dumb-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "0dll8njq8zm2ax0w8nchfjsnjvnawhljy4sf1dp8rqhhdd9lih8k"))))
+    (build-system perl-build-system)
+    (native-inputs (list perl-module-build perl-test2-suite))
+    (home-page "https://metacpan.org/release/Struct-Dumb")
+    (synopsis "Simple lightweight record-like structures for Perl")
+    (description "@code{Struct::Dumb} creates record-like structure types,
+similar to the struct keyword in C, C++ or C#, or Record in Pascal.  An
+invocation of this module will create a construction function which returns
+new object references with the given field values.  These references all
+respond to lvalue methods that access or modify the values stored.")
     (license license:perl-license)))
 
 (define-public perl-sub-exporter
@@ -12594,6 +12806,26 @@ as exceptions to standard program flow.")
 reformats Perl scripts to make them easier to read.   The formatting can be
 controlled with command line parameters.  The default parameter settings
 approximately follow the suggestions in the Perl Style Guide.")
+    (license license:gpl2+)))
+
+(define-public perl-tidy
+  (package
+    (name "perl-tidy")
+    (version "20250616")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://cpan/authors/id/S/SH/SHANCOCK/Perl-Tidy-"
+             version ".tar.gz"))
+       (sha256
+        (base32 "16k83qmfdiq5360n3166vkvhi46p8y436r86i6j2938ryviifxdh"))))
+    (build-system perl-build-system)
+    (home-page "https://metacpan.org/release/Perl-Tidy")
+    (synopsis "Perl module to indent and reformat Perl scripts")
+    (description "This module makes the functionality of the
+@command{perltidy} command available to Perl scripts.  Any or all of the input
+parameters may be omitted, in which case the @code{@@ARGV} array will be used
+to provide input parameters as described in the @samp{perltidy(1)} man page.")
     (license license:gpl2+)))
 
 (define-public perl-tie-cycle

@@ -209,14 +209,14 @@ simulation not wholly unlike BUGS.  JAGS was written with three aims in mind:
 (define-public libxls
   (package
     (name "libxls")
-    (version "1.6.2")
+    (version "1.6.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/libxls/libxls/releases/download/"
                            "v" version "/libxls-" version ".tar.gz"))
        (sha256
-        (base32 "0wg3ymr43aa1j3scyl9x83b2xgg7wilzpil0dj91a8dzji6w7b2x"))))
+        (base32 "0b327zafbwnfxj75n722z6a6zw195rs5bjmm5wskl9dml1p87yxj"))))
     (build-system gnu-build-system)
     (home-page "https://github.com/libxls/libxls")
     (synopsis "Read binary (.xls) Excel spreadsheet files")
@@ -464,6 +464,46 @@ and clustering.  It also provides robust support for producing
 publication-quality data plots.  A large amount of 3rd-party packages are
 available, greatly increasing its breadth and scope.")
     (license license:gpl3+)))
+
+(define-public python-dynesty
+  (package
+    (name "python-dynesty")
+    (version "2.1.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dynesty" version))
+       (sha256
+        (base32 "04fkbixkfyqlr8zjky177bmqxqd19xcicqx3r1mhhy0z7942sx7x"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              ;; To run a full tests suite takes a few hours on 16 threads,
+              ;; skip slow tests.
+              "-m" "not slow"
+              ;; Tests fail with error: (liwork>=max(1,10*n)||liwork==-1)
+              ;; failed for 10th keyword liwork: dsyevr:liwork=
+              "--deselect=tests/test_ellipsoid.py::test_bounding_crazy[1]"
+              "--deselect=tests/test_plot.py::test_gaussian[True-False-1-multi]")))
+    (native-inputs
+     (list python-pytest
+           python-pytest-xdist
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-h5py
+           python-matplotlib
+           python-numpy
+           python-scipy
+           python-tqdm))
+    (home-page "https://github.com/joshspeagle/dynesty")
+    (synopsis "Dynamic nested sampling computing Bayesian posteriors and evidences")
+    (description
+     "This package implements a Dynamic Nested Sampling for computing Bayesian
+posteriors and evidences.")
+    (license license:expat)))
 
 (define-public r-minimal
   (package (inherit r-with-tests)

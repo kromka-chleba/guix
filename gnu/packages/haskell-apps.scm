@@ -297,7 +297,7 @@ to @code{cabal repl}).")
 (define-public git-annex
   (package
     (name "git-annex")
-    (version "10.20250115")
+    (version "10.20250630")
     (source
      (origin
        ;; hackage release doesn't include everything needed for extra bits.
@@ -307,7 +307,7 @@ to @code{cabal repl}).")
               (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xkx7jgfcv6cpdhpjjgpiyqj95jdajzw2hn49bsb03vz8lf9dif9"))))
+        (base32 "1livig1x1a929qagisjx33pzmgv38d6fzf11bmy2jfpgvvlk9mfx"))))
     (build-system haskell-build-system)
     (properties '((upstream-name . "git-annex")))
     (arguments

@@ -48,7 +48,8 @@
   #:use-module (guix build-system copy)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
-  #:use-module (guix build-system python)
+  #:use-module ((guix build-system python) #:select (pypi-uri))
+  #:use-module (guix build-system pyproject)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
   #:use-module (gnu packages base)
@@ -71,6 +72,7 @@
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
+  #:use-module (gnu packages python-build)
   #:use-module (gnu packages python-xyz)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages ruby)
@@ -657,9 +659,12 @@ between various shells or commands.")
        (file-name (git-file-name name version))
        (sha256
         (base32 "1mqs3y9vbph33jsaa5hc0fhk80pklmsn8ylp979k9qj63fgqrnwn"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (arguments
      (list
+      #:modules `((guix build pyproject-build-system)
+                  (guix build utils)
+                  (ice-9 match))
       #:phases #~(modify-phases %standard-phases
                    (add-before 'build 'fix-setup.py
                      (lambda* (#:key outputs #:allow-other-keys)
@@ -668,19 +673,43 @@ between various shells or commands.")
                          (substitute* "setup.py"
                            (("add_script\\('")
                             (string-append "add_script('" bin "/"))))))
-                   ;; Whenever setup.py is invoked, scripts in out/bin/ are
-                   ;; replaced. Thus we cannot invoke setup.py for testing.
-                   ;; Upstream also uses pytest.
-                   (replace 'check
-                     (lambda* (#:key tests? #:allow-other-keys)
-                       (when tests?
-                         (invoke "pytest")))))))
+                   (add-before 'wrap 'install-completions
+                     (lambda _
+                       (for-each
+                        (lambda (binary)
+                          (for-each
+                           (match-lambda
+                             ((shell . path)
+                              (mkdir-p (dirname path))
+                              (with-output-to-file path
+                                (lambda _
+                                  (invoke
+                                   (string-append #$output "/bin/" binary)
+                                   "--print-completion" shell)))))
+                           `(("bash" .
+                              ,(format ;format string must be literal
+                                #f "~a/share/bash-completion/completions/~a"
+                                #$output binary))
+                             ("zsh" .
+                              ,(format #f "~a/share/zsh/site-functions/_~a"
+                                       #$output binary))
+                             ("tcsh" .
+                              ,(format #f "~a/etc/profile.d/~a.completion.csh"
+                                       #$output binary)))))
+                        (list "trash"
+                              "trash-empty"
+                              "trash-list"
+                              "trash-put"
+                              "trash-restore"
+                              "trash-rm")))))))
     (native-inputs (list python-flexmock
                          python-mock
                          python-parameterized
                          python-pytest
+                         python-setuptools
                          python-shtab
-                         python-six))
+                         python-six
+                         python-wheel))
     (inputs (list coreutils))
     (propagated-inputs (list python-psutil))
     (home-page "https://github.com/andreafrancia/trash-cli")
@@ -876,27 +905,35 @@ bookmark your favourite commands.")
     (license license:asl2.0)))
 
 (define-public shell-functools
-  (package
-    (name "shell-functools")
-    (version "0.3.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/sharkdp/shell-functools")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0d6zzg7cxfrzwzh1wmpj7q85kz33sak6ac59ncsm6dlbin12h0hi"))))
-    (build-system python-build-system)
-    (home-page "https://github.com/sharkdp/shell-functools/")
-    (synopsis "Functional programming tools for the shell")
-    (description "This package provides higher order functions like map,
-filter, foldl, sort_by and take_while as simple command-line tools.  Following
-the UNIX philosophy, these commands are designed to be composed via pipes.  A
-large collection of functions such as basename, replace, contains or is_dir
-are provided as arguments to these commands.")
-    (license license:expat)))
+  ;; v0.3.0 was released in 2018, there are changes providing fixes to the
+  ;; test suite, use the latest commit.
+  (let ((commit "530e3b6f098c41869f9dc47d1a3005e12ce300c0")
+        (revision "0"))
+    (package
+      (name "shell-functools")
+      (version (git-version "0.3.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                      (url "https://github.com/sharkdp/shell-functools")
+                      (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0l23n5anppxds4678qnh84mykbdb7qxyjrxxjzm7kin7izfzczpa"))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-pytest
+             python-hatchling))
+      (home-page "https://github.com/sharkdp/shell-functools/")
+      (synopsis "Functional programming tools for the shell")
+      (description
+       "This package provides higher order functions like map,filter, foldl,
+sort_by and take_while as simple command-line tools.  Following the UNIX
+philosophy, these commands are designed to be composed via pipes.  A large
+collection of functions such as basename, replace, contains or is_dir are
+provided as arguments to these commands.")
+      (license license:expat))))
 
 (define-public rig
   (package

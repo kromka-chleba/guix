@@ -24,6 +24,8 @@
 ;;; Copyright © 2022 Paul A. Patience <paul@apatience.com>
 ;;; Copyright © 2023 Cairn <cairn@pm.me>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
+;;; Copyright © 2025 Anderson Torres <anderson.torres.8519@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -746,7 +748,7 @@ the OpenCV-Python library.")
 (define-public vips
   (package
     (name "vips")
-    (version "8.16.1")
+    (version "8.17.0")
     (source
      (origin
        (method git-fetch)
@@ -755,12 +757,17 @@ the OpenCV-Python library.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0qy3vsh8mrkdbmdyfandydfp0miqqqiisqfagp1mnwd5xvwyqwm2"))))
+        (base32 "1rdz2mmivr02s7cksqgbramv37yw95w6s8r20hgjqx36in2ndnbl"))))
     (build-system meson-build-system)
     (native-inputs
-     (list gobject-introspection `(,glib "bin") pkg-config))
+     (list `(,glib "bin")
+           gobject-introspection
+           pkg-config))
     (inputs
-     (list glib hdf5 imagemagick poppler))
+     (list glib
+           hdf5
+           imagemagick
+           poppler))
     ;; Propagated to satisfy vips.pc.
     (propagated-inputs
      (list expat
@@ -1238,15 +1245,20 @@ libraries designed for computer vision research and implementation.")
 (define-public insight-toolkit
   (package
     (name "insight-toolkit")
-    (version "5.0.0")
+    (version "5.4.4")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/InsightSoftwareConsortium/ITK/"
-                           "releases/download/v" version "/InsightToolkit-"
-                           version ".tar.xz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/InsightSoftwareConsortium/ITK")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0bs63mk4q8jmx38f031jy5w5n9yy5ng9x8ijwinvjyvas8cichqi"))))
+        (base32 "1l5rby8jj8726k380aivycmhn56cz56mr9k3r56c8hkkrfwwng50"))
+       ;; This patch is required to build with both ITK_USE_GPU=ON and
+       ;; ITK_WRAP_PYTHON=ON.
+       ;; <https://github.com/InsightSoftwareConsortium/ITK/pull/4842>
+       (patches (search-patches "insight-toolkit-fix-build.patch"))))
     (build-system cmake-build-system)
     (outputs '("out" "python"))
     (arguments
@@ -1254,9 +1266,16 @@ libraries designed for computer vision research and implementation.")
            #:configure-flags
            #~(list "-DITK_USE_GPU=ON"
                    "-DITK_USE_SYSTEM_LIBRARIES=ON"
-                   "-DITK_USE_SYSTEM_GOOGLETEST=ON"
                    "-DITK_USE_SYSTEM_CASTXML=ON"
-                   "-DITK_BUILD_SHARED=ON"
+                   "-DITK_USE_SYSTEM_SWIG=ON"
+                   (string-append "-DHDF5_DIR=" #$(this-package-input "hdf5")
+                                  "/lib/cmake")
+                   "-DBUILD_SHARED_LIBS=ON"
+                   ;; Without this flag, there are shared libraries installed
+                   ;; in PY_SITE_PACKAGES_PATH/itk instead of #$output/lib and
+                   ;; RUNPATHs contain the *build directory* of
+                   ;; PY_SITE_PACKAGES_PATH/itk.
+                   "-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
                    "-DITK_WRAPPING=ON"
                    "-DITK_WRAP_PYTHON=ON"
                    "-DITK_DYNAMIC_LOADING=ON"
@@ -1268,11 +1287,10 @@ libraries designed for computer vision research and implementation.")
                                           "/lib/python" python-version
                                           "/site-packages")))
                      (string-append "-DPY_SITE_PACKAGES_PATH=" python-lib-path))
-                   ;; This prevents "GTest::GTest" from being added to the ITK_LIBRARIES
-                   ;; variable in the installed CMake files.  This is necessary as other
-                   ;; packages using insight-toolkit could not be configured otherwise.
-                   "-DGTEST_ROOT=gtest"
-                   "-DCMAKE_CXX_STANDARD=17")
+                   ;; Python is not built with Py_LIMITED_API.
+                   "-DITK_USE_PYTHON_LIMITED_API=OFF"
+                   "-DCMAKE_CXX_STANDARD=17"
+                   "-DBUILD_TESTING=OFF")
 
            #:phases #~(modify-phases %standard-phases
                         (add-after 'unpack 'do-not-tune
@@ -1283,13 +1301,27 @@ libraries designed for computer vision research and implementation.")
                         (add-after 'unpack 'ignore-warnings
                           (lambda _
                             (substitute* "Wrapping/Generators/Python/CMakeLists.txt"
-                              (("-Werror") "")))))))
+                              (("-Werror") ""))))
+                        (add-after 'unpack 'exclude-gtest-target
+                          (lambda _
+                            ;; Prevent ITKGoogleTest from being added to
+                            ;; ITK_MODULES_ENABLED in the installed
+                            ;; ITKConfig.cmake, which in turn prevents
+                            ;; 'GTest::GTest' from being added to the
+                            ;; ITK_LIBRARIES variable.  This is necessary
+                            ;; because projects that use ITK fail to configure
+                            ;; otherwise.  Fixes
+                            ;; <https://codeberg.org/guix/guix/issues/776>.
+                            ;; <https://github.com/microsoft/vcpkg/pull/27187>
+                            (substitute* "Modules/ThirdParty/GoogleTest/itk-module.cmake"
+                              (("DEPENDS") "DEPENDS\n  EXCLUDE_FROM_DEFAULT")))))))
     (inputs
      (list eigen
            expat
            fftw
            fftwf
            hdf5
+           libaec
            libjpeg-turbo
            libpng
            libtiff
@@ -1300,7 +1332,7 @@ libraries designed for computer vision research and implementation.")
            vxl-1
            zlib))
     (native-inputs
-     (list castxml googletest pkg-config swig which))
+     (list castxml git-minimal pkg-config swig-next which))
 
     ;; The 'CMake/ITKSetStandardCompilerFlags.cmake' file normally sets
     ;; '-mtune=native -march=corei7', suggesting there's something to be

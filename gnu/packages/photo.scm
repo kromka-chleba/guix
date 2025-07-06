@@ -535,7 +535,7 @@ photographic equipment.")
 (define-public darktable
   (package
     (name "darktable")
-    (version "5.0.1")
+    (version "5.2.0")
     (source
      (origin
        (method url-fetch)
@@ -543,7 +543,7 @@ photographic equipment.")
              "https://github.com/darktable-org/darktable/releases/"
              "download/release-" version "/darktable-" version ".tar.xz"))
        (sha256
-        (base32 "116rdmxl2csxysghm4h9h1rwms6pqcawf351czpq7adv9q4qv4aa"))))
+        (base32 "1imyk611wz0zxp03w91lhsxkj5hqgi0apx5bqj2q84gpdva6r92k"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -640,8 +640,8 @@ and enhance them.")
 
 ;; There has been no release nor any tag yet, so we take an arbitrary commit.
 (define-public ansel
-  (let ((commit "406cfed6cdd95002493d26042b646c45cbdf4bee")
-        (revision "0"))
+  (let ((commit "b51cfa38c41abe9933b40e1583807b105c5933c1")
+        (revision "1"))
     (package
       (name "ansel")
       (version (git-version "0.0.0" revision commit))
@@ -649,12 +649,12 @@ and enhance them.")
        (origin
          (method git-fetch)
          (uri (git-reference
-               (url "https://github.com/aurelienpierreeng/ansel.git")
+               (url "https://github.com/aurelienpierreeng/ansel")
                (commit commit)
                (recursive? #t)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1p0f1ys345i834a9grzd28wmwj7xmwz64lndabdskl7qc49fh9rf"))
+          (base32 "0f2m8qlmfaw9afs3b2bpk3s40wmgqzaf36szcz10c38dm3lhnhqh"))
          (modules '((guix build utils)))
          (snippet '(for-each delete-file-recursively
                              '("src/external/LibRaw"

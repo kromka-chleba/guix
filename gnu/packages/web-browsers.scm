@@ -3,7 +3,7 @@
 ;;; Copyright © 2014, 2019 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015, 2016, 2019, 2021-2023, 2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016 Kei Kebreau <kkebreau@posteo.net>
-;;; Copyright © 2017, 2024 Eric Bavier <bavier@posteo.net>
+;;; Copyright © 2017, 2024, 2025 Eric Bavier <bavier@posteo.net>
 ;;; Copyright © 2018–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2018 Rutger Helling <rhelling@mykolab.com>
 ;;; Copyright © 2018 Timo Eisenmann <eisenmann@fn.de>
@@ -24,6 +24,7 @@
 ;;; Copyright © 2023 Herman Rimm <herman@rimm.ee>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2025 Sergey Trofimov <sarg@sarg.org.ru>
+;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -137,6 +138,9 @@
        ((guix build cmake-build-system)
         ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
         (guix build utils))
+       #:configure-flags
+       ;; Relax gcc-14's strictness.
+       '("-DCMAKE_C_FLAGS=-Wno-error=int-conversion")
        #:phases
        (modify-phases %standard-phases
          (add-after 'install 'glib-or-gtk-compile-schemas
@@ -592,7 +596,7 @@ interface.")
                 (string-append "os.path.join(\""
                                (assoc-ref outputs "out")
                                "\", \"share\", \"qutebrowser\"")))))
-         (add-after 'build 'build-docs
+         (add-before 'build 'build-docs
            (lambda _
                (substitute* "scripts/asciidoc2html.py"
                  (("sys.executable, \"-m\", \"asciidoc\"")
@@ -1166,16 +1170,16 @@ Features include
 (define-public edbrowse
   (package
     (name "edbrowse")
-    (version "3.8.10")
+    (version "3.8.12")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/CMB/edbrowse.git")
+             (url "https://github.com/edbrowse/edbrowse")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1rkz3xrx96071xbd9cd6iiqvaiinsf9lfj7s7ahnkp7hywr9whm5"))))
+        (base32 "19wpsil3927qchky5frczlp75fiqir9l2wzfqq95gbpssiafwkpy"))))
     (build-system gnu-build-system)
     (inputs (list curl-ssh pcre2 quickjs openssl readline-7 unixodbc))
     (native-inputs (list perl pkg-config))

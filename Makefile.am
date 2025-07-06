@@ -20,6 +20,7 @@
 # Copyright © 2023 Clément Lassieur <clement@lassieur.org>
 # Copyright © 2023, 2024 Wilko Meyer <w@wmeyer.eu>
 # Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
+# Copyright © 2025 Brice Waegeneire <brice@waegenei.re>
 #
 # This file is part of GNU Guix.
 #
@@ -310,6 +311,7 @@ MODULES =					\
   guix/import/kde.scm				\
   guix/import/launchpad.scm   			\
   guix/import/minetest.scm   			\
+  guix/import/nuget.scm   			\
   guix/import/npm-binary.scm			\
   guix/import/opam.scm				\
   guix/import/print.scm				\
@@ -441,6 +443,11 @@ AUX_FILES =						\
   gnu/packages/aux-files/emacs/guix-emacs.el		\
   gnu/packages/aux-files/findclass.php			\
   gnu/packages/aux-files/guix.vim			\
+  gnu/packages/aux-files/linux-libre/6.15-arm.conf	\
+  gnu/packages/aux-files/linux-libre/6.15-arm64.conf	\
+  gnu/packages/aux-files/linux-libre/6.15-i686.conf	\
+  gnu/packages/aux-files/linux-libre/6.15-riscv.conf	\
+  gnu/packages/aux-files/linux-libre/6.15-x86_64.conf	\
   gnu/packages/aux-files/linux-libre/6.14-arm.conf	\
   gnu/packages/aux-files/linux-libre/6.14-arm64.conf	\
   gnu/packages/aux-files/linux-libre/6.14-i686.conf	\
@@ -746,6 +753,7 @@ EXTRA_DIST +=						\
   build-aux/compile-as-derivation.scm			\
   build-aux/config.rpath				\
   build-aux/convert-xref.scm				\
+  build-aux/extract-syscall-ranges.sh			\
   build-aux/generate-authors.scm			\
   build-aux/git-version-gen				\
   build-aux/mdate-from-git.scm				\
@@ -1246,7 +1254,12 @@ cuirass-jobs: $(GOBJECTS)
 .PHONY: update-guix-package update-NEWS cuirass-jobs release
 
 # Git auto-configuration.
-.git/hooks/%: etc/git/%
+.git/hooks/:
+	$(AM_V_at)if test -d .git; then \
+	mkdir "$@"; \
+	fi
+
+.git/hooks/%: etc/git/% | .git/hooks/
 	$(AM_V_at)if test -d .git; then \
 	cp "$<" "$@"; \
 	fi
@@ -1258,7 +1271,7 @@ cuirass-jobs: $(GOBJECTS)
 	fi
 
 COMMIT_MSG_MAGIC = VGhpcyBpcyB0aGUgY29tbWl0LW1zZyBob29rIG9mIEd1aXg=
-.git/hooks/commit-msg: etc/git/commit-msg
+.git/hooks/commit-msg: etc/git/commit-msg | .git/hooks/
 	$(AM_V_at)if test -d .git; then \
 	if test -f $@  && ! grep -qF $(COMMIT_MSG_MAGIC) $@; then \
 	  mkdir -p $@.d && mv $@ $@.d && \
@@ -1321,12 +1334,15 @@ download-po:
 .PHONY: download-po
 
 # Regenerate 'CODEOWNERS' when 'teams.scm' is modified so we don't forget.
+if in_git_p
+if !CROSS_COMPILING
 CODEOWNERS: etc/teams.scm scripts/guix
 	./etc/teams.scm codeowners > "$@.tmp"
 	mv "$@.tmp" "$@"
 
 BUILT_SOURCES += CODEOWNERS
-
+endif
+endif
 ## -------------- ##
 ## Silent rules.  ##
 ## -------------- ##

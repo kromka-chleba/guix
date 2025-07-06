@@ -87,7 +87,8 @@
   #:use-module (gnu packages tcl)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages toolkits)
-  #:use-module (gnu packages version-control))
+  #:use-module (gnu packages version-control)
+  #:use-module (gnu packages web))
 
 (define-public abc
   (let ((commit "d2714035145bd237097c509c23fc9e24b0fa933b")
@@ -128,7 +129,7 @@ formal verification.")
   (package
     (inherit abc)
     (name "abc-yosyshq")
-    (version "0.53")
+    (version "0.54")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -186,7 +187,7 @@ For synthesis, the compiler generates netlists in the desired format.")
 (define-public yosys
   (package
     (name "yosys")
-    (version "0.53")
+    (version "0.54")
     (source
      (origin
        (method git-fetch)
@@ -194,7 +195,7 @@ For synthesis, the compiler generates netlists in the desired format.")
              (url "https://github.com/YosysHQ/yosys")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "01pcf20dpm0gjfzr9bvw4w7cgc390gqg3xfnir9d6x0nr8k6lljh"))
+        (base32 "11khf0wrfixhp35bk9ddzipns6kxz20v3g9c3hb2bfc6a549sg04"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -595,7 +596,7 @@ a hardware description and verification language.")
 (define-public python-vunit
   (package
     (name "python-vunit")
-    (version "5.0.0-dev.5") ;v4.7.0 dates back from 2 years ago.
+    (version "5.0.0-dev.6") ;v4.7.0 dates back from 2 years ago.
     (source
      (origin
        (method git-fetch)
@@ -605,10 +606,21 @@ a hardware description and verification language.")
              (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1sfnl1l6bgaqa8c2sk8k8f232bnq2drjg6rg7jvscmyz18yfih0b"))))
+        (base32 "0zm7733g7ivcx6y00bigvqzkxa2i46sw4pb5k1n3lfbqvsjymshh"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-ghdl-jit
+            (lambda _
+              ;; TODO: Remove when fixed upstream (see:
+              ;; https://github.com/VUnit/vunit/pull/1121).
+              (substitute* "vunit/sim_if/ghdl.py"
+                ((": \"llvm\",")
+                 (string-append
+                  ": \"llvm\",\n\tr\"static elaboration, LLVM JIT code "
+                  "generator\": \"llvm-jit\","))))))
       #:test-flags
       ;; Skip lint tests which require python-pycodestyle, python-pylint and
       ;; python-mypy to reduce closoure size; some lint test fails, see
@@ -638,7 +650,7 @@ automated testing of HDL code.")
 (define-public nvc
   (package
     (name "nvc")
-    (version "1.16.0")
+    (version "1.16.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -647,11 +659,20 @@ automated testing of HDL code.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1hi1mqhjbj7r3wcdkjr6yazwpc7y9lqc0b8bj4ikfgdfsmakm3s4"))))
+                "0kzlr99viw652p8wiz0nb1705hyh4mkx7j9zk1yzrspqfmh6pcq3"))))
     (build-system gnu-build-system)
     (arguments
      (list #:out-of-source? #t
-           #:configure-flags #~(list "--enable-tcl" "--enable-llvm")
+           #:configure-flags
+           #~(list "--enable-tcl"
+                   "--enable-llvm"
+                   "--enable-verilog"
+                   "--enable-vital"
+                   "--enable-server"
+                   "--with-ncurses"
+                   "--enable-parallel-make"
+                   (string-append "--with-bash-completion=" #$output
+                                  "/share/bash-completion/completions"))
            #:phases #~(modify-phases %standard-phases
                         (add-after 'unpack 'clean-up
                           (lambda _
@@ -668,7 +689,8 @@ automated testing of HDL code.")
            ruby
            which))
     (inputs
-     (list libffi
+     (list jansson
+           libffi
            llvm
            readline
            tcl
@@ -818,11 +840,27 @@ hardware designs in Verilog.")
                   libusb
                   zlib))
     (arguments
-     `(#:tests? #f)) ; No tests exist
+     (list #:tests? #f                  ;no test suite
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'install-rules
+                 (lambda _
+                   (install-file
+                    "../source/99-openfpgaloader.rules"
+                    (string-append #$output "/lib/udev/rules.d/")))))))
     (synopsis "Utility for programming FPGA")
     (description "This package provides a program to transfer a bitstream
-to an FPGA.")
-    (home-page "https://trabucayre.github.io/openFPGALoader")
+to an FPGA.  To use @code{openfpgaloader} without root privileges it is
+necessary to install the necessary udev rules.  This can be done by extending
+@code{udev-service-type} in the @code{operating-system} configuration file with
+this package, as in:
+@lisp
+(udev-rules-service 'openfpgaloader openfpgaloader #:groups '(\"plugdev\")
+@end lisp
+Additionally, the @samp{plugdev} group should be registered in the
+@code{supplementary-groups} field of your @code{user-account} declaration. Refer
+to @samp{info \"(guix) Base Services\"} for examples.")
+    (home-page "https://trabucayre.github.io/openFPGALoader/")
     (license license:asl2.0)))
 
 (define-public python-hdlmake

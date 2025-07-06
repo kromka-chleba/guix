@@ -1112,7 +1112,7 @@ machine, and more.")
 (define-public exercism
   (package
     (name "exercism")
-    (version "3.5.4")
+    (version "3.5.5")
     (source
      (origin
        (method git-fetch)
@@ -1121,47 +1121,60 @@ machine, and more.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32
-         "0shh84g7j977kn9kcm09rj3lz6a3y5qq9yvklsldgb9zvass5szd"))
+        (base32 "1a53caqrxv0rhg79md97vnzcbr9gnz3mzjkk7xyafc3h456b4gsz"))
        (patches (search-patches "exercism-disable-self-update.patch"))))
     (build-system go-build-system)
     (arguments
-     `(#:import-path "github.com/exercism/cli/exercism"
-       #:unpack-path "github.com/exercism/cli"
-       #:install-source? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'install-completions
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out  (assoc-ref outputs "out"))
-                    (bash (string-append out "/etc/bash_completion.d/exercism"))
-                    (fish (string-append
-                            out "/share/fish/vendor_completions.d/exercism.fish"))
-                    (zsh  (string-append out "/share/zsh/site-functions/_exercism")))
-               (mkdir-p (dirname bash))
-               (with-output-to-file bash
-                 (lambda ()
-                   (invoke (string-append out "/bin/exercism") "completion" "bash")))
-               (mkdir-p (dirname fish))
-               (with-output-to-file fish
-                 (lambda ()
-                   (invoke (string-append out "/bin/exercism") "completion" "fish")))
-               (mkdir-p (dirname zsh))
-               (with-output-to-file zsh
-                 (lambda ()
-                   (invoke (string-append out "/bin/exercism") "completion" "zsh")))))))))
-    (inputs
+     (list
+      #:install-source? #f
+      #:import-path "github.com/exercism/cli/exercism"
+      #:unpack-path "github.com/exercism/cli"
+      ;; Step away from cli/exercism to test the whole project.
+      #:test-subdirs #~(list "../../...")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'install-completions
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((exercism (string-append #$output "/bin/exercism"))
+                     (bash (string-append
+                            #$output
+                            "/etc/bash_completion.d/exercism"))
+                     (fish (string-append
+                            #$output
+                            "/share/fish/vendor_completions.d/exercism.fish"))
+                     (zsh (string-append
+                           #$output
+                           "/share/zsh/site-functions/_exercism")))
+                (mkdir-p (dirname bash))
+                (with-output-to-file bash
+                  (lambda ()
+                    (invoke exercism "completion" "bash")))
+                (mkdir-p (dirname fish))
+                (with-output-to-file fish
+                  (lambda ()
+                    (invoke exercism "completion" "fish")))
+                (mkdir-p (dirname zsh))
+                (with-output-to-file zsh
+                  (lambda ()
+                    (invoke exercism "completion" "zsh")))))))))
+    (native-inputs
      (list go-github-com-blang-semver
            go-github-com-spf13-cobra
            go-github-com-spf13-pflag
            go-github-com-spf13-viper
+           go-github-com-stretchr-testify
            go-golang-org-x-net
            go-golang-org-x-text))
     (home-page "https://exercism.org/")
     (synopsis "Mentored learning for programming languages")
-    (description "Commandline client for exercism.io, a free service providing
-mentored learning for programming languages.")
+    (description
+     "Commandline client for exercism.io, a free service providing mentored
+learning for programming languages.")
     (license license:expat)))
+
+(define-public exercism-cli
+  (package/inherit exercism
+    (name "exercism-cli")))
 
 (define-public mazo
   (package

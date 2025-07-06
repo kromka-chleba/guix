@@ -29,8 +29,10 @@
 ;;; Copyright © 2023 Timotej Lazar <timotej.lazar@araneo.si>
 ;;; Copyright © 2023 Morgan Smith <Morgan.J.Smith@outlook.com>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
-;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2024-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2025 Grigory Shepelev <shegeley@gmail.com>
 
 ;;;
 ;;; This file is part of GNU Guix.
@@ -49,6 +51,22 @@
 ;;; along with GNU Guix.  If not, see <http://www.gnu.org/licenses/>.
 
 (define-module (gnu packages disk)
+  #:use-module ((guix licenses) #:prefix license:)
+  #:use-module (guix build-system glib-or-gtk)
+  #:use-module (guix build-system gnu)
+  #:use-module (guix build-system go)
+  #:use-module (guix build-system meson)
+  #:use-module (guix build-system perl)
+  #:use-module (guix build-system pyproject)
+  #:use-module (guix build-system python)
+  #:use-module (guix build-system qt)
+  #:use-module (guix build-system scons)
+  #:use-module (guix build-system trivial)
+  #:use-module (guix download)
+  #:use-module (guix gexp)
+  #:use-module (guix git-download)
+  #:use-module (guix packages)
+  #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages admin)
   #:use-module (gnu packages autotools)
@@ -65,8 +83,8 @@
   #:use-module (gnu packages docbook)
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages elf)
-  #:use-module (gnu packages file-systems)
   #:use-module (gnu packages file)
+  #:use-module (gnu packages file-systems)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gettext)
@@ -83,6 +101,7 @@
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages ncurses)
+  #:use-module (gnu packages ninja)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages perl)
   #:use-module (gnu packages perl-web)
@@ -107,23 +126,7 @@
   #:use-module (gnu packages w3m)
   #:use-module (gnu packages web)
   #:use-module (gnu packages xml)
-  #:use-module (gnu packages xorg)
-  #:use-module (guix build-system gnu)
-  #:use-module (guix build-system glib-or-gtk)
-  #:use-module (guix build-system go)
-  #:use-module (guix build-system meson)
-  #:use-module (guix build-system perl)
-  #:use-module (guix build-system python)
-  #:use-module (guix build-system pyproject)
-  #:use-module (guix build-system qt)
-  #:use-module (guix build-system trivial)
-  #:use-module (guix build-system scons)
-  #:use-module (guix download)
-  #:use-module (guix gexp)
-  #:use-module (guix git-download)
-  #:use-module ((guix licenses) #:prefix license:)
-  #:use-module (guix packages)
-  #:use-module (guix utils))
+  #:use-module (gnu packages xorg))
 
 (define-public bcache-tools
   ;; The 1.1 release is a year old and missing new features & documentation.
@@ -684,6 +687,118 @@ also send commands associated with starting and stopping the media, loading
 and unloading removable media and some other housekeeping functions.")
     (license license:bsd-3)))
 
+(define-public open-isns
+  (package
+    (name "open-isns")
+    (version "0.103")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-iscsi/open-isns")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (sha256
+        (base32 "0008f4sv0z3mmqgf5ifx6rp7nwpp41qd3shhi3b2ci1ir8r91skf"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      ;; TODO: Figure out how to run tests, "build" directory contains 0 files
+      ;; from "source/tests", attempt to run them from that directorie failed
+      ;; with error: no pid file: /tmp/isns-test/Test01/server0/pid
+      #:tests? #f
+      #:configure-flags
+      #~(list "-Dslp=disabled"
+              (string-append "-Dsystemddir=" #$output "/lib/systemd")
+              "--sharedstatedir=/var")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-meson.build
+            (lambda _
+              (substitute* "meson.build"
+                (("/usr/lib64")
+                 (string-append #$output "/lib"))
+                (("/var/lib")
+                 (string-append #$output "/lib"))))))))
+    (native-inputs
+     (list meson
+           ninja
+           pkg-config))
+    (inputs
+     (list openssl))
+    (home-page "https://github.com/open-iscsi/open-isns")
+    (synopsis "Linux server and client for iSNS")
+    (description
+     "This package provides a partial implementation of @acronym{iSNS,
+ Internet Storage Name Service}, specified by
+@url{https://www.rfc-editor.org/rfc/rfc3720.html, RFC4171}.  It's an
+maintained fork of https://github.com/cleech/open-isns.")
+    (license license:gpl2)))
+
+(define-public open-iscsi
+  (package
+    (name "open-iscsi")
+    (version "2.1.11")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/open-iscsi/open-iscsi")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0bafxz3vwk0wfa5r3cl3h9sngdfkll10i8467q8d0im4sj489kay"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      ;; XXX: 2nd of 4th test fails with iSCSI ERROR: Could not open
+      ;; /run/lock/iscsi: 2: No such file or directory
+      ;; ../source/libopeniscsiusr/idbm.c:_idbm_lock():327
+      #:tests? #f
+      #:configure-flags
+      #~(list "-Dno_systemd=true"
+              (string-append "-Discsi_sbindir="
+                             #$output "/sbin")
+              (string-append "-Ddbroot="
+                             #$output "/var/lib/iscsi")
+              (string-append "--sbindir="
+                             #$output "/sbin"))))
+    (native-inputs
+     (list meson
+           ninja
+           perl
+           pkg-config))
+    (inputs
+     (list kmod
+           open-isns
+           openssl
+           (list util-linux "lib")))
+    (home-page "https://github.com/open-iscsi/open-iscsi")
+    (synopsis "Linux iSCSI tools")
+    (description
+     "The Open @acronym{iSCSI, Internet Small Computer Systems Interface}
+project is a high-performance, transport independent, multi-platform
+implementation of @url{https://www.rfc-editor.org/rfc/rfc3720.html, RFC3720}
+iSCSI.
+
+Features:
+@itemize
+@item highly optimized and very small-footprint data path
+@item persistent configuration database
+@item SendTargets discovery
+@item provides @acronym{CHAP, Challenge Handshake Authentication Protocol}
+support
+@item @acronym{PDU, Protocol Data Unit} header Digest
+@item multiple sessions
+@end itemize")
+    ;; The daemon and other top-level commands are licensed as GPLv3, while
+    ;; the libopeniscsiusr library used by some of those commmands is licensed
+    ;; as LGPLv3.
+    (license (list license:gpl2+        ;attached license
+                   license:gpl3         ;mentioned in README
+                   license:lgpl3))))    ;mentioned in README
+
 (define-public idle3-tools
   (package
     (name "idle3-tools")
@@ -978,46 +1093,38 @@ Duperemove can also take input from the @command{fdupes} program.")
 (define-public ranger
   (package
     (name "ranger")
-    (version "1.9.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://ranger.github.io/"
-                                  "ranger-" version ".tar.gz"))
-              (sha256
-               (base32
-                "0lfjrpv3z4h0knd3v94fijrw2zjba51mrp3mjqx2c98wr428l26f"))))
-    (build-system python-build-system)
-    (inputs
-     (list bash-minimal w3m))
-    (native-inputs
-     (list which
-           ;; For tests.
-           python-pytest))
+    (version "1.9.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "https://ranger.github.io/" "ranger-" version
+                           ".tar.gz"))
+       (sha256
+        (base32 "128ggxfhfmckl7x89flwxks7gxq0m02insdizcsp62193c6mxmvs"))))
+    (build-system pyproject-build-system)
     (arguments
-     '( ;; The 'test' target runs developer tools like pylint, which fail.
-       #:test-target "test_pytest"
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'wrap-program
-           ;; Tell 'ranger' where 'w3mimgdisplay' is.
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out  (assoc-ref outputs "out"))
-                    (ranger (string-append out "/bin/ranger"))
-                    (w3m (assoc-ref inputs "w3m"))
-                    (w3mimgdisplay (string-append w3m
-                                   "/libexec/w3m/w3mimgdisplay")))
-               (wrap-program ranger
-                 `("W3MIMGDISPLAY_PATH" ":" prefix (,w3mimgdisplay))))))
-         (replace 'check
-           ;; The default check phase simply prints 'Ran 0 tests in 0.000s'.
-           (lambda* (#:key test-target #:allow-other-keys)
-             (invoke "make" test-target))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'wrap-program
+            ;; Tell 'ranger' where 'w3mimgdisplay' is.
+            (lambda _
+              (let* ((ranger (string-append #$output "/bin/ranger"))
+                     (w3m #$(this-package-input "w3m"))
+                     (w3mimgdisplay (string-append w3m
+                                     "/libexec/w3m/w3mimgdisplay")))
+                (wrap-program ranger
+                  `("W3MIMGDISPLAY_PATH" ":" prefix
+                    (,w3mimgdisplay)))))))))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (inputs (list bash-minimal w3m))
     (home-page "https://ranger.github.io/")
     (synopsis "Console file manager")
-    (description "ranger is a console file manager with Vi key bindings.  It
-provides a minimalistic and nice curses interface with a view on the directory
-hierarchy.  It ships with @code{rifle}, a file launcher that is good at
-automatically finding out which program to use for what file type.")
+    (description
+     "ranger is a console file manager with Vi key bindings.  It provides a
+minimalistic and nice curses interface with a view on the directory hierarchy.
+It ships with @code{rifle}, a file launcher that is good at automatically
+finding out which program to use for what file type.")
     (license license:gpl3)))
 
 (define-public fff
@@ -1685,7 +1792,7 @@ wrapper for disk usage querying and visualisation.")
 (define-public qdirstat
   (package
     (name "qdirstat")
-    (version "1.8.1")
+    (version "1.9")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1694,25 +1801,23 @@ wrapper for disk usage querying and visualisation.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "04vpdlwk01kgmc4r5rnrmrgd4sf2kfh1rjzb2rjkfxdd4pbghsy9"))))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (system* "qmake"
-                      (string-append "INSTALL_PREFIX="
-                                     (assoc-ref outputs "out")))))
-         (add-after 'install 'wrap
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (wrap-program (string-append
-                            (assoc-ref outputs "out")
-                            "/bin/qdirstat-cache-writer")
-               `("PERL5LIB" ":" prefix
-                 (,(string-append
-                    (assoc-ref inputs "perl-uri-escape")
-                    "/lib/perl5/site_perl")))))))))
+                "09amjkg0h097kahscap59imyg4wpjy43lkaiqw60ady3s6b6c1x7"))))
     (build-system qt-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda _
+              (system* "qmake" (string-append "INSTALL_PREFIX=" #$output))))
+          (add-after 'install 'wrap
+            (lambda _
+              (wrap-program (string-append #$output
+                                           "/bin/qdirstat-cache-writer")
+                `("PERL5LIB" ":" prefix
+                  (,(string-append
+                     #$(this-package-input "perl-uri-escape")
+                     "/lib/perl5/site_perl")))))))))
     (inputs
      (list bash-minimal
            perl
@@ -1720,11 +1825,11 @@ wrapper for disk usage querying and visualisation.")
            qtbase-5
            qtwayland-5
            zlib))
+    (home-page "https://github.com/shundhammer/qdirstat")
     (synopsis "Storage utilisation visualization tool")
     (description
      "QDirStat is a graphical application to show where your disk space has
 gone and to help you to clean it up.")
-    (home-page "https://github.com/shundhammer/qdirstat")
     (license license:gpl2)))
 
 (define-public nwipe

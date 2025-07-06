@@ -25,6 +25,7 @@
 ;;; Copyright © 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2024 Roman Scherer <roman@burningswell.com>
+;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -49,8 +50,10 @@
   #:use-module (guix git-download)
   #:use-module (guix utils)
   #:use-module (gnu packages)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages golang-build)
-  #:use-module (gnu packages golang-xyz))
+  #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages version-control))
 
 ;;; Commentary:
 ;;;
@@ -977,6 +980,59 @@ package).")
               license:isc    ; for d3-selection
               ))))
 
+(define-public go-github-com-h2non-gock
+  (package
+    (name "go-github-com-h2non-gock")
+    (version "1.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/h2non/gock")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0w6gmhyqbgf3xq8km3wip61j5y56nwxkny06rkhmvn6a3s5qkshv"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/h2non/gock"
+      ;; want: (context.deadlineExceededError) context deadline exceeded
+      #:test-flags #~(list "-skip" "TestResponderPreExpiredContext")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-examples
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "_examples")))))))
+    (propagated-inputs
+     (list go-github-com-h2non-parth
+           go-github-com-nbio-st))
+    (home-page "https://github.com/h2non/gock")
+    (synopsis "HTTP traffic mocking and testing for Go")
+    (description
+     "Versatile HTTP mocking made easy in @url{https://golang.org, Go} that
+works with any @code{net/http} based stdlib implementation.  Inspired by the
+Node @code{nock} library, it has features like:
+@itemize
+@item Simple and expressive API
+@item Semantic API DSL for declarative HTTP mock declarations
+@item Built-in helpers for easy JSON/XML mocking
+@item Supports persistent and volatile TTL-limited mocks
+@item Full regular expressions capable HTTP request mock matching
+@item Designed for both testing and runtime scenarios
+@item Match request by method, URL params, headers and bodies
+@item Extensible and pluggable HTTP matching rules
+@item Ability to switch between mock and real networking modes
+@item Ability to filter/map HTTP requests for accurate mock matching
+@item Supports map and filters to handle mocks easily
+@item Wide compatible HTTP interceptor using @code{http.RoundTripper} interface
+@item Works with any @code{net/http} compatible client, such as @code{gentleman}
+@item Network timeout/cancelation delay simulation
+@item Extensible and hackable API
+@end itemize")
+    (license license:expat)))
+
 (define-public go-github-com-hexops-gotextdiff
   (package
     (name "go-github-com-hexops-gotextdiff")
@@ -1258,6 +1314,72 @@ Many times certain facilities are not available, or tests must run
 differently.")
     (license license:expat)))
 
+(define-public go-github-com-jiu2015-gotestspace
+  (package
+    (name "go-github-com-jiu2015-gotestspace")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Jiu2015/gotestspace")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1wcvdp1wjqj3lh2vdhb2vph528vncjs3vixjriwkxrn979b59y4s"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/Jiu2015/gotestspace"
+      ;; Our patching causes some discrepancies in the expected
+      ;; output/values.
+      ;;
+      ;; expected: "goshelltest2=222"
+      ;; actual  : "goshelltest1=111"
+      #:test-flags
+      #~(list "-skip" (string-join
+                       (list "TestNewShellSpace/path_and_env_parameter"
+                             "TestNewShellSpace/path_and_env_and_tem.*r$")
+                       "|"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-example
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (delete-file-recursively "example"))))
+          (add-after 'unpack 'preserve-PATH-from-environment
+            ;; Unlike FHS systems, Guix needs to look its commands fom PATH.
+            ;; Expose it by default in the test environments.
+            (lambda* (#:key tests? import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* "options.go"
+                  (("\"GIT_COMMITTER_NAME='C O Mitter'\"," all)
+                   (string-append
+                    all "\n\t\t\t\"PATH=\" + os.Getenv(\"PATH\"),"))))))
+          (add-after 'unpack 'patch-commands
+            (lambda* (#:key import-path inputs #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                ;; Runtime modules.
+                (substitute* "testspace.go"
+                  (("/bin/bash")
+                   (search-input-file inputs "bin/bash"))
+                  (("\"git\"")
+                   (format #f "~s" (search-input-file inputs "bin/git"))))))))))
+    (native-inputs
+     (list git-minimal
+           go-github-com-stretchr-testify))
+    (inputs
+     (list bash-minimal
+           git-minimal))
+    (home-page "https://github.com/Jiu2015/gotestspace")
+    (synopsis "Create Go workspaces that can quickly run shell commands")
+    (description
+     "@code{gotestspace} is used to quickly create a working directory for
+shell execution using Go, as well as a tool for customizing the execution of
+the shell.  It can help you quickly create an independent workspace for unit
+testing and improve the efficiency of unit test writing.")
+    (license license:gpl3+)))
+
 (define-public go-github-com-jmhodges-clock
   (package
     (name "go-github-com-jmhodges-clock")
@@ -1482,6 +1604,42 @@ testing capabilities.")
      "Package testdeep allows flexible deep comparison, it is an adaptation of
 Perl's @url{https://metacpan.org/pod/Test::Deep, Test::Deep perl}.")
     (license license:bsd-2)))
+
+(define-public go-github-com-nbio-st
+  (package
+    (name "go-github-com-nbio-st")
+    (version "0.0.0-20140626010706-e9e8d9816f32")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/nbio/st")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "14r4acm82gp9ikqnp41a06bm4mrdlbskakhibbxsc5ljav7bni27"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/nbio/st"
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'delete-problematic-tests
+            (lambda _
+              ;; The readme_test.go file contains failing tests on
+              ;; purpose to demonstrate the failing output.
+              (delete-file "src/github.com/nbio/st/readme/readme_test.go"))))))
+    (home-page "https://github.com/nbio/st")
+    (synopsis "Tiny test framework for Go")
+    (description
+     "Package @code{st}, pronounced @emph{ghost}, is a tiny test framework for
+making short, useful assertions in your Go tests.  @samp{Assert(t, have, want)
+and Refute(t, have, want)} abort a test immediately with @code{t.Fatal}.
+@samp{Expect(t, have, want) and Reject(t, have, want)} allow a test to
+continue, reporting failure at the end with @code{t.Error}.  They print nice
+error messages, preserving the order of @code{have} (actual result) before
+@code{want} (expected result) to minimize confusion.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-onsi-ginkgo
   (package

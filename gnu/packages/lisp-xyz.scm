@@ -130,6 +130,7 @@
   #:use-module (gnu packages tcl)
   #:use-module (gnu packages texinfo)
   #:use-module (gnu packages tls)
+  #:use-module (gnu packages uml)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages video)
   #:use-module (gnu packages web)
@@ -361,6 +362,9 @@ operations in 3D space.")
 (define-public ecl-3d-matrices
   (sbcl-package->ecl-package sbcl-3d-matrices))
 
+(define-public clasp-3d-matrices
+  (sbcl-package->clasp-package sbcl-3d-matrices))
+
 (define-public sbcl-3d-quaternions
   (let ((commit "b79c15cca8d9c409216a6cee8ec9e182dcdec9e2")
         (revision "0"))
@@ -400,6 +404,9 @@ most modern systems and compilers.")
 ;;
 ;; (define-public ecl-3d-quaternions
 ;;   (sbcl-package->ecl-package sbcl-3d-quaternions))
+
+(define-public clasp-3d-quaternions
+  (sbcl-package->clasp-package sbcl-3d-quaternions))
 
 (define-public sbcl-3d-spaces
   (let ((commit "a93f4915affcf65617366297ad8bd2ec77bae702")
@@ -480,6 +487,9 @@ alternative 4x4 matrix representation.")
 ;; (define-public ecl-3d-transforms
 ;;   (sbcl-package->ecl-package sbcl-3d-transforms))
 
+(define-public clasp-3d-transforms
+  (sbcl-package->clasp-package sbcl-3d-transforms))
+
 (define-public sbcl-3d-vectors
   (let ((commit "257969402864ac3859d77b981abf0aa5373c4e78")
         (revision "2"))
@@ -513,6 +523,39 @@ offers them both in non-modifying and modifying versions where applicable.")
 
 (define-public ecl-3d-vectors
   (sbcl-package->ecl-package sbcl-3d-vectors))
+
+(define-public clasp-3d-vectors
+  (sbcl-package->clasp-package sbcl-3d-vectors))
+
+(define-public sbcl-40ants-asdf-system
+  (let ((commit "492bc9b09c100593ceec8375899addcbffa573cc")
+        (revision "0"))
+    (package
+      (name "sbcl-40ants-asdf-system")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/40ants/40ants-asdf-system")
+                (commit commit)))
+         (sha256
+          (base32 "151zfyz7c4xrd4mnyzd5nsla1p70q4iixgm9mlnbm799mr1aprwp"))
+         (file-name (git-file-name "cl-40ants-asdf-system" version))))
+      (build-system asdf-build-system/sbcl)
+      (native-inputs (list sbcl-rove))
+      (home-page "https://40ants.com/40ants-asdf-system/")
+      (synopsis "Alternative to asdf:package-inferred-system")
+      (description
+       "@code{40ants-asdf-system} provides a class for being used instead of
+@code{asdf:package-inferred-system} in 40ANT systems.")
+      (license license:bsd-3))))
+
+(define-public cl-40ants-asdf-system
+  (sbcl-package->cl-source-package sbcl-40ants-asdf-system))
+
+(define-public ecl-40ants-asdf-system
+  (sbcl-package->ecl-package sbcl-40ants-asdf-system))
 
 (define-public sbcl-40ants-doc
   (let ((commit "7725ff67a380e9ebfc6155e14d91e650f256711b")
@@ -596,6 +639,49 @@ system, and additional features in the full system.")
 
 (define-public ecl-40ants-doc
   (sbcl-package->ecl-package sbcl-40ants-doc))
+
+(define-public sbcl-40ants-plantuml
+  (let ((commit "928a074051491273450c70a290b11db27fd379e7")
+        (revision "0"))
+    (package
+      (name "sbcl-40ants-plantuml")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/40ants/plantuml")
+                (commit commit)))
+         (sha256
+          (base32 "0bi3i0cw16aa38xp04xwirdfvwjz862q5yzghpprddi1q5mvxpbf"))
+         (file-name (git-file-name "cl-40ants-plantuml" version))))
+      (build-system asdf-build-system/sbcl)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-paths
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "src/core.lisp"
+                  (("/usr/share/plantuml/plantuml.jar")
+                   (search-input-file inputs "/bin/plantuml"))))))))
+      (native-inputs (list sbcl-rove))
+      (inputs
+       (list graphviz
+             plantuml
+             sbcl-40ants-asdf-system
+             sbcl-serapeum))
+      (home-page "https://40ants.com/plantuml/")
+      (synopsis "Wrapper around PlantUML jar library")
+      (description
+       "@code{40ants-plantuml} provides a wrapper around the PlantUML jar library.")
+      (license license:unlicense))))
+
+(define-public cl-40ants-plantuml
+  (sbcl-package->cl-source-package sbcl-40ants-plantuml))
+
+(define-public ecl-40ants-plantuml
+  (sbcl-package->ecl-package sbcl-40ants-plantuml))
 
 (define-public sbcl-abstract-classes
   (let ((commit "7fa74f1e057f9ba7c1ffecff14f049f979e45267")
@@ -969,6 +1055,17 @@ portable between implementations.")
           `(modify-phases ,phases
              (delete 'build-doc))))))))
 
+(define-public clasp-alexandria
+  (let ((pkg (sbcl-package->clasp-package sbcl-alexandria)))
+    (package
+      (inherit pkg)
+      (outputs '("out"))
+      (arguments
+       (substitute-keyword-arguments (package-arguments pkg)
+         ((#:phases phases)
+          `(modify-phases ,phases
+             (delete 'build-doc))))))))
+
 (define-public sbcl-alexandria-plus
   (let ((commit "adafb09838a84895bedb119f8253b89b6a04a2c5")
         (revision "0"))
@@ -1004,6 +1101,9 @@ portable between implementations.")
 
 (define-public ecl-alexandria-plus
   (sbcl-package->ecl-package sbcl-alexandria-plus))
+
+(define-public clasp-alexandria-plus
+  (sbcl-package->clasp-package sbcl-alexandria-plus))
 
 (define-public sbcl-alloy
   (let ((commit "628974de537affb5b44ad548347f67c16efffcfc")
@@ -1086,6 +1186,9 @@ operator in portable Common Lisp.")
 (define-public ecl-amb
   (sbcl-package->ecl-package sbcl-amb))
 
+(define-public clasp-amb
+  (sbcl-package->clasp-package sbcl-amb))
+
 (define-public sbcl-anaphora
   (package
     (name "sbcl-anaphora")
@@ -1115,6 +1218,9 @@ new fiends in addition to old friends like @command{aif} and
 
 (define-public ecl-anaphora
   (sbcl-package->ecl-package sbcl-anaphora))
+
+(define-public clasp-anaphora
+  (sbcl-package->clasp-package sbcl-anaphora))
 
 ;;; Split the antik package in two to work around the circular dependency
 ;;; between antik/antik and antik/gsll.
@@ -1453,6 +1559,9 @@ functions for arrays and vectors.  Originally from Plump.")
 
 (define-public ecl-array-utils
   (sbcl-package->ecl-package sbcl-array-utils))
+
+(define-public clasp-array-utils
+  (sbcl-package->clasp-package sbcl-array-utils))
 
 (define-public sbcl-arrow-macros
   ;; The latest upstream version tag is dated (pushed in 2020), use the latest
@@ -1849,6 +1958,9 @@ implementations offer.")
 (define-public ecl-atomics
   (sbcl-package->ecl-package sbcl-atomics))
 
+(define-public clasp-atomics
+  (sbcl-package->clasp-package sbcl-atomics))
+
 (define-public sbcl-authentic
   (let ((commit "4e9194dda227b98f56dda1c2a2480efcc2d1f973")
         (revision "2"))
@@ -1915,6 +2027,9 @@ GNU libiconv, but completely written in Common Lisp.")
 
 (define-public ecl-babel
   (sbcl-package->ecl-package sbcl-babel))
+
+(define-public clasp-babel
+  (sbcl-package->clasp-package sbcl-babel))
 
 (define-public sbcl-binary-types
   (let ((commit "a17caf8890f11fdc56f6ea3a21260bf0fb9c589c"))
@@ -1990,6 +2105,9 @@ and a variant called ascii85, used by git for binary diff files.")
 (define-public cl-binascii
   (sbcl-package->cl-source-package sbcl-binascii))
 
+(define-public clasp-binascii
+  (sbcl-package->clasp-package sbcl-binascii))
+
 (define-public sbcl-binding-arrows
   ;; Fork of sbcl-arrows that does not have a new tag.
   (let ((commit "46bcba8bb1ff27cd5caab3bda36f000d0489a4f2")
@@ -2023,6 +2141,9 @@ impossible to merge back upstream.")
 
 (define-public ecl-binding-arrows
   (sbcl-package->ecl-package sbcl-binding-arrows))
+
+(define-public clasp-binding-arrows
+  (sbcl-package->clasp-package sbcl-binding-arrows))
 
 (define-public cl-binding-arrows
   (sbcl-package->cl-source-package sbcl-binding-arrows))
@@ -2058,6 +2179,9 @@ impossible to merge back upstream.")
 
 (define-public ecl-binpack
   (sbcl-package->ecl-package sbcl-binpack))
+
+(define-public clasp-binpack
+  (sbcl-package->clasp-package sbcl-binpack))
 
 (define-public sbcl-birch
   (let ((commit "30cd24260675c6c4e276daaf28be8d02ac15dd8f")
@@ -2679,6 +2803,9 @@ cartesian product.")
 (define-public ecl-bubble-operator-upwards
   (sbcl-package->ecl-package sbcl-bubble-operator-upwards))
 
+(define-public clasp-bubble-operator-upwards
+  (sbcl-package->clasp-package sbcl-bubble-operator-upwards))
+
 (define-public sbcl-burgled-batteries3
   (let ((commit "f65f454d13bb6c40e17e9ec62e41eb5069e09760")
         (revision "2"))
@@ -3248,6 +3375,9 @@ definition objects.")
 (define-public ecl-cesdi
   (sbcl-package->ecl-package sbcl-cesdi))
 
+(define-public clasp-cesdi
+  (sbcl-package->clasp-package sbcl-cesdi))
+
 (define-public sbcl-cf
   (let ((commit "0aa0dd67f59f88e0dbd50ebe25690fcdaafee4c5")
         (revision "0"))
@@ -3440,6 +3570,9 @@ initialization methods.")
 (define-public ecl-charje.documentation
   (sbcl-package->ecl-package sbcl-charje.documentation))
 
+(define-public clasp-charje.documentation
+  (sbcl-package->clasp-package sbcl-charje.documentation))
+
 (define-public sbcl-charje.loop
   (package
     (name "sbcl-charje.loop")
@@ -3567,6 +3700,9 @@ could just install the chemical-compounds package.")
 (define-public ecl-chemical-compounds
   (sbcl-package->ecl-package sbcl-chemical-compounds))
 
+(define-public clasp-chemical-compounds
+  (sbcl-package->clasp-package sbcl-chemical-compounds))
+
 (define-public sbcl-chipz
   (let ((version "0.8")
         (commit "82a17d39c78d91f6ea63a03aca8f9aa6069a5e11")
@@ -3603,6 +3739,9 @@ the format used by the popular compression tool bzip2.")
 
 (define-public ecl-chipz
   (sbcl-package->ecl-package sbcl-chipz))
+
+(define-public clasp-chipz
+  (sbcl-package->clasp-package sbcl-chipz))
 
 (define-public sbcl-chirp
   (let ((commit "01c79fa41939688216d1f86d0766a687becb0654")
@@ -4172,6 +4311,9 @@ visualization.")
 (define-public ecl-cl-annot
   (sbcl-package->ecl-package sbcl-cl-annot))
 
+(define-public clasp-cl-annot
+  (sbcl-package->clasp-package sbcl-cl-annot))
+
 (define-public sbcl-cl-ansi-text
   (let ((commit "8b129d83c7511b54cdd9d4123825a2d06349b25c"))
     (package
@@ -4236,6 +4378,9 @@ tables.")
 
 (define-public ecl-cl-ascii-table
   (sbcl-package->ecl-package sbcl-cl-ascii-table))
+
+(define-public clasp-cl-ascii-table
+  (sbcl-package->clasp-package sbcl-cl-ascii-table))
 
 (define-public sbcl-cl-async
   (let ((commit "f6423e44404a44434d803605e0d2e17199158e28")
@@ -4966,6 +5111,9 @@ This library is no longer supported by its author.")
 (define-public ecl-cl-colors2
   (sbcl-package->ecl-package sbcl-cl-colors2))
 
+(define-public clasp-cl-colors2
+  (sbcl-package->clasp-package sbcl-cl-colors2))
+
 (define-public sbcl-cl-conspack
   (let ((commit "6e529d7b3a7223ef1bb5c7b9f18384ba67b50b09")
         (revision "2"))
@@ -5038,6 +5186,9 @@ transforming Common Lisp code to continuation passing style.")
 
 (define-public ecl-cl-cont
   (sbcl-package->ecl-package sbcl-cl-cont))
+
+(define-public clasp-cl-cont
+  (sbcl-package->clasp-package sbcl-cl-cont))
 
 (define-public sbcl-cl-containers
   (let ((commit "781ebfe0888bae46f07c018f7d473898b1bd4f5f")
@@ -7952,6 +8103,9 @@ of http://code.google.com/p/mimeparse/, with a Common Lisp flavor.")
 (define-public ecl-cl-mimeparse
   (sbcl-package->ecl-package sbcl-cl-mimeparse))
 
+(define-public clasp-cl-mimeparse
+  (sbcl-package->clasp-package sbcl-cl-mimeparse))
+
 (define-public sbcl-cl-mixed
   (let ((commit "4aaff134d3902d93a2a8605c10de4bcfc62d7afa")
         (revision "0"))
@@ -8533,6 +8687,9 @@ package locks across supported Common Lisp implementations.")
 (define-public ecl-cl-package-locks
   (sbcl-package->ecl-package sbcl-cl-package-locks))
 
+(define-public clasp-cl-package-locks
+  (sbcl-package->clasp-package sbcl-cl-package-locks))
+
 (define-public sbcl-cl-pango
   (let ((commit "ee4904d19ce22d00eb2fe17a4fe42e5df8ac8701")
         (revision "0"))
@@ -8656,6 +8813,9 @@ pure Common Lisp.")
          ;; 40502229875678917802724098623316930025 is not of type
          ;; (INTEGER 0 2305843009213693951)
          ((#:tests? _ #f) #f))))))
+
+(define-public clasp-cl-pcg
+  (sbcl-package->clasp-package sbcl-cl-pcg))
 
 (define-public sbcl-cl-pdf
   (let ((commit "0a1cd33b658c7101766781c534455d4d9e5972bf")
@@ -8853,6 +9013,9 @@ compatible with ANSI-compliant Common Lisp implementations.")
 
 (define-public ecl-cl-ppcre
   (sbcl-package->ecl-package sbcl-cl-ppcre))
+
+(define-public clasp-cl-ppcre
+  (sbcl-package->clasp-package sbcl-cl-ppcre))
 
 (define-public sbcl-cl-ppcre-unicode
   (package (inherit sbcl-cl-ppcre)
@@ -9342,8 +9505,8 @@ previous commands.")
   (sbcl-package->ecl-package sbcl-cl-readline))
 
 (define-public sbcl-cl-redis
-  (let ((commit "7d592417421cf7cd1cffa96043b457af0490df7d")
-        (revision "0"))
+  (let ((commit "06ff30e9f5b7bc2b4c0f4d18ce1823f0de4d32a7")
+        (revision "1"))
     (package
       (name "sbcl-cl-redis")
       (version (git-version "2.3.8" revision commit))
@@ -9355,7 +9518,7 @@ previous commands.")
                (commit commit)))
          (file-name (git-file-name "cl-redis" version))
          (sha256
-          (base32 "0x5ahxb5cx37biyn3cjycshhm1rr9p5cf1a9l5hd1n1xjxm2f8vi"))))
+          (base32 "1jb82zpiwx7ri86z0xqdynr3m40jnlzinyc0b47lvpbqs7cydrrg"))))
       (build-system asdf-build-system/sbcl)
       (arguments
        '(#:phases
@@ -9364,16 +9527,17 @@ previous commands.")
              (lambda _
                (system "redis-server --port 6379 &"))))))
       (native-inputs
-       `(("bordeaux-threads" ,sbcl-bordeaux-threads)
-         ("flexi-streams" ,sbcl-flexi-streams)
-         ("redis" ,redis)
-         ("should-test" ,sbcl-should-test)))
+       (list sbcl-bordeaux-threads
+             sbcl-flexi-streams
+             redis
+             sbcl-should-test))
       (inputs
-       `(("babel" ,sbcl-babel)
-         ("cl-ppcre" ,sbcl-cl-ppcre)
-         ("flexi-streams" ,sbcl-flexi-streams)
-         ("rutils" ,sbcl-rutils)
-         ("usocket" ,sbcl-usocket)))
+       (list sbcl-babel
+             sbcl-cl-ppcre
+             sbcl-cl+ssl
+             sbcl-flexi-streams
+             sbcl-rutils
+             sbcl-usocket))
       (home-page "https://github.com/vseloved/cl-redis")
       (synopsis "Common Lisp client for Redis")
       (description "This is a Common Lisp wrapper for interacting with the
@@ -10043,6 +10207,9 @@ utilities that make it even easier to manipulate text in Common Lisp.  It has
 (define-public ecl-cl-strings
   (sbcl-package->ecl-package sbcl-cl-strings))
 
+(define-public clasp-cl-strings
+  (sbcl-package->clasp-package sbcl-cl-strings))
+
 (define-public sbcl-cl-svg
   (let ((commit "1e988ebd2d6e2ee7be4744208828ef1b59e5dcdc")
         (revision "1"))
@@ -10463,6 +10630,9 @@ ANSI-compliant Common Lisp implementations.")
 (define-public ecl-cl-unicode
   (sbcl-package->ecl-package sbcl-cl-unicode))
 
+(define-public clasp-cl-unicode
+  (sbcl-package->clasp-package sbcl-cl-unicode))
+
 (define-public sbcl-cl-unification
   (let ((commit "01079f34d197495880aa49ab727d63774d83035c")
         (revision "1"))
@@ -10547,6 +10717,9 @@ everywhere some dumb user might make a mistake.")
 
 (define-public ecl-cl-utilities
   (sbcl-package->ecl-package sbcl-cl-utilities))
+
+(define-public clasp-cl-utilities
+  (sbcl-package->clasp-package sbcl-cl-utilities))
 
 (define-public sbcl-cl-variates
   (let ((commit "4e7548754d8a8731a42487fae31174db4bf36d47")
@@ -11202,6 +11375,9 @@ during initialization or reinitialization of its subcomponents.")
 (define-public ecl-class-options
   (sbcl-package->ecl-package sbcl-class-options))
 
+(define-public clasp-class-options
+  (sbcl-package->clasp-package sbcl-class-options))
+
 (define-public sbcl-classimp
   (let ((commit "6c74f3808e00781a2662f37ddc26ccbbf2687b6b")
         (revision "1"))
@@ -11758,6 +11934,9 @@ Lisp implementations.")
 (define-public ecl-closer-mop
   (sbcl-package->ecl-package sbcl-closer-mop))
 
+(define-public clasp-closer-mop
+  (sbcl-package->clasp-package sbcl-closer-mop))
+
 (define-public sbcl-clostrum
   (let ((commit "c85d38bde9d093f1f132574e9b98b8d64683cd51")
         (revision "0"))
@@ -12172,20 +12351,19 @@ as opposed to a character file or S-expressions.")
   (sbcl-package->ecl-package sbcl-cluster))
 
 (define-public sbcl-clx
-  (let ((commit "69f2ebb761d1ff3400deb10c3edce3725846d739")
-        (revision "1"))
+  (let ((version "0.7.7"))
     (package
       (name "sbcl-clx")
-      (version (git-version "0.7.6" revision commit))
+      (version version)
       (source
        (origin
          (method git-fetch)
          (uri
           (git-reference
            (url "https://github.com/sharplispers/clx")
-           (commit commit)))
+           (commit version)))
          (sha256
-          (base32 "0hcyjj7z1xmjfh4f8zljyinnf2d4ap6gazfxkmiz7vvb8ks6i5y3"))
+          (base32 "12cqmr1h5sn79fifn2jzcx1y1vsc1kf0q231axqc5aa4xg04g2b0"))
          (file-name (git-file-name "cl-clx" version))))
       (build-system asdf-build-system/sbcl)
       (native-inputs
@@ -12675,6 +12853,9 @@ or cl-launch for portable processing of command-line arguments.")
 (define-public ecl-command-line-arguments
   (sbcl-package->ecl-package sbcl-command-line-arguments))
 
+(define-public clasp-command-line-arguments
+  (sbcl-package->clasp-package sbcl-command-line-arguments))
+
 (define-public sbcl-common-lisp-jupyter
   (let ((commit "3555a009f6d8734751bda1feadc8a09e7b0099b6")
         (revision "0"))
@@ -12755,6 +12936,9 @@ model, thereby greatly simplifying the definition of class mixins.")
 
 (define-public ecl-compatible-metaclasses
   (sbcl-package->ecl-package sbcl-compatible-metaclasses))
+
+(define-public clasp-compatible-metaclasses
+  (sbcl-package->clasp-package sbcl-compatible-metaclasses))
 
 (define-public sbcl-compiler-macro
   (let ((commit "7796bda64aec5af3ca175170ad3565167868789c")
@@ -12968,6 +13152,9 @@ packages and users of those packages.")
 (define-public ecl-conduit-packages
   (sbcl-package->ecl-package sbcl-conduit-packages))
 
+(define-public clasp-conduit-packages
+  (sbcl-package->clasp-package sbcl-conduit-packages))
+
 (define-public sbcl-conium
   (let ((commit "089adfd8759ec7973bb6f67b98d7a246e67aeb05")
         (revision "1"))
@@ -12998,6 +13185,9 @@ tasks in Common Lisp.  It is fork of SWANK-BACKEND.")
 
 (define-public ecl-conium
   (sbcl-package->ecl-package sbcl-conium))
+
+(define-public clasp-conium
+  (sbcl-package->clasp-package sbcl-conium))
 
 (define-public sbcl-constantfold
   (let ((commit "0ff1d97a3fbcb89264f6a2af6ce62b73e7b421f4")
@@ -13102,6 +13292,9 @@ well as standard genetic algorithms.")
 (define-public ecl-core-gp
   (sbcl-package->ecl-package sbcl-core-gp))
 
+(define-public clasp-core-gp
+  (sbcl-package->clasp-package sbcl-core-gp))
+
 (define-public sbcl-croatoan
   (let ((commit "470055739ef6ece42655ef0f3878a87a9e3e9b78")
         (revision "2"))
@@ -13205,6 +13398,9 @@ JavaScript code.")
 (define-public ecl-css-lite
   (sbcl-package->ecl-package sbcl-css-lite))
 
+(define-public clasp-css-lite
+  (sbcl-package->clasp-package sbcl-css-lite))
+
 (define-public sbcl-ctype
   (let ((commit "6eb84dfbf1d41f251cc0c09f6e69a2b9415fd3d6"))
     (package
@@ -13237,6 +13433,9 @@ particularly @code{cl:typep} and @code{cl:subtypep}.")
 ;; FIXME: https://github.com/s-expressionists/ctype/issues/31
 ;; (define-public ecl-ctype
 ;;   (sbcl-package->ecl-package sbcl-ctype))
+
+(define-public clasp-ctype
+  (sbcl-package->clasp-package sbcl-ctype))
 
 (define-public sbcl-curry-compose-reader-macros
   (let ((commit "beaa92dedf392726c042184bfd6149fa8d9e6ac2")
@@ -13271,6 +13470,9 @@ of function partial application and composition.")
 (define-public ecl-curry-compose-reader-macros
   (sbcl-package->ecl-package sbcl-curry-compose-reader-macros))
 
+(define-public clasp-curry-compose-reader-macros
+  (sbcl-package->clasp-package sbcl-curry-compose-reader-macros))
+
 (define-public sbcl-custom-hash-table
   (let ((commit "f26983133940f5edf826ebbc8077acc04816ddfa"))
     (package
@@ -13302,6 +13504,9 @@ directly.")
 
 (define-public ecl-custom-hash-table
   (sbcl-package->ecl-package sbcl-custom-hash-table))
+
+(define-public clasp-custom-hash-table
+  (sbcl-package->clasp-package sbcl-custom-hash-table))
 
 (define-public sbcl-cxml
   (let ((commit "00b22bf4c4cf11c993d5866fae284f95ab18e6bf")
@@ -13812,6 +14017,9 @@ of a symbol.")
 (define-public ecl-definitions
   (sbcl-package->ecl-package sbcl-definitions))
 
+(define-public clasp-definitions
+  (sbcl-package->clasp-package sbcl-definitions))
+
 (define-public sbcl-definitions-systems
   (package
     (name "sbcl-definitions-systems")
@@ -13874,6 +14082,9 @@ wrappers of deflate streams.  It currently does not handle compression.")
 (define-public ecl-deflate
   (sbcl-package->ecl-package sbcl-deflate))
 
+(define-public clasp-deflate
+  (sbcl-package->clasp-package sbcl-deflate))
+
 (define-public sbcl-defpackage-plus
   (let ((revision "0")
         (commit "5492e27e0bdb7b75fa5177ea4388519dc7a75f11"))
@@ -13904,6 +14115,9 @@ predictable cross-platform behavior and some utilities useful for versioning.")
 
 (define-public ecl-defpackage-plus
   (sbcl-package->ecl-package sbcl-defpackage-plus))
+
+(define-public clasp-defpackage-plus
+  (sbcl-package->clasp-package sbcl-defpackage-plus))
 
 (define-public sbcl-defstar
   (let ((commit "132829dac9f84fa7202a0c5793aa6accb8d2662a"))
@@ -13936,6 +14150,9 @@ replacement, which is called @code{*let}).")
 
 (define-public ecl-defstar
   (sbcl-package->ecl-package sbcl-defstar))
+
+(define-public clasp-defstar
+  (sbcl-package->clasp-package sbcl-defstar))
 
 (define-public sbcl-deploy
   (let ((commit "9b20e64fe924b9e31832304d87a3a72c383dc6d8")
@@ -14154,6 +14371,9 @@ diffs, \"context\" format diffs, and \"vdelta\" format binary diffs.")
 (define-public ecl-diff
   (sbcl-package->ecl-package sbcl-diff))
 
+(define-public clasp-diff
+  (sbcl-package->clasp-package sbcl-diff))
+
 (define-public sbcl-dissect
   (let ((commit "a70cabcd748cf7c041196efd711e2dcca2bbbb2c"))
     (package
@@ -14185,6 +14405,9 @@ and active restarts.")
 
 (define-public ecl-dissect
   (sbcl-package->ecl-package sbcl-dissect))
+
+(define-public clasp-dissect
+  (sbcl-package->clasp-package sbcl-dissect))
 
 (define-public sbcl-distributions
   (let ((commit "ea72622073ee7e005dfdc621ce1e5a83b22bb39e")
@@ -14369,6 +14592,9 @@ docstrings for your library.")
 
 (define-public ecl-documentation-utils
   (sbcl-package->ecl-package sbcl-documentation-utils))
+
+(define-public clasp-documentation-utils
+  (sbcl-package->clasp-package sbcl-documentation-utils))
 
 (define-public sbcl-documentation-utils-extensions
   (let ((commit "f67f8a05d583174662a594b79356b201c1d9d750"))
@@ -14900,6 +15126,9 @@ to booleans.")
 (define-public ecl-enhanced-boolean
   (sbcl-package->ecl-package sbcl-enhanced-boolean))
 
+(define-public clasp-enhanced-boolean
+  (sbcl-package->clasp-package sbcl-enhanced-boolean))
+
 (define-public sbcl-enhanced-defclass
   (package
     (name "sbcl-enhanced-defclass")
@@ -14937,6 +15166,9 @@ detect the suitable metaclass by analyzing the @code{defclass} form.")
 
 (define-public ecl-enhanced-defclass
   (sbcl-package->ecl-package sbcl-enhanced-defclass))
+
+(define-public clasp-enhanced-defclass
+  (sbcl-package->clasp-package sbcl-enhanced-defclass))
 
 (define-public sbcl-enhanced-eval-when
   (package
@@ -15000,6 +15232,9 @@ to classes.")
 (define-public ecl-enhanced-find-class
   (sbcl-package->ecl-package sbcl-enhanced-find-class))
 
+(define-public clasp-enhanced-find-class
+  (sbcl-package->clasp-package sbcl-enhanced-find-class))
+
 (define-public sbcl-enhanced-typep
   (package
     (name "sbcl-enhanced-typep")
@@ -15029,6 +15264,9 @@ in which case it returns the appropriate closure.")
 
 (define-public ecl-enhanced-typep
   (sbcl-package->ecl-package sbcl-enhanced-typep))
+
+(define-public clasp-enhanced-typep
+  (sbcl-package->clasp-package sbcl-enhanced-typep))
 
 (define-public sbcl-envy
   (let ((commit "26a7faadc981f2a047daa36f715a44faec5dd00c")
@@ -15176,6 +15414,9 @@ compile-time side-effects of forms.")
 
 (define-public ecl-evaled-when
   (sbcl-package->ecl-package sbcl-evaled-when))
+
+(define-public clasp-evaled-when
+  (sbcl-package->clasp-package sbcl-evaled-when))
 
 (define-public sbcl-event-emitter
   (let ((commit "cb0e15f9de4c617cef3f5d5a22a41e28f9613d0b")
@@ -15403,6 +15644,9 @@ NIL means no value.")
 (define-public ecl-fakenil
   (sbcl-package->ecl-package sbcl-fakenil))
 
+(define-public clasp-fakenil
+  (sbcl-package->clasp-package sbcl-fakenil))
+
 (define-public sbcl-fare-csv
   (let ((commit "f877a238dcbf587a89359cccf2128919a94a348c")
         (revision "0"))
@@ -15433,6 +15677,9 @@ which standard exactly.")
 
 (define-public ecl-fare-csv
   (sbcl-package->ecl-package sbcl-fare-csv))
+
+(define-public clasp-fare-csv
+  (sbcl-package->clasp-package sbcl-fare-csv))
 
 (define-public sbcl-fare-memoization
   (let ((commit "8b43ac6bcc0057d1a92052e39b6d34c05c2eb7e4")
@@ -15467,6 +15714,9 @@ results when called again with the same arguments rather than repeating the comp
 
 (define-public ecl-fare-memoization
   (sbcl-package->ecl-package sbcl-fare-memoization))
+
+(define-public clasp-fare-memoization
+  (sbcl-package->clasp-package sbcl-fare-memoization))
 
 (define-public sbcl-fare-mop
   (let ((commit "538aa94590a0354f382eddd9238934763434af30")
@@ -15557,6 +15807,9 @@ Trivia.")
 (define-public ecl-fare-quasiquote
   (sbcl-package->ecl-package sbcl-fare-quasiquote))
 
+(define-public clasp-fare-quasiquote
+  (sbcl-package->clasp-package sbcl-fare-quasiquote))
+
 (define-public sbcl-fare-utils
   (let ((commit "66e9c6f1499140bc00ccc22febf2aa528cbb5724")
         (revision "1"))
@@ -15591,6 +15844,9 @@ basic everyday functions and macros.")
 
 (define-public ecl-fare-utils
   (sbcl-package->ecl-package sbcl-fare-utils))
+
+(define-public clasp-fare-utils
+  (sbcl-package->clasp-package sbcl-fare-utils))
 
 (define-public sbcl-fast-generic-functions
   (let ((commit "6e9d690ec08dacf9ab4e14aa39a084ef7c7edabb")
@@ -15778,6 +16034,9 @@ formats within this framework.")
 
 (define-public ecl-feeder
   (sbcl-package->ecl-package sbcl-feeder))
+
+(define-public clasp-feeder
+  (sbcl-package->clasp-package sbcl-feeder))
 
 (define-public sbcl-ffa
   (let ((commit "b7012f51c4c37d1e759ff9cf78cea178504d8e07")
@@ -16116,11 +16375,11 @@ any existing or future application.")
   (sbcl-package->ecl-package sbcl-flare))
 
 (define-public sbcl-flexi-streams
-  (let ((commit "74a1027311371a57258eba1bc908e050f5702277")
-        (revision "0"))
+  (let ((commit "4951d575b8f73270802a03cc5812b8310409caa9")
+        (revision "1"))
     (package
       (name "sbcl-flexi-streams")
-      (version (git-version "1.0.19" revision commit))
+      (version (git-version "1.0.20" revision commit))
       (source
        (origin
          (method git-fetch)
@@ -16129,7 +16388,7 @@ any existing or future application.")
                (commit commit)))
          (file-name (git-file-name "cl-flexi-streams" version))
          (sha256
-          (base32 "04azqvz11s8dngy49bjl19hrfn0ip1b7m0szm4hlppq364msil7b"))))
+          (base32 "1bk224ryfiwsmnmq2gdfv9gld85z2rvnlx7fxcl2k122vc344akh"))))
       (build-system asdf-build-system/sbcl)
       (arguments
        (list #:phases
@@ -16153,6 +16412,13 @@ streams which are similar to string streams.")
 
 (define-public ecl-flexi-streams
   (sbcl-package->ecl-package sbcl-flexi-streams))
+
+(define-public clasp-flexi-streams
+  (package
+    (inherit (sbcl-package->clasp-package sbcl-flexi-streams))
+    (arguments
+     ;; TODO: https://github.com/edicl/flexi-streams/issues/51
+     '(#:tests? #f))))
 
 (define-public sbcl-flexichain
   ;; There are no releases.
@@ -16220,6 +16486,9 @@ covered by the Common Lisp standard.")
 (define-public ecl-float-features
   (sbcl-package->ecl-package sbcl-float-features))
 
+(define-public clasp-float-features
+  (sbcl-package->clasp-package sbcl-float-features))
+
 (define-public sbcl-flow
   (let ((commit "6d925af009cdfe033650d7048197a5e6ee937d15")
         (revision "1"))
@@ -16263,6 +16532,9 @@ and even allows the generic visualisation of graphs in this format.")
 
 (define-public ecl-flow
   (sbcl-package->ecl-package sbcl-flow))
+
+(define-public clasp-flow
+  (sbcl-package->clasp-package sbcl-flow))
 
 (define-public sbcl-flute
   (let ((commit "90ebcd6e82f637f49b6de7d625ccc51ec4c92900")
@@ -16328,6 +16600,9 @@ than the body of the lambda.")
 
 (define-public ecl-fn
   (sbcl-package->ecl-package sbcl-fn))
+
+(define-public clasp-fn
+  (sbcl-package->clasp-package sbcl-fn))
 
 (define-public sbcl-fof
   (let ((commit "522879e7da110ecf2e841998b197b34062c54b29")
@@ -16451,6 +16726,9 @@ require code-walking and is easier to extend.")
 (define-public ecl-for
   (sbcl-package->ecl-package sbcl-for))
 
+(define-public clasp-for
+  (sbcl-package->clasp-package sbcl-for))
+
 (define-public sbcl-forge
   (let ((commit "012324e251d91436f4a610e2fe2eb50674c3c3ce")
         (revision "1"))
@@ -16524,6 +16802,9 @@ macro.  This library provides a set of simple utilities to help with that.")
 
 (define-public ecl-form-fiddle
   (sbcl-package->ecl-package sbcl-form-fiddle))
+
+(define-public clasp-form-fiddle
+  (sbcl-package->clasp-package sbcl-form-fiddle))
 
 (define-public sbcl-format-colors
   (let ((commit "fecb1d8c6e7a07ff9f10a7a4eb4c3bd629d4969f")
@@ -16726,6 +17007,9 @@ timestamp.")
 
 (define-public ecl-fuzzy-dates
   (sbcl-package->ecl-package sbcl-fuzzy-dates))
+
+(define-public clasp-fuzzy-dates
+  (sbcl-package->clasp-package sbcl-fuzzy-dates))
 
 (define-public sbcl-fuzzy-match
   (let ((commit "e46ca41ef4641461f7be006782e3cfdcf73ba98a")
@@ -17129,6 +17413,9 @@ special variables, especially in the presence of threads.")
 (define-public ecl-global-vars
   (sbcl-package->ecl-package sbcl-global-vars))
 
+(define-public clasp-global-vars
+  (sbcl-package->clasp-package sbcl-global-vars))
+
 (define-public sbcl-glop
   (let ((commit "45e722ab4a0cd2944d550bf790206b3326041e38")
         (revision "1"))
@@ -17227,6 +17514,9 @@ a glsl UBO/SSBO.")
 (define-public ecl-glsl-packing
   (sbcl-package->ecl-package sbcl-glsl-packing))
 
+(define-public clasp-glsl-packing
+  (sbcl-package->clasp-package sbcl-glsl-packing))
+
 (define-public sbcl-glsl-spec
   (let ((commit "f04476f7da89355ae6856b33283c60ba95c6555d")
         (revision "1"))
@@ -17257,6 +17547,9 @@ from GLSL as data.")
 
 (define-public ecl-glsl-spec
   (sbcl-package->ecl-package sbcl-glsl-spec))
+
+(define-public clasp-glsl-spec
+  (sbcl-package->clasp-package sbcl-glsl-spec))
 
 (define-public sbcl-glsl-toolkit
   (let ((commit "4c4889e75c635772c4df70b11d6f14e7a596da43")
@@ -17349,6 +17642,9 @@ Lisp, inspired by BODOL (@url{https://github.com/bodil/BODOL}).")
 
 (define-public ecl-golden-utils
   (sbcl-package->ecl-package sbcl-golden-utils))
+
+(define-public clasp-golden-utils
+  (sbcl-package->clasp-package sbcl-golden-utils))
 
 (define-public sbcl-graph
   (let ((commit "78bf9ec930d8eae4f0861b5be76765fb1e45e24f")
@@ -18482,6 +18778,9 @@ classes.")
 (define-public ecl-incless
   (sbcl-package->ecl-package sbcl-incless))
 
+(define-public clasp-incless
+  (sbcl-package->clasp-package sbcl-incless))
+
 (define-public sbcl-inferior-shell
   (let ((commit "15c2d04a7398db965ea1c3ba2d49efa7c851f2c2")
         (revision "1"))
@@ -18610,6 +18909,9 @@ codes header file found on Linux and FreeBSD.")
 
 (define-public ecl-input-event-codes
   (sbcl-package->ecl-package sbcl-input-event-codes))
+
+(define-public clasp-input-event-codes
+  (sbcl-package->clasp-package sbcl-input-event-codes))
 
 (define-public sbcl-inquisitor
   (let ((commit "423fa9bdd4a68a6ae517b18406d81491409ccae8")
@@ -18886,6 +19188,13 @@ It is similar to the @code{CL:LOOP} macro, with these distinguishing marks:
 (define-public ecl-iterate
   (sbcl-package->ecl-package sbcl-iterate))
 
+(define-public clasp-iterate
+  (package
+    (inherit (sbcl-package->clasp-package sbcl-iterate))
+    (arguments
+     ;; Tests are broken on clasp.
+     (list #:tests? #f))))
+
 (define-public sbcl-ixf
   (let ((commit "ed26f87e4127e4a9e3aac4ff1e60d1f39cca5183")
         (revision "1"))
@@ -19145,6 +19454,9 @@ building block for higher level libraries.")
 (define-public ecl-json-streams
   (sbcl-package->ecl-package sbcl-json-streams))
 
+(define-public clasp-json-streams
+  (sbcl-package->clasp-package sbcl-json-streams))
+
 (define-public sbcl-jsonrpc
   (let ((commit "a43dd933838bb9596a2bf40e821af0bafd3d5356")
         (revision "1"))
@@ -19223,6 +19535,9 @@ objects themselves.")
 (define-public ecl-jsown
   (sbcl-package->ecl-package sbcl-jsown))
 
+(define-public clasp-jsown
+  (sbcl-package->clasp-package sbcl-jsown))
+
 (define-public sbcl-just-getopt-parser
   (package
     (name "sbcl-just-getopt-parser")
@@ -19251,6 +19566,9 @@ defined.")
 
 (define-public ecl-just-getopt-parser
   (sbcl-package->ecl-package sbcl-just-getopt-parser))
+
+(define-public clasp-just-getopt-parser
+  (sbcl-package->clasp-package sbcl-just-getopt-parser))
 
 (define-public sbcl-jzon
   (package
@@ -19408,6 +19726,9 @@ Rosenberg's Common Lisp packages.")
 (define-public ecl-kmrcl
   (sbcl-package->ecl-package sbcl-kmrcl))
 
+(define-public clasp-kmrcl
+  (sbcl-package->clasp-package sbcl-kmrcl))
+
 (define-public sbcl-kons-9
   (let ((commit "fe0b3228ca28c316457d35f9e7c67edc83b2a4cc")
         (revision "0"))
@@ -19562,6 +19883,9 @@ processing.")
 (define-public ecl-lambda-fiddle
   (sbcl-package->ecl-package sbcl-lambda-fiddle))
 
+(define-public clasp-lambda-fiddle
+  (sbcl-package->clasp-package sbcl-lambda-fiddle))
+
 (define-public sbcl-language-codes
   (let ((commit "e7aa0e37cb97a3d37d6bc7316b479d01bff8f42e"))
     (package
@@ -19591,6 +19915,9 @@ language name mapping.")
 
 (define-public ecl-language-codes
   (sbcl-package->ecl-package sbcl-language-codes))
+
+(define-public clasp-language-codes
+  (sbcl-package->clasp-package sbcl-language-codes))
 
 (define-public sbcl-langutils
   (let ((commit "38beec7a82eeb35b0bfb0824a41d13ed94fc648b")
@@ -20496,6 +20823,9 @@ Long Painful History of Time\".")
 (define-public ecl-local-time
   (sbcl-package->ecl-package sbcl-local-time))
 
+(define-public clasp-local-time
+  (sbcl-package->clasp-package sbcl-local-time))
+
 (define-public sbcl-cl-postgres+local-time
   (package
     (inherit sbcl-local-time)
@@ -20585,6 +20915,9 @@ and mix text with expressions.")
 
 (define-public ecl-lorem-ipsum
   (sbcl-package->ecl-package sbcl-lorem-ipsum))
+
+(define-public clasp-lorem-ipsum
+  (sbcl-package->clasp-package sbcl-lorem-ipsum))
 
 (define-public sbcl-lparallel
   (let ((commit "80fc2952a074776abd343d6b5d3ab157f0e1df7a")
@@ -20804,6 +21137,9 @@ LispWorks library that are used in software such as ContextL.")
 
 (define-public ecl-lw-compat
   (sbcl-package->ecl-package sbcl-lw-compat))
+
+(define-public clasp-lw-compat
+  (sbcl-package->clasp-package sbcl-lw-compat))
 
 (define-public sbcl-lzlib
   (let ((commit "22767ca12d1c1bd59a7ae1f9c5ef7d2e937206bb")
@@ -21127,6 +21463,9 @@ extensible initializers.")
 (define-public ecl-make-hash
   (sbcl-package->ecl-package sbcl-make-hash))
 
+(define-public clasp-make-hash
+  (sbcl-package->clasp-package sbcl-make-hash))
+
 (define-public sbcl-map-bind
   (let ((commit "532d55d93540c632e22b2cd264b5daa5f9d3d900")
         (revision "0"))
@@ -21186,6 +21525,9 @@ addition, removal, and random selection.")
 
 (define-public ecl-map-set
   (sbcl-package->ecl-package sbcl-map-set))
+
+(define-public clasp-map-set
+  (sbcl-package->clasp-package sbcl-map-set))
 
 ;;; The following package is renamed from "markup" to "markup-reader" in order
 ;;; not to conflict with the "cl-markup" package.
@@ -21296,6 +21638,9 @@ Only minimal changes required to make your CLOS objects serializable.")
 
 (define-public ecl-marshal
   (sbcl-package->ecl-package sbcl-marshal))
+
+(define-public clasp-marshal
+  (sbcl-package->clasp-package sbcl-marshal))
 
 (define-public sbcl-mathkit
   (let ((commit "fd884f94b36ef5e9bc19459ad0b3cda6303d2a2a"))
@@ -21854,6 +22199,9 @@ extensions to Common Lisp.  It contains:
 (define-public ecl-misc-extensions
   (sbcl-package->ecl-package sbcl-misc-extensions))
 
+(define-public clasp-misc-extensions
+  (sbcl-package->clasp-package sbcl-misc-extensions))
+
 (define-public sbcl-mito
   (let ((commit "47ba4865ca4bb2894b53703a49a299e973f8eb86")
 	(revision "3"))
@@ -22398,6 +22746,9 @@ for Common Lisp.")
 (define-public ecl-mt19937
   (sbcl-package->ecl-package sbcl-mt19937))
 
+(define-public clasp-mt19937
+  (sbcl-package->clasp-package sbcl-mt19937))
+
 (define-public sbcl-multilang-documentation
   (let ((commit "59e798a07e949e8957a20927f52aca425d84e4a0"))
     (package
@@ -22459,6 +22810,9 @@ of enharmonics and dealing with ties and dots in rhythm notation.")
 (define-public ecl-music-spelling
   (sbcl-package->ecl-package sbcl-music-spelling))
 
+(define-public clasp-music-spelling
+  (sbcl-package->clasp-package sbcl-music-spelling))
+
 (define-public sbcl-mw-equiv
   (let ((commit "3ae871458685b1ef7cd6a996ee22c8c5e738a03d")
         (revision "1"))
@@ -22510,6 +22864,9 @@ equality.")
 
 (define-public ecl-mw-equiv
   (sbcl-package->ecl-package sbcl-mw-equiv))
+
+(define-public clasp-mw-equiv
+  (sbcl-package->clasp-package sbcl-mw-equiv))
 
 (define-public sbcl-myway
   (let ((commit "286230082a11f879c18b93f17ca571c5f676bfb7")
@@ -22629,6 +22986,9 @@ readtables, which is akin to package namespacing in Common Lisp.")
 
 (define-public ecl-named-readtables
   (sbcl-package->ecl-package sbcl-named-readtables))
+
+(define-public clasp-named-readtables
+  (sbcl-package->clasp-package sbcl-named-readtables))
 
 (define-public sbcl-napa-fft3
   (let ((commit "f2d9614c7167da327c9ceebefb04ff6eae2d2236")
@@ -22808,6 +23168,9 @@ In order to make one or several variables file-local, use the macros
 (define-public ecl-net.didierverna.asdf-flv
   (sbcl-package->ecl-package sbcl-net.didierverna.asdf-flv))
 
+(define-public clasp-net.didierverna.asdf-flv
+  (sbcl-package->clasp-package sbcl-net.didierverna.asdf-flv))
+
 (define-public sbcl-nfiles
   (package
    (name "sbcl-nfiles")
@@ -22981,6 +23344,9 @@ also be supported.")
 
 (define-public ecl-nibbles
   (sbcl-package->ecl-package sbcl-nibbles))
+
+(define-public clasp-nibbles
+  (sbcl-package->clasp-package sbcl-nibbles))
 
 (define-public sbcl-ningle
   (let ((commit "2e85675bbb668d6ef341514fc9f22391a0f506b1")
@@ -23242,6 +23608,9 @@ implement Common Lisp streams using generic functions.")
 
 (define-public ecl-nontrivial-gray-streams
   (sbcl-package->ecl-package sbcl-nontrivial-gray-streams))
+
+(define-public clasp-nontrivial-gray-streams
+  (sbcl-package->clasp-package sbcl-nontrivial-gray-streams))
 
 (define-public sbcl-nsymbols
   (package
@@ -23531,6 +23900,52 @@ expressions.")
 (define-public ecl-one-more-re-nightmare
   (sbcl-package->ecl-package sbcl-one-more-re-nightmare))
 
+(define-public sbcl-open-with
+  (let ((commit "f0682e42ac48311d1a5bb9eb7ca646baacd88a80")
+        (revision "0"))
+    (package
+      (name "sbcl-open-with")
+      (version (git-version "1.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/Shinmera/open-with")
+                (commit commit)))
+         (file-name (git-file-name "cl-open-with" version))
+         (sha256
+          (base32 "0j0qv1389wbr84y3mis4qd2zz9qybnq4frvc01pamidsbryxss0r"))))
+      (build-system asdf-build-system/sbcl)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'fix-paths
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "toolkit.lisp"
+                  (("xdg-open")
+                   (search-input-file inputs "/bin/xdg-open"))))))))
+      (inputs
+       (list sbcl-documentation-utils
+             sbcl-trivial-features
+             xdg-utils))
+      (synopsis "Open a file in a suitable external program")
+      (description
+       "This package provides a small utility library to open a thing (usually
+a file or URL) in an appropriate handler (usually an external file manager or
+browser).")
+      (home-page "https://shinmera.github.io/open-with/")
+      (license license:zlib))))
+
+(define-public cl-open-with
+  (sbcl-package->cl-source-package sbcl-open-with))
+
+(define-public ecl-open-with
+  (sbcl-package->ecl-package sbcl-open-with))
+
+(define-public clasp-open-with
+  (sbcl-package->clasp-package sbcl-open-with))
+
 (define-public sbcl-opticl
   (let ((commit "f6fc4dc5fa61ae3f2527b77e4bda99001ba37dcb")
         (revision "1"))
@@ -23640,6 +24055,9 @@ optimizing techniques widely used in the functional programming world.")
 (define-public ecl-optima
   (sbcl-package->ecl-package sbcl-optima))
 
+(define-public clasp-optima
+  (sbcl-package->clasp-package sbcl-optima))
+
 (define-public sbcl-org-sampler
   (let ((commit "ee135a417750e5b1d810bb9574eb85223cb3038a")
         (revision "1"))
@@ -23670,6 +24088,9 @@ text for inclusion into a larger document.")
 
 (define-public ecl-org-sampler
   (sbcl-package->ecl-package sbcl-org-sampler))
+
+(define-public clasp-org-sampler
+  (sbcl-package->clasp-package sbcl-org-sampler))
 
 (define-public sbcl-origin
   (let ((commit "d646134302456408d6d43580bb05299f1695ab8e")
@@ -24024,6 +24445,9 @@ high-level way.  This library provides such operators.")
 (define-public ecl-parse-declarations
   (sbcl-package->ecl-package sbcl-parse-declarations))
 
+(define-public clasp-parse-declarations
+  (sbcl-package->clasp-package sbcl-parse-declarations))
+
 (define-public sbcl-parse-float
   (let ((commit "3074765101e41222b6b624a66aaf1e6416379f9c")
         (revision "2"))
@@ -24060,6 +24484,9 @@ values from a string in Common Lisp.")
 (define-public ecl-parse-float
   (sbcl-package->ecl-package sbcl-parse-float))
 
+(define-public clasp-parse-float
+  (sbcl-package->clasp-package sbcl-parse-float))
+
 (define-public sbcl-parse-js
   (let ((commit "fbadc6029bec7039602abfc06c73bb52970998f6")
         (revision "1"))
@@ -24088,6 +24515,9 @@ JavaScript (ECMAScript 3).  It has basic support for ECMAScript 5.")
 
 (define-public ecl-parse-js
   (sbcl-package->ecl-package sbcl-parse-js))
+
+(define-public clasp-parse-js
+  (sbcl-package->clasp-package sbcl-parse-js))
 
 (define-public sbcl-parse-number
   (package
@@ -24118,6 +24548,9 @@ else @code{parse-number} signals an error of type @code{invalid-number}.")
 
 (define-public ecl-parse-number
   (sbcl-package->ecl-package sbcl-parse-number))
+
+(define-public clasp-parse-number
+  (sbcl-package->clasp-package sbcl-parse-number))
 
 (define-public sbcl-parseq
   (package
@@ -24158,6 +24591,9 @@ features.  Any resemblance to esrap-liquid is merely coincidental.")
 
 (define-public ecl-parseq
   (sbcl-package->ecl-package sbcl-parseq))
+
+(define-public clasp-parseq
+  (sbcl-package->clasp-package sbcl-parseq))
 
 (define-public sbcl-parser-combinators
   (let ((commit "9c7569a4f6af5e60c0d3a51d9c15c16d1714c845")
@@ -24373,6 +24809,9 @@ table.")
 (define-public ecl-periodic-table
   (sbcl-package->ecl-package sbcl-periodic-table))
 
+(define-public clasp-periodic-table
+  (sbcl-package->clasp-package sbcl-periodic-table))
+
 (define-public sbcl-periods
   (let ((commit "60383dcef88a1ac11f82804ae7a33c361dcd2949")
         (revision "2"))
@@ -24545,6 +24984,9 @@ for Common Lisp.")
 (define-public ecl-piping
   (sbcl-package->ecl-package sbcl-piping))
 
+(define-public clasp-piping
+  (sbcl-package->clasp-package sbcl-piping))
+
 (define-public sbcl-plump
   (let ((commit "0c3e0b57b43b6e0c5794b6a902f1cf5bee2a2927")
         (revision "3"))
@@ -24581,6 +25023,9 @@ your own classes.")
 (define-public ecl-plump
   (sbcl-package->ecl-package sbcl-plump))
 
+(define-public clasp-plump
+  (sbcl-package->clasp-package sbcl-plump))
+
 (define-public sbcl-plump-sexp
   (let ((commit "bbcf75e9ecda8fe7603098ab8c15828407bb4f08")
         (revision "0"))
@@ -24613,6 +25058,9 @@ between S-expressions and the Plump DOM.")
 
 (define-public ecl-plump-sexp
   (sbcl-package->ecl-package sbcl-plump-sexp))
+
+(define-public clasp-plump-sexp
+  (sbcl-package->clasp-package sbcl-plump-sexp))
 
 (define-public sbcl-png
   (let ((commit "11b965fe378fd0561abe3616b18ff03af5179648")
@@ -25224,6 +25672,9 @@ project and its dependencies.")
 (define-public ecl-print-licenses
   (sbcl-package->ecl-package sbcl-print-licenses))
 
+(define-public clasp-print-licenses
+  (sbcl-package->clasp-package sbcl-print-licenses))
+
 (define-public cl-print-licenses
   (sbcl-package->cl-source-package sbcl-print-licenses))
 
@@ -25294,6 +25745,9 @@ an array-based heap.")
 
 (define-public ecl-priority-queue
   (sbcl-package->ecl-package sbcl-priority-queue))
+
+(define-public clasp-priority-queue
+  (sbcl-package->clasp-package sbcl-priority-queue))
 
 (define-public sbcl-proc-parse
   (let ((commit "ac3636834d561bdc2686c956dbd82494537285fd"))
@@ -25446,6 +25900,9 @@ integrate.")
 (define-public ecl-promise
   (sbcl-package->ecl-package sbcl-promise))
 
+(define-public clasp-promise
+  (sbcl-package->clasp-package sbcl-promise))
+
 (define-public sbcl-prompter
   (let ((commit "7890ed5d02e70aba01ceb964c6ee4f40776e7dc0")
         (revision "0"))
@@ -25564,6 +26021,9 @@ Lisp programs.  It parses URI according to the RFC 2396 specification.")
 (define-public ecl-puri
   (sbcl-package->ecl-package sbcl-puri))
 
+(define-public clasp-puri
+  (sbcl-package->clasp-package sbcl-puri))
+
 (define-public sbcl-py-configparser
   ;; NOTE: (Sharlatan <2021-01-05 Tue> <19:52:19 UTC+0000>) Project updated last
   ;; time 8y ago, it looks like abandoned. VCS of the project:
@@ -25597,6 +26057,9 @@ values in other options.")
 
 (define-public ecl-py-configparser
   (sbcl-package->ecl-package sbcl-py-configparser))
+
+(define-public clasp-py-configparser
+  (sbcl-package->clasp-package sbcl-py-configparser))
 
 (define-public sbcl-py4cl
   (let ((commit "2f2a008dd6162d4446803971292fe1b323fe0dd5")
@@ -25666,6 +26129,9 @@ the CFFI approach used by burgled-batteries, but has the same goal.")
 (define-public ecl-py4cl
   (sbcl-package->ecl-package sbcl-py4cl))
 
+(define-public clasp-py4cl
+  (sbcl-package->clasp-package sbcl-py4cl))
+
 (define-public sbcl-pythonic-string-reader
   (let ((commit "47a70ba1e32362e03dad6ef8e6f36180b560f86a"))
     (package
@@ -25696,6 +26162,9 @@ writing code that contains string literals that contain code themselves.")
 
 (define-public ecl-pythonic-string-reader
   (sbcl-package->ecl-package sbcl-pythonic-string-reader))
+
+(define-public clasp-pythonic-string-reader
+  (sbcl-package->clasp-package sbcl-pythonic-string-reader))
 
 (define-public sbcl-pzmq
   (let ((commit "6f7b2ca02c23ea53510a9b0e0f181d5364ce9d32")
@@ -26642,6 +27111,9 @@ Rucksack with some enhancements.")
 (define-public ecl-rutils
   (sbcl-package->ecl-package sbcl-rutils))
 
+(define-public clasp-rutils
+  (sbcl-package->clasp-package sbcl-rutils))
+
 (define-public sbcl-s-base64
   (let ((commit "ed473e220133ca0e8b5b96618ea2972dec9de6cd")
         (revision "0"))
@@ -26671,6 +27143,9 @@ portable, safe printable, 7-bit ASCII format.")
 
 (define-public ecl-s-base64
   (sbcl-package->ecl-package sbcl-s-base64))
+
+(define-public clasp-s-base64
+  (sbcl-package->clasp-package sbcl-s-base64))
 
 (define-public sbcl-s-graphviz
   (let ((commit "a06d9573f0d4e21751b0ae782515b63a40ad6eae")
@@ -27001,6 +27476,9 @@ can coexist and interoperate with other extensions to as CLIM and Iterate.")
 (define-public ecl-screamer
   (sbcl-package->ecl-package sbcl-screamer))
 
+(define-public clasp-screamer
+  (sbcl-package->clasp-package sbcl-screamer))
+
 (define-public sbcl-sdf
   ;; Shinmera's fork required for Alloy.
   (let ((commit "e1ab3ac4ea52c0e0119b832f428c71f580b4d83b")
@@ -27292,6 +27770,9 @@ conditions.")
 (define-public ecl-sealable-metaobjects
   (sbcl-package->ecl-package sbcl-sealable-metaobjects))
 
+(define-public clasp-sealable-metaobjects
+  (sbcl-package->clasp-package sbcl-sealable-metaobjects))
+
 (define-public sbcl-secret-values
   (let ((commit "72996c0551eea338afa355ee90e20171ac74ebd4")
         (revision "0"))
@@ -27320,6 +27801,9 @@ risk of accidentally revealing them.")
 
 (define-public ecl-secret-values
   (sbcl-package->ecl-package sbcl-secret-values))
+
+(define-public clasp-secret-values
+  (sbcl-package->clasp-package sbcl-secret-values))
 
 (define-public sbcl-seedable-rng
   (let ((commit "aa1a1564b6e07e2698df37c7a98348c4f762cb15")
@@ -27511,6 +27995,9 @@ little slower than it could be.")
 (define-public ecl-sha1
   (sbcl-package->ecl-package sbcl-sha1))
 
+(define-public clasp-sha1
+  (sbcl-package->clasp-package sbcl-sha1))
+
 (define-public sbcl-shadow
   (let ((commit "b2031adbfba3579b48c9d39ad997e19b79b6852f")
         (revision "1"))
@@ -27581,6 +28068,9 @@ buffer object types (UBO, SSBO currently).")
 (define-public ecl-shared-preferences
   (sbcl-package->ecl-package sbcl-shared-preferences))
 
+(define-public clasp-shared-preferences
+  (sbcl-package->clasp-package sbcl-shared-preferences))
+
 (define-public sbcl-shasht
   (let ((commit "27ba0a8842e103f2d575b3c8bbcfc19bd172d9ea")
         (revision "2"))
@@ -27613,6 +28103,9 @@ format.")
 
 (define-public ecl-shasht
   (sbcl-package->ecl-package sbcl-shasht))
+
+(define-public clasp-shasht
+  (sbcl-package->clasp-package sbcl-shasht))
 
 (define-public sbcl-shlex
   (let ((commit "3dee1cb7c0140fa7660ca7a3b2ac5e75d1218e5c")
@@ -27710,6 +28203,9 @@ using advisors.")
 
 (define-public ecl-simple-guess
   (sbcl-package->ecl-package sbcl-simple-guess))
+
+(define-public clasp-simple-guess
+  (sbcl-package->clasp-package sbcl-simple-guess))
 
 (define-public sbcl-simple-inferiors
   (let ((commit "deac886354e03f8a9502ce96f12a0459ce3be671"))
@@ -27868,6 +28364,9 @@ color palette for a GUI or web page.")
 
 (define-public ecl-simple-rgb
   (sbcl-package->ecl-package sbcl-simple-rgb))
+
+(define-public clasp-simple-rgb
+  (sbcl-package->clasp-package sbcl-simple-rgb))
 
 (define-public cl-simple-rgb
   (sbcl-package->cl-source-package sbcl-simple-rgb))
@@ -28095,6 +28594,9 @@ processes that doesn't run under Emacs.  Lisp processes created by
 (define-public ecl-slime-swank
   (sbcl-package->ecl-package sbcl-slime-swank))
 
+(define-public clasp-slime-swank
+  (sbcl-package->clasp-package sbcl-slime-swank))
+
 (define-public sbcl-slite
   (let ((commit "942a95330592d30be5ac02fb1b697fb14ccbf1af")
         (revision "0"))
@@ -28278,6 +28780,17 @@ multiple inspectors with independent history.")
           `(modify-phases ,phases
              (delete 'build-image))))))))
 
+(define-public clasp-slynk
+  (let ((pkg (sbcl-package->clasp-package sbcl-slynk)))
+    (package
+      (inherit pkg)
+      (outputs '("out"))
+      (arguments
+       (substitute-keyword-arguments (package-arguments pkg)
+         ((#:phases phases)
+          `(modify-phases ,phases
+             (delete 'build-image))))))))
+
 (define-public sbcl-smart-buffer
   (let ((commit "09b9a9a0b3abaa37abe9a730f5aac2643dca4e62")
         (revision "1"))
@@ -28346,6 +28859,9 @@ descent parsers without funky syntax or impenetrable macrology.")
 
 (define-public ecl-smug
   (sbcl-package->ecl-package sbcl-smug))
+
+(define-public clasp-smug
+  (sbcl-package->clasp-package sbcl-smug))
 
 (define-public sbcl-snakes
   (let ((commit "8c7eae579bb24539dbd584a81a1049f3d3ff8bf8")
@@ -28715,6 +29231,9 @@ empty object).")
 (define-public ecl-st-json
   (sbcl-package->ecl-package sbcl-st-json))
 
+(define-public clasp-st-json
+  (sbcl-package->clasp-package sbcl-st-json))
+
 (define-public sbcl-staple
   (let ((commit "0ee8e25fe6fe8fa83b2a6c93d4febd468c3eaa4e")
         (revision "1"))
@@ -29023,6 +29542,9 @@ trees to dispatch on string equality.")
 (define-public ecl-string-case
   (sbcl-package->ecl-package sbcl-string-case))
 
+(define-public clasp-string-case
+  (sbcl-package->clasp-package sbcl-string-case))
+
 (define-public sbcl-string-pokemonize
   (let ((commit "2dc01643defb497e4d1eb833def71dfc1e8d5da6")
         (revision "0"))
@@ -29054,6 +29576,9 @@ and lowercase characters for a given string.")
 
 (define-public ecl-string-pokemonize
   (sbcl-package->ecl-package sbcl-string-pokemonize))
+
+(define-public clasp-string-pokemonize
+  (sbcl-package->clasp-package sbcl-string-pokemonize))
 
 (define-public sbcl-stripe
   (let ((commit "b59631d21d63e101de6eb96b56941471504ba644")
@@ -29301,6 +29826,9 @@ and camel-case rules.")
 
 (define-public ecl-symbol-munger
   (sbcl-package->ecl-package sbcl-symbol-munger))
+
+(define-public clasp-symbol-munger
+  (sbcl-package->clasp-package sbcl-symbol-munger))
 
 (define-public sbcl-system-load
   (let ((commit "3ff1a40be55866cc5316ac7a530d872b12510294")
@@ -29595,6 +30123,9 @@ provides a method for determining which capabilities a terminal
 (define-public ecl-terminfo
   (sbcl-package->ecl-package sbcl-terminfo))
 
+(define-public clasp-terminfo
+  (sbcl-package->clasp-package sbcl-terminfo))
+
 (define-public sbcl-termp
   (let ((commit "29789fe83db624679b6f341e3fae3f2577ce6a45")
         (revision "0"))
@@ -29624,6 +30155,9 @@ emacs-slime.")
 
 (define-public ecl-termp
   (sbcl-package->ecl-package sbcl-termp))
+
+(define-public clasp-termp
+  (sbcl-package->clasp-package sbcl-termp))
 
 (define-public sbcl-terrable
   (let ((commit "e4fe23ffa08e8d53a8168105b413861da59cc786")
@@ -29697,6 +30231,9 @@ determine the cost of certain actions on a given platform and implementation.")
 
 (define-public ecl-the-cost-of-nothing
   (sbcl-package->ecl-package sbcl-the-cost-of-nothing))
+
+(define-public clasp-the-cost-of-nothing
+  (sbcl-package->clasp-package sbcl-the-cost-of-nothing))
 
 (define-public sbcl-tooter
   (let ((commit "76fbb36552b036ee84ec7fe4773616470b1ce4c2")
@@ -30160,6 +30697,9 @@ a simple-array ensuring that the resulting array is still a simple-array.")
 (define-public ecl-trivial-adjust-simple-array
   (sbcl-package->ecl-package sbcl-trivial-adjust-simple-array))
 
+(define-public clasp-trivial-adjust-simple-array
+  (sbcl-package->clasp-package sbcl-trivial-adjust-simple-array))
+
 (define-public sbcl-trivial-arguments
   (let ((commit "ecd84ed9cf9ef8f1e873d7409e6bd04979372aa7")
         (revision "1"))
@@ -30187,6 +30727,9 @@ a simple-array ensuring that the resulting array is still a simple-array.")
 
 (define-public ecl-trivial-arguments
   (sbcl-package->ecl-package sbcl-trivial-arguments))
+
+(define-public clasp-trivial-arguments
+  (sbcl-package->clasp-package sbcl-trivial-arguments))
 
 (define-public sbcl-trivial-backtrace
   (let ((commit "7f90b4a4144775cca0728791e4b92ac2557b07a1")
@@ -30299,6 +30842,9 @@ even by adding additional statistical @code{compute}ations.")
 
 (define-public ecl-trivial-benchmark
   (sbcl-package->ecl-package sbcl-trivial-benchmark))
+
+(define-public clasp-trivial-benchmark
+  (sbcl-package->clasp-package sbcl-trivial-benchmark))
 
 (define-public sbcl-trivial-channels
   (let ((commit "e2370118d8983ba69c0360a7695f8f2e2fd6a8a6")
@@ -30480,6 +31026,9 @@ and @code{doseq*}.")
 (define-public ecl-trivial-do
   (sbcl-package->ecl-package sbcl-trivial-do))
 
+(define-public clasp-trivial-do
+  (sbcl-package->clasp-package sbcl-trivial-do))
+
 (define-public sbcl-trivial-download
   (let ((commit "d2472061d86b1cf3d32f388daacd4e32a13af699"))
     (package
@@ -30576,6 +31125,9 @@ operations that interact with sequences.")
 ;; (define-public ecl-trivial-extensible-sequences
 ;;   (sbcl-package->ecl-package sbcl-trivial-extensible-sequences))
 
+(define-public clasp-trivial-extensible-sequences
+  (sbcl-package->clasp-package sbcl-trivial-extensible-sequences))
+
 (define-public sbcl-trivial-features
   (package
     (name "sbcl-trivial-features")
@@ -30607,6 +31159,9 @@ consistent across multiple Common Lisp implementations.")
 
 (define-public ecl-trivial-features
   (sbcl-package->ecl-package sbcl-trivial-features))
+
+(define-public clasp-trivial-features
+  (sbcl-package->clasp-package sbcl-trivial-features))
 
 (define-public sbcl-trivial-file-size
   (let ((commit "1c1d672a01a446ba0391dbb4ffc40be3b0476f23")
@@ -30677,6 +31232,9 @@ the Common Lisp programming language.")
 (define-public ecl-trivial-garbage
   (sbcl-package->ecl-package sbcl-trivial-garbage))
 
+(define-public clasp-trivial-garbage
+  (sbcl-package->clasp-package sbcl-trivial-garbage))
+
 (define-public sbcl-trivial-gray-streams
   (let ((revision "1")
         (commit "2b3823edbc78a450db4891fd2b566ca0316a7876"))
@@ -30707,6 +31265,9 @@ thin compatibility layer for gray streams.")
 
 (define-public ecl-trivial-gray-streams
   (sbcl-package->ecl-package sbcl-trivial-gray-streams))
+
+(define-public clasp-trivial-gray-streams
+  (sbcl-package->clasp-package sbcl-trivial-gray-streams))
 
 (define-public sbcl-trivial-indent
   (let ((commit "f25275094b80df8aa158af46db980bbc3ce2f88b")
@@ -30739,6 +31300,9 @@ results.")
 
 (define-public ecl-trivial-indent
   (sbcl-package->ecl-package sbcl-trivial-indent))
+
+(define-public clasp-trivial-indent
+  (sbcl-package->clasp-package sbcl-trivial-indent))
 
 (define-public sbcl-trivial-macroexpand-all
   (let ((commit "933270ac7107477de1bc92c1fd641fe646a7a8a9")
@@ -31148,6 +31712,9 @@ PROPER-LIST, ASSOCIATION-LIST, PROPERTY-LIST and TUPLE.")
 (define-public ecl-trivial-types
   (sbcl-package->ecl-package sbcl-trivial-types))
 
+(define-public clasp-trivial-types
+  (sbcl-package->clasp-package sbcl-trivial-types))
+
 (define-public sbcl-trivial-utf-8
   (let ((commit "6ca9943588cbc61ad22a3c1ff81beb371e122394")
         (revision "2"))
@@ -31185,6 +31752,9 @@ UTF-8 has is that it doesn't depend on any other libraries.")
 (define-public ecl-trivial-utf-8
   (sbcl-package->ecl-package sbcl-trivial-utf-8))
 
+(define-public clasp-trivial-utf-8
+  (sbcl-package->clasp-package sbcl-trivial-utf-8))
+
 (define-public sbcl-trivial-utilities
   (let ((commit "279ff255562628196942632c543d91c357067221")
         (revision "0"))
@@ -31216,6 +31786,9 @@ UTF-8 has is that it doesn't depend on any other libraries.")
 
 (define-public ecl-trivial-utilities
   (sbcl-package->ecl-package sbcl-trivial-utilities))
+
+(define-public clasp-trivial-utilities
+  (sbcl-package->clasp-package sbcl-trivial-utilities))
 
 (define-public sbcl-trivial-with-current-source-form
   (let ((commit "9e343e043a77a5478c1f77bb626db22335fbbfb8")
@@ -31252,6 +31825,9 @@ concept of a source-form to report where the error or warning is located.")
   ;; This package is so packages dependent on trivial-with-current-source-form
   ;; can be loaded on ECL.
   (sbcl-package->ecl-package sbcl-trivial-with-current-source-form))
+
+(define-public clasp-trivial-with-current-source-form
+  (sbcl-package->clasp-package sbcl-trivial-with-current-source-form))
 
 (define-public sbcl-trivial-ws
   (let ((commit "ebf1ec0ea26bdac4007e98e89f3a621dbfb4390a")
@@ -31485,6 +32061,9 @@ implement low-level numerical data types and functionality.")
 (define-public ecl-type-templates
   (sbcl-package->ecl-package sbcl-type-templates))
 
+(define-public clasp-type-templates
+  (sbcl-package->clasp-package sbcl-type-templates))
+
 (define-public sbcl-typo
   (let ((commit "0e883490f81edf2a1be4e5b101d1caec78d7853b")
         (revision "0"))
@@ -31567,6 +32146,9 @@ user.")
 
 (define-public ecl-uax-14
   (sbcl-package->ecl-package sbcl-uax-14))
+
+(define-public clasp-uax-14
+  (sbcl-package->clasp-package sbcl-uax-14))
 
 (define-public sbcl-uax-15
   (package
@@ -31786,6 +32368,9 @@ precisely controls the behavior of the parser via Common Lisp restarts.")
 (define-public ecl-unix-opts
   (sbcl-package->ecl-package sbcl-unix-opts))
 
+(define-public clasp-unix-opts
+  (sbcl-package->clasp-package sbcl-unix-opts))
+
 (define-public sbcl-usocket
   (package
     (name "sbcl-usocket")
@@ -31901,6 +32486,9 @@ binary stream for Common Lisp.")
 (define-public ecl-utf8-input-stream
   (sbcl-package->ecl-package sbcl-utf8-input-stream))
 
+(define-public clasp-utf8-input-stream
+  (sbcl-package->clasp-package sbcl-utf8-input-stream))
+
 (define-public sbcl-utils-kt
   (let ((commit "4adfe2889036ab5ffdd3cc2182ca2cc692bf11ff"))
     (package
@@ -31928,6 +32516,9 @@ It was originally developed for the Cells library.")
 
 (define-public ecl-utils-kt
   (sbcl-package->ecl-package sbcl-utils-kt))
+
+(define-public clasp-utils-kt
+  (sbcl-package->clasp-package sbcl-utils-kt))
 
 (define-public sbcl-utm-ups
   (let ((commit "f1e6fd469871051470dfaabdf199afb75f2fa302")
@@ -32075,6 +32666,9 @@ algorithms.")
 
 (define-public ecl-vas-string-metrics
   (sbcl-package->ecl-package sbcl-vas-string-metrics))
+
+(define-public clasp-vas-string-metrics
+  (sbcl-package->clasp-package sbcl-vas-string-metrics))
 
 (define-public sbcl-verbose
   (let ((commit "c5b7ecd465be61b35af17ef57564697b88397174")
@@ -32309,6 +32903,9 @@ has a small codebase that's easy to understand and use.")
 
 (define-public ecl-vom
   (sbcl-package->ecl-package sbcl-vom))
+
+(define-public clasp-vom
+  (sbcl-package->clasp-package sbcl-vom))
 
 (define-public sbcl-wayflan
   (package
@@ -32622,6 +33219,9 @@ numbers in a natural way.")
 (define-public ecl-wu-decimal
   (sbcl-package->ecl-package sbcl-wu-decimal))
 
+(define-public clasp-wu-decimal
+  (sbcl-package->clasp-package sbcl-wu-decimal))
+
 (define-public sbcl-xhtmlambda
   (let ((commit "c86376bccebf77ca428e8033df2ba7d8450ea1e8")
         (revision "0"))
@@ -32654,6 +33254,9 @@ arrangements.")
 
 (define-public cl-xhtmlambda
   (sbcl-package->cl-source-package sbcl-xhtmlambda))
+
+(define-public clasp-xhtmlambda
+  (sbcl-package->clasp-package sbcl-xhtmlambda))
 
 (define-public sbcl-xkbcommon
   (let ((commit "aa9513d93f42d7816f88dd1bd8bd21375e7d7512")
@@ -32727,6 +33330,9 @@ trivially.")
 
 (define-public ecl-xml-emitter
   (sbcl-package->ecl-package sbcl-xml-emitter))
+
+(define-public clasp-xml-emitter
+  (sbcl-package->clasp-package sbcl-xml-emitter))
 
 (define-public sbcl-xmls
   (package
@@ -32849,6 +33455,9 @@ JSON interchange format.")
 
 (define-public ecl-yason
   (sbcl-package->ecl-package sbcl-yason))
+
+(define-public clasp-yason
+  (sbcl-package->clasp-package sbcl-yason))
 
 (define-public sbcl-yxorp
   (let ((commit "c306898a467995e123a22316c9b79fcac442415b")
@@ -33036,6 +33645,9 @@ files.")
 (define-public ecl-zpb-exif
   (sbcl-package->ecl-package sbcl-zpb-exif))
 
+(define-public clasp-zpb-exif
+  (sbcl-package->clasp-package sbcl-zpb-exif))
+
 (define-public sbcl-zpb-ttf
   (package
     (name "sbcl-zpb-ttf")
@@ -33063,6 +33675,9 @@ file.")
 
 (define-public ecl-zpb-ttf
   (sbcl-package->ecl-package sbcl-zpb-ttf))
+
+(define-public clasp-zpb-ttf
+  (sbcl-package->clasp-package sbcl-zpb-ttf))
 
 (define-public sbcl-zpng
   (package

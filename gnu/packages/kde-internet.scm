@@ -120,7 +120,7 @@ Other notable features include:
 (define-public falkon
   (package
     (name "falkon")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
@@ -128,7 +128,7 @@ Other notable features include:
                            "/src/falkon-" version ".tar.xz"))
        (sha256
         (base32
-         "0j930i2nvg71p05z881inbk59c54gx8dzhyjb8iaqkw8i5s5r983"))))
+         "1hhljgv5c0na4851r9klwzwgifygmq9xkrii7c8hvd7bnwc0jmwd"))))
     (build-system qt-build-system)
     (arguments
      (list #:phases
@@ -168,14 +168,14 @@ Other notable features include:
 (define-public kget
   (package
     (name "kget")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kget-" version ".tar.xz"))
        (sha256
-        (base32 "0xm3a3bxk4gb1yxpq3icg1wh5sqpmxqlr9n8j1gffszzd6c9x8mn"))))
+        (base32 "0pj7zrmdccbwd4bwrh76p23xfw40544vvqh4hdi7gvmcrkvris3n"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools pkg-config))
@@ -227,14 +227,14 @@ This package is part of the KDE networking module.")
 (define-public konversation
   (package
     (name "konversation")
-    (version "24.08.0")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/konversation-" version ".tar.xz"))
        (sha256
-        (base32 "1807i5sj5n1w75x66ii0cm192g3b7z6zqvw7y3l9nlf61ksqfrfi"))))
+        (base32 "13gy4sgkw2i4cg3xwbm5mlp3ay95yqsd5r7mf92rp6kyk9iikcig"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools qttools))
@@ -301,14 +301,14 @@ Features are:
 (define-public krdc
   (package
     (name "krdc")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/krdc-" version ".tar.xz"))
        (sha256
-        (base32 "0xw9ks43llm4lnnswv1h81gmr8mr6191bblmd21c1a5a6vvr935h"))))
+        (base32 "0kwsnmvnqyaj53njpd0424fsd7pkdcv5h162dym2binkq710mdvf"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules pkg-config kdoctools))
@@ -319,6 +319,7 @@ Features are:
            kcmutils
            kcompletion
            kconfig
+           kcrash
            kdnssd
            ki18n
            kio
@@ -354,14 +355,14 @@ This package is part of the KDE networking module.")
 (define-public ktorrent
   (package
     (name "ktorrent")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/ktorrent-" version ".tar.xz"))
        (sha256
-        (base32 "1m96ch4rfrjnrw9rd7ad3ipc0hvhxl2awb7aqfnk4dd1g8hhjkq0"))))
+        (base32 "178mri9hjlriji43rf36h0bfp5zsy4ky8aczsnxxawrg25c8h2ma"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -409,14 +410,14 @@ a full-featured client for BitTorrent.")
 (define-public libktorrent
   (package
     (name "libktorrent")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/"
                            version "/src/" name "-" version ".tar.xz"))
        (sha256
-        (base32 "1gr31v09jz5kdvhrpln9abncnnih7db35j3af73m3vlg6izw9z98"))))
+        (base32 "1ik4ak7vb5axr1fs717h15zad9zxvxfs9y5l6y98lpbwjpd94wbf"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs

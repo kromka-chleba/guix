@@ -43,6 +43,7 @@
 ;;; Copyright © 2024 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;; Copyright © 2025 Frederick Muriuki Muriithi <fredmanglis@gmail.com>
 ;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
+;;; Copyright © 2025 Matthew Elwin <elwin@northwestern.edu>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -5552,3 +5553,94 @@ and mogan.")
 towards field theory.")
     (home-page "https://cadabra.science/")
     (license license:gpl3+)))
+
+(define-public orocos-kinematics-dynamics
+  (let ((commit "34ecff4ca7bae52fa16ca13fdb3d9db26fd2a293")
+        ;; There hasn't been a new release in many years (version 1.5.1)
+        ;; Using the latest commit (which has internally set version to 1.5.2)
+        (revision "0"))
+    (package
+      (name "orocos-kinematics-dynamics")
+      (version (git-version "1.5.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/orocos/orocos_kinematics_dynamics")
+               (commit commit)))
+         (sha256
+          (base32 "1c7vimy065908qs5nwhnrk9pp0wh8pjgdvz2hwb12a9wcsj50kf0"))
+         (file-name (git-file-name name version))
+         (modules '((guix build utils)))
+         ;; make tests deterministic by seeding the random number generator
+         (snippet '(substitute* '("orocos_kdl/tests/treeinvdyntest.cpp"
+                                  "orocos_kdl/tests/solvertest.cpp")
+                     (("srand\\( \\(unsigned\\)time\\( NULL \\)\\)")
+                      "srand(0u)")))))
+      (build-system cmake-build-system)
+      (native-inputs (list cppunit))
+      (propagated-inputs (list eigen))
+      (arguments
+       (list
+        #:configure-flags
+        #~(list "-DENABLE_TESTS=ON")
+        #:test-target "check"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'chdir
+              (lambda _
+                (chdir "orocos_kdl"))))))
+      (home-page "https://docs.orocos.org/kdl/overview.html")
+      (synopsis "Orocos Kinematics and Dynamics (KDL) C++ Library")
+      (description
+       "A C++ library for rigid body kinematics calculations
+and representations for kinematic structures and their inverse and
+forward kinematics solvers.")
+      (license license:lgpl2.1+))))
+
+(define-public python-orocos-kinematics-dynamics
+  (package
+    (inherit orocos-kinematics-dynamics)
+    (name "python-orocos-kinematics-dynamics")
+    (source
+     (origin
+       (inherit (package-source orocos-kinematics-dynamics))
+       (snippet '(begin
+                   (substitute* "python_orocos_kdl/CMakeLists.txt"
+                     ;; Use the system pybind11 instead of the bundled version
+                     (("add_subdirectory\\(pybind11\\)")
+                      "find_package(pybind11)")
+                     ;; change debian-specific python install directory
+                     (("dist-packages")
+                      "site-packages"))
+                   ;; ROS 1 uses some dynamic attributes, which are
+                   ;; disabled by default in pybind11. No harm in enabling them
+                   ;; See "https://github.com/ros2/geometry2/issues/624
+                   ;; and https://pybind11.readthedocs.io/en/stable/classes.html
+                   ;; #dynamic-attributes <Both accessed June 1 2025>
+                   (substitute* "python_orocos_kdl/PyKDL/frames.cpp"
+                     (("m, \"Vector\"")
+                      "m, \"Vector\", py::dynamic_attr()")
+                     (("m, \"Frame\"")
+                      "m, \"Frame\", py::dynamic_attr()")
+                     (("m, \"Twist\"")
+                      "m, \"Twist\", py::dynamic_attr()")
+                     (("m, \"Wrench\"")
+                      "m, \"Wrench\", py::dynamic_attr()"))))))
+    (native-inputs (list python pybind11 python-psutil))
+    (inputs (list orocos-kinematics-dynamics))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "python_orocos_kdl")))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (setenv "PYTHONPATH" "./")
+              (when tests?
+                (invoke "python3"
+                        "../python_orocos_kdl/tests/PyKDLtest.py")))))))
+    (synopsis "Python bindings for orocos-kinematics-dynamics")
+    (description "Python bindings for orocos-kinematics-dynamics.")))

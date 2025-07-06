@@ -25,12 +25,15 @@
   #:use-module ((gcrypt hash) #:prefix gcrypt:)
   #:use-module (guix base32)
   #:use-module ((guix git) #:select (with-repository))
+  #:use-module (guix config)
   #:use-module (guix tests)
   #:use-module (guix tests git)
   #:use-module (guix tests http)
   #:use-module ((guix packages) #:select (package-derivation base32))
   #:use-module ((guix build utils)
-                #:select (executable-file? strip-store-file-name))
+                #:select (executable-file? strip-store-file-name which))
+  #:use-module ((gnu build linux-container)
+                #:select (unprivileged-user-namespace-supported?))
   #:use-module ((guix hash) #:select (file-hash*))
   #:use-module ((git oid) #:select (oid->string))
   #:use-module ((git reference) #:select (reference-name->oid))
@@ -54,6 +57,14 @@
 
 ;; Globally disable grafts because they can trigger early builds.
 (%graft? #f)
+
+;; This can happen when someone is running tests without --disable-chroot and
+;; with either slirp4netns or /dev/net/tun unavailable.
+(define builder-network-isolated?
+  (and (target-linux? %system)
+       (unprivileged-user-namespace-supported?)
+       (or (not (which "slirp4netns"))
+           (not (file-exists? "/dev/net/tun")))))
 
 (define (bootstrap-binary name)
   (let ((bin (search-bootstrap-binary name (%current-system))))
@@ -501,6 +512,71 @@
                 #:hash-algo 'sha512
                 #:hash #vu8(1 2 3))
     #f))
+
+(unless (not builder-network-isolated?) (test-skip 1))
+(test-assert "fixed-output derivation, network access, localhost"
+  ;; Test a fixed-output derivation connecting to "localhost".
+  (let ((text (random-text)))
+    (with-http-server `((200 ,text))
+      (let* ((drv (build-expression->derivation
+                   %store
+                   "fixed-output-download"
+                   `(begin
+                      (use-modules (web client)
+                                   (srfi srfi-11)
+                                   (rnrs io ports))
+
+                      ;; Neutralize 'set-port-encoding!' because
+                      ;; guile-bootstrap cannot open iconv descriptors
+                      ;; contrary to what 'read-response' expects.
+                      (set! (@ (guile) set-port-encoding!) (const #t))
+
+                      (let-values (((response body)
+                                    (http-get ,(%local-url)
+                                              #:decode-body? #f)))
+                        (format #t "response: ~s~%body: ~s~%"
+                                response body)
+                        (call-with-output-file %output
+                          (lambda (port)
+                            (put-bytevector port body)))))
+                   #:hash-algo 'sha256
+                   #:hash (gcrypt:sha256 (string->utf8 text)))))
+        (and (build-derivations %store (list drv))
+             (string=? (call-with-input-file (derivation->output-path drv)
+                         get-string-all)
+                       text))))))
+
+(unless (and (network-reachable?) (not builder-network-isolated?))
+  (test-skip 1))
+(test-assert "fixed-output derivation, network access, external host"
+  ;; Test a fixed-output derivation connecting to an external server.
+  (let* ((drv (build-expression->derivation
+               %store
+               (string-append (number->string (random (expt 2 64) (%seed))
+                                              16)
+                              "-gplv3.txt")
+               '(begin
+                  (use-modules (web client)
+                               (srfi srfi-11)
+                               (rnrs io ports))
+
+                  ;; DNS working?
+                  (pk 'addr (getaddrinfo "www.gnu.org" "https"))
+
+                  ;; Neutralize 'set-port-encoding!' because
+                  ;; guile-bootstrap cannot open iconv descriptors
+                  ;; contrary to what 'read-response' expects.
+                  (set! (@ (guile) set-port-encoding!) (const #t))
+
+                  (let-values (((response body)
+                                (http-get "http://www.gnu.org/licenses/gpl-3.0.txt"
+                                          #:decode-body? #f)))
+                    (call-with-output-file %output
+                      (lambda (port)
+                        (put-bytevector port body)))))
+               #:hash-algo 'sha256
+               #:hash (base32 "11k9nggwk1mgsrkdwgdjz65avrradxlpdgrdkc7ryjgn8jbxqwir"))))
+    (build-derivations %store (list drv))))
 
 (test-assert "derivation with a fixed-output input"
   ;; A derivation D using a fixed-output derivation F doesn't has the same

@@ -1419,7 +1419,8 @@ instead, it aims for very high speeds and reasonable compression.  For instance,
 compared to the fastest mode of zlib, Snappy is an order of magnitude faster
 for most inputs, but the resulting compressed files are anywhere from 20% to
 100% bigger.")
-    (license license:asl2.0)))
+    (license license:asl2.0)
+    (properties '((cpe-vendor . "google")))))
 
 ;; We need this for irods.
 (define-public snappy-with-clang6
@@ -2545,7 +2546,7 @@ reading from and writing to ZIP archives.")
 (define-public zchunk
   (package
     (name "zchunk")
-    (version "1.3.1")
+    (version "1.5.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2554,7 +2555,7 @@ reading from and writing to ZIP archives.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "19rw870150w1c730wzg2pn68ixmscq8cwa3vricqhwxs5l63r5wr"))))
+                "08ngp6d54fllk19qhdz6r1s9832781g322gn7524akbr3v1v5jjz"))))
     (build-system meson-build-system)
     (arguments
      (list

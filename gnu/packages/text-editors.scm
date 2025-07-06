@@ -232,8 +232,8 @@ intuitive, while also taking advantage of the capabilities of modern terminals."
       (license license:expat))))
 
 (define-public lem
-  (let ((commit "a951aedc72cd40fb8b0eada8923f088afb25caff")
-        (revision "7"))
+  (let ((commit "0025e1c196b50fbf6b8a97f8b9ef986f8d316cdf")
+        (revision "8"))
     (package
       (name "lem")
       (version (git-version "2.2.0" revision commit))
@@ -244,7 +244,7 @@ intuitive, while also taking advantage of the capabilities of modern terminals."
                (url "https://github.com/lem-project/lem/")
                (commit commit)))
          (sha256
-          (base32 "06zmhkbdaf3mil4pz1x79nld3vy3qcqaig552yqn0pxdr51w143v"))
+          (base32 "06hd0n66q69nr15ypdmwlwl6m9l2pzj6fym7dm8v2zp165pgr7s1"))
          (file-name (git-file-name name version))
          (snippet
           #~(begin
@@ -1856,7 +1856,7 @@ commands.")
 (define-public lite-xl
   (package
     (name "lite-xl")
-    (version "2.1.7")
+    (version "2.1.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1865,10 +1865,10 @@ commands.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ykidzm2wi2ds251ngq0g02sdawajw5iy5hcp3mzr5z5347if392"))))
+                "1lf6l6r02hp641n6wnfp7xmx54r32hv8whf7bd5nhf3gzvnl76pl"))))
     (build-system meson-build-system)
     (arguments (list #:configure-flags #~'("-Duse_system_lua=true")))
-    (inputs (list lua-5.4 pcre2 freetype sdl2))
+    (inputs (list lua-5.4 pcre2 freetype libdecor sdl3))
     (native-inputs (list pkg-config))
     (home-page "https://lite-xl.com")
     (synopsis "Lightweight text editor written in Lua")

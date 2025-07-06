@@ -73,6 +73,8 @@
 ;;; Copyright © 2025 Junker <dk@junkeria.club>"
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>"
+;;; Copyright © 2025 Daniel Khodabakhsh <d@niel.khodabakh.sh>
+;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -106,7 +108,9 @@
   #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system go)
+  #:use-module (guix build-system guile)
   #:use-module (guix build-system meson)
+  #:use-module (guix build-system node)
   #:use-module (guix build-system perl)
   #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
@@ -1749,7 +1753,9 @@ C.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "00yj06drb6izcxfxfqlhimlrb089kka0w0x8k27pyzyiq7qzcvml"))))
+                "00yj06drb6izcxfxfqlhimlrb089kka0w0x8k27pyzyiq7qzcvml"))
+              (patches
+               (search-patches "yajl-CVE-2023-33460.patch"))))
     (build-system cmake-build-system)
     (arguments
      '(#:phases
@@ -2230,57 +2236,56 @@ directions.")
     (description "Microsocks is a small, efficient SOCKS5 server.")
     (license license:expat)))
 
-;; This is a variant of esbuild that builds and installs the nodejs API.
-;; Eventually, this should probably be merged with the esbuild package.
-(define-public esbuild-node
+(define-public node-esbuild
   (package
-    (inherit esbuild)
-    (name "esbuild-node")
-    (version "0.14.0")
+    (name "node-esbuild")
+    (version (package-version esbuild))
     (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/evanw/esbuild")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "09r1xy0kk6c9cpz6q0mxr4why373pwxbm439z2ihq3k1d5kk7x4w"))
-       (modules '((guix build utils)))
-       (snippet
-        ;; Remove prebuilt binaries
-        '(delete-file-recursively "lib/npm/exit0"))))
-    (arguments
-     (list
-      #:import-path "github.com/evanw/esbuild/cmd/esbuild"
-      #:unpack-path "github.com/evanw/esbuild"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'build 'build-platform
-            (lambda* (#:key unpack-path #:allow-other-keys)
-              (with-directory-excursion (string-append "src/" unpack-path)
-                ;; Must be writable.
-                (for-each make-file-writable (find-files "." "."))
-                (invoke "node" "scripts/esbuild.js"
-                        (string-append #$output "/bin/esbuild"))
-                (let ((modules (string-append #$output "/lib/node_modules/esbuild")))
-                  (mkdir-p modules)
-                  (copy-recursively "npm/esbuild" modules)))))
-          (replace 'check
-            (lambda* (#:key tests? unpack-path #:allow-other-keys)
-              (when tests?
-                ;; The "Go Race Detector" is only supported on 64-bit
-                ;; platforms, this variable disables it.
-                ;; TODO: Causes too many rebuilds, rewrite to limit to x86_64,
-                ;; aarch64 and ppc64le.
-                #$(if (target-riscv64?)
-                      `(setenv "ESBUILD_RACE" "")
-                      #~(unless #$(target-64bit?)
-                          (setenv "ESBUILD_RACE" "")))
-                (with-directory-excursion (string-append "src/" unpack-path)
-                  (invoke "make" "test-go"))))))))
-    (native-inputs
-     (list go-github-com-kylelemons-godebug node-lts))))
+      (origin
+        (inherit (package-source esbuild))
+        (file-name (git-file-name name version))
+        (snippet #f)
+        (modules '())))
+    (build-system node-build-system)
+    (inputs (list esbuild))
+    (arguments (list
+      #:tests? #f
+      #:phases #~(modify-phases %standard-phases
+        (add-after 'unpack 'chdir (lambda _
+          (chdir "npm/esbuild")))
+        (add-before 'patch-dependencies 'modify-package (lambda _
+            (modify-json
+              (delete-fields '("optionalDependencies" "scripts")))
+            (substitute* "../../lib/npm/node-platform.ts"
+              (("^export var ESBUILD_BINARY_PATH:.+$")
+                (string-append "export var ESBUILD_BINARY_PATH: string"
+                " = process.env.ESBUILD_BINARY_PATH"
+                " || ESBUILD_BINARY_PATH"
+                " || path.join(__dirname, '..', 'bin', 'esbuild')")))))
+        (replace 'build (lambda* (#:key inputs #:allow-other-keys)
+          ; From scripts/esbuild.js
+          (invoke
+            "esbuild"
+            "../../lib/npm/node.ts"
+            "--outfile=lib/main.js"
+            "--bundle"
+            "--target=node10"
+            "--define:WASM=false"
+            (string-append "--define:ESBUILD_VERSION=\"" #$version "\"")
+            "--external:esbuild"
+            "--platform=node"
+            "--log-level=warning")
+          (copy-file "../../lib/shared/types.ts" "lib/main.d.ts")
+          (install-file
+            (string-append (assoc-ref inputs "esbuild") "/bin/esbuild")
+            "bin"))))))
+    (home-page (package-home-page esbuild))
+    (synopsis "Node module of ESBuild")
+    (description (package-description esbuild))
+    (license (package-license esbuild))))
+
+(define-public esbuild-node
+  (deprecated-package "esbuild-node" node-esbuild))
 
 (define-public wwwoffle
   (package
@@ -5414,8 +5419,8 @@ Cloud.")
     (license license:expat)))
 
 (define-public guix-data-service
-  (let ((commit "dfbfc846d60195ae62526de13d0c662375c09b43")
-        (revision "68"))
+  (let ((commit "40212ea053309341e5b35cc962e9404ff0ccea6b")
+        (revision "70"))
     (package
       (name "guix-data-service")
       (version (string-append "0.0.1-" revision "." (string-take commit 7)))
@@ -5427,7 +5432,7 @@ Cloud.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0mq04i1f9wlny6mmvn163i34573a32pq4acc966vqcvypa82q51v"))))
+                  "1lxq7kfrih2h19r2gvpbvvcdbqfpqlgkm2r8hq5v1dj8bwqb02mj"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -5632,6 +5637,12 @@ It uses the uwsgi protocol for all the networking/interprocess communications.")
        (snippet
         ;; Remove bundled onigurama.
         '(delete-file-recursively "vendor/oniguruma"))))
+    (arguments
+     (if (or (target-x86-32?)
+             (target-arm32?))
+         ;; requires 64bit time_t
+         (list #:make-flags #~'("XFAIL_TESTS=tests/optionaltest"))
+         '()))
     (inputs
      (list oniguruma))
     (native-inputs
@@ -5652,7 +5663,10 @@ grep and friends let you play with text.  It is written in portable C.  jq can
 mangle the data format that you have into the one that you want with very
 little effort, and the program to do so is often shorter and simpler than
 you'd expect.")
-    (license (list license:expat license:cc-by3.0))))
+    (license (list license:expat license:cc-by3.0))
+    ;; Both those CVEs are actually fixed in version 1.7.1.
+    (properties `((lint-hidden-cve . ("CVE-2023-50246"
+                                      "CVE-2023-50268"))))))
 
 (define-public go-github-com-mikefarah-yq-v4
   (package
@@ -6012,6 +6026,58 @@ C.  It is developed as part of the NetSurf project.")
 parse both valid and invalid web content.  It is developed as part of the
 NetSurf project.")
     (license license:expat)))
+
+(define-public iter-vitae
+  (package
+    (name "iter-vitae")
+    (version "0.3.32")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/jjba23/iter-vitae.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0r7zvavjflyl8wzysadgh7zmyamvdkicac7652qckgi1aaqh33nw"))))
+    (arguments
+     `(#:source-directory "src"
+       #:phases (modify-phases %standard-phases
+                  (add-before 'build 'install-program-files
+                    (lambda* (#:key outputs #:allow-other-keys)
+                      (let ((bin (string-append (assoc-ref outputs "out")
+                                                "/bin"))
+                            (share (string-append (assoc-ref outputs "out")
+                                                  "/share")))
+                        (mkdir-p (string-append share "/scripts"))
+                        (mkdir-p (string-append share "/resources"))
+                        (install-file "resources/help.txt"
+                                      (string-append share
+                                                     "/resources"))
+                        (copy-recursively "resources/js"
+                                          (string-append share "/resources/js"))
+                        (install-file "scripts/iter-vitae" bin)
+                        (install-file "scripts/log.sh"
+                                      (string-append share "/scripts/"))
+                        (chmod (string-append bin "/iter-vitae") #o755)))))))
+    (build-system guile-build-system)
+    (native-inputs (list guile-3.0))
+    (inputs (list guile-3.0 bash-minimal))
+    (synopsis
+     "Resume / @acronym{CV, Curriculum Vitae} generator written in Guile Scheme")
+    (description
+     "Iter Vitae is a command-line utility that allows you to generate a
+Resume / @acronym{CV, Curriculum Vitae}, by reading a S-expression version
+of your CV details (in Scheme code).
+
+With a @acronym{MVC, model-view-controller} approach,
+it lets you separate the data from the presentation (how the document looks).
+
+This tool creates a web-site version of your CV (using SXML and TailwindCSS),
+and is designed for long-term use, so you can update and evolve your CV over the years.
+The program supports multilingual content and is fully extensible.")
+    (home-page "https://codeberg.org/jjba23/iter-vitae")
+    (license license:agpl3+)))
 
 (define-public ikiwiki
   (package
@@ -7268,7 +7334,7 @@ command-line arguments or read from stdin.")
 (define-public python-internetarchive
   (package
     (name "python-internetarchive")
-    (version "5.1.0")
+    (version "5.4.0")
     (source
      (origin
        (method git-fetch)
@@ -7278,7 +7344,7 @@ command-line arguments or read from stdin.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "186nx0dj0lgqrqkg9kzng5h0scbz3m6bk44vj83wzckr8yh3q08z"))))
+         "0wfzz22daiax20v0xc2is3i3plk7mcz9m0is52nwdrvx9dazi0nq"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -7290,19 +7356,14 @@ command-line arguments or read from stdin.")
               " and not test_upload"
               " and not test_ia"))))
     (propagated-inputs
-     (list python-backports-csv
-           python-clint
-           python-docopt
-           python-importlib-metadata
-           python-jsonpatch
+     (list python-jsonpatch
            python-requests
-           python-six
            python-schema
-           python-tqdm))
+           python-tqdm
+           python-urllib3))
     (native-inputs
      (list nss-certs-for-test
            python-pytest
-           python-pytest-capturelog
            python-responses
            python-setuptools
            python-wheel))

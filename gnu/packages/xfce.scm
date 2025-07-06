@@ -17,6 +17,7 @@
 ;;; Copyright © 2021, 2022 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2021 André A. Gomes <andremegafone@gmail.com>
 ;;; Copyright © 2025 Tomáš Čech <sleep_walker@gnu.org>
+;;; Copyright © 2025 Ashvith Shetty <ashvithshetty0010@zohomail.in>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -91,28 +92,6 @@
   #:use-module ((guix licenses) #:hide (freetype))
   #:use-module (guix packages)
   #:use-module (guix utils))
-
-(define-public gtk-xfce-engine
-  (package
-    (name "gtk-xfce-engine")
-    (version "2.10.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://archive.xfce.org/src/xfce/"
-                                  name "/" (version-major+minor version) "/"
-                                  name "-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "0g86ywkx0ghzhhn96k88p67bbzlm1aqckly85izp07w80l1934ja"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list pkg-config intltool))
-    (inputs (list gtk+-2))
-    (home-page "https://www.xfce.org/")
-    (synopsis "GTK+ theme engine for Xfce")
-    (description
-     "Default GTK+ engine and themes for Xfce Desktop Environment.")
-    (license gpl2+)))
 
 (define-public libxfce4util
   (package
@@ -1372,22 +1351,13 @@ for and start applications.")
     (version (package-version xfce4-session))
     (source #f)
     (build-system trivial-build-system)
-    (arguments
-     '(#:modules ((guix build union))
-       #:builder
-       (begin
-         (use-modules (ice-9 match)
-                      (guix build union))
-         (match %build-inputs
-           (((names . directories) ...)
-            (union-build (assoc-ref %outputs "out")
-                         directories)
-            #t)))))
-    (inputs
+    (arguments '(#:builder (mkdir %output)))
+    (propagated-inputs
      (list exo
            garcon
            adwaita-icon-theme
            elementary-xfce-icon-theme
+           font-dejavu                  ;default font
            greybird-gtk-theme
            hicolor-icon-theme
            mate-polkit-for-xfce
@@ -1417,9 +1387,6 @@ for and start applications.")
            xfce4-clipman-plugin
            xfce4-pulseaudio-plugin
            xfce4-xkb-plugin))
-    (propagated-inputs
-     ;; Default font that applications such as IceCat require.
-     (list font-dejavu))
     (native-search-paths
      ;; For finding panel and thunar plugins.
      (append

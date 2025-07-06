@@ -1,5 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2020, 2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2020, 2024, 2025 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2025 Brice Waegeneire <brice@waegenei.re>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -18,6 +19,7 @@
 
 (define-module (guix scripts git authenticate)
   #:use-module (git)
+  #:use-module (guix build utils)
   #:use-module (guix ui)
   #:use-module (guix scripts)
   #:use-module (guix git-authenticate)
@@ -26,8 +28,10 @@
   #:use-module ((guix channels) #:select (openpgp-fingerprint))
   #:use-module ((guix git) #:select (with-git-error-handling))
   #:use-module (guix progress)
+  #:autoload   (guix base16) (base16-string->bytevector)
   #:use-module (guix base64)
-  #:autoload   (rnrs bytevectors) (bytevector-length)
+  #:autoload   (rnrs bytevectors) (bytevector=? bytevector-length)
+  #:autoload   (gcrypt hash) (port-hash hash-algorithm sha1)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26)
   #:use-module (srfi srfi-37)
@@ -134,65 +138,112 @@ REPOSITORY."
   (define config
     (repository-config repository))
 
-  ;; Guile-Git < 0.7.0 lacks 'set-config-string'.
-  (if (module-defined? (resolve-interface '(git)) 'set-config-string)
-      (begin
-        (set-config-string config "guix.authentication.introduction-commit"
-                           commit)
-        (set-config-string config "guix.authentication.introduction-signer"
-                           signer)
-        (set-config-string config "guix.authentication.keyring"
-                           keyring-reference)
-        (info (G_ "introduction and keyring recorded \
+  (set-config-string config "guix.authentication.introduction-commit"
+                     commit)
+  (set-config-string config "guix.authentication.introduction-signer"
+                     signer)
+  (set-config-string config "guix.authentication.keyring"
+                     keyring-reference)
+  (info (G_ "introduction and keyring recorded \
 in repository configuration file~%")))
-      (warning (G_ "could not record introduction and keyring configuration\
- (Guile-Git too old?)~%"))))
+
+(define %pre-push-hook
+  ;; Contents of the pre-push hook that gets installed.
+  "\
+#!/bin/sh
+# Installed by 'guix git authenticate'.
+set -e
+
+# The \"empty hash\" used by Git when pushing a branch deletion.
+z40=0000000000000000000000000000000000000000
+
+while read local_ref local_oid remote_ref remote_oid
+do
+  if [ \"$local_oid\" != \"$z40\" ]
+  then
+      guix git authenticate --end=\"$local_oid\"
+  fi
+done\n")
 
 (define (install-hooks repository)
   "Attempt to install in REPOSITORY hooks that invoke 'guix git authenticate'.
 Bail out if one of these already exists."
-  ;; Guile-Git < 0.7.0 lacks 'repository-common-directory'.
-  (if (module-defined? (resolve-interface '(git))
-                       'repository-common-directory)
-      (let ()
-        (define directory
-          (repository-common-directory repository))
+  (define hooks-directory
+    (in-vicinity (repository-common-directory repository) "hooks"))
 
-        (define pre-push-hook
-          (in-vicinity directory "hooks/pre-push"))
+  (define pre-push-hook
+    (in-vicinity hooks-directory "pre-push"))
 
-        (define post-merge-hook
-          (in-vicinity directory "hooks/post-merge"))
+  (define post-merge-hook
+    (in-vicinity hooks-directory "post-merge"))
 
-        (if (or (file-exists? pre-push-hook)
-                (file-exists? post-merge-hook))
-            (begin
-              (warning (G_ "not overriding pre-existing hooks '~a' and '~a'~%")
-                       pre-push-hook post-merge-hook)
-              (display-hint (G_ "Consider running @command{guix git authenticate}
+  (mkdir-p hooks-directory)
+
+  (if (or (file-exists? pre-push-hook)
+          (file-exists? post-merge-hook))
+      (begin
+        (warning (G_ "not overriding pre-existing hooks '~a' and '~a'~%")
+                 pre-push-hook post-merge-hook)
+        (display-hint (G_ "Consider running @command{guix git authenticate}
 from your pre-push and post-merge hooks so your repository is automatically
 authenticated before you push and when you pull updates.")))
-            (begin
-              (call-with-output-file pre-push-hook
-                (lambda (port)
-                  (format port "#!/bin/sh
-# Installed by 'guix git authenticate'.
-set -e
-while read local_ref local_oid remote_ref remote_oid
-do
-  guix git authenticate --end=\"$local_oid\"
-done\n")
-                  (chmod port #o755)))
-              (call-with-output-file post-merge-hook
-                (lambda (port)
-                  (format port "#!/bin/sh
+      (begin
+        (call-with-output-file pre-push-hook
+          (lambda (port)
+            (display %pre-push-hook port)
+            (chmod port #o755)))
+        (call-with-output-file post-merge-hook
+          (lambda (port)
+            (format port "#!/bin/sh
 # Installed by 'guix git authenticate'.
 exec guix git authenticate\n")
-                  (chmod port #o755)))
-              (info (G_ "installed hooks '~a' and '~a'~%")
-                    pre-push-hook post-merge-hook))))
-      (warning (G_ "cannot determine where to install hooks\
- (Guile-Git too old?)~%"))))
+            (chmod port #o755)))
+        (info (G_ "installed hooks '~a' and '~a'~%")
+              pre-push-hook post-merge-hook))))
+
+(define (broken-pre-push-hook? file)
+  "Return true if FILE corresponds to a missing or known-broken pre-push hook
+that needs to be replaced."
+  (define broken-pre-push-hooks
+    ;; Size and SHA1 hash of pre-push hooks that were automatically installed
+    ;; but are known to be broken.
+    `((161 "a9916155b71894014144fcafad7700f89da26c83")))
+
+  (match (stat file #f)
+    (#f #t)
+    (st
+     (find (match-lambda
+             ((size bad-sha1)
+              (and (= size (stat:size st))
+                   (bytevector=? (call-with-input-file file
+                                   (lambda (port)
+                                     (port-hash (hash-algorithm sha1) port)))
+                                 (base16-string->bytevector bad-sha1)))))
+           broken-pre-push-hooks))))
+
+(define (maybe-upgrade-hooks repository)
+  "Update pre-push or post-merge hooks in REPOSITORY if it is missing or a
+known-broken version is installed."
+  (define directory
+    (repository-common-directory repository))
+
+  (define pre-push-hook
+    (in-vicinity directory "hooks/pre-push"))
+
+  (when (broken-pre-push-hook? pre-push-hook)
+    (info (G_ "upgrading hook '~a'~%") pre-push-hook)
+    (call-with-output-file pre-push-hook
+      (lambda (port)
+        (display %pre-push-hook port)
+        (chmod port #o755)))))
+
+(define (ensure-commit-id repository oid)
+  "If OID refers to an annotated tag, return its target commit; otherwise
+return OID."
+  (let ((obj (object-lookup repository oid)))
+    (if (= OBJ-TAG (object-type obj))
+        (tag-target-id (tag-lookup repository oid))
+        oid)))
 
 (define (show-stats stats)
   "Display STATS, an alist containing commit signing stats as returned by
@@ -298,30 +349,41 @@ expected COMMIT and SIGNER~%")))
             (end         (match (assoc-ref options 'end-commit)
                            (#f  (reference-target
                                  (repository-head repository)))
-                           (oid oid)))
+                           (oid (ensure-commit-id repository oid))))
             (history     (match (assoc-ref options 'historical-authorizations)
                            (#f '())
                            (file (call-with-input-file file
                                    read-authorizations))))
             (cache-key   (or (assoc-ref options 'cache-key)
-                             (repository-cache-key repository))))
-       (define stats
-         (authenticate-repository repository (string->oid commit)
-                                  (openpgp-fingerprint* signer)
-                                  #:end end
-                                  #:keyring-reference keyring
-                                  #:historical-authorizations history
-                                  #:cache-key cache-key
-                                  #:make-reporter make-reporter))
+                             (repository-cache-key repository)))
+            (branch      (current-branch repository)))
+       ;; Since the keyring branch is not authenticated, exit successfully
+       ;; when invoked on it.  This exit status is what the 'post-merge' hook
+       ;; expects when running 'git pull' on that branch, and what the
+       ;; 'pre-push' hook expects when running 'git push' on that branch.
+       (if (and branch (string=? branch keyring))
+           (info (G_ "current branch '~a' is the keyring branch; \
+doing nothing~%")
+                 branch)
+           (let ((stats
+                  (authenticate-repository repository (string->oid commit)
+                                           (openpgp-fingerprint* signer)
+                                           #:end end
+                                           #:keyring-reference keyring
+                                           #:historical-authorizations history
+                                           #:cache-key cache-key
+                                           #:make-reporter make-reporter)))
 
-       (unless (configured? repository)
-         (record-configuration repository
-                               #:commit commit #:signer signer
-                               #:keyring-reference keyring)
-         (install-hooks repository))
+             (if (configured? repository)
+                 (maybe-upgrade-hooks repository)
+                 (begin
+                   (record-configuration repository
+                                         #:commit commit #:signer signer
+                                         #:keyring-reference keyring)
+                   (install-hooks repository)))
 
-       (when (and show-stats? (not (null? stats)))
-         (show-stats stats))
+             (when (and show-stats? (not (null? stats)))
+               (show-stats stats))
 
-       (info (G_ "successfully authenticated commit ~a~%")
-             (oid->string end))))))
+             (info (G_ "successfully authenticated commit ~a~%")
+                   (oid->string end))))))))

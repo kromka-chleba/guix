@@ -133,6 +133,7 @@
             profile-derivation
             profile-search-paths
             load-profile
+            default-package-properties
 
             profile
             profile?
@@ -371,7 +372,7 @@ file name."
            #t
            lst)))
 
-(define (default-properties package)
+(define (default-package-properties package)
   "Return the default properties of a manifest entry for PACKAGE."
   ;; Preserve transformation options by default.
   (match (assq-ref (package-properties package) 'transformations)
@@ -380,7 +381,7 @@ file name."
 
 (define* (package->manifest-entry package #:optional (output "out")
                                   #:key (parent (delay #f))
-                                  (properties (default-properties package)))
+                                  (properties (default-package-properties package)))
   "Return a manifest entry for the OUTPUT of package PACKAGE."
   ;; For each dependency, keep a promise pointing to its "parent" entry.
   (letrec* ((deps  (map (match-lambda
@@ -421,10 +422,12 @@ explicit and implicit inputs of PACKAGE."
                   #f))
                (package-development-inputs package system #:target target))))
 
-(define (packages->manifest packages)
+(define* (packages->manifest packages #:key
+                             (properties default-package-properties))
   "Return a list of manifest entries, one for each item listed in PACKAGES.
 Elements of PACKAGES can be either package objects or package/string tuples
-denoting a specific output of a package."
+denoting a specific output of a package.  PROPERTIES is a procedure taking one
+argument and returning an alist."
   (define inferiors-loaded?
     ;; This hack allows us to provide seamless integration for inferior
     ;; packages while not having a hard dependency on (guix inferior).
@@ -438,9 +441,11 @@ denoting a specific output of a package."
    (delete-duplicates
     (map (match-lambda
            (((? package? package) output)
-            (package->manifest-entry package output))
+            (package->manifest-entry package output
+                                     #:properties (properties package)))
            ((? package? package)
-            (package->manifest-entry package))
+            (package->manifest-entry package
+                                     #:properties (properties package)))
            ((thing output)
             (if inferiors-loaded?
                 ((inferior->entry) thing output)

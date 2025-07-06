@@ -43,7 +43,7 @@ specified, recurse and return a mingw-w64 with support for winpthreads."
     (package
       (name (string-append "mingw-w64" "-" machine
                            (if with-winpthreads? "-winpthreads" "")))
-      (version "12.0.0")
+      (version "13.0.0")
       (source
        (origin
          (method url-fetch)
@@ -51,7 +51,7 @@ specified, recurse and return a mingw-w64 with support for winpthreads."
                "mirror://sourceforge/mingw-w64/mingw-w64/"
                "mingw-w64-release/mingw-w64-v" version ".tar.bz2"))
          (sha256
-          (base32 "0bzdprdrb8jy5dhkl2j2yhnr2nsiv6wk2wzxrzaqsvjbmj58jhfc"))))
+          (base32 "1bwchaannz49ckg295diyvp4k3sk3p3fwidgv9kvzvf4ylm85zjs"))))
       (native-inputs `(("xgcc-core" ,(if xgcc xgcc (cross-gcc triplet)))
                        ("xbinutils" ,(if xbinutils xbinutils
                                          (cross-binutils triplet)))
@@ -153,7 +153,7 @@ several new APIs such as DirectX and DDK, and 64-bit support.")
 (define-public mingw-w64-tools
   (package
     (name "mingw-w64-tools")
-    (version "12.0.0")
+    (version "13.0.0")
     (source
      (origin
        (method url-fetch)
@@ -161,7 +161,7 @@ several new APIs such as DirectX and DDK, and 64-bit support.")
              "mirror://sourceforge/mingw-w64/mingw-w64/"
              "mingw-w64-release/mingw-w64-v" version ".tar.bz2"))
        (sha256
-        (base32 "0bzdprdrb8jy5dhkl2j2yhnr2nsiv6wk2wzxrzaqsvjbmj58jhfc"))))
+        (base32 "1bwchaannz49ckg295diyvp4k3sk3p3fwidgv9kvzvf4ylm85zjs"))))
     (build-system gnu-build-system)
     (arguments
      (list

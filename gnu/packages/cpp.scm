@@ -2473,6 +2473,7 @@ provides a number of utilities to make coding with expected cleaner.")
    (synopsis "Immutable data structures")
    (description "Immer is a library of persistent and immutable data structures
 written in C++.")
+   (properties '((lint-hidden-cpe-vendors . ("immer_project"))))
    (license license:boost1.0)))
 
 (define-public zug
@@ -2947,6 +2948,7 @@ command line interfaces of C++ programs.  It allows you to describe the
 options that your program supports, their types, default values, and
 documentation.")
     (home-page "https://codesynthesis.com/projects/cli/")
+    (properties `((lint-hidden-cpe-vendors . ("github" "snyk"))))
     (license license:expat)))
 
 (define-public xsd
@@ -3053,7 +3055,7 @@ which can evaluate Jsonnet files and expressions.")))
 (define-public simdjson
   (package
     (name "simdjson")
-    (version "3.10.1")
+    (version "3.13.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3062,7 +3064,7 @@ which can evaluate Jsonnet files and expressions.")))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1qv7lvls7x9aw6mlnwfgchbajsxh6qygp09wpkb2w6mjdbidmi0h"))))
+                "005yli56nrkvlyx9g9cq8dczk42r9a18l162i2s5k81lj3y7mcrp"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f                      ; tests require downloading dependencies

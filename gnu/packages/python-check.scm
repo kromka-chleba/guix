@@ -10,7 +10,7 @@
 ;;; Copyright © 2020, 2022 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2020 Matthew James Kraai <kraai@ftbfs.org>
 ;;; Copyright © 2020 Edouard Klein <edk@beaver-labs.com>
-;;; Copyright © 2020, 2021 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020, 2021, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2021-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2021 Brendan Tildesley <mail@brendan.scot>
@@ -1892,16 +1892,15 @@ Python code formatter \"black\".")
 (define-public python-pytest-check
   (package
     (name "python-pytest-check")
-    (version "2.4.1")
+    (version "2.5.3")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pytest_check" version))
        (sha256
-        (base32 "0l7n2jhadbkmqr8kzja8zwclhjvhc87qsgr5v867zgsry37fy92j"))))
+        (base32 "1jkhmii6zrgzq0427sy9igm7a6nfvx7p4ms91h6d75f3fzgxfmr3"))))
     (build-system pyproject-build-system)
-    (native-inputs (list python-flit-core))
-    (propagated-inputs (list python-pytest))
+    (native-inputs (list python-hatchling python-pytest))
     (home-page "https://github.com/okken/pytest-check")
     (synopsis "Pytest plugin to allow multiple failures")
     (description "This package provides a pytest plugin that allows multiple
@@ -1991,22 +1990,15 @@ interfaces with pytest.")
     (version "0.7.0")
     (source
      (origin
-       ;; No tests in the PyPI tarball.
-       (method git-fetch)
+       (method git-fetch) ; no tests in PyPI
        (uri (git-reference
              (url "https://github.com/hackebrot/pytest-cookies")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1x7ny6mx1siy9law1cv1i63nvv9ds2g1dlagm40l8qymxry43mjn"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (when tests?
-                        (invoke "pytest" "-vv")))))))
-    (native-inputs (list python-pytest))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (propagated-inputs (list python-cookiecutter))
     (home-page "https://github.com/hackebrot/pytest-cookies")
     (synopsis "Pytest plugin for Cookiecutter templates")
@@ -3212,6 +3204,52 @@ support and @code{subtests} fixture.")
      "This plug-in auto-selects and reruns tests impacted by recent changes.")
     (license license:expat)))
 
+(define-public python-pytest-textual-snapshot
+  (package
+    (name "python-pytest-textual-snapshot")
+    (version "1.1.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest_textual_snapshot" version))
+       (sha256
+        (base32 "1ss4hm2xgxx07qn9s7p9fykzvmzxsl4g0rg198xjm1862fq8mm4n"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:tests? #f ; no tests in PyPI or Git
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-path
+            (lambda _
+              ;; Taken from NixOS package definition.
+              (substitute* "pytest_textual_snapshot.py"
+                (("this_file_path.parent")
+                 (string-append "Path('" #$output
+                                "/share/pytest-textual-snapshot/')")))))
+          (add-after 'install 'post-install
+            (lambda _
+              (install-file "./resources/snapshot_report_template.jinja2"
+                            (string-append #$output
+                                           "/share/pytest-textual-snapshot/resources/")))))))
+    (native-inputs
+     (list python-pytest
+           python-poetry-core))
+    (propagated-inputs
+     (list python-jinja2
+           python-rich
+           python-syrupy
+           python-textual))
+    (home-page "https://github.com/Textualize/pytest-textual-snapshot")
+    (synopsis "Pytest plugin for snapshot testing Textual applications")
+    (description
+     "This package implements a functionality to save an SVG screenshot of a
+running Textual app to disk.  The next time the test runs, it takes another
+screenshot and compares it to the saved one.  If the new screenshot differs
+from the old one, the test fails.  This is a convenient way to quickly and
+automatically detect visual regressions in your applications.")
+    (license license:expat)))
+
 (define-public python-pytest-tornado
   (package
     (name "python-pytest-tornado")
@@ -3716,6 +3754,43 @@ documentation by parsing them from their source and evaluating the
 parsed examples as part of your normal test run.  Integration is
 provided for the main Python test runners.")
     (license license:expat)))
+
+(define-public python-syrupy
+  (package
+    (name "python-syrupy")
+    (version "4.9.1")
+    (source
+     (origin
+       (method git-fetch)               ;no tests in PyPI archive
+       (uri (git-reference
+              (url "https://github.com/syrupy-project/syrupy")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "10q1xdwbcy9jfq8gd4r9q4r2p2zpcfrh4yj58nl9sbr2nc3irbh0"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "invoke" "test")))))))
+    (native-inputs
+     (list python-invoke
+           python-debugpy
+           python-twine
+           python-poetry-core
+           python-pytest
+           python-pytest-xdist
+           python-setuptools-scm))
+    (home-page "https://github.com/syrupy-project/syrupy")
+    (synopsis "Pytest Snapshot Test Utility")
+    (description
+     "This package implements a functionality to write tests which assert
+immutability of computed results.")
+    (license license:asl2.0)))
 
 (define-public python-tappy
   (package

@@ -459,7 +459,7 @@ Kate's features include:
 (define-public kdebugsettings
   (package
     (name "kdebugsettings")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
@@ -467,13 +467,15 @@ Kate's features include:
                                   ".tar.xz"))
               (sha256
                (base32
-                "1il9jcwya1hgqrs5yrlahk9h0hrrs5h1ay304sbixgiiafx1dcv7"))))
+                "0x9arz4a7sshn8xa8rahl1g0zgrmq1w2fbcy54wrm7m20qfxvhbn"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list kcoreaddons
                   kconfig
+                  kcrash
                   kdbusaddons
                   ki18n
+                  kiconthemes
                   kwidgetsaddons
                   kitemviews
                   kcompletion
@@ -557,7 +559,7 @@ drive, USB stick, etc
 (define-public kcharselect
   (package
     (name "kcharselect")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
@@ -565,7 +567,7 @@ drive, USB stick, etc
                                   ".tar.xz"))
               (sha256
                (base32
-                "0yzw3jqcxkqi3ricsxcj1g8lhwxqjx0vwa91h4jb7ig1gsp6h3hi"))))
+                "0xp6p4592rv50prrznp19hawahka9h9jx74n87ky2pyw1nysqn4l"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs (list extra-cmake-modules))
@@ -640,17 +642,18 @@ conversions between European currencies.")
 (define-public keysmith
   (package
     (name "keysmith")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/keysmith-" version ".tar.xz"))
               (sha256
                (base32
-                "1n34sda27hpl53gayglrjyz8la8g25z8mrvaymwhcp8fzpids911"))))
+                "1sbixsi4jq8p7bz044qjx70155b2ywvy3pjypfyaicjcq23bnd19"))))
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules pkg-config python-minimal))
-    (inputs (list kdbusaddons
+    (inputs (list kcoreaddons
+                  kdbusaddons
                   kirigami
                   ki18n
                   kwindowsystem
@@ -750,18 +753,20 @@ with support for QR scanning.")
 (define-public kontrast
   (package
     (name "kontrast")
-    (version "24.05.2")
+    (version "24.12.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kde/stable/release-service/"
                                   version "/src/kontrast-" version ".tar.xz"))
               (sha256
                (base32
-                "0rn7nw686d773hx6dg1zvld89r0l9gg4fps3ipyhlwi8gwcm1dwl"))))
+                "106zga72ln52qnb5jrq9d842ph0djbj9h3s6c34k11vjcy2vaag5"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs (list extra-cmake-modules kdoctools python-minimal))
-    (inputs (list kirigami
+    (inputs (list kcrash
+                  kirigami
+                  kirigami-addons
                   ki18n
                   kcoreaddons
                   qtdeclarative
@@ -800,61 +805,17 @@ combinations are distinct enough to be readable and accessible.")
 the computer and 3D Printers.")
       (license (list license:lgpl2.1 license:lgpl3)))))
 
-(define-public wacomtablet
-  (package
-    (name "wacomtablet")
-    (version "3.2.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://kde/stable/"
-                                  name "/" version "/"
-                                  name "-" version ".tar.xz"))
-              (patches (search-patches
-                        "wacomtablet-add-missing-includes.patch"
-                        "wacomtablet-qt5.15.patch"))
-              (sha256
-               (base32
-                "197pwpl87gqlnza36bp68jvw8ww25znk08acmi8bpz7n84xfc368"))))
-    (build-system qt-build-system)
-    (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (replace 'check
-                          (lambda* (#:key tests? #:allow-other-keys)
-                            (when tests?
-                              (invoke "dbus-launch" "ctest" "-E"
-                                      "(Test.KDED.DBusTabletService|Test.KDED.TabletHandler|Test.KDED.XInputAdaptor|Test.KDED.XsetWacomAdaptor)")))))))
-    (native-inputs (list dbus extra-cmake-modules kdoctools-5 pkg-config))
-    (inputs (list kcoreaddons-5
-                  ki18n-5
-                  kglobalaccel-5
-                  kconfig-5
-                  kxmlgui-5
-                  kwidgetsaddons-5
-                  kwindowsystem-5
-                  knotifications-5
-                  kdbusaddons-5
-                  qtx11extras
-                  qtdeclarative-5
-                  libwacom
-                  xf86-input-wacom
-                  libxi))
-    (propagated-inputs (list plasma-framework))
-    (home-page "https://invent.kde.org/system/wacomtablet")
-    (synopsis "KDE GUI for the Wacom Linux Drivers")
-    (description "Provides KDE GUI for the Wacom Linux Drivers.")
-    (license license:gpl2+)))
-
 (define-public kmag
   (package
     (name "kmag")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kmag-" version ".tar.xz"))
        (sha256
-        (base32 "0sbm9jr0spywgvm136swgbdqrw23dsf2msbj8x9sv4j004nx7sww"))))
+        (base32 "0n5d8wjpq4avcp8dsslks4sp10b1avrjhcyqrmp7xarci8qk137q"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs
@@ -877,14 +838,14 @@ artists to web-designers to people with low vision.")
 (define-public kmousetool
   (package
     (name "kmousetool")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kmousetool-" version ".tar.xz"))
        (sha256
-        (base32 "1vhabwsi1iiliakyqdaxjlzx9n7ln08szrr1l6hyi7abvzaarp8p"))))
+        (base32 "05q0xm4s435cvdxxaff7r0aplp0mimjsn6j6p5v6w8m8cdvn7c1c"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -917,14 +878,14 @@ whom pressing buttons hurts.")
 (define-public kmouth
   (package
     (name "kmouth")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/kmouth-" version ".tar.xz"))
        (sha256
-        (base32 "1gd51vwa9xdxxi6idzgzfb9dapirp5xc9alf3d9xnliwxqfxiv3x"))))
+        (base32 "0nclzgxn5q23mhdfx9wywwdm0agn5js57p91ywl610hk9p0c3r30"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools))
@@ -988,7 +949,6 @@ sentences to be re-spoken.")
              kio
              kitemviews
              kjobwidgets
-             kjs
              kservice
              kwidgetsaddons
              kxmlgui
@@ -1055,48 +1015,44 @@ to save the times and resume them later.")
 (define-public krusader
   (package
     (name "krusader")
-    (version "2.8.1")
+    (version "2.9.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/krusader/" version
                            "/krusader-" version ".tar.xz"))
        (sha256
-        (base32 "10w2y66kapd0ii8lr37jjwgg2a623ds05bv416j1payh352j1grp"))))
+        (base32 "012f75afp7vjpp7wps4lzvcszj6a5y9yzv21wgh9zikcvvx9pdy9"))))
     (build-system qt-build-system)
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'patch-compat.h
-                 (lambda _
-                   ;; Those fallbacks for pre KF-5.91 cause missing includes.
-                   (substitute* "app/compat.h"
-                     (("#  include <kcompletion_version\\.h>") "")
-                     (("#  include <karchive_version\\.h>") "")))))))
+     (list #:qtbase qtbase))
     (native-inputs
-     (list extra-cmake-modules kdoctools-5))
+     (list extra-cmake-modules kdoctools))
     (inputs
-     (list karchive-5
-           kbookmarks-5
-           kcodecs-5
-           kcompletion-5
-           kconfig-5
-           kcoreaddons-5
-           kguiaddons-5
-           ki18n-5
-           kiconthemes-5
-           kio-5
-           kitemviews-5
-           knotifications-5
-           kparts-5
-           ktextwidgets-5
-           kwallet-5
-           kwidgetsaddons-5
-           kwindowsystem-5
-           kxmlgui-5
-           breeze-icons ;; default icon set
-           qtbase-5
-           solid-5
+     (list breeze-icons ;; default icon set
+           karchive
+           kbookmarks
+           kcodecs
+           kcompletion
+           kconfig
+           kcoreaddons
+           kcrash
+           kglobalaccel
+           kguiaddons
+           ki18n
+           kiconthemes
+           kio
+           kitemviews
+           knotifications
+           kparts
+           kstatusnotifieritem
+           ktextwidgets
+           kwallet
+           kwidgetsaddons
+           kwindowsystem
+           kxmlgui
+           qt5compat
+           solid
            zlib))
     (home-page "https://krusader.org/")
     (synopsis "Twin-panel (commander-style) file manager")
@@ -1141,14 +1097,14 @@ either be created or generated from a image.")
 (define-public okteta
   (package
     (name "okteta")
-    (version "0.26.15")
+    (version "0.26.18")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/okteta/" version
                            "/src/okteta-" version ".tar.xz"))
        (sha256
-        (base32 "0qvwryk8m2ixxn9f6xgjiy3nv0vffapkgx8qw9315306yw750cq5"))))
+        (base32 "0qwapyplbp811c21089ahzmcflgnzhm99px165pin89fsik622f4"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools-5 qttools-5 shared-mime-info))
@@ -1320,14 +1276,14 @@ Features:
 (define-public sweeper
   (package
     (name "sweeper")
-    (version "24.05.2")
+    (version "24.12.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/sweeper-" version ".tar.xz"))
        (sha256
-        (base32 "0s1cj86p8wa9ngdqxff6mf4fx4b388b6il02g442g8q1kcqcnla5"))))
+        (base32 "1h5pj60h36j3034p5218mm2m0hqnlv4cb36gpkm0yi9faq8gwhvy"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs

@@ -162,6 +162,7 @@
   #:use-module (gnu packages lirc)
   #:use-module (gnu packages llvm)
   #:use-module (gnu packages lua)
+  #:use-module (gnu packages machine-learning)
   #:use-module (gnu packages man)
   #:use-module (gnu packages mp3)
   #:use-module (gnu packages mpd)
@@ -4281,13 +4282,14 @@ websites such as Libre.fm.")
 (define-public beets
   (package
     (name "beets")
-    (version "2.0.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "beets" version))
-              (sha256
-               (base32
-                "1kzqn6f3iw30lav9cwf653w2ns1n09yrys54dqxf6a9ppjsp449v"))))
+    (version "2.3.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "beets" version))
+       (sha256
+        (base32
+         "04jp9mwfsh5qj0d9h6i720ji3b7q720rwgddsl39my2al4hqfnc7"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -4305,14 +4307,25 @@ websites such as Libre.fm.")
                     (types (getenv "GI_TYPELIB_PATH")))
                 (wrap-program prog
                   `("GST_PLUGIN_SYSTEM_PATH" ":" prefix (,plugins))
-                  `("GI_TYPELIB_PATH" ":" prefix (,types)))))))))
+                  `("GI_TYPELIB_PATH" ":" prefix (,types))))))
+          (add-after 'wrap 'install-completion
+            (lambda _
+              (let ((completion-path
+                     (string-append
+                      #$output "/share/bash-completion/completions/beet")))
+                (mkdir-p (dirname completion-path))
+                (with-output-to-file completion-path
+                  (lambda _ (invoke (string-append #$output "/bin/beet")
+                                    "completion")))))))))
     (native-inputs
      (list gobject-introspection
            python-flask
            python-mock
+           python-poetry-core
            python-py7zr
            python-pytest
            python-pytest-cov
+           python-pytest-flask
            python-setuptools
            python-responses
            python-wheel))
@@ -4323,9 +4336,11 @@ websites such as Libre.fm.")
            gstreamer
            python-confuse
            python-jellyfish
+           python-lap
            python-mediafile
            python-munkres
            python-musicbrainzngs
+           python-platformdirs
            python-pyyaml
            python-typing-extensions
            python-unidecode
@@ -4353,41 +4368,37 @@ Then it provides a variety of tools for manipulating and accessing
 your music.")
     (license license:expat)))
 
-;;; XXX: The original project is abandoned for 4y, see
-;;; <https://github.com/unrblt/beets-bandcamp/issues/15>, this package may be
-;;; sourced from maintained fork <https://github.com/snejus/beetcamp>.
-(define-public beets-bandcamp
+(define-public beets-beetcamp
   (package
-    (name "beets-bandcamp")
-    (version "0.1.4")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "beets-bandcamp" version))
-              (sha256
-               (base32
-                "0dwbdkrb9c0ppzm5s78h47ndpr88cw1k0z8fgfhkl706wazx2ddg"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f))          ; there are no tests
-    (propagated-inputs
-     (list beets
-           python-beautifulsoup4
-           python-confuse
-           python-isodate
-           python-jellyfish
-           python-mediafile
-           python-munkres
-           python-musicbrainzngs
-           python-requests
-           python-six
-           python-unidecode
-           python-typing-extensions))
-    (home-page "https://github.com/unrblt/beets-bandcamp")
+    (name "beets-beetcamp")
+    (version "0.21.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "beetcamp" version))
+       (sha256
+        (base32 "14him9y82071l8jszy3g86k3mvnvzdb6g9yir3czfy7bhcn8x50x"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list beets
+                             python-httpx
+                             python-packaging
+                             python-pycountry))
+    (native-inputs (list python-poetry-core python-pytest))
+    ;; Tests are weird and can't be run properly.
+    (arguments (list #:tests? #f))
+    (home-page "https://github.com/snejus/beetcamp")
     (synopsis "Bandcamp plugin for beets")
     (description
      "This plugin for beets automatically obtains tag data from @uref{Bandcamp,
 https://bandcamp.com/}.  It's also capable of getting song lyrics and album art
 using the beets FetchArt plugin.")
     (license license:gpl2)))
+
+;;; XXX: The original project is abandoned for 4y, see
+;;; <https://github.com/unrblt/beets-bandcamp/issues/15>, this package may be
+;;; sourced from maintained fork <https://github.com/snejus/beetcamp>.
+(define-public beets-bandcamp
+  (deprecated-package "beets-bandcamp" beets-beetcamp))
 
 (define-public milkytracker
   (package
@@ -5118,20 +5129,25 @@ provide a very simple interface for editing and playing MIDI loops.")
 (define-public python-discogs-client
   (package
     (name "python-discogs-client")
-    (version "2.3.12")
+    (version "2.8")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "python3-discogs-client" version))
+              (uri (pypi-uri "python3_discogs_client" version))
               (sha256
                (base32
-                "1zmib0i9jicv9fyphgkcrk418qmpv3l4p38ibl31sh237ki5xqw9"))))
-    (build-system python-build-system)
+                "0fxk8q8z5v5l961d9z2ywq49i2fz50h074p81zv6w6j9zzs7fb0g"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-setuptools
+           python-wheel))
     (propagated-inputs
-     (list python-dateutil python-oauthlib python-requests))
+     (list python-dateutil
+           python-oauthlib
+           python-requests))
     (home-page "https://github.com/joalla/discogs_client")
     (synopsis "Python client for the Discogs API")
     (description "This is the continuation of the official Discogs API
-client for Python. It enables you to query the Discogs database for
+client for Python.  It enables you to query the Discogs database for
 information on artists, releases, labels, users, Marketplace listings,
 and more.  It also supports OAuth 1.0a authorization, which allows you to
 change user data such as profile information, collections and wantlists,
