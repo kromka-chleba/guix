@@ -80,6 +80,7 @@
 ;;; Copyright © 2025 pinoaffe <pinoaffe@gmail.com>
 ;;; Copyright © 2025 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2025 Igorj Gorjaĉev <igor@goryachev.org>
+;;; Copyright © 2025 Nguyễn Gia Phong <cnx@loang.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -7710,6 +7711,31 @@ file links.")
                    license:bsd-3              ; linkcheck/colorama.py
                    license:psfl               ; linkcheck/gzip2.py
                    license:expat))))          ; linkcheck/mem.py
+
+(define-public scadere
+  (package
+    (name "scadere")
+    (version "0.2.4")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "scadere" version))
+       (sha256
+        (base32 "13pv4zwh09ibhmn1hs6bxrn4xsmkh9q2141i50m67bmlclw87wbb"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-flit-core
+                         python-hypothesis
+                         python-pytest
+                         python-pytest-asyncio
+                         python-trustme
+                         python-tzdata))
+    (home-page "https://chim.loan/scadere")
+    (synopsis "Web feeds for TLS certificate renewal reminder")
+    (description
+     "Scadere is a TLS certificate renewal reminder.
+It checks for certificates that are about to expire
+and provides an Atom feed for notification.")
+    (license (list license:agpl3+ license:cc0))))
 
 (define-public castor
   (package
