@@ -75,6 +75,7 @@
 ;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>"
 ;;; Copyright © 2025 Daniel Khodabakhsh <d@niel.khodabakh.sh>
 ;;; Copyright © 2025 Josep Bigorra <jjbigorra@gmail.com>
+;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -5419,8 +5420,8 @@ Cloud.")
     (license license:expat)))
 
 (define-public guix-data-service
-  (let ((commit "40212ea053309341e5b35cc962e9404ff0ccea6b")
-        (revision "70"))
+  (let ((commit "683b375d5679acd248aeff7e8e16424530a92346")
+        (revision "71"))
     (package
       (name "guix-data-service")
       (version (string-append "0.0.1-" revision "." (string-take commit 7)))
@@ -5432,7 +5433,7 @@ Cloud.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1lxq7kfrih2h19r2gvpbvvcdbqfpqlgkm2r8hq5v1dj8bwqb02mj"))))
+                  "19z1v907dkwpg70d273avvms2vmqnimr6smx5rp5vn6p9wyv95h8"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -6848,19 +6849,21 @@ tools like SSH (Secure Shell) to reach the outside world.")
 (define-public stunnel
   (package
   (name "stunnel")
-  (version "5.66")
+  (version "5.75")
   (source
     (origin
       (method url-fetch)
       (uri (string-append "https://www.stunnel.org/downloads/stunnel-"
                           version ".tar.gz"))
       (sha256
-       (base32 "172pkzp8qilj0gd92bhdi96739gjpgbcav5c7a4gd98s9mq7i0am"))))
+       (base32 "10snpaiq3xyijs3hxlf0qxs38f6njbxp9zllrgf78294hpnz07hc"))))
   (build-system gnu-build-system)
   (arguments
    (list #:configure-flags
          #~(list (string-append "--with-ssl="
                                 #$(this-package-input "openssl")))
+         #:tests? (and (not (%current-target-system))
+                       (this-package-native-input "python-cryptography"))
          #:phases
          #~(modify-phases %standard-phases
              (add-after 'unpack 'patch-output-directories
@@ -6878,10 +6881,13 @@ tools like SSH (Secure Shell) to reach the outside world.")
                    (for-each delete-file (find-files doc "^INSTALL"))))))))
   (native-inputs
    ;; For tests.
-   (list iproute
-         netcat
-         procps
-         python))
+   (if (supported-package? python-cryptography)
+       (list iproute
+             netcat
+             procps
+             python
+             python-cryptography)
+       '()))
   (inputs (list openssl perl))
   (home-page "https://www.stunnel.org")
   (synopsis "TLS proxy for clients or servers")
@@ -7099,20 +7105,14 @@ functions of Tidy.")
 (define-public hiawatha
   (package
     (name "hiawatha")
-    (version "10.11")
+    (version "11.2")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://www.hiawatha-webserver.org/files/"
                            "hiawatha-" version ".tar.gz"))
-       (modules '((guix build utils)))
-       (snippet '(begin
-                   ;; We use packaged libraries, so delete the bundled copies.
-                   (for-each delete-file-recursively
-                             (list "extra/nghttp2.tgz" "mbedtls"))
-                   #t))
        (sha256
-        (base32 "09wpgilbv13zal71v9lbsqr8c3fignygadykpd1p1pb8blb5vn3r"))))
+        (base32 "1i8vrxbvpcj6yxmshbg19gm9g8vrxds6pdra0sgld4vzj9v4zilr"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f                      ; no tests included

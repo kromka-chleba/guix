@@ -1651,3 +1651,165 @@ automate testing and is compatible with Vim and Neovim.")
      "Srcery is a color scheme with clearly defined contrasting colors
 and a slightly earthy tone.")
     (license license:expat)))
+
+(define-public vim-commentary
+  (let ((commit "e87cd90dc09c2a203e13af9704bd0ef79303d755")
+        (revision "1"))
+    (package
+      (name "vim-commentary")
+      (version (git-version "1.3" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/tpope/vim-commentary")
+               (commit commit)))
+         (file-name (string-append name "-" version "-checkout"))
+         (sha256
+          (base32 "09kzc89iwkgsi4wvjxk56fis462kkz5chcl9sl4hdbmpa1f41wy0"))))
+      (build-system vim-build-system)
+      (arguments
+       (list
+        #:plugin-name "commentary.vim"))
+      (synopsis "Vim plugin for commenting out code")
+      (description
+       "Comment stuff out.  Use gcc to comment out a line (takes a count), gc to
+comment out the target of a motion (for example, gcap to comment out a
+paragraph), gc in visual mode to comment out the selection, and gc in operator
+pending mode to target a comment.  You can also use it as a command, either with
+a range like :7,17Commentary, or as part of a :global invocation like with
+:g/TODO/Commentary.")
+      (home-page "https://www.vim.org/scripts/script.php?script_id=3695")
+      (license license:vim))))
+
+(define-public vim-guile
+  (let ((commit "f76959a9dbdc69cde018901de82ac5a3d443843c")
+        (revision "1"))
+    (package
+      (name "vim-guile")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/HiPhish/guile.vim")
+               (commit commit)))
+         (file-name (string-append name "-" version "-checkout"))
+         (sha256
+          (base32 "1pqlhssdnpd8ngjc5bssma7ddjhffvh8hj67gchmyyxr5jfxwdq9"))))
+      (build-system vim-build-system)
+      (arguments
+       (list
+        #:plugin-name "guile.vim"))
+      (synopsis "Syntax highlighting for GNU Guile")
+      (description
+       "This plugin extends Vim's Scheme support to include the additions to
+the language provided by the GNU Guile implementation.  The plugin automatically
+detects whether a Scheme file is a Guile file and adds syntax highlighting for
+Guile's special forms.")
+      (home-page "https://github.com/HiPhish/guile.vim")
+      (license license:expat))))
+
+(define-public vim-dhall-vim
+  (let ((commit "68500ef46ff3706f46c99db3be7a0c8abcf6a3ae")
+        (revision "1"))
+    (package
+      (name "vim-dhall-vim")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/vmchale/dhall-vim")
+               (commit commit)))
+         (file-name (string-append name "-" version "-checkout"))
+         (sha256
+          (base32 "0lwna4kcq7davfvh3535n8wl9jxkjm7cg6jgpisd17kvagihh8qw"))))
+      (build-system vim-build-system)
+      (arguments
+       (list
+        #:plugin-name "dhall-vim"))
+      (synopsis "Vim configuration for Dhall")
+      (description
+       "A vim plugin to provide support and syntax hightlighting for the Dhall
+programming language")
+      (home-page "https://github.com/vmchale/dhall-vim")
+      (license license:bsd-3))))
+
+(define-public vim-mundo
+  (let ((commit "b53d35fb5ca9923302b9ef29e618ab2db4cc675e")
+        (revision "1"))
+    (package
+      (name "vim-mundo")
+      (version (git-version "3.1.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/simnalamburt/vim-mundo")
+               (commit commit)))
+         (file-name (string-append name "-" version "-checkout"))
+         (sha256
+          (base32 "1dwrarcxrh8in78igm036lpvyww60c93vmmlk8h054i3v2p8vv59"))))
+      (build-system vim-build-system)
+      (arguments
+       (list
+        #:plugin-name "Mundo"))
+      (synopsis "Vim undo tree visualizer")
+      (description "A Vim plugin to visualize the Vim undo tree")
+      (home-page "https://simnalamburt.github.io/vim-mundo/")
+      (license license:gpl2))))
+
+(define-public vim-zig
+  (let ((commit "54c216e5306a5c3878a60596aacb94dca8652ab9")
+        (revision "1"))
+    (package
+      (name "vim-zig")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ziglang/zig.vim")
+               (commit commit)))
+         (file-name (string-append name "-" version "-checkout"))
+         (sha256
+          (base32 "1nxwjyn3ps3c2abffai5cql3czl4kah4cin0g30damy1k99ypncb"))))
+      (build-system vim-build-system)
+      (arguments
+       (list
+        #:plugin-name "zig.vim"))
+      (synopsis "Vim configuration for Zig")
+      (description
+       "File detection and syntax highlighting for the zig programming
+language.")
+      (home-page "https://github.com/ziglang/zig.vim")
+      (license license:expat))))
+
+(define-public vim-plantuml-syntax
+  (let ((commit "845abb56dcd3f12afa6eb47684ef5ba3055802b8")
+        (revision "1"))
+    (package
+      (name "vim-plantuml-syntax")
+      (version (git-version "0.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/aklt/plantuml-syntax")
+               (commit commit)))
+         (file-name (string-append name "-" version "-checkout"))
+         (sha256
+          (base32 "0d2frv6knkj4bjavq2c2kx8qdnmcq0d8l04a5z7bpqwkmrrhd31f"))))
+      (build-system vim-build-system)
+      (arguments
+       (list
+        #:plugin-name "plantuml-syntax"))
+      (synopsis "Syntax highlighting for PlantUML")
+      (description
+       "This is a vim syntax file for PlantUML.  The filetype will be set to
+plantuml for *.pu, *.uml, *.puml, *.iuml or *.plantuml files or if the first
+line of a file contains @@startuml.  Additionally the makeprg is set to plantuml
+assuming you have this executable in your path.")
+      (home-page "https://github.com/aklt/plantuml-syntax")
+      (license license:vim))))

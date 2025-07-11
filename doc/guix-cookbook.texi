@@ -69,13 +69,14 @@ This manual is also available in French (@pxref{Top,,, guix-cookbook.fr,
 Livre de recettes de GNU Guix}), German (@pxref{Top,,, guix-cookbook.de,
 GNU-Guix-Kochbuch}), Korean (@pxref{Top,,, guix-cookbook.ko, GNU Guix 쿡북}),
 Spanish (@pxref{Top,,, guix-cookbook.es, Libro de recetas de GNU Guix}),
+Italian (@pxref{Top,,, guix-cookbook.it, Ricettario di GNU Guix}),
 Brazilian Portuguese (@pxref{Top,,, guix-cookbook.pt_BR,
 Livro de receitas do GNU Guix}), Russian (@pxref{Top,,, guix-cookbook.ru,
 GNU Guix Рецепты}), Slovak (@pxref{Top,,, guix-cookbook.sk,
 Receptár GNU Guix}), and Swedish (@pxref{Top,,, guix-cookbook.sv,
 Kokbok för GNU Guix}).  If you would like to translate
 this document in your native language, consider joining
-@uref{https://translate.fedoraproject.org/projects/guix/documentation-cookbook,
+@uref{https://translate.codeberg.org/projects/guix/documentation-cookbook,
 Weblate} (@pxref{Translating Guix,,, guix, GNU Guix Reference
 Manual}).
 
@@ -1561,7 +1562,7 @@ recommended.)  Other times the resulting package won't be reproducible.
 Should you be stuck, unable to figure out how to fix any sort of packaging
 issue, don't hesitate to ask the community for help.
 
-See the @uref{https://www.gnu.org/software/guix/contact/, Guix homepage} for information on the mailing lists, IRC, etc.
+See the @uref{https://guix.gnu.org/contact/, Guix homepage} for information on the mailing lists, IRC, etc.
 
 @node Conclusion
 @subsection Conclusion
@@ -1589,13 +1590,13 @@ hopefully we will see your contributions soon!
 
 @itemize
 @item
-The @uref{https://www.gnu.org/software/guix/manual/en/html_node/Defining-Packages.html, package reference in the manual}
+The @uref{https://guix.gnu.org/manual/en/html_node/Defining-Packages.html, package reference in the manual}
 
 @item
 @uref{https://gitlab.com/pjotrp/guix-notes/blob/master/HACKING.org, Pjotr’s hacking guide to GNU Guix}
 
 @item
-@uref{https://www.gnu.org/software/guix/guix-ghm-andreas-20130823.pdf, ``GNU Guix: Package without a scheme!''}, by Andreas Enge
+@uref{https://guix.gnu.org/guix-ghm-andreas-20130823.pdf, ``GNU Guix: Package without a scheme!''}, by Andreas Enge
 @end itemize
 
 @c *********************************************************************

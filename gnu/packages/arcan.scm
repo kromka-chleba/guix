@@ -64,7 +64,7 @@
 (define-public arcan
   (package
     (name "arcan")
-    (version "0.6.3")
+    (version "0.6.3.3")
     (source (origin
               (method git-fetch)
               (file-name (git-file-name name version))
@@ -73,7 +73,7 @@
                     (commit version)))
               (sha256
                (base32
-                "1aj8hffxsf6vg1al2v29cn35wnh7wir5x9krk4h68sy5va88w8k5"))
+                "0rbswqqrgh9bkv0fzsswpkfw2zp1a7znwy0abgrxha5vpn13qd8c"))
               (modules '((guix build utils)))
               (snippet
                ;; Remove some bundled packages.
@@ -187,9 +187,8 @@ engine with a Lua scripting interface.")
     (synopsis "Combined display server, multimedia framework and game engine (SDL)")))
 
 (define-public durden
-  ;; Match Arcan 0.6.3
-  (let ((commit "a8938b9c835f55bedc2c42aec4ddc5c9739eb949")
-        (revision "1"))
+  (let ((commit "43211acd7994836d5c4ba039d7ecc939dcf8a5aa")
+        (revision "2"))
     (package
       (name "durden")
       (version (git-version "0.6.1" revision commit))
@@ -201,7 +200,7 @@ engine with a Lua scripting interface.")
                (url "https://github.com/letoram/durden")
                (commit commit)))
          (sha256
-          (base32 "1ybi6x2kwn597kjqycrqmlvp6z79yv2jfwzgx937wcckm55xlpvk"))
+          (base32 "1jns4lq959s8ydykm0yg9sddzh74k7fdvjrnbz3z91idb7abl92d"))
          (patches (search-patches "durden-shadow-arcan.patch"))))
       (build-system copy-build-system)
       (arguments

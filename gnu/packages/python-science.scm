@@ -624,7 +624,7 @@ optimization problems in Python.")
 (define-public python-dask-expr
   (package
     (name "python-dask-expr")
-    (version "1.0.14")
+    (version "1.1.21")
     (source
      (origin
        (method git-fetch)
@@ -633,7 +633,7 @@ optimization problems in Python.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0c2q8w8wl5d2hycbjp9vavkl5f36kaz390wxlis2d8d43jnqhf0d"))))
+        (base32 "0m920db2asmqf4w2dncpnkccdhx4c9sfcsd96bh1jfdh8sw2wf6z"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -773,7 +773,7 @@ interoperability offered by HDF5.")
 (define-public python-distributed
   (package
     (name "python-distributed")
-    (version "2024.4.2")
+    (version "2024.12.1")
     (source
      (origin
        ;; The test files are not included in the archive on pypi
@@ -784,7 +784,7 @@ interoperability offered by HDF5.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0sy9mqa8qlxsagbz8xn304csrlxhxj4b6k84yrjxdcmkp9pkx166"))))
+         "1k0kmzd48mvaaizbf3b6lk84s0fw88x9v7hfgiddyyv6mf4x7h27"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -795,6 +795,10 @@ interoperability offered by HDF5.")
                             " and not gpu"
                             " and not ipython"
                             " and not avoid_ci")
+             ;; This disables FutureWarning that are caught as error,
+             ;; related to the merge of python-dask-expr in python-dask.
+             "-W"
+             (string-append "ignore::FutureWarning")
              "-k"
              (string-append
               ;; These fail because they require network access,
@@ -860,6 +864,7 @@ interoperability offered by HDF5.")
                 "test_rebalance_sync"
                 "test_repr_localcluster"
                 "test_require_encryption"
+                "test_rpc_closed_exception"
                 "test_rpc_default"
                 "test_rpc_inproc"
                 "test_rpc_message_lifetime_default"
@@ -891,6 +896,7 @@ interoperability offered by HDF5.")
                 "test_threadpoolworkers_pick_correct_ioloop"
                 "test_tls_listen_connect"
                 "test_tls_temporary_credentials_functional"
+                "test_transition_failure_triggers_log_event"
                 "test_variable_in_task"
                 "test_worker_preload_text"
                 "test_worker_uses_same_host_as_nanny"
@@ -1483,6 +1489,57 @@ serialization and deserialization of numerical and array data types provided
 by numpy using the highly efficient @code{msgpack} format.  Serialization of
 Python's native complex data types is also supported.")
     (license license:bsd-3)))
+
+(define-public python-narwhals
+  (package
+    (name "python-narwhals")
+    (version "1.44.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "narwhals" version))
+       (sha256
+        (base32 "07fk7b1via9a81ig38316l10avdbrjbdxz2n7ddj48bg9xnn3w4c"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              ;; Run a minimal portion of tests, the complete test suite
+              ;; requires Polars, PySpark and SqlFrame packages.
+              "--constructors=pandas"
+              "-k" (string-join
+                    ;; XXX: ValueError: Minimum version of modin supported by Narwhals is
+                    ;; (0, 8, 2), found: (0,)
+                    (list "not test_allow_series"
+                          "test_cross_join_non_pandas"
+                          "test_eager_only_eager"
+                          "test_from_native_roundtrip_identity"
+                          "test_namespace_series_from_iterable"
+                          "test_series_only"
+                          "test_to_native_namespace")
+                    " and not "))))
+    (native-inputs
+     (list python-pytest
+           python-pytest-xdist
+           python-duckdb
+           python-pytest-env
+           python-hatchling))
+    (propagated-inputs
+     (list python-pandas
+           python-dask
+           python-modin
+           python-pyarrow))
+    (home-page "https://narwhals-dev.github.io/narwhals/")
+    (synopsis "Compatibility layer between dataframe libraries")
+    (description
+     "This package provides an extremely lightweight compatibility layer
+between dataframe libraries.
+@itemize
+@item full API support: cuDF, Modin, pandas, Polars, PyArrow
+@item lazy-only support: Dask, DuckDB, Ibis, PySpark, SQLFrame
+@end itemize")
+    (license license:expat)))
 
 (define-public python-ndindex
   (package
@@ -2250,28 +2307,41 @@ logic, also known as grey logic.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/scikit-image/scikit-image")
-             (commit (string-append "v" version))))
+              (url "https://github.com/scikit-image/scikit-image")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1bc8i57sjk44vd9k1ilr6fpvfq1zbq9yfi22lz22k26mzrlisym3"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      ;; Disable flaky test
-      #:test-flags #~(list "-k" "not test_ellipse_parameter_stability")
+      #:test-flags
+      ;; To make sure we test compiled and installed module.
+      #~(list (string-append #$output "/lib/python"
+                             #$(version-major+minor (package-version python))
+                             "/site-packages")
+              "--pyargs" "skimage"
+              ;; Disable flaky test
+              "-k" (string-join
+                    (list "not test_ellipse_parameter_stability"
+                          ;; ValueError: Cannot call len() on object with unknown chunk size.
+                          "test_thresholds_dask_compatibility[threshold_triangle-41-43]")
+                    " and not "))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'change-home-dir
             (lambda _
               ;; Change from /homeless-shelter to /tmp for write permission.
               (setenv "HOME" "/tmp")))
-          (replace 'check
-            (lambda* (#:key tests? test-flags #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion "/tmp"
-                  (apply invoke "pytest" "-v" "--doctest-modules"
-                         (append test-flags (list #$output))))))))))
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; To prevent loading tests twise.
+              ;; 16277 passed, 240 skipped, 4 deselected
+              (delete-file-recursively "skimage")))
+          (add-before 'check 'post-check
+            (lambda _
+              (for-each delete-file-recursively
+                        (find-files #$output "__pycache__" #:directories? #t)))))))
     ;; See requirements/ for the list of build and run time requirements.
     ;; NOTE: scikit-image has an optional dependency on python-pooch, however
     ;; propagating it would enable many more tests that require online data.
@@ -3836,8 +3906,17 @@ readable.")
             (delete-file-recursively "vendor")))))
     (build-system pyproject-build-system)
     (arguments
-     ;; require vaex.server and others, which require vaex-core.
-     (list #:tests? #false))
+     (list
+      #:tests? #f ; require vaex.server and others, which require vaex-core.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-requirements
+            (lambda _
+              (substitute* "setup.py"
+                ;; "dask!=2022.4.0,<2024.9"; there is a note "fingerprinting
+                ;; in no longer deterministic as of 2024.9.0" which may be
+                ;; resolved in 2024.12.1.
+                ((",<2024.9") "")))))))
     (inputs
      (list boost pcre pybind11 string-view-lite tsl-hopscotch-map))
     (propagated-inputs

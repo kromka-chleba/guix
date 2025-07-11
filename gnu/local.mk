@@ -309,6 +309,8 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/fontutils.scm			\
   %D%/packages/fpga.scm				\
   %D%/packages/forth.scm			\
+  %D%/packages/fortran-check.scm			\
+  %D%/packages/fortran-xyz.scm			\
   %D%/packages/freedesktop.scm			\
   %D%/packages/freeipmi.scm			\
   %D%/packages/fsf.scm				\
@@ -1630,6 +1632,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/isl-0.11.1-aarch64-support.patch	\
   %D%/packages/patches/itk-snap-alt-glibc-compat.patch		\
   %D%/packages/patches/jamesdsp-fix-bulid-on-pipewire-1.4.0.patch\
+  %D%/packages/patches/jami-disable-webengine.patch		\
   %D%/packages/patches/jami-enable-testing.patch		\
   %D%/packages/patches/jami-libjami-headers-search.patch	\
   %D%/packages/patches/jami-qwindowkit.patch			\
@@ -1751,7 +1754,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libgnomeui-utf8.patch			\
   %D%/packages/patches/libgrss-CVE-2016-2001.patch		\
   %D%/packages/patches/libjami-ac-config-files.patch		\
-  %D%/packages/patches/libjami-libgit2-compatibility.patch	\
   %D%/packages/patches/libjxr-fix-function-signature.patch	\
   %D%/packages/patches/libjxr-fix-typos.patch			\
   %D%/packages/patches/libofa-ftbfs-1.diff		\
@@ -1809,6 +1811,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/linphone-desktop-without-sdk.patch	\
   %D%/packages/patches/linux-libre-infodocs-target.patch	\
   %D%/packages/patches/linux-libre-support-for-Pinebook-Pro.patch \
+  %D%/packages/patches/linux-libre-arm64-mnt-reform-revert-phy-rockchip-samsung.patch	\
+  %D%/packages/patches/linux-libre-arm64-mnt-reform-revert-rk-samsung-hdptx.patch	\
+  %D%/packages/patches/linux-libre-arm64-mnt-reform-revert-vop2-display-modes.patch	\
   %D%/packages/patches/linux-pam-no-setfsuid.patch		\
   %D%/packages/patches/linux-pam-unix_chkpwd.patch		\
   %D%/packages/patches/linuxdcpp-openssl-1.1.patch		\
@@ -2049,6 +2054,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/python-sgmllib3k-assertions.patch	\
   %D%/packages/patches/python-sphobjinv-defer-ssl-import.patch	\
   %D%/packages/patches/python-sphinx-prompt-docutils-0.19.patch	\
+  %D%/packages/patches/python-zeroc-ice-3.6.5-python-3.11-support.patch	\
   %D%/packages/patches/qcodeeditor-qt6.patch			\
   %D%/packages/patches/qtdeclarative-5-disable-qmlcache.patch	\
   %D%/packages/patches/qtdeclarative-disable-qmlcache.patch	\
@@ -2301,6 +2307,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/softhsm-fix-openssl3-tests.patch		\
   %D%/packages/patches/spectre-meltdown-checker-externalize-fwdb.patch \
   %D%/packages/patches/sphinxbase-fix-doxygen.patch		\
+  %D%/packages/patches/guile-srfi-125-fix-r7rs-rename-clause.patch \
   %D%/packages/patches/sssd-system-directories.patch		\
   %D%/packages/patches/steghide-fixes.patch			\
   %D%/packages/patches/suitesparse-mongoose-cmake.patch		\
@@ -2467,6 +2474,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/xygrib-newer-proj.patch			\
   %D%/packages/patches/yajl-CVE-2023-33460.patch		\
   %D%/packages/patches/yggdrasil-extra-config.patch	\
+  %D%/packages/patches/zabbix-agent2-test-timezone-fix.patch	\
   %D%/packages/patches/zig-0.9-build-respect-PKG_CONFIG-env-var.patch	\
   %D%/packages/patches/zig-0.9-fix-runpath.patch		\
   %D%/packages/patches/zig-0.9-riscv-support.patch		\

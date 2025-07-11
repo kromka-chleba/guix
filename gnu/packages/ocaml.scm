@@ -1909,7 +1909,7 @@ full_split, cut, rcut, etc..")
 (define-public dune-bootstrap
   (package
     (name "dune")
-    (version "3.11.0")
+    (version "3.19.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1918,7 +1918,7 @@ full_split, cut, rcut, etc..")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "12k8k2964s1z05mj71f9imwyvk0jyh5h6mpw4hpyr2d73iw53ink"))))
+                "01ys792jnld5yihhyirwkk4jlqm59bk0vrqjvvk5xjn8pp26vryq"))))
     (build-system ocaml-build-system)
     (arguments
      `(#:tests? #f; require odoc
@@ -2043,7 +2043,7 @@ config.h files for instance.  Among other things, dune-configurator allows one t
 (define-public ocaml-pp
   (package
     (name "ocaml-pp")
-    (version "1.2.0")
+    (version "2.0.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2052,7 +2052,7 @@ config.h files for instance.  Among other things, dune-configurator allows one t
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ylwb8lbjzj1prnal3c5p404dvh7bv4s19cvgrplnd7s46lvnj50"))))
+                "1gfd6hrb031qzb54v2zhlfxs54x0vnbaj6a8as07pvpwx7qznyss"))))
     (build-system dune-build-system)
     (propagated-inputs (list ocaml-odoc))
     (native-inputs (list ocaml-ppx-expect))
@@ -6203,6 +6203,8 @@ interfaces and the standard higher-level merlin protocol.")
        (modify-phases %standard-phases
          (replace 'check
            (lambda* (#:key tests? #:allow-other-keys)
+              ;; Tests require a writable cache directory
+              (setenv "HOME" "/tmp")
              (when tests?
                (invoke "dune" "runtest" "-p" "merlin,dot-merlin-reader")))))))
     (propagated-inputs (list ocaml-merlin-lib ocaml-yojson))
@@ -6230,6 +6232,8 @@ Atom.")
         (modify-phases %standard-phases
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
+              ;; Tests require a writable cache directory
+              (setenv "HOME" "/tmp")
               (when tests?
                 (invoke "dune" "runtest" "-p" "merlin,dot-merlin-reader")))))))
      (propagated-inputs (list ocaml-merlin-lib ocaml-yojson))

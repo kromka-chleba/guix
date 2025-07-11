@@ -108,7 +108,7 @@
 ;;; Copyright © 2021, 2022 Taiju HIGASHI <higashi@taiju.info>
 ;;; Copyright © 2022 Brandon Lucas <br@ndon.dk>
 ;;; Copyright © 2022 Jai Vetrivelan <jaivetrivelan@gmail.com>
-;;; Copyright © 2022, 2023 jgart <jgart@dismail.de>
+;;; Copyright © 2022, 2023, 2025 jgart <jgart@dismail.de>
 ;;; Copyright © 2022 Dominic Martinez <dom@dominicm.dev>
 ;;; Copyright © 2022 Peter Polidoro <peter@polidoro.io>
 ;;; Copyright © 2022 Luis Felipe López Acevedo <luis.felipe.la@protonmail.com>
@@ -2074,7 +2074,7 @@ before interacting with non-free LLMs.")
 (define-public emacs-magit
   (package
     (name "emacs-magit")
-    (version "4.3.6")
+    (version "4.3.8")
     (source
      (origin
        (method git-fetch)
@@ -2083,23 +2083,21 @@ before interacting with non-free LLMs.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gc6b1hclrpgyp2xccz980k2zg9ix6cyym11wxq6pjr8x8kl1j93"))))
+        (base32 "0y5151flgsxb1cv123kkj4v74xs5s6sh7ycq00gqc7bm0n09lcdb"))))
     (build-system emacs-build-system)
     (arguments
      (list
+      #:lisp-directory "lisp"
       #:test-command #~(list "make" "-C" ".." "test")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'build-info-manual
             (lambda _
-              (invoke "make" "info")
+              (invoke "make" "-C" ".." "info")
               ;; Copy info files to the lisp directory, which acts as
               ;; the root of the project for the emacs-build-system.
-              (rename-file "docs/magit.info" "lisp/magit.info")))
-          (add-after 'build-info-manual 'chdir-lisp
-            (lambda _
-              (chdir "lisp")))
-          (add-after 'chdir-lisp 'patch-version-executables
+              (rename-file "../docs/magit.info" "../lisp/magit.info")))
+          (add-after 'unpack 'patch-version-executables
             (lambda* (#:key inputs #:allow-other-keys)
               (emacs-substitute-variables "magit.el"
                 ("magit-version" #$version))
@@ -3339,15 +3337,15 @@ on the Flexoki colour scheme by Steph Ango.")
 (define-public emacs-flycheck
   (package
     (name "emacs-flycheck")
-    (version "34.1")
+    (version "35.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/flycheck/flycheck/")
-             (commit version)))
+              (url "https://github.com/flycheck/flycheck/")
+              (commit (string-append "v" version))))
        (sha256
-        (base32 "1rhsrbbg3y50qc4drbdgwa1z0hw7w84blgr0xl6zi9mqnjnak495"))
+        (base32 "1jj9w1j1qgpj3cdihwkgaj7nd714a0sgsydh413j9rsv6a3d4cgg"))
        (file-name (git-file-name name version))))
     (build-system emacs-build-system)
     (propagated-inputs
@@ -20492,16 +20490,16 @@ are common in Chromium-derived projects.")
 (define-public emacs-gnosis
   (package
     (name "emacs-gnosis")
-    (version "0.4.9")
+    (version "0.5.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://git.thanosapollo.org/gnosis")
-             (commit version)))
+              (url "https://git.thanosapollo.org/gnosis")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "08pqz0xfih761hmaq1hs3fzmkxn2jhzfbkqrkisl84ayla8shnrn"))))
+        (base32 "11zw5lw32c6zzgl2h1rmklhmqw35xv07ymdddwa1wc2xf9a7mb3p"))))
     (build-system emacs-build-system)
     (arguments (list #:test-command #~(list "make" "test")
                      #:emacs emacs      ; tests require built-in SQLite support
@@ -20511,8 +20509,12 @@ are common in Chromium-derived projects.")
                            (lambda _
                              (setenv "HOME" (getenv "TMPDIR"))
                              (mkdir-p (string-append (getenv "HOME")
-                                                     "/.emacs.d")))))))
-    (propagated-inputs (list emacs-compat emacs-emacsql))
+                                                     "/.emacs.d"))))
+                         (add-before 'install 'make-info
+                           (lambda _ (invoke "make" "doc"))))))
+    (native-inputs (list texinfo))
+    (propagated-inputs
+     (list emacs-compat emacs-emacsql emacs-org-gnosis emacs-transient))
     (home-page "https://thanosapollo.org/projects/gnosis")
     (synopsis "Spaced repetition system for GNU Emacs")
     (description
@@ -26217,6 +26219,30 @@ after its registered lisp object has been garbage collected.  This allows
 extra resources, such as buffers and processes, to be cleaned up after the
 object has been freed.")
   (license license:unlicense)))
+
+(define-public emacs-firefox-javascript-repl
+  (package
+    (name "emacs-firefox-javascript-repl")
+    (version "0.9.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://elpa.gnu.org/packages/firefox-javascript-repl-" version
+             ".tar"))
+       (sha256
+        (base32 "07qmp6hfzgljrl9gkwy673xk67b3bgxq4kkw2kzr8ma4a7lx7a8l"))))
+    (build-system emacs-build-system)
+    (home-page "https://elpa.gnu.org/packages/firefox-javascript-repl.html")
+    (synopsis "Jack into Firefox")
+    (description
+     "This package provides a way to REPL into a new Firefox instance's
+@code{JavaScript} engine.  A new throwaway Firefox profile directory is
+created before each run, so you won't need to modify your existing profiles.
+This mode takes care of starting the new Firefox process in debugging mode,
+which may be tedious to do by hand.  This comint mode is barebones and
+unstructured, meant for quick @code{JavaScript} experiments.")
+    (license license:gpl3+)))
 
 (define-public emacs-emacsql
   (package
@@ -38261,7 +38287,7 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
 (define-public emacs-fj
   (package
     (name "emacs-fj")
-    (version "0.13")
+    (version "0.14")
     (source
      (origin
        (method git-fetch)
@@ -38270,7 +38296,7 @@ Lisp's (relatively new) EIEIO object oriented libraries.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1wg4mlkzh15dyqr9qkwwl4xlhg2n48fi3qlbm4bwqxji9j5njkpf"))))
+        (base32 "01b9sfbwc012ki7ysf9fxg5mz4xmxqrdafzxsdzwj0c5xm1w8p07"))))
     (build-system emacs-build-system)
     (arguments (list #:tests? #f)) ; no tests
     (propagated-inputs (list emacs-fedi emacs-magit emacs-tp))

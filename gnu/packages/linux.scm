@@ -38,7 +38,7 @@
 ;;; Copyright © 2019 Stefan Stefanović <stefanx2ovic@gmail.com>
 ;;; Copyright © 2019-2022 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2019 Kei Kebreau <kkebreau@posteo.net>
-;;; Copyright © 2020, 2021 Oleg Pykhalov <go.wigust@gmail.com>
+;;; Copyright © 2020, 2021, 2025 Oleg Pykhalov <go.wigust@gmail.com>
 ;;; Copyright © 2020 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2020 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
@@ -514,17 +514,17 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.15-version "6.15.4")
+(define-public linux-libre-6.15-version "6.15.5")
 (define-public linux-libre-6.15-gnu-revision "gnu")
 (define deblob-scripts-6.15
   (linux-libre-deblob-scripts
    linux-libre-6.15-version
    linux-libre-6.15-gnu-revision
-   (base32 "1q85hjzn9hhzvz46ydglprrr8ak39jn7r059qpmgr8b8jph0578v")
-   (base32 "0cl3w5if11sllrwwgnjs3yq0dpfmgznb68ddp2l5ff34cqrmkba2")))
+   (base32 "0v0fsw3av42xbayy3g11cxyin3hda8s3b103sin05yc80r16584b")
+   (base32 "05153ci3sk9gsq8vgk6phvzszldaj2psmyp10cjivm3gl6qvkbhk")))
 (define-public linux-libre-6.15-pristine-source
   (let ((version linux-libre-6.15-version)
-        (hash (base32 "05psir6p8x5a89d9kxkxlv5iifln67yf803xj5rqvx82nqkxdbqf")))
+        (hash (base32 "1dc8qrwvvy34s5lgm43j295ipwaqm8wd8x4qchr14hqlkj9hg9rc")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.15)))
@@ -548,22 +548,22 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.35")
+(define-public linux-libre-6.12-version "6.12.36")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
    linux-libre-6.12-version
    linux-libre-6.12-gnu-revision
    (base32 "0y6i9ifax1a8bxih3rr9xzy3mj61ssgx9yfsy6fh94mni6wl51gp")
-   (base32 "19xrz8nnccw2c2wjzk1vbypbl7qqk0av1yrs2qylkixyf6gq3rjz")))
+   (base32 "0g08l17f57wkh2jfj4n2k7f7ikm87aj55npljvwd1lns7v5p90xr")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "0j577lqmzbzx45gxvxirx627pv6cbhq9slzb50rqqmyy3nqf1x05")))
+        (hash (base32 "135s057ya63zw4v1jr9lzjdxk60ahr9v38hbv6nima755pnql5ja")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.95")
+(define-public linux-libre-6.6-version "6.6.96")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -573,12 +573,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1zzpk2hpv76lylip4j7jkn0jqcjj15h3jff22x22i73mwz2kiqgk")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "11gaczm68mqm72f3mfg656nkiqd9y66kf943hvwghln9lblhlr0q")))
+        (hash (base32 "1p8v49w7z8w3wc68mbw46cz9xqrllc8cpa7nqlm2xnrssi1mir4y")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.142")
+(define-public linux-libre-6.1-version "6.1.143")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -588,7 +588,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1hzjr44hy8px4n3x5my2syhd60chkfy79ajgzvlz04pc5yf6ihpi")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "1am31xw70sbxzdnvj70fx9l946nadcbrc7qk2yxxssy96nhnxlnw")))
+        (hash (base32 "02ivq22hv42bcnssfpkkbqlhz1by9jrfrqlrz1wi0svysz2dlnz2")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
@@ -1195,11 +1195,11 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
                        "aarch64-linux" "powerpc64le-linux" "riscv64-linux")
                      #:configuration-file kernel-config))
 
-(define-public linux-libre-version         linux-libre-6.14-version)
-(define-public linux-libre-gnu-revision    linux-libre-6.14-gnu-revision)
-(define-public linux-libre-pristine-source linux-libre-6.14-pristine-source)
-(define-public linux-libre-source          linux-libre-6.14-source)
-(define-public linux-libre                 linux-libre-6.14)
+(define-public linux-libre-version         linux-libre-6.15-version)
+(define-public linux-libre-gnu-revision    linux-libre-6.15-gnu-revision)
+(define-public linux-libre-pristine-source linux-libre-6.15-pristine-source)
+(define-public linux-libre-source          linux-libre-6.15-source)
+(define-public linux-libre                 linux-libre-6.15)
 
 (define-public linux-libre-6.12
   (make-linux-libre* linux-libre-6.12-version
@@ -1563,29 +1563,19 @@ Linux kernel.  It has been modified to remove all non-free binary blobs.")
               license:gpl3
               license:x11))))
 
-(define %mnt-reform-revert-drm-rockchip-vop2-patch
-  (origin
-    (method url-fetch)
-    (uri (string-append
-          "https://source.mnt.re/vagrantc/reform-debian-packages/"
-          "-/raw/e4e6b0972dcbe21c83c0704a9f36d29e0657a9f2/linux/"
-          "patches6.12/rk3588-drm-revert/"
-          "0001-Revert-drm-rockchip-vop2-Improve-display-modes-handl.patch"))
-    (file-name "mnt-reform-revert-drm-rockchip-vop2.patch")
-    (sha256
-     (base32 "1h4cznxx0ix5bd7cfwxil0zrxmzqryha19l11ww6hd8bad1f9i7p"))))
-
 (define-public linux-libre-arm64-mnt-reform
   ;; Kernel for use on the MNT/Reform systems
   ;; https://mntre.com/reform.html
   (let ((base (make-linux-libre* linux-libre-6.12-version
                                  linux-libre-6.12-gnu-revision
                                  (source-with-patches linux-libre-6.12-source
-                                                      ;; Revert upstream patch
-                                                      ;; that conflicts with
+                                                      ;; Revert upstream patches
+                                                      ;; that conflict with
                                                       ;; MNT/Reform patches
-                                                      (list
-                                                       %mnt-reform-revert-drm-rockchip-vop2-patch))
+                                                      (search-patches
+                                                       "linux-libre-arm64-mnt-reform-revert-vop2-display-modes.patch"
+                                                       "linux-libre-arm64-mnt-reform-revert-phy-rockchip-samsung.patch"
+                                                       "linux-libre-arm64-mnt-reform-revert-rk-samsung-hdptx.patch"))
                                  '("aarch64-linux")
                                  #:extra-version "arm64-mnt-reform"
                                  #:extra-options
@@ -2082,7 +2072,7 @@ and the notification, WiFi, and Bluetooth LED.")
 (define-public tuxedo-keyboard
   (package
     (name "tuxedo-keyboard")
-    (version "4.14.1")
+    (version "4.14.2")
     (source
      (origin
        (method git-fetch)
@@ -2091,7 +2081,7 @@ and the notification, WiFi, and Bluetooth LED.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "145yk8iv1vprwag5zm2z4843w1wdivlgnrw9cysq3rf37xbydbni"))))
+        (base32 "0b7qivyd8r58cq84q11b2z919px5p9k5zbinm6ahj07w0lsq2j7b"))))
     (build-system linux-module-build-system)
     (arguments
      (list #:tests? #f))                ; no test suite
@@ -6864,7 +6854,7 @@ and copy/paste text in the console and in xterm.")
 (define-public btrfs-progs
   (package
     (name "btrfs-progs")
-    (version "6.14")
+    (version "6.15")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://kernel.org/linux/kernel/"
@@ -6872,7 +6862,7 @@ and copy/paste text in the console and in xterm.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "189xgsgdzqqcwm7k1ga33cj107md07w630xd88f2jvmkzh2bhnnz"))))
+                "1fvlyv78g65y6dv2vrgp1rj7ikkqav8cmwgchf6xi7qrsa6l5njp"))))
     (build-system gnu-build-system)
     (outputs '("out" "static")) ;static versions of the binaries in "out"
     (arguments
@@ -11625,6 +11615,20 @@ work properly.")
     (supported-systems
      (filter (cut string-suffix? "-linux" <>) %supported-systems))
     (license license:gpl2+)))
+
+(define-public firejail-disable-sandbox-check
+  (package/inherit
+   firejail
+   (name "firejail-disable-sandbox-check")
+   (arguments
+    (substitute-keyword-arguments (package-arguments firejail)
+      ((#:configure-flags flags #~'())
+       #~(append #$flags
+                 (list "--disable-sandbox-check")))))
+   (description
+    (string-append (package-description firejail)
+                   "  Builded with @code{--disable-sandbox-check}, which is
+ only intended for development."))))
 
 (define-public edac-utils
   (package

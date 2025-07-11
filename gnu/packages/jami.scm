@@ -36,6 +36,7 @@
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages guile)
+  #:use-module (gnu packages hunspell)
   #:use-module (gnu packages libcanberra)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages markup)
@@ -78,67 +79,8 @@
 ;;; When updating Jami, make sure that the patches used for ffmpeg-jami are up
 ;;; to date with those listed in
 ;;; <https://review.jami.net/plugins/gitiles/jami-daemon/+/refs/heads/master/contrib/src/ffmpeg/rules.mak>.
-(define %jami-nightly-version "20240524.0")
-(define %jami-daemon-commit "fd2f2815448ce4072dcbc3995950788573d63f3b")
-
-(define webrtc-audio-processing/jami
-  ;; libjami still requires an 0.x version of this package.  Remove it when
-  ;; libjami moves on, and don't forget to delete the patch.
-  (package
-    (name "webrtc-audio-processing")
-    (version "0.3.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri
-        (string-append "http://freedesktop.org/software/pulseaudio/"
-                       "webrtc-audio-processing/webrtc-audio-processing-"
-                       version ".tar.xz"))
-       (sha256
-        (base32 "1gsx7k77blfy171b6g3m0k0s0072v6jcawhmx1kjs9w5zlwdkzd0"))))
-    (build-system gnu-build-system)
-    (arguments
-     (if (or (target-riscv64?)
-             (target-powerpc?))
-         (list
-          #:phases
-          #~(modify-phases %standard-phases
-              (add-after 'unpack 'patch-source
-                (lambda* (#:key inputs #:allow-other-keys)
-                  (let ((patch-file
-                         #$(local-file
-                            (search-patch
-                             "webrtc-audio-processing-big-endian.patch"))))
-                    (invoke "patch" "--force" "-p1" "-i" patch-file)
-                    (substitute* "webrtc/typedefs.h"
-                      (("defined\\(__aarch64__\\)" all)
-                       (string-append
-                        ;; powerpc-linux
-                        "(defined(__PPC__) && __SIZEOF_SIZE_T__ == 4)\n"
-                        "#define WEBRTC_ARCH_32_BITS\n"
-                        "#define WEBRTC_ARCH_BIG_ENDIAN\n"
-                        ;; powerpc64-linux
-                        "#elif (defined(__PPC64__) && defined(_BIG_ENDIAN))\n"
-                        "#define WEBRTC_ARCH_64_BITS\n"
-                        "#define WEBRTC_ARCH_BIG_ENDIAN\n"
-                        ;; aarch64-linux
-                        "#elif " all
-                        ;; riscv64-linux
-                        " || (defined(__riscv) && __riscv_xlen == 64)"
-                        ;; powerpc64le-linux
-                        " || (defined(__PPC64__) && defined(_LITTLE_ENDIAN))"))))))))
-         '()))
-    (native-inputs
-     (if (or (target-riscv64?)
-             (target-powerpc?))
-         (list
-          (local-file (search-patch "webrtc-audio-processing-big-endian.patch"))
-          patch)
-         '()))
-    (home-page (package-home-page webrtc-audio-processing))
-    (synopsis (package-synopsis webrtc-audio-processing))
-    (description (package-description webrtc-audio-processing))
-    (license (package-license webrtc-audio-processing))))
+(define %jami-nightly-version "20250610.0")
+(define %jami-daemon-commit "3280fa373a186c8cd4926849ef94d41bcf97c129")
 
 (define-public libjami
   (package
@@ -152,10 +94,9 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1bw0laj93w4pvlxsr5abz59805ypbmg21z5393yzm82j4d35cfyr"))
+                "1sxrm0q4p9al6ar3svnni080cnclgf6yi9sy503n60srg47jvs87"))
               (patches (search-patches
-                        "libjami-ac-config-files.patch"
-                        "libjami-libgit2-compatibility.patch"))))
+                        "libjami-ac-config-files.patch"))))
     (outputs '("out" "bin" "debug"))    ;"bin' contains jamid
     (build-system gnu-build-system)
     (arguments
@@ -169,7 +110,9 @@
       ;; execution of test plans described in Scheme.  It may be useful in
       ;; user scripts too, until more general purpose Scheme bindings are made
       ;; available (see: test/agent/README.md).
-      #:configure-flags #~(list "--enable-agent" "--enable-debug")
+      ;; FIXME: compiling the agent currently fails (see:
+      ;; https://git.jami.net/savoirfairelinux/jami-daemon/-/issues/1139).
+      #:configure-flags #~(list "--disable-agent" "--enable-debug")
       #:make-flags #~(list"V=1")        ;build verbosely
       #:phases
       #~(modify-phases %standard-phases
@@ -203,7 +146,7 @@
            dhtnet
            eudev
            ffmpeg-jami
-           guile-3.0
+           ;guile-3.0
            jack-1
            jsoncpp
            libarchive
@@ -218,7 +161,7 @@
            sdbus-c++-1.4.0
            speex
            speexdsp
-           webrtc-audio-processing/jami
+           webrtc-audio-processing-0.3
            yaml-cpp))
     (native-inputs
      (list autoconf
@@ -290,8 +233,9 @@ QSortFilterProxyModel conveniently exposed for QML.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1wqi50n80khyngj48brc8wg3m6jq471h9gm62yxpj4f8z5j81ncd"))
+                "11hydcclfllvdsd08fdmsqxldgk957rr0xyjqgr9hdh7y0l95a9a"))
               (patches (search-patches
+                        "jami-disable-webengine.patch"
                         "jami-enable-testing.patch"
                         "jami-libjami-headers-search.patch"
                         "jami-qwindowkit.patch"
@@ -360,7 +304,8 @@ QSortFilterProxyModel conveniently exposed for QML.")
                   ;; "ctest" "-R" "Qml_Tests" ctest-args)
                   )))))))
     (native-inputs
-     (list googletest
+     (list git
+           googletest
            pkg-config
            python
            qthttpserver
@@ -370,6 +315,7 @@ QSortFilterProxyModel conveniently exposed for QML.")
     (inputs
      (list ffmpeg-jami
            glib                         ;for integration with GNOME
+           hunspell
            libjami
            libnotify
            libxcb
@@ -385,7 +331,8 @@ QSortFilterProxyModel conveniently exposed for QML.")
            qtsvg
            qwindowkit
            tidy-html                    ;used by src/app/htmlparser.h
-           vulkan-loader))
+           vulkan-loader
+           zxing-cpp))
     (home-page "https://jami.net")
     (synopsis "Qt Jami client")
     (description "This package provides the Jami Qt client.  Jami is a secure

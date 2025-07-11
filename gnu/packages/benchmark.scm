@@ -52,10 +52,11 @@
   #:use-module (gnu packages compression)
   #:use-module (gnu packages databases)
   #:use-module (gnu packages docbook)
-  #:use-module (gnu packages kde-frameworks)
+  #:use-module (gnu packages file-systems)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages graphics)
+  #:use-module (gnu packages kde-frameworks)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages maths)
@@ -399,6 +400,57 @@ It can carry out both qualitative and quantitative benchmarks in a clean,
 reproducible, and easy-to-use manner, making it easy to compare one particular
 setup against another one.")
     (license license:gpl3+)))
+
+(define-public python-benchexec
+  (package
+    (name "python-benchexec")
+    (version "3.29")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/sosy-lab/benchexec")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0vcafk20sg8bwh9qqwf94d6hqk0kq3yhiraknf7jsjisf2mrksjk"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags #~(list "--exclude=runexecutor")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-paths
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let ((prog (search-input-file inputs "bin/fuse-overlayfs")))
+                (substitute* "benchexec/container.py"
+                  (("shutil.which\\(\"fuse-overlayfs\"\\)")
+                   (string-append "\"" prog "\""))))))
+          (add-before 'check 'skip-failing-tests
+            (lambda _
+              (delete-file-recursively "benchexec/test_integration"))))))
+    (propagated-inputs (list fuse-overlayfs python-pyyaml))
+    (native-inputs
+     (list coreutils
+           python-lxml
+           python-nose
+           python-setuptools
+           python-wheel))
+    (home-page "https://github.com/sosy-lab/benchexec/")
+    (synopsis "Framework for Reliable Benchmarking")
+    (description
+     "BenchExec is a framework for reliable benchmarking, which takes care
+of important low-level details for accurate, precise, and reproducible
+measurements.  In particular, it makes use of cgroups, kernel namespaces,
+and overlay filesystems to restrict interference of the executed tool
+with the benchmarking host.")
+    (license license:asl2.0)))
+
+(define-public benchexec
+  (package/inherit python-benchexec
+    (name "benchexec")
+    (inputs (package-propagated-inputs python-benchexec))
+    (propagated-inputs (list))))
 
 (define-public python-locust
   (package

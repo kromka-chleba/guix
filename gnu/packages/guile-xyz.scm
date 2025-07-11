@@ -797,7 +797,7 @@ you send to a FIFO file.")
 (define-public guile-documenta
   (package
     (name "guile-documenta")
-    (version "0.3.0")
+    (version "0.4.0")
     (source
      (origin
        (method git-fetch)
@@ -806,7 +806,7 @@ you send to a FIFO file.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0agqjd4vlgb95ckrxvmn5ghbjsm72akgmd9zf08plk8j02l238ak"))))
+        (base32 "1z99wji3v3illckd3yq8c7y6w824l2hf9i90z7lkg3mcfwwgd9vp"))))
     (build-system guile-build-system)
     (inputs
      (list bash-minimal
@@ -1365,7 +1365,7 @@ It has a nice, simple s-expression based syntax.")
 (define-public guile-scheme-json-rpc
   (package
     (name "guile-scheme-json-rpc")
-    (version "0.4.5a")
+    (version "0.5.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1374,7 +1374,7 @@ It has a nice, simple s-expression based syntax.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0356hm6phcfgvwvx3ys6b927v40jzb7qrfgvql7g78na24zp2cmi"))))
+                "05xk12dcs802aa1fmdxx48b6gvgnjp5c5kbpipmg1s0bmn1a8b64"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -1395,7 +1395,7 @@ for calling methods on remote servers by exchanging JSON objects.")
 (define-public guile-lsp-server
   (package
     (name "guile-lsp-server")
-    (version "0.4.7")
+    (version "0.4.8")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1404,7 +1404,7 @@ for calling methods on remote servers by exchanging JSON objects.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1ybd9gs8wbxv6hfph7cs3hv02qf5qyqkdb0nw6fp02ksb6gyip2w"))))
+                "1v4za2phmrka2d467591pyl2vjisgj1ifzksd1kfbmacc8vnlh67"))))
     (build-system gnu-build-system)
      (arguments
       (list
@@ -4470,6 +4470,114 @@ pre-alpha code.")
 parameters, which  define* and lambda* special forms")
     (license license:gpl3+)))
 
+(define-public guile-srfi-125
+ (let ((revision "0")
+       (commit "556827a4b88b43acc0b941ac3f7f926ffad27e42"))
+  (package
+   (name "guile-srfi-125")
+   (version (git-version "0.0.1" revision commit))
+   (source
+    (origin
+     (method git-fetch)
+     (uri (git-reference
+           (url
+            "https://github.com/scheme-requests-for-implementation/srfi-125")
+           (commit commit)))
+     (file-name (git-file-name name version))
+     (sha256
+      (base32 "0dy839sq14h9y6fi4i27pli4xgz92zsswndad4fi0271rs2c26zy"))
+     (patches (search-patches "guile-srfi-125-fix-r7rs-rename-clause.patch"))
+     (snippet #~(begin
+                 (rename-file "srfi/125.sld" "srfi/srfi-125.scm")
+                 (delete-file "tables-test.sps")))))
+   (build-system guile-build-system)
+   (arguments (list #:not-compiled-file-regexp "body\\.scm$"))
+   (inputs (list guile-3.0))
+   (native-inputs (list guile-3.0 guile-srfi-126 guile-srfi-128))
+   (propagated-inputs (list guile-srfi-126 guile-srfi-128))
+   (home-page
+    "https://github.com/scheme-requests-for-implementation/srfi-125")
+   (synopsis "SRFI 125: Intermediate hash tables")
+   (description
+    "Procedures in this SRFI are drawn primarily from SRFI 69 and R6RS. In
+addition, the following sources are acknowledged:
+@itemize
+@item @code{hash-table-mutable?} procedure and the second argument of
+@code{hash-table-copy} (which allows the creation of immutable hash tables)
+are from R6RS, renamed in the style of this SRFI.
+@item @code{hash-table-intern!} procedure is from Racket, renamed in the style
+of this SRFI.
+@item @code{hash-table-find} procedure is a modified version of
+@code{table-search} in Gambit.
+@item procedures @code{hash-table-unfold} and @code{hash-table-count} were
+suggested by SRFI 1.
+@item procedures @code{hash-table=?} and @code{hash-table-map} were suggested
+by Haskell's @code{Data.Map.Strict} module.
+@item procedure @code{hash-table-map->list} is from Guile.
+@end itemize
+
+    The procedures @code{hash-table-empty?}, @code{hash-table-empty-copy},
+@code{hash-table-pop!}, @code{hash-table-map!},
+@code{hash-table-intersection!}, @code{hash-table-difference!}, and
+@code{hash-table-xor!} were added for convenience and completeness.")
+   (license license:expat))))
+
+(define-public guile-srfi-126
+ (let ((revision "0")
+       (commit "f480cf2d1a33c1f3d0fab3baf321c0ed5b5eb248"))
+  (package
+   (name "guile-srfi-126")
+   (version (git-version "0.0.1" revision commit))
+   (source
+    (origin
+     (method git-fetch)
+     (uri (git-reference
+           (url
+            "https://github.com/scheme-requests-for-implementation/srfi-126")
+           (commit commit)))
+     (file-name (git-file-name name version))
+     (modules '((guix build utils)))
+     (snippet #~(begin
+                 (delete-file-recursively "r6rs")
+
+                 (delete-file "srfi/126.sld")
+                 (delete-file "srfi/126.sld.in")
+                 (delete-file "srfi/:126.sls")
+                 (delete-file "srfi/:126.sls.in")
+
+                 (delete-file "test-suite.body.scm")
+                 (delete-file "test-suite.r6rs.sps")
+                 (delete-file "test-suite.r6rs.sps.in")
+                 (delete-file "test-suite.r7rs.scm")
+                 (delete-file "test-suite.r7rs.scm.in")))
+     (sha256
+      (base32 "18psw8l798xmbv2h90cz41r51q1mydzg7yr71krfprx5kdfqn32q"))))
+   (build-system guile-build-system)
+   (arguments (list #:not-compiled-file-regexp "body\\.scm$"))
+   (inputs (list guile-3.0))
+   (native-inputs (list guile-3.0))
+   (home-page
+    "https://github.com/scheme-requests-for-implementation/srfi-126")
+   (synopsis "SRFI 126: R6RS-based hashtables")
+   (description
+    "Utility procedures provided by this SRFI in addition to the R6RS API may
+be categorized as follows:
+@itemize
+@item Constructors: @code{alist->eq-hashtable}, @code{alist->eqv-hashtable},
+@code{alist->hashtable}
+@item Access and mutation: @code{hashtable-lookup}, @code{hashtable-intern!}
+@item Copying: @code{hashtable-empty-copy}
+@item Key/value collections: @code{hashtable-values},
+@code{hashtable-key-list}, @code{hashtable-value-list},
+@code{hashtable-entry-lists}
+@item Iteration: @code{hashtable-walk}, @code{hashtable-update-all!},
+@code{hashtable-prune!}, @code{hashtable-merge!}, @code{hashtable-sum},
+@code{hashtable-map->lset}, @code{hashtable-find}
+@item Miscellaneous: @code{hashtable-empty?}, @code{hashtable-pop!},
+@code{hashtable-inc!}, @code{hashtable-dec!}
+@end itemize")
+   (license license:expat))))
+
 (define-public guile-srfi-128
   (package
     (name "guile-srfi-128")
@@ -7134,8 +7242,8 @@ is an attempt to combine both into something useful.")
       (license license:asl2.0))))
 
 (define-public guile-knots
-  (let ((commit "0fa6737a39f866bdbffc11fd16348c5411c11a7c")
-        (revision "22"))
+  (let ((commit "d18b5b8d5de5beff3b9f84cfb359b73a4dcf2070")
+        (revision "23"))
     (package
     (name "guile-knots")
     (version (git-version "0" revision commit))
@@ -7146,7 +7254,7 @@ is an attempt to combine both into something useful.")
                     (commit commit)))
               (sha256
                (base32
-                "1kgrs99c71i8l82p799ggacw9yqsl9aimb5ssb9nkfpjg7dk9nkg"))
+                "0ygf0m6y6mf53pgq5i7agv4a54fkml2akg3ws55jj79v5ndy3lnb"))
               (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (native-inputs

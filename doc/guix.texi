@@ -197,10 +197,11 @@ This manual is also available in Simplified Chinese (@pxref{Top,,, guix.zh_CN,
 GNU Guix参考手册}), French (@pxref{Top,,, guix.fr, Manuel de référence de GNU
 Guix}), German (@pxref{Top,,, guix.de, Referenzhandbuch zu GNU Guix}),
 Spanish (@pxref{Top,,, guix.es, Manual de referencia de GNU Guix}),
+Italian (@pxref{Top,,, guix.it, Manuale di riferimento di GNU Guix}),
 Brazilian Portuguese (@pxref{Top,,, guix.pt_BR, Manual de referência do
 GNU Guix}), and Russian (@pxref{Top,,, guix.ru, Руководство GNU Guix}).  If you
 would like to translate it in your native language, consider joining
-@uref{https://translate.fedoraproject.org/projects/guix/documentation-manual,
+@uref{https://translate.codeberg.org/projects/guix/documentation-manual,
 Weblate} (@pxref{Translating Guix}).
 
 @menu
@@ -35689,7 +35690,7 @@ some reason.
 
 By using this service, you agree to the ACME Subscriber Agreement, which
 can be found there:
-@url{https://acme-v01.api.letsencrypt.org/directory}.
+@url{https://acme-v02.api.letsencrypt.org/directory}.
 
 @defvar certbot-service-type
 A service type for the @code{certbot} Let's Encrypt client.  Its value
@@ -35802,10 +35803,10 @@ file name of the resource requested when performing an HTTP-01 challenge.
 
 @item @code{cleanup-hook} (default: @code{#f})
 Command to be run in a shell once for each certificate challenge that
-have been answered by the @code{auth-hook}.  For this command, the shell
-variables available in the @code{auth-hook} script are still available, and
-additionally @code{$CERTBOT_AUTH_OUTPUT} will contain the standard output
-of the @code{auth-hook} script.
+have been answered by the @code{authentication-hook}.  For this command,
+the shell variables available in the @code{authentication-hook} script
+are still available, and additionally @code{$CERTBOT_AUTH_OUTPUT} will
+contain the standard output of the @code{authentication-hook} script.
 
 @item @code{deploy-hook} (default: @code{#f})
 Command to be run in a shell once for each successfully issued
@@ -35815,6 +35816,41 @@ example, @samp{"/etc/letsencrypt/live/example.com"}) containing the new
 certificates and keys; the shell variable @code{$RENEWED_DOMAINS} will
 contain a space-delimited list of renewed certificate domains (for
 example, @samp{"example.com www.example.com"}.
+
+@item @code{dry-run?} (default: @code{#f})
+Communicate with the ACME server but do not update certificates nor
+trigger @code{deploy-hook}.  This is useful as a temporary setting to
+test the challenge procedure, especially the @code{authentication-hook}
+and @code{cleanup-hook} while working on them.  It's also a good idea to
+use the Let's Encrypt staging server at
+@url{https://acme-staging-v02.api.letsencrypt.org/directory} while
+testing, which allows for higher rate limits, but with which
+@code{certbot} will helpfully refuse to update certificates and
+recommend the @code{dry-run?} option.  For example:
+
+@lisp
+(define %authentication-hook
+  (program-file "authentication-hook"
+    #~(let ((domain (getenv "CERTBOT_DOMAIN"))
+            (token (getenv "CERTBOT_TOKEN")))
+        (format #t "Hey, can you authenticate ~a with ~a for me?"
+                domain token))))
+
+(define %cleanup-hook
+  (program-file "authentication-hook"
+    #~(display "Bye")))
+
+(service certbot-service-type
+         (certbot-configuration
+          (server "https://acme-staging-v02.api.letsencrypt.org/directory")
+          (certificates
+           (list
+            (certificate-configuration
+              (dry-run? #t)
+              (authentication-hook %authentication-hook)
+              (cleanup-hook %cleanup-hook)
+              (domains '("example.net" "www.example.net")))))))
+@end lisp
 
 @item @code{start-self-signed?} (default: @code{#t})
 Whether to generate an initial self-signed certificate during system
@@ -51295,7 +51331,7 @@ an example of a service and its configuration that you could add to the
            (server "irc.oftc.net")
            (nick "sneek")
            (password "snuik is sneeky")
-           (channels '("#reproducible-builds"))))
+           (channels '("#reproducible-builds")))))
 @end lisp
 
 @node Media Home Services

@@ -3908,7 +3908,7 @@ communication over HTTP.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "03ajv1d034z6sjf2xapy8zq1mq2xkz5dqvn51vz2p26ws5axbzrn"))))
+                "0nzkh9kxk6mz570w4pygmfnyila5mkxcgzifi73wshd4yp7q3f3d"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -3927,7 +3927,6 @@ communication over HTTP.")
               (chdir "dev"))))))
     (native-inputs
      (list catch2-3
-           expected-lite
            json-dto))
     (inputs
      (list openssl
@@ -3935,6 +3934,7 @@ communication over HTTP.")
     (propagated-inputs
      ;; These are all #include'd by restinio's .hpp header files.
      (list asio
+           expected-lite
            fmt
            llhttp
            pcre
@@ -3947,55 +3947,19 @@ HTTP/Websocket server.  It is based on standalone version of ASIO
 and targeted primarily for asynchronous processing of HTTP-requests.")
     (license license:bsd-3)))
 
-(define-public restinio-0.6
-  (package
-    (inherit restinio)
-    (name "restinio")
-    (version "0.6.19")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/Stiffstream/restinio")
-                    (commit (string-append "v." version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1qrb1qr075r5059w984c4slgpsiwv94j6fmi9naa5l48dbi1p7jz"))))
-    (arguments
-     (list
-      #:configure-flags #~(list "-DRESTINIO_FIND_DEPS=ON"
-                                "-DRESTINIO_INSTALL=ON"
-                                "-DRESTINIO_TEST=ON"
-                                "-DRESTINIO_USE_EXTERNAL_HTTP_PARSER=ON"
-                                "-DRESTINIO_USE_EXTERNAL_SOBJECTIZER=ON")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'change-directory
-            (lambda _
-              (chdir "dev"))))))
-    (native-inputs (list catch2 clara json-dto))
-    ;; These are all #include'd by restinio's .hpp header files.
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs restinio)
-       (replace "llhttp" http-parser)))))
-
 (define-public opendht
-  ;; Temporarily use the latest commit, as the latest release lacks a 'detach'
-  ;; procedure used by a recent DhtNet, required by Jami.
-  (let ((commit "318d02c55a7061a771a632ff2224b0d195a80d42")
-        (revision "0"))
     (package
       (name "opendht")
-      (version (git-version "3.1.11" revision commit))
+      (version "3.4.0")
       (source (origin
                 (method git-fetch)
                 (uri (git-reference
                       (url "https://github.com/savoirfairelinux/opendht")
-                      (commit commit)))
+                      (commit (string-append "v" version))))
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0d4m9bxvwa1pz8r0sfrjjyml4yp5v7n4vy8ad7k4hcryyvd5npb0"))))
+                  "069y4mgygjsfp5szfbqr7l30g7fbcqqj62h11byyq9k24rl7ilsq"))))
       (outputs '("out" "python" "tools" "debug"))
       (build-system gnu-build-system)
       (arguments
@@ -4046,6 +4010,13 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
                   (("extra_link_args=\\[(.*)\\]" _ args)
                    (string-append "extra_link_args=[" args
                                   ", '-Wl,-rpath=" #$output "/lib']")))))
+            ;; TODO: build with liburing, requires cmake or meson.
+            (add-after 'unpack 'pkgconfig-disable-iouring
+              (lambda _
+                ;; This one causes configure error in dhtnet.
+                (substitute* "opendht.pc.in"
+                  (("@iouring_lib@")
+                   ""))))
             (replace 'check
               (lambda* (#:key tests? #:allow-other-keys)
                 (when tests?
@@ -4075,12 +4046,13 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
              readline))
       (propagated-inputs
        (list msgpack-cxx                  ;included in several installed headers
-             restinio-0.6                 ;included in opendht/http.h
+             restinio                     ;included in opendht/http.h
              ;; The following are listed in the 'Requires.private' field of
              ;; opendht.pc:
              argon2
              gnutls
              jsoncpp
+             llhttp
              nettle
              openssl                      ;required for the DHT proxy
              python))
@@ -4117,12 +4089,12 @@ library (get, put, etc.) with text values.
 @item dhtchat
 A very simple IM client working over the DHT.
 @end table")
-      (license license:gpl3+))))
+      (license license:gpl3+)))
 
 (define-public dhtnet
   ;; There is no tag nor release; use the latest available commit.
-  (let ((revision "3")
-        (commit "77331098ff663a5ac54fae7d0bedafe076c575a1"))
+  (let ((revision "4")
+        (commit "6c5ee3a21556d668d047cdedb5c4b746c3c6bdb2"))
     (package
       (name "dhtnet")
       ;; The base version is taken from the CMakeLists.txt file (see:
@@ -4136,14 +4108,15 @@ A very simple IM client working over the DHT.
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1ch736misnlv2aqalj3n62gnz5xlhmip9xfv1aimp0aqinfc94p7"))))
+                  "0np0h19gcibn9d4hyn9vjvlxjc6ma8cg8j1qxh1cam5c9i49h1xv"))))
       (outputs (list "out" "debug"))
       (build-system cmake-build-system)
       (arguments
        (list
         #:configure-flags #~(list "-DBUILD_DEPENDENCIES=OFF"
                                   "-DBUILD_SHARED_LIBS=ON"
-                                  "-DBUILD_TESTING=ON")
+                                  "-DBUILD_TESTING=ON"
+                                  "-DDNC_SYSTEMD=OFF")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'delete-problematic-tests
