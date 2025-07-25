@@ -44,6 +44,7 @@
 ;;; Copyright © 2025 Frederick Muriuki Muriithi <fredmanglis@gmail.com>
 ;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
 ;;; Copyright © 2025 Matthew Elwin <elwin@northwestern.edu>
+;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -295,7 +296,7 @@ their devices.")
 (define-public librecad
   (package
     (name "librecad")
-    (version "2.2.1.1")
+    (version "2.2.1.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -304,7 +305,7 @@ their devices.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1nal6xfh9qcvn96gapb1jn3nyz3n3wwidqdc864rv38lrigms66i"))))
+                "1km7n85arh818ka1bgdz0nx7ib48djipgwkml0rm4s5vv2p2kzbb"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -946,11 +947,13 @@ required for Fritzing app.")
     (version "0.9.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "https://git.tuxfamily.org/qet/qet.git/"
-                           "snapshot/qet-" version ".tar.gz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/qelectrotech/qelectrotech-source-mirror")
+             (commit version)))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1qkgagx2bk2jfzs3d91kki01y5bs5p85f4c8xjxn45hmw4rl512b"))))
+        (base32 "17rrr9l11wc2ni3pxybq595dc4l1lklaba7rd562r8qc00f5r7zl"))))
     (build-system qt-build-system)
     (arguments
      ;; XXX: tests are built for the CMake build option but it seems to be
@@ -3359,7 +3362,7 @@ ontinuous-time and discret-time expressions.")
                     python-pillow
                     qscintilla
                     qtbase-5
-                    qtgamepad
+                    qtgamepad-5
                     qtmultimedia-5
                     qtsvg-5
                     qtwayland-5
@@ -3560,7 +3563,7 @@ dynamics is used by FreeCAD 1.0.0 for its new Assembly workbench.")
            qtwebengine
            qtwayland
            qtx11extras
-           qtxmlpatterns
+           qtxmlpatterns-5
            sqlite
            tbb-2020                     ; Same version as opencascade-occt
            vtk
@@ -4774,13 +4777,14 @@ facilitate the communication between Cura and its backend and similar code.")
 (define-public cura-engine
   (package
     (name "cura-engine")
-    (version "4.13.1")
+    (version "4.13.2")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
                (url "https://github.com/Ultimaker/CuraEngine")
                (commit version)))
+       (patches (search-patches "cura-engine-gcc-14.patch"))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0xp2r0m5wwfsh9wdb3biqzvfqfz5jsmyw4bww93aksw0rgli07bp"))))

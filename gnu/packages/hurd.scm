@@ -7,6 +7,7 @@
 ;;; Copyright © 2020 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2020 Rene Saavedra <pacoon@protonmail.com>
 ;;; Copyright © 2023 Josselin Poiret <dev@jpoiret.xyz>
+;;; Copyright © 2025 Yelninei <yelninei@tutamail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -57,7 +58,7 @@
                  version ".tar.gz"))
 
 (define-public gnumach-headers
-  (let ((commit "v1.8+git20240714"))
+  (let ((commit "v1.8+git20250304"))
     (package
       (name "gnumach-headers")
       (version (string-drop commit 1))
@@ -70,7 +71,7 @@
          (patches (search-patches "gnumach-version.patch"))
          (file-name (git-file-name "gnumach" version))
          (sha256
-          (base32 "0ykav1kx0bgxcxw04bpcsh5s4531fzdkahjgrlsfs2h3w3vfkga0"))))
+          (base32 "0sq15n7x05qk3rjx5c0dbiijysyvk4gqqqfkc6gjkpsy3mx7a9q0"))))
       (build-system gnu-build-system)
       (arguments
        `(#:phases
@@ -81,7 +82,7 @@
            (delete 'build))
          #:tests? #f))
       (native-inputs
-       (list autoconf automake texinfo-4))
+       (list autoconf automake texinfo))
       (supported-systems %hurd-systems)
       (home-page "https://www.gnu.org/software/hurd/microkernel/mach/gnumach.html")
       (synopsis "GNU Mach kernel headers")
@@ -131,8 +132,8 @@ communication.")
     (license gpl2+)))
 
 (define-public hurd-headers
-  (let ((revision "3")
-        (commit "v0.9.git20240714"))
+  (let ((revision "4")
+        (commit "v0.9.git20250420"))
     (package
       (name "hurd-headers")
       (version (string-drop commit 1))
@@ -143,7 +144,7 @@ communication.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "0wvzil3llmrjg7ymwqs86d11bm5fl771jwncv7kk679lsvqca0ll"))
+                  "09z9gj1z11wswmxy7jdzrbjmlplpy0fpbc6gaj09hh34j4y6yr91"))
                 (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (native-inputs
@@ -216,6 +217,25 @@ libiohelp, libfshelp, libtrivfs, and libmachdev, needed to build the GNU C
 Library, Parted and netdde for GNU/Hurd.")
     (license gpl2+)))
 
+(define-public libirqhelp
+  (package (inherit hurd-headers)
+    (name "libirqhelp")
+    (arguments
+     (substitute-keyword-arguments (package-arguments hurd-headers)
+       ((#:make-flags flags '())
+        #~'(#$(string-append "lib-subdirs=libirqhelp")
+            "prog-subdirs="
+            "other-subdirs="
+            #$@flags))
+       ((#:phases _)
+        #~%standard-phases)))
+    (supported-systems %hurd-systems)
+    (synopsis "Hurd helper library for userspace IRQ handling")
+    (description
+     "This package provides libirqhelp, a GNU Hurd helper library to handle
+@acronym{IRQs, interrupt requests} in user space.")
+    (license gpl2+)))
+
 (define-public hurd-core-headers
   (package
     (name "hurd-core-headers")
@@ -275,7 +295,7 @@ Hurd-minimal package which are needed for both glibc and GCC.")
                (cross-mig (%current-target-system))
                mig)
            perl
-           texinfo-4))
+           texinfo))
     (supported-systems `("i686-linux" ,@%hurd-systems))
     (synopsis "Microkernel of the GNU system")
     (description
@@ -319,8 +339,7 @@ Hurd-minimal package which are needed for both glibc and GCC.")
               (patches (search-patches "hurd-refcounts-assert.patch"
                                        "hurd-rumpdisk-no-hd.patch"
                                        "hurd-startup.patch"
-                                       "hurd-socket-activation.patch"
-                                       "hurd-64bit.patch"))))
+                                       "hurd-socket-activation.patch"))))
     (version (package-version hurd-headers))
     (arguments
      `(#:tests? #f                      ;no "check" target
@@ -500,12 +519,13 @@ exec ${system}/rc \"$@\"
                                      "/bin/bash")
                       (string-append "CC="
                                      ,(cc-for-target))
-                      (string-append "WARNINGS="
-                                     " -Wno-declaration-missing-parameter-type"
-                                     " -Wno-implicit-function-declaration"
-                                     " -Wno-implicit-int"
-                                     " -Wno-int-conversion"
-                                     " -Wno-strict-prototypes")
+                      (string-append
+                       "WARNINGS="
+                       " -Wno-error=declaration-missing-parameter-type"
+                       " -Wno-error=implicit-function-declaration"
+                       " -Wno-error=implicit-int"
+                       " -Wno-error=int-conversion"
+                       " -Wno-error=strict-prototypes")
                       (string-append "ARCH=" arch)))))
          (add-after 'install 'install-goodies
           (lambda* (#:key inputs native-inputs outputs #:allow-other-keys)
@@ -595,7 +615,7 @@ exec ${system}/rc \"$@\"
                     mig))
        ("pkg-config" ,pkg-config)
        ("perl" ,perl)
-       ("texinfo" ,texinfo-4)
+       ("texinfo" ,texinfo)
        ("dde-sources" ,dde-sources)))
     (supported-systems %hurd-systems)
     (home-page "https://www.gnu.org/software/hurd/hurd.html")
@@ -635,11 +655,11 @@ implementing them.")
                "PKGDIR=libdde_linux26"
                (string-append "CC=" ,(cc-for-target))
                (string-append "WARNINGS="
-                              " -Wno-declaration-missing-parameter-type"
-                              " -Wno-implicit-function-declaration"
-                              " -Wno-implicit-int"
-                              " -Wno-int-conversion"
-                              " -Wno-strict-prototypes")
+                              " -Wno-error=declaration-missing-parameter-type"
+                              " -Wno-error=implicit-function-declaration"
+                              " -Wno-error=implicit-int"
+                              " -Wno-error=int-conversion"
+                              " -Wno-error=strict-prototypes")
                (let ((arch ,(match (or (%current-target-system)
                                        (%current-system))
                               ((? target-x86-32?)
@@ -720,11 +740,11 @@ in userland processes thanks to the DDE layer.")
       (license gpl2))))
 
 (define-public rumpkernel
-  (let ((commit "f1ffd6405f225336e595a0f99f01095ed7438337")
+  (let ((commit "2aad456903b2dc2232fa18c7f286cea6d77b570f")
         (revision "0"))
     (package
       (name "rumpkernel")
-      (version (git-version "0-20211031" revision commit))
+      (version (git-version "0-20250111" revision commit))
       ;; This uses the Debian Salsa rumpkernel package git as upstream as that
       ;; is where development happens.  Once things have stabilized, upstream
       ;; may change to the NetBSD git from where Debian takes their snapshots.
@@ -735,7 +755,7 @@ in userland processes thanks to the DDE layer.")
                       (commit commit)))
                 (sha256
                  (base32
-                  "1ygn3ysji06ik3k44sf906fjpdmabznkspw70llldbk2zkrcdw7i"))
+                  "14fiv2llvd5s1vi9gigmi1vi0b9yvg2zqyc9xg67ffxl1phv7p8j"))
                 (file-name (git-file-name name version))))
       (build-system gnu-build-system)
       (arguments
@@ -842,7 +862,9 @@ in userland processes thanks to the DDE layer.")
                      "-V" (string-append "TOPRUMP=" toprump)
                      "-V" "BUILDRUMP_CPPFLAGS=-Wno-error=stringop-overread"
                      "-V" "RUMPUSER_EXTERNAL_DPLIBS=pthread"
-		     "-V" (string-append
+                     ;; build.sh unsets C_INCLUDE_PATH which breaks our HOST_CC
+                     "-V" (string-append "C_INCLUDE_PATH=" (getenv "C_INCLUDE_PATH"))
+                     "-V" (string-append
                            "CPPFLAGS="
                            " -I../../obj/destdir." host-cpu "/usr/include"
                            " -D_FILE_OFFSET_BITS=64"
@@ -850,7 +872,8 @@ in userland processes thanks to the DDE layer.")
                            " -DRUMPUSER_CONFIG=yes"
                            " -DNO_PCI_MSI_MSIX=yes"
                            " -DNUSB_DMA=1"
-                           " -DPAE")
+                           " -DPAE"
+                           " -DBUFPAGES=16")
                      "-V" (string-append
                            "CWARNFLAGS="
                            " -Wno-error=maybe-uninitialized"
@@ -913,7 +936,7 @@ in userland processes thanks to the DDE layer.")
                    (append (find-files "buildrump.sh/src" "librump.*[.](a|so.*)")
                            (find-files "obj" "librump.*[.](a|so.*)")))))))))
       (inputs
-       (list gnumach-headers libpciaccess))
+       (list gnumach-headers libpciaccess libirqhelp))
       (native-inputs
        (list autoconf
              automake

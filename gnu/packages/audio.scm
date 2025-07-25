@@ -54,6 +54,7 @@
 ;;; Copyright © 2025 Sughosha <sughosha@disroot.org>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.com>
 ;;; Copyright © 2025 Kjartan Oli Agustsson <kjartanoli@outlook.com>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -552,7 +553,7 @@ Sega Master System/Mark III, Sega Genesis/Mega Drive, BBC Micro
 (define-public libopenmpt
   (package
     (name "libopenmpt")
-    (version "0.5.9")
+    (version "0.7.12")
     (source
      (origin
        (method url-fetch)
@@ -560,7 +561,7 @@ Sega Master System/Mark III, Sega Genesis/Mega Drive, BBC Micro
         (string-append "https://download.openmpt.org/archive/libopenmpt/src/"
                        "libopenmpt-" version "+release.autotools.tar.gz"))
        (sha256
-        (base32 "0h86p8mnpm98vc4v6jbvrmm02fch7dnn332i26fg3a2s1738m04d"))))
+        (base32 "160cbvbzv8wc9jlclfbxycr31h40dh14z56cnljya096czikravr"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags
@@ -1017,7 +1018,7 @@ PulseAudio clients, featuring:
 (define-public ardour
   (package
     (name "ardour")
-    (version "8.10")
+    (version "8.12")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1034,7 +1035,7 @@ PulseAudio clients, featuring:
 namespace ARDOUR { const char* revision = \"" version "\" ; const char* date = \"\"; }")))))
               (sha256
                (base32
-                "11aczxkr5rz9lsxrsbwxaj4yr2di7agbqmrxs6pvwi549fiqv1yb"))
+                "1cbsgdzhvnjwqgxbjk7ydcqaq6m87qm463ccwlvz1h6wkm1h3270"))
               (file-name (git-file-name name version))))
     (build-system waf-build-system)
     (arguments
@@ -3000,13 +3001,14 @@ especially for creating reverb effects.  It supports impulse responses with 1,
         (base32 "0i6l25dmfk2ji2lrakqq9icnwjxklgcjzzk65dmsff91z2zva5rm"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
+     `(#:configure-flags
+       '("CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types")
+       #:phases (modify-phases %standard-phases
                   (add-after 'unpack 'patch-configure
                     (lambda _
                       (substitute* "configure"
                         ;; Install to <out/lib> regardless of platform.
-                        (("libnn=lib64") "libnn=lib"))
-                      #t)))))
+                        (("libnn=lib64") "libnn=lib")))))))
     (inputs
      (list alsa-lib readline))
     ;; uuid.h is included in the JACK type headers
@@ -5023,9 +5025,10 @@ control functionality, or just for playing around with the sound effects.")
     (build-system gnu-build-system)
     (arguments
      '(#:configure-flags
-       ;; The upstream asks to identify the distribution to diagnose SoX
-       ;; bug reports.
-       '("--with-distro=Guix System Distribution")))
+       '("CFLAGS=-g -O2 -Wno-error=implicit-function-declaration"
+         ;; Upstream asks to identify the distribution to diagnose SoX
+         ;; bug reports.
+         "--with-distro=Guix System Distribution")))
     (native-inputs
      (list pkg-config))
     (inputs
@@ -7414,7 +7417,7 @@ verifies checksums.")
 (define-public easyeffects
   (package
     (name "easyeffects")
-    (version "7.2.3")
+    (version "7.2.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -7422,11 +7425,10 @@ verifies checksums.")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
-               (base32 "0vr21d12vbyvw3l1h4dx44fk1vk7ns7l8ynclchw5flhsd58yg3d"))))
+               (base32 "0k4l77hsmifqsw00mr28575b5fmhvskawjf7h4pmyj6ffbbinwy3"))))
     (build-system meson-build-system)
     (native-inputs
      (list `(,glib "bin") ;for glib-compile-resources
-           gcc-12 ; fails to build with gcc-11
            gettext-minimal
            itstool
            pkg-config))

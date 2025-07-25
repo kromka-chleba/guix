@@ -59,14 +59,14 @@
 (define-public a2ps
   (package
     (name "a2ps")
-    (version "4.15.6")
+    (version "4.15.7")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/a2ps/a2ps-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "1x5xdy8g5640bs11nsn7n15v5rb5bsvgi32v3lc6j6di3j09vzw7"))
+                "1bxqzf5hlg666hli2grdlmf2dbggzrlg808wlx60p5gx19kkhpvi"))
               (modules '((guix build utils)))
               (snippet
                ;; Remove timestamp from the installed 'README' file.
@@ -272,11 +272,25 @@ a fast alternative to @code{IOStreams}.")
        (uri (string-append "https://github.com/fmtlib/fmt/releases/download/"
                            version "/fmt-" version ".zip"))
        (sha256
-        (base32 "15n9yi6xzzs7g9rm87kg8y5yhl2zrqj3bjr845saa63f6swlrsyc"))))))
+        (base32 "15n9yi6xzzs7g9rm87kg8y5yhl2zrqj3bjr845saa63f6swlrsyc"))))
+    (arguments
+     (list
+      #:configure-flags ''("-DBUILD_SHARED_LIBS=ON")
+      #:phases
+      (cond
+       ((string-prefix? "i686" (%current-system))
+        #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch
+            (lambda _
+              (invoke
+               "patch" "-p1" "-i"
+               #$(local-file
+                  (search-patch "fmt-9-overspecified-tests.patch")))))))
+       (else #~%standard-phases))))))
 
 (define-public fmt-8
   (package
-    (inherit fmt-9)
+    (inherit fmt-10)
     (version "8.1.1")
     (source
      (origin
@@ -285,18 +299,6 @@ a fast alternative to @code{IOStreams}.")
                            version "/fmt-" version ".zip"))
        (sha256
         (base32 "0p8f82ijqa57sk72hjf0qviv1wwinmns0p87wiv2v8fvisnqnxr3"))))))
-
-(define-public fmt-8.0
-  (package
-    (inherit fmt-8)
-    (version "8.0.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/fmtlib/fmt/releases/download/"
-                           version "/fmt-" version ".zip"))
-       (sha256
-        (base32 "1gqmsk4r93x65cqs8w7zhfiv70w5fv8279nrblggqm4mmdpaa9x6"))))))
 
 (define-public fmt-7
   (package

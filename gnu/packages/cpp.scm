@@ -10,7 +10,7 @@
 ;;; Copyright © 2020 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2020, 2021, 2023, 2024, 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
-;;; Copyright © 2020, 2021, 2022, 2024 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2020, 2021, 2022, 2024, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020, 2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Michael Rohleder <mike@rohleder.de>
 ;;; Copyright © 2020 Alexandros Theodotou <alex@zrythm.org>
@@ -46,6 +46,8 @@
 ;;; Copyright © 2025 Sergio Pastor Pérez <sergio.pastorperez@gmail.com>
 ;;; Copyright © 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2025 Romain Garbage <romain.garbage@inria.fr>
+;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -78,6 +80,7 @@
   #:use-module (guix modules)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
+  #:use-module (gnu packages algebra)
   #:use-module (gnu packages assembly)
   #:use-module (gnu packages audio)
   #:use-module (gnu packages autotools)
@@ -875,7 +878,7 @@ same name.")
 (define-public google-highway
   (package
     (name "google-highway")
-    (version "1.0.7")
+    (version "1.2.0")
     (source
      (origin
        (method git-fetch)
@@ -884,7 +887,7 @@ same name.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0cx38hnislqyd4vd47mlpgjpr1zmpf1fms2bj6nb00fjv53q1sb7"))))
+        (base32 "0ykhc6n3ai18dijdmi38fm1d7pa8i6nbgh64jrxd4499k7jhg568"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags (list "-DHWY_SYSTEM_GTEST=on"
@@ -910,7 +913,7 @@ library for SIMD (Single Instruction, Multiple Data) with runtime dispatch.")
 (define-public hyprgraphics
   (package
     (name "hyprgraphics")
-    (version "0.1.3")
+    (version "0.1.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -921,9 +924,9 @@ library for SIMD (Single Instruction, Multiple Data) with runtime dispatch.")
               (snippet #~(substitute* "CMakeLists.txt" (("libjxl_cms") "")))
               (sha256
                (base32
-                "14yfb8vl1bbldlv12cg3dhd6z9bdaxvlz7kx671dqpi9m8j3kd56"))))
+                "0q7bpywn8ljsj3dymvv19cm7n0r51vg5hj1jsapdl5bwpwf7bf41"))))
     (build-system cmake-build-system)
-    (native-inputs (list gcc-14 pkg-config))
+    (native-inputs (list gcc-15 pkg-config))
     (arguments (list #:cmake cmake-next))
     (inputs (list cairo
                   hyprutils
@@ -932,7 +935,7 @@ library for SIMD (Single Instruction, Multiple Data) with runtime dispatch.")
                   libwebp
                   pixman
                   spng))
-    (home-page "https://wiki.hyprland.org/Hypr-Ecosystem/hyprgraphics/")
+    (home-page "https://wiki.hypr.land/Hypr-Ecosystem/hyprgraphics/")
     (synopsis "Hyprland graphics/resource utilities")
     (description
      "Hyprgraphics is a small C++ library with graphics/resource related
@@ -976,7 +979,7 @@ language used in Hyprland.")
 (define-public hyprutils
   (package
     (name "hyprutils")
-    (version "0.7.1")
+    (version "0.8.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -985,7 +988,7 @@ language used in Hyprland.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "04vn5vxzxixfbyrvhhgrj1b2m7yhndbnv1y78v0q0i9kpmnvvlav"))))
+                "15iwcgm6v7y4cm8l9yh3aig31va5xifswm47bind90mac7srar0p"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -998,7 +1001,7 @@ language used in Hyprland.")
                  (string-append
                   "set(PKG_CONFIG_EXECUTABLE " #$(pkg-config-for-target) ")\n"
                   all))))))))
-    (native-inputs (list gcc-14 pkg-config))
+    (native-inputs (list gcc-15 pkg-config))
     (inputs (list pixman))
     (home-page "https://github.com/hyprwm/hyprutils")
     (synopsis "C++ library for utilities used across Hyprland ecosystem")
@@ -1353,6 +1356,41 @@ intuitive syntax and trivial integration.")
 a cooperatively interruptible thread that is joined upon destruction.")
       (license license:cc-by4.0))))
 
+(define-public toml11
+  (package
+    (name "toml11")
+    (version "3.7.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ToruNiina/toml11")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "090i2qg88iknldxd6v2mh3jfvkdkwc5m38czhrbm58r3y835fy0y"))))
+    (build-system cmake-build-system)
+    (home-page "https://github.com/ToruNiina/toml11")
+    (synopsis "TOML for modern C++")
+    (description
+     "@code{toml11} is a C++11 (or later) header-only toml parser/encoder
+depending only on C++ standard library.
+
+@itemize
+@item It is compatible to the latest version of TOML v1.0.0.
+@item It is one of the most TOML standard compliant libraries, tested with
+a language agnostic test suite for TOML parsers.
+@item It shows highly informative error messages.
+@item It has configurable container.  You can use any random-access containers
+and key-value maps as backend containers.
+@item It optionally preserves comments without any overhead.
+@item It has configurable serializer that supports comments, inline tables,
+literal strings and multiline strings.
+@item It supports user-defined type conversion from/into toml values.
+@item It correctly handles UTF-8 sequences, with or without BOM.
+@end itemize")
+    (license license:expat)))
+
 (define-public tomlplusplus
   (package
    (name "tomlplusplus")
@@ -1650,6 +1688,30 @@ HTTP/HTTPS library, easy to setup.  It can also be used as a single-header
 library.")
     (license license:expat)))
 
+(define-public rapidfuzz-cpp
+  (package
+    (name "rapidfuzz-cpp")
+    (version "3.3.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/rapidfuzz/rapidfuzz-cpp")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1im0k0pjg1fnzsixl5k7j706kwwdhkw15a9hpkyr8yqbmmbg9q82"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "-DRAPIDFUZZ_BUILD_TESTING=ON")))
+    (native-inputs (list catch2))
+    (home-page "https://github.com/rapidfuzz/rapidfuzz-cpp")
+    (synopsis "Rapid fuzzy string matching using the Levenshtein Distance")
+    (description "RapidFuzz is a fast string matching library for Python and
+C++, which is using the string similarity calculations from FuzzyWuzzy.")
+    (license license:expat)))
+
 (define-public cpplint
   (package
     (name "cpplint")
@@ -1830,7 +1892,7 @@ programs.")
 (define-public kokkos
   (package
     (name "kokkos")
-    (version "4.4.00")
+    (version "4.6.02")
     (source
      (origin
        (method git-fetch)
@@ -1839,7 +1901,7 @@ programs.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1k8xd1m5lvk28i677yj780029gsb56m48wyh8d7rp9yqd4bcchbh"))
+        (base32 "0pfrxqjirm8qccb9k1krlw9fh0qlva62q6gyc6j7yz0zvdrdyi59"))
        (modules '((guix build utils)))
        (snippet
         ;; Remove bundled googletest.
@@ -1885,6 +1947,71 @@ hierarchies and multiple types of execution resources.")
     (properties '((tunable? . #t)))
 
     (license license:asl2.0))) ; With LLVM exception
+
+(define-public kokkos-kernels
+  (package
+    (name "kokkos-kernels")
+    ;; Synchronize with Kokkos version.
+    (version (package-version kokkos))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/kokkos/kokkos-kernels")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        ;; Version 4.6.02.
+        (base32 "05g4dp1359rsx0y2wrg2yv4zx3aq5anxr8jgb2c5f1ay3nq3639s"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "-DBUILD_SHARED_LIBS=ON")))
+    (inputs
+     (list kokkos
+           openblas))
+    (properties '((tunable? . #t)))
+    (home-page "https://kokkos.org")
+    (synopsis
+     "Math kernels for Kokkos")
+    (description "KokkosKernels implements local computational kernels for
+linear algebra and graph operations, using the Kokkos shared-memory parallel
+programming model.  \"Local\" means not using MPI, or running within a
+single MPI process without knowing about MPI.")
+    (license license:asl2.0))) ;with LLVM exception
+
+(define-public kokkos-fft
+  (package
+    (name "kokkos-fft")
+    (version "0.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/kokkos/kokkos-fft")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256 (base32 "0skajkzkrmlsfzrzkvspzqf6z9wqvs529cmknzhk4mhn917pykh6"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "-DKokkosFFT_DEPENDENCY_POLICIES=INSTALLED"
+                   "-DKokkosFFT_ENABLE_TESTS=ON")))
+    (inputs
+     (list kokkos
+           fftw
+           fftwf))
+    (native-inputs
+     (list googletest))
+    (home-page "https://kokkosfft.readthedocs.io/")
+    (synopsis "Shared-memory FFT for the Kokkos ecosystem")
+    (description "Kokkos-fft is an experimental FFT interface for the
+Kokkos C++ environment.  It implements local interfaces between Kokkos
+and FFT libraries such as FFTW, cufft, hipfft (rocfft), and oneMKL.
+\"Local\" means not using MPI, or running within a single MPI process
+without knowing about MPI.")
+    ;; dual licensed, asl2.0 with LLVM exception
+    (license (list license:expat license:asl2.0))))
 
 (define-public tweeny
   (package
@@ -2451,30 +2578,33 @@ provides a number of utilities to make coding with expected cleaner.")
     (license license:cc0)))
 
 (define-public immer
-  (package
-   (name "immer")
-   (version "0.8.1")
-   (source (origin
-            (method git-fetch)
-            (uri (git-reference
-                  (url "https://github.com/arximboldi/immer")
-                  (commit (string-append "v" version))))
-            (file-name (git-file-name name version))
-            (sha256
-             (base32 "03qkr42h0g6rivj3kq207gzgnv7hq88y69q16l2vg1lbvjcgca2g"))))
-   (build-system cmake-build-system)
-   (arguments (list #:test-target "check"
-                    ;; -Werror appears to report false positives.
-                    ;; See <https://github.com/arximboldi/immer/issues/223>.
-                    #:configure-flags #~(list "-DDISABLE_WERROR=ON")))
-   (inputs (list boost libgc c-rrb))
-   (native-inputs (list catch2 doctest fmt pkg-config))
-   (home-page "https://sinusoid.es/immer")
-   (synopsis "Immutable data structures")
-   (description "Immer is a library of persistent and immutable data structures
+  ;; Use latest commit to fix build with gcc 14.
+  (let ((commit "df6ef46d97e1fe81f397015b9aeb32505cef653b")
+        (revision "0"))
+    (package
+      (name "immer")
+      (version (git-version "0.8.1" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/arximboldi/immer")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32 "032rb84ahvdnc1m6sj4lflrwnk4p1f2jsq1pv03xbgizp2lr2pkx"))))
+      (build-system cmake-build-system)
+      (arguments (list #:test-target "check"
+                       ;; -Werror appears to report false positives.
+                       ;; See <https://github.com/arximboldi/immer/issues/223>.
+                       #:configure-flags #~(list "-DDISABLE_WERROR=ON")))
+      (inputs (list boost libgc c-rrb))
+      (native-inputs (list catch2-3 doctest fmt pkg-config))
+      (home-page "https://sinusoid.es/immer")
+      (synopsis "Immutable data structures")
+      (description "Immer is a library of persistent and immutable data structures
 written in C++.")
-   (properties '((lint-hidden-cpe-vendors . ("immer_project"))))
-   (license license:boost1.0)))
+      (properties '((lint-hidden-cpe-vendors . ("immer_project"))))
+      (license license:boost1.0))))
 
 (define-public zug
   (package
@@ -2607,7 +2737,12 @@ conversions to and from strings, iteration and related functionality.")
                 "0r48rfghjm90pkdyr4khxg783g9v98rdx2n69xn8f6c5i0hl96rv"))))
     (build-system gnu-build-system)
     (arguments
-     (list #:configure-flags #~(list "--enable-mcpplib" "--disable-static")))
+     (list #:configure-flags
+           #~(list "--enable-mcpplib"
+                   "--disable-static"
+                   (string-append "CFLAGS=-g -O2"
+                                  " -Wno-error=incompatible-pointer-types"
+                                  " -Wno-error=implicit-function-declaration"))))
     (home-page "https://mcpp.sourceforge.net/")
     (synopsis "C/C++ preprocessor")
     (description
@@ -3868,7 +4003,7 @@ std::variant (formerly boost::variant) for C++11/14.")
                 ((".*3rdparty/googletest.*\n") "")
                 ((".*config_compiler_and_linker.*\n") "")
                 (("gtest_main") "gtest gtest_main")))))))
-    (native-inputs (list googletest gcc-12)) ; XXX: build fails with GCC 11
+    (native-inputs (list googletest))
     (home-page "https://github.com/mpark/variant")
     (synopsis "Implementation of std::variant for C++11/14/17")
     (description
@@ -3966,7 +4101,8 @@ for C++17 string-view.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0m344qq3d57balzvc26fjx985nj2xwnfb1a7prkv3njj5lfcf127"))))
+          (base32 "0m344qq3d57balzvc26fjx985nj2xwnfb1a7prkv3njj5lfcf127"))
+         (patches (search-patches "strutcpp-fix-includes.patch"))))
       (build-system cmake-build-system)
       (arguments
        (list

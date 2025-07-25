@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012-2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2012 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2014, 2015, 2017 Mark H Weaver <mhw@netris.org>
@@ -161,27 +161,31 @@ the checkout from TARBALL, a tarball containing said checkout.
                 "0cf5vj5yxfvkgzvjvh2l7b2nz5ji5l534n9g4mfp8f5jsjqdrqjc"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:implicit-inputs? #f
-       #:tests? #f
-       #:guile ,%bootstrap-guile
-       #:imported-modules ((guix build gnu-bootstrap)
-                           ,@%default-gnu-imported-modules)
-       #:phases
-       (begin
-         (use-modules (guix build gnu-bootstrap))
-         (modify-phases %standard-phases
-           (replace 'unpack
-             (lambda* (#:key inputs #:allow-other-keys)
-               (let* ((source (assoc-ref inputs "source"))
-                      (guile-dir (assoc-ref inputs "guile"))
-                      (guile (string-append guile-dir "/bin/guile")))
-                 (invoke guile "--no-auto-compile" source)
-                 (chdir "bootar"))))
-           (replace 'configure (bootstrap-configure "Bootar" ,version
-                                                    '(".") "scripts"))
-           (replace 'build (bootstrap-build '(".")))
-           (replace 'install (bootstrap-install '(".") "scripts"))))))
-    (inputs `(("guile" ,%bootstrap-guile)))
+     (list #:implicit-inputs? #f
+           #:tests? #f
+           #:guile %bootstrap-guile
+           #:imported-modules `((guix build gnu-bootstrap)
+                                ,@%default-gnu-imported-modules)
+           #:modules `((guix build gnu-bootstrap)
+                       ,@%default-gnu-modules)
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'unpack
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (let* ((source #+(package-source this-package))
+                          (guile (search-input-file inputs
+                                                    "/bin/guile")))
+                     (invoke guile "--no-auto-compile" source)
+                     (chdir "bootar"))))
+               (replace 'configure
+                 (bootstrap-configure "Bootar"
+                                      #$version
+                                      '(".") "scripts"))
+               (replace 'build
+                 (bootstrap-build '(".")))
+               (replace 'install
+                 (bootstrap-install '(".") "scripts")))))
+    (inputs (list %bootstrap-guile))
     (home-page "https://git.ngyro.com/bootar")
     (synopsis "Tar decompression and extraction in Guile Scheme")
     (description "Bootar is a simple Tar extractor written in Guile
@@ -201,123 +205,144 @@ pure Scheme to Tar and decompression in one easy step.")
     (inherit gash)
     (name "gash-boot")
     (arguments
-     `(#:implicit-inputs? #f
-       #:tests? #f
-       #:guile ,%bootstrap-guile
-       #:imported-modules ((guix build gnu-bootstrap)
-                           ,@%default-gnu-imported-modules)
-       #:phases
-       (begin
-         (use-modules (guix build gnu-bootstrap))
-         (modify-phases %standard-phases
-           (replace 'configure
-             (bootstrap-configure "Gash" ,(package-version gash)
-                                  '("gash") "scripts"))
-           (replace 'build (bootstrap-build '("gash")))
-           (replace 'install (bootstrap-install '("gash") "scripts"))
-           (add-after 'install 'install-symlinks
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let ((out (assoc-ref outputs "out")))
-                 (symlink (string-append out "/bin/gash")
-                          (string-append out "/bin/sh"))
-                 (symlink (string-append out "/bin/gash")
-                          (string-append out "/bin/bash")))))))))
-    (inputs `(("guile" ,%bootstrap-guile)))
-    (native-inputs `(("bootar" ,bootar)))))
+     (list #:implicit-inputs? #f
+           #:tests? #f
+           #:guile %bootstrap-guile
+           #:imported-modules `((guix build gnu-bootstrap)
+                                ,@%default-gnu-imported-modules)
+           #:modules `((guix build gnu-bootstrap)
+                       ,@%default-gnu-modules)
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'configure
+                 (bootstrap-configure "Gash"
+                                      #$(package-version gash)
+                                      '("gash") "scripts"))
+               (replace 'build
+                 (bootstrap-build '("gash")))
+               (replace 'install
+                 (bootstrap-install '("gash") "scripts"))
+               (add-after 'install 'install-symlinks
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   (let ((out (assoc-ref outputs "out")))
+                     (symlink "gash" (string-append out "/bin/sh"))
+                     (symlink "gash" (string-append out "/bin/bash"))))))))
+    (inputs (list %bootstrap-guile))
+    (native-inputs (list bootar))))
 
 (define gash-utils-boot
   (package
     (inherit gash-utils)
     (name "gash-utils-boot")
     (arguments
-     `(#:implicit-inputs? #f
-       #:tests? #f
-       #:guile ,%bootstrap-guile
-       #:imported-modules ((guix build gnu-bootstrap)
-                           ,@%default-gnu-imported-modules)
-       #:phases
-       (begin
-         (use-modules (guix build gnu-bootstrap))
-         (modify-phases %standard-phases
-           (add-after 'unpack 'set-load-path
-             (lambda* (#:key inputs #:allow-other-keys)
-               (let ((gash (assoc-ref inputs "gash")))
-                 (add-to-load-path (string-append gash "/share/guile/site/"
-                                                  (effective-version))))))
-           (add-before 'configure 'pre-configure
-             (lambda _
-               (format #t "Creating gash/commands/testb.scm~%")
-               (copy-file "gash/commands/test.scm"
-                          "gash/commands/testb.scm")
-               (substitute* "gash/commands/testb.scm"
-                 (("gash commands test") "gash commands testb")
-                 (("apply test [(]cdr") "apply test/bracket (cdr"))
-               (for-each (lambda (script)
-                           (let ((target (string-append "scripts/"
-                                                        script ".in")))
-                             (format #t "Creating scripts/~a~%" target)
-                             (copy-file "scripts/template.in" target)
-                             (substitute* target
-                               (("@UTILITY@") script))))
-                         '("awk" "basename" "cat" "chmod" "cmp" "command"
-                           "compress" "cp" "cut" "diff" "dirname" "env"
-                           "expr" "false" "find" "grep" "head" "ln" "ls"
-                           "mkdir" "mv" "printf" "pwd" "reboot" "rm" "rmdir"
-                           "sed" "sleep" "sort" "tar" "test" "touch" "tr"
-                           "true" "uname" "uniq" "wc" "which"))
-               (format #t "Creating scripts/[.in~%")
-               (copy-file "scripts/template.in" "scripts/[.in")
-               (substitute* "scripts/[.in"
-                 (("@UTILITY@") "testb"))
-               (delete-file "scripts/template.in")))
-           (replace 'configure
-             (bootstrap-configure "Gash-Utils" ,(package-version gash-utils)
-                                  '("gash" "gash-utils") "scripts"))
-           (replace 'build (bootstrap-build '("gash" "gash-utils")))
-           (replace 'install
-             (bootstrap-install '("gash" "gash-utils") "scripts"))
-           ;; XXX: The scripts should add Gash to their load paths and
-           ;; this phase should not exist.
-           (add-after 'install 'copy-gash
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (moddir (string-append out "/share/guile/site/"
-                                             (effective-version)))
-                      (godir (string-append out "/lib/guile/"
-                                            (effective-version)
-                                            "/site-ccache"))
-                      (gash (assoc-ref inputs "gash"))
-                      (gash-moddir (string-append gash "/share/guile/site/"
-                                                  (effective-version)))
-                      (gash-godir (string-append gash "/lib/guile/"
-                                                 (effective-version)
-                                                 "/site-ccache")))
-                 (copy-file (string-append gash-moddir "/gash/compat.scm")
-                            (string-append moddir "/gash/compat.scm"))
-                 (copy-recursively (string-append gash-moddir "/gash/compat")
-                                   (string-append moddir "/gash/compat"))
-                 (copy-file (string-append gash-godir "/gash/compat.go")
-                            (string-append godir "/gash/compat.go"))
-                 (copy-recursively (string-append gash-godir "/gash/compat")
-                                   (string-append godir "/gash/compat")))))
-           ;; We need an external echo.
-           (add-after 'install 'make-echo
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (gash (assoc-ref inputs "gash")))
-                 (with-output-to-file (string-append out "/bin/echo")
-                   (lambda ()
-                     (display (string-append "#!" gash "/bin/gash\n"))
-                     (newline)
-                     (display "echo \"$@\"")
-                     (newline)))
-                 (chmod (string-append out "/bin/echo") #o755))))))))
+     (list #:implicit-inputs? #f
+           #:tests? #f
+           #:guile %bootstrap-guile
+           #:imported-modules `((guix build gnu-bootstrap)
+                                ,@%default-gnu-imported-modules)
+           #:modules `((guix build gnu-bootstrap)
+                       ,@%default-gnu-modules)
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'set-load-path
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (let ((gash (assoc-ref inputs "gash")))
+                     (add-to-load-path (string-append gash
+                                                      "/share/guile/site/"
+                                                      (effective-version))))))
+               (add-before 'configure 'pre-configure
+                 (lambda _
+                   (format #t "Creating gash/commands/testb.scm~%")
+                   (copy-file "gash/commands/test.scm"
+                              "gash/commands/testb.scm")
+                   (substitute* "gash/commands/testb.scm"
+                     (("gash commands test")
+                      "gash commands testb")
+                     (("apply test [(]cdr")
+                      "apply test/bracket (cdr"))
+                   (for-each (lambda (script)
+                               (let ((target (string-append
+                                              "scripts/" script ".in")))
+                                 (format #t "Creating scripts/~a~%"
+                                         target)
+                                 (copy-file "scripts/template.in"
+                                            target)
+                                 (substitute* target
+                                   (("@UTILITY@") script))))
+                             '("awk" "basename" "cat" "chmod" "cmp" "command"
+                               "compress" "cp" "cut" "diff" "dirname" "env"
+                               "expr" "false" "find" "grep" "head" "ln" "ls"
+                               "mkdir" "mv" "printf" "pwd" "reboot" "rm" "rmdir"
+                               "sed" "sleep" "sort" "tar" "test" "touch" "tr"
+                               "true" "uname" "uniq" "wc" "which"))
+                   (format #t "Creating scripts/[.in~%")
+                   (copy-file "scripts/template.in" "scripts/[.in")
+                   (substitute* "scripts/[.in"
+                     (("@UTILITY@")
+                      "testb"))
+                   (delete-file "scripts/template.in")))
+               (replace 'configure
+                 (bootstrap-configure "Gash-Utils"
+                                      #$(package-version gash-utils)
+                                      '("gash" "gash-utils")
+                                      "scripts"))
+               (replace 'build
+                 (bootstrap-build '("gash" "gash-utils")))
+               (replace 'install
+                 (bootstrap-install '("gash" "gash-utils") "scripts"))
+               ;; XXX: The scripts should add Gash to their load paths and
+               ;; this phase should not exist.
+               (add-after 'install 'copy-gash
+                 (lambda* (#:key inputs outputs #:allow-other-keys)
+                   (let* ((out (assoc-ref outputs "out"))
+                          (moddir (string-append out
+                                                 "/share/guile/site/"
+                                                 (effective-version)))
+                          (godir (string-append out "/lib/guile/"
+                                                (effective-version)
+                                                "/site-ccache"))
+                          (gash (assoc-ref inputs "gash"))
+                          (gash-moddir (string-append gash
+                                                      "/share/guile/site/"
+                                                      (effective-version)))
+                          (gash-godir (string-append gash
+                                                     "/lib/guile/"
+                                                     (effective-version)
+                                                     "/site-ccache")))
+                     (copy-file (string-append gash-moddir
+                                               "/gash/compat.scm")
+                                (string-append moddir
+                                               "/gash/compat.scm"))
+                     (copy-recursively (string-append gash-moddir
+                                                      "/gash/compat")
+                                       (string-append moddir
+                                                      "/gash/compat"))
+                     (copy-file (string-append gash-godir
+                                               "/gash/compat.go")
+                                (string-append godir
+                                               "/gash/compat.go"))
+                     (copy-recursively (string-append gash-godir
+                                                      "/gash/compat")
+                                       (string-append godir
+                                                      "/gash/compat")))))
+               ;; We need an external echo.
+               (add-after 'install 'make-echo
+                 (lambda* (#:key inputs outputs #:allow-other-keys)
+                   (let* ((out (assoc-ref outputs "out"))
+                          (gash (search-input-file inputs "/bin/gash")))
+                     (with-output-to-file (string-append out "/bin/echo")
+                       (lambda ()
+                         (display (string-append "#!" gash "\n"))
+                         (newline)
+                         (display "echo \"$@\"")
+                         (newline)))
+                     (chmod (string-append out "/bin/echo") #o755)))))))
     (inputs `(("gash" ,gash-boot)
               ("guile" ,%bootstrap-guile)))
     (native-inputs `(("bootar" ,bootar)))))
 
 (define (%boot-gash-inputs)
-  `(("bash" , gash-boot)                ; gnu-build-system wants "bash"
+  `(("bash" , gash-boot)               ;gnu-build-system used to expect "bash"
     ("coreutils" , gash-utils-boot)
     ("bootar" ,bootar)
     ("guile" ,%bootstrap-guile)))
@@ -1852,7 +1877,36 @@ exec " gcc "/bin/" program
 ;; In the future, Gash et al. could handle it directly, but it's not
 ;; ready yet.
 (define bash-mesboot (mesboot-package "bash-mesboot" static-bash))
-(define sed-mesboot (mesboot-package "sed-mesboot" sed))
+
+;; "sed" from Gash-Utils lacks the 'w' command as of 0.2.0.
+(define sed-mesboot
+  (mesboot-package
+   "sed-mesboot"
+   (package
+     (inherit sed)
+     (version "4.8")
+     (source
+      (origin
+        (method url-fetch)
+        (uri (string-append "mirror://gnu/sed/sed-" version
+                            ".tar.gz"))
+        (sha256
+         (base32
+          "0alqagh0nliymz23kfjg6g9w3cr086k0sfni56gi8fhzqwa3xksk"))
+        (patches (search-patches "coreutils-gnulib-tests.patch"))
+
+        ;; Remove this snippet once upstream releases a fixed version.
+        ;; This snippet changes Makefile.in, even though the upstream
+        ;; patch changes testsuite/local.mk, since we build sed from a
+        ;; release tarball.  See: https://bugs.gnu.org/36150
+        (snippet
+         '(begin
+            (substitute* "Makefile.in"
+              (("^  abs_srcdir='\\$\\(abs_srcdir\\)'.*" previous-line)
+               (string-append
+                previous-line
+                "  CONFIG_HEADER='$(CONFIG_HEADER)'\t\t\\\n")))))
+        (modules '((guix build utils))))))))
 
 ;; "sed" from Gash-Utils lacks the 'w' command as of 0.2.0.
 (define coreutils-mesboot
@@ -1885,7 +1939,10 @@ exec " gcc "/bin/" program
        (ensure-keyword-arguments (package-arguments pkg)
                                  ;; XXX: This fails even though the
                                  ;; actual runpaths seem fine.
-                                 `(#:validate-runpath? #f))))))
+                                 `(#:validate-runpath? #f
+                                 ;; XXX: The build gets stuck
+                                 ;; when parallel build is enabled.
+                                   #:parallel-build? #f))))))
 
 ;; We don't strictly need Tar here, but it allows us to get rid of
 ;; Bootar and Gash-Utils and continue with the standard GNU tools.
@@ -1895,7 +1952,11 @@ exec " gcc "/bin/" program
       (inherit pkg)
       (native-inputs
        `(("xz" ,xz-mesboot)
-         ,@(package-native-inputs pkg))))))
+         ("sed" ,sed-mesboot)
+         ,@(package-native-inputs pkg)))
+      (arguments (substitute-keyword-arguments (package-arguments pkg)
+                   ((#:configure-flags flags ''())
+                    `(cons "--disable-year2038" ,flags)))))))
 
 (define (%boot-mesboot6-inputs)
   `(("bash" ,bash-mesboot)
@@ -2013,15 +2074,7 @@ exec " gcc "/bin/" program
      `(#:tests? #f                            ; the test suite needs diffutils
        #:guile ,%bootstrap-guile
        #:implicit-inputs? #f
-       ,@(substitute-keyword-arguments (package-arguments diffutils)
-           ((#:configure-flags flags ''())
-            (match (%current-system)
-              ((or "arm-linux" "aarch64-linux")
-               ;; The generated config.status has some problems due to the
-               ;; bootstrap environment.  Disable dependency tracking to work
-               ;; around it.
-               `(cons "--disable-dependency-tracking" ,flags))
-              (_ flags))))))))
+       ,@(package-arguments diffutils)))))
 
 (define findutils-boot0
   (package
@@ -2044,10 +2097,8 @@ exec " gcc "/bin/" program
               ,(if (target-64bit?)
                    ''("TIME_T_32_BIT_OK=yes")
                    ''())
-              ,(match (%current-system)
-                 ((or "arm-linux" "aarch64-linux")
-                  ''("--disable-dependency-tracking"))
-                 (_ ''()))
+              '("--disable-year2038")
+              '()       ; XXX: List only added to prevent rebuilds!
               ,flags))
            ((#:phases phases '%standard-phases)
             `(modify-phases ,phases
@@ -2080,11 +2131,8 @@ exec " gcc "/bin/" program
     (inherit (@ (gnu packages file) file))
     (arguments
      `(#:configure-flags
-       `("--disable-bzlib"
-         ,,@(match (%current-system)
-              ((or "arm-linux" "aarch64-linux")
-               '("--disable-dependency-tracking"))
-              (_ '())))))))
+       ;; XXX: List only added to prevent rebuilds!
+       `("--disable-bzlib" ,,@'())))))
 
 (define file-boot0
   (package
@@ -2164,6 +2212,7 @@ exec " gcc "/bin/" program
      `(#:implicit-inputs? #f
        #:tests? #f
        #:guile ,%bootstrap-guile
+       #:configure-flags (list "--disable-year2038")
        ,@(package-arguments tar)))))
 
 (define (%boot0-inputs)
@@ -2399,13 +2448,7 @@ exec " gcc "/bin/" program
                                    ,(glibc-dynamic-linker
                                      (match (%current-system)
                                        ("x86_64-linux" "i686-linux")
-                                       (_ (%current-system))))))
-                  (if (target-hurd64?)
-                      ;;Convince gmp's configure that gcc works
-                      (list (string-append
-                             "CC_FOR_BUILD=gcc"
-                             " -Wno-implicit-function-declaration"))
-                      '())))))
+                                       (_ (%current-system))))))))))
         ((#:phases phases)
          #~(modify-phases #$phases
              (add-after 'unpack 'unpack-gmp&co
@@ -2429,6 +2472,15 @@ exec " gcc "/bin/" program
                                            char-set:letter)
                                         #$(package-name lib)))
                            (list gmp-6.0 mpfr mpc)))))
+             #$@(if (and (target-linux?) (target-x86?))
+                    #~((add-after 'unpack 'patch-system.h
+                         (lambda _
+                           ;; Avoid: missing binary operator before token "("
+                           (substitute* "gcc/system.h"
+                             (("#ifndef SIZE_MAX" all)
+                              (string-append "#define SIZE_MAX (ULONG_MAX)\n"
+                                             all))))))
+                    #~())
              #$@(if (target-hurd64?)
                     #~((add-after 'unpack 'patch-libcc1-static
                          (lambda _
@@ -2476,7 +2528,10 @@ exec " gcc "/bin/" program
 
               ;; The libstdc++ that libcc1 links against.
               ("libstdc++" ,(match (%current-system)
+                                   ("aarch64-linux" (make-libstdc++-boot0 gcc-5))
+                                   ("powerpc64le-linux" (make-libstdc++-boot0 gcc-5))
                                    ("riscv64-linux" (make-libstdc++-boot0 gcc-7))
+                                   ("i586-gnu" (make-libstdc++-boot0 gcc-5))
                                    ("x86_64-gnu" (make-libstdc++-boot0 gcc-14))
                                    (_ libstdc++-boot0)))
 
@@ -2573,7 +2628,8 @@ exec " gcc "/bin/" program
            (_
             '(#:configure-flags '("gl_cv_func_posix_spawn_works=no"))))
 
-       ,@(package-arguments bison)))))
+       ,@(strip-keyword-arguments '(#:configure-flags)
+				  (package-arguments bison))))))
 
 (define flex-boot0
   ;; This Flex is needed to build MiG as well as Linux-Libre headers.
@@ -2625,7 +2681,7 @@ memoized as a function of '%current-system'."
                    (substitute* "scripts/min-tool-version.sh"
                      (("echo 5\\.1\\.0")  ;GCC
                       "echo 4.8.4")
-                     (("echo 2\\.23\\.0") ;binutils
+                     (("echo 2\\.25\\.0") ;binutils
                       "echo 2.20.1")))))))))
     (native-inputs
      `(("perl" ,perl-boot0)
@@ -2666,7 +2722,7 @@ memoized as a function of '%current-system'."
    (package
      (inherit gnumach-headers)
      (name "gnumach-headers-boot0")
-     (version "1.8+git20240714")
+     (version "1.8+git20250304")
      (source
       (origin
         (inherit (package-source gnumach-headers))
@@ -2680,7 +2736,7 @@ memoized as a function of '%current-system'."
                   "gnumach-" version ".tar.gz"))
             (sha256
              (base32
-              "1bnw5vdbq91zjxklx23qvim40fb0yw1qdxhn9n37jdfypm6q3xir")))))))
+              "1mmjlcbzk1fs64q6vz2p2irp7vgbmyvm5inj3bf522gx50b3v67q")))))))
      (native-inputs (list autoconf-boot0 automake-boot0 texinfo-boot0))
      (arguments
       (substitute-keyword-arguments (package-arguments gnumach-headers)
@@ -2730,7 +2786,7 @@ memoized as a function of '%current-system'."
    (package
      (inherit hurd-headers)
      (name "hurd-headers-boot0")
-     (version "0.9.git20240714")
+     (version "0.9.git20250420")
      (source
       (origin
         (inherit (package-source hurd-headers))
@@ -2743,7 +2799,7 @@ memoized as a function of '%current-system'."
                   "hurd-v" version ".tar.gz"))
             (sha256
              (base32
-              "0wcihffclwijjamx4cjbr8i92yg780538ipg2z208ahg96jjrmgq")))))))
+              "14ldrijzgqkvnii873vjlsmrjr3kvs1aksyc5b4ha8anlnnvdkg1")))))))
      (native-inputs
       (list autoconf-boot0 automake-boot0 mig-boot0))
      (inputs '()))))
@@ -3264,22 +3320,14 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
                                        "/lib -L" zlib "/lib -Wl,-rpath="
                                        zlib "/lib")
                         flag))
-                  #$(if (target-hurd64?)
-                        `(cons
-                          (string-append
-                           ;;Convince gmp's configure that gcc works
-                           "STAGE_CC_WRAPPER=" (getcwd) "/build/gcc.sh")
-                          ,flags)
-                        flags))))
+                  #$flags)))
         ((#:configure-flags flags)
-         (if (target-hurd64?)
+         ;; XXX FIXME: Does this need to stay separate?
+         (if (or (target-hurd64?)
+                 (and (target-x86?) (target-linux?)))
              #~(append
                 #$flags
-                (list #$(string-append
-                         ;;Convince gmp's configure that gcc works
-                         "CC=gcc"
-                         " -Wno-implicit-function-declaration")
-                      "--disable-plugin"))
+                (list "--disable-plugin"))
              flags))
         ;; Build again GMP & co. within GCC's build process, because it's hard
         ;; to do outside (because GCC-BOOT0 is a cross-compiler, and thus
@@ -3325,19 +3373,7 @@ exec ~a/bin/~a-~a -B~a/lib -Wl,-dynamic-linker -Wl,~a/~a \"$@\"~%"
                                                (getenv "CPLUS_INCLUDE_PATH")
                                                #\:))
                                       ":")
-                                     "\nAM_CXXFLAGS = "))))))
-             #$@(if (target-hurd64?)
-                    #~((add-after 'configure 'create-stage-wrapper
-                         (lambda _
-                           (with-output-to-file "gcc.sh"
-                             (lambda _
-                               (format #t "#! ~a/bin/bash
-exec \"$@\" \
-    -Wno-error \
-    -Wno-implicit-function-declaration"
-                                       #$static-bash-for-glibc)))
-                           (chmod "gcc.sh" #o555))))
-                    #~()))))))
+                                     "\nAM_CXXFLAGS = ")))))))))))
 
     ;; This time we want Texinfo, so we get the manual.  Add
     ;; STATIC-BASH-FOR-GLIBC so that it's used in the final shebangs of
@@ -3690,7 +3726,7 @@ is the GNU Compiler Collection.")
   (make-gcc-toolchain gcc-10))
 
 (define-public gcc-toolchain-11
-    (make-gcc-toolchain gcc-11))
+  (make-gcc-toolchain gcc-11))
 
 (define-public gcc-toolchain-12
   (make-gcc-toolchain gcc-12))
@@ -3706,9 +3742,7 @@ is the GNU Compiler Collection.")
 
 ;; The default GCC
 (define-public gcc-toolchain
-  (if (host-hurd64?)
-      gcc-toolchain-14
-      gcc-toolchain-11))
+  gcc-toolchain-14)
 
 (define-public gcc-toolchain-aka-gcc
   ;; It's natural for users to try "guix install gcc".  This package

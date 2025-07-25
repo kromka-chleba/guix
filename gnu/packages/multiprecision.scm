@@ -9,7 +9,7 @@
 ;;; Copyright © 2018, 2019, 2021, 2023, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2021 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2022, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
-;;; Copyright © 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2023, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2023 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -106,13 +106,13 @@ It is aimed at use in, for example, cryptography and computational algebra.")
 (define-public mpfr
   (package
    (name "mpfr")
-   (version "4.2.1")
+   (version "4.2.2")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/mpfr/mpfr-" version
                                 ".tar.xz"))
             (sha256 (base32
-                     "1cnb3y7y351qg6r7ynwsgaykm7l2a8zg2nlljs4rf9k778shfy17"))))
+                     "00ffqs0sssb81bx007d0k2wc7hsyxy4yiqil6xbais7p7qwa0yxn"))))
    (arguments
     (list
      #:phases (if (system-hurd?)
@@ -178,7 +178,10 @@ precision and correctly rounds the results.")
                   "141pa2ym1azka25bwkx2w1mf6wdcn155ncc45dr5bj5dycw2hj0m"))))
       (build-system gnu-build-system)
       (arguments
-       (list #:configure-flags #~(list "--enable-static=no")
+       (list #:configure-flags
+             #~(list
+                "CFLAGS=-g -O -Wno-error=incompatible-pointer-types"
+                "--enable-static=no")
              #:phases #~(modify-phases %standard-phases
                           (add-after 'unpack 'chdir
                             (lambda _

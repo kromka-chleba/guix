@@ -46,6 +46,7 @@
 ;;; Copyright © 2024, 2025 Igor Goryachev <igor@goryachev.org>
 ;;; Copyright © 2024 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
+;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -261,15 +262,15 @@ XMPP-based sessions.")
 (define-public libgnt
   (package
     (name "libgnt")
-    (version "2.14.3")
+    (version "2.14.4")
     (source
      (origin
        (method url-fetch)
        (uri
         (string-append "mirror://sourceforge/pidgin/libgnt/"
-                       version "/libgnt-" version ".tar.xz"))
+                       version "/libgnt-" version "-dev" ".tar.xz"))
        (sha256
-        (base32 "08v14fjcx2wx6c573wllq015l6zc8qkpz8rrl6qhp7crf9zlbxap"))))
+        (base32 "1v4n9hb7x8d2mb626k4w3rg72amdq1fbm0dqj5bmglrilylk6n8r"))))
     (build-system meson-build-system)
     (outputs '("out" "doc"))
     (arguments
@@ -981,7 +982,7 @@ authentication.")
 (define-public pidgin
   (package
     (name "pidgin")
-    (version "2.14.13")
+    (version "2.14.14")
     (source
      (origin
        (method url-fetch)
@@ -989,7 +990,7 @@ authentication.")
         (string-append "mirror://sourceforge/pidgin/Pidgin/"
                        version "/pidgin-" version ".tar.bz2"))
        (sha256
-        (base32 "1a3by4niw5ls67mwgj20p2mr317zj4hzysi5glm9mq0pivf4j00j"))
+        (base32 "0mi3ir2vsir7k07cqlalhflw93gsxqni7kamibwn00pivsa9kz0g"))
        (patches
         (search-patches "pidgin-add-search-path.patch"))
        (modules '((guix build utils)))
@@ -1499,7 +1500,7 @@ default.")
                   qtquickcontrols2-5
                   qtsvg-5
                   qtmultimedia-5
-                  qtxmlpatterns
+                  qtxmlpatterns-5
                   qqc2-desktop-style
                   qxmpp
                   sonnet
@@ -1943,14 +1944,14 @@ with several different talk daemons at the same time.")
 (define-public gloox
   (package
     (name "gloox")
-    (version "1.0.24")
+    (version "1.0.28")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://camaya.net/download/gloox-"
                            version ".tar.bz2"))
        (sha256
-        (base32 "1jgrd07qr9jvbb5hcmhrqz4w4lvwc51m30jls1fgxf1f5az6455f"))))
+        (base32 "0v4nqmf22h57jxpihbpxlhdrrvz81nn9jszgl580pply4hnd26sr"))))
     (build-system gnu-build-system)
     (inputs
      (list libidn gnutls zlib))
@@ -2796,48 +2797,56 @@ support for high performance Telegram Bot creation.")
     (source
      (origin
        (method git-fetch)
-       (uri (git-reference (url "https://github.com/gkdr/lurch")
-                       (commit (string-append "v" version))))
+       (uri (git-reference
+              (url "https://github.com/gkdr/lurch")
+              (commit (string-append "v" version))))
        (modules '((guix build utils)))
        (snippet
-        `(begin
-           ;; Submodules
-           (delete-file-recursively "lib")))
+        #~(begin
+            ;; Submodules
+            (delete-file-recursively "lib")))
        (file-name
         (git-file-name name version))
        (sha256
         (base32 "1ipd9gwh04wbqv6c10yxi02lc2yjsr02hwjycgxhl4r9x8b33psd"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'configure
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let ((out (assoc-ref outputs "out")))
-                        (substitute* "Makefile"
-                          (("^PURPLE_PLUGIN_DIR = .*")
-                           (string-append "PURPLE_PLUGIN_DIR = " out
-                                          "/lib/purple-2\n")))
-                        (setenv "CC" "gcc")))))
-       #:parallel-tests? #f))
-    (native-inputs (list cmocka pkg-config))
-    (inputs (list axc
-                  glib
-                  libgcrypt
-                  libomemo
-                  libsignal-protocol-c
-                  libxml2
-                  minixml
-                  pidgin
-                  sqlite))
-    (synopsis "OMEMO Encryption for libpurple")
-    (description "Purple-lurch plugin adds end-to-end encryption support
-through the Double Ratchet (Axolotl) algorithm, to @code{libpurple}
-applications using @acronym{XMPP, Extensible Messaging and Presence Protocol},
-through its standard XEP-0384: @acronym{OMEMO, OMEMO Multi-End Message and
-Object Encryption} Encryption.  It provides confidentiality, (weak) forward
-secrecy, break-in recovery, authentication, integrity, deniability, and
-asynchronicity.")
+     (list
+      #:parallel-tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda _
+              (substitute* "Makefile"
+                (("^PURPLE_PLUGIN_DIR = .*")
+                 (string-append "PURPLE_PLUGIN_DIR = " #$output
+                                "/lib/purple-2\n")))
+              ;; Fix for gcc@14.
+              (setenv "CFLAGS" "-Wno-error=implicit-function-declaration")
+              (setenv "CC" #$(cc-for-target)))))))
+    (native-inputs
+     (list cmocka
+           pkg-config))
+    (inputs
+     (list axc
+           glib
+           libgcrypt
+           libomemo
+           libsignal-protocol-c
+           libxml2
+           minixml
+           pidgin
+           sqlite))
     (home-page "https://github.com/gkdr/lurch")
+    (synopsis "OMEMO Encryption for libpurple")
+    (description
+     "Purple-lurch plugin adds end-to-end encryption support through the
+Double Ratchet (Axolotl) algorithm, to @code{libpurple} applications using
+@acronym{XMPP, Extensible Messaging and Presence Protocol},through its
+standard XEP-0384: @acronym{OMEMO, OMEMO Multi-End Message and Object
+Encryption} Encryption.  It provides confidentiality, (weak) forward secrecy,
+break-in recovery, authentication, integrity, deniability, and
+asynchronicity.")
     (license license:gpl3+)))
 
 (define-public libphonenumber

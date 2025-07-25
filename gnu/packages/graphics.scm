@@ -40,6 +40,7 @@
 ;;; Copyright © 2024 Ivan Vilata-i-Balaguer <ivan@selidor.net>
 ;;; Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
 ;;; Copyright © 2025 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -204,7 +205,9 @@ framebuffer graphics, audio output and input event.")
         (base32 "0bs3yzb7hy3mgydrj8ycg7pllrd2b6j0gxj596inyr7ihssr3i0y"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
+     `(#:configure-flags
+       '("CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types")
+       #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'remove-buildtime
            ;; Remove embedded build time for reproducible builds
@@ -221,8 +224,7 @@ framebuffer graphics, audio output and input event.")
          (add-after 'unpack 'disable-configure-during-bootstrap
            (lambda _
              (substitute* "autogen.sh"
-               (("^.*\\$srcdir/configure.*") ""))
-             #t)))))
+               (("^.*\\$srcdir/configure.*") "")))))))
     (native-inputs
      `(("autoconf" ,autoconf)
        ("automake" ,automake)
@@ -1151,6 +1153,9 @@ exception-handling library.")
                #~((add-after 'unpack 'skip-faulty-test
                     (lambda _
                       (substitute* "tests/CMakeLists.txt"
+                        ;; This test fails at various comparions of ±π.
+                        (("angle-test") "")
+
                         ;; This test fails on i686 when comparing floating point
                         ;; values, probably due to excess precision.  However,
                         ;; '-fexcess-precision' is not implemented for C++ in
@@ -1556,7 +1561,19 @@ graphics.")
                                (("TEST\\( testB44ACompression, \"core_compression\" \\);")
                                 "")
                                (("TEST \\(testOptimizedInterleavePatterns, \"basic\"\\);")
-                                "")))))))))
+                                ""))))))
+               #$@(if (target-aarch64?)
+                      #~((add-after 'patch-test-directory 'disable-broken-aarch64-tests
+                           ;; Disable tests known to fail on aarch64. Remove once
+                           ;; https://github.com/AcademySoftwareFoundation/openexr/issues/1460
+                           ;; is fixed.
+                           (lambda _
+                             (substitute* '("src/test/OpenEXRCoreTest/main.cpp")
+                               (("TEST \\(testDWAACompression, \"core_compression\"\\);")
+                                "")
+                               (("TEST \\(testDWABCompression, \"core_compression\"\\);")
+                                "")))))
+                      #~()))))
     (inputs (list imath))
     (propagated-inputs
      (list libdeflate ; Marked as Requires.private in OpenEXR.pc.
@@ -1576,6 +1593,8 @@ with strong support for multi-part, multi-channel use cases.")
     (version (package-version ilmbase))
     (source (origin
               (inherit (package-source ilmbase))
+              (patches (append (origin-patches (package-source ilmbase))
+                               (search-patches "openexr-2-gcc-14.patch")))
               (file-name (git-file-name "openexr" version))))
     (build-system cmake-build-system)
     (arguments
@@ -2048,6 +2067,7 @@ understanding different BRDFs (and other component functions).")
                             "/include")
              (string-append "--x-libraries=" (assoc-ref %build-inputs "libx11")
                             "/lib")
+             "CXXFLAGS=-fpermissive"    ;from ‘unsigned char*’ to ‘char*’
              "--disable-examples")
        #:phases
        (modify-phases %standard-phases

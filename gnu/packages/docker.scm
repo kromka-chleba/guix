@@ -203,7 +203,8 @@ Python without keeping their credentials in a Docker configuration file.")
        (sha256
         (base32 "1m31y00sq2m76m1jiq4znws8gxbgkh5adklvqibxiz1b96vvwjk8"))
        (patches
-        (search-patches "containerd-create-pid-file.patch"))))
+        (search-patches "containerd-create-pid-file.patch"
+                        "containerd-fix-includes.patch"))))
     (build-system go-build-system)
     (arguments
      (let ((make-flags #~(list (string-append "VERSION=" #$version)
@@ -610,7 +611,7 @@ runcexecutor/executor.go"
            xz))
     (native-inputs
      (list eudev ; TODO: Should be propagated by lvm2 (.pc -> .pc)
-           go-1.20 gotestsum pkg-config))
+           go-1.21 gotestsum pkg-config))
     (synopsis "Container component library and daemon")
     (description "This package provides a framework to assemble specialized
 container systems.  It includes components for orchestration, image

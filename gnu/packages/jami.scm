@@ -2,7 +2,7 @@
 ;;; Copyright © 2019 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2019, 2020 Jan Wielkiewicz <tona_kosmicznego_smiecia@interia.pl>
-;;; Copyright © 2020, 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -79,8 +79,8 @@
 ;;; When updating Jami, make sure that the patches used for ffmpeg-jami are up
 ;;; to date with those listed in
 ;;; <https://review.jami.net/plugins/gitiles/jami-daemon/+/refs/heads/master/contrib/src/ffmpeg/rules.mak>.
-(define %jami-nightly-version "20250610.0")
-(define %jami-daemon-commit "3280fa373a186c8cd4926849ef94d41bcf97c129")
+(define %jami-nightly-version "20250613.0")
+(define %jami-daemon-commit "41384122a8b61548aae90c9893d065aca216ce85")
 
 (define-public libjami
   (package
@@ -94,9 +94,10 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1sxrm0q4p9al6ar3svnni080cnclgf6yi9sy503n60srg47jvs87"))
+                "136hiippjfbyp4h3pf68kh3cyw6r2idjgq7vj1h9sdipc87a1a2r"))
               (patches (search-patches
-                        "libjami-ac-config-files.patch"))))
+                        "libjami-ac-config-files.patch"
+                        "libjami-sdbus-cpp-v2.patch"))))
     (outputs '("out" "bin" "debug"))    ;"bin' contains jamid
     (build-system gnu-build-system)
     (arguments
@@ -158,7 +159,7 @@
            openssl
            pjproject-jami
            pulseaudio
-           sdbus-c++-1.4.0
+           sdbus-c++
            speex
            speexdsp
            webrtc-audio-processing-0.3
@@ -185,9 +186,9 @@ service definitions.")
 ;;; Private package; this is used in source form: the project build system has
 ;;; no install target.
 (define sortfilterproxymodel
-  ;; Use the latest commit available from the 'qt-6' branch.
-  (let ((commit "6cc21205dbf36640613f0e6e67b2b13b1855c377")
-        (revision "0"))
+  ;; Use the latest commit available from the master branch.
+  (let ((commit "67670eee2c3c5bd758345afa9ba1177dbed32ed2")
+        (revision "1"))
     (package
       (name "sortfilterproxymodel")
       ;; There are no recent release tag; the module version defined in the
@@ -233,7 +234,7 @@ QSortFilterProxyModel conveniently exposed for QML.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "11hydcclfllvdsd08fdmsqxldgk957rr0xyjqgr9hdh7y0l95a9a"))
+                "1kb564njmxzyn6lpry58dj14hcwfjhz9kqyi419glbdp98kipd4m"))
               (patches (search-patches
                         "jami-disable-webengine.patch"
                         "jami-enable-testing.patch"
@@ -241,7 +242,8 @@ QSortFilterProxyModel conveniently exposed for QML.")
                         "jami-qwindowkit.patch"
                         "jami-skip-tests-requiring-internet.patch"
                         "jami-tests-qtwebengine-ifdef-to-if.patch"
-                        "jami-unbundle-dependencies.patch"))))
+                        "jami-unbundle-dependencies.patch"
+                        "jami-unittests-fix-build.patch"))))
     (build-system qt-build-system)
     (outputs '("out" "debug"))
     (arguments
@@ -250,6 +252,7 @@ QSortFilterProxyModel conveniently exposed for QML.")
       #:configure-flags
       #~(list "-DWITH_DAEMON_SUBMODULE=OFF"
               "-DBUILD_TESTING=ON"
+              (string-append "-DBUILD_VERSION=" #$version)
               ;; Disable the webengine since it grows the closure size by
               ;; about 450 MiB and requires more resources.
               "-DWITH_WEBENGINE=OFF"
@@ -260,15 +263,6 @@ QSortFilterProxyModel conveniently exposed for QML.")
               "-DFETCHCONTENT_TRY_FIND_PACKAGE_MODE=ALWAYS")
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'fix-version-string
-            (lambda _
-              (substitute* "src/app/version.h"
-                (("VERSION_STRING")
-                 "BUILD_DATE")          ;to avoid a redefinition error
-                (("// clang-format on.*" anchor)
-                 (string-append "const char VERSION_STRING[] = \""
-                                #$version "\";\n"
-                                anchor)))))
           (add-after 'unpack 'copy-3rdparty-source-dependencies
             (lambda _
               (copy-recursively #$(package-source sortfilterproxymodel)
@@ -304,10 +298,10 @@ QSortFilterProxyModel conveniently exposed for QML.")
                   ;; "ctest" "-R" "Qml_Tests" ctest-args)
                   )))))))
     (native-inputs
-     (list git
+     (list git-minimal
            googletest
            pkg-config
-           python
+           python-minimal
            qthttpserver
            qttools
            qtwebsockets
@@ -329,6 +323,7 @@ QSortFilterProxyModel conveniently exposed for QML.")
            qtnetworkauth
            qtpositioning
            qtsvg
+           qtwayland
            qwindowkit
            tidy-html                    ;used by src/app/htmlparser.h
            vulkan-loader
@@ -344,8 +339,8 @@ P2P-DHT.")
 
 (define-public jami-docs
   ;; There aren't any tags, so use the latest commit.
-  (let ((revision "2")
-        (commit "a48997de84cc4933bd111fa93fbf6a58189b166d"))
+  (let ((revision "3")
+        (commit "4764cc83ccac2a64d7d9051ad915bbf762c6a624"))
     (package
       (name "jami-docs")
       (version (git-version "0.0.0" revision commit))
@@ -357,7 +352,7 @@ P2P-DHT.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0a1kcflvk39aag2vk83cn4m0ifkgb3gvwkr8pbbvf0hcd2cj2j31"))))
+                  "1aj63ba6v0vnvn3si97xf1zk5b4y2hpk7g6mx75jbb2q9qybzn0i"))))
       (build-system copy-build-system)
       (arguments
        (list
@@ -365,18 +360,18 @@ P2P-DHT.")
         #~(modify-phases %standard-phases
             (add-after 'unpack 'build
               (lambda _
-                (invoke "make" "info" "html" "man" "LANGS="
+                (invoke "make" "info" "man" "LANGS="
                         "-j" (number->string
                               (parallel-job-count))))))
         #:install-plan
         ;; TODO: Install localized info manuals and HTML.
         ''(("_build/out/texinfo/jami.info" "share/info/")
-           ("_build/out/html" "share/doc/jami/")
            ("_build/out/man/jami.1" "share/man/man1/"))))
       (native-inputs
-       (list python
+       (list python-minimal
              python-myst-parser
              python-sphinx
+             python-sphinxcontrib-mermaid
              python-sphinx-rtd-theme
              texinfo))
       (home-page "https://git.jami.net/")

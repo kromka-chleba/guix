@@ -621,10 +621,10 @@ ecosystem."
         #:scope (list "gnu/packages/emulators.scm"
                       "gnu/packages/games.scm"
                       "gnu/packages/game-development.scm"
-                      "gnu/packages/minetest.scm"
+                      "gnu/packages/luanti.scm"
                       "gnu/packages/esolangs.scm" ; granted, rather niche
                       "gnu/packages/motti.scm"
-                      "guix/build/minetest-build-system.scm")))
+                      "guix/build/luanti-build-system.scm")))
 
 (define-team gnome
   (team 'gnome
@@ -907,11 +907,17 @@ importer."
         #:name "Science team"
         #:description "The main science disciplines and fields related
 packages (e.g. Astronomy, Chemistry, Math, Physics etc.)"
-        #:scope (list "gnu/packages/algebra.scm"
+        #:scope (list (make-regexp* "^gnu/packages/fortran(-.+|)\\.scm$")
+                      "gnu/packages/algebra.scm"
                       "gnu/packages/astronomy.scm"
-                      "gnu/packages/geo.scm"
                       "gnu/packages/chemistry.scm"
-                      "gnu/packages/maths.scm")))
+                      "gnu/packages/geo.scm"
+                      "gnu/packages/graph.scm"
+                      "gnu/packages/lean.scm"
+                      "gnu/packages/maths.scm"
+                      "gnu/packages/medical.scm"
+                      "gnu/packages/sagemath.scm"
+                      "gnu/packages/statistics.scm")))
 
 (define-team sugar
   (team 'sugar
@@ -1168,7 +1174,7 @@ the \"texlive\" importer."
 (define-member (person "Sharlatan Hellseher"
                        "sharlatanus@gmail.com"
                        "Hellseher")
-  go lisp python science sysadmin)
+  go julia python science sysadmin)
 
 (define-member (person "Vivien Kraus"
                        "vivien@planete-kraus.eu")

@@ -28,6 +28,7 @@
 ;;; Copyright © 2024 Alexis Simon <alexis.simon@runbox.com>
 ;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
 ;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
+;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -20160,7 +20161,7 @@ bound.")
 (define-public python-pypairix
   (package
     (name "python-pypairix")
-    (version "0.3.7")
+    (version "0.3.8")
     ;; The tarball on pypi does not include the makefile to build the
     ;; programs.
     (source
@@ -20172,19 +20173,23 @@ bound.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1snr3lrmsld8sy77ng6ba6wcmd33xjccf1l2f3m6pi29xis9nd6p"))))
+         "1jlxj3xa67q1i58pmbi6imhvl6f5w9m5qxv0xd45ba86mp8mnmvz"))))
     (build-system python-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'build 'build-programs
-           (lambda _ (invoke "make")))
-         (add-after 'install 'install-programs
-           (lambda* (#:key outputs #:allow-other-keys)
-             (copy-recursively "bin" (string-append
-                                      (assoc-ref outputs "out")
-                                      "/bin"))
-             #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'relax-gcc-14-strictness
+            (lambda _
+              (setenv "CFLAGS"
+                      (string-append "-g -O2"
+                                     " -Wno-error=incompatible-pointer-types"
+                                     " -Wno-error=int-conversion"))))
+          (add-before 'build 'build-programs
+            (lambda _ (invoke "make")))
+          (add-after 'install 'install-programs
+            (lambda _
+              (copy-recursively "bin" (string-append #$output "/bin")))))))
     (inputs
      (list zlib))
     (home-page "https://github.com/4dn-dcic/pairix")
@@ -20197,41 +20202,37 @@ bgzipped text file that contains a pair of genomic coordinates per line.")
 (define-public python-pyrodigal
   (package
     (name "python-pyrodigal")
-    (version "3.3.0")
+    (version "3.6.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/althonos/pyrodigal")
-             (commit (string-append "v" version))
-             (recursive? #t)))
+              (url "https://github.com/althonos/pyrodigal")
+              (commit (string-append "v" version))
+              ;; XXX: vendor -> <https://github.com/hyattpd/Prodigal>
+              (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "10vxbm9i33wari0ifsr78xnfn7d0yqwzqpc5pchirjflf1mmnr6w"))))
+        (base32 "1gcvdrx0q730i0r3lndl7l7h0h8xvzsi09ymf14b498mj03yjdq9"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:modules '((ice-9 ftw)
-                  (srfi srfi-1)
-                  (srfi srfi-26)
-                  (guix build utils)
-                  (guix build pyproject-build-system))
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-pyproject
+            (lambda _
+              (substitute* "pyproject.toml"
+                ;; Extra keys present in "project": 'platform'
+                (("platform =.*") ""))))
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
-                (let ((cwd (getcwd))
-                      (libdir (find (cut string-prefix? "lib." <>)
-                                    (scandir "build"))))
-                  (with-directory-excursion (string-append cwd "/build/" libdir)
-                    (invoke "python3" "-m" "unittest" "pyrodigal.tests" "-vv")))))))))
-    (propagated-inputs (list python-archspec python-importlib-resources))
+                (invoke "python" "-m" "unittest" "pyrodigal.tests" "-vv")))))))
+    (propagated-inputs (list python-archspec))
     (native-inputs
-     (list python-cython-3
-           python-mock
-           python-unittest2
-           python-wheel))
+     (list cmake-minimal
+           python-cython-3
+           python-scikit-build-core))
     (home-page "https://github.com/althonos/pyrodigal")
     (synopsis "Cython bindings and Python interface for Prodigal")
     (description

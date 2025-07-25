@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012-2021, 2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2018 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2020 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2021, 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
@@ -28,6 +28,7 @@
   #:use-module (ice-9 regex)
   #:use-module (ice-9 format)
   #:use-module (ice-9 ftw)
+  #:use-module (ice-9 threads)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-19)
   #:use-module (srfi srfi-34)
@@ -317,8 +318,9 @@ makefiles."
          (libdir     (assoc-ref outputs "lib"))
          (includedir (assoc-ref outputs "include"))
          (docdir     (assoc-ref outputs "doc"))
-         (bash       (or (and=> (assoc-ref (or native-inputs inputs) "bash")
-                                (cut string-append <> "/bin/bash"))
+         (bash       (or (false-if-exception
+                          (search-input-file (or native-inputs inputs)
+                                             "/bin/bash"))
                          "/bin/sh"))
          (flags      `(,@(if target             ; cross building
                              '("CC_FOR_BUILD=gcc")
@@ -385,7 +387,9 @@ makefiles."
                 #:allow-other-keys)
   (apply invoke "make"
          `(,@(if parallel-build?
-                 `("-j" ,(number->string (parallel-job-count)))
+                 `("-j" ,(number->string (parallel-job-count))
+                   ,(string-append "--max-load="
+                                   (number->string (total-processor-count))))
                  '())
            ,@make-flags)))
 
@@ -424,7 +428,9 @@ makefiles."
                  (raise c)))
         (apply invoke "make" test-target
                `(,@(if parallel-tests?
-                       `("-j" ,(number->string (parallel-job-count)))
+                       `("-j" ,(number->string (parallel-job-count))
+                         ,(string-append "--max-load="
+                                         (number->string (total-processor-count))))
                        '())
                  ,@make-flags)))
       (format #t "test suite not run~%")))

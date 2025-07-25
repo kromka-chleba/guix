@@ -24,6 +24,7 @@
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024-2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Jonas Freimuth <jonas.freimuth@posteo.de>
+;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -247,7 +248,9 @@ This package also provides @command{xls2csv} to export Excel files to CSV.")
      (list
       #:disallowed-references `(,tzdata-for-tests)
       #:make-flags
-      #~(list (string-append "LDFLAGS=-Wl,-rpath=" #$output "/lib/R/lib")
+      #~(list (string-append "CFLAGS=-g -O2"
+                             " -Wno-error=implicit-function-declaration")
+              (string-append "LDFLAGS=-Wl,-rpath=" #$output "/lib/R/lib")
               ;; This affects the embedded timestamp of only the core packages.
               "PKG_BUILT_STAMP=1970-01-01")
       #:phases
@@ -3191,7 +3194,7 @@ files, including Rmarkdown files.")
         (base32 "0aqalr86d7h9sp9zjkydw3ap4s54qgq2ml6p8gd0gnn1jf0ljm72"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list autoconf automake gnu-gettext libtool))
+     (list autoconf automake gettext-minimal libtool))
     (inputs
      (list zlib))
     (home-page "https://github.com/WizardMac/ReadStat")

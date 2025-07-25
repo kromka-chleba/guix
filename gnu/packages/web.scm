@@ -40,7 +40,7 @@
 ;;; Copyright © 2019, 2020 Florian Pelz <pelzflorian@pelzflorian.de>
 ;;; Copyright © 2020 Timotej Lazar <timotej.lazar@araneo.si>
 ;;; Copyright © 2020 Pierre Neidhardt <mail@ambrevar.xyz>
-;;; Copyright © 2020, 2021, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2020, 2021, 2023, 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2018, 2019, 2020 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
 ;;; Copyright © 2020, 2021 Paul Garlick <pgarlick@tourbillion-technology.com>
 ;;; Copyright © 2020, 2022 Michael Rohleder <mike@rohleder.de>
@@ -375,7 +375,7 @@ and its related documentation.")
                  (lambda _
                    (substitute* "Makefile.am"
                      (("/bin/sh") (which "sh"))))))))
-    (native-inputs (list autoconf automake))
+    (native-inputs (list autoconf automake-1.16.5))
     (inputs (list pcre2))
     (home-page "https://sourceforge.net/projects/leafnode/")
     (synopsis "NNTP news proxy")
@@ -573,14 +573,14 @@ the same, being completely separated from the Internet.")
     ;; Track the ‘mainline’ branch.  Upstream considers it more reliable than
     ;; ’stable’ and recommends that “in general you deploy the NGINX mainline
     ;; branch at all times” (https://www.nginx.com/blog/nginx-1-6-1-7-released/)
-    (version "1.27.3")
+    (version "1.28.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://nginx.org/download/nginx-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "00vrkdx0a6fpy8n0n7m9xws0dfa7dbb9pqnh3jv3c824ixbaj8xs"))))
+                "0sppdxbmz61y3hfcfyc20gk0ky8f3m60hppzlcy9vpy0hsqcddf6"))))
     (build-system gnu-build-system)
     (inputs (list libxcrypt libxml2 libxslt openssl pcre zlib))
     (arguments
@@ -671,9 +671,9 @@ and as a proxy to reduce the load on back-end HTTP or mail servers.")
 
 (define-public nginx-documentation
   ;; This documentation should be relevant for the current nginx package.
-  (let ((version "1.27.3")
-        (revision 3156)
-        (changeset "5c6ef6def8bc"))
+  (let ((version "1.28.0")
+        (revision 3202)
+        (changeset "16887604240f"))
     (package
       (name "nginx-documentation")
       (version (simple-format #f "~A-~A-~A" version revision changeset))
@@ -685,7 +685,7 @@ and as a proxy to reduce the load on back-end HTTP or mail servers.")
                (file-name (string-append name "-" version))
                (sha256
                 (base32
-                 "09wdvgvsr7ayjz3ypq8qsm12idb9z626j5ibmknc8phm10gh8cgk"))))
+                 "0slfgl9ap6hxcjg2fc5lfccz0sbmlk83p74i31g05a27ldrqv03l"))))
       (build-system gnu-build-system)
       (arguments
        '(#:tests? #f                    ; no test suite
@@ -1377,7 +1377,7 @@ data.")
 (define-public json-c
   (package
     (name "json-c")
-    (version "0.15")
+    (version "0.18")
     (source (origin
              (method url-fetch)
              (uri (string-append
@@ -1385,7 +1385,7 @@ data.")
                    version ".tar.gz"))
              (sha256
               (base32
-               "1im484iz08j3gmzpw07v16brwq46pxxj65i996kkp2vivcfhmn5q"))))
+               "090pn7gyicvpqq01451zhkjw1fw3h4l6v2f6mxlvhrli8x3b0sl7"))))
     (build-system cmake-build-system)
     (home-page "https://github.com/json-c/json-c/wiki")
     (synopsis "JSON implementation in C")
@@ -1418,7 +1418,13 @@ It aims to conform to RFC 7159.")
                  (set-file-time "config.h.in"
                                 (stat "aclocal.m4"))
                  #t))))
-    (build-system gnu-build-system)))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list #$(string-append "CFLAGS=-g -O2"
+                               " -Wno-error=calloc-transposed-args"
+                               " -Wno-error=implicit-function-declaration"))))))
 
 (define-public json-c-0.12
   (package
@@ -1778,20 +1784,29 @@ C.")
 (define-public libwebsockets
   (package
     (name "libwebsockets")
-    (version "4.3.2")
-    (source (origin
-              ;; The project does not publish tarballs, so we have to take
-              ;; things from Git.
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/warmcat/libwebsockets")
-                    (commit (string-append "v" version))))
-              (sha256
-               (base32
-                "0rxgb05f6jignb0y367rs88cla2s1ndd9jfl4ms77q8w0wnbq762"))
-              (file-name (git-file-name name version))))
+    (version "4.4.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/warmcat/libwebsockets")
+             (commit (string-append "v" version))))
+       (sha256
+        (base32 "1qlrfa1vqr89yfrqpk99zkfl8k4cpdbvbdvikdbj6l5xz5z2gxsy"))
+       (file-name (git-file-name name version))))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-test-cert-generation
+            (lambda _
+              (substitute* "lib/tls/CMakeLists.txt"
+                (("-config /etc/ssl/openssl.cnf ")
+                 "")))))
+      #:configure-flags
+      #~'("-DLWS_CTEST_INTERNET_AVAILABLE=0")))
     (build-system cmake-build-system)
-    (native-inputs (list perl))             ; to build the HTML doc
+    (native-inputs (list perl)) ;to build the HTML doc
     (inputs (list zlib openssl))
     (synopsis "WebSockets library written in C")
     (description
@@ -1806,11 +1821,14 @@ for efficient socket-like bidirectional reliable communication channels.")
    (package
      (inherit libwebsockets)
      (arguments
-      (list
-       ;; Mosquitto requires some tweaks for libwebsockets, see:
-       ;; https://github.com/NixOS/nixpkgs/blob/1750f3c1c89488e2ffdd47cab9d05454dddfb734/pkgs/by-name/mo/mosquitto/package.nix#L20
-       #:configure-flags '(list "-DLWS_WITH_EXTERNAL_POLL=ON"
-                                "-DLWS_WITH_HTTP2=OFF"))))))
+      (substitute-keyword-arguments
+          (package-arguments libwebsockets)
+        ((#:configure-flags flags)
+         ;; Mosquitto requires some tweaks for libwebsockets, see:
+         ;; https://github.com/NixOS/nixpkgs/blob/1750f3c1c89488e2ffdd47cab9d05454dddfb734/pkgs/by-name/mo/mosquitto/package.nix#L20
+         #~(cons* "-DLWS_WITH_EXTERNAL_POLL=ON"
+                  "-DLWS_WITH_HTTP2=OFF"
+                  #$flags)))))))
 
 (define-public wabt
   (package
@@ -2032,7 +2050,7 @@ perform the opening handshake in HTTP.")
 (define-public libpsl
   (package
     (name "libpsl")
-    (version "0.21.1")
+    (version "0.21.5")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/rockdaboot/libpsl/"
@@ -2040,13 +2058,12 @@ perform the opening handshake in HTTP.")
                                   "/libpsl-" version ".tar.gz"))
               (sha256
                (base32
-                "0k0d46bbh1jj2ll369f134vciplrzbqkg7fv9m62bl6lzghy2v5c"))))
+                "0272v94h89pg4zr9h47qdzy1m28y1v6xwm7nng0g6a5ix3m9rk0x"))))
     (build-system gnu-build-system)
     (native-inputs
-     `(("pkg-config" ,pkg-config)
-
-       ;; For tests.
-       ("python" ,python-wrapper)))
+     (list pkg-config
+           ;; For tests.
+           python-minimal))
     (inputs
      (list libidn2 libunistring))
     (home-page "https://github.com/rockdaboot/libpsl")
@@ -2481,15 +2498,14 @@ from streaming URLs.  It is a command-line wrapper for the libquvi library.")
 (define-public serf
   (package
     (name "serf")
-    (version "1.3.9")
+    (version "1.3.10")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://apache/serf/serf-"
                            version ".tar.bz2"))
-       (patches (search-patches "serf-python3.patch"))
        (sha256
-        (base32 "1k47gbgpp52049andr28y28nbwh9m36bbb0g8p0aka3pqlhjv72l"))))
+        (base32 "1rk4q0fv9xs57fivjy5mxqkk5g7pvvvssxvalz6nwld2p84fz0dy"))))
     (build-system scons-build-system)
     (propagated-inputs
      (list apr apr-util openssl-1.1))
@@ -2498,7 +2514,8 @@ from streaming URLs.  It is a command-line wrapper for the libquvi library.")
            ;;("gss" ,gss)
            zlib))
     (arguments
-     `(#:scons-flags (list (string-append "APR=" (assoc-ref %build-inputs "apr"))
+     `(#:scons-flags (list "CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types"
+                           (string-append "APR=" (assoc-ref %build-inputs "apr"))
                            (string-append "APU=" (assoc-ref %build-inputs "apr-util"))
                            (string-append "OPENSSL=" (assoc-ref %build-inputs "openssl"))
                            ;; (string-append "GSSAPI=" (assoc-ref %build-inputs "gss"))
@@ -4414,14 +4431,14 @@ and IPv6 sockets, intended as a replacement for IO::Socket::INET.")
 (define-public perl-io-socket-ssl
   (package
     (name "perl-io-socket-ssl")
-    (version "2.081")
+    (version "2.089")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://cpan/authors/id/S/SU/SULLR/"
                                   "IO-Socket-SSL-" version ".tar.gz"))
               (sha256
                (base32
-                "0hw4c62abq0cs3ixi0ws96i2y0fij3452514dlqn7d6nm0kgig87"))))
+                "1l8l78p9sq2mj0xb4bpjn8rph0fdxi9xa6pm968px5j22qn130zn"))))
     (build-system perl-build-system)
     (propagated-inputs
      (list perl-net-ssleay
@@ -5551,14 +5568,13 @@ a pure C99 library.")
 (define-public uwsgi
   (package
     (name "uwsgi")
-    (version "2.0.18")
+    (version "2.0.28")
     (source (origin
               (method url-fetch)
-              (uri (string-append "https://projects.unbit.it/downloads/uwsgi-"
-                                  version ".tar.gz"))
+              (uri (pypi-uri name version))
               (sha256
                (base32
-                "10zmk4npknigmbqcq1wmhd461dk93159px172112vyq0i19sqwj9"))))
+                "1l4r3smmgrdvqj82zwq33pax4jxr1s6fww84mc44bw9dxy8iijkr"))))
     (build-system gnu-build-system)
     (outputs '("out" "python"))
     (arguments
@@ -5963,7 +5979,8 @@ libraries.")
 
 (define netsurf-buildsystem-arguments
   `(#:make-flags `("COMPONENT_TYPE=lib-shared"
-                   "CC=gcc" "BUILD_CC=gcc"
+                   "CC=gcc -Wno-error=calloc-transposed-args"
+                   "BUILD_CC=gcc -Wno-error=calloc-transposed-args"
                    ,(string-append "PREFIX=" %output)
                    ,(string-append "NSSHARED="
                                    (assoc-ref %build-inputs
@@ -9623,15 +9640,7 @@ It contains the code shared by all Kiwix ports.")
            (lambda* (#:key outputs #:allow-other-keys)
              (invoke "qmake"
                      (string-append "PREFIX="
-                                    (assoc-ref outputs "out")))))
-         (add-after 'install 'wrap-qt-process-path
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin/kiwix-desktop"))
-                    (qt-process-path (search-input-file
-                                      inputs "/lib/qt5/libexec/QtWebEngineProcess")))
-               (wrap-program bin
-                 `("QTWEBENGINEPROCESS_PATH" = (,qt-process-path)))))))))
+                                    (assoc-ref outputs "out"))))))))
     (inputs
      (list bash-minimal
            curl

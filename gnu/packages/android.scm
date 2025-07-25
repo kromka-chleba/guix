@@ -421,6 +421,7 @@ various Android core host applications.")
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (install-file "diagnose_usb.h" (string-append (assoc-ref outputs "out") "/include"))
              #t)))))
+    (native-inputs (list linux-libre-headers-5.4 gcc-11))
     (inputs
      (list android-libbase android-libcutils android-liblog openssl))
     (home-page "https://developer.android.com/studio/command-line/adb.html")
@@ -697,6 +698,13 @@ file system.")
                (("libext4_utils_host") "libext4_utils_host libselinux libpcre")
                (("\\$\\(shell git .*\\)") ,version))
              #t))
+         (add-after 'patch-source 'relax-gcc-14-strictness
+           (lambda _
+             (setenv
+              "CXXFLAGS"
+              (string-append "-g -O2"
+                             " -Wno-error=calloc-transposed-args"
+                             " -Wno-error=format-truncation"))))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))

@@ -1,10 +1,12 @@
 ;;; GNU Guix --- Functional package management for GNU
+;;; Copyright © 2018 Christopher Baines <mail@cbaines.net>
 ;;; Copyright © 2020 Brice Waegeneire <brice@waegenei.re>
 ;;; Copyright © 2020, 2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2022, 2024 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 Benjamin <benjamin@uvy.fr>
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
 ;;; Copyright © 2024 Jordan Moore <lockbox@struct.foo>
+;;; Copyright © 2025 Artur Wroblewski <wrobell@riseup.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -31,10 +33,15 @@
 
 (define-module (gnu packages high-availability)
   #:use-module (gnu packages autotools)
+  #:use-module (gnu packages base)
+  #:use-module (gnu packages bash)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cluster)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages crypto)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages elixir)
+  #:use-module (gnu packages erlang)
   #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages glib)
@@ -45,6 +52,7 @@
   #:use-module (gnu packages golang-web)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages hardware)
+  #:use-module (gnu packages libevent)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages lua)
   #:use-module (gnu packages networking)
@@ -53,6 +61,7 @@
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages python)
   #:use-module (gnu packages rsync)
+  #:use-module (gnu packages sqlite)
   #:use-module (gnu packages tls)
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages version-control)
@@ -67,6 +76,94 @@
   #:use-module (guix utils)
   #:use-module ((guix licenses)
                 #:prefix license:))
+
+(define-public cowsql
+  ;; Use the latest commit which includs
+  ;; <https://github.com/cowsql/cowsql/pull/37>, revert back to vertion tags
+  ;; when released.
+  (let ((commit "cb624d3263ca22b42ecfa8a1dd8a0c8d990db7b6")
+        (revision "0"))
+    (package
+      (name "cowsql")
+      (version (git-version "1.15.8" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/cowsql/cowsql")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0b4ymmsp9y9zzwanp739bc6p5qzl1h6ny2g50blhda99xcnlaf77"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'bootstrap
+              (lambda _
+                (invoke "autoreconf" "-vfi"))))))
+      (native-inputs
+       (list autoconf
+             automake
+             libtool
+             pkg-config))
+      (inputs
+       (list cowsql-raft
+             libuv
+             sqlite))
+      (home-page "https://github.com/cowsql/cowsql")
+      (synopsis "Embeddable, replicated and fault tolerant SQL engine")
+      (description
+       "cowsql (/ˈkaʊ,siːkwəl/ listen) is a C library that implements an
+embeddable and replicated SQL database engine with high availability and
+automatic failover.
+
+cowsql extends SQLite with a network protocol that can connect together
+various instances of your application and have them act as a highly-available
+cluster, with no dependency on external databases.")
+      (license license:gpl3+))))
+
+(define-public cowsql-raft
+  (package
+    (name "cowsql-raft")
+    (version "0.22.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/cowsql/raft")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1cs70jlc2hg3hrcwpc4h54l4zpwm287mlamdm7gxhpdw7c0kyv38"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'bootstrap
+            (lambda _
+              (invoke "autoreconf" "-vfi"))))))
+    (native-inputs
+     (list autoconf
+           automake
+           libtool
+           pkg-config))
+    (inputs
+     (list libuv
+           lz4))
+    (home-page "https://github.com/cowsql/raft")
+    (synopsis "Asynchronous C implementation of the Raft consensus protocol")
+    (description
+     "This package implements a Raft algorithm logic (no I/O and no system
+calls).  On top of that, various drivers are provided that implement actual
+network communication and persistent data storage.
+
+The core part of the library is designed to work well with asynchronous or
+non-blocking I/O engines (such as libuv and io_uring), although it can be used
+in threaded or blocking contexts as well.")
+    (license license:lgpl3)))
 
 (define-public haproxy
   (package
@@ -439,3 +536,121 @@ relationships (both ordering and location) between the cluster resources.
 
 Virtually anything that can be scripted can be managed as part of a Pacemaker cluster.")
     (license (list license:cc-by4.0 license:gpl2+ license:lgpl2.1+))))
+
+(define-public rabbitmq
+  (package
+    (name "rabbitmq")
+    (version "4.1.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://github.com/rabbitmq/rabbitmq-server/releases/download/v"
+             version "/rabbitmq-server-" version ".tar.xz"))
+       (file-name (string-append name "-" version ".tar.xz"))
+       (sha256
+        (base32 "1dl2x5v4bj6sl51gw50aj9nch9sy03qhrfjap3k9x9jpkhm6g946"))
+       (patches (search-patches "rabbitmq-defaults.patch"))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      ;; Using parallel build leads to random build crashes.
+      #:parallel-build? #f
+      ;; The release page advises to use .tar.xz archive, but this file does not
+      ;; contain files required to run RabbitMQ  tests (i.e.
+      ;; deps/rabbitmq_ct_helpers is missing). If we change to the .tar.gz
+      ;; archive, then we can run the tests, but that can take even few hours if
+      ;; a machine is slow. We might need to pick a subset of the tests. See
+      ;; RabbitMQ Arch Linux package for a candidate of a subset of tests.
+      #:tests? #f
+      #:make-flags
+      #~(list (string-append "RMQ_ROOTDIR="
+                             #$output)
+              (string-append "RABBITMQ_VERSION="
+                             #$version))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; erlang.mk contains the entries
+          ;;
+          ;; ELIXIR_BIN ?= $(shell readlink -f `which elixir`)
+          ;; ELIXIR_LIBS ?= $(abspath $(dir $(ELIXIR_BIN))/../lib)
+          ;;
+          ;; but fails to find elixir.app when building plugins.
+          ;;
+          ;; Despite the failures, the build is reported successful while some
+          ;; plugins are not built. For example, running rabbitmqctl
+          ;; command-line utility gives error
+          ;;
+          ;; undefined function Elixir.RabbitMQCtl':main/1
+          ;;
+          ;; After changing `dir` to `dirname`, all plugins build successfully
+          ;; and it is possible to use the command-line utilities.
+          (add-after 'unpack 'extract-rabbitmq-sources
+            (lambda _
+              (substitute* "erlang.mk"
+                (("dir \\$\\(ELIXIR_BIN\\)")
+                 "shell dirname \\$\\(ELIXIR_BIN\\)"))))
+          (add-after 'install 'wrap-rabbitmq
+            (lambda* (#:key outputs inputs #:allow-other-keys)
+              (let ((sbindir (string-append #$output "/lib/rabbitmq_server-"
+                                            #$version "/sbin"))
+                    (rabbitmq-programs (list "rabbitmqctl"
+                                             "rabbitmq-diagnostics"
+                                             "rabbitmq-plugins"
+                                             "rabbitmq-queues"
+                                             "rabbitmq-server"
+                                             "rabbitmq-streams"
+                                             "rabbitmq-upgrade")))
+                ;; Starting RabbitMQ server requires: getconf, df, erl.
+                (wrap-program (string-append sbindir "/rabbitmq-server")
+                  `("PATH" ":" prefix
+                    (,(dirname (search-input-file inputs "bin/getconf"))
+                     ,(dirname (search-input-file inputs "bin/df"))
+                     ,(dirname (search-input-file inputs "bin/erl")))))
+                ;; Each of the RabbitMQ programs requires Erlang cookie
+                ;; stored in RabbitMQ'S user home directory.
+                (for-each (lambda (prog)
+                            (wrap-program (string-append sbindir "/" prog)
+                              `("PATH" suffix
+                                (,(string-append #$erlang "/bin")))
+                              `("HOME" =
+                                ("/var/lib/rabbitmq")))) rabbitmq-programs))))
+          (delete 'configure)
+          (add-after 'install 'patch-scripts
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute* (string-append #$output "/lib/rabbitmq_server-"
+                                          #$version "/sbin/rabbitmq-env")
+                (("basename")
+                 (which "basename"))
+                (("dirname")
+                 (which "dirname"))
+                (("readlink")
+                 (which "readlink")))))
+          (add-after 'install 'install-bin
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (let ((target (string-append #$output "/sbin"))
+                    (sbindir (string-append #$output "/lib/rabbitmq_server-"
+                                            #$version "/sbin"))
+                    (rabbitmq-programs (list "rabbitmqctl"
+                                             "rabbitmq-diagnostics"
+                                             "rabbitmq-plugins"
+                                             "rabbitmq-queues"
+                                             "rabbitmq-server"
+                                             "rabbitmq-streams"
+                                             "rabbitmq-upgrade")))
+                (mkdir-p target)
+                (for-each (lambda (prog)
+                            (symlink (string-append sbindir "/" prog)
+                                     (string-append target "/" prog)))
+                          rabbitmq-programs)))))))
+    (inputs (list bash-minimal))
+    (native-inputs (list erlang elixir python-wrapper which p7zip))
+    (synopsis
+     "Messaging and streaming broker supporting multiple open protocols")
+    (description
+     "RabbitMQ is a messaging and streaming broker that supports multiple
+messaging protocols, including AMQP 1.0 and MQTT 5.0.  It offers features
+such as message routing, filtering, streaming, federation, and clustering.
+It is designed for reliability and flexibility.")
+    (home-page "https://www.rabbitmq.com/")
+    (license license:asl2.0)))

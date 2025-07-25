@@ -9,7 +9,7 @@
 ;;; Copyright © 2016, 2017, 2021 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2016, 2017 Adonay "adfeno" Felipe Nogueira <https://libreplanet.org/wiki/User:Adfeno> <adfeno@openmailbox.org>
 ;;; Copyright © 2016, 2021 Amirouche <amirouche@hypermove.net>
-;;; Copyright © 2016, 2019, 2021, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016, 2019, 2021, 2023, 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2017 Andy Wingo <wingo@igalia.com>
 ;;; Copyright © 2017 David Thompson <davet@gnu.org>
 ;;; Copyright © 2017, 2018, 2019, 2020 Mathieu Othacehe <m.othacehe@gmail.com>
@@ -872,7 +872,7 @@ generate API documentation for GNU Guile projects.")
 (define-public guile-dotenv
   (package
    (name "guile-dotenv")
-   (version "0.1.1")
+   (version "0.2.0")
     (source
      (origin
        (method git-fetch)
@@ -881,21 +881,110 @@ generate API documentation for GNU Guile projects.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0m5jg41cipnpl3w9vzwm50ah0haa2hcwwd7mri7kaa8pr9kfx64j"))))
+        (base32 "0smwlfggvx3dpc1zx8wva9df8nfawcinzizhvk5f3yf7bdyy4rym"))))
    (build-system gnu-build-system)
+   (arguments
+    (list
+     #:phases
+     #~(modify-phases %standard-phases
+         (add-after 'install 'drop-bin-entrypoint
+           ;; The entrypoint requires guile-config,
+           ;; so it is shipped through the guile-dotenv-cli package.
+           ;; This way guile-dotenv does not need to depend on guile-config.
+           (lambda _
+             (invoke "rm" "-rfv" (string-append #$output "/bin")))))))
    (native-inputs
     (list autoconf
           automake
           gettext-minimal
+          ;; This is needed only to build the entrypoint.
+          guile-config
           pkg-config
           texinfo))
    (inputs (list guile-3.0))
+   (propagated-inputs (list nyacc))
    (synopsis "Read environment variables specifications from @code{.env} files")
    (description "This package provides a simple Guile interface to @code{.env}
 (or dotenv) files.  It implements parsing of files and setting environment
 variables from them.")
    (home-page "https://codeberg.org/fishinthecalculator/dotenv")
    (license license:gpl3+)))
+
+(define-public guile-dotenv-cli
+  (package
+   (inherit guile-dotenv)
+   (name "guile-dotenv-cli")
+   (arguments
+    (list
+     #:modules `((ice-9 match)
+                 (ice-9 ftw)
+                 ,@%default-gnu-imported-modules)
+     #:phases
+     #~(modify-phases %standard-phases
+         (replace 'install
+           (lambda _
+             (mkdir-p (string-append #$output "/bin"))
+             (install-file "./scripts/dotenv"
+                           (string-append #$output "/bin/"))))
+         (add-after 'install 'wrap-binaries
+           (lambda _
+             (let* ((inputs
+                     (list
+                      #$@(map (lambda (input)
+                                (this-package-input input))
+                              '("guile-config"
+                                "guile-dotenv"))))
+                    (compiled-dir
+                     (lambda (out version)
+                       (string-append out "/lib/guile/"
+                                      version "/site-ccache")))
+                    (uncompiled-dir
+                     (lambda (out version)
+                       (string-append out "/share/guile/site"
+                                      (if (string-null? version) "" "/")
+                                      version)))
+                    (dep-path
+                     (lambda (env modules path)
+                       (list env ":" 'prefix
+                             (cons modules
+                                    (map (lambda (input)
+                                           (string-append input path))
+                                         inputs)))))
+                    (bin (string-append #$output "/bin/"))
+                    (site
+                     (uncompiled-dir #$(this-package-input "guile-dotenv") "")))
+                (match (scandir site)
+                  (("." ".." version)
+                   (for-each
+                    (lambda (file)
+                      (wrap-program (string-append bin file)
+                        (dep-path
+                         "GUILE_LOAD_PATH"
+                         (uncompiled-dir
+                          #$(this-package-input "guile-dotenv") version)
+                         (uncompiled-dir "" version))
+                        (dep-path
+                         "GUILE_LOAD_COMPILED_PATH"
+                         (compiled-dir
+                          #$(this-package-input "guile-dotenv") version)
+                         (compiled-dir "" version))))
+                    '("dotenv"))))))))))
+   (inputs
+     (modify-inputs (package-inputs guile-dotenv)
+       (append bash-minimal)))
+   (native-inputs
+    (modify-inputs (package-native-inputs guile-dotenv)
+      ;; As opposed to guile-config, here we need to propagate it.
+      (delete "guile-config")))
+   (propagated-inputs
+    (modify-inputs (package-propagated-inputs guile-dotenv)
+      (prepend guile-config
+               guile-dotenv)))
+   (description
+    (string-append (package-description guile-dotenv)
+                   "\n\nAdditionally, this package provides a @command{dotenv}
+command, exposes part of the @code{guile-dotenv} Guile API as command lines
+invocations."))))
 
 (define-public guile-dsv
   (package
@@ -3411,14 +3500,14 @@ quotes.")
 (define-public guile-reader
   (package
     (name "guile-reader")
-    (version "0.6.3")
+    (version "0.6.4")
     (source  (origin
                (method url-fetch)
                (uri (string-append "mirror://savannah/guile-reader/guile-reader-"
                                    version ".tar.gz"))
                (sha256
                 (base32
-                 "1fyjckmygkhq22lq8nqc86yl5zzbqd7a944dnz5c1f6vx92b9hiq"))))
+                 "0nqkk4x18i7p3k9jxld4fnk8d69bq9ag6hqsyjzbfw9fmhrh08kb"))))
     (build-system gnu-build-system)
     (native-inputs (list pkg-config gperf))
     (inputs (list guile-3.0))
@@ -4378,7 +4467,8 @@ list of components.  This module takes care of that for you.")
                 "019mbhgyga57k2074kg97mh3qsa8ny9l0kjgqids8cg3c6vbjdby"))))
     (build-system glib-or-gtk-build-system)
     (arguments
-     `(#:configure-flags '("--with-gnu-filesystem-hierarchy")
+     `(#:configure-flags '("CFLAGS=-Wno-error=incompatible-pointer-types"
+                           "--with-gnu-filesystem-hierarchy")
        #:modules ((guix build glib-or-gtk-build-system)
                   (guix build utils)
                   (ice-9 popen)
@@ -4716,7 +4806,7 @@ denote the invalidity of certain code paths in a Scheme program.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://inqlab.net/git/guile-srfi-146.git")
+             (url "https://codeberg.org/pukkamustard/guile-srfi-146")
              (commit (string-append "v" version))))
        (sha256
         (base32
@@ -4740,7 +4830,7 @@ keys and another using a hash function on the keys.  The
 datastructures and procedures are by default purely-functional.  This
 package re-uses the SRFI sample implementation that is based on
 red-black trees and Hash Array Mapped Trie (HAMT).")
-    (home-page "https://inqlab.net/git/guile-srfi-146.git")
+    (home-page "https://codeberg.org/pukkamustard/guile-srfi-146")
     (license
      (list license:lgpl3+
            ;; contains ISC code from the SRFI sample implementation
@@ -6980,6 +7070,34 @@ which functions should satisfy, as Scheme code and then check whether they hold
 in a large number of randomly generated test cases.")
     (license license:gpl3+)))
 
+(define-public guile-veritas
+  (package
+    (name "guile-veritas")
+    (version "0.0.41")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/jjba23/veritas.git")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17x5xjwjbj0smwb7hj6crar790kgc6bbqzkk9kgrjk0j6nbw920c"))))
+    (build-system guile-build-system)
+    (arguments
+     (list
+      #:source-directory "src"))
+    (native-inputs (list guile-3.0))
+    (propagated-inputs (list guile-fibers))
+    (home-page "https://codeberg.org/jjba23/veritas")
+    (synopsis "Testing framework for Guile")
+    (description
+     "Veritas is a testing framework for Guile with an @acronym{EDSL,
+embedded domain specific language} to define test suites.  Emphasis is placed
+on legibility and maintainability of tests.  Veritas shuffles tests and
+runs them concurrently by default to ensure robust testing practices.")
+    (license license:lgpl3+)))
+
 (define-public guile-fslib
   (package
     (name "guile-fslib")
@@ -7096,7 +7214,7 @@ GitLab instance.")
 (define-public guile-smc
   (package
     (name "guile-smc")
-    (version "0.6.3")
+    (version "0.6.4")
     (source
      (origin
        (method git-fetch)
@@ -7106,35 +7224,35 @@ GitLab instance.")
        (file-name (string-append name "-" version))
        (sha256
         (base32
-         "1gjwz1l2ls4xkkgg4d2vw3a1klc4var03ab4k6lq1jifdvc8n51f"))))
+         "12zg0blap8rxjx9m5bkgz5bc4ym1shii3bs3w5j41a55f0fn3p68"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags '("GUILE_AUTO_COMPILE=0")     ;to prevent guild warnings
-       #:modules (((guix build guile-build-system)
+     (list
+      #:make-flags #~(list "GUILE_AUTO_COMPILE=0")     ;to prevent guild warnings
+      #:modules `(((guix build guile-build-system)
                    #:select (target-guile-effective-version))
                   ,@%default-gnu-modules)
-       #:imported-modules ((guix build guile-build-system)
+      #:imported-modules `((guix build guile-build-system)
                            ,@%default-gnu-imported-modules)
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'strip)
-         (add-after 'install 'wrap-program
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let* ((out       (assoc-ref outputs "out"))
-                    (bin       (string-append out "/bin"))
-                    (guile-lib (assoc-ref inputs "guile-lib"))
-                    (version   (target-guile-effective-version))
-                    (scm       (string-append "/share/guile/site/"
-                                              version))
-                    (go        (string-append  "/lib/guile/"
-                                               version "/site-ccache")))
-               (wrap-program (string-append bin "/smc")
-                 `("GUILE_LOAD_PATH" prefix
-                   (,(string-append out scm)
-                    ,(string-append guile-lib scm)))
-                 `("GUILE_LOAD_COMPILED_PATH" prefix
-                   (,(string-append out go)
-                    ,(string-append guile-lib go))))))))))
+      #:phases
+      #~(modify-phases %standard-phases
+        (delete 'strip)
+        (add-after 'install 'wrap-program
+          (lambda* (#:key inputs #:allow-other-keys)
+            (let* ((bin       (string-append #$output "/bin"))
+                   (guile-lib (assoc-ref inputs "guile-lib"))
+                   (version   (target-guile-effective-version))
+                   (scm       (string-append "/share/guile/site/"
+                                             version))
+                   (go        (string-append  "/lib/guile/"
+                                              version "/site-ccache")))
+              (wrap-program (string-append bin "/smc")
+                `("GUILE_LOAD_PATH" prefix
+                  (,(string-append #$output scm)
+                   ,(string-append guile-lib scm)))
+                `("GUILE_LOAD_COMPILED_PATH" prefix
+                  (,(string-append #$output go)
+                   ,(string-append guile-lib go))))))))))
     (native-inputs
      (list autoconf
            automake
@@ -7356,7 +7474,7 @@ HTTP handler to implement a HTTP GraphQL endpoint.")
        (list autoconf
              automake
              libtool
-             gnu-gettext
+             gettext-minimal
              pkg-config
 
              ;; Use Guile >= 3.0.8 to work around

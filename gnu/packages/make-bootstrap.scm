@@ -75,7 +75,7 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
       (source (origin (inherit (package-source base))
                       (patches (append (search-patches
                                         (match (package-version base)
-                                          ("2.39" "glibc-2.39-bootstrap-system.patch")
+                                          ("2.41" "glibc-2.41-bootstrap-system.patch")
                                           (_ "glibc-bootstrap-system.patch")))
                                    (origin-patches (package-source base))))))
       (arguments
@@ -85,18 +85,7 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
           ;; and can use statically-linked NSS modules.
           `(cons* "--disable-nscd" "--disable-build-nscd"
                   "--enable-static-nss"
-                  ,flags))
-         ((#:phases phases #~%standard-phases)
-          ;; Apply i686-linux-specific patch.
-          (if (target-x86-32?)
-              #~(modify-phases #$phases
-                  (add-after 'unpack 'apply-libm-patch
-                    (lambda _
-                      (define patch
-                        #$(local-file
-                           (search-patch "glibc-2.39-fmod-libm-a.patch")))
-                      (invoke "patch" "--force" "-p1" "-i" patch))))
-              phases))))
+                  ,flags))))
 
       ;; Remove the 'debug' output to allow bit-reproducible builds (when the
       ;; 'debug' output is used, ELF files end up with a .gnu_debuglink, which
@@ -479,8 +468,6 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
                         (target-hurd? (%current-target-system)))
                    (string-suffix? "-hurd" (%current-system)))
                   gnumach-headers)
-                 ;; linux 5.19 include loongarch support.
-                 ((target-loongarch64?) linux-libre-headers-5.19.17)
                  (else linux-libre-headers)))))
       (propagated-inputs '())
 
@@ -540,8 +527,7 @@ for `sh' in $PATH, and without nscd, and with static NSS modules."
                 (substitute* (cons "gcc/config/rs6000/sysv4.h"
                                    (find-files "gcc/config"
                                                "^gnu-user.*\\.h$"))
-                  ((" -lgcc_s}}") "}}"))
-                #$@(if (target-hurd64?) '() '(#t))))))))
+                  ((" -lgcc_s}}") "}}"))))))))
      (inputs
       `(("zlib:static" ,zlib "static")
         ("isl:static" ,isl "static")

@@ -1,12 +1,12 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012-2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014, 2019 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2012 Nikita Karetnikov <nikita@karetnikov.org>
 ;;; Copyright © 2014, 2015, 2016, 2018 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2014 Alex Kost <alezost@gmail.com>
 ;;; Copyright © 2014, 2015 Manolis Fragkiskos Ragkousis <manolis837@gmail.com>
 ;;; Copyright © 2016, 2017, 2019-2023 Efraim Flashner <efraim@flashner.co.il>
-;;; Copyright © 2016, 2020, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016, 2020, 2023, 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2016, 2018 Alex Vong <alexvong1995@gmail.com>
 ;;; Copyright © 2017 Rene Saavedra <rennes@openmailbox.org>
 ;;; Copyright © 2017, 2020 Mathieu Othacehe <m.othacehe@gmail.com>
@@ -23,7 +23,7 @@
 ;;; Copyright © 2022 zamfofex <zamfofex@twdb.moe>
 ;;; Copyright © 2022 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2023 Josselin Poiret <dev@jpoiret.xyz>
-;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024, 2025 Zheng Junjie <z572@z572.online>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -192,35 +192,21 @@ including, for example, recursive directory searching.")
 
 (define-public sed
   (package
-   (name "sed")
-   (version "4.8")
-   (source (origin
-            (method url-fetch)
-            (uri (string-append "mirror://gnu/sed/sed-" version
-                                ".tar.gz"))
-            (sha256
-             (base32
-              "0alqagh0nliymz23kfjg6g9w3cr086k0sfni56gi8fhzqwa3xksk"))
-            (patches (search-patches "coreutils-gnulib-tests.patch"))
-
-            ;; Remove this snippet once upstream releases a fixed version.
-            ;; This snippet changes Makefile.in, even though the upstream
-            ;; patch changes testsuite/local.mk, since we build sed from a
-            ;; release tarball.  See: https://bugs.gnu.org/36150
-            (snippet
-             '(begin
-                (substitute* "Makefile.in"
-                  (("^  abs_srcdir='\\$\\(abs_srcdir\\)'.*" previous-line)
-                   (string-append
-                    previous-line
-                    "  CONFIG_HEADER='$(CONFIG_HEADER)'\t\t\\\n")))))
-            (modules '((guix build utils)))))
-   (build-system gnu-build-system)
-   (synopsis "Stream editor")
-   (native-inputs (append (if (target-loongarch64?)
-                              (list config)
-                              '())
-                          (list perl)))                    ;for tests
+    (name "sed")
+    (version "4.9")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnu/sed/sed-" version
+                                  ".tar.gz"))
+              (sha256
+               (base32
+                "0bi808vfkg3szmpy9g5wc7jnn2yk6djiz412d30km9rky0c8liyi"))))
+    (build-system gnu-build-system)
+    (synopsis "Stream editor")
+    (native-inputs (append (if (target-loongarch64?)
+                               (list config)
+                               '())
+                           (list perl)))                    ;for tests
     (arguments (if (target-loongarch64?)
                    (list #:phases
                          #~(modify-phases %standard-phases
@@ -234,26 +220,26 @@ including, for example, recursive directory searching.")
                                                (string-append "/bin/" file)) "./build-aux"))
                                            '("config.guess" "config.sub"))))))
                    '()))
-   (description
-    "Sed is a non-interactive, text stream editor.  It receives a text
+    (description
+     "Sed is a non-interactive, text stream editor.  It receives a text
 input from a file or from standard input and it then applies a series of text
 editing commands to the stream and prints its output to standard output.  It
 is often used for substituting text patterns in a stream.  The GNU
 implementation offers several extensions over the standard utility.")
-   (license gpl3+)
-   (home-page "https://www.gnu.org/software/sed/")))
+    (license gpl3+)
+    (home-page "https://www.gnu.org/software/sed/")))
 
 (define-public tar
   (package
    (name "tar")
-   (version "1.34")
+   (version "1.35")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/tar/tar-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "0a0x87anh9chbi2cgcyy7pmnm5hzk4yd1w2j8gm1wplwhwkbvgk3"))
+              "05nw7q7sazkana11hnf3f77lmybw1j9j6lsk93bsxirf6hvzyqjd"))
             (patches (search-patches "tar-skip-unreliable-tests.patch"
                                      "tar-remove-wholesparse-check.patch"))))
    (build-system gnu-build-system)
@@ -282,6 +268,11 @@ implementation offers several extensions over the standard utility.")
           ((not (target-64bit?))
            '(#:make-flags (list "TESTSUITEFLAGS= -k '!tricky time stamps'")))
           (else '()))
+      ;; XXX: 32-bit Hurd platforms don't support 64bit time_t
+      ,@(if (and (target-hurd?)
+                 (not (target-64bit?)))
+            (list #:configure-flags ''("--disable-year2038"))
+            '())
       #:phases (modify-phases %standard-phases
                  (add-before 'build 'set-shell-file-name
                    (lambda* (#:key inputs #:allow-other-keys)
@@ -364,14 +355,14 @@ differences.")
 (define-public diffutils
   (package
    (name "diffutils")
-   (version "3.10")
+   (version "3.12")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/diffutils/diffutils-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "17nhkdn5a2z6pwcmjs4jas2plg066hbdz06y5vhypr14qwyfkrch"))))
+              "1zbxf8vv7z18ypddwqgzj51n426k959fiv4wxbyl34b0r2gpz2vw"))))
    (build-system gnu-build-system)
    (arguments
     (list
@@ -382,6 +373,12 @@ differences.")
                   (string=? (%current-system) "i586-gnu"))
              #~'("XFAIL_TESTS=test-year2038")
              #~'())
+
+     #:configure-flags
+     #~#$(if (%current-target-system)
+       ;; Fix for crosscompiling; on GNU system strcasecmp always works
+       #~'("ac_cv_func_strcasecmp=yes" "gl_cv_func_strcasecmp_works=yes")
+       #~'())
 
      #:phases (if (system-hurd?)
                   #~(modify-phases %standard-phases
@@ -413,18 +410,23 @@ interactive means to merge two files.")
 (define-public findutils
   (package
    (name "findutils")
-   (version "4.9.0")
+   (version "4.10.0")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/findutils/findutils-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "1zk2sighc26bfdsm97bv7cd1cnvq7r4gll4zqpnp0rs3kp0bigx2"))
+              "1xd4y24qfsdfp3ndz7d5j49lkhbhpzgr13wrvsmx4izjgyvf11qk"))
             (patches (search-patches "findutils-localstatedir.patch"))))
    (build-system gnu-build-system)
    (arguments
     `(#:configure-flags (list
+                         ;; XXX: 32-bit Hurd platforms don't support 64bit time_t
+                         ,@(if (and (target-hurd?)
+                                    (not (target-64bit?)))
+                               '("--disable-year2038")
+                               '())
                          ;; Tell 'updatedb' to write to /var.
                          "--localstatedir=/var")
       #:phases (modify-phases %standard-phases
@@ -519,6 +521,8 @@ used to apply commands with arbitrarily long arguments.")
                                    "tests/split/fail.sh"
                                    ;; These tests error
                                    "tests/dd/nocache.sh"
+                                   ;; These tests can intermitently fail on btrfs
+                                   "tests/cp/reflink-auto.sh"
                                    ;; These tests fail
                                    "tests/cp/sparse.sh"
                                    "tests/cp/special-f.sh"
@@ -683,15 +687,17 @@ change.  GNU make offers many powerful extensions over the standard utility.")
 (define-public binutils
   (package
    (name "binutils")
-   (version "2.41")
+   (version "2.44")
    (source
     (origin
       (method url-fetch)
       (uri (string-append "mirror://gnu/binutils/binutils-"
                           version ".tar.bz2"))
       (sha256
-       (base32 "02xkm9xgcrqhln742636nm43yzrpjkhqj0z64h03gf7pab0bxi54"))
-      (patches (search-patches "binutils-loongson-workaround.patch"))))
+       (base32 "0fnwaasfglbphqzvz5n25js9gl695p7pjbmb1z81g8gsc6k90qzn"))
+      (patches (search-patches
+                "binutils-2.41-fix-cross.patch"
+                "binutils-loongson-workaround.patch"))))
    (build-system gnu-build-system)
    (arguments
     (list #:out-of-source? #t ;recommended in the README
@@ -759,8 +765,17 @@ included.")
    (properties '())))
 
 (define-public binutils-gold
-  (package/inherit binutils
+  (package
+    (inherit binutils)
     (name "binutils-gold")
+    (version "2.44")
+    (source
+     (origin
+       (inherit (package-source binutils))
+       (uri (string-append "mirror://gnu/binutils/binutils-with-gold-"
+                           version ".tar.bz2"))
+       (sha256
+        (base32 "1j64m2czn9ygd5g1cjjcw7q43b18xh6qkrdl1pkm03ncjnj3wwrl"))))
     (arguments
      (substitute-keyword-arguments (package-arguments binutils)
        ((#:configure-flags flags)
@@ -782,6 +797,36 @@ included.")
                   #~())))))
     (native-inputs (modify-inputs (package-native-inputs binutils)
                      (append bc)))))
+
+(define-public libbfd
+  (package/inherit binutils
+    (name "libbfd")
+    (inputs
+     (modify-inputs (package-native-inputs binutils)
+       (append texinfo))) ; because makeinfo is needed when building bfd alone
+    (arguments
+     (substitute-keyword-arguments (package-arguments binutils)
+       ;; Only build as a shared library
+       ((#:configure-flags flags)
+        #~(append #$flags '("--enable-shared" "--disable-static")))
+       ;; Only build and install bfd
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (replace 'build
+              (lambda _
+                (invoke "make" "-j" (number->string (parallel-job-count))
+                        "all-bfd")))
+            (replace 'check
+              (lambda _
+                (invoke "make" "check-bfd"
+                        "-j" (number->string (parallel-job-count))
+                        "MAKEINFO=true")))
+            (replace 'install
+              (lambda _ (invoke "make" "install-bfd")))))))
+    (synopsis "GNU BFD library for operating on object files")
+    (description "This package provides a standalone shared library version of
+BFD, which is otherwise distributed and installed as part of the Binutils
+package release.")))
 
 (define* (make-ld-wrapper name #:key
                           (target (const #f))
@@ -863,37 +908,41 @@ the store.")
     (license gpl3+)))
 
 (define %glibc-patches
-  (list "glibc-2.39-git-updates.patch"
-        "glibc-ldd-powerpc.patch"
-        "glibc-2.38-ldd-x86_64.patch"
-        "glibc-dl-cache.patch"
+  (list "glibc-ldd-powerpc.patch"
+        "glibc-2.41-ldd-x86_64.patch"
+        "glibc-2.40-dl-cache.patch"
         "glibc-2.37-versioned-locpath.patch"
         ;; "glibc-allow-kernel-2.6.32.patch"
         "glibc-reinstate-prlimit64-fallback.patch"
         "glibc-supported-locales.patch"
         "glibc-2.37-hurd-clock_t_centiseconds.patch"
-        "glibc-2.37-hurd-local-clock_gettime_MONOTONIC.patch"
+        "glibc-2.41-hurd-local-clock_gettime_MONOTONIC.patch"
         "glibc-hurd-mach-print.patch"
         "glibc-hurd-gettyent.patch"
-        "glibc-hurd-getauxval.patch"))
+        "glibc-hurd-getauxval.patch"
+        "glibc-hurd-pthread_setcancelstate.patch"
+        "glibc-hurd-2.41-pthread-once.patch"
+        "glibc-hurd-2.41-pthread-sigmask.patch"
+        "glibc-hurd-2.41-symlink.patch"
+        "glibc-hurd64-intr-msg-clobber.patch"
+        "glibc-hurd64-gcc-14.2-tls-bug.patch"))
 
 (define-public glibc
   ;; This is the GNU C Library, used on GNU/Linux and GNU/Hurd.  Prior to
   ;; version 2.28, GNU/Hurd used a different glibc branch.
   (package
    (name "glibc")
-   (version "2.39")
+   (version "2.41")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/glibc/glibc-" version ".tar.xz"))
             (sha256
              (base32
-              "09nrwb0ksbah9k35jchd28xxp2hidilqdgz7b8v5f30pz1yd8yzp"))
+              "00g95047sshv0zxk9ja3mi7lzwi8wh8qx0nxngbvgmj5yli6p8m5"))
             (patches (map search-patch %glibc-patches))))
    (properties `((lint-hidden-cve . ("CVE-2024-2961"
                                      "CVE-2024-33601" "CVE-2024-33602"
                                      "CVE-2024-33600" "CVE-2024-33599"))))
-   (replacement glibc/fixed)
    (build-system gnu-build-system)
 
    ;; Glibc's <limits.h> refers to <linux/limit.h>, for instance, so glibc
@@ -1171,28 +1220,6 @@ with the Linux kernel.")
    (license lgpl2.0+)
    (home-page "https://www.gnu.org/software/libc/")))
 
-(define glibc/fixed
-  (package
-    (inherit glibc)
-    (name "glibc")
-    (version (package-version glibc))
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "git://sourceware.org/git/glibc.git")
-                    ;; This is the latest commit from the
-                    ;; 'release/2.39/master' branch, where CVEs and other
-                    ;; important bug fixes are cherry picked.
-                    (commit "2c882bf9c15d206aaf04766d1b8e3ae5b1002cc2")))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "111yf24g0qcfcxywfzrilmjxysahlbkzxfimcz9rq8p00qzvvf51"))
-              (patches (map search-patch
-                            (fold (cut delete <...>)
-                                  %glibc-patches
-                                  '("glibc-2.39-git-updates.patch"))))))))
-
 ;; Define a variation of glibc which uses the default /etc/ld.so.cache, useful
 ;; in FHS containers.
 (define-public glibc-for-fhs
@@ -1204,11 +1231,35 @@ with the Linux kernel.")
                      ;; directories, re-enabling the default /etc/ld.so.cache
                      ;; behavior.
                      (patches
-                      (delete (search-patch "glibc-dl-cache.patch")
+                      (delete (search-patch "glibc-2.40-dl-cache.patch")
                               (origin-patches (package-source glibc)))))))))
 
 ;; Below are old libc versions, which we use mostly to build locale data in
 ;; the old format (which the new libc cannot cope with.)
+
+(define-public glibc-2.39
+  (package
+    (inherit glibc)
+    (version "2.39")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnu/glibc/glibc-" version ".tar.xz"))
+              (sha256
+               (base32
+                "09nrwb0ksbah9k35jchd28xxp2hidilqdgz7b8v5f30pz1yd8yzp"))
+              (patches (search-patches "glibc-2.39-git-updates.patch"
+                                       "glibc-ldd-powerpc.patch"
+                                       "glibc-2.38-ldd-x86_64.patch"
+                                       "glibc-dl-cache.patch"
+                                       "glibc-2.37-versioned-locpath.patch"
+                                       ;; "glibc-allow-kernel-2.6.32.patch"
+                                       "glibc-reinstate-prlimit64-fallback.patch"
+                                       "glibc-supported-locales.patch"
+                                       "glibc-2.37-hurd-clock_t_centiseconds.patch"
+                                       ;; "glibc-2.37-hurd-local-clock_gettime_MONOTONIC.patch"
+                                       "glibc-hurd-mach-print.patch"
+                                       "glibc-hurd-gettyent.patch"
+                                       "glibc-hurd-getauxval.patch"))))))
 
 (define-public glibc-2.35
   (package
@@ -1237,7 +1288,8 @@ with the Linux kernel.")
     (arguments
      (substitute-keyword-arguments (package-arguments glibc)
        ((#:configure-flags flags #~'())
-        #~(cons* "--enable-crypt"
+        #~(cons* "CFLAGS=-g -O2 -Wno-error=builtin-declaration-mismatch"
+                 "--enable-crypt"
                  ;; We do not want to use the C++ compiler, because its
                  ;; libstdc++ is linked against a newer glibc, and so relies
                  ;; on those newer symbols.  Pretend it doesn't link (the test
@@ -1272,7 +1324,28 @@ with the Linux kernel.")
                         (member (basename patch)
                                 '("glibc-2.35-CVE-2023-4911.patch"
                                   "glibc-hurd-clock_gettime_monotonic.patch")))
-                             (origin-patches (package-source glibc-2.35)))))))))
+                             (origin-patches (package-source glibc-2.35)))))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments glibc)
+       ((#:configure-flags flags #~'())
+        #~(cons* #$(string-append
+                    "CFLAGS=-g -O2"
+                    " -Wno-error=builtin-declaration-mismatch"
+                    " -Wno-error=format-overflow"
+                    " -Wno-error=stringop-overflow"
+                    " -Wno-error=use-after-free")
+                 "--enable-crypt"
+                 ;; We do not want to use the C++ compiler, because its
+                 ;; libstdc++ is linked against a newer glibc, and so relies
+                 ;; on those newer symbols.  Pretend it doesn't link (the test
+                 ;; doesn't actually check that the compiler works with new
+                 ;; libstdc++ and older glibc).
+                 "libc_cv_cxx_link_ok=no"
+                 #$flags))
+       ((#:phases phases)
+        `(modify-phases ,phases
+           ;; This phase fails trying to create /etc/ld.so.cache
+           (delete 'install-utf8-c-locale)))))))
 
 (define-public glibc-2.32
   (package
@@ -1630,18 +1703,7 @@ variety of options.  It is an alternative to the shell \"type\" built-in
 command.")
     (license gpl3+))) ; some files are under GPLv2+
 
-(define-public glibc/hurd
-  (package/inherit glibc
-    (source
-     (origin
-       (inherit (package-source glibc))
-       (patches
-        (append (origin-patches (package-source glibc))
-                (search-patches "glibc-hurd-pthread_setcancelstate.patch"
-                                "glibc-hurd64-fault.patch"
-                                "glibc-hurd64-intr-msg-clobber.patch"
-                                "glibc-hurd64-sgms-context.patch"
-                                "glibc-hurd64-gcc-14.2-tls-bug.patch")))))))
+(define-public glibc/hurd glibc)
 
 (define-public glibc/hurd-headers
   (package/inherit glibc/hurd
@@ -1720,7 +1782,7 @@ command.")
     (name "tzdata")
     ;; This package should be kept in sync with python-pytz and python-tzdata
     ;; in (gnu packages time).
-    (version "2023d")
+    (version "2025a")
     (source (origin
              (method url-fetch)
              (uri (string-append
@@ -1728,7 +1790,7 @@ command.")
                    version ".tar.gz"))
              (sha256
               (base32
-               "1wq858ip55ijnlrffnnadq7vw0x93ywxghgfxh68r2qa1fbj3jnv"))))
+               "1l7hnlgc4wgy2gmaj5zmswpzbyq23h7vsndnw2zhwibw5k3wnpsd"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f
@@ -1789,17 +1851,14 @@ command.")
                      (delete-file-recursively
                       (string-append out "/share/zoneinfo-leaps")))))
                (delete 'configure))))
-    (inputs `(("_"
-               ;; Note: The "_" label above is here to avoid a full rebuild.
-               ;; TODO: Remove it on next rebuild cycle.
-               ,(origin
-                  (method url-fetch)
-                  (uri (string-append
-                        "https://data.iana.org/time-zones/releases/tzcode"
-                        version ".tar.gz"))
-                  (sha256
-                   (base32
-                    "07hn7hn2klw4dfyr673ril2nrk18198hbfv25gljsvc833hzk9g9"))))))
+    (inputs (list (origin
+                    (method url-fetch)
+                    (uri (string-append
+                          "https://data.iana.org/time-zones/releases/tzcode"
+                          version ".tar.gz"))
+                    (sha256
+                     (base32
+                      "0qahpwp1zlyvi7qrlm4r74pmj3c7sx3jlg9xw2siwj3nkzapk5hi")))))
     (home-page "https://www.iana.org/time-zones")
     (synopsis "Database of current and historical time zones")
     (description "The Time Zone Database (often called tz or zoneinfo)
@@ -1822,14 +1881,14 @@ and daylight-saving rules.")
 (define-public libiconv
   (package
     (name "libiconv")
-    (version "1.15")
+    (version "1.18")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/libiconv/libiconv-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0y1ij745r4p48mxq84rax40p10ln7fc7m243p8k8sia519i3dxfc"))
+                "1s35d4kk7abfqrcicjzy5s9gpip6dzyhn157a7qq5sxlz7sga21v"))
               (modules '((guix build utils)))
               (snippet
                ;; Work around "declared gets" error on glibc systems (fixed by

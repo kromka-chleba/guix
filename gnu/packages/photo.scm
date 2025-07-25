@@ -10,7 +10,7 @@
 ;;; Copyright © 2020 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2020, 2024. 2021, 2022, 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
-;;; Copyright © 2022, 2023 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2022, 2023, 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
@@ -250,6 +250,16 @@ data as produced by digital cameras.")
                (base32
                 "1d0g3ixxfz3sfm5rzibydqd9ccflls86pq0ls48zfp5dqvda2qgf"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'configure 'relax-gcc-14-strictness
+                 ;; Required on i686, but not x86_64.
+                 (lambda _
+                   (setenv "CFLAGS"
+                           (string-append
+                             "-g -O2 "
+                             "-Wno-incompatible-pointer-types")))))))
     (native-inputs (list pkg-config))
     (inputs
      (list libjpeg-turbo libltdl libusb libxml2))
@@ -571,7 +581,10 @@ photographic equipment.")
     (native-inputs
      (list cmocka
            desktop-file-utils
-           gcc-13             ; gcc-11 too old for darktable, 12+ required
+           ;; XXX: Need to explicitly specify gcc-14 here or else the build
+           ;; fails with missing Graphite/isl support in gcc for unknown
+           ;; reasons.
+           gcc-14
            `(,glib "bin")
            gobject-introspection
            intltool
@@ -671,8 +684,9 @@ and enhance them.")
        (list cmocka
              desktop-file-utils
              ;; With the default GCC configuration fails with: Unsupported
-             ;; libstdc++ version: 11
-             gcc-12
+             ;; libstdc++ version: 11.  Updated to gcc-14 for ABI
+             ;; compatibility with libheif/openexr.
+             gcc-14
              `(,glib "bin")
              gobject-introspection
              intltool

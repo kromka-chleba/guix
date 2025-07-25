@@ -36,7 +36,7 @@
 ;;; Copyright © 2020 Josh Marshall <joshua.r.marshall.1991@gmail.com>
 ;;; Copyright © 2020 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2020 Tanguy Le Carrour <tanguy@bioneland.org>
-;;; Copyright © 2020, 2021, 2022, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Hugo Lecomte <hugo.lecomte@inria.fr>
 ;;; Copyright © 2022 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022, 2023 David Elsing <david.elsing@posteo.net>
@@ -549,9 +549,9 @@ with a flexible variety of user interfaces.")
              (method url-fetch)
               (uri (string-append "http://dev-www.libreoffice.org/src/"
                                   name "-" version ".tar.gz"))
-             (sha256
-              (base32
-               "19qpqzy66bq76wcyadmi3zahk5v1ll2kig1nvg96zx9padkcdic9"))))
+              (sha256
+               (base32
+                "19qpqzy66bq76wcyadmi3zahk5v1ll2kig1nvg96zx9padkcdic9"))))
     ;; Explicitly link with libdl. This is expected to be done by packages
     ;; relying on cppunit for their tests. However, not all of them do.
     ;; If we added the linker flag to such packages, we would pollute all
@@ -1148,6 +1148,21 @@ package.")
 discovery, death tests, assertions, parameterized tests and XML test report
 generation.")
     (license license:bsd-3)))
+
+(define-public googletest-1.17
+  (package
+    (inherit googletest)
+    (name "googletest")
+    (version "1.17.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/google/googletest")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1zn701fgmbk29y45p49sajaswm01i2bv89ds2kkbiq8i0p2cr08w"))))))
 
 (define-public googletest-1.8
   (package
@@ -4110,8 +4125,12 @@ loaded.")
                         ;; to find it in "virtest/vir/" instead of "vir/vir/".
                         (substitute* "CMakeLists.txt"
                           (("DESTINATION include/vir")
-                           "DESTINATION include/virtest"))
-                        #t)))))
+                           "DESTINATION include/virtest"))))
+                    (add-after 'unpack 'gcc14
+                      (lambda _
+                        (substitute* "vir/test.h"
+                          (("#include <cmath>" all)
+                            (string-append all "\n#include <cstdint>"))))))))
       (synopsis "Header-only test framework")
       (description
        "@code{virtest} is a small header-only test framework for C++.  It

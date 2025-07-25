@@ -1,5 +1,5 @@
 ;;; GNU Guix --- Functional package management for GNU
-;;; Copyright © 2012-2024 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2012-2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014, 2015, 2018 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2014, 2015, 2016, 2017, 2019, 2021 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015, 2023 Andreas Enge <andreas@enge.fr>
@@ -18,6 +18,7 @@
 ;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2024 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Leo Nikkilä <hello@lnikki.la>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -53,6 +54,7 @@
   #:use-module (gnu packages perl)
   #:use-module (guix packages)
   #:use-module (guix download)
+  #:use-module (guix memoization)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system trivial)
   #:use-module (guix gexp)
@@ -241,6 +243,33 @@ where the OS part is overloaded to denote a specific ABI---into GCC
 
           #:phases
           (modify-phases %standard-phases
+            (add-before 'configure 'relax-gcc-14s-strictness
+              (lambda* (#:key inputs #:allow-other-keys)
+                (let ((bash (assoc-ref inputs "bash"))
+                      (wrapper (string-append (getcwd) "/gcc.sh"))
+                      (stage-wrapper (string-append (getcwd) "/stage-gcc.sh")))
+                  (with-output-to-file wrapper
+                    (lambda _
+                      (format #t "#! ~a/bin/bash
+exec gcc \"$@\" \
+    -Wno-error=implicit-function-declaration"
+                              bash)))
+                  (chmod wrapper #o555)
+                  (with-output-to-file stage-wrapper
+                    (lambda _
+                      (format #t "#! ~a/bin/bash
+exec \"$@\" \
+    -Wno-error=implicit-function-declaration"
+                              bash)))
+                  (chmod stage-wrapper #o555)
+                  ;; Rather than adding CC to #:configure-flags and
+                  ;; STAGE_CC_WRAPPER to #:make-flags, we add them to the
+                  ;; environment in this easily removable stage.
+                  (cond (,(%current-target-system) ;cross-build?
+                         (setenv "CC_FOR_BUILD" wrapper))
+                        (else
+                         (setenv "CC" wrapper)
+                         (setenv "STAGE_CC_WRAPPER" stage-wrapper))))))
             (add-before 'configure 'pre-configure
               (lambda* (#:key inputs outputs #:allow-other-keys)
                 (let ((libdir ,(libdir))
@@ -288,7 +317,7 @@ where the OS part is overloaded to denote a specific ABI---into GCC
 \"-L~a/lib %{!static:-rpath=~a/lib %{!static-libgcc:-rpath=~a/lib -lgcc_s}} \" ~a"
                                libc libc libdir suffix))
                       (("#define GNU_USER_TARGET_STARTFILE_SPEC.*$" line)
-                       (format #f "#define STANDARD_STARTFILE_PREFIX_1 \"~a/lib\"
+                       (format #f "#define STANDARD_STARTFILE_PREFIX_1 \"~a/lib/\"
 #define STANDARD_STARTFILE_PREFIX_2 \"\"
 ~a"
                                libc line)))
@@ -302,7 +331,7 @@ where the OS part is overloaded to denote a specific ABI---into GCC
 \"-L~a/lib %{!static:-rpath=~a/lib %{!static-libgcc:-rpath=~a/lib -lgcc_s}} \" ~a"
                                libc libc libdir suffix))
                       (("#define	STARTFILE_LINUX_SPEC.*$" line)
-                       (format #f "#define STANDARD_STARTFILE_PREFIX_1 \"~a/lib\"
+                       (format #f "#define STANDARD_STARTFILE_PREFIX_1 \"~a/lib/\"
 #define STANDARD_STARTFILE_PREFIX_2 \"\"
 ~a"
                                libc line))))
@@ -552,7 +581,7 @@ Go.  It also includes runtime support libraries for these languages.")
        ;; XXX: This gross hack allows us to have libstdc++'s <bits/c++config.h>
        ;; in the search path, thereby avoiding misconfiguration of libstdc++:
        ;; <https://bugs.gnu.org/42392>.
-       ("libstdc++" ,libstdc++-headers)
+       ("libstdc++" ,(make-libstdc++-headers this-package))
 
        ,@(package-inputs gcc-4.7)))))
 
@@ -666,7 +695,8 @@ Go.  It also includes runtime support libraries for these languages.")
               (patches (search-patches "gcc-strmov-store-file-names.patch"
                                        "gcc-7-libsanitizer-mode-size.patch"
                                        "gcc-7-libsanitizer-fsconfig-command.patch"
-                                       "gcc-5.0-libvtv-runpath.patch"))))
+                                       "gcc-5.0-libvtv-runpath.patch"
+                                       "gcc-libstdc++-newer-gcc.patch"))))
     (description
      "GCC is the GNU Compiler Collection.  It provides compiler front-ends
 for several languages, including C, C++, Objective-C, Fortran, Ada, and Go.
@@ -693,7 +723,8 @@ It also includes runtime support libraries for these languages.")
               (patches (search-patches "gcc-8-strmov-store-file-names.patch"
                                        "gcc-7-libsanitizer-fsconfig-command.patch"
                                        "gcc-5.0-libvtv-runpath.patch"
-                                       "gcc-8-sort-libtool-find-output.patch"))
+                                       "gcc-8-sort-libtool-find-output.patch"
+                                       "gcc-libstdc++-newer-gcc.patch"))
               (modules '((guix build utils)))
               (snippet gcc-canadian-cross-objdump-snippet)))))
 
@@ -713,7 +744,8 @@ It also includes runtime support libraries for these languages.")
                                      "gcc-13.2.0-libstdc++-info-install-fix.patch"
                                      "gcc-9-strmov-store-file-names.patch"
                                      "gcc-9-asan-fix-limits-include.patch"
-                                     "gcc-5.0-libvtv-runpath.patch"))
+                                     "gcc-5.0-libvtv-runpath.patch"
+                                     "gcc-libstdc++-newer-gcc.patch"))
             (modules '((guix build utils)))
             (snippet gcc-canadian-cross-objdump-snippet)))))
 
@@ -730,7 +762,8 @@ It also includes runtime support libraries for these languages.")
               "1h87lcfaga0ydsf4pkhwlnjr8mky5ix8npbv6iy3jvzlzm1ra415"))
             (patches (search-patches "gcc-9-strmov-store-file-names.patch"
                                      "gcc-5.0-libvtv-runpath.patch"
-                                     "gcc-10-libsanitizer-no-crypt.patch"))
+                                     "gcc-10-libsanitizer-no-crypt.patch"
+                                     "gcc-libstdc++-newer-gcc.patch"))
             (modules '((guix build utils)))
             (snippet gcc-canadian-cross-objdump-snippet)))
    (properties
@@ -745,18 +778,19 @@ It also includes runtime support libraries for these languages.")
 (define-public gcc-11
   (package
    (inherit gcc-8)
-   (version "11.4.0")
+   (version "11.5.0")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/gcc/gcc-"
                                 version "/gcc-" version ".tar.xz"))
             (sha256
              (base32
-              "1ncd7akww0hl5kkmw1dj3qgqp3phdrr5dfnm7jia9s07n0ib4b9z"))
+              "0y1l6q4iy94nr30r3189fbb82ljbdqkq87y0y23wyifmx9l1iqm6"))
             (patches (search-patches "gcc-9-strmov-store-file-names.patch"
                                      "gcc-5.0-libvtv-runpath.patch"
                                      "gcc-10-libsanitizer-no-crypt.patch"
-                                     "gcc-11-libstdc++-hurd-libpthread.patch"))
+                                     "gcc-11-libstdc++-hurd-libpthread.patch"
+                                     "gcc-libstdc++-newer-gcc.patch"))
             (modules '((guix build utils)))
             (snippet gcc-canadian-cross-objdump-snippet)))
    (properties
@@ -782,7 +816,8 @@ It also includes runtime support libraries for these languages.")
               (patches (search-patches "gcc-12-strmov-store-file-names.patch"
                                        "gcc-5.0-libvtv-runpath.patch"
                                        "gcc-12-libsanitizer-no-crypt.patch"
-                                       "gcc-11-libstdc++-hurd-libpthread.patch"))
+                                       "gcc-11-libstdc++-hurd-libpthread.patch"
+                                       "gcc-libstdc++-newer-gcc.patch"))
               (modules '((guix build utils)))
               (snippet gcc-canadian-cross-objdump-snippet)))
    (properties
@@ -807,7 +842,8 @@ It also includes runtime support libraries for these languages.")
                 "10y0l1hx1haz4cj4d4g9f2ci5h7z9555i52f90zs2hwm3iifji88"))
               (patches (search-patches "gcc-12-strmov-store-file-names.patch"
                                        "gcc-5.0-libvtv-runpath.patch"
-                                       "gcc-13-libsanitizer-no-crypt.patch"))
+                                       "gcc-13-libsanitizer-no-crypt.patch"
+                                       "gcc-libstdc++-newer-gcc.patch"))
               (modules '((guix build utils)))
               (snippet gcc-canadian-cross-objdump-snippet)))
     (arguments
@@ -906,10 +942,7 @@ It also includes runtime support libraries for these languages.")
 
 ;; Note: When changing the default gcc version, update
 ;;       the gcc-toolchain-* definitions.
-(define-public gcc
-  (if (host-hurd64?)
-      gcc-14
-      gcc-11))
+(define-public gcc gcc-14)
 
 
 ;;;
@@ -1077,14 +1110,14 @@ using compilers other than GCC."
           (add-before 'configure 'chdir
             (lambda _
               (chdir "libstdc++-v3")))
-          #$@(let ((version (package-version gcc)))
-               (if (target-hurd64?)
-                   #~((add-after 'unpack 'patch-hurd64
-                        (lambda _
-                          (substitute* "libstdc++-v3/src/c++20/tzdb.cc"
-                            (("#if ! defined _GLIBCXX_ZONEINFO_DIR")
-                             "#if __GNU__ || ! defined _GLIBCXX_ZONEINFO_DIR")))))
-                   '())))
+
+          #$@(if (version>=? (package-version gcc) "13")
+                 #~((add-after 'unpack 'patch-tzdb.cc
+                      (lambda _
+                        (substitute* "libstdc++-v3/src/c++20/tzdb.cc"
+                          (("#if ! defined _GLIBCXX_ZONEINFO_DIR")
+                           "#if 1 // ! defined _GLIBCXX_ZONEINFO_DIR")))))
+                 '()))
 
       #:configure-flags '`("--disable-libstdcxx-pch"
                            ,(string-append "--with-gxx-include-dir="
@@ -1103,30 +1136,28 @@ using compilers other than GCC."
     (propagated-inputs '())
     (synopsis "GNU C++ standard library")))
 
-(define libstdc++
-  ;; Libstdc++ matching the default GCC.
-  (make-libstdc++ gcc))
-
-(define libstdc++-headers
-  ;; XXX: This package is for internal use to work around
-  ;; <https://bugs.gnu.org/42392> (see above).  The main difference compared
-  ;; to the libstdc++ headers that come with 'gcc' is that <bits/c++config.h>
-  ;; is right under include/c++ and not under
-  ;; include/c++/x86_64-unknown-linux-gnu (aka. GPLUSPLUS_TOOL_INCLUDE_DIR).
-  (package
-    (inherit libstdc++)
-    (name "libstdc++-headers")
-    (outputs '("out"))
-    (build-system trivial-build-system)
-    (arguments
-     '(#:builder (let* ((out       (assoc-ref %outputs "out"))
-                        (libstdc++ (assoc-ref %build-inputs "libstdc++")))
-                   (mkdir out)
-                   (mkdir (string-append out "/include"))
-                   (symlink (string-append libstdc++ "/include")
-                            (string-append out "/include/c++")))))
-    (inputs `(("libstdc++" ,libstdc++)))
-    (synopsis "Headers of GNU libstdc++")))
+(define make-libstdc++-headers
+  (mlambdaq (gcc)      ;memoize to play well with the object cache
+    ;; XXX: This package is for internal use to work around
+    ;; <https://bugs.gnu.org/42392> (see above).  The main difference compared
+    ;; to the libstdc++ headers that come with 'gcc' is that <bits/c++config.h>
+    ;; is right under include/c++ and not under
+    ;; include/c++/x86_64-unknown-linux-gnu (aka. GPLUSPLUS_TOOL_INCLUDE_DIR).
+    (let ((libstdc++ (make-libstdc++ gcc)))
+      (package
+        (inherit libstdc++)
+        (name "libstdc++-headers")
+        (outputs '("out"))
+        (build-system trivial-build-system)
+        (arguments
+         '(#:builder (let* ((out       (assoc-ref %outputs "out"))
+                            (libstdc++ (assoc-ref %build-inputs "libstdc++")))
+                       (mkdir out)
+                       (mkdir (string-append out "/include"))
+                       (symlink (string-append libstdc++ "/include")
+                                (string-append out "/include/c++")))))
+        (inputs `(("libstdc++" ,libstdc++)))
+        (synopsis "Headers of GNU libstdc++")))))
 
 (define-public libstdc++-4.9
   (make-libstdc++ gcc-4.9))
@@ -1316,7 +1347,7 @@ misnomer.")))
 
 ;; This must match the 'gcc' variable, but it must also be 'eq?' to one of the
 ;; libgccjit-* packages above.
-(define-public libgccjit libgccjit-11)
+(define-public libgccjit libgccjit-14)
 
 (define (make-gccgo gcc)
   "Return a gccgo package based on GCC."

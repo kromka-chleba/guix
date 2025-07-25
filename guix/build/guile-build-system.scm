@@ -62,14 +62,6 @@ determined."
         (substring file 0 dot)
         file)))
 
-(define %scheme-file-regexp
-  ;; Regexp to match Scheme files.
-  "\\.(scm|sls)$")
-
-(define %documentation-file-regexp
-  ;; Regexp to match README files and the likes.
-  "^(README.*|.*\\.html|.*\\.org|.*\\.md)$")
-
 (define* (set-locale-path #:key inputs native-inputs
                           #:allow-other-keys)
   "Set 'GUIX_LOCPATH'."
@@ -143,14 +135,11 @@ Raise an error if one of the processes exit with non-zero."
   (force-output log-port))
 
 (define* (build #:key outputs inputs native-inputs
-                (source-directory ".")
-                (compile-flags '())
-                ;; FIXME: Turn on parallel building of Guile modules by
-                ;; default after the non-determinism issues in the Guile byte
-                ;; compiler are resolved (see bug #20272).
-                (parallel-build? #f)
-                (scheme-file-regexp %scheme-file-regexp)
-                (not-compiled-file-regexp #f)
+                source-directory
+                compile-flags
+                parallel-build?
+                scheme-file-regexp
+                not-compiled-file-regexp
                 target
                 #:allow-other-keys)
   "Build files in SOURCE-DIRECTORY that match SCHEME-FILE-REGEXP.  Files
@@ -212,9 +201,7 @@ installed; this is useful for files that are meant to be included."
        #:max-processes (if parallel-build? (parallel-job-count) 1)
        #:report-progress report-build-progress))))
 
-(define* (install-documentation #:key outputs
-                                (documentation-file-regexp
-                                 %documentation-file-regexp)
+(define* (install-documentation #:key outputs documentation-file-regexp
                                 #:allow-other-keys)
   "Install files that match DOCUMENTATION-FILE-REGEXP."
   (let* ((out (assoc-ref outputs "out"))

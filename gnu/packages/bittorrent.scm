@@ -21,6 +21,8 @@
 ;;; Copyright © 2024 Noisytoot <ron@noisytoot.org>
 ;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2025 Tomas Volf <~@wolfsden.cz>
+;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -44,6 +46,7 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
+  #:use-module (guix build-system pyproject)
   #:use-module (guix build-system python)
   #:use-module (guix build-system qt)
   #:use-module (guix build-system glib-or-gtk)
@@ -327,6 +330,10 @@ Transmission BitTorrent daemon.")
                               #$output "/etc/bash_completion.d/"))
        #:phases
        #~(modify-phases %standard-phases
+           (add-after 'unpack 'patch-configure
+             (lambda _
+               (substitute* "configure.ac"
+                 (("0[.]18") "0.19.6"))))
            (add-after 'unpack 'delete-socket-tests
              (lambda _
                (substitute* "test/LpdMessageDispatcherTest.cc"
@@ -603,7 +610,7 @@ the following features:
        (sha256
         (base32
          "1kbac1qjbddcib0bldqaf0dcq5mqi9i2jv2fd4fayam4bcmjgfmr"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
     (inputs (list bash-minimal))
     (propagated-inputs
      (list gtk+
@@ -620,12 +627,10 @@ the following features:
            python-rencode
            python-service-identity
            python-setproctitle
-           python-six
            python-twisted
            python-zope-interface))
     (native-inputs
-     (list intltool python-wheel
-           (librsvg-for-system)))
+     (list intltool python-setuptools python-wheel))
     (native-search-paths
      (list $SSL_CERT_DIR
            $SSL_CERT_FILE))
@@ -634,34 +639,19 @@ the following features:
     ;; started, some of the tests still fail.  There are likely some tests
     ;; that require a network connection.
     (arguments
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'install 'wrap
-           (lambda* (#:key native-inputs inputs outputs #:allow-other-keys)
-             (let ((out               (assoc-ref outputs "out"))
-                   ;; "librsvg" input is only needed at build time and it
-                   ;; conflit with the "librsvg" propageted by "gtk+", so we
-                   ;; make sure there is no reference to it in the wrapper.
-                   (gi-typelib-path
-                    (string-join (filter
-                                  (lambda (x) (not (string-prefix?
-                                                    (assoc-ref
-                                                     (or native-inputs inputs)
-                                                     "librsvg")
-                                                    x)))
-                                  (string-split
-                                   (getenv "GI_TYPELIB_PATH")
-                                   #\:))
-                                 ":")))
-               (for-each
-                (lambda (program)
-                  (wrap-program program
-                    `("GI_TYPELIB_PATH" ":" prefix (,gi-typelib-path))))
-                (map (lambda (name)
-                       (string-append out "/bin/" name))
-                     '("deluge" "deluge-gtk"))))
-             #t)))))
+     (list
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'wrap 'wrap-deluge
+            (lambda _
+              (for-each
+               (lambda (program)
+                 (wrap-program program
+                   `("GI_TYPELIB_PATH" ":" prefix (,(getenv "GI_TYPELIB_PATH")))))
+               (map (lambda (name)
+                      (string-append #$output "/bin/" name))
+                    (list "deluge" "deluge-gtk"))))))))
     (home-page "https://www.deluge-torrent.org/")
     (synopsis  "Fully-featured cross-platform ​BitTorrent client")
     (description

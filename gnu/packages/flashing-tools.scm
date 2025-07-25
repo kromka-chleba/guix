@@ -14,6 +14,7 @@
 ;;; Copyright © 2023 B. Wilson <x@wilsonb.com>
 ;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
+;;; Copyright © 2025 Joaquín Aguirrezabalaga <kinote@kinote.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -179,19 +180,20 @@ technique.")
 (define-public dfu-programmer
   (package
     (name "dfu-programmer")
-    (version "0.7.2")
+    (version "1.1.0")
     (source
      (origin
-      (method url-fetch)
-      (uri (string-append "mirror://sourceforge/dfu-programmer/dfu-programmer/"
-                          version "/dfu-programmer-" version ".tar.gz"))
-      (sha256
-       (base32
-        "15gr99y1z9vbvhrkd25zqhnzhg6zjmaam3vfjzf2mazd39mx7d0x"))
-      (patches (search-patches "dfu-programmer-fix-libusb.patch"))))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/dfu-programmer/dfu-programmer")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "1y9ayl97qdy36bmlcf5vrg85jn72pgx7blgxd1albk79r87q2632"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list pkg-config))
+     (list autoconf automake pkg-config))
     (inputs
      (list libusb))
     (home-page "https://dfu-programmer.github.io/")
@@ -591,7 +593,7 @@ formats, and can perform many different manipulations.")
 (define-public uuu
   (package
     (name "uuu")
-    (version "1.5.125")
+    (version "1.5.201")
     (source
      (origin
        (method git-fetch)
@@ -601,7 +603,7 @@ formats, and can perform many different manipulations.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "02nyax1z2qkcxs764lj5cpazv8n957hv9ipd9b5rqpgi9pgnvlvz"))))
+         "0jil04khy0lxllhapdm86yyq9i3xqrlvmf6g5r53qmq9jyvxwlhv"))))
     (arguments
      `(#:tests? #f                      ; no tests
        #:modules ((guix build utils)
@@ -629,7 +631,7 @@ formats, and can perform many different manipulations.")
     (native-inputs
      (list pkg-config))
     (inputs
-     (list libusb bzip2 zlib libzip openssl
+     (list libusb bzip2 zlib libzip openssl tinyxml2
            `(,zstd "lib")))
     (home-page "https://github.com/NXPmicro/mfgtools")
     (synopsis "Freescale/NXP I.MX chip image deploy tools")

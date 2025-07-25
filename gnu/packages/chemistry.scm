@@ -812,9 +812,16 @@ your colleagues, or to generate pre-rendered animations.")
                          "-DBUILD_XCFUN=OFF"
                          "-DBUILD_LIBCINT=OFF"))))))))
     (native-inputs
-     (list cmake-minimal
-           python-setuptools
-           python-wheel))
+     (list
+      cmake-minimal
+      ;; HACK: Add gcc, make tune work.
+      ;; build-system-with-tuning-compiler on guix/transformations.scm
+      ;; want to find compiler on the build-inputs, but gcc is on the
+      ;; python-build-system's host-inputs, so when tune it , will report:
+      ;; "failed to determine which compiler is used"
+      (canonical-package gcc)
+      python-setuptools
+      python-wheel))
     (inputs
      (list
       ;; Use qcint when tuning for x86_64.
@@ -930,8 +937,8 @@ electromagnetic properties for molecules and crystals.")
         (origin
           (method git-fetch)
           (uri (git-reference
-                (url "https://github.com/sunqm/qcint")
-                (commit (string-append "v" (package-version base)))))
+                 (url "https://github.com/sunqm/qcint")
+                 (commit (string-append "v" (package-version base)))))
           (file-name (git-file-name name (package-version base)))
           (sha256
            (base32
@@ -944,11 +951,11 @@ electromagnetic properties for molecules and crystals.")
        (arguments
         (substitute-keyword-arguments (package-arguments base)
           ((#:configure-flags flags '())
-           `(cons "-DBUILD_MARCH_NATIVE=OFF"
-                  ,flags))
+           #~(cons "-DBUILD_MARCH_NATIVE=OFF"
+                   #$flags))
           ((#:phases phases)
-           `(modify-phases ,phases
-              (delete 'adjust-build-path)))
+           #~(modify-phases #$phases
+               (delete 'adjust-build-path)))
           ;; Tests require python-pyscf.
           ((#:tests? _ #f) #f)))
        (native-inputs

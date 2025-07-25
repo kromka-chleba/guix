@@ -116,16 +116,16 @@ Firefox locales.")
 
 ;; We copy the official build id, which is defined at
 ;; tor-browser-build/rbm.conf (browser_release_date).
-(define %torbrowser-build-date "20250623181100")
+(define %torbrowser-build-date "20250722101758")
 
 ;; To find the last version, look at https://www.torproject.org/download/.
-(define %torbrowser-version "14.5.4")
+(define %torbrowser-version "14.5.5")
 
 ;; To find the last Firefox version, browse
 ;; https://archive.torproject.org/tor-package-archive/torbrowser/<%torbrowser-version>
 ;; There should be only one archive that starts with
 ;; "src-firefox-tor-browser-".
-(define %torbrowser-firefox-version "128.12.0esr-14.5-1-build1")
+(define %torbrowser-firefox-version "128.13.0esr-14.5-1-build2")
 
 ;; See tor-browser-build/rbm.conf for the list.
 (define %torbrowser-locales (list "ar" "be" "bg" "ca" "cs" "da" "de" "el" "es-ES" "fa"
@@ -140,11 +140,11 @@ Firefox locales.")
     (method git-fetch)
     (uri (git-reference
           (url "https://gitlab.torproject.org/tpo/translation.git")
-          (commit "9f6043e1a51d04f9f6f00ade10e410691fe41f66")))
+          (commit "8600afeb12fdae895c37618e1386c1a1ac2f5308")))
     (file-name "translation-base-browser")
     (sha256
      (base32
-      "0hg3pihvdk91kmrg5f9173j5m28jw9bzi7pr1sg3711llp8ybzp5"))))
+      "1l190sqpbldnsrwqv8y3fbf7l3bf54b17bajswkaqpsgyci2wicy"))))
 
 ;; See tor-browser-build/projects/translation/config.
 (define torbrowser-translation-specific
@@ -152,11 +152,11 @@ Firefox locales.")
     (method git-fetch)
     (uri (git-reference
           (url "https://gitlab.torproject.org/tpo/translation.git")
-          (commit "cd3b5ba07ab83e7e0e8e0fdffbc1c4043a5525ca")))
+          (commit "9fe8a13ee4c69f91cd545dc3c575ca8f4851d58e")))
     (file-name "translation-tor-browser")
     (sha256
      (base32
-      "05w1idd2jid91qnbanrwz706fkijf14ninakn58v5hz0vrk99x8n"))))
+      "0n3wa1snadhr574rf01kqg18vh66hzv1h7lhwkdps7q9qj7mpgim"))))
 
 (define torbrowser-assets
   ;; This is a prebuilt Torbrowser from which we take the assets we need.
@@ -172,7 +172,7 @@ Firefox locales.")
          version "/tor-browser-linux-x86_64-" version ".tar.xz"))
        (sha256
         (base32
-         "1nv3d7cnd9m5d4w0v0fjpxwr81v6181laj06q5ncw1q5bkssmdfv"))))
+         "0gdzd3gm0qs7ypzdrcdqz6byp5lc9byvb3m4xj3sgdd44j0s34dc"))))
     (arguments
      (list
       #:install-plan
@@ -213,7 +213,7 @@ Browser.")
          ".tar.xz"))
        (sha256
         (base32
-         "1y273bk7bd6y0j2gan0r63mm9znj1lzfg84xz7fnrf3v51h2g7np"))))
+         "1pm0fi816hzafgv0z52h3n3x355hwjlxgzz89lpzncz9idf9lsqy"))))
     (build-system mozilla-build-system)
     (inputs
      (list lyrebird
@@ -235,9 +235,6 @@ Browser.")
            libgnome
            libjpeg-turbo
            libpng-apng
-           ;; UNBUNDLE-ME! libogg
-           ;; UNBUNDLE-ME! libtheora ; wants theora-1.2, not yet released
-           ;; UNBUNDLE-ME! libvorbis
            libwebp
            libxft
            libevent
@@ -351,9 +348,6 @@ Browser.")
          "--with-system-webp"
          "--with-system-zlib"
          "--with-system-libevent"
-         ;; UNBUNDLE-ME! "--with-system-ogg"
-         ;; UNBUNDLE-ME! "--with-system-vorbis"
-         ;; UNBUNDLE-ME! "--with-system-theora" ; wants theora-1.2, not yet released
          "--with-system-libvpx"
          "--with-system-icu"
          "--with-system-nspr"
@@ -410,26 +404,11 @@ Browser.")
                           ;; to build netwerk/socket/neqo_glue.
                           ;;"security/nss"
                           ;;
-                          ;; TODO: Use more system media libraries.  See:
-                          ;; <https://bugzilla.mozilla.org/show_bug.cgi?id=517422>
-                          ;;   * libtheora: esr60 wants v1.2, not yet released.
-                          ;;   * soundtouch: avoiding the bundled library would
-                          ;;     result in some loss of functionality.  There's
-                          ;;     also an issue with exception handling
-                          ;;     configuration.  It seems that this is needed in
-                          ;;     some moz.build:
-                          ;;       DEFINES['ST_NO_EXCEPTION_HANDLING'] = 1
-                          ;;   * libopus
-                          ;;   * speex
-                          ;;
                           "modules/freetype2"
                           ;; "media/libjpeg"  ; needed for now, because media/libjpeg/moz.build is referenced from config/external/moz.build
                           "modules/zlib"
                           "ipc/chromium/src/third_party/libevent"
                           "media/libvpx"
-                          ;; UNBUNDLE-ME! "media/libogg"
-                          ;; UNBUNDLE-ME! "media/libvorbis"
-                          ;; UNBUNDLE-ME! "media/libtheora" ; wants theora-1.2, not yet released
                           ;; UNBUNDLE-ME! "media/libtremor"
                           "media/libwebp"
                           ;; UNBUNDLE-ME! "gfx/harfbuzz"
@@ -667,6 +646,11 @@ Browser.")
               ;; system/architecture-specific file name.
               (install-file (first (find-files "." "geckodriver"))
                             (string-append #$output "/bin"))))
+	  (add-after 'install 'remove-duplicate-bin
+            (lambda* (#:key outputs #:allow-other-keys)
+              (delete-file (string-append #$output "/lib/"
+					  #$moz-app-name "/"
+					  #$moz-app-name "-bin"))))
           (add-after 'install 'wrap-program
             (lambda* (#:key inputs #:allow-other-keys)
               (let* ((gtk #$(this-package-input "gtk+"))
@@ -844,17 +828,17 @@ attacks on the privacy of Tor users.")
 
 ;; We copy the official build id, which can be found there:
 ;; https://cdn.mullvad.net/browser/update_responses/update_1/release.
-(define %mullvadbrowser-build-date "20250623181100")
+(define %mullvadbrowser-build-date "20250722101758")
 
 ;; To find the last version, look at
 ;; https://mullvad.net/en/download/browser/linux.
-(define %mullvadbrowser-version "14.5.4")
+(define %mullvadbrowser-version "14.5.5")
 
 ;; To find the last Firefox version, browse
 ;; https://archive.torproject.org/tor-package-archive/mullvadbrowser/<%mullvadbrowser-version>
 ;; There should be only one archive that starts with
 ;; "src-firefox-mullvad-browser-".
-(define %mullvadbrowser-firefox-version "128.12.0esr-14.5-1-build1")
+(define %mullvadbrowser-firefox-version "128.13.0esr-14.5-1-build1")
 
 ;; See tor-browser-build/projects/translation/config.
 (define mullvadbrowser-translation-base
@@ -862,11 +846,11 @@ attacks on the privacy of Tor users.")
     (method git-fetch)
     (uri (git-reference
           (url "https://gitlab.torproject.org/tpo/translation.git")
-          (commit "9f6043e1a51d04f9f6f00ade10e410691fe41f66")))
+          (commit "8600afeb12fdae895c37618e1386c1a1ac2f5308")))
     (file-name "translation-base-browser")
     (sha256
      (base32
-      "0hg3pihvdk91kmrg5f9173j5m28jw9bzi7pr1sg3711llp8ybzp5"))))
+      "1l190sqpbldnsrwqv8y3fbf7l3bf54b17bajswkaqpsgyci2wicy"))))
 
 ;; See tor-browser-build/projects/translation/config.
 (define mullvadbrowser-translation-specific
@@ -894,7 +878,7 @@ attacks on the privacy of Tor users.")
          version "/mullvad-browser-linux-x86_64-" version ".tar.xz"))
        (sha256
         (base32
-         "182xpn6ln1cms4d7sml33shqpz47zh0sg5gbynw127w9c7xir48c"))))
+         "1z5g5l3bikpl2vlps641fpm2lps672ci0vx002blvssn55iv22iz"))))
     (arguments
      (list
       #:install-plan
@@ -937,7 +921,7 @@ Mullvad Browser.")
          %mullvadbrowser-firefox-version ".tar.xz"))
        (sha256
         (base32
-         "1wv5s5x907aw15nhm4w0x2wriyylrzjgw103f350mqwrhckmqhc0"))))
+         "1d8zs5mziig1vs385rqr8xmxyklf9aqbsk3lmqxc0p2ldgq6ygll"))))
     (arguments
      (substitute-keyword-arguments (package-arguments mullvadbrowser-base)
        ((#:phases phases)

@@ -100,14 +100,14 @@
 (define-public freetype
   (package
     (name "freetype")
-    (version "2.13.0")
+    (version "2.13.3")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://savannah/freetype/freetype-"
                            version ".tar.xz"))
        (sha256
-        (base32 "0k32jaaz4pfhw34xwr6a38fncrpwr9fn5ij35m5w4dkn0jykmqjy"))))
+        (base32 "129j0rprq6iijmckjmk9yyjwnfimpg3mlpdqmr6wf9ylcq33al05"))))
     (build-system gnu-build-system)
     (arguments
      ;; The use of "freetype-config" is deprecated, but other packages still
@@ -360,11 +360,23 @@ but also provides many useful font conversion and analysis facilities.
        (sha256
         (base32 "0187xhgw6spzaji93fs1mnhqnq30pxhdj1p2m88673szvzpf10av"))))
     (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-before 'build 'set-CC
-                 (lambda _
-                   (setenv "CC" "gcc"))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-gcc14-strictness
+            (lambda _
+              (substitute* (string-append
+                            "c/makeotf/makeotf_lib/build"
+                            "/hotconv/linux/gcc/release/Makefile")
+                (("CFLAGS = ")
+                 "CFLAGS = -Wno-error=int-conversion"))
+              (substitute*
+                  "c/public/lib/build/t1write/linux/gcc/release/Makefile"
+                (("CFLAGS = ")
+                 "CFLAGS = -Wno-error=incompatible-pointer-types"))))
+          (add-before 'build 'set-CC
+            (lambda _
+              (setenv "CC" "gcc"))))))
     (native-inputs
      (list pkg-config
            python-pytest
@@ -379,7 +391,7 @@ but also provides many useful font conversion and analysis facilities.
            python-defcon
            python-fontmath
            python-fonttools
-           python-lxml
+           python-lxml-4.9
            python-tqdm
            python-ufonormalizer
            python-ufoprocessor))))
@@ -1685,14 +1697,14 @@ definitions.")
 (define-public fontforge
   (package
     (name "fontforge")
-    (version "20220308")
+    (version "20230101")
     (source (origin
               (method url-fetch)
               (uri (string-append
                     "https://github.com/fontforge/fontforge/releases/download/"
                     version "/fontforge-" version ".tar.xz"))
               (sha256
-               (base32 "0ncfc4ajwy4ng6b6h79w52jh9z3lngvf3f3ldi1wzkhcg9zh3r01"))))
+               (base32 "1y30bk9rdya8bkw4q77y6nq5xfg7nm0qliz5miqdlk8c0r6fr0na"))))
     (build-system cmake-build-system)
     (native-inputs
      (list pkg-config))
@@ -1720,7 +1732,7 @@ definitions.")
            zlib))
     (arguments
      (list
-      #:configure-flags #~'( ;; TODO: Provide GTK+ for the Wayland-friendly GDK
+      #:configure-flags #~`(;; TODO: Provide GTK+ for the Wayland-friendly GDK
                             ;; backend, instead of the legacy X11 backend.
                             ;; Currently it introduces a circular dependency.
                             "-DENABLE_X11=ON")
@@ -1733,6 +1745,12 @@ definitions.")
               (substitute* "CMakeLists.txt"
                 (("^set_default_rpath\\(\\)")
                  ""))))
+          (add-after 'unpack 'do-not-use-msgfmt--check
+            (lambda _
+              ;; msgfmt --check from gettext-0.23 fails on fr.po:
+              ;; 'msgstr' is not a valid C format string
+              (substitute* "po/CMakeLists.txt"
+                ((" --check") ""))))
           #$@(if (target-hurd?)
                  #~((add-after 'unpack 'apply-hurd-patch
                       (lambda _
@@ -1937,7 +1955,7 @@ maintain the Noto Fonts project.")
 (define-public fcft
   (package
     (name "fcft")
-    (version "3.3.1")
+    (version "3.3.2")
     (home-page "https://codeberg.org/dnkl/fcft")
     (source (origin
               (method git-fetch)
@@ -1945,7 +1963,7 @@ maintain the Noto Fonts project.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "08fr6zcqk4qp1k3r0di6v60qfyd3q5k9jnxzlsx2p1lh0nils0xa"))))
+                "1saqi8fxrz2lddx9pj6ym4ikx11sgqlyp8w10ngdlci384p49sbb"))))
     (build-system meson-build-system)
     (native-inputs
      (list check pkg-config scdoc))

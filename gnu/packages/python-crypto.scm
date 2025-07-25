@@ -28,7 +28,7 @@
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2022 Antero Mejr <antero@mailbox.org>
 ;;; Copyright © 2023 Juliana Sims <juli@incana.org>
-;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2023, 2025 Zheng Junjie <z572@z572.online>
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;;
@@ -680,7 +680,16 @@ OpenSSL library.")
        (sha256
         (base32
          "18v3rfyv7xi26fb97nw1xc0l6x8wi0i4xj8dlq4gblpbjxiac187"))))
-    (build-system python-build-system)
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'relax-gcc-14-strictness
+            (lambda _
+              (setenv "CFLAGS"
+                      (string-append "-g -O2 -Wno-error=int-conversion")))))))
     (home-page "https://github.com/tgalal/python-axolotl-curve25519")
     (synopsis "Python wrapper for curve25519 library")
     (description "This is a python wrapper for the curve25519 library
@@ -743,6 +752,7 @@ asynchronous messaging environments.")
     (license license:gpl3)))
 
 (define-public python-pyaes
+  ;; XXX: Last updated in 2017.
   (package
     (name "python-pyaes")
     (version "1.6.1")
@@ -751,9 +761,9 @@ asynchronous messaging environments.")
        (method url-fetch)
        (uri (pypi-uri "pyaes" version))
        (sha256
-        (base32
-         "13vdaff15k0jyfcss4b4xvfgm8xyv0nrbyw5n1qc7lrqbi0b3h82"))))
-    (build-system python-build-system)
+        (base32 "13vdaff15k0jyfcss4b4xvfgm8xyv0nrbyw5n1qc7lrqbi0b3h82"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
     (home-page "https://github.com/ricmoo/pyaes")
     (synopsis "Implementation of AES in Python")
     (description "This package contains a pure-Python implementation of the

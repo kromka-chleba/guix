@@ -40,7 +40,7 @@
 ;;; Copyright © 2023 Jaeme Sifat <jaeme@runbox.com>
 ;;; Copyright © 2024 Suhail <suhail@bayesians.ca>
 ;;; Copyright © 2024 Clément Lassieur <clement@lassieur.org>
-;;; Copyright © 2024 Ashish SHUKLA <ashish.is@lostca.se>
+;;; Copyright © 2024, 2025 Ashish SHUKLA <ashish.is@lostca.se>
 ;;; Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 ;;; Copyright © 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Roman Scherer <roman@burningswell.com>
@@ -554,63 +554,71 @@ to all types of devices that provide serial consoles.")
     (license license:gpl2+)))
 
 (define-public beep
-  (package
-    (name "beep")
-    (version "1.4.12")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             ;; The original beep 1.3 at <http://www.johnath.com/beep> has been
-             ;; unmaintained for some time, and vulnerable to at least two CVEs:
-             ;; https://github.com/johnath/beep/issues/11#issuecomment-454056858
-             ;; Use this maintained fork instead.
-             (url "https://github.com/spkr-beep/beep")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0dgrb5yg4ys1fa4hs95iz3m2yhryfzzw0j6g6yf6vhbys4ihcf40"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list #:make-flags
-           #~(list (string-append "CC=" #$(cc-for-target))
-                   (string-append "prefix=" #$output))
-           #:phases
-           #~(modify-phases %standard-phases
-               (delete 'configure)      ; no configure script
-               (add-before 'check 'patch-tests
-                 (lambda _
-                   (substitute* "GNUmakefile"
-                     (("/bin/bash")
-                      (which "bash"))
-                     ;; XXX In the build environment, $(PWD) is the *parent* directory
-                     ;; /tmp/guix-build-beep-x.y.drv-0!  A pure guix shell works fine.
-                     (("\\$\\(PWD\\)" pwd)
-                      (string-append pwd "/source")))
-                   (substitute* (find-files "tests" "\\.expected")
-                     ;; The build environment lacks /dev/{console,tty*}.
-                     ;; In fact, even nckx's regular Guix System lacks ttyS1…
-                     ((": Permission denied")
-                      ": No such file or directory"))))
-               (add-before 'install 'install-rules
-                 (lambda _
-                   (mkdir-p (string-append #$output "/etc/udev/rules.d"))
-                   (with-output-to-file
-                       (string-append #$output
-                                      "/etc/udev/rules.d/70-pcspkr-beep.rules")
-                     (lambda _
-                       (display (string-append "\
-ACTION==\"add\", SUBSYSTEM==\"input\", ATTRS{name}==\"PC Speaker\", "
-                                               "ENV{DEVNAME}!=\"\", "
-                                               "TAG+=\"uaccess\"")))))))))
-    (synopsis "Linux command-line utility to control the PC speaker")
-    (description "beep allows the user to control the PC speaker with precision,
+  (let ((commit "1cba97210748ac9f478c0f93334a1eb31eb002d7")
+        (revision "0"))
+    (package
+      (name "beep")
+      (version (git-version "1.4.12" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                ;; The original beep 1.3 at <http://www.johnath.com/beep> has been
+                ;; unmaintained for some time, and vulnerable to at least two CVEs:
+                ;; https://github.com/johnath/beep/issues/11#issuecomment-454056858
+                ;; Use this maintained fork instead.
+                (url "https://github.com/spkr-beep/beep")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1di7j1n7svn6hyvs3fac0n1wnc3wiyxk47jyafwla0zifnwf0xwy"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:make-flags
+        #~(list (string-append "CC=" #$(cc-for-target))
+                (string-append "prefix=" #$output))
+        #:phases
+        #~(modify-phases %standard-phases
+            (delete 'configure) ;no configure script
+            (add-before 'check 'patch-tests
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "GNUmakefile"
+                  (("/bin/bash")
+                   (search-input-file inputs "bin/bash"))
+                  ;; XXX In the build environment, $(PWD) is the *parent* directory
+                  ;; /tmp/guix-build-beep-x.y.drv-0!  A pure guix shell works fine.
+                  (("\\$\\(PWD\\)" pwd)
+                   (string-append pwd "/source")))
+                (substitute* (find-files "tests" "\\.expected")
+                  ;; The build environment lacks /dev/{console,tty*}.
+                  ;; In fact, even nckx's regular Guix System lacks ttyS1…
+                  ((": Permission denied")
+                   ": No such file or directory"))))
+            (add-before 'install 'install-rules
+              (lambda _
+                (let ((rules.d (string-append #$output "/etc/udev/rules.d")))
+                  (mkdir-p rules.d)
+                  (with-output-to-file
+                      (string-append rules.d "/70-pcspkr-beep.rules")
+                    (lambda _
+                      (display
+                       (string-join (list "ACTION==\"add\""
+                                          "SUBSYSTEM==\"input\""
+                                          "ATTRS{name}==\"PC Speaker\""
+                                          "ENV{DEVNAME}!=\"\""
+                                          "TAG+=\"uaccess\"")
+                                    ", "))))))))))
+      (synopsis "Linux command-line utility to control the PC speaker")
+      (description
+       "beep allows the user to control the PC speaker with precision,
 allowing different sounds to indicate different events.  While it can be run
 quite happily on the command line, its intended place of residence is within
 scripts, notifying the user when something interesting occurs.  Of course, it
-has no notion of what's interesting, but it's very good at that notifying part.")
-    (home-page "https://github.com/spkr-beep/beep")
-    (license license:gpl2+)))
+has no notion of what's interesting, but it's very good at that notifying
+part.")
+      (home-page "https://github.com/spkr-beep/beep")
+      (license license:gpl2+))))
 
 (define-public unibilium
   (package
@@ -852,7 +860,7 @@ eye-candy, customizable, and reasonably lightweight.")
 (define-public foot
   (package
     (name "foot")
-    (version "1.22.3")
+    (version "1.23.1")
     (home-page "https://codeberg.org/dnkl/foot")
     (source
      (origin
@@ -862,7 +870,7 @@ eye-candy, customizable, and reasonably lightweight.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1l5liw4dgv7hxdimyk5qycmkfjgimdrx51rjvdizpcfmdlkvg518"))))
+        (base32 "1rs0i8i6li38sdf1nqp4jkq6a7i7zwn14hibrxpry0hjnbiypwcc"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -1330,8 +1338,11 @@ tmux.")
           (delete 'configure)   ;no configure script
           (replace 'build
             (lambda* (#:key inputs #:allow-other-keys)
-              ;; Don't fail on deprecation warnings from GCC
-              (setenv "CFLAGS" "-Wno-error=deprecated-declarations")
+              ;; Don't fail on deprecation warnings from GCC or when not using
+              ;; sizeof in one of the two arguments of calloc
+              (setenv "CFLAGS"
+                      (string-append "-Wno-error=deprecated-declarations "
+                                     "-Wno-error=calloc-transposed-args"))
               ;; The "kitty" sub-directory must be writable prior to
               ;; configuration (e.g., un-setting updates).
               (for-each make-file-writable (find-files "kitty"))

@@ -601,7 +601,7 @@ specialized device.")
            qtsvg-5
            qtwebchannel-5
            qtwebengine-5
-           qtxmlpatterns
+           qtxmlpatterns-5
            quazip-5
            sdl
            zlib))
@@ -735,7 +735,7 @@ charts.")
            qtgraphicaleffects
            qtquickcontrols2-5
            qtx11extras
-           qtxmlpatterns))
+           qtxmlpatterns-5))
     (home-page "https://edu.kde.org/ktouch/")
     (synopsis "Touch typing tutor")
     (description
@@ -837,18 +837,11 @@ stored and user can review his performance in any time.")
                          (filter (match-lambda
                                    ((label . _)
                                     (string-prefix? "python-" label)))
-                                 inputs)))
-                   (qtwebengineprocess
-                    (search-input-file inputs
-                                       "lib/qt5/libexec/QtWebEngineProcess")))
-               ;; The program fails to find the QtWebEngineProcess program, so
-               ;; we set QTWEBENGINEPROCESS_PATH to help it.  PYTHONPATH is
-               ;; wrapped to avoid declaring Python libraries as propagated
-               ;; inputs.
+                                 inputs))))
+               ;; PYTHONPATH is wrapped to avoid declaring Python libraries as
+               ;; propagated inputs.
                (for-each (lambda (program)
                            (wrap-program program
-                             `("QTWEBENGINEPROCESS_PATH" =
-                               (,qtwebengineprocess))
                              `("PATH" prefix (,(string-append
                                                 (assoc-ref inputs "mpv")
                                                 "/bin")))

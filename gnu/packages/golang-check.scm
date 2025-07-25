@@ -51,6 +51,7 @@
   #:use-module (guix utils)
   #:use-module (gnu packages)
   #:use-module (gnu packages bash)
+  #:use-module (gnu packages golang)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages version-control))
@@ -94,6 +95,34 @@ function returns obj boolean.  This package does not integrate into the
 testing package automatically and requires to check the returning boolean
 value and call @code{t.Fatal()} if the assertion fails.")
     (license license:expat)))
+
+(define-public go-github-com-adalogics-go-fuzz-headers
+  (package
+    (name "go-github-com-adalogics-go-fuzz-headers")
+    (version "0.0.0-20240806141605-e8a1dd7889d6")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/AdaLogics/go-fuzz-headers")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "161wky8n1zszn34zgh837lpk6q3cabfhzavv1qyzd0qybmq1n7g2"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/AdaLogics/go-fuzz-headers"))
+    (home-page "https://github.com/AdaLogics/go-fuzz-headers")
+    (synopsis "Helper functions for Go fuzzing")
+    (description
+     "This project provides various helper functions for @url{Go fuzzing,
+https://go.dev/doc/security/fuzz/}.  It is mostly used in combination with
+@url{https://github.com/dvyukov/go-fuzz, go-fuzz}, but compatibility with
+fuzzing in the standard library will also be supported.  Any coverage guided
+fuzzing engine that provides an array or slice of bytes can be used with
+go-fuzz-headers.")
+    (license license:asl2.0)))
 
 (define-public go-github-com-alecthomas-assert-v2
   (package
@@ -2153,6 +2182,34 @@ strings must or must not be sent to a given local UDP listener.")
      "This package provides JSON equality assertions for Golang.")
     (license license:expat)))
 
+(define-public go-github-com-tailscale-depaware
+  (package
+    (name "go-github-com-tailscale-depaware")
+    (version "0.0.0-20250112153213-b748de04d81b")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tailscale/depaware")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0x6ljpmmdpi5z1iky56akprbhw0z7xsqvvvxvwwh19lkl75gxdf5"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/tailscale/depaware"))
+    (propagated-inputs
+     (list go-github-com-pkg-diff
+           go-golang-org-x-tools))
+    (home-page "https://github.com/tailscale/depaware")
+    (synopsis "Dependencies checker for Golang")
+    (description
+     "This package implements a functionality to scan and report for
+dependencies which are checked in to the repository.  It provides a library
+and CLI tool.")
+    (license license:bsd-3)))
+
 (define-public go-github-com-tdewolff-test
   (package
     (name "go-github-com-tdewolff-test")
@@ -2754,7 +2811,7 @@ used to skip the test
 (define-public go-honnef-co-go-tools
   (package
     (name "go-honnef-co-go-tools")
-    (version "0.4.7")
+    (version "0.6.1")
     (source
      (origin
        (method git-fetch)
@@ -2764,22 +2821,17 @@ used to skip the test
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "1n58skq2a0vhsgdfdkyqi00d3vv13kiw9b4mxx6xfyb6ysrdy7d1"))))
+         "0y4xbb91mv1rj7aps5g7hz1mhf5pbdc8yp5bxz6dq5ajlmfqwi3s"))))
     (build-system go-build-system)
     (arguments
      (list
+      #:go go-1.23
+      #:skip-build? #t
       #:import-path "honnef.co/go/tools"
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; XXX: Workaround for go-build-system's lack of Go modules support.
-          (delete 'build)
-          (replace 'check
-            (lambda* (#:key tests? import-path #:allow-other-keys)
-              (when tests?
-                (with-directory-excursion (string-append "src/" import-path)
-                  (invoke "go" "test" "-v" "./..."))))))))
+      #:unpack-path "honnef.co/go/tools"))
     (propagated-inputs
      (list go-github-com-burntsushi-toml
+           go-golang-org-x-exp
            go-golang-org-x-exp-typeparams
            go-golang-org-x-mod
            go-golang-org-x-tools))
@@ -2915,18 +2967,6 @@ thoroughly
                     "  This package provides an command line interface (CLI)
 tool."))))
 
-(define-public go-keyify
-  (package
-    (inherit go-honnef-co-go-tools)
-    (name "go-keyify")
-    (arguments
-     `(#:import-path "honnef.co/go/tools/cmd/keyify"
-       #:unpack-path "honnef.co/go/tools"
-       #:install-source? #f))
-    (synopsis "Transform an unkeyed struct literal into a keyed one in Go")
-    (description "This package turns unkeyed struct literals (@code{T{1, 2,
-3}}) into keyed ones (@code{T{A: 1, B: 2, C: 3}}) in Go.")))
-
 (define-public go-pgmockproxy
   (package
     (inherit go-github-com-jackc-pgmock)
@@ -2958,13 +2998,18 @@ without needing to use a tool like Wireshark.")))
 tool."))))
 
 (define-public go-staticcheck
-  (package
-    (inherit go-honnef-co-go-tools)
+  (package/inherit go-honnef-co-go-tools
     (name "go-staticcheck")
     (arguments
-     `(#:import-path "honnef.co/go/tools/cmd/staticcheck"
-       #:unpack-path "honnef.co/go/tools"
-       #:install-source? #f))
+     (substitute-keyword-arguments
+         (package-arguments go-honnef-co-go-tools)
+       ((#:tests? _ #t) #f)
+       ((#:skip-build? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _) "honnef.co/go/tools/cmd/staticcheck")))
+    (native-inputs (package-propagated-inputs go-honnef-co-go-tools))
+    (propagated-inputs '())
+    (inputs '())
     (synopsis "Staticcheck advanced Go linter")
     (description
      "Staticcheck is a state of the art linter for the Go programming language.
@@ -2972,13 +3017,18 @@ Using static analysis, it finds bugs and performance issues, offers
 simplifications, and enforces style rules.")))
 
 (define-public go-structlayout
-  (package
-    (inherit go-honnef-co-go-tools)
+  (package/inherit go-honnef-co-go-tools
     (name "go-structlayout")
     (arguments
-     `(#:import-path "honnef.co/go/tools/cmd/structlayout"
-       #:unpack-path "honnef.co/go/tools"
-       #:install-source? #f))
+     (substitute-keyword-arguments
+         (package-arguments go-honnef-co-go-tools)
+       ((#:tests? _ #t) #f)
+       ((#:skip-build? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _) "honnef.co/go/tools/cmd/structlayout")))
+    (native-inputs (package-propagated-inputs go-honnef-co-go-tools))
+    (propagated-inputs '())
+    (inputs '())
     (synopsis "Display the layout (field sizes and padding) of structs in Go")
     (description "This package prints the layout of a struct in Go, which is
 the byte offset and size of each field, respecting padding.  This information
@@ -2986,26 +3036,36 @@ is printed in human-readable form by default, or as JSON with the @code{-json}
 flag.")))
 
 (define-public go-structlayout-optimize
-  (package
-    (inherit go-honnef-co-go-tools)
+  (package/inherit go-honnef-co-go-tools
     (name "go-structlayout-optimize")
     (arguments
-     `(#:import-path "honnef.co/go/tools/cmd/structlayout-optimize"
-       #:unpack-path "honnef.co/go/tools"
-       #:install-source? #f))
+     (substitute-keyword-arguments
+         (package-arguments go-honnef-co-go-tools)
+       ((#:tests? _ #t) #f)
+       ((#:skip-build? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _) "honnef.co/go/tools/cmd/structlayout-optimize")))
+    (native-inputs (package-propagated-inputs go-honnef-co-go-tools))
+    (propagated-inputs '())
+    (inputs '())
     (synopsis "Reorder struct fields to minimize the amount of padding in Go")
     (description "This package reads @code{go-structlayout} JSON on stdin and
 reorders fields to minimize the amount of padding.  It can emit JSON to feed
 into @code{go-structlayout-pretty}.")))
 
 (define-public go-structlayout-pretty
-  (package
-    (inherit go-honnef-co-go-tools)
+  (package/inherit go-honnef-co-go-tools
     (name "go-structlayout-pretty")
     (arguments
-     `(#:import-path "honnef.co/go/tools/cmd/structlayout-pretty"
-       #:unpack-path "honnef.co/go/tools"
-       #:install-source? #f))
+     (substitute-keyword-arguments
+         (package-arguments go-honnef-co-go-tools)
+       ((#:tests? _ #t) #f)
+       ((#:skip-build? _ #t) #f)
+       ((#:install-source? _ #t) #f)
+       ((#:import-path _) "honnef.co/go/tools/cmd/structlayout-pretty")))
+    (native-inputs (package-propagated-inputs go-honnef-co-go-tools))
+    (propagated-inputs '())
+    (inputs '())
     (synopsis "Format the output of go-structlayout with ASCII art in Go")
     (description "This package takes @code{go-structlayout}-like JSON and
 prints an ASCII fraphic representing the memory layout.")))

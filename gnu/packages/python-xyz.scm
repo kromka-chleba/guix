@@ -132,7 +132,7 @@
 ;;; Copyright © 2022 Mathieu Laparie <mlaparie@disr.it>
 ;;; Copyright © 2022 Garek Dyszel <garekdyszel@disroot.org>
 ;;; Copyright © 2022 Baptiste Strazzulla <bstrazzull@hotmail.fr>
-;;; Copyright © 2022 Nicolas Graves <ngraves@ngraves.fr>
+;;; Copyright © 2022-2025 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2023 Gabriel Wicki <gabriel@erlikon.ch>
 ;;; Copyright © 2023 Amade Nemes <nemesamade@gmail.com>
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
@@ -146,7 +146,7 @@
 ;;; Copyright © 2023 Parnikkapore <poomklao@yahoo.com>
 ;;; Copyright © 2023 Foundation Devices, Inc. <hello@foundationdevices.com>
 ;;; Copyright © c4droid <c4droid@foxmail.com>
-;;; Copyright © 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2023, 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2023 Attila Lendvai <attila@lendvai.name>
 ;;; Copyright © 2023, 2024 Troy Figiel <troy@troyfigiel.com>
 ;;; Copyright © 2023 Adam Faiz <adam.faiz@disroot.org>
@@ -356,7 +356,7 @@ SNS, Gotify, etc.")
 (define-public python-archspec
   (package
     (name "python-archspec")
-    (version "0.2.3")
+    (version "0.2.5")
     (source
      (origin
        (method git-fetch)
@@ -366,36 +366,12 @@ SNS, Gotify, etc.")
              (recursive? #t)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "03yfn4b9xg41pd7vls2cils77wkkb9si1h2qqvnkds661fdankqj"))))
+        (base32 "0pdqdyzwy75fmcv4ncvar57r3zvfbnqgsya6dgfkzjfd0wvwby05"))))
     (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:phases
-      '(modify-phases %standard-phases
-         ;; Numba needs a writable dir to cache functions.
-         (add-before 'build 'set-numba-cache-dir
-           (lambda _
-             (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
-    (propagated-inputs (list python-boltons
-                             python-cooler
-                             python-ctxcore
-                             python-interlap
-                             python-intervaltree
-                             python-jsonschema
-                             python-networkx
-                             python-numba
-                             python-poetry-core
-                             pyscenic
-                             python-scikit-learn
-                             python-tables
-                             python-typing-extensions))
-    (native-inputs (list python-black
-                         python-flake8
-                         python-isort
-                         python-poetry-core
-                         python-pylint
-                         python-pytest
-                         python-pytest-cov))
+    (native-inputs
+     (list python-jsonschema
+           python-poetry-core
+           python-pytest))
     (home-page "https://github.com/archspec/archspec")
     (synopsis "Library to query system architecture")
     (description
@@ -1169,13 +1145,13 @@ similar XML files, in the same way the @command{diff} utility does it.")
 (define-public python-xmlsec
   (package
     (name "python-xmlsec")
-    (version "1.3.14")
+    (version "1.3.16")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "xmlsec" version))
        (sha256
-        (base32 "1nd2jbrfbmnd566i1v39xrh3a0b1nqvf5bhydywcsnw95x7q0kwk"))))
+        (base32 "178zg6jl3v7j4cdxxzqzr16m3wqfisai98xa0sh4q7bd9ia70v1b"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1202,7 +1178,7 @@ similar XML files, in the same way the @command{diff} utility does it.")
                          python-setuptools
                          python-setuptools-scm
                          python-wheel))
-    (home-page "https://github.com/mehcode/python-xmlsec")
+    (home-page "https://github.com/xmlsec/python-xmlsec")
     (synopsis "Python bindings for the XML Security Library")
     (description "This package provides Python bindings for the XML Security
 Library.")
@@ -3628,13 +3604,13 @@ command-line applications.")
 (define-public python-shapely
   (package
     (name "python-shapely")
-    (version "2.0.5")
+    (version "2.1.1")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "shapely" version))
        (sha256
-        (base32 "0cpyziixzdj7xqkya4k6fwr0qmrw8k84fsrx6p5sdgw6qxmkdwmz"))))
+        (base32 "0wi71vyjyb04lbw6kkl9vcsmn7n28j8002288m19dziggyb221jh"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3980,7 +3956,14 @@ library.")
               (when tests?
                 (setenv "H5PY_TEST_CHECK_FILTERS" "1")
                 (with-directory-excursion (site-packages inputs outputs)
-                  (invoke "pytest" "-vv"))))))))
+                  (invoke "pytest" "-vv")))))
+          (add-before 'build 'relax-gcc-14-strictness
+            (lambda _
+              (setenv
+               "CFLAGS"
+               (string-append
+                "-g -O2"
+                `" -Wno-error=incompatible-pointer-types")))))))
     (propagated-inputs (list python-six python-numpy))
     (inputs (list hdf5))
     (native-inputs
@@ -4229,28 +4212,44 @@ of the netcdf4 package before.")
 (define-public python-netcdf4
   (package
     (name "python-netcdf4")
-    (version "1.6.0")
+    (version "1.6.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "netCDF4" version))
        (sha256
         (base32
-         "0qxs8r1qmsmg760wm5q0wqlcm7hdd3k7cghryw6wvqd3v5rs7vwm"))))
-    (build-system python-build-system)
+         "0lxfykqdkpbmqma72m2mhwdz8lgl83n5vj7ydygl3252yqpv10h3"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'configure-locations
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "HDF5_DIR" (assoc-ref inputs "hdf5"))
-             #t)))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-configure-flags
+            (lambda _
+              (setenv "CFLAGS" (string-join
+                                (list "-Wno-error=incompatible-pointer-types"
+                                      "-Wno-error=implicit-function-declaration"
+                                      "-Wno-error=int-conversion")
+                                " "))
+              (setenv "HDF5_DIR" #$(this-package-input "hdf5"))
+              (setenv "NETCDF4_DIR" #$(this-package-input "netcdf"))
+              (setenv "USE_NCCONFIG" "0")))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "test"
+                  (setenv "NO_NET" "1")
+                  (setenv "NO_CDL" "1")
+                  (invoke "python" "run_all.py"))))))))
     (native-inputs
-     (list python-cython))
+     (list python-cython-3
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-numpy python-cftime))
     (inputs
-     (list netcdf hdf4 hdf5))
+     (list netcdf hdf5 zlib))
     (home-page "https://github.com/Unidata/netcdf4-python")
     (synopsis "Python/numpy interface to the netCDF library")
     (description "Netcdf4-python is a Python interface to the netCDF C
@@ -6745,15 +6744,18 @@ structure is left untouched.")
 (define-public python-exif-read
   (package
     (name "python-exif-read")
-    (version "3.0.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "ExifRead" version))
-              (sha256
-               (base32
-                "191c7sa0rca8wkspfq8nlfa6davh743mqkzrcayz5gcx2rja7i8a"))))
-    (build-system python-build-system)
-    (arguments `(#:tests? #f)) ; no tests
+    (version "3.3.2")
+    (source
+     (origin
+       (method git-fetch) ;PyPI doesn't contain the test images
+       (uri (git-reference
+             (url "https://github.com/ianare/exif-py")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0igvqhalrllidyccy7rlqbhx277rv7mf6bf0w6xjr0dj2dk3jw76"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/ianare/exif-py")
     (synopsis "Python library to extract EXIF data from image files")
     (description
@@ -9665,32 +9667,32 @@ Server (PLS).")
 (define-public python-lsp-server
   (package
     (name "python-lsp-server")
-    (version "1.12.0")
+    (version "1.13.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "python_lsp_server" version))
        (sha256
         (base32
-         "0fq5vkwkvn29rwf5l19iicmj913franc6q8ymjdvs0ys53qkd8xn"))))
+         "0s8dipxkdshg27a7a2nnkgg3kmksvbkfa7g39n310k6g7sv2d3rp"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
       '(list "-c" "/dev/null"           ;avoid coverage
+             "--ignore-glob" "**/test_autopep8_format.py"  ;avoid autopep8 dep
              "-k"
              (string-append
-              "not test_pyqt_completion " ;avoid pyqt5
-              ;; This test fails with "AssertionError: assert 'isabs(s)' ==
-              ;; 'commonprefix(m)'" (see:
-              ;; https://github.com/python-lsp/python-lsp-server/issues/602).
-              "and not test_jedi_completion_with_fuzzy_enabled"))
+              "not test_concurrent_ws_requests "  ; flaky
+              "and not test_pyqt_completion "  ; avoid pyqt5
+              "and not test_pandas_completion"))  ; avoid pandas
       #:phases
       '(modify-phases %standard-phases
          (add-before 'check 'set-HOME
            (lambda _ (setenv "HOME" "/tmp"))))))
     (propagated-inputs
-     (list python-docstring-to-markdown
+     (list python-black
+           python-docstring-to-markdown
            python-importlib-metadata
            python-jedi
            python-lsp-jsonrpc
@@ -9701,17 +9703,15 @@ Server (PLS).")
            python-whatthepatch
            python-yapf))
     (native-inputs
-     (list python-autopep8
-           python-flake8
+     (list python-flake8
            python-flaky
            python-matplotlib
-           python-numpy
-           python-pandas
            python-pylint
            python-pytest
            python-rope
            python-setuptools
            python-setuptools-scm
+           python-websockets
            python-wheel))
     (home-page "https://github.com/python-lsp/python-lsp-server")
     (synopsis "Python implementation of the Language Server Protocol")
@@ -9976,7 +9976,7 @@ programming language and the extended Cython programming language.  It makes
 writing C extensions for Python as easy as Python itself.")
     (license license:asl2.0)))
 
-;; Needed for scipy
+;; Needed for scipy and numpy
 (define-public python-cython-0.29.35
   (package
     (inherit python-cython)
@@ -10043,9 +10043,14 @@ writing C extensions for Python as easy as Python itself.")
               (when tests?
                 (apply invoke "python" "runtests.py" test-flags)))))))
     (native-inputs
-     (list libxcrypt
-           python-setuptools
-           python-wheel))
+     ;; does not compile with gcc-14
+     (list
+      (cond
+       ((target-x86-32?) gcc-11)
+       (else gcc-13))
+      libxcrypt
+      python-setuptools
+      python-wheel))
     (properties '())))
 
 ;; NOTE: when upgrading numpy please make sure that python-numba,
@@ -10062,7 +10067,7 @@ writing C extensions for Python as easy as Python itself.")
     ;; - URL <https://raw.githubusercontent.com/numpy/numpy>
     ;; - commit :: 2f3549c9d7c5048621568e431c86bc7530742723
     ;; - file <doc/source/building/understanding_meson.rst>
-    (version "1.26.2")
+    (version "1.26.4")
     (source
      (origin
        (method url-fetch)
@@ -10071,7 +10076,8 @@ writing C extensions for Python as easy as Python itself.")
              version "/numpy-" version ".tar.gz"))
        (sha256
         (base32
-         "1snknqb4hmv6b720nsaz21g7h6z1ikdvnsqyy5vmgavnfr23hmzn"))))
+         "0410j6jfz1yzm5s0v0yrc1j0q6ih4322357and7arr0jxnlsn0ia"))
+       (patches (search-patches "python-numpy-gcc-14.patch"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -10092,6 +10098,10 @@ writing C extensions for Python as easy as Python itself.")
                          (delete (string-append gfortran "/include/c++")
                                  (string-split (getenv "CPLUS_INCLUDE_PATH") #\:))
                          ":")))))
+          (add-before 'build 'relax-gcc-14-strictness
+            (lambda _
+              (setenv "CFLAGS"
+                      "-g -O2 -Wno-error=implicit-function-declaration")))
           (add-before 'build 'parallelize-build
             (lambda _
               (setenv "NPY_NUM_BUILD_JOBS"
@@ -10174,21 +10184,42 @@ include_dirs = ~:*~a/include~%"
                               ;; an FPU is still under investigation upstream.
                               ;; https://github.com/numpy/numpy/issues/20635
                               #$@(if (target-riscv64?)
-                                   `(" and not test_float"
-                                     " and not test_fpclass"
-                                     " and not test_fp_noncontiguous")
-                                   '())))))))))
+                                   `(" and not test_fp_noncontiguous")
+                                   '())
+                              ;; They also fail with gcc-14
+                              " and not test_float"
+                              " and not test_fpclass"
+
+                              ;; These tests fail with gcc-14
+                              " and not test_context_locality"
+                              " and not test_cosh"
+                              " and not test_default_policy_singleton"
+                              " and not test_exp_exceptions"
+                              " and not test_half_fpe"
+                              " and not test_owner_is_base"
+                              " and not test_policy_propagation"
+                              " and not test_set_policy"
+                              " and not test_sinh"
+                              " and not test_square_values"
+                              " and not test_sum"
+                              " and not test_switch_owner"
+                              " and not test_thread_locality"))))))))
     (native-inputs
-     (list gfortran
-           meson-python
+     (list meson-python
            pkg-config
+           python-cython-0.29.35        ;overwrite Cython from meson-python
            python-hypothesis
            python-mypy
            python-pytest
            python-pytest-xdist
            python-setuptools
            python-typing-extensions
-           python-wheel))
+           python-wheel
+           ;; XXX: Avoid to: 'fenv_t' has not been declared in '::' 58 | using ::fenv_t;
+           ;; See <https://github.com/numpy/numpy/issues/21075#issuecomment-1047976197>,
+           ;; <https://github.com/numpy/numpy/issues/24318>.
+           gcc                    ;fevn.h c[++] include must precede fortran's
+           gfortran))
     (inputs (list bash openblas))
     (home-page "https://numpy.org")
     (synopsis "Fundamental package for scientific computing with Python")
@@ -10542,85 +10573,6 @@ objects.")
     (description
      "This is a Python library for color math and conversions.")
     (license license:bsd-3)))
-
-(define-public python-sparse
-  (package
-    (name "python-sparse")
-    (version "0.15.5")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "sparse" version))
-       (sha256
-        (base32
-         "0rp29gp82qwwkq210pzh2qmlqhi2007nb7p7nwqmrkgmjq6cwxjc"))))
-    (build-system pyproject-build-system)
-    (propagated-inputs
-     (list python-numba python-numpy python-scipy))
-    (native-inputs
-     (list python-dask
-           python-pytest
-           python-pytest-cov
-           python-setuptools
-           python-setuptools-scm-next
-           python-wheel))
-    (home-page "https://github.com/pydata/sparse/")
-    (synopsis "Library for multi-dimensional sparse arrays")
-    (description
-     "This package implements sparse arrays of arbitrary dimension on top of
-@code{numpy} and @code{scipy.sparse}.  Sparse array is a matrix in which most
-of the elements are zero.  @code{python-sparse} generalizes the
-@code{scipy.sparse.coo_matrix} and @code{scipy.sparse.dok_matrix} layouts, but
-extends beyond just rows and columns to an arbitrary number of dimensions.
-Additionally, this project maintains compatibility with the
-@code{numpy.ndarray} interface rather than the @code{numpy.matrix} interface
-used in @code{scipy.sparse}.  These differences make this project useful in
-certain situations where @code{scipy.sparse} matrices are not well suited, but
-it should not be considered a full replacement.  It lacks layouts that are not
-easily generalized like @dfn{compressed sparse row/column}(CSR/CSC) and
-depends on @code{scipy.sparse} for some computations.")
-    (license license:bsd-3)))
-
-(define-public python-multiscale-spatial-image
-  (package
-    (name "python-multiscale-spatial-image")
-    (version "1.0.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "multiscale_spatial_image" version))
-       (sha256
-        (base32 "01kcagjy797hbz5an9cp8wcl5krgp21yb7ibfimvpidb3jp5lfhb"))))
-    (build-system pyproject-build-system)
-    ;; All interesting tests require file downloads over IPFS.
-    (arguments (list #:tests? #false))
-    (propagated-inputs
-     (list `(,insight-toolkit "python")
-           python-dask
-           python-dask-image
-           python-numpy
-           python-spatial-image
-           python-xarray
-           python-xarray-datatree))
-    (native-inputs
-     (list python-fsspec
-           python-hatchling
-           python-ipfsspec
-           python-jsonschema
-           python-nbmake
-           python-pooch
-           python-pytest
-           python-pytest-mypy
-           python-urllib3
-           python-zarr))
-    (home-page "https://github.com/spatial-image/multiscale-spatial-image")
-    (synopsis "Multi-dimensional spatial image data structure")
-    (description
-     "This package lets you generate a multiscale, chunked, multi-dimensional
-spatial image data structure that can serialized to OME-NGFF.  Each scale is a
-scientific Python Xarray spatial-image Dataset, organized into nodes of an
-Xarray Datatree.")
-    (license license:asl2.0)))
 
 (define-public python-spectra
   (package
@@ -11572,28 +11524,6 @@ and provides convenience methods for performing common object operations.")
 snippets with input parameters (e.g., the size of an array) and plotting
 the results.")
     (license license:gpl3+)))
-
-(define-public python-pykdtree
-  (package
-    (name "python-pykdtree")
-    (version "1.3.9")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pykdtree" version))
-       (sha256
-        (base32 "0q4zrqdn8ad6f710yggkhvx4avf2h1hsbg9qa7ghly54v4vhpgd7"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-cython python-pytest python-setuptools python-wheel))
-    (propagated-inputs
-     (list python-numpy))
-    (home-page "https://github.com/storpipfugl/pykdtree")
-    (synopsis "Fast kd-tree implementation with OpenMP-enabled queries")
-    (description
-     "@code{pykdtree} is a kd-tree implementation for fast nearest neighbour
-search in Python.")
-    (license license:lgpl3+)))
 
 (define-public python-wurlitzer
   (package
@@ -14298,15 +14228,18 @@ without using the configuration machinery.")
 (define-public python-treelib
   (package
     (name "python-treelib")
-    (version "1.7.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "treelib" version))
-              (sha256
-               (base32
-                "0qgv61g1p06kzf5fd2hcim5s49nzbv8k210frnk45rmr2vs1mzwv"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-six))
+    (version "1.8.0")
+    (source
+     (origin
+       (method git-fetch) ; no tests in PyPI
+       (uri (git-reference
+             (url "https://github.com/caesar0301/treelib")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0jd3rdaq8v7ykb626cm1gxa03higqnn2pmnv46fc0lc55xbrkxlf"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-poetry-core python-pytest))
     (home-page "https://github.com/caesar0301/treelib")
     (synopsis "Implementation of a tree structure in Python")
     (description
@@ -15357,6 +15290,15 @@ of the structure, dynamics, and functions of complex networks.")
         (base32
          "0pbn32flkrpjiwfcknmj6398qa81ba783kbcvwan3kym73v0hnsj"))))
     (build-system python-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'relax-gcc-14-strictness
+            (lambda _
+              (setenv "CFLAGS"
+                      (string-append "-g -O2"
+                                     " -Wno-error=incompatible-pointer-types")))))))
     (native-inputs
      (list python-cython python-hypothesis python-pytest
            python-pytest-runner))
@@ -17254,7 +17196,7 @@ from an XML-based format.")
       (propagated-inputs
        (list python-brotli
              python-fs
-             python-lxml
+             python-lxml-4.9
              python-lz4
              python-scipy
              python-unicodedata2
@@ -18563,29 +18505,29 @@ background.")
 (define-public python-libarchive-c
   (package
     (name "python-libarchive-c")
-    (version "2.9")
+    (version "5.2")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "libarchive-c" version))
+              (uri (pypi-uri "libarchive_c" version))
               (sha256
                (base32
-                "0q7g6a97110bk0j5x81555kajyxh4sybaabab6v5sgr0xi6386cr"))))
-    (build-system python-build-system)
+                "05vl0pjpv5wqy9xybzixjv9anvih9yjx361c4rw6xbq9hpiahi7x"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (add-before
-                   'build 'reference-libarchive
-                   (lambda* (#:key inputs #:allow-other-keys)
-                     ;; Retain the absolute file name of libarchive.so.
-                     (let ((libarchive (assoc-ref inputs "libarchive")))
-                       (substitute* "libarchive/ffi.py"
-                         (("find_library\\('archive'\\)")
-                          (string-append "'" libarchive
-                                         "/lib/libarchive.so'"))))))
-                  (replace 'check
-                    (lambda _ (invoke "pytest" "-vv"))))))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'reference-libarchive
+            (lambda* (#:key inputs #:allow-other-keys)
+              ;; Retain the absolute file name of libarchive.so.
+              (substitute* "libarchive/ffi.py"
+                (("find_library\\('archive'\\)")
+                 (string-append
+                  "'"
+                  (search-input-file inputs "/lib/libarchive.so")
+                  "'"))))))))
     (native-inputs
-     (list python-mock python-pytest))
+     (list python-setuptools python-wheel python-pytest))
     (inputs
      (list libarchive))
     (home-page "https://github.com/Changaco/python-libarchive-c")
@@ -23411,7 +23353,7 @@ some degree most natural languages too.")
 (define-public python-find-libpython
   (package
     (name "python-find-libpython")
-    (version "0.4.0")
+    (version "0.4.1")
     (source
      (origin
        (method git-fetch)
@@ -23420,7 +23362,7 @@ some degree most natural languages too.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1z1r9nix2z75sv41j97pnl6jgj2lk6k8la23vavxjpprsc9ld1dd"))))
+        (base32 "173qxif277vc23kgidwbkxx7z7b7676f8lv5kxy9pd82228m8m79"))))
     (build-system pyproject-build-system)
     (native-inputs (list python-setuptools python-wheel
                          ;; tests
@@ -25335,16 +25277,17 @@ Mustache templating language renderer.")
 (define-public python-duckdb
   (package
     (name "python-duckdb")
-    (version "1.0.0")
+    (version "1.3.2")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "duckdb" version))
               (sha256
                (base32
-                "0lyl6di1c7j31i2mk384j711kzyyf9rjd3nqx5mbgmf7gfvmk852"))))
+                "1x8zb47y8lzc4w0g013sim8x9vd1h96ra3dd0bvh91y73f5dyn66"))))
     (build-system pyproject-build-system)
     (arguments
      (list
+      #:tests? #f ;FIXME: See <https://codeberg.org/guix/guix/issues/1436>.
       #:test-flags
       #~(list "--ignore=tests/slow/test_h2oai_arrow.py"
               ;; Do not relay on mypy.
@@ -25364,11 +25307,6 @@ Mustache templating language renderer.")
           ;; Tests need this
           (add-before 'check 'set-HOME
             (lambda _ (setenv "HOME" "/tmp")))
-          (add-before 'build 'set-version
-            (lambda _
-              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)
-              (substitute* "setup.py"
-                (("\"setuptools_scm<7.0.0\",") ""))))
           ;; Later versions of pybind replace "_" with "const_name".
           (add-after 'unpack 'pybind-compatibility
             (lambda _
@@ -25382,13 +25320,11 @@ Mustache templating language renderer.")
     (native-inputs
      (list pybind11
            python-fsspec
-           python-google-cloud-storage
+           ;; python-google-cloud-storage ;python-grpcio fails (see: guix/guix#1436)
            python-numpy
            python-pandas
            python-psutil
-           python-pyarrow
-           python-pytest
-           python-pytest-runner
+           ;; python-pytest
            python-setuptools-scm
            python-setuptools
            python-wheel))
@@ -27856,6 +27792,41 @@ Rust Python extensions implemented with @code{PyO3} or @code{rust-cpython}.")
     (description "This package provides a plugin for Setuptools for gettext.")
     (license license:gpl2+)))
 
+(define-public python-pyclibrary
+  ;; XXX: https://github.com/MatthieuDartiailh/pyclibrary/issues/82
+  (let ((commit "4e1e243a0bdfefa188d93ebdf3b60c6861244855")
+        (revision "0"))
+    (package
+      (name "python-pyclibrary")
+      (version (git-version "0.2.2" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/MatthieuDartiailh/pyclibrary")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1sza6n2fg8zml0v1s5zwzrlsb79s2abn1n4pr1l8r15al4g9z0c6"))))
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'set-version
+              (lambda _
+                (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" "0.2.2"))))))
+      (native-inputs (list python-pytest python-setuptools
+                           python-setuptools-scm python-wheel))
+      (propagated-inputs (list python-pyparsing-2.4.7))
+      (home-page "https://github.com/MatthieuDartiailh/pyclibrary")
+      (synopsis "Wrap dynamic libraries in Python")
+      (description
+       "This package helps wrapping dynamic libraries in Python.  It includes
+a pure-Python C parser and an automation library that uses C header file
+definitions to simplify the use of C bindings.")
+      (license license:expat))))
+
 (define-public python-pyclipper
   (package
     (name "python-pyclipper")
@@ -30037,86 +30008,6 @@ codecs for use in data storage and communication applications.")
 N-dimensional arrays for Python.")
     (license license:expat)))
 
-(define-public python-anndata
-  (package
-    (name "python-anndata")
-    (version "0.11.1")
-    (source
-     (origin
-       ;; The tarball from PyPi doesn't include tests.
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/theislab/anndata")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32
-         "0skmjjvxk5gdsx6fkplszff92jsb4l45j23c6mhq1vdi3wqhqhcw"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      #~(list "-k" #$(string-append
-                      ;; This one test seemingly freezes
-                      "not test_read_lazy_h5_cluster"
-                      ;; Fails with a numpy deprecation warning
-                      ;; but not an actual failure
-                      " and not test_read_write_X"))
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; Doctests require scanpy from (gnu packages bioinformatics)
-          (add-after 'unpack 'disable-doctests
-            (lambda _
-              (substitute* "pyproject.toml"
-                (("--doctest-modules") ""))))
-          (add-before 'build 'set-version
-            (lambda _
-              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)
-              ;; ZIP does not support timestamps before 1980.
-              (setenv "SOURCE_DATE_EPOCH" "315532800")))
-          ;; Numba needs a writable dir to cache functions.
-          (add-before 'check 'set-numba-cache-dir
-            (lambda _
-              (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
-    (propagated-inputs
-     (list python-array-api-compat
-           python-exceptiongroup ;only for Python <3.11
-           python-h5py
-           python-importlib-metadata
-           python-natsort
-           python-numcodecs
-           python-packaging
-           python-pandas
-           python-scipy
-           python-scikit-learn
-           python-setuptools ; For pkg_resources.
-           python-zarr))
-    (native-inputs
-     (list python-awkward
-           python-boltons
-           python-dask
-           python-distributed
-           python-hatchling
-           python-hatch-vcs
-           python-joblib
-           python-loompy
-           python-matplotlib
-           python-pytest
-           python-pytest-mock
-           python-pytest-doctestplus
-           python-pytest-xdist
-           python-toml
-           python-flit
-           python-setuptools-scm))
-    (home-page "https://github.com/theislab/anndata")
-    (synopsis "Annotated data for data analysis pipelines")
-    (description "Anndata is a package for simple (functional) high-level APIs
-for data analysis pipelines.  In this context, it provides an efficient,
-scalable way of keeping track of data together with learned annotations and
-reduces the code overhead typically encountered when using a mostly
-object-oriented library such as @code{scikit-learn}.")
-    (license license:bsd-3)))
-
 (define-public python-dill
   (package
     (name "python-dill")
@@ -30474,197 +30365,6 @@ specification for a file-system interface, that specific implementations
 should follow, so that applications making use of them can rely on a common
 behavior and not have to worry about the specific internal implementation
 decisions with any given backend.")
-    (license license:bsd-3)))
-
-;; Note: Remember to update python-distributed when updating dask.
-(define-public python-dask
-  (package
-    (name "python-dask")
-    (version "2024.12.1")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/dask/dask/")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "17iqfyjphyn72xdr8fmynzvixskbq16pwmsknwc6anq7s2axvas2"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      ;; Avoid coverage
-      #:test-flags
-      #~(list "--numprocesses" (number->string (parallel-job-count))
-              "-m" "not gpu and not slow and not network"
-              ;; These all fail with different hashes.  Doesn't seem
-              ;; problematic.
-              "--ignore-glob=**/test_tokenize.py"
-              ;; ORC tests crash Python with a failure to find the global
-              ;; localtime file.  See also
-              ;; https://github.com/apache/arrow/issues/40633.
-              "--ignore-glob=**/test_orc.py"
-              "-k" (string-append
-                    ;; This one cannot be interrupted.
-                    "not test_interrupt"
-                    ;; This one fails with "local variable 'ctx' referenced
-                    ;; before assignment".  Maybe enable this in later
-                    ;; versions (or when pandas has been upgraded.
-                    " and not test_dt_accessor"
-                    ;; This fails when dask-expr is among the inputs.
-                    " and not test_groupby_internal_repr"
-                    ;; This fails with different job ids.
-                    " and not test_to_delayed_optimize_graph"
-                    ;; This one expects a deprecation warning that never
-                    ;; comes.
-                    " and not test_RandomState_only_funcs"
-                    ;; This test expects a RuntimeWarning that is never
-                    ;; raised.
-                    " and not test_nanquantile_all_nan")
-              ;; Tests must run from the output directory, because otherwise
-              ;; it complains about the difference between the target
-              ;; directory embedded in the pyc files and the source directory
-              ;; from which we run tests.
-              (getcwd))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'versioneer
-            (lambda _
-              ;; Our version of versioneer needs setup.cfg.  This is adapted
-              ;; from pyproject.toml.
-              (with-output-to-file "setup.cfg"
-                (lambda ()
-                  (display "\
-[versioneer]
-VCS = git
-style = pep440
-versionfile_source = dask/_version.py
-versionfile_build = dask/_version.py
-tag_prefix =
-parentdir_prefix = dask-
-")))
-              (invoke "versioneer" "install")
-              (substitute* "setup.py"
-                (("versioneer.get_version\\(\\)")
-                 (string-append "\"" #$version "\"")))))
-          (add-after 'unpack 'fix-pytest-config
-            (lambda _
-              ;; This option is not supported by our version of pytest.
-              (substitute* "pyproject.toml"
-                (("--cov-config=pyproject.toml") ""))))
-          (add-after 'unpack 'patch-pyproject
-            (lambda _
-              ;; We use pyarrow > 14
-              (substitute* "pyproject.toml"
-                (("\"pyarrow_hotfix\",") ""))))
-          (add-before 'check 'pre-check
-            (lambda _ (chdir "/tmp"))))))
-    (propagated-inputs
-     (list python-click ;needed at runtime
-           python-cloudpickle
-           python-dask-expr
-           python-fsspec
-           python-importlib-metadata ;needed at runtime for dask/_compatibility.py
-           python-numpy
-           python-packaging
-           python-pandas
-           python-partd
-           python-toolz
-           python-pyyaml))
-    (native-inputs
-     (list python-importlib-metadata
-           python-pytest
-           python-pytest-rerunfailures
-           python-pytest-runner
-           python-pytest-xdist
-           python-versioneer
-           python-wheel))
-    (home-page "https://github.com/dask/dask/")
-    (synopsis "Parallel computing with task scheduling")
-    (description
-     "Dask is a flexible parallel computing library for analytics.  It
-consists of two components: dynamic task scheduling optimized for computation,
-and large data collections like parallel arrays, dataframes, and lists that
-extend common interfaces like NumPy, Pandas, or Python iterators to
-larger-than-memory or distributed environments.  These parallel collections
-run on top of the dynamic task schedulers.")
-    (license license:bsd-3)))
-
-(define-public python-dask/bootstrap
-  (package
-    (inherit python-dask)
-    (properties '((hidden? . #true)))
-    (arguments
-     (substitute-keyword-arguments (package-arguments python-dask)
-       ((#:tests? _ #t) #f)))
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs python-dask)
-       (delete "python-dask-expr")))))
-
-(define-public python-dask-image
-  (package
-    (name "python-dask-image")
-    (version "2024.5.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "dask_image" version))
-       (sha256
-        (base32 "0g4293n1vjlpyxbvd1xz3pz9an9z4rnsw1m7lynhm00m0bgiz7qc"))))
-    (build-system pyproject-build-system)
-    (arguments
-     (list
-      #:test-flags
-      ;; Flake8 attribute errors.
-      '(list "--ignore=dask_image/ndfilters/_threshold.py"
-             "--ignore=dask_image/ndfourier/_utils.py"
-             "--ignore=dask_image/ndinterp/__init__.py"
-             "--ignore=dask_image/ndmeasure/__init__.py"
-             "--ignore=dask_image/ndmeasure/_utils/_find_objects.py"
-             "--ignore=dask_image/ndmeasure/_utils/_label.py"
-             "--ignore=tests/test_dask_image/test_ndfilters/test__conv.py"
-             "--ignore=tests/test_dask_image/test_ndfourier/test_core.py"
-             "--ignore=tests/test_dask_image/test_ndinterp/test_spline_filter.py"
-             "--ignore=tests/test_dask_image/test_ndmeasure/test_core.py"
-             "--ignore=tests/test_dask_image/test_ndmeasure/test_find_objects.py")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'build 'set-version
-            (lambda _
-              (substitute* "pyproject.toml"
-                (("^version_file.*") "")
-                (("dynamic = \\[\"version\"\\]")
-                 (string-append "version = \"" #$version "\""))))))))
-    (propagated-inputs (list python-dask
-                             python-numpy
-                             python-pandas-2
-                             python-pims
-                             python-scipy
-                             python-tifffile))
-    (native-inputs
-     (list python-coverage
-           python-flake8
-           python-pytest
-           python-pytest-cov
-           python-pytest-flake8
-           python-pytest-timeout
-           python-setuptools
-           python-setuptools-scm
-           python-twine
-           python-wheel))
-    (home-page "https://github.com/dask/dask-image")
-    (synopsis "Distributed image processing")
-    (description "This is a package for image processing with Dask arrays.
-Features:
-
-@itemize
-@item Provides support for loading image files.
-@item Implements commonly used N-D filters.
-@item Includes a few N-D Fourier filters.
-@item Provides some functions for working with N-D label images.
-@item Supports a few N-D morphological operators.
-@end itemize
-")
     (license license:bsd-3)))
 
 (define-public python-ilinkedlist
@@ -32070,6 +31770,24 @@ bindings for Python 3.")
        "This package helps you to capture the standard out (stdout) and the
 standard error channel (stderr) in your program.")
       (license license:expat))))
+
+(define-public python-ioctl-opt
+  (package
+    (name "python-ioctl-opt")
+    (version "1.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "ioctl-opt" version))
+       (sha256
+        (base32 "1ygjgkzn0i61zk2yr27aqnma08c8xpblhdixli9f20if1nlgkm2y"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "http://github.com/vpelletier/python-ioctl-opt")
+    (synopsis "Functions to compute fnctl.ioctl's opt argument")
+    (description
+     "This package provides functions to compute fnctl.ioctl's opt argument.")
+    (license license:gpl2+)))
 
 (define-public python-anyio
   (package
@@ -34351,29 +34069,37 @@ It adds a simple and readable way to print stuff during development.")
         (base32
          "19fbgq1zrwx10kljmdbs3p0y2m2xsgww20pqzw4kv6161zipsymf"))))
     (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(cons* "-k" "not test_relative_base_setting_2_en"
+               (map
+                (lambda (name)
+                  (string-append "--ignore=tests/" name ".py"))
+                '("test_dateparser_data_integrity"
+                  "test_hijri"
+                  "test_jalali"
+                  "test_language_detect")))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-check-environment
+            (lambda* (#:key inputs #:allow-other-keys)
+              (setenv "TZ" "UTC")
+              (setenv "TZDIR"
+                      (search-input-directory inputs
+                                              "share/zoneinfo")))))))
     (propagated-inputs
-     (list python-dateutil python-pytz python-regex python-ruamel.yaml
+     (list python-dateutil
+           python-pytz
+           python-regex
+           python-ruamel.yaml
            python-tzlocal))
     (native-inputs
-     (list python-flake8 python-pytest python-parameterized tzdata-for-tests
-           python-setuptools python-wheel))
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'set-check-environment
-           (lambda* (#:key inputs #:allow-other-keys)
-             (setenv "TZ" "UTC")
-             (setenv "TZDIR"
-                     (search-input-directory inputs
-                                             "share/zoneinfo"))))
-         (add-before 'check 'delete-failing-tests
-           (lambda _
-             (with-directory-excursion "tests"
-               (for-each delete-file
-                         '("test_dateparser_data_integrity.py"
-                           "test_hijri.py"
-                           "test_jalali.py"
-                           "test_language_detect.py"))))))))
+     (list python-parameterized
+           python-pytest
+           python-setuptools
+           python-wheel
+           tzdata-for-tests))
     (home-page "https://github.com/scrapinghub/dateparser")
     (synopsis
      "Date parsing library designed to parse dates from HTML pages")
@@ -35792,17 +35518,15 @@ number of words, syllables, and sentences.")
                 "13nfy2v0pbbf62jn9qwgi489gg97hbb22q6w3f78mnvjxd2m19rh"))
               (snippet
                #~(begin (delete-file "readability/compat/two.py")))))
-    (build-system python-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                (invoke "python" "-m" "pytest" "-v" "tests/")))))))
-    (propagated-inputs (list python-chardet python-cssselect python-lxml))
-    (native-inputs (list python-timeout-decorator python-pytest))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-chardet
+                             python-cssselect
+                             python-lxml
+                             python-lxml-html-clean))
+    (native-inputs (list python-timeout-decorator
+                         python-setuptools
+                         python-pytest
+                         python-wheel))
     (home-page "http://github.com/buriy/python-readability")
     (synopsis "HTML to text parser")
     (description
@@ -39166,14 +38890,15 @@ toolkit for Python.")
 (define-public python-srt
   (package
     (name "python-srt")
-    (version "3.5.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "srt" version))
-              (sha256
-               (base32
-                "0l24710spxarijmv3h7iicvx0lv6m3d4xg77nd9kyv8jwifav93s"))))
-    (build-system python-build-system)
+    (version "3.5.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "srt" version))
+       (sha256
+        (base32 "1h0cxlp66i6wlq3g6dg1f1nw0sipm9nfsy7qs47p9w548d833128"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/cdown/srt")
     (synopsis "SRT parsing library")
     (description

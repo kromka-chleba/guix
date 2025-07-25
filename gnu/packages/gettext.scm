@@ -9,9 +9,9 @@
 ;;; Copyright © 2017 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2018, 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019 Miguel <rosen644835@gmail.com>
-;;; Copyright © 2020, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2020, 2023, 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020 EuAndreh <eu@euandre.org>
-;;; Copyright © 2022, 2024 gemmaro <gemmaro.dev@gmail.com>
+;;; Copyright © 2022, 2024, 2025 gemmaro <gemmaro.dev@gmail.com>
 ;;; Copyright © 2023 Maxim Cournoyer maxim.cournoyer@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -55,15 +55,14 @@
 (define-public gettext-minimal
   (package
     (name "gettext-minimal")
-    (version "0.21")
+    (version "0.23.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/gettext/gettext-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "04kbg1sx0ncfrsbr85ggjslqkzzb243fcw9nyh3rrv1a22ihszf7"))
-              (patches (search-patches "gettext-libunicode-update.patch"))))
+                "0j8fijicvg8jkrisgsqbpnbmfb2mz3gx2p6pcwip82731yb7i9aj"))))
     (build-system gnu-build-system)
     (outputs '("out"
                "doc"))                            ;9 MiB of HTML
@@ -89,10 +88,13 @@
                    (substitute* '("gettext-tools/src/project-id"
                                   "gettext-tools/projects/KDE/trigger"
                                   "gettext-tools/projects/GNOME/trigger")
-                     (("/bin/pwd") "pwd"))
-                   #t))
+                     (("/bin/pwd") "pwd"))))
                (add-before 'check 'patch-tests
                  (lambda* (#:key inputs #:allow-other-keys)
+                   ;;libgettextlib-0.23.so => not found
+                   (substitute* "gettext-tools/gnulib-tests/test-execute.sh"
+                     (("^#!.*" all)
+                      (string-append all "exit 77;\n")))
                    (let* ((bash (which "sh")))
                      ;; Some of the files we're patching are
                      ;; ISO-8859-1-encoded, so choose it as the default
@@ -114,23 +116,12 @@
                          (("/bin/pwd")
                           "pwd"))
 
-                       ;; Work around Gnulib test failures on armhf-linux.
-                       #$@(if (target-arm32?)
-                              #~((with-directory-excursion "gettext-tools"
-                                   (invoke "patch" "--force" "-p1" "-i"
-                                           #$(local-file
-                                              (search-patch
-                                               "coreutils-gnulib-tests.patch")))))
-                              '())
-
                        #$@(if (target-hurd?)
                               #~((substitute*
                                      "gettext-tools/gnulib-tests/Makefile.in"
                                    ;; See 'coreutils' for the rationale.
                                    ((" test-tls\\$\\(EXEEXT\\) ") " ")))
-                              '())
-
-                       #t))))
+                              '())))))
           #$@(if (%current-target-system)
                  #~((add-after 'install 'patch-cross-shebangs
                       (lambda _
@@ -157,6 +148,31 @@ translated messages from the catalogs.  Nearly all GNU packages use Gettext.")
     (properties `((upstream-name . "gettext")
                   (cpe-name . "gettext")))
     (license gpl3+)))                             ;some files are under GPLv2+
+
+(define-public gettext-minimal-0.21
+  (package/inherit gettext-minimal
+    (version "0.21")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnu/gettext/gettext-"
+                                  version ".tar.gz"))
+              (sha256
+               (base32
+                "04kbg1sx0ncfrsbr85ggjslqkzzb243fcw9nyh3rrv1a22ihszf7"))
+              (patches (search-patches "gettext-libunicode-update.patch"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments gettext-minimal)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (add-after 'unpack 'touch-test
+              (lambda _
+                (with-output-to-file "gettext-tools/gnulib-tests/test-execute.sh"
+                  (lambda _ (display "")))))
+            (add-before 'check 'patch-test
+              (lambda _
+                ;; This test fails with ggc-14.
+                (substitute* "gettext-tools/tests/xgettext-javascript-6"
+                  (("^#!.*" all) (string-append all "exit 77;\n")))))))))))
 
 ;; Use that name to avoid clashes with Guile's 'gettext' procedure.
 ;;
@@ -249,7 +265,7 @@ from Markdown files.")
 (define-public po4a
   (package
     (name "po4a")
-    (version "0.73")
+    (version "0.74")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/mquinson/po4a"
@@ -257,38 +273,23 @@ from Markdown files.")
                                   version "/po4a-" version ".tar.gz"))
               (sha256
                (base32
-                "184f0cv0w3xa301gwm74srn5s6g8qdn3ksip84wpg8xjihnzh63g"))))
+                "1hp7iy1rl8ci7rirh7r6d3jb0i16jm4vy3mgqd4bsyx35czk5z15"))))
     (build-system perl-build-system)
     (arguments
      (list
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'install 'wrap-programs
-            (lambda* (#:key inputs outputs #:allow-other-keys)
+            (lambda _
               ;; Make sure all executables in "bin" find the Perl modules
               ;; required by this package at runtime.
-              (let* ((out  #$output)
-                     (bin  (string-append out "/bin/"))
-                     (path (string-append
-                            out "/lib/perl5/site_perl:"
-                            (string-join
-                             (map (lambda (name)
-                                    (string-append (assoc-ref inputs name)
-                                                   "/lib/perl5/site_perl"))
-                                  (list "perl-gettext"
-                                        "perl-pod-parser"
-                                        "perl-sgmls"
-                                        "perl-syntax-keyword-try"
-                                        "perl-xs-parse-keyword"
-                                        "perl-term-readkey"
-                                        "perl-text-wrapi18n"
-                                        "perl-unicode-linebreak"
-                                        "perl-yaml-tiny"))
-                             ":"))))
-                (for-each (lambda (file)
-                            (wrap-program file
-                              `("PERL5LIB" ":" prefix (,path))))
-                          (find-files bin "\\.*$")))))
+              (for-each
+               (lambda (file)
+                 (wrap-program file
+                   (list "PERL5LIB" 'suffix
+                         (list (string-append #$output "/lib/perl5/site_perl")
+                               (getenv "PERL5LIB")))))
+               (find-files (string-append #$output "/bin/") "\\.*$"))))
           #$@(if (system-hurd?)
                  #~((add-after 'unpack 'skip-tests/hurd
                       (lambda _
@@ -301,6 +302,7 @@ from Markdown files.")
            perl-module-build
            docbook-xsl
            libxslt
+           libxml2 ;xmlcatalog
            ;; For tests.
            docbook-sgml-4.1
            docbook-xml-4.5
@@ -311,6 +313,7 @@ from Markdown files.")
            opensp
            perl-gettext
            perl-pod-parser
+           perl-pod-simple
            perl-sgmls
            perl-syntax-keyword-try
            perl-xs-parse-keyword

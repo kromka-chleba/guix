@@ -15,7 +15,7 @@
 ;;; Copyright © 2020 Christopher Howard <christopher@librehacker.com>
 ;;; Copyright © 2021 Felipe Balbi <balbi@kernel.org>
 ;;; Copyright © 2021, 2024 Felix Gruber <felgru@posteo.net>
-;;; Copyright © 2021, 2024, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021, 2024, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2023 c4droid <c4droid@foxmail.com>
 ;;; Copyright © 2023 Yovan Naumovski <yovan@gorski.stream>
@@ -24,6 +24,7 @@
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2025 Andrew Wong <wongandj@icloud.comg>
+;;; Copyright © 2025 Anderson Torres <anderson.torres.8519@gmail.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -256,11 +257,20 @@ console.")
                                      "-Dfrontend-gtk=true"
                                      "-Dgdb-stub=true"
                                      "-Dopenal=true")
-           #:phases #~(modify-phases %standard-phases
-                        ;; meson.build is in a subdirectory.
-                        (add-after 'unpack 'chdir
-                          (lambda _
-                            (chdir "desmume/src/frontend/posix"))))))
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'relax-gcc-14-strictness
+                 (lambda _
+                   (setenv
+                    "CFLAGS"
+                    (string-append
+                     "-g -O2"
+                     " -Wno-error=implicit-function-declaration"
+                     " -Wno-error=int-conversion"))))
+               ;; meson.build is in a subdirectory.
+               (add-after 'unpack 'chdir
+                 (lambda _
+                   (chdir "desmume/src/frontend/posix"))))))
     (native-inputs (list `(,glib "bin") gettext-minimal intltool pkg-config))
     (inputs (list agg
                   alsa-lib
@@ -399,6 +409,10 @@ It aims to support Nintendo DSi and 3DS as well.")
                       (libvulkan
                        (search-input-file inputs "/lib/libvulkan.so")))
                   (chdir "docs")
+                  ;; Include a missing header, needed for gcc@14.
+                  (substitute* "gc-font-tool.cpp"
+                    (("#include <cstring>" all)
+                      (string-append all "\n#include <cstdint>")))
                   (invoke "bash" "-c" "g++ -O2 $(freetype-config \
 --cflags --libs) gc-font-tool.cpp -o gc-font-tool")
                   (invoke "./gc-font-tool" "a" fontfile "font_western.bin")
@@ -764,95 +778,66 @@ and a game metadata scraper.")
       (license license:expat))))
 
 (define-public higan
-  (package
-    (name "higan")
-    (version "110")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/higan-emu/higan")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "11rvm53c3p2f6zk8xbyv2j51xp8zmqnch7zravhj3fk590qrjrr2"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     `(("alsa-lib" ,alsa-lib)
-       ("bash" ,bash-minimal) ; for wrap-program
-       ("ao" ,ao)
-       ("eudev" ,eudev)
-       ("gtk+" ,gtk+-2)
-       ("gtksourceview-2" ,gtksourceview-2)
-       ("libxrandr" ,libxrandr)
-       ("libxv" ,libxv)
-       ("mesa" ,mesa)
-       ("openal" ,openal)
-       ("pulseaudio" ,pulseaudio)
-       ("sdl2" ,sdl2)))
-    (arguments
-     '(#:phases
-       (let ((build-phase (assoc-ref %standard-phases 'build))
-             (install-phase (assoc-ref %standard-phases 'install)))
-         (modify-phases %standard-phases
-           ;; The higan build system has no configure phase.
-           (delete 'configure)
-           (add-before 'build 'chdir-to-higan
-             (lambda _
-               (chdir "higan")
-               #t))
-           (add-before 'install 'create-/share/applications
-             (lambda* (#:key outputs #:allow-other-keys)
-               (let ((out (assoc-ref outputs "out")))
-                 ;; It seems the author forgot to do this in the Makefile.
-                 (mkdir-p (string-append out "/share/applications"))
-                 #t)))
-           (add-after 'install 'chdir-to-icarus
-             (lambda _
-               (chdir "../icarus")
-               #t))
-           (add-after 'chdir-to-icarus 'build-icarus build-phase)
-           (add-after 'build-icarus 'install-icarus install-phase)
-           (add-after 'install-icarus 'wrap-higan-executable
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (let* ((out (assoc-ref outputs "out"))
-                      (bin (string-append out "/bin"))
-                      (higan (string-append bin "/higan"))
-                      (higan-original (string-append higan "-original"))
-                      (bash (search-input-file inputs "/bin/bash"))
-                      (coreutils (assoc-ref inputs "coreutils"))
-                      (mkdir (string-append coreutils "/bin/mkdir"))
-                      (cp (string-append coreutils "/bin/cp"))
-                      (cp-r (string-append cp " -r --no-preserve=mode")))
-                 ;; First, have the executable make sure ~/.local/share/higan
-                 ;; contains up to date files.  Higan insists on looking there
-                 ;; for these data files.
-                 (rename-file higan higan-original)
-                 (with-output-to-file higan
-                   (lambda ()
-                     (display
-                      (string-append
-                       "#!" bash "\n"
-                       ;; higan doesn't respect $XDG_DATA_HOME
-                       mkdir " -p ~/.local/share\n"
-                       cp-r " " out "/share/higan ~/.local/share\n"
-                       "exec " higan-original))))
-                 (chmod higan #o555)
-                 ;; Second, make sure higan will find icarus in PATH.
-                 (wrap-program higan
-                   `("PATH" ":" prefix (,bin)))
-                 #t)))))
-       #:make-flags
-       (list "compiler=g++"
-             (string-append "prefix=" (assoc-ref %outputs "out")))
-       ;; There is no test suite.
-       #:tests? #f))
-    (home-page "https://github.com/higan-emu/higan/")
-    (synopsis "Multi-system emulator")
-    (description
-     "higan is a multi-system emulator with an uncompromising focus on
+  ;; There are no recent releases; use the latest commit of the master branch.
+  (let ((commit "ad0e11e7b73053eb1bcd5bdeabbe2de92c356286")
+        (revision "0"))
+    (package
+      (name "higan")
+      (version (git-version "110" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/higan-emu/higan")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1dlx5vqxv8mr8faw0wggsd10bk51p258l56yixjarv0dyhv6nkbq"))))
+      (build-system gnu-build-system)
+      (native-inputs
+       (list pkg-config))
+      (inputs
+       (list alsa-lib
+             bash-minimal                 ; for wrap-program
+             ao
+             eudev
+             gtk+
+             gtksourceview-3
+             libxrandr
+             libxv
+             mesa
+             openal
+             pulseaudio
+             sdl2))
+      (arguments
+       (list
+        #:tests? #f                       ;no test suite
+        #:make-flags #~(list "compiler=g++"
+                             "higan.path=../higan"
+                             "platform=linux"
+                             (string-append "prefix=" #$output))
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; The higan build system has no configure phase.
+            (delete 'configure)
+            (add-before 'build 'chdir-to-higan-ui
+              (lambda _
+                (chdir "higan-ui")))
+            (add-after 'install 'chdir-to-icarus
+              (lambda _
+                (chdir "../icarus")))
+            (add-after 'chdir-to-icarus 'build-icarus
+              (assoc-ref %standard-phases 'build))
+            (add-after 'build-icarus 'install-icarus
+              (assoc-ref %standard-phases 'install))
+            (add-after 'install-icarus 'wrap-higan-executable
+              (lambda _
+                (wrap-program (string-append #$output "/bin/higan")
+                  `("PATH" prefix (,(string-append #$output "/bin")))))))))
+      (home-page "https://github.com/higan-emu/higan/")
+      (synopsis "Multi-system emulator")
+      (description
+       "higan is a multi-system emulator with an uncompromising focus on
 accuracy and code readability.
 
 It currently emulates the following systems: Famicom, Famicom Disk System,
@@ -861,7 +846,7 @@ Game Boy Player, SG-1000, SC-3000, Master System, Game Gear, Mega Drive, Mega
 CD, PC Engine, SuperGrafx, MSX, MSX2, ColecoVision, Neo Geo Pocket, Neo Geo
 Pocket Color, WonderSwan, WonderSwan Color, SwanCrystal, Pocket Challenge
 V2.")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public mednafen
   (package
@@ -959,7 +944,7 @@ The following systems are supported:
     (inputs
      (list ffmpeg
            libedit
-           libelf
+           elfutils
            libepoxy
            libpng
            mesa
@@ -1025,6 +1010,46 @@ and Super Game Boy emulator.  SameBoy is accurate and includes a wide
 range of debugging features.  It has all the features one would expect
 from an emulator---from save states to scaling filters.")
     (license license:expat)))
+
+(define-public stella
+  (package
+    (name "stella")
+    (version "7.0c")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/stella-emu/stella")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0kcbjlsi5wy0pia7apck7va86yx9y6iyy5245ylkn77khaf7wr13"))
+       (modules '((guix build utils)))
+       (snippet
+        '(begin
+           ;; Delete machine-generated parser files
+           (with-directory-excursion "src/debugger/yacc"
+             (delete-file "y.tab.c")
+             (delete-file "y.tab.h"))))))
+    (build-system gnu-build-system)
+    (arguments
+     (list
+      #:tests? #f ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Regenerate the deleted files
+          (add-before 'build 'regenerate-yacc-files
+            (lambda _
+              (with-directory-excursion "src/debugger/yacc"
+                (invoke "make" "-f" "Makefile.yacc")))))))
+    (inputs (list sdl2 sqlite))
+    (native-inputs (list bison pkg-config sdl2))
+    (synopsis "Atari 2600 @acronym{VCS, Video Computer System} emulator")
+    (description "Stella is a multi-platform Atari 2600
+@acronym{VCS, Video Computer System} emulator, released as Free Software.
+Enjoy all of your favorite Atari 2600 games on your PC thanks to Stella!")
+    (home-page "https://stella-emu.github.io/")
+    (license license:gpl2+)))
 
 (define-public mupen64plus-core
   (package
@@ -2916,34 +2941,34 @@ play them on systems for which they were never designed!")
   (package
     (name "libticables2")
     (version "1.3.5")
-    (source (origin
-              (method url-fetch)
-              (uri "https://www.ticalc.org/pub/unix/tilibs.tar.gz")
-              (sha256
-               (base32
-                "07cfwwlidgx4fx88whnlch6y1342x16h15lkvkkdlp2y26sn2yxg"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri "https://www.ticalc.org/pub/unix/tilibs.tar.gz")
+       (sha256
+        (base32 "07cfwwlidgx4fx88whnlch6y1342x16h15lkvkkdlp2y26sn2yxg"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags (list "--enable-libusb10")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'unpack
-           (lambda* (#:key source #:allow-other-keys)
-             (invoke "tar" "xvkf" source)
-             (invoke "tar" "xvkf"
-                     (string-append "tilibs2/libticables2-"
-                                    ,version ".tar.bz2"))
-             (chdir (string-append "libticables2-" ,version))
-             #t)))))
-    (native-inputs
-     (list autoconf
-           autogen
-           automake
-           gnu-gettext
-           libtool
-           pkg-config))
-    (inputs
-     (list glib libusb))
+     (list
+      #:configure-flags
+      #~(list "--enable-libusb10")
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'unpack
+            (lambda* (#:key source #:allow-other-keys)
+              (invoke "tar" "xvkf" source)
+              (invoke "tar" "xvkf"
+                      (string-append "tilibs2/libticables2-"
+                                     #$version ".tar.bz2"))
+              (chdir (string-append "libticables2-"
+                                    #$version)))))))
+    (native-inputs (list autoconf
+                         autogen
+                         automake
+                         gettext-minimal
+                         libtool
+                         pkg-config))
+    (inputs (list glib libusb))
     (synopsis "Link cable library for TI calculators")
     (description
      "This package contains libticables, a library for operations on
@@ -2994,28 +3019,27 @@ This is a part of the TiLP project.")
   (package
     (name "libtifiles2")
     (version "1.1.7")
-    (source (origin
-              (method url-fetch)
-              (uri "https://www.ticalc.org/pub/unix/tilibs.tar.gz")
-              (sha256
-               (base32
-                "07cfwwlidgx4fx88whnlch6y1342x16h15lkvkkdlp2y26sn2yxg"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri "https://www.ticalc.org/pub/unix/tilibs.tar.gz")
+       (sha256
+        (base32 "07cfwwlidgx4fx88whnlch6y1342x16h15lkvkkdlp2y26sn2yxg"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'unpack
-           (lambda* (#:key source #:allow-other-keys)
-             (invoke "tar" "xvkf" source)
-             (invoke "tar" "xvkf"
-                     (string-append "tilibs2/libtifiles2-"
-                                    ,version ".tar.bz2"))
-             (chdir (string-append "libtifiles2-" ,version))
-             #t)))))
-    (native-inputs
-     (list autoconf automake gnu-gettext libtool pkg-config))
-    (inputs
-     (list glib libarchive libticonv))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'unpack
+            (lambda* (#:key source #:allow-other-keys)
+              (invoke "tar" "xvkf" source)
+              (invoke "tar" "xvkf"
+                      (string-append "tilibs2/libtifiles2-"
+                                     #$version ".tar.bz2"))
+              (chdir (string-append "libtifiles2-"
+                                    #$version)))))))
+    (native-inputs (list autoconf automake gettext-minimal libtool pkg-config))
+    (inputs (list glib libarchive libticonv))
     (synopsis "File functions library for TI calculators")
     (description
      "This package contains libticonv, a library to support working with
@@ -3029,28 +3053,27 @@ This is a part of the TiLP project.")
   (package
     (name "libticalcs2")
     (version "1.1.9")
-    (source (origin
-              (method url-fetch)
-              (uri "https://www.ticalc.org/pub/unix/tilibs.tar.gz")
-              (sha256
-               (base32
-                "07cfwwlidgx4fx88whnlch6y1342x16h15lkvkkdlp2y26sn2yxg"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri "https://www.ticalc.org/pub/unix/tilibs.tar.gz")
+       (sha256
+        (base32 "07cfwwlidgx4fx88whnlch6y1342x16h15lkvkkdlp2y26sn2yxg"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'unpack
-           (lambda* (#:key source #:allow-other-keys)
-             (invoke "tar" "xvkf" source)
-             (invoke "tar" "xvkf"
-                     (string-append "tilibs2/libticalcs2-"
-                                    ,version ".tar.bz2"))
-             (chdir (string-append "libticalcs2-" ,version))
-             #t)))))
-    (native-inputs
-     (list autoconf automake gnu-gettext libtool pkg-config))
-    (inputs
-     (list glib libarchive libticables2 libticonv libtifiles2))
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'unpack
+            (lambda* (#:key source #:allow-other-keys)
+              (invoke "tar" "xvkf" source)
+              (invoke "tar" "xvkf"
+                      (string-append "tilibs2/libticalcs2-"
+                                     #$version ".tar.bz2"))
+              (chdir (string-append "libticalcs2-"
+                                    #$version)))))))
+    (native-inputs (list autoconf automake gettext-minimal libtool pkg-config))
+    (inputs (list glib libarchive libticables2 libticonv libtifiles2))
     (synopsis "Support library for TI calculators")
     (description
      "This project aims to develop a multi-platform linking program for use
@@ -3432,69 +3455,81 @@ from various forks of Gens, and improved platform portability.")
     (license license:gpl2+)))
 
 (define-public bsnes
-  (package
-    (name "bsnes")
-    (version "115")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/bsnes-emu/bsnes")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0j054x38fwai61vj36sc04r3zkzay5acq2cgd9zqv5hs51s36g5b"))))
-    (build-system gnu-build-system)
-    (arguments
-     (list
-      #:make-flags #~(list "-C" "bsnes"
-                           ;; Remove march=native
-                           "local=false"
-                           (string-append "prefix=" #$output))
-      #:tests? #f                       ;No tests.
-      #:phases #~(modify-phases %standard-phases
-                   (delete 'configure))))
-    (native-inputs (list pkg-config))
-    (inputs
-     (list alsa-lib
-           ao
-           cairo
-           eudev
-           gtksourceview-2
-           libxrandr
-           libxv
-           openal
-           pulseaudio
-           sdl2))
-    (home-page "https://github.com/bsnes-emu/bsnes")
-    (synopsis "Emulator for the Super Nintendo / Super Famicom systems")
-    (description
-     "bsnes is a Super Nintendo / Super Famicom emulator that focuses on
+  ;; Use a snapshot of the latest master branch, as it includes unreleased
+  ;; build fixes.
+  (let ((commit "ddc3dc2d472aa0bb93ae0663b774734dfd94ab4b")
+        (revision "0"))
+    (package
+      (name "bsnes")
+      (version (git-version "115" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/bsnes-emu/bsnes")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "03slkk1117vv5p2zhvmyb4l18gb0j9nq2szsravl94zb3v6lbfl0"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:make-flags #~(list "-C" "bsnes"
+                             ;; Remove march=native
+                             "local=false"
+                             (string-append "prefix=" #$output))
+        #:tests? #f                       ;No tests.
+        #:phases #~(modify-phases %standard-phases
+                     (delete 'configure))))
+      (native-inputs (list pkg-config))
+      (inputs
+       (list alsa-lib
+             ao
+             cairo
+             gtk+
+             eudev
+             libxrandr
+             libxv
+             openal
+             pulseaudio
+             sdl2))
+      (home-page "https://github.com/bsnes-emu/bsnes")
+      (synopsis "Emulator for the Super Nintendo / Super Famicom systems")
+      (description
+       "bsnes is a Super Nintendo / Super Famicom emulator that focuses on
 performance, features, and ease of use.")
-    (license license:gpl3)))
+      (license license:gpl3+))))
 
 (define-public bsnes-hd
-  (package
-    (inherit bsnes)
-    (name "bsnes-hd")
-    ;; As of 10.6, there only ever was beta releases -- treat these as the
-    ;; stable releases for now.
-    (version "10.6")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/DerKoun/bsnes-hd")
-                    (commit (string-append
-                             "beta_"
-                             (string-replace-substring version "." "_")))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0f3cd89fd0lqskzj98cc1pzmdbscq0psdjckp86w94rbchx7iw4h"))))
-    (build-system gnu-build-system)
-    (home-page "https://github.com/DerKoun/bsnes-hd/")
-    (synopsis "Fork of bsnes with added HD video features")
-    (description "bsnes-hd (called ``HD Mode 7 mod, for bsnes'' in early
+  ;; Use a git snapshot of the master branch, which includes unreleased build
+  ;; fixes.
+  (let ((commit "0bb7b8645e22ea2476cabd58f32e987b14686601")
+        (revision "0"))
+    (package
+      (inherit bsnes)
+      (name "bsnes-hd")
+      ;; As of 10.6, there only ever was beta releases -- treat these as the
+      ;; stable releases for now.
+      (version (git-version "10.6" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/DerKoun/bsnes-hd")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0z9wqmx351f9160jsmprznqw5sx5lslyisbr41b9igzsr5j94db3"))))
+      (build-system gnu-build-system)
+      (arguments (substitute-keyword-arguments (package-arguments bsnes)
+                   ((#:make-flags flags ''())
+                    ;; This is needed because the modified bsnes code that
+                    ;; bsnes-hd uses is based on an older copy that still
+                    ;; defaults to gtk2.
+                    #~(cons "hiro=gtk3" #$flags))))
+      (home-page "https://github.com/DerKoun/bsnes-hd/")
+      (synopsis "Fork of bsnes with added HD video features")
+      (description "bsnes-hd (called ``HD Mode 7 mod, for bsnes'' in early
 betas) is a fork of bsnes (the great SNES emulator by Near) that adds HD video
 features, such as:
 @table @asis
@@ -3511,7 +3546,7 @@ Color calculation are done at true color instead of the SNES color depth (3x8
 instead of 3x5 bit).  With the optional line color smoothing color ``steps''
 turn into actual gradients (without influencing the sharpness of the artwork).
 @end table")
-    (license license:gpl3+)))
+      (license license:gpl3+))))
 
 (define-public libretro-bsnes-hd
   (package/inherit bsnes-hd

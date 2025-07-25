@@ -12,6 +12,7 @@
 ;;; Copyright © 2021 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2021 Mathieu Laparie <mlaparie@disr.it>
 ;;; Copyright © 2024 jgart <jgart@dismail.de>
+;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -103,6 +104,10 @@
                 "18zzb4x3z0d7fjh1x5439bs62dmgsi4c1pg3qyr7h5gp1i5xcj9l"))
              (patches (search-patches "chmlib-inttypes.patch"))))
     (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "CFLAGS=-Wno-error=implicit-function-declaration")))
     (home-page "http://www.jedrea.com/chmlib/")
     (synopsis "Library for CHM files")
     (description "CHMLIB is a library for dealing with ITSS/CHM format files.")
@@ -332,26 +337,7 @@ sip-include-dirs = [\""
                      (string-append #$(this-package-input "font-liberation")
                                     "/share/fonts/truetype")))
                 (delete-file-recursively font-dest)
-                (symlink font-src font-dest))))
-          ;; Make run-time dependencies available to the binaries.
-          (add-after 'wrap 'wrap-program
-            (lambda* (#:key inputs #:allow-other-keys)
-              (with-directory-excursion (string-append #$output "/bin")
-                (for-each
-                 (lambda (binary)
-                   (wrap-program binary
-                     ;; Make QtWebEngineProcess available.
-                     `("QTWEBENGINEPROCESS_PATH" =
-                       ,(list
-                         (search-input-file
-                          inputs "/lib/qt6/libexec/QtWebEngineProcess")))))
-                 ;; Wrap all the binaries shipping with the package, except
-                 ;; for the wrappings created during the 'wrap standard
-                 ;; phase.  This extends existing .calibre-real wrappers
-                 ;; rather than create ..calibre-real-real-s.  For more
-                 ;; information see: https://issues.guix.gnu.org/43249.
-                 (find-files "." (lambda (file stat)
-                                   (not (wrapped-program? file)))))))))))
+                (symlink font-src font-dest)))))))
     (home-page "https://calibre-ebook.com/")
     (synopsis "E-book library management software")
     (description "Calibre is an e-book library manager.  It can view, convert

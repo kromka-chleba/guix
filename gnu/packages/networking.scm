@@ -67,6 +67,8 @@
 ;;; Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
 ;;; Copyright © 2025 Sughosha <sughosha@disroot.org>
 ;;; Copyright © 2025 B. Wilson <elaexuotee@wilsonb.com>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1205,14 +1207,14 @@ residing in IPv4-only networks, even when they are behind a NAT device.")
 (define-public ndisc6
   (package
     (name "ndisc6")
-    (version "1.0.7")
+    (version "1.0.8")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.remlab.net/files/ndisc6/ndisc6-"
                                   version ".tar.bz2"))
               (sha256
                (base32
-                "02b6r4mwqj3kkia3nnqlr5nq8qqg1pg47lirb8d35mqh0pbk3i7d"))))
+                "0kqbxagjys3qr83f699fbv657dyq8j576fcxl2jhlxvj27fb4bqz"))))
     (build-system gnu-build-system)
     (home-page "https://www.remlab.net/ndisc6/")
     (synopsis "IPv6 diagnostic tools")
@@ -3959,7 +3961,8 @@ and targeted primarily for asynchronous processing of HTTP-requests.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "069y4mgygjsfp5szfbqr7l30g7fbcqqj62h11byyq9k24rl7ilsq"))))
+                  "069y4mgygjsfp5szfbqr7l30g7fbcqqj62h11byyq9k24rl7ilsq"))
+                (patches (search-patches "opendht-nanosleep.patch"))))
       (outputs '("out" "python" "tools" "debug"))
       (build-system gnu-build-system)
       (arguments
@@ -4309,7 +4312,7 @@ and signal strength.")
 (define-public libyang
   (package
     (name "libyang")
-    (version "3.4.2")
+    (version "3.12.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4318,7 +4321,7 @@ and signal strength.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "07skjr3r4na12kadca2dyk45clpcpnp4zkkwfaa8sqyslx7vhj56"))))
+                "1gnnhm28zcla42wm1qpps5336msmhxcnrs8gc1prw6c0n5g0fwl8"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags
@@ -4524,6 +4527,10 @@ simulation, and a number of other applications.")
        (sha256
         (base32 "08i6l5lr14mh4n3qbmx6kyx7vjqvzdnh3j9yfvgjppqik2dnq270"))))
     (build-system gnu-build-system)
+    (arguments
+     ;; fix build with GCC 14
+     '(#:configure-flags
+       (list "CFLAGS=-Wno-implicit-function-declaration")))
     (home-page "https://sourceforge.net/projects/wake-on-lan/")
     (synopsis "Implements Wake On LAN functionality in a small program")
     (description "Tool to send a magic packet to wake another host on the
@@ -4576,20 +4583,18 @@ some traces for unprivileged users.")
                    license:lgpl2.1+)))) ;for the libsupp subdirectory
 
 (define-public vde2
-  (let ((commit "8c65ebc464b2f986d5f1f4e6ae829ef4480c9d5a")
-        (revision "0"))
   (package
     (name "vde2")
-    (version (git-version "2.3.2" revision commit))
+    (version "2.3.3")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-              (url "https://github.com/virtualsquare/vde-2")
-              (commit commit)))
+             (url "https://github.com/virtualsquare/vde-2")
+             (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0l5xf71sv9zm5zw0wg8xgip58c0wh8zck2bazyc2a8gb67gc3s8y"))))
+        (base32 "0rgsizq6mhmrfc2nm2pdakp3g39b565qaskvv5fqk5grp03r1zk1"))))
     (build-system gnu-build-system)
     (arguments
      `(#:parallel-build? #f))           ; Build fails if #t.
@@ -4608,7 +4613,7 @@ cables.")
                    license:lgpl2.1       ; libvdeplug
                    (license:non-copyleft ; slirpvde
                     "file://COPYING.slirpvde"
-                    "See COPYING.slirpvde in the distribution."))))))
+                    "See COPYING.slirpvde in the distribution.")))))
 
 (define-public lldpd
   (package

@@ -26,7 +26,7 @@
 ;;; Copyright © 2020 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2020 R Veera Kumar <vkor@vkten.in>
 ;;; Copyright © 2020, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
-;;; Copyright © 2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2020, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020 Zhu Zihao <all_but_last@163.com>
 ;;; Copyright © 2020, 2021, 2022, 2023, 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 Sharlatan Hellseher <sharlatanus@gmail.com>
@@ -73,6 +73,7 @@
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
   #:use-module (gnu packages gimp)
@@ -126,7 +127,7 @@
 (define-public converseen
   (package
     (name "converseen")
-    (version "0.12.0.2")
+    (version "0.12.2.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -135,12 +136,7 @@
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0gjg2ma8v8pwldny4j2ag92g5zrv5cz511mq44qr7akjsddq6q6p"))
-              (patches
-               (search-patches "converseen-hide-updates-checks.patch"
-                               ;; Remove links to sites relying on non-free
-                               ;; Javascript.
-                               "converseen-hide-non-free-pointers.patch"))))
+                "03jsf5418kk1j8mk0gjzxb79lv44yy1wsycn6g6fmvg4zhl2cls3"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -148,10 +144,15 @@
       #:configure-flags #~(list "-DUSE_QT6=yes")
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'set-translations-location
-            ;; Fix translations location.  Without this, only English is
-            ;; offered.
+          (add-after 'unpack 'patch-source
             (lambda _
+              ;; Disable auto update and website links, for privacy concerns.
+              (substitute* "src/mainwindowimpl.cpp"
+                (("up->checkForUpdates[(][)];") ""))
+              (substitute* '("src/dialoginfo.cpp" "src/mainwindowimpl.cpp")
+                (("QDesktopServices::openUrl.*;") ""))
+              ;; Fix translations location.  Without this, only English is
+              ;; offered.
               (substitute* "src/translator.cpp"
                 (("QString\\(\"%1/share/converseen/loc\"\\).arg\\(rootPath\\)")
                  (string-append "QString(\""
@@ -166,6 +167,41 @@
     (description
      "Converseen is an image batch conversion tool.  You can resize and
 convert images in more than 100 different formats.")
+    (license license:gpl3+)))
+
+(define-public gradia
+  (package
+    (name "gradia")
+    (version "1.2.1")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/AlexanderVanhee/Gradia")
+                     (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32 "07hal4h3kkjf7la02nqmqgw19sa6hkd130bkfmgwjimkv9zi8z2i"))))
+    (build-system meson-build-system)
+    (arguments
+     (list #:glib-or-gtk? #t
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'skip-gtk-update-icon-cache
+                 (lambda _
+                   (substitute* "meson.build"
+                     (("gtk_update_icon_cache: true")
+                      "gtk_update_icon_cache: false")
+                     (("update_desktop_database: true")
+                      "update_desktop_database: false")))))))
+    (inputs (list gtk libadwaita python python-pygobject))
+    (native-inputs
+     (list blueprint-compiler gettext-minimal `(,glib "bin") pkg-config))
+    (home-page "https://github.com/AlexanderVanhee/Gradia")
+    (synopsis "Edit screenshots")
+    (description "Gradia is a GTK 4 application for enhancing and preparing
+screenshots for blogs, social media, and documentation.  It supports background
+customization, annotation tools (pen, arrow, text, highlight, stamp), padding,
+cropping, and various export formats.")
     (license license:gpl3+)))
 
 (define-public iqa
@@ -590,8 +626,16 @@ lossless JPEG manipulations such as rotation, scaling or cropping:
              ;; flag if there was no file decoding error.
              ;; The makefile is a "Non-ISO extended-ASCII text, with CRLF line
              ;; terminators" according to the file(1) utility.
-             (string-append "CFLAGS=-I. -Icommon/include -Iimage/sys -fPIC "
-                            "-D__ANSI__ -DDISABLE_PERF_MEASUREMENT -w -O "))
+             (string-append "CFLAGS=-I."
+                            " -Icommon/include"
+                            " -Iimage/sys"
+                            " -D__ANSI__"
+                            " -DDISABLE_PERF_MEASUREMENT"
+                            " -fPIC"
+                            " -w"
+                            " -O"
+                            " -Wno-error=implicit-function-declaration"
+                            " -Wno-error=incompatible-pointer-types"))
        #:tests? #f ; no check target
        #:phases
        (modify-phases %standard-phases
@@ -845,39 +889,6 @@ seedfill and connected components, image transformations combining changes in
 scale and pixel depth, and pixelwise masking, blending, enhancement, and
 arithmetic ops.")
     (license license:bsd-2)))
-
-(define-public leptonica-1.80
-  (package
-    (inherit leptonica)
-    (name "leptonica")
-    (version "1.80.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/DanBloomberg/leptonica")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "12ddln72z5l3icz0i9rpsfkg5xik8fcwcn8lb0cp3jigjxi8gvkg"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments leptonica)
-       ((#:tests? _ #t)
-        ;; The pngio_reg test fails, probably because the libpng used is
-        ;; newer.
-        #f)
-       ((#:phases phases '%standard-phases)
-        #~(modify-phases #$phases
-            (replace 'provide-absolute-giflib-reference
-              (lambda _
-                (let ((giflib #$(this-package-input "giflib")))
-                  ;; Add an absolute reference to giflib to avoid propagation.
-                  ;; This is the same as for the parent package, but at that
-                  ;; time the file name was 'liblept.la, not libleptonica.la.
-                  (with-directory-excursion (string-append #$output "/lib")
-                    (substitute* '("liblept.la" "pkgconfig/lept.pc")
-                      (("-lgif")
-                       (string-append "-L" giflib "/lib -lgif")))))))))))))
 
 (define-public jbig2dec
   (package
@@ -2220,7 +2231,7 @@ Features:
 (define-public swappy
   (package
     (name "swappy")
-    (version "1.4.0")
+    (version "1.5.1")
     (source
      (origin
        (method git-fetch)
@@ -2229,7 +2240,7 @@ Features:
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1s2lp3bz30svqdg6467jvncim0qgl0q1b1nqxnnci6kljbp5g0xh"))))
+        (base32 "0fh85brivyz9knby9cda4jd1kw6kkxzbqz9rf2y8i5q8vz5yywzx"))))
     (build-system meson-build-system)
     (native-inputs
      (list pkg-config scdoc
@@ -2768,39 +2779,47 @@ Format) file format decoder and encoder.")
     (name "mtpaint")
     ;; The author neither releases tarballs nor uses git version tags.
     ;; Instead, author puts version in git commit title.
-    (version "3.49.33")
+    (version "3.50.12")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
              (url "https://github.com/wjaguar/mtPaint")
-             (commit "5272e2b1e773c8e02ac3506b2d3bde82ad946b21")))
+             (commit "7cae5d663ed835a365d89a535536c39e18862a83")))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1bmq4m0dxczl18n1yiqb75g05a4c3pal1vdcyypkilx7ijsr0cmc"))))
+        (base32 "0rcblsdikn5659gzqwq3xdws5k03xyvd4yj7r0rm78daamki1wsv"))))
     (build-system gnu-build-system)
     (native-inputs
-     `(("gettext" ,gettext-minimal)
-       ("pkg-config" ,pkg-config)
-       ("which" ,which)))
+     (list
+       gettext-minimal
+       perl
+       pkg-config
+       which))
     (inputs
-     `(("imlib2" ,imlib2)
-       ("libtiff" ,libtiff)
-       ("libpng" ,libpng)
-       ("libungif" ,libungif)
-       ("libjpeg" ,libjpeg-turbo)
-       ("libwebp" ,libwebp)
-       ("openjpeg" ,openjpeg)
-       ("lcms" ,lcms)
-       ("zlib" ,zlib)
-       ("glib" ,glib)
-       ;; Support for gtk3 is in the testing stage.
-       ("gtk+" ,gtk+-2)))
+     (list
+       glib
+       gtk+
+       imlib2
+       libjpeg-turbo
+       libpng
+       libtiff
+       libungif
+       libwebp
+       openjpeg
+       lcms
+       zlib))
     (arguments
-     `(#:configure-flags
-       (list "intl"                     ; build internationalized version
-             "man")                     ; build the man page
-       #:tests? #f))                    ; no test suite
+      (list
+        #:tests? #f                    ; no test suite
+        #:phases
+        #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; Do not use "--enable-fast-install".
+            (lambda _
+              (invoke "./configure"
+                      (string-append "--prefix=" #$output)
+                      "intl" "man"))))))
     (home-page "https://mtpaint.sourceforge.net/")
     (synopsis "Create pixel art and manipulate digital images")
     (description

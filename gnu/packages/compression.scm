@@ -24,7 +24,7 @@
 ;;; Copyright © 2018 Joshua Sierles, Nextjournal <joshua@nextjournal.com>
 ;;; Copyright © 2018, 2019 Pierre Neidhardt <mail@ambrevar.xyz>
 ;;; Copyright © 2019 Nicolas Goaziou <mail@nicolasgoaziou.fr>
-;;; Copyright © 2019, 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2019, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
 ;;; Copyright © 2020 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2020, 2021 Lars-Dominik Braun <lars@6xq.net>
@@ -41,7 +41,7 @@
 ;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2024 David Elsing <david.elsing@posteo.net>
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
-;;; Copyright © 2024 Zheng Junjie <873216071@qq.com>
+;;; Copyright © 2024, 2025 Zheng Junjie <873216071@qq.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -112,7 +112,7 @@
 (define-public zlib
   (package
     (name "zlib")
-    (version "1.3")
+    (version "1.3.1")
     (source
      (origin
        (method url-fetch)
@@ -122,7 +122,7 @@
                                  version "/zlib-" version ".tar.gz")))
        (sha256
         (base32
-         "0gjrz8p70mgkic7mxjh1vqwws4x8z7hq2fhbackvqg81jb1a82zz"))))
+         "08yzf8xz0q7vxs8mnn74xmpxsrs6wy0aan55lpmpriysvyvv54ws"))))
     (build-system gnu-build-system)
     (outputs '("out" "static"))
     (arguments
@@ -183,16 +183,7 @@ in compression.")
      `(#:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'enter-source
-           (lambda _ (chdir "contrib/minizip") #t))
-         (add-after 'install 'remove-crypt-h
-           (lambda* (#:key outputs #:allow-other-keys)
-             ;; Remove <minizip/crypt.h> because it interferes with libc's
-             ;; <crypt.h> given that 'minizip.pc' says "-I…/include/minizip".
-             ;; Fedora does the same:
-             ;; <https://src.fedoraproject.org/rpms/zlib/c/4d2785ec3116947872f6f32dc4104e6d36d8a7a4?branch=master>.
-             (let ((out (assoc-ref outputs "out")))
-               (delete-file (string-append out "/include/minizip/crypt.h"))
-               #t))))))
+           (lambda _ (chdir "contrib/minizip"))))))
     (native-inputs
      (list autoconf automake libtool))
     (propagated-inputs (list zlib))
@@ -280,14 +271,14 @@ adding and extracting files to/from a tar archive.")
 (define-public gzip
   (package
    (name "gzip")
-   (version "1.13")
+   (version "1.14")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://gnu/gzip/gzip-"
                                 version ".tar.xz"))
             (sha256
              (base32
-              "0mx0j7765l4cyj3hyvlks2s3izdyzaqf3hknamjwc5yv6mlynm3l"))))
+              "1ihaii7d3vznvj9vk1fkmpvd7pqbz0c8fyzr2pvgs2r2pn0vi9q1"))))
    (build-system gnu-build-system)
    (synopsis "General file (de)compression (using lzw)")
    (arguments
@@ -722,14 +713,14 @@ some compression ratio).")
 (define-public lzip
   (package
     (name "lzip")
-    (version "1.23")
+    (version "1.25")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://savannah/lzip/lzip-"
                                  version ".tar.gz"))
              (sha256
               (base32
-               "03985xc696210irdzv475mlvf30ylahni3msanfz4ppivm3w14j7"))))
+               "0vx5y39y6ipks1lcc203mrxx7x9xf04nx1dxyl9m2gxqixnqlh89"))))
     (build-system gnu-build-system)
     (arguments
      ;; The configure script doesn't recognise the --build or --host
@@ -1764,92 +1755,91 @@ or junctions, and always follows hard links.")
 (define-public zstd
   (package
     (name "zstd")
-    (version "1.5.2")
+    (version "1.5.6")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/facebook/zstd/releases/download/"
                            "v" version "/zstd-" version ".tar.gz"))
        (sha256
-        (base32 "1l1zm1imcc2ixayykyh4y421shdj3pzp7g2xm2k2js8jmipxahkw"))))
+        (base32 "1h83si7s70jy7mcy0mv1c9mbkz66qqpawxs0zkmc3b1ayinf0acc"))))
     (build-system gnu-build-system)
     (outputs '("out"                    ;1.5MiB executables and documentation
                "lib"                    ;1.2MiB shared library and headers
                "static"))               ;1.2MiB static library
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-command-file-names
-           ;; Don't require hard requirements to be in $PATH.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (our (lambda (name) (string-append out "/bin/" name))))
-               (substitute* "programs/zstdgrep"
-                 (("(:-)(grep)" _ prefix command)
-                  (string-append prefix (which command)))
-                 (("(:-)(zstdcat)" _ prefix command)
-                  (string-append prefix (our command))))
-               (substitute* "programs/zstdless"
-                 (("zstdcat" command)
-                  (our command))))))
-         (delete 'configure)            ;no configure script
-         (add-after 'install 'adjust-library-locations
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (lib (assoc-ref outputs "lib"))
-                    (static (assoc-ref outputs "static"))
-                    (shared-libs (string-append lib "/lib"))
-                    (static-libs (string-append static "/lib")))
-               (mkdir-p static-libs)
-               ;; This is based on the win64 release zip file from zstd.
-               ,@(if (target-mingw?)
-                     `((for-each delete-file (find-files out "\\.so"))
-                       (for-each delete-file (find-files shared-libs "\\.so"))
-                       (rename-file (string-append shared-libs "/libzstd.a")
-                                    (string-append static-libs "/libzstd_static.lib"))
-                       (delete-file-recursively
-                         (string-append shared-libs "/pkgconfig"))
-                       ;; no binary for interpreter `sh' found in $PATH
-                       (delete-file (string-append out "/bin/zstdgrep"))
-                       (delete-file (string-append out "/bin/zstdless"))
-                       (delete-file (string-append out "/share/man/man1/zstdgrep.1"))
-                       (delete-file (string-append out "/share/man/man1/zstdless.1")))
-                     `(;; Move the static library to its own output to save ~1MiB.
-                       (for-each (lambda (ar)
-                                   (link ar (string-append static-libs "/"
-                                                           (basename ar)))
-                                   (delete-file ar))
-                                 (find-files shared-libs "\\.a$"))
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'patch-command-file-names
+                 ;; Don't require hard requirements to be in $PATH.
+                 (lambda _
+                   (let* ((our (lambda (name) (string-append #$output "/bin/" name))))
+                     (substitute* "programs/zstdgrep"
+                       (("(:-)(grep)" _ prefix command)
+                        (string-append prefix (which command)))
+                       (("(:-)(zstdcat)" _ prefix command)
+                        (string-append prefix (our command))))
+                     (substitute* "programs/zstdless"
+                       (("zstdcat" command)
+                        (our command))))))
+               (delete 'configure)            ;no configure script
+               (add-after 'install 'adjust-library-locations
+                 (lambda _
+                   (let* ((out #$output)
+                          (lib #$output:lib)
+                          (static #$output:static)
+                          (shared-libs (string-append lib "/lib"))
+                          (static-libs (string-append static "/lib")))
+                     (mkdir-p static-libs)
+                     ;; This is based on the win64 release zip file from zstd.
+                     #$@(if (target-mingw?)
+                            #~((for-each delete-file (find-files out "\\.so"))
+                               (for-each delete-file (find-files shared-libs "\\.so"))
+                               (rename-file (string-append shared-libs "/libzstd.a")
+                                            (string-append static-libs "/libzstd_static.lib"))
+                               (delete-file-recursively
+                                (string-append shared-libs "/pkgconfig"))
+                               ;; no binary for interpreter `sh' found in $PATH
+                               (delete-file (string-append out "/bin/zstdgrep"))
+                               (delete-file (string-append out "/bin/zstdless"))
+                               (delete-file (string-append out "/share/man/man1/zstdgrep.1"))
+                               (delete-file (string-append out "/share/man/man1/zstdless.1")))
+                            #~(;; Move the static library to its own output to save ~1MiB.
+                               (for-each (lambda (ar)
+                                           (link ar (string-append static-libs "/"
+                                                                   (basename ar)))
+                                           (delete-file ar))
+                                         (find-files shared-libs "\\.a$"))
 
-                       ;; Make sure the pkg-config file refers to the right output.
-                       (substitute* (string-append shared-libs "/pkgconfig/libzstd.pc")
-                         (("^prefix=.*")
-                          ;; Note: The .pc file expects a trailing slash for 'prefix'.
-                          (string-append "prefix=" lib "/\n")))))))))
-       #:make-flags
-       (list ,(string-append "CC=" (cc-for-target))
-             (string-append "prefix=" (assoc-ref %outputs "out"))
-             (string-append "libdir=" (assoc-ref %outputs "lib") "/lib")
-             (string-append "includedir=" (assoc-ref %outputs "lib") "/include")
-             ,@(if (target-mingw?)
-                   `(;; See the note in the Makefile.
-                     "TARGET_SYSTEM=Windows"
-                     ;; Don't try to link with pthread.
-                     "THREAD_LD="
-                     ;; This isn't picked up correctly in the Makefiles.
-                     "EXT=.exe")
-                   '())
-             ;; Auto-detection is over-engineered and buggy.
-             "PCLIBDIR=lib"
-             "PCINCDIR=include"
-             ;; Skip auto-detection of, and creating a dependency on, the build
-             ;; environment's ‘xz’ for what amounts to a dubious feature anyway.
-             "HAVE_LZMA=0"
-             ;; Not currently detected, but be explicit & avoid surprises later.
-             "HAVE_LZ4=0"
-             "HAVE_ZLIB=0")
-       #:tests? ,(not (or (target-hurd?)
-                          (%current-target-system)))))
+                               ;; Make sure the pkg-config file refers to the right output.
+                               (substitute* (string-append shared-libs "/pkgconfig/libzstd.pc")
+                                 (("^prefix=.*")
+                                  ;; Note: The .pc file expects a trailing slash for 'prefix'.
+                                  (string-append "prefix=" lib "/\n")))))))))
+           #:make-flags
+           #~(list (string-append "CC=" #$(cc-for-target))
+                   (string-append "prefix=" #$output)
+                   (string-append "libdir=" #$output:lib "/lib")
+                   (string-append "includedir=" #$output:lib "/include")
+                   #$@(if (target-mingw?)
+                          `(;; See the note in the Makefile.
+                            "TARGET_SYSTEM=Windows"
+                            ;; Don't try to link with pthread.
+                            "THREAD_LD="
+                            ;; This isn't picked up correctly in the Makefiles.
+                            "EXT=.exe")
+                          '())
+                   ;; Auto-detection is over-engineered and buggy.
+                   "PCLIBDIR=lib"
+                   "PCINCDIR=include"
+                   ;; Skip auto-detection of, and creating a dependency on, the build
+                   ;; environment's ‘xz’ for what amounts to a dubious feature anyway.
+                   "HAVE_LZMA=0"
+                   ;; Not currently detected, but be explicit & avoid surprises later.
+                   "HAVE_LZ4=0"
+                   "HAVE_ZLIB=0")
+           #:tests? (not (or (target-hurd?)
+                             (%current-target-system)))))
     (home-page "https://facebook.github.io/zstd/")
     (synopsis "Zstandard real-time compression algorithm")
     (description "Zstandard (@command{zstd}) is a lossless compression algorithm
@@ -1886,12 +1876,12 @@ speed.")
     (outputs '("out"))
     (inputs
      `(,@(if (%current-target-system)
-           `(("googletest" ,googletest))
-           '())))
+             `(("googletest" ,googletest))
+             '())))
     (native-inputs
      `(,@(if (%current-system)
-           `(("googletest" ,googletest))
-           '())))
+             `(("googletest" ,googletest))
+             '())))
     (arguments
      `(#:phases
        (modify-phases %standard-phases
@@ -1943,13 +1933,14 @@ the actual decompression, the other input and output.")
      `(#:tests? #f ; no test target
        #:make-flags (let ((out (assoc-ref %outputs "out")))
                       (list "-f" "unix/Makefile"
+                            "CC=gcc -Wno-error=implicit-function-declaration"
                             (string-append "prefix=" out)
                             (string-append "MANDIR=" out "/share/man/man1")))
        #:phases
        (modify-phases %standard-phases
          (replace 'build
            (lambda* (#:key (make-flags '()) #:allow-other-keys)
-             (apply invoke "make" "generic_gcc" make-flags)))
+             (apply invoke "make" "generic" make-flags)))
          (delete 'configure))))
     (home-page "http://www.info-zip.org/Zip.html")
     (synopsis "Compression and file packing utility")
@@ -2039,15 +2030,17 @@ Compression ratios of 2:1 to 3:1 are common for text files.")
                           `("-j" ,(number->string
                                    (parallel-job-count))
                             ,@make-flags
-                            "generic_gcc")))))
+                            "generic")))))
            #:make-flags
            ;; Fix cross-compilation without affecting native builds, as doing so
            ;; would trigger too many rebuilds: https://issues.guix.gnu.org/57127
            (if (%current-target-system)
                #~(list "-f" "unix/Makefile"
+                       "CC=gcc -Wno-error=implicit-function-declaration"
                        (string-append "prefix=" #$output)
                        (string-append "MANDIR=" #$output "/share/man/man1"))
                #~(list "-f" "unix/Makefile"
+                       "CC=gcc -Wno-error=implicit-function-declaration"
                        (string-append "prefix=" %output)
                        (string-append "MANDIR=" %output "/share/man/man1")))))
     (home-page "http://www.info-zip.org/UnZip.html")
@@ -2116,7 +2109,7 @@ timestamps in the file header with a fixed time (1 January 2008).
 (define-public zziplib
   (package
     (name "zziplib")
-    (version "0.13.72")
+    (version "0.13.78")
     (home-page "https://github.com/gdraheim/zziplib")
     (source (origin
               (method git-fetch)
@@ -2125,7 +2118,7 @@ timestamps in the file header with a fixed time (1 January 2008).
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0i6bpa2b13z19alm6ig80364dnin1w28cvif18k6wkkb0w3dzp8y"))))
+                "18578xbzj8j89srv4bwayjm11bg56fl34sya0znq4fwq3apm037i"))))
     (build-system cmake-build-system)
     (inputs
      (list zlib))

@@ -42,6 +42,7 @@
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Karl Hallsby <karl@hallsby.com>
 ;;; Copyright © 2025 Douglas Deslauriers <Douglas.Deslauriers@vector.com>
+;;; Copyright © 2025 Andreas Enge <andreas@enge.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -107,8 +108,12 @@
   #:use-module (gnu packages gnome)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang)
-  #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-compression)
+  #:use-module (gnu packages golang-check)
+  #:use-module (gnu packages golang-crypto)
+  #:use-module (gnu packages golang-web)
+  #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages gperf)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
@@ -119,6 +124,7 @@
   #:use-module (gnu packages haskell-crypto)
   #:use-module (gnu packages haskell-web)
   #:use-module (gnu packages haskell-xyz)
+  #:use-module (gnu packages high-availability)
   #:use-module (gnu packages image)
   #:use-module (gnu packages libbsd)
   #:use-module (gnu packages libusb)
@@ -200,7 +206,8 @@
        (patches (search-patches "qemu-build-info-manual.patch"
                                 "qemu-disable-bios-tables-test.patch"
                                 "qemu-disable-migration-test.patch"
-                                "qemu-fix-agent-paths.patch"))
+                                "qemu-fix-agent-paths.patch"
+                                "qemu-glibc-2.41.patch"))
        (modules '((guix build utils)))
        (snippet
         '(begin
@@ -1128,7 +1135,7 @@ commodity hardware.")
      (list autoconf automake jq))
     (inputs
      (list btrfs-progs
-           cryptsetup
+           cryptsetup-minimal
            e2fsprogs
            f2fs-tools
            lvm2
@@ -1304,6 +1311,11 @@ it emulates a variety of hardware and peripherals.")
      (list
        #:phases
        #~(modify-phases %standard-phases
+           (add-before 'configure 'gcc14
+             (lambda _
+               (substitute* "fesvr/device.h"
+                 (("#include <string>" all)
+                  (string-append all "\n#include <cstdint>")))))
            (add-before 'configure 'configure-dtc-path
              (lambda* (#:key inputs #:allow-other-keys)
                ;; Reference dtc by its absolute store path.
@@ -1319,6 +1331,164 @@ it emulates a variety of hardware and peripherals.")
     (description "Spike, the RISC-V ISA Simulator, implements a functional model
 of one or more RISC-V harts.")
     (license license:bsd-3)))
+
+(define-public incus
+  (package
+    (name "incus")
+    (version "6.14.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/lxc/incus")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1x0ggs7plc570805x16r5jy7bb9z1qdn0124yi9rv0wwx6l50bd7"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:install-source? #f
+      #:tests? #f ;TODO: tests requrie some set up.
+      #:import-path "github.com/lxc/incus/v6"
+      #:embed-files
+      #~(list "children"
+              "form_post.html.tmpl"
+              "nodes"
+              "text")
+      #:test-flags
+      #~(list "-tags" "libsqlite3")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-module-path
+           ;; go-github-com-ovn-kubernetes-libovsdb is a successor of
+           ;; go-github-com-ovn-org-libovsdb.
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (substitute* (find-files "." "\\.go$")
+                  (("github.com/ovn-org/libovsdb")
+                   "github.com/ovn-kubernetes/libovsdb")))))
+          (replace 'build
+            (lambda* (#:key import-path #:allow-other-keys)
+              (with-directory-excursion (string-append "src/" import-path)
+                (invoke "make" "build"
+                        (string-append "CC=" #$(cc-for-target))
+                        "TAG_SQLITE3=libsqlite3")))))))
+    ;; TODO:
+    ;; - Check and wrap runtime dependencies.
+    ;; - Build documentation.
+    ;; - Write shepherd service.
+    (native-inputs
+     (list go-github-com-adhocore-gronx
+           go-github-com-apex-log
+           go-github-com-armon-go-proxyproto
+           go-github-com-cenkalti-backoff-v4
+           go-github-com-checkpoint-restore-go-criu-v6
+           go-github-com-cowsql-go-cowsql
+           go-github-com-digitalocean-go-smbios
+           go-github-com-dustinkirkland-golang-petname
+           go-github-com-flosch-pongo2-v6
+           go-github-com-fvbommel-sortorder
+           go-github-com-go-chi-chi-v5
+           go-github-com-go-jose-go-jose-v4
+           go-github-com-go-logr-logr
+           go-github-com-golang-jwt-jwt-v5
+           go-github-com-google-gopacket
+           go-github-com-google-uuid
+           go-github-com-gorilla-mux
+           go-github-com-gorilla-websocket
+           go-github-com-gosexy-gettext
+           go-github-com-insomniacslk-dhcp
+           go-github-com-jaypipes-pcidb
+           go-github-com-jochenvg-go-udev
+           go-github-com-kballard-go-shellquote
+           go-github-com-linbit-golinstor
+           go-github-com-lxc-go-lxc
+           go-github-com-mattn-go-colorable
+           go-github-com-mattn-go-sqlite3
+           go-github-com-mdlayher-arp
+           go-github-com-mdlayher-ndp
+           go-github-com-mdlayher-netx
+           go-github-com-mdlayher-vsock
+           go-github-com-miekg-dns
+           go-github-com-minio-minio-go-v7
+           go-github-com-mitchellh-mapstructure
+           go-github-com-olekukonko-tablewriter
+           go-github-com-opencontainers-runtime-spec
+           go-github-com-opencontainers-umoci
+           go-github-com-openfga-go-sdk
+           go-github-com-osrg-gobgp-v3
+           go-github-com-ovn-kubernetes-libovsdb
+           go-github-com-pierrec-lz4-v4
+           go-github-com-pkg-sftp
+           go-github-com-pkg-xattr
+           go-github-com-sirupsen-logrus
+           go-github-com-spf13-cobra
+           go-github-com-spf13-pflag
+           go-github-com-stretchr-testify
+           go-github-com-vishvananda-netlink
+           go-github-com-zitadel-oidc-v3
+           go-go-starlark-net
+           go-golang-org-x-crypto
+           go-golang-org-x-exp
+           go-golang-org-x-oauth2
+           go-golang-org-x-sync
+           go-golang-org-x-sys
+           go-golang-org-x-term
+           go-golang-org-x-text
+           go-golang-org-x-tools
+           go-google-golang-org-protobuf
+           go-gopkg-in-yaml-v2
+           go-k8s-io-utils
+           pkg-config))
+    (inputs
+     (list acl
+           cowsql
+           dbus
+           eudev
+           libcap
+           libdqlite
+           libseccomp
+           libselinux
+           lxc))
+    (home-page "https://github.com/lxc/incus")
+    (synopsis "System container and virtual machine manager")
+    (description
+     "Incus is a modern, secure and powerful system container and virtual
+machine manager.
+
+It provides a unified experience for running and managing full Linux systems
+inside containers or virtual machines.  Incus supports images for a large
+number of Linux distributions (official Ubuntu images and images provided by
+the community) and is built around a very powerful, yet pretty simple, REST
+API.  Incus scales from one instance on a single machine to a cluster in a
+full data center rack, making it suitable for running workloads both for
+development and in production.
+
+This package provides the following commands:
+@itemize
+@item fuidshift - tool to remap a filesystem tree, switching it from one set
+of UID/GID ranges to another
+@item generate-config - tool to generate documentation for Incus
+@item generate-database - entry point for all @code{go:generate} directives
+used in Incus' source code
+@item incus - command line client for Incus
+@item incus-agent -  Incus virtual machine agent
+@item incus-benchmark - tool to benchmark various actions on a local Incus
+daemon
+@item incusd - the Incus daemon
+@item incus-migrate - physical to instance migration tool
+@item incus-simplestreams - tool to manage the files on a static image server
+using simplestreams index files as the publishing mechanism
+@item incus-user - Incus user project daemon
+@item lxc-to-incus - CLI client for container migration
+@item lxd-to-incus -   LXD to Incus migration tool
+@item mini-oidc
+@item sysinfo - basic system stats tool
+@item tls2jwt - TLS to JWT certificate convertor, reference/testing tool
+@end itemize")
+    (license license:asl2.0)))
 
 (define-public libosinfo
   (package
@@ -1440,113 +1610,6 @@ manage system or application containers.")
 of making Linux containers feel more like a virtual machine.
 It started as a side project of LXC but can be used by any run-time.")
     (license license:lgpl2.1+)))
-
-(define-public lxd
-  (package
-    (name "lxd")
-    (version "4.24")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append
-                    "https://github.com/lxc/lxd/releases/download/"
-                    "lxd-" version "/lxd-" version ".tar.gz"))
-              (sha256
-               (base32
-                "0lmjmvm98m6yjxcqlfw690i71nazfzgrm3mzbjj77g1631df3ylp"))))
-    (build-system go-build-system)
-    (arguments
-     `(#:import-path "github.com/lxc/lxd"
-       #:tests? #f ;; tests fail due to missing /var, cgroups, etc.
-       #:modules ((guix build go-build-system)
-                  (guix build union)
-                  (guix build utils)
-                  (srfi srfi-1))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'unpack-dist
-           (lambda* (#:key import-path #:allow-other-keys)
-             (with-directory-excursion (string-append "src/" import-path)
-               ;; Move all the dependencies into the src directory.
-               (copy-recursively "_dist/src" "../../.."))))
-         (replace 'build
-           (lambda* (#:key import-path #:allow-other-keys)
-             (with-directory-excursion (string-append "src/" import-path)
-               (invoke "make" "build" "CC=gcc" "TAG_SQLITE3=libsqlite3"))))
-         (replace 'check
-           (lambda* (#:key tests? import-path #:allow-other-keys)
-             (when tests?
-               (with-directory-excursion (string-append "src/" import-path)
-                 (invoke "make" "check" "CC=gcc" "TAG_SQLITE3=libsqlite3")))))
-         (replace 'install
-           (lambda* (#:key inputs outputs import-path #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin-dir
-                     (string-append out "/bin/"))
-                    (doc-dir
-                     (string-append out "/share/doc/lxd-" ,version))
-                    (completions-dir
-                     (string-append out "/share/bash-completion/completions")))
-               (with-directory-excursion (string-append "src/" import-path)
-                 ;; Wrap lxd with run-time dependencies.
-                 (wrap-program (string-append bin-dir "lxd")
-                   `("PATH" ":" prefix
-                     ,(fold (lambda (input paths)
-                              ;; TODO: Use 'search-input-directory' rather
-                              ;; than look up inputs by name.
-                              (let* ((in (assoc-ref inputs input))
-                                     (bin (string-append in "/bin"))
-                                     (sbin (string-append in "/sbin")))
-                                (append (filter file-exists?
-                                                (list bin sbin)) paths)))
-                            '()
-                            '("bash-minimal" "acl" "rsync" "tar" "xz" "btrfs-progs"
-                              "gzip" "dnsmasq" "squashfs-tools" "iproute2"
-                              "criu" "iptables" "attr"))))
-                 ;; Remove unwanted binaries.
-                 (for-each (lambda (prog)
-                             (delete-file (string-append bin-dir prog)))
-                           '("deps" "macaroon-identity" "generate"))
-                 ;; Install documentation.
-                 (for-each (lambda (file)
-                             (install-file file doc-dir))
-                           (find-files "doc"))
-                 ;; Install bash completion.
-                 (rename-file "scripts/bash/lxd-client" "scripts/bash/lxd")
-                 (install-file "scripts/bash/lxd" completions-dir))))))))
-    (native-inputs
-     (list ;; Test dependencies:
-           ;; ("go-github-com-rogpeppe-godeps" ,go-github-com-rogpeppe-godeps)
-           ;; ("go-github-com-tsenart-deadcode" ,go-github-com-tsenart-deadcode)
-           ;; ("go-golang-org-x-lint" ,go-golang-org-x-lint)
-           pkg-config))
-    (inputs
-     (list acl
-           eudev
-           libdqlite
-           libraft
-           libcap
-           lxc
-           ;; Run-time dependencies.
-           attr
-           bash-minimal
-           rsync
-           tar
-           xz
-           btrfs-progs
-           gzip
-           dnsmasq
-           squashfs-tools
-           iproute
-           criu
-           iptables))
-    (synopsis "Daemon based on liblxc offering a REST API to manage containers")
-    (home-page "https://linuxcontainers.org/lxd/")
-    (description "LXD is a next generation system container manager.  It
-offers a user experience similar to virtual machines but using Linux
-containers instead.  It's image based with pre-made images available for a
-wide number of Linux distributions and is built around a very powerful, yet
-pretty simple, REST API.")
-    (license license:asl2.0)))
 
 (define-public libvirt
   (package

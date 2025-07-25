@@ -393,7 +393,9 @@ with freedesktop.org standard.")
                 (string-append "graphical_su="
                                (search-input-file inputs "/bin/ktsuss")))))))
        #:configure-flags (list
-                          "CFLAGS=-fcommon"
+                          (string-append
+                            "CFLAGS=-fcommon -g -O2 "
+                            "-Wno-error=incompatible-pointer-types")
                           (string-append "--with-preferable-sudo="
                                          (assoc-ref %build-inputs "ktsuss")
                                          "/bin/ktsuss")
@@ -549,7 +551,9 @@ in LXDE.")
                      (find-files "." generated-c-file?))))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags (list "--enable-gtk3")
+     `(#:configure-flags (list "--enable-gtk3"
+                               ;; Fix build with GCC 14.
+                               "CFLAGS=-Wno-error=incompatible-pointer-types")
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'rm-stamp

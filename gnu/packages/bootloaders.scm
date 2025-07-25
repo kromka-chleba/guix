@@ -688,9 +688,7 @@ The SUBDIR argument defaults to \"efi/Guix\", as it is also the case for
                                  "syslinux-strip-gnu-property.patch"))))
       (build-system gnu-build-system)
       (native-inputs
-       `(("nasm" ,nasm)
-         ("perl" ,perl)
-         ("python-2" ,python-2)))
+       (list nasm perl python))
       (inputs
        `(("libuuid" ,util-linux "lib")
          ("mtools" ,mtools)))
@@ -704,6 +702,7 @@ The SUBDIR argument defaults to \"efi/Guix\", as it is also the case for
                (string-append "DATADIR=" %output "/share")
                (string-append "MANDIR=" %output "/share/man")
                "PERL=perl"
+               "PYTHON=python3"
                "bios")
          #:strip-flags '("--strip-debug" "--enable-deterministic-archives")
          #:phases
@@ -755,7 +754,8 @@ The SUBDIR argument defaults to \"efi/Guix\", as it is also the case for
                     "dtc-" version ".tar.gz"))
               (sha256
                (base32
-                "1x609axqpkw5d47pz3ag34ycy3w7y1d0i8q4715hvlmgszmya07j"))))
+                "1x609axqpkw5d47pz3ag34ycy3w7y1d0i8q4715hvlmgszmya07j"))
+              (patches (search-patches "dtc-fix-test.patch"))))
     (build-system meson-build-system)
     (arguments
      (list

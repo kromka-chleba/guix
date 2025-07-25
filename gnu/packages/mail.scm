@@ -62,6 +62,8 @@
 ;;; Copyright © 2025 Tanguy Le Carrour <tanguy@bioneland.org>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2025 Jelle Licht <jlicht@fsfe.org>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Zacchaeus <eikcaz@zacchae.us>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -915,7 +917,7 @@ It adds a large amount of new and improved features to Mutt.")
                                                          base))))))))))))
     (native-inputs
      (list autoconf-2.71
-           automake
+           automake-1.16.5
            pkg-config
            gnupg                        ; for tests only
            gobject-introspection
@@ -2070,7 +2072,7 @@ delivery.")
 (define-public exim
   (package
     (name "exim")
-    (version "4.98")
+    (version "4.98.2")
     (source
      (origin
        (method url-fetch)
@@ -2084,7 +2086,7 @@ delivery.")
                     (string-append "https://ftp.exim.org/pub/exim/exim4/old/"
                                    file-name))))
        (sha256
-        (base32 "1xsjb2hqasxsqsmrcv98c2dvfgcsiy0j0g229fx974lzfy511g0f"))))
+        (base32 "1bnw8874jkb9yfvda9gg5z5g8qp66sm6308l3l5wrdhxgjkfif48"))))
     (build-system gnu-build-system)
     (arguments
      (list #:phases
@@ -2149,7 +2151,15 @@ delivery.")
                    ;; same source tree and varies across different (parallel?)
                    ;; builds.  Make it a ‘constant number’ instead.
                    (substitute* "src/version.c"
-                     (("#include \"cnumber.h\"") "1")))))
+                     (("#include \"cnumber.h\"") "1"))))
+               (add-after 'build 'install-docs
+                 (lambda* (#:key outputs #:allow-other-keys)
+                   ;; Compiling spec.info requires us to build from git
+                   ;; instead of the exim tarball.  Add spec.txt instead.
+                   (install-file "doc/spec.txt"
+                                 (string-append (assoc-ref outputs "out")
+                                                "/share/doc/"
+                                                #$name "-" #$version)))))
            #:make-flags
            #~(list (string-append "CC=" #$(cc-for-target))
                    "INSTALL_ARG=-no_chown")
@@ -3404,7 +3414,7 @@ from the Cyrus IMAP project.")
            zlib))
     (native-inputs
      (list autoconf
-           automake
+           automake-1.16.5
            bison
            groff                        ;for man pages
            pkg-config))

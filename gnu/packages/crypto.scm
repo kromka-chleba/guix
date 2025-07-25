@@ -107,6 +107,36 @@
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-26))
 
+(define-public libblake3
+  (package
+    (name "libblake3")
+    (version "1.8.2")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/BLAKE3-team/BLAKE3")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pm7285insrmpfwwal8rnp3yhvc6s2ki8b6ccmbh2qfnnl95a010"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=ON")
+      #:tests? #f ; XXX: there are some rust tests in the root.
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "c"))))))
+    (home-page "https://github.com/BLAKE3-team/BLAKE3")
+    (synopsis "Official C implementation of BLAKE3")
+    (description "This package provides a cryptographic hash function that is
+fast, secure, parallelizable, capable of incremental updates.")
+    (license (list license:asl2.0 license:cc0)))) ; dual licensed
+
 (define-public libdecaf
   (package
     (name "libdecaf")
@@ -514,7 +544,7 @@ total number of shares generated.")
     (inputs
      (list argon2
            bash-minimal
-           cryptsetup
+           cryptsetup-minimal
            e2fsprogs        ; for mkfs.ext4
            gettext-minimal  ; used at runtime
            gnupg
@@ -1636,7 +1666,7 @@ checksum tool based on the BLAKE3 cryptographic hash function.")
 (define-public libxcrypt
   (package
     (name "libxcrypt")
-    (version "4.4.36")
+    (version "4.4.38")
     (source
      (origin
        (method url-fetch)
@@ -1645,22 +1675,12 @@ checksum tool based on the BLAKE3 cryptographic hash function.")
          "https://github.com/besser82/libxcrypt/releases/download/v" version
          "/libxcrypt-" version ".tar.xz"))
        (sha256
-        (base32 "0hw9zphnbzgys5k7ja37iqmwmlyn0y417qr6xqmdw08axv5g9qg5"))))
+        (base32 "1mkd42s12iagnpqk29hqi5vk2a6vkdaagn81gwr9k9vf62f4nc40"))))
     (build-system gnu-build-system)
     (native-inputs
      (list perl))
     (arguments
      (cond
-       ((target-hurd64?)
-        (list
-          #:phases
-          #~(modify-phases %standard-phases
-              (add-after 'unpack 'apply-hurd64-patch
-                (lambda _
-                  (let ((patch
-                         #$(local-file
-                            (search-patch "libxcrypt-hurd64.patch"))))
-                    (invoke "patch" "--force" "-p1" "-i" patch)))))))
        ((target-ppc32?)
         (list #:tests? #f))     ; TODO: Investigate test failures.
        ((target-mingw?)

@@ -13,6 +13,7 @@
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2025 Matthias Riße <matrss@0px.xyz>
+;;; Copyright © 2025 jgart <jgart@dismail.de>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -93,22 +94,23 @@
           (base32 "1nyx80z53xxlbhpb5k22jnv4jajxqhjm0gz7qb18w9pqqlrvkqd4"))))
       (build-system python-build-system)
       (arguments
-       `(#:phases
-         (modify-phases %standard-phases
-           (replace 'check
-             (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-               (setenv "HOME" (getenv "TEMP"))
-               (when tests?
-                 (add-installed-pythonpath inputs outputs)
-                 (invoke "pytest" "-vv")))))))
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key inputs outputs tests? #:allow-other-keys)
+                (setenv "HOME" (getenv "TEMP"))
+                (when tests?
+                  (add-installed-pythonpath inputs outputs)
+                  (invoke "pytest" "-vv")))))))
       (native-inputs
-       `(("pytest" ,python-pytest)
-         ("click" ,python-click)))
+       (list python-pytest
+             python-click))
       (inputs
-       `(("click" ,python-click)
-         ("click-default-group" ,python-click-default-group)
-         ("pyyaml" ,python-pyyaml)
-         ("rich" ,python-rich)))
+       (list python-click
+             python-click-default-group
+             python-pyyaml
+             python-rich))
       (home-page "https://github.com/kitplummer/clikan")
       (synopsis "Command-line kanban utility")
       (description
@@ -175,14 +177,23 @@ backed by Git Annex.")
          (file-name (string-append name "-" version "-checkout"))
          (sha256
           (base32 "0c8zn7l0xq65wp07h7mxnb5ww56d1443l2vkjvx5sj6wpcchfn0s"))))
-      (build-system python-build-system)
+      (build-system pyproject-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:key tests? #:allow-other-keys)
+                (if tests?
+                    (invoke "cram" "tests")
+                    (format #t "test suite not run.~%")))))))
       (native-inputs
-       (list python-cram))
+       (list python-cram python-setuptools python-wheel))
+      (home-page "https://github.com/sjl/t")
       (synopsis "Command-line todo list manager")
       (description
        "@command{t} is a command-line todo list manager for people that want
 to finish tasks, not organize them.")
-      (home-page "https://stevelosh.com/projects/t/")
       (license license:expat))))
 
 (define-public taskwarrior

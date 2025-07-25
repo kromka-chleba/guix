@@ -231,8 +231,8 @@ features including, tables, builtin image display, bookmarks, SSL and more.")
     (license license:gpl1+)))
 
 (define-public elinks
-  (let ((commit "5e6ea2669c69db492a5c3e920e4a47a8a9af70fc")
-        (revision "1"))
+  (let ((commit "9b8ae3ebb7ca73fbb364262b3a5ff5377b0dfa26")
+        (revision "2"))
     (package
       (name "elinks")
       (version (git-version "0.18.0" revision commit))
@@ -245,7 +245,7 @@ features including, tables, builtin image display, bookmarks, SSL and more.")
          (file-name (git-file-name name version))
          (sha256
           (base32
-           "1rjq66kwq4d44fwv3wphycxldw7mnyngadcgq9lnk8vz2f8026kw"))))
+           "0klvgnvii8pzpf5c0m11caz22in3yy631n480pp0mwpj0mvpnpa7"))))
       (build-system meson-build-system)
       (arguments
        (list
@@ -266,11 +266,13 @@ features including, tables, builtin image display, bookmarks, SSL and more.")
                 "-Dreproducible=true"
                 "-Dsource-date-epoch=1"
                 "-Dtest=true"
-                "-Dtrue-color=true")))
+                "-Dtrue-color=true"
+                ;; Fix GCC 14 build
+                "-Dc_args=-Wno-implicit-function-declaration")))
       (native-inputs
        (list autoconf
              automake
-             gnu-gettext
+             gettext-minimal
              perl
              pkg-config
              python-minimal))
@@ -575,7 +577,7 @@ interface.")
            python-pyqtwebengine-6
            python-tldextract
            ;; While qtwebengine is provided by python-pyqtwebengine-6, it's
-           ;; included here so we can wrap QTWEBENGINEPROCESS_PATH.
+           ;; included here so we can wrap QTWEBENGINE_RESOURCES_PATH.
            qtwebengine))
     (arguments
      `(;; FIXME: With the existence of qtwebengine, tests can now run.  But
@@ -636,10 +638,7 @@ interface.")
              (wrap-program (search-input-file outputs "bin/qutebrowser")
                `("QTWEBENGINE_RESOURCES_PATH" =
                  (,(search-input-directory
-                    inputs "/share/qt6/resources")))
-               `("QTWEBENGINEPROCESS_PATH" =
-                 (,(search-input-file
-                    inputs "/lib/qt6/libexec/QtWebEngineProcess")))))))))
+                    inputs "/share/qt6/resources")))))))))
     (home-page "https://qutebrowser.org/")
     (synopsis "Minimal, keyboard-focused, vim-like web browser")
     (description "qutebrowser is a keyboard-focused browser with a minimal
@@ -968,7 +967,7 @@ http, and https via third-party applications.")
      (list autoconf
            automake
            bash-completion
-           gnu-gettext
+           gettext-minimal
            libjpeg-turbo
            imagemagick
            mandoc

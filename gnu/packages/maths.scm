@@ -22,7 +22,7 @@
 ;;; Copyright © 2017, 2019, 2022 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2017–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2017 Dave Love <me@fx@gnu.org>
-;;; Copyright © 2018, 2019, 2020, 2021, 2022, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2018, 2019, 2020, 2021, 2022, 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2018 Joshua Sierles, Nextjournal <joshua@nextjournal.com>
 ;;; Copyright © 2018 Nadya Voronova <voronovank@gmail.com>
 ;;; Copyright © 2018 Adam Massmann <massmannak@gmail.com>
@@ -722,12 +722,16 @@ precision floating point numbers.")
                     ;; There are rounding issues with these tests on i686:
                     ;; https://lists.gnu.org/archive/html/bug-gsl/2016-10/msg00000.html
                     ;; https://lists.gnu.org/archive/html/bug-gsl/2020-04/msg00000.html
+                    ;; https://codeberg.org/guix/guix/issues/1234#issuecomment-5874172
                     #~((add-before 'check 'disable-failing-tests
                          (lambda _
                            (substitute* "spmatrix/test.c"
                              ((".*test_all.*") "\n")
                              ((".*test_float.*") "\n")
                              ((".*test_complex.*") "\n"))
+
+                           (substitute* "specfunc/test_legendre.c"
+                             ((".*= test_legendre_schmidt.*") "\n"))
 
                            ;; XXX: These tests abort with:
                            ;; gsl: cholesky.c:645: ERROR: matrix is not positive definite
@@ -1329,7 +1333,13 @@ provide LAPACK for someone who does not have access to a Fortran compiler.")
                       ;; <https://github.com/amd/scalapack/commit/d3b6248b26f615b118ff4d72a00b3028f59a47f6>.
                       (substitute* "TESTING/CMakeLists.txt"
                         (("^add_test\\(x[cz]heevr.*" all)
-                         (string-append "# " all "\n"))))))))
+                         (string-append "# " all "\n")))))
+                  (add-before 'configure 'fix-gcc14-errors
+                    (lambda _
+                      (setenv "CFLAGS"
+                        (string-append
+                          "-g -O2 -DNDEBUG"
+                          " -Wno-error=implicit-function-declaration")))))))
     (home-page "https://www.netlib.org/scalapack/")
     (synopsis "Library for scalable numerical linear algebra")
     (description
@@ -1795,9 +1805,11 @@ incompatible with HDF5.")
                            "--enable-threadsafe"
                            "--with-pthread"
                            "--enable-unsupported")
-       ;; Use -fPIC to allow the R bindings to link with the static libraries
-       #:make-flags (list "CFLAGS=-fPIC"
-                          "CXXFLAGS=-fPIC")
+       ;; Use -fPIC to allow the R bindings to link with the static libraries.
+       ;; Declare warnings as non-errors to fix build with gcc@14
+       #:make-flags
+       (list "CFLAGS=-g -O2 -fPIC -Wno-error=incompatible-pointer-types"
+             "CXXFLAGS=-g -O2 -fPIC")
        #:phases
        (modify-phases %standard-phases
          (add-before 'configure 'patch-configure
@@ -1948,14 +1960,14 @@ extremely large and complex data collections.")
                  "src/H5Epubgen.h"
                  "src/H5Eterm.h"
                  "src/H5overflow.h"
-                 "src/H5version.h"))))
-       (patches (search-patches "hdf5-config-dependencies.patch"))))
+                 "src/H5version.h"))))))
     (build-system cmake-build-system)
     (arguments
      (list
       ;; Some of the users, notably Flann, need the C++ interface.
       #:configure-flags
       #~(list
+         "-DBUILD_STATIC_LIBS=OFF"
          "-DHDF5_INSTALL_CMAKE_DIR=lib/cmake"
          "-DHDF5_BUILD_CPP_LIB=ON"
          "-DHDF5_BUILD_FORTRAN=ON"
@@ -2249,14 +2261,16 @@ Swath).")
               (prepend openmpi)))
     (arguments
      (substitute-keyword-arguments (package-arguments hdf5)
-       ((#:configure-flags _ #f)
-        #~(list
-           (string-append "-DHDF5_INSTALL_CMAKE_DIR=" #$output "/lib/cmake")
-           "-DHDF5_ENABLE_THREADSAFE=OFF"
-           "-DHDF5_ENABLE_PARALLEL=ON"
-           "-DHDF5_BUILD_FORTRAN=ON"
-           "-DHDF5_BUILD_CPP_LIB=OFF"
-           "-DHDF5_BUILD_DOC=ON"))
+       ((#:configure-flags flags '())
+        #~(append (filter (lambda (flag)
+                            (not
+                             (or (string-prefix? "-DHDF5_ENABLE_THREADSAFE" flag)
+                                 (string-prefix? "-DHDF5_BUILD_CPP_LIB" flag)
+                                 (string-prefix? "-DALLOW_UNSUPPORTED" flag))))
+                          #$flags)
+                  (list "-DHDF5_ENABLE_THREADSAFE=OFF"
+                        "-DHDF5_ENABLE_PARALLEL=ON"
+                        "-DHDF5_BUILD_CPP_LIB=OFF" )))
        ((#:phases phases)
         #~(modify-phases #$phases
             (add-after 'build 'mpi-setup
@@ -2443,7 +2457,8 @@ similar to MATLAB, GNU Octave or SciPy.")
            zlib))
     (arguments
      (list #:configure-flags
-           #~'("--enable-doxygen" "--enable-dot"
+           #~'("CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types"
+               "--enable-doxygen" "--enable-dot"
                "--enable-hdf4" "--disable-dap-remote-tests")
 
            #:phases
@@ -3093,37 +3108,56 @@ fixed point (16.16) format.")
   (package
     (name "glucose")
     (version "4.2.1")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/audemard/glucose")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0zrn4hnkf8k95dc3s3acydl1bqkr8a0axw56g7n562lx7zj7sd62"))))
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/audemard/glucose")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0zrn4hnkf8k95dc3s3acydl1bqkr8a0axw56g7n562lx7zj7sd62"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; Remove code related to the parallel version as non-free;
+        ;; from parallel/Main.cc:
+        ;; "The parallel version of Glucose (all files modified
+        ;; since Glucose 3.0 releases, 2013) cannot be used in any
+        ;; competitive event"
+        '(begin
+           (delete-file-recursively "parallel")
+           (substitute* "CMakeLists.txt"
+             (("^add_library\\(glucosep.*$")
+              "")
+             (("^add_executable\\(glucose-syrup.*$")
+              "")
+             (("^target_link_libraries\\(glucose-syrup.*$")
+              ""))))))
     (build-system cmake-build-system)
     (arguments
      (list
-      #:tests? #f ; there are no tests
+      #:tests? #f ;there are no tests
       #:configure-flags
       #~(list "-DBUILD_SHARED_LIBS=ON"
               (string-append "-DCMAKE_BUILD_RPATH=" #$output "/lib"))
-      #:phases #~(modify-phases %standard-phases
-                   (replace 'install
-                     (lambda _
-                       (for-each
-                        (lambda (bin)
-                          (install-file bin (string-append #$output "/bin")))
-                        '("glucose-simp" "glucose-syrup"))
-                       (for-each
-                        (lambda (lib)
-                          (install-file lib (string-append #$output "/lib")))
-                        '("libglucose.so" "libglucosep.so")))))))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'install
+            (lambda _
+              (install-file "libglucose.so"
+                            (string-append #$output "/lib"))
+              (install-file "glucose-simp"
+                            (string-append #$output "/bin"))
+              ;; Add a symbolic link with the customary name used until
+              ;; the parallel version was written, and which is expected
+              ;; by Sage.
+              (symlink "glucose-simp"
+                       (string-append #$output "/bin/glucose")))))))
     (inputs (list zlib))
     (home-page "https://www.labri.fr/perso/lsimon/research/glucose/")
     (synopsis "SAT Solver")
-    (description "Glucose is a SAT solver based on a scoring scheme introduced
+    (description
+     "Glucose is a SAT solver based on a scoring scheme introduced
 in 2009 for the clause learning mechanism of so called “Modern” SAT solvers.
 It is designed to be parallel.")
     (license license:expat)))
@@ -3524,7 +3558,8 @@ script files.")
        ;; freeimage version 3.17 library leads to 'undefined
        ;; reference' errors.
        #:configure-flags
-        (list "-DUSE_FREEIMAGE:BOOL=OFF"
+        (list "-DCMAKE_CXX_FLAGS=-fpermissive" ;from unsigned char* to char*
+              "-DUSE_FREEIMAGE:BOOL=OFF"
               "-DUSE_TBB:BOOL=ON"
               "-DUSE_VTK:BOOL=OFF"
               "-DBUILD_DOC_Overview:BOOL=OFF"
@@ -6178,7 +6213,7 @@ access to BLIS implementations via traditional BLAS routine calls.")
 (define-public openlibm
   (package
     (name "openlibm")
-    (version "0.8.1")
+    (version "0.8.7")
     (source
      (origin
        (method git-fetch)
@@ -6187,7 +6222,7 @@ access to BLIS implementations via traditional BLAS routine calls.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1xsrcr49z0wdqpwd98jmw2xh18myzsa9xman0kp1h2i89x8mic5b"))))
+        (base32 "0lgylmspyhsndfxzya9bymyz7vnah3197jylr497jgbm4b62q8bx"))))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags
@@ -7353,6 +7388,11 @@ specifications.")
        #:phases
        (modify-phases %standard-phases
          (delete 'configure)            ; no configure script
+         (add-after 'unpack 'apply-gcc-14-patch
+           (lambda _
+             (substitute* '("lpsolve55/ccc"
+                            "lp_solve/ccc")
+               (("^c=gcc") "c=\"gcc -Wno-error=implicit-int\""))))
          (replace 'build
            (lambda _
              (with-directory-excursion "lpsolve55"
@@ -9805,6 +9845,9 @@ optimized algorithms and implementation.")
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ; no check target
+           #:make-flags
+           #~(list (string-append "CFLAGS=-g -O2"
+                                  " -Wno-error=implicit-function-declaration"))
            #:phases
            #~(modify-phases %standard-phases
                (add-after 'unpack 'patch-source
@@ -9844,8 +9887,8 @@ generic reader and writer API.")
                    license:bsd-3))))    ; blif2aig
 
 (define-public btor2tools
-  (let ((commit "b8456dda4780789e882f5791eb486f295ade4da4")
-        (revision "1"))
+  (let ((commit "fb69ee3b95e8baa5f0a9a6b0b19ee8beaad52932")
+        (revision "2"))
    (package
    (name "btor2tools")
    (version (git-version "1.0.0-pre" revision commit))
@@ -9857,7 +9900,7 @@ generic reader and writer API.")
             (file-name (git-file-name name version))
             (sha256
              (base32
-              "0r3cm69q5xhnbxa74yvdfrsf349s4cxmiqlb4aq8appi7yg3qhww"))))
+              "1vxgcjgs90ywvclp1dvk0j202fcfdp0sjzxjrzsx0v96a2frq02p"))))
    (build-system cmake-build-system)
    (arguments
     (list #:out-of-source? #f
@@ -9888,6 +9931,8 @@ Boolector.")
               "0hyw9q42ir92vcaa7bwv6f631n85rfsxp463rnmklniq1wf6dyn9"))))
    (build-system gnu-build-system)
    (arguments (list #:configure-flags #~(list "--enable-shared")))
+   (native-inputs
+       (list gcc-13)) ;XXX: 1 test fails with gcc@14.
    ;; The original home-page was lost to time, so we reference the "unofficial"
    ;; Github mirror.  For what it's worth, the author of the library appears to
    ;; have been involved with this mirror at some point in time.
@@ -10174,8 +10219,8 @@ true in all models.")
                   (apply (assoc-ref %standard-phases 'install) args))))))))))
 
 (define-public louvain-community
-  (let ((commit "8cc5382d4844af127b1c1257373740d7e6b76f1e")
-        (revision "1"))
+  (let ((commit "681a711a530ded0b25af72ee4881d453a80ac8ac")
+        (revision "2"))
     (package
       (name "louvain-community")
       (version (git-version "1.0.0" revision commit))
@@ -10187,7 +10232,7 @@ true in all models.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1ss00hkdvr9bdkd355hxf8zd7xycb3nm8qpy7s75gjjf6yng0bfj"))))
+                  "1ria6s5p7iw86mq1arbrhlbadll1k79j9y5c1bdg76zdwjfs17cs"))))
       (build-system cmake-build-system)
       (arguments
        (list #:tests? #f                ; tests appear to require missing files
@@ -10889,6 +10934,13 @@ computation is supported via MPI.")
                       "modules/scicos/src/translator/makefile.mak"
                       "modules/scicos/src/modelica_compiler/makefile.mak")
                   (("nums\\.cmx?a") ""))))
+            ;; See https://gitlab.com/scilab/scilab/-/issues/17462
+            (add-after 'unpack 'fix-call-scilab-examples
+              (lambda _
+                (substitute*
+                    (find-files "modules/call_scilab/examples" "\\.c$")
+                  (("StartScilab\\((.*), NULL\\)" all args)
+                   (string-append "StartScilab(" args ", 0)")))))
             (add-after 'unpack 'fix-linking
               (lambda _
                 (substitute* "modules/Makefile.am"

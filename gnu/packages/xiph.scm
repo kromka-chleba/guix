@@ -328,14 +328,14 @@ Kate stream.")
 (define-public vorbis-tools
   (package
    (name "vorbis-tools")
-   (version "1.4.2")
+   (version "1.4.3")
    (source (origin
             (method url-fetch)
             (uri (string-append "https://downloads.xiph.org/releases/vorbis/"
                                 "vorbis-tools-" version ".tar.gz"))
             (sha256
              (base32
-              "1c7h4ivgfdyygz2hyh6nfibxlkz8kdk868a576qkkjgj5gn78xyv"))))
+              "1phd8vh66sw1df6crzsn8yr58ya3w3gpwzkrdfzwxgbpczf3vzm1"))))
    (build-system gnu-build-system)
    (arguments
     (list
@@ -531,6 +531,12 @@ things in between.")
                (base32
                 "0469yzc1csm25f5dbyb7ly7i1mzjz13pw8c8bmswkpfzxzqd9jrr"))))
     (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list
+                           #$(string-append
+                              "CFLAGS=-g -O2"
+                              " -Wno-error=implicit-function-declaration"))))
     (native-inputs
      (list pkg-config))
     (propagated-inputs

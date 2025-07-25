@@ -141,6 +141,7 @@ Copyright @copyright{} 2025 Zacchaeus@*
 Copyright @copyright{} 2025 Sergio Pastor Pérez@*
 Copyright @copyright{} 2024 Evgeny Pisemsky@*
 Copyright @copyright{} 2025 jgart@*
+Copyright @copyright{} 2025 Artur Wroblewski@*
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -420,6 +421,7 @@ Services
 * Kerberos Services::           Kerberos services.
 * LDAP Services::               LDAP services.
 * Web Services::                Web servers.
+* High Availability Services::  High availability services.
 * Certificate Services::        TLS certificates via Let's Encrypt.
 * DNS Services::                DNS daemons.
 * VNC Services::                VNC daemons.
@@ -793,7 +795,7 @@ sudo pacman -S guix
 The Guix project also provides a shell script, @file{guix-install.sh},
 which automates the binary installation process without use of a foreign
 distro package
-manager@footnote{@uref{https://guix.gnu.org/install.sh}}.
+manager@footnote{@uref{https://guix.gnu.org/guix-install.sh}}.
 Use of @file{guix-install.sh} requires Bash, GnuPG, GNU@tie{}tar, wget,
 and Xz.
 
@@ -810,7 +812,7 @@ As root, run:
 
 @example
 # cd /tmp
-# wget https://guix.gnu.org/install.sh
+# wget https://guix.gnu.org/guix-install.sh
 # chmod +x guix-install.sh
 # ./guix-install.sh
 @end example
@@ -1209,7 +1211,7 @@ value, configurable via the @code{overload-threshold} field of its
 @code{build-machine} object.
 
 @item
-Disk space availability.  More than a 100 MiB must be available.
+Disk space availability.  More than 100 MiB must be available.
 @end enumerate
 
 The @file{/etc/guix/machines.scm} file typically looks like this:
@@ -12572,7 +12574,8 @@ Return an object representing a text file called @var{name} with the given
 This is the declarative counterpart of @code{text-file}.
 @end deffn
 
-@deffn {Procedure} computed-file name gexp [#:local-build? #t] [#:options '()]
+@deffn {Procedure} computed-file @var{name} @var{gexp} @
+  [#:guile] [#:local-build? #t] [#:options '()]
 Return an object representing the store item @var{name}, a file or
 directory computed by @var{gexp}.  When @var{local-build?} is true (the
 default), the derivation is built locally.  @var{options} is a list of
@@ -12583,7 +12586,7 @@ This is the declarative counterpart of @code{gexp->derivation}.
 
 @deffn {Monadic Procedure} gexp->script @var{name} @var{exp} @
   [#:guile (default-guile)] [#:module-path %load-path] @
-  [#:system (%current-system)] [#:target #f]
+  [#:system (%current-system)] [#:target 'current]
 Return an executable script @var{name} that runs @var{exp} using
 @var{guile}, with @var{exp}'s imported modules in its search path.
 Look up @var{exp}'s modules in @var{module-path}.
@@ -12620,8 +12623,8 @@ This is the declarative counterpart of @code{gexp->script}.
 
 @deffn {Monadic Procedure} gexp->file @var{name} @var{exp} @
             [#:set-load-path? #t] [#:module-path %load-path] @
-            [#:splice? #f] @
-            [#:guile (default-guile)]
+            [#:splice? #f] [#:guile (default-guile)] @
+            [#:system (%current-system)] [#:target 'current]
 Return a derivation that builds a file @var{name} containing @var{exp}.
 When @var{splice?}  is true, @var{exp} is considered to be a list of
 expressions that will be spliced in the resulting file.
@@ -12880,7 +12883,7 @@ guix repl @var{options} [@var{file} @var{args}]
 @end example
 
 When a @var{file} argument is provided, @var{file} is
-executed as a Guile scripts:
+executed as a Guile script:
 
 @example
 guix repl my-script.scm
@@ -18637,6 +18640,13 @@ there are several.  The format is identical to @var{target}.
 @item type
 This must be a @code{mapped-device-kind} object, which specifies how
 @var{source} is mapped to @var{target}.
+
+@item arguments
+This is a list of arguments specific to @var{type} that are passed to
+its @code{open}, @code{close}, and @code{check} procedures.
+
+As an example, @code{luks-device-mapping} supports keyword
+arguments---see below for details.
 @end table
 @end deftp
 
@@ -18644,15 +18654,13 @@ This must be a @code{mapped-device-kind} object, which specifies how
 This defines LUKS block device encryption using the @command{cryptsetup}
 command from the package with the same name.  It relies on the
 @code{dm-crypt} Linux kernel module.
-@end defvar
 
-@deffn {Procedure} luks-device-mapping-with-options [#:key-file #:allow-discards?]
-Return a @code{luks-device-mapping} object, which defines LUKS block
-device encryption using the @command{cryptsetup} command from the
-package with the same name.  It relies on the @code{dm-crypt} Linux
-kernel module.
+The following options may be passed @i{via} the @code{arguments} field
+of a mapped device:
 
-If @code{key-file} is provided, unlocking is first attempted using that
+@table @code
+@item #:key-file
+If @code{file} is provided, unlocking is first attempted using that
 key file.  This has an advantage of not requiring a password entry, so
 it can be used (for example) to unlock RAID arrays automatically on
 boot.  If key file unlock fails, password unlock is attempted as well.
@@ -18665,19 +18673,19 @@ given location at the time of the unlock attempt.
 (mapped-device
  (source "/dev/sdb1)
  (target "data)
- (type (luks-device-mapping-with-options
-        #:key-file "/crypto.key")))
+ (type luks-device-mapping)
+ (arguments '(#:key-file "/crypto.key")))
 @end lisp
 
-
+@item #:allow-discards?
 @code{allow-discards?} allows the use of discard (TRIM) requests for the
 underlying device.  This is useful for solid state drives.  However,
 this option can have a negative security impact because it can make
 file system level operations visible on the physical device.  For more
 information, refer to the description of the @code{--allow-discards}
 option in the @code{cryptsetup-open(8)} man page.
-
-@end deffn
+@end table
+@end defvar
 
 @defvar raid-device-mapping
 This defines a RAID device, which is assembled using the @code{mdadm}
@@ -19502,6 +19510,7 @@ declaration.
 * Kerberos Services::           Kerberos services.
 * LDAP Services::               LDAP services.
 * Web Services::                Web servers.
+* High Availability Services::  High availability services.
 * Certificate Services::        TLS certificates via Let's Encrypt.
 * DNS Services::                DNS daemons.
 * VNC Services::                VNC daemons.
@@ -20895,6 +20904,15 @@ Make this terminal active on start of @code{greetd}.
 @item @code{source-profile?} (default: @code{#t})
 Whether to source @file{/etc/profile} and @file{~/.profile}, when they
 exist.
+
+@item @code{initial-session-user} (default: @samp{#f})
+The user to use for running the initial session, if any.
+
+@item @code{initial-session-command} (default: @code{#f})
+The command to run the first time the greeter starts up, to auto-login.
+For that to be useful, you should also set @code{initial-session-user}.
+Then, greetd will automatically log in with that user and execute that command.
+When you eventually log out again, the regular greeter will appear.
 
 @item @code{default-session-user} (default: @samp{"greeter"})
 The user to use for running the greeter.
@@ -35649,6 +35667,67 @@ The file which should store the logging output of Agate.
 @end table
 @end deftp
 
+@node High Availability Services
+@subsection High Availability Services
+
+@cindex Message broker
+@cindex Message streaming
+The @code{(gnu services high-availability)} module provides RabbitMQ
+message broker service.
+
+@anchor{RabbitMQ}
+@subsubheading RabbitMQ
+
+@defvar rabbitmq-service-type
+Service type for the @uref{https://www.rabbitmq.com/,RabbitMQ} web server.
+The value for this service type is a @code{<rabbitmq-configuration>} record.
+
+A simple example configuration is given below.
+
+@lisp
+(service rabbitmq-service-type
+         (rabbitmq-configuration
+           (rabbitmq-configuration
+             (plugins '("rabbitmq_stream"
+                        "rabbitmq_management"
+                        "rabbitmq_prometheus")))))
+@end lisp
+@end defvar
+
+At startup, RabbitMQ broker logs its initialization messages into
+@file{/var/log/messages} file.  Once running, the logging messages can be
+found in a logging file of a RabbitMQ node in @file{/var/log/rabbitmq}
+directory.
+
+@quotation Note
+The default configuration of the RabbitMQ service enables the RabbitMQ
+broker to accept connections only on loopback interfaces.  However,
+enabling certain plugins may open ports on all network interfaces.  See
+also @url{https://www.rabbitmq.com/docs/networking#ports, RabbitMQ Port Access}.
+@end quotation
+
+@deftp {Data Type} rabbitmq-configuration
+This data type represents the configuration for RabbitMQ.
+
+@table @asis
+@item @code{rabbitmq} (default: @code{rabbitmq})
+The RabbitMQ package to use.
+
+@item @code{config-file} (default: @code{%default-rabbitmq-config-file})
+Configuration file for the RabbitMQ broker. See also
+@url{https://www.rabbitmq.com/docs/configure, RabbitMQ Configuration}.
+
+@item @code{data-directory} (default: @code{"/var/lib/rabbitmq/data"})
+Directory with RabbitMQ broker data - a schema database, message stores,
+cluster member information, and other persistent node state.
+
+@item @code{plugins} (default: @code{'()})
+A list of RabbitMQ plugins to enable.  View all available plugins using
+the @command{rabbitmq-plugins list} command.
+
+@end table
+@end deftp
+
 @node Certificate Services
 @subsection Certificate Services
 
@@ -46164,13 +46243,13 @@ File name of an additional initrd to load during the boot.  It may or
 may not point to a file in the store, but the main use case is for
 out-of-store files containing secrets.
 
-In order to be able to provide decryption keys for the LUKS device, they
-need to be available in the initial ram disk.  However they cannot be
+In order to be able to provide decryption keys for LUKS devices, they
+need to be available in the initial RAM disk.  However they cannot be
 stored inside the usual initrd, since it is stored in the store and
-being a world-readable (as files in the store are) is not a desired
-property for a initrd containing decryption keys.  You can therefore use
-this field to instruct GRUB to also load a manually created initrd not
-stored in the store.
+being world-readable (as files in the store are) is not a desired
+property for an initrd containing decryption keys.  You can therefore
+use this field to instruct GRUB to also load a manually created initrd
+not stored in the store.
 
 For any use case not involving secrets, you should use regular initrd
 (@pxref{operating-system Reference, @code{initrd}}) instead.
@@ -46187,19 +46266,19 @@ After it is created, you can use it in this manner:
 @lisp
 ;; Operating system with encrypted boot partition
 (operating-system
-  ...
+  @dots{}
   (bootloader (bootloader-configuration
                (bootloader grub-efi-bootloader)
                (targets '("/boot/efi"))
-               ;; Load the initrd with a key file
+               ;; Load the initrd with a key file...
                (extra-initrd "/key-file.cpio")))
   (mapped-devices
    (list (mapped-device
           (source (uuid "12345678-1234-1234-1234-123456789abc"))
           (target "my-root")
-          (type (luks-device-mapping-with-options
-                 ;; And use it to unlock the root device
-                 #:key-file "/key-file.bin"))))))
+          (type luks-device-mapping)
+          ;; ... and use it to unlock the root device.
+          (arguments '(#:key-file "/key-file.bin"))))))
 @end lisp
 
 Be careful when using this option, since pointing to a file that is not

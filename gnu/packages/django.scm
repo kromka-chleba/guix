@@ -11,6 +11,7 @@
 ;;; Copyright © 2021 Luis Felipe López Acevedo <luis.felipe.la@protonmail.com>
 ;;; Copyright © 2022 Pradana Aumars <paumars@courrier.dev>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
+;;; Copyright © 2025 Vinicius Monego <monego@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -44,6 +45,8 @@
   #:use-module (gnu packages check)
   #:use-module (gnu packages finance)
   #:use-module (gnu packages geo)
+  #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages mail)
   #:use-module (gnu packages openldap)
   #:use-module (gnu packages python)
   #:use-module (gnu packages python-build)
@@ -231,7 +234,7 @@ and adapters that are useful for non-trivial configuration scenarios.")
 (define-public python-django-extensions
   (package
     (name "python-django-extensions")
-    (version "3.0.6")
+    (version "4.1")
     (source
      (origin
        (method git-fetch)
@@ -241,24 +244,31 @@ and adapters that are useful for non-trivial configuration scenarios.")
              (commit version)))
        (file-name (string-append name "-" version))
        (sha256
-        (base32
-         "0sra6hazqvspxd1pnx5cj7gia1rkaz3hn06ib4wd0frc167f5afy"))))
-    (build-system python-build-system)
+        (base32 "1qayan9za7ylvzkwp6p0l0735gavnzd1kdjsfc178smq6xnby0ss"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:tests? #f)) ;XXX: requires a Postgres or MySQL database
+     (list
+      ;; The 5 tests in test_dumbscript.py fail (OperationalError).
+      #:test-flags
+      #~(list "--ignore" "tests/test_dumpscript.py"
+              "-k" (string-append
+                    ;; These fail for unknown reasons.
+                    "not test_do_export_emails_format_vcard_start"
+                    " and not test_initialize_runserver_plus"
+                    " and not test_should_highlight_python_syntax_with_name"))))
     (propagated-inputs
-     (list python-six python-vobject python-werkzeug python-dateutil
-           python-django))
+     (list python-django))
     (native-inputs
-     (list python-mock
+     (list python-aiosmtpd
            python-factory-boy
-           python-tox
+           python-pygments
            python-pytest
-           python-pytest-cov
+           python-pytest-cov ; runs by default
            python-pytest-django
-           python-shortuuid))
-    (home-page
-     "https://github.com/django-extensions/django-extensions")
+           python-setuptools-next
+           python-shortuuid
+           python-wheel))
+    (home-page "https://github.com/django-extensions/django-extensions")
     (synopsis "Custom management extensions for Django")
     (description
      "Django-extensions extends Django providing, for example, management
@@ -429,40 +439,19 @@ size and quality.")
 (define-public python-pytest-django
   (package
     (name "python-pytest-django")
-    (version "4.5.2")
+    (version "4.11.1")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "pytest-django" version))
+              (uri (pypi-uri "pytest_django" version))
               (sha256
                (base32
-                "1hp61jbnnhnjxzdrz9ni08lzrv8q7iiycnnxvcwnkhxpkdsny1yr"))))
-    (build-system python-build-system)
-    (arguments
-     ;; The test suite is disabled because there are many test failures (see:
-     ;; https://github.com/pytest-dev/pytest-django/issues/943).
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (if tests?
-               (begin
-                 (setenv "PYTEST_DJANGO_TEST_RUNNER" "pytest")
-                 (setenv "DJANGO_SETTINGS_MODULE"
-                         "pytest_django_test.settings_sqlite_file")
-                 (invoke "python" "-m" "pytest" "-vv" "-k"
-                         ;; FIXME: these tests fail to locate Django templates ...
-                         (string-append "not test_django_not_loaded_without_settings"
-                                        " and not test_settings"
-                                        ;; ... and this does not discover
-                                        ;; 'pytest_django_test'.
-                                        " and not test_urls_cache_is_cleared")))
-               (format #t "test suite not run~%")))))))
+                "14br4bzx07yxrx6xsyyhlpjgb0sz6lflbw90g87cn0z13qd18jd9"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-setuptools-scm))
+     (list python-django python-setuptools python-setuptools-scm python-wheel))
     (propagated-inputs
      (list python-pytest))
-    (home-page "https://pytest-django.readthedocs.org/")
+    (home-page "https://pytest-django.readthedocs.io/")
     (synopsis "Django plugin for py.test")
     (description "Pytest-django is a plugin for py.test that provides a set of
 useful tools for testing Django applications and projects.")
@@ -817,27 +806,29 @@ applications with a @var{SEARCH_URL} variable.")
 (define-public python-django-picklefield
   (package
     (name "python-django-picklefield")
-    (version "3.2.0")
-    (home-page "https://github.com/gintas/django-picklefield")
-    ;; Use a git checkout because the PyPI release lacks tests.
+    (version "3.3.0")
     (source
       (origin
-        (method git-fetch)
+        (method git-fetch) ; no tests in PyPI
         (uri (git-reference
-              (url home-page)
+              (url "https://github.com/gintas/django-picklefield")
               (commit (string-append "v" version))))
         (file-name (git-file-name name version))
         (sha256
          (base32
-          "0ykcw0wb064zv17piwiz6ldy2d2jil93x1ckk5pcfnc7hhk1phsh"))))
-    (build-system python-build-system)
+          "19qiyb3i9s72qanxzrgy1a10707138zq8sclhdfn4zpnqykaqzpw"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      (invoke "python" "-m" "django" "test" "-v2"
-                              "--settings=tests.settings"))))))
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests?
+                         (invoke "python" "-m" "django" "test" "-v2"
+                                 "--settings=tests.settings")))))))
+    (native-inputs (list python-setuptools python-wheel))
     (propagated-inputs (list python-django))
+    (home-page "https://github.com/gintas/django-picklefield")
     (synopsis "Pickled object field for Django")
     (description "Pickled object field for Django")
     (license license:expat)))
@@ -868,23 +859,27 @@ project aims to bulk update given objects using one query over Django ORM.")
 (define-public python-django-contact-form
   (package
     (name "python-django-contact-form")
-    (version "1.9")
+    (version "5.2.0")
     (source (origin
               (method url-fetch)
-              (uri (pypi-uri "django-contact-form" version))
+              (uri (pypi-uri "django_contact_form" version))
               (sha256
                (base32
-                "1my9hkrylckp5vfqg9b0kncrdlxjnwxll56sdciqn4v19i4wbq1y"))))
-    (build-system python-build-system)
+                "091nji94c6d2n8zfpsfhwdv417ligi1hfwr4vvydbggf3s4q392n"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda _
-             (invoke "coverage" "run" "--source" "contact_form"
-                     "runtests.py"))))))
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests?
+                         ;; This file contains a single test that requires
+                         ;; python-akismet (not yet packaged).
+                         (delete-file "tests/test_akismet_integration.py")
+                         (setenv "DJANGO_SETTINGS_MODULE" "tests.test_settings")
+                         (invoke "django-admin" "test" "--pythonpath=.")))))))
     (native-inputs
-     (list python-coverage))
+     (list python-pdm-backend python-tzdata))
     (propagated-inputs
      (list python-django))
     (home-page "https://github.com/ubernostrum/django-contact-form")
@@ -919,19 +914,16 @@ entries, photos, book chapters, or anything else.")
 (define-public python-django-ninja
   (package
     (name "python-django-ninja")
-    (version "0.22.2")
+    (version "1.4.3")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "django_ninja" version))
               (sha256
                (base32
-                "0b19w7nvw7c3z19dbza49m24c3384j59w2xcr5l6jshxazkvsgli"))))
+                "0f5hgjkavvk1csb1yl34scqai3ljjhh93k5kbqm8s8hclry4fvg4"))))
     (build-system pyproject-build-system)
-    (arguments
-     ;; FIXME: How to configure this test properly?
-     (list #:test-flags #~'("-k" "not test_improperly_configured")))
     (propagated-inputs
-     (list python-django python-pydantic))
+     (list python-django python-pydantic-2))
     (native-inputs
      (list python-flit-core
            python-psycopg2
@@ -944,6 +936,38 @@ entries, photos, book chapters, or anything else.")
      "Django Ninja is a web framework for building APIs with Django
 and Python type hints.  It is designed to be fast and easy to use thanks
 to asyncio and Pydantic.")
+    (license license:expat)))
+
+(define-public python-django-htmx
+  (package
+    (name "python-django-htmx")
+    (version "1.23.2")
+    (source (origin
+              (method git-fetch) ; PyPI does not include settings.py for tests
+              (uri (git-reference
+                    (url "https://github.com/adamchainz/django-htmx")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0gr6zahrqvx8sjsy7wr1k7rgavz7bjx32kky4900gff70wrqbmvy"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "DJANGO_SETTINGS_MODULE" "tests.settings")
+                (invoke "django-admin" "test" "tests"
+                        "--pythonpath=.")))))))
+    (propagated-inputs (list python-asgiref python-django))
+    (native-inputs (list python-pytest python-setuptools-next python-wheel))
+    (home-page "https://django-htmx.readthedocs.io/en/latest/")
+    (synopsis "Extensions for using Django with htmx")
+    (description "This package provides a Django extension to work with
+@url{https://htmx.org/,htmx}.")
     (license license:expat)))
 
 (define-public python-django-pipeline
@@ -990,6 +1014,39 @@ to asyncio and Pydantic.")
      "Pipeline is an asset packaging library for Django, providing both CSS
 and JavaScript concatenation and compression, built-in JavaScript template
 support, and optional data-URI image and font embedding.")
+    (license license:expat)))
+
+(define-public python-django-cors-headers
+  (package
+    (name "python-django-cors-headers")
+    (version "4.7.0")
+    (source (origin
+              (method git-fetch) ; PyPI does not include settings.py for tests
+              (uri (git-reference
+                    (url "https://github.com/adamchainz/django-cors-headers")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0j5h31wfndkva5a6m6zw67yq3sbndl0zq9w4w3v7xx15dd84g9y4"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "DJANGO_SETTINGS_MODULE" "tests.settings")
+                (invoke "django-admin" "test" "tests"
+                        "--pythonpath=.")))))))
+    (propagated-inputs (list python-asgiref python-django))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (home-page "https://github.com/adamchainz/django-cors-headers")
+    (synopsis "Django application for handling headers required for CORS")
+    (description
+     "@code{django-cors-headers} is a Django application for handling the
+server headers required for Cross-Origin Resource Sharing (CORS).")
     (license license:expat)))
 
 (define-public python-django-redis
@@ -1238,20 +1295,23 @@ the order of added relations.")
 (define-public python-django-appconf
   (package
     (name "python-django-appconf")
-    (version "1.0.4")
+    (version "1.1.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "django-appconf" version))
               (sha256
                (base32
-                "101k8nkc7xlffpjdi2qbrp9pc4v8hzvmkzi12qp7vms39asxwn5y"))))
-    (build-system python-build-system)
+                "1r23cb8g680p4lc8q4gikarcn1y0x5x4whw9w4gg58425wvsvklz"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda _
-                      (setenv "DJANGO_SETTINGS_MODULE" "tests.test_settings")
-                      (invoke "django-admin" "test" "--pythonpath=."))))))
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests?
+                         (setenv "DJANGO_SETTINGS_MODULE" "tests.test_settings")
+                         (invoke "django-admin" "test" "--pythonpath=.")))))))
+    (native-inputs (list python-setuptools python-wheel))
     (propagated-inputs
      (list python-django))
     (home-page "https://github.com/django-compressor/django-appconf")
@@ -1388,11 +1448,19 @@ provides features like a Web-browsable API and authentication policies.")
         (sha256
          (base32
           "1bfdag32yqjq3vqvyi9izdkmfcs2qip42rcmxpphqp0bmv5kdjia"))))
-    (build-system python-build-system)
-    (arguments '(#:tests? #f)) ; Tests not included with release.
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests?
+                         (setenv "DJANGO_SETTINGS_MODULE" "tests.settings")
+                         (invoke "django-admin" "test" "--pythonpath=.")))))))
+    (native-inputs (list python-setuptools python-wheel))
     (propagated-inputs
      (list python-django python-django-classy-tags))
-    (home-page "https://github.com/divio/django-sekizai")
+    (home-page "https://github.com/django-cms/django-sekizai")
     (synopsis "Template blocks for Django projects")
     (description "Sekizai means blocks in Japanese, and that is what this app
 provides.  A fresh look at blocks.  With @code{django-sekizai} you can define
@@ -1487,6 +1555,53 @@ CSS in a Django templates into cacheable static files by using the compress
 template tag.")
     (license license:expat)))
 
+(define-public python-django-dbbackup
+  (package
+    (name "python-django-dbbackup")
+    (version "4.3.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "django_dbbackup" version))
+       (sha256
+        (base32 "1p66xs6c2sw1l2zlskpa64zslyawlpgv0vn2l86g4rxizp6chj9m"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; To write a .env file.
+              (setenv "HOME" "/tmp")
+              ;; 'env' command is not available in the build environment.
+              (substitute* "dbbackup/tests/test_connectors/test_base.py"
+                (("def test_run_command_with_parent_env")
+                 "def _test_run_command_with_parent_env"))))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (setenv "DJANGO_SETTINGS_MODULE" "dbbackup.tests.settings")
+                (invoke "django-admin" "test" "dbbackup/tests"
+                        "--pythonpath=.")))))))
+    (native-inputs (list gnupg
+                         python-dotenv
+                         python-gnupg
+                         python-pytest
+                         python-pytz
+                         python-setuptools
+                         python-testfixtures
+                         python-tzdata
+                         python-wheel))
+    (propagated-inputs (list python-django))
+    (home-page "https://github.com/Archmonger/django-dbbackup")
+    (synopsis "Backup and restore a Django project database and media")
+    (description
+     "This Django application provides management commands to help backup and
+restore your project database and media files with various storages such as
+Amazon S3, Dropbox, local file storage or any Django storage.")
+    (license license:bsd-3)))
+
 (define-public python-django-override-storage
   (package
     (name "python-django-override-storage")
@@ -1516,6 +1631,52 @@ template tag.")
      "This project provides tools to help reduce the side effects of using
 FileFields during tests.")
     (license license:expat)))
+
+(define-public python-django-storages
+  (package
+    (name "python-django-storages")
+    (version "1.14.6")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "django_storages" version))
+       (sha256
+        (base32 "1ja1jgh7alypsb46ncbc6acsxxw771hf51yfqz4rmxhl8a7ww9bs"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'delete-some-tests
+                     (lambda _
+                        (delete-file
+                         ;; python-google-cloud-storage broken in the CI
+                         "tests/test_gcloud.py")
+                        (delete-file
+                         ;; python-moto can't find 'mock_s3'
+                         "tests/test_s3.py")
+                       (substitute* "tests/test_utils.py"
+                         ;; This test depends on a file which is likely
+                         ;; unavailble in PyPI (FileNotFoundError).
+                         (("def test_with_string_file_detect_encoding")
+                          "def _test_with_string_file_detect_encoding"))))
+                   (replace 'check
+                     (lambda* (#:key tests? #:allow-other-keys)
+                       (when tests?
+                         (setenv "DJANGO_SETTINGS_MODULE" "tests.settings")
+                         (invoke "django-admin" "test" "tests"
+                                 "--pythonpath=.")))))))
+    (propagated-inputs (list python-django))
+    (native-inputs (list python-azure-storage-blob ; azure backend
+                         python-dropbox ; dropbox backend
+                         python-paramiko ; sftp backend
+                         python-pytest
+                         python-setuptools python-wheel))
+    (home-page "https://django-storages.readthedocs.io/en/latest/")
+    (synopsis "Support for many storage backends in Django")
+    (description
+     "@code{django-storages} is a project to provide a variety of storage
+backends in a single library.")
+    (license license:bsd-3)))
 
 (define-public python-django-auth-ldap
   (package
@@ -1682,10 +1843,31 @@ models that use Django's standard @code{ImageField}, in addition to the
 image files already supported by it.")
     (license license:expat)))
 
+(define-public python-django-environ
+  (package
+    (name "python-django-environ")
+    (version "0.12.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "django_environ" version))
+       (sha256
+        (base32 "06h4g50qy1h77b4n28xbyzl2wvsblzs9qi63d7kvvm9x8n8whz92"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://django-environ.readthedocs.io/")
+    (synopsis "Configure Django project using environment variables")
+    (description
+     "This Django package allows you to utilize 12factor inspired environment
+variables to configure your Django application.")
+    (license license:expat)))
+
 (define-public python-django-cleanup
   (package
     (name "python-django-cleanup")
-    (version "6.0.0")
+    (version "9.0.0")
     (source
      (origin
        (method git-fetch)
@@ -1694,35 +1876,14 @@ image files already supported by it.")
              (commit (string-append version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0c1nghn1bnlq0a4d3sy3s363ksqsnxksixbimdy3cc6a0vk4sjps"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-tests-settings
-           (lambda* (#:key inputs #:allow-other-keys)
-             ;; django-cleanup optionally integrates with
-             ;; sorl-thumbnail, which is not available in Guix yet, so
-             ;; this patch comments it out to avoid import failures in
-             ;; test settings.
-             (substitute* "django_cleanup/testapp/settings.py"
-               (("'sorl\\.thumbnail',") "# 'sorl.thumbnail',"))))
-         (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (when tests?
-               (add-installed-pythonpath inputs outputs)
-               ;; Add CWD to PYTHONPATH so that the tests can find the
-               ;; testapp package in the source.
-               (setenv "PYTHONPATH" (getcwd))
-               (invoke "pytest")))))))
+        (base32 "02ipa8d8ndnj8bs4dqhk03id4vmrvyr25vkpfqcfhmwipbhx8dc0"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list ;; python-django-sorl-thumbnail  ; TODO: Add to Guix.
-           python-easy-thumbnails
-           python-pillow
-           python-pytest
-           python-pytest-cov
+     (list python-pytest
+           python-pytest-cov ; runs by default
            python-pytest-django
-           python-pytest-xdist))
+           python-setuptools
+           python-wheel))
     (propagated-inputs
      (list python-django))
     (home-page "https://github.com/un1t/django-cleanup")

@@ -115,7 +115,7 @@
 (define-public font-adwaita
   (package
     (name "font-adwaita")
-    (version "48.2")
+    (version "49.0")
     (source
      (origin
        (method git-fetch)
@@ -124,30 +124,13 @@
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1sk6kb6v4ims3jzyfh71mx2kmwv55idr2yd1xgxlqc9lk59zhymd"))))
+        (base32 "0hjir1961ag5d91l1x7pq2lsak4cny7mvsi8cvrqmd83pzy8cw0p"))))
     (build-system font-build-system)
-    (arguments
-     (list
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; Install font licenses instead of the buildsystem license.
-          (replace 'install-license-files
-            (lambda _
-              (let ((doc-dir (string-append #$output "/share/doc/"
-                                            #$name "-" #$version)))
-                (define (install-license form)
-                  (install-file (string-append form "/LICENSE.md")
-                                (string-append doc-dir "/" form)))
-                (install-license "sans")
-                (install-license "mono")))))))
     (home-page "https://gitlab.gnome.org/GNOME/adwaita-fonts/")
     (synopsis "GNOME Adwaita Fonts")
     (description
      "This package provides Adwaita Fonts, a variation of Inter, and Adwaita
  Mono, Iosevka customized to match Inter.")
-    ;; Buildsystem and shell scripts are under the GPL, but fonts themselves are
-    ;; under OFL-1.1.
-    ;; https://gitlab.gnome.org/GNOME/adwaita-fonts/-/issues/14
     (license license:silofl1.1)))
 
 (define-public font-arapey
@@ -1322,7 +1305,7 @@ utilities to ease adding new glyphs to the font.")
 (define-public font-google-noto
   (package
     (name "font-google-noto")
-    (version "2025.06.01")
+    (version "2025.07.01")
     (source
      (origin
        (method git-fetch)
@@ -1331,7 +1314,7 @@ utilities to ease adding new glyphs to the font.")
              (commit (string-append "noto-monthly-release-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0afv8lw7h23lh8jhnyrs1cyjwwdixmxkpiww7p7mkshz74kcsmpa"))))
+        (base32 "0p27wbxdwi99r5yj33z9jadlv4rbhp5vw5c0ir15bymvdwdr8s8z"))))
     (build-system font-build-system)
     (arguments
      (list
@@ -1388,7 +1371,7 @@ display all Unicode symbols.")
 (define-public font-google-noto-emoji
   (package
     (name "font-google-noto-emoji")
-    (version "2.047")
+    (version "2.048")
     (source
      (origin
        (method git-fetch)
@@ -1398,7 +1381,7 @@ display all Unicode symbols.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0p9wa55fyxih0bm81h55ip9rc12rh1c2v0dq9dxd2y19rxgcnnxz"))))
+         "0kpm16pc44a4p86335prcd6zsvbdlvs48nwv770dh34ljhr6g00r"))))
     (build-system font-build-system)
     (arguments
      (list

@@ -12,7 +12,7 @@
 ;;; Copyright © 2016 Dmitry Nikolaev <cameltheman@gmail.com>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
 ;;; Copyright © 2016, 2018, 2019, 2020, 2021 Eric Bavier <bavier@posteo.net>
-;;; Copyright © 2016 Jan Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016, 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2017 Feng Shu <tumashu@163.com>
 ;;; Copyright © 2017–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2017 Chris Marusich <cmmarusich@gmail.com>
@@ -50,7 +50,7 @@
 ;;; Copyright © 2021 Alexey Abramov <levenson@mmer.org>
 ;;; Copyright © 2021, 2022, 2023 Andrew Tropin <andrew@trop.in>
 ;;; Copyright © 2021 David Wilson <david@daviwil.com>
-;;; Copyright © 2021-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2020 Hartmut Goebel <h.goebel@crazy-compilers.com>
 ;;; Copyright © 2021 Raghav Gururajan <rg@raghavgururajan.name>
 ;;; Copyright © 2021 Thiago Jung Bauermann <bauermann@kolabnow.com>
@@ -130,12 +130,14 @@
   #:use-module (gnu packages cdrom)
   #:use-module (gnu packages certs)
   #:use-module (gnu packages check)
+  #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages cpp)
   #:use-module (gnu packages crates-check)
   #:use-module (gnu packages crates-io)
   #:use-module (gnu packages crates-graphics)
   #:use-module (gnu packages curl)
+  #:use-module (gnu packages datastructures)
   #:use-module (gnu packages dbm)
   #:use-module (gnu packages dejagnu)
   #:use-module (gnu packages dns)
@@ -158,6 +160,7 @@
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang-build)
   #:use-module (gnu packages golang-xyz)
+  #:use-module (gnu packages graphics)
   #:use-module (gnu packages gstreamer)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages haskell-xyz)
@@ -165,6 +168,7 @@
   #:use-module (gnu packages image)
   #:use-module (gnu packages imagemagick)
   #:use-module (gnu packages iso-codes)
+  #:use-module (gnu packages kde-frameworks)
   #:use-module (gnu packages libcanberra)
   #:use-module (gnu packages libidn)
   #:use-module (gnu packages libusb)
@@ -181,6 +185,7 @@
   #:use-module (gnu packages nettle)
   #:use-module (gnu packages networking)
   #:use-module (gnu packages ocr)
+  #:use-module (gnu packages openkinect)
   #:use-module (gnu packages pcre)
   #:use-module (gnu packages pciutils)
   #:use-module (gnu packages perl)
@@ -222,6 +227,7 @@
   #:use-module (gnu packages vulkan)
   #:use-module (gnu packages web)
   #:use-module (gnu packages wget)
+  #:use-module (gnu packages wm)
   #:use-module (gnu packages wxwidgets)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xiph)
@@ -318,7 +324,9 @@ user has installed.")
     (arguments
      `(#:configure-flags
        (list
-        "CFLAGS=-O2 -g -fcommon"
+        ,(string-append "CFLAGS=-O2 -g -fcommon"
+                        " -Wno-error=implicit-function-declaration"
+                        " -Wno-error=int-conversion")
         ;; XXX: Broken API.
         ;; Undeclared variables 'sys_nerr' and 'sys_errlist'.
         ;; "--enable-libv4l2"
@@ -439,7 +447,7 @@ the Core 2 Duo.")
 (define-public mediasdk
   (package
     (name "mediasdk")
-    (version "22.4.4")
+    (version "23.2.2")
     (source
      (origin
        (method git-fetch)
@@ -447,9 +455,10 @@ the Core 2 Duo.")
         (git-reference
          (url "https://github.com/Intel-Media-SDK/MediaSDK")
          (commit (string-append "intel-" name "-" version))))
+       (patches (search-patches "mediasdk-gcc-14.patch"))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "18mrqringyv1drswm4m8ppw7sks6x4jzp6s0ag0h9hrpd15kn5rx"))))
+        (base32 "12if7ylhz1r8mpj2q2n7nw8nnsglm90jg8lqpl3zhajjyrmkfyn2"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -546,9 +555,12 @@ as a joint effort between the BBC and Fluendo.")
         (search-patches "libquicktime-ffmpeg.patch"))))
     (build-system gnu-build-system)
     (arguments
-     ;; Avoid legacy dependencies such as GTK+ 2 and FFmpeg 4.
-     (list #:configure-flags #~(list "--without-ffmpeg"
-                                     "--without-gtk")))
+     (list #:configure-flags
+           #~(list
+              "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration"
+              ;; Avoid legacy dependencies such as GTK+ 2 and FFmpeg 4.
+              "--without-ffmpeg"
+              "--without-gtk")))
     (native-inputs
      (list gettext-minimal doxygen pkg-config))
     (inputs
@@ -736,6 +748,7 @@ touchscreen devices and the ability to apply filters to their input events.")
      `(#:test-target "test"
        #:make-flags
        (list
+        "CC=gcc -g -O2 -Wno-error=implicit-function-declaration"
         (string-append "A52DIR=" (assoc-ref %build-inputs "liba52"))
         (string-append "DST=" (assoc-ref %outputs "out") "/bin"))
      #:phases
@@ -787,7 +800,11 @@ stream decoding")
     (arguments
      (list
       #:configure-flags
-      #~(list "--disable-static"
+      #~(list #$(string-append
+                 "CFLAGS=-g -O2"
+                 " -Wno-error=implicit-function-declaration"
+                 " -Wno-error=return-mismatch")
+              "--disable-static"
               (string-append "--with-ncurses="
                              #$(this-package-input "ncurses")))
       #:phases
@@ -1851,7 +1868,22 @@ audio/video codec library.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "0s7r2qv8gh2a3w568n9xxgcz0q8j5ww1jdsci1hm9f4l1yqg9146"))))))
+                "0s7r2qv8gh2a3w568n9xxgcz0q8j5ww1jdsci1hm9f4l1yqg9146"))
+              (patches
+               (search-patches
+                "ffmpeg-add-av_stream_get_first_dts-for-chromium.patch"))))
+    (arguments
+     (if (target-x86-32?)
+         (substitute-keyword-arguments (package-arguments ffmpeg-7)
+           ((#:phases phases)
+            #~(modify-phases #$phases
+                (add-before 'configure 'relax-gcc-14-strictness
+                  (lambda _
+                    (setenv
+                     "CFLAGS"
+                     (string-append "-g -O2"
+                                    " -Wno-error=incompatible-pointer-types")))))))
+         (package-arguments ffmpeg-7)))))
 
 (define-public ffmpeg-5
   (package
@@ -1920,13 +1952,16 @@ audio/video codec library.")
                   "--enable-libsvtav1")))
        ((#:phases phases)
         #~(modify-phases #$phases
+            #$@(if (target-x86-32?)
+                   #~((delete 'relax-gcc-14-strictness))
+                   #~())
             (add-after 'configure 'relax-gcc-14-strictness
               (lambda _
-              (substitute* "ffbuild/config.mak"
-                (("CFLAGS *=" all)
-                 (string-append all
-                                " -Wno-error=incompatible-pointer-types"
-                                " -Wno-error=int-conversion")))))))))
+                (substitute* "ffbuild/config.mak"
+                  (("CFLAGS *=" all)
+                   (string-append all
+                                  " -Wno-error=incompatible-pointer-types"
+                                  " -Wno-error=int-conversion")))))))))
     (inputs (modify-inputs (package-inputs ffmpeg-4)
               (delete "dav1d" "libaom" "rav1e" "srt")))))
 
@@ -1956,7 +1991,16 @@ audio/video codec library.")
                  "--disable-postproc"
                  "--disable-avfilter"
                  "--disable-shared"
-                 "--enable-static"))))
+                 "--enable-static"))
+        ((#:phases phases)
+         #~(modify-phases #$phases
+             (add-after 'configure 'relax-gcc-14-strictness
+               (lambda _
+                 (substitute* "config.mak"
+                   (("CFLAGS *=" all)
+                    (string-append all
+                                   " -Wno-error=incompatible-pointer-types"
+                                   " -Wno-error=int-conversion ")))))))))
      (inputs '()))))
 
 (define-public ffmpeg-for-friction
@@ -2356,6 +2400,72 @@ or peak normalization to a certain target level.  Batch processing of several
 input files is possible, including video files.")
     (license license:expat)))
 
+(define-public gpac
+  (let ((commit "9c1da9ec7e4d16b162856495f8ba284844a1b976")
+        (revision "1"))
+    (package
+      (name "gpac")
+      ;; Use a git snapshot of the master branch, as it fixes build issues
+      ;; when using a recent ffmpeg release.
+      (version (git-version "2.4.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/gpac/gpac")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "0q3j9l8khq7cgzv0lwll65vhmsi9gqj1sfnz7az4mz3wqfv23vri"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list #:configure-flags
+             #~(list (string-append "--cc=" #$(cc-for-target))
+                     (string-append "--cxx=" #$(cxx-for-target))
+                     ;; Help the configure script correctly detect the
+                     ;; availability of freetype (see:
+                     ;; <https://github.com/gpac/gpac/issues/3307>).
+                     (format #f "--extra-cflags=-I~a"
+                             (search-input-directory %build-inputs
+                                                     "include/freetype2"))
+                     "--verbose")
+             ;; The test suite is a git submodule that must synchronize its data
+             ;; from the network.
+             #:tests? #f))
+      (inputs
+       (list alsa-lib
+             curl
+             faad2
+             ffmpeg
+             freetype
+             glu
+             jack-2
+             liba52
+             libcaca
+             libcaption
+             libfreenect
+             libjpeg-turbo
+             libmad
+             libpng
+             libtheora
+             libvorbis
+             libx11
+             libxv
+             mesa
+             openssl
+             pulseaudio
+             sdl2
+             xvid
+             zlib))
+      (home-page "https://gpac.io/")
+      (synopsis "Video streaming and multimedia transcoding toolkit")
+      (description "GPAC is a multimedia framework focused on modularity and
+standards compliance.  GPAC provides tools to process, inspect, package,
+stream, playback and interact with media content.  Such content can be any
+combination of audio, video, subtitles, metadata, scalable graphics, encrypted
+media, 2D/3D graphics and ECMAScript.")
+      (license license:lgpl2.1+))))
+
 (define-public vlc
   (package
     (name "vlc")
@@ -2554,7 +2664,15 @@ streaming protocols.")
                 (("#! /bin/sh") (string-append "#!" (which "sh"))))
               (setenv "SHELL" (which "bash"))
               (setenv "CONFIG_SHELL" (which "bash"))
-              (apply invoke "./configure" configure-flags))))))
+              (apply invoke "./configure" configure-flags)
+              ;; Adding CFLAGS to #:configure-flags, or setting it in the
+              ;; enviroment does not work.  Adding CFLAGS to #:make-flags
+              ;; breaks the build.
+              (substitute* "config.mak"
+                (("CFLAGS *=" all)
+                 (string-append all
+                                " -Wno-error=incompatible-pointer-types"
+                                " -Wno-error=int-conversion"))))))))
     ;; FIXME: Add additional inputs once available.
     (native-inputs
      (list pkg-config yasm))
@@ -2631,10 +2749,12 @@ SVCD, DVD, 3ivx, DivX 3/4/5, WMV and H.264 movies.")
       #:configure-flags
       #~(list "-Dlibmpv=true"
               "-Dcdda=enabled"
+              "-Ddmabuf-wayland=enabled"
               "-Ddvdnav=enabled"
               "-Dbuild-date=false")))
     (native-inputs
-     (list perl                         ;for zsh completion file
+     (list libdisplay-info
+           perl                         ;for zsh completion file
            pkg-config
            python-docutils
            python-wrapper))
@@ -2884,7 +3004,7 @@ images and image hosting sites.")
            xorg-server-for-tests
            xvfb-run))
     (inputs
-     (list ffmpeg glib mpv))
+     (list ffmpeg glib libdisplay-info mpv))
     (home-page "https://github.com/hoyon/mpv-mpris")
     (synopsis "MPRIS plugin for mpv")
     (description "This package provides an @dfn{MPRIS} (Media Player Remote
@@ -2901,7 +3021,6 @@ To load this plugin, specify the following option when starting mpv:
   (package
     (name "libvpx")
     (version "1.15.0")
-    (replacement libvpx/fixed)
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2911,7 +3030,8 @@ To load this plugin, specify the following option when starting mpv:
               (sha256
                (base32
                 "1q2scpfiifhpilw6qqpqihk98plj57gwh0vyiqwsv991i7b322bv"))
-              (patches (search-patches "libvpx-CVE-2016-2818.patch"))))
+              (patches (search-patches "libvpx-CVE-2016-2818.patch"
+                                       "libvpx-CVE-2025-5262.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags (list "--enable-shared"
@@ -2939,11 +3059,6 @@ To load this plugin, specify the following option when starting mpv:
     (description "libvpx is a codec for the VP8/VP9 video compression format.")
     (license license:bsd-3)
     (home-page "https://www.webmproject.org/")))
-
-(define-public libvpx/fixed
-  (hidden-package
-   (package-with-extra-patches libvpx
-                               (search-patches "libvpx-CVE-2025-5262.patch"))))
 
 (define-public orfondl
   (package
@@ -4026,7 +4141,7 @@ be used for realtime video capture via Linux-specific APIs.")
 (define-public obs
   (package
     (name "obs")
-    (version "30.1.2")
+    (version "31.1.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4036,21 +4151,27 @@ be used for realtime video capture via Linux-specific APIs.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "02pm6397h7l0xhdpscbh1kq8y98zx236z95wvw60kbhq38s0i0ik"))
+                "0dddcvwlh3skd2hd8cmgy74r6l6pmcya9a6hrl9x402y7ywxd50m"))
               (patches
                (search-patches "obs-modules-location.patch"))))
     (build-system cmake-build-system)
     (arguments
      (list
+      #:cmake cmake-next                ;needs cmake >= 3.28
       #:configure-flags
-      #~(list (string-append "-DOBS_VERSION_OVERRIDE=" #$version)
-              "-DENABLE_UNIT_TESTS=ON"
-              "-DENABLE_NEW_MPEGTS_OUTPUT=OFF"
-              "-DENABLE_AJA=OFF"
-              "-DENABLE_QSV11=OFF"
-              ;; Browser plugin requires cef, but it is not packaged yet.
-              ;; <https://bitbucket.org/chromiumembedded/cef/src/master/>
-              "-DBUILD_BROWSER=OFF")
+      #~(let ((libdir (string-append (assoc-ref %outputs "out") "/lib")))
+          (list (string-append "-DOBS_VERSION_OVERRIDE=" #$version)
+                (string-append "-DOBS_EXECUTABLE_RPATH=" libdir)
+                (string-append "-DOBS_LIBRARY_RPATH=" libdir)
+                (string-append "-DOBS_MODULE_RPATH=" libdir)
+                "-DENABLE_UNIT_TESTS=ON"
+                "-DENABLE_NEW_MPEGTS_OUTPUT=OFF"
+                "-DENABLE_AJA=OFF"
+                "-DENABLE_QSV11=OFF"
+                "-DENABLE_NVENC=OFF"
+                ;; Browser plugin requires cef, but it is not packaged yet.
+                ;; <https://bitbucket.org/chromiumembedded/cef/src/master/>
+                "-DBUILD_BROWSER=OFF"))
        #:phases
        #~(modify-phases %standard-phases
            (add-after 'install 'wrap-executable
@@ -4082,6 +4203,7 @@ be used for realtime video capture via Linux-specific APIs.")
       bash-minimal
       curl
       eudev
+      extra-cmake-modules
       ffmpeg
       fontconfig
       freetype
@@ -4106,10 +4228,12 @@ be used for realtime video capture via Linux-specific APIs.")
       qtbase
       qtsvg
       qtwayland
+      rnnoise
       speexdsp
       v4l-utils
-      vulkan-headers
+      uthash
       vlc
+      vulkan-headers
       wayland
       wayland-protocols
       websocketpp
@@ -4559,7 +4683,7 @@ different filters than the original.")
 (define-public obs-source-copy
   (package
     (name "obs-source-copy")
-    (version "0.2.4")
+    (version "0.2.6")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4568,7 +4692,7 @@ different filters than the original.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1l3ls3j57yh03vkwiah6yj1xnnmq7q2ngjjn1k4h1sqqk0dxn86j"))))
+                "0hkjpjli1bw090asc0a9km1gqjachv3hsx5z642kqc5mrnq7fnq3"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -4648,7 +4772,7 @@ Wayland compositors.")
 (define-public obs-vkcapture
   (package
     (name "obs-vkcapture")
-    (version "1.5.0")
+    (version "1.5.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4657,7 +4781,7 @@ Wayland compositors.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "00a69rg1inkssccqmwp1j85vrw17j2k6d5pidvzfdq94vvad10w5"))))
+                "0p4v3c6wsgkvh3kszdl47w8j0f4q5n1rv6bk8alvipf97r4x25w2"))))
     (build-system cmake-build-system)
     (arguments
      '(#:tests? #f)) ;no tests
@@ -5207,6 +5331,59 @@ post-processing of video formats like MPEG2, H.264/AVC, and VC-1.")
      "Openh264 is a library which can decode H264 video streams.")
     (license license:bsd-2)))
 
+(define-public opentimelineio
+  (package
+    (name "opentimelineio")
+    (version "0.17.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/AcademySoftwareFoundation/OpenTimelineIO")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0qram9cb77x0f29v6nbzwsd5mwdfw9m1k4d8pcny3ij7p26rfwp7"))
+              (modules '((guix build utils)))
+              (snippet
+               '(begin
+                  (substitute* "CMakeLists.txt"
+                    (("add_subdirectory\\(src/deps\\)") ""))
+                  (substitute* "src/opentimelineio/serializableObject.h"
+                    (("#include \"ImathBox.h\"")
+                     "#include <Imath/ImathBox.h>"))
+                  (substitute* '("src/opentimelineio/mediaReference.h"
+                                 "src/opentimelineio/composable.h")
+                    (("#include <ImathBox.h>")
+                     "#include <Imath/ImathBox.h>"))))))
+    (build-system cmake-build-system)
+    (arguments
+     (list #:configure-flags
+           '(list "-DOTIO_PYTHON_INSTALL=off"
+                  "-DOTIO_AUTOMATIC_SUBMODULES=off")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'install 'install-imath
+                 (lambda _
+                   (symlink (string-append
+                             #$(this-package-input "imath")
+                             "/include/Imath")
+                            (string-append
+                             #$output "/include/opentimelineio/deps")))))))
+    (inputs (list imath rapidjson))
+    (home-page "https://opentimeline.io")
+    (synopsis "API and interchange format for editorial timeline information")
+    (description "OpenTimelineIO is an interchange format and API for
+editorial cut information.  OTIO contains information about the order and
+length of cuts and references to external media.  It is not however, a
+container format for media.
+
+For integration with applications, the core OTIO library is implemented in C++
+and provides an in-memory data model, as well as library functions for
+interpreting, manipulating, and serializing that data model.  Within the core
+is a dependency-less library for dealing strictly with time, @code{opentime}.")
+    (license license:gpl2+)))
+
 (define-public libmp4v2
   (package
     (name "libmp4v2")
@@ -5668,7 +5845,8 @@ to newbies and professionals alike.")
     (arguments
      '(#:configure-flags '("LIBS=-lm")))
     (native-inputs
-     (list pkg-config doxygen))
+     ;; Avoid gcc-14's: error: SSE register return with SSE disabled
+     (list gcc-13 pkg-config doxygen))
     (home-page "https://gmerlin.sourceforge.net")
     (synopsis "Low level library for multimedia API building")
     (description
@@ -6018,19 +6196,7 @@ API.  It includes bindings for Python, Ruby, and other languages.")
                     (lambda _
                       ;; src/classes/info.py "needs" to create several
                       ;; directories in $HOME when loaded during build
-                      (setenv "HOME" "/tmp")))
-                  (add-after 'install 'wrap-program
-                    (lambda* (#:key outputs inputs #:allow-other-keys)
-                      (let ((out (assoc-ref outputs "out"))
-                            (qtwebengine-process-path
-                             (search-input-file
-                              inputs "/lib/qt5/libexec/QtWebEngineProcess")))
-                        (wrap-qt-program "openshot-qt"
-                                         #:output out #:inputs inputs)
-                        ;; Help the program discover QtWebEngine at runtime.
-                        (wrap-program (string-append out "/bin/openshot-qt")
-                          `("QTWEBENGINEPROCESS_PATH" =
-                            (,qtwebengine-process-path)))))))))
+                      (setenv "HOME" "/tmp"))))))
     (home-page "https://www.openshot.org/")
     (synopsis "Video editor")
     (description "OpenShot takes your videos, photos, and music files and
@@ -6041,7 +6207,7 @@ transitions, and effects and then export your film to many common formats.")
 (define-public shotcut
   (package
     (name "shotcut")
-    (version "25.03.29")
+    (version "25.05.11")
     (source
      (origin
        (method git-fetch)
@@ -6050,7 +6216,7 @@ transitions, and effects and then export your film to many common formats.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "114h7g1ambj3b91f54yrwsg02pcdh0b6npg2w84qympib0f30ck6"))))
+        (base32 "1mrv33mimx103qyq6kpzb2cb8xbxwlxzn9x24fgkimmfbcigks6a"))))
     (build-system qt-build-system)
     (arguments
      (list
@@ -6700,26 +6866,31 @@ includes @code{dvdxchap} tool for extracting chapter information from DVD.")
     (home-page "https://www.bunkus.org/videotools/ogmtools/")))
 
 (define-public libcaption
-  (package
-    (name "libcaption")
-    (version "0.7")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                     (url "https://github.com/szatmary/libcaption")
-                     (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "16mhw8wpl7wdjj4n7rd1c294p1r8r322plj7z91crla5aah726rq"))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:tests? #f ; Cannot figure out how to run the unit tests
-       #:configure-flags '("-DENABLE_RE2C=ON")))
-    (native-inputs
-     (list re2c))
-    (synopsis "CEA608 / CEA708 closed-caption codec")
-    (description "Libcaption creates and parses closed-caption data,
+  ;; This is the latest commit of the 'develop' branch, which corresponds to
+  ;; the de facto, never-released v0.8 version that most applications using
+  ;; libcaption rely on.
+  (let ((commit "e8b6261090eb3f2012427cc6b151c923f82453db")
+        (revision "0"))
+    (package
+      (name "libcaption")
+      (version (git-version "0.7" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/szatmary/libcaption")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1m9rw3r502923sch8rz2s1v8wz2klgbi7hqd37l63l3plh837nzn"))))
+      (build-system cmake-build-system)
+      (arguments
+       `(#:tests? #f ; Cannot figure out how to run the unit tests
+                  #:configure-flags '("-DBUILD_SHARED_LIBS=ON"
+                                      "-DENABLE_RE2C=ON")))
+      (native-inputs (list re2c))
+      (synopsis "CEA608 / CEA708 closed-caption codec")
+      (description "Libcaption creates and parses closed-caption data,
 providing an encoder / decoder for the EIA608 and CEA708 closed-caption
 standards.
 
@@ -6733,8 +6904,8 @@ structure.
 In addition, utility functions to create h.264 SEI (Supplementary enhancement
 information) NALUs (Network Abstraction Layer Unit) for inclusion into an h.264
 elementary stream are provided.")
-    (home-page "https://github.com/szatmary/libcaption")
-    (license license:expat)))
+      (home-page "https://github.com/szatmary/libcaption")
+      (license license:expat))))
 
 (define-public video-contact-sheet
   (package
@@ -6879,7 +7050,7 @@ included for convenience.")
                     (("gtk4-update-icon-cache")
                      "true")))))))
     (native-inputs
-     (list (list glib "bin") gnu-gettext pkg-config))
+     (list (list glib "bin") gettext-minimal pkg-config))
     (inputs
      (list libevdev eudev libinput glib gtk libadwaita json-glib cairo pango
            libxkbcommon polkit))

@@ -93,6 +93,7 @@
 ;;; Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
 ;;; Copyright © 2025 Adrien 'neox' Bourmault <neox@gnu.org>
 ;;; Copyright © 2025 Ada Stevenson <adanskana@gmail.com>
+;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -913,7 +914,8 @@ feedback support.")
      `(#:tests? #f                      ;no test
        #:make-flags
        (list ,(string-append "CC=" (cc-for-target))
-             (string-append "DESTDIR=" (assoc-ref %outputs "out")))
+             (string-append "DESTDIR=" (assoc-ref %outputs "out"))
+             "CFLAGS=-g -O2 -Wno-error=implicit-int")
        #:phases
        (modify-phases %standard-phases
          (replace 'configure
@@ -1286,7 +1288,7 @@ high a score as possible.")
     (outputs '("out"
                "tiles"))                ;for tile graphics and sound support
     (native-inputs
-     (list astyle gettext-minimal pkg-config))
+     (list astyle gcc-13 gettext-minimal pkg-config))
     (inputs
      (list freetype
            libogg
@@ -4933,8 +4935,7 @@ This package expects the game(s) to be placed in subdirectories of
   ;; There are no tags or releases for the stk-assets data, nor indication of
   ;; which revision is bundled into the released SuperTuxKart-*-src tarball;
   ;; use the latest SVN revision available.
-  (let ((commit "18593")
-        (revision "0"))
+  (let ((commit "18612"))
     (hidden-package
      (package
        (name "supertuxkart-data")
@@ -4951,7 +4952,7 @@ This package expects the game(s) to be placed in subdirectories of
           (file-name (string-append name "-" commit "-checkout"))
           (sha256
            (base32
-            "0x2l45w1ahgkw9mrbcxzwdlqs7rams6rsga9m40qjapfiqmvlvbg"))))
+            "1r21m1aginn4wmgrasv2a0cky75l2wk50pqja80k3fbc1gs3hbhz"))))
        (build-system copy-build-system)
        (arguments
         (list #:install-plan
@@ -4997,6 +4998,17 @@ This package expects the game(s) to be placed in subdirectories of
                    "-DUSE_IPV6=FALSE")
            #:phases
            #~(modify-phases %standard-phases
+               (add-before 'configure 'gcc14
+                 (lambda _
+                   (setenv "CXXFLAGS" "-g -O2 -std=c++11")
+                   (substitute* "lib/graphics_engine/include/vk_mem_alloc.h"
+                     (("#define AMD_VULKAN_MEMORY_ALLOCATOR_H" all)
+                       (string-append all "\n#include <cstdio>\n")))
+                   (substitute*
+                     '("lib/graphics_engine/include/ge_main.hpp"
+                       "lib/graphics_engine/include/ge_vulkan_driver.hpp")
+                     (("#include <string>" all)
+                       (string-append all "\n#include <stdexcept>")))))
                (add-before 'configure 'disable-data-install
                  (lambda _
                    (substitute* "CMakeLists.txt"
@@ -6491,7 +6503,7 @@ in-window at 640x480 resolution or fullscreen.")
                   openal
                   physfs
                   qtbase-5
-                  qtscript
+                  qtscript-5
                   openssl
                   sdl2
                   sqlite
@@ -6901,7 +6913,13 @@ with the \"Stamp\" tool within Tux Paint.")
              (base32
               "1xkr3ka2sxp5s0spp84iv294i29s1vxqzazb6kmjc0n415h0x57p"))
             (patches
-             (search-patches "supertux-unbundle-squirrel.patch"))))
+             (search-patches "supertux-unbundle-squirrel.patch"))
+            (modules '((guix build utils)))
+            (snippet
+             #~(substitute* "external/partio_zip/zip_manager.hpp"
+                            (("^#include <vector>" include-vector)
+                             (string-append "#include <memory>\n"
+                                            include-vector))))))
    (arguments
     '(#:tests? #f
       #:configure-flags '("-DINSTALL_SUBDIR_BIN=bin"
@@ -7408,6 +7426,43 @@ This command works on piped data.  Pipe any ASCII or UTF-8 text to nms, and
 it will apply the hollywood effect, initially showing encrypted data, then
 starting a decryption sequence to reveal the original plaintext characters.")
     (license license:expat)))
+
+(define-public asciiquarium
+  (package
+    (name "asciiquarium")
+    (version "1.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append
+             "https://robobunny.com/projects/asciiquarium/asciiquarium_"
+             version ".tar.gz"))
+       (sha256
+        (base32 "0qfkr5b7sxzi973nh0h84blz2crvmf28jkkgaj3mxrr56mhwc20v"))))
+    (build-system copy-build-system)
+    (inputs (list bash-minimal perl perl-curses perl-term-animation))
+    (arguments
+     (list
+      #:install-plan
+      #~'(("asciiquarium" "bin/")
+          ("README" "share/doc/asciiquarium/"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'chmod
+            (lambda _
+              (chmod (string-append #$output "/bin/asciiquarium") #o755)))
+          (add-after 'chmod 'wrap-perl-bin
+            (lambda _
+              (wrap-program (string-append #$output "/bin/asciiquarium")
+                `("PERL5LIB" ":" prefix
+                  (,(getenv "PERL5LIB")))))))))
+    (home-page "https://robobunny.com/projects/asciiquarium/html/")
+    (synopsis "ASCII aquarium for the terminal")
+    (license license:gpl2+)
+    (description
+     "The @code{asciiquarium} package renders a fullscreen animation of an
+aquarium with various fish in the terminal, which can make for a nice
+screensaver.")))
 
 (define-public megaglest-data
   (package
@@ -8365,6 +8420,13 @@ Crowther & Woods, its original authors, in 1995.  It has been known as
                       (string-append
                        (search-input-directory inputs "/include/SDL2")
                        ":" (or (getenv "CPATH") "")))))
+          (add-after 'set-sdl-paths 'set-cflags
+            (lambda _
+              (setenv "CFLAGS"
+                      (string-append
+                        "-g -O2 "
+                        "-Wno-error=incompatible-pointer-types "
+                        "-Wno-error=implicit-function-declaration"))))
           ;; premake doesn't provide install target
           (replace 'install
             (lambda* (#:key inputs outputs #:allow-other-keys)
@@ -8657,14 +8719,14 @@ some graphical niceities, and numerous bug-fixes and other improvements.")
 (define-public yamagi-quake2
   (package
     (name "yamagi-quake2")
-    (version "8.30")
+    (version "8.51")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://deponie.yamagi.org/quake2/quake2-"
                            version ".tar.xz"))
        (sha256
-        (base32 "11lv22y5ccd80iyhk6zj94wligcbx6x5vwbqh3jkgz96v0x5dng2"))))
+        (base32 "0xk321ph15wgydlmln3k7bdn4zdls2zliggsnkjwlnbax0cfy3z4"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f
@@ -9917,7 +9979,7 @@ your score gets higher, you level up and the blocks fall faster.")
 (define-public endless-sky
   (package
     (name "endless-sky")
-    (version "0.10.10")
+    (version "0.10.14")
     (source
      (origin
        (method git-fetch)
@@ -9926,13 +9988,14 @@ your score gets higher, you level up and the blocks fall faster.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1nwim56ii3z6f9gxvmf9q4i5chlsgk3kjisz8li6ivr595wq5502"))))
+        (base32 "198ijk95qhq5qicp27f26g0pqsqdgjyb9ll3dmd3dq8b68j3xyfc"))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags #~(list "-DES_USE_VCPKG=0"
                                      "-DES_USE_SYSTEM_LIBRARIES=1")
            #:make-flags #~(list (string-append "PREFIX=" #$output))
            #:build-type "Release"
+	   #:tests? (not (target-x86-32?))
            #:phases
            #~(modify-phases %standard-phases
                (add-after 'unpack 'fix-paths
@@ -9949,7 +10012,9 @@ your score gets higher, you level up and the blocks fall faster.")
            libjpeg-turbo
            libmad
            libpng
+           minizip
            openal
+           pkgconf
            sdl2
            `(,util-linux "lib"))) ; for libuuid
     (home-page "https://endless-sky.github.io/")
@@ -10110,7 +10175,10 @@ via the in-game download manager.")
            (substitute* "extern/CMakeLists.txt"
              (("include\\(CMakeProject-png.cmake\\)") ""))
            (delete-file-recursively "extern/libpng")
-           #t))))
+           ;; Include missing <ctime> header.
+           (substitute* "src/arch/ArchHooks/ArchHooks.h"
+             (("#define ARCH_HOOKS_H" all)
+              (string-append all "\n#include <ctime> // struct tm")))))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f                      ;FIXME: couldn't find how to run tests
@@ -11200,7 +11268,7 @@ play with up to four players simultaneously.  It has network support.")
            (sdl-union
             (list sdl2 sdl2-mixer sdl2-net sdl2-ttf sdl2-image))))
     (native-inputs
-     (list clang-9 ghc pkg-config qttools-5))
+     (list clang ghc pkg-config qttools-5))
     (home-page "https://hedgewars.org/")
     (synopsis "Turn-based artillery game featuring fighting hedgehogs")
     (description
@@ -11952,8 +12020,8 @@ for using any UCI engine and also to connect UCI engines to Lichess and IRC.")
         (base32 "1kkcnpkzgybm7rqg7nafd7sqd5m4alns6l4j5zcf3p41jdc9s3iv"))))
     (build-system glib-or-gtk-build-system)
     (inputs (list automake autoconf pkg-config intltool
-		 gnu-gettext libtool glib gtk+-2 boost))
-    (arguments `(#:tests? #f))
+		  gettext-minimal libtool glib gtk+-2 boost))
+    (arguments (list #:tests? #f))  ; No tests in source.
     (home-page "http://nine-mens-morris.net/downloads.html")
     (synopsis "Implementation of the board game Nine Men's Morris")
     (description "Morris is an implementation of the board game Nine Men's Morris.
@@ -13108,104 +13176,105 @@ Jongg tiles from the playing field by taking one matching pair at a time.")
 (define-public sc-controller
   (package
     (name "sc-controller")
-    (version "0.4.8.9")
+    (version "0.5.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/Ryochan7/sc-controller")
+                    (url "https://github.com/C0rn3j/sc-controller")
                     (commit (string-append "v" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1410yj6947yq43wwrj3cwllalalggzmd74sad70jd1niwj85yvna"
-                ))))
-    (build-system python-build-system)
+                "1zczdaxf76n1h6v3daaml7zd2ga808sscfp4bhnagfvw8y3xbf63"))))
+    (build-system pyproject-build-system)
     (arguments
-     (list #:phases #~(modify-phases %standard-phases
-                        (delete 'sanity-check)
-                        (add-after 'unpack 'remove-bundled-libraries
-                          (lambda _
-                            (with-directory-excursion "scc/lib"
-                              (for-each delete-file
-                                        '("enum.py" "jsonencoder.py"
-                                          "libusb1.py" "usb1.py")))
-                            ;; libusb1 fixes
-                            (substitute* '("scc/uinput.py"
-                                           "scc/drivers/usb.py"
-                                           "scc/drivers/steamdeck.py"
-                                           "scc/drivers/sc_by_cable.py")
-                              (("scc\\.lib\\.libusb1")
-                               "libusb1")
-                              (("scc\\.lib\\.usb1")
-                               "usb1")
-                              (("from scc\\.lib import usb1")
-                               "import usb1"))
-                            ;; enum fixes
-                            (substitute* "scc/cemuhook_server.py"
-                              (("scc\\.lib\\.enum")
-                               "enum"))
-                            ;; simplejson fixes
-                            (substitute* "scc/profile.py"
-                              (("from scc\\.lib\\.jsonencoder")
-                               "from simplejson"))))
-                        (add-after 'unpack 'fix-paths
-                          (lambda _
-                            (substitute* "scc/lib/xwrappers.py"
-                              (("libXfixes.so")
-                               (string-append (assoc-ref %build-inputs
-                                                         "libxfixes")
-                                              "/lib/libXfixes.so"))
-                              (("libXext.so")
-                               (string-append (assoc-ref %build-inputs
-                                                         "libxext")
-                                              "/lib/libXext.so")))
-                            (substitute* "scc/lib/eudevmonitor.py"
-                              (("libudev.so")
-                               (string-append (assoc-ref %build-inputs "eudev")
-                                              "/lib/libudev.so")))
-                            (substitute* "scc/uinput.py"
-                              (("/usr/include")
-                               (string-append (assoc-ref %build-inputs
-                                                         "linux-libre-headers")
-                                              "/include")))
-                            (substitute* '("scc/gui/app.py"
-                                           "scc/osd/inputdisplay.py"
-                                           "scc/paths.py")
-                              (("/usr/share/scc")
-                               (string-append #$output "/share/scc")))))
-                        (add-after 'wrap 'gi-wrap
-                          (lambda _
-                            (for-each (lambda (prog)
-                                        (wrap-program (string-append #$output
-                                                                     "/bin/"
-                                                                     prog)
-                                          `("GI_TYPELIB_PATH" =
-                                            (,(getenv
-                                               "GI_TYPELIB_PATH")))))
-                                      '("sc-controller" "scc"
-                                        "scc-daemon"
-                                        "scc-osd-dialog"
-                                        "scc-osd-keyboard"
-                                        "scc-osd-launcher"
-                                        "scc-osd-menu"
-                                        "scc-osd-message"
-                                        "scc-osd-radial-menu"
-                                        "scc-osd-show-bindings")))))))
-    (inputs (list bash-minimal
-                  gtk+
-                  gtk-layer-shell
-                  eudev
-                  libxext
-                  libxfixes
-                  linux-libre-headers
-                  python-pycairo
-                  python-evdev
-                  python-libusb1
-                  python-pylibacl
-                  python-pygobject
-                  python-simplejson
-                  python-vdf
-                  zlib))
+     (list
+      #:imported-modules `((guix build glib-or-gtk-build-system)
+                           ,@%pyproject-build-system-modules)
+      #:modules '((guix build pyproject-build-system)
+                  ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
+                  (guix build utils))
+      #:phases #~(modify-phases %standard-phases
+                   (delete 'sanity-check)
+                   (add-after 'unpack 'generate-gdk-pixbuf-loaders-cache-file
+                     (assoc-ref glib-or-gtk:%standard-phases 'generate-gdk-pixbuf-loaders-cache-file))
+                   (add-before 'build 'no-install-udev
+                     (lambda _
+                       ;; Installing udev rules errors out.  Install them manually later
+                       (substitute* "setup.py"
+                         ((".*lib/udev.*") ""))))
+                   (add-before 'build 'set-version
+                     (lambda _
+                       (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)))
+                   (add-after 'unpack 'remove-bundled-libraries
+                     (lambda _
+                       (delete-file "scc/lib/jsonencoder.py")
+                       (substitute* "scc/profile.py"
+                         (("from scc\\.lib\\.jsonencoder")
+                          "from simplejson"))))
+                   (add-after 'unpack 'fix-paths
+                     (lambda _
+                       (substitute* '("scc/lib/xwrappers.py"
+                                      "scc/lib/eudevmonitor.py")
+                         (("libXfixes\\.so|libXext\\.so|libudev\\.so" library)
+                          (search-input-file %build-inputs (string-append "lib/" library))))
+                       (substitute* "scc/uinput.py"
+                         (("/usr/include")
+                          (string-append (assoc-ref %build-inputs
+                                                    "linux-libre-headers")
+                                         "/include")))
+                       (substitute* '("scc/gui/app.py"
+                                      "scc/osd/inputdisplay.py"
+                                      "scc/paths.py")
+                         (("/usr/share/scc")
+                          (string-append #$output "/share/scc")))))
+                   (add-after 'install 'install-udev
+                     (lambda _
+                       (for-each
+                        (lambda (udev-rule)
+                          (install-file udev-rule
+                                        (string-append
+                                         #$output
+                                         "/lib/udev/rules.d")))
+                        (find-files "./scripts" "\\.rules$"))))
+                     (add-after 'install 'glib-or-gtk-compile-schemas
+                       (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-compile-schemas))
+                     (add-after 'wrap 'glib-or-gtk-wrap
+                       (assoc-ref glib-or-gtk:%standard-phases 'glib-or-gtk-wrap))
+                     (add-after 'glib-or-gtk-wrap 'gi-wrap
+                       (lambda _
+                         (let ((bin (string-append #$output "/bin")))
+                           (for-each (lambda (prog)
+                                       (wrap-program prog
+                                         `("GDK_PIXBUF_MODULE_FILE" =
+                                           (,(getenv "GDK_PIXBUF_MODULE_FILE")))
+                                         `("GI_TYPELIB_PATH" =
+                                           (,(getenv "GI_TYPELIB_PATH")))))
+                                     ;; Predicate regex so we don't wrap the existing wrappers
+                                     (find-files bin "^[^.]"))))))))
+    (inputs (list
+             bash-minimal
+             eudev
+             gtk+
+             gtk-layer-shell
+             libxext
+             libxfixes
+             linux-libre-headers
+             python-evdev
+             python-ioctl-opt
+             python-libusb1
+             python-pycairo
+             python-pygobject
+             python-pylibacl
+             python-simplejson
+             python-vdf
+             zlib))
+    (native-inputs
+     (list
+      python-pytest
+      python-setuptools
+      python-setuptools-scm
+      python-wheel))
     (home-page "https://github.com/Ryochan7/sc-controller")
     (synopsis "Driver and configuration tool for game controllers")
     (description
@@ -13213,8 +13282,6 @@ Jongg tiles from the playing field by taking one matching pair at a time.")
 the Steam Controller, Steam Deck, and Dual Shock 4.  Install the included udev
 rules to solve permissions issues.")
     (license (list
-              ;; lib/enum.py, lib/usb1.py, and lib/libusb1.py are deleted but
-              ;; do have other licenses.
               license:cc0 ; images/*, default_profiles/*, profile_examples/*, default_menus/*
               license:zlib ; scripts/gamecontrollerdb.txt
               license:gpl2)))) ; everything else

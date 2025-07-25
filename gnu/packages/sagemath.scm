@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2019, 2025 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2024 Vinicius Monego <monego@posteo.net>
+;;; Copyright © 2024, 2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2025 Ricardo Wurmus <rekado@elephly.net>
 ;;;
 ;;; This file is part of GNU Guix.
@@ -368,6 +368,11 @@ database.")
                     (url "https://github.com/sagemath/sage")
                     (commit version)))
               (file-name (git-file-name name version))
+              (patches
+               ;; This patch works around a Cython issue and can be removed
+               ;; after sage 10.7 is released.  See
+               ;; https://github.com/sagemath/sage/issues/39735
+               (search-patches "sage-safeguard-sage-getargspec-cython.patch"))
               (sha256
                (base32
                 "0m2f6k6nwgyzfhf45r0kp798aimjxhpfnmsp1k03jpj9d6mhadk4"))))
@@ -404,7 +409,6 @@ database.")
             freetype
             gap
             gd
-            giac
             givaro
             glpk
             gmp
@@ -515,7 +519,7 @@ database.")
     (description
      "SageMath is a mathematics software built on top of many existing
 packages such as NumPy, SciPy, Matplotlib, Sympy, Maxima, GAP, FLINT,
-R and others. Their combined power may be accessed through a common,
+R and others.  Their combined power may be accessed through a common,
 Python-based language or directly via interfaces or wrappers.")
     ;; Documentation under cc-by-sa3.0, see COPYING.txt in the distribution.
     (license license:gpl3)))

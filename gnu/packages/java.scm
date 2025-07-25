@@ -11,7 +11,7 @@
 ;;; Copyright © 2018 Chris Marusich <cmmarusich@gmail.com>
 ;;; Copyright © 2018-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2019, 2020, 2021 Björn Höfling <bjoern.hoefling@bjoernhoefling.de>
-;;; Copyright © 2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2020, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020 Raghav Gururajan <raghavgururajan@disroot.org>
 ;;; Copyright © 2020, 2022, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Vincent Legoll <vincent.legoll@gmail.com>
@@ -233,7 +233,12 @@
              (lambda _
                (substitute* "openjdk.src/jdk/make/common/Defs-linux.gmk"
                  (("CFLAGS_COMMON   = -fno-strict-aliasing" all)
-                  (string-append all " -fcommon")))
+                  (string-append all
+                                 " -fcommon"
+                                 " -Wno-error=implicit-function-declaration"
+                                 " -Wno-error=implicit-int"
+                                 " -Wno-error=incompatible-pointer-types"
+                                 " -Wno-error=int-conversion")))
                (substitute*
                    '("openjdk.src/jdk/src/solaris/native/java/net/PlainSocketImpl.c"
                      "openjdk.src/jdk/src/solaris/native/java/net/PlainDatagramSocketImpl.c")
@@ -605,7 +610,14 @@
                                (string-append (assoc-ref outputs "jdk")
                                               "/jre/lib/security"))))))))
       (native-inputs
-       `(("openjdk-src"
+       ;; XXX: Compiling with gcc-14 will encounter the following error:
+       ;; BUILD FAILED:
+       ;; /tmp/guix-build-icedtea-2.6.13.drv-0/icedtea-2.6.13/openjdk/langtools/
+       ;; make/build.xml:452: The following error occurred while executing this
+       ;; line:
+       ;; java.lang.AbstractMethodError: java.lang.Throwable.toString()Ljava/lang/String;
+       `(("gcc" ,gcc-13)
+         ("openjdk-src"
           ,(drop "openjdk"
                  "0l34ikyf62hbzlf9032alzkkqvf7bpmckz4gvirvph755w7gka8l"))
          ("corba-drop"
@@ -739,7 +751,11 @@ IcedTea build harness.")
                 (srfi srfi-26)))
              ((#:configure-flags flags)
               `(let ((jdk (assoc-ref %build-inputs "jdk")))
-                 `("CFLAGS=-fcommon"
+                 `(,(string-append "CFLAGS=-fcommon"
+                                   " -Wno-error=implicit-function-declaration"
+                                   " -Wno-error=implicit-int"
+                                   " -Wno-error=incompatible-pointer-types"
+                                   " -Wno-error=int-conversion")
                    "CXXFLAGS=-fcommon"
                    "--enable-bootstrap"
                    "--enable-nss"
@@ -943,7 +959,9 @@ new Date();"))
                      ;; Add flags for compilation with gcc >= 10
                      ,(string-append "--with-extra-cflags=-fcommon"
                                      " -fno-delete-null-pointer-checks"
-                                     " -fno-lifetime-dse")
+                                     " -fno-lifetime-dse"
+                                     ;; flags for compilation with gcc >= 14.
+                                     " -Wno-error=int-conversion")
                      (string-append "--with-freetype="
                                     (assoc-ref inputs "freetype"))
                      "--disable-freetype-bundling"
@@ -1176,7 +1194,7 @@ new Date();"))
            freetype
            giflib
            lcms
-           libelf
+           elfutils
            libjpeg-turbo
            libice
            libpng
@@ -1265,7 +1283,9 @@ new Date();"))
                        ;; Add flags for compilation with gcc >= 10
                        ,(string-append "--with-extra-cflags=-fcommon"
                                        " -fno-delete-null-pointer-checks"
-                                       " -fno-lifetime-dse")
+                                       " -fno-lifetime-dse"
+                                       ;; flags for compilation with gcc >= 14.
+                                       " -Wno-error=int-conversion")
                        (string-append "--with-freetype="
                                       (assoc-ref inputs "freetype"))
                        "--disable-freetype-bundling"
@@ -1336,7 +1356,9 @@ new Date();"))
          ;; Add flags for compilation with gcc >= 10.
          #$(string-append "--with-extra-cflags=-fcommon"
                           " -fno-delete-null-pointer-checks"
-                          " -fno-lifetime-dse")
+                          " -fno-lifetime-dse"
+                          ;; flags for compilation with gcc >= 14.
+                          " -Wno-error=int-conversion")
          ;; Otherwise, the '--enable-fast-install' causes an error.
          "--disable-option-checking"
          "--disable-warnings-as-errors"

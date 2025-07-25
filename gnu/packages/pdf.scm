@@ -30,6 +30,7 @@
 ;;; Copyright © 2024 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2024 Aaron Covrig <aaron.covrig.us@ieee.org>
 ;;; Copyright © 2025 Jussi Timperi <jussi.timperi@iki.fi>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -635,31 +636,24 @@ using libarchive.")
 (define-public zathura-ps
   (package
     (name "zathura-ps")
-    (version "0.2.7")
+    (version "0.2.8")
     (source (origin
-              (method url-fetch)
-              (uri
-               (string-append "https://pwmt.org/projects/zathura-ps/download/zathura-ps-"
-                              version ".tar.xz"))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/pwmt/zathura-ps")
+                     (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "0ilf63wxn1yzis9m3qs8mxbk316yxdzwxrrv86wpiygm9hhgk5sq"))))
+                "04nv4cpxhx2f1m6iagrhj3dx3mranljl604sj2yn11anhnm0igc5"))))
     (native-inputs (list pkg-config))
     (inputs (list libspectre zathura))
     (build-system meson-build-system)
     (arguments
-     `(#:tests? #f                      ; package does not contain tests
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-plugin-directory
-           ;; Something of a regression in 0.2.7: the new Meson build system
-           ;; now hard-codes an incorrect plugin directory.  Fix it.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (substitute* "meson.build"
-               (("(install_dir:).*" _ key)
-                (string-append key
-                               "'" (assoc-ref outputs "out") "/lib/zathura'\n")))
-             #t)))))
+     (list
+      #:tests? #f                       ;package does not contain tests
+      #:configure-flags
+      #~(list (string-append "-Dplugindir=" #$output "/lib/zathura"))))
     (home-page "https://pwmt.org/projects/zathura-ps/")
     (synopsis "PS support for zathura (libspectre backend)")
     (description "The zathura-ps plugin adds PS support to zathura
@@ -669,32 +663,24 @@ using libspectre.")
 (define-public zathura-djvu
   (package
     (name "zathura-djvu")
-    (version "0.2.9")
+    (version "0.2.10")
     (source (origin
-              (method url-fetch)
-              (uri
-               (string-append "https://pwmt.org/projects/zathura-djvu/download/zathura-djvu-"
-                              version ".tar.xz"))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/pwmt/zathura-djvu")
+                     (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "0062n236414db7q7pnn3ccg5111ghxj3407pn9ri08skxskgirln"))))
+                "1c069n676c9byy1sp2c6idm3mlfijcdpv6z09ifx8hjkryaajplx"))))
     (native-inputs (list pkg-config))
     (inputs
      (list djvulibre zathura))
     (build-system meson-build-system)
     (arguments
-     `(#:tests? #f                      ; package does not contain tests
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-plugin-directory
-           ;; Something of a regression in 0.2.8: the new Meson build system
-           ;; now hard-codes an incorrect plugin directory.  Fix it.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (substitute* "meson.build"
-               (("(install_dir:).*" _ key)
-                (string-append key
-                               "'" (assoc-ref outputs "out") "/lib/zathura'\n")))
-             #t)))))
+     (list #:tests? #f                      ;package does not contain tests
+           #:configure-flags
+           #~(list (string-append "-Dplugindir=" #$output "/lib/zathura"))))
     (home-page "https://pwmt.org/projects/zathura-djvu/")
     (synopsis "DjVu support for zathura (DjVuLibre backend)")
     (description "The zathura-djvu plugin adds DjVu support to zathura
@@ -704,47 +690,35 @@ using the DjVuLibre library.")
 (define-public zathura-pdf-mupdf
   (package
     (name "zathura-pdf-mupdf")
-    (version "0.4.3")
+    (version "0.4.4")
     (source (origin
-              (method url-fetch)
-              (uri
-               (string-append "https://pwmt.org/projects/zathura-pdf-mupdf"
-                              "/download/zathura-pdf-mupdf-" version ".tar.xz"))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/pwmt/zathura-pdf-mupdf")
+                     (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "0xk7fxgx5fiafczwqlpb3hkfmfhhq2ljabxvi272m9vy13p89kwc"))))
+                "1g1wiazyqdjd40qvq5vkxqabxzd0qlk6wvfvllm4y8x1jcc11vbs"))))
     (native-inputs (list pkg-config))
     (inputs
-     (list gumbo-parser
-           jbig2dec
-           libjpeg-turbo
-           mujs
-           mupdf
-           openjpeg
-           openssl
-           tesseract-ocr
-           zathura))
+     (list mupdf zathura))
     (build-system meson-build-system)
     (arguments
-     `(#:tests? #f                      ; package does not contain tests
-       #:configure-flags (list (string-append "-Dplugindir="
-                                              (assoc-ref %outputs "out")
-                                              "/lib/zathura"))
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'remove-libmupdfthird.a-requirement
-           (lambda _
-             ;; Ignore a missing (apparently superfluous) static library.
-             (substitute* "meson.build"
-               (("mupdfthird = .*")
-                "")
-               ((", mupdfthird")
-                ""))))
-         (add-after 'unpack 'fix-mupdf-detection
-           (lambda _
-             (substitute* "meson.build"
-               (("dependency\\('mupdf', required: false\\)")
-                "cc.find_library('mupdf')")))))))
+     (list
+      #:tests? #f ;package does not contain tests
+      #:configure-flags
+      #~(list (string-append "-Dplugindir=" #$output "/lib/zathura"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'remove-libmupdfthird.a-requirement
+            (lambda _
+              ;; Ignore a missing (apparently superfluous) static library.
+              (substitute* "meson.build"
+                (("mupdfthird = .*")
+                 "")
+                ((", mupdfthird")
+                 "")))))))
     (home-page "https://pwmt.org/projects/zathura-pdf-mupdf/")
     (synopsis "PDF support for zathura (mupdf backend)")
     (description "The zathura-pdf-mupdf plugin adds PDF support to zathura
@@ -754,15 +728,16 @@ by using the @code{mupdf} rendering library.")
 (define-public zathura-pdf-poppler
   (package
     (name "zathura-pdf-poppler")
-    (version "0.3.2")
+    (version "0.3.3")
     (source (origin
-              (method url-fetch)
-              (uri
-               (string-append "https://pwmt.org/projects/zathura-pdf-poppler/download/zathura-pdf-poppler-"
-                              version ".tar.xz"))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/pwmt/zathura-pdf-poppler")
+                     (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "049h8m9swxni7ar6fsbm0hb3fg4ffmjc3m6vyg78ilfi3kayxavi"))))
+                "1pzxhld2bfgq5403qn9w3acglvqnhfb2l959m9b149wa936rnfm8"))))
     (native-inputs (list pkg-config))
     (inputs
      (list poppler zathura))
@@ -780,15 +755,16 @@ by using the poppler rendering engine.")
 (define-public zathura
   (package
     (name "zathura")
-    (version "0.5.6")
+    (version "0.5.12")
     (source (origin
-              (method url-fetch)
-              (uri
-               (string-append "https://pwmt.org/projects/zathura/download/zathura-"
-                              version ".tar.xz"))
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/pwmt/zathura.git/")
+                     (commit version)))
+              (file-name (git-file-name name version))
               (sha256
                (base32
-                "1nhhdww8z6i2cmj7n6qjgyh49dy4jf0xq4j13djpvrfchxgf6y5l"))))
+                "1wrr9vr0d83kawkg0wj4i91g293cbjgyhmfspf4bxbs62x77zb9m"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -847,6 +823,7 @@ interaction.")
                     (url "https://github.com/podofo/podofo")
                     (commit version)))
               (file-name (git-file-name name version))
+              (patches (search-patches "podofo-gcc-14.patch"))
               (sha256
                (base32
                 "1fyv0zbl6zs93wy0qb3mjkfm99pgz5275nkzss115ww2w04h0ssl"))))
@@ -1142,6 +1119,23 @@ enhance the quality of scanned pages before performing
         (base32
          "09i88v3wacmx7f96dmq0l3afpyv95lh6jrx16xzm0jd1szdrhn5j"))))
     (build-system gnu-build-system)
+    (arguments
+     (list
+      #:make-flags
+      #~(list (string-append "CFLAGS=-g -O2 "
+                             ;; Placate gcc@14 strictness.
+                             "-Wno-error=deprecated-declarations "
+                             "-Wno-error=implicit-function-declaration"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-includes
+            ;; Inclusion of unistd.h is conditional on HAVE_UNISTD_H being
+            ;; defined, but this comes from config.h.
+            (lambda _
+              (with-fluids ((%default-port-encoding "ISO-8859-1"))
+                (substitute* "src/ttsubset/sft.h"
+                  (("#include <sys/types.h>")
+                   "#include \"config.h\"\n#include <sys/types.h>"))))))))
     (inputs
      (list gtk+-2 pango poppler glib libgnomecanvas))
     (native-inputs
@@ -1835,65 +1829,67 @@ Keywords: html2pdf, htmltopdf")
     (license license:bsd-3)))
 
 (define-public sioyek
-  (package
-    (name "sioyek")
-    (version "2.0.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/ahrm/sioyek")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1vmmp2s032ygh1byz77pg9aljmp8hx745fr7mmz11831f96mlmhq"))
-       (modules '((guix build utils)))
-       ;; libmupdf-third.so no longer available since mupdf 1.18.0.
-       (snippet '(substitute* "pdf_viewer_build_config.pro"
-                   (("-lmupdf-third") "")))
-       ;; XXX: Fix build with mupdf-0.23.0+.
-       ;; See also: https://github.com/ahrm/sioyek/issues/804
-       (patches (search-patches "sioyek-fix-build.patch"))))
-    (build-system qt-build-system)
-    (arguments
-     (list
-      #:configure-flags
-      #~(list (string-append "PREFIX=" #$output))
-      #:test-target "check"
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-after 'unpack 'patch-paths
-            (lambda _
-              (substitute* "pdf_viewer/main.cpp"
-                (("/usr/share")
-                 (string-append #$output "/share"))
-                (("/etc")
-                 (string-append #$output "/etc")))))
-          (replace 'configure
-            (lambda* (#:key configure-flags #:allow-other-keys)
-              (apply invoke "qmake" configure-flags)))
-          (add-after 'install 'instal-man-page
-            (lambda _
-              (install-file "resources/sioyek.1"
-                            (string-append #$output "/share/man/man1")))))))
-    (inputs
-     (list freetype
-           gumbo-parser
-           harfbuzz
-           jbig2dec
-           libjpeg-turbo
-           mujs
-           mupdf
-           openjpeg
-           qt3d-5
-           qtbase-5
-           qtwayland-5
-           zlib))
-    (home-page "https://sioyek.info/")
-    (synopsis "PDF viewer with a focus on technical books and research papers")
-    (description
-     "Sioyek is a PDF viewer with a focus on textbooks and research papers.")
-    (license license:gpl3+)))
+  (let ((commit "8d173d993738d78559da035cc051f2eb40df41e6")
+        (revision "1"))
+    (package
+      (name "sioyek")
+      (version (git-version "2.0.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/ahrm/sioyek")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "10d08ajcm5ckvrj5xkgi0dj9ibndi961v2yacw7a8mxkdqki6ck6"))
+         (modules '((guix build utils)))
+         ;; libmupdf-third.so no longer available since mupdf 1.18.0.
+         (snippet '(substitute* "pdf_viewer_build_config.pro"
+                     (("-lmupdf-third") "")))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:configure-flags
+        #~(list (string-append "PREFIX=" #$output))
+        #:test-target "check"
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-paths
+              (lambda _
+                (substitute* "pdf_viewer/main.cpp"
+                  (("/usr/share")
+                   (string-append #$output "/share"))
+                  (("/etc")
+                   (string-append #$output "/etc")))))
+            (replace 'configure
+              (lambda* (#:key configure-flags #:allow-other-keys)
+                (apply invoke "qmake" configure-flags)))
+            (add-after 'install 'instal-man-page
+              (lambda _
+                (install-file "resources/sioyek.1"
+                              (string-append #$output "/share/man/man1")))))))
+      (inputs
+       (list freetype
+             gumbo-parser
+             harfbuzz
+             jbig2dec
+             libjpeg-turbo
+             mujs
+             mupdf
+             openjpeg
+             qtbase
+             qtdeclarative
+             qtsvg
+             qt3d
+             qtspeech
+             qtwayland
+             zlib))
+      (home-page "https://sioyek.info/")
+      (synopsis "PDF viewer with a focus on technical books and research papers")
+      (description
+       "Sioyek is a PDF viewer with a focus on textbooks and research papers.")
+      (license license:gpl3+))))
 
 (define-public pdftk
   (package

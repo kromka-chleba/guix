@@ -14,7 +14,7 @@
 ;;; Copyright © 2017 Rutger Helling <rhelling@mykolab.com>
 ;;; Copyright © 2018 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2019 Mathieu Othacehe <m.othacehe@gmail.com>
-;;; Copyright © 2020, 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2020, 2023, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020, 2021, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2021 Solene Rapenne <solene@perso.pw>
 ;;; Copyright © 2021 Brice Waegeneire <brice@waegenei.re>
@@ -92,7 +92,7 @@
 (define-public libtasn1
   (package
     (name "libtasn1")
-    (version "4.19.0")
+    (version "4.20.0")
     (source
      (origin
       (method url-fetch)
@@ -100,7 +100,7 @@
                           version ".tar.gz"))
       (sha256
        (base32
-        "0yizlr2y6gfjh86v68qw5wjcfg16arnw1f731kndd17l3jng04qn"))))
+        "0v57hwsv4wijb0fvfp6s9jx35izhhgfjssq3fvpaxm029jyy7q4j"))))
     (build-system gnu-build-system)
     (arguments
      `(#:configure-flags '("--disable-static")))
@@ -827,14 +827,15 @@ certificates for free.")
 (define-public perl-net-ssleay
   (package
     (name "perl-net-ssleay")
-    (version "1.92")
+    (version "1.94")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://cpan/authors/id/C/CH/CHRISN/"
                                   "Net-SSLeay-" version ".tar.gz"))
               (sha256
                (base32
-                "1acnjd5180dca26dmjq0b9ib0dbavlrzd6fnf4nidrzj02rz5hj7"))))
+                "0pfrpi77964cg15dm6y0w03l64xs0k2nqc15qh2xmv8vdnjyhywx"))
+              (patches (search-patches "perl-net-ssleay-colon-parsing.patch"))))
     (build-system perl-build-system)
     (inputs (list openssl))
     (arguments
@@ -971,7 +972,7 @@ number generator")
 (define-public mbedtls-lts
   (package
     (name "mbedtls")
-    (version "2.28.7")
+    (version "2.28.9")
     (source
      (origin
        (method git-fetch)
@@ -980,11 +981,12 @@ number generator")
              (commit (string-append "mbedtls-" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "070i5pxciw04swfqk1rmdprhsafn4cias3dlmkm467pqpjnhb394"))))
+        (base32 "0ldqhvmj9wl0yp3hz675zbnq69lw533s0ahy9bbdxxnj5gjb86gw"))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags
-           #~(list "-DUSE_SHARED_MBEDTLS_LIBRARY=ON"
+           #~(list "-DCMAKE_C_FLAGS=-Wno-error=calloc-transposed-args"
+                   "-DUSE_SHARED_MBEDTLS_LIBRARY=ON"
                    "-DUSE_STATIC_MBEDTLS_LIBRARY=OFF")
            #:phases
            #~(modify-phases %standard-phases

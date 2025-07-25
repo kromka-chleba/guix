@@ -220,14 +220,14 @@
 (define-public aide
   (package
     (name "aide")
-    (version "0.19")
+    (version "0.19.1")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://github.com/aide/aide/releases/download/v"
                            version "/aide-" version ".tar.gz"))
        (sha256
-        (base32 "1r55mf4nl6ydb7zwzkz4689j9v9kaabz5gsrcgbrj4p09chs1yz7"))))
+        (base32 "0lhbx7ilwzpfl77vi7b6cklhgzk1iwyfp4fvvgvlmmq30igvzy3d"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags #~(list "--with-posix-acl"
@@ -423,7 +423,10 @@ late.")
        (file-name (git-file-name name version))))
     (build-system glib-or-gtk-build-system)
     (arguments
-     (list #:phases
+     (list
+       #:configure-flags
+         #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")
+       #:phases
            #~(modify-phases %standard-phases
                (add-after 'unpack 'patch-file-names
                  (lambda _
@@ -2884,7 +2887,16 @@ utilization, temperature and power.")
                                   version ".orig.tar.gz"))
               (sha256
                (base32
-                "1cg0mklfrwfyzwqkzidd0151r8n2jgbiiqz1v0p3w4q62mkmdand"))))
+                "1cg0mklfrwfyzwqkzidd0151r8n2jgbiiqz1v0p3w4q62mkmdand"))
+              (modules '((guix build utils)))
+              (snippet
+               #~(begin
+                   ;; The build fails with "implicit declaration of function
+                   ;; 'rpl_malloc'; did you mean 'realloc'?" when building
+                   ;; for RISCV64 target if "AC_FUNC_MALLOC" macro is present.
+                   ;; Remove it.
+                   (substitute* "configure.ac"
+                     (("AC_FUNC_MALLOC") ""))))))
     (build-system gnu-build-system)
     (native-inputs
      (list autoconf automake))
@@ -3475,7 +3487,6 @@ limits.")
     ;; Text formatting only supported since C++20, which is available in gcc-13.
     ;; https://en.cppreference.com/w/cpp/compiler_support#cpp_lib_format_201907L
     (native-inputs (list catch2-3
-                         gcc-13
                          pkg-config
                          qttools-5))
     (inputs (list dbus
@@ -4623,7 +4634,7 @@ information tool.")
 (define-public fastfetch
   (package
     (name "fastfetch")
-    (version "2.46.0")
+    (version "2.48.1")
     (source
      (origin
        (method git-fetch)
@@ -4632,7 +4643,7 @@ information tool.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gqhi1z4c7cwapn7l23zw0a3ldwkacm3qm68p9a0lw6lavgcc441"))
+        (base32 "1gzpmc7vx5dqfjbga6facfqxybgb1hps6h2y9blngjwsskicsi7v"))
        (modules '((guix build utils)))
        (snippet '(begin
                    (delete-file-recursively "src/3rdparty")))))
@@ -5297,7 +5308,7 @@ tcpdump and snoop.")
      (list perl pkg-config))
     (inputs
      (append
-      (cons cryptsetup (libcryptsetup-propagated-inputs))
+      (cons cryptsetup-minimal (libcryptsetup-propagated-inputs))
       (list libhx
             libxml2
             linux-pam

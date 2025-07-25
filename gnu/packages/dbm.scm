@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2012, 2013, 2014, 2016, 2020 Ludovic Courtès <ludo@gnu.org>
-;;; Copyright © 2013, 2015 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2013, 2015, 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2016, 2017, 2018, 2020, 2021 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2017, 2018 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2018 Mark H Weaver <mhw@netris.org>
@@ -8,6 +8,8 @@
 ;;; Copyright © 2021 Leo Le Bouter <lle-bout@zaclys.net>
 ;;; Copyright © 2021, 2022 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2021 LuHui <luhux76@gmail.com>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2025 Brennan Vincent <brennan@umanwizard.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -89,6 +91,107 @@
            #:out-of-source? #true
            #:configure-flags
            #~(list
+              "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration"
+              ;; Remove 7 MiB of .a files.
+              "--disable-static"
+
+              ;; The compatibility mode is needed by some packages,
+              ;; notably iproute2.
+              "--enable-compat185"
+
+              ;; The following flag is needed so that the inclusion
+              ;; of db_cxx.h into C++ files works; it leads to
+              ;; HAVE_CXX_STDHEADERS being defined in db_cxx.h.
+              "--enable-cxx")
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'bootstrap
+                 (lambda* (#:key inputs native-inputs outputs
+                           #:allow-other-keys #:rest arguments)
+                   (with-directory-excursion "dist"
+                     (for-each (lambda (x)
+                                 (install-file x "aclocal"))
+                               (find-files "aclocal_java"))
+                     (apply (assq-ref %standard-phases 'bootstrap) arguments)
+                     (let ((automake-files (search-input-directory
+                                            (or native-inputs inputs)
+                                            "share/automake-1.16")))
+                       (define (replace file)
+                         (symlink (string-append automake-files "/" file) file))
+                       (for-each replace '("config.sub" "config.guess"
+                                           "install-sh"))))))
+               #$@(if (or (target-arm?)
+                          (target-riscv64?))
+                      #~((add-after 'unpack 'bdb-configure-patch
+                           (lambda _
+                             (invoke
+                              "patch" "-p1" "-i"
+                              #$(local-file
+                                 (search-patch "bdb-4-5-configure.patch"))))))
+                      #~())
+               (add-before 'configure 'pre-configure
+                 (lambda _
+                   (chdir "dist")
+                   ;; '--docdir' is not honored, so we need to patch.
+                   (substitute* "Makefile.in"
+                     (("docdir[[:blank:]]*=.*")
+                      (string-append "docdir = " #$output:doc
+                                     "/share/doc/bdb")))
+                   ;; Replace __EDIT_DB_VERSION__... by actual version numbers.
+                   ;; s_config is responsible for this, but also runs autoconf
+                   ;; again, so patch out the autoconf bits.
+                   (substitute* "s_config"
+                     (("^.*(aclocal|autoconf|autoheader|config\\.hin).*$") "")
+                     (("^.*auto4mte.*$") "")
+                     (("rm (.*) configure") "")
+                     (("chmod (.*) config.guess(.*)$") ""))
+                   (invoke "sh" "s_config"))))))
+    (native-inputs (list autoconf automake-1.16.5 libtool))
+    (synopsis "Berkeley database")
+    (description
+     "Berkeley DB is an embeddable database allowing developers the choice of
+SQL, Key/Value, XML/XQuery or Java Object storage for their data model.")
+    ;; Starting with version 6, BDB is distributed under AGPL3. Many individual
+    ;; files are covered by the 3-clause BSD license.
+    (home-page
+     "http://www.oracle.com/us/products/database/berkeley-db/overview/index.html")))
+
+(define-public bdb-5.3
+  (package (inherit bdb-4.8)
+    (name "bdb")
+    (version "5.3.28")
+    (source (origin
+              (inherit (package-source bdb-4.8))
+              (uri (string-append "https://download.oracle.com/berkeley-db/db-"
+                                  version ".tar.gz"))
+              (sha256
+               (base32
+                "0a1n5hbl7027fbz5lm0vp0zzfp1hmxnz14wx3zl9563h83br5ag0"))
+              (patch-flags '("-p0"))
+              (patches (search-patches "bdb-5.3-atomics-on-gcc-9.patch"))))))
+
+(define-public bdb-6
+  (package (inherit bdb-4.8)
+    (name "bdb")
+    (version "6.2.32")
+    (source (origin
+              (inherit (package-source bdb-4.8))
+              (method url-fetch)
+              (uri (string-append "https://download.oracle.com/berkeley-db/db-"
+                                  version ".tar.gz"))
+              (sha256
+               (base32
+                "1yx8wzhch5wwh016nh0kfxvknjkafv6ybkqh6nh7lxx50jqf5id9"))
+              (patches '())))
+    ;; Copy-paste the arguments from bdb-4.8 and drop the
+    ;; 'bdb-configure patch phase.
+    (arguments
+     (list #:tests? #f                        ; no check target available
+           #:disallowed-references '("doc")
+           #:out-of-source? #true
+           #:configure-flags
+           #~(list
+              "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration"
               ;; Remove 7 MiB of .a files.
               "--disable-static"
 
@@ -134,43 +237,6 @@
                      (("rm (.*) configure") "")
                      (("chmod (.*) config.guess(.*)$") ""))
                    (invoke "sh" "s_config"))))))
-    (native-inputs (list autoconf automake libtool))
-    (synopsis "Berkeley database")
-    (description
-     "Berkeley DB is an embeddable database allowing developers the choice of
-SQL, Key/Value, XML/XQuery or Java Object storage for their data model.")
-    ;; Starting with version 6, BDB is distributed under AGPL3. Many individual
-    ;; files are covered by the 3-clause BSD license.
-    (home-page
-     "http://www.oracle.com/us/products/database/berkeley-db/overview/index.html")))
-
-(define-public bdb-5.3
-  (package (inherit bdb-4.8)
-    (name "bdb")
-    (version "5.3.28")
-    (source (origin
-              (inherit (package-source bdb-4.8))
-              (uri (string-append "https://download.oracle.com/berkeley-db/db-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "0a1n5hbl7027fbz5lm0vp0zzfp1hmxnz14wx3zl9563h83br5ag0"))
-              (patch-flags '("-p0"))
-              (patches (search-patches "bdb-5.3-atomics-on-gcc-9.patch"))))))
-
-(define-public bdb-6
-  (package (inherit bdb-4.8)
-    (name "bdb")
-    (version "6.2.32")
-    (source (origin
-              (inherit (package-source bdb-4.8))
-              (method url-fetch)
-              (uri (string-append "https://download.oracle.com/berkeley-db/db-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "1yx8wzhch5wwh016nh0kfxvknjkafv6ybkqh6nh7lxx50jqf5id9"))
-              (patches '())))
     ;; Starting with version 6, BDB is distributed under AGPL3. Many individual
     ;; files are covered by the 3-clause BSD license.
     (license (list license:agpl3+ license:bsd-3))))
@@ -180,14 +246,16 @@ SQL, Key/Value, XML/XQuery or Java Object storage for their data model.")
 (define-public gdbm
   (package
     (name "gdbm")
-    (version "1.23")
+    (version "1.25")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnu/gdbm/gdbm-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "1kfapds42j1sjq6wl7fygipw5904wpbfa5kwppj3mwgz44fhicbl"))))
+                "1v4kycs1n9x0pczm9ny6m16gfgpmj8gwv0bvh7w7gn3fjb2v6bfh"))
+              (patches
+               (search-patches "gdbm-lockwait-test.patch"))))
     (arguments `(#:configure-flags '("--enable-libgdbm-compat"
                                      "--disable-static")
                  ,@(if (target-loongarch64?)

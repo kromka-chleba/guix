@@ -9,7 +9,7 @@
 ;;; Copyright © 2018, 2020, 2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2019 Arun Isaac <arunisaac@systemreboot.net>
 ;;; Copyright © 2022 Marius Bakke <marius@gnu.org>
-;;; Copyright © 2023 Andreas Enge <andreas@enge.fr>
+;;; Copyright © 2023, 2025 Andreas Enge <andreas@enge.fr>
 ;;; Copyright © 2023 Malte Frank Gerdes <malte.f.gerdes@gmail.com>
 ;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2025 Ekaitz Zarraga <ekaitz@elenq.tech>
@@ -251,41 +251,6 @@ and many other languages.")
        ((#:configure-flags flags #~'())
         #~(append #$flags '("--with-gtk=2")))))))
 
-(define-public wxwidgets-2
-  (package
-    (inherit wxwidgets)
-    (version "2.8.12")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/wxWidgets/wxWidgets/"
-                           "releases/download/v" version
-                           "/wxGTK-" version ".tar.gz"))
-       (sha256
-        (base32 "1gjs9vfga60mk4j4ngiwsk9h6c7j22pw26m3asxr1jwvqbr8kkqk"))))
-    (inputs
-     `(("gtk" ,gtk+-2)
-       ("libjpeg" ,libjpeg-turbo)
-       ("libtiff" ,libtiff)
-       ("libmspack" ,libmspack)
-       ("sdl" ,sdl)
-       ("unixodbc" ,unixodbc)))
-    (arguments
-     `(#:configure-flags
-       '("--enable-unicode" "--with-regex=sys" "--with-sdl")
-       #:make-flags
-       (list (string-append "LDFLAGS=-Wl,-rpath="
-                            (assoc-ref %outputs "out") "/lib"))
-       ;; No 'check' target.
-       #:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'ignore-narrowing-errors
-           (lambda _
-             (substitute* "configure"
-               (("-Wall") "-Wall -Wno-narrowing"))
-             #t)))))))
-
 (define-public prusa-wxwidgets
   ;; There is no proper tag/release, all patches are in separate branches based on
   ;; the wxWidgets release (e.g. this commit is taken from "v3.2.0-patched" branch".)
@@ -405,14 +370,14 @@ provide a 100% native look and feel for the application.")
 (define-public wxsvg
   (package
     (name "wxsvg")
-    (version "1.5.24")
+    (version "1.5.25")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://sourceforge/wxsvg/wxsvg/"
                             version "/wxsvg-" version ".tar.bz2"))
        (sha256
-        (base32 "10i4bv1bfbfgrrpxvfdjrr5svgn64v471lkcl2pzx9fhz28k4ixf"))))
+        (base32 "0jsk4vrv7rkb7wrdbsdf60zvdnvj0pxfika8xydd2jxm65larxjv"))))
     (build-system glib-or-gtk-build-system)
     (inputs
      (list wxwidgets cairo ffmpeg))

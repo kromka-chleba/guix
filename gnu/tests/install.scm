@@ -1078,8 +1078,8 @@ launched as a shepherd service."
     (mapped-devices (list (mapped-device
                            (source (uuid "12345678-1234-1234-1234-123456789abc"))
                            (target "the-home-device")
-                           (type (luks-device-mapping-with-options
-                                  #:key-file "/key-file.bin")))))
+                           (type luks-device-mapping)
+                           (arguments '(#:key-file "/key-file.bin")))))
     (file-systems (cons* (file-system
                            (device (file-system-label "root-fs"))
                            (mount-point "/")
@@ -1978,7 +1978,7 @@ build (current-guix) and then store a couple of full system images.")
          (list
           (swap-space
            (target (uuid "11111111-2222-3333-4444-123456789abc"))))))
-    (services (cons* (service dhcp-client-service-type)
+    (services (cons* (service dhcpcd-service-type)
                      (service ntp-service-type)
                      (operating-system-user-services %minimal-os-on-vda)))))
 

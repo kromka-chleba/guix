@@ -22,6 +22,7 @@
 ;;; Copyright © 2023 Timotej Lazar <timotej.lazar@araneo.si>
 ;;; Copyright © 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2023 Pierre Langlois <pierre.langlois@gmx.com>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -311,7 +312,7 @@ from a client application and provide access to the desired reader.")
                     '("ATR_analysis" "gscriptor" "scriptor"))
                    (wrap-program (string-append #$output "/bin/gscriptor")
                      `("GI_TYPELIB_PATH" = (,(getenv "GI_TYPELIB_PATH")))))))))
-    (native-inputs (list autoconf automake libtool gnu-gettext pkg-config))
+    (native-inputs (list autoconf automake libtool gettext-minimal pkg-config))
     (inputs (list bash-minimal          ;for wrap-program
                   perl
                   perl-gtk3

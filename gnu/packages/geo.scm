@@ -1100,63 +1100,60 @@ projections and coordinate transformations library.")
     (name "python-fiona")
     (version "1.9.4.post1")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "Fiona" version))
-        (sha256
-          (base32
-            "083120rqc4rrqzgmams0yjd8b1h4p5xm4n9fnxg064ymw3vx6yan"))))
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "Fiona" version))
+       (sha256
+        (base32
+         "083120rqc4rrqzgmams0yjd8b1h4p5xm4n9fnxg064ymw3vx6yan"))))
     (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-before 'check 'remove-local-fiona
-           (lambda _
-             ; This would otherwise interfere with finding the installed
-             ; fiona when running tests.
-             (delete-file-recursively "fiona")))
-         (replace 'check
-           (lambda* (#:key tests? inputs outputs #:allow-other-keys)
-             (add-installed-pythonpath inputs outputs)
-             (setenv "GDAL_ENABLE_DEPRECATED_DRIVER_GTM" "YES")
-             (when tests?
-               (invoke "pytest"
-                       "-m" "not network and not wheel"
-                       ;; FIXME: Find why the
-                       ;;   test_no_append_driver_cannot_append[PCIDSK]
-                       ;; test is failing.
-                       "-k" "not test_no_append_driver_cannot_append")))))))
+     (list
+      #:test-flags
+      #~(list "-m" "not network and not wheel"
+              ;; FIXME: Find why the
+              ;; test_no_append_driver_cannot_append[PCIDSK] test is failing.
+              "-k" "not test_no_append_driver_cannot_append")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-configure-flags
+            (lambda _
+              (setenv "CFLAGS" "-Wno-error=incompatible-pointer-types")))
+          (add-before 'check 'remove-local-fiona
+            (lambda _
+              ;; This would otherwise interfere with finding the installed
+              ;; fiona when running tests.
+              (delete-file-recursively "fiona"))))))
     (inputs
-      (list gdal))
+     (list gdal))
     (propagated-inputs
-      (list python-attrs
-            python-certifi
-            python-click
-            python-click-plugins
-            python-cligj
-            python-importlib-metadata
-            python-six))
+     (list python-attrs
+           python-certifi
+           python-click
+           python-click-plugins
+           python-cligj
+           python-importlib-metadata
+           python-six))
     (native-inputs
-      (list gdal ; for gdal-config
-            python-boto3
-            python-cython
-            python-pytest
-            python-pytest-cov
-            python-pytz
-            python-setuptools
-            python-wheel))
+     (list gdal ; for gdal-config
+           python-boto3
+           python-cython
+           python-pytest
+           python-pytest-cov
+           python-pytz
+           python-setuptools
+           python-wheel))
     (home-page "https://github.com/Toblerity/Fiona")
     (synopsis
-      "Fiona reads and writes spatial data files")
+     "Fiona reads and writes spatial data files")
     (description
-      "Fiona is GDAL’s neat and nimble vector API for Python programmers.
-Fiona is designed to be simple and dependable.  It focuses on reading
-and writing data in standard Python IO style and relies upon familiar
-Python types and protocols such as files, dictionaries, mappings, and
-iterators instead of classes specific to OGR.  Fiona can read and write
-real-world data using multi-layered GIS formats and zipped virtual file
-systems and integrates readily with other Python GIS packages such as
-pyproj, Rtree, and Shapely.")
+     "Fiona is GDAL’s neat and nimble vector API for Python programmers. Fiona
+is designed to be simple and dependable.  It focuses on reading and writing
+data in standard Python IO style and relies upon familiar Python types and
+protocols such as files, dictionaries, mappings, and iterators instead of
+classes specific to OGR.  Fiona can read and write real-world data using
+multi-layered GIS formats and zipped virtual file systems and integrates
+readily with other Python GIS packages such as pyproj, Rtree, and Shapely.")
     (license license:bsd-3)))
 
 (define-public python-geopack
@@ -1188,14 +1185,14 @@ pyproj, Rtree, and Shapely.")
 (define-public python-geopandas
   (package
     (name "python-geopandas")
-    (version "1.0.1")
+    (version "1.1.1")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "geopandas" version))
         (sha256
           (base32
-            "1aq8rb1a97n9h0yinrcr6nhfj7gvh8h6wr2ng9dj1225afjp1gxq"))))
+            "0g993nzdxf6dp0fy1wi49cjph5i7plypb3p0f8zc95fhchzp2i8p"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -1205,7 +1202,10 @@ pyproj, Rtree, and Shapely.")
          "--ignore=geopandas/tests/test_overlay.py"
          "--ignore=geopandas/io/tests/test_file.py"
          ;; Number of open figures changed during test
-         "-k" "not test_pandas_kind"
+         "-k" (string-append "not test_pandas_kind"
+                           ;; OSError: Baseline image '<...>' does not exist.
+                           " and not test_plot_polygon_with_holes[png]"
+                           " and not test_multipolygons_with_interior[png]")
          ;; Disable tests that require internet access.
          "-m" "not web")))
     (propagated-inputs
@@ -1216,10 +1216,7 @@ pyproj, Rtree, and Shapely.")
             python-pyproj
             python-shapely))
     (native-inputs
-      (list python-codecov
-            python-pytest
-            python-pytest-cov
-            python-pytest-xdist
+      (list python-pytest
             python-setuptools
             python-wheel))
     (home-page "https://geopandas.org")
@@ -1881,14 +1878,20 @@ extension.")
      (list
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'udunits-path
+          (add-after 'unpack 'set-configure-flags
             (lambda _
               (setenv "UDUNITS2_XML_PATH"
                       (format #f "~a/share/udunits/udunits2.xml"
-                              #$(this-package-input "udunits")))))
+                              #$(this-package-input "udunits")))
+              (setenv "CFLAGS"
+                      (string-join
+                       (list "-Wno-error=implicit-function-declaration"
+                             "-Wno-error=int-conversion")
+                       " "))))
           (replace 'check
-          ;; To load built module and bypath error: ImportError: cannot import
-          ;; name '_udunits2' from partially initialized module 'cf_units'.
+            ;; To load built module and bypath error: ImportError: cannot
+            ;; import name '_udunits2' from partially initialized module
+            ;; 'cf_units'.
             (lambda* (#:key tests? test-flags #:allow-other-keys)
               (with-directory-excursion #$output
                 (apply invoke "pytest" "-vv" test-flags)))))))
@@ -3977,7 +3980,7 @@ latitude and longitude.")
            python-numpy
            qtbase-5
            qtsvg-5
-           qtxmlpatterns
+           qtxmlpatterns-5
            qwt
            zlib))
     (home-page "https://www.gplates.org")

@@ -2905,6 +2905,9 @@ invalidate based on expressions evaluating to different values.")
 (define-public ecl-cache-while
   (sbcl-package->ecl-package sbcl-cache-while))
 
+(define-public clasp-cache-while
+  (sbcl-package->clasp-package sbcl-cache-while))
+
 (define-public sbcl-cacle
   (let ((commit "4cbe8cfe227d2e097eaced14766f4f37aa05e617")
         (revision "1"))
@@ -15540,6 +15543,9 @@ learn about each of the parameters.")
 (define-public ecl-exponential-backoff
   (sbcl-package->ecl-package sbcl-exponential-backoff))
 
+(define-public clasp-exponential-backoff
+  (sbcl-package->clasp-package sbcl-exponential-backoff))
+
 (define-public sbcl-external-program
   (let ((commit "5888b8f1fd3953feeeacecbba4384ddda584a749")
         (revision "1"))
@@ -15614,6 +15620,9 @@ Common Lisp code.")
 
 (define-public ecl-f2cl
   (sbcl-package->ecl-package sbcl-f2cl))
+
+(define-public clasp-f2cl
+  (sbcl-package->clasp-package sbcl-f2cl))
 
 (define-public sbcl-fakenil
   (package
@@ -15749,6 +15758,9 @@ great for REPL interaction and debugging.")
 
 (define-public ecl-fare-mop
   (sbcl-package->ecl-package sbcl-fare-mop))
+
+(define-public clasp-fare-mop
+  (sbcl-package->clasp-package sbcl-fare-mop))
 
 (define-public cl-fare-mop
   (sbcl-package->cl-source-package sbcl-fare-mop))
@@ -16901,6 +16913,9 @@ may contain sets, maps may be keyed by sets, etc.")
 (define-public cl-fset
   (sbcl-package->cl-source-package sbcl-fset))
 
+(define-public clasp-fset
+  (sbcl-package->clasp-package sbcl-fset))
+
 (define-public ecl-fset
   (package
     (inherit (sbcl-package->ecl-package sbcl-fset))
@@ -16932,11 +16947,11 @@ caching based on arguments (an expanded form of memoization).")
      (license:non-copyleft
       "https://github.com/AccelerationNet/function-cache/blob/master/README.md"))
     (inputs
-     `(("alexandria" ,sbcl-alexandria)
-       ("cl-interpol" ,sbcl-cl-interpol)
-       ("iterate" ,sbcl-iterate)
-       ("symbol-munger" ,sbcl-symbol-munger)
-       ("closer-mop" ,sbcl-closer-mop)))
+     (list sbcl-alexandria
+           sbcl-cl-interpol
+           sbcl-iterate
+           sbcl-symbol-munger
+           sbcl-closer-mop))
     (arguments
      `(#:tests? #f))))
 
@@ -18111,6 +18126,9 @@ starting from one of its nodes (typically when you open a URL in a new tab).")
 (define-public ecl-html-encode
   (sbcl-package->ecl-package sbcl-html-encode))
 
+(define-public clasp-html-encode
+  (sbcl-package->clasp-package sbcl-html-encode))
+
 (define-public sbcl-html-entities
   (let ((commit "4af018048e891f41d77e7d680ed3aeb639e1eedb"))
     (package
@@ -18178,6 +18196,9 @@ immediately.")
 
 (define-public ecl-html-template
   (sbcl-package->ecl-package sbcl-html-template))
+
+(define-public clasp-html-template
+  (sbcl-package->clasp-package sbcl-html-template))
 
 (define-public sbcl-http-body
   (let ((commit "3e4bedd6a9d9bc4e1dc0a45e5b55360ae30fd388")
@@ -18249,6 +18270,9 @@ documentation system, explicit development support, etc.")
 
 (define-public ecl-hu.dwim.asdf
   (sbcl-package->ecl-package sbcl-hu.dwim.asdf))
+
+(define-public clasp-hu.dwim.asdf
+  (sbcl-package->clasp-package sbcl-hu.dwim.asdf))
 
 (define-public sbcl-hu.dwim.common
   (package
@@ -19422,6 +19446,9 @@ and macros, primarily for software projects written in CL by the author.")
 
 (define-public ecl-jpl-util
   (sbcl-package->ecl-package sbcl-jpl-util))
+
+(define-public clasp-jpl-util
+  (sbcl-package->clasp-package sbcl-jpl-util))
 
 (define-public sbcl-json-streams
   (let ((commit "5da012e8133affbf75024e7500feb37394690752")

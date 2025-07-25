@@ -123,14 +123,14 @@
 (define-public baloo-widgets
   (package
     (name "baloo-widgets")
-    (version "24.12.1")
+    (version "25.04.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/baloo-widgets-" version ".tar.xz"))
        (sha256
-        (base32 "15x66h4nl1g3giak9n07izjp3syxa0bq6a3pwkbg5mfzjy9immqw"))))
+        (base32 "0iawqhkq3adnsg1mihyh3pqhikwk593sa2fs2fhqi705svfiip53"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -243,18 +243,7 @@ translation engines.")
         (base32 "0gimz1k5yzkmpn4mq1dfvx3x5n6y7jmm74npy2mn3mdmi9lrg6hh"))))
     (build-system qt-build-system)
     (arguments
-     (list #:qtbase qtbase
-           #:phases
-           #~(modify-phases %standard-phases
-             (add-after 'install 'wrap-qt-process-path
-               (lambda* (#:key inputs outputs #:allow-other-keys)
-                 (let* ((out (assoc-ref outputs "out"))
-                        (bin (string-append out "/bin/akregator"))
-                        (qt-process-path
-                         (search-input-file
-                          inputs "/lib/qt6/libexec/QtWebEngineProcess")))
-                   (wrap-program bin
-                     `("QTWEBENGINEPROCESS_PATH" = (,qt-process-path)))))))))
+     (list #:qtbase qtbase))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -374,24 +363,24 @@ annotating features.")
 (define-public kdenlive
   (package
     (name "kdenlive")
-    (version "24.12.3")
+    (version "25.07.80")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://invent.kde.org/multimedia/kdenlive")
-             (commit (string-append "v" version))))
+              (url "https://invent.kde.org/multimedia/kdenlive")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0m1s27vska60qswrqfnjlrj9p787n5p8zx7gldn95sj1mdw9s7cr"))))
+        (base32 "1mvd3sfwdihfw94s1wrlyp66a7z5m4d95bcsq7pszjqbj8pq10wq"))))
     (build-system qt-build-system)
     (arguments
-     ;; XXX: there is a single test that spawns other tests and
-     ;; 1/3 tests failed and 1/327 assertions failed.  It seems
-     ;; that individual tests can't be skipped.
+     ;; XXX otiotest seemingly freezes.  Additionally, tests/mixtest.cpp:818
+     ;; fails with an unexpected exception.
      (list
       #:qtbase qtbase
-      #:configure-flags #~(list "-DBUILD_TESTING=off")
+      #:configure-flags #~(list "-DBUILD_TESTING=off"
+                                "-DFETCH_OTIO=off")
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
@@ -416,10 +405,11 @@ annotating features.")
      (list extra-cmake-modules kdoctools pkg-config qttools))
     (inputs
      (list bash-minimal
-           breeze                       ; make dark them available easily
+           breeze                       ; make dark theme available easily
            breeze-icons                 ; recommended icon set
            ffmpeg
            frei0r-plugins
+           imath
            karchive
            kcrash
            kdbusaddons
@@ -437,6 +427,7 @@ annotating features.")
            ktextwidgets
            ladspa
            mlt
+           opentimelineio
            purpose
            qqc2-desktop-style
            qtbase
@@ -1892,14 +1883,14 @@ Python, PHP, and Perl.")
 (define-public libkdegames
   (package
     (name "libkdegames")
-    (version "24.12.3")
+    (version "25.04.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/libkdegames-" version ".tar.xz"))
        (sha256
-        (base32 "1r82gid4wpp70517zc0d5pbnm904c28iwd1sj1p4f3j5j2jxah6n"))))
+        (base32 "0zq481x2l6sqilw5ialacp3cksvw58syxz9dkk3yha0vfjp1p8k9"))))
     (build-system qt-build-system)
     (arguments (list #:qtbase qtbase))
     (native-inputs

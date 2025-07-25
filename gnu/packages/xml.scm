@@ -10,7 +10,7 @@
 ;;; Copyright © 2016 Mathieu Lirzin <mthl@gnu.org>
 ;;; Copyright © 2016, 2017 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 Ben Woodcroft <donttrustben@gmail.com>
-;;; Copyright © 2016 Jan Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
 ;;; Copyright © 2016–2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2016-2022 Marius Bakke <marius@gnu.org>
@@ -27,7 +27,7 @@
 ;;; Copyright © 2020 Brett Gilio <brettg@gnu.org>
 ;;; Copyright © 2020 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2021 Michael Rohleder <mike@rohleder.de>
-;;; Copyright © 2021, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021-2023, 2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Julien Lepiller <julien@lepiller.eu>
 ;;; Copyright © 2021, 2023 Felix Gruber <felgru@posteo.net>
 ;;; Copyright © 2021 Guillaume Le Vaillant <glv@posteo.net>
@@ -36,6 +36,7 @@
 ;;; Copyright © 2023 Bruno Victal <mirai@makinata.eu>
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2024 gemmaro <gemmaro.dev@gmail.com>
+;;; Copyright © 2025 Antoine Côté <antoine.cote@posteo.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -127,8 +128,7 @@ the entire document.")
 (define-public expat
   (package
     (name "expat")
-    (version "2.5.0")
-    (replacement expat/fixed)
+    (version "2.7.1")
     (source (let ((dot->underscore (lambda (c) (if (char=? #\. c) #\_ c))))
               (origin
                 (method url-fetch)
@@ -140,7 +140,7 @@ the entire document.")
                             "/expat-" version ".tar.xz")))
                 (sha256
                  (base32
-                  "1gnwihpfz4x18rwd6cbrdggmfqjzwsdfh1gpmc0ph21c4gq2097g")))))
+                  "0c3w446jrrnss3ccgx9z590lpwbpxiqdbxv2a0p036cg9da54i9m")))))
     (build-system gnu-build-system)
     (arguments
      '(#:phases (modify-phases %standard-phases
@@ -164,28 +164,17 @@ stream-oriented parser in which an application registers handlers for
 things the parser might find in the XML document (like start tags).")
     (license license:expat)))
 
-(define-public expat/fixed
- (hidden-package
-  (package
-    (inherit expat)
-    (replacement expat/fixed)
-    (source (origin
-              (inherit (package-source expat))
-              (patches (search-patches "expat-CVE-2024-45490.patch"
-                                       "expat-CVE-2024-45491.patch"
-                                       "expat-CVE-2024-45492.patch")))))))
-
 (define-public libebml
   (package
     (name "libebml")
-    (version "1.4.4")
+    (version "1.4.5")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "https://dl.matroska.org/downloads/libebml/"
                            "libebml-" version ".tar.xz"))
        (sha256
-        (base32 "19w74q2makq4qz1cjsrlbzglwfhb4497bvbnxq539jbc6n1mzp42"))))
+        (base32 "06r2md4jysp5q5lx108vgv8b7c596zhh7wr6sk12knlj0l5n8wa9"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags
@@ -264,6 +253,23 @@ hierarchical form with variable field lengths.")
      "Libxml2 is the XML C parser and toolkit developed for the Gnome
 project (but it is usable outside of the Gnome platform).")
     (license license:x11)))
+
+(define-public libxml2-next
+  (package
+    (inherit libxml2)
+    (name "libxml2")
+    (version "2.14.5")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "mirror://gnome/sources/libxml2/"
+                                  (version-major+minor version)"/libxml2-"
+                                  version ".tar.xz"))
+              (sha256
+               (base32
+                "0jylv2kkyzih710blg24al7b43iaqg6xsfn52qy865knagrhdl03"))))
+    (native-inputs (modify-inputs (package-native-inputs libxml2)
+                     (append pkg-config
+                             python-minimal)))))
 
 (define-public libxml2-xpath0
   (package/inherit libxml2
@@ -666,7 +672,9 @@ with XML in Perl.  libxml-perl software works in combination with
                            "XML-LibXML-" version ".tar.gz"))
        (sha256
         (base32
-         "1ks69xymv6zkj7hvaymjvb78ch81abri7kg4zrwxhdfsqb8a9g7h"))))
+         "1ks69xymv6zkj7hvaymjvb78ch81abri7kg4zrwxhdfsqb8a9g7h"))
+       ;; Remove patch with update to version 2.0210.
+       (patches (search-patches "perl-xml-libxml-fix-function-prototypes.patch"))))
     (build-system perl-build-system)
     (propagated-inputs
      (list perl-xml-namespacesupport perl-xml-sax))
@@ -712,7 +720,9 @@ XML parser and the high performance DOM implementation.")
                            "XML-LibXSLT-" version ".tar.gz"))
        (sha256
         (base32
-         "0wyl8klgr65j8y8fzgwz9jlvfjwvxazna8j3dg9gksd2v973fpia"))))
+         "0wyl8klgr65j8y8fzgwz9jlvfjwvxazna8j3dg9gksd2v973fpia"))
+       ;; Remove patch with update to version 2.003000.
+       (patches (search-patches "perl-xml-libxslt-fix-configure.patch"))))
     (build-system perl-build-system)
     (inputs
      (list libxslt))
@@ -1178,7 +1188,8 @@ code for classes that correspond to data structures defined by XMLSchema.")
      ;; Make sure the reference to util-linux's 'getopt' is kept in 'xmlto'.
      (list
       #:configure-flags
-      #~(list (string-append "GETOPT="
+      #~(list "CFLAGS=-g -O2 -Wno-error=implicit-int"
+              (string-append "GETOPT="
                              #$(this-package-input "util-linux")
                              "/bin/getopt"))))
     (native-inputs
@@ -1888,13 +1899,13 @@ because lxml.etree already has its own implementation of XPath 1.0.")
 (define-public python-lxml
   (package
     (name "python-lxml")
-    (version "4.9.1")
+    (version "5.2.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "lxml" version))
        (sha256
-         (base32 "0grczyrrq2rbwhvpri15cyhv330s494vbz3js3jky8xp5c2rnx7y"))))
+        (base32 "11yvrzlswlh81z6lpmds2is2jd3wkigpwj6mcfcaggl0h64w8bdv"))))
     (build-system python-build-system)
     (arguments
      `(#:phases (modify-phases %standard-phases
@@ -1911,8 +1922,61 @@ because lxml.etree already has its own implementation of XPath 1.0.")
 libxml2 and libxslt.")
     (license license:bsd-3))) ; and a few more, see LICENSES.txt
 
+(define-public python-lxml-4.9
+  (hidden-package
+   (package
+     (inherit python-lxml)
+     (name "python-lxml")
+     (version "4.9.4")
+     (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "lxml" version))
+        (sha256
+         (base32 "03l86qr5xzvz0jcbk669sj8nbw1fjshmf0b7l83gl5cfnx81wm5i"))))
+     (arguments
+      (list #:phases
+            #~(modify-phases %standard-phases
+                (add-after 'unpack 'relax-gcc-14-strictness
+                  (lambda _
+                    (setenv "CFLAGS"
+                            "-Wno-error=incompatible-pointer-types")))))))))
+
 (define-deprecated python-lxml-4.7 python-lxml)
 (export python-lxml-4.7)
+
+(define-public python-lxml-html-clean
+  (package
+    (name "python-lxml-html-clean")
+    (version "0.4.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "lxml_html_clean" version))
+       (sha256
+        (base32 "1cxwrrv4kdkxwkwm12a6rh38xmb415257g31yjmk0m5rbmxiwaci"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "python" "-m" "unittest" "-v" "tests.test_clean")
+                (invoke "python" "-m" "doctest"
+                        "tests/test_clean_embed.txt"
+                        "tests/test_clean.txt"
+                        "tests/test_autolink.txt")))))))
+    (propagated-inputs (list python-lxml))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://github.com/fedora-python/lxml_html_clean/")
+    (synopsis "Remove superfluous content from HTML files")
+    (description "This package provides a Cleaner for cleaning up HTML pages.
+It supports removing embedded or script content, special tags and CSS style
+annotations among other features.  Its main purpose is removing superfluous
+content, it is not appropriate for security sensitive environments.")
+    (license license:bsd-3)))
 
 (define-public python-untangle
   ;; The latest tagged release is from 2014; use the latest commit.

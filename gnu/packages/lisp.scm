@@ -393,7 +393,7 @@ interface.")
         (base32 "1sf8m0w3d4kagf4chb7viqndnr152crpsy979ll61krcfxaybc4j"))))
     (build-system gnu-build-system)
     (inputs
-     (list boost clang-toolchain-19 fmt `(,gcc "lib") gmp libelf libunwind))
+     (list boost clang-toolchain-19 fmt `(,gcc "lib") gmp elfutils libunwind))
     (native-inputs
      (list binutils-gold ninja pkg-config sbcl))
     (arguments
@@ -1238,7 +1238,7 @@ including a built-in database engine and a GUI system.")
 (define-public roswell
   (package
    (name "roswell")
-   (version "23.10.14.114")
+   (version "24.10.115")
    (home-page "https://github.com/roswell/roswell")
    (source
     (origin
@@ -1248,7 +1248,7 @@ including a built-in database engine and a GUI system.")
            (commit (string-append "v" version))))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "05w5sjh1bfy2wnblc09cb9qs8h7hxkx5hcqlbgpn7md32b0m4h7g"))))
+      (base32 "1az9295cp2swyms0bkrb7l00x5s04b9zk8b4yf67cgfi1ka019nr"))))
    (build-system gnu-build-system)
    (arguments
     (list #:configure-flags #~(list (string-append "--prefix=" #$output))

@@ -52,7 +52,7 @@
 ;;; Copyright © 2021 Nikita Domnitskii <nikita@domnitskii.me>
 ;;; Copyright © 2021 ikasero <ahmed@ikasero.com>
 ;;; Copyright © 2021 Felix Gruber <felgru@posteo.net>
-;;; Copyright © 2021 jgart <jgart@dismail.de>
+;;; Copyright © 2021, 2025 jgart <jgart@dismail.de>
 ;;; Copyright © 2022, 2024 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Jai Vetrivelan <jaivetrivelan@gmail.com>
 ;;; Copyright © 2022 Derek Chuank <derekchuank@outlook.com>
@@ -68,6 +68,7 @@
 ;;; Copyright © 2024 Spencer Peters <spencerpeters@protonmail.com>
 ;;; Copyright © 2024 Jakob Kirsch <jakob.kirsch@web.de>
 ;;; Copyright © 2025 Evgeny Pisemsky <mail@pisemsky.site>
+;;; Copyright © 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -248,7 +249,7 @@ command line, without displaying a keyboard at all.")
 (define-public aquamarine
   (package
     (name "aquamarine")
-    (version "0.8.0")
+    (version "0.9.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -257,14 +258,14 @@ command line, without displaying a keyboard at all.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "01lmzmb5bzphichbyim7iy04405af5mqcqf8ki3if4wdxkdmbfn9"))))
+                "0cwbd9cdbg40frhircwfbaxdqh11s8jqq9dqy228j9zvb27y2b72"))))
     (build-system cmake-build-system)
     (arguments
      (list #:cmake cmake-next
            ;; TODO: Figure out what's expected in the test environment.
            #:tests? #f))
     (native-inputs
-     (list gcc-14 hyprwayland-scanner pkg-config))
+     (list gcc-15 hyprwayland-scanner pkg-config))
     (inputs
      (list eudev
            hwdata
@@ -499,6 +500,34 @@ tabs.  Saved clipboard can be later copied and pasted directly into any
 application.")
     (home-page "https://hluk.github.io/CopyQ/")
     (license license:gpl3+)))
+
+(define-public bigbagkbdtrixxkb
+  (let ((commit "d01cfc801fea7118001482b7b2c4184b3aac960e")
+        (revision "0"))
+    (package
+      (name "bigbagkbdtrixxkb")
+      (version (git-version "0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/DreymaR/BigBagKbdTrixXKB")
+               (commit "d01cfc801fea7118001482b7b2c4184b3aac960e")))
+         (file-name (git-file-name name version))
+         (sha256
+          "1ffvqnnghjvzrqj1rn843lkylapvvb15il1wprp12xfdvhfc16n6")))
+      (build-system copy-build-system)
+      (arguments
+       (list
+        #:install-plan
+        #~'(("xkb-data_xmod/xkb" "share/X11/xkb"))))
+      (home-page "https://dreymar.colemak.org/")
+      (synopsis "DreymaR's Big Bag of Keyboard Tricks")
+      (description
+       "This package includes a variety of xkb keyboard options including
+ergonomic layouts and the 'extend' layer for easy access to modifiers and
+function keys.")
+    (license license:expat))))
 
 (define-public xkeysnail
   (package
@@ -1053,7 +1082,8 @@ tracking.")
           #:configure-flags #~(list
                                ;; when cross-compilation, skip realloc checking
                                "lf_cv_sane_realloc=yes"
-                               (string-append "PKG_CONFIG=" #$(pkg-config-for-target)))
+                               (string-append "PKG_CONFIG="
+                                              #$(pkg-config-for-target)))
           #:phases
           #~(modify-phases %standard-phases
               (add-after 'unpack 'update-config-scripts
@@ -1065,7 +1095,9 @@ tracking.")
                                 (or native-inputs inputs)
                                 (string-append "/bin/" file)) "."))
                             '("config.guess" "config.sub"))))))
-         '()))
+         (list
+          #:configure-flags
+          #~(list "CFLAGS=-g -O2 -Wno-error=int-conversion"))))
     (native-inputs (append (if (and (or (target-riscv64?)
                                         (target-aarch64?))
                                     (%current-target-system))
@@ -1235,6 +1267,12 @@ include cursor in the resulting image.")
     (build-system gnu-build-system)
     (arguments
      '(#:tests? #f                      ; no check target
+       #:make-flags
+       (list (string-append "CFLAGS=-g -O2 "
+                            ;; Relax GCC 14's checks.
+                            "-Wno-error=implicit-int "
+                            "-Wno-error=builtin-declaration-mismatch "
+                            "-Wno-error=implicit-function-declaration"))
        #:phases
        (modify-phases %standard-phases
          (delete 'configure)
@@ -3894,7 +3932,7 @@ This package is the fork of hsetroot by Hyriand.")
 (define-public hyprsunset
   (package
     (name "hyprsunset")
-    (version "0.1.0")
+    (version "0.3.0")
     (source
      (origin
        (method git-fetch)
@@ -3903,17 +3941,19 @@ This package is the fork of hsetroot by Hyriand.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "110cw7nd6a0krsg6764hx2i45lc8n4b1iln3b8jz1x6pziw1qna9"))))
+        (base32 "0h0iibncjl780nnwvf1mfmqckdzzc4b4fphflj4mq56nswf697ha"))))
     (build-system cmake-build-system)
     (arguments
      (list
+      #:cmake cmake-next
       #:tests? #f)) ;No tests.
     (native-inputs
-     (list gcc-14
+     (list gcc-15
            pkg-config))
     (inputs
      (list hyprwayland-scanner
            hyprutils
+           hyprlang
            wayland
            hyprland-protocols
            wayland-protocols))
@@ -3932,7 +3972,7 @@ reduce percieved brightness below the monitor's minimum.")
 (define-public hyprlock
   (package
    (name "hyprlock")
-   (version "0.8.2")
+   (version "0.9.0")
    (source
     (origin
      (method git-fetch)
@@ -3941,7 +3981,7 @@ reduce percieved brightness below the monitor's minimum.")
            (commit (string-append "v" version))))
      (file-name (git-file-name name version))
      (sha256
-      (base32 "1wrndp1bkyfp741mgvjflkbq4pvdlccrh6xaz41y1f9967j8magm"))))
+      (base32 "1f0vcp0c9d3m9v3avajprpv14khnv3wk3y9fi3pcwr5xf2alaxv2"))))
    (build-system cmake-build-system)
    (arguments
     `(#:cmake ,cmake-next
@@ -3956,7 +3996,7 @@ reduce percieved brightness below the monitor's minimum.")
                           (("OpenGL REQUIRED")
                            "OpenGL REQUIRED COMPONENTS GLES2 EGL")))))
       #:tests? #f)) ;; no test
-   (native-inputs (list gcc-14 pkg-config))
+   (native-inputs (list gcc-15 pkg-config))
    (inputs (list cairo
                  file
                  hyprgraphics
@@ -3973,7 +4013,7 @@ reduce percieved brightness below the monitor's minimum.")
                  sdbus-c++
                  wayland
                  wayland-protocols))
-   (home-page "https://hyprland.org/")
+   (home-page "https://hypr.land/")
    (synopsis "Hyprland's screen locking utility")
    (description
     "This package provides Hyprland's simple, yet multi-threaded and
@@ -4200,7 +4240,7 @@ keyboard input, mouse actions, etc.  programmatically or manually.")
 (define-public wvkbd
   (package
     (name "wvkbd")
-    (version "0.14.1")
+    (version "0.17")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -4209,7 +4249,7 @@ keyboard input, mouse actions, etc.  programmatically or manually.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1aha9ylzbkhbf45172l3wyp65kqj6zs5gxqyj62ahj3gp944wmbb"))))
+                "0hn3fkkskynhqcy3f2j4y74cq488ss6my752zc8asyskpkgf6djn"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f ;no tests
@@ -4224,8 +4264,10 @@ keyboard input, mouse actions, etc.  programmatically or manually.")
                               (("pkg-config")
                                #$(pkg-config-for-target)))))
                         (delete 'configure))))
-    (native-inputs (list wayland ;for wayland-scanner
-                         pkg-config))
+    (native-inputs
+     (list scdoc
+           wayland ; For wayland-scanner.
+           pkg-config))
     (inputs (list libxkbcommon cairo pango harfbuzz wayland))
     (home-page "https://git.sr.ht/~proycon/wvkbd")
     (synopsis "On-screen keyboard for wlroots compositors")

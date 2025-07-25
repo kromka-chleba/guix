@@ -12,6 +12,7 @@
 ;;; Copyright © 2020 Pierre Langlois <pierre.langlois@gmx.com>
 ;;; Copyright © 2020-2025 Vinicius Monego <monego@posteo.net>
 ;;; Copyright © 2021 Greg Hogan <code@greghogan.com>
+;;; Copyright © 2021 Mădălin Ionel Patrașcu <madalinionel.patrascu@mdc-berlin.de>
 ;;; Copyright © 2021 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2021 Paul Garlick <pgarlick@tourbillion-technology.com>
 ;;; Copyright © 2021 Arun Isaac <arunisaac@systemreboot.net>
@@ -247,6 +248,86 @@ tensors.  The reverse mode is also known as backpropagation and can be found
 in similar form in tools like PyTorch.  Speciality of AlgoPy is the
 possibility to differentiate functions that contain matrix functions as
 +,-,*,/, dot, solve, qr, eigh, cholesky.")
+    (license license:bsd-3)))
+
+(define-public python-anndata
+  (package
+    (name "python-anndata")
+    (version "0.11.1")
+    (source
+     (origin
+       ;; The tarball from PyPi doesn't include tests.
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/theislab/anndata")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0skmjjvxk5gdsx6fkplszff92jsb4l45j23c6mhq1vdi3wqhqhcw"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" #$(string-append
+                      ;; This one test seemingly freezes
+                      "not test_read_lazy_h5_cluster"
+                      ;; Fails with a numpy deprecation warning
+                      ;; but not an actual failure
+                      " and not test_read_write_X"))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Doctests require scanpy from (gnu packages bioinformatics)
+          (add-after 'unpack 'disable-doctests
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("--doctest-modules") ""))))
+          (add-before 'build 'set-version
+            (lambda _
+              (setenv "SETUPTOOLS_SCM_PRETEND_VERSION" #$version)
+              ;; ZIP does not support timestamps before 1980.
+              (setenv "SOURCE_DATE_EPOCH" "315532800")))
+          ;; Numba needs a writable dir to cache functions.
+          (add-before 'check 'set-numba-cache-dir
+            (lambda _
+              (setenv "NUMBA_CACHE_DIR" "/tmp"))))))
+    (propagated-inputs
+     (list python-array-api-compat
+           python-exceptiongroup ;only for Python <3.11
+           python-h5py
+           python-importlib-metadata
+           python-natsort
+           python-numcodecs
+           python-packaging
+           python-pandas
+           python-scipy
+           python-scikit-learn
+           python-setuptools ; For pkg_resources.
+           python-zarr))
+    (native-inputs
+     (list python-awkward
+           python-boltons
+           python-dask
+           python-distributed
+           python-hatchling
+           python-hatch-vcs
+           python-joblib
+           python-loompy
+           python-matplotlib
+           python-pytest
+           python-pytest-mock
+           python-pytest-doctestplus
+           python-pytest-xdist
+           python-toml
+           python-flit
+           python-setuptools-scm))
+    (home-page "https://github.com/theislab/anndata")
+    (synopsis "Annotated data for data analysis pipelines")
+    (description "Anndata is a package for simple (functional) high-level APIs
+for data analysis pipelines.  In this context, it provides an efficient,
+scalable way of keeping track of data together with learned annotations and
+reduces the code overhead typically encountered when using a mostly
+object-oriented library such as @code{scikit-learn}.")
     (license license:bsd-3)))
 
 (define-public python-aplus
@@ -621,6 +702,131 @@ it can be used for displaying many qualitatively different samples.")
 optimization problems in Python.")
     (license license:asl2.0)))
 
+;; Note: Remember to update python-distributed when updating dask.
+(define-public python-dask
+  (package
+    (name "python-dask")
+    (version "2024.12.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/dask/dask/")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "17iqfyjphyn72xdr8fmynzvixskbq16pwmsknwc6anq7s2axvas2"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; Avoid coverage
+      #:test-flags
+      #~(list "--numprocesses" (number->string (parallel-job-count))
+              "-m" "not gpu and not slow and not network"
+              ;; These all fail with different hashes.  Doesn't seem
+              ;; problematic.
+              "--ignore-glob=**/test_tokenize.py"
+              ;; ORC tests crash Python with a failure to find the global
+              ;; localtime file.  See also
+              ;; https://github.com/apache/arrow/issues/40633.
+              "--ignore-glob=**/test_orc.py"
+              "-k" (string-append
+                    ;; This one cannot be interrupted.
+                    "not test_interrupt"
+                    ;; This one fails with "local variable 'ctx' referenced
+                    ;; before assignment".  Maybe enable this in later
+                    ;; versions (or when pandas has been upgraded.
+                    " and not test_dt_accessor"
+                    ;; This fails when dask-expr is among the inputs.
+                    " and not test_groupby_internal_repr"
+                    ;; This fails with different job ids.
+                    " and not test_to_delayed_optimize_graph"
+                    ;; This one expects a deprecation warning that never
+                    ;; comes.
+                    " and not test_RandomState_only_funcs"
+                    ;; This test expects a RuntimeWarning that is never
+                    ;; raised.
+                    " and not test_nanquantile_all_nan")
+              ;; Tests must run from the output directory, because otherwise
+              ;; it complains about the difference between the target
+              ;; directory embedded in the pyc files and the source directory
+              ;; from which we run tests.
+              (getcwd))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'versioneer
+            (lambda _
+              ;; Our version of versioneer needs setup.cfg.  This is adapted
+              ;; from pyproject.toml.
+              (with-output-to-file "setup.cfg"
+                (lambda ()
+                  (display "\
+[versioneer]
+VCS = git
+style = pep440
+versionfile_source = dask/_version.py
+versionfile_build = dask/_version.py
+tag_prefix =
+parentdir_prefix = dask-
+")))
+              (invoke "versioneer" "install")
+              (substitute* "setup.py"
+                (("versioneer.get_version\\(\\)")
+                 (string-append "\"" #$version "\"")))))
+          (add-after 'unpack 'fix-pytest-config
+            (lambda _
+              ;; This option is not supported by our version of pytest.
+              (substitute* "pyproject.toml"
+                (("--cov-config=pyproject.toml") ""))))
+          (add-after 'unpack 'patch-pyproject
+            (lambda _
+              ;; We use pyarrow > 14
+              (substitute* "pyproject.toml"
+                (("\"pyarrow_hotfix\",") ""))))
+          (add-before 'check 'pre-check
+            (lambda _ (chdir "/tmp"))))))
+    (propagated-inputs
+     (list python-click ;needed at runtime
+           python-cloudpickle
+           python-dask-expr
+           python-fsspec
+           python-importlib-metadata ;needed at runtime for dask/_compatibility.py
+           python-numpy
+           python-packaging
+           python-pandas
+           python-partd
+           python-toolz
+           python-pyyaml))
+    (native-inputs
+     (list python-importlib-metadata
+           python-pytest
+           python-pytest-rerunfailures
+           python-pytest-runner
+           python-pytest-xdist
+           python-versioneer
+           python-wheel))
+    (home-page "https://github.com/dask/dask/")
+    (synopsis "Parallel computing with task scheduling")
+    (description
+     "Dask is a flexible parallel computing library for analytics.  It
+consists of two components: dynamic task scheduling optimized for computation,
+and large data collections like parallel arrays, dataframes, and lists that
+extend common interfaces like NumPy, Pandas, or Python iterators to
+larger-than-memory or distributed environments.  These parallel collections
+run on top of the dynamic task schedulers.")
+    (license license:bsd-3)))
+
+(define-public python-dask/bootstrap
+  (package
+    (inherit python-dask)
+    (properties '((hidden? . #true)))
+    (arguments
+     (substitute-keyword-arguments (package-arguments python-dask)
+       ((#:tests? _ #t) #f)))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs python-dask)
+       (delete "python-dask-expr")))))
+
 (define-public python-dask-expr
   (package
     (name "python-dask-expr")
@@ -672,6 +878,72 @@ parentdir_prefix = dask_expr-
     (synopsis "Dask DataFrames with query optimization")
     (description "This is a rewrite of Dask DataFrame that includes query
 optimization and generally improved organization.")
+    (license license:bsd-3)))
+
+(define-public python-dask-image
+  (package
+    (name "python-dask-image")
+    (version "2024.5.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dask_image" version))
+       (sha256
+        (base32 "0g4293n1vjlpyxbvd1xz3pz9an9z4rnsw1m7lynhm00m0bgiz7qc"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      ;; Flake8 attribute errors.
+      '(list "--ignore=dask_image/ndfilters/_threshold.py"
+             "--ignore=dask_image/ndfourier/_utils.py"
+             "--ignore=dask_image/ndinterp/__init__.py"
+             "--ignore=dask_image/ndmeasure/__init__.py"
+             "--ignore=dask_image/ndmeasure/_utils/_find_objects.py"
+             "--ignore=dask_image/ndmeasure/_utils/_label.py"
+             "--ignore=tests/test_dask_image/test_ndfilters/test__conv.py"
+             "--ignore=tests/test_dask_image/test_ndfourier/test_core.py"
+             "--ignore=tests/test_dask_image/test_ndinterp/test_spline_filter.py"
+             "--ignore=tests/test_dask_image/test_ndmeasure/test_core.py"
+             "--ignore=tests/test_dask_image/test_ndmeasure/test_find_objects.py")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'build 'set-version
+            (lambda _
+              (substitute* "pyproject.toml"
+                (("^version_file.*") "")
+                (("dynamic = \\[\"version\"\\]")
+                 (string-append "version = \"" #$version "\""))))))))
+    (propagated-inputs (list python-dask
+                             python-numpy
+                             python-pandas-2
+                             python-pims
+                             python-scipy
+                             python-tifffile))
+    (native-inputs
+     (list python-coverage
+           python-flake8
+           python-pytest
+           python-pytest-cov
+           python-pytest-flake8
+           python-pytest-timeout
+           python-setuptools
+           python-setuptools-scm
+           python-twine
+           python-wheel))
+    (home-page "https://github.com/dask/dask-image")
+    (synopsis "Distributed image processing")
+    (description "This is a package for image processing with Dask arrays.
+Features:
+
+@itemize
+@item Provides support for loading image files.
+@item Implements commonly used N-D filters.
+@item Includes a few N-D Fourier filters.
+@item Provides some functions for working with N-D label images.
+@item Supports a few N-D morphological operators.
+@end itemize
+")
     (license license:bsd-3)))
 
 (define-public python-decaylanguage
@@ -1490,6 +1762,47 @@ by numpy using the highly efficient @code{msgpack} format.  Serialization of
 Python's native complex data types is also supported.")
     (license license:bsd-3)))
 
+(define-public python-multiscale-spatial-image
+  (package
+    (name "python-multiscale-spatial-image")
+    (version "1.0.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "multiscale_spatial_image" version))
+       (sha256
+        (base32 "01kcagjy797hbz5an9cp8wcl5krgp21yb7ibfimvpidb3jp5lfhb"))))
+    (build-system pyproject-build-system)
+    ;; All interesting tests require file downloads over IPFS.
+    (arguments (list #:tests? #false))
+    (propagated-inputs
+     (list `(,insight-toolkit "python")
+           python-dask
+           python-dask-image
+           python-numpy
+           python-spatial-image
+           python-xarray
+           python-xarray-datatree))
+    (native-inputs
+     (list python-fsspec
+           python-hatchling
+           python-ipfsspec
+           python-jsonschema
+           python-nbmake
+           python-pooch
+           python-pytest
+           python-pytest-mypy
+           python-urllib3
+           python-zarr))
+    (home-page "https://github.com/spatial-image/multiscale-spatial-image")
+    (synopsis "Multi-dimensional spatial image data structure")
+    (description
+     "This package lets you generate a multiscale, chunked, multi-dimensional
+spatial image data structure that can serialized to OME-NGFF.  Each scale is a
+scientific Python Xarray spatial-image Dataset, organized into nodes of an
+Xarray Datatree.")
+    (license license:asl2.0)))
+
 (define-public python-narwhals
   (package
     (name "python-narwhals")
@@ -1952,6 +2265,39 @@ different units.")
      "This package provides a Python library for calculating
 Evapotranspiration using various standard methods.")
     (license license:expat)))
+
+(define-public python-pykdtree
+  (package
+    (name "python-pykdtree")
+    (version "1.4.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pykdtree" version))
+       (sha256
+        (base32 "1xb5xdp32s5ffcbbb6vlrj4i70hdknajvr9yhzx0wld52rx9caxx"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; FIXME: Tests are unable to import properly, but it seems to work in
+      ;; real conditions.
+      #:tests? #f
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'fix-site-packages
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (with-directory-excursion (site-packages inputs outputs)
+                (for-each delete-file (find-files "." "test*"))))))))
+    (native-inputs
+     (list python-cython-3 python-pytest python-setuptools python-wheel))
+    (propagated-inputs
+     (list python-numpy))
+    (home-page "https://github.com/storpipfugl/pykdtree")
+    (synopsis "Fast kd-tree implementation with OpenMP-enabled queries")
+    (description
+     "@code{pykdtree} is a kd-tree implementation for fast nearest neighbour
+search in Python.")
+    (license license:lgpl3+)))
 
 (define-public python-pynetdicom
   (package
@@ -2861,6 +3207,44 @@ its software deployment plugins.")
 Snakemake and its storage plugins.")
     (license license:expat)))
 
+(define-public python-sparse
+  (package
+    (name "python-sparse")
+    (version "0.15.5")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "sparse" version))
+       (sha256
+        (base32
+         "0rp29gp82qwwkq210pzh2qmlqhi2007nb7p7nwqmrkgmjq6cwxjc"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs
+     (list python-numba python-numpy python-scipy))
+    (native-inputs
+     (list python-dask
+           python-pytest
+           python-pytest-cov
+           python-setuptools
+           python-setuptools-scm-next
+           python-wheel))
+    (home-page "https://github.com/pydata/sparse/")
+    (synopsis "Library for multi-dimensional sparse arrays")
+    (description
+     "This package implements sparse arrays of arbitrary dimension on top of
+@code{numpy} and @code{scipy.sparse}.  Sparse array is a matrix in which most
+of the elements are zero.  @code{python-sparse} generalizes the
+@code{scipy.sparse.coo_matrix} and @code{scipy.sparse.dok_matrix} layouts, but
+extends beyond just rows and columns to an arbitrary number of dimensions.
+Additionally, this project maintains compatibility with the
+@code{numpy.ndarray} interface rather than the @code{numpy.matrix} interface
+used in @code{scipy.sparse}.  These differences make this project useful in
+certain situations where @code{scipy.sparse} matrices are not well suited, but
+it should not be considered a full replacement.  It lacks layouts that are not
+easily generalized like @dfn{compressed sparse row/column}(CSR/CSC) and
+depends on @code{scipy.sparse} for some computations.")
+    (license license:bsd-3)))
+
 (define-public python-tdda
   (package
     (name "python-tdda")
@@ -3167,7 +3551,8 @@ doing practical, real world data analysis in Python.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "00f6jnplwg7iffnxdm4hpfls0ncbarc23933xq1rm5nk5g8dcldx"))))
+        (base32 "00f6jnplwg7iffnxdm4hpfls0ncbarc23933xq1rm5nk5g8dcldx"))
+       (patches (search-patches "python-pandas-2-no-pytz_datetime.patch"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -3877,8 +4262,8 @@ readable.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://www.github.com/maartenbreddels/vaex")
-             (commit (string-append "core-v" version))))
+              (url "https://www.github.com/maartenbreddels/vaex")
+              (commit (string-append "core-v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1sp096msbzgjlwi8c1ink2bp4pjff9pvikqz1y1li8d3in4gpgdr"))
@@ -3916,7 +4301,14 @@ readable.")
                 ;; "dask!=2022.4.0,<2024.9"; there is a note "fingerprinting
                 ;; in no longer deterministic as of 2024.9.0" which may be
                 ;; resolved in 2024.12.1.
-                ((",<2024.9") "")))))))
+                ((",<2024.9") ""))))
+          (add-before 'build 'patch-missing-include
+            (lambda _
+              ;; See: <https://github.com/vaexio/vaex/issues/2382>.
+              ;; TODO: Update to the latest version including the fix.
+              (substitute* "src/string_utils.hpp"
+                (("#include <nonstd/string_view.hpp>")
+                 "#include <cstdint>\n#include <nonstd/string_view.hpp>")))))))
     (inputs
      (list boost pcre pybind11 string-view-lite tsl-hopscotch-map))
     (propagated-inputs

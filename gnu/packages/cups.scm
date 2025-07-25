@@ -10,6 +10,8 @@
 ;;; Copyright © 2021, 2023, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2023 Zheng Junjie <873216071@qq.com>
 ;;; Copyright © 2025 Lukas Gradl <lgradl@posteo.net>
+;;; Copyright © 2025 Antoine Côté <antoine.cote@posteo.net>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -69,66 +71,119 @@
   #:use-module (ice-9 match))
 
 (define-public brlaser
-  (let ((commit "2a49e3287c70c254e7e3ac9dabe9d6a07218c3fa")
-        (revision "2"))
-    (package
-      (name "brlaser")
-      (version (git-version "6" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/pdewacht/brlaser")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "033g461qzwrzi6x24pfasyx9g7fkn5iy5f8c3h8bczg2bvscxyym"))))
-      (build-system cmake-build-system)
-      (arguments
-       (list
-        #:configure-flags
-        #~(list (string-append "-DCUPS_DATA_DIR=" #$output "/share/cups")
-                (string-append "-DCUPS_SERVER_BIN=" #$output "/lib/cups"))))
-      (inputs
-       (list ghostscript cups zlib))
-      (home-page "https://github.com/pdewacht/brlaser")
-      (synopsis "Brother laser printer driver")
-      (description "Brlaser is a CUPS driver for Brother laser printers.  This
+  (package
+    (name "brlaser")
+    (version "6.2.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/Owl-Maintain/brlaser")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0giibsva4f2sfn6cchqfnv74d047n5dmp97yxqdks1zad0pf7r3b"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list (string-append "-DCUPS_DATA_DIR="
+                             #$output "/share/cups")
+              (string-append "-DCUPS_SERVER_BIN="
+                             #$output "/lib/cups"))))
+    (inputs (list ghostscript cups zlib))
+    (home-page "https://github.com/Owl-Maintain/brlaser")
+    (synopsis "Brother laser printer driver")
+    (description "Brlaser is a CUPS driver for Brother laser printers.  This
 driver is known to work with these printers:
 
 @enumerate
 @item Brother DCP-1510 series
 @item Brother DCP-1600 series
+@item Brother DCP-1610W series
+@item Brother DCP-7010
+@item Brother DCP-7020
 @item Brother DCP-7030
 @item Brother DCP-7040
 @item Brother DCP-7055
 @item Brother DCP-7055W
 @item Brother DCP-7060D
 @item Brother DCP-7065DN
+@item Brother DCP-7070DW
 @item Brother DCP-7080
+@item Brother DCP-7080D
+@item Brother DCP-8065DN
+@item Brother DCP-B7500D series
 @item Brother DCP-L2500D series
+@item Brother DCP-L2510D series
 @item Brother DCP-L2520D series
+@item Brother DCP-L2520DW series
+@item Brother DCP-L2537DW
 @item Brother DCP-L2540DW series
+@item Brother DCP-L2550DW series
+@item Brother DCP-L2560DW series
+@item Brother FAX-2820
+@item Brother FAX-2840
 @item Brother HL-1110 series
 @item Brother HL-1200 series
 @item Brother HL-2030 series
+@item Brother HL-2130 series
 @item Brother HL-2140 series
 @item Brother HL-2220 series
+@item Brother HL-2230 series
+@item Brother HL-2240 series
+@item Brother HL-2240D series
+@item Brother HL-2250DN series
+@item Brother HL-2260
+@item Brother HL-2260D
 @item Brother HL-2270DW series
+@item Brother HL-2280DW
 @item Brother HL-5030 series
+@item Brother HL-5040 series
+@item Brother HL-5140 series
+@item Brother HL-5370DW series
+@item Brother HL-5450DN series
 @item Brother HL-L2300D series
+@item Brother HL-L2305 series
+@item Brother HL-L2310D series
 @item Brother HL-L2320D series
+@item Brother HL-L2335D series
 @item Brother HL-L2340D series
+@item Brother HL-L2350DW series
 @item Brother HL-L2360D series
-@item Brother MFC-1910W
+@item Brother HL-L2370DN series
+@item Brother HL-L2375DW series
+@item Brother HL-L2380DW series
+@item Brother HL-L2390DW
+@item Brother HL-L2400DW
+@item Brother HL-L2402D
+@item Brother HL-L2405W
+@item Brother HL-L5000D series
+@item Brother MFC-1810 series
+@item Brother MFC-1910W series
 @item Brother MFC-7240
+@item Brother MFC-7320
+@item Brother MFC-7340
 @item Brother MFC-7360N
 @item Brother MFC-7365DN
-@item Brother MFC-7840W
+@item Brother MFC-7420
+@item Brother MFC-7440N
+@item Brother MFC-7460DN
+@item Brother MFC-7860DW
+@item Brother MFC-8440
+@item Brother MFC-8710DW
+@item Brother MFC-8860DN
+@item Brother MFC-9160
+@item Brother MFC-L2690DW
+@item Brother MFC-L2700DN series
+@item Brother MFC-L2700DW series
+@item Brother MFC-L2710DN series
 @item Brother MFC-L2710DW series
-@item Lenovo M7605D
+@item Brother MFC-L2750DW series
+@item Fuji Xerox DocuPrint P265 dw
+@item Lenovo LJ2650DN
 @end enumerate")
-      (license license:gpl2+))))
+    (license license:gpl2+)))
 
 (define-public cups-filters
   (package
@@ -265,7 +320,6 @@ filters for the PDF-centric printing workflow introduced by OpenPrinting.")
   (package
     (name "cups-minimal")
     (version "2.4.9")
-    (replacement cups-minimal/fixed)
     (source
      (origin
        (method git-fetch)
@@ -275,7 +329,8 @@ filters for the PDF-centric printing workflow introduced by OpenPrinting.")
        ;; Avoid NAME confusion: these are the complete CUPS sources.
        (file-name (git-file-name "cups" version))
        (sha256
-        (base32 "08wjd1flyaslhnwvxl39403qi3g675rk532ysiyk6cda4r8ks1g1"))))
+        (base32 "08wjd1flyaslhnwvxl39403qi3g675rk532ysiyk6cda4r8ks1g1"))
+       (patches (search-patches "cups-minimal-Address-PPD-injection-issues.patch"))))
     (build-system gnu-build-system)
     (arguments
      (list #:configure-flags
@@ -354,15 +409,6 @@ supported through legacy PPD-based printer drivers called ``printer
 applications''.  These must be installed separately.")
     ;; CUPS is Apache 2.0 with exceptions, see the NOTICE file.
     (license license:asl2.0)))
-
-(define cups-minimal/fixed
-  (package
-    (inherit cups-minimal)
-    (source
-     (origin
-       (inherit (package-source cups-minimal))
-       (patches
-        (search-patches "cups-minimal-Address-PPD-injection-issues.patch"))))))
 
 (define-public cups
   (package/inherit cups-minimal
@@ -600,6 +646,19 @@ should only be used as part of the Guix cups-pk-helper service.")
               "--disable-qt4")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'set-gcc-14-cflags
+            ;; We set CFLAGS here because adding setting it in
+            ;; #:configure-flags or #:make-flags does not work.
+            (lambda _
+              (substitute* "Makefile.in"
+                (("CFLAGS = @CFLAGS@" all)
+                 (string-append all
+                                " -Wno-error=attributes"
+                                " -Wno-error=implicit-function-declaration"
+                                " -Wno-error=implicit-int"
+                                " -Wno-error=incompatible-pointer-types"
+                                " -Wno-error=int-conversion"
+                                " -Wno-error=return-mismatch")))))
           (add-after 'unpack 'fix-hard-coded-file-names
             (lambda* (#:key inputs outputs #:allow-other-keys)
               (let ((out #$output)
@@ -909,7 +968,8 @@ HP@tie{}LaserJet, and possibly other printers.  See @file{README} for details.")
            `((srfi srfi-26)
              ,@%default-gnu-modules)
            #:configure-flags
-           #~(list "--disable-static"
+           #~(list "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration"
+                   "--disable-static"
                    (string-append "--prefix=" #$output)
                    (string-append "--with-cupsfilterdir=" #$output "/lib/cups/filter")
                    (string-append "--with-cupsppddir=" #$output "/share/cups/model"))

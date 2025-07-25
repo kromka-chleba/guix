@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013, 2014, 2015, 2023 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2015 Sou Bunnbu <iyzsong@gmail.com>
+;;; Copyright © 2015, 2025 宋文武 <iyzsong@envs.net>
 ;;; Copyright © 2015, 2018, 2019, 2020, 2021, 2023 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2015-2019, 2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017 Nikita <nikita@n0.is>
@@ -137,6 +137,7 @@
   #:use-module (gnu packages valgrind)
   #:use-module (gnu packages video)
   #:use-module (gnu packages vulkan)
+  #:use-module (gnu packages web)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xiph)
   #:use-module (gnu packages xorg)
@@ -463,7 +464,7 @@ applications on Wayland.")
      ;; Optional: lcov and cccc, both are for code coverage
      (list doxygen))
     (inputs
-     (list qtbase-5 qtdeclarative-5 qtscript))
+     (list qtbase-5 qtdeclarative-5 qtscript-5))
     (build-system cmake-build-system)
     (arguments
      (list #:phases #~(modify-phases %standard-phases
@@ -762,13 +763,13 @@ developers using C++ or QML, a CSS & JavaScript like language.")
   (package
     (inherit qtbase-5)
     (name "qtbase")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (inherit (package-source qtbase-5))
               (uri (qt-url name version))
               (sha256
                (base32
-                "16bmfrjfxjajs6sqg1383ihhfwwf69ihkpnpvsajh5pv21g2mwn5"))
+                "01gy1p8zvxq8771x6iqkrc7s3kzdddgf1i7xj656w7j1dp746801"))
               (modules '((guix build utils)))
               (snippet
                ;; corelib uses bundled harfbuzz, md4, md5, sha3
@@ -782,14 +783,14 @@ developers using C++ or QML, a CSS & JavaScript like language.")
                                "qtbase-absolute-runpath.patch"
                                "qtbase-qmake-use-libname.patch"
                                "qtbase-qmlimportscanner-qml-import-path.patch"
-                               "qtbase-find-tools-in-PATH.patch"
                                "qtbase-qmake-fix-includedir.patch"))))
     (build-system cmake-build-system)
     (arguments
      (substitute-keyword-arguments (package-arguments qtbase-5)
        ((#:configure-flags _ ''())
         `(let ((out (assoc-ref %outputs "out")))
-           (list "-DQT_BUILD_TESTS=ON"
+           (list "-GNinja"              ;officially supported
+                 "-DQT_BUILD_TESTS=ON"
                  (string-append "-DINSTALL_ARCHDATADIR=" out "/lib/qt6")
                  (string-append "-DINSTALL_DATADIR=" out "/share/qt6")
                  (string-append "-DINSTALL_DOCDIR=" out "/share/doc/qt6")
@@ -822,6 +823,16 @@ developers using C++ or QML, a CSS & JavaScript like language.")
                  "-DBUILD_WITH_PCH=OFF")))
        ((#:phases phases)
         #~(modify-phases #$phases
+            (replace 'build
+              (lambda* (#:key parallel-build? #:allow-other-keys)
+                (apply invoke "cmake" "--build" "."
+                       (if parallel-build?
+                           `("--parallel" ,(number->string
+                                            (parallel-job-count)))
+                           '()))))
+            (replace 'install
+              (lambda _
+                (invoke "cmake" "--install" ".")))
             (add-after 'unpack 'honor-CMAKE_PREFIX_PATH
               (lambda _
                 ;; The configuration files for other Qt packages are searched
@@ -841,8 +852,12 @@ developers using C++ or QML, a CSS & JavaScript like language.")
                 ;; 'qmlimportscanner' from qtdeclarative work out of the
                 ;; box.
                 (substitute* "cmake/QtConfig.cmake.in"
-                  (("(set\\(QT_ADDITIONAL_PACKAGES_PREFIX_PATH )\"\"" _ head)
-                   (string-append head "\"$ENV{CMAKE_PREFIX_PATH}\"")))))
+                  (("set\\(QT_ADDITIONAL_HOST_PACKAGES_PREFIX_PATH" below)
+                   (string-append "
+if(QT_ADDITIONAL_PACKAGES_PREFIX_PATH STREQUAL \"\")
+  cmake_path(CONVERT $ENV{CMAKE_PREFIX_PATH} TO_CMAKE_PATH_LIST
+    QT_ADDITIONAL_PACKAGES_PREFIX_PATH)
+endif()\n" below)))))
             (delete 'patch-bin-sh)
             (delete 'patch-xdg-open)
             ;; Some tests fail to build on i686-linux
@@ -877,11 +892,30 @@ tst_qt_cmake_create.cpp"
 
                 (substitute* "src/corelib/CMakeLists.txt"
                   (("/bin/ls")
-                   (search-input-file inputs "bin/ls")))))
+                   (search-input-file inputs "bin/ls")))
+
+                ;; Use shared-mime-info as the default MIME type database.
+                (substitute* "src/corelib/mimetypes/qmimedatabase.cpp"
+                  (("return dirs;" all)
+                   (string-append
+                    "dirs.append(\""
+                    #$(this-package-input "shared-mime-info") "/share/mime"
+                    "\");\n" all)))))
+            #$@(if (target-aarch64?)
+                   ;; backport of 2bce75a6b53cccbf9c813581b64eea87f3ab55fc,
+                   ;; which makes flaky tst_qthread less flaky.
+                   #~((add-after 'patch-more-paths 'patch-aarch64-tests
+                      (lambda _
+                        (invoke
+                         "patch" "-p1" "-i"
+                         #$(local-file
+                            (search-patch "qtbase-fix-thread-test.patch"))))))
+                 #~())
             (delete 'do-not-capture-python) ;move after patch-source-shebangs
             (add-after 'patch-source-shebangs 'do-not-capture-python
               (lambda _
-                (substitute* '("mkspecs/features/uikit/devices.py"
+                (substitute* '("libexec/qt-android-runner.py"
+                               "mkspecs/features/uikit/devices.py"
                                "util/testrunner/qt-testrunner.py"
                                "util/testrunner/sanitizer-testrunner.py")
                   (((which "python3"))
@@ -945,6 +979,12 @@ tst_qt_cmake_create.cpp"
                        ;; after running for more than 300s (see:
                        ;; https://bugreports.qt.io/browse/QTBUG-135603).
                        "tst_qguitimer"
+
+                       ;; TODO: Enable this when update qtbase.
+                       ;; tst_QDate::startOfDay_endOfDay fails for BajaMexico
+                       ;; due to IANA timezone update (see:
+                       ;; https://bugreports.qt.io/browse/QTQAINFRA-6757).
+                       "tst_qdate"
 
                        ;; The 'test_standalone_test' fails with a
                        ;; "get_property could not find TARGET Qt6::Core" error
@@ -1054,6 +1094,14 @@ tst_qt_cmake_create.cpp"
                        ;; "/home", "/etc" or "/root" and fail.
                        "tst_qcompleter"
                        "tst_qfiledialog"
+                       ;; The following tests fail with: "Generation of UI
+                       ;; files were triggered in the second build", but could
+                       ;; pass in `guix shell --container`.
+                       "test_qt_add_ui_1"
+                       "test_qt_add_ui_2"
+                       "test_qt_add_ui_6"
+                       "test_qt_add_ui_8"
+                       "test_qt_add_ui_9"
                        ;; This test is susceptible to the 600 ms timeout used:
                        "tst_qpauseanimation")
                       #$@(cond
@@ -1142,11 +1190,17 @@ tst_qt_cmake_create.cpp"
                  (string-append #$output "/tests"))))))))
     (native-inputs
      (modify-inputs (package-native-inputs qtbase-5)
-       (prepend tzdata-for-tests
+       (prepend ninja                   ;CMake Generator, also used for tests
+                tzdata-for-tests
                 wayland-protocols
                 xvfb-run)))
+    (propagated-inputs
+     (modify-inputs (package-propagated-inputs qtbase-5)
+       ;; Required by Qt6GuiDependencies.cmake.
+       (prepend libxkbcommon vulkan-headers)))
     (inputs
      (modify-inputs (package-inputs qtbase-5)
+       (delete "libxkbcommon")          ;qtbase-5 use libxkbcommon-1.5
        (prepend at-spi2-core
                 bash-minimal
                 coreutils-minimal
@@ -1156,6 +1210,7 @@ tst_qt_cmake_create.cpp"
                 libsm
                 libxcb
                 libxext
+                shared-mime-info
                 xcb-util-cursor
                 `(,zstd "lib"))))
     (native-search-paths
@@ -1239,16 +1294,44 @@ HostData=lib/qt5"
     (synopsis "Qt module for 3D")
     (description "The Qt3d module provides classes for displaying 3D.")))
 
-(define-public qt5compat
+(define-public qt3d
   (package
-    (name "qt5compat")
-    (version "6.7.2")
+    (name "qt3d")
+    (version "6.5.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "00y071p09v91ascxg3llc0yfbx7xs24smcgxckdrnkgwkqcba9l8"))))
+                "047rwawrlm7n0vifxmsqvs3w3j5c16x8qkpx8xazq6xd47dn9w11"))))
+    (propagated-inputs (list))
+    (native-inputs (list perl))
+    (inputs (list mesa qtbase vulkan-headers zlib libxkbcommon))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "-DQT_BUILD_TESTS=ON")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-display
+            (lambda _
+              ;; Make Qt render "offscreen", required for tests.
+              (setenv "QT_QPA_PLATFORM" "offscreen"))))))
+    (synopsis "Qt module for 3D")
+    (description "The Qt3d module provides classes for displaying 3D.")
+    (home-page (package-home-page qtbase))
+    (license (package-license qtbase))))
+
+(define-public qt5compat
+  (package
+    (name "qt5compat")
+    (version "6.8.2")
+    (source (origin
+              (method url-fetch)
+              (uri (qt-url name version))
+              (sha256
+               (base32
+                "05jk959ykc96gp1chszr5pmv916nzd8g5gk6qbfy427cjny58cdm"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1340,13 +1423,13 @@ HostData=lib/qt5
 (define-public qtsvg
   (package
     (name "qtsvg")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "00ggr84l1h8did6ivprv343rwwcl7j2bbbilxqzmiqsvlf3143gv"))))
+                "1yn1kl5cvpnl7619r1inbmik4yg0cy87xn1irz5ijvd63kr7j9da"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1399,14 +1482,14 @@ support for MNG, TGA, TIFF and WBMP image formats.")))
 (define-public qtimageformats
   (package
     (name "qtimageformats")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (inherit (package-source qtimageformats-5))
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "1mp5bi45gcmsds0g2xfjd1mklrijbwfv0hx4s1md2rxfbxwdi8g1"))))
+                "1qf88gjff2bdb51ijdpjzf1l7w00prqb29wjqapa1f078ywbp8fj"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1496,7 +1579,7 @@ XLSX document format.")
      (list qtbase-5))
     (synopsis "Qt5 build for the qxlsx library")))
 
-(define-public qtxmlpatterns
+(define-public qtxmlpatterns-5
   (package (inherit qtsvg-5)
     (name "qtxmlpatterns")
     (version "5.15.15")
@@ -1574,14 +1657,14 @@ with JavaScript and C++.")))
 (define-public qtdeclarative
   (package
     (name "qtdeclarative")
-    (version "6.7.2")
+    (version "6.8.2")
     ;; TODO: Package 'masm' and unbundle from sources.
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "16drp7yjsm50cvsyww9xk15hzf2csax02vpbv0jx8hlcmyhwnaac"))
+                "0mkd6hqvg21dg63022iq1b6sskp2s5wfchsifc4mkdcbvim8fk8l"))
               (patches (search-patches "qtdeclarative-disable-qmlcache.patch"))))
     (outputs '("out" "debug"))
     (build-system cmake-build-system)
@@ -1697,7 +1780,10 @@ with JavaScript and C++.")))
                     "tst_dom_all"
                     "tst_qmlls"
                     "tst_qmllscompletions"
-
+                    ;; This test fails with comparing 'importPaths' between:
+                    ;;   /tmp/guix-build-.../lib/qt6/qml
+                    ;;   /gnu/store/......../lib/qt6/qml
+                    "test_generate_qmlls_ini"
                     ;; This test fails starting with 6.6.3 (see:
                     ;; https://bugreports.qt.io/browse/QTBUG-123748), for
                     ;; unknown reasons.
@@ -1752,13 +1838,13 @@ with Bluetooth and NFC.")))
 (define-public qtconnectivity
   (package
     (name "qtconnectivity")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "1s08djgzhh5p9ij0hxbrrcx9n7r7f0ba6pr9793mdsgh8ar23lwf"))))
+                "0al1a86q0cd1xrs1f7wsk3cjq74yvrvw3wk4c3ynkhsa107145z6"))))
     (build-system cmake-build-system)
     (native-inputs
      (list perl pkg-config qtdeclarative))
@@ -1805,13 +1891,13 @@ consume data received from the server, or both.")))
 (define-public qtwebsockets
   (package
     (name "qtwebsockets")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "0pr13p6inlh2i79yc567w8dp446rh9xvfakq5diwis4wxkv4mpjv"))))
+                "1glczsi3pgrhgb6v20pqm8invnfjb8415lcj74wwhiilp9igb7ci"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1845,13 +1931,13 @@ consume data received from the server, or both.")
   (package
     (inherit qtsvg)
     (name "qtsensors")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "0ndvwra9bssfqw32bk5mbj3zdqgi9zshm0gd0bfd8vn5hz3xxlga"))))
+                "1jplvcnpp7xc8d1lpw7qzrk6pvm8lrn84r2hy7dspl0s02dpr0ca"))))
     (native-inputs (list qtdeclarative))
     (inputs (list qtbase))
     (synopsis "Qt Sensors module")
@@ -1939,7 +2025,7 @@ set of plugins for interacting with pulseaudio and GStreamer.")))
 (define-public qtshadertools
   (package
     (name "qtshadertools")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
@@ -1947,7 +2033,7 @@ set of plugins for interacting with pulseaudio and GStreamer.")))
               ;; sources.
               (sha256
                (base32
-                "1hbw5xz12frydk787rl6cgfxm2bxlzkxiwcxjjmgq04cmk039ypd"))))
+                "0w8qamghycprmz20n01s0di8as52v7j4qnn57bb71z45i07gkmfi"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -1968,21 +2054,13 @@ Vulkan, OpenGL and other main graphic APIs.")
 (define-public qtmultimedia
   (package
     (name "qtmultimedia")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "1lsiarvag8lr4a1apa466xz56b1znjncy8wz5hyiv6nbb88kby4f"))
-              (modules '((guix build utils)))
-              (snippet
-               '(begin
-                  (delete-file-recursively
-                   "examples/multimedia/spectrum/3rdparty")
-                  ;; We also prevent the spectrum example from being built.
-                  (substitute* "examples/multimedia/multimedia.pro"
-                    (("spectrum") "#"))))))
+                "0s8mxd7pwm9v8x5qa3h6124w91k0zjbbah6h9b68n5bvq3yn3x9l"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2099,20 +2177,24 @@ compositor libraries.")))
 (define-public qtwayland
   (package
     (name "qtwayland")
-    (version "6.7.2")
+    (version "6.8.2")
     (source
      (origin
        (method url-fetch)
        (uri (qt-url name version))
-       (patches (search-patches
-                 "qtwayland-6-update-wayland-xml.patch"))
        (sha256
-        (base32 "0nwa59g1wk7fkym837pkw312abjb376gx44rpd5d8jv4vphmg852"))))
+        (base32 "0iwnvjas5vqzi48finff72iqnl5hal48qba64kwjnpr911wiaijy"))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags #~(list "-DQT_BUILD_TESTS=ON")
            #:phases
            #~(modify-phases %standard-phases
+               (add-after 'unpack 'update-wayland.xml
+                 ;; Upstream commit: c2f61bc47baacf2e6a44c6c3c4e4cbf0abfa4095
+                 (lambda* (#:key inputs #:allow-other-keys)
+                   (copy-file (search-input-file
+                               inputs "/share/wayland/wayland.xml")
+                              "src/3rdparty/protocol/wayland/wayland.xml")))
                (add-after 'unpack 'disable-failing-tests
                  (lambda _
                    ;; FIXME: tst_seatv4::animatedCursor() fails here.
@@ -2191,13 +2273,13 @@ interacting with serial ports from within Qt.")))
 (define-public qtserialport
   (package
     (name "qtserialport")
-    (version "6.7.2")
+    (version "6.8.2")
     (source
      (origin
        (method url-fetch)
        (uri (qt-url name version))
        (sha256
-        (base32 "1z5lsgdl4g48fr2kcp7zznv5jyv42xmd4qn6rrxikd8w2v8lrhr1"))))
+        (base32 "1rrv3snfc5r08q5dx37vrns1vwk6rnw1l0ldym4z32g9c4iy05zd"))))
     (build-system cmake-build-system)
     (arguments
      (list #:phases
@@ -2220,7 +2302,7 @@ interacting with serial ports from within Qt.")))
 interacting with serial ports from within Qt.")
     (license (package-license qtbase))))
 
-(define-public qtserialbus
+(define-public qtserialbus-5
   (package
     (inherit qtsvg-5)
     (name "qtserialbus")
@@ -2269,13 +2351,13 @@ popular web engines, Qt WebKit 2 and Qt WebEngine.")))
 (define-public qtwebchannel
   (package
     (name "qtwebchannel")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "072hniyxavz2jjkzh7mrz4g67zf0cngvp4xgdradxrqhgdh9cpdc"))))
+                "1b5pd0f3zbz4q6cygjn8fbrsbfb7rlwi4nq0f1vaaws6yi9ix7w6"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2303,7 +2385,7 @@ between the host (QML/C++ application) and the client (HTML/JavaScript
 application).")
     (license (package-license qtbase))))
 
-(define-public qtwebglplugin
+(define-public qtwebglplugin-5
   (package
     (inherit qtsvg-5)
     (name "qtwebglplugin")
@@ -2332,7 +2414,7 @@ WebGL.  WebGL is a JavaScript API for rendering 2D and 3D graphics within any
 compatible web browser without the use of plug-ins.  The API is similar to
 OpenGL ES 2.0 and can be used in HTML5 canvas elements")))
 
-(define-public qtwebview
+(define-public qtwebview-5
   (package
     (inherit qtsvg-5)
     (name "qtwebview")
@@ -2353,13 +2435,13 @@ native APIs where it makes sense.")))
 (define-public qtlanguageserver
   (package
     (name "qtlanguageserver")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "14hs20738d2ljfb5la8p0lip7qranjnrwl5fwdhs1zs4a5jzwndn"))))
+                "1yw54x6g291z88ib7g0ydz9y5940vr71xh28fmvhhk1k2nn79swy"))))
     (build-system cmake-build-system)
     (arguments
      (list #:phases #~(modify-phases %standard-phases
@@ -2384,7 +2466,24 @@ Server Protocol (LSP) for Qt.")
               (uri (qt-url name version))
               (sha256
                (base32
-                "0ja5rs1z9lx9hns7m1mg1lndl04arhjajqbdg29j446q5xlzkpk2"))))
+                "0ja5rs1z9lx9hns7m1mg1lndl04arhjajqbdg29j446q5xlzkpk2"))
+              (patches
+               (search-patches "qtlocation-5.15.8-mapboxgl-gcc13.patch"))
+              (modules '((guix build utils)))
+              (snippet
+               #~(begin
+                   ;; TODO: Unvendor more deps.
+                   (with-directory-excursion "src/3rdparty/mapbox-gl-native"
+                     (for-each delete-file-recursively
+                               (list "deps/rapidjson"
+                                     "deps/protozero"))
+
+                     (substitute* "mapbox-gl-native.pro"
+                       (("    deps/protozero/1\\.5\\.2 \\\\
+    deps/protozero/1\\.5\\.2/include \\\\
+    deps/rapidjson/1\\.1\\.0 \\\\
+    deps/rapidjson/1\\.1\\.0/include \\\\")
+                        "")))))))
     (arguments
      (substitute-keyword-arguments (package-arguments qtsvg-5)
        ((#:tests? _ #f) #f)             ; TODO: Enable the tests
@@ -2394,7 +2493,7 @@ Server Protocol (LSP) for Qt.")
               (lambda _
                 (setenv "HOME" "/tmp")))))))
     (native-inputs (list perl qtdeclarative-5 qtquickcontrols-5 qtserialport-5))
-    (inputs (list icu4c openssl qtbase-5 zlib))
+    (inputs (list icu4c openssl qtbase-5 zlib rapidjson protozero))
     (synopsis "Qt Location and Positioning modules")
     (description "The Qt Location module provides an interface for location,
 positioning and geolocation plugins.")))
@@ -2403,13 +2502,13 @@ positioning and geolocation plugins.")))
   (package
     (inherit qtsvg)
     (name "qtlocation")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "0pa8ibw490p3433ysni73f0gpz7gvxyl2abh3ygvd28ipxcdlcpj"))))
+                "068pgnds6hgmj6lmxwlapc9nx69cz2bzndgksvm051kb875hnjck"))))
     (arguments
      (substitute-keyword-arguments (package-arguments qtsvg)
        ((#:tests? _ #f) #f)             ; TODO: Enable the tests
@@ -2428,13 +2527,13 @@ positioning and geolocation plugins.")))
 (define-public qtlottie
   (package
     (name "qtlottie")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "03piwc7p0lgqm73rx2kf5ckh986nv9dkssfl47js8lnkb29vrbyr"))))
+                "085yiqihp54m94nw2r82dfnjpf5kvr43bywhr02xv4q31nr3xm2y"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2492,13 +2591,13 @@ that helps in Qt development.")))
 (define-public qttools
   (package
     (name "qttools")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "0ajbma9lbrb0d048bvg2xl74m833ddv2b9684r3hjcr53fnmbs2q"))))
+                "1h6jacmzyb4qrsmk68if72avsydfk31ap4gj28v921rzsjvq2qrj"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2517,9 +2616,9 @@ that helps in Qt development.")))
                        (invoke/quiet (search-input-file outputs "bin/qdoc")
                                      "--help"))))))
     (native-inputs (list perl qtdeclarative vulkan-headers))
-    ;; Use clang-15, which is built using as a single shared library, which is
+    ;; Use clang-18, which is built using as a single shared library, which is
     ;; what the build system of qttools expects.
-    (inputs (list clang-15 libxkbcommon mesa qtbase `(,zstd "lib")))
+    (inputs (list clang-18 libxkbcommon mesa qtbase `(,zstd "lib")))
     (home-page (package-home-page qtbase))
     (synopsis "Qt Tools and Designer modules")
     (description "The Qt Tools module provides a set of applications to browse
@@ -2532,13 +2631,13 @@ that helps in Qt development.")
 (define-public qttranslations
   (package
     (name "qttranslations")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "1a9cb1br3wqn0rshkgj21hba3r7jx8dbavc3ayfjgdy1bl5phicq"))))
+                "1ld3sv309shkm267ab0f5f849lw8j8ll062c5iq7gz8bb256w46j"))))
     (build-system cmake-build-system)
     (arguments (list #:tests? #f))
     (native-inputs (list qtbase qttools))
@@ -2550,7 +2649,7 @@ the Qt community.")
     ;; LICENSES/Qt-GPL-exception-1.0.txt).
     (license (list license:gpl3))))
 
-(define-public qtscript
+(define-public qtscript-5
   (package
     (inherit qtsvg-5)
     (name "qtscript")
@@ -2633,7 +2732,7 @@ components.  The API consists of over 20 effects provided as separate QML
 types.  The effects cover functional areas such as blending, masking, blurring,
 coloring, and many more.")))
 
-(define-public qtgamepad
+(define-public qtgamepad-5
   (package
     (inherit qtsvg-5)
     (name "qtgamepad")
@@ -2690,13 +2789,13 @@ also contains functionality to support data models and executable content.")))
 (define-public qtscxml
   (package
     (name "qtscxml")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "0vy80npai5ikwlf0ghxf5xj8vq1hi3cdjgddjas2g3yl0qszkv10"))
+                "14x1iv7wdaifly06dh5w0iqa46va0hikg1c4rh0yj0a0l88llg38"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -2729,13 +2828,13 @@ also contains functionality to support data models and executable content.")
 (define-public qtpositioning
   (package
     (name "qtpositioning")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "073v10z1axmqydrvdka9g69wr117kzhvci9sjr110swgmbq0j002"))))
+                "1rdqbp4yxzyd3c77bf4y9klvbvv1pimg4zqmw6kncr4k9r7ncc6z"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2766,7 +2865,7 @@ position on a map.  In addition, you can use to the API to retrieve satellite
 information and perform area based monitoring.")
     (license (package-license qtbase))))
 
-(define-public qtpurchasing
+(define-public qtpurchasing-5
   (package
     (inherit qtsvg-5)
     (name "qtpurchasing")
@@ -2814,13 +2913,13 @@ graphs by selecting one of the charts themes.")
 (define-public qtcharts
   (package
     (name "qtcharts")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "1nlv4z2rvhrn1f1f7n6qdag7lmkpl3idnj6ph572qzwb8lvs9xh0"))))
+                "0py56kxmp766jp4vxxn91nclhg7sjgwzc3b1xa62yysx3bd88z7c"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2855,7 +2954,7 @@ graphs by selecting one of the charts themes.")
     (home-page (package-home-page qtbase))
     (license (package-license qtbase))))
 
-(define-public qtdatavis3d
+(define-public qtdatavis3d-5
   (package
     (inherit qtsvg-5)
     (name "qtdatavis3d")
@@ -2896,15 +2995,21 @@ implementation of OAuth and OAuth2 authenticathon methods for Qt.")))
 (define-public qtnetworkauth
   (package
     (name "qtnetworkauth")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "0w7l5lhhxhg9x1rd66727gwkpzi6l7wmyc0c4qrfp2g5rx7q42bz"))))
+                "1mxlam2fzh8arfq7iypsvlk4h2pbj41f5a7ibakap1zc4ysv95fl"))))
     (build-system cmake-build-system)
-    (arguments (list #:configure-flags #~(list "-DQT_BUILD_TESTS=ON")))
+    (arguments
+     (list #:configure-flags #~(list "-DQT_BUILD_TESTS=ON")
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'check 'check-setup
+                 (lambda _
+                   (setenv "QT_QPA_PLATFORM" "offscreen"))))))
     (native-inputs (list perl))
     (inputs (list qtbase))
     (home-page (package-home-page qtbase))
@@ -2916,13 +3021,13 @@ implementation of OAuth and OAuth2 authenticathon methods for Qt.")
 (define-public qtremoteobjects
   (package
     (name "qtremoteobjects")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "10vlkg5v5hc8fwiw9x06d84z6cs4i5kxm652si3lwvvxma0np40b"))))
+                "0adnbqdppawy4k8j5d87h59v9mdfhdrj4yfbhy0vy2qvw7nx6anh"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2934,7 +3039,12 @@ implementation of OAuth and OAuth2 authenticathon methods for Qt.")
               (setenv "QT_QPA_PLATFORM" "offscreen")))
           (delete 'check)               ;move after the install phase
           (add-after 'install 'check
-            (assoc-ref %standard-phases 'check))
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (invoke "ctest" "-E"
+                        ;; This test fails with "invalid index", but could
+                        ;; pass in `guix shell --container'.
+                        "tst_modelview"))))
           (add-before 'check 'prepare-for-tests
             (lambda _
               (setenv "QML_IMPORT_PATH"
@@ -2965,7 +3075,7 @@ processes or computers.")
      (substitute-keyword-arguments (package-arguments qtsvg-5)
        ((#:tests? _ #f) #f))) ; TODO: Enable the tests
     (inputs (list qtbase-5))
-    (native-inputs (list perl qtdeclarative-5 qtmultimedia-5 qtxmlpatterns))
+    (native-inputs (list perl qtdeclarative-5 qtmultimedia-5 qtxmlpatterns-5))
     (synopsis "Qt Speech module")
     (description "The Qt Speech module enables a Qt application to support
 accessibility features such as text-to-speech, which is useful for end-users
@@ -2978,13 +3088,13 @@ message.")))
 (define-public qtspeech
   (package
     (name "qtspeech")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "1khl90m6jd2zg0r0fncdz3r1w2l96vwp6jihpq9rgr730ja7d36c"))))
+                "1hq2y8dwr57gcqq1zj3w42ykwmzphjh2yf1ab3s9005rdcrm56z0"))))
     (build-system cmake-build-system)
     (arguments
      (list #:phases
@@ -3425,7 +3535,10 @@ linux/libcurl_wrapper.h")
                                   "/share/qt5/translations\")"))
                   (("QLibraryInfo::location\\(QLibraryInfo::DataPath\\)")
                    (string-append "QLatin1String(\"" #$output
-                                  "/share/qt5\")")))
+                                  "/share/qt5\")"))
+                  (("QLibraryInfo::location\\(QLibraryInfo::LibraryExecutablesPath)")
+                   (string-append "QLatin1String(\"" #$output
+                                  "/lib/qt5/libexec\")")))
                 ;; Substitute full dynamic library path for nss.
                 (substitute* "src/3rdparty/chromium/crypto/nss_util.cc"
                   (("libnssckbi.so")
@@ -3463,12 +3576,6 @@ linux/libcurl_wrapper.h")
        ;; It's possible this can be fixed by setting QTWEBENGINEPROCESS_PATH
        ;; before running tests.
        ((#:tests? _ #f) #f)))
-    (native-search-paths
-     (list (search-path-specification
-            (file-type 'regular)
-            (separator #f)
-            (variable "QTWEBENGINEPROCESS_PATH")
-            (files '("lib/qt5/libexec/QtWebEngineProcess")))))
     (home-page "https://wiki.qt.io/QtWebEngine")
     (synopsis "Qt WebEngine module")
     (description "The Qt5WebEngine module provides support for web applications
@@ -3479,14 +3586,16 @@ and binaries removed, and adds modular support for using system libraries.")
 (define-public qtwebengine
   (package
     (name "qtwebengine")
-    (version "6.7.2")
+    (version "6.8.2")
     (source
      (origin
        (method url-fetch)
        (uri (qt-url name version))
        (sha256
         (base32
-         "1lgz0mj9lw4ii1c8nkbr0ll02xzx8i6n7wvvn21f72sdb5smhxf7"))
+         "00j8wlz6fbg4ivkc6w7dbc67835hv7w74sfrshdb75y12rzri5gz"))
+       (patches
+        (search-patches "qtwebengine-fix-system-libvpx.patch"))
        (modules '((ice-9 ftw)
                   (ice-9 match)
                   (srfi srfi-1)
@@ -3510,7 +3619,6 @@ and binaries removed, and adds modular support for using system libraries.")
                     "base/third_party/nspr"
                     "base/third_party/superfasthash"
                     "base/third_party/symbolize"
-                    "base/third_party/xdg_mime"
                     "base/third_party/xdg_user_dirs"
                     "net/third_party/mozilla_security_manager"
                     "net/third_party/nss"
@@ -3561,6 +3669,7 @@ additional_readme_paths.json"
                     "third_party/devtools-frontend/src/front_end/third_party/chromium"
                     "third_party/devtools-frontend/src/front_end/third_party/codemirror"
                     "third_party/devtools-frontend/src/front_end/third_party/codemirror.next"
+                    "third_party/devtools-frontend/src/front_end/third_party/csp_evaluator"
                     "third_party/devtools-frontend/src/front_end/third_party/diff"
                     "third_party/devtools-frontend/src/front_end/third_party/intl-messageformat"
                     "third_party/devtools-frontend/src/front_end/third_party/lighthouse"
@@ -3636,6 +3745,7 @@ vscode.web-custom-data"
                     "third_party/libxml"
                     "third_party/libyuv"
                     "third_party/libzip" ;BSD-3
+                    "third_party/lit"
                     "third_party/lottie"
                     "third_party/lss"
                     "third_party/mako"
@@ -3741,8 +3851,6 @@ vscode.web-custom-data"
                     "v8/third_party/v8/builtins")))
 
              (with-directory-excursion "src/3rdparty"
-               (delete-file-recursively "ninja")
-
                (with-directory-excursion "chromium"
                  ;; Delete bundled software and binaries that were not
                  ;; explicitly preserved above.
@@ -3768,10 +3876,15 @@ linux/libcurl_wrapper.h"
                      "third_party/analytics/google-analytics-bundle.js"
                    (lambda (port)
                      (const #t)))))
-             ;; Do not enable support for loading the Widevine DRM plugin.
-             (substitute* "src/core/CMakeLists.txt"
-               (("enable_widevine=true")
-                "enable_widevine=false")))))))
+              (substitute* "src/core/CMakeLists.txt"
+                (("enable_widevine=true")
+                 (string-join
+                  '(;; Do not enable support for loading the Widevine DRM
+                    ;; plugin.
+                    "enable_widevine=false"
+                    ;; Link pulseaudio directly instead of using dlopen.
+                    "link_pulseaudio=true")
+                  "\n"))))))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -3788,7 +3901,6 @@ linux/libcurl_wrapper.h"
               ;; disable it.
               "-DQT_FEATURE_webengine_printing_and_pdf=OFF"
               "-DQT_FEATURE_webengine_pepper_plugins=OFF" ;widevine
-              "-DQT_FEATURE_system_ffmpeg=ON"
 
               ;; The webenginedriver feature is disabled, otherwise the RUNPATH
               ;; validation phase fails.
@@ -3834,7 +3946,10 @@ linux/libcurl_wrapper.h"
                                 "/share/qt6/translations\")"))
                 (("QLibraryInfo::path\\(QLibraryInfo::DataPath)")
                  (string-append "QLatin1String(\"" #$output
-                                "/share/qt6\")")))
+                                "/share/qt6\")"))
+                (("QLibraryInfo::path\\(QLibraryInfo::LibraryExecutablesPath)")
+                 (string-append "QLatin1String(\"" #$output
+                                "/lib/qt6/libexec\")")))
               ;; Substitute full dynamic library path for nss.
               (substitute* "src/3rdparty/chromium/crypto/nss_util.cc"
                 (("libnssckbi.so")
@@ -3878,13 +3993,14 @@ linux/libcurl_wrapper.h"
      (modify-inputs (package-native-inputs qtwebengine-5)
        (delete "python2" "python2-six")
        (replace "node" node-lts)
-       (append clang-15
-               lld-as-ld-wrapper-15
+       (append clang-18
+               lld-as-ld-wrapper-18
                python-wrapper
                python-beautifulsoup4
                python-html5lib)))
     (inputs
      (modify-inputs (package-inputs qtwebengine-5)
+       (replace "ffmpeg" ffmpeg)
        (replace "icu4c" icu4c-75)
        (replace "re2" re2-next)
        (replace "qtmultimedia" qtmultimedia)
@@ -3894,12 +4010,6 @@ linux/libcurl_wrapper.h"
        (replace "qtbase" qtbase)
        (replace "qtdeclarative" qtdeclarative)
        (replace "qtwebchannel" qtwebchannel)))
-    (native-search-paths
-     (list (search-path-specification
-            (file-type 'regular)
-            (separator #f)
-            (variable "QTWEBENGINEPROCESS_PATH")
-            (files '("lib/qt6/libexec/QtWebEngineProcess")))))
     (home-page "https://wiki.qt.io/QtWebEngine")
     (synopsis "Qt WebEngine module")
     (description "The Qt WebEngine module provides support for web
@@ -4211,7 +4321,7 @@ module provides support functions to the automatically generated code.")
        ("qtwebchannel-5" ,qtwebchannel-5)
        ("qtwebsockets-5" ,qtwebsockets-5)
        ("qtx11extras" ,qtx11extras)
-       ("qtxmlpatterns" ,qtxmlpatterns)))
+       ("qtxmlpatterns" ,qtxmlpatterns-5)))
     (arguments
       (list
        #:tests? #f ; No tests.
@@ -4242,14 +4352,14 @@ contain over 620 classes.")
 (define-public python-pyqt-6
   (package
     (inherit python-pyqt)
-    (version "6.7.1")
+    (version "6.8.1")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "PyQt6" version))
-       (file-name (string-append "PyQt6-" version ".tar.gz"))
+       (uri (pypi-uri "pyqt6" version))
+       (file-name (string-append "pyqt6-" version ".tar.gz"))
        (sha256
-        (base32 "1fcwslx32h6ik3nmr8pxk7ijha8y881kk880nadfjqisrlnahwin"))))
+        (base32 "0mp2fpvxsq93svshbpjkvaqgvnx6ildf3pplf3yzlx322vb3gnci"))))
     (inputs ;Qt5 dependencies only in python-pyqt:
             ;; (qt)connectivity, location, sensors, serialport, x11extras, xmlpatterns.
             (list python-wrapper
@@ -4306,13 +4416,13 @@ contain over 620 classes.")
   (package
     (inherit python-pyqt5-sip)
     (name "python-pyqt6-sip")
-    (version "13.8.0")
+    (version "13.10.0")
     (source
      (origin
        (method url-fetch)
-       (uri (pypi-uri "PyQt6_sip" version))
+       (uri (pypi-uri "pyqt6_sip" version))
        (sha256
-        (base32 "1m39znwza9yypyd93i5mxd9pbf6zn9qdajczpm953awwdlywyx1g"))))
+        (base32 "0l2kmsj2mvc3rpzfmmb5xlfzcmblx469wm1vabndj5fk1ddaknnn"))))
     (synopsis "Sip module support for PyQt6")
     (description
      "SIP is used to write self contained extension modules, i.e. without a
@@ -4379,13 +4489,19 @@ itself.")
 (define-public python-pyqtwebengine-6
   (package
     (inherit python-pyqtwebengine)
-    (version "6.7.0")
+    (version "6.8.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "PyQt6_WebEngine" version))
        (sha256
-        (base32 "00ahqmdgyfw21nhymarrskx723fakkkq2s4mvvspbqnrnsnwgvb8"))))
+        (base32 "1wiz5wn84wpb23lm8sphrw56df0ljyp5b3xiqa11i95n4ak5w134"))
+       (modules '((guix build utils)))
+       (snippet
+        ;; Fix missing include for QVariant.
+        '(substitute* "sip/QtWebEngineCore/qwebengineframe.sip"
+           (("#include <qwebengineframe\\.h>" all)
+            (string-append "#include <qvariant.h>\n" all))))))
     (native-inputs (list python python-sip python-pyqt-builder
                          ;; qtbase is required for qmake
                          qtbase))
@@ -4413,14 +4529,14 @@ set of three modules.")))
 (define-public python-pyqt-builder
   (package
     (name "python-pyqt-builder")
-    (version "1.16.4")
+    (version "1.18.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pyqt_builder" version))
        (sha256
         (base32
-         "1pxgcqk9qf0qvszllb467v2cmr6ngksfr2caz1a2xgkrwcdf85a5"))))
+         "13l4aw8cgi062c8srmnazlzw4y6g1v4bqi39ia9azq0wzjm316ff"))))
     (build-system pyproject-build-system)
     (native-inputs (list python-setuptools
                          python-setuptools-scm-next
@@ -4732,8 +4848,8 @@ securely.  It will not store any data unencrypted unless explicitly requested.")
                      "${CMAKE_INSTALL_PREFIX}/share/qt6/translations")))))))))))
 
 (define-public qtsolutions
-  (let ((commit "9568abd142d581b67b86a5f63d823a34b0612702")
-        (revision "53"))
+  (let ((commit "777e95ba69952f11eaec0adfb0cb987fabcdecb3")
+        (revision "54"))
     (package
       (name "qtsolutions")
       (version (git-version "0" revision commit))
@@ -4745,7 +4861,7 @@ securely.  It will not store any data unencrypted unless explicitly requested.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "17fnmassflm3vxi0krpr6fff368jy38cby31a48rban4nqqmgx7n"))
+          (base32 "044dzxxhjldzmxd1pqi7p1ppppjvqjdr42bm60gbl8902rda6qrk"))
          (modules '((guix build utils)
                     (ice-9 ftw)
                     (srfi srfi-1)))
@@ -5239,12 +5355,13 @@ color-related widgets.")
                 "0q3ky0fai3wr8kr1q82vdg5byhbn5sfdymmb554afpi72zyxcgkd"))))
     (build-system cmake-build-system)
     (inputs
-     (list clang-toolchain
+     ;; pyside-2 fails with clang>=16, pyside-6 needs llvm>=14.
+     (list clang-toolchain-15
            libxml2
            libxslt
            python-wrapper
            qtbase-5
-           qtxmlpatterns))
+           qtxmlpatterns-5))
     (arguments
      (list
       #:tests? #f
@@ -5299,7 +5416,7 @@ color-related widgets.")
   (package
     (inherit python-shiboken-2)
     (name "python-shiboken-6")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://qt/QtForPython/pyside6/PySide6-"
@@ -5307,7 +5424,7 @@ color-related widgets.")
                                   version ".tar.xz"))
               (sha256
                (base32
-                "1iv8wfc5sfx5xr4b3bhbaqagx8qidx5wl1kzvifsmjbqdq6hsars"))))
+                "1y0jq5wl2ffzgwz3k8x1w3img7m0ryqfjlr837iijh9z82mfj8l4"))))
     (build-system cmake-build-system)
     (inputs
      (modify-inputs (package-inputs python-shiboken-2)
@@ -5338,13 +5455,13 @@ color-related widgets.")
     (build-system cmake-build-system)
     (inputs
      (list qtbase-5
-           qtdatavis3d
+           qtdatavis3d-5
            qtdeclarative-5
            qtlocation-5
            qtmultimedia-5
            qtquickcontrols-5
            qtquickcontrols2-5
-           qtscript
+           qtscript-5
            qtscxml-5
            qtsensors-5
            qtspeech-5
@@ -5354,7 +5471,7 @@ color-related widgets.")
            qtwebengine-5
            qtwebsockets-5
            qtx11extras
-           qtxmlpatterns))
+           qtxmlpatterns-5))
     (propagated-inputs
      (list python-shiboken-2))
     (native-inputs
@@ -5632,15 +5749,16 @@ data.")
 (define-public qthttpserver
   (package
     (name "qthttpserver")
-    (version "6.7.2")
+    (version "6.8.2")
     (source (origin
               (method url-fetch)
               (uri (qt-url name version))
               (sha256
                (base32
-                "11lbfx08yl725w4n8dmvviscixvfkpzx8ijhy74gx0waz6sbjlq3"))))
+                "14h6j3cf36lylb01drpbzmbm7nyq4vgc3bgp64436nws0k0ig59d"))))
     (build-system cmake-build-system)
-    (inputs (list qtbase qtwebsockets))
+    (inputs (list qtbase))
+    (propagated-inputs (list qtwebsockets)) ;dependency of cmake module
     (home-page (package-home-page qtbase))
     (synopsis "HTTP server module for Qt")
     (description "Qt HTTP Server supports building HTTP server functionality
@@ -5770,38 +5888,58 @@ policy applications.")
      (list license:bsd-3 ; cmake/*
            license:expat)))) ; everything else
 
+
+(define libkode
+  (origin
+    (method git-fetch)
+    (uri (git-reference
+           (url "https://github.com/cornelius/libkode")
+           (commit "2891c9eec984e423bfb56e0284784c85a6e6bb14")))
+    (file-name "libkode")
+    (sha256
+     (base32 "08wvxmk77zrixll8wfhwd7ixvpvj2wbisvq8lqw2b8ym77sbbyz4"))))
+
 (define-public kdsoap
-  (package
-    (name "kdsoap")
-    (version "2.2.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/KDAB/KDSoap/releases/download/"
-                           "kdsoap-" version "/kdsoap-" version ".tar.gz"))
-       (sha256
-        (base32
-         "0mpkg9iyvzb6mxvhbi6zc052ids2r2nzpmjbljgpq6a2hja13vyr"))))
-    (build-system qt-build-system)
-    (arguments
-     (list #:qtbase qtbase
-           #:configure-flags
-           #~(list "-DKDSoap_TESTS=true"
-                   ;; remove when next version release.
-                   "-DKDSoap_QT6=true")
-           #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "ctest" "-E" ;; These tests try connect to the internet.
-                             "(kdsoap-test_webcalls|kdsoap-test_webcalls_wsdl|kdsoap-test_calc)")))))))
-    (home-page "https://www.kdab.com/development-resources/qt-tools/kd-soap/")
-    (synopsis "Qt SOAP component")
-    (description "KD SOAP is a tool for creating client applications for web
+  (let ((commit "b23dcc1b554d98a4b77fb56fff0d0f0714c8f0bf")
+        (revision "0"))
+    (package
+      (name "kdsoap")
+      (version (git-version "2.2.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/KDAB/KDSoap")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1invsvadfz3l6cf453j4ad4dkg3gas3h85nxvvlif6h7xfx73qhi"))))
+      (build-system qt-build-system)
+      (arguments
+       (list #:qtbase qtbase
+             #:configure-flags
+             #~(list "-DKDSoap_TESTS=true")
+             #:phases
+             #~(modify-phases %standard-phases
+                 (add-after 'unpack 'add-libkode
+                   (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                     (copy-recursively #$(this-package-native-input "libkode")
+                                       "kdwsdl2cpp/libkode")))
+                 (replace 'check
+                   (lambda* (#:key native-inputs inputs tests? #:allow-other-keys)
+                     (when tests?
+                       (setenv "TZDIR" (search-input-directory
+                                        (or native-inputs inputs) "share/zoneinfo"))
+                       (setenv "TZ" "Etc/UTC")
+                       (invoke "ctest" "-E" ;; These tests try connect to the internet.
+                               "(kdsoap-test_webcalls|kdsoap-test_webcalls_wsdl|kdsoap-test_calc)")))))))
+      (native-inputs (list libkode tzdata-for-tests))
+      (home-page "https://www.kdab.com/development-resources/qt-tools/kd-soap/")
+      (synopsis "Qt SOAP component")
+      (description "KD SOAP is a tool for creating client applications for web
 services using the XML based SOAP protocol and without the need for a dedicated
 web server.")
-    (license (list license:gpl2 license:gpl3))))
+      (license (list license:gpl2 license:gpl3)))))
 
 (define-public kdsoap-qt6
   (deprecated-package "kdsoap-qt6" kdsoap))
@@ -6075,7 +6213,7 @@ including @i{fix-its} for automatic refactoring.")
 (define-public qt-creator
   (package
     (name "qt-creator")
-    (version "14.0.1")
+    (version "15.0.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -6106,7 +6244,7 @@ including @i{fix-its} for automatic refactoring.")
                             ((".*marketplace/marketplace.qbs.*") ""))))
               (sha256
                (base32
-                "0zc9z4zzypqd1q49p4ckwbgxqcnnsc11jgsys6wli1ppmvzmn2zn"))))
+                "04sprj9m5zq5m5sc6wjm4ilhz6qfrawnxa2vl8618riadgbsxr7j"))))
     (outputs '("out" "debug"))
     (build-system qt-build-system)
     (arguments

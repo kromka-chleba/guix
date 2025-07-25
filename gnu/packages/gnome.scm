@@ -15,7 +15,7 @@
 ;;; Copyright © 2016, 2017, 2018 Rene Saavedra <pacoon@protonmail.com>
 ;;; Copyright © 2016 Jochem Raat <jchmrt@riseup.net>
 ;;; Copyright © 2016, 2017, 2019 Kei Kebreau <kkebreau@posteo.net>
-;;; Copyright © 2016, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016, 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2016 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016, 2018 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2016 Alex Griffin <a@ajgrf.com>
@@ -39,7 +39,7 @@
 ;;; Copyright © 2019, 2024, 2025 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2019 Jelle Licht <jlicht@fsfe.org>
 ;;; Copyright © 2019 Jonathan Frederickson <jonathan@terracrypt.net>
-;;; Copyright © 2019-2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2019-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2019, 2020 Martin Becze <mjbecze@riseup.net>
 ;;; Copyright © 2019 David Wilson <david@daviwil.com>
 ;;; Copyright © 2019, 2020 Raghav Gururajan <raghavgururajan@disroot.org>
@@ -811,7 +811,13 @@ patterns.")
             (lambda _
               (copy-recursively
                #$(this-package-native-input "libgd-checkout")
-               "subprojects/libgd"))))))
+               "subprojects/libgd")))
+          (add-before 'configure 'relax-gcc-14-strictness
+            (lambda _
+              (setenv "CFLAGS"
+                      (string-append
+                       "-g -O2"
+                       " -Wno-error=incompatible-pointer-types")))))))
     (inputs (list glib
                   gnome-autoar
                   gnome-online-accounts
@@ -2028,44 +2034,53 @@ and system administrators.")
    (license license:cc-by3.0)))
 
 (define-public dia
-  ;; This version from GNOME's repository includes fixes for compiling with
-  ;; recent versions of the build tools.  The latest activity on the
-  ;; pre-GNOME version has been in 2014, while GNOME has continued applying
-  ;; fixes since.
-  (let ((commit "b903dd83aa5aab1b41c7864dd5027d1b6a0a190c")
-        (revision "4"))
+  ;; There are no recent releases; use the latest commit from the master
+  ;; branch.
+  (let ((commit "c99c6e2c85ce28e82a89384a83800d6efb91dfb1")
+        (revision "6"))
     (package
       (name "dia")
       (version (git-version "0.97.3" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://gitlab.gnome.org/GNOME/dia.git/")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "0j5q7whwpzzfsinjryp3g0xh3cyy88drwyr0w8x0666mj6h70h6a"))))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://gitlab.gnome.org/GNOME/dia.git/")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "11ak07pw1d9bgrkmpzlk287aphqscdnh4l36vc821v0srkas9335"))))
       (build-system meson-build-system)
-      ;; XXX: Parallel builds may cause: [74/566] [...]
-      ;; fatal error: dia-lib-enums.h: No such file or directory
-      (arguments '(#:parallel-build? #f))
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'disable-gtk-update-icon-cache
+              (lambda _
+                (substitute* "meson.build"
+                  (("gtk_update_icon_cache: true")
+                   "gtk_update_icon_cache: false")
+                  (("update_desktop_database: true")
+                   "update_desktop_database: false")))))))
+      (native-inputs
+       (list appstream
+             docbook-xml-4.5
+             docbook-xsl
+             `(,glib "bin")
+             gettext-minimal
+             pkg-config))
       (inputs
        (list graphene
-             gtk+-2
-             libxml2
+             gtk+
+             libxml2-next
              libxslt
-
-             ;; XXX: PDF plugin fails to build with poppler 21.07.0.
-             ;; poppler
-
-             python))
-      (native-inputs
-       (list appstream-glib docbook-xsl
-             `(,glib "bin") gettext-minimal pkg-config))
+             poppler
+             python-minimal
+             xpm-pixbuf))
       (home-page "https://wiki.gnome.org/Apps/Dia")
       (synopsis "Diagram creation for GNOME")
-      (description "Dia can be used to draw different types of diagrams, and
+      (description
+       "Dia can be used to draw different types of diagrams, and
 includes support for UML static structure diagrams (class diagrams), entity
 relationship modeling, and network diagrams.  The program supports various file
 formats like PNG, SVG, PDF and EPS.")
@@ -2589,6 +2604,9 @@ GNOME Desktop.")
                (base32
                 "11hp93gqk7m64h84q5hndzlwj4w6hl0cbmzrk2pkdn04ikm2zj4v"))))
     (build-system gnu-build-system)
+    (arguments
+     (list #:configure-flags
+           #~(list "CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types")))
     (native-inputs
      (list autoconf
            automake
@@ -2614,18 +2632,18 @@ GNOME Desktop.")
   (package/inherit gdl
     (name "gdl-minimal")
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'disable-doc-generation
-           ;; XXX: There is no easy way to disable generating the
-           ;; documentation.
-           (lambda _
-             (substitute* "configure.in"
-               (("GTK_DOC_CHECK.*") "")
-               (("docs/.*") ""))
-             (substitute* "Makefile.am"
-               (("gdl docs po") "gdl po"))
-             #t)))))
+     (substitute-keyword-arguments (package-arguments gdl)
+       ((#:phases phases #~%standard-phases)
+        #~(modify-phases #$phases
+            (add-after 'unpack 'disable-doc-generation
+              ;; XXX: There is no easy way to disable generating the
+              ;; documentation.
+              (lambda _
+                (substitute* "configure.in"
+                  (("GTK_DOC_CHECK.*") "")
+                  (("docs/.*") ""))
+                (substitute* "Makefile.am"
+                  (("gdl docs po") "gdl po"))))))))
     (native-inputs (alist-delete "gtk-doc" (package-native-inputs gdl)))))
 
 (define-public libgnome-keyring
@@ -3939,7 +3957,10 @@ functionality was designed to be as reusable and portable as possible.")
       ;; The "timeout-server" test hangs when run in parallel.
       #:parallel-tests? #f
       #:configure-flags
-      #~'(;; We don't need static libraries, plus they don't build reproducibly
+      #~'(#$(string-append "CFLAGS=-g -O2"
+                           " -Wno-error=implicit-int"
+                           " -Wno-error=incompatible-pointer-types")
+          ;; We don't need static libraries, plus they don't build reproducibly
           ;; (non-deterministic ordering of .o files in the archive.)
           "--disable-static"
 
@@ -4102,7 +4123,12 @@ designed to be accessed through the MIME functions in GnomeVFS.")
                 "1ajg8jb8k3snxc7rrgczlh8daxkjidmcv3zr9w809sq4p2sn9pk2"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
+     `(#:configure-flags
+       ;; Add CFLAGS to relax gcc-14's strictness.
+       (list (string-append
+              "CFLAGS=-g -O2"
+              " -Wno-error=implicit-function-declaration"))
+       #:phases
        (modify-phases %standard-phases
          (add-before 'configure 'ignore-deprecations
            (lambda _
@@ -4677,7 +4703,15 @@ targeting the GNOME stack simple.")
                                   "vala-" version ".tar.xz"))
               (sha256
                (base32
-                "12y6p8wdjp01vmfhxg2cgh32xnyqq6ivblvrar9clnj6vc867qhx"))))))
+                "12y6p8wdjp01vmfhxg2cgh32xnyqq6ivblvrar9clnj6vc867qhx"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments vala)
+       ((#:configure-flags flags #~'())
+        #~(cons*
+           (string-append "CFLAGS=-g -O2"
+                          " -Wno-error=address"
+                          " -Wno-error=incompatible-pointer-types")
+           #$flags))))))
 
 (define-public vte
   (package
@@ -4792,26 +4826,28 @@ editors, IDEs, etc.")
     (arguments
      ;; Disable -Werror and such, to avoid build failures on compilation
      ;; warnings.
-     '(#:configure-flags '("--enable-compile-warnings=minimum"
-                           "CFLAGS=-O2 -g -fcommon")
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'install 'skip-gtk-update-icon-cache
-           (lambda _
-             ;; Don't create 'icon-theme.cache'
-             (substitute* (find-files "." "^Makefile$")
-               (("gtk-update-icon-cache") (which "true")))
-             #t))
-         (add-after 'unpack 'patch-configure
-           (lambda _
-             (substitute* "configure"
-               (("freerdp") "freerdp2"))
-             #t)))))
+     (list
+      #:configure-flags
+      #~(list "--enable-compile-warnings=minimum"
+              (string-append "CFLAGS=-O2 -g -fcommon "
+                             "-Wno-implicit-int "
+                             "-Wno-incompatible-pointer-types"))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'skip-gtk-update-icon-cache
+            (lambda _
+              ;; Don't create 'icon-theme.cache'
+              (substitute* (find-files "." "^Makefile$")
+                (("gtk-update-icon-cache") (which "true")))))
+          (add-after 'unpack 'patch-configure
+            (lambda _
+              (substitute* "configure"
+                (("freerdp") "freerdp2")))))))
     (native-inputs
-     `(("pkg-config" ,pkg-config)
-       ("intltool" ,intltool)
-       ("itstool" ,itstool)
-       ("glib-bin" ,glib "bin")))                 ;for glib-compile-schemas
+     (list pkg-config
+           intltool
+           itstool
+           (list glib "bin")))                 ;for glib-compile-schemas
     (inputs
      (list libxml2
            gtk-vnc
@@ -5214,7 +5250,7 @@ as OpenStreetMap, OpenCycleMap, OpenAerialMap and Maps.")
 (define-public libsoup-minimal
   (package
     (name "libsoup-minimal")
-    (version "3.6.1")
+    (version "3.6.4")
     (source (origin
               (method url-fetch)
               (uri (string-append "mirror://gnome/sources/libsoup/"
@@ -5222,7 +5258,7 @@ as OpenStreetMap, OpenCycleMap, OpenAerialMap and Maps.")
                                   "libsoup-" version ".tar.xz"))
               (sha256
                (base32
-                "0f7qiahry819c3rv9r0mxybz0pn5js69klsrh76v4wyx5fmg3cff"))))
+                "12jwcsk17b4x4pd4wqnhn5xzr25186hw5dpjrbmmpc3na9pwfm4v"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -5760,6 +5796,10 @@ file.")
                         (not (target-little-endian?))))
       #:phases
       #~(modify-phases %standard-phases
+          (add-before 'configure 'relax-gcc-14-strictness
+            (lambda _
+              (setenv "CFLAGS"
+                      "-g -O2 -Wno-error=incompatible-pointer-types")))
           (add-after 'unpack 'disable-problematic-tests
             (lambda _
               ;; Skip the colord-test-private, which requires a *system* D-Bus
@@ -5986,7 +6026,9 @@ faster results and to avoid unnecessary server load.")
               ;; This test calls an unimplemented bluez dbus method.
               (substitute* "src/linux/integration-test.py"
                 (("test_bluetooth_hidpp_mouse")
-                 "disabled_test_bluetooth_hidpp_mouse"))
+                 "disabled_test_bluetooth_hidpp_mouse")
+                (("test_daemon_restart")
+                 "disabled_test_daemon_restart"))
               #$@(if (target-x86-32?)
                      ;; Address test failure caused by excess precision
                      ;; on i686:
@@ -6409,7 +6451,10 @@ throughout GNOME for API documentation).")
            wayland))
     (arguments
      `(#:disallowed-references (,xorg-server-for-tests)
-       #:configure-flags (list "--enable-cogl-gst=no" ;broken and unmaintained
+       #:configure-flags (list ,(string-append
+                                 "CFLAGS=-g -O2"
+                                 " -Wno-error=implicit-function-declaration")
+                               "--enable-cogl-gst=no" ;broken and unmaintained
                                "--enable-wayland-egl-platform"
                                "--enable-wayland-egl-server"
 
@@ -7676,6 +7721,8 @@ wraps things up in a developer-friendly way.")
     (build-system gnu-build-system)
     (arguments
      (list
+      #:configure-flags
+      #~(list "CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-introspection-install-dir
@@ -9375,7 +9422,7 @@ devices using the GNOME desktop.")
     (build-system meson-build-system)
     (arguments (list #:glib-or-gtk? #t))
     (inputs (list gtk libadwaita))
-    (native-inputs (list `(,glib "bin") gnu-gettext pkg-config))
+    (native-inputs (list `(,glib "bin") gettext-minimal pkg-config))
     (home-page "https://gitlab.gnome.org/GNOME/tecla")
     (synopsis "Keyboard layout viewer")
     (description "Tecla is a keyboard layout viewer based on GTK 4 and
@@ -9824,6 +9871,13 @@ easy, safe, and automatic.")
           (add-before 'configure 'set-shell
             (lambda _
               (setenv "SHELL" (which "bash"))))
+          (add-before 'configure 'relax-gcc-14-strictness
+            (lambda _
+              (setenv "CFLAGS"
+                      (string-append
+                       "-g -O2"
+                       " -Wno-error=implicit-function-declaration"
+                       " -Wno-error=incompatible-pointer-types"))))
           (add-before 'configure 'fix-paths
             (lambda* (#:key inputs #:allow-other-keys)
               (let* ((manpage "/etc/asciidoc/docbook-xsl/manpage.xsl")
@@ -10974,7 +11028,7 @@ to perfectly fit the GNOME desktop.")
     (native-inputs (list blueprint-compiler
                          desktop-file-utils
                          `(,glib "bin")
-                         gnu-gettext
+                         gettext-minimal
                          gobject-introspection
                          `(,gtk "bin")
                          pkg-config))
@@ -11434,7 +11488,9 @@ basically a text box in which notes can be written.")
                     (guix build glib-or-gtk-build-system)
                     (guix build utils))
          #:configure-flags
-         (list "--with-unicode-data=../unicode-data")
+         (list
+          "CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types"
+          "--with-unicode-data=../unicode-data")
          #:phases
          (modify-phases %standard-phases
            (add-after 'unpack 'prepare-unicode-data
@@ -12650,7 +12706,11 @@ repository and commit your work.")
                 "02n1zr9y8q9lyczhcz0nxar1vmf8p2mmbw8kq0v43wg21jr4i6d5"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:phases
+     `(#:configure-flags `(,(string-append
+                             "CFLAGS=-g -O2"
+                             " -Wno-error=implicit-function-declaration"
+                             " -Wno-error=return-mismatch"))
+       #:phases
        (modify-phases %standard-phases
          ;; The 'config.sub' is too old to recognise aarch64.
          ,@(if (or (target-aarch64?) (target-riscv64?))
@@ -12920,7 +12980,11 @@ integrate seamlessly with the GNOME desktop.")
                             (substitute* "src/installed-media.vala"
                               (("qemu-img")
                                (search-input-file inputs
-                                                  "/bin/qemu-img"))))))))
+                                                  "/bin/qemu-img")))))
+                        (add-before 'configure 'relax-gcc-14-strictness
+                          (lambda _
+                            (setenv "CFLAGS"
+                                    "-g -O2 -Wno-error=int-conversion"))))))
     (native-inputs
      (list desktop-file-utils           ;for update-desktop-database
            gettext-minimal
@@ -14211,7 +14275,7 @@ historical battery usage and related statistics.")
               ;; This is done so we can override.
               (("`set.PREFIX_BIN") "set(QPREFIX_BIN")))))))
     (native-inputs
-     (list cmake pkg-config intltool gnu-gettext))
+     (list cmake pkg-config intltool gettext-minimal))
     (inputs
      (list glib gtk+ libx11 libsm libxv libxaw libxcb libxkbfile
            shared-mime-info))

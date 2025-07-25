@@ -742,7 +742,8 @@ This package also provides @samp{kdlpp}, a C++20 wrapper around @samp{ckdl}.")
                     version ".tar.gz"))
               (sha256
                (base32
-                "03f1862ljdshg7d0rg3j7jzgm3ip55kzd2y91q7p0racax3hxx6i"))))
+                "03f1862ljdshg7d0rg3j7jzgm3ip55kzd2y91q7p0racax3hxx6i"))
+              (patches (search-patches "capnproto-fix-test.patch"))))
     (build-system gnu-build-system)
     (arguments
      `(#:phases
@@ -872,7 +873,7 @@ style and key ordering are kept, so you can diff the source.")
 (define-public python-ruamel.yaml.clib
   (package
     (name "python-ruamel.yaml.clib")
-    (version "0.2.8")
+    (version "0.2.9")
     (source
       (origin
         ;; pypi release code has cythonized code without corresponding source.
@@ -880,10 +881,10 @@ style and key ordering are kept, so you can diff the source.")
         (uri (hg-reference
                (url "http://hg.code.sf.net/p/ruamel-yaml-clib/code")
                (changeset version)))
-        (file-name (string-append name "-" version "-checkout"))
+        (file-name (hg-file-name name version))
         (sha256
          (base32
-          "0qspqnk72xrjj17b00hjibbzjk3krsrakzf08wxwz7z908cv6278"))
+          "100nyixfikwivsxiwkq2frgbfkqvvl112wkn0sgc57xq0p1s0dv8"))
         (modules '((guix build utils)))
         (snippet
          '(begin
@@ -954,17 +955,16 @@ to generate and parse.  The two primary functions are @code{cbor.loads} and
 (define-public flatbuffers
   (package
     (name "flatbuffers")
-    (version "2.0.0")
-    (source
-      (origin
-        (method git-fetch)
-        (uri (git-reference
-              (url "https://github.com/google/flatbuffers")
-              (commit (string-append "v" version))))
-        (file-name (git-file-name name version))
-        (sha256
-         (base32
-          "1zbf6bdpps8369r1ql00irxrp58jnalycc8jcapb8iqg654vlfz8"))))
+    (version "24.12.23")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/google/flatbuffers")
+                    (commit (string-append "v" version))))
+              (file-name (git-file-name "flatbuffers" version))
+              (sha256
+               (base32
+                "01g64kmjw8dfhj12j5fgyx70avix9p1ml4w25lm726dixmpq9gp8"))))
     (build-system cmake-build-system)
     (arguments
      '(#:build-type "Release"
@@ -1002,22 +1002,8 @@ game development and other performance-critical applications.")
        ((#:configure-flags flags #~'())
         #~(append #$flags '("-DCMAKE_POSITION_INDEPENDENT_CODE=ON")))))))
 
-(define-public flatbuffers-next
-  (package
-    (inherit flatbuffers)
-    (version "24.12.23")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/google/flatbuffers")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name "flatbuffers" version))
-              (sha256
-               (base32
-                "01g64kmjw8dfhj12j5fgyx70avix9p1ml4w25lm726dixmpq9gp8"))))))
-
 (define-public go-github-com-google-flatbuffers
-  (package/inherit flatbuffers-next
+  (package/inherit flatbuffers
     (name "go-github-com-google-flatbuffers")
     (build-system go-build-system)
     (arguments

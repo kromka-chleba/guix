@@ -4,7 +4,7 @@
 ;;; Copyright © 2015 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2016, 2018–2022 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2016, 2019-2021, 2023, 2025 Efraim Flashner <efraim@flashner.co.il>
-;;; Copyright © 2016, 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2016, 2023, 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2016 Roel Janssen <roel@gnu.org>
 ;;; Copyright © 2016, 2017 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2017 Hartmut Goebel <h.goebel@crazy-compilers.com>
@@ -906,14 +906,14 @@ permit managing file systems not included in libparted.")
 (define-public testdisk
   (package
     (name "testdisk")
-    (version "7.1")
+    (version "7.2")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://www.cgsecurity.org/testdisk-"
                                   version ".tar.bz2"))
               (sha256
                (base32
-                "1zlh44w67py416hkvw6nrfmjickc2d43v51vcli5p374d5sw84ql"))))
+                "0gr87j0ynbwzb958j443dnp013rr33cvrqx2j5fiq05l1ki3nd7q"))))
     (build-system gnu-build-system)
     (inputs
      (list ntfs-3g
@@ -1183,7 +1183,7 @@ and its highly optimized now for efficient performance.")
      (list pkg-config swig python-3))           ; used to generate the Python bindings
     (inputs
      (append
-      (cons cryptsetup (libcryptsetup-propagated-inputs))
+      (cons cryptsetup-minimal (libcryptsetup-propagated-inputs))
       (cons lvm2 (libdevmapper-propagated-inputs))
       (list nss
             (list util-linux "lib")
@@ -1361,7 +1361,7 @@ to create devices with respective mappings for the ATARAID sets discovered.")
            python-wrapper))
     (inputs
      (append
-      (cons cryptsetup (libcryptsetup-propagated-inputs))
+      (cons cryptsetup-minimal (libcryptsetup-propagated-inputs))
       (if (supported-package? multipath-tools)
           (list multipath-tools)
           '())

@@ -354,7 +354,7 @@ or musca).
                   "1f75vfd5fv8zhd7hy7lg26wmlaslxqj2knf3zi6wnv21n63m3wa1"))))
       (build-system cmake-build-system)
       (arguments (list #:tests? #f)) ;No tests.
-      (native-inputs (list gcc-14 pkg-config))
+      (native-inputs (list gcc-15 pkg-config))
       (inputs
        (list hyprland-protocols
              hyprlang
@@ -373,7 +373,7 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
 (define-public hyprland
   (package
     (name "hyprland")
-    (version "0.49.0")
+    (version "0.50.1")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://github.com/hyprwm/Hyprland"
@@ -390,7 +390,7 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
                               "subprojects"))))
               (sha256
                (base32
-                "0c2pvi9cdg6jv9wiz966q1sj8mjmxsgvcplsmfhhknpy7h2gp5px"))))
+                "0mn97wlzc5ccywbq87ka7a27jajkdkgypkfzkcan014viph80wif"))))
     (build-system cmake-build-system)
     (arguments
      (list #:cmake cmake-next
@@ -419,7 +419,7 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
                      (("hyprland-update-screen" cmd)
                       (search-input-file inputs (in-vicinity "bin" cmd)))))))))
     (native-inputs
-     (list gcc-14
+     (list gcc-15
            hyprwayland-scanner
            (module-ref (resolve-interface
                   '(gnu packages commencement))
@@ -435,7 +435,7 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
            hyprland-qtutils
            hyprlang
            hyprutils
-           libinput-minimal
+           libinput-minimal-next
            libxcursor
            libxkbcommon
            mesa
@@ -449,7 +449,7 @@ loginctl commands (lock/unlock/before-sleep) and inhibit.")
            xcb-util-errors
            xcb-util-wm
            xorg-server-xwayland))
-    (home-page "https://hyprland.org/")
+    (home-page "https://hypr.land/")
     (synopsis "Dynamic tiling Wayland compositor")
     (description
      "Hyprland is a dynamic tiling Wayland compositor that doesn't sacrifice on
@@ -1002,7 +1002,7 @@ prompt.")
 (define-public i3lock-color
   (package
     (name "i3lock-color")
-    (version "2.13.c.4")
+    (version "2.13.c.5")
     (source
      (origin
        (method git-fetch)
@@ -1011,10 +1011,14 @@ prompt.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1lnyh8spbf1ar4xan5v7q8i2i51aq1i60kzbfkn9w3wa0jzf9f3d"))))
+        (base32 "1ya7h4ql5znjapfw67b8mkmflvcyywial494pgmnczv2aj1dxqky"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:tests? #f))                    ; no tests included
+     (list
+      #:tests? #f ;no tests included
+      #:configure-flags
+      #~(list (string-append "--with-zsh-completion-dir="
+                             #$output "/share/zsh/site-functions"))))
     (inputs
      (list cairo
            libev
@@ -1026,7 +1030,7 @@ prompt.")
            xcb-util-image
            xcb-util-xrm))
     (native-inputs
-     (list autoconf automake pkg-config))
+     (list autoconf automake-1.16.5 bash-completion pkg-config))
     (home-page "https://github.com/Raymo111/i3lock-color")
     (synopsis "Screen locker with color configuration support")
     (description
@@ -1373,63 +1377,57 @@ drags, snap-to-border support, and virtual desktops.")
     (name "fluxbox")
     (version "1.3.7")
     (synopsis "Small and fast window manager")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/fluxbox/fluxbox/"
-                                  version "/fluxbox-" version ".tar.xz"))
-              (sha256
-               (base32
-                "1h1f70y40qd225dqx937vzb4k2cz219agm1zvnjxakn5jkz7b37w"))
-              (patches
-               (search-patches "fluxbox-1.3.7-no-dynamic-cursor.patch"
-                               "fluxbox-1.3.7-gcc.patch"))))
+    (source
+     (origin
+       (method url-fetch)
+       (uri (string-append "mirror://sourceforge/fluxbox/fluxbox/" version
+                           "/fluxbox-" version ".tar.xz"))
+       (sha256
+        (base32 "1h1f70y40qd225dqx937vzb4k2cz219agm1zvnjxakn5jkz7b37w"))
+       (patches (search-patches "fluxbox-1.3.7-no-dynamic-cursor.patch"
+                                "fluxbox-1.3.7-gcc.patch"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:make-flags '("CPPFLAGS=-U__TIME__") ;ugly, but for reproducibility
-       #:phases
-       (modify-phases %standard-phases
-         (add-before 'bootstrap 'force-bootstrap
-           (lambda _
-             (delete-file "configure")))
-         (add-after 'install 'install-vim-files
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (syntax (string-append
-                              out "/share/vim/vimfiles/pack/guix/start/fluxbox/syntax")))
-               (copy-recursively "3rd/vim/vim/syntax" syntax)
-               #t)))
-         (add-after 'install 'install-xsession
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (xsessions (string-append out "/share/xsessions")))
-               (mkdir-p xsessions)
-               (call-with-output-file
-                 (string-append xsessions "/fluxbox.desktop")
-                 (lambda (port)
-                   (format port "~
-                     [Desktop Entry]~@
-                     Name=~a~@
-                     Comment=~a~@
-                     Exec=~a/bin/startfluxbox~@
-                     Type=Application~%" ,name ,synopsis out)))
-               #t))))))
-    (native-inputs
-     (list autoconf automake gnu-gettext pkg-config))
-    (inputs
-     (list freetype
-           fribidi
-           imlib2
-           libx11
-           libxcursor
-           libxext
-           libxft
-           libxinerama
-           libxpm
-           libxrandr
-           libxrender))
-    (description "Fluxbox is a window manager.  It is light on resources
-and easy to handle yet full of features to make an easy and fast desktop
-experience.")
+     (list
+      #:make-flags
+      #~'("CPPFLAGS=-U__TIME__") ;ugly, but for reproducibility
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'bootstrap 'force-bootstrap
+            (lambda _
+              (delete-file "configure")))
+          (add-after 'install 'install-vim-files
+            (lambda _
+              (copy-recursively "3rd/vim/vim/syntax"
+                                (string-append #$output "\
+/share/vim/vimfiles/pack/guix/start/fluxbox/syntax"))))
+          (add-after 'install 'install-xsession
+            (lambda _
+              (let ((apps (string-append #$output "/share/applications")))
+                (mkdir-p apps)
+                (make-desktop-entry-file
+                 (string-append apps "/fluxbox.desktop")
+                 #:name "Fluxbox"
+                 #:generic-name #$synopsis
+                 #:exec (string-append #$output "/bin/startfluxbox %U")
+                 #:comment
+                 `(("en" ,#$synopsis)
+                   (#f ,#$synopsis)))))))))
+    (native-inputs (list autoconf automake gettext-minimal pkg-config))
+    (inputs (list freetype
+                  fribidi
+                  imlib2
+                  libx11
+                  libxcursor
+                  libxext
+                  libxft
+                  libxinerama
+                  libxpm
+                  libxrandr
+                  libxrender))
+    (description
+     "Fluxbox is a window manager.  It is light on resources and easy to
+handle yet full of features to make an easy and fast desktop experience.")
     (home-page "http://fluxbox.org/")
     (license license:expat)))
 
@@ -3711,34 +3709,34 @@ for wayland conceptually based on the X11 window manager
     (license license:expat)))
 
 (define-public libdisplay-info
-  (let ((commit "ebee35935dad01478ae1ae5ead298c4cd8018ac2")
-        (revision "0"))
-    (package
-      (name "libdisplay-info")
-      (version (git-version "0.2.0-dev" revision commit))
-      (home-page "https://gitlab.freedesktop.org/emersion/libdisplay-info")
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference (url home-page) (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "1ly8acdjxn8l55y0wc07n7pb6rzh9dpr1vbsakdib2zrl0i5yh3a"))))
-      (build-system meson-build-system)
-      (arguments
-       (list
-        #:phases #~(modify-phases %standard-phases
-                     (add-before 'configure 'fix-meson-file
-                       (lambda* (#:key native-inputs inputs #:allow-other-keys)
-                         (substitute* "meson.build"
-                           (("/usr/share/hwdata/pnp.ids")
-                            (string-append (assoc-ref (or native-inputs inputs)
-                                                      "hwdata")
-                                           "/share/hwdata/pnp.ids"))))))))
-      (native-inputs (list hwdata python))
-      (synopsis "EDID and DisplayID library")
-      (description
-       "This package provides a library to read @acronym{EDID, Extended
+  (package
+    (name "libdisplay-info")
+    (version "0.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://gitlab.freedesktop.org/emersion/libdisplay-info")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0x5paiq0lfvq6kbn5hgf0h8m86mjkqqj1pldjgl1i0n7nc39c6gb"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'configure 'fix-meson-file
+                     (lambda* (#:key native-inputs inputs #:allow-other-keys)
+                       (substitute* "meson.build"
+                         (("/usr/share/hwdata/pnp.ids")
+                          (string-append (assoc-ref (or native-inputs inputs)
+                                                    "hwdata")
+                                         "/share/hwdata/pnp.ids"))))))))
+    (native-inputs (list hwdata python))
+    (home-page "https://gitlab.freedesktop.org/emersion/libdisplay-info")
+    (synopsis "EDID and DisplayID library")
+    (description
+     "This package provides a library to read @acronym{EDID, Extended
 Display Identification Data} and DisplayID metadata from display devices.  It
 has the following goals:
 
@@ -3751,7 +3749,7 @@ Simplicity and correctness over performance and resource usage.
 @item
 Well-tested and fuzzed.
 @end enumerate")
-      (license license:expat))))
+    (license license:expat)))
 
 (define-public libucl
   (package

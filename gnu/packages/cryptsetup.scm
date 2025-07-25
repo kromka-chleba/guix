@@ -3,6 +3,8 @@
 ;;; Copyright © 2016 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2019–2021 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2025 Antoine Côté <antoine.cote@posteo.net>
+;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -23,6 +25,7 @@
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix download)
+  #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
   #:use-module (guix gexp)
   #:use-module (guix utils)
@@ -35,10 +38,10 @@
   #:use-module (gnu packages ruby-check)
   #:use-module (gnu packages web))
 
-(define-public cryptsetup
+(define-public cryptsetup-minimal
   (package
-   (name "cryptsetup")
-   (version "2.6.1")
+   (name "cryptsetup-minimal")
+   (version "2.8.0")
    (source (origin
             (method url-fetch)
             (uri (string-append "mirror://kernel.org/linux/utils/cryptsetup/v"
@@ -46,7 +49,7 @@
                                 "/cryptsetup-" version ".tar.xz"))
             (sha256
              (base32
-              "14s6vbb9llpgnhmv0badxxzhi73jp4vyvp8swk4bjah7l5jys3a1"))))
+              "18j3a8zzcwc0sragq47vf0b0qyr06bajh2sj6zm1r1ssq8vjv7nc"))))
    (build-system gnu-build-system)
    (arguments
     `(#:configure-flags
@@ -70,10 +73,7 @@
           (string-append "--with-libgcrypt-prefix="
                          (assoc-ref %build-inputs "libgcrypt"))))))
    (native-inputs
-    (append (list pkg-config)
-            (if (supported-package? ruby-asciidoctor/minimal)
-                (list ruby-asciidoctor/minimal)
-                '())))
+    (list pkg-config))
    (inputs
     (list argon2
           json-c
@@ -100,6 +100,14 @@ block integrity kernel modules.")
    (license license:gpl2)
    (home-page "https://gitlab.com/cryptsetup/cryptsetup")))
 
+(define-public cryptsetup
+  (package/inherit cryptsetup-minimal
+    (name "cryptsetup")
+    (native-inputs `(,(if (supported-package? ruby-asciidoctor/minimal)
+                          `("ruby-asciidoctor" ,ruby-asciidoctor/minimal)
+                          '())
+                     ,@(package-native-inputs cryptsetup-minimal)))))
+
 (define-public (libcryptsetup-propagated-inputs)
   (list argon2
         json-c
@@ -116,16 +124,21 @@ files).  This assumes LIBRARY uses Libtool."
     (arguments
      (substitute-keyword-arguments (package-arguments library)
        ((#:configure-flags flags #~'())
-        #~(append '("--disable-shared" "--enable-static")
-                  #$flags))))))
+        (let* ((build-system (package-build-system library))
+               (static-flags (cond ((eq? build-system cmake-build-system)
+                                    '("-DBUILD_SHARED_LIBS=OFF"))
+                                   (else
+                                    '("--disable-shared" "--enable-static")))))
+          #~(append '#$static-flags
+                    #$flags)))))))
 
 (define-public cryptsetup-static
   ;; Stripped-down statically-linked 'cryptsetup' command for use in initrds.
   (package
-    (inherit cryptsetup)
+    (inherit cryptsetup-minimal)
     (name "cryptsetup-static")
     (arguments
-     (substitute-keyword-arguments (package-arguments cryptsetup)
+     (substitute-keyword-arguments (package-arguments cryptsetup-minimal)
        ((#:configure-flags flags ''())
         `(cons* "--disable-shared"
                 "--enable-static-cryptsetup"
@@ -174,7 +187,7 @@ files).  This assumes LIBRARY uses Libtool."
               (propagated-inputs
                `(("libgpg-error-host" ,(static-library libgpg-error)))))))
        `(("argon2" ,(static-library argon2))
-         ("json-c" ,(static-library json-c-0.13))
+         ("json-c" ,(static-library json-c))
          ("libgcrypt" ,libgcrypt-static)
          ("lvm2" ,lvm2-static)
          ("util-linux" ,util-linux "static")

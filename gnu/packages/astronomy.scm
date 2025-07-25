@@ -277,7 +277,7 @@ wide set of telescopes.")
 (define-public astroterm
   (package
     (name "astroterm")
-    (version "1.0.7")
+    (version "1.0.8")
     (source
      (origin
        (method git-fetch)
@@ -286,7 +286,7 @@ wide set of telescopes.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "03vfjcf8y039xbkigc3wy1sccbmk7zyy2nkfp984nbdxgr1pj129"))))
+        (base32 "10y776rh6ww1zjk96cd497ipbr54q0wdd1g7ybsrffdbrzc6l8jx"))))
     (build-system meson-build-system)
     (arguments
      (list
@@ -305,7 +305,7 @@ wide set of telescopes.")
     (native-inputs
      (list pkg-config python-wrapper specification-ybsc xxd))
     (inputs
-     (list ncurses argtable))
+     (list ncurses argtable3))
     (home-page "https://github.com/da-luce/astroterm")
     (synopsis "Planetarium for your terminal")
     (description
@@ -714,6 +714,9 @@ in FITS files.")
                    (string-append blas "/lib"))))))
           (replace 'build
             (lambda* _
+                (substitute* "compile.cp"
+                  (("-Wno-unknown-pragmas")
+                   "-Wno-unknown-pragmas -Wno-error=maybe-uninitialized"))
               (invoke "./compile.cp" "BLAS" "OPEN_MP" "LPTHREAD" "PY_INTERF")))
           (replace 'install
             (lambda _
@@ -802,8 +805,8 @@ corrections.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://gitlab.lam.fr/jclamber/glnemo2")
-             (commit version)))
+              (url "https://gitlab.lam.fr/jclamber/glnemo2")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
         (base32 "1jmmxszh8d2jmfghig36nhykff345mqnpssfa64d0r7l9cnfp3cn"))))
@@ -811,7 +814,12 @@ corrections.")
     (arguments
      (list
       #:tests? #f        ; No test target
-      #:configure-flags #~(list "CPPFLAGS=-fcommon")
+      #:configure-flags
+      #~(list "CPPFLAGS=-fcommon"
+              (string-append "-DCMAKE_C_FLAGS="
+                             " -Wno-error=implicit-function-declaration"
+                             " -Wno-error=implicit-int"
+                             " -Wno-error=int-conversion"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-libraries-paths
@@ -1146,20 +1154,6 @@ more.")
                    license:gpl2+
                    license:lgpl2.0+
                    license:lgpl2.1+))))
-
-(define-public indi-1
-  (package
-    (inherit indi)
-    (version "1.9.9")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/indilib/indi")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name "indi" version))
-       (sha256
-        (base32 "1vfcas59nlw8v7n6qhxhcm4isf5wk0crip5rmsallq3bsv3zznfr"))))))
 
 (define-public iraf-community
   (package
@@ -1533,68 +1527,75 @@ R. Seaman's protocol}
     (license license:gpl3+)))
 
 (define-public phd2
-  (package
-    (name "phd2")
-    (version "2.6.13")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/OpenPHDGuiding/phd2")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0shr50ngi7dliijy8fxrd1c4hzkm4vp4m0a4m0d9gvrx56vzyx0s"))
-       (modules '((guix build utils)
-                  (ice-9 ftw)
-                  (srfi srfi-26)))
-       (snippet
-        #~(begin
-            ;; XXX: 'delete-all-but' is copied from the turbovnc package.
-            (define (delete-all-but directory . preserve)
-              (define (directory? x)
-                (and=> (stat x #f)
-                       (compose (cut eq? 'directory <>) stat:type)))
-              (with-directory-excursion directory
-                (let* ((pred
-                        (negate (cut member <> (append '("." "..") preserve))))
-                       (items (scandir "." pred)))
-                  (for-each (lambda (item)
-                              (if (directory? item)
-                                  (delete-file-recursively item)
-                                  (delete-file item)))
-                            items))))
-            (delete-all-but "thirdparty" "thirdparty.cmake")))))
-    (build-system cmake-build-system)
-    (arguments
-     (list #:configure-flags #~(list "-DOPENSOURCE_ONLY=yes"
-                                     "-DUSE_SYSTEM_CFITSIO=yes"
-                                     "-DUSE_SYSTEM_EIGEN3=yes"
-                                     "-DUSE_SYSTEM_GTEST=yes"
-                                     "-DUSE_SYSTEM_LIBINDI=yes"
-                                     "-DUSE_SYSTEM_LIBUSB=yes")))
-    (native-inputs
-     (list gettext-minimal
-           googletest
-           perl
-           pkg-config
-           python))
-    (inputs
-     (list cfitsio
-           curl
-           eigen
-           gtk+
-           indi-1
-           libnova
-           libusb
-           wxwidgets
-           zlib))
-    (home-page "https://openphdguiding.org")
-    (synopsis "Teleskope guiding software")
-    (description
-     "PHD2 is the enhanced, second generation version of the PHD guiding software
-from Stark Labs.")
-    (license license:bsd-3)))
+  ;; The tag 2.6.13 was placed in 2023, but there are a lot of changes, fixes
+  ;; and compatability with indi@2, use the latest commit from master branch.
+  (let ((commit "cc00236e79810da48e691e6a4785eb7e10b794ac")
+        (revision "0"))
+    (package
+      (name "phd2")
+      (version (git-version "2.6.13" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/OpenPHDGuiding/phd2")
+                (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1b6fzniy5w9bx4627761nd4laargy728zvhw4k69dinwdwdi8jjw"))
+         (modules '((guix build utils)
+                    (ice-9 ftw)
+                    (srfi srfi-26)))
+         (snippet
+          #~(begin
+              ;; XXX: 'delete-all-but' is copied from the turbovnc package.
+              (define (delete-all-but directory . preserve)
+                (define (directory? x)
+                  (and=> (stat x #f)
+                         (compose (cut eq? 'directory <>) stat:type)))
+                (with-directory-excursion directory
+                  (let* ((pred
+                          (negate (cut member <> (append '("." "..") preserve))))
+                         (items (scandir "." pred)))
+                    (for-each (lambda (item)
+                                (if (directory? item)
+                                    (delete-file-recursively item)
+                                    (delete-file item)))
+                              items))))
+              (delete-all-but "thirdparty" "thirdparty.cmake")))))
+      (build-system cmake-build-system)
+      (arguments
+       (list
+        #:configure-flags
+        #~(list "-DOPENSOURCE_ONLY=yes"
+                "-DUSE_SYSTEM_CFITSIO=yes"
+                "-DUSE_SYSTEM_EIGEN3=yes"
+                "-DUSE_SYSTEM_GTEST=yes"
+                "-DUSE_SYSTEM_LIBINDI=yes"
+                "-DUSE_SYSTEM_LIBUSB=yes")))
+      (native-inputs
+       (list gettext-minimal
+             googletest
+             perl
+             pkg-config
+             python))
+      (inputs
+       (list cfitsio
+             curl
+             eigen
+             gtk+
+             indi
+             libnova
+             libusb
+             opencv
+             wxwidgets
+             zlib))
+      (home-page "https://openphdguiding.org")
+      (synopsis "Teleskope guiding software")
+      (description
+       "PHD2 is the enhanced,second generation version of the PHD guiding
+software from Stark Labs.")
+      (license license:bsd-3))))
 
 (define-public psfex
   (package
@@ -8588,6 +8589,11 @@ arbitrary solar system observers.")
        (sha256
         (base32 "0m2b21mim3a7wgfg3ph2w5hv7mdvr03jmmhzipc0wcahijglcw9j"))))
     (build-system gnu-build-system)
+    (arguments
+     (list
+      #:make-flags
+      #~(list (string-append "CFLAGS=-g -O2"
+                             " -Wno-error=implicit-function-declaration"))))
     (home-page "https://www.eso.org/sci/software/eclipse/qfits/")
     (synopsis "C library offering access to astronomical FITS files")
     (description
@@ -9098,7 +9104,7 @@ deconvolution).  Such post-processing is not performed by Stackistry.")
            qtlocation-5
            qtmultimedia-5
            qtpositioning
-           qtscript ; the last v5 left to rename
+           qtscript-5
            qtserialport-5
            qttranslations
            qtwayland-5
@@ -9355,8 +9361,8 @@ See related paper
 
 (define-public unsio
   ;; There is no versioned tag, use the latest commit.
-  (let ((commit "25e52468298e1194c9726ef5dba9d5fbb46870f5")
-        (revision "0"))
+  (let ((commit "ac48210ec24432ec3ad330c4203e7eb21876a921")
+        (revision "1"))
     (package
       (name "unsio")
       (version (git-version "1.3.3" revision commit))
@@ -9368,7 +9374,7 @@ See related paper
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "110i2p5608zhh5w3pf3b5r2651hykw2ayspgq6vpqsffhya1p170"))
+                  "0diiiflwz5yw2hpk3xj5x5iviyfibim4lhs02qn07hfw86qi9vn2"))
                 (modules '((guix build utils)))
                 (snippet
                   ;; force installation into lib/ instead of lib64/

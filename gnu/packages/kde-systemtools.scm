@@ -23,17 +23,21 @@
 (define-module (gnu packages kde-systemtools)
   #:use-module (guix build-system qt)
   #:use-module (guix download)
+  #:use-module (guix git-download)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix packages)
   #:use-module (guix utils)
   #:use-module (guix gexp)
   #:use-module (gnu packages)
+  #:use-module (gnu packages aidc)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages freedesktop)
+  #:use-module (gnu packages image)
   #:use-module (gnu packages kde)
   #:use-module (gnu packages kde-frameworks)
   #:use-module (gnu packages kde-plasma)
   #:use-module (gnu packages linux)
+  #:use-module (gnu packages ocr)
   #:use-module (gnu packages pkg-config)
   #:use-module (gnu packages qt)
   #:use-module (gnu packages glib)
@@ -51,14 +55,14 @@
 (define-public dolphin
   (package
     (name "dolphin")
-    (version "24.12.1")
+    (version "25.04.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/dolphin-" version ".tar.xz"))
        (sha256
-        (base32 "0qw61a1k8savwz0wi6xmr2z19jn5n7qjscsn284lwdc646m0l728"))))
+        (base32 "061a05dab11isn7pnv07mvvh84wgx8appxpygmj25bqjxw2fr5w9"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools ruby ruby-test-unit))
@@ -109,14 +113,14 @@ The main features of Dolphin are:
 (define-public dolphin-plugins
   (package
     (name "dolphin-plugins")
-    (version "24.12.1")
+    (version "25.04.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/dolphin-plugins-" version ".tar.xz"))
        (sha256
-        (base32 "0c2gfix61kisva7abbcq41ixhbpzrshr2qm3vazmil4a4lv4n5n4"))))
+        (base32 "16sd5ygzzi0r2245kfj4gclid15xhylsy5xvf3nif1az9f8bw6pz"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules))
@@ -169,17 +173,6 @@ Dolphin with the version control systems: Bzr, Git, Mercurial, Subversion.")
            qtbase
            xapian
            qtwebengine))
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'install 'wrap-executable
-                 (lambda* (#:key inputs #:allow-other-keys)
-                   (wrap-program (string-append #$output
-                                                "/bin/khelpcenter")
-                     `("QTWEBENGINEPROCESS_PATH" =
-                       (,(search-input-file
-                          inputs
-                          "lib/qt6/libexec/QtWebEngineProcess")))))))))
     (home-page "https://apps.kde.org/khelpcenter/")
     (synopsis "KDE documentation viewer")
     (description "KHelpCenter uses meta data files which describe the
@@ -196,14 +189,14 @@ document meta data file.")
 (define-public konsole
   (package
     (name "konsole")
-    (version "24.12.1")
+    (version "25.04.0")
     (source
      (origin
        (method url-fetch)
        (uri (string-append "mirror://kde/stable/release-service/" version
                            "/src/konsole-" version ".tar.xz"))
        (sha256
-        (base32 "0g6b69x5x41gb83rp4g983jz2f65cc58vw0jvd0c7pgwnx0cmpj3"))))
+        (base32 "1lbr7bkmm5lz0am9z70z06y7cf6kl7ganszd6181wcqpgfjxn9nk"))))
     (build-system qt-build-system)
     (native-inputs
      (list extra-cmake-modules kdoctools zlib))
@@ -387,64 +380,44 @@ This package is part of the KDE administration module.")
      "This package provides a tool to manage passwords on @code{kwallet}.")
     (license license:gpl2+)))
 
-(define-public spectacle
+(define-public spectacle-ocr-screenshot
   (package
-    (name "spectacle")
-    (version "24.12.1")
+    (name "spectacle-ocr-screenshot")
+    (version "0.3.0")
     (source
      (origin
-       (method url-fetch)
-       (uri (string-append "mirror://kde/stable/release-service/" version
-                           "/src/spectacle-" version ".tar.xz"))
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/funinkina/spectacle-ocr-screenshot")
+             (commit version)))
        (sha256
-        (base32 "16dr9h4inh2z9j1lm8f4yx9m7n0vxf1sm80afslk6lgixc1hwwfz"))))
+        (base32 "06dyvv4h4m4j8cm3f7ivcczql26rfajkmw84qh7kik71f70qvwjw"))
+       (file-name (git-file-name name version))))
     (build-system qt-build-system)
     (arguments
      (list #:qtbase qtbase
+           #:tests? #f ;no tests
            #:phases
            #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "ctest" "-E"
-                             "filename_test")))))))
+               (replace 'configure
+                 (lambda _
+                   (invoke "qmake" (string-append "PREFIX=" #$output))))
+               (replace 'install
+                 (lambda _
+                   (install-file "spectacle-ocr-screenshot"
+                                 (string-append #$output "/bin")))))))
     (native-inputs
-     (list extra-cmake-modules kdoctools))
+     (list pkg-config))
     (inputs
-     (list kconfig
-           kcoreaddons
-           kcrash
-           kdbusaddons
-           kglobalaccel
-           kguiaddons
-           ki18n
-           kio
-           kirigami
-           knotifications
-           kpipewire
-           kstatusnotifieritem
-           kwidgetsaddons
-           kwindowsystem
-           kxmlgui
-           opencv
-           purpose
-           layer-shell-qt
-           prison
-           qtdeclarative
-           qtimageformats
-           qtmultimedia
-           qtwayland
-           wayland
-           wayland-protocols
-           plasma-wayland-protocols
-           xcb-util
-           xcb-util-cursor
-           xcb-util-image
-           libxkbcommon))
-    (home-page "https://apps.kde.org/spectacle/")
-    (synopsis "Screenshot capture utility for KDE")
-    (description "Spectacle is a screenshot taking utility for the KDE.")
-    (license license:gpl2+)))
+     (list leptonica
+           tesseract-ocr
+           zxing-cpp))
+    (home-page "https://github.com/funinkina/spectacle-ocr-screenshot")
+    (synopsis "Utility to extract text from Spectacle")
+    (description "This package provides an application that integrates with KDE
+Spectacle screenshot tool with Tesseract OCR to extract text from screenshots
+as well as QR codes.")
+    (license license:expat)))
 
 (define-public yakuake
   (package

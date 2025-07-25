@@ -304,7 +304,13 @@ behind the scenes.")
                               version ".tar.gz"))
               (sha256
                (base32
-                "1g1jahknv5r4yhh1xq5sf0md20ybdw1zh1i15lry26sq39bmn8fq"))))))
+                "1g1jahknv5r4yhh1xq5sf0md20ybdw1zh1i15lry26sq39bmn8fq"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments sdl2)
+       ((#:configure-flags flags)
+        #~(cons*
+           "CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types"
+           #$flags))))))
 
 (define-public libmikmod
   (package
@@ -422,7 +428,14 @@ WEBP, XCF, XPM, and XV.")
     (arguments
      `(#:tests? #f ; No check target.
        #:configure-flags
-       '("--enable-music-mp3-mad-gpl" ; Use libmad instead of smpeg.
+        `(,(string-append "CFLAGS=-g -O2"
+                          " -Wno-error=implicit-function-declaration"
+                          " -Wno-error=incompatible-pointer-types"
+                          " -Wno-error=return-mismatch")
+          "--enable-music-mp3-mad-gpl" ; Use libmad instead of smpeg.
+          ;; Explicitly link against shared libraries instead of dlopening them.
+          "--disable-music-flac-shared"
+          "--disable-music-fluidsynth-shared"
          ;; Explicitly link against shared libraries instead of dlopening them.
          "--disable-music-flac-shared"
          "--disable-music-fluidsynth-shared"

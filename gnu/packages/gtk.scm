@@ -1,6 +1,6 @@
 ;;; GNU Guix --- Functional package management for GNU
 ;;; Copyright © 2013 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021 Ludovic Courtès <ludo@gnu.org>
+;;; Copyright © 2013-2021, 2025 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2014, 2015, 2017, 2018, 2019, 2021 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2014 Eric Bavier <bavier@member.fsf.org>
 ;;; Copyright © 2015 Federico Beffa <beffa@fbengineering.ch>
@@ -24,7 +24,7 @@
 ;;; Copyright © 2019 Giacomo Leidi <goodoldpaul@autistici.org>
 ;;; Copyright © 2020 Brendan Tildesley <mail@brendan.scot>
 ;;; Copyright © 2020 Guillaume Le Vaillant <glv@posteo.net>
-;;; Copyright © 2020, 2021, 2022, 2023, 2024, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2020-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Leo Famulari <leo@famulari.name>
 ;;; Copyright © 2021 Simon Streit <simon@netpanic.org>
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
@@ -35,7 +35,7 @@
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2023 Sergiu Ivanov <sivanov@colimite.fr>
 ;;; Copyright © 2023, 2024 Zheng Junjie <873216071@qq.com>
-;;; Copyright © 2023 Janneke Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2023, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2024 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2025 Florian Pelz <pelzflorian@pelzflorian.de>
 ;;; Copyright © 2025 Remco van 't Veer <remco@remworks.net>
@@ -169,11 +169,10 @@ such as mate-panel and xfce4-panel.")
     (home-page "https://gitlab.com/vala-panel-project/vala-panel-appmenu")
     (license (list license:lgpl3))))
 
-(define cairo
+(define-public cairo
   (package
     (name "cairo")
-    (version "1.18.2")
-    (replacement cairo-1.18.4)
+    (version "1.18.4")
     (source
      (origin
        (method url-fetch)
@@ -181,7 +180,7 @@ such as mate-panel and xfce4-panel.")
         (string-append "https://cairographics.org/releases/cairo-"
                        version ".tar.xz"))
        (sha256
-        (base32 "0nnli5cghygbl9bvlbjls7nspnrrzx1y1pbd7p649s154js9nax6"))))
+        (base32 "1jrcqfcna0358aqrk7rnys1hwq6k36ilr9r62bg26j3fi8hdhpj4"))))
     (build-system meson-build-system)
     (arguments
      `(#:tests? #f ; see http://lists.gnu.org/archive/html/bug-guix/2013-06/msg00085.html
@@ -239,21 +238,6 @@ output.  Experimental backends include OpenGL, BeOS, OS/2, and DirectFB.")
       license:mpl1.1))
     ;; Hide and have cairo-with-documentation public.
     (properties '((hidden? . #t)))))
-
-;;; TODO: This newer version resolves an issue when writing PDFs.  Remove
-;;; after ungrafting cairo.
-(define cairo-1.18.4
-  (package
-    (inherit cairo)
-    (version "1.18.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri
-        (string-append "https://cairographics.org/releases/cairo-"
-                       version ".tar.xz"))
-       (sha256
-        (base32 "1jrcqfcna0358aqrk7rnys1hwq6k36ilr9r62bg26j3fi8hdhpj4"))))))
 
 (define-public cairo-with-documentation
   ;; cairo's docs must be built in a separate package since it requires
@@ -525,6 +509,10 @@ g_test_add_func \\(\"/layout/gravity-metrics2\", test_gravity_metrics2\\);")
               (base32
                "0ip0ziys6mrqqmz4n71ays0kf5cs1xflj1gfpvs4fgy2nsrr482m"))))
     (build-system gnu-build-system)
+    (arguments
+     (list
+      #:configure-flags
+      #~(list "CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types")))
     (inputs
      (list glib pango-1.42))
     (native-inputs
@@ -572,64 +560,6 @@ functions which were removed.")
 graph-like environments, e.g. modular synths or finite state machine
 diagrams.")
     (license license:gpl3+)))
-
-(define-public gtksourceview-2
-  (package
-    (name "gtksourceview")
-    (version "2.10.5") ; This is the last version which builds against gtk+2
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://gnome/sources/" name "/"
-                                  (version-major+minor version)  "/"
-                                  name "-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "07hrabhpl6n8ajz10s0d960jdwndxs87szxyn428mpxi8cvpg1f5"))
-              (patches
-                (search-patches
-                  "gtksourceview-2-add-default-directory.patch"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list intltool
-           `(,glib "bin") ; for glib-genmarshal, etc.
-           pkg-config
-           ;; For testing.
-           xorg-server-for-tests
-           shared-mime-info))
-    (propagated-inputs
-     ;; As per the pkg-config file.
-     `(("gtk" ,gtk+-2)
-       ("libxml2" ,libxml2)))
-    (arguments
-     `(#:phases
-       ;; Unfortunately, some of the tests in "make check" are highly dependent
-       ;; on the environment therefore, some black magic is required.
-       (modify-phases %standard-phases
-         (add-before 'check 'start-xserver
-           (lambda* (#:key inputs #:allow-other-keys)
-             (let ((xorg-server (assoc-ref inputs "xorg-server"))
-                   (mime (assoc-ref inputs "shared-mime-info")))
-
-               ;; There must be a running X server and make check doesn't start one.
-               ;; Therefore we must do it.
-               (system (format #f "~a/bin/Xvfb :1 &" xorg-server))
-               (setenv "DISPLAY" ":1")
-
-               ;; The .lang files must be found in $XDG_DATA_HOME/gtksourceview-2.0
-               (system "ln -s gtksourceview gtksourceview-2.0")
-               (setenv "XDG_DATA_HOME" (getcwd))
-
-               ;; Finally, the mimetypes must be available.
-               (setenv "XDG_DATA_DIRS" (string-append mime "/share/")))
-             #t)))))
-    (synopsis "Widget that extends the standard GTK+ 2.x 'GtkTextView' widget")
-    (description
-     "GtkSourceView is a portable C library that extends the standard GTK+
-framework for multiline text editing with support for configurable syntax
-highlighting, unlimited undo/redo, search and replace, a completion framework,
-printing and other features typical of a source code editor.")
-    (license license:lgpl2.0+)
-    (home-page "https://developer.gnome.org/gtksourceview/")))
 
 (define-public gtksourceview
   (package
@@ -727,10 +657,15 @@ highlighting and other features typical of a source code editor.")
                (base32
                 "1zbpj283b5ycz767hqz5kdq02wzsga65pp4fykvhg8xj6x50f6v9"))))
     (build-system gnu-build-system)
-    (arguments (substitute-keyword-arguments (package-arguments gtksourceview)
-                 ((#:phases phases)
-                  `(modify-phases ,phases
-                     (delete 'disable-gtk-update-icon-cache)))))))
+    (arguments
+     (append
+      (list
+       #:configure-flags
+       #~(list "CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types"))
+      (substitute-keyword-arguments (package-arguments gtksourceview)
+        ((#:phases phases)
+         `(modify-phases ,phases
+            (delete 'disable-gtk-update-icon-cache))))))))
 
 (define-public gdk-pixbuf
   (package
@@ -837,6 +772,30 @@ since been moved out of the original repository.  No newly written code should
 ever use this library.")
     (home-page "https://gitlab.gnome.org/Archive/gdk-pixbuf-xlib")
     (license license:lgpl2.1+)))
+
+(define-public xpm-pixbuf
+  (let ((commit "d290a0c846687b22d2a8c5aaec83a6689f30e1c3")
+        (revision "1"))
+    (package
+      (name "xpm-pixbuf")
+      (version "0.0.0")
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://gitlab.gnome.org/ZanderBrown/xpm-pixbuf")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1aljnfa28wvfanizphnz3c28076n25f8cc3wzw2yf8f8xqlsfkid"))))
+      (build-system meson-build-system)
+      (native-inputs (list pkg-config))
+      (inputs (list gdk-pixbuf glib))
+      (home-page "https://gitlab.gnome.org/ZanderBrown/xpm-pixbuf")
+      (synopsis "XPM image loader for GdkPixbuf")
+      (description "This package provides a GdkPixbuf module for loading XMP
+images.")
+      (license license:lgpl2.1+))))
 
 ;;; A minimal variant used to prevent a cycle with Inkscape.
 (define-public at-spi2-core
@@ -993,7 +952,11 @@ is part of the GNOME accessibility project.")
      (list
       #:parallel-tests? #f
       #:configure-flags
-      #~(list "--with-xinput=yes"
+      #~(list #$(string-append
+                 "CFLAGS=-g -O2"
+                 " -Wno-error=implicit-int"
+                 " -Wno-error=incompatible-pointer-types")
+              "--with-xinput=yes"
               (string-append "--with-html-dir=" #$output
                              "/share/gtk-doc/html"))
       #:phases
@@ -2309,16 +2272,16 @@ and routines to assist in editing internationalized text.")
   ;; of 2024-03)
   (package
     (name "girara")
-    (version "0.4.3")
+    (version "0.4.5")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://git.pwmt.org/pwmt/girara")
-             (commit version)))
+              (url "https://github.com/pwmt/girara/")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0cbcs3810frgdmal5ia9pf3rk3k5h4xyzw1d2ia3rcg4nms5gcpx"))))
+        (base32 "04igidbihgq5k7fh0jd5n26w00qlb47riky6q7qlp5k314d6cd2y"))))
     (arguments
      (list
       #:phases
@@ -2486,7 +2449,9 @@ Redmond95 and ThinIce.")
     (arguments
      `(#:configure-flags
        `("--enable-animation"
-         "--enable-animationrtl")))
+         "--enable-animationrtl"
+         ;; Relax GCC 14's checks.
+         "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")))
     (native-inputs
      (list pkg-config intltool))
     (propagated-inputs
@@ -2899,7 +2864,8 @@ popovers.")
      (list cairo glib gtk+ python-pygobject))
     (arguments
      `(#:configure-flags '("--disable-rebuilds"
-                           "--disable-static")
+                           "--disable-static"
+                           "CFLAGS=-Wno-error=incompatible-pointer-types")
        #:phases
        (modify-phases %standard-phases
          (add-after 'unpack 'fix-install-path

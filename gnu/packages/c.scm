@@ -6,7 +6,7 @@
 ;;; Copyright © 2019, 2020, 2022-2024 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2019, 2021 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2019 Andreas Enge <andreas@enge.fr>
-;;; Copyright © 2020 Jan (janneke) Nieuwenhuizen <janneke@gnu.org>
+;;; Copyright © 2020, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;; Copyright © 2020, 2021 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2020 Katherine Cox-Buday <cox.katherine.e@gmail.com>
 ;;; Copyright © 2020, 2022, 2023 Maxim Cournoyer <maxim.cournoyer@gmail.com>
@@ -133,6 +133,11 @@ reference manual.")
               (sha256
                (base32 "0zmha3xi80vgdcwzb4vwdllf97dvggjpjfgahrpsb5f5qi3yshxa"))))
      (build-system gnu-build-system)
+     (arguments
+      (list #:configure-flags
+            #~(list (string-append
+                   "CFLAGS=-g -O2"
+                  " -Wno-error=incompatible-pointer-types"))))
      (inputs (list libgc))
      (native-inputs (list autoconf automake libtool))
      (home-page "https://github.com/hypirion/c-rrb")
@@ -254,7 +259,8 @@ hashes and fingerprints.")
       (build-system gnu-build-system)
       (native-inputs (list perl texinfo))
       (arguments
-       `(#:configure-flags (list (string-append "--elfinterp="
+       `(#:configure-flags (list "--extra-cflags=-Wno-error=implicit-int"
+                                 (string-append "--elfinterp="
                                                 (assoc-ref %build-inputs
                                                            "libc")
                                                 ,(glibc-dynamic-linker))

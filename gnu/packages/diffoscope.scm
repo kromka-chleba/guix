@@ -78,7 +78,7 @@
 (define-public diffoscope
   (package
     (name "diffoscope")
-    (version "300")
+    (version "301")
     (source
      (origin
        (method git-fetch)
@@ -87,7 +87,7 @@
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0s08dyxdpb3mrrjziwvqbqgh4fxnnjpw551qv9s72mm49hwa1lyj"))))
+        (base32 "1rbghly9kpp4ddlqydlwzhhaqmz1k3m9wyi05r4h5b6376vaz4pz"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -99,6 +99,13 @@
             (lambda _
               (delete-file "tests/comparators/test_berkeley_db.py")
               (delete-file "tests/comparators/test_wasm.py")))
+          (add-after 'compress-documentation 'make-extract-vmlinux-executable
+            ;; The script extract-vmlinux needs to be marked executable to be
+            ;; able to extract vmlinux files.
+            (lambda _
+              (for-each (lambda (file)
+                          (chmod file #o755))
+                        (find-files #$output "extract-vmlinux"))))
           (add-after 'unpack 'embed-tool-references
             (lambda* (#:key inputs #:allow-other-keys)
               (define (bin command)

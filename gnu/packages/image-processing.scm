@@ -1160,7 +1160,7 @@ recalculates.")
            qtwebchannel-5
            qtwebengine-5
            qtx11extras
-           qtxmlpatterns
+           qtxmlpatterns-5
            sdl2
            sqlite
            tbb
@@ -1321,7 +1321,6 @@ libraries designed for computer vision research and implementation.")
            fftw
            fftwf
            hdf5
-           libaec
            libjpeg-turbo
            libpng
            libtiff

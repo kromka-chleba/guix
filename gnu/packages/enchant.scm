@@ -3,6 +3,7 @@
 ;;; Copyright © 2018 Marius Bakke <mbakke@fastmail.com>
 ;;; Copyright © 2019, 2020 Tobias Geerinckx-Rice <me@tobias.gr>
 ;;; Copyright © 2020 Julien Lepiller <julien@lepiller.eu>
+;;; Copyright © 2025 Zheng Junjie <z572@z572.online>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -57,6 +58,10 @@
        (sha256
         (base32 "05j1hmczy6v9dyxp77vxhgyl7y5hff3v45vlp86gyh7m9lgqpmra"))))
     (build-system cmake-build-system)
+    (arguments
+     (if (%current-target-system)
+         (list #:configure-flags #~(list "-DBUILD_TESTING=OFF"))
+         '()))
     (native-inputs (list catch2-3 pkg-config))
     (propagated-inputs (list icu4c))
     (native-search-paths (list (search-path-specification
@@ -116,7 +121,14 @@ Ispell-compatible.")
   (package
     (inherit enchant)
     (version "1.6.0")
-    (arguments '(#:configure-flags '("--disable-static")))
+    (arguments
+     (list #:configure-flags
+           #~(list
+              ;; Add CFLAGS to relax gcc-14's strictness.
+              (string-append
+               "CFLAGS=-g -O2"
+               " -Wno-error=incompatible-pointer-types")
+              "--disable-static")))
     (native-inputs (alist-delete "unittest-cpp"
                                  (package-native-inputs enchant)))
     (source (origin

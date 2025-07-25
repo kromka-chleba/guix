@@ -25,7 +25,7 @@
 ;;; Copyright © 2022 Foo Chuan Wei <chuanwei.foo@hotmail.com>
 ;;; Copyright © 2022 zamfofex <zamfofex@twdb.moe>
 ;;; Copyright © 2022 Jai Vetrivelan <jaivetrivelan@gmail.com>
-;;; Copyright © 2022, 2024 jgart <jgart@dismail.de>
+;;; Copyright © 2022, 2024-2025 jgart <jgart@dismail.de>
 ;;; Copyright © 2022 Andy Tai <atai@atai.org>
 ;;; Copyright © 2022 ( <paren@disroot.org>
 ;;; Copyright © 2023 Eidvilas Markevičius <markeviciuseidvilas@gmail.com>
@@ -133,14 +133,14 @@
 (define-public ed
   (package
     (name "ed")
-    (version "1.20.1")
+    (version "1.21")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://gnu/ed/ed-"
                                  version ".tar.lz"))
              (sha256
               (base32
-               "1jmvpbs2mnrmk870js11v7g5qr3z8w0ws7sbdj3zjhd1jyr6795i"))))
+               "0xddpcdsdhf1cx7izk9l5dmf8vakjx5ncm1cy1f3libxfac4kqk0"))))
     (build-system gnu-build-system)
     (native-inputs (list lzip))
     (arguments
@@ -347,7 +347,7 @@ intuitive, while also taking advantage of the capabilities of modern terminals."
 (define-public vis
   (package
     (name "vis")
-    (version "0.8")                     ; also update the vis-test input
+    (version "0.9")                     ; also update the vis-test input
     (source
      (origin
        (method git-fetch)
@@ -355,7 +355,7 @@ intuitive, while also taking advantage of the capabilities of modern terminals."
              (url "https://git.sr.ht/~martanne/vis")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "0ija192c9i13gbikm707jynf6my212i040ls0f8pgkbiyvls7xay"))
+        (base32 "0y5b434dg7h5m1z0rz40ypirh99sm77mvvg8r1fp79z1bk73g0s9"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments
@@ -398,9 +398,9 @@ intuitive, while also taking advantage of the capabilities of modern terminals."
            (method git-fetch)
            (uri (git-reference
                  (url "https://git.sr.ht/~martanne/vis-test")
-                 (commit "bbd2f34ff788e87a51a74069069273ad83c44f1f")))
+                 (commit "783b7ef67aa360f0b9bd44fa5ea47e644bc49d69")))
            (sha256
-            (base32 "1jsvg2lg3xqfgi79x08kx94mc34mh62ivca10vsci6fqsk68jbd0"))
+            (base32 "1lhcizf93gab4hgnpac7l9csmhhvh0i7rd71p3vfk00nrdqrqrb6"))
            (file-name (git-file-name "vis-test" version))))))
     (inputs (list bash-minimal lua ncurses libtermkey lua-lpeg tre))
     (synopsis "Vim-like text editor")

@@ -10,6 +10,7 @@
 ;;; Copyright © 2022 Marius Bakke <marius@gnu.org>
 ;;; Copyright © 2022 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2023 Brendan Tildesley <mail@brendan.scot>
+;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -49,6 +50,7 @@
   #:use-module (gnu packages documentation)
   #:use-module (gnu packages dbm)
   #:use-module (gnu packages gnupg)
+  #:use-module (gnu packages gtk)
   #:use-module (gnu packages kerberos)
   #:use-module (gnu packages linux)
   #:use-module (gnu packages multiprecision)
@@ -68,16 +70,14 @@
 (define-public raptor2
   (package
     (name "raptor2")
-    (version "2.0.15")
+    (version "2.0.16")
     (source (origin
              (method url-fetch)
              (uri (string-append "https://download.librdf.org/source/" name
                                  "-" version ".tar.gz"))
-             (patches
-              (search-patches "raptor2-heap-overflow.patch"))
              (sha256
               (base32
-               "1vc02im4mpc28zxzgli68k6j0dakh0k3s389bm436yvqajxg19xd"))))
+               "1026whyxpajwijlr4k5c0iliwn09mwxrg7gkvd5kb0n9ga6vg788"))))
     (build-system gnu-build-system)
     (inputs
      (list curl libxml2 libxslt zlib))
@@ -109,7 +109,8 @@ HTML and JSON.")
               (base32
                "1arffdwivig88kkx685pldr784njm0249k0rb1f1plwavlrw9zfx"))
              (patches (search-patches "clucene-pkgconfig.patch"
-                                      "clucene-contribs-lib.patch"))))
+                                      "clucene-contribs-lib.patch"
+                                      "clucene-gcc-14.patch"))))
     (build-system cmake-build-system)
     (inputs
      (list boost ; could also use bundled copy
@@ -255,29 +256,58 @@ Turtle/N3 and read them in SPARQL XML, RDF/XML and Turtle/N3.")
     (license license:lgpl2.1+))) ; or any choice of gpl2+ or asl2.0
 
 (define-public redland
-  (package
-    (name "redland")
-    (version "1.0.17")
-    (source (origin
-             (method url-fetch)
-             (uri (string-append "http://download.librdf.org/source/" name
-                                 "-" version ".tar.gz"))
-             (sha256
-              (base32
-               "109n0kp39p966dpiasad2bb7q66rwbcb9avjvimw28chnpvlf66y"))))
-    (build-system gnu-build-system)
-    (native-inputs
-     (list perl ; needed for installation
-           pkg-config))
-    (propagated-inputs
-     (list rasqal)) ; in Requires.private field of .pc
-    (inputs
-     (list bdb))
-    (home-page "https://librdf.org/")
-    (synopsis "RDF library")
-    (description "The Redland RDF Library (librdf) provides the RDF API
-and triple stores.")
-    (license license:lgpl2.1+))) ; or any choice of gpl2+ or asl2.0
+  ;; XXX: No tags for the last release, altough it's clear from
+  ;; Github and logs a new release has been made.
+  (let ((commit "3ec9bda623107f9b1c86c0a3f261ffd3f8a40965")
+        (revision "0"))
+    (package
+      (name "redland")
+      (version (git-version "1.0.17" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/dajobe/librdf")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "0qwxmwi96lqjqi1mdx0mfbw23a5xg20xbv8bv18pmr4h4fxr51q7"))))
+      (build-system gnu-build-system)
+      (arguments
+       (list
+        #:phases
+        #~(modify-phases %standard-phases
+            ;; XXX: Copied files from libtool have been generated with
+            ;; another version of autoconf.
+            (add-after 'bootstrap 'bootstrap-libtool
+              (lambda _
+                (with-directory-excursion "libltdl"
+                  (delete-file "aclocal.m4")
+                  (invoke "autoreconf" "-vfi"))))
+            ;; XXX: 1/17 fails with recent compilers. No patch seems to have
+            ;; been done for Nix nor Debian.
+            (add-after 'unpack 'disable-problematic-test
+              (lambda _
+                (substitute* "src/Makefile.am"
+                  (("test rdf_parser_test")
+                   "test")))))))
+      (native-inputs
+       (list autoconf
+             automake
+             libtool
+             gtk-doc
+             perl ; needed for installation
+             pkg-config))
+      (propagated-inputs
+       (list rasqal)) ; in Requires.private field of .pc
+      (inputs
+       (list bdb))
+      (home-page "https://librdf.org/")
+      (synopsis "RDF library")
+      (description
+       "The Redland RDF Library (librdf) provides the RDF API and triple
+stores.")
+      (license license:lgpl2.1+)))) ; or any choice of gpl2+ or asl2.0
 
 (define-public serd
   (package

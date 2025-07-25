@@ -41,6 +41,7 @@
 ;;; Copyright © 2022 Petr Hodina <phodina@protonmail.com>
 ;;; Copyright © 2023 Christian Miller <christian.miller@dadoes.de>
 ;;; Copyright © 2024, 2025 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2024 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1045,8 +1046,10 @@ from the @code{password-store} package.  Files are encrypted with the
                 (string-append
                  "OATH="
                  (assoc-ref inputs "oath-toolkit")
-                 "/bin/oathtool\n")))
-             #t)))
+                 "/bin/oathtool\n"))
+               ;; courtesy: https://github.com/tadfisher/pass-otp/pull/172
+               (("&counter=[$]counter" all)
+                (format #f "~s" all))))))
        #:test-target "test"))
     (inputs
      (list oath-toolkit))
@@ -1840,7 +1843,7 @@ HTTP.")
     (native-inputs
      (list autoconf automake))
     (inputs
-     (list cryptsetup))
+     (list cryptsetup-minimal))
     (synopsis "LUKS encrypted volume cracker")
     (description
      "This is a cracker for LUKS encrypted volumes.  It can be used either in

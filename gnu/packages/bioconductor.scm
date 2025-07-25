@@ -14,6 +14,7 @@
 ;;; Copyright © 2021 Nicolas Vallet <nls.vallet@gmail.com>
 ;;; Copyright © 2023 Navid Afkhami <Navid.Afkhami@mdc-berlin.de>
 ;;; Copyright © 2024 Spencer King <spencer.king@geneoscopy.com>
+;;; Copyright © 2024, 2025 Janneke Nieuwenhuizen <janneke@gnu.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -23245,6 +23246,23 @@ printing and plotting @code{aCGH} objects.")
                 "1s1s00b6mrv710x14vnscs99iinqq5pml684vpgbshlvszzyw71h"))))
     (properties `((upstream-name . "ACME")))
     (build-system r-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'relax-gcc-14-strictness
+            (lambda _
+              ;; XXX FIXME: $HOME/.R/Makevars seems to be the only way to
+              ;; set custom CFLAGS for R?
+              (setenv "HOME" (getcwd))
+              (mkdir-p ".R")
+              (with-directory-excursion ".R"
+                (with-output-to-file "Makevars"
+                  (lambda _
+                    (display
+                     (string-append
+                      "CFLAGS=-g -O2"
+                      " -Wno-error=incompatible-pointer-types\n"))))))))))
     (propagated-inputs (list r-biobase r-biocgenerics))
     (home-page "https://bioconductor.org/packages/aCGH/")
     (synopsis "Calculating microarray enrichment")
@@ -25918,6 +25936,26 @@ variable and significantly correlated genes.")
                              r-s4vectors
                              r-xvector))
     (native-inputs (list r-knitr r-testthat))
+    (arguments
+     (list
+      #:phases
+      '(modify-phases %standard-phases
+        (add-after 'unpack 'relax-floating-point-tests
+          ;; Test files that are modified below contain the following
+          ;; comment:
+          ;; "Looks like using expect_identical() is too strict for some
+          ;; operations on some systems"
+          ;; then modify the tests to expect_equal for specific functions
+          ;; on speficic systems. This looks as if we are in the presence
+          ;; of floating point discrepancies, which are poorly suited for
+          ;; a strict test suite rejecting builds. Since the tests also
+          ;; fail in Guix on x86_64 with gcc@14, let us use expect_equal
+          ;; everywhere.
+          (lambda _
+            (substitute*
+              '("tests/testthat/test-NaArray-Math-methods.R"
+                "tests/testthat/test-SparseArray-Math-methods.R")
+              (("expect_identical\\(as") "expect_equal(as")))))))
     (home-page "https://bioconductor.org/packages/SparseArray")
     (synopsis
      "Efficient in-memory representation of multidimensional sparse arrays")
