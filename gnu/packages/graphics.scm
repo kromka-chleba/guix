@@ -3365,6 +3365,8 @@ options.")
                (base32
                 "13jv0zqbnyxjw7fa9x0yl08rrkqq0mdvki0yzbj6vqifvs393v5h"))))
     (build-system gnu-build-system)
+    (arguments
+     '(#:configure-flags '("CFLAGS=-Wno-incompatible-pointer-types -Wno-implicit-function-declaration")))
     (inputs (list gtk+-2 libglade))
     (native-inputs
      (list gettext-minimal `(,glib "bin") pkg-config))
