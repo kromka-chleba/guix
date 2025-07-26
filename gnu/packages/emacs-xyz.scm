@@ -5122,7 +5122,7 @@ programs such as @code{vi}, @code{top}, @code{htop} or even @code{emacs
 (define-public emacs-mistty
   (package
     (name "emacs-mistty")
-    (version "1.4")
+    (version "1.5")
     (source
      (origin
        (method git-fetch)
@@ -5131,7 +5131,7 @@ programs such as @code{vi}, @code{top}, @code{htop} or even @code{emacs
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1garqzcx14mwakbrp5p2vqynlbh819w8gjnf24x4xhv5aa5xy81j"))))
+        (base32 "1dlb4k7sbjjgyhikbcw0qf9js328vhs964lmhciyh8ahcfb7i9l6"))))
     (build-system emacs-build-system)
     (arguments
      (list
@@ -11021,7 +11021,7 @@ variables, and so on.  The mode also allows you to execute Tup commands.")
 (define-public emacs-turtles
   (package
     (name "emacs-turtles")
-    (version "2.0.0")
+    (version "2.0.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -11030,7 +11030,7 @@ variables, and so on.  The mode also allows you to execute Tup commands.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0gwnsrfiiizcrcccbs3pyx030wydg6xmh7vy9r7lvbh8hmxghbyg"))))
+                "1cipfgzx8ws79lzx7dfqr9lbirxf5fl332y8m5wz46455421avgi"))))
     (build-system emacs-build-system)
     (propagated-inputs (list emacs-compat))
     (home-page "https://github.com/szermatt/turtles")

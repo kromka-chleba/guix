@@ -71,6 +71,7 @@
 # Copyright © 2024 Runciter <runciter@whispers-vpn.org>
 # Copyright © 2024 Ashvith Shetty <ashvithshetty10@gmail.com>
 # Copyright © 2024 James Smith <jsubuntuxp@disroot.org>
+# Copyright © 2025 Nigko Yerden <nigko.yerden@gmail.com>
 #
 # This file is part of GNU Guix.
 #
@@ -1677,6 +1678,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/libcamera-ipa_manager-disable-signature-verification.patch	\
   %D%/packages/patches/libconfuse-CVE-2022-40320.patch		\
   %D%/packages/patches/libcss-check-format.patch		\
+  %D%/packages/patches/libeb-gcc-14.patch			\
   %D%/packages/patches/libextractor-tidy-support.patch		\
   %D%/packages/patches/libftdi-fix-paths-when-FTDIPP-set.patch	\
   %D%/packages/patches/libgeotiff-fix-tests-with-proj-9.1.1.patch	\
@@ -2131,6 +2133,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/proot-add-clone3.patch			\
   %D%/packages/patches/proot-add-missing-include.patch		\
   %D%/packages/patches/protobuf-fix-build-on-32bit.patch	\
+  %D%/packages/patches/psm2-compile-ctor-without-avx.patch	\
   %D%/packages/patches/psm-arch.patch				\
   %D%/packages/patches/psm-disable-memory-stats.patch		\
   %D%/packages/patches/psm-ldflags.patch			\
@@ -2144,7 +2147,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/pulseview-glib-2.68.patch		\
   %D%/packages/patches/pybugz-encode-error.patch		\
   %D%/packages/patches/pybugz-stty.patch			\
-  %D%/packages/patches/pyqt-configure.patch			\
   %D%/packages/patches/python-2-deterministic-build-info.patch	\
   %D%/packages/patches/python-2.7-adjust-tests.patch		\
   %D%/packages/patches/python-2.7-expat-compat.patch		\

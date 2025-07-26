@@ -1456,7 +1456,7 @@ the XDG Autostart specification.")
 (define-public fnott
   (package
     (name "fnott")
-    (version "1.7.1")
+    (version "1.8.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1465,7 +1465,7 @@ the XDG Autostart specification.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1061p4vxm0nb5pk5q5dw3kpj4q6kzw70skd3zijfjwdb6fkayh8b"))))
+                "00b1dcq48lq7wbihvnvydy58b52nn8ka2mdxhcbzrfdq7s51z3r0"))))
     (build-system meson-build-system)
     (arguments `(#:build-type "release"
                  #:phases
@@ -4365,36 +4365,34 @@ It is inspired by dwm and xmonad.")
       (license license:expat))))
 
 (define-public wbg
-  ;; This commit fixes a build error: https://codeberg.org/dnkl/wbg/issues/11
-  (let ((commit "dd36cce8c47bb0e17a789cf2bd95a51e29b59e78")
-        (revision "0"))
-    (package
-      (name "wbg")
-      (version (git-version "1.2.0" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://codeberg.org/dnkl/wbg")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0nsb8w3myprhnwr59i6g4nwkc8fx67d40l70svjmwfmhpqy6zc18"))))
-      (build-system meson-build-system)
-      (arguments
-       (list
-        #:build-type "release"
-        #:configure-flags #~(list "-Dpng=enabled"
-                                  "-Djpeg=enabled"
-                                  "-Dwebp=enabled")))
-      (native-inputs (list pkg-config tllist wayland-protocols))
-      (inputs (list libjpeg-turbo libpng libwebp pixman wayland))
-      (home-page "https://codeberg.org/dnkl/wbg")
-      (synopsis "Wallpaper application for Wayland compositors")
-      (description
-       "wbg is a super simple wallpaper application for Wayland compositors
+  (package
+    (name "wbg")
+    (version "1.3.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://codeberg.org/dnkl/wbg")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1dl60zdi8cndxfwf00yb8ahfs2vwgmg31g5zcybga0cysbfnaix8"))))
+    (build-system meson-build-system)
+    (arguments
+     (list
+      #:build-type "release"
+      #:configure-flags #~(list "-Dpng=enabled"
+                                "-Djxl=enabled"
+                                "-Djpeg=enabled"
+                                "-Dwebp=enabled")))
+    (native-inputs (list pkg-config tllist wayland-protocols))
+    (inputs (list libjpeg-turbo libjxl libpng libwebp pixman wayland))
+    (home-page "https://codeberg.org/dnkl/wbg")
+    (synopsis "Wallpaper application for Wayland compositors")
+    (description
+     "wbg is a super simple wallpaper application for Wayland compositors
 implementing the layer-shell protocol.")
-      (license license:expat))))
+    (license license:expat)))
 
 (define-public wsbg
   (let ((commit "15b0d0f6910ea97b9bcc471695fac07270955dd2")
