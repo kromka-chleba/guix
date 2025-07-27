@@ -31,7 +31,6 @@
 ;;; Copyright © 2022 Olivier Dion <olivier.dion@polymtl.ca>
 ;;; Copyright © 2022 Peter Polidoro <peter@polidoro.io>
 ;;; Copyright © 2022 Malte Frank Gerdes <malte.f.gerdes@gmail.com>
-;;; Copyright © 2022 Konstantinos Agiannis <agiannis.kon@gmail.com>
 ;;; Copyright © 2022 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2022, 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
 ;;; Copyright © 2022, 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
@@ -67,6 +66,8 @@
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system copy)
   #:use-module (guix build-system emacs)
+  #:use-module (guix build-system guile)
+  #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system pyproject)
@@ -568,29 +569,28 @@ features.")))
 (define-public librnd
   (package
     (name "librnd")
-    (version "4.0.2")
+    (version "4.3.2")
     (source (origin
               (method url-fetch)
-              (uri (string-append "http://www.repo.hu/projects/librnd/releases/"
-                                  "librnd-" version ".tar.bz2"))
+              (uri (string-append "http://www.repo.hu/projects/librnd/"
+                                  "releases/librnd-" version ".tar.bz2"))
               (sha256
                (base32
-                "0z578x3sd8yjfbhivy1hz4hlgiy43qq6x7mnby872plpm08vgqxz"))))
-    (build-system gnu-build-system)
+                "1qjv6gg9fb3rpvr1y9l5nbzz2xk2sa4nqz0dgwvds5hc1bmd97mf"))))
+    (build-system glib-or-gtk-build-system)
     (arguments
      (list
       #:tests? #false                   ;no check target
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'cc-is-gcc
-            (lambda _ (setenv "CC" #$(cc-for-target))))
+          ;; The configure script doesn't tolerate most of our configure
+          ;; flags.
           (replace 'configure
-            ;; The configure script doesn't tolerate most of our configure flags.
             (lambda _
-              (invoke "sh" "configure"
-                      (string-append "--prefix=" #$output)))))))
+              (setenv "CC" #$(cc-for-target))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
     (inputs
-     (list gd gtk glib glu))
+     (list gd glib glu gtk gtkglext libepoxy))
     (native-inputs
      (list pkg-config))
     (home-page "http://repo.hu/projects/librnd/")
@@ -654,35 +654,35 @@ optimizer; and it can produce photorealistic and design review images.")
     (license license:gpl2+)))
 
 (define-public pcb-rnd
-  (package (inherit pcb)
+  (package
     (name "pcb-rnd")
-    (version "3.1.1")
+    (version "3.1.7b")
     (source (origin
               (method url-fetch)
-              (uri (string-append "http://repo.hu/projects/pcb-rnd/releases/"
-                                  "pcb-rnd-" version ".tar.gz"))
+              (uri (string-append "http://repo.hu/projects/pcb-rnd/"
+                                  "releases/pcb-rnd-" version ".tar.gz"))
               (sha256
                (base32
-                "0szcsp2049wh3wslv7743wbjqllrmphi07yz0933sz4vf6f1c8dg"))))
+                "1djsa0w53l6nvhwv28rlhpva55ir9n3xdvjgnjj8fgvcmrqlzrsl"))))
+    (build-system glib-or-gtk-build-system)
     (arguments
      (list
-      #:tests? #false                   ;no check target
+      #:test-target "test"
       #:phases
       #~(modify-phases %standard-phases
-          (add-after 'unpack 'cc-is-gcc
-            (lambda _ (setenv "CC" #$(cc-for-target))))
           (replace 'configure
-            ;; The configure script doesn't tolerate most of our configure flags.
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
             (lambda _
+              (setenv "CC" #$(cc-for-target))
               (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
-              (invoke "sh" "configure"
-                      (string-append "--prefix=" #$output)))))))
-    (inputs
-     (modify-inputs (package-inputs pcb)
-       (append librnd)))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
     (home-page "http://repo.hu/projects/pcb-rnd/")
-    (description "PCB RND is a fork of the GNU PCB circuit board editing tool
-featuring various improvements and bug fixes.")))
+    (synopsis "Modular layout editor")
+    (description "@code{Pcb-rnd} is a @acronym{Printed Circuit Board} layout
+editor, part of the RiNgDove EDA suite.")
+    (license license:gpl2+)))
 
 (define-public fastcap
   (package
@@ -1195,6 +1195,10 @@ fonts to gEDA.")
               (lambda args
                 (apply (assoc-ref guile:%standard-phases 'build)
                        #:source-directory "../source/libfive/bind/guile"
+                       #:compile-flags '()
+                       #:parallel-build? #f
+                       #:scheme-file-regexp #$default-scheme-file-regexp
+                       #:not-compiled-file-regexp #f
                        args)))
             (add-after 'install 'wrap-studio
               (lambda _
@@ -2416,15 +2420,13 @@ high-performance parallel differential evolution (DE) optimization algorithm.")
     (version "44.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (list (string-append
-                   "mirror://sourceforge/ngspice/ng-spice-rework/" version
-                   "/ngspice-" version ".tar.gz")
-                  (string-append
-                   "mirror://sourceforge/ngspice/ng-spice-rework/"
-                   "old-releases/" version "/ngspice-" version ".tar.gz")))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://git.code.sf.net/p/ngspice/ngspice")
+              (commit (string-append "ngspice-" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "1zfpj09vqjamgkhnipwpwmvrzhfymikml7lw80igsx2lpnvxznp7"))))
+        (base32 "1vp27149kx8l7397bv5p708jqph1kma8rb9bl7ckgmbr9sw9cn3q"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -2437,9 +2439,9 @@ high-performance parallel differential evolution (DE) optimization algorithm.")
                                        "/share/ngspice/scripts")))))
       #:configure-flags #~(list "--enable-openmp" "--enable-cider"
                                 "--enable-xspice" "--with-ngshared")))
-    (native-inputs (list bison flex))
+    (native-inputs (list autoconf automake bison flex libtool))
     (inputs (list openmpi))
-    (home-page "https://ngspice.sourceforge.net/")
+    (home-page "https://ngspice.sourceforge.io/")
     (synopsis "Mixed-level/mixed-signal circuit simulator")
     (description
      "Ngspice is a mixed-level/mixed-signal circuit simulator.  It includes
@@ -2465,7 +2467,9 @@ an embedded event driven algorithm.")
        ((#:phases phases)
         #~(modify-phases #$phases
             (delete 'delete-scripts)))))
-    (native-inputs (list perl))
+    (native-inputs
+     (modify-inputs (package-native-inputs libngspice)
+       (append perl)))
     (inputs (list libngspice readline libxaw libx11))))
 
 (define trilinos-serial-xyce
@@ -5164,49 +5168,6 @@ python bindings.  It belongs to the Cura project from Ultimaker.")
     (description "Cura is a slicing software from Ultimaker.  A @emph{slicer}
 generates G-Code for 3D printers.")
     (license license:lgpl3+)))
-
-(define-public xschem
-  (let ((commit "f574539e21b297fa3bcebd52114555e162a5fc56")
-        (revision "1"))
-    (package
-      (name "xschem")
-      (version (git-version "3.0.0" revision commit))
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/StefanSchippers/xschem")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "129kj8m3wcf62plp74kml6pqwld4lnfmxy070a82lvj0rfiy77hb"))))
-      (native-inputs (list flex bison pkg-config))
-      (inputs (list gawk
-                    tcl
-                    tk
-                    libxpm
-                    cairo
-                    libxrender
-                    libxcb)) ; Last 3 are optional, but good to have.
-      (build-system gnu-build-system)
-      (arguments
-       `(#:tests? #f
-         #:phases
-         (modify-phases %standard-phases
-           (delete 'configure)
-           (add-before 'build 'setenv
-             (lambda* (#:key outputs #:allow-other-keys)
-               (setenv "CC" ,(cc-for-target))
-               (invoke "./configure"
-                       (string-append "--prefix="
-                                      (assoc-ref outputs "out"))))))))
-      (synopsis "Hierarchical schematic editor")
-      (description
-       "Xschem is an X11 schematic editor written in C and focused on
-hierarchical and parametric design.  It can generate VHDL, Verilog or Spice
-netlists from the drawn schematic, allowing the simulation of the circuit.")
-      (home-page "https://xschem.sourceforge.io/stefan/index.html")
-      (license license:gpl2+))))
 
 (define-public bcnc
   (package

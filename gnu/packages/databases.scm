@@ -3626,16 +3626,19 @@ can autogenerate peewee models using @code{pwiz}, a model generator.")
 (define-public python-pypika-tortoise
   (package
     (name "python-pypika-tortoise")
-    (version "0.1.6")
+    (version "0.3.2")
     (source
      (origin
-       (method url-fetch)
-       (uri (pypi-uri "pypika-tortoise" version))
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tortoise/pypika-tortoise")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
-        (base32 "0dmzpsnlqjjz0vm0r9xjk69xfsm235bpnk3jccr8ww4s8y7qc0nq"))))
+        (base32 "1pz7i9vgjwzzvacjjkvr5xbcmphn52xv993zbks602is844k0pp0"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list poetry python-setuptools))
+     (list python-poetry-core python-pytest))
     (home-page "https://github.com/tortoise/pypika-tortoise")
     (synopsis "Pypika fork for tortoise-orm")
     (description "Pypika-tortoise is a fork of pypika which has been
@@ -3710,6 +3713,34 @@ reuses most of @code{pymysql} and @code{aiomysql} but rewrites the core
 protocol with Cython for performance.")
     (license license:asl2.0)))
 
+(define-public python-asyncodbc
+  (package
+    (name "python-asyncodbc")
+    (version "0.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/tortoise/asyncodbc")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0fdcvx2r09vsxx3zw8zvj7ww6wyby8sk3r2a3174nfngiajbi6g1"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:tests? #f))        ;tests fail similarly to python-pyodbc
+    (native-inputs
+     (list python-poetry-core
+           unixodbc))
+    (propagated-inputs
+     (list python-pyodbc))
+    (home-page "https://github.com/tortoise/asyncodbc")
+    (synopsis "Access ODBC databases with asyncio")
+    (description "This package provides an improved fork of
+@code{python-aioodbc}, and makes it possible to Access ODBC databases with
+@code{python-asyncio}.")
+    (license license:asl2.0)))
+
 (define-public python-aiomysql
   (package
     (name "python-aiomysql")
@@ -3735,7 +3766,7 @@ of PyMySQL.  @code{aiomysql} tries to preserve the same API as the
 (define-public python-tortoise-orm
   (package
     (name "python-tortoise-orm")
-    (version "0.20.0")
+    (version "0.22.2")
     (source
      (origin
        (method git-fetch)
@@ -3744,16 +3775,31 @@ of PyMySQL.  @code{aiomysql} tries to preserve the same API as the
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "19rgyvs2y9gn27x71y7djdz6rb6bszgvprv55q1hr4266wy6g999"))))
+        (base32 "1xzwywvb3898hm41vwkzn785ziqprxh6lcf0lpmrgfcsc9qnnhzk"))))
     (build-system pyproject-build-system)
-    ;; The test suite relies on asynctest, which is abandoned and doesn't
-    ;; support Python >= 3.8.
-    (arguments '(#:tests? #f))
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    (list "not test_enum"  ; Fixed in the next release.
+                          ;; tortoise.exceptions.OperationalError
+                          "test_delete"
+                          "test_delete_limit"
+                          "test_delete_limit_order_by"
+                          "test_update_with_limit_ordering")
+                    " and not "))))
     (native-inputs
-     (list poetry))
+     (list python-asyncodbc
+           python-fastapi
+           python-poetry-core
+           python-psycopg
+           python-psycopg-pool
+           python-pydantic-2
+           python-pyodbc
+           python-pytest))
     (propagated-inputs
      (list python-aiomysql
-           python-aiosqlite-0.17
+           python-aiosqlite
            python-asyncmy
            python-asyncpg
            python-ciso8601
@@ -3866,30 +3912,24 @@ development.")
 (define-public python-pyodbc
   (package
     (name "python-pyodbc")
-    (version "4.0.35")
+    (version "5.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "pyodbc" version))
        (sha256
-        (base32 "1j7577acd2f16zifw49ajg0aw7vm0pdg6jxrr1dlaa5rx14azfcj"))
+        (base32 "1xd88k6rngm9n8z3klb0g94csa9m8sk7df544vpfxpf816cf72yy"))
        (modules '((guix build utils)))
        (snippet
         ;; Delete precompiled binaries.  The corresponding source is included.
         #~(for-each delete-file (find-files "." "\\.pyc$")))))
-    (build-system python-build-system)
-    (inputs
-     (list unixodbc))
+    (build-system pyproject-build-system)
+    (inputs (list unixodbc))
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (arguments
-     ;; XXX Tests fail with ‘Can't open lib 'SQL Server Native Client 10.0' :
-     ;; file not found (0) (SQLDriverConnect)")’.
-     (list #:tests? #f
-           #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "python3" "tests3/test.py")))))))
+     ;; XXX Tests fail with [unixODBC][Driver Manager]Data source name not
+     ;; found and no default driver specified (0) (SQLDriverConnect)
+     (list #:tests? #f))
     (home-page "https://github.com/mkleehammer/pyodbc")
     (synopsis "Python ODBC Library")
     (description "@code{python-pyodbc} provides a Python DB-API driver
@@ -4486,33 +4526,6 @@ into Python.")
 async versions of all the standard connection and cursor methods, and context
 managers for automatically closing connections.")
     (license license:expat)))
-
-(define-public python-aiosqlite-0.17
-  (package
-    (inherit python-aiosqlite)
-    (version "0.17.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/omnilib/aiosqlite")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name (package-name python-aiosqlite)
-                                        version))
-              (sha256
-               (base32
-                "1agh7b9g7rgryvb8flph85i8m80ai1rinpljxzlsrs0s0y616qgg"))))
-    (build-system pyproject-build-system)
-    (arguments
-     '(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (if tests?
-                          (invoke "python" "-m" "unittest" "aiosqlite.tests")
-                          (format #t "test suite not run~%")))))))
-    (propagated-inputs
-     (list python-typing-extensions))
-    (native-inputs
-     (list python-flit-core python-aiounittest))))
 
 (define-public python-databases
   (package

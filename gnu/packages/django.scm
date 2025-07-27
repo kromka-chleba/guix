@@ -59,6 +59,84 @@
   #:use-module (gnu packages time)
   #:use-module (gnu packages xml))
 
+(define-public daphne
+  (package
+    (name "daphne")
+    (version "4.2.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "daphne" version))
+       (sha256
+        (base32 "1crircpk2g26y02q8xmxlyb5wh86hqr7q7aly7fpmnhz19q8x2az"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      ;; AssertionError("Could not find site-packages in sys.path")
+      ;; This test checks for the presence of fd_endpoint.py in the Pytest
+      ;; store path, but it is in Daphne's path.
+      #:test-flags #~(list "-k" "not test_fd_endpoint_plugin_installed")))
+    (propagated-inputs (list python-asgiref
+                             python-autobahn
+                             ;; Twisted plugins should be propagated from
+                             ;; python-twisted.
+                             python-pyopenssl ; twisted plugin
+                             python-service-identity ; twisted plugin
+                             python-twisted))
+    (native-inputs (list python-django
+                         python-pytest
+                         python-pytest-asyncio
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/django/daphne")
+    (synopsis "Django ASGI (HTTP/WebSocket) server")
+    (description "Daphne is a HTTP, HTTP2 and WebSocket protocol server for
+@url{https://github.com/django/asgiref/blob/main/specs/asgi.rst,ASGI} and
+@url{https://github.com/django/asgiref/blob/main/specs/www.rst,ASGI-HTTP},
+developed to power Django Channels.
+
+It supports automatic negotiation of protocols; there's no need for URL
+prefixing to determine WebSocket endpoints versus HTTP endpoints.")
+    (license license:bsd-3)))
+
+(define-public python-channels
+  (package
+    (name "python-channels")
+    (version "4.2.2")
+    (source
+     (origin
+       (method git-fetch) ; no tests in PyPI
+       (uri (git-reference
+             (url "https://github.com/django/channels")
+             (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0x7w29qpj2acrzf8hcgymsyr5gk3aj2wkbvlwcr01ygd6as8h7hz"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-asgiref python-django))
+    ;; Channels develops and maintains Daphne but any other ASGI server can be
+    ;; used, so keep it in native-inputs for tests.
+    (native-inputs (list daphne
+                         python-async-timeout
+                         python-pytest
+                         python-pytest-asyncio
+                         python-pytest-django
+                         python-setuptools
+                         python-wheel))
+    (home-page "https://github.com/django/channels")
+    (synopsis "Async, event-driven capabilities on Django")
+    (description
+     "Channels wraps Django's native asynchronous view support, allowing Django
+projects to handle not only HTTP, but protocols that require long-running
+connections too - WebSockets, MQTT, chatbots, amateur radio, and more.  It does
+this while preserving Django's synchronous nature, allowing you to choose how
+you write your code - synchronous, fully asynchronous, or a mixture of both.
+
+Channels also bundles this event-driven architecture with @emph{channel layers},
+a system that allows you to easily communicate between processes, and separate
+your project into different processes.")
+    (license license:bsd-3)))
+
 (define-public python-django-4.2
   (package
     (name "python-django")
@@ -742,17 +820,18 @@ example, explicit calls to callables from templates and better performance.")
 (define-public python-dj-database-url
   (package
     (name "python-dj-database-url")
-    (version "2.3.0")
+    (version "3.0.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "dj_database_url" version))
               (sha256
                (base32
-                "11w7532lq05c3wysbn7f5jf82yj0vjjmsi2ylkjmfsqq6kkfhlmf"))))
-    (build-system python-build-system)
+                "1y7ghizjni3imbmqh63mra8pcvqzr5q0hma1ijzwd3w8zcg9d549"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (propagated-inputs
-     (list python-django python-typing-extensions))
-    (home-page "https://github.com/kennethreitz/dj-database-url")
+     (list python-django))
+    (home-page "https://github.com/jazzband/dj-database-url")
     (synopsis "Use Database URLs in your Django Application")
     (description
       "This simple Django utility allows you to utilize the 12factor inspired

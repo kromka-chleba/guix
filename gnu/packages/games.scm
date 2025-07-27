@@ -72,7 +72,7 @@
 ;;; Copyright © 2022 Roman Riabenko <roman@riabenko.com>
 ;;; Copyright © 2022, 2023, 2025 zamfofex <zamfofex@twdb.moe>
 ;;; Copyright © 2022 Gabriel Arazas <foo.dogsquared@gmail.com>
-;;; Copyright © 2022-2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2022-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2022 Hendursaga <hendursaga@aol.com>
 ;;; Copyright © 2022 Parnikkapore <poomklao@yahoo.com>
 ;;; Copyright © 2022 Cairn <cairn@pm.me>
@@ -4258,35 +4258,31 @@ exec ~a/bin/freedink -refdir ~a/share/dink\n"
     (native-inputs '())))
 
 (define-public fuzzylite
-  (package
-    (name "fuzzylite")
-    (version "6.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/fuzzylite/fuzzylite")
-                    (commit (string-append "v" version))))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "0yay0qc81x0irlvxqpy7jywjxpkmpjabdhq2hdh28r9z85wp2nwb"))
-              (patches (search-patches "fuzzylite-use-catch2.patch"
-                                       "fuzzylite-soften-float-equality.patch"
-                                       "fuzzylite-relative-path-in-tests.patch"))))
-    (build-system cmake-build-system)
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (add-before 'configure 'switch-to-fuzzylite-dir
-                    (lambda _
-                      (chdir "fuzzylite"))))))
-    (native-inputs (list catch2))
-    (home-page "https://www.fuzzylite.com/")
-    (synopsis "Fuzzy logic control binary")
-    (description
-     "This package provides fuzzylite, a fuzzy logic control library which
+  ;; Use the latest commit from the master branch, as the latest release fails
+  ;; to build.
+  (let ((commit "13b3122f5c353c0389ed4e66041d548c44ec9df6")
+        (revision "0"))
+    (package
+      (name "fuzzylite")
+      (version (git-version "6.0" revision commit))
+      (source (origin
+                (method git-fetch)
+                (uri (git-reference
+                       (url "https://github.com/fuzzylite/fuzzylite")
+                       (commit commit)))
+                (file-name (git-file-name name version))
+                (sha256
+                 (base32
+                  "1ai7x5lfy8c1d11crz33ayy21alry740f78qjjxwzdfr6ph7pkzq"))))
+      (build-system cmake-build-system)
+      (native-inputs (list catch2-3))
+      (home-page "https://www.fuzzylite.com/")
+      (synopsis "Fuzzy logic control binary")
+      (description
+       "This package provides fuzzylite, a fuzzy logic control library which
 allows one to easily create fuzzy logic controllers in a few steps utilizing
 object-oriented programming.")
-    (license license:gpl3)))
+      (license license:gpl3+))))
 
 (define-public xboard
   (package
@@ -9612,7 +9608,7 @@ open-source FPS of its kind.")
 (define-public frotz
   (package
     (name "frotz")
-    (version "2.54")
+    (version "2.55")
     (source (origin
               (method url-fetch)
               (uri (list (string-append
@@ -9623,7 +9619,7 @@ open-source FPS of its kind.")
                           "frotz/frotz-" version ".tar.gz")))
               (sha256
                (base32
-                "1vsfq9ryyb4nvzxpnnn40k423k9pdy8k67i8390qz5h0vmxw0fds"))))
+                "0wfqhxwgjwhgnjh1byjzsfj3mqhy5hialngyb53p5jjbz4pr3mp3"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ; there are no tests
@@ -9711,7 +9707,7 @@ of lore accompanying everything from planets to equipment.")
 (define-public frotz-dumb-terminal
   (package
     (name "frotz-dumb-terminal")
-    (version "2.44")
+    (version "2.55")
     (source (origin
               (method url-fetch)
               (uri (list (string-append
@@ -9722,8 +9718,9 @@ of lore accompanying everything from planets to equipment.")
                           "frotz/frotz-" version ".tar.gz")))
               (sha256
                (base32
-                "1v735xr3blznac8fnwa27s1vhllx4jpz7kw7qdw1bsfj6kq21v3k"))))
+                "0wfqhxwgjwhgnjh1byjzsfj3mqhy5hialngyb53p5jjbz4pr3mp3"))))
     (build-system gnu-build-system)
+    (native-inputs (list pkg-config which))
     (arguments
      `(#:tests? #f                      ; there are no tests
        #:phases
@@ -9731,7 +9728,7 @@ of lore accompanying everything from planets to equipment.")
          (delete 'configure)
          (replace 'build
            (lambda _
-             (invoke "make" "dumb")))
+             (invoke "make" (string-append "CC=" ,(cc-for-target)) "dumb")))
          (replace 'install
            (lambda* (#:key outputs #:allow-other-keys)
              (let* ((out (assoc-ref outputs "out"))

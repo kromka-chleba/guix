@@ -1728,38 +1728,6 @@ and many external plugins.")
            python-wheel))
     (arguments `(#:tests? #f))))
 
-(define-public python-pytest-assume
-  (package
-    (name "python-pytest-assume")
-    (version "2.4.3")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest-assume" version))
-       (sha256
-        (base32 "0zilqsy9fcjr6l2f9qzfxpkp40h24csnjm5mifhpmzb0fr9r0glq"))))
-    (build-system python-build-system)
-    (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'check
-                    (lambda* (#:key tests? #:allow-other-keys)
-                      (when tests?
-                        (invoke "pytest")))))))
-    (propagated-inputs
-     (list python-pytest python-six))
-    (home-page "https://github.com/astraw38/pytest-assume")
-    (synopsis "Pytest plugin that allows multiple failures per test")
-
-    (description "This package provides a Pytest plugin that allows multiple
-failures per test.  This is a fork from pytest-expect which includes the
-following improvements:
-@itemize
-@item showlocals support (the Pytest option)
-@item global usage support (a fixture is not required)
-@item output refinements and tweaks.
-@end itemize")
-    (license license:expat)))
-
 (define-public python-pytest-cov
   (package
     (name "python-pytest-cov")
@@ -2669,28 +2637,6 @@ to make testing async code easier.")
            python-setuptools
            python-wheel))))
 
-(define-public python-cov-core
-  (package
-    (name "python-cov-core")
-    (version "1.15.0")
-    (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "cov-core" version))
-        (sha256
-         (base32
-          "0k3np9ymh06yv1ib96sb6wfsxjkqhmik8qfsn119vnhga9ywc52a"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-coverage))
-    (home-page "https://github.com/schlamar/cov-core")
-    (synopsis "Coverage plugin core for pytest-cov, nose-cov and nose2-cov")
-    (description
-     "This is a library package for use by @code{pytest-cov}, @code{nose-cov}
-and @code{nose2-cov}.  It is useful for developing coverage plugins for these
-testing frameworks.")
-    (license license:expat)))
-
 (define-public python-codecov
   (package
     (name "python-codecov")
@@ -2738,24 +2684,6 @@ C/C++, R, and more, and uploads it to the @code{codecov.io} service.")
      "Testpath is a collection of utilities for Python code working with files
 and commands.  It contains functions to check things on the file system, and
 tools for mocking system commands and recording calls to those.")
-    (license license:expat)))
-
-(define-public python-testlib
-  (package
-    (name "python-testlib")
-    (version "0.6.5")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "testlib" version ".zip"))
-       (sha256
-        (base32 "1mz26cxn4x8bbgv0rn0mvj2z05y31rkc8009nvdlb3lam5b4mj3y"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list unzip))  ; for unpacking the source
-    (synopsis "Python micro test suite harness")
-    (description "A micro unittest suite harness for Python.")
-    (home-page "https://github.com/trentm/testlib")
     (license license:expat)))
 
 ;;; The software provided by this package was integrated into pytest 2.8.
@@ -2837,28 +2765,6 @@ enables you to test server connections locally.")
      "Pytest-xprocess is an experimental py.test plugin for managing processes
 across test runs.")
     (license license:expat)))
-
-(define-public python-pytest-subtesthack
-  (package
-    (name "python-pytest-subtesthack")
-    (version "0.1.1")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "pytest-subtesthack" version))
-              (sha256
-               (base32
-                "15kzcr5pchf3id4ikdvlv752rc0j4d912n589l4rifp8qsj19l1x"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-pytest))
-    (synopsis "Set-up and tear-down fixtures for unit tests")
-    (description "This plugin allows you to set up and tear down fixtures
-within unit test functions that use @code{py.test}.  This is useful for using
-@command{hypothesis} inside py.test, as @command{hypothesis} will call the
-test function multiple times, without setting up or tearing down fixture state
-as is normally the case.")
-    (home-page "https://github.com/untitaker/pytest-subtesthack/")
-    (license license:unlicense)))
 
 (define-public python-pytest-sugar
   (package
@@ -3298,69 +3204,6 @@ pragmas to control it from within your code.  Additionally, it is
 possible to write plugins to add your own checks.")
     (license license:gpl2+)))
 
-(define-public python-setuptools-lint
-  (package
-    (name "python-setuptools-lint")
-    (version "0.6.0")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "setuptools-lint" version))
-              (sha256
-               (base32
-                "16a1ac5n7k7sx15cnk03gw3fmslab3a7m74dc45rgpldgiff3577"))))
-    (build-system python-build-system)
-    (propagated-inputs (list python-tomli python-pylint))
-    (home-page "https://github.com/johnnoone/setuptools-pylint")
-    (synopsis "Run pylint with @command{python setup.py lint}")
-    (description "This package expose pylint as a lint command into
-setup.py.")
-    (license license:bsd-3)))
-
-(define-public python-paramunittest
-  (package
-    (name "python-paramunittest")
-    (version "0.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "ParamUnittest" version))
-       (sha256
-        (base32
-         "0kp793hws5xv1wvycxq7jw2pwy36f35k39jg8hx5qikij5a0jid1"))))
-    (build-system python-build-system)
-    (home-page
-     "https://github.com/rik0/ParamUnittest")
-    (synopsis
-     "Simple extension to have parametrized unit tests")
-    (description
-     "This package creates parameterized unit-tests that work with the standard
-unittest package.  A parameterized test case is automatically converted to multiple test
-cases.  Since they are TestCase subclasses, they work with other test suites that
-recognize TestCases.")
-    (license license:bsd-2)))
-
-(define-public python-pytest-warnings
-  (package
-    (name "python-pytest-warnings")
-    (version "0.2.0")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (pypi-uri "pytest-warnings" version))
-       (sha256
-        (base32
-         "0gf2dpahpl5igb7jh1sr9acj3z3gp7zahqdqb69nk6wx01c8kc1g"))))
-    (build-system python-build-system)
-    (propagated-inputs
-     (list python-pytest))
-    (home-page "https://github.com/fschulze/pytest-warnings")
-    (synopsis "Pytest plugin to list Python warnings in pytest report")
-    (description
-     "Python-pytest-warnings is a pytest plugin to list Python warnings in
-pytest report.")
-    (license license:expat)
-    (properties `((superseded unquote python-pytest)))))
-
 (define-public python-pytest-capturelog
   (package
     (name "python-pytest-capturelog")
@@ -3530,32 +3373,6 @@ JSON APIs with Behave.")
      "@code{nose-exclude} is a Nose plugin that allows you to easily specify
 directories to be excluded from testing.")
     (license license:lgpl2.1+)))
-
-(define-public python-nose-random
-  (package
-    (name "python-nose-random")
-    (version "1.0.0")
-    (source
-     (origin
-      (method git-fetch)
-      (uri (git-reference
-            (url "https://github.com/fzumstein/nose-random")
-            (commit version)))
-      (file-name (git-file-name name version))
-      (sha256
-       (base32
-        "1dvip61r2frjv35mv6mmfjc07402z73pjbndfp3mhxyjn2zhksw2"))))
-    (build-system python-build-system)
-    (native-inputs
-     (list python-nose))
-    (home-page "https://github.com/fzumstein/nose-random")
-    (synopsis "Nose plugin to facilitate randomized unit testing with
-Python")
-    (description "Python nose-random is designed to facilitate
-Monte-Carlo style unit testing.  The idea is to improve testing by
-running your code against a large number of randomly generated input
-scenarios.")
-    (license license:expat)))
 
 (define-public python-nose-timer
   (package
@@ -4241,41 +4058,6 @@ asynchronous code in Python (asyncio).")
 to mark some tests as dependent from other tests.  These tests will then be
 skipped if any of the dependencies did fail or has been skipped.")
     (license license:asl2.0)))
-
-(define-public python-pytest-pudb
-  ;; PyPi does not include tests
-  (let ((commit "a6b3d2f4d35e558d72bccff472ecde9c9d9c69e5"))
-    (package
-      (name "python-pytest-pudb")
-      ;; Version mentioned in setup.py version field.
-      (version "0.7.0")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/wronglink/pytest-pudb")
-                      (commit commit)))
-                (file-name (git-file-name name commit))
-                (sha256
-                 (base32
-                  "1c0pypxx3y8w7s5bz9iy3w3aablnhn81rnhmb0is8hf2qpm6k3w0"))))
-      (build-system python-build-system)
-      (propagated-inputs (list pudb))
-      (native-inputs (list python-pytest))
-      (arguments
-       `(#:phases (modify-phases %standard-phases
-                    (replace 'check
-                      (lambda* (#:key inputs outputs tests? #:allow-other-keys)
-                        (when tests?
-                          (add-installed-pythonpath inputs outputs)
-                          (invoke "pytest" "-v")))))))
-      (home-page "https://github.com/wronglink/pytest-pudb")
-      (synopsis "Pytest PuDB debugger integration")
-      (description
-       "@code{python-pytest-pudb} provides PuDB debugger integration based
-on pytest PDB integration.  For example, the software developer can
-call pudb by running @code{py.test --pudb} from the command line or by
-including @code{pudb.set_trace} in their test file(s).")
-      (license license:expat))))
 
 (define-public python-pytest-datadir
   (package

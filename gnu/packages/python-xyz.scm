@@ -553,6 +553,34 @@ line drawing algorithm}.")
 understanding ECMA script.")
     (license license:expat)))
 
+(define-public python-copydetect
+  (package
+    (name "python-copydetect")
+    (version "0.5.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/blingenf/copydetect")
+              (commit version)))
+       (sha256
+        (base32 "0hp9994bbnzp79xxprgwsbgc0w06sb4n82nghl90w1z9zbvwn6gz"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-jinja2
+                             python-matplotlib
+                             python-numpy
+                             python-pygments
+                             python-tqdm))
+    (native-inputs (list python-setuptools
+                         python-pytest
+                         python-wheel))
+    (home-page "https://github.com/blingenf/copydetect")
+    (synopsis "Code plagiarism detection tool")
+    (description "Copydetect is a tool to detect likely instances of plagiarism
+based on the winnowing algorithm.  It takes a list of directories as input and
+generates an HTML report displaying copied slices as output.")
+    (license license:expat)))
+
 (define-public python-couleur
   (package
     (name "python-couleur")
@@ -1123,6 +1151,28 @@ programs via modification of source files. Trubar supports f-strings and does
 not require any changes to the original source code, such as marking strings
 for translation.")
     (license license:expat)))
+
+(define-public python-vendetect
+  (package
+    (name "python-vendetect")
+    (version "0.0.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "vendetect" version))
+       (sha256
+        (base32 "0hi13sbgr8y66mih2xyzczjfff4lwymkn9cw5215ms2nn6qq9rhi"))))
+    (build-system pyproject-build-system)
+    (propagated-inputs (list python-copydetect python-rich))
+    (native-inputs (list python-hatchling python-pytest))
+    (home-page "https://github.com/trailofbits/vendetect")
+    (synopsis "Detect vendored and copy-pasted code")
+    (description
+     "Vendetect helps identify copied or vendored code between repositories,
+making it easier to detect when code has been copied with or without
+attribution.  It uses similarity detection algorithms to compare code files
+and highlight matching sections.")
+    (license license:agpl3+)))
 
 (define-public python-xmldiff
   (package
@@ -1933,7 +1983,7 @@ HoloViews, and Datashader.")
 (define-public python-colored
   (package
     (name "python-colored")
-    (version "1.4.4")
+    (version "2.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1942,10 +1992,17 @@ HoloViews, and Datashader.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "196ins0m7f90xz5dw764dlx060ziqbcydqzzq40b4ir5858baf3r"))))
+                "00332xdjw5fcj5wx848693355nvlgcf8qmpwkvz3rngfg1q5bxa6"))))
     (build-system pyproject-build-system)
-    (arguments (list #:tests? #false)) ;the tests are not run automatically
-    (native-inputs (list python-setuptools python-wheel))
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'pre-check
+            (lambda _
+              ;; Tests expect ANSI escape codes for colors.
+              (setenv "FORCE_COLOR" "1"))))))
+    (native-inputs (list python-flit-core python-pytest))
     (home-page "https://gitlab.com/dslackw/colored")
     (synopsis "Simple library for color and formatting to terminal")
     (description "This is a very simple Python library for color and
@@ -6762,32 +6819,31 @@ versions, process requirements files and generate AUTHORS and ChangeLog file
 from git information.
 ")))
 
+(define-public python-pbr-next
+  (hidden-package
+   (package/inherit python-pbr
+     (version "6.1.1")
+     (source
+      (origin
+        (method url-fetch)
+        (uri (pypi-uri "pbr" version))
+        (sha256
+         (base32 "0szp9dy7ksvpqddfzzca2a4assag8whmgxyhk7njxsw9d7775slk")))))))
+
 (define-public python-pyrsistent
   (package
     (name "python-pyrsistent")
-    (version "0.16.0")
+    (version "0.20.0")
     (home-page "https://github.com/tobgu/pyrsistent")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "pyrsistent" version))
               (sha256
                (base32
-                "1lrsjgblnapfimd0alsi1as5nz2lfqv97131l7d6anbjzq2rjri8"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases (modify-phases %standard-phases
-                  ;; The package works fine with newer Pytest and Hypothesis, but
-                  ;; has pinned older versions to stay compatible with Python 2.
-                  (add-before 'check 'loosen-pytest-requirement
-                    (lambda _
-                      (substitute* "setup.py"
-                        (("pytest<5") "pytest")
-                        (("hypothesis<5") "hypothesis"))
-                      #t)))))
+                "1935ybwdxszmzlzshwkc7m7swm1js46ls246j1knqndbca7zfj2c"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-hypothesis python-pytest python-pytest-runner))
-    (propagated-inputs
-     (list python-six))
+     (list python-pytest python-setuptools python-wheel))
     (synopsis "Persistent data structures for Python")
     (description
      "Pyrsistent is a number of persistent collections (by some referred to as
@@ -18717,9 +18773,6 @@ libmagic.")))
           (add-before 'check 'pre-check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
-                ;; Without this we get this error: type object 'GreenSocket'
-                ;; has no attribute 'sendmsg'.
-                (setenv "EVENTLET_NO_GREENDNS" "YES")
                 (setenv "PYDEVD_USE_CYTHON" "YES"))))
           (add-after 'install 'install-attach-binary
             (lambda _

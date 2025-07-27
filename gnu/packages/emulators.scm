@@ -1814,7 +1814,7 @@ libretro API, based on Mupen64Plus.  It incorporates the following projects:
 (define-public retroarch-assets
   (package
     (name "retroarch-assets")
-    (version "1.19.0")
+    (version "1.20.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1823,7 +1823,7 @@ libretro API, based on Mupen64Plus.  It incorporates the following projects:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1i496x0lkqard5i9045yf438kivwd6f6za8p9fil8w1rfrhk2knz"))))
+                "0ngbc2wmqgz5davan7rnvqapai5wc8j9afylff1yzlk3lgsjlv1x"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ;no test suite
@@ -1839,7 +1839,7 @@ generate the various User Experience (UX) environments.")
 (define-public libretro-core-info
   (package
     (name "libretro-core-info")
-    (version "1.20.0")
+    (version "1.21.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1848,7 +1848,7 @@ generate the various User Experience (UX) environments.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1rfvp0lkv99jgpfyb9pp6vrh1i1974p3lckh93y1bibdizyxmwjg"))))
+                "12yramra6hd33g094krygq2a5h7mjkh0nh5d8qny4b6f61fxaxwk"))))
     (build-system copy-build-system)
     (arguments
      (list #:install-plan #~'(("." "lib/libretro/"
@@ -1866,7 +1866,7 @@ metadata about each known libretro core.  The snapshot is taken from the
 (define-public libretro-database
   (package
     (name "libretro-database")
-    (version "1.20.0")
+    (version "1.21.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1875,7 +1875,7 @@ metadata about each known libretro core.  The snapshot is taken from the
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "086a9grpd1irsdns2zx3hlna72bbrmsfra4r498wi4ia9zf8nb0p"))))
+                "1grkdg6k6dclwrh286dins4k50mp0wf3bvddikaspl309dldjrgw"))))
     (build-system gnu-build-system)
     (arguments (list #:tests? #f
                      #:make-flags #~(list (string-append "PREFIX=" #$output))))
@@ -1904,7 +1904,7 @@ Various scripts that are used to maintain the database files.
 (define-public retroarch-joypad-autoconfig
   (package
     (name "retroarch-joypad-autoconfig")
-    (version "1.20.0")
+    (version "1.21.1")
     (source
      (origin
        (method git-fetch)
@@ -1914,7 +1914,7 @@ Various scripts that are used to maintain the database files.
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0nlz3j3575dlv9s15250qrhi90xcs6mg5i40g4lhq1hbwd075lsd"))))
+         "06mii4zpkrwxiw9qhfvjzri8q8fps1b96nkxp7px2w7cgdl4kg68"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ;no meaningful test suite
@@ -1936,8 +1936,8 @@ physical device and the RetroPad virtual controller.")
   ;; audited for newly added items, with the snippet allow-list updated
   ;; accordingly, due to various items lacking license information or being
   ;; non-free (see: https://github.com/libretro/slang-shaders/issues/150).
-  (let ((commit "a8e35920c5a53448bf6ce78dfe4575485a20a41f")
-        (revision "0"))
+  (let ((commit "82d91f7daf81a41ece49644d2a26b2a40228be61")
+        (revision "1"))
     (package
       (name "libretro-slang-shaders")
       (version (git-version "0" revision commit))
@@ -2604,7 +2604,7 @@ physical device and the RetroPad virtual controller.")
                 "edge-smoothing/scalefx/shaders/old/scalefx.slangp"))))
          (sha256
           (base32
-           "0r45p61nhi44f7ka5dvcabin7q2l25liyhgynm159pwlpwxz83nv"))))
+           "0wmvmpgayizr5444qfxr27zyn4r1yngjfvxfipa0vcrmazw6f6yd"))))
       (build-system gnu-build-system)
       (arguments
        (list #:tests? #f                ;no test suite
@@ -2634,7 +2634,7 @@ GLSL (@file{.slang}) shaders for use with RetroArch.")
 (define-public retroarch-minimal
   (package
     (name "retroarch-minimal")
-    (version "1.20.0")
+    (version "1.21.0")
     (source
      (origin
        (method git-fetch)
@@ -2669,11 +2669,10 @@ GLSL (@file{.slang}) shaders for use with RetroArch.")
             ;; This is an old root certificate used in net_socket_ssl_mbed.c,
             ;; not actually from mbedtls.
             (delete-all-but "deps/mbedtls" "cacert.h")))
-       (patches (search-patches "retroarch-improved-search-paths.patch"
-                                "retroarch-unbundle-spirv-cross.patch"))
+       (patches (search-patches "retroarch-unbundle-spirv-cross.patch"))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0yc16j3g2g0if64xqd7qr4dza8rw10x0zypwbl92y735825p87qi"))))
+        (base32 "17l3x77vd52g7zq62g3j1jxr51ksmdnxif1qh671qi19fsd19v1r"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -2755,7 +2754,7 @@ GLSL (@file{.slang}) shaders for use with RetroArch.")
            openssl
            pulseaudio
            python
-           qtbase-5
+           qtbase
            sdl2
            spirv-cross
            spirv-headers

@@ -600,14 +600,14 @@ Dropbox API v2.")
 (define-public python-eventlet
   (package
     (name "python-eventlet")
-    (version "0.39.1")
+    (version "0.40.2")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "eventlet" version))
        (sha256
         (base32
-         "04051hmlq49kvdymf56hp08vjc6251937fh6vvnj2h1d51sn92ja"))))
+         "1c6qr1cnam79wxm1sh5y04061iyy3shs02yd0mlh47bngwknqqs2"))))
     (build-system pyproject-build-system)
     (arguments
      (list
@@ -623,22 +623,24 @@ Dropbox API v2.")
               " and not test_patcher_existing_locks"
               " and not test_dns_methods_are_green"))
       #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'avoid-OSError
-           (lambda _
-             ;; If eventlet tries to load greendns, an OSError is thrown when
-             ;; getprotobyname is called.  Thankfully there is an environment
-             ;; variable to disable the greendns import, so use it:
-             (setenv "EVENTLET_NO_GREENDNS" "yes"))))))
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'avoid-OSError
+            (lambda _
+              ;; If eventlet tries to load greendns, an OSError is thrown when
+              ;; getprotobyname is called.  Thankfully there is an environment
+              ;; variable to disable the greendns import, so use it.  Note that
+              ;; this error is propagated to child packages too, so enforce the
+              ;; changed default.
+              (substitute* "eventlet/green/socket.py"
+                (("os\\.environ\\.get\\(\"EVENTLET_NO_GREENDNS\", ''\\)")
+                 "os.environ.get(\"EVENTLET_NO_GREENDNS\", \"yes\")")))))))
     (native-inputs
-     (list python-hatch-vcs
+     (list python-pypa-build
+           python-hatch-vcs
            python-hatchling
-           python-pytest
-           python-twine))
+           python-pytest))
     (propagated-inputs
-     (list python-dnspython
-           python-greenlet
-           python-monotonic))
+     (list python-dnspython python-greenlet))
     (home-page "https://eventlet.net")
     (synopsis "Concurrent networking library for Python")
     (description
@@ -648,7 +650,11 @@ It uses @code{epoll} or @code{libevent} for highly scalable non-blocking I/O.
 Coroutines ensure that the developer uses a blocking style of programming
 that is similar to threading, but provide the benefits of non-blocking I/O.
 The event dispatch is implicit, which means you can easily use @code{Eventlet}
-from the Python interpreter, or as a small part of a larger application.")
+from the Python interpreter, or as a small part of a larger application.
+
+Note: In Guix, this package assumes the environment variable
+@code{EVENTLET_NO_GREENDNS} defaults to @code{yes}.  To try to use it, set it
+to anything else.")
     (license license:expat)))
 
 (define-public python-globus-sdk
@@ -781,12 +787,7 @@ of a fake DNS resolver.")
                           "test_request_parse_querystring"
                           "test_request_string_representation"
                           "test_request_stubs_internals")
-                    " and not "))
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'check 'pre-check
-            (lambda _
-              (setenv"EVENTLET_NO_GREENDNS" "yes"))))))
+                    " and not "))))
     (native-inputs
      (list nss-certs-for-test
            python-freezegun
@@ -7618,22 +7619,40 @@ high level API for making HTTP requests when using Twisted.")
 (define-public python-autobahn
   (package
     (name "python-autobahn")
-    (version "19.2.1")
+    (version "24.4.2")
     (source
       (origin
         (method url-fetch)
         (uri (pypi-uri "autobahn" version))
         (sha256
          (base32
-          "1mm7j24ls01c7jb1ad5p5cpyxvzgydiyf8b04ihykh2v8g98j0x7"))))
-    (build-system python-build-system)
+          "1jcjxr16cy93v2kjwpvrcmg7cjbp5kyhbcpq25nhny6gn3qixmx2"))))
+    (build-system pyproject-build-system)
     (arguments
+     (list
       ;; The tests fail to run:
       ;; https://github.com/crossbario/autobahn-python/issues/1117
-     `(#:tests? #f))
-    (propagated-inputs
-     (list python-cffi python-twisted python-txaio))
-    (home-page "https://crossbar.io/autobahn/")
+      #:tests? #f
+      #:phases #~(modify-phases %standard-phases
+                   (add-after 'unpack 'relax-zope-interface
+                     (lambda _
+                       ;; python-zope-interface is a world rebuild package
+                       ;; and our one-digit lower minor version seems to be
+                       ;; fine.
+                       (substitute* "setup.py"
+                         (("zope.interface>=5.2.0")
+                          "zope.interface>=5.1.0"))))
+                   (add-after 'unpack 'strip-xbr
+                     (lambda _
+                       ;; Strip new XBR feature which isn't available in Guix.
+                       (setenv "AUTOBAHN_STRIP_XBR" "1"))))))
+    (native-inputs (list python-setuptools python-wheel))
+    (propagated-inputs (list python-cffi
+                             python-cryptography
+                             python-hyperlink
+                             python-twisted
+                             python-txaio))
+    (home-page "https://github.com/crossbario/autobahn-python/")
     (synopsis "Web Application Messaging Protocol implementation")
     (description "This package provides an implementation of the @dfn{Web Application
 Messaging Protocol} (WAMP).  WAMP connects components in distributed

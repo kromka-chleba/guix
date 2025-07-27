@@ -3362,6 +3362,35 @@ friendly library for concurrency and async I/O in Python.")
     ;; Either license applies.
     (license (list license:expat license:asl2.0))))
 
+(define-public python-pytest-twisted
+  (package
+    (name "python-pytest-twisted")
+    (version "1.14.3")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "pytest_twisted" version))
+       (sha256
+        (base32 "0gkz7ybdj45v4mmfyyryx6lz75hizi23zi9n5mcsdnqfpk5m1q9p"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-append
+                    ;; AssertionError
+                    "not test_sigint_for_regular_tests"
+                    ;; TimeoutExpired
+                    " and not test_sigint_for_inline_callbacks_tests"))))
+    (propagated-inputs (list python-decorator python-greenlet))
+    (native-inputs (list python-pytest
+                         python-setuptools
+                         python-twisted
+                         python-wheel))
+    (home-page "https://github.com/pytest-dev/pytest-twisted")
+    (synopsis "Twisted plugin for Pytest")
+    (description "This package provides a Twisted plugin for Pytest.")
+    (license license:bsd-3)))
+
 (define-public python-pytest-vcr
   ;; This commit fixes integration with pytest-5
   (let ((commit "4d6c7b3e379a6a7cba0b8f9d20b704dc976e9f05")
@@ -3661,26 +3690,23 @@ possibly work.")
 (define-public python-stestr
   (package
     (name "python-stestr")
-    ;; XXX: The latest version needs flit-core=>3.12.
-    (version "4.1.0")
+    (version "4.2.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "stestr" version))
        (sha256
-        (base32 "12p96kzanzzssr6z4hq6k62pdbsql4mf369ms69c4qyfxrlw6qaz"))))
+        (base32 "17623fqkg3a0z7rx8jcxwvgx6afg6wzvj4q6cgip5hqw5ngn7v25"))))
     (build-system pyproject-build-system)
     (arguments
      (list
       #:test-flags
-      ;; Two tets fail.
-      #~(list "--exclude-regex" (string-join
-                                 (list "test_initialise_expands_user_directory"
-                                       "test_open_expands_user_directory")
-                                 "|"))
+      #~(list "--test-path" "stestr/tests")
       #:phases
       #~(modify-phases %standard-phases
-          ;; TODO: Implement in pypproject-build-system's  test-backends.
+          (add-before 'check 'configure-check
+            (lambda _
+              (setenv "HOME" (getcwd))))
           (replace 'check
             (lambda* (#:key tests? test-flags #:allow-other-keys)
               (when tests?
@@ -3689,10 +3715,10 @@ possibly work.")
     (native-inputs
      (list python-ddt
            python-iso8601
-           python-setuptools
-           python-wheel))
+           python-flit-core-next ;requires >=3.12
+           python-setuptools))
     (propagated-inputs
-     (list python-cliff
+     (list python-cliff-bootstrap
            python-fixtures
            python-pyyaml
            python-subunit

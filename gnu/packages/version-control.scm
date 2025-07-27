@@ -1156,7 +1156,7 @@ provides an integration with GitHub and GitLab.")
 (define-public got
   (package
     (name "got")
-    (version "0.115")
+    (version "0.116")
     (source (origin
               (method url-fetch)
               (uri
@@ -1165,7 +1165,7 @@ provides an integration with GitHub and GitLab.")
                 version ".tar.gz"))
               (sha256
                (base32
-                "1rw9i74b4q99ja0j4xckx3bbzl8jixxpfnsjzgw7sx3lqcfbrw5d"))))
+                "1zsdisaqv1q612a7jws9qd8n1gm9ilz5mnprkpgvdhc27gblm9p8"))))
     (inputs
      (list libevent
            `(,util-linux "lib")
@@ -3185,8 +3185,19 @@ patch associated with a particular revision of an RCS file.")
     (build-system gnu-build-system)
     (arguments
      ;; XXX: The test suite looks flawed, and the package is obsolete anyway.
-     '(#:tests? #f
-       #:configure-flags (list "--with-external-zlib")))
+     (list
+       #:tests? #f
+       #:configure-flags
+         #~(list
+             "--with-external-zlib"
+             "CFLAGS=-g -O2 -Wno-error=implicit-function-declaration")
+       #:phases
+         #~(modify-phases %standard-phases
+           (add-after 'unpack 'fix-include
+             (lambda _
+               (substitute* "lib/sighandle.c"
+                 (("#ifdef STDC_HEADERS" all)
+                  (string-append "#define STDC_HEADERS 1\n" all))))))))
     (inputs (list zlib nano))                    ; the default editor
     (home-page "https://cvs.nongnu.org")
     (synopsis "Historical centralized version control system")
