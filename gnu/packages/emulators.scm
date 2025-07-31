@@ -1758,8 +1758,8 @@ as RetroArch.")
 (define-public libretro-mupen64plus-nx
   ;; There are no proper release; use the latest commit of the master branch
   ;; (their stable branch).
-  (let ((commit "9d940bacb95c4d86733f42b67b57fc83046a6d39")
-        (revision "0"))
+  (let ((commit "3a676196500545b637b83cb19fb393d2359e1f9d")
+        (revision "1"))
     (package
       (name "libretro-mupen64plus-nx")
       (version (git-version "0" revision commit))
@@ -1771,7 +1771,7 @@ as RetroArch.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "0s3l62mfkbzmv8g1y4r40iayfwdz68rq6l6khc0d8kw08qk7ggl9"))))
+                  "0al0z52idssmvpn6400cmjlxg5qkp7wdb97i6yywip230xpjwlb8"))))
       (build-system gnu-build-system)
       (arguments
        (list
@@ -3591,7 +3591,7 @@ Programming Interface} for emulators.")
 (define-public jgrf
   (package
     (name "jgrf")
-    (version "1.2.0")
+    (version "1.2.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3610,7 +3610,7 @@ Programming Interface} for emulators.")
                           (delete-file-recursively "deps/miniz")))
               (sha256
                (base32
-                "1ivc8jj0majvgi0rj9nn429bmh7wp2nf87hq8xg05fjqwalfy3bl"))))
+                "06q3yiz8rwgyx7iri94lg51lcqwhz8zz8y890haw5x1vc7f7yn1v"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                ;no test suite
@@ -3657,7 +3657,7 @@ as a \"white-label\" frontend for statically linked standalone emulators.")
 (define-public jg-bsnes
   (package
     (name "jg-bsnes")
-    (version "2.0.0")
+    (version "2.0.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3677,7 +3677,7 @@ as a \"white-label\" frontend for statically linked standalone emulators.")
                           (delete-file-recursively "deps/libsamplerate")))
               (sha256
                (base32
-                "0z1ka4si8vcb0j6ih087cni18vpgfd3qnaw24awycxz23xc0jkdv"))))
+                "1750ff70y9kiqa0mxxw6530fscana0wf2fslb0d801y5g4mymp73"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ;no test suite
@@ -3763,8 +3763,8 @@ Advance.")
 
 (define-public libretro-bsnes-jg
   ;; There aren't any release yet; use the latest commit.
-  (let ((commit "0d42dea0cb20aba8bfec05b928e4aed2b295352a")
-        (revision "0"))
+  (let ((commit "6400024854702110c4019f5b0a7336dca7112fdb")
+        (revision "1"))
     (package
       (inherit jg-bsnes)
       (name "libretro-bsnes-jg")
@@ -3777,7 +3777,7 @@ Advance.")
                 (file-name (git-file-name name version))
                 (sha256
                  (base32
-                  "1dq2ypf4g4karayc9sgqn74bfnnsq2f4b3r615xyczchdaf2mi1n"))))
+                  "1sbhq614rvcm01ln7883ivdhni1mg1v4lyyvcwsy92i9wbh8qd9i"))))
       (arguments
        (substitute-keyword-arguments (package-arguments jg-bsnes)
          ((#:make-flags flags)
@@ -3797,12 +3797,12 @@ Advance.")
                     ((".*\\$\\(CORE_DIR)/deps/libsamplerate/.*")
                      ""))))))))
       (home-page "https://git.libretro.com/libretro/bsnes-jg")
-      (synopsis "libretro port of bsnes-jg"))))
+      (synopsis "Libretro port of bsnes-jg"))))
 
 (define-public jg-nestopia
   (package
     (name "jg-nestopia")
-    (version "1.52.1")
+    (version "1.53.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3811,7 +3811,7 @@ Advance.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "19qg9hgh25aaym7b81v5g7165v4fyymas6dmzc4z867mzaphbn6s"))))
+                "16saiwj4dmk6d0aqgczyrs9qpz7h79xxg3in11jnf2k7crzkk5ql"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ;no test suite
@@ -3835,7 +3835,7 @@ of the Nestopia emulator.")
 (define-public jg-cega
   (package
     (name "jg-cega")
-    (version "0.6.0")
+    (version "0.6.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3846,7 +3846,7 @@ of the Nestopia emulator.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "10qxfch08850zivxf4s1mhh0clx4h1cfn440acm6d7glb6wbv822"))))
+                "1zcxy6zkh3gg3kg050j21bqwf6wdq7q0xifqg3vs07s30yh042zc"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ;no test suite

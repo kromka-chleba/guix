@@ -1294,6 +1294,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/fenics-dolfin-boost.patch		\
   %D%/packages/patches/fenics-dolfin-config-slepc.patch		\
   %D%/packages/patches/fenics-dolfin-hdf5-version-check.patch	\
+  %D%/packages/patches/fenics-dolfin-integer-types.patch	\
   %D%/packages/patches/ffmpeg-add-av_stream_get_first_dts-for-chromium.patch	\
   %D%/packages/patches/ffmpeg-jami-change-RTCP-ratio.patch	\
   %D%/packages/patches/ffmpeg-jami-rtp_ext_abs_send_time.patch	\
@@ -1337,6 +1338,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/freeimage-unbundle.patch		\
   %D%/packages/patches/freeimage-CVE-2020-21428.patch		\
   %D%/packages/patches/freeimage-CVE-2020-22524.patch		\
+  %D%/packages/patches/freerdp-3.16.0-rpath.patch		\
   %D%/packages/patches/freesolid-automake.patch			\
   %D%/packages/patches/freesolid-autotools.patch		\
   %D%/packages/patches/freesolid-configure.patch		\
@@ -1781,7 +1783,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/libsecret-fix-test-paths.patch		\
   %D%/packages/patches/libsepol-versioned-docbook.patch		\
   %D%/packages/patches/libskk-fix-invalid-escape.patch		\
-  %D%/packages/patches/libssh-openssh-banner.patch		\
   %D%/packages/patches/libtar-CVE-2013-4420.patch 		\
   %D%/packages/patches/libtar-CVE-2021-33643-CVE-2021-33644.patch	\
   %D%/packages/patches/libtar-CVE-2021-33645-CVE-2021-33646.patch	\
@@ -2322,6 +2323,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/snappy-add-O2-flag-in-CmakeLists.txt.patch	\
   %D%/packages/patches/snappy-add-inline-for-GCC.patch		\
   %D%/packages/patches/source-highlight-gcc-compat.patch	\
+  %D%/packages/patches/sourcetrail-fix-cmakelists-and-paths.patch		\
   %D%/packages/patches/softhsm-fix-openssl3-tests.patch		\
   %D%/packages/patches/spectre-meltdown-checker-externalize-fwdb.patch \
   %D%/packages/patches/sphinxbase-fix-doxygen.patch		\

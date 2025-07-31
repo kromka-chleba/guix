@@ -94,6 +94,7 @@
 ;;; Copyright © 2025 Adrien 'neox' Bourmault <neox@gnu.org>
 ;;; Copyright © 2025 Ada Stevenson <adanskana@gmail.com>
 ;;; Copyright © 2025 Gabriel Santos <gabrielsantosdesouza@disroot.org>
+;;; Copyright © 2025 Aiden Isik <aidenisik+git@member.fsf.org>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1425,7 +1426,7 @@ more.  This package does @emph{not} provide the game assets.")
   ;; us today is a bunch of fixes that other distros shipped as patches.
   (package
     (name "cowsay")
-    (version "3.8.3")
+    (version "3.8.4")
     (source
      (origin
        (method git-fetch)
@@ -1434,7 +1435,7 @@ more.  This package does @emph{not} provide the game assets.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0xdrpqj0lf3x1aib4s1bqfq4p7dxxlw1560pp1kw6pk3mzyvxih5"))))
+        (base32 "0as4axm1v37d2bm86sksi6wrd0yc4jm2lyfdhr5k179b1mvnfx4v"))))
     (build-system gnu-build-system)
     (arguments
      (list #:make-flags
@@ -6928,7 +6929,7 @@ with the \"Stamp\" tool within Tux Paint.")
                           "-DUSE_SYSTEM_PHYSFS=ON")
       #:phases
       (modify-phases %standard-phases
-        (add-after 'unpack 'patch-squirrel-path
+        (add-after 'unpack 'adapt-squirrel
           (lambda* (#:key inputs #:allow-other-keys)
             (let ((squirrel (assoc-ref inputs "squirrel")))
               (substitute* "CMakeLists.txt"
@@ -6937,7 +6938,10 @@ with the \"Stamp\" tool within Tux Paint.")
                 (("add_dependencies\\(supertux2_lib squirrel\\)") "")
                 (("\\$\\{SQUIRREL_PREFIX\\}/include")
                  (string-append "${SQUIRREL_PREFIX}/include/squirrel"))))
-            #t)))))
+            ;; Adapt to changed API between squirrel-3.1 and 3.2.
+            (substitute* "src/scripting/wrapper.cpp"
+              (("sq_getinstanceup\\(vm, 1, &data, nullptr" all)
+               (string-append all ", 0"))))))))
    (build-system cmake-build-system)
    (inputs (list boost
                  curl
@@ -8119,7 +8123,7 @@ fight against their plot and save his fellow rabbits from slavery.")
 (define-public 0ad-data
   (package
     (name "0ad-data")
-    (version "0.0.26-alpha")
+    (version "0.27.1")
     (source
      (origin
        (method url-fetch)
@@ -8127,7 +8131,7 @@ fight against their plot and save his fellow rabbits from slavery.")
                            version "-unix-data.tar.xz"))
        (file-name (string-append name "-" version ".tar.xz"))
        (sha256
-        (base32 "0z9dfw2hn2fyrx70866lv5464fbagdb8dip321wq10pqb22y805j"))))
+        (base32 "16592xq1ncjxc072rd4lzn2bp941fmfj85r0q1gh52qkvxnjszl3"))))
     (build-system trivial-build-system)
     (native-inputs (list tar unzip xz))
     (arguments
@@ -8167,7 +8171,7 @@ fight against their plot and save his fellow rabbits from slavery.")
 (define-public 0ad
   (package
     (name "0ad")
-    (version "0.0.26-alpha")
+    (version "0.27.1")
     (source
      (origin
        (method url-fetch)
@@ -8175,7 +8179,7 @@ fight against their plot and save his fellow rabbits from slavery.")
                            version "-unix-build.tar.xz"))
        (file-name (string-append name "-" version ".tar.xz"))
        (sha256
-        (base32 "0jzfq09ispi7740c01h6yqxqv9y3zx66d217z32pfbiiwgvns71f"))))
+        (base32 "1yvb04bxq1r7cva58xx0rgzdlx6ra1hp6w1p517x4s2rxdg3b9d0"))))
     ;; A snippet here would cause a build failure because of timestamps
     ;; reset.  See https://bugs.gnu.org/26734.
     (inputs
@@ -8185,7 +8189,7 @@ fight against their plot and save his fellow rabbits from slavery.")
            fmt
            freetype
            gloox
-           icu4c
+           icu4c-73
            libidn
            libpng
            libsodium
@@ -8193,7 +8197,7 @@ fight against their plot and save his fellow rabbits from slavery.")
            libxcursor
            libxml2
            miniupnpc
-           mozjs-78
+           mozjs-115
            openal
            sdl2
            wxwidgets
@@ -8204,7 +8208,8 @@ fight against their plot and save his fellow rabbits from slavery.")
            cxxtest
            mesa
            pkg-config
-           python-2))
+           python
+           premake5))
     (build-system gnu-build-system)
     (arguments
      `(#:make-flags '("config=release" "verbose=1" "-C" "build/workspaces/gcc")
@@ -8222,16 +8227,61 @@ fight against their plot and save his fellow rabbits from slavery.")
                                "\"")))))
          (add-after 'unpack 'fix-mozjs-compatibility
            ;; 0ad only builds fine with a specific version of mozjs
-           ;; (version 78.6 for 0ad-0.0.25).
-           ;; Here we change the error in case of version mismatch to a warning,
-           ;; and add some minor compatibility fixes.
+           ;; (version 115.16.1 for 0ad-0.27.1).
+           ;; Here we change the error in case of version mismatch to a warning.
            (lambda _
              (substitute* "source/scriptinterface/ScriptTypes.h"
                (("#error Your compiler is trying to use")
-                "#warning Your compiler is trying to use"))
-             (substitute* "source/scriptinterface/ScriptContext.cpp"
-               (("JS::PrepareZoneForGC\\(")
-                "JS::PrepareZoneForGC(m_cx, "))))
+                "#warning Your compiler is trying to use"))))
+         (add-after 'unpack 'patch-python-shebangs
+           ;; A couple Python scripts point to 'python' rather than 'python3'.
+           ;; They work fine under python3, so let's fix that.
+           (lambda _
+             (substitute* "source/tools/webservices/maint_graphics.py"
+               (("#!/usr/bin/env python")
+                "#!/usr/bin/env python3"))
+             (substitute* "source/tools/webservices/manage.py"
+               (("#!/usr/bin/env python")
+                "#!/usr/bin/env python3"))))
+         (add-after 'unpack 'prepare-builtin-libs
+           ;; Builtin libraries are included in the tarball as other tarballs.
+           ;; They're usually extracted during the build, but then shebangs
+           ;; within the libs don't get patched, so we do it here ourselves.
+           (lambda _
+             (let ((fcollada-version "28209")
+                   (nvtt-version "28209"))
+               (with-directory-excursion "libraries/source/fcollada"
+                 (invoke "tar" "-xvf"
+                         (string-append "fcollada-" fcollada-version ".tar.xz"))
+                 (substitute* "build.sh"
+                   (("rm -Rf fcollada-[$][{]PV[}]")
+                    "")
+                   (("\"[$][{]TAR[}]\" xf fcollada-[$][{]PV[}].tar.xz")
+                    "")))
+               (with-directory-excursion "libraries/source/nvtt"
+                 (invoke "tar" "-xvf"
+                         (string-append "nvtt-" nvtt-version ".tar.xz"))
+                 (substitute* "build.sh"
+                   (("rm -Rf nvtt-[$][{]PV[}]")
+                    "")
+                   (("\"[$][{]TAR[}]\" xf nvtt-[$][{]PV[}].tar.xz")
+                    ""))))))
+         (add-after 'unpack 'fix-gmake2-references
+           ;; The current version of 0AD expects premake action 'gmake2',
+           ;; this was renamed to just 'gmake', so we patch to reflect that.
+           ;; Remove this when updating to the next release (fixed in main).
+           (lambda _
+             (substitute* "build/premake/cxxtest/cxxtest.lua"
+               (("gmake2")
+                "gmake"))
+             (substitute* "build/premake/premake5.lua"
+               (("if _ACTION == \"gmake\" then")
+                "if _ACTION == \"gmakelegacy\" then")
+               (("if _ACTION == \"gmake2\" then")
+                "if _ACTION == \"gmake\" then"))
+             (substitute* "build/workspaces/update-workspaces.sh"
+               (("gmake2")
+                "gmake"))))
          (replace 'configure
            (lambda* (#:key inputs outputs tests? #:allow-other-keys)
              (let* ((jobs (number->string (parallel-job-count)))
@@ -8239,15 +8289,25 @@ fight against their plot and save his fellow rabbits from slavery.")
                     (lib (string-append out "/lib"))
                     (data (string-append out "/share/0ad")))
                (setenv "JOBS" (string-append "-j" jobs))
-               (setenv "CC" "gcc")
+               (setenv "CC" ,(cc-for-target))
                (with-directory-excursion "build/workspaces"
                  (apply invoke
                         `("./update-workspaces.sh"
                           ,(string-append "--libdir=" lib)
                           ,(string-append "--datadir=" data)
                           ;; TODO: "--with-system-nvtt"
+                          "--with-system-premake5"
                           "--with-system-mozjs"
                           ,@(if tests? '() '("--without-tests"))))))))
+         (add-before 'build 'build-builtin-libs
+           (lambda _
+             (let ((jobs (number->string (parallel-job-count))))
+               (setenv "JOBS" (string-append "-j" jobs))
+               (setenv "CC" ,(cc-for-target))
+               (with-directory-excursion "libraries/source/fcollada"
+                                         (invoke "./build.sh"))
+               (with-directory-excursion "libraries/source/nvtt"
+                                         (invoke "./build.sh")))))
          (delete 'check)
          (replace 'install
            (lambda* (#:key inputs outputs #:allow-other-keys)
@@ -8271,6 +8331,7 @@ fight against their plot and save his fellow rabbits from slavery.")
                (for-each (lambda (file)
                            (install-file file lib))
                          (find-files "system" "\\.so$"))
+               (copy-recursively "../libraries/source/nvtt/lib" lib)
                ;; binaries
                (install-file "system/pyrogenesis" bin)
                (with-directory-excursion bin

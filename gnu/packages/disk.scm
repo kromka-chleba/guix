@@ -349,7 +349,11 @@ tables.  It includes a library and command-line utility.")
        #:make-flags (list (string-append "CPPFLAGS="
                                          " -I../common/include "
                                          " -I../debug/include "
-                                         " -I../exception/include"))))
+                                         " -I../exception/include")
+                          (string-append
+                            "CFLAGS="
+                            "-Wno-error=implicit-function-declaration "
+                            "-Wno-error=incompatible-pointer-types"))))
     (home-page "https://www.gnu.org/software/fdisk/")
     (synopsis "Low-level disk partitioning and formatting")
     (description
@@ -1402,7 +1406,7 @@ LVM D-Bus API).")
 (define-public rmlint
   (package
     (name "rmlint")
-    (version "2.10.2")
+    (version "2.10.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -1411,7 +1415,7 @@ LVM D-Bus API).")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0sk4v1chnk2hvzi92svyf8qgamfs4fvial90qwx4a7dayxhkbsm4"))))
+                "1033h99z443wqb66rrh34gmnlnlbjsm5j1sqpg069jdih2ffi6a3"))))
     (build-system scons-build-system)
     (arguments
      (list

@@ -207,42 +207,6 @@ such as compact binary encodings, XML, or JSON.")
                    (license:non-copyleft
                     "file://include/cereal/external/LICENSE")))))
 
-;; Some packages fail with the latest version.  Remove this variable
-;; when unused.
-(define-public cereal-1.3.0
-  (package
-    (inherit cereal)
-    (version "1.3.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/USCiLab/cereal")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name "cereal" version))
-       (sha256
-        (base32
-         "0hc8wh9dwpc1w1zf5lfss4vg5hmgpblqxbrpp1rggicpx9ar831p"))
-       (snippet
-        '(delete-file "unittests/doctest.h"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments cereal)
-       ((#:configure-flags flags #~'())
-        #~'("-DSKIP_PORTABILITY_TEST=ON" "-DWITH_WERROR=OFF"))
-       ((#:phases phases #~%standard-phases)
-        #~(modify-phases #$phases
-            (add-after 'unpack 'update-doctest
-              (lambda* (#:key inputs #:allow-other-keys)
-                (install-file (search-input-file inputs "unittests/doctest.h")
-                              "unittests/")))
-            (add-before 'configure 'skip-sandbox
-              (lambda _
-                (substitute* "CMakeLists.txt"
-                  (("add_subdirectory\\(sandbox\\)") ""))))))))
-    (native-inputs
-     (list doxygen gcc-10
-           (package-source cereal)))))
-
 (define-public msgpack-c
   (package
     (name "msgpack-c")
@@ -845,9 +809,6 @@ includes the following features:
      (list python-pytest))
     (propagated-inputs
      (list python-ruamel.yaml.clib))
-    (arguments
-     `(;; TODO: Tests require packaging "ruamel.std.pathlib".
-       #:tests? #f))
     (home-page "https://sourceforge.net/projects/ruamel-yaml/")
     (synopsis "YAML 1.2 parser/emitter")
     (description
@@ -868,12 +829,15 @@ style and key ordering are kept, so you can diff the source.")
        (uri (pypi-uri "ruamel.yaml" version))
        (sha256
         (base32
-         "0hm9yg785f46bkrgqknd6fdvmkby9dpzjnm0b63qf0i748acaj5v"))))))
+         "0hm9yg785f46bkrgqknd6fdvmkby9dpzjnm0b63qf0i748acaj5v"))))
+    (arguments
+     `(;; TODO: Tests require packaging "ruamel.std.pathlib".
+       #:tests? #f))))
 
 (define-public python-ruamel.yaml.clib
   (package
     (name "python-ruamel.yaml.clib")
-    (version "0.2.9")
+    (version "0.2.12")
     (source
       (origin
         ;; pypi release code has cythonized code without corresponding source.
@@ -884,7 +848,7 @@ style and key ordering are kept, so you can diff the source.")
         (file-name (hg-file-name name version))
         (sha256
          (base32
-          "100nyixfikwivsxiwkq2frgbfkqvvl112wkn0sgc57xq0p1s0dv8"))
+          "12ixp46706pl911f6i4wmik8x0j9vnxy2cqx65ixbdl9cnvqva2l"))
         (modules '((guix build utils)))
         (snippet
          '(begin
@@ -896,7 +860,7 @@ style and key ordering are kept, so you can diff the source.")
        #:phases
        (modify-phases %standard-phases
          (delete 'sanity-check) ; Depends on python-ruamel.yaml
-         (add-after 'unpack 'cythonize-code
+         (add-after 'ensure-no-cythonized-files 'cythonize-code
            (lambda _
              (invoke "cython" "_ruamel_yaml.pyx"))))))
     (native-inputs

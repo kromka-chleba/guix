@@ -234,7 +234,7 @@ them, etc., by attaching to the corresponding pane in tmux.")
 (define-public tmux-xpanes
   (package
     (name "tmux-xpanes")
-    (version "4.1.3")
+    (version "4.2.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -243,7 +243,7 @@ them, etc., by attaching to the corresponding pane in tmux.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "09fmnn1q76r1l4cv7clmfr3j9cjmd053kq238d0qj2i486948ivv"))))
+                "0k37zswn6s9iclm9yasil9jhy768qn9fv3m489irfwrx1vc8lp9w"))))
     (build-system trivial-build-system)
     (inputs
      (list bash))
@@ -372,7 +372,7 @@ left it off the last time it was used.")
 (define-public tmux-plugin-mem-cpu-load
   (package
     (name "tmux-plugin-mem-cpu-load")
-    (version "3.7.0")
+    (version "3.8.2")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -380,7 +380,7 @@ left it off the last time it was used.")
                     (commit (string-append "v" version))))
               (sha256
                (base32
-                "03bax7g9jlsci44ccs50drh617ya3fzvlplwyvxfyb7mgmh85r72"))
+                "041hd6s6prk63r121yggxmzhbp40h6r04mrby0q51x43lfgvmvw3"))
               (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (synopsis "CPU, RAM, and load monitor for use with tmux")

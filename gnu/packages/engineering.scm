@@ -165,6 +165,7 @@
   #:use-module (gnu packages qt)
   #:use-module (gnu packages readline)
   #:use-module (gnu packages ruby-check)
+  #:use-module (gnu packages textutils)
   #:use-module (gnu packages sagemath)
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sqlite)
@@ -980,10 +981,70 @@ such as those made in pneumatics, hydraulics, process industries, electronics,
 and others.")
     (license license:gpl2+)))
 
+(define-public qucsator-rf
+  (package
+    (name "qucsator-rf")
+    (version "1.0.6")                   ;required by qucs-s, keep in sync
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ra3xdh/qucsator_rf/")
+              (commit version)))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32
+         "0fx0kzj6hn0094jnvn6b1zqwjnkmd79xdr0zdyz5lmsyixlmxmvk"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ;no tests
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'run-tests
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                ;; Qucs-test is a collection of python scripts and data test
+                ;; cases. Its purpose is to test Qucs (GUI) and Qucsator;
+                ;; tests are under `testsuite` directory.
+                (copy-recursively
+                 #$(origin
+                     (method git-fetch)
+                     (uri
+                      ;; Using latest revision; refer to
+                      ;; .github/workflows/cmake.yml to keep up to date.
+                      (git-reference
+                        (url "https://github.com/ra3xdh/qucs-test/")
+                        (commit "ce69e05ceecab910175e6ea36b6e021a6d279947")))
+                     (sha256
+                      (base32
+                       (string-append "1r3hx43wvd0s11mzsvj1chylzv"
+                                      "0lk9qhaw7205j9x316ly03bl08"))))
+                 "qucs-test")
+                (with-directory-excursion "qucs-test"
+                  (invoke "python3" "run.py" "--qucsator"
+                          (format #f "--prefix=~a/bin" #$output)
+                          "--exclude=skip.txt"))))))
+      #:configure-flags
+      #~(list (format #f "-DBISON_DIR=~a/bin"
+                      #$(this-package-native-input "bison"))
+              (format #f "-DADMSXML_DIR=~a/bin"
+                      #$(this-package-native-input "adms")))))
+    (native-inputs
+     (list adms bison dos2unix flex gperf python python-looseversion
+           python-numpy python-matplotlib))
+    (synopsis "RF and microwave circuits simulator")
+    (description
+     "@code{Qucsator-rf} is a command line driven circuit simulator targeted
+for RF and microwave circuits.  It takes a network list in a certain format as
+input and outputs an XML dataset.")
+    (home-page "https://ra3xdh.github.io//")
+    (license license:gpl2+)))
+
 (define-public qucs-s
   (package
     (name "qucs-s")
-    (version "24.4.1")
+    (version "25.1.2")                  ;update qucsator-rf accordingly
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -992,13 +1053,11 @@ and others.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0307046h3vf6pprbvv47r46mpm764w49ci2cg0i3l1w9rbqlypln"))
-              (patches (search-patches "qucs-s-qucsator-rf-search.patch"))))
+                "07wrpqgbj77rmh1yxy233lk1y4ys1x0721b3jsldp058dcgf24zv"))))
     (build-system qt-build-system)
     (arguments
      (list
       #:qtbase qtbase                   ;for Qt 6
-      #:configure-flags #~(list "-DWITH_QT6=ON")
       #:tests? #f                       ;no tests
       #:phases
       #~(modify-phases %standard-phases
@@ -1008,9 +1067,18 @@ and others.")
                 (("\"ngspice\"")
                  (format #f "~s" (search-input-file inputs "bin/ngspice")))
                 (("\"octave\"")
-                 (format #f "~s" (search-input-file inputs "bin/octave")))))))))
+                 (format #f "~s" (search-input-file inputs "bin/octave"))))))
+          (add-after 'install 'wrap-program
+            (lambda _
+              (wrap-program (string-append #$output "/bin/qucs-s")
+                `("PATH" ":" prefix
+                  (,(string-append #$(this-package-input "ngspice") "/bin")
+                   ,(string-append
+                     #$(this-package-input "qucsator-rf") "/bin")))))))))
     (native-inputs (list qttools))
-    (inputs (list ngspice octave qtbase qtcharts qtsvg qtwayland))
+    (inputs
+     ;; TODO Add xyce-serial to the list.
+     (list bash-minimal octave qtbase qtcharts qtsvg qtwayland qucsator-rf ngspice))
     (synopsis "GUI for different circuit simulation kernels")
     (description
      "@acronym{Qucs-S, Quite universal circuit simulator with SPICE} provides
@@ -1402,7 +1470,7 @@ electrical diagrams), gerbview (viewing Gerber files) and others.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0jhn4hq78cz07hsbyfyzy93gck88j04im1pmsl3sx87g2s215qzd"))))
+                "186nmy222m2k8snwk5i2f9igamflj9avfnhv5ksrbhx5wyrx7fy2"))))
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags (list "-DBUILD_FORMATS=html")
@@ -1436,7 +1504,7 @@ electrical diagrams), gerbview (viewing Gerber files) and others.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "134x4d5w89aahl4k9zai6vwcazibz17gsgzy04l9xn4zcf6v11qp"))))
+                "0r9aimyrv7p4ykqnwb9ac3fd0dv11zmv2ll6qkmm5s875s35hhfl"))))
     (build-system cmake-build-system)
     (arguments
      `(#:tests? #f))                    ; no tests exist
@@ -1465,7 +1533,7 @@ libraries.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0w44b7dzx6d3xw2vbw37k34zxy25bq46rsnv21x10227313vr2wm"))))
+                "1ysnj0973y05nn016hxrghccfv65cas772i369xflay0sns8anqf"))))
     (synopsis "Official KiCad footprint libraries")
     (description "This package contains the official KiCad footprint libraries.")))
 
@@ -1482,7 +1550,7 @@ libraries.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "18cxlp5grvv5m63c3sb6m9l9cmijqqcjmxrkdzg63d5jp7w73smn"))))
+                "0njv4y31k62qhcx0xxcl94p34jgna8z4bs3hwjwzjfmp7ddl2dyx"))))
     (synopsis "Official KiCad 3D model libraries")
     (description "This package contains the official KiCad 3D model libraries.")))
 
@@ -3013,35 +3081,32 @@ specification can be downloaded at @url{http://3mf.io/specification/}.")
     (license license:bsd-2)))
 
 (define-public manifold
-  (let ((commit "7c8fbe186aa1ac5eb73f12c28bdef093ee4d11c9")
-        (version "3.0.1")
-        (revision "0"))
-    (package
-      (name "manifold")
-      (version (git-version version revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/elalish/manifold")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "09s4r4hlarl5lzbbihfd1fpfd3987lma5m26wkkvi7zssdbis9zc"))))
-      (build-system cmake-build-system)
-      (inputs (list tbb clipper2 assimp python-nanobind googletest))
-      (arguments
-       ;; can be removed once emscripten is packaged
-       `(#:configure-flags '("-DMANIFOLD_JSBIND=OFF")))
-      (synopsis "Geometry library for topological robustness")
-      (description
-       "Manifold is a geometry library dedicated to creating and operating on
+  (package
+    (name "manifold")
+    (version "3.1.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/elalish/manifold")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1vipfy68crvik3760jjmsqnyci6rabb26iiw22p2qpb3cj6r683l"))))
+    (build-system cmake-build-system)
+    (inputs (list tbb clipper2 assimp python-nanobind googletest))
+    (arguments
+     ;; can be removed once emscripten is packaged
+     `(#:configure-flags '("-DMANIFOLD_JSBIND=OFF")))
+    (synopsis "Geometry library for topological robustness")
+    (description
+     "Manifold is a geometry library dedicated to creating and operating on
 manifold triangle meshes.  A manifold mesh is a mesh that represents a solid
 object, and so is very important in manufacturing, CAD, structural analysis,
 etc..  Manifold also supports arbitrary vertex properties and enables mapping
 of materials for rendering use-cases.")
-      (home-page "https://github.com/elalish/manifold")
-      (license license:asl2.0))))
+    (home-page "https://github.com/elalish/manifold")
+    (license license:asl2.0)))
 
 (define-public python-keithley2600
   (package
@@ -3278,8 +3343,8 @@ ontinuous-time and discret-time expressions.")
     (license license:lgpl2.1+)))
 
 (define-public openscad
-  (let ((commit "7245089d3226de41ab55faee62ffe326f6efcb69")
-        (version "2025.06.01")
+  (let ((commit "6a8ab04bfd8bbe5cafab3efb74d2b46cb33fafe7")
+        (version "2025.07.25")
         (revision "0"))
     (package
       (name "openscad")
@@ -3295,13 +3360,13 @@ ontinuous-time and discret-time expressions.")
                ;; deleted in the patch-source build phase.
                (recursive? #t)))
          (sha256
-          (base32 "0lynjxa5y9wi443vxgaj2r8lr98dyfxinq7n4gcw9gz7cfc52a4a"))
-         (patches (search-patches
-                   "openscad-fix-path-in-expected-test-results-to-acommodate-diff.patch"))
+          (base32 "0qvvi4qjadk2p5v2ca95hkkw0zi9vmzyac8hcxr14ijnk0f1ybd0"))
          (file-name (git-file-name name version))))
-      (build-system qt-build-system)
+      (build-system cmake-build-system)
       (arguments
        (list
+        ;; OpenSCAD doesn't cope well with out-of-source builds.
+        #:out-of-source? #f
         #:configure-flags
         #~(list "-DCMAKE_BUILD_TYPE=Release"
                 "-DUSE_BUILTIN_CLIPPER2=OFF"
@@ -3316,7 +3381,8 @@ ontinuous-time and discret-time expressions.")
                 (string-append "-DOPENSCAD_COMMIT="
                                #$commit)
                 "-DENABLE_EGL=ON"
-                "-DENABLE_GLX=ON")
+                "-DENABLE_GLX=ON"
+                "-B./build")
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-source
@@ -3344,20 +3410,15 @@ ontinuous-time and discret-time expressions.")
                   ;; Use the system sanitizers-cmake module.
                   (("\\$\\{CMAKE_SOURCE_DIR\\}/submodules/sanitizers-cmake/cmake")
                    (string-append (assoc-ref inputs "sanitizers-cmake")
-                                  "/share/sanitizers-cmake/cmake")))
-                ;; Fix test-tool expecting build directory to be a direct
-                ;; subdirectory of the source directory (see
-                ;; https://github.com/openscad/openscad/issues/5937).
-                (substitute* "tests/test_cmdline_tool.py"
-                  (("build_to_test_sources = \"../../tests\"")
-                   "build_to_test_sources = \"../../source/tests\""))))
+                                  "/share/sanitizers-cmake/cmake")))))
+            ;; Tests will fail if the build doesn't happen in a
+            ;; subdirectory of the source directory.
+            (add-before 'build 'create-build-dir
+              (lambda _
+                (mkdir-p "./build")
+                (chdir "./build")))
             (add-before 'check 'patch-tests
               (lambda _
-                ;; Fix tests expecting build directory to be a direct descendant
-                ;; of the source dir (see
-                ;; https://github.com/openscad/openscad/issues/5938).
-                (copy-recursively "../source/color-schemes" "./color-schemes")
-                (copy-recursively "../source/shaders" "./shaders")
                 ;; Required for fontconfig
                 (setenv "HOME" "/tmp"))))))
       (inputs (list boost

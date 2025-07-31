@@ -515,17 +515,17 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; The current "stable" kernels. That is, the most recently released major
 ;; versions that are still supported upstream.
 
-(define-public linux-libre-6.15-version "6.15.5")
+(define-public linux-libre-6.15-version "6.15.6")
 (define-public linux-libre-6.15-gnu-revision "gnu")
 (define deblob-scripts-6.15
   (linux-libre-deblob-scripts
    linux-libre-6.15-version
    linux-libre-6.15-gnu-revision
-   (base32 "0v0fsw3av42xbayy3g11cxyin3hda8s3b103sin05yc80r16584b")
+   (base32 "05fr8s00ljj7v26z3gb1yrfna42i7zy36x6wrg74ai5hwwc7jfnd")
    (base32 "05153ci3sk9gsq8vgk6phvzszldaj2psmyp10cjivm3gl6qvkbhk")))
 (define-public linux-libre-6.15-pristine-source
   (let ((version linux-libre-6.15-version)
-        (hash (base32 "1dc8qrwvvy34s5lgm43j295ipwaqm8wd8x4qchr14hqlkj9hg9rc")))
+        (hash (base32 "1z5l0b59q56qj6s56cxzv43lhfx9z9sp4vfziw60fz97ak4qdd9b")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.15)))
@@ -549,22 +549,22 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
 ;; Here are the support timelines:
 ;; <https://www.kernel.org/category/releases.html>
 
-(define-public linux-libre-6.12-version "6.12.36")
+(define-public linux-libre-6.12-version "6.12.38")
 (define-public linux-libre-6.12-gnu-revision "gnu")
 (define deblob-scripts-6.12
   (linux-libre-deblob-scripts
    linux-libre-6.12-version
    linux-libre-6.12-gnu-revision
    (base32 "0y6i9ifax1a8bxih3rr9xzy3mj61ssgx9yfsy6fh94mni6wl51gp")
-   (base32 "0g08l17f57wkh2jfj4n2k7f7ikm87aj55npljvwd1lns7v5p90xr")))
+   (base32 "1hc3fgc0wajlwbsjkvfcxvmjw4bcxfbrnbfbcasbczz7if4f0fvf")))
 (define-public linux-libre-6.12-pristine-source
   (let ((version linux-libre-6.12-version)
-        (hash (base32 "135s057ya63zw4v1jr9lzjdxk60ahr9v38hbv6nima755pnql5ja")))
+        (hash (base32 "1k0gcwavn5iws3z1as39227i2hnc62qnfddjfqy7k7ymhf6zldgh")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.12)))
 
-(define-public linux-libre-6.6-version "6.6.96")
+(define-public linux-libre-6.6-version "6.6.98")
 (define-public linux-libre-6.6-gnu-revision "gnu")
 (define deblob-scripts-6.6
   (linux-libre-deblob-scripts
@@ -574,12 +574,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1zzpk2hpv76lylip4j7jkn0jqcjj15h3jff22x22i73mwz2kiqgk")))
 (define-public linux-libre-6.6-pristine-source
   (let ((version linux-libre-6.6-version)
-        (hash (base32 "1p8v49w7z8w3wc68mbw46cz9xqrllc8cpa7nqlm2xnrssi1mir4y")))
+        (hash (base32 "1raxyhvv0yay3k1izwcqdbq9322nflflfzcn9d1jrhmb032k8si9")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.6)))
 
-(define-public linux-libre-6.1-version "6.1.143")
+(define-public linux-libre-6.1-version "6.1.145")
 (define-public linux-libre-6.1-gnu-revision "gnu")
 (define deblob-scripts-6.1
   (linux-libre-deblob-scripts
@@ -589,12 +589,12 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "1hzjr44hy8px4n3x5my2syhd60chkfy79ajgzvlz04pc5yf6ihpi")))
 (define-public linux-libre-6.1-pristine-source
   (let ((version linux-libre-6.1-version)
-        (hash (base32 "02ivq22hv42bcnssfpkkbqlhz1by9jrfrqlrz1wi0svysz2dlnz2")))
+        (hash (base32 "0qrkcrqb0migsrq6xl1idyz8n6vjbdk74z4sc9na97b6n5vp0r9i")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-6.1)))
 
-(define-public linux-libre-5.15-version "5.15.186")
+(define-public linux-libre-5.15-version "5.15.188")
 (define-public linux-libre-5.15-gnu-revision "gnu")
 (define deblob-scripts-5.15
   (linux-libre-deblob-scripts
@@ -604,7 +604,7 @@ corresponding UPSTREAM-SOURCE (an origin), using the given DEBLOB-SCRIPTS."
    (base32 "0rg65s6kd9gxxa3wl6180pr39rb6zbcicwjik4kygs2ns0247y56")))
 (define-public linux-libre-5.15-pristine-source
   (let ((version linux-libre-5.15-version)
-        (hash (base32 "0anbf7v0m26da0c6d0z925im4x2kf8kswpbv056543amxvbzsklw")))
+        (hash (base32 "1nfcrdwa2mgih57ch9kh8gc6jl950a7vpqgr56xk1b02303km5f4")))
    (make-linux-libre-source version
                             (%upstream-linux-source version hash)
                             deblob-scripts-5.15)))
@@ -2662,7 +2662,7 @@ supported under @file{/sys/class/backlight/}.")
 (define-public v4l2loopback-linux-module
   (package
     (name "v4l2loopback-linux-module")
-    (version "0.15.0")
+    (version "0.15.1")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2671,7 +2671,7 @@ supported under @file{/sys/class/backlight/}.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1vp7f3ssvlbsxrwx6ix890yk589na6zhi0z3p1yl00fa813wcidh"))))
+                "00vkn4c1wlfmf8kqklklxj5kalwgiwwnxwbh4pw7dj9l1ivycm4f"))))
     (build-system linux-module-build-system)
     (arguments
      (list #:tests? #f))                ; no test suite
@@ -7991,7 +7991,7 @@ The collection contains a set of bandwidth and latency benchmark such as:
   (package
     (name "rng-tools")
     (home-page "https://github.com/nhorman/rng-tools")
-    (version "6.16")
+    (version "6.17")
     (source (origin
               (method git-fetch)
               (uri (git-reference (url home-page)
@@ -7999,7 +7999,7 @@ The collection contains a set of bandwidth and latency benchmark such as:
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1rsk8nxs0j32b9hr88qk8hv029fb1q0hcrw0mfdywvm7dn2d15gn"))
+                "0vvqi9ha4jbk4086x2q98p4ip3z56sfdpyckdyknsd36zhp6z8n2"))
               (patches
                (search-patches "rng-tools-revert-build-randstat.patch"))
               (patch-flags '("-p0"))))

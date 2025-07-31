@@ -460,8 +460,10 @@ score, keyboard, guitar, drum and controller views.")
          "--without-hal"
          "--enable-udev"
          (string-append "--with-udev-dir=" #$output "/lib/udev")
-         (string-append "--prefix=" #$output))
-
+         (string-append "--prefix=" #$output)
+         (string-append "CFLAGS="
+                        "-Wno-error=incompatible-pointer-types "
+                        "-Wno-error=implicit-int"))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-autotools-version-requirement
@@ -2306,7 +2308,7 @@ your own lessons.")
 (define-public powertabeditor
   (package
     (name "powertabeditor")
-    (version "2.0.0-alpha19")
+    (version "2.0.22")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2315,7 +2317,7 @@ your own lessons.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1fbrfw1ky57nms47pcfdrrwpa2jmgc8vgc68sz96wkvs49zzm5d1"))))
+                "1pn8wcmxsvffh8b3slsrbdb6l5s1mdbl3x41i4l170ld0p6fv92n"))))
     (build-system cmake-build-system)
     (arguments
      (list
@@ -2330,8 +2332,8 @@ your own lessons.")
            minizip
            nlohmann-json
            pugixml
-           qtbase-5
-           qttools-5 ;for Qt5LinguistTools
+           qtbase
+           qttools ;for QtLinguistTools
            rtmidi
            timidity++
            zlib))

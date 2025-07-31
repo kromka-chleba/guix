@@ -2422,12 +2422,6 @@ input files is possible, including video files.")
        (list #:configure-flags
              #~(list (string-append "--cc=" #$(cc-for-target))
                      (string-append "--cxx=" #$(cxx-for-target))
-                     ;; Help the configure script correctly detect the
-                     ;; availability of freetype (see:
-                     ;; <https://github.com/gpac/gpac/issues/3307>).
-                     (format #f "--extra-cflags=-I~a"
-                             (search-input-directory %build-inputs
-                                                     "include/freetype2"))
                      "--verbose")
              ;; The test suite is a git submodule that must synchronize its data
              ;; from the network.
@@ -6207,7 +6201,7 @@ transitions, and effects and then export your film to many common formats.")
 (define-public shotcut
   (package
     (name "shotcut")
-    (version "25.05.11")
+    (version "25.07.26")
     (source
      (origin
        (method git-fetch)
@@ -6216,7 +6210,7 @@ transitions, and effects and then export your film to many common formats.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1mrv33mimx103qyq6kpzb2cb8xbxwlxzn9x24fgkimmfbcigks6a"))))
+        (base32 "0213adgk8zlsw160dz3bbdkhlz627cg42i6ng35flgxdx0z050hn"))))
     (build-system qt-build-system)
     (arguments
      (list

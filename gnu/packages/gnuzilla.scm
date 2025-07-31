@@ -269,11 +269,10 @@ fractional-second-digits-append-item.js")
 in C/C++.")
     (license license:mpl2.0))) ; and others for some files
 
-(define-public mozjs-78
+(define-public mozjs-115
   (package
     (inherit mozjs)
-    (name "mozjs")
-    (version "78.15.0")
+    (version "115.26.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://archive.mozilla.org/pub/firefox"
@@ -281,86 +280,45 @@ in C/C++.")
                                   version "esr.source.tar.xz"))
               (sha256
                (base32
-                "0l91cxdc5v9fps79ckb1kid4gw6v5qng1jd9zvaacwaiv628shx4"))))
-    (build-system gnu-build-system)
+                "0xvwk3vkbxnybpi3gwk48nxffg44lbv58mbk2xq6cz50ffq0k5k2"))))
     (arguments
      (substitute-keyword-arguments (package-arguments mozjs)
        ((#:phases phases)
         #~(modify-phases #$phases
-            (add-after 'unpack 'python-3.11-compatibility
-              (lambda _
-                (substitute* '("python/mozbuild/mozpack/files.py"
-                               "python/mozbuild/mozbuild/util.py"
-                               "python/mozbuild/mozbuild/action/process_define_files.py"
-                               "python/mozbuild/mozbuild/backend/base.py"
-                               "python/mozbuild/mozbuild/preprocessor.py"
-                               "python/mozbuild/mozbuild/virtualenv.py")
-                  (("'rU'") "'r'"))))
-            (add-after 'unpack 'patch-for-python-3.10
-              (lambda _
-                ;; Some classes were moved from collections to collections.abc
-                ;; in Python 3.10.
-                (substitute* "python/mozbuild/mozbuild/util.py"
-                  (("collections\\.Sequence")
-                   "collections.abc.Sequence"))
-                (substitute* "python/mozbuild/mozbuild/makeutil.py"
-                  (("from collections import Iterable")
-                   "from collections.abc import Iterable"))
-                (substitute* "python/mozbuild/mozbuild/backend/configenvironment.py"
-                  (("from collections import Iterable, OrderedDict")
-                   "from collections import OrderedDict\n\
-from collections.abc import Iterable"))
-                (substitute*
-                    "testing/mozbase/manifestparser/manifestparser/filters.py"
-                  (("from collections import defaultdict, MutableSequence")
-                   "from collections import defaultdict\n\
-from collections.abc import MutableSequence"))))
-            (replace 'configure
-              (lambda* (#:key configure-flags #:allow-other-keys)
-                ;; The configure script does not accept environment variables as
-                ;; arguments.  It also must be run from a different directory,
-                ;; but not the root directory either.
-                (mkdir "run-configure-from-here")
-                (chdir "run-configure-from-here")
-                (setenv "SHELL" (which "sh"))
-                (setenv "CONFIG_SHELL" (which "sh"))
-                (setenv "AUTOCONF" (which "autoconf"))
-                (apply invoke "../js/src/configure"
-                       (cons (string-append "--prefix=" #$output)
-                             configure-flags))))
             (replace 'adjust-tests
               (lambda _
                 (with-directory-excursion "../js/src/tests"
-                  ;; The test suite expects a lightly patched ICU 67.  Since
-                  ;; Guix is about to switch to ICU 68, massage the tests to
-                  ;; work with that instead of patching ICU.  Try removing this
-                  ;; phase for newer versions of mozjs.
+                ;; The test suite expects a lightly patched ICU.  Disable tests
+                ;; that do not work with the system version.  See
+                ;; "intl/icu-patches" for clues.
 
-                  ;; These tests look up locale names and expects to get
-                  ;; "GB" instead of "UK".
-                  (substitute* "non262/Intl/DisplayNames/language.js"
-                    (("Traditionell, GB")
-                     "Traditionell, UK"))
-                  (substitute* "non262/Intl/DisplayNames/region.js"
-                    (("\"GB\": \"GB\"")
-                     "\"GB\": \"UK\""))
+                ;; See <https://unicode-org.atlassian.net/browse/ICU-20992> and
+                ;; <https://bugzilla.mozilla.org/show_bug.cgi?id=1636984> and
+                ;; related patch for why this is failing.
+                (delete-file "non262/Intl/DateTimeFormat/\
+fractional-second-digits-append-item.js")
+                ;; FIXME: got "0 \u251CAM/PM: noon\u2524", expected "0 (AM/PM: noon)"
+                (delete-file "non262/Intl/DateTimeFormat/day-period-hour-cycle.js")
+                ;; FIXME: got "en-US-posix", expected "en-US-POSIX".
+                (delete-file "non262/Intl/available-locales-supported.js")
+                ;; FIXME: got "en-US", expected "en-US-POSIX"
+                (delete-file "non262/Intl/available-locales-resolved.js")
 
-                  ;; XXX: Some localized time formats have changed, and
-                  ;; substitution fails for accented characters, even though
-                  ;; it works in the REPL(?).  Just delete these for now.
-                  (delete-file "non262/Intl/Date/toLocaleString_timeZone.js")
-                  (delete-file "non262/Intl/Date/toLocaleDateString_timeZone.js")
+                ;;; Since 115:
+                ;; Mismatching array lengths
+                (delete-file "non262/Intl/supportedValuesOf-timeZones-canonical.js")
+                ;; FIXME: got "America/Santa_Isabel", expected "America/Tijuana":
+                ;; America/Santa_Isabel -> America/Tijuana
+                (delete-file "non262/Intl/DateTimeFormat/timeZone_backward_links.js")
+                ;; TODO: tzdata 2024a expected – find a way to regenerate
+                ;; these generated tests
+                (delete-file "non262/Intl/DateTimeFormat/timeZone_version.js")
 
-                  ;; Similarly, these get an unexpected "A" suffix when looking
-                  ;; up a time in the "ar-MA-u-ca-islamicc" locale, which is
-                  ;; tricky to substitute.
-                  (delete-file "non262/Intl/DateTimeFormat/format_timeZone.js")
-                  (delete-file "non262/Intl/DateTimeFormat/format.js")
+                ;; FIXME: got "\uD840\uDDF2", expected "\u5047"
+                (delete-file "non262/Intl/Collator/implicithan.js")
+                ;; FIXME: got "\uD840\uDDF2", expected "\u3467"
+                (delete-file "non262/Intl/Collator/big5han-gb2312han.js"))))
 
-                  ;; This file compares a generated list of ICU locale names
-                  ;; with actual lookups.  Some have changed slightly, i.e.
-                  ;; daf-Latn-ZZ -> daf-Latn-CI, so drop it for simplicity.
-                  (delete-file "non262/Intl/Locale/likely-subtags-generated.js"))))
             (replace 'pre-check
               (lambda _
                 (with-directory-excursion "../js/src/tests"
@@ -387,17 +345,8 @@ from collections.abc import MutableSequence"))))
                             (string-append "--worker-count="
                                            (number->string
                                             (parallel-job-count)))))))))))))
-    (native-inputs
-     (list autoconf-2.13
-           automake
-           llvm                         ;for llvm-objdump
-           perl
-           pkg-config
-           python-3
-           rust
-           `(,rust "cargo")))
     (inputs
-     (list icu4c-69 readline zlib))))
+     (list icu4c-73 readline zlib))))
 
 
 ;;;

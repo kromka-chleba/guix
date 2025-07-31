@@ -614,20 +614,18 @@ controls for certain tuners which may be paired with an audio device.")
       (license license:expat))))
 
 (define-public soapybladerf
-  (let ((commit "85f6dc554ed4c618304d99395b19c4e1523675b0")
-        (revision "1"))
     (package
       (name "soapybladerf")
-      (version (git-version "0.4.1" revision commit))
+      (version "0.4.2")
       (source
        (origin
          (method git-fetch)
          (uri (git-reference
                (url "https://github.com/pothosware/SoapyBladeRF")
-               (commit commit)))
+               (commit (string-append "soapy-bladerf-" version))))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "05c5mv1b55jv7dcr740hv4b3gplfaqryflfvprhlkm7bycr8pp16"))))
+          (base32 "1jhhqslpn9kpif9znsdxc9zwlz7hhlzk87lpcg9m4xl2x2xy454n"))))
       (build-system cmake-build-system)
       (inputs (list bladerf soapysdr))
       (arguments (list #:tests? #f))  ; No test suite
@@ -635,7 +633,7 @@ controls for certain tuners which may be paired with an audio device.")
       (synopsis "SoapySDR BladeRF module")
       (description "This package provides BladeRF devices support to the
 SoapySDR library.")
-      (license license:lgpl2.1+))))
+      (license license:lgpl2.1+)))
 
 (define-public soapyhackrf
   ;; Some fixes are not yet in a tagged release.
@@ -1590,7 +1588,14 @@ you must extend 'udev-service-type' with this package.  E.g.:
                                                     "/lib/udev/rules.d")
                                      "-DBLADERF_GROUP=dialout"
                                      "-DBUILD_DOCUMENTATION=ON")
-           #:tests? #f)) ; No test suite
+           #:tests? #f ; No test suite
+           #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'gcc-14
+                 (lambda _
+                   (substitute* "host/utilities/bladeRF-fsk/c/src/fir_filter.c"
+                     (("calloc\\(sizeof\\(struct complex_sample\\), chunk_size\\)")
+                      "calloc(1 * sizeof(struct complex_sample), chunk_size)")))))))
     (home-page "https://www.nuand.com/")
     (synopsis "User-space library and utilities for BladeRF SDR")
     (description
