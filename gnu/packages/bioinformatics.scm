@@ -8454,7 +8454,7 @@ comment or quality sections.")
 (define-public gemma
   (package
     (name "gemma")
-    (version "0.98.3")
+    (version "v0.98.5")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -8463,7 +8463,7 @@ comment or quality sections.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1p8a7kkfn1mmrg017aziy544aha8i9h6wd1x2dk3w2794wl33qb7"))
+                "1dm8pf1fbdmv2yiz5aybcvk3050m5350gq8xlr4j6swzm3wwhydn"))
               (modules '((guix build utils)))
               (snippet
                '(begin
@@ -15136,28 +15136,6 @@ measures for ChIP-seq/DNase-seq/FAIRE-seq/MNase-seq data.  It can also be
 used to obtain robust estimates of the predominant fragment length or
 characteristic tag shift values in these assays.")
       (license license:bsd-3))))
-
-(define-public r-r4rna
-  (package
-    (name "r-r4rna")
-    (version "0.1.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "http://www.e-rna.org/r-chie/files/R4RNA_"
-                           version ".tar.gz"))
-       (sha256
-        (base32
-         "1p0i78wh76jfgmn9jphbwwaz6yy6pipzfg08xs54cxavxg2j81p5"))))
-    (build-system r-build-system)
-    (propagated-inputs
-     (list r-optparse r-rcolorbrewer))
-    (home-page "https://www.e-rna.org/r-chie/index.cgi")
-    (synopsis "Analysis framework for RNA secondary structure")
-    (description
-     "The R4RNA package aims to be a general framework for the analysis of RNA
-secondary structure and comparative analysis in R.")
-    (license license:gpl3+)))
 
 (define-public rcas-web
   (let ((commit "71c93e3835653beb4eaa6e89b860bee3779729b8")

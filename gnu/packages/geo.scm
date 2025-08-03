@@ -888,79 +888,6 @@ lets developers use the functionality of Proj in their own software.")
                    ;; src/geodesic.*, src/tests/geodtest.cpp
                    license:x11))))
 
-; This is the last version of proj that provides the old proj.4 API.
-(define-public proj-7
-  (package (inherit proj)
-    (version "7.2.1")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "http://download.osgeo.org/proj/proj-"
-                           version ".tar.gz"))
-       (sha256
-        (base32
-         "050apzdn0isxpsblys1shrl9ccli5vd32kgswlgx1imrbwpg915k"))
-       (patches
-        (search-patches "proj-7-initialize-memory.patch"))))
-    (arguments
-     `(#:configure-flags '("-DUSE_EXTERNAL_GTEST=ON")
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-version
-           (lambda _
-             (substitute* "CMakeLists.txt"
-               (("MAJOR 7 MINOR 2 PATCH 0") "MAJOR 7 MINOR 2 PATCH 1")))))))))
-
-(define-public proj.4
-  (package
-    (name "proj.4")
-    (version "4.9.3")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://download.osgeo.org/proj/proj-"
-                                  version ".tar.gz"))
-              (sha256
-               (base32
-                "1xw5f427xk9p2nbsj04j6m5zyjlyd66sbvl2bkg8hd1kx8pm9139"))))
-    (build-system gnu-build-system)
-    (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'patch-test-paths
-           (lambda _
-             (substitute* '("nad/test27"
-                            "nad/test83"
-                            "nad/testvarious"
-                            "nad/testdatumfile"
-                            "nad/testflaky"
-                            "nad/testIGNF")
-               (("/bin/rm") (which "rm")))
-             #t))
-         ;; Precision problems on i686 and other platforms. See:
-         ;; https://web.archive.org/web/20151006134301/http://trac.osgeo.org/proj/ticket/255
-         ;; Disable failing test.
-         (add-after 'patch-test-paths 'ignore-failing-tests
-           (lambda _
-             (substitute* '("nad/Makefile.in")
-               (("\tPROJ_LIB.*" all) (string-append  "#" all)))
-             #t)))))
-    (inputs
-     (list glib))
-    (home-page "https://proj.org/")
-    (synopsis "Cartographic Projections Library")
-    (description
-     "Proj.4 is a library for converting coordinates between cartographic
-projections.")
-    (license (list license:expat
-                   ;; src/PJ_patterson.c
-                   license:asl2.0
-                   ;; src/geodesic.c/h
-                   license:x11
-                   ;; Embedded EPSG database.
-                   (license:non-copyleft "http://www.epsg.org/TermsOfUse")
-                   ;; cmake/*
-                   license:boost1.0))))
-
 (define-public python-obspy
   (package
     (name "python-obspy")
@@ -1808,14 +1735,14 @@ Shapely capabilities
 (define-public postgis
   (package
     (name "postgis")
-    (version "3.2.1")
+    (version "3.3.8")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.osgeo.org/postgis/source/postgis-"
                                   version ".tar.gz"))
               (sha256
                (base32
-                "0gl9d6xy2an82ldb9sixz5blyngjryq8m3509fr38ffawvfniazv"))))
+                "1w1jkb98rf22qz0x4wajp0cjwzcb928247169xk84az3adb0y9vf"))))
     (build-system gnu-build-system)
     (arguments
      `(#:tests? #f
@@ -2105,7 +2032,7 @@ visualizing and performing calculations with weather data.")
 (define-public libosmium
   (package
     (name "libosmium")
-    (version "2.19.0")
+    (version "2.22.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2114,7 +2041,7 @@ visualizing and performing calculations with weather data.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0d69xzd29hk846g049y2g668mr8kaf05f6a26s3qn6az062hxfa7"))))
+                "05djv6j3cgl2mqznycgwjbsz39imgbfhxran7l5z09x53qzdv23g"))))
     (build-system cmake-build-system)
     (propagated-inputs (list boost
                              bzip2
@@ -2122,7 +2049,7 @@ visualizing and performing calculations with weather data.")
                              gdal
                              geos
                              lz4
-                             proj-7
+                             proj
                              protozero
                              zlib))
     (native-inputs (list doxygen graphviz-minimal))
@@ -2136,7 +2063,7 @@ OpenStreetMap data.")
 (define-public osmium-tool
   (package
     (name "osmium-tool")
-    (version "1.15.0")
+    (version "1.18.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2145,13 +2072,9 @@ OpenStreetMap data.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0d90vz316xdl3c416nicgdw7ybw17l2125wgxglbzl7jaqngapy5"))
-              (modules '((guix build utils)))
-              (snippet
-               ;; Remove bundled libraries.
-               '(delete-file-recursively "include/rapidjson"))))
+                "13zqgniyl58m9gywfsi2wagrf0gh93d850krmx1ndd6r3jzgj978"))))
     (build-system cmake-build-system)
-    (inputs (list libosmium rapidjson))
+    (inputs (list libosmium nlohmann-json))
     (native-inputs (list pandoc))
     (home-page "https://osmcode.org/osmium-tool/")
     (synopsis "Osmium command-line tool")

@@ -9,6 +9,8 @@
 ;;; Copyright © 2025 Cayetano Santos <csantosb@inventati.org>
 ;;; Copyright © 2025 Sharlatan Hellseher <sharlatanus@gmail.com>
 ;;; Copyright © 2022 Konstantinos Agiannis <agiannis.kon@gmail.com>
+;;; Copyright © 2018-2021 Tobias Geerinckx-Rice <me@tobias.gr>
+;;; Copyright © 2015-2025 Ricardo Wurmus <rekado@elephly.net>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -28,6 +30,7 @@
 (define-module (gnu packages electronics)
   #:use-module ((guix licenses) #:prefix license:)
   #:use-module (guix build-system cmake)
+  #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system pyproject)
   #:use-module (guix download)
@@ -46,13 +49,16 @@
   #:use-module (gnu packages cmake)
   #:use-module (gnu packages compression)
   #:use-module (gnu packages documentation)
+  #:use-module (gnu packages engineering)
   #:use-module (gnu packages embedded)
   #:use-module (gnu packages flex)
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages fpga)
   #:use-module (gnu packages gawk)
+  #:use-module (gnu packages gd)
   #:use-module (gnu packages gl)
   #:use-module (gnu packages glib)
+  #:use-module (gnu packages gnome)
   #:use-module (gnu packages graphviz)
   #:use-module (gnu packages gtk)
   #:use-module (gnu packages libftdi)
@@ -99,6 +105,44 @@ are implemented as a core Linux kernel module providing common functionality and
 individual low-level driver modules.")
     (home-page "https://www.comedi.org/")
     (license license:lgpl2.1)))
+
+(define-public librnd
+  (package
+    (name "librnd")
+    (version "4.3.2")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "http://www.repo.hu/projects/librnd/"
+                                  "releases/librnd-" version ".tar.bz2"))
+              (sha256
+               (base32
+                "1qjv6gg9fb3rpvr1y9l5nbzz2xk2sa4nqz0dgwvds5hc1bmd97mf"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:tests? #false                   ;no check target
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; The configure script doesn't tolerate most of our configure
+          ;; flags.
+          (replace 'configure
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs
+     (list gd glib glu gtk gtkglext libepoxy))
+    (native-inputs
+     (list pkg-config))
+    (home-page "http://repo.hu/projects/librnd/")
+    (synopsis "Two-dimensional CAD engine")
+    (description "This is a flexible, modular two-dimensional CAD engine
+@itemize
+@item with transparent multiple GUI toolkit support;
+@item a flexible, dynamic menu system;
+@item a flexible, dynamic configuration system; and
+@item support for user scripting in a dozen languages.
+@end itemize")
+    (license license:gpl2+)))
 
 (define-public libserialport
   (package
@@ -426,6 +470,37 @@ such as:
 @item Reads FZ (with key), BRD, BRD2, BDV and BV* formats.
 @end itemize")
     (license license:expat)))
+
+(define-public pcb-rnd
+  (package
+    (name "pcb-rnd")
+    (version "3.1.7b")
+    (source (origin
+              (method url-fetch)
+              (uri (string-append "http://repo.hu/projects/pcb-rnd/"
+                                  "releases/pcb-rnd-" version ".tar.gz"))
+              (sha256
+               (base32
+                "1djsa0w53l6nvhwv28rlhpva55ir9n3xdvjgnjj8fgvcmrqlzrsl"))))
+    (build-system glib-or-gtk-build-system)
+    (arguments
+     (list
+      #:test-target "test"
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            ;; The configure script doesn't tolerate most of our configure
+            ;; flags.
+            (lambda _
+              (setenv "CC" #$(cc-for-target))
+              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
+              (invoke "./configure" (string-append "--prefix=" #$output)))))))
+    (inputs (list librnd))
+    (home-page "http://repo.hu/projects/pcb-rnd/")
+    (synopsis "Modular layout editor")
+    (description "@code{Pcb-rnd} is a @acronym{Printed Circuit Board} layout
+editor, part of the RiNgDove EDA suite.")
+    (license license:gpl2+)))
 
 (define-public prjtrellis
   ;; The last release is 2 years old; use the latest commit for now.

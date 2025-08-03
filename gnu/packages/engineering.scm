@@ -67,7 +67,6 @@
   #:use-module (guix build-system copy)
   #:use-module (guix build-system emacs)
   #:use-module (guix build-system guile)
-  #:use-module (guix build-system glib-or-gtk)
   #:use-module (guix build-system gnu)
   #:use-module (guix build-system meson)
   #:use-module (guix build-system pyproject)
@@ -182,6 +181,7 @@
   #:use-module (gnu packages tree-sitter)
   #:use-module (gnu packages version-control)
   #:use-module (gnu packages web)
+  #:use-module (gnu packages webkit)
   #:use-module (gnu packages wxwidgets)
   #:use-module (gnu packages xdisorg)
   #:use-module (gnu packages xiph)
@@ -427,39 +427,42 @@ utilities.")
     (license license:gpl2+)))
 
 (define-public lepton-eda
-  ;; This is a fork of gEDA/gaf started in late 2016.  One of its goal is to
-  ;; keep and to extend Guile support.
   (package
-    (inherit geda-gaf)
     (name "lepton-eda")
     (version "1.9.18-20220529")
-    (home-page "https://github.com/lepton-eda/lepton-eda")
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url home-page)
-                    (commit version)))
+                     (url "https://github.com/lepton-eda/lepton-eda/")
+                     (commit version)))
               (sha256
                (base32
                 "06plrcab3s2rpyf0qv2gzc1yp33627xi8105niasgixckk6glnc2"))
               (file-name (git-file-name name version))))
+    (build-system gnu-build-system)
     (arguments
      (list
       #:configure-flags
-      #~(let ((pcb #$(this-package-input "pcb")))
-          ;; When running "make", the POT files are built with the build time as
-          ;; their "POT-Creation-Date".  Later on, "make" notices that .pot
-          ;; files were updated and goes on to run "msgmerge"; as a result, the
-          ;; non-deterministic POT-Creation-Date finds its way into .po files,
-          ;; and then in .gmo files.  To avoid that, simply make sure 'msgmerge'
-          ;; never runs.  See <https://bugs.debian.org/792687>.
-          (list "ac_cv_path_MSGMERGE=true" "--with-gtk3"
-                (string-append "--with-pcb-datadir=" pcb
-                               "/share")
-                (string-append "--with-pcb-lib-path=" pcb
-                               "/share/pcb/pcblib-newlib:"
-                               pcb "/share/pcb/newlib")
-                "CFLAGS=-fcommon"))
+      #~(list
+         ;; When running "make", the POT files are built with the build time as
+         ;; their "POT-Creation-Date".  Later on, "make" notices that .pot
+         ;; files were updated and goes on to run "msgmerge"; as a result, the
+         ;; non-deterministic POT-Creation-Date finds its way into .po files,
+         ;; and then in .gmo files.  To avoid that, simply make sure 'msgmerge'
+         ;; never runs.  See <https://bugs.debian.org/792687>.
+         "ac_cv_path_MSGMERGE=true"
+         (string-append "--with-pcb-datadir="
+                        #$(this-package-input "pcb")
+                        "/share")
+         (string-append "--with-pcb-lib-path="
+                        #$(this-package-input "pcb")
+                        "/share/pcb/pcblib-newlib:"
+                        #$(this-package-input "pcb")
+                        "/share/pcb/newlib")
+         "--with-gtk3"
+         "CFLAGS=-fcommon"
+         "--enable-guild"
+         "--enable-contrib")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-tests
@@ -540,24 +543,28 @@ utilities.")
               (unsetenv "LD_LIBRARY_PATH")
               (invoke "make" "precompile"))))))
     (native-inputs
-     (modify-inputs (package-native-inputs geda-gaf)
-       (prepend autoconf
-                automake
-                desktop-file-utils
-                libtool
-                gettext-minimal
-                texinfo
-                groff
-                which)))
+     (list autoconf
+           automake
+           desktop-file-utils
+           flex
+           gettext-minimal
+           groff
+           gawk
+           libtool
+           pkg-config
+           m4
+           perl
+           texinfo))
     (inputs
      (list glib
            gtk+
            gtksheet
            guile-3.0
            guile-readline
-           shared-mime-info
-           m4
-           pcb))
+           pcb
+           shared-mime-info))
+    (home-page "https://lepton-eda.github.io/")
+    (synopsis "GPL Electronic Design Automation")
     (description
      "Lepton EDA ia an @dfn{electronic design automation} (EDA) tool set
 forked from gEDA/gaf in late 2016.  EDA tools are used for electrical circuit
@@ -565,44 +572,7 @@ design, schematic capture, simulation, prototyping, and production.  Lepton
 EDA includes tools for schematic capture, attribute management, bill of
 materials (BOM) generation, netlisting into over 20 netlist formats, analog
 and digital simulation, and printed circuit board (PCB) layout, and many other
-features.")))
-
-(define-public librnd
-  (package
-    (name "librnd")
-    (version "4.3.2")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://www.repo.hu/projects/librnd/"
-                                  "releases/librnd-" version ".tar.bz2"))
-              (sha256
-               (base32
-                "1qjv6gg9fb3rpvr1y9l5nbzz2xk2sa4nqz0dgwvds5hc1bmd97mf"))))
-    (build-system glib-or-gtk-build-system)
-    (arguments
-     (list
-      #:tests? #false                   ;no check target
-      #:phases
-      #~(modify-phases %standard-phases
-          ;; The configure script doesn't tolerate most of our configure
-          ;; flags.
-          (replace 'configure
-            (lambda _
-              (setenv "CC" #$(cc-for-target))
-              (invoke "./configure" (string-append "--prefix=" #$output)))))))
-    (inputs
-     (list gd glib glu gtk gtkglext libepoxy))
-    (native-inputs
-     (list pkg-config))
-    (home-page "http://repo.hu/projects/librnd/")
-    (synopsis "Two-dimensional CAD engine")
-    (description "This is a flexible, modular two-dimensional CAD engine
-@itemize
-@item with transparent multiple GUI toolkit support;
-@item a flexible, dynamic menu system;
-@item a flexible, dynamic configuration system; and
-@item support for user scripting in a dozen languages.
-@end itemize")
+features.")
     (license license:gpl2+)))
 
 (define-public pcb
@@ -621,6 +591,13 @@ features.")))
      (list
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'convert-encoding
+            (lambda _
+              (for-each
+               (lambda (name)
+                 (invoke "iconv" "-f" "LATIN1" "-t" "UTF-8" name "-o" name))
+               '("src/pcb-menu.res.in"
+                 "src/pcb-menu.res.h"))))
           (add-before 'check 'pre-check
             (lambda _
               (system "Xvfb :1 &")
@@ -652,37 +629,6 @@ features.")))
 layouts.  It features a rats-nest implementation, schematic/netlist import,
 and design rule checking.  It also includes an autorouter and a trace
 optimizer; and it can produce photorealistic and design review images.")
-    (license license:gpl2+)))
-
-(define-public pcb-rnd
-  (package
-    (name "pcb-rnd")
-    (version "3.1.7b")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "http://repo.hu/projects/pcb-rnd/"
-                                  "releases/pcb-rnd-" version ".tar.gz"))
-              (sha256
-               (base32
-                "1djsa0w53l6nvhwv28rlhpva55ir9n3xdvjgnjj8fgvcmrqlzrsl"))))
-    (build-system glib-or-gtk-build-system)
-    (arguments
-     (list
-      #:test-target "test"
-      #:phases
-      #~(modify-phases %standard-phases
-          (replace 'configure
-            ;; The configure script doesn't tolerate most of our configure
-            ;; flags.
-            (lambda _
-              (setenv "CC" #$(cc-for-target))
-              (setenv "LIBRND_PREFIX" #$(this-package-input "librnd"))
-              (invoke "./configure" (string-append "--prefix=" #$output)))))))
-    (inputs (list librnd))
-    (home-page "http://repo.hu/projects/pcb-rnd/")
-    (synopsis "Modular layout editor")
-    (description "@code{Pcb-rnd} is a @acronym{Printed Circuit Board} layout
-editor, part of the RiNgDove EDA suite.")
     (license license:gpl2+)))
 
 (define-public fastcap
@@ -4637,10 +4583,10 @@ visualization, matrix manipulation.")
     (license (list license:gpl3 license:mpl2.0))))
 
 (define-public prusa-libbgcode
-  ;; Use the latest commit since there are no proper releases nor tags, see
+  ;; Use the same commit as in the PrusaSlicer repository.
   ;; <https://github.com/prusa3d/libbgcode/issues/31>.
-  (let ((commit "8ae75bd0eea622f0e34cae311b3bd065b55eae9b")
-        (revision "0"))
+  (let ((commit "5041c093b33e2748e76d6b326f2251310823f3df")
+        (revision "1"))
     (package
       (name "prusa-libbgcode")
       (version (git-version "0.0.0" revision commit))
@@ -4652,8 +4598,8 @@ visualization, matrix manipulation.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "0fjx2ijz9zqpqs486lcrrrhqvmfzrpb8j6v57l0jiynavwv3kznw"))))
-      (native-inputs (list catch2))
+          (base32 "0ivc0zhpf0gz55jfj0gbkff6yw5gpwazk94asldzznn7x9jmbb0i"))))
+      (native-inputs (list catch2-3.8))
       (propagated-inputs (list zlib boost heatshrink))
       (build-system cmake-build-system)
       (home-page "https://github.com/prusa3d/libbgcode")
@@ -4686,7 +4632,7 @@ G-codes to binary and vice versa.")
 (define-public prusa-slicer
   (package
     (name "prusa-slicer")
-    (version "2.7.4")
+    (version "2.9.2")
     (source
      (origin
        (method git-fetch)
@@ -4695,8 +4641,8 @@ G-codes to binary and vice versa.")
          (url "https://github.com/prusa3d/PrusaSlicer")
          (commit (string-append "version_" version))))
        (file-name (git-file-name name version))
-       (sha256 (base32 "0s1cfvhfilyv0y98asr61c6rwlgyr1hf5v5hg8q9zwmzm2bkcql3"))
-       (patches (search-patches "prusa-slicer-fix-tests.patch"))
+       (sha256 (base32 "05zwwhqv3fjg9rx6a4ga55f4ic1136f6lwms0kb4kaq50w9dvxwg"))
+       (patches (search-patches "prusa-slicer-add-cmake-module.patch"))
        (modules '((guix build utils)))
        (snippet
         `(begin
@@ -4704,25 +4650,40 @@ G-codes to binary and vice versa.")
            ;; Most of them contain prusa-specific modifications (e.g. avrdude),
            ;; but others do not. Here we replace the latter with Guix packages.
            ;; Remove bundled libraries that were not modified by Prusa Slicer developers.
-           (delete-file-recursively "src/hidapi")
-           (delete-file-recursively "src/eigen")
-           (delete-file-recursively "src/libigl/igl")
+           (delete-file-recursively "bundled_deps/hidapi")
+           (delete-file-recursively "bundled_deps/libigl/igl")
            (substitute* "CMakeLists.txt"
+             (("target_link_libraries\\(libexpat INTERFACE EXPAT::EXPAT\\)")
+              "")
              (("add_library\\(libexpat INTERFACE\\)")
               ""))
-           (substitute* "src/libigl/CMakeLists.txt"
+           (substitute* "bundled_deps/CMakeLists.txt"
+             (("add_subdirectory\\(hidapi\\)")
+              ""))
+           (substitute* "bundled_deps/libigl/CMakeLists.txt"
              (("target_link_libraries\\(libigl INTERFACE igl::core\\)") ""))
            (substitute* "src/CMakeLists.txt"
              (("add_subdirectory\\(hidapi\\)")
               "pkg_check_modules(HIDAPI REQUIRED hidapi-hidraw)")
              (("include_directories\\(hidapi/include\\)")
-              "include_directories()"))
+              "include_directories()")
+            (("add_library\\(libexpat INTERFACE\\)")
+            "")
+            (("target_link_libraries\\(libexpat INTERFACE EXPAT::EXPAT\\)")
+            "")
+            (("list\\(APPEND wxWidgets_LIBRARIES libexpat\\)")
+            "list(APPEND wxWidgets_LIBRARIES expat)"))
+            (substitute* "src/libslic3r/CMakeLists.txt"
+            (("libexpat")
+            "expat"))
            (substitute* "src/slic3r/CMakeLists.txt"
              (("add_library\\(libslic3r_gui.*" all)
               (string-append
+               "find_package(HidAPI REQUIRED)\n"
                all
-               "\ntarget_include_directories(libslic3r_gui PUBLIC ${HIDAPI_INCLUDE_DIRS})\n"))
-             (("\\bhidapi\\b") "${HIDAPI_LIBRARIES}"))))))
+               "\ntarget_include_directories(libslic3r_gui PUBLIC ${HIDAPI_INCLUDE_DIR})\n"))
+             (("    hidapi")
+              "    ${HIDAPI_LIBRARY}"))))))
     (build-system cmake-build-system)
     (arguments
      (list #:configure-flags
@@ -4744,7 +4705,7 @@ G-codes to binary and vice versa.")
                      (("#include <libigl/igl/qslim.h>")
                       "#include <igl/qslim.h>")))))))
     (native-inputs
-     (list pkg-config catch2))
+     (list pkg-config catch2-3.8))
     (inputs
      (list boost
            cereal
@@ -4768,7 +4729,8 @@ G-codes to binary and vice versa.")
            mpfr
            nanosvg
            nlopt
-           opencascade-occt
+           opencascade-occt-7.6.1
+           openssl
            openvdb
            pango
            prusa-libbgcode
@@ -4777,11 +4739,18 @@ G-codes to binary and vice versa.")
            prusa-wxwidgets
            qhull
            tbb
+           webkitgtk-for-gtk3
+           webkitgtk-with-libsoup2
+           z3
            zlib))
     (home-page "https://www.prusa3d.com/prusaslicer/")
     (synopsis "G-code generator for 3D printers (RepRap, Makerbot, Ultimaker etc.)")
-    (description "PrusaSlicer takes 3D models (STL, OBJ, AMF) and converts them into
-G-code instructions for FFF printers or PNG layers for mSLA 3D printers.")
+    (description "PrusaSlicer takes 3D models (STL, OBJ, AMF) and converts
+them into G-code instructions for FFF printers or PNG layers for mSLA 3D
+printers.  It is compatible with any modern printer based on the RepRap
+toolchain, including all those based on the Marlin, Prusa, Sprinter and
+Repetier firmware.  It also works with Mach3, LinuxCNC and Machinekit
+controllers.")
     (license license:agpl3)
 
     ;; Mark as tunable to take advantage of SIMD code in Eigen and in libigl.

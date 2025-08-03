@@ -128,6 +128,7 @@
   #:use-module (gnu packages python-science)
   #:use-module (gnu packages python-web)
   #:use-module (gnu packages python-xyz)
+  #:use-module (gnu packages qt)
   #:use-module (gnu packages rdf)
   #:use-module (gnu packages regex)
   #:use-module (gnu packages rocm)
@@ -432,6 +433,42 @@ machine learning algorithms based on GPs.")
     (inputs
      (list python))
     (synopsis "Python bindings of libSVM")))
+
+(define-public python-mcfit
+  ;; PyPI variant fails during compile-bytecode phase: "IndentationError:
+  ;; expected an indented block after function definition on line 10
+  ;; (mkfit.py, line 15)".
+  ;; GitHub provides no release tags, use the latest commit from the master
+  ;; branch.
+  ;; See: <https://github.com/eelregit/mcfit/issues/5>.
+  (let ((commit "be3a5cf9c474e16875126adcd35ba785fb781ebb")
+        (revision "0"))
+    (package
+      (name "python-mcfit")
+      (version (git-version "0.0.22" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/eelregit/mcfit")
+                (commit commit)))
+         (sha256
+          (base32 "120ybwhrqpn9a9q96m6l8pw8a7cdz705vzqn3s87wnffa8nslbsi"))))
+      (build-system pyproject-build-system)
+      (native-inputs
+       (list python-pytest
+             python-setuptools
+             python-wheel))
+      (propagated-inputs
+       (list python-mpmath
+             python-numpy
+             python-scipy))
+      (home-page "https://github.com/eelregit/mcfit")
+      (synopsis "Multiplicatively convolutional fast integral transforms")
+      (description
+       "This package provides multiplicatively convolutional fast integral
+transforms.")
+      (license license:gpl3+))))
 
 (define-public python-ml-collections
   (package
@@ -7136,35 +7173,33 @@ without dependencies, with
     (license license:expat)))
 
 (define-public python-gguf
-  ;; They didn't tag the commit
-  (let ((commit "69050a11be0ae3e01329f11371ecb6850bdaded5"))
-    (package
-      (name "python-gguf")
-      (version "0.16.0")
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/ggml-org/llama.cpp")
-               (commit commit)))
-         (file-name (git-file-name name commit))
-         (sha256
-          (base32 "1563mbrjykwpsbhghhzi4h1qv9qy74gq5vq4xhs58zk0jp20c7zz"))))
-      (build-system pyproject-build-system)
-      (arguments
-       (list
-        #:phases
-        #~(modify-phases %standard-phases
-            (add-after 'unpack 'chdir
-              (lambda _
-                (chdir "gguf-py"))))))
-      (propagated-inputs (list python-numpy python-pyyaml python-sentencepiece
-                               python-tqdm))
-      (native-inputs (list python-poetry-core python-pytest))
-      (home-page "https://ggml.ai")
-      (synopsis "Read and write ML models in GGUF for GGML")
-      (description "A Python library for reading and writing GGUF & GGML format ML models.")
-      (license license:expat))))
+  (package
+    (name "python-gguf")
+    (version "0.17.1")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/ggml-org/llama.cpp")
+              (commit (string-append "gguf-v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0lrvj0ahhyj5paxfzk0brps2m8j7fy47n7k4v4xjg9xqqq6wqc2y"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'chdir
+            (lambda _
+              (chdir "gguf-py"))))))
+    (propagated-inputs (list python-numpy python-pyyaml python-pyside-6
+                             python-sentencepiece python-tqdm))
+    (native-inputs (list python-poetry-core python-pytest))
+    (home-page "https://ggml.ai")
+    (synopsis "Read and write ML models in GGUF for GGML")
+    (description "A Python library for reading and writing GGUF & GGML format ML models.")
+    (license license:expat)))
 
 (define-public python-gymnasium
   (package

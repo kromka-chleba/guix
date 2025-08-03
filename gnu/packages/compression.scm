@@ -33,7 +33,7 @@
 ;;; Copyright © 2021 Antoine Côté <antoine.cote@posteo.net>
 ;;; Copyright © 2021 Vincent Legoll <vincent.legoll@gmail.com>
 ;;; Copyright © 2021 Simon Tournier <zimon.toutoune@gmail.com>
-;;; Copyright © 2021, 2024 Maxim Cournoyer <maxim.cournoyer@gmail.com>
+;;; Copyright © 2021, 2024-2025 Maxim Cournoyer <maxim@guixotic.coop>
 ;;; Copyright © 2021 Ahmad Jarara <git@ajarara.io>
 ;;; Copyright © 2022 Greg Hogan <code@greghogan.com>
 ;;; Copyright © 2022 Zhu Zihao <all_but_last@163.com>
@@ -862,7 +862,7 @@ with the sfArk algorithm.")
 (define-public minizip-ng
   (package
     (name "minizip-ng")
-    (version "4.0.5")
+    (version "4.0.10")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -871,12 +871,34 @@ with the sfArk algorithm.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "0lgx4s4aykxn8x3b4m4c4isasd2608bbyfm4lxc2spcc4xqwhzkz"))))
+                "1y6yvswzl1gzrv1am3yhr6r2zpsh50d1l7g381ccccn9sz19jw13"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags #~(list "-DBUILD_SHARED_LIBS=ON"
-                                     "-DMZ_BUILD_TESTS=ON"
-                                     "-DMZ_BUILD_UNIT_TESTS=ON")))
+     (list
+      #:configure-flags #~(list "-DBUILD_SHARED_LIBS=ON"
+                                "-DMZ_BUILD_TESTS=ON"
+                                "-DMZ_BUILD_UNIT_TESTS=ON"
+                                "-DMZ_COMPAT=OFF")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'install 'sanitize-config-file
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((minizip-config
+                     (or (false-if-exception
+                          (search-input-file
+                           outputs
+                           "lib/cmake/minizip-ng/minizip-ng-config.cmake"))
+                         (search-input-file ;for the minizip variant
+                          outputs
+                          "lib/cmake/minizip/minizip-config.cmake"))))
+                (substitute* minizip-config
+                  ;; The find_dependency calls appear useful only in a
+                  ;; static library context, to ensure the transitive
+                  ;; dependencies are available for linking. Remove these to
+                  ;; avoid having to propagate all optional inputs (see:
+                  ;; <https://github.com/zlib-ng/minizip-ng/issues/898>).
+                  ((".*CMakeFindDependencyMacro.*") "")
+                  ((".*find_dependency.*") ""))))))))
     (native-inputs (list googletest pkg-config))
     (inputs (list openssl zlib `(,zstd "lib")))
     (home-page "https://github.com/zlib-ng/minizip-ng")
@@ -884,6 +906,31 @@ with the sfArk algorithm.")
     (description "@code{minizip-ng} is a zip manipulation library written in
 C, forked from the zip manipulation library found in the zlib distribution.")
     (license license:bsd-3)))
+
+(define-public minizip-ng-compat
+  (package/inherit minizip-ng
+    (name "minizip-ng-compat")
+    (arguments
+     (substitute-keyword-arguments (package-arguments minizip-ng)
+       ((#:configure-flags flags)
+        #~(delete "-DMZ_COMPAT=OFF" #$flags))))))
+
+;; The following package is needed for opencolorio@2.4.2, see
+;; https://github.com/AcademySoftwareFoundation/OpenColorIO/issues/2157
+;; https://github.com/NixOS/nixpkgs/pull/406607
+(define-public minizip-ng-4.0.9
+  (package/inherit minizip-ng
+    (name "minizip-ng")
+    (version "4.0.9")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                     (url "https://github.com/zlib-ng/minizip-ng")
+                     (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0bychb3ysbxdhgfvjvmy0rkzjd0ngfkha7d5jy6w8zam53xb0248"))))))
 
 (define-public sfarkxtc
   (let ((commit "13cd6f93725a90d91ec5ea75babf1dbd694ac463")

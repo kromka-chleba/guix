@@ -26,6 +26,7 @@
 ;;; Copyright © 2024 Nicolas Graves <ngraves@ngraves.fr>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
 ;;; Copyright © 2025 Anderson Torres <anderson.torres.8519@gmail.com>
+;;; Copyright © 2025 Andreas Enge <andreas@enge.fr>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -49,6 +50,7 @@
   #:use-module (guix utils)
   #:use-module (guix download)
   #:use-module (guix git-download)
+  #:use-module (guix build-system copy)
   #:use-module (guix build-system qt)
   #:use-module (guix build-system cmake)
   #:use-module (guix build-system gnu)
@@ -105,6 +107,7 @@
   #:use-module (gnu packages serialization)
   #:use-module (gnu packages sphinx)
   #:use-module (gnu packages sqlite)
+  #:use-module (gnu packages ssh)
   #:use-module (gnu packages swig)
   #:use-module (gnu packages tbb)
   #:use-module (gnu packages textutils)
@@ -169,6 +172,58 @@ The tools in this software implement various reconstruction algorithms for
 Magnetic Resonance Imaging.")
     (license license:bsd-3)))
 
+(define-public cimg
+  (package
+    (name "cimg")
+    (version "3.5.5")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/GreycLab/CImg")
+             (commit (string-append "v." version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "01myf3bjbc46f977r7lvr9g1hcnpfygcv2xnqvhrl2nj7955sm5x"))))
+    (build-system copy-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (when tests?
+                (with-directory-excursion "examples"
+                  ;; This is from upstream CI but parallelized.
+                  (invoke "make" "-j"
+                          (number->string (parallel-job-count)) "mlinux")
+                  (invoke "./image2ascii")
+                  (invoke "./generate_loop_macros")
+                  ;; Build an example that requires an external library.
+                  ;; Running it requires a display.
+                  (invoke "make" "use_jpeg_buffer"
+                          (string-append "CONF_CFLAGS="
+                                         (string-join '("-Dcimg_display=0"
+                                                        "-O3"
+                                                        "-mtune=generic"
+                                                        "-Dcimg_use_jpeg")
+                                                      " "))
+                          "CONF_LIBS=-ljpeg"))))))
+      #:install-plan
+      #~'(("CImg.h" "include/")
+          ("plugins" "include/CImg/plugins"))))
+    (native-inputs (list libjpeg-turbo)) ;for 'check
+    (home-page "https://cimg.eu")
+    (synopsis "Small C++ image processing library")
+    (description
+     "The @acronym{CImg, Cool Image} Library is a small C++ toolkit for
+image processing.  It is made of a single header file @code{CImg.h}
+that can be compiled using a minimal set of standard C++ and system
+libraries.  It includes a plugin mechanism to extend its functionality
+with external tools and libraries.")
+    ;; Dual-licensed, either license applies.
+    (license (list license:cecill-c license:cecill))))
+
 (define-public dcmtk
   (package
     (name "dcmtk")
@@ -211,7 +266,7 @@ licences similar to the Modified BSD licence."))))
 (define-public opencolorio
   (package
     (name "opencolorio")
-    (version "2.3.2")
+    (version "2.4.2")
     (source
      (origin
        (method git-fetch)
@@ -219,7 +274,7 @@ licences similar to the Modified BSD licence."))))
              (url "https://github.com/AcademySoftwareFoundation/OpenColorIO")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "1h33s2pfy28nj836kx6xx3iks7v38g3kx7c4f6zn1dpskl0zf809"))
+        (base32 "1h5n1adm7hlblq4z9qdbnh5jy3f6aimlk96cn1k4ah3f8vqx7zpq"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
@@ -258,7 +313,8 @@ licences similar to the Modified BSD licence."))))
            imath
            lcms
            libglvnd
-           minizip-ng
+           ;; opencolorio@2.4.2 fails to build with minizip-ng@4.0.10
+           minizip-ng-4.0.9
            openexr
            pystring
            yaml-cpp
@@ -413,38 +469,6 @@ triangulation.  VTK has an extensive information visualization framework, has
 a suite of 3D interaction widgets, supports parallel processing, and
 integrates with various databases on GUI toolkits such as Qt and Tk.")
     (license license:bsd-3)))
-
-(define-public vtk-7
-  (package
-    (inherit vtk)
-    (version "7.1.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "https://vtk.org/files/release/"
-                                  (version-major+minor version)
-                                  "/VTK-" version ".tar.gz"))
-              (sha256
-               (base32
-                "0nm7xwwj7rnsxjdv2ssviys8nhci4n9iiiqm2y14s520hl2dsp1d"))
-              (patches (search-patches "vtk-7-python-compat.patch"
-                                       "vtk-7-hdf5-compat.patch"
-                                       "vtk-7-gcc-10-compat.patch"
-                                       "vtk-7-gcc-11-compat.patch"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments vtk)
-       ((#:configure-flags flags)
-        ;; Otherwise, the build would fail with: "error: invalid conversion
-        ;; from ‘const char*’ to ‘char*’ [-fpermissive]".
-        #~(cons "-DCMAKE_CXX_FLAGS=-fpermissive" #$flags))
-       ((#:phases phases)
-        #~(modify-phases #$phases
-            (add-after 'unpack 'remove-kernel-version
-              ;; Avoid embedding the kernel version for reproducible builds
-              (lambda _
-                (substitute*
-                    "ThirdParty/hdf5/vtkhdf5/config/cmake/libhdf5.settings.cmake.in"
-                  (("Host system: \\@CMAKE_HOST_SYSTEM\\@")
-                   "Host system: @CMAKE_SYSTEM_NAME@"))))))))))
 
 (define-public vktdiff
   (package
@@ -1256,104 +1280,146 @@ libraries designed for computer vision research and implementation.")
              "-DCMAKE_CXX_STANDARD=14")))))
 
 (define-public insight-toolkit
-  (package
-    (name "insight-toolkit")
-    (version "5.4.4")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/InsightSoftwareConsortium/ITK")
-             (commit (string-append "v" version))))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1l5rby8jj8726k380aivycmhn56cz56mr9k3r56c8hkkrfwwng50"))
-       ;; This patch is required to build with both ITK_USE_GPU=ON and
-       ;; ITK_WRAP_PYTHON=ON.
-       ;; <https://github.com/InsightSoftwareConsortium/ITK/pull/4842>
-       (patches (search-patches "insight-toolkit-fix-build.patch"))))
-    (build-system cmake-build-system)
-    (outputs '("out" "python"))
-    (arguments
-     (list #:tests? #f        ; tests require network access and external data
-           #:configure-flags
-           #~(list "-DITK_USE_GPU=ON"
-                   "-DITK_USE_SYSTEM_LIBRARIES=ON"
-                   "-DITK_USE_SYSTEM_CASTXML=ON"
-                   "-DITK_USE_SYSTEM_SWIG=ON"
-                   (string-append "-DHDF5_DIR=" #$(this-package-input "hdf5")
-                                  "/lib/cmake")
-                   "-DBUILD_SHARED_LIBS=ON"
-                   ;; Without this flag, there are shared libraries installed
-                   ;; in PY_SITE_PACKAGES_PATH/itk instead of #$output/lib and
-                   ;; RUNPATHs contain the *build directory* of
-                   ;; PY_SITE_PACKAGES_PATH/itk.
-                   "-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
-                   "-DITK_WRAPPING=ON"
-                   "-DITK_WRAP_PYTHON=ON"
-                   "-DITK_DYNAMIC_LOADING=ON"
-                   (let* ((python-version
-                           #$(version-major+minor
-                              (package-version (this-package-input "python"))))
-                          (python-lib-path
-                           (string-append #$output:python
-                                          "/lib/python" python-version
-                                          "/site-packages")))
-                     (string-append "-DPY_SITE_PACKAGES_PATH=" python-lib-path))
-                   ;; Python is not built with Py_LIMITED_API.
-                   "-DITK_USE_PYTHON_LIMITED_API=OFF"
-                   "-DCMAKE_CXX_STANDARD=17"
-                   "-DBUILD_TESTING=OFF")
+  ;; For information about ITK remote modules, see:
+  ;; https://insightsoftwareconsortium.github.io/ITKWikiArchive/Wiki/ITK/Policy_and_Procedures_for_Adding_Remote_Modules
+  ;; For a remote MODULE, use the commit in
+  ;; 'Modules/Remote/MODULE.remote.cmake'.
+  ;; MorphologicalContourInterpolation is required by itk-snap.
+  (let* ((module-commit "821bf9b3ef8eaaab10391ed060dc9ca5e4d37b39")
+         (module-file (git-file-name "ITKMorphologicalContourInterpolation"
+                                     module-commit)))
+    (package
+      (name "insight-toolkit")
+      (version "5.4.4")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/InsightSoftwareConsortium/ITK")
+               (commit (string-append "v" version))))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1l5rby8jj8726k380aivycmhn56cz56mr9k3r56c8hkkrfwwng50"))
+         ;; This patch is required to build with both ITK_USE_GPU=ON and
+         ;; ITK_WRAP_PYTHON=ON.
+         ;; <https://github.com/InsightSoftwareConsortium/ITK/pull/4842>
+         (patches (search-patches "insight-toolkit-fix-build.patch"))))
+      (build-system cmake-build-system)
+      (outputs '("out" "python"))
+      (arguments
+       (list
+        #:tests? #f ;tests require network access and external data
+        #:configure-flags
+        #~(list "-DITK_USE_GPU=ON"
+                "-DITK_USE_SYSTEM_LIBRARIES=ON"
+                "-DITK_USE_SYSTEM_CASTXML=ON"
+                "-DITK_USE_SYSTEM_SWIG=ON"
+                (string-append "-DHDF5_DIR="
+                               #$(this-package-input "hdf5") "/lib/cmake")
+                "-DBUILD_SHARED_LIBS=ON"
+                ;; Without this flag, there are shared libraries installed
+                ;; in PY_SITE_PACKAGES_PATH/itk instead of #$output/lib and
+                ;; RUNPATHs contain the *build directory* of
+                ;; PY_SITE_PACKAGES_PATH/itk.
+                "-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON"
+                "-DITK_WRAPPING=ON"
+                "-DITK_WRAP_PYTHON=ON"
+                "-DITK_DYNAMIC_LOADING=ON"
+                (let* ((python-version
+                         #$(version-major+minor
+                             (package-version
+                               (this-package-input "python"))))
+                       (python-lib-path (string-append #$output:python
+                                                       "/lib/python"
+                                                       python-version
+                                                       "/site-packages")))
+                  (string-append "-DPY_SITE_PACKAGES_PATH="
+                                 python-lib-path))
+                ;; Python is not built with Py_LIMITED_API.
+                "-DITK_USE_PYTHON_LIMITED_API=OFF"
+                "-DModule_MorphologicalContourInterpolation=ON"
+                "-DCMAKE_CXX_STANDARD=17"
+                "-DBUILD_TESTING=OFF")
 
-           #:phases #~(modify-phases %standard-phases
-                        (add-after 'unpack 'do-not-tune
-                          (lambda _
-                            (substitute* "CMake/ITKSetStandardCompilerFlags.cmake"
-                              (("-mtune=native")
-                               ""))))
-                        (add-after 'unpack 'ignore-warnings
-                          (lambda _
-                            (substitute* "Wrapping/Generators/Python/CMakeLists.txt"
-                              (("-Werror") ""))))
-                        (add-after 'unpack 'exclude-gtest-target
-                          (lambda _
-                            ;; Prevent ITKGoogleTest from being added to
-                            ;; ITK_MODULES_ENABLED in the installed
-                            ;; ITKConfig.cmake, which in turn prevents
-                            ;; 'GTest::GTest' from being added to the
-                            ;; ITK_LIBRARIES variable.  This is necessary
-                            ;; because projects that use ITK fail to configure
-                            ;; otherwise.  Fixes
-                            ;; <https://codeberg.org/guix/guix/issues/776>.
-                            ;; <https://github.com/microsoft/vcpkg/pull/27187>
-                            (substitute* "Modules/ThirdParty/GoogleTest/itk-module.cmake"
-                              (("DEPENDS") "DEPENDS\n  EXCLUDE_FROM_DEFAULT")))))))
-    (inputs
-     (list eigen
-           expat
-           fftw
-           fftwf
-           hdf5
-           libjpeg-turbo
-           libpng
-           libtiff
-           mesa-opencl
-           perl
-           python
-           tbb
-           vxl-1
-           zlib))
-    (native-inputs
-     (list castxml gcc-13 git-minimal pkg-config swig-next which))
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'do-not-tune
+              (lambda _
+                (substitute* "CMake/ITKSetStandardCompilerFlags.cmake"
+                  (("-mtune=native")
+                   ""))))
+            (add-after 'unpack 'ignore-warnings
+              (lambda _
+                (substitute* "Wrapping/Generators/Python/CMakeLists.txt"
+                  (("-Werror")
+                   ""))))
+            (add-after 'unpack 'exclude-gtest-target
+              (lambda _
+                ;; Prevent ITKGoogleTest from being added to
+                ;; ITK_MODULES_ENABLED in the installed
+                ;; ITKConfig.cmake, which in turn prevents
+                ;; 'GTest::GTest' from being added to the
+                ;; ITK_LIBRARIES variable.  This is necessary
+                ;; because projects that use ITK fail to configure
+                ;; otherwise.  Fixes
+                ;; <https://codeberg.org/guix/guix/issues/776>.
+                ;; <https://github.com/microsoft/vcpkg/pull/27187>
+                (substitute* "Modules/ThirdParty/GoogleTest/itk-module.cmake"
+                  (("DEPENDS")
+                   "DEPENDS\n  EXCLUDE_FROM_DEFAULT"))))
+            (add-after 'unpack 'prepare-remote-modules
+              (lambda _
+                ;; ITK module MorphologicalContourInterpolation
+                ;; is for ITK-SNAP.
+                (symlink #$(this-package-native-input module-file)
+                         "Modules/Remote/MorphologicalContourInterpolation")
+                (delete-file
+                  (string-append
+                    "Modules/Remote/"
+                    "MorphologicalContourInterpolation.remote.cmake")))))))
+      (inputs (list eigen
+                    expat
+                    fftw
+                    fftwf
+                    hdf5
+                    libjpeg-turbo
+                    libpng
+                    libtiff
+                    mesa-opencl
+                    perl
+                    python
+                    tbb
+                    vxl-1
+                    zlib))
+      (native-inputs
+       (list castxml
+             gcc-13
+             git-minimal
+             pkg-config
+             swig-next
+             which
+             (origin
+               (method git-fetch)
+               (uri
+                 (git-reference
+                   (url (string-append
+                          "https://github.com/KitwareMedical/"
+                          "ITKMorphologicalContourInterpolation"))
+                   (commit module-commit)))
+               (file-name module-file)
+               (sha256
+                 (base32
+                   "00myhgvlk3n062i8bnknz1d10zkv3jlvs7f4jnk24727gd4v2n4i")))))
 
-    ;; The 'CMake/ITKSetStandardCompilerFlags.cmake' file normally sets
-    ;; '-mtune=native -march=corei7', suggesting there's something to be
-    ;; gained from CPU-specific optimizations.
-    (properties '((tunable? . #t)))
+      ;; The 'CMake/ITKSetStandardCompilerFlags.cmake' file normally sets
+      ;; '-mtune=native -march=corei7', suggesting there's something to be
+      ;; gained from CPU-specific optimizations.
+      (properties '((tunable? . #t)))
 
-    (home-page "https://github.com/InsightSoftwareConsortium/ITK/")
-    (synopsis "Scientific image processing, segmentation and registration")
-    (description "The Insight Toolkit (ITK) is a toolkit for N-dimensional
+      (home-page "https://github.com/InsightSoftwareConsortium/ITK/")
+      (synopsis "Scientific image processing, segmentation and registration")
+      (description
+       "The Insight Toolkit (ITK) is a toolkit for N-dimensional
 scientific image processing, segmentation, and registration.  Segmentation is
 the process of identifying and classifying data found in a digitally sampled
 representation.  Typically the sampled representation is an image acquired
@@ -1361,178 +1427,165 @@ from such medical instrumentation as CT or MRI scanners.  Registration is the
 task of aligning or developing correspondences between data.  For example, in
 the medical environment, a CT scan may be aligned with a MRI scan in order to
 combine the information contained in both.")
-    (license license:asl2.0)))
+      (license license:asl2.0))))
 
-(define-public insight-toolkit-4
-  (package (inherit insight-toolkit)
-    (version "4.13.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "https://github.com/InsightSoftwareConsortium/ITK/"
-                           "releases/download/v" version "/InsightToolkit-"
-                           version ".tar.xz"))
-       (sha256
-        (base32 "19cgfpd63gqrvc3m27m394gy2d7w79g5y6lvznb5qqr49lihbgns"))))
-    (outputs '("out"))
-    (arguments
-     (list #:tests? #f        ; tests require network access and external data
-           #:configure-flags #~'("-DITKV3_COMPATIBILITY=ON" ; needed for itk-snap
-                                 "-DITK_USE_GPU=ON"
-                                 "-DITK_USE_SYSTEM_LIBRARIES=ON"
-                                 "-DITK_USE_SYSTEM_GOOGLETEST=ON"
-                                 "-DITK_USE_SYSTEM_VXL=ON")))
-    (native-inputs
-     (list googletest pkg-config))))
-
-(define-public insight-toolkit-4.12
-  (package (inherit insight-toolkit-4)
-    (version "4.12.2")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://sourceforge/itk/itk/4.12/"
-                           "InsightToolkit-" version ".tar.xz"))
-       (sha256
-        (base32 "1qw9mxbh083siljygahl4gdfv91xvfd8hfl7ghwii19f60xrvn2w"))))
-    (arguments
-     (substitute-keyword-arguments (package-arguments insight-toolkit-4)
-       ((#:configure-flags cf #~'())
-        ;; error: ISO C++17 does not allow dynamic exception specifications
-        #~(cons* "-DCMAKE_CXX_FLAGS=-std=c++14" #$cf))))))
+;; Provide variant of insight-toolkit (ITK) built with ITK_LEGACY_REMOVE=OFF.
+;; ITK-SNAP version 4.2.2 and 4.4.0-alpha3 require ITK >= 5.4 and for ITK to
+;; be built this way.  Note that enabling Python wrapping forces this option
+;; to ON, so Python wrapping is not enabled for this build.
+(define insight-toolkit-legacy
+  (hidden-package
+   (package/inherit insight-toolkit
+     ;; Unfortunately we cannot remove the 'python output because it is
+     ;; referenced in #:configure-flags below.
+     (name "insight-toolkit-legacy")
+     (arguments
+      (substitute-keyword-arguments (package-arguments insight-toolkit)
+        ((#:configure-flags cf '())
+         #~(filter (lambda (flag)
+                     (not (or
+                           ;; Remove these flags to restore the default
+                           ;; ITK_LEGACY_REMOVE=OFF.
+                           (string=? "-DITK_WRAPPING=ON" flag)
+                           (string=? "-DITK_WRAP_PYTHON=ON" flag)
+                           ;; These flags are now unused.
+                           (string-prefix? "-DPY_SITE_PACKAGES_PATH=" flag)
+                           (string-prefix? "-DITK_USE_PYTHON_LIMITED_API=" flag)
+                           (string-prefix? "-DITK_USE_SYSTEM_CASTXML=" flag)
+                           (string-prefix? "-DITK_USE_SYSTEM_SWIG=" flag))))
+                   #$cf))))
+     (inputs (modify-inputs (package-inputs insight-toolkit)
+               (delete "python")))
+     (native-inputs (modify-inputs (package-native-inputs insight-toolkit)
+                      (delete "castxml")
+                      (delete "swig"))))))
 
 (define-public itk-snap
+  ;; The latest release, 4.2.2, segmentation faults on startup.
+  ;; The commit is version 4.4.0-alpha3.
+  (let ((commit "65251254d44d68a6c0530984169784e35de020dd")
+        (revision "0"))
   (package
     (name "itk-snap")
-    (version "3.8.0")
+    (version (git-version "4.2.2" revision commit))
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://git.code.sf.net/p/itk-snap/src")
-             (commit (string-append "v" version))))
+             (url "https://github.com/pyushkevich/itksnap")
+             (commit commit)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "15i5ixpryfrbf3vrrb5rici8fb585f25k0v1ljds16bp1f1msr4q"))
-       (patches (search-patches "itk-snap-alt-glibc-compat.patch"))))
+        (base32 "07dgcfklc55yj3ldcq6fc5fil8qfrv7z6c3xhbd293kz7kpjr4yc"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags
-       (list "-DSNAP_VERSION_GIT_SHA1=release"
-             "-DSNAP_VERSION_GIT_BRANCH=release"
-             "-DSNAP_VERSION_GIT_TIMESTAMP=0"
-             "-DSNAP_PACKAGE_QT_PLUGINS=OFF"
-             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
-             ;; ISO C++17 does not allow dynamic exception specifications.
-             "-DCMAKE_CXX_STANDARD=14")
-       #:phases
-       (modify-phases %standard-phases
-         ;; During the installation phase all libraries provided by all
-         ;; dependencies will be copied to the lib directory.  That's insane,
-         ;; so we disable this.
-         (add-after 'unpack 'do-not-copy-dependencies
-           (lambda _
-             (substitute* "CMakeLists.txt"
-               (("install_qt5_executable\
+     (list
+      #:configure-flags
+      #~(list "-DSNAP_VERSION_GIT_BRANCH=release"
+              "-DSNAP_PACKAGE_QT_PLUGINS=OFF")
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; During the installation phase all libraries provided by all
+          ;; dependencies will be copied to the lib directory.  That's insane,
+          ;; so we disable this.
+          (add-after 'unpack 'do-not-copy-dependencies
+            (lambda _
+              (substitute* "CMakeLists.txt"
+                (("install_qt5_executable\
 \\(\\$\\{SNAP_MAIN_INSTALL_DIR\\}/\\$\\{SNAP_EXE\\}\\)")
-                ""))))
-         (add-after 'unpack 'disable-gui-tests
-           (lambda _
-             ;; The GUI tests just time out.
-             (substitute* "CMakeLists.txt"
-               (("  (Workspace|DiffSpace|ProbeIntensity|RegionCompetition\
-|RandomForest|RandomForestBailOut)")
-                ""))))
-         (add-after 'unpack 'make-reproducible
-           (lambda _
-             (substitute* "CMakeLists.txt"
-               (("TODAY\\(SNAP_VERSION_COMPILE_DATE\\)")
-                "SET(SNAP_VERSION_COMPILE_DATE \"(removed for reproducibility)\")"))))
-         (add-after 'unpack 'prepare-submodules
-           (lambda* (#:key inputs #:allow-other-keys)
-             (rmdir "Submodules/c3d")
-             (copy-recursively (assoc-ref inputs "c3d-src")
-                               "Submodules/c3d")
-             (substitute* '("Submodules/c3d/adapters/BiasFieldCorrectionN4.cxx"
-                            "Submodules/c3d/adapters/ApplyMetric.cxx")
-               (("vcl_") "std::"))
-             (rmdir "Submodules/greedy")
-             (symlink (assoc-ref inputs "greedy-src")
-                      "Submodules/greedy")))
-         (add-after 'unpack 'fix-includes
-           (lambda _
-             (substitute* "GUI/Model/RegistrationModel.cxx"
-               (("<vnl_symmetric_eigensystem.h>")
-                "<vnl/algo/vnl_symmetric_eigensystem.h>"))))
-         (add-before 'check 'prepare-tests
-           (lambda _
-             ;; Needed by at least one test.
-             (setenv "HOME" "/tmp")))
-         (add-after 'install 'wrap-executable
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (let ((out (assoc-ref outputs "out")))
-               (wrap-program (string-append out "/bin/itksnap")
-                 `("QT_PLUGIN_PATH" ":" prefix
-                   ,(map (lambda (label)
-                           (string-append (assoc-ref inputs label)
-                                          "/lib/qt5/plugins"))
-                         '("qtbase" "qtdeclarative"))))))))))
+                 ""))))
+          (add-after 'unpack 'disable-gui-tests
+            (lambda _
+              ;; The GUI tests just segmentation fault.
+              (substitute* "CMakeLists.txt"
+                (("  (Workspace|DiffSpace|ProbeIntensity|RegionCompetition\
+|RandomForest|RandomForestBailOut|NaNs|4DContinuousRenderingD|EdgeAttraction\
+|EchoCartesianDicomLoading|LabelSmoothing|PreferencesDialog|MeshImport\
+|MeshWorkspace|SegmentationMesh|VolumeRendering|Reloading|4DToMC|MCTo4D\
+|DeformationGrid)")
+                 ""))))
+          (add-after 'unpack 'make-reproducible
+            (lambda _
+              (substitute* "CMakeLists.txt"
+                (("TODAY\\(SNAP_VERSION_COMPILE_DATE\\)")
+                 "SET(SNAP_VERSION_COMPILE_DATE \"(removed for reproducibility)\")"))))
+          (add-after 'unpack 'prepare-submodules
+            (lambda _
+              (rmdir "Submodules/c3d")
+              (symlink #$(this-package-native-input "c3d-checkout")
+                       "Submodules/c3d")
+              (rmdir "Submodules/digestible")
+              (symlink #$(this-package-native-input "digestible-checkout")
+                       "Submodules/digestible")
+              (rmdir "Submodules/greedy")
+              (symlink #$(this-package-native-input "greedy-checkout")
+                       "Submodules/greedy")))
+          (add-after 'unpack 'remove-bundled-jsoncpp
+            (lambda _
+              (substitute* "CMakeLists.txt"
+                (("  Common/JSon/jsoncpp\\.cpp") ""))))
+          (add-before 'check 'prepare-tests
+            (lambda _
+              ;; Needed by at least one test.
+              (setenv "HOME" "/tmp")))
+          (add-after 'install 'wrap-executable
+            (lambda _
+              (wrap-program (string-append #$output "/bin/itksnap")
+                (list
+                 "QT_PLUGIN_PATH"
+                 'suffix
+                 (list (string-append #$(this-package-input "qtbase")
+                                      "/lib/qt6/plugins")
+                       (string-append #$(this-package-input "qtdeclarative")
+                                      "/lib/qt6/plugins")))))))))
     (inputs
-     (list bash-minimal
-           curl
-           fftw
-           fftwf
+     (list curl
+           freetype
+           glew
            glu
-           hdf5
+           insight-toolkit-legacy
+           jsoncpp
+           libssh
            mesa-opencl
-           ;; This package does not build with either insight-toolkit 5.0.0
-           ;; and not with 4.13.  It really needs to be 4.12.
-           insight-toolkit-4.12
-           vtk-7
-           qtbase-5
-           qtdeclarative-5
-           vxl-1
-           zlib))
+           qtbase
+           qtdeclarative
+           vtk))
     (native-inputs
-     `(("googletest" ,googletest)
-       ("qttools-5" ,qttools-5)
-       ("pkg-config" ,pkg-config)
-       ("c3d-src"
-        ,(let* ((commit "f521358db26e00002c911cc47bf463b043942ad3")
-                (revision "1")
-                (version (git-version "0" revision commit)))
-           (origin
-             (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/pyushkevich/c3d")
-                   (commit commit)))
-             (file-name (git-file-name "c3d" version))
-             (sha256
-              (base32
-               "0kyv3rxrxwr8c3sa9zv01lsnhk95b27gx1s870k3yi8qp52h7bx3")))))
-       ;; We are using an arbitrary commit from 2017 because the latest
-       ;; version breaks the build...
-       ("greedy-src"
-        ,(let* ((commit "97e340f7e8e66597599144947775e6039e79a0d3")
-                (revision "1")
-                (version (git-version "0" revision commit)))
-           (origin
-             (method git-fetch)
-             (uri (git-reference
-                   (url "https://github.com/pyushkevich/greedy")
-                   (commit commit)))
-             (file-name (git-file-name "greedy" version))
-             (sha256
-              (base32
-               "0k5bc9za4jrc8z9dj08z1rkcp5xf0gnd1d2jmi1w9ny4vxh2q2ab")))))))
+     (list
+      doxygen
+      ;; Use the submodule commits in this version of ITK-SNAP.
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://github.com/pyushkevich/c3d")
+              (commit "a86a2a32db8635c1535522332fee68bc56eacaa2")))
+        (file-name "c3d-checkout")
+        (sha256
+         (base32 "0da3ikx7pqlrmvhkmzil269j6kyd84pphy1mls8v69gmzl89piis")))
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://github.com/pyushkevich/digestible")
+              (commit "1b66709e99c43d280bb472e1a0e36185ef2ea412")))
+        (file-name "digestible-checkout")
+        (sha256
+         (base32 "1m1b954prq6l3byfdgxw2y17xsg81agd516g5n6ps60dqnxw8hqs")))
+      (origin
+        (method git-fetch)
+        (uri (git-reference
+              (url "https://github.com/pyushkevich/greedy")
+              (commit "f10152c5374da08ee024c4c60ef8882876bd0808")))
+        (file-name "greedy-checkout")
+        (sha256
+         (base32 "0xk1l0h4wis4nkfwjnvh624bdlhy7l26djibk4l00wzv0vvq21qv")))))
     (home-page "https://sourceforge.net/p/itk-snap/")
     (synopsis "Medical image segmentation")
     (description "ITK-SNAP is a tool for segmenting anatomical structures in
 medical images.  It provides an automatic active contour segmentation
 pipeline, along with supporting a manual segmentation toolbox.  ITK-SNAP has a
 full-featured UI aimed at clinical researchers.")
-    ;; This includes the submodules greedy and c3d.
-    (license license:gpl3+)))
+    ;; This includes the submodules greedy, c3d and digestible.
+    (license license:gpl3+))))
 
 (define-public metapixel
   ;; Follow stable branch.

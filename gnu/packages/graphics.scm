@@ -1645,7 +1645,7 @@ with strong support for multi-part, multi-channel use cases.")
 (define-public openimageio
   (package
     (name "openimageio")
-    (version "2.5.13.0")
+    (version "2.5.19.0")
     (source
      (origin
        (method git-fetch)
@@ -1655,7 +1655,7 @@ with strong support for multi-part, multi-channel use cases.")
        (file-name (git-file-name name version))
        (sha256
         (base32
-         "0bqalfcfjjk31a7zv2hyx0jz8jpdhpsmc3sqwmfl4zf431g45hpb"))))
+         "1s4275iik6gpbyzh703acm440csg9ff8w5l5drnz1gl6mx5946kz"))))
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f ; half the tests require online data or use redirection
@@ -2811,7 +2811,7 @@ and build scripts for the OpenXR loader.")
 (define-public tinygltf
   (package
     (name "tinygltf")
-    (version "2.9.5")
+    (version "2.9.6")
     (source
      (origin
        (method git-fetch)
@@ -2820,7 +2820,7 @@ and build scripts for the OpenXR loader.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0gx4wa0kxhig3wjn8v14dbjxl15xn0srkfxb5szzhrl06dv0nszc"))
+        (base32 "0xh94bnxz5dffq9g2fdfhxfy0lkyb9qhbnh583gbqkfysmyp3l6x"))
        (modules '((guix build utils)))
        (snippet #~(begin
                     (for-each delete-file-recursively

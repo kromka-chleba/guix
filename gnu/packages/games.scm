@@ -3212,6 +3212,85 @@ and defeat them with your bubbles!")
     ;; GPL2+ is for code, CC0 is for art.
     (license (list license:gpl2+ license:cc0))))
 
+(define-public serious-sam-classic
+  (package
+    (name "serious-sam-classic")
+    (version "1.10.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tx00100xt/SeriousSamClassic")
+             (commit version)))
+       (sha256
+        (base32 "1s1mbj2qpaxdrx0pfhdyk3v1vh7f2dp33w2i5ifpgphkchdx61jg"))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (patches (search-patches "serious-sam-classic-engine-patch-paths.patch"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:tests? #f                       ; no upstream tests
+      #:configure-flags
+      #~(list (string-append "-DCMAKE_INSTALL_PREFIX:PATH="
+                             #$output))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-cmake
+            (lambda _
+              (substitute* (list "CMakeLists.txt"
+                                 "SamTFE/Sources/CMakeLists.txt"
+                                 "SamTSE/Sources/CMakeLists.txt")
+                (("\"Install to systems directories\" Off")
+                 "\"Install to systems directories\" On")
+                (("march=native") "mtune=generic")
+                (("CMAKE_SKIP_RPATH ON") "CMAKE_SKIP_RPATH OFF")
+                (("/usr") #$output)
+                (("lib64") "lib"))))
+          (add-after 'fix-cmake 'fix-paths
+            (lambda _
+              (substitute* (list "SamTFE/Sources/Engine/Engine.cpp"
+                                 "SamTSE/Sources/Engine/Engine.cpp")
+                (("@OUTPUT_DIR@") #$output)))))))
+    (inputs (list sdl2 libvorbis))
+    (native-inputs (list flex bison nasm imagemagick))
+    (home-page "https://github.com/tx00100xt/SeriousSamClassic")
+    (synopsis "SeriousSam engine and Serious Sam: TFE and TSE")
+    (description
+     "This is an open-source port of the Serious Engine from
+Serious Sam: The First Encounter and Serious Sam: The Second Encounter.
+To run, you must put your official game data, @code{Levels} and @code{Help} in
+@code{~/.local/share/Serious-Engine/{serioussam,serioussamse}/gamedata/}.}")
+    (license license:gpl2)))
+
+(define-public serious-sam-classic-vk
+  (package
+    (inherit serious-sam-classic)
+    (name "serious-sam-classic-vk")
+    (version "1.10.7")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/tx00100xt/SeriousSamClassic-VK")
+             (commit version)))
+       (sha256
+        (base32 "1av3ll3pfdsadm10dz3srxfw9ld1xbg8i5xrgv7qynqsd0x8jxby"))
+       (file-name (git-file-name name version))
+       (modules '((guix build utils)))
+       (patches (search-patches
+                 "serious-sam-classic-engine-patch-paths.patch"))))
+    (inputs (modify-inputs (package-inputs serious-sam-classic)
+              (prepend vulkan-loader vulkan-headers)))
+    (synopsis
+     "SeriousSam engine and Serious Sam: TFE and TSE with Vulkan renderer")
+    (description
+     "This is an open-source port of the Serious Engine from
+Serious Sam: The First Encounter and Serious Sam: The Second Encounter.
+This variant includes a Vulkan renderer.
+To run, you must put your official game data, @code{Levels} and @code{Help} in
+@code{~/.local/share/Serious-Engine/{serioussam,serioussamse}/gamedata/}.}")))
+
 (define-public solarus
   (package
     (name "solarus")
@@ -4444,9 +4523,7 @@ for common mesh file formats, and collision detection.")
     (license license:zlib)))
 
 (define-public mars
-  ;; The latest release on SourceForge relies on an unreleased version of SFML
-  ;; with a different API, so we take the latest version from the official
-  ;; repository on Github.
+  ;; No official release since 2013: use the latest commit.
   (let ((commit   "84664cda094efe6e49d9b1550e4f4f98c33eefa2")
         (revision "2"))
     (package
@@ -4476,7 +4553,7 @@ for common mesh file formats, and collision detection.")
                                 (assoc-ref outputs "out")
                                 "/share/games/marsshooter/\";"))))))))
       (inputs
-       (list mesa fribidi taglib sfml))
+       (list mesa fribidi taglib sfml-2))
       (home-page "https://mars-game.sourceforge.net/")
       (synopsis "2D space shooter")
       (description
@@ -4796,7 +4873,7 @@ Protocol).")
     (native-inputs
      (list pkg-config))
     (inputs
-     (list glu sfml))
+     (list glu sfml-2))
     (synopsis "High-speed arctic racing game based on Tux Racer")
     ;; Snarfed straight from Debian.
     (description "Extreme Tux Racer, or etracer as it is called for short, is
@@ -6529,7 +6606,7 @@ tactics.")
 (define-public widelands
   (package
     (name "widelands")
-    (version "1.2")
+    (version "1.2.1")
     (source
      (origin
        (method git-fetch)
@@ -6538,7 +6615,7 @@ tactics.")
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1m9hn1sh1siggribzsq79k7p0lggdw41ji7zdl6h648cjak9mdsp"))
+        (base32 "1n8daxarwcagcxpzlxrrdy0piir1zinwnfbcsyyg4yd789pixhgw"))
        (modules '((guix build utils)))
        (snippet
         #~(delete-file-recursively "src/third_party/minizip"))))
@@ -11018,7 +11095,7 @@ current computer, the world, and eventually the universe itself.")
                  (install-file "MarbleMarcher" bin))
                #t)))))
       (inputs
-       (list eigen mesa sfml))
+       (list eigen mesa sfml-2))
       (native-inputs
        (list pkg-config))
       (home-page "https://codeparade.itch.io/marblemarcher")
@@ -12801,7 +12878,7 @@ to start over several times to find the most satisfactory ending.")
        `(#:tests? #f                              ; no tests
          #:build-type "Release"))
       (inputs
-       (list sfml))
+       (list sfml-2))
       (home-page "https://github.com/sandsmark/Schiffbruch/")
       (synopsis "Pixelart survival game")
       (description

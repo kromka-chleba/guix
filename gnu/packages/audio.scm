@@ -1773,6 +1773,11 @@ generators of mostly elementary and occasionally exotic nature.")
                               (string-append #$output:doc "/share/doc/")))))
           (add-after 'install-manual 'chdir
             (lambda _ (chdir "Plugin")))
+          (add-after 'chdir 'fix-includes
+            (lambda _
+              (substitute* "modules/JUCE/modules/juce_core/juce_core.h"
+                (("#define JUCE_CORE_H_INCLUDED" all)
+                 (string-append all "\n#include <utility>")))))
           (replace 'check
             (lambda* (#:key tests? build-type #:allow-other-keys)
               (when tests?
@@ -4899,15 +4904,18 @@ surround and reverb.")
 (define-public libxmp
   (package
     (name "libxmp")
-    (version "4.4.1")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/xmp/libxmp/" version "/"
-                                  name "-" version ".tar.gz"))
-              (sha256
-               (base32
-                "1kycz4jsyvmf7ny9227b497wc7y5ligydi6fvvldmkf8hk63ad9m"))))
+    (version "4.6.3")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libxmp/libxmp")
+             (commit (string-append "libxmp-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0mb54n2cqr8wvq02x9v8vdanvn01bhy0j1pyq2n3iykfnpjx4f2m"))))
     (build-system gnu-build-system)
+    (native-inputs (list autoconf))
     (home-page "https://xmp.sourceforge.net/")
     (synopsis "Module player library")
     (description
@@ -4919,19 +4927,19 @@ Scream Tracker 3 (S3M), Fast Tracker II (XM), and Impulse Tracker (IT).")
 (define-public xmp
   (package
     (name "xmp")
-    (version "4.1.0")
-    (source (origin
-              (method url-fetch)
-              (uri (string-append "mirror://sourceforge/xmp/xmp/" version "/"
-                                  name "-" version ".tar.gz"))
-              (sha256
-               (base32
-                "17i8fc7x7yn3z1x963xp9iv108gxfakxmdgmpv3mlm438w3n3g8x"))))
+    (version "4.2.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/libxmp/xmp-cli")
+             (commit (string-append "xmp-" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0c015v8r91g5nspfn6lldkw76dg3xjyg3x6s2sbiw6b3n7bf8znk"))))
     (build-system gnu-build-system)
-    (native-inputs
-     (list pkg-config))
-    (inputs
-     (list libxmp pulseaudio))
+    (native-inputs (list autoconf automake pkg-config))
+    (inputs (list libxmp pulseaudio))
     (home-page "https://xmp.sourceforge.net/")
     (synopsis "Extended module player")
     (description

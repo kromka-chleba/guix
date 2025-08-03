@@ -49,6 +49,9 @@
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages gnupg)
   #:use-module (gnu packages golang)
+  #:use-module (gnu packages golang-build)
+  #:use-module (gnu packages golang-compression)
+  #:use-module (gnu packages golang-crypto)
   #:use-module (gnu packages golang-xyz)
   #:use-module (gnu packages guile)
   #:use-module (gnu packages linux)
@@ -70,7 +73,7 @@
 (define-public crun
   (package
     (name "crun")
-    (version "1.22")
+    (version "1.23.1")
     (source
      (origin
        (method url-fetch)
@@ -80,7 +83,7 @@
              "/crun-" version ".tar.gz"))
        (sha256
         (base32
-         "1cggwb5libxjx4x96hd2v1pd4rm7m7bll37j888khsc5s486q32z"))))
+         "1y23fz82d7zaa2svyzjhfhahl6l0a3yrasfbcfacplhkwk7bflnp"))))
     (build-system gnu-build-system)
     (arguments
      (list
@@ -231,6 +234,53 @@ runtime (like runc or crun) for a single container.")
      "Distrobox is a fancy wrapper around Podman or Docker to create and start
 containers highly integrated with the hosts.")
     (license license:gpl3)))
+
+(define-public dive
+  (package
+    (name "dive")
+    (version "0.12.0") ;newer version needs docker/docker@28+
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/wagoodman/dive")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0p60bq0lc820p7x3nq8kxc8cx646c0z7zxqc7vav77zc4qbm3r8a"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:go go-1.23
+      #:install-source? #f
+      #:build-flags
+      #~(list (string-append "-ldflags=-X main.version=" #$version))
+      #:import-path "github.com/wagoodman/dive"))
+    (native-inputs
+     (list go-github-com-awesome-gocui-gocui
+           go-github-com-awesome-gocui-keybinding
+           go-github-com-cespare-xxhash
+           go-github-com-docker-cli
+           go-github-com-docker-docker
+           go-github-com-dustin-go-humanize
+           go-github-com-fatih-color
+           go-github-com-google-uuid
+           go-github-com-logrusorgru-aurora
+           go-github-com-lunixbochs-vtclean
+           go-github-com-mitchellh-go-homedir
+           go-github-com-phayes-permbits
+           go-github-com-sergi-go-diff
+           go-github-com-sirupsen-logrus
+           go-github-com-spf13-afero
+           go-github-com-spf13-cobra
+           go-github-com-spf13-viper
+           go-golang-org-x-net))
+    (home-page "https://github.com/wagoodman/dive")
+    (synopsis "Tool for exploring each layer in a docker image")
+    (description
+     "This package provides a tool for exploring a Docker image, layer
+contents, and discovering ways to shrink the size of Docker/OCI image.")
+    (license license:expat)))
 
 (define-public libslirp
   (package
@@ -634,7 +684,7 @@ being rootless and not requiring any daemon to be running.")
 (define-public buildah
   (package
     (name "buildah")
-    (version "1.40.1")
+    (version "1.41.0")
     (source
      (origin
        (method git-fetch)
@@ -642,7 +692,7 @@ being rootless and not requiring any daemon to be running.")
              (url "https://github.com/containers/buildah")
              (commit (string-append "v" version))))
        (sha256
-        (base32 "109xvnx65gbajxipq2h0669bzzxyc6hfmdcijgngijxj5kwx5cgq"))
+        (base32 "12vl3g5h9m9pw0zpi88j7sjx0db8ardigh2x8h3a3qa9m5hlnqnb"))
        (file-name (git-file-name name version))))
     (build-system gnu-build-system)
     (arguments

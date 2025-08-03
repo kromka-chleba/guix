@@ -367,42 +367,52 @@ buffer, a file on your disk, or a string from the kill ring.")
       (license license:gpl3+))))
 
 (define-public emacs-elisp-autofmt
-  (let ((commit "5b1fdc2761a80674123769ebf8a43fe312c0fa3f")
+  (let ((commit "fa30ffc2320c41fc3827e2a800d40d7d5bcaddbe")
         (revision "0"))
     (package
-     (name "emacs-elisp-autofmt")
-     (version (git-version "0.0.0" revision commit))
-     (source
-      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://codeberg.org/ideasman42/emacs-elisp-autofmt")
-             (commit commit)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "09wxrrqzccq3wv51n0blcln1zggmlm4fzrnj0svv8gir5q5g6l3h"))))
-     (build-system emacs-build-system)
-     (inputs (list python))
-     (arguments
-      (list
-       #:phases
-       #~(modify-phases %standard-phases
-           (add-after 'unpack 'patch-dependencies
-             (lambda* (#:key inputs #:allow-other-keys)
-               (substitute* "elisp-autofmt.el"
-                (("\"python\"")
-                 (string-append "\""
-                                (search-input-file inputs "/bin/python3")
-                                "\"")))))
-           (add-after 'install 'install-python-module
-             (lambda* (#:key inputs outputs #:allow-other-keys)
-               (let ((destination (elpa-directory (assoc-ref outputs "out"))))
-                 (install-file "elisp-autofmt.py" destination)
-                 (install-file "elisp-autofmt.overrides.json" destination)))))))
-     (home-page "https://codeberg.org/ideasman42/emacs-elisp-autofmt")
-     (synopsis "Auto-format Emacs lisp")
-     (description "This is a package to auto-format Emacs lisp.")
-     (license license:gpl3+))))
+      (name "emacs-elisp-autofmt")
+      (version (git-version "0.1" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://codeberg.org/ideasman42/emacs-elisp-autofmt")
+               (commit commit)))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "174cmqszhx42blqc6fjjf3lgaz2hasj15743hcrzj6a97nhx4wsj"))))
+      (build-system emacs-build-system)
+      (inputs (list python))
+      (arguments
+       (list
+        #:test-command #~(list "make" "tests")
+        #:include #~(cons* "elisp-autofmt.py"
+                           "elisp-autofmt.overrides.json"
+                           %default-include)
+        #:phases
+        #~(modify-phases %standard-phases
+            (add-after 'unpack 'patch-dependencies
+              (lambda* (#:key inputs #:allow-other-keys)
+                (substitute* "elisp-autofmt.el"
+                  (("\"python\"")
+                   (string-append "\""
+                                  (search-input-file inputs "/bin/python3")
+                                  "\"")))))
+            ;; TODO Remove when fixed upstream. See:
+            ;; https://codeberg.org/ideasman42/emacs-elisp-autofmt/issues/36
+            (add-before 'check 'fix-tests
+              (lambda _
+                (setenv "HOME" (getenv "TMPDIR"))
+                (with-atomic-file-replacement "Makefile"
+                  (lambda (in out)
+                    (dump-port in out)
+                    (display "\n.PHONY: tests\n" out)))
+                (substitute* "Makefile"
+                  (("python") "python3")))))))
+      (home-page "https://codeberg.org/ideasman42/emacs-elisp-autofmt")
+      (synopsis "Auto-format Emacs lisp")
+      (description "This is a package to auto-format Emacs lisp.")
+      (license license:gpl3+))))
 
 (define-public emacs-ac-php
   (package
@@ -1897,6 +1907,31 @@ while the ones that are not being actively edited will be reduced to a smaller
 size.")
       (license license:expat))))
 
+(define-public emacs-zoom 
+    (package
+      (name "emacs-zoom")
+      (version "0.3.0")
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+                (url "https://github.com/cyrus-and/zoom")
+                (commit (string-append "v" version))))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "1zzm8kchm5wwxras4bfl46flyfj44bf7qazc5yyahx9qr2ksfnhd"))))
+      (build-system emacs-build-system)
+      (arguments (list #:tests? #f))      ;no tests
+      (home-page "https://github.com/cyrus-and/zoom")
+      (synopsis "Fixed and automatic balanced window layout for Emacs")
+      (description
+       "This minor mode takes care of managing the window sizes by
+enforcing a fixed and automatic balanced layout where the currently
+selected window is resized according to @code{zoom-size} which can be
+an absolute value in lines/columns, a ratio between the selected window
+and frame size or even a custom callback.")
+      (license license:expat)))
+
 (define-public emacs-git-modes
   (package
     (name "emacs-git-modes")
@@ -2080,7 +2115,7 @@ syntax for short lambda.")
 (define-public emacs-llm
   (package
     (name "emacs-llm")
-    (version "0.24.2")
+    (version "0.27.0")
     (source
      (origin
        (method git-fetch)
@@ -2089,12 +2124,13 @@ syntax for short lambda.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0kza3jzabp5ilapi3a0ycrc26gvj6s2nf3x1ly4c8d3si6fdlx61"))))
+        (base32 "0ribldwvgr6ij79xap7606rnaiyl34d7qvpg06p8q2nwi5k8z3dc"))))
     (build-system emacs-build-system)
     (arguments
      (list
-      ;; there are no tests
-      #:tests? #f))
+      #:test-command #~(list "emacs" "--batch"
+                             "-l" "llm-test.el"
+                             "-f" "ert-run-tests-batch-and-exit")))
     (propagated-inputs (list emacs-plz emacs-plz-event-source
                              emacs-plz-media-type))
     (home-page "https://github.com/ahyatt/llm")
@@ -4845,8 +4881,8 @@ the @code{Dracula} theme for Emacs and the @code{Gloom} theme for Atom.")
       (license license:expat))))
 
 (define-public emacs-reverso
-  (let ((commit "d1b39da3c7df1541f98435f3172a7ff4f3123634")
-        (revision "0"))
+  (let ((commit "40ed3d83c4f04c39e05d69d84595761ae2956a64")
+        (revision "1"))
     (package
       (name "emacs-reverso")
       (version (git-version "0.1.2" revision commit))
@@ -4858,9 +4894,10 @@ the @code{Dracula} theme for Emacs and the @code{Gloom} theme for Atom.")
                (commit commit)))
          (file-name (git-file-name name version))
          (sha256
-          (base32 "1fpk5wyzlssfrm4jbsrflxvlfn80yh6y1nh63ml8barf1nypsx55"))))
+          (base32 "1agsscrkqnmz8shibfy8df5f34xwixiyfad381k04aibadh742yb"))))
       (build-system emacs-build-system)
-      (propagated-inputs (list emacs-fedi emacs-request emacs-transient))
+      (arguments (list #:tests? #f))      ; no tests
+      (propagated-inputs (list emacs-request))
       (home-page "https://github.com/SqrtMinusOne/reverso.el")
       (synopsis "Translation, grammar checking, context search")
       (description "Reverso is an emacs client for the reverso.net service.")
@@ -5675,7 +5712,7 @@ within emacs.")
 (define-public emacs-bm
   (package
     (name "emacs-bm")
-    (version "202309")
+    (version "202506")
     (source
      (origin
        (method git-fetch)
@@ -5684,14 +5721,14 @@ within emacs.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1a47dcda196sb6qx45w94d0vfzyfprfs3g7yj0scjmna79rr3fqa"))))
+        (base32 "0298hjdgx03y028pql6z3jcym47ji10hv66zydn1kicsjds0r45l"))))
     (build-system emacs-build-system)
     (arguments
      (list
       #:test-command #~(list "emacs" "-Q" "--batch"
                              "-l" "bm-tests.el"
                              "-f" "ert-run-tests-batch-and-exit")))
-    (home-page "https://github.com/joodland/bm")
+    (home-page "https://joodland.github.io/bm/")
     (synopsis "Visual bookmarks for Emacs")
     (description "This package provides visible, buffer local bookmarks and
 the ability to jump forward and backward to the next bookmark.")
@@ -25887,16 +25924,16 @@ highlighting and indentation support.")
 (define-public emacs-terraform-mode
   (package
     (name "emacs-terraform-mode")
-    (version "1.0.1")
+    (version "1.1.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/syohex/emacs-terraform-mode")
+             (url "https://github.com/hcl-emacs/terraform-mode")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "10wndnlsv7f2yn83n1wamnhiwyhxkdlmwld9yk0m2kkxx4pwfgfj"))))
+        (base32 "15xgjyl864crx3vpalds68x0vn1qzibkqdcjlbp87xiq88dx2q1x"))))
     (build-system emacs-build-system)
     (arguments
      (list #:test-command #~(list "emacs" "--batch"
@@ -25907,7 +25944,7 @@ highlighting and indentation support.")
                                   "-f" "ert-run-tests-batch-and-exit")))
     (propagated-inputs
      (list emacs-dash emacs-hcl-mode))
-    (home-page "https://github.com/syohex/emacs-terraform-mode")
+    (home-page "https://github.com/hcl-emacs/terraform-mode")
     (synopsis "Major mode for Terraform")
     (description
      "@code{emacs-terraform-mode} provides a major mode for working with
@@ -36873,140 +36910,69 @@ You might want to use this to globally set dir-local variables that apply to
 all of your projects, then override or add variables on a per-project basis.")
       (license license:gpl3+))))
 
-(define-public emacs-casual-avy
+(define-public emacs-casual
   (package
-    (name "emacs-casual-avy")
-    (version "2.0.1")
+    (name "emacs-casual")
+    (version "2.7.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/kickingvegas/casual-avy")
-             (commit version)))
+              (url "https://github.com/kickingvegas/casual/")
+              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "0p4ljzgcr51wpcfs4r0nnpv4rgaivzcq4lbcyr9sfvgqhr1yr271"))))
+        (base32 "1jf12j92h88a624lg9vg82xf3djij3xkac9ycj5vavkypb6jnih2"))))
     (build-system emacs-build-system)
     (arguments
      (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'build-info-manual
+            (lambda _
+              (invoke "emacs"
+                      "--batch"
+                      "--eval=(require 'ox-texinfo)"
+                      "--eval=(find-file \"../docs/casual.org\")"
+                      "--eval=(org-texinfo-export-to-info)")
+              (rename-file "../docs/casual.info" "casual.info")))
+          ;; FIXME: Remove when included in pr upstream. See: #261.
+          (add-after 'unpack 'patch-casual-lib-dir
+            (lambda _
+              (substitute* "Makefile--defines.make"
+                (("^CASUAL_LIB_DIR.*")
+                 "CASUAL_LIB_DIR?=$(CASUAL_BASE_DIR)/casual\n"))))
+          ;; FIXME: These tests fail.
+          (add-before 'check 'remove-problematic-tests
+            (lambda _
+              (substitute* "Makefile"
+                (("editkit-tests.*")
+                 "# editkit-tests")))))
       #:lisp-directory "lisp"
-      #:test-command #~(list "make" "tests")
-      ;; Tests require “casual-lib-test-utils”, which are not installed.
-      #:tests? #f))
-    (propagated-inputs (list emacs-casual-lib emacs-avy))
-    (home-page "https://github.com/kickingvegas/casual-avy")
-    (synopsis "Transient-based porcelain for avy")
+      #:test-command #~(list "make" "tests"
+                             (string-append " CASUAL_LIB_DIR=" (getcwd)
+                                            "/source"))))
+    (native-inputs (list texinfo))
+    ;; Casual relies on the latest stable release of `transient' which may
+    ;; differ from the version that is preinstalled as a built-in.
+    (propagated-inputs (list emacs-magit emacs-transient))
+    (home-page "https://github.com/kickingvegas/casual/")
+    (synopsis "Transient user interfaces for various modes")
     (description
-     "Casual Avy is an opinionated Transient-based porcelain for Emacs Avy.")
+     "Casual is a collection of opinionated Transient-based keyboard driven
+user interfaces for various built-in modes.")
     (license license:gpl3+)))
 
 (define-public emacs-casual-calc
-  (package
-    (name "emacs-casual-calc")
-    (version "3.0.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/kickingvegas/casual-calc")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1zn281rr2z557ja5c9xvwhzx4isxkma4v6shl7acnqhczb8kpnr4"))))
-    (build-system emacs-build-system)
-    (arguments
-     (list
-      #:lisp-directory "lisp"
-      ;; Tests require “casual-lib-test-utils”, which are not installed.
-      #:tests? #f))
-    (propagated-inputs (list emacs-casual-lib))
-    (home-page "https://github.com/kickingvegas/casual-calc")
-    (synopsis "Transient-based porcelain for calc")
-    (description
-     "Casual Calc is an opinionated Transient-based porcelain for Emacs Calc.")
-    (license license:gpl3+)))
-
+  (deprecated-package "emacs-casual-calc" emacs-casual))
 (define-public emacs-casual-dired
-  (package
-    (name "emacs-casual-dired")
-    (version "2.0.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/kickingvegas/casual-dired")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0p4k626svcy6jc1mpsiifpsbacrz7nsgyrb2m0icvi65nxcysj9q"))))
-    (build-system emacs-build-system)
-    (arguments
-     (list
-      #:lisp-directory "lisp"
-      ;; Tests require “casual-lib-test-utils”, which are not installed.
-      #:tests? #f))
-    (propagated-inputs (list emacs-casual-lib))
-    (home-page "https://github.com/kickingvegas/casual-dired")
-    (synopsis "Transient-based porcelain for Dired")
-    (description
-     "Casual Dired is an opinionated Transient-based porcelain for Emacs Dired.")
-    (license license:gpl3+)))
-
+  (deprecated-package "emacs-casual-dired" emacs-casual))
 (define-public emacs-casual-info
-  (package
-    (name "emacs-casual-info")
-    (version "2.0.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/kickingvegas/casual-info")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "1q8yk71xv2v2ls94dc834c988aj2hfq1jv6nbddjxy0qn2hwxd2n"))))
-    (build-system emacs-build-system)
-    (arguments
-     (list
-      #:lisp-directory "lisp"
-      ;; Tests require “casual-lib-test-utils”, which are not installed.
-      #:tests? #f))
-    (propagated-inputs (list emacs-casual-lib))
-    (home-page "https://github.com/kickingvegas/casual-info")
-    (synopsis "Transient-based porcelain for info reader")
-    (description
-     "Casual Info is an opinionated Transient-based porcelain for Emacs Info reader.")
-    (license license:gpl3+)))
-
+  (deprecated-package "emacs-casual-info" emacs-casual))
 (define-public emacs-casual-lib
-  (package
-    (name "emacs-casual-lib")
-    (version "2.0.0")
-    (source (origin
-              (method git-fetch)
-              (uri (git-reference
-                    (url "https://github.com/kickingvegas/casual-lib")
-                    (commit version)))
-              (file-name (git-file-name name version))
-              (sha256
-               (base32
-                "1hmr0zzwm3f88786j8p8x39jn5b8jja37x1iww4vd83dsvkksbpa"))))
-    (build-system emacs-build-system)
-    (arguments
-     (list #:test-command #~(list "make" "tests")
-           #:phases
-           #~(modify-phases %standard-phases
-               (add-after 'unpack 'move-source-files
-                 (lambda _
-                   (let ((el-files (find-files "./lisp" ".*\\.el$")))
-                     (for-each (lambda (f) (copy-file f (basename f)))
-                               el-files)))))))
-    (native-inputs (list python-minimal))
-    (home-page "https://github.com/kickingvegas/casual-lib")
-    (synopsis "Library package for the Emacs Casual porcelains")
-    (description
-     "Casual Lib is a library package used to support the Casual porcelains.")
-    (license license:gpl3+)))
+  (deprecated-package "emacs-casual-lib" emacs-casual))
+(define-public emacs-casual-avy
+  (deprecated-package "emacs-casual-avy" emacs-casual))
 
 (define-public emacs-calibredb
   (package

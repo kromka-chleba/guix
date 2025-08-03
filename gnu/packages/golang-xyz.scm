@@ -1995,6 +1995,58 @@ strategies, such as fixed delay, backoff delay, and random delay.")
          (package-arguments go-github-com-avast-retry-go)
        ((#:import-path _) "github.com/avast/retry-go/v4")))))
 
+(define-public go-github-com-awesome-gocui-gocui
+  (package
+    (name "go-github-com-awesome-gocui-gocui")
+    (version "1.1.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+              (url "https://github.com/awesome-gocui/gocui")
+              (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "082ziwxj239nxcclv54d783933s6c5ks592mq3ilcvg1vfyfkjz8"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/awesome-gocui/gocui"))
+    (propagated-inputs
+     (list go-github-com-gdamore-tcell-v2
+           go-github-com-mattn-go-runewidth))
+    (home-page "https://github.com/awesome-gocui/gocui")
+    (synopsis "Console User Interface in Golang")
+    (description
+     "This package implements a functionality to create console user
+interfaces.")
+    (license license:bsd-3)))
+
+(define-public go-github-com-awesome-gocui-keybinding
+  (package
+    (name "go-github-com-awesome-gocui-keybinding")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/awesome-gocui/keybinding")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0d1nvxs2pd6nc10gm3md2rsd0v33025b8dik1l1iy8klzhiqfd1q"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:tests? #f ;broken tests
+      #:import-path "github.com/awesome-gocui/keybinding"))
+    (propagated-inputs (list go-github-com-awesome-gocui-gocui))
+    (home-page "https://github.com/awesome-gocui/keybinding")
+    (synopsis "Wrapper for parsing gocui keybindings in Golang")
+    (description
+     "This package provides a golang wrapper for parsing gocui keybindings.")
+    (license license:expat)))
+
 (define-public go-github-com-axiomhq-hyperloglog
   (package
     (name "go-github-com-axiomhq-hyperloglog")
@@ -5456,8 +5508,8 @@ is an actively maintained fork of @url{https://github.com/ogier/pflag}.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/docker/cli")
-             (commit (string-append "v" version))))
+              (url "https://github.com/docker/cli")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0gaz2pkivky94z8148aa27kdxn548j3r96xa3a9xfqpi6b1rhy27"))
@@ -5472,10 +5524,13 @@ is an actively maintained fork of @url{https://github.com/ogier/pflag}.")
       #:embed-files #~(list ".*\\.json")
       #:skip-build? #t
       #:tests? #f))
-    (propagated-inputs (list go-github-com-mitchellh-mapstructure
-                             go-gopkg-in-yaml-v2
-                             go-github-com-google-shlex
-                             go-github-com-docker-docker-credential-helpers))
+    (propagated-inputs
+     (list go-github-com-docker-docker-credential-helpers
+           go-github-com-fvbommel-sortorder
+           go-github-com-google-shlex
+           go-github-com-mitchellh-mapstructure
+           go-github-com-pkg-errors
+           go-gopkg-in-yaml-v2))
     (home-page "https://github.com/docker/cli")
     (synopsis "Docker command-line interface")
     (description "This repository is the home of the Docker command-line
@@ -5533,8 +5588,8 @@ interact with distribution components.")
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/moby/moby")
-             (commit (string-append "v" version))))
+              (url "https://github.com/moby/moby")
+              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
         (base32 "0852mrvs8602azqzx2zhb1xl0vs7baw8qfmkgrl625xm5hxrigvq"))
@@ -5547,17 +5602,20 @@ interact with distribution components.")
       #:import-path "github.com/docker/docker"
       #:skip-build? #t
       #:tests? #f))
-    (propagated-inputs (list go-github-com-docker-go-units
-                             go-github-com-containerd-containerd
-                             go-github-com-containerd-log
-                             go-github-com-gogo-protobuf
-                             go-go-opentelemetry-io-otel
-                             go-github-com-moby-sys-user
-                             go-github-com-moby-sys-userns
-                             go-github-com-moby-sys-sequential
-                             go-go-opentelemetry-io-contrib
-                             go-github-com-klauspost-compress
-                             go-github-com-moby-docker-image-spec))
+    (propagated-inputs
+     (list go-github-com-containerd-containerd
+           go-github-com-containerd-log
+           go-github-com-distribution-reference
+           go-github-com-docker-go-connections
+           go-github-com-docker-go-units
+           go-github-com-gogo-protobuf
+           go-github-com-klauspost-compress
+           go-github-com-moby-docker-image-spec
+           go-github-com-moby-sys-sequential
+           go-github-com-moby-sys-user
+           go-github-com-moby-sys-userns
+           go-go-opentelemetry-io-contrib
+           go-go-opentelemetry-io-otel))
     (home-page "https://github.com/docker/docker")
     (synopsis "The Moby Project")
     (description
@@ -15435,6 +15493,30 @@ arguments, environment variables, and/or config files.")
     (description "The @code{liner} Go package implements a simple command line
 editor with history, inspired by @url{https://github.com/antirez/linenoise/,
 linenoise}.  Xterm as well as WIN32 terminal codes are supported.")
+    (license license:expat)))
+
+(define-public go-github-com-phayes-permbits
+  (package
+    (name "go-github-com-phayes-permbits")
+    (version "0.0.0-20190612203442-39d7c581d2ee")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/phayes/permbits")
+             (commit (go-version->git-ref version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1jixy4m65agyyly5mg4icszwzs5hjgj1x7cwvc9a3df6j5lwd41x"))))
+    (build-system go-build-system)
+    (arguments
+     (list
+      #:import-path "github.com/phayes/permbits"))
+    (home-page "https://github.com/phayes/permbits")
+    (synopsis "Easy file permissions for Golang")
+    (description
+     "This package makes it a breeze to check and modify file permission
+bits.")
     (license license:expat)))
 
 (define-public go-github-com-philhofer-fwd

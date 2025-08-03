@@ -8014,16 +8014,15 @@ Mako, and Tornado.")
 (define-public python-pystache
   (package
     (name "python-pystache")
-    (version "0.6.0")
+    (version "0.6.8")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "pystache" version))
               (sha256
                (base32
-                "03a73ppf5vxnsk6az5ackvc0hp6xqv2f4hi1s5c4nk4s2jr95gwk"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:tests? #f)) ; FIXME: Python 3 tests are failing.
+                "0b67fmq0wmfkgcr7qqc44vvpvh8zkdk0rh87kccds9jdda7521rp"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "http://defunkt.io/pystache/")
     (synopsis "Python logic-less template engine")
     (description
@@ -8038,19 +8037,19 @@ logic-free templating system Mustache.")
     (source
      (origin
        (method git-fetch)
-       (uri
-        (git-reference
-         (url "https://github.com/captn3m0/pystitcher")
-         (commit
-          (string-append "v" version))))
-       (file-name
-        (git-file-name name version))
+       (uri (git-reference
+             (url "https://github.com/captn3m0/pystitcher")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
        (sha256
         (base32 "03yrzqhcsjdj5zprrk3bh5bbyqfy3vfhxra9974vmkir3m121394"))))
-    (build-system python-build-system)
-    (inputs
-     (list python-html5lib python-importlib-metadata python-markdown
-           python-pypdf3 python-validators))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
+    (inputs (list python-html5lib
+                  python-importlib-metadata
+                  python-markdown
+                  python-pypdf3
+                  python-validators))
     (home-page "https://github.com/captn3m0/pystitcher")
     (synopsis "Declaratively stitch together a PDF file from multiple sources")
     (description
@@ -17702,15 +17701,15 @@ printing of sub-tables by specifying a row range.")
 (define-public python-rtf-tokenize
   (package
     (name "python-rtf-tokenize")
-    (version "1.0.0")
+    (version "1.0.1")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "rtf_tokenize" version))
               (sha256
                (base32
-                "026njb9iwznycda83bln3gfivcnzdz6vy8y86xvbsy84s28g6gaw"))))
-    (build-system python-build-system)
-    (native-inputs (list python-pytest))
+                "1ljs0dcg2p1iad4zrxgn1pbrrcjcrswhjxrbprhdxd822n0al84h"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/benoit-pierre/rtf_tokenize")
     (synopsis "Simple RTF tokenizer")
     (description "This package is a simple RTF tokenizer.")
@@ -26957,25 +26956,17 @@ in pure Python.")
 (define-public python-sacn
   (package
     (name "python-sacn")
-    (version "1.10.0")
+    (version "1.11.0")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "sacn" version))
        (sha256
-        (base32 "02pqfwwx83lgb8nj9p0s6vyi1s7wjgbx9k0bzlyz8qapszzdsr37"))))
-    (build-system python-build-system)
-    (arguments
-     (list #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "pytest" "-vv")))))))
-    (native-inputs (list python-pytest))
+        (base32 "1sp0jmrjsd9g62kgi177fw4hi56h21s2p9khia3idmixgz53k2ql"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-pytest python-setuptools python-wheel))
     (home-page "https://github.com/Hundemeier/sacn")
-    (synopsis
-     "Python library for sending and receiving sACN data")
+    (synopsis "Python library for sending and receiving sACN data")
     (description
      "This package provides a Python library for sending and receiving
      sACN (Streaming Architecture for Control Networks) data, a standard
@@ -26986,17 +26977,31 @@ in pure Python.")
 (define-public python-bagit
   (package
     (name "python-bagit")
-    (version "1.7.0")
+    (version "1.9.0")
     (source
       (origin
-        (method url-fetch)
-        (uri (pypi-uri "bagit" version))
+        (method git-fetch) ; no tests in PyPI
+        (uri (git-reference
+               (url "https://github.com/LibraryOfCongress/bagit-python")
+               (commit (string-append "v" version))))
+        (file-name (git-file-name name version))
         (sha256
          (base32
-          "1m6y04qmig0b5hzb35lnaw3d2yfydb7alyr1579yblvgs3da6j7j"))))
-    (build-system python-build-system)
+          "12qfqha70vhc8pclq0kzv7xk0i44ramnlkphybv7419vdl4aay40"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-before 'build 'pretend-version
+                 (lambda _
+                   (setenv "SETUPTOOLS_SCM_PRETEND_VERSION"
+                           #$(package-version this-package))))
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "pytest" "-vv" "test.py")))))))
     (native-inputs
-     (list python-setuptools-scm python-coverage python-mock))
+     (list python-pytest python-setuptools python-setuptools-scm python-wheel))
     (home-page "https://libraryofcongress.github.io/bagit-python/")
     (synopsis "Create and validate BagIt packages")
     (description "Bagit is a Python library and command line utility for working

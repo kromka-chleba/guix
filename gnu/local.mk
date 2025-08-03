@@ -1055,6 +1055,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/bdb-4-5-configure.patch                  \
   %D%/packages/patches/bdb-5.3-atomics-on-gcc-9.patch		\
   %D%/packages/patches/biboumi-cmake-ignore-git.patch		\
+  %D%/packages/patches/brasero-fix-gcc-14-build-failure.patch	\
   %D%/packages/patches/brightnessctl-elogind-support.patch	\
   %D%/packages/patches/bsd-games-2.17-64bit.patch		\
   %D%/packages/patches/bsd-games-add-configure-config.patch	\
@@ -1214,7 +1215,8 @@ dist_patch_DATA =						\
   %D%/packages/patches/docbook2x-static-datadir-evaluation.patch	\
   %D%/packages/patches/doc++-include-directives.patch		\
   %D%/packages/patches/doc++-segfault-fix.patch			\
-  %D%/packages/patches/dolphin-emu-data.patch			\
+  %D%/packages/patches/dolphin-emu-unbundle-tinygltf.patch      \
+  %D%/packages/patches/dolphin-emu-unbundle-watcher.patch       \
   %D%/packages/patches/dovecot-opensslv3.patch			\
   %D%/packages/patches/dovecot-trees-support-dovecot-2.3.patch	\
   %D%/packages/patches/dstat-fix-crash-when-specifying-delay.patch	\
@@ -1633,7 +1635,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/irrlicht-use-system-libs.patch		\
   %D%/packages/patches/irrlicht-link-against-needed-libs.patch	\
   %D%/packages/patches/isl-0.11.1-aarch64-support.patch	\
-  %D%/packages/patches/itk-snap-alt-glibc-compat.patch		\
   %D%/packages/patches/jamesdsp-fix-bulid-on-pipewire-1.4.0.patch\
   %D%/packages/patches/jami-disable-webengine.patch		\
   %D%/packages/patches/jami-enable-testing.patch		\
@@ -1687,6 +1688,9 @@ dist_patch_DATA =						\
   %D%/packages/patches/libguestfs-syms.patch            	\
   %D%/packages/patches/libinfinity-renew-test-certificate.patch \
   %D%/packages/patches/libretro-dolphin-emu-data.patch		\
+  %D%/packages/patches/libretro-dolphin-emu-gc-font-tool.patch  \
+  %D%/packages/patches/libretro-dolphin-emu-libusb-assert.patch \
+  %D%/packages/patches/libretro-dolphin-emu-vulkan-headers.patch        \
   %D%/packages/patches/librewolf-add-store-to-rdd-allowlist.patch       \
   %D%/packages/patches/librewolf-neuter-locale-download.patch	\
   %D%/packages/patches/librewolf-use-system-wide-dir.patch	\
@@ -2044,7 +2048,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/pounce-readable-checks.patch             \
   %D%/packages/patches/ppsspp-disable-upgrade-and-gold.patch		\
   %D%/packages/patches/procps-strtod-test.patch                 \
-  %D%/packages/patches/prusa-slicer-fix-tests.patch		\
+  %D%/packages/patches/prusa-slicer-add-cmake-module.patch \
   %D%/packages/patches/prusa-wxwidgets-makefile-fix.patch	\
   %D%/packages/patches/pthreadpool-system-libraries.patch	\
   %D%/packages/patches/python-3.11-fix-tests.patch		\
@@ -2127,6 +2131,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/procmail-ambiguous-getline-debian.patch  \
   %D%/packages/patches/procmail-CVE-2014-3618.patch		\
   %D%/packages/patches/procmail-CVE-2017-16844.patch		\
+  %D%/packages/patches/procmail-gcc-14.patch		\
   %D%/packages/patches/proj-7-initialize-memory.patch		\
   %D%/packages/patches/proot-add-clone3.patch			\
   %D%/packages/patches/proot-add-missing-include.patch		\
@@ -2300,6 +2305,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/scons-test-environment.patch		\
   %D%/packages/patches/scotch-cmake-remove-metis.patch		\
   %D%/packages/patches/screen-hurd-path-max.patch		\
+  %D%/packages/patches/serious-sam-classic-engine-patch-paths.patch		\
   %D%/packages/patches/scsh-nonstring-search-path.patch	\
   %D%/packages/patches/seed-webkit.patch			\
   %D%/packages/patches/sendgmail-accept-ignored-gsuite-flag.patch	\

@@ -70,6 +70,7 @@
 ;;; Copyright © 2025 Luca Cirrottola <luca.cirrottola@inria.fr>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim.cournoyer@gmail.com>
 ;;; Copyright © 2025 Sören Tempel <soeren@soeren-tempel.net>
+;;; Copyright © 2025 nomike Postmann <nomike@nomike.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -3242,7 +3243,7 @@ includes a complete LAPACK implementation.")
 (define-public hpcombi
   (package
     (name "hpcombi")
-    (version "1.0.1")
+    (version "1.1.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -3251,11 +3252,11 @@ includes a complete LAPACK implementation.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "00mbxw5x6m61n0x68dsiyq97i7b08h3hkbj9is2w6gcg571jy319"))))
+                "0xxqjz4lba57vn65m2k5jxrz0v7y6jwnhxwg6njd4vrafv5w17yv"))))
     (arguments
      (list #:configure-flags #~(list "-DBUILD_TESTING=ON")))
     (native-inputs
-     (list catch2-3))
+     (list catch2-3.8))
     (build-system cmake-build-system)
     (home-page "https://libsemigroups.github.io/HPCombi/")
     (synopsis "Fast combinatorics in C++ using SSE/AVX instruction sets")
@@ -3605,6 +3606,22 @@ This is the certified version of the Open Cascade Technology (OCCT) library.")
                     "https://www.unicode.org/license.html")
                    ;; File src/NCollection/NCollection_StdAllocator.hxx:
                    license:public-domain))))
+
+;; PrusaSlicer has a hard dependency on this slightly older version of
+;; OpenCASCADE. According to them, all newer versions have a bug that causes
+;; chamfers to be triangulated incorrectly.
+;; See https://github.com/prusa3d/PrusaSlicer/commit/c6a02106fd1d3caa9a48a6b7c2bdd04546b24485.
+(define-public opencascade-occt-7.6.1
+  (hidden-package
+    (package/inherit opencascade-occt
+    (name "opencascade-occt")
+    (version "7.6.1")
+    (source
+      (origin
+        (inherit (package-source opencascade-occt))
+        (file-name (git-file-name name version))
+        (sha256
+         (base32 "1cc7n4rs26lm1awwn2bijvjq9b3kz204ffnks02lrpgs7pf8yk8b")))))))
 
 (define-public fast-downward
   (package
@@ -4640,6 +4657,40 @@ bindings to almost all functions of PETSc.")
     ;; pyproject.toml says gpl3 but file headers say gpl2+, see
     ;; <https://github.com/dimpase/primecountpy/issues/16>.
     (license license:gpl2+)))
+
+(define-public python-py-bobyqa
+  (package
+    (name "python-py-bobyqa")
+    (version "1.5.0")
+    (source
+     (origin
+       (method git-fetch)               ;no tests in PyPI release
+       (uri (git-reference
+             (url "https://github.com/numericalalgorithmsgroup/pybobyqa")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "0k9iapdlbp1k2ck1550ckw0y75f71gxzqkv4clz89ym4fwqwszv2"))))
+    (build-system pyproject-build-system)
+    (native-inputs
+     (list python-pytest
+           python-setuptools
+           python-wheel))
+    (propagated-inputs
+     (list python-numpy
+           python-pandas
+           python-scipy
+           python-setuptools))
+    (home-page "https://github.com/numericalalgorithmsgroup/pybobyqa")
+    (synopsis "Derivative-free solver for general objective minimization")
+    (description
+     "Py-BOBYQA is a flexible package for solving bound-constrained general
+objective minimization, without requiring derivatives of the objective.  At
+its core, it is a Python implementation of the BOBYQA algorithm by Powell,but
+Py-BOBYQA has extra features improving its performance on some problems.
+Py-BOBYQA is particularly useful when evaluations of the objective function
+are expensive and/or noisy.")
+    (license license:gpl3)))
 
 (define-public python-pyglm
   (package
