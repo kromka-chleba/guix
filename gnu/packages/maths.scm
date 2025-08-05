@@ -481,9 +481,7 @@ enough to be used effectively as a scientific calculator.")
                 "0csy4pjw1p8rp6g5qxi2h0ychhhp1fldv7gb761627fs2mclw9gv"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:test-target "test"
-       #:configure-flags '("-DBUILD_SHARED_LIBS=ON"
-                           "-DBUILD_TESTING=ON")))
+     '(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")))
     (synopsis "Conversion routines for IEEE doubles")
     (description
      "The double-conversion library provides binary-decimal and decimal-binary
@@ -1200,8 +1198,7 @@ large scale eigenvalue problems.")
                           "-DCBLAS=ON"
                           "-DLAPACKE=ON"
                           ;; Build the 'LAPACKE_clatms' functions.
-                          "-DLAPACKE_WITH_TMG=ON"
-                          "-DBUILD_TESTING=ON")))
+                          "-DLAPACKE_WITH_TMG=ON")))
     (synopsis "Library for numerical linear algebra")
     (description
      "LAPACK is a Fortran 90 library for solving the most commonly occurring
@@ -3253,8 +3250,6 @@ includes a complete LAPACK implementation.")
               (sha256
                (base32
                 "0xxqjz4lba57vn65m2k5jxrz0v7y6jwnhxwg6njd4vrafv5w17yv"))))
-    (arguments
-     (list #:configure-flags #~(list "-DBUILD_TESTING=ON")))
     (native-inputs
      (list catch2-3.8))
     (build-system cmake-build-system)
@@ -5454,7 +5449,8 @@ implemented in ANSI C, and MPI for communications.")
      (list flex bison gfortran))
     (outputs '("out" "metis"))
     (arguments
-     (list #:configure-flags #~'("-DBUILD_SHARED_LIBS=YES" "-DINTSIZE=64"
+     (list #:parallel-tests? #f
+           #:configure-flags #~'("-DBUILD_SHARED_LIBS=YES" "-DINTSIZE=64"
                                  "-DBUILD_PTSCOTCH=OFF")
            #:phases
            #~(modify-phases %standard-phases
@@ -5549,6 +5545,7 @@ bio-chemistry.")
       (build-system cmake-build-system)
       (arguments
        (list
+        #:tests? #f
         #:configure-flags
         #~(list "-DBUILD_SHARED_LIBS=ON"
                 #$@(if (target-x86?)
@@ -8115,8 +8112,7 @@ supports compressed MAT files, as well as newer (version 7.3) MAT files.")
     (arguments
      (list
       #:configure-flags
-      #~(list "-DBUILD_TESTING=ON"
-              ;; By default, Vc will optimize for the CPU of the build machine.
+      #~(list ;; By default, Vc will optimize for the CPU of the build machine.
               ;; Setting this to "none" makes it create portable binaries.  See
               ;; "cmake/OptimizeForArchitecture.cmake".
               "-DTARGET_ARCHITECTURE=none")
@@ -8801,6 +8797,7 @@ reduction.")
     (inputs
      (list boost glu mesa qtbase-5))
     (build-system cmake-build-system)
+    (arguments (list #:tests? #f))
     (synopsis "Toolset for the mCRL2 formal specification language")
     (description
      "@dfn{mCRL2} (micro Common Representation Language 2) is a formal
@@ -8819,7 +8816,8 @@ analysed.")
     (inputs
      (list boost))
     (arguments
-     '(#:configure-flags '("-DMCRL2_ENABLE_GUI_TOOLS=OFF")))))
+     (list #:tests? #f
+           #:configure-flags #~(list "-DMCRL2_ENABLE_GUI_TOOLS=OFF")))))
 
 (define-public tcalc
   (package
@@ -10328,7 +10326,6 @@ community detection algorithm.")
     (arguments
      (list
       #:build-type "Release"
-      #:test-target "test"
       #:configure-flags #~(list "-DENABLE_TESTING=ON" "-DSTATS=ON")
       #:phases
       #~(modify-phases %standard-phases
@@ -10644,16 +10641,23 @@ projects up to the certification of critical software.")
         (base32 "0c88gc72j3zggyk4yrrip6i0v7xkx97l140vpy3xhxs2i7xy1461"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags '("-DBUILD_DOC=ON"
-                           "-DBUILD_TESTING=ON")
-       ;; The default "check" target also includes examples and benchmarks.
-       #:test-target "check-testsuite"
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'build 'build-doc
-           (lambda _
-             (invoke "make" "-j" (number->string (parallel-job-count))
-                     "blitz-doc"))))))
+     (list
+      #:configure-flags #~(list "-DBUILD_DOC=ON")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'build 'build-doc
+            (lambda _
+              (invoke "make" "-j" (number->string (parallel-job-count))
+                      "blitz-doc")))
+           (replace 'check
+             (lambda* (#:rest args)
+               (apply (assoc-ref gnu:%standard-phases 'check)
+                      ;; The default "check" target also includes examples and
+                      ;; benchmarks.
+                      #:test-target "check-testsuite" args))))))
     (native-inputs
      (list python texinfo))
     (synopsis "C++ template class library for multidimensional arrays")

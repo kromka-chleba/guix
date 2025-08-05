@@ -2689,16 +2689,20 @@ command.")
     (build-system qt-build-system)
     (arguments
      (list
+      #:tests? #f ; no tests
       ;; Make sure the (rarely updated) package 'imagemagick/stable'
       ;; does not end up in the closure.
       #:disallowed-references (list imagemagick/stable)
-      #:test-target "check"
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chdir
             (lambda _ (chdir "wpa_supplicant/wpa_gui-qt4")))
           (replace 'configure
             (lambda _ (invoke "qmake" "wpa_gui.pro")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
           (add-after 'build 'build-icons
             (lambda _
               ;; Inkscape complains (but works) without a writable $HOME.
@@ -4637,7 +4641,7 @@ information tool.")
 (define-public fastfetch
   (package
     (name "fastfetch")
-    (version "2.48.1")
+    (version "2.49.0")
     (source
      (origin
        (method git-fetch)
@@ -4646,7 +4650,7 @@ information tool.")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1gzpmc7vx5dqfjbga6facfqxybgb1hps6h2y9blngjwsskicsi7v"))
+        (base32 "1mka26ga6jmrimkl93xf97pg8y1k3b41vsb3ds61wi6n257daprk"))
        (modules '((guix build utils)))
        (snippet '(begin
                    (delete-file-recursively "src/3rdparty")))))

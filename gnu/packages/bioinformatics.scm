@@ -7270,8 +7270,6 @@ bases are detected.")
                     (bin   (string-append #$output "/bin/")))
                 (mkdir-p bin)
                 (copy-recursively "." share)
-                (delete-file (string-append share "/Chrysalis/build/CMakeFiles/CMakeOutput.log"))
-                (delete-file (string-append share "/Inchworm/build/CMakeFiles/CMakeOutput.log"))
 
                 (wrap-program (string-append share "Trinity")
                   `("R_LIBS_SITE" ":" = (,(getenv "R_LIBS_SITE")))
@@ -7325,7 +7323,7 @@ bases are detected.")
      (list coreutils
            gzip
            which))
-    (native-inputs (list cmake))
+    (native-inputs (list cmake-minimal))
     (home-page "https://github.com/trinityrnaseq/trinityrnaseq/wiki")
     (synopsis "Trinity RNA-Seq de novo transcriptome assembly")
     (description "Trinity assembles transcript sequences from Illumina RNA-Seq
@@ -11369,7 +11367,6 @@ seamless support for BCF and VCF files.")
      (list
       #:configure-flags
       '(list "-DMORPHEUS_GUI=OFF"
-             "-DBUILD_TESTING=ON"
              "-DDOWNLOAD_XTENSOR=OFF")
       #:phases
       '(modify-phases %standard-phases
@@ -18823,6 +18820,9 @@ Thus the per-base error rate is similar to the raw input reads.")
     (build-system qt-build-system)
     (arguments
      (list
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       ;; TODO: Once <https://issues.guix.gnu.org/47475> is fixed,
       ;; consider uncommenting the following:
       ;;
@@ -18843,6 +18843,7 @@ Thus the per-base error rate is similar to the raw input reads.")
                 (with-directory-excursion "tests"
                   (setenv "XDG_RUNTIME_DIR" (getcwd))
                   (invoke "./bandage_command_line_tests.sh")))))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
           (replace 'install
             (lambda _
               (install-file "Bandage" (string-append #$output "/bin")))))))
@@ -23466,8 +23467,7 @@ The output is in SAM format.")
                 "0slkagrk3nfi2qsksv6b1brj6zhx4bj4bkib2sdycvrcd10ql2lh"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:test-target "test"
-       #:configure-flags
+     `(#:configure-flags
        ,#~(list "-DWITH_CHECK=ON"
                 (string-append "-DLIBXML_LIBRARY="
                                #$(this-package-input "libxml2")
@@ -24595,14 +24595,20 @@ both types of files.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:test-target "simple_test"
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
-      '(modify-phases %standard-phases
-         (add-after 'unpack 'fix-tests
-           (lambda _
-             (substitute* "src/megahit"
-               (("os.path.join\\(script_path, '..'\\)")
-                "os.path.join(script_path, '../source')")))))))
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-tests
+            (lambda _
+              (substitute* "src/megahit"
+                (("os.path.join\\(script_path, '..'\\)")
+                 "os.path.join(script_path, '../source')"))))
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "simple_test" args))))))
     (inputs (list python-wrapper zlib))
     (home-page "https://www.ncbi.nlm.nih.gov/pubmed/25609793")
     (synopsis "Meta-genome assembler")
@@ -25188,33 +25194,33 @@ module capable of computing base-level alignments for very large sequences.")
     (outputs '("out" "doc"))
     (arguments
      (list
+      #:test-exclude (string-join (list "TestFileMetaInformation"
+                                        "TestElement2"
+                                        "TestSCUValidation"
+                                        "TestWriter"
+                                        "TestAnonymizer4"
+                                        "TestPrinter1"
+                                        "TestEcho"
+                                        ;; The scanner tests depend on TestWriter output.
+                                        "TestStrictScanner1"
+                                        "TestStrictScanner2_1"
+                                        "TestStrictScanner2"
+                                        "TestStrictScanner2_2"
+                                        "TestFind")
+                                  "|")
+      #:configure-flags
+      #~(list "-DGDCM_BUILD_TESTING=true"
+              "-DGDCM_DOCUMENTATION:BOOL=ON"
+              "-DGDCM_PDF_DOCUMENTATION:BOOL=OFF"
+              (string-append "-DGDCM_INSTALL_DOC_DIR="
+                             #$output:doc "/share/doc/" #$name))
       #:phases
       #~(modify-phases %standard-phases
           (add-before 'build 'set-HOME
             ;; The build spams ‘Fontconfig error: No writable cache
             ;; directories’ in a seemingly endless loop otherwise.
             (lambda _
-              (setenv "HOME" "/tmp"))))
-      #:configure-flags
-      #~(list "-DGDCM_BUILD_TESTING=true"
-              (string-append "-DCMAKE_CTEST_ARGUMENTS=-E;"
-                             "'TestFileMetaInformation"
-                             "|TestElement2"
-                             "|TestSCUValidation"
-                             "|TestWriter"
-                             "|TestAnonymizer4"
-                             "|TestPrinter1"
-                             "|TestEcho"
-                             ;; The scanner tests depend on TestWriter output
-                             "|TestStrictScanner1"
-                             "|TestStrictScanner2_1"
-                             "|TestStrictScanner2"
-                             "|TestStrictScanner2_2"
-                             "|TestFind'")
-              "-DGDCM_DOCUMENTATION:BOOL=ON"
-              "-DGDCM_PDF_DOCUMENTATION:BOOL=OFF"
-              (string-append "-DGDCM_INSTALL_DOC_DIR="
-                             #$output:doc "/share/doc/" #$name))))
+              (setenv "HOME" "/tmp"))))))
     (native-inputs (list docbook-xsl doxygen graphviz libxslt))
     (home-page "https://gdcm.sourceforge.net/wiki/index.php/Main_Page")
     (synopsis "Grassroots DICOM library")

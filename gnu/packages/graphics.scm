@@ -205,7 +205,8 @@ framebuffer graphics, audio output and input event.")
         (base32 "0bs3yzb7hy3mgydrj8ycg7pllrd2b6j0gxj596inyr7ihssr3i0y"))))
     (build-system gnu-build-system)
     (arguments
-     `(#:configure-flags
+     `(#:parallel-build? #f
+       #:configure-flags
        '("CFLAGS=-g -O2 -Wno-error=incompatible-pointer-types")
        #:phases
        (modify-phases %standard-phases
@@ -634,7 +635,8 @@ Please note that this version requires a processor with SSE2 support."))))
                 "0r6q7bl8513ggrvx3n73j1s3f7n5x1rxy5xi471qyrya95gy6c60"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags
+     `(#:tests? #f
+       #:configure-flags
        (list (string-append "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-rpath="
                             (assoc-ref %outputs "out") "/lib"))))
     (inputs
@@ -802,6 +804,18 @@ and export to various formats including the format used by Magicavoxel.")
               (sha256
                (base32
                 "097fxq0frb2nl6bp8wz7kjx6vq4i4117wwq9fnxzkiij9xwv3cq9"))))
+    (arguments
+     (list #:phases
+           #~(modify-phases %standard-phases
+               (add-after 'unpack 'enable-testing
+                 (lambda _
+                   (substitute* "CMakeLists.txt"
+                     (("IF \\( ASSIMP_BUILD_TESTS \\)" all)
+                      (string-append all "\n    enable_testing()")))
+                   (substitute* "test/CMakeLists.txt"
+                     ;; Leave the test binary where ctest will look for it.
+                     (("TARGET_USE_COMMON_OUTPUT_DIRECTORY\\(unit\\)")
+                      "")))))))
     (build-system cmake-build-system)
     (inputs
      (list zlib))
@@ -2787,11 +2801,15 @@ Some feature highlights:
              (url "https://github.com/KhronosGroup/OpenXR-SDK")
              (commit (string-append "release-" version))))
        (file-name (git-file-name name version))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; Delete bundled jsoncpp.
-           (delete-file-recursively "src/external/jsoncpp")))
+       ;; When compiling against jsoncpp 1.9.6 the build fails with
+       ;;   'Unknown CMake command "check_required_components"'
+       ;; (see https://github.com/open-source-parsers/jsoncpp/issues/1568).
+       ;; When fixed uncomment the snippet and re-add jsoncpp as an input.
+       ;(modules '((guix build utils)))
+       ;(snippet
+       ; '(begin
+       ;    ;; Delete bundled jsoncpp.
+       ;    (delete-file-recursively "src/external/jsoncpp")))
        (sha256
         (base32 "0s66xgwkdj5vn05l493hqydrxfpxxidd6mcb8l7l5awhn88cy16f"))))
     (build-system cmake-build-system)
@@ -2800,7 +2818,7 @@ Some feature highlights:
     (native-inputs
      (list pkg-config python shaderc vulkan-headers))
     (inputs
-     (list jsoncpp mesa vulkan-loader wayland))
+     (list mesa vulkan-loader wayland))
     (home-page "https://www.khronos.org/openxr/")
     (synopsis "Generated headers and sources for OpenXR loader")
     (description "This package contains OpenXR headers, as well as source code
@@ -3067,7 +3085,6 @@ generated discrete signed distance field using the cubic spline kernel.
                    (string-append "-DCMAKE_INSTALL_MANDIR=" #$output "/share/man")
                    "-DBUILD_SHARED_LIBS=ON"
                    "-DBUILD_DOC=ON"
-                   "-DBUILD_TESTING=ON"
                    ;; The longer tests are for continuous integration and
                    ;; depend on input data which must be downloaded.
                    "-DONLY_VERY_SHORT_TESTS=ON"
@@ -3293,7 +3310,6 @@ desired local properties.")
       #:configure-flags
       #~(list (string-append "-DCMAKE_INSTALL_DOCDIR=" #$output
                              "/share/doc/" #$name "-" #$version)
-              "-DBUILD_TESTING=OFF"
               "-DF3D_LINUX_GENERATE_MAN=ON"
               "-DF3D_USE_EXTERNAL_CXXOPTS=ON"
               "-DF3D_USE_EXTERNAL_NLOHMANN_JSON=ON"

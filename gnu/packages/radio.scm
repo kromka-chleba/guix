@@ -147,8 +147,17 @@
           (base32 "0i6jhrdswr1wglyb9h39idpz5v9z13yhidvlbj34vxpyngrkhlvs"))))
       (build-system cmake-build-system)
       (arguments
-       `(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")
-         #:test-target "test_all"))
+       (list
+        #:configure-flags #~'("-DBUILD_SHARED_LIBS=ON")
+        #:modules '((guix build cmake-build-system)
+                    ((guix build gnu-build-system) #:prefix gnu:)
+                    (guix build utils))
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check
+              (lambda* (#:rest args)
+                (apply (assoc-ref gnu:%standard-phases 'check)
+                       #:test-target "test_all" args))))))
       (home-page "https://github.com/quiet/libfec")
       (synopsis "Forward error correction algorithms library")
       (description
@@ -175,12 +184,15 @@ useful in modems implemented with @dfn{digital signal processing} (DSP).")
       (build-system cmake-build-system)
       (arguments
        (list
-        #:test-target "check"
+        #:modules '((guix build cmake-build-system)
+                    ((guix build gnu-build-system) #:prefix gnu:)
+                    (guix build utils))
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'build 'build-libfec-compatibility-layer
               (lambda _
                 (invoke "make" "shim")))
+            (replace 'check (assoc-ref gnu:%standard-phases 'check))
             (add-after 'install 'delete-static-libraries
               (lambda _
                 (delete-file (string-append #$output "/lib/libcorrect.a"))
@@ -1097,7 +1109,8 @@ environment.")
            spdlog
            volk))
     (arguments
-     (list #:modules '((guix build cmake-build-system)
+     (list #:tests? #f
+           #:modules '((guix build cmake-build-system)
                        ((guix build python-build-system) #:prefix python:)
                        (guix build utils))
            #:imported-modules `(,@%cmake-build-system-modules
@@ -1230,6 +1243,7 @@ DMR, NXDN, P25, etc.")
          (sha256
           (base32 "12p193ngcs65nd3lynry119nhv40mikamqkw37wdln7lawx3nw7p"))))
       (build-system cmake-build-system)
+      (arguments (list #:tests? #f))
       (native-inputs
        (list doxygen
              pkg-config
@@ -2274,13 +2288,19 @@ NanoVNA vector network analyzers.")
            qtbase-5
            v4l-utils))
     (arguments
-     `(#:tests? #f  ; No test suite.
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "qmake"
-                     (string-append "PREFIX=" (assoc-ref outputs "out"))))))))
+     (list
+      #:tests? #f  ; No test suite.
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda* (#:key outputs #:allow-other-keys)
+              (invoke "qmake"
+                      (string-append "PREFIX=" (assoc-ref outputs "out")))))
+                (replace 'build (assoc-ref gnu:%standard-phases 'build))
+                (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (home-page "http://users.telenet.be/on4qz/qsstv/")
     (synopsis "Program for receiving and transmitting SSTV and HAMDRM")
     (description
@@ -2437,7 +2457,8 @@ intended for people who want to learn receiving and sending morse code.")
           (base32 "1lhsmyhljqa6apzbysqar56wpfcdvs3pq9ia1mshqd6d3hz74s78"))))
       (build-system cmake-build-system)
       (arguments
-       (list #:configure-flags #~(list "-DGGMORSE_SUPPORT_SDL2=OFF")
+       (list #:tests? #f
+             #:configure-flags #~(list "-DGGMORSE_SUPPORT_SDL2=OFF")
              #:phases #~(modify-phases %standard-phases
                           (add-after 'unpack 'disable-imgui-build
                             (lambda _
@@ -2635,34 +2656,40 @@ sinks and sources.")
            speexdsp
            zlib))
     (arguments
-     `(#:tests? #f
-       #:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'fix-paths
-           (lambda* (#:key inputs outputs #:allow-other-keys)
-             (substitute* "dream.pro"
-               (("target\\.path = /usr/bin")
-                (string-append "target.path = "
-                               (assoc-ref outputs "out") "/bin"))
-               (("documentation\\.path = /usr/share/man/man1")
-                (string-append "documentation.path = "
-                               (assoc-ref outputs "out")
-                               "/share/man/man1"))
-               (("/usr/include/pulse")
-                (search-input-directory inputs "/include/pulse"))
-               (("/usr/include/sndfile\\.h")
-                (search-input-file inputs "/include/sndfile.h"))
-               (("/usr/include/opus")
-                (search-input-directory inputs "/include/opus"))
-               (("/usr/include/speex")
-                (search-input-directory inputs "/include/speex"))
-               (("/usr/include/qwt")
-                (search-input-directory inputs "/include/qwt"))
-               (("\\$\\$OUT_PWD/include/neaacdec\\.h")
-                (search-input-file inputs "/include/neaacdec.h")))))
-         (replace 'configure
-           (lambda _
-             (invoke "qmake"))))))
+     (list
+      #:tests? #f
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'fix-paths
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute* "dream.pro"
+                (("target\\.path = /usr/bin")
+                 (string-append "target.path = "
+                                (assoc-ref outputs "out") "/bin"))
+                (("documentation\\.path = /usr/share/man/man1")
+                 (string-append "documentation.path = "
+                                (assoc-ref outputs "out")
+                                "/share/man/man1"))
+                (("/usr/include/pulse")
+                 (search-input-directory inputs "/include/pulse"))
+                (("/usr/include/sndfile\\.h")
+                 (search-input-file inputs "/include/sndfile.h"))
+                (("/usr/include/opus")
+                 (search-input-directory inputs "/include/opus"))
+                (("/usr/include/speex")
+                 (search-input-directory inputs "/include/speex"))
+                (("/usr/include/qwt")
+                 (search-input-directory inputs "/include/qwt"))
+                (("\\$\\$OUT_PWD/include/neaacdec\\.h")
+                 (search-input-file inputs "/include/neaacdec.h")))))
+          (replace 'configure
+            (lambda _
+              (invoke "qmake")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (home-page "https://sourceforge.net/projects/drm/")
     (synopsis "Digital Radio Mondiale receiver")
     (description
@@ -3122,6 +3149,7 @@ various hardware.")
        (sha256
         (base32 "11v5idwvfi9w60qg4fgqgvm7ahmb0ys4j094qv4c93r92kd9d3f9"))))
     (build-system qt-build-system)
+    (arguments (list #:tests? #f))
     (native-inputs
      (list pkg-config))
     (inputs
@@ -3150,6 +3178,9 @@ software-defined radio receivers.")
     (arguments
      (list
       #:tests? #f  ; No test suite.
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-paths
@@ -3174,7 +3205,9 @@ software-defined radio receivers.")
               (chdir "build")
               (invoke "qmake"
                       (string-append "PREFIX=" #$output)
-                      "../wfview.pro"))))))
+                      "../wfview.pro")))
+           (replace 'build (assoc-ref gnu:%standard-phases 'build))
+           (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (inputs
      (list eigen
            eudev

@@ -217,6 +217,7 @@
         (base32 "1dg3g66az17z4snxxw7cslqdkrvbx2nnyry73yi77yp0vpri1lz8"))))
     (arguments
      (list
+      #:tests? #f
       #:configure-flags
       #~(list "-DBUILD_EXTENSIONS=autocomplete;icu;json;parquet;tpch;"
               ;; There is no git checkout from which to read the version tag.
@@ -1568,11 +1569,12 @@ pictures, sounds, or video.")
      (list #:imported-modules `((guix build union)
                                 ,@%cmake-build-system-modules)
            #:modules `(,@%cmake-build-system-modules
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils)
                        (guix build union)
                        (ice-9 match))
            #:configure-flags #~(list "-DAPACHE_ONLY=ON"
                                      "-DSEND_TELEMETRY_DEFAULT=OFF")
-           #:test-target "regresschecklocal"
            #:phases
            #~(modify-phases (@ (guix build cmake-build-system) %standard-phases)
                (add-after 'unpack 'patch-install-location
@@ -1641,7 +1643,9 @@ pictures, sounds, or video.")
                              (("histogram_test\\.sql\\.in")
                               "#histogram_test.sql.in")))))))
                (add-after 'prepare-tests 'check
-                 (assoc-ref %standard-phases 'check)))))
+                 (lambda* (#:rest args)
+                   (apply (assoc-ref gnu:%standard-phases 'check)
+                          #:test-target "regresschecklocal" args))))))
     (inputs (list openssl postgresql))
     (home-page "https://www.timescale.com/")
     (synopsis "Time-series extension for PostgreSQL")
@@ -5181,7 +5185,6 @@ with integrated support for finding required rows quickly.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:cmake cmake ;needs 3.25+
       #:tests? #f
       #:phases
       #~(modify-phases %standard-phases

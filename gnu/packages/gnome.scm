@@ -11,7 +11,7 @@
 ;;; Copyright © 2015-2020, 2023, 2024 Ricardo Wurmus <rekado@elephly.net>
 ;;; Copyright © 2015, 2016, 2017, 2018, 2021 Mark H Weaver <mhw@netris.org>
 ;;; Copyright © 2015 David Thompson <davet@gnu.org>
-;;; Copyright © 2015-2024 Efraim Flashner <efraim@flashner.co.il>
+;;; Copyright © 2015-2025 Efraim Flashner <efraim@flashner.co.il>
 ;;; Copyright © 2016, 2017, 2018 Rene Saavedra <pacoon@protonmail.com>
 ;;; Copyright © 2016 Jochem Raat <jchmrt@riseup.net>
 ;;; Copyright © 2016, 2017, 2019 Kei Kebreau <kkebreau@posteo.net>
@@ -5051,6 +5051,23 @@ indicators etc).")
                (base32
                 "17zhkf2pjwrghdgk5nhfvzqakb2xwk2jj19316xjr0s9n3djv3z4"))))
     (build-system meson-build-system)
+    (arguments
+     (list
+      ;; Exclude flaky tests (see https://codeberg.org/guix/guix/issues/1377).
+      ;; Meson cannot exclude individual tests so the test suite is added in the
+      ;; phase below.
+      #:test-options #~(list "--no-suite" "connection")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-after 'unpack 'mark-tests-for-exclusion
+            (lambda _
+              ;; The test names are programmatically generated in the meson
+              ;; build file. The two failing tests are "connection-gnutls" and
+              ;; "connection-gnutls-tls1.2" and share program[0] == "common",
+              ;; so use that as the suite name.
+              (substitute* "tls/tests/meson.build"
+                (("test\\(([^)]*)\\)" _ args)
+                 (string-append "test(" args ", suite: program[0])"))))))))
     (native-inputs
      (list `(,glib "bin") ; for gio-querymodules
            pkg-config gettext-minimal))
@@ -5099,7 +5116,7 @@ from the GSettings schemas in gsettings-desktop-schemas.")
     (native-inputs
      (list gettext-minimal
            pkg-config
-           cmake
+           cmake-minimal
            `(,glib "bin")
            desktop-file-utils
            itstool
@@ -5973,16 +5990,6 @@ and latitude from an address) and reverse geocoding (finding an address from
 coordinates) using the Nominatim service.  geocode-glib caches requests for
 faster results and to avoid unnecessary server load.")
     (license license:lgpl2.0+)))
-
-(define-public geocode-glib-with-libsoup2
-  (package
-    (inherit geocode-glib)
-    (name "geocode-glib-with-libsoup2")
-    (arguments (substitute-keyword-arguments (package-arguments geocode-glib)
-                 ((#:configure-flags flags ''())
-                  #~(delete "-Dsoup2=false" #$flags))))
-    (inputs (modify-inputs (package-inputs geocode-glib)
-              (replace "libsoup" libsoup-minimal-2)))))
 
 (define-public upower
   (package
@@ -8410,6 +8417,7 @@ Microsoft Exchange, Last.fm, IMAP/SMTP, Jabber, SIP and Kerberos.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:parallel-tests? #f
       #:configure-flags
       #~(let* ((lib (string-append #$output "/lib"))
                (runpaths (map (lambda (s)
@@ -8499,30 +8507,6 @@ Microsoft Exchange, Last.fm, IMAP/SMTP, Jabber, SIP and Kerberos.")
 contacts, tasks, and calendar information.  It was originally developed for
 Evolution (hence the name), but is now used by other packages as well.")
     (license license:lgpl2.0)))
-
-;;; This version can be used for projects with dependencies stuck on libsoup2.
-(define-public evolution-data-server-3.44
-  (package
-    (inherit evolution-data-server)
-    (name "evolution-data-server")
-    (version "3.44.4")
-    (source
-     (origin
-       (method url-fetch)
-       (uri (string-append "mirror://gnome/sources/" name "/"
-                           (version-major+minor version) "/"
-                           name "-" version ".tar.xz"))
-       (sha256
-        (base32 "1sxjrjr31wqbp9g4pf6dwj8rc4mi7c5fbfd489ha92ym7246bin0"))))
-    (inputs
-     (modify-inputs (package-inputs evolution-data-server)
-       (replace "gnome-online-accounts" gnome-online-accounts-3.44)
-       (replace "libgweather4" libgweather)
-       (replace "webkitgtk-for-gtk3" webkitgtk-with-libsoup2)))
-    (propagated-inputs
-     (modify-inputs (package-propagated-inputs evolution-data-server)
-       (delete "gtk")
-       (replace "libsoup" libsoup-minimal-2)))))
 
 (define-public caribou
   (package
@@ -9851,7 +9835,8 @@ easy, safe, and automatic.")
     (arguments
      (list
       #:glib-or-gtk? #t
-      #:test-options `(list ,@(if (target-riscv64?)
+      #:test-options `(list ,@(if (or (target-riscv64?)
+                                      (target-aarch64?))
                                   `("--timeout-multiplier" "10")
                                   '("--timeout-multiplier" "2")))
       #:configure-flags
@@ -11280,14 +11265,6 @@ compiled.")
     (home-page "https://wiki.gnome.org/Projects/Folks")
     (license license:lgpl2.1+)))
 
-(define-public folks-with-libsoup2
-  (package
-    (inherit folks)
-    (name "folks-with-libsoup2")
-    (inputs
-     (modify-inputs (package-inputs folks)
-       (replace "evolution-data-server" evolution-data-server-3.44)))))
-
 (define-public gfbgraph
   (package
     (name "gfbgraph")
@@ -12356,6 +12333,7 @@ generic enough to work for everyone.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f
       #:imported-modules `(,@%cmake-build-system-modules
                            (guix build glib-or-gtk-build-system))
       #:modules '((guix build cmake-build-system)
@@ -14291,7 +14269,7 @@ historical battery usage and related statistics.")
               ;; This is done so we can override.
               (("`set.PREFIX_BIN") "set(QPREFIX_BIN")))))))
     (native-inputs
-     (list cmake pkg-config intltool gettext-minimal))
+     (list cmake-minimal pkg-config intltool gettext-minimal))
     (inputs
      (list glib gtk+ libx11 libsm libxv libxaw libxcb libxkbfile
            shared-mime-info))

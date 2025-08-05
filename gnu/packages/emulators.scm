@@ -147,7 +147,6 @@
     (build-system cmake-build-system)
     (arguments
      (list #:tests? #f                  ; No tests
-           #:cmake cmake-next           ; Requires cmake >= 3.28
            #:configure-flags
            #~(list "-DARES_BUILD_LOCAL=FALSE"
                    "-DARES_BUILD_OFFICIAL=TRUE"
@@ -491,6 +490,9 @@ It aims to support Nintendo DSi and 3DS as well.")
       (build-system cmake-build-system)
       (arguments
        (list
+        #:modules '((guix build cmake-build-system)
+                    ((guix build gnu-build-system) #:prefix gnu:)
+                    (guix build utils))
         #:phases
         #~(modify-phases %standard-phases
             (add-before 'configure 'generate-fonts&hardcode-libvulkan-path
@@ -512,6 +514,10 @@ It aims to support Nintendo DSi and 3DS as well.")
                     (("\"vulkan\", 1") (string-append "\"vulkan\""))
                     (("\"vulkan\"") (string-append "\"" libvulkan "\""))
                     (("Common::DynamicLibrary::GetVersionedFilename") "")))))
+            (replace 'check
+              (lambda* (#:rest args)
+                (apply (assoc-ref gnu:%standard-phases 'check)
+                       #:test-target "unittests" args)))
             (add-before 'install 'build-codeloader.bin
               (lambda _
                 (with-directory-excursion "../source/docs"
@@ -537,8 +543,7 @@ It aims to support Nintendo DSi and 3DS as well.")
                   (rename-file "dsp_coef.bin" "Data/Sys/GC/dsp_coef.bin")))))
         #:configure-flags
         #~(list "-DUSE_DISCORD_PRESENCE=OFF" ;avoid bundled discord-rpc lib
-                "-DDSPTOOL=ON")
-        #:test-target "unittests"))
+                "-DDSPTOOL=ON")))
       (native-inputs
        (list (cross-gcc "powerpc-linux-gnu")
              gettext-minimal
@@ -868,39 +873,44 @@ emulate a serial nullmodem over TCP/IP.")
                 "1fal7a8y5g0rqqjrk795jh1l50ihz01ppjnrfjrk9vkjbd59szbp"))))
     (build-system qt-build-system)
     (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "qmake"
-                     (string-append "PREFIX=" (assoc-ref outputs "out"))
-                     "qtmips.pro")))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (substitute* "tests/test.sh"
-               (("qtchooser.*") ""))
-             (substitute* '("tests/cpu_trap/test.sh"
-                            "tests/registers/test.sh")
-               (("sub-qtmips_cli") "qtmips_cli"))
-             (if tests?
-               (invoke "tests/run-all.sh")
-               #t)))
-         (replace 'install
-           ;; There is no install target.
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let* ((out (assoc-ref outputs "out"))
-                    (bin (string-append out "/bin"))
-                    (apps (string-append out "/share/applications"))
-                    (icons (string-append out "/share/icons/hicolor")))
-               (install-file "qtmips_gui/qtmips_gui" bin)
-               (install-file "qtmips_cli/qtmips_cli" bin)
-               (install-file "data/qtmips.desktop" apps)
-               (install-file "data/icons/qtmips_gui.svg"
-                             (string-append icons "/scalable/apps"))
-               (install-file "data/icons/qtmips_gui.png"
-                             (string-append icons "/48x48/apps"))
-               #t))))
-       #:tests? #f))    ; test suite wants mips toolchain
+     (list
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda* (#:key outputs #:allow-other-keys)
+              (invoke "qmake"
+                      (string-append "PREFIX=" (assoc-ref outputs "out"))
+                      "qtmips.pro")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'check
+            (lambda* (#:key tests? #:allow-other-keys)
+              (substitute* "tests/test.sh"
+                (("qtchooser.*") ""))
+              (substitute* '("tests/cpu_trap/test.sh"
+                             "tests/registers/test.sh")
+                (("sub-qtmips_cli") "qtmips_cli"))
+              (if tests?
+                (invoke "tests/run-all.sh")
+                #t)))
+          (replace 'install
+            ;; There is no install target.
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let* ((out (assoc-ref outputs "out"))
+                     (bin (string-append out "/bin"))
+                     (apps (string-append out "/share/applications"))
+                     (icons (string-append out "/share/icons/hicolor")))
+                (install-file "qtmips_gui/qtmips_gui" bin)
+                (install-file "qtmips_cli/qtmips_cli" bin)
+                (install-file "data/qtmips.desktop" apps)
+                (install-file "data/icons/qtmips_gui.svg"
+                              (string-append icons "/scalable/apps"))
+                (install-file "data/icons/qtmips_gui.png"
+                              (string-append icons "/48x48/apps"))
+                #t))))
+        #:tests? #f))    ; test suite wants mips toolchain
     (inputs
      (list elfutils qtbase-5 qtwayland-5))
     (home-page "https://github.com/cvut/QtMips")
@@ -4130,7 +4140,7 @@ graphic filters.  Some of its features include:
                     (("include\\(cmake/")
                      "include(")))))
     (build-system pyproject-build-system)
-    (native-inputs (list cmake pkg-config python-setuptools python-wheel))
+    (native-inputs (list cmake-minimal pkg-config python-setuptools python-wheel))
     (home-page "https://www.unicorn-engine.org")
     (synopsis "Generic CPU emulator framework")
     (description
@@ -4579,7 +4589,7 @@ stack-machine, written in ANSI C.  Graphical output is implemented using SDL2.")
         (base32 "1xahdr6bh3dw5swrc2r8kqa8ljhqlb7k2kxv5mrw5rhcmcnzcyig"))))
     (build-system pyproject-build-system)
     (native-inputs
-     (list cmake
+     (list cmake-minimal
            python-setuptools
            python-wheel))
     (home-page "https://www.keystone-engine.org")

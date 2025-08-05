@@ -2833,9 +2833,14 @@ projects while introducing many more.")
      (list #:tests? #false              ; no tests
            #:make-flags #~(list (string-append "PREFIX=" #$output)
                                 (string-append "CC=" #+(cc-for-target)))
+           #:modules '((guix build qt-build-system)
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils))
            #:phases
            #~(modify-phases %standard-phases
                (delete 'configure)
+               (replace 'build (assoc-ref gnu:%standard-phases 'build))
+               (replace 'install (assoc-ref gnu:%standard-phases 'install))
                (add-after 'install 'wrap-executable
                  (lambda* (#:key inputs outputs #:allow-other-keys)
                    (let* ((out (assoc-ref outputs "out"))
@@ -3226,7 +3231,7 @@ YouTube.com and many more sites.")
 (define-public yt-dlp
   (package
     (name "yt-dlp")
-    (version "2025.06.30")
+    (version "2025.07.21")
     (source
      (origin
        (method git-fetch)
@@ -3238,7 +3243,7 @@ YouTube.com and many more sites.")
        (snippet '(substitute* "pyproject.toml"
                    (("^.*Programming Language :: Python :: 3\\.13.*$") "")))
        (sha256
-        (base32 "14pk2rk5vm9469ghkvciaz74fihbl8dfi27qj6xnxv71hpm5w03p"))))
+        (base32 "051y9pb2imdrpi065d9l2xfmd68l22ahbz90z81yqv7kv84j9mal"))))
     (build-system pyproject-build-system)
     (arguments
      `(#:tests? ,(not (%current-target-system))
@@ -3272,7 +3277,17 @@ YouTube.com and many more sites.")
          (replace 'check
            (lambda* (#:key tests? test-flags #:allow-other-keys)
              (when tests?
-               (apply invoke "pytest" "-k" "not download" test-flags)))))))
+               (apply invoke "pytest"
+                      "-k"
+                      (string-append
+                       "not download"
+                       ;; TestHTTPRequestHandler tests are disabled due to
+                       ;; https://github.com/yt-dlp/yt-dlp/issues/13927
+                       " and not "
+                       "test_incompleteread"
+                       " and not "
+                       "test_partial_read_then_full_read")
+                      test-flags)))))))
     (inputs (list ffmpeg python-brotli
                   python-certifi
                   python-mutagen
@@ -4151,7 +4166,7 @@ be used for realtime video capture via Linux-specific APIs.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:cmake cmake-next                ;needs cmake >= 3.28
+      #:tests? #f
       #:configure-flags
       #~(let ((libdir (string-append (assoc-ref %outputs "out") "/lib")))
           (list (string-append "-DOBS_VERSION_OVERRIDE=" #$version)
@@ -6112,7 +6127,8 @@ create smoother and stable videos.")
            qtsvg-5
            zeromq))
     (arguments
-     `(#:configure-flags
+     `(#:tests? #f
+       #:configure-flags
        (list (string-append "-DPYTHON_MODULE_PATH:PATH=" %output "/lib/python"
                             ,(version-major+minor (package-version python))
                             "/site-packages")

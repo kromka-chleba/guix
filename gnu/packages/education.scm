@@ -240,8 +240,7 @@ of categories with some of the activities available in that category.
                    (setenv "DISPLAY" ":1")
                    ;; The test suite wants to write to /homeless-shelter
                    (setenv "HOME" (getcwd)))))
-           #:configure-flags #~(list "-DQML_BOX2D_MODULE=disabled"
-                                     "-DBUILD_TESTING=TRUE")))
+           #:configure-flags #~(list "-DQML_BOX2D_MODULE=disabled")))
     (native-inputs
      (list extra-cmake-modules
            gettext-minimal
@@ -514,6 +513,9 @@ specialized device.")
     (arguments
      (list
       #:tests? #f                       ;no tests
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'set-initial-values
@@ -542,6 +544,7 @@ specialized device.")
           (replace 'configure
             (lambda _
               (invoke "qmake" "OpenBoard.pro")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
           (replace 'install
             (lambda* (#:key inputs #:allow-other-keys)
               (let* ((share (string-append #$output "/share"))
@@ -692,6 +695,7 @@ language and very flexible regarding to new or unknown keyboard layouts.")
     (build-system qt-build-system)
     (native-inputs (list extra-cmake-modules))
     (inputs (list qtdeclarative-5))
+    (arguments (list #:tests? #f))
     (home-page "https://invent.kde.org/libraries/kqtquickcharts")
     (synopsis "QtQuick plugin to render beautiful and interactive charts")
     (description
@@ -736,6 +740,7 @@ charts.")
            qtquickcontrols2-5
            qtx11extras
            qtxmlpatterns-5))
+    (arguments (list #:tests? #f))
     (home-page "https://edu.kde.org/ktouch/")
     (synopsis "Touch typing tutor")
     (description

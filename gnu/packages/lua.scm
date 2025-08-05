@@ -134,7 +134,7 @@ for configuration, scripting, and rapid prototyping.")
 
 (define-public lua-5.4
   (package (inherit lua)
-           (version "5.4.6")
+           (version "5.4.8")
            (arguments
             (substitute-keyword-arguments (package-arguments lua)
               ((#:make-flags flags)
@@ -145,7 +145,7 @@ for configuration, scripting, and rapid prototyping.")
                      (uri (string-append "https://www.lua.org/ftp/lua-"
                                          version ".tar.gz"))
                      (sha256
-                      (base32 "125dncwz8syhxk034m4fpahq7vsprfnwdqfxlffbb83arfws2pkx"))
+                      (base32 "1bi90r9nzmqhjwhr8ysffhmhq30wxxcpqwmbxr33wyaf2npds62g"))
                      (patches (search-patches "lua-5.4-pkgconfig.patch"
                                               "lua-5.4-liblua-so.patch"))))))
 
@@ -984,7 +984,6 @@ spirit of the Lua C API and thus degrade performance.")
      `(#:configure-flags
        ;; lua pc file in CMakeLists.txt is lua5.3.pc
        '("-DLUA_PC_CFG=lua;lua-5.3;lua-5.1")
-       #:test-target "all"
        #:phases
        ;; This is a header only library
        (modify-phases %standard-phases

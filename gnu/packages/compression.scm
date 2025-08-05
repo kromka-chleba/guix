@@ -875,6 +875,7 @@ with the sfArk algorithm.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:parallel-tests? #f
       #:configure-flags #~(list "-DBUILD_SHARED_LIBS=ON"
                                 "-DMZ_BUILD_TESTS=ON"
                                 "-DMZ_BUILD_UNIT_TESTS=ON"
@@ -2167,6 +2168,15 @@ timestamps in the file header with a fixed time (1 January 2008).
                (base32
                 "18578xbzj8j89srv4bwayjm11bg56fl34sya0znq4fwq3apm037i"))))
     (build-system cmake-build-system)
+    (arguments
+     (list
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Avoid the integration test, which requires a system bus.
+          (replace 'check (assoc-ref gnu:%standard-phases 'check)))))
     (inputs
      (list zlib))
     (native-inputs (list perl ; for the documentation
@@ -2783,6 +2793,8 @@ RAR, RPM, DEB, tar, and ZIP.  It cannot perform functions for archives, whose
 archiver is not installed.")
     (license license:gpl2+)))
 
+;; XXX: This software is abandoned since 2018. It may be removed as soon as
+;; the build breaks; see also the discussion at #1734.
 (define-public tarsplitter
   (package
     (name "tarsplitter")
@@ -2872,7 +2884,8 @@ computations.")
                 "17kqwvw2n6bgzidi8f5906s5hc9wm1lbfbpd491gf7csxjck99sx"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags #~(list "-DBUILD_STATIC=OFF"
+     (list #:parallel-tests? #f
+           #:configure-flags #~(list "-DBUILD_STATIC=OFF"
                                      "-DDEACTIVATE_AVX2=ON"
                                      "-DDEACTIVATE_AVX512=ON"
                                      "-DPREFER_EXTERNAL_LZ4=ON"
@@ -3007,7 +3020,8 @@ can append files to the end of such compressed archives.")
           "00ibddiy62kbs9wl52c35j0hbqanx6pi7lvzkpzmbsizkj8mhp1p"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:configure-flags
+     '(#:tests? #f
+       #:configure-flags
        (let* ((out (assoc-ref %outputs "out"))
               (lib (string-append out "/lib")))
          (list

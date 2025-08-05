@@ -338,6 +338,8 @@ Segmentation and Registration Toolkit.")
         (base32
          "1nm6d87j11jc5617qk58a81ajxgrncr7xsf4dkyscrygi2n3dbgz"))))
     (build-system cmake-build-system)
+    (arguments
+     (list #:tests? #f))
     (home-page "https://github.com/Martchus/cpp-utilities/")
     (synopsis "Useful C++ classes and routines")
     (description
@@ -832,8 +834,7 @@ of XDG base directories, such as XDG_CONFIG_HOME.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:configure-flags #~(list "-DBUILD_TESTS=ON")
-      #:test-target "xtest"))
+      #:configure-flags #~(list "-DBUILD_TESTS=ON")))
     (native-inputs
      (list doctest
            googletest))
@@ -848,32 +849,30 @@ mathematical functions operating on batches.")
     (license license:bsd-3)))
 
 (define-public icecream-cpp
-  ;; Last release was in 2020.
-  (let ((commit "95c8b91c2214be76a2847cd4ab37dccd9250ed77")
-        (revision "0"))
-    (package
-      (name "icecream-cpp")
-      (version (git-version "0.3.1" revision commit))
-      (source
-       (origin
-         (method git-fetch)
-         (uri (git-reference
-               (url "https://github.com/renatoGarcia/icecream-cpp")
-               (commit commit)))
-         (file-name (git-file-name name version))
-         (sha256
-          (base32 "0zw4aj5xs13grf7qj6f33dq7md9hn5i9mf6kz66b5jsx2fly6xxs"))))
-      (build-system cmake-build-system)
-      (arguments
-       (list #:configure-flags #~(list "-DBUILD_TESTING=ON")))
-      (native-inputs (list boost catch2))
-      (home-page "https://github.com/renatoGarcia/icecream-cpp")
-      (synopsis "C++ library for @code{printf} debugging")
-      (description
-       "IceCream-Cpp is a C++ library for @code{printf} debugging.  It is
+  (package
+    (name "icecream-cpp")
+    (version "1.0.0")
+    (source
+     (origin
+       (method git-fetch)
+       (uri (git-reference
+             (url "https://github.com/renatoGarcia/icecream-cpp")
+             (commit (string-append "v" version))))
+       (file-name (git-file-name name version))
+       (sha256
+        (base32 "1pl3qibxa9m7qkfpxszablwyhlnn9qz0cgms8kr2wwvxdzipr1p0"))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      #:configure-flags #~(list "-DCMAKE_CXX_STANDARD=17")))
+    (native-inputs (list boost catch2))
+    (home-page "https://github.com/renatoGarcia/icecream-cpp")
+    (synopsis "C++ library for @code{printf} debugging")
+    (description
+     "IceCream-Cpp is a C++ library for @code{printf} debugging.  It is
 inspired by the @url{https://github.com/gruns/icecream, Python library} of the
 same name.")
-      (license license:expat))))
+    (license license:expat)))
 
 (define-public google-highway
   (package
@@ -927,7 +926,6 @@ library for SIMD (Single Instruction, Multiple Data) with runtime dispatch.")
                 "0q7bpywn8ljsj3dymvv19cm7n0r51vg5hj1jsapdl5bwpwf7bf41"))))
     (build-system cmake-build-system)
     (native-inputs (list gcc-15 pkg-config))
-    (arguments (list #:cmake cmake-next))
     (inputs (list cairo
                   hyprutils
                   libjpeg-turbo
@@ -1370,6 +1368,7 @@ a cooperatively interruptible thread that is joined upon destruction.")
        (sha256
         (base32 "090i2qg88iknldxd6v2mh3jfvkdkwc5m38czhrbm58r3y835fy0y"))))
     (build-system cmake-build-system)
+    (arguments (list #:tests? #f))
     (home-page "https://github.com/ToruNiina/toml11")
     (synopsis "TOML for modern C++")
     (description
@@ -1443,8 +1442,7 @@ for C++17.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:configure-flags #~(list "-DBUILD_TESTS=ON")
-      #:test-target "xtest"))
+      #:configure-flags #~(list "-DBUILD_TESTS=ON")))
     (native-inputs
      (list doctest
            googletest
@@ -1646,7 +1644,8 @@ tools:
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags
+     `(#:parallel-tests? #f
+       #:configure-flags
        '("-DBUILD_SHARED_LIBS=ON"
          "-DHTTPLIB_TEST=ON"
          "-DHTTPLIB_COMPILE=ON"
@@ -1965,7 +1964,8 @@ hierarchies and multiple types of execution resources.")
         (base32 "05g4dp1359rsx0y2wrg2yv4zx3aq5anxr8jgb2c5f1ay3nq3639s"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags
+     (list #:tests? #f
+           #:configure-flags
            #~(list "-DBUILD_SHARED_LIBS=ON")))
     (inputs
      (list kokkos
@@ -2593,10 +2593,17 @@ provides a number of utilities to make coding with expected cleaner.")
                 (sha256
                  (base32 "032rb84ahvdnc1m6sj4lflrwnk4p1f2jsq1pv03xbgizp2lr2pkx"))))
       (build-system cmake-build-system)
-      (arguments (list #:test-target "check"
-                       ;; -Werror appears to report false positives.
-                       ;; See <https://github.com/arximboldi/immer/issues/223>.
-                       #:configure-flags #~(list "-DDISABLE_WERROR=ON")))
+      (arguments
+       (list
+        ;; -Werror appears to report false positives.
+        ;; See <https://github.com/arximboldi/immer/issues/223>.
+        #:configure-flags #~'("-DDISABLE_WERROR=ON")
+        #:modules `((guix build cmake-build-system)
+                    ((guix build gnu-build-system) #:prefix gnu:)
+                    (guix build utils))
+        #:phases
+        #~(modify-phases %standard-phases
+            (replace 'check (assoc-ref gnu:%standard-phases 'check)))))
       (inputs (list boost libgc c-rrb))
       (native-inputs (list catch2-3 doctest fmt pkg-config))
       (home-page "https://sinusoid.es/immer")
@@ -2621,7 +2628,14 @@ written in C++.")
             (modules '((guix build utils)))
             (snippet #~(delete-file-recursively "tools"))))
    (build-system cmake-build-system)
-   (arguments (list #:test-target "check"))
+   (arguments
+    (list
+     #:modules `((guix build cmake-build-system)
+                 ((guix build gnu-build-system) #:prefix gnu:)
+                 (guix build utils))
+     #:phases
+     #~(modify-phases %standard-phases
+         (replace 'check (assoc-ref gnu:%standard-phases 'check)))))
    (native-inputs (list boost catch2))
    (home-page "https://sinusoid.es/zug")
    (synopsis "Higher-order sequence transformers")
@@ -2642,13 +2656,16 @@ composable sequential transformations.")
             (sha256
              (base32 "1by9d49qnkncifyjcq16zy605d7v4ps6hvc01q5nsp1nbswm94m4"))))
    (build-system cmake-build-system)
-   (arguments (list #:test-target "check"
-                    #:configure-flags #~(list "-Dlager_BUILD_EXAMPLES=no")
+   (arguments (list #:configure-flags #~(list "-Dlager_BUILD_EXAMPLES=no")
+                    #:modules `((guix build cmake-build-system)
+                                ((guix build gnu-build-system) #:prefix gnu:)
+                                (guix build utils))
                     #:phases
                     #~(modify-phases %standard-phases
                         (add-after 'unpack 'delete-failing-tests
                           (lambda _
-                            (delete-file-recursively "test/event_loop"))))))
+                            (delete-file-recursively "test/event_loop")))
+                        (replace 'check (assoc-ref gnu:%standard-phases 'check)))))
    (inputs (list boost immer zug))
    (native-inputs (list catch2 cereal))
    (home-page "https://sinusoid.es/lager")
@@ -3228,95 +3245,87 @@ validation.")
                 "038i9nmk85vpxvs546w6cyci0ppdrrp5wnlv1kffxw29x71a3g5l"))))))
 
 (define-public bloomberg-bde-tools
-  (let ((commit "23217675939d434537ef74b91f71b63054e36572"))
-    (package
-      (name "bloomberg-bde-tools")
-      ;; Recent releases are not tagged so commit must be used for checkout.
-      (version "4.13.0.0")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/bloomberg/bde-tools")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1x440fa8fghigipn6w8zdr60kkvxrkxs2n9a5hf3y33b8aygh8iv"))
-                (patches
-                 (search-patches
-                  "bloomberg-bde-tools-fix-install-path.patch"))))
-      (build-system copy-build-system)
-      ;; Unable to be an inline dependency of bloomberg-bde due to patch.
-      (properties '((hidden? . #t)))
-      (synopsis "Tools for developing and building libraries modeled on BDE")
-      (description
-       "This package provides the cmake imports needed to build bloomberg-bde.")
-      (home-page "https://github.com/bloomberg/bde-tools")
-      (license license:asl2.0))))
+  (package
+    (name "bloomberg-bde-tools")
+    (version "4.27.0.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/bloomberg/bde-tools")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "0zkf6vdvzp73h6bai6kmd062k0wyqwrrdv2z9m416kgxr6qickl2"))
+              (patches
+               (search-patches
+                "bloomberg-bde-tools-fix-install-path.patch"))))
+    (build-system copy-build-system)
+    ;; Unable to be an inline dependency of bloomberg-bde due to patch.
+    (properties '((hidden? . #t)))
+    (synopsis "Tools for developing and building libraries modeled on BDE")
+    (description
+     "This package provides the cmake imports needed to build bloomberg-bde.")
+    (home-page "https://github.com/bloomberg/bde-tools")
+    (license license:asl2.0)))
 
 (define-public bloomberg-bde
-  (let ((commit "445a8ac4223b90ee0a46749b87ffbbd21788e132"))
     (package
-      (name "bloomberg-bde")
-      ;; Recent releases are not tagged so commit must be used for checkout.
-      (version "4.14.0.0")
-      (source (origin
-                (method git-fetch)
-                (uri (git-reference
-                      (url "https://github.com/bloomberg/bde")
-                      (commit commit)))
-                (file-name (git-file-name name version))
-                (sha256
-                 (base32
-                  "1hf09d4fcn77s1vv6qrh0sa0rv9wijpk55km6p3zi2ymkb2cha3c"))
-                (patches
-                 (search-patches
-                  "bloomberg-bde-cmake-module-path.patch"))
-                ;;(modules '((guix build utils)))
-                (snippet
-                 `(begin
-                    ;; FIXME: Delete bundled software. The third-party packages
-                    ;; may be patched or modified from upstream sources.
-                    ;;(for-each delete-file-recursively
-                    ;; (list "thirdparty"))
-                    ;; Delete failing tests.
-                    (for-each
-                     delete-file
-                     (list "groups/bal/balcl/balcl_commandline.t.cpp"
-                           "groups/bal/balst/balst_resolver_filehelper.t.cpp"
-                           "groups/bal/balst/balst_stacktraceprintutil.t.cpp"
-                           "groups/bal/balst/balst_stacktraceutil.t.cpp"
-                           "groups/bsl/bslh/bslh_hash.t.cpp"
-                           "groups/bsl/bsls/bsls_timeutil.t.cpp"))
-                    #t))))
-      (build-system cmake-build-system)
-      (arguments
-       `(#:parallel-tests? #f           ; Test parallelism may fail inconsistently.
-         ;; Set UFID to build shared libraries. Flag descriptions can be found at
-         ;; https://bloomberg.github.io/bde-tools/bbs/reference/bbs_build_configuration.html#ufid
-         #:configure-flags '("-DUFID=opt_dbg_exc_mt_64_shr_cpp20")
-         #:phases
-         (modify-phases %standard-phases
-           ;; Explicitly build tests separate from the main build.
-           (add-after 'build 'build-tests
-             (lambda* (#:key make-flags #:allow-other-keys)
-               (apply invoke "make" "all.t"
-                 `(,@(if #:parallel-build?
-                         `("-j" ,(number->string (parallel-job-count)))
-                         '())
-                 ,@make-flags)))))))
-      (native-inputs
-       (list bloomberg-bde-tools pkg-config python))
-      (synopsis "Foundational C++ libraries used at Bloomberg")
-      (description
-       "The BDE Development Environment libraries provide an enhanced
+    (name "bloomberg-bde")
+    (version "4.27.0.0")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://github.com/bloomberg/bde")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "17315r9j20pvv4ccnd59m85miq96hp07pysfr64glb7r4f4zjkfs"))
+              ;;(modules '((guix build utils)))
+              (snippet
+               `(begin
+                  ;; FIXME: Delete bundled software. The third-party packages
+                  ;; may be patched or modified from upstream sources.
+                  ;;(for-each delete-file-recursively
+                  ;; (list "thirdparty"))
+                  ))))
+    (build-system cmake-build-system)
+    (arguments
+     (list
+      ;; Set UFID to build shared libraries. Flag descriptions can be found at
+      ;; https://bloomberg.github.io/bde-tools/bbs/reference/bbs_build_configuration.html#ufid
+      #:configure-flags #~(list "-DUFID=opt_dbg_exc_mt_64_shr_cpp20")
+      #:test-exclude (string-join (list "balcl_commandline.t"
+                                        "balst_stacktraceprintutil.t"
+                                        "bslalg_numericformatterutil.t"
+                                        "bslh_hash.t"
+                                        "bslstl_deque.0[1345].t"
+                                        "bslstl_queue.t"
+                                        "bslstl_stack.t")
+                                  "|")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          ;; Explicitly build tests after the main build.
+          (add-after 'build 'build-tests
+            (lambda* (#:key make-flags #:allow-other-keys #:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'build)
+                     (list #:make-flags (list "all.t"))))))))
+    (native-inputs
+     (list bloomberg-bde-tools pkg-config python))
+    (synopsis "Foundational C++ libraries used at Bloomberg")
+    (description
+     "The BDE Development Environment libraries provide an enhanced
 implementation of STL containers, vocabulary types for representing common
 concepts (like dates and times), and building blocks for developing
 multi-threaded applications and network applications.")
-      (home-page "https://github.com/bloomberg/bde")
-      ;; Out-of-memory on i686-linux, compile errors with non-x86.
-      (supported-systems '("x86_64-linux"))
-      (license license:asl2.0))))
+    (home-page "https://github.com/bloomberg/bde")
+    ;; Out-of-memory on i686-linux, compile errors with non-x86.
+    (supported-systems '("x86_64-linux"))
+    (license license:asl2.0)))
 
 (define-public gulrak-filesystem
   (package
@@ -4031,7 +4040,8 @@ based on the implementation of std::variant in libc++.")
         (base32 "15l0jy3v4p6rgg9dk8zr80lqp51s32ii62cm4s90400ragdgh10v"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:configure-flags '("-DBUILD_SHARED_LIBS=ON")))
+     '(#:tests? #f
+       #:configure-flags '("-DBUILD_SHARED_LIBS=ON")))
     (native-inputs (list pkg-config))
     (inputs (list gtk+))
     (home-page "https://github.com/btzy/nativefiledialog-extended")

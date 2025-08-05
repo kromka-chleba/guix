@@ -1712,12 +1712,27 @@ current version of any major web browser.")
                     (delete-file-recursively "bin/jsonchecker")))))
       (build-system cmake-build-system)
       (arguments
-       '(#:phases
+       '(#:configure-flags (list "-DCMAKE_CXX_FLAGS=-Wno-free-nonheap-object")
+         #:phases
          (modify-phases %standard-phases
            (add-after 'unpack 'fix-march=native
              (lambda _
                (substitute* "CMakeLists.txt"
-                 (("-m[^-]*=native") "")))))))
+                 (("-m[^-]*=native") ""))))
+           (add-after 'fix-march=native 'skip-deleted-tests
+             (lambda _
+               (substitute* "test/unittest/CMakeLists.txt"
+                 (("jsoncheckertest.cpp") ""))))
+           (add-after 'fix-march=native 'fix-dependencies
+             (lambda _
+               (substitute* "test/CMakeLists.txt"
+                 (("^find_package\\(GTestSrc\\)")
+                  "find_package(GTest REQUIRED)")
+                 ((".*GTEST_SOURCE_DIR.*") "")
+                 (("GTESTSRC_FOUND)")
+                  "GTest_FOUND)")))))))
+      (native-inputs (list valgrind/pinned))
+      (inputs (list googletest))
       (home-page "https://github.com/Tencent/rapidjson")
       (synopsis "JSON parser/generator for C++ with both SAX/DOM style API")
       (description
@@ -1766,7 +1781,8 @@ C.")
                (search-patches "yajl-CVE-2023-33460.patch"))))
     (build-system cmake-build-system)
     (arguments
-     '(#:phases
+     '(#:tests? #f
+       #:phases
        (modify-phases %standard-phases
          (add-after 'patch-source-shebangs 'patch-tests
            (lambda _
@@ -1853,8 +1869,10 @@ for efficient socket-like bidirectional reliable communication channels.")
      (list
       ;; Tests on non-x86_64 architectures are not well supported upstream.
       #:tests? (target-x86-64?)
-      #:test-target "run-tests"
       #:configure-flags '(list "-DUSE_SYSTEM_GTEST=ON")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'use-gcc
@@ -1862,7 +1880,11 @@ for efficient socket-like bidirectional reliable communication channels.")
          ;; XXX This is the only test that fails.
          (add-after 'unpack 'delete-broken-test
            (lambda _
-             (delete-file "test/wasm2c/spec/memory_init.txt"))))))
+             (delete-file "test/wasm2c/spec/memory_init.txt")))
+         (replace 'check
+           (lambda* (#:rest args)
+             (apply (assoc-ref gnu:%standard-phases 'check)
+                    #:test-target "run-tests" args))))))
     (native-inputs (list python googletest))
     (home-page "https://github.com/WebAssembly/wabt")
     (synopsis "WebAssembly Binary Toolkit")
@@ -1990,7 +2012,8 @@ features.")
        (patches (search-patches "websocketpp-fix-for-cmake-3.15.patch"))))
     (build-system cmake-build-system)
     (inputs (list boost openssl))
-    (arguments '(#:configure-flags '("-DBUILD_TESTS=ON")
+    (arguments '(#:parallel-tests? #f
+                 #:configure-flags '("-DBUILD_TESTS=ON")
                  #:phases
                  (modify-phases %standard-phases
                    (add-after 'install 'remove-tests
@@ -6322,7 +6345,7 @@ developed as part of the NetSurf project.")
          "0750q884ax8wygl64wq03zdjj8h838ch3f8jdfkv4gz809zj4my3"))))
     (build-system gnu-build-system)
     (native-inputs
-     (list netsurf-buildsystem pkg-config gperf-3.0))
+     (list netsurf-buildsystem pkg-config gperf))
     (inputs
      (list libwapcaplet))
     (propagated-inputs
@@ -7626,6 +7649,7 @@ protocols.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f
       #:configure-flags
       #~(list "-DBUILD_SHARED_LIBS=ON"
               "-DCIVETWEB_ENABLE_CXX=ON"
@@ -9031,6 +9055,7 @@ HTTrack is fully configurable, and has an integrated help system.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f
       #:phases
       '(modify-phases %standard-phases
          (add-after 'unpack 'use-system-googletest
@@ -9577,7 +9602,7 @@ grepping the list.")
 (define-public libzim
   (package
     (name "libzim")
-    (version "8.2.1")
+    (version "9.3.0")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -9585,7 +9610,7 @@ grepping the list.")
                     (commit version)))
               (sha256
                (base32
-                "1g735aqw0vlxqgyjv02lvq24dr5shydp4y8mqianf8720s5fs73f"))
+                "1il1vc1hs954s3vnwhr337165dxbykvrldrvbilp5jxbkmwqb60d"))
               (file-name (git-file-name name version))))
     (build-system meson-build-system)
     (arguments
@@ -9611,7 +9636,7 @@ for ZIM files.")
 (define-public kiwix-lib
   (package
     (name "kiwix-lib")
-    (version "13.0.0")
+    (version "14.0.0")
     (home-page "https://github.com/kiwix/kiwix-lib/")
     (source (origin
               (method git-fetch)
@@ -9620,7 +9645,7 @@ for ZIM files.")
                     (commit version)))
               (sha256
                (base32
-                "0mvlppbj0mqn4ka3cfaaj1pvn062cxbgz01c0nq04x0mzq1xwh5w"))
+                "099arjsx1wgz5jhvzn49859wh0v8n3ya33kmnqaw69h55mjvgza0"))
               (file-name (git-file-name name version))))
     (build-system meson-build-system)
     (arguments
@@ -9656,7 +9681,7 @@ It contains the code shared by all Kiwix ports.")
 (define-public kiwix-desktop
   (package
     (name "kiwix-desktop")
-    (version "2.3.1")
+    (version "2.4.1")
     (source (origin
               (method url-fetch)
               (uri (string-append
@@ -9665,18 +9690,23 @@ It contains the code shared by all Kiwix ports.")
                     ".tar.gz"))
               (sha256
                (base32
-                "0hlk05gcb3fmnxhwj6gan51v98rdq3iv2lklwbpmm1bazmz8i7br"))
-              (patches (search-patches "kiwix-desktop-newer-libkiwix.patch"))))
+                "1vkmk9j2jii7ri4lcayr0dr5b2w3dc24lyqmm3g4234834b1f4wl"))))
     (build-system qt-build-system)
     (arguments
-     `(#:test-target "check"
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'configure
-           (lambda* (#:key outputs #:allow-other-keys)
-             (invoke "qmake"
-                     (string-append "PREFIX="
-                                    (assoc-ref outputs "out"))))))))
+     (list
+      #:tests? #f ; no tests
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'configure
+            (lambda* (#:key outputs #:allow-other-keys)
+              (invoke "qmake"
+                      (string-append "PREFIX="
+                                     (assoc-ref outputs "out")))))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (inputs
      (list bash-minimal
            curl
@@ -9705,14 +9735,14 @@ offline (such as Wikipedia), without any access to Internet.")
 (define-public kiwix-tools
   (package
     (name "kiwix-tools")
-    (version "3.5.0")
+    (version "3.7.0")
     (source (origin
               (method url-fetch)
               (uri (string-append "https://download.kiwix.org/release/"
                                   "kiwix-tools/kiwix-tools-" version ".tar.xz"))
               (sha256
                (base32
-                "0q6b7viy1jr212q0glqid2hqxnsd2mxsx5gzcalkc4gb0bzgj32d"))))
+                "032lzzgn3hicai4lx701cs6h731cs29x1h59j9gggcgrp1n4wxks"))))
     (build-system meson-build-system)
     (inputs
      (list curl

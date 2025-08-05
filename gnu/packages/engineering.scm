@@ -311,21 +311,25 @@ their devices.")
     (build-system qt-build-system)
     (arguments
      (list
-      #:test-target "check"
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
             (lambda _
               (system* "qmake" (string-append "BOOST_DIR="
                                               #$(this-package-input "boost")))))
-         (replace 'install
-           (lambda* (#:key outputs #:allow-other-keys)
-             (let ((bin   (string-append #$output "/bin"))
-                   (share (string-append #$output "/share/librecad")))
-               (mkdir-p bin)
-               (install-file "unix/librecad" bin)
-               (mkdir-p share)
-               (copy-recursively "unix/resources" share)))))))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'check (assoc-ref gnu:%standard-phases 'check))
+          (replace 'install
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((bin   (string-append #$output "/bin"))
+                    (share (string-append #$output "/share/librecad")))
+                (mkdir-p bin)
+                (install-file "unix/librecad" bin)
+                (mkdir-p share)
+                (copy-recursively "unix/resources" share)))))))
     (inputs
      (list bash-minimal boost muparser freetype qtbase-5 qtsvg-5))
     (native-inputs
@@ -906,6 +910,9 @@ required for Fritzing app.")
      ;; XXX: tests are built for the CMake build option but it seems to be
      ;; broken in 0.8.0.
      (list #:tests? #f
+           #:modules '((guix build qt-build-system)
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils))
            #:phases
            #~(modify-phases %standard-phases
                (replace 'configure
@@ -913,7 +920,9 @@ required for Fritzing app.")
                    ;; Patch hardcoded path before running qmake.
                    (substitute* "qelectrotech.pro"
                      (("\\/usr\\/local") #$output))
-                   (invoke "qmake"))))))
+                   (invoke "qmake")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (native-inputs
      (list pkg-config qttools-5))
     (inputs
@@ -1155,12 +1164,12 @@ fonts to gEDA.")
       (build-system cmake-build-system)
       (arguments
        (list
+        #:tests? #f ; Several tests fail due to floating point error.
         #:imported-modules `((guix build guile-build-system)
                              ,@%cmake-build-system-modules)
         #:modules '((guix build cmake-build-system)
                     ((guix build guile-build-system) #:prefix guile:)
                     (guix build utils))
-        #:test-target "libfive-test"
         #:configure-flags #~(list
                              (string-append
                               "-DPYTHON_SITE_PACKAGES_DIR="
@@ -1420,10 +1429,7 @@ electrical diagrams), gerbview (viewing Gerber files) and others.")
     (build-system cmake-build-system)
     (arguments
      `(#:configure-flags (list "-DBUILD_FORMATS=html")
-       #:tests? #f ;no test suite
-       #:phases
-       (modify-phases %standard-phases
-         (delete 'build))))
+       #:tests? #f)) ;no test suite
     (native-inputs (list asciidoc
                          gettext-minimal
                          git-minimal
@@ -3042,8 +3048,9 @@ specification can be downloaded at @url{http://3mf.io/specification/}.")
     (build-system cmake-build-system)
     (inputs (list tbb clipper2 assimp python-nanobind googletest))
     (arguments
-     ;; can be removed once emscripten is packaged
-     `(#:configure-flags '("-DMANIFOLD_JSBIND=OFF")))
+     (list #:tests? #f
+           ;; can be removed once emscripten is packaged
+           #:configure-flags #~(list "-DMANIFOLD_JSBIND=OFF")))
     (synopsis "Geometry library for topological robustness")
     (description
      "Manifold is a geometry library dedicated to creating and operating on
@@ -3438,6 +3445,72 @@ models in the STL and OFF file formats.")
       (home-page "https://openscad.org/")
       (license license:gpl2+))))
 
+(define-public pythonscad
+  (let ((commit "e2641ca1a208a9a54a034a8818a9774ad4d5867c")
+        (version "0.0.0")
+        (revision "0"))
+    (package
+      (inherit openscad)
+      (name "pythonscad")
+      (version (git-version version revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/pythonscad/pythonscad")
+               (commit commit)
+               ;; Needed for libraries/MCAD, a library specific to OpenSCAD
+               ;; which is included as a submodule. All other libraries are
+               ;; deleted in the patch-source build phase.
+               (recursive? #t)))
+         (sha256
+          (base32 "1i6yajamdrha2kpgyhn7jn6dv35qmgq0zsqv8cdzdqg5142v66ay"))
+         (modules '((guix build utils)))
+         (snippet #~(begin
+                      ;; Delete all unbundled libraries to replace them with
+                      ;; guix packages.
+                      (delete-file-recursively "submodules")
+                      (substitute* "CMakeLists.txt"
+                        ;; Remove bundled libraries from cmake.
+                        (("add_subdirectory\\(submodules\\)")
+                         ""))))
+         (file-name (git-file-name name version))))
+      (arguments
+       (substitute-keyword-arguments (package-arguments openscad)
+         ((#:configure-flags flags
+           '())
+          #~(append #$flags
+                    (list "-DENABLE_LIBFIVE=ON" "-DUSE_BUILTIN_LIBFIVE=OFF"
+                          (string-append "-DPYTHON_VERSION="
+                                         #$(version-major+minor
+                                            (package-version python))))))
+         ((#:phases phases)
+          #~(modify-phases #$phases
+              (replace 'patch-source
+                (lambda* (#:key inputs #:allow-other-keys)
+                  (substitute* "CMakeLists.txt"
+                    ;; Fix detection of EGL (see
+                    ;; https://github.com/openscad/openscad/issues/5880).
+                    (("target_link_libraries\\(OpenSCAD PRIVATE OpenGL::EGL\\)")
+                     "find_package(ECM REQUIRED NO_MODULE)
+        list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
+        find_package(EGL REQUIRED)
+        target_link_libraries(OpenSCAD PRIVATE EGL::EGL)")
+                    ;; Use the system sanitizers-cmake module.
+                    (("\\$\\{CMAKE_SOURCE_DIR\\}/submodules/sanitizers-cmake/cmake")
+                     (string-append (assoc-ref inputs "sanitizers-cmake")
+                                    "/share/sanitizers-cmake/cmake")))))))))
+      (inputs (modify-inputs (package-inputs openscad)
+                (append curl libfive)))
+      (synopsis "Script-based 3D modeling app whith Python support")
+      (description
+       "PythonSCAD is a programmatic 3D modeling application.  It allows you
+to turn simple code into 3D models suitable for 3D printing.  It is a fork of
+OpenSCAD which not only adds support for using Python as a native language,
+but also adds new features and improves existing ones.")
+      (home-page "https://pythonscad.org/")
+      (license license:gpl2+))))
+
 (define-public emacs-scad-mode
   (package
     (name "emacs-scad-mode")
@@ -3660,7 +3733,8 @@ extension and customization.")
     (build-system cmake-build-system)
     (inputs (list hdf5-1.10))
     (arguments
-     `(#:phases
+     `(#:parallel-tests? #f
+       #:phases
        (modify-phases %standard-phases
          (add-after 'install 'remove-test-output
            (lambda* (#:key outputs #:allow-other-keys)
@@ -4115,6 +4189,7 @@ calibration of the milling depth.")
       (arguments
        (list
         #:build-type "Release"
+        #:tests? #f
         #:phases #~(modify-phases %standard-phases
                      (add-after 'unpack 'unpack-libdxfrw
                        (lambda _
@@ -5589,13 +5664,7 @@ towards field theory.")
                (commit commit)))
          (sha256
           (base32 "1c7vimy065908qs5nwhnrk9pp0wh8pjgdvz2hwb12a9wcsj50kf0"))
-         (file-name (git-file-name name version))
-         (modules '((guix build utils)))
-         ;; make tests deterministic by seeding the random number generator
-         (snippet '(substitute* '("orocos_kdl/tests/treeinvdyntest.cpp"
-                                  "orocos_kdl/tests/solvertest.cpp")
-                     (("srand\\( \\(unsigned\\)time\\( NULL \\)\\)")
-                      "srand(0u)")))))
+         (file-name (git-file-name name version))))
       (build-system cmake-build-system)
       (native-inputs (list cppunit))
       (propagated-inputs (list eigen))
@@ -5603,10 +5672,20 @@ towards field theory.")
        (list
         #:configure-flags
         #~(list "-DENABLE_TESTS=ON")
-        #:test-target "check"
         #:phases
         #~(modify-phases %standard-phases
-            (add-after 'unpack 'chdir
+            (add-after 'unpack 'fix-tests
+              (lambda _
+                ;; Make tests deterministic by seeding the random number generator.
+                (substitute* '("orocos_kdl/tests/treeinvdyntest.cpp"
+                               "orocos_kdl/tests/solvertest.cpp")
+                  (("srand\\( \\(unsigned\\)time\\( NULL \\)\\)")
+                   "srand(0u)"))
+                ;; CTest requires tests to be enabled in the top-level directory.
+                (substitute* "orocos_kdl/CMakeLists.txt"
+                  (("IF\\( ENABLE_TESTS \\)" _all)
+                   (string-append _all "\n" "enable_testing()")))))
+            (add-after 'fix-tests 'chdir
               (lambda _
                 (chdir "orocos_kdl"))))))
       (home-page "https://docs.orocos.org/kdl/overview.html")

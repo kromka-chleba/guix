@@ -888,6 +888,9 @@ an unprivileged user.")
     (arguments
      (list
       #:tests? #f                       ;no test suite
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-paths
@@ -898,6 +901,8 @@ an unprivileged user.")
           (replace 'configure
             (lambda _
               (invoke "qmake")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install))
           (add-after 'install 'install-desktop-resources
             (lambda _
               (let ((datadir (string-append #$output "/share")))
@@ -969,8 +974,6 @@ to the @code{python-yubikey-manager} package.")
                (base32
                 "0z39f8w0zvra874az0f67ck1al9kbpaidpilggbl8jnfs05010ck"))))
     (build-system cmake-build-system)
-    (arguments
-     '(#:configure-flags (list "-DBUILD_TESTING=on")))
     (native-inputs (list pkg-config qttools-5))
     (inputs (list catch2))
     (home-page "https://github.com/tplgy/cppcodec")

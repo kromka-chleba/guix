@@ -113,6 +113,7 @@
   #:use-module (gnu packages fontutils)
   #:use-module (gnu packages freedesktop)
   #:use-module (gnu packages gawk)
+  #:use-module (gnu packages gcc)
   #:use-module (gnu packages gdb)
   #:use-module (gnu packages gettext)
   #:use-module (gnu packages ghostscript)
@@ -149,7 +150,6 @@
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages nettle)
   #:use-module (gnu packages networking)
-  #:use-module (gnu packages ninja)
   #:use-module (gnu packages onc-rpc)
   #:use-module (gnu packages openldap)
   #:use-module (gnu packages pcre)
@@ -324,14 +324,14 @@ completely independent from the extension API.")
 (define-public mailutils
   (package
     (name "mailutils")
-    (version "3.19")
+    (version "3.20")
     (source (origin
              (method url-fetch)
              (uri (string-append "mirror://gnu/mailutils/mailutils-"
                                  version ".tar.xz"))
              (sha256
               (base32
-               "0iczhhqfp7nkcasf7iy7lkxk7wgifxhrj3bbr7c8lnvc0ch0s8sh"))
+               "0ag8d9fafzyjk53iyknzvb82risv1jf4wgnann5ii9fx3smzmwx8"))
              (patches
               (search-patches "mailutils-variable-lookup.patch"))))
     (build-system gnu-build-system)
@@ -1012,49 +1012,30 @@ mailpack.  What can alterMIME do?
              (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "17m99llggkg7xg72k8xaf7iipax7sgfhqa2a1qnlylndwa42f57b"))
-       (modules '((guix build utils)))
-       (snippet
-        '(begin
-           ;; https://github.com/astroidmail/astroid/pull/685
-           (substitute* "tests/test_composed_message.cc"
-             (("\\\\n\\.\\.\\.") "\\n...\\n"))))))
+        (base32 "17m99llggkg7xg72k8xaf7iipax7sgfhqa2a1qnlylndwa42f57b"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:modules ((guix build cmake-build-system)
+     `(#:parallel-tests? #f
+       ;; This test relies on the plugins and the test suite
+       ;; cannot find the Astroid module.
+       ;;  gi.require_version ('Astroid', '0.2')
+       ;; ValueError: Namespace Astroid not available
+       #:test-exclude "markdown"
+       #:modules ((guix build cmake-build-system)
                   ((guix build glib-or-gtk-build-system) #:prefix glib-or-gtk:)
                   (guix build utils)
                   (ice-9 match))
        #:imported-modules ((guix build glib-or-gtk-build-system)
                            ,@%cmake-build-system-modules)
-       #:configure-flags (list "-GNinja")
+       #:generator "Ninja"
        #:phases
        (modify-phases %standard-phases
-         (add-after 'unpack 'skip-markdown-test
-           ;; This test relies on the plugins and the test suite
-           ;; cannot find the Astroid module.
-           ;;  gi.require_version ('Astroid', '0.2')
-           ;; ValueError: Namespace Astroid not available
-           (lambda _
-             (substitute* "tests/CMakeLists.txt"
-               ((".*markdown.*") ""))))
-         (replace 'build
-           (lambda _
-             (invoke "ninja" "-j" (number->string (parallel-job-count)))))
          (add-before 'check 'start-xserver
            (lambda* (#:key inputs #:allow-other-keys)
              (let ((xorg-server (assoc-ref inputs "xorg-server")))
                (setenv "HOME" (getcwd))
                (system (format #f "~a/bin/Xvfb :1 &" xorg-server))
                (setenv "DISPLAY" ":1"))))
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (setenv "CTEST_OUTPUT_ON_FAILURE" "1")
-               (invoke "ctest" "."))))
-         (replace 'install
-           (lambda _
-             (invoke "ninja" "install")))
          (add-after 'install 'wrap-with-GI_TYPELIB_PATH
            (lambda* (#:key inputs outputs #:allow-other-keys)
              (let ((out (assoc-ref outputs "out"))
@@ -1077,7 +1058,6 @@ mailpack.  What can alterMIME do?
      (list glib-networking
            gsettings-desktop-schemas
            gnupg
-           ninja
            pkg-config
            ronn-ng
            w3m
@@ -4851,7 +4831,7 @@ on RFC 3501 and original @code{imaplib} module.")
 (define-public rspamd
   (package
     (name "rspamd")
-    (version "3.6")
+    (version "3.12.1")
     (source
      (origin
        (method git-fetch)
@@ -4859,16 +4839,26 @@ on RFC 3501 and original @code{imaplib} module.")
              (url "https://github.com/rspamd/rspamd")
              (commit version)))
        (sha256
-        (base32 "1ra18c3wczbdqrg9p69k04smjskjkdpxcfff9ff4yi7pmqjaxr8s"))
+        (base32 "0li75dqqy0irrvv2jddmll2adf15cywif982ijj034hldg9162bc"))
        (file-name (git-file-name name version))))
     (build-system cmake-build-system)
     (arguments
-     '(#:configure-flags '("-DENABLE_LUAJIT=ON"
-                           "-DLOCAL_CONFDIR=/etc/rspamd")))
+     (list #:configure-flags #~(list "-DENABLE_LUAJIT=ON"
+                                     "-DLOCAL_CONFDIR=/etc/rspamd")
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:key tests? #:allow-other-keys)
+                   (when tests?
+                     (invoke "make" "run-test"
+                             "-j" (number->string (parallel-job-count)))))))))
     (inputs
      (list file
            glib
            icu4c
+           libarchive
+           libbfd
+           libiberty
            libsodium
            luajit
            openssl

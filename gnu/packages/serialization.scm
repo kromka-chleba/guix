@@ -437,8 +437,17 @@ that implements both the msgpack and msgpack-rpc specifications.")
                 "1c9i93kr7wvpr01i4wixi9mf991nd3k2adg5fy0vxwwlvvc7dgdw"))))
     (build-system qt-build-system)
     (arguments
-     (list #:qtbase qtbase
-           #:test-target "tests"))
+     (list #:modules '((guix build cmake-build-system)
+                       (guix build qt-build-system)
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils))
+           #:qtbase qtbase
+           #:phases
+           #~(modify-phases %standard-phases
+               (replace 'check
+                 (lambda* (#:rest args)
+                   (apply (assoc-ref gnu:%standard-phases 'check)
+                          #:test-target "tests" args))))))
     (home-page "https://github.com/iamantony/qtcsv")
     (synopsis "Library for reading and writing CSV files in Qt")
     (description
@@ -561,32 +570,39 @@ character limit for implicit keys.")
     (license license:expat)))
 
 (define-public yaml-cpp
-  (package
-    (name "yaml-cpp")
-    (version "0.8.0")
-    (source
-     (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://github.com/jbeder/yaml-cpp")
-             (commit version)))
-       (file-name (git-file-name name version))
-       (sha256
-        (base32 "0whdn6pqa56532ml20h89p6rchcrrazdrvi5fz6zpmrkl15yiki7"))))
-    (build-system cmake-build-system)
-    (arguments
-     '(#:configure-flags '("-DYAML_BUILD_SHARED_LIBS=ON")))
-    (native-inputs
-     (list python))
-    (home-page "https://github.com/jbeder/yaml-cpp")
-    (synopsis "YAML parser and emitter in C++")
-    (description "YAML parser and emitter in C++ matching the YAML 1.2 spec.")
-    (license license:bsd-3)))
+  (let ((commit "2f86d13775d119edbb69af52e5f566fd65c6953b")
+        (revision "0"))
+    (package
+      (name "yaml-cpp")
+      (version (git-version "0.8.0" revision commit))
+      (source
+       (origin
+         (method git-fetch)
+         (uri (git-reference
+               (url "https://github.com/jbeder/yaml-cpp")
+               (commit commit)))
+         (modules '((guix build utils)))
+         (snippet #~(delete-file-recursively "test/googletest-1.13.0"))
+         (file-name (git-file-name name version))
+         (sha256
+          (base32 "12ncx2hlsl5vp9yfja6myxalg85j0kgxwbargn37yiwi8rn17m8s"))))
+      (build-system cmake-build-system)
+      (arguments
+       '(#:configure-flags '("-DYAML_BUILD_SHARED_LIBS=ON"
+                             "-DYAML_CPP_BUILD_TESTS=ON"
+                             "-DYAML_USE_SYSTEM_GTEST=ON")))
+      (native-inputs
+       (list python))
+      (inputs (list googletest))
+      (home-page "https://github.com/jbeder/yaml-cpp")
+      (synopsis "YAML parser and emitter in C++")
+      (description "YAML parser and emitter in C++ matching the YAML 1.2 spec.")
+      (license license:bsd-3))))
 
 (define-public jsoncpp
   (package
     (name "jsoncpp")
-    (version "1.9.5")
+    (version "1.9.6")
     (home-page "https://github.com/open-source-parsers/jsoncpp")
     (source (origin
               (method git-fetch)
@@ -594,7 +610,7 @@ character limit for implicit keys.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "06zss7z56ykzwcsfdxarmini63hkf8i8gx70q3yw9wb0bw7wj9rv"))))
+                "070xg4i52z3yv5b9bw5k95qskw0daivh0njka87mzj0d3zf1qsyy"))))
     (build-system meson-build-system)
     (synopsis "C++ library for interacting with JSON")
     (description "JsonCpp is a C++ library that allows manipulating JSON values,
@@ -602,6 +618,20 @@ including serialization and deserialization to and from strings.  It can also
 preserve existing comment in unserialization/serialization steps, making
 it a convenient format to store user input files.")
     (license license:expat)))
+
+(define-public jsoncpp/pinned
+  (hidden-package
+   ;; Version that rarely changes, depended on by CMake.
+   (package/inherit jsoncpp
+     (version "1.9.6")
+     (source
+      (origin
+        (method git-fetch)
+        (uri (git-reference (url (package-home-page jsoncpp)) (commit version)))
+        (file-name (git-file-name (package-name jsoncpp) version))
+        (sha256
+         (base32
+          "070xg4i52z3yv5b9bw5k95qskw0daivh0njka87mzj0d3zf1qsyy")))))))
 
 ;; Tensorflow does not build with jsoncpp 1.8.x.  It is built with commit
 ;; 4356d9bba191e1e16ce7a92073cbf3e63564e973, which lies between version 1.7.2
@@ -621,7 +651,8 @@ it a convenient format to store user input files.")
                 "1180ln8blrb0mwzpcf78k49hlki6di65q77rsvglf83kfcyh4d7z"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags
+     (list #:tests? #f
+           #:configure-flags
            #~'("-DBUILD_SHARED_LIBS:BOOL=YES"
                #$@(if (%current-target-system)
                       #~("-DJSONCPP_WITH_POST_BUILD_UNITTEST=OFF")

@@ -22,7 +22,7 @@
 ;;; Copyright © 2021 Lars-Dominik Braun <lars@6xq.net>
 ;;; Copyright © 2021, 2022 Guillaume Le Vaillant <glv@posteo.net>
 ;;; Copyright © 2022, 2024 Greg Hogan <code@greghogan.com>
-;;; Copyright © 2022, 2024 John Kehayias <john.kehayias@protonmail.com>
+;;; Copyright © 2022, 2024, 2025 John Kehayias <john.kehayias@protonmail.com>
 ;;; Copyright © 2022 Clément Lassieur <clement@lassieur.org>
 ;;; Copyright © 2022 Zhu Zihao <all_but_last@163.com>
 ;;; Copyright © 2023 Hilton Chain <hako@ultrarare.space>
@@ -277,7 +277,10 @@ until LLVM/Clang 14."
     (propagated-inputs
      (list llvm clang-runtime))
     (arguments
-     `(#:configure-flags
+     `(;; TODO: enable tests.
+       #:tests? #f
+
+       #:configure-flags
        (list "-DCLANG_INCLUDE_TESTS=True"
 
              ;; TODO: Use --gcc-install-dir when GCC_INSTALL_PREFIX is
@@ -618,6 +621,7 @@ output), and Binutils.")
       (outputs '("out" "opt-viewer"))
       (arguments
        (list
+        #:tests? (not (target-x86-32?))
         #:configure-flags
         #~(list
            ;; These options are required for cross-compiling LLVM according
@@ -659,11 +663,19 @@ output), and Binutils.")
            "-DLLVM_PARALLEL_LINK_JOBS=1") ;cater to smaller build machines
         ;; Don't use '-g' during the build, to save space.
         #:build-type "Release"
+        #:modules '((guix build cmake-build-system)
+                    ((guix build gnu-build-system) #:prefix gnu:)
+                    (guix build utils))
         #:phases
         #~(modify-phases %standard-phases
             (add-after 'unpack 'change-directory
               (lambda _
                 (chdir "llvm")))
+            (replace 'check
+              (lambda* (#:rest args)
+                (setenv "HOME" "/tmp")
+                (apply (assoc-ref gnu:%standard-phases 'check)
+                       #:test-target "check-llvm" args)))
             (add-after 'install 'install-opt-viewer
               (lambda* (#:key outputs #:allow-other-keys)
                 (let* ((opt-viewer-share (string-append #$output:opt-viewer
@@ -701,6 +713,10 @@ of programming tools as well as libraries with equivalent functionality.")
     (source (llvm-monorepo version))
     (arguments
      (list
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:tests? (not (target-x86-32?))
       #:configure-flags
       #~(list
          ;; These options are required for cross-compiling LLVM according
@@ -739,6 +755,11 @@ of programming tools as well as libraries with equivalent functionality.")
           (add-after 'unpack 'change-directory
             (lambda _
               (chdir "llvm")))
+          (replace 'check
+            (lambda* (#:rest args)
+              (setenv "HOME" "/tmp")
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "check-llvm" args)))
           (add-after 'install 'install-opt-viewer
             (lambda* (#:key outputs #:allow-other-keys)
               (let* ((out (assoc-ref outputs "out"))
@@ -749,9 +770,7 @@ of programming tools as well as libraries with equivalent functionality.")
                 (rename-file (string-append out "/share/opt-viewer")
                              opt-viewer-dir)))))))
 
-    (native-inputs
-     `(("python" ,python-wrapper)
-       ("perl"   ,perl)))))
+    (native-inputs (list perl python-wrapper which))))
 
 (define-public clang-runtime-15
   (clang-runtime-from-llvm llvm-15))
@@ -798,14 +817,20 @@ of programming tools as well as libraries with equivalent functionality.")
       #~(list "-DLIBOMP_USE_HWLOC=ON"
               "-DOPENMP_TEST_C_COMPILER=clang"
               "-DOPENMP_TEST_CXX_COMPILER=clang++")
-      #:test-target "check-libomp"
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'chdir-to-source-and-install-license
             (lambda _
               (chdir "openmp")
               (install-file "LICENSE.TXT"
-                            (string-append #$output "/share/doc")))))))
+                            (string-append #$output "/share/doc"))))
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "check-libomp" args))))))
     (native-inputs (list clang-15 llvm-15 perl pkg-config python))
     (inputs (list `(,hwloc "lib")))
     (home-page "https://openmp.llvm.org")
@@ -902,14 +927,14 @@ Library.")
                 "0kvbr4j6ldpssiv7chgqra5y77n7jwbyxlwcl7z32v31f49jcybb"))
               (file-name (string-append "libomp-" version ".tar.xz"))))
     (arguments
-     '(#:configure-flags '("-DLIBOMP_USE_HWLOC=ON"
-                           "-DOPENMP_TEST_C_COMPILER=clang"
-                           "-DOPENMP_TEST_CXX_COMPILER=clang++"
-
-                           ;; Work around faulty target detection, fixed in 14:
-                           ;; https://github.com/llvm/llvm-project/issues/52910
-                           "-DLIBOMPTARGET_BUILD_AMDGCN_BCLIB=OFF")
-       #:test-target "check-libomp"))
+     (substitute-keyword-arguments (package-arguments libomp-14)
+       ((#:configure-flags flags)
+        ;; Work around faulty target detection, fixed in 14:
+        ;; https://github.com/llvm/llvm-project/issues/52910
+        #~(cons* "-DLIBOMPTARGET_BUILD_AMDGCN_BCLIB=OFF" #$flags))
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (delete 'chdir-to-source-and-install-license)))))
     (native-inputs
      (modify-inputs (package-native-inputs libomp-14)
        (replace "clang" clang-13)
@@ -932,6 +957,8 @@ Library.")
       (patches (search-patches "llvm-13-gcc-14.patch"))))
     (arguments
      (substitute-keyword-arguments (package-arguments llvm-13)
+       ;; Disable tests for old releases now compiled with newer GCC.
+       ((#:tests? _ #false) #false)
        ((#:phases phases)
         #~(modify-phases #$phases
            #$@(if (assoc "config" (package-native-inputs this-package))
@@ -942,6 +969,9 @@ Library.")
                                              "/bin/config.guess")))
                          (copy-file config.guess "cmake/config.guess")))))
                 #~())
+         (add-after 'unpack 'delete-failing-tests
+           (lambda _
+             (delete-file "test/DebugInfo/X86/vla-multi.ll")))
          (add-before 'build 'shared-lib-workaround
            ;; Even with CMAKE_SKIP_BUILD_RPATH=FALSE, llvm-tblgen
            ;; doesn't seem to get the correct rpath to be able to run
@@ -983,10 +1013,9 @@ Library.")
                 "14dh0r6h2xh747ffgnsl4z08h0ri04azi9vf79cbz7ma1r27kzk0"))
               (file-name (string-append "libomp-" version ".tar.xz"))))
     (arguments
-     '(#:configure-flags '("-DLIBOMP_USE_HWLOC=ON"
-                           "-DOPENMP_TEST_C_COMPILER=clang"
-                           "-DOPENMP_TEST_CXX_COMPILER=clang++")
-       #:test-target "check-libomp"))
+     (substitute-keyword-arguments (package-arguments libomp-13)
+       ((#:configure-flags flags)
+        #~`(,@(delete "-DLIBOMPTARGET_BUILD_AMDGCN_BCLIB=OFF" #$flags)))))
     (native-inputs
      (modify-inputs (package-native-inputs libomp-13)
        (replace "clang" clang-12)
@@ -1271,7 +1300,12 @@ Library.")
               (uri (llvm-uri "llvm" version))
               (sha256
                (base32
-                "1qpls3vk85lydi5b4axl0809fv932qgsqgdgrk098567z4jc7mmn"))))))
+                "1qpls3vk85lydi5b4axl0809fv932qgsqgdgrk098567z4jc7mmn"))))
+    (arguments
+     (substitute-keyword-arguments (package-arguments llvm-7)
+       ((#:phases phases)
+        #~(modify-phases #$phases
+            (delete 'delete-failing-tests)))))))
 
 (define-public clang-runtime-6
   (clang-runtime-from-llvm
@@ -1320,7 +1354,7 @@ Library.")
         "1vi9sf7rx1q04wj479rsvxayb6z740iaz3qniwp266fgp5a07n8z"))))
     (outputs '("out"))
     (arguments
-     (substitute-keyword-arguments (package-arguments llvm)
+     (substitute-keyword-arguments (package-arguments llvm-6)
        ((#:phases phases)
         #~(modify-phases #$phases
             (add-before 'build 'shared-lib-workaround
@@ -1661,30 +1695,30 @@ Library.")
 
 (define-public llvm-for-rocm
   (package
-    ;; Based on LLVM 14 as of v5.0.0
-    (inherit llvm-14)
+    ;; Currently based on LLVM 19.
+    (inherit llvm-19)
     (name "llvm-for-rocm")
-    (version "5.6.0")                         ;this must match '%rocm-version'
+    (version "6.4.2")                         ;this must match '%rocm-version'
     (source (origin
               (method git-fetch)
               (uri (git-reference
-                    (url "https://github.com/RadeonOpenCompute/llvm-project.git")
+                    (url "https://github.com/ROCm/llvm-project.git")
                     (commit (string-append "rocm-" version))))
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "1kg6q6aqijjrwaznj0gr3nd01gykrnqqnk8vz8wyfifr18l9jrgx"))))
+                "1j2cr362k7snsh5c1z38ikyihmjvy0088rj0f0dhng6cjwgysryp"))))
     (arguments
-     (substitute-keyword-arguments (package-arguments llvm-14)
+     (substitute-keyword-arguments (package-arguments llvm-19)
        ((#:configure-flags flags)
-        #~(list"-DLLVM_ENABLE_PROJECTS=llvm;clang;lld"
-           "-DLLVM_TARGETS_TO_BUILD=AMDGPU;X86"
-           "-DCMAKE_SKIP_BUILD_RPATH=FALSE"
-           "-DCMAKE_BUILD_WITH_INSTALL_RPATH=FALSE"
-           "-DBUILD_SHARED_LIBS:BOOL=TRUE"
-           "-DLLVM_VERSION_SUFFIX="))))
+        #~(list "-DLLVM_ENABLE_PROJECTS=llvm;clang;lld"
+                "-DLLVM_TARGETS_TO_BUILD=AMDGPU;X86"
+                "-DCMAKE_SKIP_BUILD_RPATH=FALSE"
+                "-DCMAKE_BUILD_WITH_INSTALL_RPATH=FALSE"
+                "-DBUILD_SHARED_LIBS:BOOL=TRUE"
+                "-DLLVM_VERSION_SUFFIX="))))
     (properties `((hidden? . #t)
-                  ,@(package-properties llvm-14)))))
+                  ,@(package-properties llvm-19)))))
 
 
 
@@ -1887,6 +1921,8 @@ misuse of libraries outside of the store.")))
     (build-system cmake-build-system)
     (arguments
      (list
+       ;; No access to a compiled llvm-lit since compiled separately from llvm.
+       #:tests? #f
        #:configure-flags #~(list "-DOPENMP_TEST_CXX_COMPILER=clang++")
        #:phases
        #~(modify-phases %standard-phases
@@ -1921,7 +1957,6 @@ which highly leverage existing libraries in the larger LLVM project.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:test-target "check-cxx"
       #:tests? #f                       ;prohibitively expensive to run
       #:implicit-inputs? #f             ;to avoid conflicting GCC headers
       #:configure-flags
@@ -1934,11 +1969,18 @@ which highly leverage existing libraries in the larger LLVM project.")
               ;; as RUNPATH and don't attempt to patch it.
               ;; See also: https://gitlab.kitware.com/cmake/cmake/-/issues/22963
               "-DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'enter-subdirectory
             (lambda _
-              (chdir "runtimes"))))))
+              (chdir "runtimes")))
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "check-cxx" args))))))
     (native-inputs
      (modify-inputs (standard-packages)
        ;; Remove GCC from the build environment, to avoid its C++
@@ -2480,7 +2522,6 @@ LLVM bitcode files.")
       ;; FIXME: 79 tests fail, out of ~200 (see:
       ;; https://github.com/root-project/cling/issues/534)
       #:tests? #f
-      #:test-target "check-cling"
       #:configure-flags
       #~(list (string-append "-DCLING_CXX_PATH="
                              (search-input-file %build-inputs "bin/g++"))

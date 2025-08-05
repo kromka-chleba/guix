@@ -327,7 +327,8 @@ window managers, that don't provide Qt integration by themselves.")
                (base32
                 "0d0pxynlyfgavf6l1b1z7zpmbrzm96hkphnqnalr7mshm147450g"))))
     (build-system cmake-build-system)
-    (arguments (list #:configure-flags #~(list
+    (arguments (list #:tests? #f
+                     #:configure-flags #~(list
                                           "-DKDDockWidgets_QT6=ON"
                                           "-DKDDockWidgets_TESTS=ON")))
     (inputs
@@ -1100,7 +1101,12 @@ tst_qt_cmake_create.cpp"
                        "test_qt_add_ui_8"
                        "test_qt_add_ui_9"
                        ;; This test is susceptible to the 600 ms timeout used:
-                       "tst_qpauseanimation")
+                       "tst_qpauseanimation"
+
+                       ;; This test may fail non-deterministically as reported
+                       ;; in Guix bug#73233 and upstream at
+                       ;; https://bugreports.qt.io/browse/QTBUG-119321.
+                       "tst_qsharedmemory")
                       #$@(cond
                            ((target-ppc64le?)
                              #~((list
@@ -2623,6 +2629,7 @@ that helps in Qt development.")))
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f
       ;; The build system attempts to fetch online resources and fails when
       ;; building the test suite.
       #:configure-flags #~(list "-DQT_BUILD_TESTS=OFF")
@@ -2824,6 +2831,9 @@ also contains functionality to support data models and executable content.")))
                   (delete-file-recursively "tests/3rdparty")))))
     (arguments
      (list
+      ;; This failing test is run by the cmake-build-system phases but not
+      ;; by the gnu-build-system phases.
+      #:test-exclude "tst_scion"
       #:phases
       #~(modify-phases %standard-phases
           (delete 'check)               ;move after the install phase
@@ -4130,6 +4140,9 @@ instances.")
     (arguments
      (list
       #:qtbase qtbase
+      #:modules '((guix build qt-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'fix-installation-prefix
@@ -4144,6 +4157,7 @@ instances.")
           (replace 'configure
             (lambda _
               (invoke "qmake")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
           (replace 'check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
@@ -5078,6 +5092,7 @@ different kinds of sliders, and much more.")
         (base32
          "13n2qb8q9jz4ihwlbs7y15lw90w9113gb1bgnb1dggpxkj64r953"))))
     (build-system cmake-build-system)
+    (arguments (list #:tests? #f))
     (native-inputs
      (list qttools-5))
     (inputs
@@ -5118,6 +5133,7 @@ a binding language:
       (build-system qt-build-system)
       (arguments
        (list #:qtbase qtbase
+             #:cmake cmake-3.25
              #:tests? #f ;no tests
              #:configure-flags
              #~(list "-DBUILD_EXAMPLE=ON"
@@ -5194,8 +5210,7 @@ window docking system.")
                 "0nsh6v5k4kdrrhcd6adz947n0dka4rrbx8f8rvm1175545nbi67s"))))
     (build-system qt-build-system)
     (arguments
-     (list #:test-target "tests"
-           #:phases
+     (list #:phases
            #~(modify-phases %standard-phases
                (add-before 'install 'fix-include-path
                  (lambda _
@@ -5239,6 +5254,9 @@ programming paradigm.")
       (arguments
        (list #:qtbase qtbase
              #:tests? #f ;no tests
+             #:modules '((guix build qt-build-system)
+                         ((guix build gnu-build-system) #:prefix gnu:)
+                         (guix build utils))
              #:phases
              #~(modify-phases %standard-phases
                  ;; This project does not have any build rule but its demo has
@@ -5255,6 +5273,7 @@ programming paradigm.")
                  (replace 'configure
                    (lambda _
                      (invoke "qmake")))
+                 (replace 'build (assoc-ref gnu:%standard-phases 'build))
                  ;; No install rule exists.
                  (replace 'install
                    (lambda _
@@ -5805,7 +5824,7 @@ configurable also via HTTP.")
   (build-system cmake-build-system)
   (arguments '(#:tests? #f)) ; There are no tests
   (native-inputs
-   (list pkg-config cmake))
+   (list pkg-config cmake-minimal))
   (inputs
    (list qtbase-5 coin3d))
   (home-page "https://github.com/coin3d/soqt")
@@ -6117,6 +6136,9 @@ a secure way.")))
     (inputs (list dbus glib libaccounts-glib))
     (arguments
      (list #:tests? #f                  ; Figure out how to run tests
+           #:modules '((guix build qt-build-system)
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils))
            #:phases
            #~(modify-phases %standard-phases
                (replace 'configure
@@ -6139,7 +6161,9 @@ a secure way.")))
                            (string-append "PREFIX=" #$output)
                            (string-append "LIBDIR=" #$output "/lib")
                            (string-append "QMAKE_LFLAGS_RPATH=-Wl,-rpath,"
-                                          #$output "/lib -Wl,-rpath,")))))))
+                                          #$output "/lib -Wl,-rpath,"))))
+               (replace 'build (assoc-ref gnu:%standard-phases 'build))
+               (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (home-page "https://accounts-sso.gitlab.io/signond/index.html")
     (synopsis "Perform user authentication over D-Bus")
     (description "This package provides a D-Bus service which performs user
@@ -6189,6 +6213,9 @@ authentication on behalf of its clients.")
     (inputs (list signond))
     (arguments
      (list #:tests? #f                  ;no tests
+           #:modules '((guix build qt-build-system)
+                       ((guix build gnu-build-system) #:prefix gnu:)
+                       (guix build utils))
            #:phases
            #~(modify-phases %standard-phases
                (replace 'configure
@@ -6200,7 +6227,9 @@ authentication on behalf of its clients.")
                            (string-append "PREFIX=" #$output)
                            (string-append "LIBDIR=" #$output "/lib")
                            (string-append "SIGNON_PLUGINS_DIR=" #$output
-                                          "/lib/signon")))))))
+                                          "/lib/signon"))))
+               (replace 'build (assoc-ref gnu:%standard-phases 'build))
+               (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (synopsis "OAuth 2 plugin for signon")
     (description
      "This plugin for the Accounts-SSO SignOn daemon handles the OAuth

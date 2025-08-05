@@ -2163,11 +2163,14 @@ object library.")
        (sha256
         (base32 "1lgasyk8j4cl9178vci1dph63nks3cgwhf8y1d04z9dc8gg15dyn"))))
     (build-system cmake-build-system)
+    (arguments
+     '(#:configure-flags '("-DBUILD_STATIC_LIBRARY=ON"))) ; required to build tests
     (native-inputs
      (list bison flex gettext-minimal zlib))
     (inputs
      (list alsa-lib
            boost
+           cunit
            jack-1
            ladspa
            liblo
@@ -2847,6 +2850,11 @@ partial release of the General MIDI sound set.")
               (string-append "--ldflags=-Wl,-rpath=" #$output "/lib"))
            #:phases
            '(modify-phases %standard-phases
+              (add-after 'unpack 'fix-includes
+                (lambda _
+                  (substitute* "src/LV2/DSP/gx_common.h"
+                    (("#include <cstdlib>" all)
+                     (string-append all "\n#include <cstdint>")))))
               (add-after 'unpack 'python3.11-compatibility
                 (lambda _
                   (substitute* "wscript"
@@ -4004,8 +4012,10 @@ buffers, and audio capture.")
               (patches (search-patches "alure-dumb-2.patch"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:tests? #f ;no tests
-       #:configure-flags '("-DMODPLUG=ON")))
+     (list
+      #:cmake cmake-3.25
+      #:tests? #f ;no tests
+      #:configure-flags #~(list "-DMODPLUG=ON")))
     (native-inputs (list pkg-config))
     (inputs (list dumb
                   flac
@@ -4216,6 +4226,9 @@ link REQUIRED)"))))))
               "-DFORTIFY=ON"
               "-DLIBSCSYNTH=ON"
               "-DSC_EL=OFF")      ;scel is packaged individually as emacs-scel
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           ;; HOME must be defined otherwise supercollider throws a "ERROR:
@@ -4243,6 +4256,7 @@ link REQUIRED)"))))))
             (lambda _
               (system "Xvfb &")
               (setenv "DISPLAY" ":0")))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install))
           (add-before 'install 'install-ide
             (lambda _
               (let* ((ide #$output:ide)
@@ -4326,7 +4340,6 @@ using Guix System.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:cmake cmake-next
       #:build-type "Release"
       ;; The build system uses CMake modules features that are only available
       ;; when using Ninja.
@@ -6442,7 +6455,7 @@ as is the case with audio plugins.")
 (define-public carla
   (package
     (name "carla")
-    (version "2.4.1")
+    (version "2.5.10")
     (source
      (origin
        (method git-fetch)
@@ -6452,7 +6465,7 @@ as is the case with audio plugins.")
          (commit (string-append "v" version))))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "01ngkmfcxyg1bb4qmfvlkkjbx4lx62akxqhizl8zmqnhfcy4p9bx"))))
+        (base32 "1p7nvydnmg5l457w3089bwj1a5z509ydlpwvf19k86i348a1lm6v"))))
     (build-system gnu-build-system)
     (arguments
      (list #:tests? #f                  ; no "check" target

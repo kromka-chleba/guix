@@ -164,7 +164,6 @@
   #:use-module (gnu packages ncurses)
   #:use-module (gnu packages netpbm)
   #:use-module (gnu packages networking)
-  #:use-module (gnu packages ninja)
   #:use-module (gnu packages nss)
   #:use-module (gnu packages onc-rpc)
   #:use-module (gnu packages perl)
@@ -7900,9 +7899,8 @@ from the ntfs-3g package.  It is meant to be used in initrds.")
 
        ;; Upstream uses the "ninja" build system and encourage distros
        ;; to do the same for consistency.
-       #:configure-flags (list "-GNinja"
-
-                               ,@(if (%current-target-system)
+       #:generator "Ninja"
+       #:configure-flags (list ,@(if (%current-target-system)
                                      `((string-append
                                         "-DPKG_CONFIG_EXECUTABLE="
                                         (search-input-file
@@ -7912,18 +7910,9 @@ from the ntfs-3g package.  It is meant to be used in initrds.")
                                      '())
                                (string-append "-DRST2MAN_EXECUTABLE="
                                               (search-input-file
-                                               %build-inputs "/bin/rst2man.py")))
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'build
-           (lambda _
-             (invoke "ninja"
-                     "-j" (number->string (parallel-job-count)))))
-         (replace 'install
-           (lambda _
-             (invoke "ninja" "install"))))))
+                                               %build-inputs "/bin/rst2man.py")))))
     (native-inputs
-     (list ninja pkg-config python-wrapper python-docutils)) ;for 'rst2man'
+     (list pkg-config python-wrapper python-docutils)) ;for 'rst2man'
     (inputs
      (list libnl eudev))
     (home-page "https://github.com/linux-rdma/rdma-core")
@@ -8172,6 +8161,24 @@ not as a replacement for it.")
       #:configure-flags #~(list "-DINSTALL_KAUTH_HELPER=OFF"
                                 "-DQT6_BUILD=ON")
       #:qtbase qtbase
+      ;; The 'tst_models' and 'tst_callgraphgenerator' fail, with
+      ;; the later seemingly requiring sudo or access to the kernel
+      ;; trace points.
+      #:test-exclude
+       (string-append
+        "("
+        (string-join
+         ;; The 'tst_models' expected output doesn't exactly
+         ;; match.
+         '("tst_models"
+           ;; The 'tst_callgraphgenerator' perf invocation
+           ;; fails when run in the build container.
+           "tst_callgraphgenerator"
+           ;; The 'tst_perfparser' test requires sudo/access
+           ;; to the kernel scheduler trace points.
+           "tst_perfparser")
+         "|")
+        ")")
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-perfparser
@@ -8207,28 +8214,7 @@ not as a replacement for it.")
               (substitute* "src/perfrecord.cpp"
                 (("\"perf( )?\"" _ space)
                  (string-append "\"" (search-input-file inputs "bin/perf")
-                                (or space "") "\"")))))
-          (replace 'check
-            (lambda* (#:key tests? #:allow-other-keys)
-              (when tests?
-                ;; The 'tst_models' and 'tst_callgraphgenerator' fail, with
-                ;; the later seemingly requiring sudo or access to the kernel
-                ;; trace points.
-                (invoke "ctest" "-E"
-                        (string-append
-                         "("
-                         (string-join
-                          ;; The 'tst_models' expected output doesn't exactly
-                          ;; match.
-                          '("tst_models"
-                            ;; The 'tst_callgraphgenerator' perf invocation
-                            ;; fails when run in the build container.
-                            "tst_callgraphgenerator"
-                            ;; The 'tst_perfparser' test requires sudo/access
-                            ;; to the kernel scheduler trace points.
-                            "tst_perfparser")
-                          "|")
-                         ")"))))))))
+                                (or space "") "\""))))))))
     (native-inputs
      (list extra-cmake-modules
            vulkan-headers))
@@ -10771,7 +10757,9 @@ set as @code{LD_PRELOAD} to override the C library file system functions.")
               #$(string-append "-DFALCOSECURITY_LIBS_VERSION=" version))
       ;; Only the libsinsp test suite is run, as the one for libscap requires
       ;; elevated privileges.
-      #:test-target "run-unit-test-libsinsp"
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'disable-problematic-tests
@@ -10781,6 +10769,10 @@ set as @code{LD_PRELOAD} to override the C library file system functions.")
                 ;; exists in the build environment.
                 (("TEST_F\\(usergroup_manager_test, system_lookup)")
                  "TEST_F(usergroup_manager_test, DISABLED_system_lookup)"))))
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "run-unit-test-libsinsp" args)))
           (add-after 'install 'delete-src
             (lambda _
               (delete-file-recursively
@@ -11310,11 +11302,7 @@ modification of BPF objects on the system.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:configure-flags #~(list "-DBUILD_TESTING=ON")
-      ;; Only run the unit tests suite, as the other ones
-      ;; (runtime_tests, tools-parsing-test) require to run as
-      ;; 'root'.
-      #:test-target "bpftrace_test"
+      #:test-exclude "(runtime_tests|tools-parsing-test)"
       #:phases
       #~(modify-phases %standard-phases
           ;; This patch also fixes broken compilation due to improper detection
@@ -11336,8 +11324,28 @@ modification of BPF objects on the system.")
                                "runtime/call"
                                "procmon.cpp")
                   (("/bin/ls")
-                   (which "ls")))))))))
-    (native-inputs (list bison dwarves flex googletest xxd))
+                   (which "ls"))))))
+          (add-after 'unpack 'fix-paths
+            (lambda* (#:key inputs outputs #:allow-other-keys)
+              (substitute* '("tests/child.cpp")
+                (("/bin/sleep")
+                 (search-input-file inputs "bin/sleep")))))
+          (add-before 'check 'set-test-filter
+            (lambda _
+              (setenv "GTEST_FILTER"
+                      (string-join
+                       (list ; "-" disables all following tests
+                             "-ast.probe_name_uprobe"
+                             "bpftrace.add_probes_uprobe_wildcard_file"
+                             "bpftrace.add_probes_uprobe_wildcard_file_uprobe_multi"
+                             "bpftrace.add_probes_usdt_wildcard"
+                             "Parser.multiple_attach_points_kprobe"
+                             "Parser.uretprobe_offset"
+                             "semantic_analyser.builtin_functions"
+                             "semantic_analyser.call_func"
+                             "semantic_analyser.call_uaddr")
+                       ":")))))))
+    (native-inputs (list bison coreutils dwarves flex googletest xxd))
     (inputs (list bcc clang-15 elfutils libbpf libiberty cereal))
     (home-page "https://github.com/bpftrace/bpftrace")
     (synopsis "High-level tracing language for Linux eBPF")

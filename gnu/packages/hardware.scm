@@ -1149,6 +1149,9 @@ technology, such as head mounted displays with built in head tracking.")
        #:tests? #f ; doesn't have tests
        #:make-flags
        #~(list (string-append "INSTALL_ROOT=" #$output ))
+       #:modules '((guix build qt-build-system)
+                   ((guix build gnu-build-system) #:prefix gnu:)
+                   (guix build utils))
        #:phases
        #~(modify-phases %standard-phases
            (add-after 'unpack 'unbundle
@@ -1167,7 +1170,9 @@ technology, such as head mounted displays with built in head tracking.")
                                                "/bin/chmod")))))
            ;; Call qmake instead of configure to create a Makefile.
            (replace 'configure
-             (lambda _ (invoke "qmake" "PREFIX=/" "OpenRGB.pro"))))))
+             (lambda _ (invoke "qmake" "PREFIX=/" "OpenRGB.pro")))
+          (replace 'build (assoc-ref gnu:%standard-phases 'build))
+          (replace 'install (assoc-ref gnu:%standard-phases 'install)))))
     (inputs
      (list coreutils
            hidapi
@@ -1467,6 +1472,9 @@ management, attestation, encryption, and signing.")
     (arguments
      (list
       #:configure-flags #~(list "-DLIBCPUID_ENABLE_TESTS=ON")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'absolutize
@@ -1481,7 +1489,11 @@ management, attestation, encryption, and signing.")
               (when (and #$(target-linux?)
                          #$(target-arm?))
                 (substitute* "drivers/arm/linux/CMakeLists.txt"
-                  (("/usr/src/") (string-append #$output "/src/")))))))))
+                  (("/usr/src/") (string-append #$output "/src/"))))))
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "test" args))))))
     (inputs
      (append
        (if (target-linux?)
@@ -1519,7 +1531,7 @@ confused with the @code{cpuid} command line utility from package @code{cpuid}.")
         (base32 "1cc95ggs64jqq9lk5c8fm4nk6fdnv1x7lr3k4znamj0vv6w22bcd"))))
     (build-system meson-build-system)
     (native-inputs
-     (list cmake pkg-config))
+     (list cmake-minimal pkg-config))
     (inputs
      (list avahi libtirpc libxml2))
     (home-page "https://lxi-tools.github.io/")
@@ -1559,7 +1571,7 @@ your network, send SCPI commands, and receive responses.")
                 (("update-desktop-database") (which "true"))))))))
     (native-inputs
      (list bash-completion
-           cmake
+           cmake-minimal
            (list glib "bin")
            pkg-config
            python

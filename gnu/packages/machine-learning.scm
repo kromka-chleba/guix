@@ -683,7 +683,7 @@ Performance is achieved by using the LLVM JIT compiler.")
   (deprecated-package "guile-aiscm-next" guile-aiscm))
 
 (define-public llama-cpp
-  (let ((tag "b5013"))
+  (let ((tag "b6056"))
     (package
       (name "llama-cpp")
       (version (string-append "0.0.0-" tag))
@@ -695,7 +695,7 @@ Performance is achieved by using the LLVM JIT compiler.")
                (commit tag)))
          (file-name (git-file-name name tag))
          (sha256
-          (base32 "0s73dz871x53dr366lkzq19f677bwgma2ri8m5vhbfa9p8yp4p3r"))))
+          (base32 "1y9blrd7c8snazjmjkzj0148v328pigncvf1l9g1ih735b67zpd0"))))
       (build-system cmake-build-system)
       (arguments
        (list
@@ -730,11 +730,23 @@ Performance is achieved by using the LLVM JIT compiler.")
         #~(modify-phases %standard-phases
             (add-after 'unpack 'patch-paths
               (lambda* (#:key inputs #:allow-other-keys)
-                (substitute* "ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
-                 (("\"/bin/sh\"")
-                  (string-append "\"" (search-input-file inputs "/bin/sh") "\"")))))
+                (substitute* (format #f "~a~a"
+                                     "ggml/src/ggml-vulkan/vulkan-shaders/"
+                                     "vulkan-shaders-gen.cpp")
+                  (("\"/bin/sh\"")
+                   (string-append "\"" (search-input-file inputs "/bin/sh")
+                                  "\"")))))
             (add-after 'unpack 'fix-tests
               (lambda _
+                ;; test-thread-safety downloads ML model from network,
+                ;; cannot run in Guix build environment
+                (substitute* '("tests/CMakeLists.txt")
+                  (("llama_build_and_test\\(test-thread-safety.cpp.*")
+                   "")
+                  ;; error while handling argument "-m": expected value for
+                  ;; argument
+                  (("llama_build_and_test\\(test-arg-parser.cpp.*")
+                   ""))
                 ;; test-eval-callback downloads ML model from network, cannot
                 ;; run in Guix build environment
                 (substitute* '("examples/eval-callback/CMakeLists.txt")
@@ -751,11 +763,13 @@ Performance is achieved by using the LLVM JIT compiler.")
                                        (string-append (assoc-ref outputs "out")
                                                       "/bin")
                                        "^test-")))))))
-      (inputs (list curl glslang python python-gguf
-                    vulkan-headers vulkan-loader))
-      (native-inputs (list pkg-config shaderc bash-minimal))
+      (inputs
+       (list curl glslang python-gguf python-minimal openblas spirv-headers
+             spirv-tools vulkan-headers vulkan-loader))
+      (native-inputs
+       (list bash-minimal pkg-config shaderc))
       (propagated-inputs
-       (list python-numpy python-pytorch python-sentencepiece openblas))
+       (list python-numpy python-pytorch python-sentencepiece))
       (properties '((tunable? . #true))) ;use AVX512, FMA, etc. when available
       (home-page "https://github.com/ggml-org/llama.cpp")
       (synopsis "Port of Facebook's LLaMA model in C/C++")
@@ -800,9 +814,15 @@ independently to be able to run a LLaMA model.")
               "-DGGML_AVX2=OFF"
               "-DGGML_AVX512=OFF"
               "-DGGML_AVX512_VBMI=OFF"
-              "-DGGML_AVX512_VNNI=OFF")
+              "-DGGML_AVX512_VNNI=OFF"
+              "-DGGML_VULKAN=ON")
       #:phases
       #~(modify-phases %standard-phases
+          (add-after 'unpack 'patch-paths
+            (lambda* (#:key inputs #:allow-other-keys)
+              (substitute* "ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp"
+                (("\"/bin/sh\"")
+                 (string-append "\"" (search-input-file inputs "/bin/sh") "\"")))))
           #$@(if (not (target-64bit?))
                  '((add-after 'unpack 'skip-failing-tests
                      (lambda _
@@ -823,9 +843,10 @@ independently to be able to run a LLaMA model.")
                 (("\\$\\{VAD_TARGET\\} PROPERTIES LABELS \"base;en\"")
                  "${VAD_TEST} PROPERTIES DISABLED true")))))))
     (native-inputs
-     (list pkg-config))
+     (list pkg-config shaderc))
     (inputs
-     (list openblas sdl2 git))
+     (list openblas sdl2 git spirv-headers spirv-tools
+           vulkan-headers vulkan-loader))
     (synopsis "OpenAI's Whisper model in C/C++")
     (description
      "This package is a high-performance inference of OpenAI's
@@ -843,7 +864,7 @@ without dependencies, with
 @item C-style API
 @end itemize")
     (properties '((tunable? . #true))) ;use AVX512, FMA, etc. when available
-    (home-page "https://github.com/ggerganov/whisper.cpp")
+    (home-page "https://github.com/ggml-org/whisper.cpp/")
     (license license:expat)))
 
 (define-public mcl
@@ -4800,7 +4821,6 @@ TensorFlow.js, PyTorch, and MediaPipe.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:cmake cmake-next
       #:configure-flags
       ''("-DFBGEMM_LIBRARY_TYPE=shared")
       ;; Tests require AVX2 or AVX-512 instructions
@@ -4869,7 +4889,6 @@ the tensors contained therein.")
       (build-system cmake-build-system)
       (arguments
        (list
-        #:test-target "cpptest"
         #:configure-flags
         #~(list "-DUSE_OPENCL=ON"
                 "-DUSE_VULKAN=ON"
@@ -4889,11 +4908,11 @@ the tensors contained therein.")
         #:phases
         #~(modify-phases %standard-phases
             (replace 'check
-              (lambda* (#:key source test-target tests? #:allow-other-keys)
+              (lambda* (#:key source tests? #:allow-other-keys)
                 (when tests?
                   (begin
                     (invoke "make" "-j"
-                            (number->string (parallel-job-count)) test-target)
+                            (number->string (parallel-job-count)) "cpptest")
                     ;; Disable below the actual run of the tests because
                     ;; several fail due to platform variations (for example,
                     ;; fp16 tests fail because not supported on CPUs).
@@ -6365,7 +6384,6 @@ Jax, PyTorch and TensorFlow — with a seamless integration between them.")
     (build-system cmake-build-system)
     (arguments
      (list
-      #:test-target "ctranslate2_test"
       ;; XXX: mkl and openblas seem incompatible.
       #:configure-flags `(list "-DBUILD_TESTS=ON"
                                "-DWITH_ACCELERATE=OFF"
@@ -6374,7 +6392,16 @@ Jax, PyTorch and TensorFlow — with a seamless integration between them.")
                                "-DWITH_CUDA=OFF"
                                "-DWITH_CUDNN=OFF"
                                "-DWITH_MKL=OFF"
-                               "-DWITH_OPENBLAS=ON")))
+                               "-DWITH_OPENBLAS=ON")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "ctranslate2_test" args))))))
     (native-inputs (list libomp
                          cxxopts
                          spdlog

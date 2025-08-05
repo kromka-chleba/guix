@@ -257,7 +257,8 @@ continuous display of high-volume data.")
         (base32 "0acv6cis7gjpnzpnlxfrf6rzhwyqdm234p6r7vx7gl7ad3rp30ph"))))
     (build-system qt-build-system)
     (arguments
-     (list #:qtbase qtbase))
+     (list #:qtbase qtbase
+           #:tests? #f))
     (native-inputs
      (list extra-cmake-modules))
     (inputs
@@ -317,7 +318,8 @@ image editing capabilities.")
            gst-plugins-base
            libxml2))
     (arguments
-     `(#:configure-flags
+     `(#:tests? #f
+       #:configure-flags
        '( "-DPHONON_BUILD_PHONON4QT5=ON")))
     (home-page "https://community.kde.org/Phonon")
     (synopsis "Phonon backend which uses GStreamer")
@@ -341,7 +343,8 @@ Phonon-GStreamer is a backend based on the GStreamer multimedia library.")
                 "19f9wzff4nr36ryq18i6qvsq5kqxfkpqsmsvrarr8jqy8pf7k11k"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags
+     (list #:tests? #f
+           #:configure-flags
            #~(list "-DPHONON_BUILD_QT5=OFF"
                    "-DPHONON_BUILD_QT6=ON")))
     (native-inputs
@@ -827,15 +830,15 @@ propagate their changes to their respective configuration files.")
      (list qtdeclarative-5))
     (propagated-inputs '())
     (arguments
-     (list #:phases
+     (list #:test-exclude "(kconfigcore-kconfigtest|\
+kconfiggui-kstandardshortcutwatchertest)"
+           #:phases
            #~(modify-phases %standard-phases
-               (replace 'check
+               (add-before 'check 'pre-check
                  (lambda* (#:key tests? #:allow-other-keys)
                    (when tests? ;; kconfigcore-kconfigtest fails inconsistently!!
                      (setenv "HOME" (getcwd))
-                     (setenv "QT_QPA_PLATFORM" "offscreen")
-                     (invoke "ctest" "-E" "(kconfigcore-kconfigtest|\
-kconfiggui-kstandardshortcutwatchertest)")))))))))
+                     (setenv "QT_QPA_PLATFORM" "offscreen")))))))))
 
 (define-public kcoreaddons
   (package
@@ -1023,6 +1026,7 @@ as well as an API to create KDED modules.")
     (inputs
      (list avahi ; alternatively dnssd could be used
            qtbase))
+    (arguments (list #:tests? #f))
     (home-page "https://community.kde.org/Frameworks")
     (synopsis "Network service discovery using Zeroconf")
     (description "KDNSSD is a library for handling the DNS-based Service
@@ -1074,6 +1078,7 @@ infrastructure.")
            qt5compat))
     (native-inputs
      (list pkg-config extra-cmake-modules kdoctools))
+    (arguments (list #:tests? #f))
     (home-page "https://apps.kde.org/kgraphviewer/")
     (synopsis "Graphviz dot graph viewer for KDE")
     (description "KGraphViewer is a Graphviz DOT graph file viewer, aimed to
@@ -1230,6 +1235,7 @@ translation scripting.")
        (sha256
         (base32 "1p766vi3xg07691dpac5wc4a1ynwnyb6iacv1q73j1ymrpvx65zf"))))
     (build-system cmake-build-system)
+    (arguments (list #:tests? #f))
     (native-inputs
      (list extra-cmake-modules pkg-config
            ;; for wayland-scanner
@@ -1283,6 +1289,13 @@ or user activity.")
                (base32
                 "0ac3k26xbl6kvchr9j8dmk51valwrbvim19729rypi7vp2ss2nnx"))))
     (build-system cmake-build-system)
+    (arguments
+     (list
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'check 'set-offscreen-display
+            (lambda _
+              (setenv "QT_QPA_PLATFORM" "offscreen"))))))
     (native-inputs
      (list extra-cmake-modules qttools))
     (inputs
@@ -1313,6 +1326,9 @@ of applications that follow the Kirigami Human Interface Guidelines.")
               (sha256
                (base32
                 "1q69b1qd2qs9hpwgw0y0ig93ag41l50dghribsnqhi0c9aklsn4b"))))
+    (arguments
+     ;; Tests require an OpenGL context
+     (list #:tests? #f))
     (native-inputs
      (list extra-cmake-modules qttools-5))
     (inputs
@@ -1611,7 +1627,8 @@ protocols used in KDE Plasma.")
            wayland
            wayland-protocols))
     (arguments
-     (list #:qtbase qtbase))
+     (list #:qtbase qtbase
+           #:tests? #f))
     (home-page "https://invent.kde.org/plasma/kwayland")
     (synopsis "Qt-style API to interact with the wayland client and server")
     (description "As the names suggest they implement a Client respectively a
@@ -2186,7 +2203,8 @@ uses a job-based interface to queue tasks and execute them in an efficient way."
      (list pkg-config extra-cmake-modules))
     (inputs
      (list libraw qtbase))
-    (arguments (list #:configure-flags
+    (arguments (list #:tests? #f
+                     #:configure-flags
                      #~(list #$(string-append
                                 "-DQT_MAJOR_VERSION="
                                 (version-major
@@ -2244,6 +2262,7 @@ decode RAW picture files.")
            kxmlgui-5
            qtdeclarative-5
            solid-5))
+    (arguments (list #:tests? #f))
     (home-page "https://community.kde.org/Frameworks")
     (synopsis "Core components for the KDE Activity concept")
     (description "KActivities provides the infrastructure needed to manage a
@@ -2785,6 +2804,7 @@ formats.")
      (list extra-cmake-modules qttools))
     (inputs
      (list libxkbcommon kcoreaddons knotifications kwidgetsaddons qtbase))
+    (arguments (list #:tests? #f))
     (home-page "https://community.kde.org/Frameworks")
     (synopsis "Widgets for showing progress of asynchronous jobs")
     (description "KJobWIdgets provides widgets for showing progress of
@@ -2824,6 +2844,7 @@ asynchronous jobs.")
                (base32
                 "1pgrd42wgd6ffy52mfs9ii1l87lvx772w4blr05p03z898fjzcfj"))))
     (build-system cmake-build-system)
+    (arguments (list #:tests? #f))
     (native-inputs
      (list extra-cmake-modules pkg-config qttools))
     (propagated-inputs (list qtdeclarative))
@@ -3166,7 +3187,10 @@ maintaining an index of the contents of your files.")
            kwindowsystem
            qtdeclarative
            solid))
-    (arguments (list #:qtbase qtbase))
+    (arguments
+     (list
+       #:tests? #f
+       #:qtbase qtbase))
     (home-page "https://invent.kde.org/plasma/plasma-activities")
     (synopsis "Core components for the KDE Activity System")
     (description "KActivities provides the infrastructure needed to manage a
@@ -3190,6 +3214,7 @@ with other frameworks.")
                (base32
                 "0kcbnajlmn6rf298x493sv8bjqh5966jzl1fyl7y3j1xk3mx6jq1"))))
     (build-system cmake-build-system)
+    (arguments (list #:tests? #f))
     (native-inputs
      (list extra-cmake-modules))
     (inputs
@@ -3494,6 +3519,7 @@ their settings.")
            kwidgetsaddons
            qtshadertools
            qtbase))
+    (arguments (list #:tests? #f))
     (home-page "https://community.kde.org/Frameworks")
     (synopsis "Integration of QML and KDE work spaces")
     (description "KDeclarative provides integration of QML and KDE work spaces.
@@ -3572,6 +3598,7 @@ that offer bindings to some of the Frameworks.")
                (base32
                 "1f0zjd0gigfd6rqlvnyg6yz5fjdkcvkh3srw7044nhhc0wns8xbh"))))
     (build-system cmake-build-system)
+    (arguments (list #:tests? #f))
     (native-inputs
      (list extra-cmake-modules kdoctools))
     (inputs
@@ -3704,7 +3731,10 @@ emoticons coming from different providers.")
            kwindowsystem
            libxkbcommon
            qtdeclarative))
-    (arguments (list #:qtbase qtbase))
+    (arguments
+     (list
+      #:tests? #f
+      #:qtbase qtbase))
     (home-page "https://community.kde.org/Frameworks")
     (synopsis "Global desktop keyboard shortcuts")
     (description "KGlobalAccel allows you to have global accelerators that are
@@ -3774,6 +3804,11 @@ window does not need focus for them to be activated.")
     (arguments
      (list #:phases
            #~(modify-phases %standard-phases
+               (add-after 'unpack 'enable-testing
+                 (lambda _
+                   (substitute* "CMakeLists.txt"
+                     (("if \\(BUILD_TESTING\\)" all)
+                      (string-append all "\n    enable_testing()")))))
                (add-before 'check 'check-setup
                  (lambda* (#:key inputs #:allow-other-keys)
                    (setenv "HOME" (getcwd))
@@ -3847,6 +3882,7 @@ in applications using the KDE Frameworks.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch-paths
@@ -4148,7 +4184,10 @@ KIO enabled infrastructure.")
            qtdeclarative
            syndication))
     (arguments
-     (list #:phases
+     (list ;; This failing test is run by the cmake-build-system phases but not
+           ;; by the gnu-build-system phases.
+           #:test-exclude "knewstuff-atticaprovidertest"
+           #:phases
            #~(modify-phases %standard-phases
                (add-before 'check 'check-setup
                  (lambda _ ; XDG_DATA_DIRS isn't set
@@ -4216,6 +4255,7 @@ specification.")
                (base32
                 "1d1rz0p270fwx84870kj7nih40kkxnpl3963mf52zs0xzkmkk6xb"))))
     (build-system cmake-build-system)
+    (arguments (list #:tests? #f))
     (native-inputs
      (list extra-cmake-modules))
     (inputs
@@ -4525,6 +4565,7 @@ typed.")
      (list kcrash kdbusaddons kdoctools ki18n qtbase qtdeclarative))
     (arguments
      (list
+      #:parallel-tests? #f
       #:phases
       #~(modify-phases %standard-phases
           (add-after 'unpack 'patch
@@ -4618,7 +4659,10 @@ types or handled by application specific code.")
                (base32
                 "16nynk0b1bmbi4fjyppfavnw1m6jkfwnpvsnm4zvrdfwwgg7yf7d"))))
     (build-system qt-build-system)
-    (arguments (list #:qtbase qtbase))
+    (arguments
+     (list
+      #:qtbase qtbase
+      #:tests? #f))
     (native-inputs (list extra-cmake-modules qttools))
     (inputs (list kwindowsystem libxkbcommon))
     (home-page "https://community.kde.org/Frameworks")
@@ -5211,8 +5255,7 @@ script engines.")
       qtdeclarative
       prison))
     (arguments
-     (list #:tests? #f ;; seem to require network; don't find QTQuick components
-           #:configure-flags #~'("-DBUILD_TESTING=OFF"))) ; not run anyway
+     (list #:tests? #f)) ;; seem to require network; don't find QTQuick components
     (home-page "https://community.kde.org/Frameworks")
     (synopsis "Offers available actions for a specific purpose")
     (description "This framework offers the possibility to create integrate
@@ -5250,9 +5293,7 @@ need.")
       qtbase-5
       qtdeclarative-5))
     (arguments
-     (list #:tests? #f ;; seem to require network; don't find QTQuick components
-           ;; not run anyway
-           #:configure-flags #~'("-DBUILD_TESTING=OFF")))))
+     (list #:tests? #f)))) ;; seem to require network; don't find QTQuick components
 
 (define-public ktextaddons
   (package

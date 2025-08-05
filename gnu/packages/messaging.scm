@@ -414,17 +414,12 @@ conferencing.")
     (arguments
      `(#:configure-flags (list "-DBUILD_EXAMPLES=false"
                                "-DWITH_GSTREAMER=true")
-       #:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "ctest" "-E"
-                       (string-join ;; These tests use the network.
-                        (list "tst_qxmppiceconnection"
-                              "tst_qxmppcallmanager"
-                              "tst_qxmpptransfermanager")
-                        "|"))))))))
+       #:test-exclude
+        (string-join ;; These tests use the network.
+         (list "tst_qxmppiceconnection"
+               "tst_qxmppcallmanager"
+               "tst_qxmpptransfermanager")
+         "|")))
     (native-inputs
      (list pkg-config))
     (inputs
@@ -574,8 +569,8 @@ your private keys, no previous conversation is compromised.")
              (base32
               "0z5p03vk15i6h870azfjgyfgxhv31q2vq6rfhnybrnkxq2wqzwhk"))))
    (arguments
-    `(;; Required for proper linking and for tests to run.
-      #:configure-flags '("-DBUILD_SHARED_LIBS=on" "-DBUILD_TESTING=1")))
+    `(;; Required for proper linking.
+      #:configure-flags '("-DBUILD_SHARED_LIBS=on")))
    (build-system cmake-build-system)
    (inputs (list ;; Required for tests:
                  check openssl))
@@ -633,9 +628,10 @@ by Dino to provide OMEMO support.")))
         (git-file-name name version))
        (sha256
         (base32 "0b02b9flri374f8aw6xfz7mm9s57rb7393r8mdphv7kcsf76i7i5"))))
-    (build-system cmake-build-system)
+    (build-system gnu-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
+     `(#:test-target "test"
+       #:phases (modify-phases %standard-phases
                   (replace 'configure
                     (lambda* (#:key outputs #:allow-other-keys)
                       (let ((out (assoc-ref outputs "out")))
@@ -665,15 +661,17 @@ It implements the necessary interfaces using @code{libgcrypt} and
         (git-file-name name version))
        (sha256
         (base32 "1q3vyj8zk3vm0a4v6w8qya5dhk2yw04bga8799a0zl6907nf122k"))))
-    (build-system cmake-build-system)
+    (build-system gnu-build-system)
     (arguments
-     `(#:phases (modify-phases %standard-phases
-                  (replace 'configure
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let ((out (assoc-ref outputs "out")))
-                        (setenv "CC" "gcc")
-                        (setenv "PREFIX" out)))))
-       #:parallel-tests? #f))
+     (list
+      #:parallel-tests? #f
+      #:test-target "test"
+      #:phases #~(modify-phases %standard-phases
+                   (replace 'configure
+                     (lambda* (#:key outputs #:allow-other-keys)
+                       (let ((out (assoc-ref outputs "out")))
+                         (setenv "CC" "gcc")
+                         (setenv "PREFIX" out)))))))
     (native-inputs (list cmocka pkg-config))
     (inputs (list glib libgcrypt minixml sqlite))
     (synopsis "OMEMO C library")
@@ -1149,7 +1147,8 @@ control of your private keys, no previous conversation is compromised.")
                 "06bb6c2nciwbknfschxd2fjkpigd6i0zgwl6jiz5lm7gcadssrdy"))))
     (build-system cmake-build-system)
     (arguments
-     `(#:configure-flags
+     `(#:tests? #f
+       #:configure-flags
        (list "-DWANT_CYRUS=ON"
              "-DWANT_I18N=ON"
              "-DWANT_PERL=ON"
@@ -2406,7 +2405,6 @@ notifications, and Python scripting support.")
      (list olm openssl qtkeychain-qt6 qtmultimedia))
     (arguments
      (list #:qtbase qtbase
-           #:cmake cmake-next
            #:configure-flags
            #~(list "-DBUILD_TESTING=ON"
                    "-DBUILD_SHARED_LIBS=ON")
@@ -2823,10 +2821,11 @@ support for high performance Telegram Bot creation.")
         (git-file-name name version))
        (sha256
         (base32 "1ipd9gwh04wbqv6c10yxi02lc2yjsr02hwjycgxhl4r9x8b33psd"))))
-    (build-system cmake-build-system)
+    (build-system gnu-build-system)
     (arguments
      (list
       #:parallel-tests? #f
+      #:test-target "test"
       #:phases
       #~(modify-phases %standard-phases
           (replace 'configure
@@ -2879,11 +2878,18 @@ asynchronicity.")
                (base32
                 "06y3mh1d1mks6d0ynxp3980g712nkf8l5nyljpybsk326b246hg9"))))
    (arguments
-    `(#:test-target "tests"
-      #:phases
-      (modify-phases %standard-phases
-        (add-after 'unpack 'change-directory
-          (lambda _ (chdir "cpp"))))))
+    (list
+     #:modules '((guix build cmake-build-system)
+                 ((guix build gnu-build-system) #:prefix gnu:)
+                 (guix build utils))
+     #:phases
+     #~(modify-phases %standard-phases
+         (add-after 'unpack 'change-directory
+           (lambda _ (chdir "cpp")))
+         (replace 'check
+           (lambda* (#:rest args)
+             (apply (assoc-ref gnu:%standard-phases 'check)
+                    #:test-target "tests" args))))))
    (build-system cmake-build-system)
    (native-inputs
     (list googletest pkg-config))
@@ -2899,7 +2905,7 @@ validating international phone numbers.")
 (define-public chatty
   (package
     (name "chatty")
-    (version "0.6.7")
+    (version "0.7.3")
     (source (origin
               (method git-fetch)
               (uri (git-reference
@@ -2914,7 +2920,7 @@ validating international phone numbers.")
               (file-name (git-file-name name version))
               (sha256
                (base32
-                "11q07vjrrjf3k00kk41vm79brpq0qigz7l328br3g0li979kz32v"))))
+                "0d6z0mgl1xx384ph5lw3p5rpg3w1ninzyxjjjas3z8i7fyk47inf"))))
     (build-system meson-build-system)
     (arguments
      '(#:glib-or-gtk? #t
@@ -2941,7 +2947,7 @@ validating international phone numbers.")
            xorg-server-for-tests))
     (inputs
      (list feedbackd
-           folks-with-libsoup2
+           folks
            gnome-desktop
            gsettings-desktop-schemas
            gspell
@@ -2956,7 +2962,7 @@ validating international phone numbers.")
            purple-mm-sms
            sqlite))
     (propagated-inputs
-     (list adwaita-icon-theme evolution-data-server-3.44))
+     (list adwaita-icon-theme evolution-data-server))
     (synopsis "Mobile client for XMPP and SMS messaging")
     (description "Chatty is a chat program for XMPP and SMS.  It works on mobile
 as well as on desktop platforms.  It's based on libpurple and ModemManager.")
@@ -2977,6 +2983,7 @@ as well as on desktop platforms.  It's based on libpurple and ModemManager.")
     (build-system cmake-build-system)
     (arguments
      (list
+      #:tests? #f
       #:configure-flags
       #~(list "-DWITH_WEBSOCKETS=ON")))
     (inputs (list openssl libxslt libwebsockets-for-mosquitto))

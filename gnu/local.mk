@@ -50,7 +50,7 @@
 # Copyright © 2022 Daniel Meißner <daniel.meissner-i4k@ruhr-uni-bochum.de>
 # Copyright © 2022, 2024, 2025 Remco van 't Veer <remco@remworks.net>
 # Copyright © 2022, 2024, 2025 Artyom V. Poptsov <poptsov.artyom@gmail.com>
-# Copyright © 2022, 2023 John Kehayias <john.kehayias@protonmail.com>
+# Copyright © 2022, 2023, 2025 John Kehayias <john.kehayias@protonmail.com>
 # Copyright © 2022 muradm <mail@muradm.net>
 # Copyright © 2022 Hilton Chain <hako@ultrarare.space>
 # Copyright © 2022 Alex Griffin <a@ajgrf.com>
@@ -306,6 +306,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/flashing-tools.scm		\
   %D%/packages/flex.scm				\
   %D%/packages/fltk.scm				\
+  %D%/packages/fluidplug.scm			\
   %D%/packages/fonts.scm			\
   %D%/packages/fontutils.scm			\
   %D%/packages/fpga.scm				\
@@ -541,6 +542,7 @@ GNU_SYSTEM_MODULES =				\
   %D%/packages/orange.scm			\
   %D%/packages/orpheus.scm			\
   %D%/packages/ots.scm				\
+  %D%/packages/oyacc.scm			\
   %D%/packages/package-management.scm		\
   %D%/packages/pantheon.scm			\
   %D%/packages/parallel.scm			\
@@ -1075,7 +1077,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/binutils-loongson-workaround.patch	\
   %D%/packages/patches/binutils-mingw-w64-deterministic.patch	\
   %D%/packages/patches/binutils-2.41-fix-cross.patch		\
-  %D%/packages/patches/bloomberg-bde-cmake-module-path.patch	\
   %D%/packages/patches/bloomberg-bde-tools-fix-install-path.patch	\
   %D%/packages/patches/boolector-find-googletest.patch	\
   %D%/packages/patches/boost-fix-duplicate-definitions-bug.patch	\
@@ -1084,6 +1085,7 @@ dist_patch_DATA =						\
   %D%/packages/patches/byobu-writable-status.patch		\
   %D%/packages/patches/bubblewrap-fix-locale-in-tests.patch	\
   %D%/packages/patches/busybox-add-missing-sha-NI-guard.patch	\
+  %D%/packages/patches/busybox-no-cbq.patch			\
   %D%/packages/patches/c2rust-ast-exporter-local-search.patch	\
   %D%/packages/patches/cadical-add-shared-library.patch		\
   %D%/packages/patches/calibre-no-updates-dialog.patch		\
@@ -1146,7 +1148,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/clog-fix-shared-build.patch		\
   %D%/packages/patches/clucene-gcc-14.patch			\
   %D%/packages/patches/clucene-pkgconfig.patch			\
-  %D%/packages/patches/cmake-curl-certificates-3.24.patch	\
   %D%/packages/patches/coda-use-system-libs.patch		\
   %D%/packages/patches/cogl-fix-double-free.patch		\
   %D%/packages/patches/collectd-5.11.0-noinstallvar.patch		\
@@ -1715,7 +1716,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/kio-search-smbd-on-PATH.patch		\
   %D%/packages/patches/kismet-unbundle-boost.patch		\
   %D%/packages/patches/kitty-fix-wayland-protocols.patch	\
-  %D%/packages/patches/kiwix-desktop-newer-libkiwix.patch	\
   %D%/packages/patches/kmod-module-directory.patch		\
   %D%/packages/patches/kmscon-runtime-keymap-switch.patch	\
   %D%/packages/patches/knot-remove-runtime-deps.patch		\
@@ -2250,8 +2250,6 @@ dist_patch_DATA =						\
   %D%/packages/patches/restic-0.9.6-fix-tests-for-go1.15.patch	\
   %D%/packages/patches/rng-tools-revert-build-randstat.patch	\
   %D%/packages/patches/rocclr-5.6.0-enable-gfx800.patch		\
-  %D%/packages/patches/rocm-bandwidth-test-5.5.0-fix-includes.patch	\
-  %D%/packages/patches/rocm-comgr-3.1.0-dependencies.patch 	\
   %D%/packages/patches/rocm-opencl-runtime-4.3-noclinfo.patch 	\
   %D%/packages/patches/rottlog-direntry.patch 			\
   %D%/packages/patches/ruby-actionpack-remove-browser-tests.patch	\

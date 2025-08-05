@@ -978,7 +978,8 @@ number generator")
         (base32 "0ldqhvmj9wl0yp3hz675zbnq69lw533s0ahy9bbdxxnj5gjb86gw"))))
     (build-system cmake-build-system)
     (arguments
-     (list #:configure-flags
+     (list #:parallel-tests? #f
+           #:configure-flags
            #~(list "-DCMAKE_C_FLAGS=-Wno-error=calloc-transposed-args"
                    "-DUSE_SHARED_MBEDTLS_LIBRARY=ON"
                    "-DUSE_STATIC_MBEDTLS_LIBRARY=OFF")
@@ -1230,9 +1231,18 @@ ciphers such as ChaCha20, Curve25519, NTRU, and Blake2b.")
     (build-system cmake-build-system)
     (native-inputs (list perl))
     (arguments
-     '(#:test-target "run_minimal_tests"
-       #:configure-flags
-       '("-DBUILD_SHARED_LIBS=ON" "-DDISABLE_GO=ON")))
+     (list
+      #:configure-flags
+      #~(list "-DBUILD_SHARED_LIBS=ON" "-DDISABLE_GO=ON")
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check)
+                     #:test-target "run_minimal_tests" args))))))
     (synopsis "General purpose cryptographic library")
     (description "AWS libcrypto (aws-lc) contains portable C implementations
 of algorithms needed for TLS and common applications, and includes optimized

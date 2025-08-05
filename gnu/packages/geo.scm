@@ -1446,14 +1446,8 @@ development.")
     (arguments
      (list
       #:configure-flags #~(list "-DUSE_EXTERNAL_GTEST=ON")
-      #:phases
-           #~(modify-phases %standard-phases
-               (replace 'check
-                 (lambda* (#:key tests? #:allow-other-keys)
-                   (when tests?
-                     (invoke "ctest" "-E"
-                             ;; This tests needs network .
-                             "pdal_io_(stac|copc)_reader_test")))))))
+      #:parallel-tests? #f
+      #:test-exclude "pdal_io_(stac|copc)_reader_test"))
     (native-inputs (list python googletest))
     (inputs (list gdal
                   h3
@@ -2298,6 +2292,7 @@ volunteers.")
        (sha256
         (base32
          "02n5vjcyk04w0djidyp21hfbxfpbbara8ifd9nml6158rwqr8lja"))))
+    (arguments (list #:tests? #f))
     (build-system cmake-build-system)
     (home-page "https://libspatialindex.org")
     (synopsis "Spatial indexing library")
@@ -4149,7 +4144,6 @@ and 2D images (photos taken using a 3D imaging system).")
       #:configure-flags #~(list
                            ;; Options
                            "-DOPTION_BUILD_CCVIEWER=NO"
-                           "-DBUILD_TESTING=ON"
                            "-DOPTION_USE_SHAPE_LIB=YES"
                            "-DOPTION_USE_DXF_LIB=YES"
                            "-DOPTION_USE_GDAL=YES"

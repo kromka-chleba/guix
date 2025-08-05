@@ -165,6 +165,7 @@
 ;;; Copyright © 2025 Nguyễn Gia Phong <mcsinyx@disroot.org>
 ;;; Copyright © 2025, Cayetano Santos <csantosb@inventati.org>
 ;;; Copyright © 2025 Jake Forster <jakecameron.forster@gmail.com>
+;;; Copyright © 2025 Luis Felipe López Acevedo <sirgazil@zoho.com>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -458,7 +459,7 @@ compare against a vast section of other version formats.")
                (("^minimum-version =.*") "")))))))
     (propagated-inputs (list python-numpy))
     (native-inputs
-     (list cmake pybind11 python-pytest python-scikit-build-core))
+     (list cmake-minimal pybind11 python-pytest python-scikit-build-core))
     (home-page "https://github.com/scikit-hep/awkward-1.0")
     (synopsis "CPU kernels and compiled extensions for Awkward Array")
     (description "Awkward CPP provides precompiled routines for the awkward
@@ -884,6 +885,24 @@ comparison operators, as defined in the original
 processes, in parallel, in the console, with an interactive TUI.")
     (license license:expat)))
 
+(define-public python-orderly-set
+  (package
+    (name "python-orderly-set")
+    (version "5.5.0")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "orderly_set" version))
+       (sha256
+        (base32 "1kp64m0nabhhb0zxr4f8idrmniraahnfwq41gx7adbyqwk48awg8"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-flit-core python-pytest))
+    (home-page "https://github.com/seperman/orderly-set")
+    (synopsis "Multiple implementations of Ordered Set")
+    (description "Orderly Set is a package containing multiple implementations
+of Ordered Set.")
+    (license license:expat)))
+
 (define-public python-pastel
   (package
     (name "python-pastel")
@@ -929,6 +948,42 @@ your terminal.")
      "@code{pyxDamerauLevenshtein} implements the Damerau-Levenshtein (DL)
 edit distance algorithm for Python in Cython for high performance.")
     (license license:bsd-3)))
+
+(define-public python-safety-schemas
+  (package
+    (name "python-safety-schemas")
+    (version "0.0.14")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "safety_schemas" version))
+       (sha256
+        (base32 "0smgszbd3nb7jh61cgpycqhcvfwwdyaai5amw8mmf6g9b5x3z5a9"))))
+    (build-system pyproject-build-system)
+    (arguments
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; These tests are failing for unknown reasons.
+                    ;; (AssertionError).
+                    (list "not test_model[ConfigModel-ConfigModel]"
+                          "test_model[MetadataModel-MetadataModel]"
+                          "test_model[PolicyFileModel-PolicyFileModel]"
+                          "test_model[ProjectModel-ProjectModel]"
+                          "test_model[ReportModel-ReportModel]")
+                    " and not "))))
+    (propagated-inputs (list python-dparse
+                             python-packaging
+                             python-pydantic-2
+                             python-ruamel.yaml
+                             python-typing-extensions))
+    (native-inputs (list python-deepdiff python-hatchling python-pytest))
+    ;; Source code is not yet published outside of PyPI:
+    ;; https://github.com/pyupio/safety/issues/494
+    (home-page "https://pypi.org/project/safety-schemas/")
+    (synopsis "Schemas for Safety tools")
+    (description "This package contains models and schemas used by Safety.")
+    (license license:expat)))
 
 (define-public python-senf
   (package
@@ -1174,6 +1229,37 @@ making it easier to detect when code has been copied with or without
 attribution.  It uses similarity detection algorithms to compare code files
 and highlight matching sections.")
     (license license:agpl3+)))
+
+(define-public python-wheel-filename
+  (package
+    (name "python-wheel-filename")
+    (version "1.4.2")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "wheel_filename" version))
+       (sha256
+        (base32 "1zcqq8mydjjrk8x5xlm53bavs51jm40nz42a7500pd6bbm31r2c7"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-hatchling python-pytest python-pytest-cov))
+    (home-page "https://github.com/wheelodex/wheel-filename")
+    (synopsis "Parse wheel filenames")
+    (description
+     "This software allows you to verify
+@url{https://packaging.python.org/en/latest/specifications/binary-distribution-format/, wheel}
+filenames and parse them into their component fields.
+
+This package adheres strictly to the standard, with the following
+exceptions:
+
+@itemize @bullet
+@item
+Version components may be any sequence of the relevant set of
+characters; they are not verified for PEP 440 compliance.
+@item
+The @file{.whl} file extension is matched case-insensitively.
+@end itemize")
+    (license license:expat)))
 
 (define-public python-xmldiff
   (package
@@ -23099,23 +23185,16 @@ implementation has been adapted, improved, and fixed from Molten.")
 (define-public python-shellingham
   (package
     (name "python-shellingham")
-    (version "1.5.1")
+    (version "1.5.4")
     (source
      (origin
        (method url-fetch)
        (uri (pypi-uri "shellingham" version))
        (sha256
-        (base32 "0iawv24xx6vhwbhqlxyyg901f8pf6abqyfg0711v1bvlipx83g21"))))
-    (build-system python-build-system)
-    (arguments
-     '(#:phases
-       (modify-phases %standard-phases
-         (replace 'check
-           (lambda* (#:key tests? #:allow-other-keys)
-             (when tests?
-               (invoke "python" "-m" "pytest" "-v")))))))
+        (base32 "1ph46hv920ha9clwxgrllbrphh0ww4v4pjmkbb9mnzj8kmrs1g4d"))))
+    (build-system pyproject-build-system)
     (native-inputs
-     (list python-pytest python-pytest-mock))
+     (list python-pytest python-pytest-mock python-setuptools python-wheel))
     (home-page "https://github.com/sarugaku/shellingham")
     (synopsis "Tool to detect surrounding shell")
     (description
@@ -24663,28 +24742,28 @@ JSON) codec.")
 (define-public python-nltk
   (package
     (name "python-nltk")
-    (version "3.6.2")
-    (source (origin
-              (method url-fetch)
-              (uri (pypi-uri "nltk" version ".zip"))
-              (sha256
-               (base32
-                "1sq32lwgij9h8rsksymnxxr7bqfw3vgx5ijw4azbj6k2xnmmdmap"))))
-    (build-system python-build-system)
+    (version "3.9.1")
+    (source
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "nltk" version))
+       (sha256
+        (base32 "0s78gayd45vl1wvpa0a44ydij6ybb7xfar8jz2j8kgg47nyjglc7"))))
+    (build-system pyproject-build-system)
     (arguments
-     '(;; The tests require some extra resources to be downloaded.
-       ;; TODO Try packaging these resources.
-       #:tests? #f))
-    (propagated-inputs
-     (list python-click python-joblib python-regex python-tqdm))
-    (native-inputs
-     (list unzip))
-    (home-page "http://nltk.org/")
+     ;; Tests require some extra resources to be downloaded.
+     ;; TODO Try packaging these resources.
+     '(#:tests? #f))
+    (propagated-inputs (list python-click python-joblib python-regex
+                             python-tqdm))
+    (native-inputs (list python-setuptools python-wheel))
+    (home-page "https://www.nltk.org/")
     (synopsis "Natural Language Toolkit")
-    (description "It provides interfaces to over 50 corpora and lexical
-     resources such as WordNet, along with a suite of text processing libraries
-     for classification, tokenization, stemming, tagging, parsing, and semantic
-     reasoning, wrappers for natural language processing libraries.")
+    (description
+     "NLTK provides interfaces to over 50 corpora and lexical resources such as
+WordNet, along with a suite of text processing libraries for classification,
+tokenization, stemming, tagging, parsing, and semantic reasoning, wrappers for
+natural language processing libraries.")
     (license license:asl2.0)))
 
 (define-public python-pymongo
@@ -28615,35 +28694,21 @@ source bytes using the UTF-8 encoding and then rewrites Python 3.6 style
 (define-public python-typer
   (package
     (name "python-typer")
-    (version "0.6.1")
+    (version "0.16.0")
     (source
      (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://github.com/tiangolo/typer")
+             (url "https://github.com/fastapi/typer")
              (commit version)))
        (file-name (git-file-name name version))
        (sha256
-        (base32 "1knv353qhkl2imav3jfp6bgq47m8wkkqhq1dzmqg2sv8rsy7zgl7"))))
+        (base32 "1axd3840b2vipfp9l36cnh5ipbsladizmjadgsnpnk502qily7sq"))))
     (build-system pyproject-build-system)
     (arguments
      (list
-      #:test-flags
-      '(let ((disabled-tests (list "test_show_completion"
-                                   "test_install_completion")))
-         (list "-k" (string-append "not "
-                                   (string-join disabled-tests
-                                                " and not "))))
       #:phases
       #~(modify-phases %standard-phases
-          ;; Unfortunately, this doesn't seem to be enough to fix these two
-          ;; tests, but we'll patch this anyway.
-          (add-after 'unpack 'patch-shell-reference
-            (lambda _
-              (substitute* "tests/test_completion/test_completion.py"
-                (("\"bash\"") (string-append "\"" (which "bash") "\""))
-                (("\"/bin/bash\"")
-                 (string-append "\"" (which "bash") "\"")))))
           (add-before 'check 'pre-check
             (lambda* (#:key tests? #:allow-other-keys)
               (when tests?
@@ -28651,12 +28716,14 @@ source bytes using the UTF-8 encoding and then rewrites Python 3.6 style
                 ;; This is for completion tests
                 (with-output-to-file "/tmp/.bashrc"
                   (lambda _ (display "# dummy")))))))))
-    (propagated-inputs
-     (list python-click))
-    (native-inputs
-     (list python-coverage python-flit python-pytest python-rich
-           python-shellingham))
-    (home-page "https://github.com/tiangolo/typer")
+    (propagated-inputs (list python-click
+                             python-rich
+                             python-shellingham
+                             python-typing-extensions))
+    (native-inputs (list python-coverage ; this is required in tests
+                         python-pdm-backend
+                         python-pytest))
+    (home-page "https://github.com/fastapi/typer")
     (synopsis "Typer builds CLI based on Python type hints")
     (description
      "Typer is a library for building CLI applications.  It's based on Python
@@ -29459,23 +29526,28 @@ user-space file systems in Python.")
        ("catch" ,catch2-1)
        ("eigen" ,eigen)))
     (arguments
-     `(#:configure-flags
-       (list (string-append "-DCATCH_INCLUDE_DIR="
-                            (assoc-ref %build-inputs "catch")
-                            "/include/catch"))
-
-       #:phases (modify-phases %standard-phases
-                  (add-after 'install 'install-python
-                    (lambda* (#:key outputs #:allow-other-keys)
-                      (let ((out (assoc-ref outputs "out")))
-                        (with-directory-excursion "../source"
-                          (setenv "PYBIND11_USE_CMAKE" "yes")
-                          (invoke "python" "setup.py" "install"
-                                  "--single-version-externally-managed"
-                                  "--root=/"
-                                  (string-append "--prefix=" out)))))))
-
-       #:test-target "check"))
+     (list
+      #:configure-flags
+      #~(list (string-append "-DCATCH_INCLUDE_DIR="
+                           (assoc-ref %build-inputs "catch")
+                           "/include/catch"))
+      #:modules '((guix build cmake-build-system)
+                  ((guix build gnu-build-system) #:prefix gnu:)
+                  (guix build utils))
+      #:phases
+      #~(modify-phases %standard-phases
+          (replace 'check
+            (lambda* (#:rest args)
+              (apply (assoc-ref gnu:%standard-phases 'check) args)))
+          (add-after 'install 'install-python
+            (lambda* (#:key outputs #:allow-other-keys)
+              (let ((out (assoc-ref outputs "out")))
+                (with-directory-excursion "../source"
+                  (setenv "PYBIND11_USE_CMAKE" "yes")
+                  (invoke "python" "setup.py" "install"
+                          "--single-version-externally-managed"
+                          "--root=/"
+                          (string-append "--prefix=" out)))))))))
     (home-page "https://github.com/pybind/pybind11/")
     (synopsis "Seamless operability between C++11 and Python")
     (description
@@ -31744,7 +31816,7 @@ Its algorithms are based on the kakasi library, which is written in C.")
      (list pkg-config
            python-meson-python
            meson
-           ninja
+           ninja/pinned
            patchelf
            python-setuptools
            python-sphinx
@@ -34249,19 +34321,16 @@ dates in almost any string formats commonly found on web pages.")
 (define-public python-dparse
   (package
     (name "python-dparse")
-    (version "0.5.1")
+    (version "0.6.4")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "dparse" version))
-        (sha256
-          (base32
-            "0rzkg3nymsbwdjc0ms2bsajkda02jipwyp3xk97qj71f21lz3dd1"))))
-    (build-system python-build-system)
-    (native-inputs
-      (list python-pytest))
-    (propagated-inputs
-      (list python-packaging python-pyyaml python-toml))
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "dparse" version))
+       (sha256
+        (base32 "06i069hij4i53hikrsv332h2ibwfchr42b68hii6rhzdwcwrrclh"))))
+    (build-system pyproject-build-system)
+    (native-inputs (list python-hatchling python-pytest))
+    (propagated-inputs (list python-packaging python-toml))
     (home-page "https://github.com/pyupio/dparse")
     (synopsis "Parser for Python dependency files")
     (description "This package provides a parser for Python dependency files.")
@@ -34296,31 +34365,55 @@ facility for filtering those results.")
 (define-public python-safety
   (package
     (name "python-safety")
-    (version "1.9.0")
+    (version "3.6.0")
     (source
-      (origin
-        (method url-fetch)
-        (uri (pypi-uri "safety" version))
-        (sha256
-          (base32
-            "1j801xsxfzavjbzhhc934awvnk1b7jc0qsw3jp3ys0241mlj1gr3"))))
-    (build-system python-build-system)
+     (origin
+       (method url-fetch)
+       (uri (pypi-uri "safety" version))
+       (sha256
+        (base32 "1qzplv044yfr8w41h0qmjc8lj2admk029azsqbax70wzd4kzh858"))))
+    (build-system pyproject-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (add-after 'unpack 'disable-tests
-           (lambda _
-             (substitute* "tests/test_safety.py"
-               ;; requires network
-               (("def test_check_live") "def _test_check_live"))
-             #t)))))
-    (propagated-inputs
-      (list python-click python-dparse python-packaging python-requests))
+     (list
+      #:test-flags
+      #~(list "-k" (string-join
+                    ;; test_announcements fails with AssertionError.
+                    (list "not test_announcements_if_is_not_tty"
+                          ;; Tests below need a network connection.
+                          "test_check_live"
+                          "test_check_live_cached"
+                          "test_get_packages_licenses_without_api_key")
+                    " and not "))
+      #:phases #~(modify-phases %standard-phases
+                   (add-before 'check 'set-home ; some tests run mkdir
+                     (lambda _
+                       (setenv "HOME" "/tmp"))))))
+    (native-inputs (list nss-certs-for-test python-hatchling python-pytest))
+    (propagated-inputs (list python-authlib
+                             python-click
+                             python-dparse
+                             python-filelock
+                             python-httpx
+                             python-jinja2
+                             python-marshmallow
+                             python-nltk
+                             python-packaging
+                             python-psutil
+                             python-pydantic-2
+                             python-requests
+                             python-ruamel.yaml
+                             python-safety-schemas
+                             python-tenacity
+                             python-tomli
+                             python-tomlkit
+                             python-typer
+                             python-typing-extensions))
     (home-page "https://github.com/pyupio/safety")
     (synopsis "Check installed dependencies for known vulnerabilities")
-    (description "Safety checks installed dependencies for known vulnerabilities.
+    (description
+     "Safety checks installed dependencies for known vulnerabilities.
 By default it uses the open Python vulnerability database Safety DB.")
-  (license license:expat)))
+    (license license:expat)))
 
 (define-public python-pypandoc
   (package
@@ -35500,7 +35593,7 @@ and frame grabber interface.")
      (list cmake-minimal
            gfortran
            git-minimal/pinned           ;for tests
-           ninja
+           ninja/pinned
            python-coverage
            python-cython
            python-hatchling
@@ -38770,26 +38863,31 @@ object, which can be useful if you want to force your objects into a table.")
 (define-public python-deepdiff
   (package
     (name "python-deepdiff")
-    (version "6.3.0")
+    (version "8.5.0")
     (source (origin
               (method url-fetch)
               (uri (pypi-uri "deepdiff" version))
               (sha256
                (base32
-                "0i5nnb3nppi2vgbhiakpxiagyhx7l1f50hzcl8fcgica4bkz2fva"))))
+                "1l8wvirgif61cqwsqzd3kf8slzlrjnffmqxnrfwxak4dz8lkbpd4"))))
     (build-system pyproject-build-system)
-    (propagated-inputs (list python-ordered-set))
+    (arguments
+     ;; Ignore Polars test (not packaged).
+     (list #:test-flags #~(list "-k" "not test_polars")))
+    (propagated-inputs (list python-click ; for CLI
+                             python-pyyaml ; for CLI
+                             python-orderly-set
+                             python-orjson)) ; for optimization
     (native-inputs
-     (list python-click
-           python-dateutil
+     (list python-flit-core
            python-jsonpickle
-           python-mock
            python-numpy
+           python-pandas
+           python-pydantic-2
            python-pytest
-           python-pyyaml
-           python-setuptools
-           python-wheel
-           python-toml))
+           python-pytest-benchmark
+           python-pytz
+           python-tomli-w))
     (home-page "https://github.com/seperman/deepdiff")
     (synopsis "Deep difference and search of any Python object/data")
     (description
