@@ -522,7 +522,7 @@ of the ssh protocol.  It was originally developed to address performance issues 
                          pkg-config
                          which
                          guile-3.0)) ;needed when cross-compiling.
-    (inputs (list guile-3.0 libssh libgcrypt))
+    (inputs (list guile-3.0 libssh/sshsig libgcrypt))
     (synopsis "Guile bindings to libssh")
     (description
      "Guile-SSH is a library that provides access to the SSH protocol for
