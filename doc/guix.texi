@@ -22873,6 +22873,11 @@ level values are the @samp{scanner}, @samp{parser}, @samp{eval},
 @samp{netlink}, @samp{mnl}, @samp{proto-ctx}, @samp{segtree} or
 @samp{all} symbols.
 
+@item @code{flush?} (default: @code{#t}) (type: boolean)
+Whether to flush the ruleset when the service is stopped.  To atomically
+flush (i.e. swap) the ruleset instead, set this to @code{#f} and prepend
+@code{flush ruleset} to the @code{ruleset}.
+
 @item @code{ruleset} (type: file-like)
 A file-like object containing the complete nftables ruleset.  The
 default ruleset rejects all incoming connections except those to TCP

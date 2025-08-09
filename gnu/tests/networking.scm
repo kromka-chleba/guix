@@ -6,6 +6,7 @@
 ;;; Copyright © 2021 Maxime Devos <maximedevos@telenet.be>
 ;;; Copyright © 2021, 2023-2024 Ludovic Courtès <ludo@gnu.org>
 ;;; Copyright © 2025 Maxim Cournoyer <maxim@guixotic.coop>
+;;; Copyright © 2025 Herman Rimm <herman@rimm.ee>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -1114,6 +1115,7 @@ COMMIT
    (service nftables-service-type
             (nftables-configuration
              (debug-levels '(all))
+             (flush? #f)
              (ruleset ruleset)))))
 
 (define %default-nftables-ruleset-for-tests
@@ -1174,6 +1176,14 @@ table inet filter {
 
           (test-runner-current (system-test-runner #$output))
           (test-begin "nftables")
+
+          ;; This test silently freezes up at the login prompt.
+          ;; (test-assert "nftables service is stopped"
+          ;;   (marionette-eval
+          ;;    '(begin
+          ;;       (use-modules (gnu services herd))
+          ;;       (stop-service 'nftables))
+          ;;    marionette))
 
           (test-error "nftables blocks access to inetd echo service"
                       'misc-error

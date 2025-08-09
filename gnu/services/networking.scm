@@ -24,6 +24,7 @@
 ;;; Copyright © 2023 muradm <mail@muradm.net>
 ;;; Copyright © 2024 Nigko Yerden <nigko.yerden@gmail.com>
 ;;; Copyright © 2025 45mg <45mg.writes@gmail.com>
+;;; Copyright © 2025 Herman Rimm <herman@rimm.ee>
 ;;;
 ;;; This file is part of GNU Guix.
 ;;;
@@ -2634,6 +2635,11 @@ table inet filter {
    "A list of debug levels, for enabling debugging output.  Valid debug level values
 are the @samp{scanner}, @samp{parser}, @samp{eval}, @samp{netlink},
 @samp{mnl}, @samp{proto-ctx}, @samp{segtree} or @samp{all} symbols.")
+  (flush?
+   (boolean #t)
+   "Whether to flush the ruleset when the service is stopped.  To
+atomically flush (i.e. swap) the ruleset instead, set this to @code{#f}
+and prepend @code{flush ruleset} to the @code{ruleset}.")
   (ruleset
    (file-like %default-nftables-ruleset)
    "A file-like object containing the complete nftables ruleset.  The default
@@ -2642,7 +2648,7 @@ connections from the loopback interface are allowed."))
 
 (define (nftables-shepherd-service config)
   (match-record config <nftables-configuration>
-                (package debug-levels ruleset)
+                (package debug-levels flush? ruleset)
     (let ((nft (file-append package "/sbin/nft")))
       (shepherd-service
        (documentation "Packet filtering and classification")
@@ -2656,7 +2662,8 @@ connections from the loopback interface are allowed."))
                                  #~())
                           "--file" #$ruleset)))
        (stop #~(lambda _
-                 (invoke #$nft "flush" "ruleset")))))))
+                 (and #$flush?
+                      (invoke #$nft "flush" "ruleset"))))))))
 
 (define nftables-service-type
   (service-type
